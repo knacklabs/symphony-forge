@@ -401,7 +401,8 @@ def decision_accept(args: argparse.Namespace) -> None:
         if working and (fields.get("review_checked") != checked or not fields.get("reviewed_commit")):
             evidence = "\n\n".join(f"## {name}\n{sections.get(name, '')}" for name in SIGNOFF_SECTIONS)
             text = _set(text, reviewed_commit=_signoff_review(
-                top, args, quote, evidence, unchanged=generated_only), review_checked=checked)
+                top, args, quote, evidence, unchanged=generated_only,
+                sample_data=fields.get("sample_data") == "true"), review_checked=checked)
         if not replied:  # so the customer is only asked to approve a reviewed version
             _write(top / rel, text)
             repo.commit_state("Save the sign-off checks", rel, top=top)
@@ -486,7 +487,7 @@ def _signoff_known(top: Path, result: dict[str, Any], round_number: int) -> None
 
 
 def _signoff_review(top: Path, args: argparse.Namespace, answers: str, evidence: str,
-                    *, unchanged: bool = False, canvas: str = "") -> str:
+                    *, unchanged: bool = False, canvas: str = "", sample_data: bool = False) -> str:
     """Keep sign-off rounds in git and reuse the review loop's notes and owner choices."""
     from forge import close, review, score
 
@@ -499,12 +500,17 @@ def _signoff_review(top: Path, args: argparse.Namespace, answers: str, evidence:
     history = review._history(top, "client-signoff", "", previous, path=rel, section=section)
     if not canvas and previous:
         _signoff_known(top, previous, len(history))
-        saved["stop"] = bool(saved.get("stop") and score.open_findings(previous))
+        opened = score.open_findings(previous)
+        saved["stop"] = bool(opened and (saved.get("stop") or sample_data and len(history) >= 2)
+                             and (sample_data or not any(f["priority"] == "P0" for f in opened)))
         _write(top / rel, json.dumps(document, indent=2) + "\n")
         repo.commit_state("Apply the prototype bar to saved sign-off findings", rel, top=top)
     choice, reason = getattr(args, "resolve", None), getattr(args, "reason", None)
     next_step = ('forge decision accept client-signoff --by "<name>" '
                  '--resolve <accept|more|split> --reason "<human\'s choice>"')
+    acceptance = (("this accepts a P0 if one remains. A person declared only sample data and no back end, "
+                   "so owner acceptance is allowed here. " if sample_data else "")
+                  + "the findings stay in the item's Known issues with your reason, and sign-off continues.")
     if choice or reason is not None:
         if not saved.get("stop") or not choice or not reason or not reason.strip():
             repo.refuse(("Record the owner's choice only after sign-off stops, with a reason.", next_step))
@@ -521,7 +527,7 @@ def _signoff_review(top: Path, args: argparse.Namespace, answers: str, evidence:
                 {"finding": number, "because": f"Human chose {choice}: {reason.strip()}", "accepted": True,
                  "accepted_commit": repo.git("rev-parse", "HEAD", cwd=top)}
                 for number, finding in enumerate(previous["findings"], 1)
-                if finding in opened and finding["priority"] != "P0")
+                if finding in opened and (finding["priority"] != "P0" or sample_data))
             known = score.remember([], previous, len(history), {})
             identities = {score.identity(entry["file"], entry["title"]) for entry in known}
             state["known"] = [entry for entry in state.get("known", [])
@@ -536,7 +542,7 @@ def _signoff_review(top: Path, args: argparse.Namespace, answers: str, evidence:
     if saved.get("stop"):
         repo.refuse((review.stop_question(top, "client-signoff", {
             "why": "Client sign-off", "done_when": "The prototype matches the client's answers", "review": previous},
-            accept="the findings stay in the item's Known issues with your reason, and sign-off continues."), next_step))
+            accept=acceptance), next_step))
     if (unchanged and not score.open_findings(previous) and choice != "more"
             and (choice in ("accept", "split") or saved.get("inputs") == inputs)):
         return previous["commit"]
@@ -568,13 +574,13 @@ def _signoff_review(top: Path, args: argparse.Namespace, answers: str, evidence:
              if f in opened and f["priority"] in review.SERIOUS] if canvas else
             [(n, f) for n, f in enumerate(result["findings"], 1) if f in opened])
     saved.update(review=result, inputs=inputs,
-                 stop=bool(held and len(history) + 1 >= 2 and not critical))
+                 stop=bool(held and len(history) + 1 >= 2 and (not critical or sample_data)))
     _write(top / rel, json.dumps(document, indent=2) + "\n")
     repo.commit_state("Record the client sign-off review", rel, top=top)
     if saved["stop"]:
         repo.refuse((review.stop_question(top, "client-signoff", {
             "why": "Client sign-off", "done_when": "The prototype matches the client's answers", "review": result},
-            accept="the findings stay in the item's Known issues with your reason, and sign-off continues."), next_step))
+            accept=acceptance), next_step))
     if critical or held:
         from shlex import quote
 

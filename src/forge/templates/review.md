@@ -531,9 +531,16 @@ Judge a prototype as a prototype. Production items, including deployment to the 
 belong to the build stories. A clearly labelled demo tool is not a P0 when the prototype holds
 only sample data and has no back end, as its own files show.
 A security hole in a real API or sign-in, or any exposed real data, stays a P0.
+Risks that exist only in a real-data build the prototype is not, such as
+browser-held codes or data in a prototype with no back end, are
+build-story work and Known issues, not a P0.
 Answers about production are choices for those stories, not missing prototype work.
 Only Harm 4 or higher, Gain 5, or a P0 holds sign-off. Every other finding goes to
 Known issues without a repair round or a question to the owner.
+After two rounds, the owner may accept a remaining P0 with a reason only when a person
+wrote `sample_data: true` in the sign-off decision's front matter. This declares only
+sample data and no back end. The finding stays in Known issues. With the field absent
+or false, P0 findings keep blocking and cannot be accepted by the owner.
 Review the product diff against the customer's answers and the topic table below.
 The first review includes every tracked product file against an empty root. Later reviews
 include only product files changed since the previous sign-off review, plus a re-check of its

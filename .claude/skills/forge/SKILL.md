@@ -681,6 +681,9 @@ Judge a prototype as a prototype. Production work, including deployment to the c
 belongs to build stories. A clearly labelled demo tool is not a P0 when the prototype holds
 only sample data and has no back end, as its own files show.
 A security hole in a real API or sign-in, or any exposed real data, stays a P0.
+Risks that exist only in a real-data build the prototype is not, such as browser-held
+codes or data in a prototype with no back end, belong to build stories and Known issues,
+not P0 findings.
 Only Harm 4 or higher, Gain 5, or a P0 holds
 the product review; every other finding goes straight to Known issues without a repair
 round or an owner question. A held finding below P0 still needs the owner's choice after two rounds.
@@ -688,7 +691,14 @@ If the review engine fails, fix the engine problem and run the accept command ag
 A canvas-only sign-off needs no working build. A working build gets a full first product review.
 Each later attempt reviews only product files changed since the previous review and its open findings.
 Every reviewer gets earlier findings and answers. Settled findings stay settled.
-After two rounds, P0 findings still block until fixed. Other open findings need the owner's choice.
+Only a person may write `sample_data: true` in the sign-off decision's front matter.
+It declares that the prototype holds only sample data and has no back end. After two
+rounds, a remaining P0 then stops for the owner's choice, and `--resolve accept` keeps
+it in Known issues with the owner's reason. The question explains that this accepts a
+P0 only because of the sample-data declaration. Without the field, or with
+`sample_data: false`, a P0 keeps the hard block and has no owner acceptance path.
+Earlier repos keep that hard block until a person adds the field; there is no migration.
+Other open held findings need the owner's choice after two rounds.
 Record that choice with `forge decision accept client-signoff --by "<name>" --resolve accept|more|split --reason "<human's choice>"`.
 Accept keeps the findings in the item's Known issues. Split creates a separate fix. More permits one more review.
 The canvas completeness check uses these same rounds and owner choices. Accept or split continues

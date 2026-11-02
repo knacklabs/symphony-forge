@@ -146,3 +146,76 @@ def test_3_signoff_questions_and_split_include_only_held_findings(repo, tmp_path
     lesser = [entry for entry in board["known_issues"] if entry["title"] == "Order labels need work"]
     assert len(lesser) == 1
     assert "The owner defers" not in lesser[0]["reason"]
+
+
+# Test audit: only a person's sample-data declaration permits accepting a P0
+# after two rounds. Existing tests cover the unconditional P0 block, not this
+# owner path or its absence on upgraded repos. Exercise the decision command,
+# saved stop and public Known issues; reuse the external reviewer fixture.
+@pytest.mark.parametrize("setup,sample_data", [
+    (_client, "true"), (_client, None), (_client, "false"),
+    (_adopted_client, "true"), (_adopted_client, None),
+], ids=["sample", "absent", "false", "adopted-sample", "adopted-absent"])
+def test_4_only_declared_sample_prototypes_allow_the_owner_to_accept_p0(
+        repo, tmp_path, monkeypatch, setup, sample_data):
+    fix, answers, queue = setup(repo, tmp_path, monkeypatch)
+    if setup is _adopted_client:
+        _request_build(repo, fix)
+        (fix / "app.py").write_text("print('sample orders')\n", encoding="utf-8")
+        repo.git("add", "app.py", cwd=fix)
+        repo.git("commit", "-qm", "Build the adopted prototype", cwd=fix)
+    page = _decision(fix, answers)
+    if sample_data is not None:
+        page.write_text(page.read_text("utf-8").replace(
+            "status: proposed", f"status: proposed\nsample_data: {sample_data}"), encoding="utf-8")
+    report = {"report": {"review_status": "findings", "findings": [{
+        "priority": "P0", "title": "Browser-held order codes",
+        "body": "Gain 5, Work 2, Harm 4\nThe browser holds the order codes.",
+        "code_location": {"file_path": "app.py", "line": 1}}]}}
+    queue.write_text(json.dumps([
+        {"report": {"review_status": "scoped-clean", "findings": []}}, report]), encoding="utf-8")
+
+    def accept(*args):
+        return repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", *args, cwd=fix)
+
+    first = accept()
+    assert first.returncode == 1, first.stdout + first.stderr
+    assert "forge fix start" in first.stderr
+    premature = accept("--resolve", "accept", "--reason", "The owner accepts the sample risk")
+    assert premature.returncode == 1
+    assert "only after sign-off stops" in premature.stderr
+    second = accept()
+    assert second.returncode == 1, second.stdout + second.stderr
+    calls = queue.with_suffix(".calls.jsonl")
+    before = calls.read_text("utf-8")
+    if sample_data == "true":
+        assert "One more round, split or accept?" in second.stderr
+        assert "accepts a P0" in second.stderr
+        assert "only sample data and no back end" in second.stderr
+        again = accept()
+        assert again.returncode == 1
+        assert "accepts a P0" in again.stderr
+        assert calls.read_text("utf-8") == before
+    else:
+        assert "forge fix start" in second.stderr
+        assert "One more round" not in second.stderr
+    resolved = accept("--resolve", "accept", "--reason", "The owner accepts the sample risk")
+    assert calls.read_text("utf-8") == before
+    if sample_data == "true":
+        assert resolved.returncode == 0, resolved.stdout + resolved.stderr
+        assert "status: accepted" in page.read_text("utf-8")
+        shown = repo.forge("board", "--json", cwd=fix)
+        assert shown.returncode == 0, shown.stderr
+        kept = [entry for entry in json.loads(shown.stdout)["known_issues"]
+                if entry["title"] == "Browser-held order codes"]
+        assert len(kept) == 1
+        assert "The owner accepts the sample risk" in kept[0]["reason"]
+        assert kept[0]["kept"] != "open"
+    else:
+        assert resolved.returncode == 1
+        assert "only after sign-off stops" in resolved.stderr
+        assert "status: proposed" in page.read_text("utf-8")
+    prompt = "\n".join(json.loads(before.splitlines()[-1])["prompt_files"].values())
+    assert "Risks that exist only in a real-data build" in prompt
+    assert "browser-held codes or data" in prompt
+    assert "build-story work and Known issues, not a P0" in prompt
