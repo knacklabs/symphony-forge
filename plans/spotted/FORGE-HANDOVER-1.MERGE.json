@@ -1,0 +1,37 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/task.py\tValidate the fetched state before picking up a dropped fix\tFORGE-HANDOVER-1/MERGE",
+      "kind": "bug",
+      "path": "src/forge/task.py",
+      "line": 246,
+      "text": "Validate the fetched state before picking up a dropped fix",
+      "from": "blocking",
+      "item": "FORGE-HANDOVER-1/MERGE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\ttests/test_handover_merge.py\tFollow-up: cover fast-forward pickup and shared-ready local advice",
+      "kind": "edge",
+      "path": "tests/test_handover_merge.py",
+      "line": 84,
+      "text": "Follow-up: cover fast-forward pickup and shared-ready local advice",
+      "from": "review",
+      "item": "FORGE-HANDOVER-1/MERGE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "improve\tsrc/forge/review.py\tA worker test run can select an older story-branch test name after the checkout table is corrected.",
+      "kind": "improve",
+      "path": "src/forge/review.py",
+      "line": 129,
+      "text": "A worker test run can select an older story-branch test name after the checkout table is corrected.",
+      "from": "worker",
+      "item": "FORGE-HANDOVER-1/MERGE",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
