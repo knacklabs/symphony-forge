@@ -28,20 +28,41 @@ def latest(top: Path) -> str:
     return repo.git("rev-parse", f"origin/{default}", cwd=top)
 
 
-def green(top: Path) -> str:
+def green(top: Path, head: str = "") -> str:
     sha = latest(top)
-    done = repo.run("gh", "api", f"repos/{{owner}}/{{repo}}/commits/{sha}/statuses", cwd=top)
-    try:
-        statuses = json.loads(done.stdout) if not done.returncode else []
-        status = next((row for row in statuses if row.get("context") == STATUS), None)
-    except (ValueError, TypeError, AttributeError):
-        status = None
     default = repo.default_branch(top)
-    if status and status.get("state") == "success":
-        return ""
-    if status and status.get("state") == "failure":
-        return f"The full test run on the latest commit on {default} failed."
-    return f"The latest commit on {default} has no green full test run."
+    missing = f"The latest commit on {default} has no green full test run."
+
+    def forge_only(base: str, target: str) -> bool:
+        from forge import sync
+
+        paths = repo.git("diff", "--name-only", "--no-renames", base, target, cwd=top).splitlines()
+        product = [path for path in paths
+                   if not path.startswith((*review.BOOKKEEPING, "docs/decisions/"))]
+        return not product or set(product) <= sync.synced(
+            top, repo.config(top), base, target, product)
+
+    # ponytail: at most ten commits/status calls; older proof needs a fresh full run.
+    commits = repo.git("rev-list", "--first-parent", "--max-count=10", sha, cwd=top).splitlines() if head else [sha]
+    for commit in commits:
+        done = repo.run("gh", "api", f"repos/{{owner}}/{{repo}}/commits/{commit}/statuses", cwd=top)
+        if done.returncode:
+            return missing
+        try:
+            statuses = json.loads(done.stdout)
+            status = next((row for row in statuses if row.get("context") == STATUS), None)
+        except (ValueError, TypeError, AttributeError):
+            return missing
+        if status and status.get("state") == "failure":
+            return (f"The full test run on the latest commit on {default} failed."
+                    if commit == sha else missing)
+        if head and not forge_only(commit, sha):
+            return missing
+        if head and not forge_only(commit, head):
+            return "The reviewed product needs a new full test run."
+        if status and status.get("state") == "success":
+            return ""
+    return missing
 
 
 def run(top: Path) -> int:
