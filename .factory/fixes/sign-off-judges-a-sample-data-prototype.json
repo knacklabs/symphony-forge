@@ -25,7 +25,7 @@
       "gain": 4,
       "harm": 2,
       "line": 541,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -38,7 +38,7 @@
       "gain": 4,
       "harm": 2,
       "line": 546,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -48,37 +48,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "f92eafe37882a185f893dc83702b691a46c5ec1c1aba0b9e21de6b7c408aacb1",
-    "changed": "d892a823b3d0a3b3516a36e496e2b421a114da122b06810e53d33b7bcdeff43f",
-    "commit": "b96144ab4dfab464bffff37539d1582da51792bc",
+    "branch_diff": "c31c56914a0fe2953b23aa0d2eb05002d80883ad48561504e036158c3f1f0e48",
+    "changed": "2b6c51033e70dc8e34c95b4e936b5483ca821b9801e66732c20df806dcf8ee30",
+    "commit": "486efe373d338b02d404357b4f9a298c15328739",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 2, Harm 2\nRaise: Functional\nCase: normal use - retrying an existing prototype sign-off after upgrading.\nThe new threshold runs only after a fresh review. If an earlier review saved `stop: true` for a P1 scored Gain 4, Work 1, Harm 3, `records.py:509\u2013512` refuses with the owner question before reaching this code. The finding therefore still stops sign-off despite falling below the new bar. Reclassify saved product-review findings and clear a stop supported only by lesser findings before processing the saved stop. The adopted-client test starts a fresh sign-off and does not cover this state.",
-        "file": "src/forge/records.py",
-        "gain": 4,
-        "harm": 2,
-        "line": 541,
-        "priority": "P1",
-        "title": "Apply the prototype threshold before honoring a saved stop",
-        "work": 2
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 2\nRaise: Functional\nCase: normal use - a second product-review round contains both a held P1 and a lesser finding.\nCopying lesser findings into `state[\"known\"]` leaves them open in the saved review. The stop question receives that entire result at `records.py:558\u2013560`; `review.py:266\u2013274` lists every open finding and asks whether to repair, split or accept those cases. Choosing split then creates a repair fix containing every open finding (`records.py:486\u2013492`), including the lesser ones already recorded as Known issues. Thus lesser findings still require an owner choice and can enter another repair round. Settle them in the review result or restrict the sign-off question and resolution paths to held findings.",
-        "file": "src/forge/records.py",
-        "gain": 4,
-        "harm": 2,
-        "line": 546,
-        "priority": "P1",
-        "title": "Exclude lesser findings from sign-off questions and split repairs",
-        "work": 2
-      }
-    ],
-    "id": "136d90d1-8cf2-42a1-8ef7-8a7af6080070",
-    "status": "blocked"
+    "findings": [],
+    "id": "61b80a84-b092-478c-b19c-ef18205ede1a",
+    "status": "clean"
   },
   "round": 6,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-02T11:11:55.112653+00:00",
@@ -86,6 +65,10 @@
     },
     {
       "at": "2026-11-02T11:27:15.158287+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-02T13:54:50.412862+00:00",
       "step": "review"
     }
   ],
