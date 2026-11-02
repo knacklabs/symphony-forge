@@ -553,7 +553,7 @@ def _accepted(top: Path, item: str, history: list[dict[str, Any]]) -> str:
             kept = story.DISPOSITION.search(block)
             if kept and kept[1].lower() in ("keep", "defer"):
                 found.append(f"Plan read note {number}: {' '.join(block.split(None, 1)[1].split())}")
-    for (file, title), reason in _settled(history).items():  # every settled finding, whatever settled it
+    for (file, title), reason in _settled(history, priority_only=item == "design-check").items():
         scores = next((f"; {line[0].strip()}" for result in history for f in result.get("findings", [])
                        if (f["file"], f["title"]) == (file, title) and (line := score.LINE.search(f["body"]))), "")
         found.append(f"{title} ({file}): {reason}{scores}")
@@ -601,7 +601,7 @@ def _history(top: Path, item: str, base: str, previous: dict[str, Any],
     return list(rounds.values())
 
 
-def _settled(history: list[dict[str, Any]]) -> dict[tuple[str, str], str]:
+def _settled(history: list[dict[str, Any]], *, priority_only: bool = False) -> dict[tuple[str, str], str]:
     """Earlier rounds' settled findings, one per identity under its first spelling."""
     settled, earlier, names = {}, set(), {}
     for result in history:
@@ -612,7 +612,7 @@ def _settled(history: list[dict[str, Any]]) -> dict[tuple[str, str], str]:
         for finding in score.open_findings(result):
             if finding.get("required_done_when"):
                 continue
-            if (outcome := score.bar(score.of(finding))) in ("follow-up", "live with"):
+            if not priority_only and (outcome := score.bar(score.of(finding))) in ("follow-up", "live with"):
                 settled.setdefault(score.identity(finding["file"], finding["title"]), f"known: below the bar ({outcome})")
             if finding.get("follow_up"):
                 settled.setdefault(score.identity(finding["file"], finding["title"]),
@@ -949,7 +949,8 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         result = {"findings": findings, "blocking_level": "P0" if light else "P1"}
         if not signoff_prompt or item in ("client-signoff", "design-check"):
             history = state["signoff_history"] if signoff_prompt else _history(top, item, base, previous, state=state)
-            settled = {score.identity(*key): reason for key, reason in _settled(history).items()}
+            settled = {score.identity(*key): reason for key, reason in
+                       _settled(history, priority_only=item == "design-check").items()}
             if item in ("client-signoff", "design-check"):
                 # The owner accepts the limitation in this version of the file,
                 # independent of the next reviewer's wording. Edits reopen it.

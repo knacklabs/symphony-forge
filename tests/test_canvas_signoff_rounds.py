@@ -16,19 +16,26 @@ STORY = "canvas-sign-off-in-src-forge-records-py"
 pytestmark = pytest.mark.platform
 
 
-@pytest.mark.parametrize("setup,priority,choice", [
-    (_client, "P1", "accept"), (_adopted_client, "P1", "accept"),
-    (_client, "P1", "split"), (_client, "P1", "more"),
-    (_client, "P0", "accept"),
-], ids=["new", "adopted", "split", "more", "critical"])
+# Priority, not a code-review score, holds a canvas gap until the owner chooses.
+# A repeated low-score P1 used to become known automatically in round two.
+# Extend this owning command test; no new test seam or duplicate setup is needed.
+@pytest.mark.parametrize("setup,priority,choice,scores", [
+    (_client, "P1", "accept", "Gain 5, Work 2, Harm 4"),
+    (_adopted_client, "P1", "accept", "Gain 5, Work 2, Harm 4"),
+    (_client, "P1", "split", "Gain 5, Work 2, Harm 4"),
+    (_client, "P1", "more", "Gain 5, Work 2, Harm 4"),
+    (_client, "P0", "accept", "Gain 5, Work 2, Harm 4"),
+    (_client, "P1", "accept", "Gain 3, Work 2, Harm 2"),
+    (_adopted_client, "P1", "accept", "Gain 3, Work 2, Harm 2"),
+], ids=["new", "adopted", "split", "more", "critical", "low-score-new", "low-score-adopted"])
 def test_1_canvas_signoff_keeps_rounds_and_owner_choices(
-        repo, tmp_path, monkeypatch, setup, priority, choice):
+        repo, tmp_path, monkeypatch, setup, priority, choice, scores):
     options = {"working_build": False} if setup is _client else {}
     fix, answers, queue = setup(repo, tmp_path, monkeypatch, **options)
     page = _decision(fix, answers)
     report = {"report": {"review_status": "findings", "findings": [{
         "priority": priority, "title": "Missing customer field",
-        "body": "Gain 5, Work 2, Harm 4\nThe order screen omits the customer field.",
+        "body": scores + "\nThe order screen omits the customer field.",
         "code_location": {"file_path": "docs/design/prototype/SCREENS.md", "line": 1}}]}}
 
     def accept(*args):

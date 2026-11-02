@@ -519,7 +519,7 @@ def _signoff_review(top: Path, args: argparse.Namespace, answers: str, evidence:
     prompt = canvas or string.Template(block.split("<!-- signoff -->\n", 1)[1]).substitute(
         answers=answers, topics=table[0] if table else "")
     prompt += "\n\n## Earlier review rounds\n" + ("\n\n".join(review._previous(old) for old in history) or "- none")
-    prompt += "\n\nSettled findings:\n" + review._accepted(top, "client-signoff", history)
+    prompt += "\n\nSettled findings:\n" + review._accepted(top, "design-check" if canvas else "client-signoff", history)
     if evidence:
         prompt += ("\n\n" + evidence + "\n\nCheck every demo workflow step against the brief. "
                    "Each step must name a passing test. Refuse a missing step, a missing test, "
