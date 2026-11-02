@@ -148,7 +148,9 @@ def test_1_merge_retests_combined_change_and_names_failures(env, tmp_path, previ
     tested = [json.loads(line) for line in log.read_text("utf-8").splitlines()]
     assert tested
     head, base, lane = tested[0]
-    assert base == advanced and lane
+    # Configured selection excludes PR files already checked by CI. A full
+    # command without {base} still discovers its own merge base as before.
+    assert base == (original if fast else advanced) and lane
     assert all(row[0] == head and row[1] == base and row[2] for row in tested)
     env.repo.git("merge-base", "--is-ancestor", advanced, head)
     # The late change touches right.txt, outside the item's files. The new
