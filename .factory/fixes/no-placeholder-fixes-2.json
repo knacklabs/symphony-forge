@@ -1,0 +1,81 @@
+{
+  "base": "4cdde9ebc7c77af80b4fb1e0c339a2cba059f0fa",
+  "branch": "fix/no-placeholder-fixes-2",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a19312-2cc0-7901-863f-0d514e43f2b3",
+    "head": null,
+    "start": "74557325ba50cfa4edbd51260d71103d2f560de2"
+  },
+  "done_when": "Sorting an idea never leaves a fix or branch named find-the-problem-to-solve behind",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "d8158d2ea296f572994c92e3f5b759b6bc173e994a93aa577757d6814be103a3",
+    "changed": "0d51d1de0abc33393a32018209e97865c76f2ab082c6e8708736aeb48ed65b5e",
+    "commit": "1a98908da12a047136c300561742fce1768c1c11",
+    "dismissals": [],
+    "findings": [],
+    "id": "b589741f-00bf-4976-ab84-c7020b44e14f",
+    "status": "clean"
+  },
+  "round": 8,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-31T12:50:26.079497+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-31T17:53:05.571169+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-31T19:31:55.986802+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-31T22:14:18.008639+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-01T02:30:55.825615+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-01T04:49:39.541821+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-01T19:40:32.794071+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-02T07:34:02.931038+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-02T08:36:03.951592+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-02T16:38:24.465386+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-02T17:13:49.027449+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "aaf5f4a7-b79e-4f53-9449-92b80a159735",
+    "head": "7c958cf5887f0eb6e4566508459467a687e58c35",
+    "keys": {},
+    "round": 7
+  },
+  "why": "Fixes named Find the problem to solve appear by themselves and collect another fix's commits (issue 819). The first fix for this merged with no code (issue 1260)",
+  "worker": "codex"
+}

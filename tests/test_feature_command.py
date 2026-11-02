@@ -930,6 +930,17 @@ def _plan_line_builds_the_feature_in_one_step(repo, gh, tmp_path, shell, starter
             ("clients", "client", CLIENT_LINE),
             ("jobs", "job", JOBS_LINE),
         ):
+            # Audit: feature wiring adds relations and a catalog entry without changing
+            # existing auth models or catalog entries. Replacing an old app's content
+            # must fail, while new-only auth tables are valid. Whole-file equality
+            # cannot express that contract; use the existing command, with no seam.
+            shared_before = {
+                rel: (client / rel).read_text("utf-8")
+                for rel in (
+                    "apps/api/prisma/schema/auth.prisma",
+                    "apps/api/test/database.e2e-spec.ts",
+                )
+            } if starter == "typescript" else {}
             result = _run_line(repo, client, shell, line)
             assert result.returncode == 0, result.stdout + result.stderr
             written = _written_paths(result, client)
@@ -942,6 +953,24 @@ def _plan_line_builds_the_feature_in_one_step(repo, gh, tmp_path, shell, starter
             outputs[label][plural] = {
                 rel: (client / rel).read_bytes() for rel in written
             }
+            if starter == "typescript":
+                model = one.capitalize()
+                additions = {
+                    "apps/api/prisma/schema/auth.prisma": "\n" + "\n".join(
+                        f'  {verb}{plural.capitalize()} {model}[] @relation("{model}{relation}By")'
+                        for verb, relation in (
+                            ("created", "Created"), ("modified", "Modified"), ("deleted", "Deleted"),
+                        )
+                    ),
+                    "apps/api/test/database.e2e-spec.ts": f" {model}: '{plural}',",
+                }
+                for rel, addition in additions.items():
+                    after = (client / rel).read_text("utf-8")
+                    assert after.count(addition) == 1, rel
+                    assert after.replace(addition, "", 1) == shared_before[rel], rel
+                    # Compare only this feature's addition across releases. The preservation
+                    # assertion above checks every other character, with native newlines read as LF.
+                    outputs[label][plural][rel] = addition.encode("utf-8")
             assert migration in [client / rel for rel in written]
         if log is not None:
             _assert_feature_guidance(repo, client, log)

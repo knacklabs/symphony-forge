@@ -27,7 +27,6 @@ jobs:
     outputs:
       test-only: ${{ steps.select.outputs.test-only }}
       platform-files: ${{ steps.select.outputs.platform-files }}
-      run-windows: ${{ steps.select.outputs.run-windows }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -39,24 +38,6 @@ jobs:
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           DOCS_ONLY_EXCLUDES: '[":(exclude,glob).factory/**", ":(exclude,glob)plans/**"]'
         run: python .forge/review-tests.py
-
-  windows-installers:
-    runs-on: windows-latest
-    timeout-minutes: 5
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-      - id: parent-tests
-        if: github.event_name == 'push'
-        env:
-          GH_TOKEN: ${{ github.token }}
-          PR_WORKFLOW: forge-next.yml
-        run: python .github/reuse-test-proof.py
-      - uses: astral-sh/setup-uv@v6
-        if: steps.parent-tests.outputs.reuse != 'true'
-      - run: uv run --frozen --python 3.11 pytest tests/test_installers_explain_docker_start.py -q -m platform -o faulthandler_timeout=120 --timeout=150 --timeout-method=thread
-        if: steps.parent-tests.outputs.reuse != 'true'
 
   plugin:
     runs-on: ubuntu-latest
@@ -85,7 +66,6 @@ jobs:
 
   tests:
     needs: selection
-    if: needs.selection.outputs.run-windows != 'false'
     # Keep these matrix checks separate from the required Linux tests check in forge.yml.
     name: ${{ matrix.os == 'windows-latest' && 'platform-sensitive tests' || 'full suite' }} on ${{ matrix.os }}, group ${{ matrix.group }} of ${{ matrix.groups }}
     env:
@@ -147,7 +127,9 @@ jobs:
       - shell: pwsh
         run: |
           $testFiles = @('tests')
-          if ($env:TEST_ONLY -eq 'true') { $testFiles = @(ConvertFrom-Json $env:PLATFORM_FILES) }
+          if ($env:TEST_ONLY -eq 'true') {
+            $testFiles = @(@(ConvertFrom-Json $env:PLATFORM_FILES) + 'tests/test_installers_explain_docker_start.py' | Sort-Object -Unique)
+          }
           uv run --python 3.11 pytest @testFiles -q -n auto -o faulthandler_timeout=${{ matrix.os == 'windows-latest' && 270 || 120 }} --timeout=${{ matrix.os == 'windows-latest' && 300 || 150 }} --timeout-method=thread ${{ matrix.os == 'windows-latest' && '-p no:faulthandler --max-worker-restart=0 -m platform --reruns 1 --basetemp D:/t/pytest --durations=30 --store-durations --clean-durations' || '' }} --splits ${{ matrix.groups }} --group ${{ matrix.group }} --splitting-algorithm least_duration --durations-path ${{ matrix.os == 'windows-latest' && hashFiles('.test_durations_windows') != '' && '.test_durations_windows' || '.test_durations' }}
         if: steps.parent-tests.outputs.reuse != 'true'
         timeout-minutes: ${{ matrix.os == 'windows-latest' && 30 || 20 }}
@@ -163,18 +145,3 @@ jobs:
           name: Windows-test-durations-${{ matrix.group }}
           path: ${{ matrix.os == 'windows-latest' && hashFiles('.test_durations_windows') != '' && '.test_durations_windows' || '.test_durations' }}
           include-hidden-files: true
-
-  net-lines:
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          fetch-depth: 2
-      - name: Print the pull request's net lines
-        # HEAD is the pull request merged into its base; HEAD^1 is the base.
-        run: |
-          git diff --numstat HEAD^1 HEAD \
-            | awk '{a += $1; d += $2} END {printf "Net lines: %+d (%d added, %d removed)\n", a - d, a, d}' \
-            | tee -a "$GITHUB_STEP_SUMMARY"
