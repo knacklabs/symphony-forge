@@ -4,12 +4,20 @@
   "done_when": "A new app and an existing app that signs in another way get guide and baseline text whose basic screens follow the approved sign-in answer, and the review no longer reports a synced Forge file against the app.",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-02T08:59:19.387415+00:00",
       "step": "start"
     }
   ],
-  "why": "The app-baseline skill names six basic screens and specifies Sign-in with Email and Password, Forgot password, Reset password and Accept invite with Password. The guide says to build the basic screens first, and nothing says the approved sign-in answer replaces the baseline. Forge's sync overwrites the baseline in every repo, so an app that signs in another way cannot correct it, and the review names only the story doc and AGENTS.md as overrides."
+  "stuck": {
+    "close": null,
+    "head": "956654f45e767d17a007206026871ac485eabf26",
+    "keys": {},
+    "round": null
+  },
+  "why": "The app-baseline skill names six basic screens and specifies Sign-in with Email and Password, Forgot password, Reset password and Accept invite with Password. The guide says to build the basic screens first, and nothing says the approved sign-in answer replaces the baseline. Forge's sync overwrites the baseline in every repo, so an app that signs in another way cannot correct it, and the review names only the story doc and AGENTS.md as overrides.",
+  "worker": "codex"
 }
