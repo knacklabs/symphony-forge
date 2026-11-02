@@ -61,8 +61,8 @@
     "id": "3d86ffa4-03c3-47f1-a61f-d490641ab6e3",
     "status": "clean"
   },
-  "round": 7,
-  "status": "waiting for checks",
+  "round": 8,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-02T11:11:55.112653+00:00",
@@ -91,10 +91,10 @@
     "worker_round": 2
   },
   "stuck": {
-    "close": "ed137e9b-863f-475a-a4cb-85cefdb49098",
-    "head": "de40154f0ea76cce6d168f87e2f0861cca17c0a5",
+    "close": "41c1ea55-a961-4ff0-8705-3e7838d178cb",
+    "head": "3a4bd5228a24dea42b13c7002456be15d801691f",
     "keys": {},
-    "round": 6
+    "round": 7
   },
   "why": "Sign-off judges a sample-data prototype by production rules: its prompt says the full production proof is due now and never says there is no back end, so labelled demo tools can get P0 and production answers can get Not done, and fix-now findings stop the owner for a repair round (GitHub issue 1303).",
   "worker": "codex"
