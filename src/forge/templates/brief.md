@@ -136,6 +136,12 @@ and gives `forge work <item>` as the next step. With no default-branch move, mer
 If the file sets do not overlap, Forge restores the original head and merges without a push or another check wait.
 If the file sets overlap, Forge keeps the local merge, reuses the existing review and commits its coverage of the combined change.
 It pushes that commit, waits for its required checks, then merges.
+In repos whose tests run in pull request CI, close already leaves the laptop tests to CI.
+When merge's pytest selection exceeds one quarter of the suite's test files, including
+`always_test`, merge also skips the laptop run. It publishes the combined change and waits
+for that commit's CI, even when the changed files do not overlap. This uses the existing
+pytest picker, with no new test collection. Other runners and custom fast commands keep
+their local retest. Repos whose tests run only on the laptop keep their local runs.
 The nightly full run on the default branch covers the rest.
 `forge test --full` fails if the whole run has no tests. Set `test` in `forge.toml` to run
 the whole suite. An empty group of a nonempty suite is valid.

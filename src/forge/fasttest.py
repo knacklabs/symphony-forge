@@ -6,6 +6,7 @@ import os
 import re
 import shlex
 import subprocess
+import sys
 import tempfile
 import tomllib
 from pathlib import Path
@@ -387,6 +388,27 @@ def related(base: str) -> tuple[list[str], list[str], bool, list[str]]:
                if docskip.reads_file_relative(path.read_text("utf-8-sig"), inputs)}
     picked = docskip.test_readers(readers, picked)
     return sorted(path.as_posix() for path in picked if path in tests), everything, False, missed
+
+
+def broad_ci_selection(top: Path, base: str) -> bool:
+    """Use the existing pytest file inventory before taking the laptop test place."""
+    cfg = repo.config(top)
+    if cfg["test_place"] != "ci" or not cfg["checks"]:
+        return False
+    # Other fast commands can choose a different set; keep their current local proof.
+    if cfg["fast_test"] and not re.search(r"\bforge test --pytest\s", cfg["fast_test"]):
+        return False
+    if not any(kind == "python" for kind, _, _ in quicktest.test_parts(top, cfg["test"])):
+        return False
+    # Selection reads repo-relative paths. A child keeps the coordinator's cwd unchanged.
+    code = (f"import sys; sys.path.insert(0, {str(Path(__file__).parents[1])!r}); "
+            "from forge.fasttest import related; "
+            "picked, tests, _, _ = related(sys.argv[1]); "
+            "print(len(set(picked) | set(sys.argv[2:])) * 4 > len(tests))")
+    always = [name.split("::", 1)[0] for name in cfg["always_test"]]
+    selected = repo.run(sys.executable, "-c", code, base, *always, cwd=top)
+    selected.check_returncode()
+    return selected.stdout.strip() == "True"
 
 
 # The temporary pytest plugin: skip unpicked files, keep picked tests and each always_test entry,

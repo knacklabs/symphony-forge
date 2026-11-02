@@ -10,8 +10,9 @@ inside Forge and goes into every worker's brief. How Forge behaves is set by its
 
 You need git, the GitHub CLI (`gh`, signed in with `gh auth login`), `uv`, and the agent your
 repo uses: Claude Code, Codex, or both for split workers. Either agent can coordinate the work;
-with one tool, that tool reads plans; with both, the first cold read uses the other installed tool,
-or the coordinating session's `reader` subagent when the other tool is unavailable.
+with one tool selected, that tool reads plans. With both selected, the first read uses the other
+installed tool, or the coordinator's tool if the other is unavailable. Later reads keep that
+reader while available. A native read uses a separate `reader` subagent.
 `forge.toml` chooses which one builds tasks and fixes.
 Install the release a repo pins (uv brings Python 3.11 or later if you don't have it):
 
@@ -124,8 +125,9 @@ screen list. Missing screens, fields,
 choice-list options or flows hold sign-off. When a precondition is missing, the refusal lists every
 gap and the next action for each. An existing client can sign off after upgrade with the brief and
 design it has; no prototype design files are required for this gate.
-The completeness review uses `claude-opus-5-5` at high, independent of `[models.design]`.
-Without Claude it uses `gpt-6.1-sol` at high and reports the fallback.
+The canvas completeness check always uses Codex with `gpt-6.1-sol` at high. It needs Codex
+even with `tools = "claude"`. It ignores `[models.design]` and `[models.review]`.
+The separate whole-product code review uses the selected review tool and `[models.review]`.
 Fix gaps, then retry `forge decision accept client-signoff`.
 A canvas-only sign-off needs no working build. A working prototype gets a full first product review.
 Later attempts review only product files changed since the last review and its open findings.
@@ -143,7 +145,9 @@ repo, trying either command early tells you to build and demo the prototype and 
 Every new story carries forward the available canvas, Proof and Decisions into
 `## Proven by the prototype`. The plan and cold read treat this as settled evidence and cover
 only new work or production risks. Start from the prototype canvas or a newer design approved with the plan.
-Forge's own repo keeps its existing story flow. For the full sign-off contract, see the
+Forge's own repo keeps its existing story flow. For the first production release, follow the
+[production checklist](start-a-prototype.md#prepare-the-first-production-release).
+For the sign-off history, see the
 [prototype sign-off spec](specs/prototype-signoff.md) and
 [decision 0095](decisions/0095-prototype-before-stories.md).
 
@@ -287,9 +291,9 @@ with one tool `workers` is ignored, including for design work. Upgrade Forge bef
 with any choice. Claude worker rounds use the Agent SDK whenever installed, including in
 a Claude coordinator. Without it, that coordinator uses its background subagent. Codex rounds
 in a Codex coordinator stay native; other Codex rounds use the app server. Plan reads on
-the coordinator's tool stay native. Reviews use the repo's tool through Autoreview's own default model
-and effort; with both they use Codex when installed, otherwise Claude. Existing review model
-entries are ignored and doctor shows a note; upgrading preserves the repo's settings.
+the coordinator's tool stay native. Code reviews use the selected tool and its `[models.review]`
+model and effort through Autoreview. With both selected, reviews use Codex when installed,
+otherwise Claude. Unset entries use Autoreview's defaults. The canvas check always uses Codex.
 
 For a native plan read, `forge read <target>` hands out the `reader` role, the plan's checkout
 and its prompt. Run that background subagent in your session, then record its final message
