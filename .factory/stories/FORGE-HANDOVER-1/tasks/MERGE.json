@@ -52,28 +52,17 @@
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "88c9a00f34ec63d90f8e875f57e376fc610de5de671ab504e212e87501a4c35f",
-    "changed": "feb514167b4885f0562f429ce5c98cc3b5408f8a1227f08e8a0f0a1375722807",
-    "commit": "2c4ccd8e313a37ddab2e5b9a7dddafb927bbaa51",
+    "branch_diff": "fa926580ce3be6ebab0e09937d52aab7d3574acacc52376f76201df4af459883",
+    "changed": "ca0a62463115276a9e69af0104ae63e2650370e246774448df51916382ca9d98",
+    "commit": "40f70d20809c3813e20e7fb842c204fdaffe03be",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 2, Work 2, Harm 2\nIf this machine previously closed the item and another machine subsequently advances and closes it, the old local receipt remains syntactically valid. This condition therefore skips the current shared ready record, even after pickup fast-forwards the checkout. The head comparison at merge.py:85 then refuses the merge despite the pull request carrying matching clean readiness. The previous finding remains unfixed: treat a local receipt whose commit differs from the pull request head as stale and try the validated shared record.",
-        "file": "src/forge/merge.py",
-        "gain": 2,
-        "harm": 2,
-        "line": 72,
-        "priority": "P2",
-        "title": "[P2] Fall back to shared readiness when the local receipt is stale",
-        "work": 2
-      }
-    ],
-    "id": "255346d6-56cc-4c83-ba37-b83b3a491680",
+    "findings": [],
+    "id": "f42ea256-e6c2-4787-a35a-8685e3868d36",
     "status": "clean"
   },
   "round": 10,
   "stacked_on": "FORGE-STACK-1/CLOSE",
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-31T10:55:49.065586+00:00",
@@ -101,6 +90,10 @@
     },
     {
       "at": "2026-11-02T20:56:37.124439+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-02T21:41:04.534756+00:00",
       "step": "review"
     }
   ],
