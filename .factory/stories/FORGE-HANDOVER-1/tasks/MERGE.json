@@ -34,22 +34,43 @@
       "security": false,
       "title": "Follow-up: cover fast-forward pickup and shared-ready local advice",
       "work": 2
+    },
+    {
+      "area": "merge() in src/forge/merge.py",
+      "file": "src/forge/merge.py",
+      "gain": null,
+      "harm": null,
+      "line": 72,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 5,
+      "security": false,
+      "title": "[P2] Fall back to shared readiness when the local receipt is stale",
+      "work": null
     }
   ],
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "0344179e052141e278a30d62cd046157d44c7674000cd229f558ca9af0caf397",
-    "changed": "914b7986896c68690ceee45a680edbec5e4fa22aba3f612ba9eed828b8c5a550",
-    "commit": "a3ecdae9981b523a468f61c13283f1216241067b",
+    "branch_diff": "5d252ebcc2fe96cf1cf671dbdd3b7be357c6613a448502623aa82d2429852bc8",
+    "changed": "a444d546336e3aceedfea35c5a1d5b042deb160df63e5b0bb7256139c583525b",
+    "commit": "297779875a9ca44ba6b8c51dc549fe9f2049a3f8",
     "dismissals": [],
-    "findings": [],
-    "id": "340b9918-face-449a-9e98-68e13e9241b1",
+    "findings": [
+      {
+        "body": "If this machine previously closed the item, then another machine advances and closes it again, the old local receipt remains syntactically valid. Even after pickup fast-forwards the checkout to the newly reviewed head, this condition skips the matching shared record, and the head comparison below refuses the merge. The new `forge next` advice can therefore repeatedly recommend a merge that fails. Treat a local receipt whose commit differs from the PR head as stale and try the validated shared record before refusing.",
+        "file": "src/forge/merge.py",
+        "line": 72,
+        "priority": "P2",
+        "title": "[P2] Fall back to shared readiness when the local receipt is stale"
+      }
+    ],
+    "id": "8d96eeb1-477c-4650-a17c-f21110401825",
     "status": "clean"
   },
   "round": 8,
   "stacked_on": "FORGE-STACK-1/CLOSE",
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-31T10:55:49.065586+00:00",
@@ -69,6 +90,10 @@
     },
     {
       "at": "2026-11-02T19:25:41.961677+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-02T20:18:40.861714+00:00",
       "step": "review"
     }
   ],
