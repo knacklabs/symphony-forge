@@ -981,7 +981,7 @@ def _copies(top: Path, landed: str, history: Item | None = None) -> list[tuple[s
                 if tree != base_tree:
                     snapshots[tree] = dict(snapshots[base_tree])
     texts = _blob_texts(top, list(dict.fromkeys(blob for files in snapshots.values() for blob in files.values())))
-    blobs = {blob: story.json_of(text) for blob, text in texts.items()}
+    blobs = {blob: repo.without_size_stop(story.json_of(text)) for blob, text in texts.items()}
     state_files = {tree: {rel: blob for rel, blob in sorted(files.items()) if STATE.fullmatch(rel)}
                    for tree, files in snapshots.items()}
     # Bulk Git supplies clean state; changed and untracked state still needs fresh disk reads.
@@ -1007,7 +1007,7 @@ def _copies(top: Path, landed: str, history: Item | None = None) -> list[tuple[s
                 else:
                     text = (path / rel).read_text(encoding="utf-8")
                     if text not in parsed:
-                        parsed[text] = story.json_of(text)
+                        parsed[text] = repo.without_size_stop(story.json_of(text))
                     state = parsed[text]
                 found.append((rel, state, path))
     seen_states = set()

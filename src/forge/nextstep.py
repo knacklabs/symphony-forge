@@ -879,10 +879,10 @@ def remote_state(top: Path, item: str, branch: str, pr: dict[str, Any] | None = 
     or without a pull request) and no worktree here: its state at the pull request's head."""
     if not pr and history is not None:  # the board's own bulk read of the branches; a local-only one counts too
         refs = history["ref_states"]
-        return (refs.get(f"refs/remotes/origin/{branch}") or refs.get(f"refs/heads/{branch}")
-                or {}).get(repo.state_path(item)) or {}
+        return repo.without_size_stop((refs.get(f"refs/remotes/origin/{branch}") or refs.get(f"refs/heads/{branch}")
+                or {}).get(repo.state_path(item)) or {})
     ref = review_ref(top, branch, pr)
-    return story.json_of(story.show(top, ref, repo.state_path(item))) if ref else {}
+    return repo.without_size_stop(story.json_of(story.show(top, ref, repo.state_path(item)))) if ref else {}
 
 
 def branch_tips(top: Path) -> dict[str, str]:
