@@ -4,12 +4,20 @@
   "done_when": "Every version reference names v1.2.26, forge sync output is committed, and the version tests pass",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-02T06:52:36.019867+00:00",
       "step": "start"
     }
   ],
-  "why": "Release v1.2.26 with the client sign-off accept repair"
+  "stuck": {
+    "close": null,
+    "head": "b19c8de25f33fabc94c7036fa510edef102d3520",
+    "keys": {},
+    "round": null
+  },
+  "why": "Release v1.2.26 with the client sign-off accept repair",
+  "worker": "codex"
 }
