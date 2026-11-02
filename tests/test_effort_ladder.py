@@ -222,7 +222,7 @@ def test_3_reviews_reads_and_design_keep_their_effort(
     # These paths have fixed settings. A worker's failure must not raise them.
     # Existing selection tests cover normal calls, without a failed worker round.
     if phase == "signoff":
-        from test_proto_signoff import _client, _decision, _green_full_run
+        from test_proto_signoff import _client, _decision
 
         folder, answers, queue = _client(repo, tmp_path, monkeypatch)
         page = _decision(folder, answers)
@@ -236,7 +236,6 @@ def test_3_reviews_reads_and_design_keep_their_effort(
                           encoding="utf-8")
         repo.git("add", "-A", cwd=folder)
         repo.git("commit", "-qm", "Keep the fixed sign-off settings", cwd=folder)
-        _green_full_run(repo, product=folder)
         queue.write_text(json.dumps([{"say": "model: gpt-6.1-sol\nthinking: medium\nautoreview done",
                                       "report": {"review_status": "scoped-clean", "findings": []}}]),
                          encoding="utf-8")

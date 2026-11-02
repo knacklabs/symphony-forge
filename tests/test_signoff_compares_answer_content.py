@@ -4,7 +4,7 @@ import shutil
 import pytest
 
 from conftest import ROOT
-from test_proto_signoff import _client, _decision, _green_full_run
+from test_proto_signoff import _client, _decision
 
 STORY = "FIX-SIGNOFF-WHITESPACE"
 
@@ -24,8 +24,6 @@ def _signoff(repo, gh, tmp_path, monkeypatch, history):
     repo.git("add", "-A", cwd=fix)
     if repo.git("diff", "--cached", "--name-only", cwd=fix):
         repo.git("commit", "-qm", "Commit the sign-off records and synced files", cwd=fix)
-    if history == "adopted":
-        _green_full_run(repo, product=fix)
     return repo, fix, answers, queue
 
 
@@ -50,7 +48,6 @@ def test_1_signoff_ignores_trailing_whitespace_and_line_endings(
              answers.replace("\n", " \t\r\n") + "\r\n\r\n").encode())
         repo.git("add", "docs/product/BRIEF.md", cwd=fix)
         repo.git("commit", "-qm", "Format the source answers", cwd=fix)
-        _green_full_run(repo, product=fix)
     else:
         quote = answers.rstrip("\n")
     page = _decision(fix, answers)

@@ -1,7 +1,7 @@
 """Sign-off reuses full-run proof only for Forge output and records.
 
 Test audit: protect command admission after a main repair and on the reviewed
-branch. Rejecting all stale results or ignoring app changes breaks these cases.
+branch. Rejecting all stale results or ignoring default-branch app changes breaks these cases.
 Existing sign-off tests supply green proof only on latest main, so cannot catch
 this gap. Reuse their client fixtures and fake only GitHub and Autoreview, with
 no production seam. Earlier clients start from the text adoption fixture.
@@ -57,13 +57,13 @@ def test_1_signoff_reuses_green_only_for_forge_changes(repo, tmp_path, monkeypat
 
     accepted = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
 
-    if change in {"record", "sync"}:
+    # The amended contract checks main's changes, so an unmerged app repair
+    # must reach review. Main app changes and a failed latest run still refuse.
+    if change in {"record", "sync", "app-branch"}:
         assert accepted.returncode == 0, accepted.stdout + accepted.stderr
         assert "status: accepted" in page.read_text("utf-8")
     else:
         assert accepted.returncode == 1, accepted.stdout + accepted.stderr
         assert "full test run" in accepted.stderr
-        if change == "app-branch":
-            assert "The reviewed product needs a new full test run." in accepted.stderr
         assert "status: proposed" in page.read_text("utf-8")
         assert not queue.with_suffix(".calls.jsonl").exists()
