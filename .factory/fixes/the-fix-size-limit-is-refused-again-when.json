@@ -1,6 +1,13 @@
 {
   "base": "e65fe4f96406916b16a7693d694ea23872fbb0e5",
   "branch": "fix/the-fix-size-limit-is-refused-again-when",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a19d5d-9dfc-73d0-b82b-81e9b73fb2aa",
+    "head": null,
+    "start": "d65523f08781d32af8acfa957649d7595fed6f7b"
+  },
   "done_when": "A push of a fix over the size limit goes through, while the commit check and the pull request check still refuse it.",
   "fix_kind": "backend",
   "kind": "fix",
