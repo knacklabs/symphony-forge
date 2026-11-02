@@ -53,7 +53,7 @@
       "gain": 4,
       "harm": 3,
       "line": 223,
-      "outcome": "open",
+      "outcome": "fixed in round 12",
       "reason": "",
       "round": 11,
       "security": false,
@@ -63,27 +63,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "4e3f31d87355f68b3f73086263fe79c2ffc759af282c5e54ce3091912d3fc9a7",
-    "changed": "73cbdcb7af915e755c487c40a649f309283cedf599b93d459632862ca9a7b6b2",
-    "commit": "7ac5e2c719ed497f53e95d9ddd5a18a661e81402",
+    "branch_diff": "08a0e46d7a2f71e8855a9d7cca0b73b9ed4c36f46a65d39d6c4f295008bf5fe3",
+    "changed": "6b3d4383910e37c260c3b3757184565870fe4642a197821863573c086c425b30",
+    "commit": "7a13a0624efa63293a25f8e619574c11eff3cb46",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - main advances while a stacked child is being built, and the worker starts another round.\n`worker.prepare()` automatically merges the updated default branch into the child (src/forge/worker.py:120). In that state, `githooks.fix_base()` returns a synthetic root commit without parents (src/forge/githooks.py:203-209). Using that commit as `review_ref` makes the subsequent three-dot diff at close.py:236, or the unconditional merge-base at close.py:281, fail because it shares no ancestry with HEAD. The child therefore cannot close while its parent remains unmerged. The new nextstep.py:643 fingerprint call has the same problem for a previously reviewed child. Preserve a connected baseline or adapt these consumers to compare the synthetic trees directly; the added tests bypass this normal worker preparation path.",
-        "file": "src/forge/close.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 223,
-        "priority": "P1",
-        "title": "[P1] Preserve ancestry when constructing the stacked review baseline",
-        "work": 2
-      }
-    ],
-    "id": "bc92741d-ce48-4e1b-bec8-670ace0aef48",
-    "status": "blocked"
+    "findings": [],
+    "id": "e9f408db-f4eb-42bb-8d90-fde3ebd28ff1",
+    "status": "clean"
   },
   "round": 12,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-30T13:05:18.351033+00:00",
@@ -131,6 +120,10 @@
     },
     {
       "at": "2026-11-02T00:59:32.966149+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-02T04:22:56.129852+00:00",
       "step": "review"
     }
   ],
