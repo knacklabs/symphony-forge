@@ -12,12 +12,27 @@
   "done_when": "Every version reference names v1.2.26, forge sync output is committed, and the version tests pass",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "03ebcd3e6619870ad4993da4a0a10de4c1d5a6d6ba950bb4350c7c2e174cdc60",
+    "changed": "eb8d9e14c2bbf6819832c5b612a1d9f381cfc30e6d73c121ab4977d3e2c935f2",
+    "commit": "a0113a38007fa6bf9fe3d694701e5dcc5ecc2f03",
+    "dismissals": [],
+    "findings": [],
+    "id": "12f29d2e-43c9-4fec-8d7f-e45d55bc7e57",
+    "status": "clean"
+  },
   "round": 2,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-02T06:52:36.019867+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-02T06:59:14.236914+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
