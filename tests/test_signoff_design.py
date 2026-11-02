@@ -85,7 +85,8 @@ runpy.run_path({str(original)!r}, run_name="__main__")
     prompt = "\n".join(check["prompt_files"].values())
     for text in ("## Summary", "## Users", "## Key flows",
                  "Compare the screens with the whole app brief below",
-                 "Read the prototype screen images", "Salespeople keep track of customer orders.",
+                 "Read only the attached prototype screen images, the brief, and text in the design folder.",
+                 "Do not inspect source or report code defects.", "Salespeople keep track of customer orders.",
                  "Create an order, then review its status."):
         assert text in prompt
     canvas = json.loads(queue.with_suffix(".canvas.json").read_text("utf-8"))
@@ -123,7 +124,8 @@ def _holds_canvas_gaps_reported_by_completeness_check(
     prompt = "\n".join(calls[0]["prompt_files"].values())
     for text in ("## Summary", "## Users", "## Key flows",
                  "Compare the screens with the whole app brief below",
-                 "Read the prototype screen images", "Salespeople keep track of customer orders.",
+                 "Read only the attached prototype screen images, the brief, and text in the design folder.",
+                 "Do not inspect source or report code defects.", "Salespeople keep track of customer orders.",
                  "Create an order, then review its status."):
         assert text in prompt
 

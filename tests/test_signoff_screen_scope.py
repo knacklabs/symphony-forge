@@ -4,6 +4,8 @@ Test audit: protect review input isolation, absent-image handling and hold label
 Whole-tree snapshots and unconditional canvas calls are credible regressions.
 Existing transport tests do not check these contracts. Observe only the external
 review tool's checkout, reuse client setup, and add no production seam.
+The same command case also protects counts at the round limit and on saved stops:
+those paths can bypass the first-refusal summary without changing review transport.
 """
 import json
 import os
@@ -63,8 +65,18 @@ runpy.run_path(ORIGINAL, run_name='__main__')
         assert "1 blocks sign-off" in result.stderr
         assert "Blocks sign-off: Missing status" in result.stderr
         assert "Does not block sign-off: Small label" in result.stderr
+        for _ in range(2):
+            stopped = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
+            assert stopped.returncode == 1, stopped.stdout + stopped.stderr
+            assert "One more round, split or accept?" in stopped.stderr
+            assert "2 open findings" in stopped.stderr
+            assert "1 blocks sign-off" in stopped.stderr
+            assert "Blocks sign-off: Missing status" in stopped.stderr
+            assert "Does not block sign-off: Small label" in stopped.stderr
+        assert len(observed.read_text("utf-8").splitlines()) == 2
         queue.write_text(json.dumps([{"report": {"review_status": "scoped-clean", "findings": []}}]), encoding="utf-8")
-        accepted = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
+        accepted = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi",
+                              "--resolve", "more", "--reason", "The owner requests the repair", cwd=fix)
         assert accepted.returncode == 0, accepted.stdout + accepted.stderr
         calls = [json.loads(line) for line in observed.read_text("utf-8").splitlines()]
         assert any(not call["canvas"] and "app.py" in call["names"] for call in calls)

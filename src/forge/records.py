@@ -463,6 +463,23 @@ def _app_files(top: Path, names: list[str], ref: str | None = None) -> list[str]
             or (story.show(top, ref, name) if ref else _text(top / name)) != _text(template)]
 
 
+def _signoff_findings(result: dict, canvas: str) -> tuple[list, str]:
+    """Use the same holds and summary for each sign-off refusal."""
+    from forge import review, score
+
+    opened = score.open_findings(result)
+    held = ([(n, f) for n, f in enumerate(result["findings"], 1)
+             if f in opened and f["priority"] in review.SERIOUS] if canvas else review.blocking(result))
+    summary = ("The canvas completeness check" if canvas else "Customer sign-off review")
+    summary += f" has {len(opened)} open findings; {len(held)} " + (
+        "blocks" if len(held) == 1 else "block") + " sign-off:\n"
+    summary += "\n".join(
+        ("Blocks sign-off: " if any(f is finding for _, finding in held)
+         else "Does not block sign-off: ") + f["title"] + ": " + f["body"]
+        for f in opened)
+    return held, summary
+
+
 def _signoff_review(top: Path, args: argparse.Namespace, answers: str, evidence: str,
                     *, unchanged: bool = False, canvas: str = "") -> str:
     """Keep sign-off rounds in git and reuse the review loop's notes and owner choices."""
@@ -507,7 +524,7 @@ def _signoff_review(top: Path, args: argparse.Namespace, answers: str, evidence:
         repo.commit_state("Record the owner's sign-off choice", rel, top=top)
         history = review._history(top, "client-signoff", "", previous, path=rel, section=section)
     if saved.get("stop"):
-        repo.refuse((review.stop_question(top, "client-signoff", {
+        repo.refuse((_signoff_findings(previous, canvas)[1] + "\n" + review.stop_question(top, "client-signoff", {
             "why": "Client sign-off", "done_when": "The prototype matches the client's answers", "review": previous},
             accept="the findings stay in the item's Known issues with your reason, and sign-off continues."), next_step))
     if (unchanged and not score.open_findings(previous) and choice != "more"
@@ -534,14 +551,13 @@ def _signoff_review(top: Path, args: argparse.Namespace, answers: str, evidence:
                          "", {}, previous, signoff_prompt=prompt, images=set()))
     opened = score.open_findings(result)
     critical = any(f["priority"] == "P0" for f in opened)
-    held = ([(n, f) for n, f in enumerate(result["findings"], 1)
-             if f in opened and f["priority"] in review.SERIOUS] if canvas else review.blocking(result))
+    held, problem = _signoff_findings(result, canvas)
     saved.update(review=result, inputs=inputs,
                  stop=bool(held and len(history) + 1 >= 2 and not critical))
     _write(top / rel, json.dumps(document, indent=2) + "\n")
     repo.commit_state("Record the client sign-off review", rel, top=top)
     if saved["stop"]:
-        repo.refuse((review.stop_question(top, "client-signoff", {
+        repo.refuse((problem + "\n" + review.stop_question(top, "client-signoff", {
             "why": "Client sign-off", "done_when": "The prototype matches the client's answers", "review": result},
             accept="the findings stay in the item's Known issues with your reason, and sign-off continues."), next_step))
     if critical or held:
@@ -551,13 +567,6 @@ def _signoff_review(top: Path, args: argparse.Namespace, answers: str, evidence:
                             for _, f in held)
         repair = (f"forge fix start {quote(f'Sign-off findings: {details}')} "
                   f"--done {quote(f'A review no longer finds: {details}')} --kind mechanical")
-        problem = ("The canvas completeness check" if canvas else "Customer sign-off review")
-        problem += f" has {len(opened)} open findings; {len(held)} " + (
-            "blocks" if len(held) == 1 else "block") + " sign-off:\n"
-        problem += "\n".join(
-            ("Blocks sign-off: " if any(f is finding for _, finding in held)
-             else "Does not block sign-off: ") + f["title"] + ": " + f["body"]
-            for f in opened)
         repo.refuse((problem + ".", repair +
             '\nThen fix and merge it, then forge decision accept client-signoff --by "<name>"'))
     return result["commit"]
