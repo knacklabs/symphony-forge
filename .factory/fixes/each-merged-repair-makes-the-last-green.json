@@ -1,0 +1,83 @@
+{
+  "base": "e26302089bfdf304e514c5de6c8b666e65467cfb",
+  "branch": "fix/each-merged-repair-makes-the-last-green",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a19b89-e864-7da3-9872-652f34b77a31",
+    "head": null,
+    "start": "542764308f4ba7a4598a31da63169126ef3dabab"
+  },
+  "done_when": "Sign-off accepts the last green full run when every change since it is a Forge-written file or record, and a change to app code still needs a new full run.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "green() in src/forge/fullrun.py",
+      "file": "src/forge/fullrun.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 61,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Sign-off accepts the last green full run when every change since it is a Forge-written file or record, and a change to app code ",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "cb827686f30a758a2cc0ef20d3b2028a8607d4744b6b108743082c485b58449b",
+    "changed": "fac5272122b90378b3e0a58bfc1050a77ec40e496d0845d8a1491919b795a343",
+    "commit": "7272f971da2129f5085552a3c46e159920749442",
+    "dismissals": [],
+    "findings": [],
+    "id": "f825de91-7bfa-4087-8cc2-2a1d2477be45",
+    "status": "clean"
+  },
+  "round": 6,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-02T09:14:10.523085+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-02T09:31:05.010354+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-02T10:25:58.295807+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-02T11:01:35.987774+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-02T11:32:20.102151+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-02T13:20:38.649057+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-02T13:37:01.029838+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-02T14:00:04.015765+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "42f0738f-bd23-4236-80ff-30aefa247fda",
+    "head": "793eae5b758808e7b48f00aed2f5b22de2f7eb85",
+    "keys": {},
+    "round": 5
+  },
+  "why": "Each merged repair makes the last green full run stale, so client sign-off waits about 30 minutes even for Forge-written bookkeeping changes. The review already runs after the green check in the sign-off path (src/forge/records.py decision_accept: the gaps list that includes the green check refuses before _signoff_review is called), so only the reuse part is new; the sign-off also checks green on the default branch's latest commit but reviews HEAD, and nothing ties the two together.",
+  "worker": "codex"
+}

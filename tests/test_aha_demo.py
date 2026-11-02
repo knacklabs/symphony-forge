@@ -127,7 +127,7 @@ def test_6_signoff_is_read_back_and_reviewed_first(repo, signoff, skill):
     _decision(fix, answers, via="", on="")
     queue.write_text(json.dumps(
         [{"say": SOL_HIGH, "report": {"review_status": "scoped-clean", "findings": []}}]))
-    _green_full_run(repo)
+    _green_full_run(repo, product=fix)
     reviewed = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
     assert reviewed.returncode == 0, reviewed.stderr
     assert "The sign-off review passed" in reviewed.stdout

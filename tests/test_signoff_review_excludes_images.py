@@ -16,7 +16,7 @@ from pathlib import Path
 
 import pytest
 
-from test_proto_signoff import _adopted_client, _client, _decision, _request_build
+from test_proto_signoff import _adopted_client, _client, _decision, _green_full_run, _request_build
 
 STORY = "signoff-skips-screenshots"
 
@@ -35,6 +35,7 @@ def test_1_code_signoff_excludes_images(repo, tmp_path, monkeypatch, setup):
     (fix / old_image).write_text('<svg xmlns="http://www.w3.org/2000/svg"/>\n', encoding="utf-8")
     repo.git("add", old_image, cwd=fix)
     repo.git("commit", "-qm", "Add an earlier screen", cwd=fix)
+    _green_full_run(repo, product=fix)
     queue.write_text(json.dumps([
         {"report": {"review_status": "findings", "findings": [{
             "priority": "P1", "title": "Product purpose is missing",
@@ -64,6 +65,7 @@ runpy.run_path({json.dumps(str(original))}, run_name="__main__")
     repo.git("rm", old_image, cwd=fix)
     repo.git("add", "PRODUCT.md", cwd=fix)
     repo.git("commit", "-qm", "Explain the product purpose and remove an old screen", cwd=fix)
+    _green_full_run(repo, product=fix)
     queue.write_text(json.dumps([
         {"report": {"review_status": "scoped-clean", "findings": []}}
     ]), encoding="utf-8")

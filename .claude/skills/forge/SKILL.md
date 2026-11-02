@@ -1594,8 +1594,12 @@ In CI mode, `forge.yml` also runs `forge test --full` once a day on the default 
 `workflow_dispatch`. To start a full run now, run `gh workflow run forge.yml --ref <default>`.
 Local mode has no scheduled job; when `forge next` says the daily run is due, run `forge test --full`
 in the main checkout when the machine is quiet. A green full run on the latest default-branch
-commit is required before pushing a release tag or accepting `client-signoff`. Everyday merges do
-not wait for it.
+commit is required before pushing a release tag. Client sign-off can reuse a green full run
+within the latest ten default-branch commits when only exact `forge sync` output or records
+under `.factory/`, `plans/` or `docs/decisions/` changed, including on the reviewed branch.
+App, test or lock-file changes need a fresh full run. A failed latest full run still blocks.
+Earlier clients need no migration, and accepted sign-off records stay valid. Everyday merges do
+not wait for a full run.
 A failed scheduled or manual full run appears in `forge next` with its failed test names.
 The required `forge-pr-check` fails a pull request from a branch Forge did not start.
 Before the first committed review, this check stays pending. A stale or blocked review still
