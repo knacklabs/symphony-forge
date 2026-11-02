@@ -1,0 +1,15 @@
+{
+  "base": "c9d636b028b1c27397ffa14021915713eb69a3db",
+  "branch": "fix/release-1-2-27",
+  "done_when": "Every version reference names v1.2.27, forge sync output is committed, and the version tests pass",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-02T15:05:09.856912+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Release v1.2.27 with the client sign-off hotfix"
+}
