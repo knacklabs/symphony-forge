@@ -1,4 +1,4 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 import type { AuthOptions } from '@app/auth-contracts';
 
 export class AuthOptionsResponseDto implements AuthOptions {
@@ -26,12 +26,12 @@ export class MessageResponseDto {
 }
 
 export class InviteResponseDto extends MessageResponseDto {
-  @ApiPropertyOptional({ description: 'The new invite link, omitted on a retry with the same key.', example: 'https://app.example.com/accept-invite?token=one-time-token' })
+  @ApiProperty({ required: false, description: 'The new invite link, omitted on a retry with the same key.', example: 'https://app.example.com/accept-invite?token=one-time-token' })
   inviteUrl?: string;
 }
 
 export class ResetLinkResponseDto {
-  @ApiPropertyOptional({ description: 'The new reset link, shown only for the original request.', example: 'https://app.example.com/reset-password?token=one-time-token' })
+  @ApiProperty({ required: false, description: 'The new reset link, shown only for the original request.', example: 'https://app.example.com/reset-password?token=one-time-token' })
   resetUrl?: string;
 }
 
