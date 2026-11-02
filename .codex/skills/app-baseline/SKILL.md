@@ -22,6 +22,11 @@ business task, and the basic screens are shown last.
 
 ## Basic screens
 
+The sign-in, forgot password, reset password and accept invite specs below are the default for
+email and password. The app's approved sign-in answer, spec or decision decides which basic
+screens exist and what they hold. For another method, such as one-time codes or company sign-in,
+follow that choice and do not build the password screens.
+
 Build these screens first in every prototype, in the client's design: sign-in, forgot password,
 reset password, accept invite, members and settings.
 
