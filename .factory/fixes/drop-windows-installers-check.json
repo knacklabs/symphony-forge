@@ -15,7 +15,8 @@
     "id": "de9a0daf-4070-4d75-bc97-28f35aef6de0",
     "status": "clean"
   },
-  "status": "waiting for checks",
+  "round": 1,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-02T19:01:38.220903+00:00",
@@ -26,5 +27,12 @@
       "step": "review"
     }
   ],
-  "why": "Forge waits for checks named on the default branch's forge.toml, so a pull request that removes the windows-installers job waits forever for that job. Drop the name from forge.toml first, as a change of its own, so that branch protection and forge.toml agree and the CI cleanup can then merge."
+  "stuck": {
+    "close": "28561f09-39d1-4e8a-bfa5-bc39a5eaf73c",
+    "head": "96a252197570bd4f31dd482b758670ce910ee986",
+    "keys": {},
+    "round": null
+  },
+  "why": "Forge waits for checks named on the default branch's forge.toml, so a pull request that removes the windows-installers job waits forever for that job. Drop the name from forge.toml first, as a change of its own, so that branch protection and forge.toml agree and the CI cleanup can then merge.",
+  "worker": "codex"
 }
