@@ -4,12 +4,20 @@
   "done_when": "A push of a fix over the size limit goes through, while the commit check and the pull request check still refuse it.",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-02T17:45:05.124445+00:00",
       "step": "start"
     }
   ],
-  "why": "The fix size limit is refused again when a branch is pushed, and the close check for copied shadcn/ui components repeats a review rule, so one problem gets more than one refusal."
+  "stuck": {
+    "close": null,
+    "head": "136af77671c12795e4dad258b5a1a6bc4339bf5f",
+    "keys": {},
+    "round": null
+  },
+  "why": "The fix size limit is refused again when a branch is pushed, and the close check for copied shadcn/ui components repeats a review rule, so one problem gets more than one refusal.",
+  "worker": "codex"
 }
