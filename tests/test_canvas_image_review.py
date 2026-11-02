@@ -20,7 +20,7 @@ from pathlib import Path
 import pytest
 from PIL import Image
 
-from test_proto_signoff import _adopted_client, _client, _decision
+from test_proto_signoff import _adopted_client, _client, _decision, _green_full_run
 
 STORY = "on-windows-the-client-sign-off-completen"
 pytestmark = pytest.mark.platform
@@ -32,6 +32,7 @@ def test_1_completeness_always_uses_codex(repo, tmp_path, monkeypatch, adopted):
     Image.new("RGB", (1, 1)).save(fix / "docs/design/prototype/order-detail.png")
     repo.git("add", "docs/design/prototype/order-detail.png", cwd=fix)
     repo.git("commit", "-qm", "Add a raster screen", cwd=fix)
+    _green_full_run(repo, product=fix)
     page = _decision(fix, answers)
 
     accepted = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
@@ -72,6 +73,7 @@ def test_3_windows_completeness_reviews_all_screen_images(repo, tmp_path, monkey
     expected = sorted(hashlib.sha256(path.read_bytes()).hexdigest() for path in folder.glob("*.png"))
     repo.git("add", "docs/design/prototype", cwd=fix)
     repo.git("commit", "-qm", "Add screen images", cwd=fix)
+    _green_full_run(repo, product=fix)
     page = _decision(fix, answers)
     # Reproduce Autoreview's image transport at its process boundary. Each staged
     # attachment has a full path, just as the pinned helper sends to Codex.

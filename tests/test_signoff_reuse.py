@@ -22,7 +22,7 @@ import re
 
 import pytest
 
-from test_proto_signoff import _adopted_client, _client, _decision, _request_build
+from test_proto_signoff import _adopted_client, _client, _decision, _green_full_run, _request_build
 
 STORY = "FORGE-PACE-1/SIGNOFF"
 
@@ -57,6 +57,7 @@ def _working_signoff_reuses_review_and_check_after_customer_reply(
         (fix / "app.py").write_text("print('requested working prototype')\n", encoding="utf-8")
         repo.git("add", "app.py", cwd=fix)
         repo.git("commit", "-qm", "Build the requested prototype", cwd=fix)
+        _green_full_run(repo, product=fix)
 
     reviewed = _accept(repo, fix)
     assert reviewed.returncode == 0, reviewed.stderr
@@ -91,11 +92,13 @@ def _working_signoff_repeats_review_when_a_saved_input_changes(
         repo.git("add", "docs/product/BRIEF.md", cwd=fix)
         repo.git("commit", "-q", "-m", "Update customer answers", cwd=fix)
         page.write_text(page.read_text("utf-8").replace(answers, updated), encoding="utf-8")
+        _green_full_run(repo, product=fix)
     elif changed_input == "product":
         app = fix / "app.py"
         app.write_text("print('prototype with reviewed order status')\n", encoding="utf-8")
         repo.git("add", "app.py", cwd=fix)
         repo.git("commit", "-q", "-m", "Show order status", cwd=fix)
+        _green_full_run(repo, product=fix)
     elif changed_input == "proof":
         page.write_text(page.read_text("utf-8").replace(
             "The design shows the key order flow.",
@@ -140,6 +143,7 @@ def _canvas_signoff_reuses_or_rechecks_completeness(
             "Salespeople keep track of customer orders and their status."), encoding="utf-8")
         repo.git("add", "docs/product/BRIEF.md", cwd=fix)
         repo.git("commit", "-q", "-m", "Clarify the order brief", cwd=fix)
+        _green_full_run(repo, product=fix)
     _reply(page)
 
     accepted = _accept(repo, fix)

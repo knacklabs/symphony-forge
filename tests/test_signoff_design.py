@@ -16,7 +16,7 @@ from pathlib import Path
 
 import pytest
 
-from test_proto_signoff import _adopted_client, _client, _decision
+from test_proto_signoff import _adopted_client, _client, _decision, _green_full_run
 
 STORY = "FORGE-PACE-1/SIGNOFF"
 
@@ -41,6 +41,7 @@ def _pins_the_completeness_check_and_records_what_it_checked(
         out.write("\ndocs/design/prototype/*.svg linguist-generated\n")
     repo.git("add", ".gitattributes", cwd=fix)
     repo.git("commit", "-qm", "Mark screen images as generated", cwd=fix)
+    _green_full_run(repo, product=fix)
     page = _decision(fix, answers)
     confirmation = "The owner confirms Order, Open | Submitted, and the Order list screen."
     page.write_text(page.read_text("utf-8") + "\n## Owner confirmation\n" + confirmation + "\n", encoding="utf-8")

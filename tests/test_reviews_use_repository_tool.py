@@ -4,7 +4,7 @@ import json
 import pytest
 
 from test_close import env  # noqa: F401
-from test_proto_signoff import _client, _decision
+from test_proto_signoff import _client, _decision, _green_full_run
 
 STORY = "FIX-CLAUDE-SONNET-DEFAULT"
 
@@ -44,6 +44,7 @@ def test_7_signoff_uses_repository_tool_and_accepts_autoreview_default_selection
     toml = fix / "forge.toml"
     toml.write_text(toml.read_text("utf-8") + f'tools = "{family}"\n', "utf-8")
     repo.git("commit", "-qam", "Choose the repository tool", cwd=fix)
+    _green_full_run(repo, product=fix)
     page = _decision(fix, answers)
     # Complete clean review, without a model header: Autoreview owns the selection.
     result = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
