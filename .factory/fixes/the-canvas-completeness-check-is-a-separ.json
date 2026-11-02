@@ -1,6 +1,13 @@
 {
   "base": "8edd160e3968ec9d9af22a14656eff5f157c5d2a",
   "branch": "fix/the-canvas-completeness-check-is-a-separ",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a19bd8-6a06-7961-9c69-67d250b6ff67",
+    "head": null,
+    "start": "c3e64c46be75f5cb7e7cb3521b25677024401509"
+  },
   "done_when": "Client sign-off no longer runs or refuses on the canvas completeness check for either kind of prototype, its template and model call are deleted, the product sign-off review still runs for working prototypes, and earlier accepted sign-off records stay as they are.",
   "fix_kind": "backend",
   "kind": "fix",
