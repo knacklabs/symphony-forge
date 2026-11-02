@@ -3,14 +3,16 @@
 Test audit: protect demo-address timing, screen scope and unresolved client choices.
 Regressions can treat a build request as code, omit marks, or review before refusing choices.
 Existing sign-off tests do not cover these contracts. Reuse their client fixtures and replace
-only the external review tool. No production test seam is needed.
+only GitHub and the external review tool. No production test seam is needed.
+The fixture publishes full-run proof for each committed screen revision so
+the strengthened product gate does not hide the scope and decision checks.
 """
 from __future__ import annotations
 
 import pytest
 
 from test_open_decisions import _question
-from test_proto_signoff import _adopted_client, _client, _decision, _request_build
+from test_proto_signoff import _adopted_client, _client, _decision, _green_full_run, _request_build
 from test_signoff_design import _calls
 
 STORY = "FORGE-SIGNOFF-1"
@@ -20,6 +22,7 @@ pytestmark = pytest.mark.platform
 def _commit(repo, fix):
     repo.git("add", "docs/design/prototype/SCREENS.md", cwd=fix)
     repo.git("commit", "-qm", "Set screen scope", cwd=fix)
+    _green_full_run(repo, product=fix)
 
 
 def _preview(fix, answers):

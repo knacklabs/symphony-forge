@@ -82,7 +82,12 @@ def _review_tools(repo, tmp_path, monkeypatch):
     return queue
 
 
-def _green_full_run(repo):
+def _green_full_run(repo, *, product=None):
+    if product is not None:
+        # Model GitHub merging this committed product before its full run passes.
+        remote = Path(repo.git("remote", "get-url", "origin"))
+        repo.git("fetch", "-q", str(product), "HEAD:refs/heads/main", cwd=remote)
+        repo.git("fetch", "-q", "origin", cwd=product)
     head = repo.git("rev-parse", "origin/main")
     StubGh(repo.bin).respond(
         "api", f"repos/{{owner}}/{{repo}}/commits/{head}/statuses",

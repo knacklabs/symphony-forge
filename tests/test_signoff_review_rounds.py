@@ -4,17 +4,23 @@ Test audit: protects reviewer input, the durable owner stop and the owning item'
 public Known issues. A changed-files-only retry drops an unresolved finding in an
 unchanged file. A misplaced accepted finding disappears from the owner's item.
 This is the command-level owner of those contracts, with no production test seam.
-Only Autoreview is faked at its external edge; the real CLI, git snapshots and
+Only GitHub and Autoreview are faked at their external edges; the real CLI, git snapshots and
 board output own the observed behavior.
 The earlier revision must remain an ancestor of the comparison base. Image
 exclusion can create a child snapshot, so exact base commit identity is not
 the contract; the earlier app contents and ancestry are.
+
+Fixture audit: the new full-run contract must admit each app revision before
+these review-loop assertions run. Stale GitHub proof otherwise stops the
+command before review. Existing reuse tests own admission; this file owns the
+subsequent review lifecycle. Publish proof at the GitHub edge, with no new
+production seam and no change to the review assertions.
 """
 import json
 
 import pytest
 
-from test_proto_signoff import _adopted_client, _client, _decision, _request_build
+from test_proto_signoff import _adopted_client, _client, _decision, _green_full_run, _request_build
 
 STORY = "client-sign-off-never-finishes-every-att"
 pytestmark = pytest.mark.platform
@@ -46,6 +52,7 @@ def test_1_signoff_reviews_changes_and_bounds_rounds(repo, tmp_path, monkeypatch
         (fix / "app.py").write_text("print('prototype')\n", encoding="utf-8")
         repo.git("add", "app.py", cwd=fix)
         repo.git("commit", "-q", "-m", "Build the adopted prototype", cwd=fix)
+    _green_full_run(repo, product=fix)
     page = _decision(fix, answers)
     previous_app = repo.git("ls-tree", "HEAD", "--", "app.py", cwd=fix)
     previous_commit = repo.git("rev-parse", "HEAD", cwd=fix)
@@ -65,6 +72,7 @@ def test_1_signoff_reviews_changes_and_bounds_rounds(repo, tmp_path, monkeypatch
         page_change.write("\n# Explain the order path\n")
     repo.git("add", changed, cwd=fix)
     repo.git("commit", "-q", "-m", "Explain the order path", cwd=fix)
+    _green_full_run(repo, product=fix)
     # The product edit also invalidates the separate canvas completeness check.
     queue.write_text(json.dumps([
         {"report": {"review_status": "scoped-clean", "findings": []}}, _report(priority)]))
@@ -135,6 +143,7 @@ def test_2_accepted_signoff_survives_only_unchanged_files(
     (fix / "src/orders.py").write_text("print('orders')\n", encoding="utf-8")
     repo.git("add", "src/orders.py", cwd=fix)
     repo.git("commit", "-qm", "Build order flow", cwd=fix)
+    _green_full_run(repo, product=fix)
     _decision(fix, answers)
     report = _report("P1")
     report["report"]["findings"][0]["code_location"]["file_path"] = "src\\orders.py"
@@ -164,6 +173,7 @@ def test_2_accepted_signoff_survives_only_unchanged_files(
         out.write("\n# Changed after acceptance\n")
     repo.git("add", target, cwd=fix)
     repo.git("commit", "-qm", "Update the prototype", cwd=fix)
+    _green_full_run(repo, product=fix)
     finding = report["report"]["findings"][0]
     finding.update(priority=priority, title=("Order submission fails" if priority == "P0"
                                            else "Submitting an order still fails"))
