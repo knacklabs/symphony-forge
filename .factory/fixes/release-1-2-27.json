@@ -1,4 +1,5 @@
 {
+  "allow_large": "A version bump for a release the owner asked for touches every file that names the version.",
   "base": "c9d636b028b1c27397ffa14021915713eb69a3db",
   "branch": "fix/release-1-2-27",
   "done_when": "Every version reference names v1.2.27, forge sync output is committed, and the version tests pass",
