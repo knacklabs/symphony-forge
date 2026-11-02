@@ -243,8 +243,11 @@ def pick_up(item: str, branches: list[str]) -> Path | None:
         if run("git", "fetch", "-q", "origin", branch, cwd=top).returncode:
             continue
         remote = f"origin/{branch}"
-        if story.json_of(show(remote, repo.state_path(item), top)).get("branch") != branch:
+        state = story.json_of(show(remote, repo.state_path(item), top))
+        if state.get("branch") != branch:
             continue
+        if "/" not in item and state.get("status") == "dropped":
+            raise repo.Refused(f"Fix {item} is dropped.", f"forge fix drop {item} --undo")
         path = _folder(item.replace("/", "-") if "/" in item else f"fix-{item}")
         if git("branch", "--list", branch, cwd=top):
             git("worktree", "add", "-q", str(path), branch, cwd=top)
