@@ -4,39 +4,24 @@
 
 ## What changes for you
 
-<What the people who use this will notice, in plain English. No IDs, codes or jargon. End each
-item with its source in plain words, such as (Source: the client's note on late orders, 12 Oct),
-or with the sourced item that needs it, such as (Needed by: the Customers screen). A source is a
-client note, a brief answer, a decision, a screen marked Build now at sign-off, a fixed rule of
-the app, or the owner's own request with its date. Name each screen, field, endpoint, tool and
-setting that the plan adds in one of these items.>
-
-<!-- For user-facing parts: run impeccable init if PRODUCT.md is absent. Design the screens
-in a Claude Design artifact; on a Codex-only host without artifact tools, use HTML artboards.
-Save each screen and its images in docs/design/<KEY>/. Copy .forge/design/support.js beside
-the HTML screens and run it for a 1440 by 900 PNG per screen. Commit the folder. Use its git tree
-id (git rev-parse HEAD:docs/design/<KEY>) in the last line below. For small changes to existing
-screens that add no screen and change no flow, use Design: none (<why>) instead.
-Remove this comment and omit
-the Design line for a backend-only story. Cold read follows the design; one plan approval binds
-these exact files. A folder edit needs its new tree id and a new plan approval.
-The rule starts with the next plan read and approval. Plans approved without a Design line
-before this rule keep their existing approval. -->
-Design: docs/design/<KEY>/ (<tree id>)
+- A prototype whose sign-off record declares sample data gets one small gap check at sign-off. It reads the brief, the client's answers, the artifact's screens, the app routes, the demo steps and the signer's record.
+- That prototype skips the full test run and the whole-source review at sign-off, and needs only the signer's name.
+- Review findings other than Harm 4 or higher, Gain 5 or P0 go to Known issues with no repair round, unless the owner asks for one.
+- Open brief items show as a quiet checklist in forge next and on the board. They inform and never block, and not known yet is accepted, not a finding.
+- An open personal-data answer blocks only before the first release that uses real data.
+- Agents run review-only passes at milestones for other prototypes. There is no new brief command.
+- Prototypes with real data or a back end keep today's sign-off rules. Existing repos need no migration.
 
 ## Why
 
-Sample-data prototypes get a light sign-off
-
-
+Sign-off for a prototype that holds only sample data is heavier than the prototype needs. It runs the full test gate and a whole-source review, and it refuses while must-answer brief topics are open.
 
 ## Done when
 
-<!-- One bold plain sentence per result, which the owner approves: no code names, file paths or
-test names. Its evidence, edge cases and proving tests go under the same number in Done-when
-details. -->
-
-1. **Something anyone can observe once this is done.**
+1. **A sample-data prototype's sign-off runs only the small gap check and asks only for the signer's name.**
+2. **Its other review findings land in Known issues with no repair round, unless the owner asks for one.**
+3. **forge next and the board show open brief items as a checklist, and sign-off never refuses on them for such a prototype.**
+4. **A prototype with real data or a back end, and every existing repo, sees no change.**
 
 ## Risks
 
