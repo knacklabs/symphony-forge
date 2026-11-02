@@ -181,12 +181,18 @@ If the default branch moved after close, `forge merge` compares its new changed 
 It merges the default branch locally to check the combined change.
 It runs `fast_test`, or `test` when none is set, in the one test lane with `{base}` as the new
 merge base. It merges the pull request only after the tests pass. A failure names the failed tests
-and gives `forge work <item>` as the next step. This is always on, with no setting. With no
+and gives `forge work <item>` as the next step. With no
 default-branch move, merge runs no extra tests. New repos get this rule at init; existing repos
 get it on upgrade and sync.
 If the file sets do not overlap, Forge restores the original head and merges without a push or another check wait.
 If the file sets overlap, Forge keeps the local merge, reuses the existing review and commits its coverage of the combined change.
 It pushes that commit, waits for its required checks, then merges.
+In repos whose tests run in pull request CI, close already leaves the laptop tests to CI.
+When merge's pytest selection exceeds one quarter of the suite's test files, including
+`always_test`, merge also skips the laptop run. It publishes the combined change and waits
+for that commit's CI, even when the changed files do not overlap. This uses the existing
+pytest picker, with no new test collection. Other runners and custom fast commands keep
+their local retest. Repos whose tests run only on the laptop keep their local runs.
 The nightly full run on the default branch covers the rest. With no retest, the usual CI wait applies.
 Before the retest, Forge refuses uncommitted changes and names their files. After tests and
 checks, Forge fetches the default branch again. If it moved again, Forge checks the new
