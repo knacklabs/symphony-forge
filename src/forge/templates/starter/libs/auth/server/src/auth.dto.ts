@@ -25,6 +25,16 @@ export class MessageResponseDto {
   message!: string;
 }
 
+export class InviteResponseDto extends MessageResponseDto {
+  @ApiProperty({ required: false, description: 'The new invite link, omitted on a retry with the same key.', example: 'https://app.example.com/accept-invite?token=one-time-token' })
+  inviteUrl?: string;
+}
+
+export class ResetLinkResponseDto {
+  @ApiProperty({ required: false, description: 'The new reset link, shown only for the original request.', example: 'https://app.example.com/reset-password?token=one-time-token' })
+  resetUrl?: string;
+}
+
 export class AgentResponseDto {
   @ApiProperty({ description: 'The membership identifier.', example: 'b3e1d349-1d8e-481c-8c69-99ea576f94c7' })
   id!: string;

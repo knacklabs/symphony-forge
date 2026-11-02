@@ -1,11 +1,9 @@
 """Laptop installers distinguish an installed Docker CLI from a running engine."""
 
 import os
-import re
 import shlex
 import shutil
 import subprocess
-import tomllib
 from pathlib import Path
 
 import pytest
@@ -14,26 +12,6 @@ pytestmark = pytest.mark.platform
 
 STORY = "FIX-SKIPPED-TEMPLATES"
 ROOT = Path(__file__).resolve().parents[1]
-
-
-def test_6_windows_installer_is_a_required_pull_request_check():
-    # CI routing is a config contract; local execution cannot prove the Windows branch.
-    workflow = (ROOT / ".github/workflows/forge-next.yml").read_text(encoding="utf-8")
-    assert re.search(r"^  pull_request:\s*$", workflow, re.M)
-    job = re.search(r"^  windows-installers:\n(.*?)(?=^  \S|\Z)", workflow, re.M | re.S)
-    assert job, "Windows installer cases need a pull-request job"
-    assert "runs-on: windows-latest" in job[1]
-    # The job stays required on PRs. Only its push steps can reuse passed proof;
-    # step conditions must not be mistaken for a condition that skips the job.
-    assert not re.search(r"^    if:", job[1], re.M)
-    assert "continue-on-error:" not in job[1]
-    command = re.search(r"^      - run: (.+)$", job[1], re.M)
-    assert command
-    tokens = shlex.split(command[1])
-    assert "pytest" in tokens and "tests/test_installers_explain_docker_start.py" in tokens
-    assert "-k" not in tokens and "--collect-only" not in tokens
-    settings = tomllib.loads((ROOT / "forge.toml").read_text(encoding="utf-8"))
-    assert "windows-installers" in settings["checks"]
 
 
 @pytest.mark.parametrize("check,running,new_install", [

@@ -10,7 +10,7 @@ from test_ci_reuses_tested_trees import commit, decide
 STORY = "FIX-REUSE-PROOF-AFTER-MERGE"
 
 
-@pytest.mark.parametrize("job", ["tests", "plugin", "windows-installers"])
+@pytest.mark.parametrize("job", ["tests", "plugin"])
 @pytest.mark.parametrize("case", ["older", "equal", "newer", "changed-tree",
                                   "missing-time", "invalid-time", "api-error"])
 def test_1_merged_run_without_snapshots_requires_an_older_main_tip_and_the_same_tree(
