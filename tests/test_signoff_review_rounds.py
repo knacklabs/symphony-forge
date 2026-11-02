@@ -134,7 +134,11 @@ def test_2_accepted_signoff_survives_only_unchanged_files(
     (fix / "src/orders.py").write_text("print('orders')\n", encoding="utf-8")
     repo.git("add", "src/orders.py", cwd=fix)
     repo.git("commit", "-qm", "Build order flow", cwd=fix)
-    _decision(fix, answers)
+    # Keep client approval pending: owner acceptance settles a review finding,
+    # while a completed client sign-off now stays accepted without another review.
+    page = _decision(fix, answers)
+    page.write_text(page.read_text("utf-8").replace("approved_via: email\n", "").replace(
+        "approved_on: 2026-09-28\n", ""), encoding="utf-8")
     report = _report("P1")
     report["report"]["findings"][0]["code_location"]["file_path"] = "src\\orders.py"
 

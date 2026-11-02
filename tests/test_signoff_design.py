@@ -62,6 +62,6 @@ def _new_signoff_decision_names_the_pinned_sections(repo, tmp_path, monkeypatch)
     (_refuses_app_code_until_a_build_is_requested, (True,)),
     (_old_accepted_signoff_needs_no_new_design_check, ()),
     (_new_signoff_decision_names_the_pinned_sections, ()),
-])
+], ids=["new-code", "starter-screen", "old-signoff", "decision-sections"])
 def test_2_client_signoff_scope(repo, tmp_path, monkeypatch, check, args):
     check(repo, tmp_path, monkeypatch, *args)

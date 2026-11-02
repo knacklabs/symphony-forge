@@ -601,7 +601,7 @@ def _history(top: Path, item: str, base: str, previous: dict[str, Any],
     return list(rounds.values())
 
 
-def _settled(history: list[dict[str, Any]], *, priority_only: bool = False) -> dict[tuple[str, str], str]:
+def _settled(history: list[dict[str, Any]]) -> dict[tuple[str, str], str]:
     """Earlier rounds' settled findings, one per identity under its first spelling."""
     settled, earlier, names = {}, set(), {}
     for result in history:
@@ -612,7 +612,7 @@ def _settled(history: list[dict[str, Any]], *, priority_only: bool = False) -> d
         for finding in score.open_findings(result):
             if finding.get("required_done_when"):
                 continue
-            if not priority_only and (outcome := score.bar(score.of(finding))) in ("follow-up", "live with"):
+            if (outcome := score.bar(score.of(finding))) in ("follow-up", "live with"):
                 settled.setdefault(score.identity(finding["file"], finding["title"]), f"known: below the bar ({outcome})")
             if finding.get("follow_up"):
                 settled.setdefault(score.identity(finding["file"], finding["title"]),
