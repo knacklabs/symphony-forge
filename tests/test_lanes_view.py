@@ -94,7 +94,7 @@ def test_4_doctor_and_board_show_the_machine_split_and_agent_entries(env, tmp_pa
     assert synced.returncode == 0, synced.stderr
     assert (folder / "forge.toml").read_text("utf-8") == config
     for host in (".claude", ".codex"):
-        guide = (folder / host / "skills/forge/SKILL.md").read_text("utf-8")
+        guide = (folder / host / "skills/forge/run-reference.md").read_text("utf-8")
         assert "forge board --json" in guide and "forge stop --id <id>" in guide
     repo.git("add", "-A", cwd=folder)
     repo.git("commit", "-qm", "Sync the client guidance", cwd=folder)
