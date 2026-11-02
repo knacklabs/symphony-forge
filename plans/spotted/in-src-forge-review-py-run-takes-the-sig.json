@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/templates/design-check.md\tGate: test_signoff_design.py still asserts the removed prompt text\tin-src-forge-review-py-run-takes-the-sig",
+      "kind": "bug",
+      "path": "src/forge/templates/design-check.md",
+      "line": 4,
+      "text": "Gate: test_signoff_design.py still asserts the removed prompt text",
+      "from": "blocking",
+      "item": "in-src-forge-review-py-run-takes-the-sig",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/records.py\tNot done: Sign-off refusal counts and blocking labels disappear at the round limit",
+      "kind": "edge",
+      "path": "src/forge/records.py",
+      "line": 555,
+      "text": "Not done: Sign-off refusal counts and blocking labels disappear at the round limit",
+      "from": "review",
+      "item": "in-src-forge-review-py-run-takes-the-sig",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
