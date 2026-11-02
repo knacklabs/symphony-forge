@@ -1,6 +1,13 @@
 {
   "base": "e7abb17344534e7ab54d927806b8498b94c5f8c4",
   "branch": "fix/drop-windows-installers-check",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a19dac-55df-7972-a515-6f9cc1178ebb",
+    "head": null,
+    "start": "adad2cac5b8a55fb1155479ce49680b0fe20604e"
+  },
   "done_when": "forge.toml's checks name only tests and forge-pr-check on the default branch",
   "fix_kind": "mechanical",
   "kind": "fix",
