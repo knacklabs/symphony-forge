@@ -41,7 +41,7 @@ REFUSALS = {
     "starter_app": ("forge init --starter found an existing app file: {path}.",
                     "use a new folder for the starter, or forge init to keep this app"),
     "actions": ("Forge needs to know: Does this repo run GitHub Actions? Check "
-                "gh api repos/{{owner}}/{{repo}}/actions/permissions (enabled), then choose "
+                "gh api repos/{owner}/{repo}/actions/permissions (enabled), then choose "
                 "--actions yes or --actions no.", "forge init --actions yes|no"),
     "answers": ("This repo already has commits, so forge init adopts it on a fix branch, and it "
                 "needs the answers you confirmed: {missing}.",

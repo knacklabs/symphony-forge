@@ -616,7 +616,7 @@ salesperson or developer before sign-off; a default or agent-only answer does no
 | Demo workflow | Which one task should the demo let them do from start to finish? | from the problem card | must |
 | Users and roles | Who uses it, and what can each kind of user do? | admin and staff; other | must |
 | Existing systems | Which systems must this work with? | none; CRM; accounting; email or SMS; payments; company sign-in | must |
-| Sign-in | How will people sign in? | email and password; company sign-in (Google or Microsoft) | must |
+| Sign-in | How will people sign in? The client chooses the method. | email and password (default if the client gives no other answer); one-time codes; company sign-in (Google or Microsoft) | must |
 | Personal data | Will it hold personal, health or payment data, or data that must stay in one country? | none; personal only; regulated | must |
 | Production host | Where will the real app run? | our platform; the client's cloud; the client's servers | must |
 | Data import | Does data need to come in from today's tools? | no; a spreadsheet; another system | may wait |
@@ -676,7 +676,11 @@ prototype design files for this gate.
 The check uses Codex's `gpt-6.1-sol` at high effort, independent of `[models.design]`.
 Codex must be installed because only Codex can review the screen images.
 On Windows, large image folders use separate batches to fit the native command line limit.
-Fix all findings from one sign-off review in one fix, then retry `forge decision accept client-signoff`.
+Fix all findings from one sign-off review in one fix. Run the printed repair command from
+the sign-off checkout that the refusal names. The repair includes the sign-off record and
+publishes its earlier review commits, even when that checkout's first fix already merged.
+After the repair merges, retry `forge decision accept client-signoff` from its checkout.
+The record keeps earlier rounds and owner choices after a squash merge or a move to another computer.
 If the review engine fails, fix the engine problem and run the accept command again.
 A canvas-only sign-off needs no working build. A working build gets a full first product review.
 Each later attempt reviews only product files changed since the previous review and its open findings.

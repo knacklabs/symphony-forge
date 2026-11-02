@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/task.py\tPreserve sign-off history when close replays a repair\tsign-off-rounds-settled-findings-and-the",
+      "kind": "bug",
+      "path": "src/forge/task.py",
+      "line": 624,
+      "text": "Preserve sign-off history when close replays a repair",
+      "from": "blocking",
+      "item": "sign-off-rounds-settled-findings-and-the",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
