@@ -8,6 +8,9 @@ are an independent reviewer contract, captured at that same external boundary.
 The prompt must limit the demo exception to files proving sample data and no
 back end; otherwise a starter API security hole could be excused. Extend the
 existing prompt contract rather than add another test or production seam.
+Queue audit after the canvas review removal: only the product review consumes
+a report. An old leading clean canvas response would hide the finding under
+test. Remove that obsolete fixture response and keep all behavior assertions.
 """
 import json
 
@@ -41,8 +44,7 @@ def test_1_prototype_signoff_keeps_lesser_findings_without_repair(
         "priority": priority, "title": "Order labels need work",
         "body": scores + "\nThe order labels need clearer wording.",
         "code_location": {"file_path": "app.py", "line": 1}}]}}
-    queue.write_text(json.dumps([
-        {"report": {"review_status": "scoped-clean", "findings": []}}, report]), encoding="utf-8")
+    queue.write_text(json.dumps([report]), encoding="utf-8")
     result = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
     assert result.returncode == (1 if held else 0), result.stdout + result.stderr
     calls = [json.loads(line) for line in queue.with_suffix(".calls.jsonl").read_text("utf-8").splitlines()]
@@ -84,8 +86,7 @@ def test_2_adopted_signoff_releases_a_saved_lesser_stop(repo, tmp_path, monkeypa
         "priority": "P1", "title": "Order labels need work",
         "body": "Gain 5, Work 1, Harm 3\nThe order labels need clearer wording.",
         "code_location": {"file_path": "app.py", "line": 1}}]}}
-    queue.write_text(json.dumps([
-        {"report": {"review_status": "scoped-clean", "findings": []}}, report]), encoding="utf-8")
+    queue.write_text(json.dumps([report]), encoding="utf-8")
     for _ in range(2):
         stopped = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
         assert stopped.returncode == 1, stopped.stdout + stopped.stderr
@@ -125,8 +126,7 @@ def test_3_signoff_questions_and_split_include_only_held_findings(repo, tmp_path
         {"priority": "P1", "title": "Order labels need work",
          "body": "Gain 4, Work 1, Harm 3\nThe labels need clearer wording.",
          "code_location": {"file_path": "app.py", "line": 1}}]}}
-    queue.write_text(json.dumps([
-        {"report": {"review_status": "scoped-clean", "findings": []}}, report]), encoding="utf-8")
+    queue.write_text(json.dumps([report]), encoding="utf-8")
     for _ in range(2):
         stopped = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
         assert stopped.returncode == 1, stopped.stdout + stopped.stderr
@@ -172,8 +172,7 @@ def test_4_only_declared_sample_prototypes_allow_the_owner_to_accept_p0(
         "priority": "P0", "title": "Browser-held order codes",
         "body": "Gain 5, Work 2, Harm 4\nThe browser holds the order codes.",
         "code_location": {"file_path": "app.py", "line": 1}}]}}
-    queue.write_text(json.dumps([
-        {"report": {"review_status": "scoped-clean", "findings": []}}, report]), encoding="utf-8")
+    queue.write_text(json.dumps([report]), encoding="utf-8")
 
     def accept(*args):
         return repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", *args, cwd=fix)
