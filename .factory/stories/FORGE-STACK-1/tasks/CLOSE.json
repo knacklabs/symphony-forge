@@ -83,7 +83,7 @@
     "status": "blocked"
   },
   "round": 11,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-30T13:05:18.351033+00:00",
@@ -136,8 +136,12 @@
   ],
   "stop": {
     "at": "2026-11-02T00:59:32.966655+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "src/forge/close.py",
-    "wait_id": "df15cf82-1ca8-4383-9767-14c165788231"
+    "reason": "The owner chose one more round: keep the history link in the stacked review baseline.",
+    "wait_id": "df15cf82-1ca8-4383-9767-14c165788231",
+    "worker_round": 11
   },
   "stuck": {
     "close": "cbb2c6aa-c062-422a-b00d-02e29d71ee43",
