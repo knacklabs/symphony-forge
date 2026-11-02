@@ -488,7 +488,7 @@ def _signoff_known(top: Path, result: dict[str, Any], round_number: int) -> None
 
 def _signoff_review(top: Path, args: argparse.Namespace, answers: str, evidence: str,
                     *, unchanged: bool = False, canvas: str = "", sample_data: bool = False) -> str:
-    """Keep sign-off rounds in git and reuse the review loop's notes and owner choices."""
+    """Keep sign-off rounds in the record across squash merges and reuse owner choices."""
     from forge import close, review, score
 
     rel = ".factory/client-signoff.json"
@@ -497,9 +497,12 @@ def _signoff_review(top: Path, args: argparse.Namespace, answers: str, evidence:
     previous = saved.get("review") or {}
     inputs = _digest(json.dumps([answers, evidence, story.agents_section(top, "Review rules"), constitution(top)]))
     section = "canvas" if canvas else ""
-    history = review._history(top, "client-signoff", "", previous, path=rel, section=section)
+    history = saved.get("rounds") or review._history(
+        top, "client-signoff", "", previous, path=rel, section=section)
     if not canvas and previous:
         _signoff_known(top, previous, len(history))
+        history[-1] = previous
+        saved["rounds"] = history
         opened = score.open_findings(previous)
         saved["stop"] = bool(opened and (saved.get("stop") or sample_data and len(history) >= 2)
                              and (sample_data or not any(f["priority"] == "P0" for f in opened)))
@@ -536,9 +539,10 @@ def _signoff_review(top: Path, args: argparse.Namespace, answers: str, evidence:
             repo.commit_state("Record the owner's sign-off findings", repo.state_path(item), top=top)
         saved["stop"] = False
         saved["choice"] = {"resolve": choice, "reason": reason.strip()}
+        history[-1] = previous
+        saved["rounds"] = history
         _write(top / rel, json.dumps(document, indent=2) + "\n")
         repo.commit_state("Record the owner's sign-off choice", rel, top=top)
-        history = review._history(top, "client-signoff", "", previous, path=rel, section=section)
     if saved.get("stop"):
         repo.refuse((review.stop_question(top, "client-signoff", {
             "why": "Client sign-off", "done_when": "The prototype matches the client's answers", "review": previous},
@@ -573,7 +577,7 @@ def _signoff_review(top: Path, args: argparse.Namespace, answers: str, evidence:
     held = ([(n, f) for n, f in enumerate(result["findings"], 1)
              if f in opened and f["priority"] in review.SERIOUS] if canvas else
             [(n, f) for n, f in enumerate(result["findings"], 1) if f in opened])
-    saved.update(review=result, inputs=inputs,
+    saved.update(review=result, rounds=history + [result], inputs=inputs,
                  stop=bool(held and len(history) + 1 >= 2 and (not critical or sample_data)))
     _write(top / rel, json.dumps(document, indent=2) + "\n")
     repo.commit_state("Record the client sign-off review", rel, top=top)
@@ -591,8 +595,9 @@ def _signoff_review(top: Path, args: argparse.Namespace, answers: str, evidence:
         problem = ("The canvas completeness check found gaps: " + "; ".join(
             f["title"] + ": " + f["body"] for f in opened) if canvas else
             "Customer sign-off review found a blocking issue: " + "; ".join(f["title"] for f in opened))
-        repo.refuse((problem + ".", repair +
-            '\nThen fix and merge it, then forge decision accept client-signoff --by "<name>"'))
+        repo.refuse((problem + f".\nRun the next command from this sign-off checkout: {top}", repair +
+            '\nThen fix and merge it, then from the repair checkout run '
+            'forge decision accept client-signoff --by "<name>"'))
     return result["commit"]
 
 
