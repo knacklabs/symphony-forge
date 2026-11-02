@@ -4,12 +4,20 @@
   "done_when": "A later screens check runs only when a screen or the brief changes and checks only the changed screens and the open findings; the first check still covers every screen.",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-02T09:14:33.033893+00:00",
       "step": "start"
     }
   ],
-  "why": "The screens check runs again whenever any app file changes, and each run re-checks every screen at top effort, so it takes long and finds new problems each time."
+  "stuck": {
+    "close": null,
+    "head": "40b34c8333f8b84eb9421876a0b248064fb8a652",
+    "keys": {},
+    "round": null
+  },
+  "why": "The screens check runs again whenever any app file changes, and each run re-checks every screen at top effort, so it takes long and finds new problems each time.",
+  "worker": "codex"
 }
