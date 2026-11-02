@@ -1,0 +1,101 @@
+{
+  "base": "823cdf3b43ec810daebff876ebb55995fadd5310",
+  "branch": "fix/pull-request-test-groups-take-20-to-32-m",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a193a6-49f4-7bf0-95cb-bcb1707138f9",
+    "head": null,
+    "start": "d07d82c3ba97fa44bbb18d2429d21ecbd00ee597"
+  },
+  "done_when": "Every test in the suite has a recorded time in the timing file, and the pull request text reports the slowest group's time before and after on the same runners.",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": ".factory/fixes/pull-request-test-groups-take-20-to-32-m.json",
+      "file": ".factory/fixes/pull-request-test-groups-take-20-to-32-m.json",
+      "gain": null,
+      "harm": null,
+      "line": 11,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 2,
+      "security": false,
+      "title": "Not done: Report the slowest group's elapsed time before and after on the same runners",
+      "work": null
+    },
+    {
+      "area": ".test_durations",
+      "file": ".test_durations",
+      "gain": null,
+      "harm": null,
+      "line": 1040,
+      "outcome": "fixed in round 6",
+      "reason": "",
+      "round": 5,
+      "security": false,
+      "title": "Refresh timing entries against the current test suite",
+      "work": null
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "dd2d795455a4037a280a4af34ea4ac534cdf2097e3ec416ea599b895ba18b7db",
+    "changed": "eba43414a23a9a363927926b6ecead1bc89279bb775da7bea8366cb55be54f8f",
+    "commit": "18da27651f5e66702d0b55e65a9380d2d9603a08",
+    "dismissals": [],
+    "findings": [],
+    "id": "b1e17ba4-58f2-4756-8785-3f9fdc0dd7b9",
+    "status": "clean"
+  },
+  "round": 4,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-31T20:25:44.871326+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-31T21:30:36.505360+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-31T22:46:15.733639+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-01T02:32:03.220393+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-01T17:29:40.977023+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-02T00:57:58.101524+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-02T02:51:25.328963+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-02T00:57:58.101815+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": ".test_durations",
+    "reason": "The owner chose one more round: update the test times to match the current tests.",
+    "wait_id": "f2ad772e-bd1f-4edd-a251-e9b80701fd9d",
+    "worker_round": 3
+  },
+  "stuck": {
+    "close": "a3675dbd-fca9-44b5-b8c0-be0db9eb22e3",
+    "head": "0561cdc028dfbae57af66176d9cd6e188e705908",
+    "keys": {},
+    "round": 3
+  },
+  "why": "Pull request test groups take 20 to 32 minutes each, far above the 5-minute goal, and the six groups are split from a timing file that misses 1,193 of 3,851 tests; no CI run stores Linux per-test times.",
+  "worker": "codex"
+}
