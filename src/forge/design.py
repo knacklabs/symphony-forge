@@ -53,9 +53,11 @@ def has_app_code(top: Path, ref: str, base: str = "") -> bool:
                     for path in skeleton.rglob("*") if path.is_file())
     managed = repo.command_fact(("prototype managed paths",), top,
         lambda: {*scaffold, *sync.files(top, repo.config(top), check_syntax=False)})
-    excluded = [f":(exclude,literal){name}" for name in managed]
+    folders = ("docs/", "plans/", ".factory/", ".forge/", ".github/", ".claude/", ".codex/")
+    # Folder exclusions already cover shipped skills; do not repeat every file on Windows argv.
+    excluded = [f":(exclude,literal){name}" for name in managed if not name.startswith(folders)]
     excluded += [f":(exclude,glob){name}**" for name in
-                 ("docs/", "plans/", ".factory/", ".forge/", ".github/", ".claude/", ".codex/")]
+                 folders]
     excluded.append(":(exclude,glob,icase)**/*.md")
     args = (("diff", "--name-only", "--no-renames", f"{base}...{ref}") if base else
             ("log", "--first-parent", "--diff-merges=first-parent", "--format=", "--name-only", ref))
