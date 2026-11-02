@@ -1,5 +1,12 @@
 {
   "branch": "task/FORGE-PARTWARN-1-SIZE",
+  "chat": {
+    "approval": "96650b49918f4a7a8406890c308180380f318f06f2aa7923113e75ea87860eff",
+    "claude": null,
+    "conversation": "01a19ea1-11b9-7b90-9d36-681cf4d0860f",
+    "head": null,
+    "start": "ffe20facee5f5adff73b04401568a28ca6eb7af1"
+  },
   "part_line_limit": 400,
   "round": 1,
   "status": "working",
