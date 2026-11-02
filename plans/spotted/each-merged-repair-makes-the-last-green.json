@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "edge\tsrc/forge/fullrun.py\tNot done: Sign-off accepts the last green full run when every change since it is a Forge-written file or record, and a change to app code",
+      "kind": "edge",
+      "path": "src/forge/fullrun.py",
+      "line": 61,
+      "text": "Not done: Sign-off accepts the last green full run when every change since it is a Forge-written file or record, and a change to app code",
+      "from": "review",
+      "item": "each-merged-repair-makes-the-last-green",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

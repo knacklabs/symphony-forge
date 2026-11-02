@@ -1,0 +1,53 @@
+{
+  "base": "e26302089bfdf304e514c5de6c8b666e65467cfb",
+  "branch": "fix/the-app-baseline-skill-names-six-basic-s",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a19b7c-51f6-7e01-8505-d804d26baf08",
+    "head": null,
+    "start": "c0023f9dcd2aaaa07be642491ae1948adfb50632"
+  },
+  "done_when": "A new app and an existing app that signs in another way get guide and baseline text whose basic screens follow the approved sign-in answer, and the review no longer reports a synced Forge file against the app.",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "5f842f22fc4bded255e8aa625d83ac98fca5abb2253f26443ab4dae248b84684",
+    "changed": "152621ff93de986f39db523e2cf57d6c7fd8736e026ad95d408bf7852fb6d122",
+    "commit": "46cb2c5190e698d84f48df695c93dd26fb6aeb22",
+    "dismissals": [],
+    "findings": [],
+    "id": "43f1d815-d609-4fb6-996c-fdff787f50f4",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-02T08:59:19.387415+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-02T09:05:09.035382+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-02T09:40:32.004981+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-02T10:01:48.495995+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "f6da2711-53a8-43ab-b6d5-063efb91b746",
+    "head": "4a22d00d4a40a9d2196697ef04064e0856d71cb4",
+    "keys": {},
+    "round": 2
+  },
+  "why": "The app-baseline skill names six basic screens and specifies Sign-in with Email and Password, Forgot password, Reset password and Accept invite with Password. The guide says to build the basic screens first, and nothing says the approved sign-in answer replaces the baseline. Forge's sync overwrites the baseline in every repo, so an app that signs in another way cannot correct it, and the review names only the story doc and AGENTS.md as overrides.",
+  "worker": "codex"
+}

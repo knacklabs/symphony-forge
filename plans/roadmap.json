@@ -510,6 +510,12 @@
       "title": "One prototype approval, then the agent builds every record type",
       "status": "pending",
       "order": 110
+    },
+    {
+      "key": "FORGE-NOSCREENS-1",
+      "title": "Starter ships no screens",
+      "status": "pending",
+      "order": 110
     }
   ],
   "epics": [

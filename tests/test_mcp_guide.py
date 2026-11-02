@@ -1,4 +1,10 @@
-"""Init, sync and work deliver the MCP guide and tool rules."""
+"""Init, sync and work deliver the MCP guide and tool rules.
+
+The screenless starter changes the fixed rule from a supplied Members screen to
+agent-built screens over the Members API. This existing prompt-delivery owner
+protects that contract; losing it at init or sync is the regression. No new seam
+or overlapping test is needed.
+"""
 import shutil
 
 import pytest
@@ -43,7 +49,8 @@ def test_5_the_guides_name_the_mcp_server(repo, gh, tmp_path, setup):
     for host in (".claude", ".codex"):
         guide = " ".join((client / host / "skills/forge/SKILL.md").read_text("utf-8").split())
         built_in = ("- Built in: the API serves an MCP server at /mcp. An admin adds agent "
-                    "accounts on the Members screen, with a role and a key that shows once; "
+                    "accounts with a role and a key that shows once through the Members API; "
+                    "the agent builds the Members screen in the client's design; "
                     "agents use each feature's tools with that role's permissions, and delete "
                     "and restore tools stay off until an admin turns them on for the feature.")
         assert guide.count(built_in) == 2, host  # TypeScript and Python fixed rules

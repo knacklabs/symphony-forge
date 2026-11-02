@@ -2,6 +2,10 @@ $summary
 
 # Worker brief
 
+"Find the problem to solve" is a discovery placeholder, not a problem for a fix.
+Forge refuses it before it creates a branch. Use `forge start "<the idea>"` to explore an idea;
+discovery asks a question and starts no fix. Workers work only on their brief.
+
 Settled findings stay settled. Each reader and reviewer gets earlier rounds' notes and answers,
 including findings already fixed or dismissed. Do not reopen them with the same finding text
 (cold reads) or title and file (reviews); report a new defect with distinct text and new evidence.
@@ -76,6 +80,7 @@ A merge of the default branch or a clean review does not clear it. Close repeats
 Land prints the owner's question, open findings and failing checks, then exits with status 3
 (needs a choice) instead of waiting. The coordinator records the choice, then runs `forge land <item>`
 again. Other stops and session subagent handoffs also print the open findings and failing checks.
+While land waits, commands share each pull request head's status snapshot across worktrees for 60 seconds.
 
 When the owner narrows or splits a stopped story part, close writes the choice into that part's
 builder details and merges the plan into the task branch. The next worker round gets those details.
@@ -87,14 +92,17 @@ Close records a reused review against the current branch after a replay. Land re
 when only Forge's review check reports a stale or missing review. If that check still fails,
 land stops without a worker round.
 
-The client sign-off code review excludes images; the canvas completeness check reviews them.
+The client sign-off code review excludes images. Canvas-only sign-off runs no model review.
+Sign-off runs each review's independent parts side by side inside its existing machine review run.
+It keeps the same model calls and result order.
 Normal reviews, reviews of docs and assets, and sign-off reviews use the selected tool's model and optional effort from
 `[models.review]` in `forge.toml`, including its per-tool entries. An unset entry or effort
 uses Autoreview's default. New and earlier-adopted repos get this behaviour on the current release.
 
 After a red close test, a blocking review finding or a failed required check, a build, fix or
 lite round raises only its effort. Codex uses at least high and Claude at least xhigh.
-Design rounds keep their fixed effort. Claude uses the SDK when installed. Native rounds
+Design rounds keep their fixed effort. External Claude workers and cold reads use the Agent SDK;
+if it is missing, run `forge doctor --fix`. Cold reads use plan mode. Native rounds
 request the effort in their instructions and record it as requested.
 New repos start build, fix and lite at low effort on both tools. Existing repos keep
 their configured models and efforts; a failure round uses the higher of that effort
@@ -116,6 +124,9 @@ line asking you to split them into smaller stories; already approved larger stor
 Parts can start on one reviewed, unmerged part by default. `stack = "off"` in `forge.toml`
 makes new parts wait for merges. A part that builds on another part keeps that base until close
 moves its own changes onto the default branch after the base merges through Forge.
+Close reviews only the stacked part's own changes and waits for its base to merge before CI and merge.
+After Forge merges the base, run the printed `forge close <part>` step to move the part onto the default branch.
+After a merge outside Forge, follow close's printed pull request target correction, then close the part again.
 The board and `forge next` show the part's base. After a clean review, they say that
 the part waits for its base to merge. After that merge, run `forge close <part>`.
 If a base exists only on this machine, finish its work and run `forge close <base>` to publish
@@ -127,12 +138,19 @@ If that merge conflicts, the worker gets its normal full brief with one added li
 
 If the default branch moved after close, `forge merge` compares its new changed files with the item's changed files.
 It merges the default branch locally to check the combined change.
-It runs `fast_test`, or `test` when none is set, in the one test lane with `{base}` as the new
-merge base. It merges the pull request only after the tests pass. A failure names the failed tests
+It runs `fast_test`, or `test` when none is set, in the one test lane with `{base}` as the
+pull request's checked head. This selects tests for incoming default-branch changes instead of
+the pull request's own files, on the combined code. It merges only after those tests pass. A failure names the failed tests
 and gives `forge work <item>` as the next step. With no default-branch move, merge runs no extra tests.
 If the file sets do not overlap, Forge restores the original head and merges without a push or another check wait.
 If the file sets overlap, Forge keeps the local merge, reuses the existing review and commits its coverage of the combined change.
 It pushes that commit, waits for its required checks, then merges.
+In repos whose tests run in pull request CI, close already leaves the laptop tests to CI.
+When merge's pytest selection exceeds one quarter of the suite's test files, including
+`always_test`, merge also skips the laptop run. It publishes the combined change and waits
+for that commit's CI, even when the changed files do not overlap. This uses the existing
+pytest picker, with no new test collection. Other runners and custom fast commands keep
+their local retest. Repos whose tests run only on the laptop keep their local runs.
 The nightly full run on the default branch covers the rest.
 `forge test --full` fails if the whole run has no tests. Set `test` in `forge.toml` to run
 the whole suite. An empty group of a nonempty suite is valid.
@@ -160,9 +178,14 @@ $delegation
 - A successful hand-back frees the item's lock. If the worker process and lock are no longer live,
   the board and `forge next` show the worker as stopped and give `forge work <item>` for an unfinished round.
 - Never run `forge stop`: only a person can stop a run, after confirmation in the host.
-- A run in line names each holder and the command that frees its place. Return a finished
-  native round with `forge handback` in its own session. Ask the operator to use `forge stop`
-  for other holders. A place no longer counts after its owning process exits.
+- When your test run waits in line, keep waiting in the same round until it finishes.
+  Never stop your round to ask the coordinator to free a test place.
+- Your test command lends your agent place while it waits or runs. Before it returns,
+  it waits for an agent place again. Keep waiting for the command to finish.
+  Returning builders and repair rounds after failed tests go before new builds;
+  reviews take no agent place. New builds pause when waiting test items exceed twice
+  the test lane's place count and start again at that count or below. New and upgraded
+  repos on this release get this behaviour.
 - Only the human decides to drop a fix. Leave `forge fix drop <fix> --because "<reason>"`
   to the coordinator after a clear yes. `forge fix drop <fix> --undo` restores it; a restored
   fix needs `forge close` again before it is ready.
@@ -380,6 +403,12 @@ a sensible default, and name it in your handback as an open question: what it to
 asked, the default, why you picked it and what happens if it stands. The coordinator adds it to
 the open-decisions list.
 Build the screens marked `Build: now` in SCREENS.md. Build a `Build: later` screen only when the plan names it.
+In a client repo with a web app, build each person-facing API's screen in the client's design
+with the API, without waiting for a request, unless the screen is marked `Build: later`.
+In a client repo with a web app, report as P1, titled `Screen: <route>`, a route this change
+adds that people use, when the change adds no screen for it. Webhooks, agent-only routes,
+MCP, system endpoints and jobs are not findings, nor is a screen marked `Build: later`.
+When you build a basic screen, remove its name from `pendingScreens` so its rule specs run.
 
 <!-- if fix-round -->
 ## Fix round
@@ -448,6 +477,7 @@ singular and fields. As your first step, run the plan's line:
 Keep every `--field` value in single quotes, such as `'name:text'`,
 `'description?:long-text'`, `'status:status(planned|active|done)'` and `'client?:link(clients)'`.
 The command copies the installed starter's projects feature, not the app's projects code.
+It builds the API, agent tools, change history and tests without writing pages or changing the web app.
 Keep its organisation scoping, soft delete, restore and transactional change history.
 Each feature checks view, create, edit, delete and restore permissions on every screen and API call.
 Admins have all five. Members can view, create and edit, but cannot delete or restore and never

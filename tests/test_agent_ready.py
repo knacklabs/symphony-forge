@@ -34,9 +34,9 @@ def _new_client(repo, gh, tmp_path, starter="typescript"):
 @pytest.mark.timeout(1800)
 @pytest.mark.parametrize("starter", ["typescript", "python", "earlier adopted"])
 def test_1_a_create_sent_again_with_its_retry_key_makes_one_item(repo, gh, tmp_path, starter, request):
-    # Audit: HTTP/MCP own storage and email delivery; hooks own key lifetime after transport
-    # failure. Existing cases never retry REST creates or invites. Init/sync is the public
-    # packaging boundary. No production seam is needed.
+    # Audit: HTTP/MCP own storage and email delivery after a retry. The screen removal also
+    # removes create/invite hooks and their form flows, so only the API cases remain here.
+    # Init/sync is the public packaging boundary. No production seam is needed.
     if starter == "earlier adopted":
         before, after = _adopted_files_after_sync(repo)
         assert after == before
@@ -67,14 +67,6 @@ def test_1_a_create_sent_again_with_its_retry_key_makes_one_item(repo, gh, tmp_p
             "a project create sent again with the same Idempotency-Key makes one project",
             "an invite sent again with the same Idempotency-Key sends one email and makes one invitation",
             "a retried project create with the same idempotency key makes one project",
-        ))
-        _require_cases(_junit_cases(live["folder"] / "test-results/formats.xml"), (
-            "the create hook keeps one Idempotency-Key until a create succeeds",
-            "the invite hook keeps one Idempotency-Key until an invite succeeds",
-        ))
-        _require_cases(live["browser"], (
-            "a project form retries with its key after the create response is lost",
-            "an invite form retries with its key after the response is lost",
         ))
 
 
@@ -162,9 +154,6 @@ def test_3_a_new_feature_takes_a_retry_key_on_create(repo, gh, tmp_path, starter
     if starter == "python":
         routes = (client / "apps/api/app/jobs/routes.py").read_text("utf-8")
         assert "Idempotency-Key" in routes and '"jobs_create"' in routes
-        assert "Idempotency-Key" in (
-            client / "libs/jobs/web/src/hooks/jobs-hooks.ts"
-        ).read_text("utf-8")
         built = repo.forge(
             "task",
             "feature",
@@ -191,7 +180,6 @@ def test_3_a_new_feature_takes_a_retry_key_on_create(repo, gh, tmp_path, starter
     assert "forge:feature:retry-key" not in controller
     spec = (client / "apps/api/test/jobs.e2e-spec.ts").read_text("utf-8")
     assert "Idempotency-Key" in spec and "forge:feature:retry-key" not in spec
-    assert "Idempotency-Key" in (client / "libs/jobs/web/src/hooks/jobs-hooks.ts").read_text("utf-8")
     built = repo.forge("task", "feature", "work-orders", "--one", "work-order", "--field", "name:text", cwd=client)
     assert built.returncode == 0, built.stdout + built.stderr
     controller = (client / "libs/work-orders/server/src/work-orders.controller.ts").read_text("utf-8")

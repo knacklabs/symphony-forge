@@ -34,4 +34,6 @@ def test_5_salesperson_can_follow_the_checklist_in_order():
     assert "forge init" in checklist and "forge doctor --fix" in checklist
     assert "Codex SDK" in checklist
     assert "deploy platform" in checklist and "subdomain" in checklist
-    assert "placeholder" in checklist and "own login" in checklist
+    # The first production guide replaces the old address placeholder with an access route.
+    assert "placeholder" not in checklist and "own login" in checklist
+    assert "team administrator" in checklist and "current sign-in link" in checklist

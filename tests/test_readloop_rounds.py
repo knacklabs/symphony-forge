@@ -3,9 +3,9 @@ STORY = "FORGE-READLOOP-1"
 with only what changed, starts fresh and says why when it can't, and `forge next` names the round.
 
 Codex readers run the real SDK against the stand-in app-server below, which keeps its
-conversations in threads.json beside itself, as Codex keeps them in its home. Claude readers are a
-fake `claude` on PATH that keeps each --session-id it starts and refuses to --resume one it doesn't
-have. Each says what `<app>-says.md` beside it holds, or `No findings.`.
+conversations in threads.json beside itself, as Codex keeps them in its home. Claude readers use
+the stub SDK; the legacy CLI below serves only the previous-release upgrade tests.
+Each says what `<app>-says.md` beside it holds, or `No findings.`.
 Each test is named test_<n>_<rule> after the Done-when item of STORY it proves.
 """
 
@@ -19,7 +19,7 @@ from pathlib import Path
 
 import pytest
 
-from conftest import _install
+from conftest import _claude_sdk_env, _install
 from test_codex_reader import GRILL
 from test_codex_worker import _lines, _sent, _toml
 from test_codex_worker import sdk_data  # noqa: F401  (a fixture)
@@ -227,11 +227,13 @@ class Reader:
         if self.app == "codex":
             turns = self.repo.path / ".git" / "forge" / "threads" / "read" / "SHOP.log"
             return _lines(turns)[-1]["continued"]
-        return "--resume" in json.loads(self.log.read_text("utf-8").splitlines()[-1])["args"]
+        return bool(json.loads(self.log.read_text("utf-8").splitlines()[-1])["options"]["resume"])
 
     def lose(self) -> None:
         """The app forgets every conversation, as when its home is cleared."""
-        (self.repo.bin / ("threads.json" if self.app == "codex" else "claude-sessions.json")).unlink()
+        (self.repo.bin / ("threads.json" if self.app == "codex" else "claude-sdk-sessions.json")).unlink()
+        if self.app == "claude":
+            (self.repo.bin / "claude-sessions.json").unlink(missing_ok=True)
 
     def fail(self, on: bool) -> None:
         name, value = (("STUB_CODEX_STATUS", "failed") if self.app == "codex" else
@@ -283,11 +285,18 @@ def _setup(repo, monkeypatch, tmp_path, sdk_data, app: str) -> Reader:  # noqa: 
 def _no_codex(monkeypatch, tmp_path) -> None:
     """Codex isn't installed: Forge finds no Codex SDK."""
     (tmp_path / "no-codex").mkdir()
+    _claude_sdk_env(tmp_path / "no-codex")
     monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / "no-codex"))
 
 
 def _no_claude(repo, monkeypatch, tmp_path) -> None:
-    """Claude Code isn't installed: no `claude` anywhere on PATH, git still there."""
+    """Neither Claude's SDK nor its separate CLI is installed; git stays available."""
+    unavailable = tmp_path / "no-claude-sdk"
+    package = unavailable / "claude_agent_sdk"
+    package.mkdir(parents=True, exist_ok=True)
+    (package / "__init__.py").write_text('raise ImportError("Claude SDK is unavailable")\n',
+                                       encoding="utf-8")
+    monkeypatch.setenv("PYTHONPATH", str(unavailable) + os.pathsep + os.environ.get("PYTHONPATH", ""))
     for name in ("claude", "claude.cmd"):
         (repo.bin / name).unlink(missing_ok=True)
     git = shutil.which("git")

@@ -35,7 +35,7 @@ HELPERS = [Path.home() / host / "skills" / "autoreview" / "scripts" / "autorevie
            for host in (".codex", ".claude")]
 # Untracked in the review tree, which branch mode leaves out of the diff.
 STANDARDS = "forge-standards.md"
-SPENT = "spent.jsonl"  # beside the review tree: the engine's chat and token use
+SPENT = "spent"  # beside the review tree: the engine's chat and token use
 SERIOUS = ("P0", "P1")
 # Bookkeeping, not product: state and unrelated planning files never make a review stale.
 BOOKKEEPING = (".factory/", "plans/")
@@ -69,37 +69,6 @@ REFUSALS = {
     "bad_doc": ("plans/{key}.md has no usable Tasks row for {task}.",
                 "fix that row in plans/{key}.md, then forge close {item}"),
 }
-
-# Ported from the old tree's review launcher: the helper starts the reviewer in an empty folder,
-# where it can't open the code a finding depends on. Each launcher starts the real one in the
-# reviewed checkout instead. The `codex` one swaps that one folder; the read-only sandbox the
-# helper asks for stays as it is. The helper gives Claude only web search and refuses Read as a
-# tool option, so the `claude` one adds the read-only file tools; --restricted keeps them inside
-# the checkout and leaves out every tool that runs commands.
-LAUNCHER = '''\
-import subprocess, sys
-argv = sys.argv[1:]
-if {engine!r} == "codex":
-    for i in range(len(argv) - 1):
-        if argv[i] in ("-C", "--cd"):
-            argv[i + 1] = {tree!r}
-    if "exec" in argv:
-        i = argv.index("exec")
-        argv[i:i] = {quiet!r}
-elif "--tools" in argv:
-    i = argv.index("--tools") + 1
-    argv[i] = ",".join(filter(None, ["Read", "Grep", "Glob", argv[i]]))
-    argv.append("--restricted")
-# The engine's chat and token use go to a side file, as the helper keeps no copy.
-with open({spent!r}, "ab") as spent, subprocess.Popen(
-        [*{real!r}, *argv], cwd={tree!r}, stdout=subprocess.PIPE) as engine:
-    for line in engine.stdout:
-        sys.stdout.buffer.write(line)
-        sys.stdout.buffer.flush()
-        if any(kind in line for kind in (b"thread.started", b"turn.completed", b"session_id")):
-            spent.write(line)
-sys.exit(engine.returncode)
-'''
 
 
 # --- the story doc ---------------------------------------------------------------------
@@ -360,6 +329,8 @@ def instructions(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any
         chosen = ["fix", "proof-list", "rules"]
         if not cfg["interfaces"] and not state.get("allow_large"):
             chosen.insert(1, "promote")
+    has_web = any((top / path / "package.json").is_file() for path in ("apps/web", "web", "frontend"))
+    chosen += (["screens"] if cfg["repo"] == "client" and has_web else []) + ["app-rules"]
     values["design_context"], owned_design = worker.design_context(top, design_text, user_facing)
     chosen.append("design-context")
     if owned_design:
@@ -371,6 +342,8 @@ def instructions(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any
     prompt = (string.Template((Path(__file__).parent / "templates" / "review-light.md").read_text(
         encoding="utf-8")).substitute(values) if prototype else
         "\n\n".join(blocks[name].substitute(values) for name in chosen))
+    if prototype and "screens" in chosen:
+        prompt += "\n\n" + blocks["screens"].substitute(values)
     prompt += "\n\n" + blocks["approach"].substitute(values)
     settings = repo.review_settings(top)
     if "added_work_min_gain" in settings:
@@ -580,7 +553,7 @@ def _accepted(top: Path, item: str, history: list[dict[str, Any]]) -> str:
             kept = story.DISPOSITION.search(block)
             if kept and kept[1].lower() in ("keep", "defer"):
                 found.append(f"Plan read note {number}: {' '.join(block.split(None, 1)[1].split())}")
-    for (file, title), reason in _settled(history).items():  # every settled finding, whatever settled it
+    for (file, title), reason in _settled(history).items():
         scores = next((f"; {line[0].strip()}" for result in history for f in result.get("findings", [])
                        if (f["file"], f["title"]) == (file, title) and (line := score.LINE.search(f["body"]))), "")
         found.append(f"{title} ({file}): {reason}{scores}")
@@ -609,13 +582,14 @@ def _rulings(top: Path, base: str, history: list[dict[str, Any]]) -> str:
 
 def _history(top: Path, item: str, base: str, previous: dict[str, Any],
              ref: str = "HEAD", *, state: dict[str, Any] | None = None,
-             path: str = "") -> list[dict[str, Any]]:
+             path: str = "", section: str = "") -> list[dict[str, Any]]:
     """Git owns earlier reviews; later dismissals replace that round's original result."""
     path = path or repo.state_path(item)
     rounds = {}
     for sha in repo.git("rev-list", "--reverse", "--first-parent", f"{base}..{ref}" if base else ref, "--", path,
                         cwd=top).split():
-        result = json.loads(repo.git("show", f"{sha}:{path}", cwd=top)).get("review") or {}
+        saved = json.loads(repo.git("show", f"{sha}:{path}", cwd=top))
+        result = (saved.get(section, {}) if section else saved).get("review") or {}
         if result.get("commit"):  # one per round: two rounds at one commit differ in their findings
             if state is not None:
                 bound_review(top, item, state, result)
@@ -922,8 +896,7 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                 merged_base = repo.git("merge-base", base, "HEAD", cwd=tree)
                 if repo.git("merge-base", base, review_base, cwd=tree) != merged_base:
                     review_base = merged_base
-        prompt += _hide_generated(tree, repo.git("merge-base", review_base, "HEAD", cwd=tree), "HEAD",
-                                  keep_images=item == "design-check")
+        prompt += _hide_generated(tree, repo.git("merge-base", review_base, "HEAD", cwd=tree), "HEAD")
         # The worker brief's standards page, as rules; a prompt file keeps it out of argv.
         rules = block.split("<!-- standards -->\n", 1)[1].split("\n<!-- ", 1)[0]
         # The branch may track this path, even as a link out of the tree: drop it unfollowed,
@@ -951,8 +924,10 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         launcher = _launcher(tmp / "bin", tree, engine)
         if launcher:
             argv += [f"--{engine}-bin", str(launcher)]
-            if os.name == "nt":
-                argv[1:1] = [str(Path(__file__).with_name("review_process.py")), str(launcher)]
+        if signoff_prompt or (os.name == "nt" and launcher):
+            argv[1:1] = [str(Path(__file__).with_name("review_process.py")),
+                         str(launcher) if os.name == "nt" and launcher else "",
+                         "parallel" if signoff_prompt else "serial"]
         with machine.agent_slot(top, "review", item):
             for attempt in ((1,) if signoff_prompt else (1, 2)):
                 with repo.record_run(top, item, "review", family=engine) as ran:
@@ -973,7 +948,8 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         result = {"findings": findings, "blocking_level": "P0" if light else "P1"}
         if not signoff_prompt or item == "client-signoff":
             history = state["signoff_history"] if signoff_prompt else _history(top, item, base, previous, state=state)
-            settled = {score.identity(*key): reason for key, reason in _settled(history).items()}
+            settled = {score.identity(*key): reason for key, reason in
+                       _settled(history).items()}
             if item == "client-signoff":
                 # The owner accepts the limitation in this version of the file,
                 # independent of the next reviewer's wording. Edits reopen it.
@@ -1006,8 +982,6 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
             if not signoff_prompt:
                 bound_review(top, item, state, result)
         serious = blocking(result)
-        if item == "design-check":
-            serious = [(n, f) for n, f in enumerate(findings, 1) if f["priority"] in SERIOUS]
         identity = repo.record_event(top, item, "review result", commit=head,
             review_round=round_number(top, item, state),
             outcome="failed" if reason else "blocked" if serious else "clean",
@@ -1025,11 +999,6 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                 problem, action = "The prototype differs from the reviewed commit.", "commit the changes"
             else:
                 return {"commit": head, **result}
-            if item == "design-check" and (reason or serious):
-                problem = ("The canvas completeness check did not finish: " + reason + "." if reason else
-                           "The canvas completeness check found gaps: " + "; ".join(
-                               f["title"] + ": " + f["body"] for _, f in serious) + ".")
-                action = "fix the review engine problem" if reason else "fix the prototype screens"
             repo.refuse((problem, f'{action}, then forge decision accept client-signoff --by "<name>"'))
     base = repo.resolve_commit(top, base)
     return {"id": identity, "commit": head, **result,
@@ -1116,21 +1085,17 @@ def declines(top: Path, base: str, result: dict[str, Any]) -> bool:
     return changed
 
 
-def _hide_generated(tree: Path, start: str, head: str, *, keep_images: bool = False) -> str:
+def _hide_generated(tree: Path, start: str, head: str) -> str:
     """Put changed binary and linguist-generated files back as they were at start in the review
     tree, so their contents stay out of the reviewed diff.
-    Completeness review keeps images visible, including generated screen captures.
     Returns the lines naming those files with their changed-line counts, or "" when there are none."""
-    from forge import design
-
     counts = {row[2]: row[:2] for record in repo.git(
         "diff", "--numstat", "-z", "--no-renames", start, head, cwd=tree).split("\0")
         if len(row := record.split("\t", 2)) == 3}
     attrs = repo.run("git", "check-attr", "--stdin", "-z", "linguist-generated", cwd=tree,
                      input="\0".join(counts)).stdout.split("\0")
     marked = {path for path, value in zip(attrs[::3], attrs[2::3]) if value in ("set", "true")}
-    generated = [path for path, count in counts.items() if (path in marked or "-" in count)
-                 and not (keep_images and Path(path).suffix.lower() in design.IMAGES)]
+    generated = [path for path, count in counts.items() if path in marked or "-" in count]
     if not generated:
         return ""
     repo.git("restore", f"--source={start}", "--staged", "--", *generated, cwd=tree)
@@ -1142,29 +1107,6 @@ def _hide_generated(tree: Path, start: str, head: str, *, keep_images: bool = Fa
             "the diff. A missing or untracked copy in the review tree is not a finding:\n"
             + _bullets(f"{path}: {counts[path][0]} added, {counts[path][1]} removed"
                        for path in generated))
-
-
-def design_check(top: Path, prompt: str) -> None:
-    """Check the canvas with its own pinned model through the strict review engine."""
-    from forge import design
-
-    cfg = {**repo.config(top), "tools": "codex", "models": {"review": {
-        "model": "gpt-6.1-sol", "effort": "high"}}}
-    images = [name for name in repo.git("ls-files", "-z", cwd=top).split("\0")
-              if not name.startswith((*BOOKKEEPING, "docs/decisions/"))
-              and Path(name).suffix.lower() in design.IMAGES]
-    # The pinned helper stages each attachment under gettempdir(), with fixed-size names.
-    # Leave 8K for executable, configs, schema, output and working-directory arguments.
-    size = max(1, 24000 // (len(str(Path(tempfile.gettempdir()).resolve())) * 2 + 256))
-    if os.name != "nt" or len(images) <= size:
-        run(top, "design-check", {}, cfg, "", {}, {}, signoff_prompt=prompt)
-        return
-    for start in range(0, len(images), size):
-        batch = set(images[start:start + size])
-        run(top, "design-check", {}, cfg, "", {}, {}, images=batch,
-            signoff_prompt=prompt + "\n\nThis is one image batch. Check the attached screens against "
-            "the whole brief. Other screens have separate batches; do not report them as absent "
-            "from this batch.\nAttached screens:\n" + _bullets(sorted(batch)))
 
 
 def _launcher(folder: Path, tree: Path, engine: str) -> Path | None:
@@ -1184,6 +1126,8 @@ def _launcher(folder: Path, tree: Path, engine: str) -> Path | None:
     folder.mkdir()
     script = folder / f"{engine}_in_tree.py"
     from forge.codex import QUIET
+    from forge.review_process import LAUNCHER
+    (folder.parent / SPENT).mkdir()
     quiet = [arg for key, value in QUIET.items() for arg in ("-c", f"{key}={json.dumps(value)}")]
     script.write_text(LAUNCHER.format(engine=engine, tree=str(tree), real=command, quiet=quiet,
                                       spent=str(folder.parent / SPENT)), encoding="utf-8")
