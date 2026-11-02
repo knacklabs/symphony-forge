@@ -1,11 +1,19 @@
 {
   "branch": "task/FORGE-NOSCREENS-1-AUTHPY",
   "part_line_limit": 400,
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-02T18:49:52.746962+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "8cab92b58e4137563eec5f38d3c25ad163ff562a",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
