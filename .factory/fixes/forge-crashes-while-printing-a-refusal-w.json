@@ -1,6 +1,13 @@
 {
   "base": "7450721ddf8c0cbedf9d84c8311677a59f817675",
   "branch": "fix/forge-crashes-while-printing-a-refusal-w",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a19be6-7167-7cb0-8d49-46906efb717e",
+    "head": null,
+    "start": "b2aedae0da9c4284187e25e89f7be6a76364a8c2"
+  },
   "done_when": "A refusal that carries review finding text or a review engine error prints exactly as written, with braces and JSON intact, and no error is raised.",
   "fix_kind": "backend",
   "kind": "fix",
