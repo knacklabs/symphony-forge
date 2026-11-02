@@ -654,7 +654,8 @@ def test_4_client_machine_views_follow_the_last_task_merge(env, history, phase):
         repo.git("remote", "set-head", "origin", "main", cwd=checkout)
     repo.path = checkout
     for host in (".claude", ".codex"):
-        assert "## Machine views" in (checkout / host / "skills/forge/SKILL.md").read_text("utf-8")
+        # Machine details now ship beside the short coordinator guide.
+        assert "## Machine views" in (checkout / host / "skills/forge/run-reference.md").read_text("utf-8")
     assert 'repo = "client"' in (checkout / "forge.toml").read_text("utf-8")
     # Keep the shipped client files; select the test harness's third-party review configuration.
     version = repo.forge("--version").stdout.split()[-1]

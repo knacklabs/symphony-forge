@@ -38,7 +38,7 @@ def test_1_waiting_prerequisites_start_first_and_explain_their_place(
         repo.git("merge", "-q", "--ff-only", branch)
         _land_fixture(repo)
     for host in (".codex", ".claude"):
-        guide = " ".join((repo.path / host / "skills/forge/SKILL.md").read_text("utf-8").split())
+        guide = " ".join((repo.path / host / "skills/forge/run-reference.md").read_text("utf-8").split())
         assert "Within the remaining work, items that other planned work waits on go first, first-come within each group" in guide
     machine_cores(repo, 2)
     configured = repo.forge("fix", "start", "Configure the client", "--done", "Workers use Claude",
