@@ -677,9 +677,11 @@ The check uses Codex's `gpt-6.1-sol` at high effort, independent of `[models.des
 Codex must be installed because only Codex can review the screen images.
 On Windows, large image folders use separate batches to fit the native command line limit.
 Fix held findings from one sign-off review in one fix, then retry `forge decision accept client-signoff`.
-Judge the sample-data prototype with no production back end. Production work, including
-deployment to the client's account, belongs to build stories. Labelled demo tools on sample
-data are not a P0 unless real data is exposed. Only Harm 4 or higher, Gain 5, or a P0 holds
+Judge a prototype as a prototype. Production work, including deployment to the client's account,
+belongs to build stories. A clearly labelled demo tool is not a P0 when the prototype holds
+only sample data and has no back end, as its own files show.
+A security hole in a real API or sign-in, or any exposed real data, stays a P0.
+Only Harm 4 or higher, Gain 5, or a P0 holds
 the product review; every other finding goes straight to Known issues without a repair
 round or an owner question. A held finding below P0 still needs the owner's choice after two rounds.
 If the review engine fails, fix the engine problem and run the accept command again.

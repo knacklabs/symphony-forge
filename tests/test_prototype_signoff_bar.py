@@ -5,6 +5,9 @@ repair or owner question and publish them as Known issues. The old P1 bar
 incorrectly requests repairs. Existing rounds tests cover held findings only.
 Only the external reviewer is faked; no production seam is added. Prompt bytes
 are an independent reviewer contract, captured at that same external boundary.
+The prompt must limit the demo exception to files proving sample data and no
+back end; otherwise a starter API security hole could be excused. Extend the
+existing prompt contract rather than add another test or production seam.
 """
 import json
 
@@ -45,8 +48,10 @@ def test_1_prototype_signoff_keeps_lesser_findings_without_repair(
     calls = [json.loads(line) for line in queue.with_suffix(".calls.jsonl").read_text("utf-8").splitlines()]
     prompt = "\n".join(calls[-1]["prompt_files"].values())
     assert "The full production proof is due now" not in prompt
-    assert "no production back end" in prompt
-    assert "labelled demo tools" in prompt
+    assert "Judge a prototype as a prototype" in prompt
+    assert "only sample data and has no back end, as its own files show" in prompt
+    assert "A security hole in a real API or sign-in, or any exposed real data, stays a P0" in prompt
+    assert "clearly labelled demo tool" in prompt
     assert "client's account" in prompt
     if held:
         assert "forge fix start" in result.stderr

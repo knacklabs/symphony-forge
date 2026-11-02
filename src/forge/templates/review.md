@@ -527,10 +527,11 @@ existing app to rebuild what it already has.
 $standards
 <!-- signoff -->
 ## Client prototype sign-off review
-Judge this as a sample-data prototype with no production back end. Production items,
-including deployment to the client's account, belong to the build stories. Clearly
-labelled demo tools on sample data are not a P0 unless real data is exposed. Answers
-about production are choices for those stories, not missing prototype work.
+Judge a prototype as a prototype. Production items, including deployment to the client's account,
+belong to the build stories. A clearly labelled demo tool is not a P0 when the prototype holds
+only sample data and has no back end, as its own files show.
+A security hole in a real API or sign-in, or any exposed real data, stays a P0.
+Answers about production are choices for those stories, not missing prototype work.
 Only Harm 4 or higher, Gain 5, or a P0 holds sign-off. Every other finding goes to
 Known issues without a repair round or a question to the owner.
 Review the product diff against the customer's answers and the topic table below.
