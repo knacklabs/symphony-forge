@@ -674,16 +674,33 @@ run on main is green. When a precondition is
 missing, the refusal lists every gap and the next action for each. Existing clients can complete
 sign-off with the brief and design they have after upgrade and sync; they do not need to add
 prototype design files for this gate.
-Fix all findings from one sign-off review in one fix. Run the printed repair command from
+Fix held findings from one sign-off review in one fix. Run the printed repair command from
 the sign-off checkout that the refusal names. The repair includes the sign-off record and
 publishes its earlier review commits, even when that checkout's first fix already merged.
 After the repair merges, retry `forge decision accept client-signoff` from its checkout.
 The record keeps earlier rounds and owner choices after a squash merge or a move to another computer.
+Judge a prototype as a prototype. Production work, including deployment to the client's account,
+belongs to build stories. A clearly labelled demo tool is not a P0 when the prototype holds
+only sample data and has no back end, as its own files show.
+A security hole in a real API or sign-in, or any exposed real data, stays a P0.
+Risks that exist only in a real-data build the prototype is not, such as browser-held
+codes or data in a prototype with no back end, belong to build stories and Known issues,
+not P0 findings.
+Only Harm 4 or higher, Gain 5, or a P0 holds
+the product review; every other finding goes straight to Known issues without a repair
+round or an owner question. A held finding below P0 still needs the owner's choice after two rounds.
 If the review engine fails, fix the engine problem and run the accept command again.
 A canvas-only sign-off needs no working build. A working build gets a full first product review.
 Each later attempt reviews only product files changed since the previous review and its open findings.
 Every reviewer gets earlier findings and answers. Settled findings stay settled.
-After two rounds, P0 findings still block until fixed. Other open findings need the owner's choice.
+Only a person may write `sample_data: true` in the sign-off decision's front matter.
+It declares that the prototype holds only sample data and has no back end. After two
+rounds, a remaining P0 then stops for the owner's choice, and `--resolve accept` keeps
+it in Known issues with the owner's reason. The question explains that this accepts a
+P0 only because of the sample-data declaration. Without the field, or with
+`sample_data: false`, a P0 keeps the hard block and has no owner acceptance path.
+Earlier repos keep that hard block until a person adds the field; there is no migration.
+Other open held findings need the owner's choice after two rounds.
 Record that choice with `forge decision accept client-signoff --by "<name>" --resolve accept|more|split --reason "<human's choice>"`.
 Accept keeps the findings in the item's Known issues. Split creates a separate fix. More permits one more review.
 These rules apply to new clients and earlier-adopted clients after upgrade.
@@ -710,7 +727,7 @@ A requested working prototype proves the demo steps and its security and data bo
 Its light review checks demo breakage, security and data loss, using `[models.light_review]`.
 A requested working prototype gets a light review that blocks only on P0 findings.
 A `Not done` against the item's own approved Done-when still blocks at any priority.
-Full proof is due at sign-off.
+Sign-off needs proof of the prototype demo; production proof belongs to the build stories.
 
 After sign-off, every new story carries forward the available canvas, Proof and Decisions into
 `## Proven by the prototype`. Treat that evidence as settled. Plan and cold read only new work
@@ -1579,8 +1596,10 @@ Local mode has no scheduled job; when `forge next` says the daily run is due, ru
 in the main checkout when the machine is quiet. A green full run on the latest default-branch
 commit is required before pushing a release tag. Client sign-off can reuse a green full run
 within the latest ten default-branch commits when only exact `forge sync` output or records
-under `.factory/`, `plans/` or `docs/decisions/` changed, including on the reviewed branch.
-App, test or lock-file changes need a fresh full run. A failed latest full run still blocks.
+under `.factory/`, `plans/` or `docs/decisions/` changed on the default branch.
+App, test or lock-file changes on the default branch need a fresh full run.
+An app repair on the sign-off branch can use the default branch's green run.
+A failed latest full run still blocks.
 Earlier clients need no migration, and accepted sign-off records stay valid. Everyday merges do
 not wait for a full run.
 A failed scheduled or manual full run appears in `forge next` with its failed test names.

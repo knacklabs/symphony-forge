@@ -11,7 +11,7 @@ import re
 import pytest
 
 from conftest import StubGh
-from test_proto_signoff import _adopted_client, _client, _decision, _green_full_run, _request_build
+from test_proto_signoff import _adopted_client, _client, _decision, _request_build
 
 STORY = "FIX-AFTER-THE-UPGRADE-TO-V1-2-22-CLIENT-SIGN"
 
@@ -31,7 +31,6 @@ def test_1_signoff_passes_without_ritual_records(repo, tmp_path, monkeypatch, ad
     brief.write_text(brief.read_text("utf-8").replace("## Things it keeps track of", "## Orders"), encoding="utf-8")
     repo.git("add", "-A", cwd=fix)
     repo.git("commit", "-qm", "Keep the existing client evidence", cwd=fix)
-    _green_full_run(repo, product=fix)
     accepted = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
     assert accepted.returncode == 0, accepted.stdout + accepted.stderr
     assert "status: accepted" in page.read_text("utf-8")

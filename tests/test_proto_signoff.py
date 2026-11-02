@@ -14,7 +14,6 @@ import re
 import shutil
 import subprocess
 import sys
-import tempfile
 from pathlib import Path
 
 import pytest
@@ -83,22 +82,7 @@ def _review_tools(repo, tmp_path, monkeypatch):
     return queue
 
 
-def _green_full_run(repo, *, product=None):
-    if product is not None:
-        # Publish the tested product without merging this fix's own records.
-        # Otherwise the board reads main's older Known issues instead of this fix's list.
-        with tempfile.TemporaryDirectory() as folder:
-            env = {**os.environ, "GIT_INDEX_FILE": str(Path(folder) / "index")}
-            for args in (("read-tree", "HEAD"),
-                         ("reset", "-q", "origin/main", "--", ".factory", "plans", "docs/decisions")):
-                subprocess.run(["git", *args], cwd=product, env=env, check=True,
-                               capture_output=True, timeout=60)
-            tree = subprocess.check_output(["git", "write-tree"], cwd=product, env=env,
-                                           encoding="utf-8", timeout=60).strip()
-        head = repo.git("commit-tree", tree, "-p", "origin/main", "-m", "Test the current product", cwd=product)
-        remote = Path(repo.git("remote", "get-url", "origin"))
-        repo.git("fetch", "-q", str(product), f"{head}:refs/heads/main", cwd=remote)
-        repo.git("fetch", "-q", "origin", cwd=product)
+def _green_full_run(repo):
     head = repo.git("rev-parse", "origin/main")
     StubGh(repo.bin).respond(
         "api", f"repos/{{owner}}/{{repo}}/commits/{head}/statuses",
