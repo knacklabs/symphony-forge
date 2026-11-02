@@ -1,6 +1,17 @@
 {
   "items": [
     {
+      "key": "bug\t.github/workflows/forge.yml\tThe review job fails before review when the remote pull-request ref is behind the event commit; filed Forge issue 1309.",
+      "kind": "bug",
+      "path": ".github/workflows/forge.yml",
+      "line": 125,
+      "text": "The review job fails before review when the remote pull-request ref is behind the event commit; filed Forge issue 1309.",
+      "from": "worker",
+      "item": "FORGE-NOSCREENS-1/AUTH",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/templates/starter/apps/api/test/auth.e2e-spec.ts\tGate: isolate the production sign-in rate-limit tests\tFORGE-NOSCREENS-1/AUTH",
       "kind": "bug",
       "path": "src/forge/templates/starter/apps/api/test/auth.e2e-spec.ts",
