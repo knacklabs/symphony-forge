@@ -43,6 +43,7 @@ def _pr(env, branch: str, head: str, pr_body: str) -> None:
     pr.update(headRefOid=head, title="Repair the page", url="https://github.com/acme/shop/pull/7",
               body=pr_body)
     github(env.gh, [pr])
+    env.gh.respond("pr", "list", "--state", "open", stdout=json.dumps([pr]))
     env.gh.respond("pr", "view", branch, stdout=json.dumps({
         "number": 7, "state": "OPEN", "baseRefName": "main", "headRefName": branch,
         "headRefOid": head, "title": "Repair the page", "isDraft": False, "body": pr_body,
@@ -133,6 +134,7 @@ def test_1_a_ready_item_merges_from_a_machine_with_no_checkout(env, adopted, tmp
         task_pr.update(headRefOid=task_head, title="Save a basket",
                        url="https://github.com/acme/shop/pull/7", body=task_body)
         github(env.gh, [task_pr])
+        env.gh.respond("pr", "list", "--state", "open", stdout=json.dumps([task_pr]))
         env.gh.respond("pr", "view", task_branch, stdout=json.dumps({
             "number": 7, "state": "OPEN", "baseRefName": "main", "headRefName": task_branch,
             "headRefOid": task_head, "title": "Save a basket", "isDraft": False,
