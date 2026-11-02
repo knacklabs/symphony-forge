@@ -4,12 +4,20 @@
   "done_when": "tests/test_zod_starter.py passes on the default branch, and the invite and reset answers keep their documented shape",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-02T20:00:04.977772+00:00",
       "step": "start"
     }
   ],
-  "why": "Main is broken: tests/test_zod_starter.py::test_3 fails, because the merged sign-in part's auth.dto.ts uses a Swagger decorator that the starter's rule forbids; request docs come from the shared Zod schemas. Every pull request that selects this test fails until it is repaired."
+  "stuck": {
+    "close": null,
+    "head": "34cb5d7ee365e72189f1fb8e7e58924abd329b38",
+    "keys": {},
+    "round": null
+  },
+  "why": "Main is broken: tests/test_zod_starter.py::test_3 fails, because the merged sign-in part's auth.dto.ts uses a Swagger decorator that the starter's rule forbids; request docs come from the shared Zod schemas. Every pull request that selects this test fails until it is repaired.",
+  "worker": "codex"
 }
