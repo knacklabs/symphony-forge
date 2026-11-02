@@ -1041,7 +1041,10 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
                 review.stop_question(path or top, item, state),
                 "Next: " + close.REFUSALS["hotspot"][1].format(item=item, **stop)]
     if not path and status not in ("ready", "merged", "done"):  # its checkout is on another machine
-        return [f"{label} has no checkout on this machine.", f"Next: forge work {item}"]
+        if pr or _commit(top, f"refs/remotes/origin/{state.get('branch', '')}"):
+            return [f"{label} has no checkout on this machine.", f"Next: forge work {item}"]
+        starter = board._starters(top).get(repo.state_path(item)) or "the person who started it"
+        return [f"{label} was started by {starter} and runs on their machine."]
     if question := codex.record(top, item).get("question"):  # close and work refuse until it is answered
         return [f"The worker on {label} asked a question. Ask the human:", question,
                 "Next: " + close.REFUSALS["question"][1].format(item=item)]
