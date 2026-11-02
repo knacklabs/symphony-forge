@@ -11,7 +11,7 @@
   "done_when": "At prototype sign-off, only a finding with Harm 4 or higher, Gain 5, or a P0 stops the work; every other finding goes to Known issues with no repair round and no question.",
   "fix_kind": "backend",
   "kind": "fix",
-  "round": 1,
+  "round": 2,
   "status": "working",
   "steps": [
     {
