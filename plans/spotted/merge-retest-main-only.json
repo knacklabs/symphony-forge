@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\ttests/test_fix_old_forge_records.py\tThe plan path check rejects the current ideas file.",
+      "kind": "bug",
+      "path": "tests/test_fix_old_forge_records.py",
+      "line": 22,
+      "text": "The plan path check rejects the current ideas file.",
+      "from": "worker",
+      "item": "merge-retest-main-only",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

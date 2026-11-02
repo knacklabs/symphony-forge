@@ -20,6 +20,7 @@ SOURCES = {
         "skills/forge/SKILL.md": "src/forge/templates/skill.md",
         "skills/forge/standards.md": "src/forge/standards.md",
         "skills/forge/migrate-skill.md": "src/forge/templates/migrate-skill.md",
+        "skills/forge/run-reference.md": "src/forge/templates/run-reference.md",
         "skills/forge/fde.md": ".codex/skills/forge/fde.md",
         "skills/app-baseline/SKILL.md": ".codex/skills/app-baseline/SKILL.md",
         "skills/database/SKILL.md": "src/forge/templates/skills/database/SKILL.md",

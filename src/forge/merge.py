@@ -108,13 +108,14 @@ def merge(args: argparse.Namespace, *, refreshed: bool = False) -> int:
                 base = repo.git("merge-base", "HEAD", f"origin/{default}", cwd=worktree)
                 checked_default = base
                 cfg = repo.config(worktree)
-                command = (cfg["fast_test"] or cfg["test"]).replace("{base}", base)
-                ci_retest = fasttest.broad_ci_selection(worktree, base)
+                # CI covered this head; only the incoming default-branch diff needs tests.
+                command = (cfg["fast_test"] or cfg["test"]).replace("{base}", head)
+                ci_retest = fasttest.broad_ci_selection(worktree, head)
                 if ci_retest:
                     print("Related tests exceed one quarter of the suite. Pull request CI runs them.",
                           flush=True)
                 else:
-                    failed, tested = review.test_run(worktree, command, f"origin/{default}", always=True)
+                    failed, tested = review.test_run(worktree, command, head, always=True)
                     print(tested, flush=True)
                     if failed:
                         repo.refuse(REFUSALS["retest_failed"], item=item,

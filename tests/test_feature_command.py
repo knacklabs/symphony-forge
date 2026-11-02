@@ -838,6 +838,8 @@ def test_6_unsupported_apps_refuse_without_changing_the_worktree(repo, gh, tmp_p
 
 SHELLS = [shutil.which("bash"), *([shutil.which("zsh")] if shutil.which("zsh") else [])]
 assert SHELLS[0], "The planner command must run through bash -c."
+# Collection includes optional shells; shared command helpers use installed shells only.
+SHELL_CASES = [SHELLS[0], shutil.which("zsh") or "zsh"]
 
 
 def _assert_feature_guidance(repo, client: Path, log: Path) -> None:
@@ -892,16 +894,18 @@ def _assert_feature_guidance(repo, client: Path, log: Path) -> None:
 @pytest.mark.platform
 @pytest.mark.parametrize("starter,case", [("typescript", "parser"),
                          *[(starter, shell) for starter in ("typescript", "python")
-                           for shell in SHELLS]],
+                           for shell in SHELL_CASES]],
                          ids=["generated-contracts",
                               *[f"{starter}-{Path(shell).name}"
-                                for starter in ("typescript", "python") for shell in SHELLS]])
+                                for starter in ("typescript", "python") for shell in SHELL_CASES]])
 def test_1_feature_contracts_parse_and_plan_lines_build_in_one_step(repo, gh, tmp_path, starter, case):
     # The command line is the contract; each shell preserves it, and generated source parses.
     # Separate tests previously duplicated this criterion and let parser and command cases drift.
     if case == "parser":
         _generated_contracts_and_link_tests_parse_and_cursors_encode(repo, gh, tmp_path)
     else:
+        if not shutil.which(case):
+            pytest.skip(f"{Path(case).name} is not installed on this runner")
         _plan_line_builds_the_feature_in_one_step(repo, gh, tmp_path, case, starter)
 
 
