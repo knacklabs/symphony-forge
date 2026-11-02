@@ -4,39 +4,17 @@
 
 ## What changes for you
 
-<What the people who use this will notice, in plain English. No IDs, codes or jargon. End each
-item with its source in plain words, such as (Source: the client's note on late orders, 12 Oct),
-or with the sourced item that needs it, such as (Needed by: the Customers screen). A source is a
-client note, a brief answer, a decision, a screen marked Build now at sign-off, a fixed rule of
-the app, or the owner's own request with its date. Name each screen, field, endpoint, tool and
-setting that the plan adds in one of these items.>
-
-<!-- For user-facing parts: run impeccable init if PRODUCT.md is absent. Design the screens
-in a Claude Design artifact; on a Codex-only host without artifact tools, use HTML artboards.
-Save each screen and its images in docs/design/<KEY>/. Copy .forge/design/support.js beside
-the HTML screens and run it for a 1440 by 900 PNG per screen. Commit the folder. Use its git tree
-id (git rev-parse HEAD:docs/design/<KEY>) in the last line below. For small changes to existing
-screens that add no screen and change no flow, use Design: none (<why>) instead.
-Remove this comment and omit
-the Design line for a backend-only story. Cold read follows the design; one plan approval binds
-these exact files. A folder edit needs its new tree id and a new plan approval.
-The rule starts with the next plan read and approval. Plans approved without a Design line
-before this rule keep their existing approval. -->
-Design: docs/design/<KEY>/ (<tree id>)
+- A story part over 400 changed lines shows a warning when its task starts, and close no longer stops to ask the owner.
+- The planner splits such a part before building, and the planning guide says so.
+- AGENTS.md principle 4 (Four simplicity principles, Rules are stated, not policed) becomes three levels: Forge does the right thing by default where it can; it refuses only when a mistake costs a lot or is hard to undo; it states a rule only when a mistake is cheap and something later catches it.
 
 ## Why
 
-Warn instead of stop for story parts over 400 lines
-
-
+A part over 400 lines stops close and asks the owner, and the stop cannot be cleared: open issue 960 shows that accept is refused and the allowance does not release it. Each stop costs a builder round.
 
 ## Done when
 
-<!-- One bold plain sentence per result, which the owner approves: no code names, file paths or
-test names. Its evidence, edge cases and proving tests go under the same number in Done-when
-details. -->
-
-1. **Something anyone can observe once this is done.**
+1. **A part over 400 changed lines closes without an owner question and shows a warning at task start, and a story approved before the change keeps working.**
 
 ## Risks
 
