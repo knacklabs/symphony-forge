@@ -48,27 +48,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "c7d3a5f6b402661e7ee21fa978b76e22e9caaa0841fac18cec4762b2bf845208",
-    "changed": "63f5afc53bc4a415fb7e790a79ff28a5fdac064609a46c779c8f26f5741b3366",
-    "commit": "65aa164c3da75da81612c31acfbea6996206b3c7",
+    "branch_diff": "f872ce96cb55ff1f14fa3c9ca0f2174bde9d3bd9fd4010b1cacbac882aa4bbaa",
+    "changed": "50f93dc9a8e88adfb02620ca1869b02eb7f9c3fa14cf4fb8d71a21c6a7c69df5",
+    "commit": "814ffd5f7b84427be9ec07e5c2d6551e4e1d5416",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 3, Work 1, Harm 1\nRaise: Test.\nCase: normal use - running either canvas parameter of the changed regression test.\nThis overwrites the remaining third-round findings with a clean report. Lines 164\u2013165 replenish the queue only for working-build cases, while tests/stubs/autoreview:19 repeats its last response. Consequently, the canvas `--resolve more` call receives clean reviews and succeeds, contradicting the assertions at lines 172\u2013173. Restore the third-round report for the canvas cases after close so the test passes and exercises settled-finding filtering.",
-        "file": "tests/test_signoff_repair_history.py",
-        "gain": 3,
-        "harm": 1,
-        "line": 84,
-        "priority": "P1",
-        "title": "Gate: test_1_repair_checkout_keeps_rounds_settlements_and_owner_stop",
-        "work": 1
-      }
-    ],
-    "id": "c603c13b-d29e-4cee-948e-3e379f72969c",
+    "findings": [],
+    "id": "037377d9-8acf-41ee-bf4b-d6c203234fb0",
     "status": "clean"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-02T09:09:22.747509+00:00",
@@ -80,6 +69,10 @@
     },
     {
       "at": "2026-11-02T09:58:15.985500+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-02T10:35:00.824524+00:00",
       "step": "review"
     }
   ],
