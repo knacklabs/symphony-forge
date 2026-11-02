@@ -4,12 +4,20 @@
   "done_when": "Each check runs once per pull request, and the live starter tests still run every night.",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-02T17:45:36.918377+00:00",
       "step": "start"
     }
   ],
-  "why": "Pull requests print the net-line count in two places: the net-lines job in .github/workflows/forge-next.yml and the pull request size step in .github/workflows/forge.yml. The Windows installer test runs in its own windows-installers job and again in the Windows platform groups, but only for pull requests that change non-test code. Removing the job also drops the only Windows check on test-only pull requests that touch no platform test. Starter smoke's live tests skip unless FORGE_STARTER_LIVE is set, and the nightly full run in forge.yml does not set it, so moving them to nightly needs that variable set too."
+  "stuck": {
+    "close": null,
+    "head": "8234058ef4f843516afeea493ca3ef36204e3be7",
+    "keys": {},
+    "round": null
+  },
+  "why": "Pull requests print the net-line count in two places: the net-lines job in .github/workflows/forge-next.yml and the pull request size step in .github/workflows/forge.yml. The Windows installer test runs in its own windows-installers job and again in the Windows platform groups, but only for pull requests that change non-test code. Removing the job also drops the only Windows check on test-only pull requests that touch no platform test. Starter smoke's live tests skip unless FORGE_STARTER_LIVE is set, and the nightly full run in forge.yml does not set it, so moving them to nightly needs that variable set too.",
+  "worker": "codex"
 }
