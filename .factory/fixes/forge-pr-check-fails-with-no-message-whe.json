@@ -1,0 +1,15 @@
+{
+  "base": "bedb684c948e462274bb62920e1fcc56ccbffed0",
+  "branch": "fix/forge-pr-check-fails-with-no-message-whe",
+  "done_when": "The review check waits briefly for the pull request ref to catch up, and if it still differs, it prints a plain message that says so.",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-02T18:39:27.465851+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "forge-pr-check fails with no message when GitHub's pull request ref has not caught up with the commit that close just pushed, so close reports failed checks until a plain rerun passes."
+}
