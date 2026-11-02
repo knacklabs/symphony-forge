@@ -11,12 +11,27 @@
   "done_when": "The review check waits briefly for the pull request ref to catch up, and if it still differs, it prints a plain message that says so.",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "47d61cd93213a07cbc63ca700bee7334260fb216793db2c54e707866c2285ee7",
+    "changed": "51929b38b794208484775a12db12f93fbf67dd5f54bfa20c4c38e94047fb3346",
+    "commit": "cf39398b90e116b673eefd600501e784795df248",
+    "dismissals": [],
+    "findings": [],
+    "id": "8579c78d-04ec-4e7b-8471-9abbdff52d14",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-02T18:39:27.465851+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-02T21:24:01.298695+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
