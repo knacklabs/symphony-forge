@@ -8,6 +8,7 @@ import pytest
 
 from conftest import GH_STUB, Repo, _install
 from test_close import STORY_DOC, body, env
+from test_fix_drop import _github
 from test_machine_views import github, pull
 from test_next_local_progress import _client
 from test_story import worktree
@@ -56,6 +57,28 @@ def _clone(env, tmp_path, name: str) -> Repo:
     path = tmp_path / name
     env.repo.git("clone", "-q", remote, str(path))
     return Repo(path, env.repo.bin)
+
+
+@pytest.mark.parametrize("adopted,command", [(False, "work"), (False, "close"), (True, "work")],
+                         ids=["new-work", "new-close", "earlier-adopted-work"])
+def test_2_pickup_keeps_a_newly_dropped_fix_inactive(env, adopted, command, tmp_path):
+    _client(env.repo, env.gh, tmp_path, adopted)
+    item, _ = env.start_fix()
+    branch = f"fix/{item}"
+    env.repo.git("push", "-q", "origin", branch)
+    machine = _clone(env, tmp_path, "stale-machine")
+    stale = machine.git("rev-parse", f"origin/{branch}")
+    _github(env.repo)
+    dropped = env.repo.forge("fix", "drop", item, "--because", "The owner no longer needs this fix")
+    assert dropped.returncode == 0, dropped.stdout + dropped.stderr
+    assert machine.git("rev-parse", f"origin/{branch}") == stale
+
+    refused = machine.forge(command, item)
+    assert not any(line == f"branch refs/heads/{branch}" for line in
+                   machine.git("worktree", "list", "--porcelain").splitlines())
+    assert refused.returncode != 0
+    assert refused.stderr == f"Fix {item} is dropped.\nNext: forge fix drop {item} --undo\n"
+    assert machine.git("ls-remote", "origin", f"refs/heads/{branch}").split()[0] != stale
 
 
 @pytest.mark.parametrize("adopted", [False, True], ids=["new repo", "earlier adopted"])
