@@ -22,8 +22,8 @@
     "id": "329d4b8b-ca0a-45a1-ae7e-2a01d0fba816",
     "status": "clean"
   },
-  "round": 1,
-  "status": "waiting for checks",
+  "round": 2,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-02T08:59:19.387415+00:00",
@@ -35,10 +35,10 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "956654f45e767d17a007206026871ac485eabf26",
+    "close": "cfcd8aa1-4c8b-422b-99ce-1027a5a7acf0",
+    "head": "41cedac7d764170877a7f57e7369625c49f97061",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "The app-baseline skill names six basic screens and specifies Sign-in with Email and Password, Forgot password, Reset password and Accept invite with Password. The guide says to build the basic screens first, and nothing says the approved sign-in answer replaces the baseline. Forge's sync overwrites the baseline in every repo, so an app that signs in another way cannot correct it, and the review names only the story doc and AGENTS.md as overrides.",
   "worker": "codex"
