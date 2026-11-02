@@ -4,12 +4,20 @@
   "done_when": "Sign-off accepts the last green full run when every change since it is a Forge-written file or record, and a change to app code still needs a new full run.",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-02T09:14:10.523085+00:00",
       "step": "start"
     }
   ],
-  "why": "Each merged repair makes the last green full run stale, so client sign-off waits about 30 minutes even for Forge-written bookkeeping changes. The review already runs after the green check in the sign-off path (src/forge/records.py decision_accept: the gaps list that includes the green check refuses before _signoff_review is called), so only the reuse part is new; the sign-off also checks green on the default branch's latest commit but reviews HEAD, and nothing ties the two together."
+  "stuck": {
+    "close": null,
+    "head": "e958d352395a7218a926827dd562afb9f4da45f5",
+    "keys": {},
+    "round": null
+  },
+  "why": "Each merged repair makes the last green full run stale, so client sign-off waits about 30 minutes even for Forge-written bookkeeping changes. The review already runs after the green check in the sign-off path (src/forge/records.py decision_accept: the gaps list that includes the green check refuses before _signoff_review is called), so only the reuse part is new; the sign-off also checks green on the default branch's latest commit but reviews HEAD, and nothing ties the two together.",
+  "worker": "codex"
 }
