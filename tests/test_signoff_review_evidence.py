@@ -34,7 +34,7 @@ def test_1_signoff_uses_the_green_full_run_without_a_separate_test_run(
     prompt = "\n".join(calls[-1]["prompt_files"].values())
     # Old contract: demand a local receipt for exactly this product. New contract:
     # the already-checked full run supplies proof for the named demo tests.
-    assert "The full test run on the latest commit on main passed" in prompt
+    assert "The full test run covering the reviewed product on main passed" in prompt
     assert "forge-full-suite" in prompt
     assert "tests/test_orders.py::test_create_order" in prompt
     assert "Run forge test on the finished product" not in prompt

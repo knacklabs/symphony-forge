@@ -14,7 +14,7 @@ import json
 
 import pytest
 
-from test_proto_signoff import _adopted_client, _client, _decision, _request_build
+from test_proto_signoff import _adopted_client, _client, _decision, _green_full_run, _request_build
 
 STORY = "client-sign-off-never-finishes-every-att"
 pytestmark = pytest.mark.platform
@@ -46,6 +46,7 @@ def test_1_signoff_reviews_changes_and_bounds_rounds(repo, tmp_path, monkeypatch
         (fix / "app.py").write_text("print('prototype')\n", encoding="utf-8")
         repo.git("add", "app.py", cwd=fix)
         repo.git("commit", "-q", "-m", "Build the adopted prototype", cwd=fix)
+    _green_full_run(repo, product=fix)
     page = _decision(fix, answers)
     previous_app = repo.git("ls-tree", "HEAD", "--", "app.py", cwd=fix)
     previous_commit = repo.git("rev-parse", "HEAD", cwd=fix)
@@ -65,6 +66,7 @@ def test_1_signoff_reviews_changes_and_bounds_rounds(repo, tmp_path, monkeypatch
         page_change.write("\n# Explain the order path\n")
     repo.git("add", changed, cwd=fix)
     repo.git("commit", "-q", "-m", "Explain the order path", cwd=fix)
+    _green_full_run(repo, product=fix)
     queue.write_text(json.dumps([
         _report(priority)]))
     second = accept()
@@ -134,6 +136,7 @@ def test_2_accepted_signoff_survives_only_unchanged_files(
     (fix / "src/orders.py").write_text("print('orders')\n", encoding="utf-8")
     repo.git("add", "src/orders.py", cwd=fix)
     repo.git("commit", "-qm", "Build order flow", cwd=fix)
+    _green_full_run(repo, product=fix)
     # Keep client approval pending: owner acceptance settles a review finding,
     # while a completed client sign-off now stays accepted without another review.
     page = _decision(fix, answers)
@@ -167,6 +170,7 @@ def test_2_accepted_signoff_survives_only_unchanged_files(
         out.write("\n# Changed after acceptance\n")
     repo.git("add", target, cwd=fix)
     repo.git("commit", "-qm", "Update the prototype", cwd=fix)
+    _green_full_run(repo, product=fix)
     finding = report["report"]["findings"][0]
     finding.update(priority=priority, title=("Order submission fails" if priority == "P0"
                                            else "Submitting an order still fails"))
