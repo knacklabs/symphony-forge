@@ -41,6 +41,7 @@ LISTED = {"AGENTS.md", ".gitattributes", ".gitignore", ".forge/hooks.sh", ".forg
           *(f"{host}/skills/simplified-technical-english/{name}" for host in (".claude", ".codex")
             for name in PLAIN_ENGLISH), *ROLE_FILES}
 LISTED.add(".forge/design/support.js")
+LISTED.update(f"{host}/skills/forge/run-reference.md" for host in (".claude", ".codex"))
 # The old first commit had only Forge docs and config; it now includes deploy files.
 SCAFFOLD = {"forge.toml", "Dockerfile", ".dockerignore", "services.toml", "docs/product/BRIEF.md", "docs/product/DISCOVERY.md",
             "docs/specs/README.md", "docs/decisions/README.md", "plans/roadmap.json"}
