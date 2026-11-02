@@ -1,0 +1,84 @@
+{
+  "base": "8edd160e3968ec9d9af22a14656eff5f157c5d2a",
+  "branch": "fix/the-canvas-completeness-check-is-a-separ",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a19bd8-6a06-7961-9c69-67d250b6ff67",
+    "head": null,
+    "start": "c3e64c46be75f5cb7e7cb3521b25677024401509"
+  },
+  "done_when": "Client sign-off no longer runs or refuses on the canvas completeness check for either kind of prototype, its template and model call are deleted, the product sign-off review still runs for working prototypes, and earlier accepted sign-off records stay as they are.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "decision_accept() in src/forge/records.py",
+      "file": "src/forge/records.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 388,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: update the remaining tests that require canvas review",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "3a32b4eacfcd5be158dbd6d741999d1a2bb6f07608952c473cc553dc3c72d1c0",
+    "changed": "6fad4e3f3da85ff4d6030f666e86ea3b84cea110997feb4eeca1bc02c8eda2de",
+    "commit": "be696e41d69e56ad3f37c55998635888f8ea5b88",
+    "dismissals": [],
+    "findings": [],
+    "id": "c0f7fd5b-e3b9-44cb-acdb-cc47ba5b70ca",
+    "status": "clean"
+  },
+  "round": 5,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-02T10:39:49.970692+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-02T10:51:38.579306+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-02T11:05:03.591201+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-02T11:21:06.259075+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-02T12:41:59.532737+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-02T12:52:47.561201+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-02T10:51:38.591833+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "src/forge/records.py",
+    "reason": "The owner chose one more round: update the remaining tests.",
+    "wait_id": "f7b57a72-00d9-4510-9e6d-b7814c9b69fd",
+    "worker_round": 1
+  },
+  "stuck": {
+    "close": "f3d33c05-a76d-4e70-ad5e-78b574d7d5e2",
+    "head": "9757b7b318ccd791d5f331d9d635ef4444469fcb",
+    "keys": {},
+    "round": 4
+  },
+  "why": "The canvas completeness check is a separate AI model call that runs on every client sign-off, for prototypes with a working app and for canvas-only ones, and it can hold sign-off over screen gaps the owner no longer wants checked, because the design lives in the artifact and the client approves a demo.",
+  "worker": "codex"
+}

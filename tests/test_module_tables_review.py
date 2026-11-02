@@ -5,7 +5,7 @@ import json
 
 import pytest
 
-from test_close import CLEAN, GREEN, STORY_DOC, blocked, body, env  # noqa: F401 (fixture)
+from test_close import GREEN, STORY_DOC, blocked, body, env  # noqa: F401 (fixture)
 from test_proto_signoff import SOL_HIGH, _client, _decision
 from test_score_bar import _read_prompt, _says
 from test_score_notes import _client_repo as setup_client, _scored
@@ -112,7 +112,6 @@ def test_3_reviews_and_reads_hold_a_query_on_another_modules_tables(env, tmp_pat
         fix, answers, queue = _client(repo, signoff, monkeypatch)
         _decision(fix, answers)
         queue.write_text(json.dumps([
-            {**CLEAN, "say": SOL_HIGH},
             {**blocked(issue), "say": SOL_HIGH},
         ]), encoding="utf-8")
         accepted = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)

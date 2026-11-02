@@ -22,7 +22,6 @@ def test_1_refusals_preserve_review_text(repo, tmp_path, monkeypatch, setup):
     _decision(fix, answers)
     title = 'Cannot save {role}: {"role": "owner"} and {{literal}}'
     queue.write_text(json.dumps([
-        {"report": {"review_status": "scoped-clean", "findings": []}},
         {"report": {"review_status": "findings", "findings": [{
             "priority": "P1", "title": title,
             "body": "Gain 5, Work 2, Harm 4\nThe normal save fails.",

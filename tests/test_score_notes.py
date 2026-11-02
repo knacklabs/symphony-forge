@@ -59,13 +59,12 @@ def test_1_every_note_and_finding_shows_scores_and_the_harm_floor(env, tmp_path,
         (tmp_path / "sign-off").mkdir()
         fix, answers, queue = _client(repo, tmp_path / "sign-off", monkeypatch)
         _decision(fix, answers)
-        clean_check = {"say": SOL_HIGH, "report": {
-            "review_status": "scoped-clean", "findings": []}}
         # A line outside the score range is unscored. The finding now holds by priority,
         # rather than making the report unreadable.
         invalid_score = {"say": SOL_HIGH, "report": {"review_status": "findings", "findings": [
             _scored("P1", "Prototype fails", "Gain 3, Work 2, Harm 1.5\nDemo cannot finish")]}}
-        queue.write_text(json.dumps([clean_check, invalid_score]))
+        # Only the product review runs now; its first result must be the unscored finding.
+        queue.write_text(json.dumps([invalid_score]))
         unscored = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
         assert unscored.returncode == 1
         assert "found a blocking issue: Prototype fails" in unscored.stderr

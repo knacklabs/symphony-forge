@@ -666,16 +666,14 @@ client-signoff` (customer, demo address for a working build, and the answers pag
 approved via and approved on empty), and run `forge decision accept client-signoff --by "<name>"`
 before any reply is recorded. Put each demo step and its test under `## Proof` for a working build,
 and settled choices under `## Decisions`.
+Before the demo, the Claude agent reads the design artifact and lists its screens.
+It compares them with the app, then builds what is missing or tells the person.
+On a Codex-only host, compare the app with the design pages saved in the repo.
 Sign-off checks that the copied Answers section matches `docs/product/BRIEF.md` and that the full
-run on main is green. Its completeness review must pass after judging the screens against the whole
-brief, including its purpose, users, records, fields, choices and key flows; it does not require a
-separate screen list. Missing screens, fields, options or flows hold sign-off. When a precondition is
+run on main is green. When a precondition is
 missing, the refusal lists every gap and the next action for each. Existing clients can complete
 sign-off with the brief and design they have after upgrade and sync; they do not need to add
 prototype design files for this gate.
-The check uses Codex's `gpt-6.1-sol` at high effort, independent of `[models.design]`.
-Codex must be installed because only Codex can review the screen images.
-On Windows, large image folders use separate batches to fit the native command line limit.
 Fix all findings from one sign-off review in one fix. Run the printed repair command from
 the sign-off checkout that the refusal names. The repair includes the sign-off record and
 publishes its earlier review commits, even when that checkout's first fix already merged.
@@ -688,12 +686,10 @@ Every reviewer gets earlier findings and answers. Settled findings stay settled.
 After two rounds, P0 findings still block until fixed. Other open findings need the owner's choice.
 Record that choice with `forge decision accept client-signoff --by "<name>" --resolve accept|more|split --reason "<human's choice>"`.
 Accept keeps the findings in the item's Known issues. Split creates a separate fix. More permits one more review.
-The canvas completeness check uses these same rounds and owner choices. Accept or split continues
-sign-off without another canvas check while the product and brief stay unchanged. A P0 still blocks.
 These rules apply to new clients and earlier-adopted clients after upgrade.
 Forge reuses passed results while what they checked stays unchanged.
 The product review uses the green full run as test evidence. It needs no separate `forge test` run.
-If the product or completeness review cannot finish, the refusal names its saved raw report when one exists.
+If the product review cannot finish, the refusal names its saved raw report when one exists.
 Before the customer's reply, the command runs these checks and stops without accepting sign-off.
 Autoreview uses the
 repo's tool and `[models.review]` settings, with Autoreview's defaults for unset values. Fix what it finds and run it again. Once it passes, tell the salesperson to ask the
