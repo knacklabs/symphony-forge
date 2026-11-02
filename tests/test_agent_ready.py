@@ -65,7 +65,7 @@ def test_1_a_create_sent_again_with_its_retry_key_makes_one_item(repo, gh, tmp_p
         live = live_run(request.getfixturevalue("tmp_path_factory"))
         _require_cases(live["api"], (
             "a project create sent again with the same Idempotency-Key makes one project",
-            "an invite sent again with the same Idempotency-Key sends one email and makes one invitation",
+            "an invite retry with the same key returns no link and makes one invitation",
             "a retried project create with the same idempotency key makes one project",
         ))
 
