@@ -111,8 +111,11 @@ def test_3_reviews_and_reads_hold_a_query_on_another_modules_tables(env, tmp_pat
         signoff.mkdir()
         fix, answers, queue = _client(repo, signoff, monkeypatch)
         _decision(fix, answers)
+        # The prototype uses its own bar. Keep the low-score floor proof above,
+        # and use Gain 5 here to retain the sign-off refusal and prompt contract.
+        signoff_issue = _scored("P1", title, "Gain 5, Work 3, Harm 1\nProjects reads the sign-in table.")
         queue.write_text(json.dumps([
-            {**blocked(issue), "say": SOL_HIGH},
+            {**blocked(signoff_issue), "say": SOL_HIGH},
         ]), encoding="utf-8")
         accepted = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
         assert accepted.returncode == 1, accepted.stdout + accepted.stderr
