@@ -18,12 +18,52 @@
   "done_when": "After a repair fix merges, or after the work moves to another computer, the next sign-off accept counts the earlier rounds, keeps their settled findings, and stops for the owner at round two.",
   "fix_kind": "backend",
   "kind": "fix",
+  "known": [
+    {
+      "area": "fix_start() in src/forge/task.py",
+      "file": "src/forge/task.py",
+      "gain": 4,
+      "harm": 4,
+      "line": 624,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Preserve sign-off history when close replays a repair",
+      "work": 3
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "b9eb0ed97ba2af602af24bf537718696a13dfbbff383b95fa7e41f09cdb4d003",
+    "changed": "baa312725999c1e062955b87a5799e00e6b0c698dd4d3ffebb9a4493d85b8b9e",
+    "commit": "887231ecb74625ae32ba7ead1f8327bca0bb902a",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 3, Harm 4\nRaise: Data loss.\nCase: normal use - main receives a conflicting app edit while a sign-off repair is being built.\nChoosing HEAD here puts the newer sign-off record inside the repair's recorded base. When close handles the conflict, src/forge/close.py:723 constructs its replay baseline from main's tree, and :733 replays only commits after that base. The inherited sign-off record is therefore deleted or reverted to main's older version. After the repair squash and a fresh clone, earlier rounds, settled findings and the owner's stop are lost again. The published start tag retains the commits, but the history reader does not search that tag to restore the record. The new tests avoid this path by manually merging main with `-X ours` at tests/test_signoff_repair_history.py:118 and :177. Preserve the record through the real close/replay path and exercise that path in the regression test.",
+        "file": "src/forge/task.py",
+        "gain": 4,
+        "harm": 4,
+        "line": 624,
+        "priority": "P1",
+        "title": "Preserve sign-off history when close replays a repair",
+        "work": 3
+      }
+    ],
+    "id": "6b627367-60d2-40cf-b41c-14edf9313684",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-02T09:09:22.747509+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-02T09:39:12.328435+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
