@@ -4,12 +4,20 @@
   "done_when": "The sign-off screens check reviews only the attached screen images and the brief, its refusal states how many findings are open and which of them block sign-off, and source is reviewed only by the strict review.",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-02T09:56:00.929300+00:00",
       "step": "start"
     }
   ],
-  "why": "In src/forge/review.py, run() takes the signoff branch with an empty base commit for item design-check, and the omitted-images filter only drops images outside the batch, so all source stays in the tree. Autoreview then splits that whole diff into chunks (review_process.py parallel_parts). Findings from different chunks are merged in design_check() with no de-duplication, so one gap gets reported under several titles. The refusal in src/forge/records.py _signoff_review() lists every open finding with its body under found gaps and does not give a count or say which findings block, while the repair text names only the held ones."
+  "stuck": {
+    "close": null,
+    "head": "676c55265319476d4b111b751412796d327876ca",
+    "keys": {},
+    "round": null
+  },
+  "why": "In src/forge/review.py, run() takes the signoff branch with an empty base commit for item design-check, and the omitted-images filter only drops images outside the batch, so all source stays in the tree. Autoreview then splits that whole diff into chunks (review_process.py parallel_parts). Findings from different chunks are merged in design_check() with no de-duplication, so one gap gets reported under several titles. The refusal in src/forge/records.py _signoff_review() lists every open finding with its body under found gaps and does not give a count or say which findings block, while the repair text names only the held ones.",
+  "worker": "codex"
 }
