@@ -43,6 +43,17 @@
       "item": "no-placeholder-fixes-2",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_release_version.py\tThe latest release renamed the version test without its timing key, repeating the inventory failure.",
+      "kind": "bug",
+      "path": "tests/test_release_version.py",
+      "line": 15,
+      "text": "The latest release renamed the version test without its timing key, repeating the inventory failure.",
+      "from": "worker",
+      "item": "no-placeholder-fixes-2",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
