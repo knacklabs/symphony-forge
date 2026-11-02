@@ -1,0 +1,15 @@
+{
+  "base": "7450721ddf8c0cbedf9d84c8311677a59f817675",
+  "branch": "fix/the-sign-in-question-in-the-guide-offers",
+  "done_when": "A new prototype's sign-in question lists email and password first, then one-time codes, then company sign-in, and states that the client chooses the method.",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-02T11:32:01.870412+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The sign-in question in the guide offers only two methods, so a client who wants one-time codes sees no choice for it, and the owner wants that option added, with email and password kept as the default and a clear note that the method is the client's choice."
+}
