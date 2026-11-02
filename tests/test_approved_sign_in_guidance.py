@@ -8,7 +8,7 @@ Only the existing external GitHub and review-tool edges are fake.
 
 import pytest
 
-from test_close import CLEAN, env  # noqa: F401
+from test_close import CLEAN, GREEN, env  # noqa: F401
 from test_score_notes import _client_repo
 
 STORY = "FIX-APPROVED-SIGN-IN"
@@ -18,6 +18,8 @@ STORY = "FIX-APPROVED-SIGN-IN"
 @pytest.mark.parametrize("previous", [False, True], ids=["new", "earlier-adopted"])
 def test_1_basic_screens_follow_approved_sign_in(env, tmp_path, previous):
     _client_repo(env, tmp_path, previous)
+    # New-client init replaces API responses; restore the close fixture's check results.
+    env.checks(GREEN)
     repo = env.repo
     item, where = env.start_fix(changes={
         "docs/decisions/sign-in.md":
