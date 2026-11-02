@@ -115,12 +115,9 @@ def test_10_doctor_checks_the_selected_tool_instead_of_workers(env, tmp_path, mo
     monkeypatch.setenv("XDG_DATA_HOME", str(home / "data"))
     monkeypatch.setenv("CLAUDECODE", "1")
     monkeypatch.delenv("CODEX_THREAD_ID", raising=False)
-    # Both CLIs are installed. Missing SDK, trust and UI skills belong only to the chosen tool.
-    if tools == "claude":
-        for name in ("impeccable", "emil-design-eng"):
-            skill = home / ".claude/skills" / name / "SKILL.md"
-            skill.parent.mkdir(parents=True)
-            skill.write_text(f"{name}\n", "utf-8")
+    # This boundary owns selected-tool SDK/trust checks on new and adopted clients.
+    # Sync now supplies both skills, so a missing global copy is no longer a gap.
+    # The delivery test owns their contents; no fake global skills or new seam needed.
     _stub_forge(tmp_path, monkeypatch)
     checked = repo.forge("doctor", cwd=client)
     assert config.read_bytes() == before
@@ -131,9 +128,9 @@ def test_10_doctor_checks_the_selected_tool_instead_of_workers(env, tmp_path, mo
         assert "worker reads skills" not in checked.stdout
     else:
         assert checked.returncode == 1, checked.stdout + checked.stderr
-        assert "forge doctor found 4 problem(s)" in checked.stderr, checked.stdout + checked.stderr
+        assert "forge doctor found 2 problem(s)" in checked.stderr, checked.stdout + checked.stderr
         assert "Codex SDK" in checked.stdout
         assert "Codex doesn't trust this project" in checked.stdout
         for name in ("impeccable", "emil-design-eng"):
-            assert f"{name} is required for UI work but isn't installed where the codex worker reads skills." in checked.stdout
+            assert f"{name} is required for UI work" not in checked.stdout
         assert "claude worker reads skills" not in checked.stdout
