@@ -4,11 +4,26 @@
   "done_when": "forge.toml's checks name only tests and forge-pr-check on the default branch",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "e617a86862c204255bb64f3af7736bcc93a84b07a953000e47a290374925a5be",
+    "changed": "f9c04a1b8cab3a43b7441fc72030e8a1170c2f4668e15c1b030e89bab9490944",
+    "commit": "5478d67ffa461437a1a4aca6c9065339851f244d",
+    "dismissals": [],
+    "findings": [],
+    "id": "de9a0daf-4070-4d75-bc97-28f35aef6de0",
+    "status": "clean"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-02T19:01:38.220903+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-02T19:02:21.372137+00:00",
+      "step": "review"
     }
   ],
   "why": "Forge waits for checks named on the default branch's forge.toml, so a pull request that removes the windows-installers job waits forever for that job. Drop the name from forge.toml first, as a change of its own, so that branch protection and forge.toml agree and the CI cleanup can then merge."
