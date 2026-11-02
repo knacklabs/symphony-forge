@@ -54,7 +54,7 @@
     "id": "6b627367-60d2-40cf-b41c-14edf9313684",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -67,10 +67,12 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "a6e72d3f4f121e4d2535d724a4ed45a183caa731",
-    "keys": {},
-    "round": null
+    "close": "ee67c874-f51a-46de-a875-79efdcfcb103",
+    "head": "34f0b6879985c0fea9901c17a44991873fa0751d",
+    "keys": {
+      "the open P0 preserve sign-off history when close replays a repair in src/forge/task.py": 1
+    },
+    "round": 1
   },
   "why": "Sign-off rounds, settled findings and the owner's stop after round two are lost when a repair fix does not carry the sign-off record from the branch that wrote it. Evidence: _history in src/forge/review.py reads only HEAD's first-parent history of the record; _signoff_review in src/forge/records.py refuses with a repair command that does not say to run it from the sign-off checkout; fix_start in src/forge/task.py stacks on the current branch only when that branch is run from and not yet merged.",
   "worker": "codex"
