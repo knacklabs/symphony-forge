@@ -852,7 +852,8 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         repo.git("clone", "-q", "--no-local", "--no-checkout", str(top), str(tree), cwd=top)
         repo.git("checkout", "-q", "--detach", head, cwd=tree)
         if signoff_prompt:
-            if previous.get("commit"):
+            # Canvas attachments need every current screen, including unchanged images.
+            if previous.get("commit") and item != "design-check":
                 repo.git("fetch", "-q", str(top), previous["commit"], cwd=tree)
                 repo.git("read-tree", previous["commit"], cwd=tree)
                 review_base = previous["commit"]
