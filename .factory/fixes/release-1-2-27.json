@@ -2,6 +2,13 @@
   "allow_large": "A version bump for a release the owner asked for touches every file that names the version.",
   "base": "c9d636b028b1c27397ffa14021915713eb69a3db",
   "branch": "fix/release-1-2-27",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a19cce-b464-77e2-97ae-4466769ebe15",
+    "head": null,
+    "start": "89dbb8e6960a7e9c7f28038265e92e6e0b8838b8"
+  },
   "done_when": "Every version reference names v1.2.27, forge sync output is committed, and the version tests pass",
   "fix_kind": "mechanical",
   "kind": "fix",
