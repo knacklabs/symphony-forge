@@ -34,6 +34,17 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/prcheck.py\tA pull-request event with an older base rejects a clean review recorded against newer main even when the product head has not changed.",
+      "kind": "edge",
+      "path": "src/forge/prcheck.py",
+      "line": 394,
+      "text": "A pull-request event with an older base rejects a clean review recorded against newer main even when the product head has not changed.",
+      "from": "worker",
+      "item": "FORGE-HANDOVER-1/MERGE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\ttests/test_handover_merge.py\tFollow-up: cover fast-forward pickup and shared-ready local advice",
       "kind": "edge",
       "path": "tests/test_handover_merge.py",
