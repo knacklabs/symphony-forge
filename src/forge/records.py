@@ -34,6 +34,7 @@ import string
 from datetime import date
 from itertools import zip_longest
 from pathlib import Path
+from typing import Any
 
 from forge import repo, story
 from forge.story import FRONTMATTER, _record as _front, _text, _write  # pyright: ignore[reportPrivateUsage]
@@ -463,6 +464,27 @@ def _app_files(top: Path, names: list[str], ref: str | None = None) -> list[str]
             or (story.show(top, ref, name) if ref else _text(top / name)) != _text(template)]
 
 
+def _signoff_known(top: Path, result: dict[str, Any], round_number: int) -> None:
+    """Settle lesser product findings before any stop, question or repair uses them."""
+    from forge import review, score
+
+    result["blocking_level"] = "P0"
+    opened = score.open_findings(result)
+    lesser = [n for n, finding in enumerate(result.get("findings", []), 1)
+              if finding in opened and finding["priority"] != "P0" and not score.holds(finding, "P0")]
+    if not lesser:
+        return
+    result.setdefault("dismissals", []).extend(
+        {"finding": number, "because": "known: below the prototype sign-off bar"} for number in lesser)
+    item, state = review.branch_item(repo.current_branch(top), top)
+    known = score.remember([], result, round_number, {})
+    identities = {score.identity(entry["file"], entry["title"]) for entry in known}
+    state["known"] = [entry for entry in state.get("known", [])
+                      if score.identity(entry["file"], entry["title"]) not in identities] + known
+    repo.write_state(item, state, top)
+    repo.commit_state("Keep lesser sign-off findings as known issues", repo.state_path(item), top=top)
+
+
 def _signoff_review(top: Path, args: argparse.Namespace, answers: str, evidence: str,
                     *, unchanged: bool = False, canvas: str = "") -> str:
     """Keep sign-off rounds in git and reuse the review loop's notes and owner choices."""
@@ -475,6 +497,11 @@ def _signoff_review(top: Path, args: argparse.Namespace, answers: str, evidence:
     inputs = _digest(json.dumps([answers, evidence, story.agents_section(top, "Review rules"), constitution(top)]))
     section = "canvas" if canvas else ""
     history = review._history(top, "client-signoff", "", previous, path=rel, section=section)
+    if not canvas and previous:
+        _signoff_known(top, previous, len(history))
+        saved["stop"] = bool(saved.get("stop") and score.open_findings(previous))
+        _write(top / rel, json.dumps(document, indent=2) + "\n")
+        repo.commit_state("Apply the prototype bar to saved sign-off findings", rel, top=top)
     choice, reason = getattr(args, "resolve", None), getattr(args, "reason", None)
     next_step = ('forge decision accept client-signoff --by "<name>" '
                  '--resolve <accept|more|split> --reason "<human\'s choice>"')
@@ -533,23 +560,13 @@ def _signoff_review(top: Path, args: argparse.Namespace, answers: str, evidence:
     result = (review.design_check(top, prompt, history, previous) if canvas else
               review.run(top, "client-signoff", {"signoff_history": history}, repo.config(top),
                          "", {}, previous, signoff_prompt=prompt, images=set()))
+    if not canvas:
+        _signoff_known(top, result, len(history) + 1)
     opened = score.open_findings(result)
     critical = any(f["priority"] == "P0" for f in opened)
     held = ([(n, f) for n, f in enumerate(result["findings"], 1)
-             if f in opened and f["priority"] in review.SERIOUS] if canvas else review.blocking(result))
-    if not canvas:
-        result["blocking_level"] = "P0"
-        held = [(n, f) for n, f in enumerate(result["findings"], 1)
-                if f in opened and (f["priority"] == "P0" or score.holds(f, "P0"))]
-        item, state = review.branch_item(repo.current_branch(top), top)
-        held_keys = {score.identity(f["file"], f["title"]) for _, f in held}
-        known = [entry for entry in score.remember([], result, len(history) + 1, {})
-                 if score.identity(entry["file"], entry["title"]) not in held_keys]
-        identities = {score.identity(entry["file"], entry["title"]) for entry in known}
-        state["known"] = [entry for entry in state.get("known", [])
-                          if score.identity(entry["file"], entry["title"]) not in identities] + known
-        repo.write_state(item, state, top)
-        repo.commit_state("Keep lesser sign-off findings as known issues", repo.state_path(item), top=top)
+             if f in opened and f["priority"] in review.SERIOUS] if canvas else
+            [(n, f) for n, f in enumerate(result["findings"], 1) if f in opened])
     saved.update(review=result, inputs=inputs,
                  stop=bool(held and len(history) + 1 >= 2 and not critical))
     _write(top / rel, json.dumps(document, indent=2) + "\n")

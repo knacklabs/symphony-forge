@@ -66,3 +66,83 @@ def test_1_prototype_signoff_keeps_lesser_findings_without_repair(
                 if entry["title"] == "Order labels need work"]
         assert len(kept) == 1
         assert kept[0]["kept"] != "open"
+
+
+# Test audit: an earlier release's saved stop must be reclassified before the
+# owner question, without another model call on an unchanged product. Fresh
+# sign-off coverage cannot reach this upgrade state. Seed it with real review
+# rounds, then restore the earlier release's lesser scores in its saved record;
+# assert only command output, reviewer calls and public Known issues.
+def test_2_adopted_signoff_releases_a_saved_lesser_stop(repo, tmp_path, monkeypatch):
+    fix, answers, queue = _adopted_client(repo, tmp_path, monkeypatch)
+    _request_build(repo, fix)
+    (fix / "app.py").write_text("print('sample orders')\n", encoding="utf-8")
+    repo.git("add", "app.py", cwd=fix)
+    repo.git("commit", "-qm", "Build the adopted prototype", cwd=fix)
+    page = _decision(fix, answers)
+    report = {"report": {"review_status": "findings", "findings": [{
+        "priority": "P1", "title": "Order labels need work",
+        "body": "Gain 5, Work 1, Harm 3\nThe order labels need clearer wording.",
+        "code_location": {"file_path": "app.py", "line": 1}}]}}
+    queue.write_text(json.dumps([
+        {"report": {"review_status": "scoped-clean", "findings": []}}, report]), encoding="utf-8")
+    for _ in range(2):
+        stopped = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
+        assert stopped.returncode == 1, stopped.stdout + stopped.stderr
+    assert "One more round, split or accept?" in stopped.stderr
+    # Earlier releases also stopped on Gain 4, Work 1, Harm 3. Preserve that
+    # historical record as an upgrade input, without changing the product.
+    record = fix / ".factory/client-signoff.json"
+    saved = json.loads(record.read_text("utf-8"))
+    finding = saved["review"]["findings"][0]
+    finding.update(gain=4, body=finding["body"].replace("Gain 5", "Gain 4"))
+    record.write_text(json.dumps(saved), encoding="utf-8")
+    repo.git("add", ".factory/client-signoff.json", cwd=fix)
+    repo.git("commit", "-qm", "Restore an earlier release sign-off stop", cwd=fix)
+    calls = queue.with_suffix(".calls.jsonl")
+    before = calls.read_text("utf-8")
+    accepted = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
+    assert accepted.returncode == 0, accepted.stdout + accepted.stderr
+    assert "--resolve" not in accepted.stderr
+    assert "status: accepted" in page.read_text("utf-8")
+    assert calls.read_text("utf-8") == before
+    shown = repo.forge("board", "--json", cwd=fix)
+    assert shown.returncode == 0, shown.stderr
+    assert any(entry["title"] == "Order labels need work" and entry["kept"] != "open"
+               for entry in json.loads(shown.stdout)["known_issues"])
+
+
+# Test audit: mixed findings must not send a lesser issue into the owner's
+# question or the split repair. Existing round tests contain only held issues.
+# Drive the actual decision and split commands; fake only the reviewer.
+def test_3_signoff_questions_and_split_include_only_held_findings(repo, tmp_path, monkeypatch):
+    fix, answers, queue = _client(repo, tmp_path, monkeypatch)
+    _decision(fix, answers)
+    report = {"report": {"review_status": "findings", "findings": [
+        {"priority": "P1", "title": "Order submission fails",
+         "body": "Gain 5, Work 2, Harm 3\nThe order cannot be submitted.",
+         "code_location": {"file_path": "app.py", "line": 1}},
+        {"priority": "P1", "title": "Order labels need work",
+         "body": "Gain 4, Work 1, Harm 3\nThe labels need clearer wording.",
+         "code_location": {"file_path": "app.py", "line": 1}}]}}
+    queue.write_text(json.dumps([
+        {"report": {"review_status": "scoped-clean", "findings": []}}, report]), encoding="utf-8")
+    for _ in range(2):
+        stopped = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
+        assert stopped.returncode == 1, stopped.stdout + stopped.stderr
+    assert "One more round, split or accept?" in stopped.stderr
+    assert "Order submission fails" in stopped.stderr
+    assert "Order labels need work" not in stopped.stderr
+    split = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", "--resolve", "split",
+                       "--reason", "The owner defers order submission", cwd=fix)
+    assert split.returncode == 0, split.stdout + split.stderr
+    shown = repo.forge("board", "--json", cwd=fix)
+    assert shown.returncode == 0, shown.stderr
+    board = json.loads(shown.stdout)
+    repairs = [item for item in board["items"] if "Sign-off findings:" in item["title"]]
+    assert len(repairs) == 1
+    assert "Order submission fails" in repairs[0]["title"]
+    assert "Order labels need work" not in repairs[0]["title"]
+    lesser = [entry for entry in board["known_issues"] if entry["title"] == "Order labels need work"]
+    assert len(lesser) == 1
+    assert "The owner defers" not in lesser[0]["reason"]
