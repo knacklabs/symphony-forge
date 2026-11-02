@@ -1,7 +1,14 @@
 {
+  "amendments": [
+    {
+      "at": "2026-11-02T09:09:33.023606+00:00",
+      "because": "The owner's request and the report need this to hold across fixes and machines, and a teammate's earlier attempts ran on another computer.",
+      "done_when": "After a repair fix started from the default branch on this computer, the next sign-off accept counts the earlier round, keeps its settled findings, and stops at round two."
+    }
+  ],
   "base": "e26302089bfdf304e514c5de6c8b666e65467cfb",
   "branch": "fix/sign-off-rounds-settled-findings-and-the",
-  "done_when": "After a repair fix started from the default branch on this computer, the next sign-off accept counts the earlier round, keeps its settled findings, and stops at round two.",
+  "done_when": "After a repair fix merges, or after the work moves to another computer, the next sign-off accept counts the earlier rounds, keeps their settled findings, and stops for the owner at round two.",
   "fix_kind": "backend",
   "kind": "fix",
   "status": "started",
