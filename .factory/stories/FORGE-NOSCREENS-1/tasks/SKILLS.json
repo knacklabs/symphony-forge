@@ -47,21 +47,42 @@
       "security": false,
       "title": "[P2] Preserve launcher executability when skills are added on Windows",
       "work": 3
+    },
+    {
+      "area": "src/forge/templates/skills/impeccable/scripts/live-browser.js",
+      "file": "src/forge/templates/skills/impeccable/scripts/live-browser.js",
+      "gain": null,
+      "harm": null,
+      "line": 12393,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 7,
+      "security": false,
+      "title": "[P2] Remove the design panel when exiting live mode",
+      "work": null
     }
   ],
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "5f463e9c4d01f124cf7965b4d5787353d199993f46c3e3eeacab69fcb46ff255",
-    "changed": "ba92b8322ac2764ebf0dd4e8591a723f078490ec8a86816b389da10c70b0d3fa",
-    "commit": "af418f0dfbd1363137a359e02c1bc0454f980ffc",
+    "branch_diff": "51ba2687482983c330dbef57d848d4615831f94ba04ce996502d9c740e9fed9b",
+    "changed": "60d65f7f784605cdf8228bb6f66f1a883a6cd996e270108921de32b72f93606c",
+    "commit": "481ed2fb1d941be068e0f56475f3a626f3a99c69",
     "dismissals": [],
-    "findings": [],
-    "id": "12ae38ad-862e-4474-aa70-2b3db6566e4b",
+    "findings": [
+      {
+        "body": "chunk 6/6:\n\nWhen DESIGN.md is open and the user clicks Exit, teardown removes the bar and other chrome but never removes `designHost`, which is mounted at lines 12460\u201312480. The fixed, interactive panel therefore remains over the host page after live mode exits. Remove and reset the design panel alongside the other chrome.",
+        "file": "src/forge/templates/skills/impeccable/scripts/live-browser.js",
+        "line": 12393,
+        "priority": "P2",
+        "title": "[P2] Remove the design panel when exiting live mode"
+      }
+    ],
+    "id": "3a0c4768-994a-4fe1-8bc9-c069f75813cb",
     "status": "clean"
   },
   "round": 8,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-02T05:14:47.798079+00:00",
@@ -89,6 +110,10 @@
     },
     {
       "at": "2026-11-02T22:14:10.606325+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-02T23:42:41.298832+00:00",
       "step": "review"
     }
   ],

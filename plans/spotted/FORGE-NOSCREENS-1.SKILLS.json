@@ -32,6 +32,17 @@
       "item": "FORGE-NOSCREENS-1/SKILLS",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/templates/skills/impeccable/scripts/live-browser.js\t[P2] Remove the design panel when exiting live mode",
+      "kind": "edge",
+      "path": "src/forge/templates/skills/impeccable/scripts/live-browser.js",
+      "line": 12393,
+      "text": "[P2] Remove the design panel when exiting live mode",
+      "from": "review",
+      "item": "FORGE-NOSCREENS-1/SKILLS",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
