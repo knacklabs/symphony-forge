@@ -1,18 +1,18 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-11-02T18:09:17.889756+00:00
-seconds: 332.415
-read_hash: 64ca8423863c79d14ad9a54b05d281ab77f8c242
-round: 1
+read_at: 2026-11-02T18:14:47.059705+00:00
+seconds: 153.646
+read_hash: c9d08c3faa6776fdf2fd05e20f46c9a32769db69
+round: 2
 passed: no
-doc_seen: 64ca8423863c79d14ad9a54b05d281ab77f8c242
+doc_seen: c9d08c3faa6776fdf2fd05e20f46c9a32769db69
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+notes_seen: 2fe7e4fdc04ecc2915e592468e7d053ebdfa80d5
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a19d6e-7be6-7b40-930c-d15d57641a07
 session:
-loop_choice:
-loop_reason:
+loop_choice: more
+loop_reason: The owner chose one more round: make the gap check see the routes and keep skipped files from looking deleted.
 ---
 # Cold read notes
 
@@ -67,3 +67,17 @@ Only a genuine trade-off goes to the human, as a question with options.
    [Notes:158](/plans/FORGE-SAMPLE-1.md:158) require SETUP, DESIGN and SIGNOFF to follow `FORGE-ONEPLAN-1/GATES`, and require this second story to repair `tests/test_one_plan.py::test_1`. The task table contains neither that external dependency nor that test in any Scope. [task.py:418](/src/forge/task.py:418) schedules dependencies from the After cell, so the prose does not establish the required order. The dependency and the named test repair need explicit task ownership.
    Gain 4, Work 1, Harm 2
    Disposition: cut - SETUP, DESIGN and SIGNOFF list `FORGE-ONEPLAN-1/GATES` in After, `tests/test_one_plan.py` is in SETUP's and DESIGN's Scope, and the Notes now say the owner dropped the screenshot-file refusal and kept the client's tick.
+
+## Round 2
+
+6. Advisory: Unproven: item 1's new file filter can exclude the prototype's entire route table.
+   Raise: Test.
+   Case: normal use - a sample-data prototype defines its React Router routes in `apps/web/src/main.tsx` or `router.tsx`.
+   [Settled 4](/plans/FORGE-SAMPLE-1.md:72) now selects routes through `interfaces` or `init.INTERFACES`. [The default patterns](/src/forge/init.py:65) match neither filename, although [the frontend convention](/src/forge/templates/conventions/frontend.md:91) requires React Router. In a prototype with no back end, the check can therefore receive no routes. The planned file-list assertion would pass while the promised route comparison does nothing.
+   Gain 3, Work 2, Harm 3
+
+7. Advisory: Unproven: item 1's retry can expose excluded files as deletions.
+   Raise: Test.
+   Case: normal use - the agent changes the prototype and reruns the gap check.
+   The new filtering rule removes files only from the resulting snapshot. [review.py:1001](/src/forge/review.py:1001) saves the original product commit, and [line 855](/src/forge/review.py:855) uses that unfiltered commit as the next review's base. Filtering only the new snapshot makes every excluded product file appear deleted in the review diff. The new test inspects the working tree, so it misses those diff inputs. Both sides of the comparison need the same file selection.
+   Gain 3, Work 2, Harm 3
