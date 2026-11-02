@@ -1,0 +1,12 @@
+{
+  "doc": "plans/FORGE-SAMPLE-1.md",
+  "status": "planning",
+  "steps": [
+    {
+      "at": "2026-11-02T17:44:46.189061+00:00",
+      "step": "start"
+    }
+  ],
+  "title": "Sample-data prototypes get a light sign-off",
+  "touches": 0
+}
