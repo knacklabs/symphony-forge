@@ -23,8 +23,8 @@
     "id": "12f29d2e-43c9-4fec-8d7f-e45d55bc7e57",
     "status": "clean"
   },
-  "round": 2,
-  "status": "waiting for checks",
+  "round": 3,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-02T06:52:36.019867+00:00",
@@ -36,10 +36,10 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "b19c8de25f33fabc94c7036fa510edef102d3520",
+    "close": "cc956c3e-1945-4ce9-a0e5-16c753b3e672",
+    "head": "b2d89df282067ad8d9a8ea9fc2d7af10da9c74a9",
     "keys": {},
-    "round": null
+    "round": 2
   },
   "why": "Release v1.2.26 with the client sign-off accept repair",
   "worker": "codex"
