@@ -1,18 +1,15 @@
-"""Sign-off reuses its review and completeness result while their inputs stay unchanged.
+"""Sign-off reuses its product review while its inputs stay unchanged.
 
 Test audit:
-1. Protect command-visible reuse and invalidation for prototype sign-off on new and earlier-adopted
-   clients: app or answer changes rerun completeness review, while proof, decision, and signed-design
-   changes do not.
-2. A lost saved result repeats expensive checks, while a stale completeness result can accept a
+1. Protect command-visible reuse and invalidation for working prototype sign-off:
+   app, answer, proof, decision and signed-design changes repeat the product review.
+2. A lost saved result repeats expensive checks, while a stale product review can accept a
    changed app or customer answer.
 3. Existing sign-off tests cover review and acceptance separately, but not reuse across them,
-   unchanged canvas acceptance, or completeness invalidation for app and answer changes alongside
-   reuse after other saved-input changes.
+   or invalidation after each saved input changes.
 4. Drive `forge decision accept`; replace only Autoreview at its external command boundary.
 
-Completeness now always uses Codex (issue 1159), alongside the working-build review.
-The counts still distinguish reuse from rerunning either check when its inputs change.
+The counts distinguish reuse from another product review when its inputs change.
 """
 
 from __future__ import annotations
@@ -22,7 +19,7 @@ import re
 
 import pytest
 
-from test_proto_signoff import _adopted_client, _client, _decision, _green_full_run, _request_build
+from test_proto_signoff import _client, _decision, _green_full_run, _request_build
 
 STORY = "FORGE-PACE-1/SIGNOFF"
 
@@ -62,14 +59,14 @@ def _working_signoff_reuses_review_and_check_after_customer_reply(
     reviewed = _accept(repo, fix)
     assert reviewed.returncode == 0, reviewed.stderr
     assert "ask the customer's named person for sign-off" in reviewed.stdout
-    assert _count_engine(queue, "codex") == 2
+    assert _count_engine(queue, "codex") == 1
     assert _count_engine(queue, "claude") == 0
 
     _reply(page)
     accepted = _accept(repo, fix)
     assert accepted.returncode == 0, accepted.stderr
     assert "status: accepted" in page.read_text("utf-8")
-    assert _count_engine(queue, "codex") == 2
+    assert _count_engine(queue, "codex") == 1
     assert _count_engine(queue, "claude") == 0
 
 
@@ -80,7 +77,7 @@ def _working_signoff_repeats_review_when_a_saved_input_changes(
 
     reviewed = _accept(repo, fix)
     assert reviewed.returncode == 0, reviewed.stderr
-    assert _count_engine(queue, "codex") == 2
+    assert _count_engine(queue, "codex") == 1
     assert _count_engine(queue, "claude") == 0
 
     if changed_input == "answers":
@@ -119,38 +116,8 @@ def _working_signoff_repeats_review_when_a_saved_input_changes(
     accepted = _accept(repo, fix)
     assert accepted.returncode == 0, accepted.stderr
     assert "status: accepted" in page.read_text("utf-8")
-    assert _count_engine(queue, "codex") == (4 if changed_input in ("answers", "product") else 3)
+    assert _count_engine(queue, "codex") == 2
     assert _count_engine(queue, "claude") == 0
-
-
-def _canvas_signoff_reuses_or_rechecks_completeness(
-        repo, tmp_path, monkeypatch, adopted, changed_brief):
-    client = _adopted_client if adopted else _client
-    kwargs = {} if adopted else {"working_build": False}
-    fix, answers, queue = client(repo, tmp_path, monkeypatch, **kwargs)
-    page = _decision(fix, answers, via="", on="")
-
-    checked = _accept(repo, fix)
-    assert checked.returncode == 0, checked.stderr
-    assert "ask the customer's named person for sign-off" in checked.stdout
-    assert _count_engine(queue, "claude") == 0
-    assert _count_engine(queue, "codex") == 1
-
-    if changed_brief:
-        brief = fix / "docs/product/BRIEF.md"
-        brief.write_text(brief.read_text("utf-8").replace(
-            "Salespeople keep track of customer orders.",
-            "Salespeople keep track of customer orders and their status."), encoding="utf-8")
-        repo.git("add", "docs/product/BRIEF.md", cwd=fix)
-        repo.git("commit", "-q", "-m", "Clarify the order brief", cwd=fix)
-        _green_full_run(repo, product=fix)
-    _reply(page)
-
-    accepted = _accept(repo, fix)
-    assert accepted.returncode == 0, accepted.stderr
-    assert "status: accepted" in page.read_text("utf-8")
-    assert _count_engine(queue, "claude") == 0
-    assert _count_engine(queue, "codex") == (2 if changed_brief else 1)
 
 
 @pytest.mark.parametrize(("check", "args"), [
@@ -161,12 +128,6 @@ def _canvas_signoff_reuses_or_rechecks_completeness(
     *(pytest.param(_working_signoff_repeats_review_when_a_saved_input_changes,
                    (changed,), id=changed)
       for changed in ("answers", "product", "proof", "decisions", "signed design")),
-    pytest.param(_canvas_signoff_reuses_or_rechecks_completeness,
-                 (False, False), id="unchanged"),
-    pytest.param(_canvas_signoff_reuses_or_rechecks_completeness,
-                 (False, True), id="changed-brief"),
-    pytest.param(_canvas_signoff_reuses_or_rechecks_completeness,
-                 (True, False), id="earlier-adopted"),
 ])
 def test_5_signoff_reuses_results_until_their_inputs_change(repo, tmp_path, monkeypatch, check, args):
     check(repo, tmp_path, monkeypatch, *args)

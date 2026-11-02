@@ -17,13 +17,11 @@ def test_11_prototype_precedes_signoff_and_stories_in_the_docs():
     assert route.index("Start with FDE discovery") < route.index("Build and demo the prototype")
     assert route.index("Resolve the answers, then run the sign-off checks") < route.index(
         "The customer's named person approves") < route.index("Only after accepted client sign-off")
-    assert route.index("reviews the canvas against the whole brief") < route.index(
-        "The customer's named person approves")
-    assert route.index("A working prototype also gets one strict whole-product review") < route.index(
+    assert route.index("A working prototype gets one strict whole-product review") < route.index(
         "The customer's named person approves")
     assert route.index("Only after accepted client sign-off") < route.index("create stories")
-    assert "a canvas-only sign-off does not need that review." in route
-    assert "A working prototype also gets one strict whole-product review" in route
+    assert "a canvas-only sign-off needs no model review." in route
+    assert "A working prototype gets one strict whole-product review" in route
     assert "[decision 0095](docs/decisions/0095-prototype-before-stories.md)" in readme
     assert "[decision 0095](decisions/0095-prototype-before-stories.md)" in guide
 

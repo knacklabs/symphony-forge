@@ -4,17 +4,11 @@ Test audit: protects reviewer input, the durable owner stop and the owning item'
 public Known issues. A changed-files-only retry drops an unresolved finding in an
 unchanged file. A misplaced accepted finding disappears from the owner's item.
 This is the command-level owner of those contracts, with no production test seam.
-Only GitHub and Autoreview are faked at their external edges; the real CLI, git snapshots and
+Only Autoreview is faked at its external edge; the real CLI, git snapshots and
 board output own the observed behavior.
 The earlier revision must remain an ancestor of the comparison base. Image
 exclusion can create a child snapshot, so exact base commit identity is not
 the contract; the earlier app contents and ancestry are.
-
-Fixture audit: the new full-run contract must admit each app revision before
-these review-loop assertions run. Stale GitHub proof otherwise stops the
-command before review. Existing reuse tests own admission; this file owns the
-subsequent review lifecycle. Publish proof at the GitHub edge, with no new
-production seam and no change to the review assertions.
 """
 import json
 
@@ -57,7 +51,7 @@ def test_1_signoff_reviews_changes_and_bounds_rounds(repo, tmp_path, monkeypatch
     previous_app = repo.git("ls-tree", "HEAD", "--", "app.py", cwd=fix)
     previous_commit = repo.git("rev-parse", "HEAD", cwd=fix)
     queue.write_text(json.dumps([
-        {"report": {"review_status": "scoped-clean", "findings": []}}, _report(priority)]))
+        _report(priority)]))
 
     def accept(*args):
         return repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", *args, cwd=fix)
@@ -73,9 +67,8 @@ def test_1_signoff_reviews_changes_and_bounds_rounds(repo, tmp_path, monkeypatch
     repo.git("add", changed, cwd=fix)
     repo.git("commit", "-q", "-m", "Explain the order path", cwd=fix)
     _green_full_run(repo, product=fix)
-    # The product edit also invalidates the separate canvas completeness check.
     queue.write_text(json.dumps([
-        {"report": {"review_status": "scoped-clean", "findings": []}}, _report(priority)]))
+        _report(priority)]))
     second = accept()
     assert second.returncode == 1, second.stdout + second.stderr
     # The earlier finding's file remains a review target even when only the
@@ -144,7 +137,11 @@ def test_2_accepted_signoff_survives_only_unchanged_files(
     repo.git("add", "src/orders.py", cwd=fix)
     repo.git("commit", "-qm", "Build order flow", cwd=fix)
     _green_full_run(repo, product=fix)
-    _decision(fix, answers)
+    # Keep client approval pending: owner acceptance settles a review finding,
+    # while a completed client sign-off now stays accepted without another review.
+    page = _decision(fix, answers)
+    page.write_text(page.read_text("utf-8").replace("approved_via: email\n", "").replace(
+        "approved_on: 2026-09-28\n", ""), encoding="utf-8")
     report = _report("P1")
     report["report"]["findings"][0]["code_location"]["file_path"] = "src\\orders.py"
 
@@ -152,7 +149,7 @@ def test_2_accepted_signoff_survives_only_unchanged_files(
         return repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", *args, cwd=fix)
 
     queue.write_text(json.dumps([
-        {"report": {"review_status": "scoped-clean", "findings": []}}, report]), encoding="utf-8")
+        report]), encoding="utf-8")
     assert accept().returncode == 1
     assert accept().returncode == 1
     assert set((tmp_path / "reviewed-files.txt").read_text("utf-8").splitlines()) == {"src/orders.py"}
@@ -178,7 +175,7 @@ def test_2_accepted_signoff_survives_only_unchanged_files(
     finding.update(priority=priority, title=("Order submission fails" if priority == "P0"
                                            else "Submitting an order still fails"))
     queue.write_text(json.dumps([
-        {"report": {"review_status": "scoped-clean", "findings": []}}, report]), encoding="utf-8")
+        report]), encoding="utf-8")
     retried = accept()
     assert retried.returncode == (0 if change == "other" and priority == "P1" else 1), retried.stdout + retried.stderr
     assert set((tmp_path / "reviewed-files.txt").read_text("utf-8").splitlines()) == {target}

@@ -59,7 +59,7 @@ def test_1_signoff_ignores_trailing_whitespace_and_line_endings(
     accepted = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
     assert accepted.returncode == 0, accepted.stderr
     assert "status: accepted" in page.read_text("utf-8")
-    assert len(queue.with_suffix(".calls.jsonl").read_text("utf-8").splitlines()) == 2
+    assert len(queue.with_suffix(".calls.jsonl").read_text("utf-8").splitlines()) == 1
 
 
 @pytest.mark.parametrize("history, change, line", [
