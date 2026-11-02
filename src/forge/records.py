@@ -375,7 +375,8 @@ def decision_accept(args: argparse.Namespace) -> None:
                 f"- {problem} Next: {action}" for problem, action in gaps))
         product_hash = _digest("\0".join(product))
         brief_hash = _digest(brief)
-        previous = json.loads(_text(top / ".factory/client-signoff.json") or "{}").get("review") or {}
+        signoff = json.loads(_text(top / ".factory/client-signoff.json") or "{}")
+        previous = signoff.get("canvas", {}).get("review") or signoff.get("review") or {}
         generated_only = False
         if previous.get("commit"):
             changed = repo.git("diff", "--name-only", "-z", previous["commit"], "HEAD", cwd=top).strip("\0").split("\0")
@@ -388,7 +389,10 @@ def decision_accept(args: argparse.Namespace) -> None:
             prompt = (Path(__file__).parent / "templates/design-check.md").read_text(encoding="utf-8")
             prompt += "\n\n## App brief\n" + brief
             prompt += f"\n\n## Sign-off record: {rel}\n{text}"
-            review.design_check(top, prompt)
+            _signoff_review(top, args, quote, "", unchanged=generated_only, canvas=prompt)
+            if signoff.get("canvas", {}).get("stop"):
+                # The canvas loop consumed this choice; the code review has its own stop.
+                args = argparse.Namespace(**{**vars(args), "resolve": None, "reason": None})
             text = _set(text, design_checked=product_hash, brief_checked=brief_hash)
             _write(top / rel, text)
         checked = _digest(json.dumps([product, quote, [sections.get(name, "") for name in SIGNOFF_SECTIONS],
@@ -460,15 +464,17 @@ def _app_files(top: Path, names: list[str], ref: str | None = None) -> list[str]
 
 
 def _signoff_review(top: Path, args: argparse.Namespace, answers: str, evidence: str,
-                    *, unchanged: bool = False) -> str:
+                    *, unchanged: bool = False, canvas: str = "") -> str:
     """Keep sign-off rounds in git and reuse the review loop's notes and owner choices."""
     from forge import close, review, score
 
     rel = ".factory/client-signoff.json"
-    saved = json.loads(_text(top / rel) or "{}")
+    document = json.loads(_text(top / rel) or "{}")
+    saved = document.setdefault("canvas", {}) if canvas else document
     previous = saved.get("review") or {}
     inputs = _digest(json.dumps([answers, evidence, story.agents_section(top, "Review rules"), constitution(top)]))
-    history = review._history(top, "client-signoff", "", previous, path=rel)
+    section = "canvas" if canvas else ""
+    history = review._history(top, "client-signoff", "", previous, path=rel, section=section)
     choice, reason = getattr(args, "resolve", None), getattr(args, "reason", None)
     next_step = ('forge decision accept client-signoff --by "<name>" '
                  '--resolve <accept|more|split> --reason "<human\'s choice>"')
@@ -497,9 +503,9 @@ def _signoff_review(top: Path, args: argparse.Namespace, answers: str, evidence:
             repo.commit_state("Record the owner's sign-off findings", repo.state_path(item), top=top)
         saved["stop"] = False
         saved["choice"] = {"resolve": choice, "reason": reason.strip()}
-        _write(top / rel, json.dumps(saved, indent=2) + "\n")
+        _write(top / rel, json.dumps(document, indent=2) + "\n")
         repo.commit_state("Record the owner's sign-off choice", rel, top=top)
-        history = review._history(top, "client-signoff", "", previous, path=rel)
+        history = review._history(top, "client-signoff", "", previous, path=rel, section=section)
     if saved.get("stop"):
         repo.refuse((review.stop_question(top, "client-signoff", {
             "why": "Client sign-off", "done_when": "The prototype matches the client's answers", "review": previous},
@@ -510,7 +516,7 @@ def _signoff_review(top: Path, args: argparse.Namespace, answers: str, evidence:
     skill = (Path(__file__).parent / "templates" / "skill.md").read_text(encoding="utf-8")
     table = re.search(r"^\| Topic \|.*?(?=\n\n)", skill, re.M | re.S)
     block = (Path(__file__).parent / "templates" / "review.md").read_text(encoding="utf-8")
-    prompt = string.Template(block.split("<!-- signoff -->\n", 1)[1]).substitute(
+    prompt = canvas or string.Template(block.split("<!-- signoff -->\n", 1)[1]).substitute(
         answers=answers, topics=table[0] if table else "")
     prompt += "\n\n## Earlier review rounds\n" + ("\n\n".join(review._previous(old) for old in history) or "- none")
     prompt += "\n\nSettled findings:\n" + review._accepted(top, "client-signoff", history)
@@ -523,27 +529,32 @@ def _signoff_review(top: Path, args: argparse.Namespace, answers: str, evidence:
                    "(forge-full-suite). Client sign-off checked this result before this review. "
                    "Use this green full run as passing evidence for the tests named in Proof. "
                    "No separate forge test run is required.")
-    result = review.run(top, "client-signoff", {"signoff_history": history}, repo.config(top),
-                        "", {}, previous, signoff_prompt=prompt, images=set())
+    result = (review.design_check(top, prompt, history, previous) if canvas else
+              review.run(top, "client-signoff", {"signoff_history": history}, repo.config(top),
+                         "", {}, previous, signoff_prompt=prompt, images=set()))
     opened = score.open_findings(result)
     critical = any(f["priority"] == "P0" for f in opened)
+    held = ([(n, f) for n, f in enumerate(result["findings"], 1)
+             if f in opened and f["priority"] in review.SERIOUS] if canvas else review.blocking(result))
     saved.update(review=result, inputs=inputs,
-                 stop=bool(review.blocking(result) and len(history) + 1 >= 2 and not critical))
-    _write(top / rel, json.dumps(saved, indent=2) + "\n")
+                 stop=bool(held and len(history) + 1 >= 2 and not critical))
+    _write(top / rel, json.dumps(document, indent=2) + "\n")
     repo.commit_state("Record the client sign-off review", rel, top=top)
     if saved["stop"]:
         repo.refuse((review.stop_question(top, "client-signoff", {
             "why": "Client sign-off", "done_when": "The prototype matches the client's answers", "review": result},
             accept="the findings stay in the item's Known issues with your reason, and sign-off continues."), next_step))
-    if critical or review.blocking(result):
+    if critical or held:
         from shlex import quote
 
         details = "; ".join(f"{f['title']} ({f['file']}:{f['line']})"
-                            for _, f in review.blocking(result))
+                            for _, f in held)
         repair = (f"forge fix start {quote(f'Sign-off findings: {details}')} "
                   f"--done {quote(f'A review no longer finds: {details}')} --kind mechanical")
-        repo.refuse(("Customer sign-off review found a blocking issue: " + "; ".join(
-            f["title"] for f in opened) + ".", repair +
+        problem = ("The canvas completeness check found gaps: " + "; ".join(
+            f["title"] + ": " + f["body"] for f in opened) if canvas else
+            "Customer sign-off review found a blocking issue: " + "; ".join(f["title"] for f in opened))
+        repo.refuse((problem + ".", repair +
             '\nThen fix and merge it, then forge decision accept client-signoff --by "<name>"'))
     return result["commit"]
 
