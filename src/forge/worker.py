@@ -429,7 +429,7 @@ def ready(top: Path, config: dict[str, Any], kind: str, on_codex: bool,
     the SDK with the declining handler's place and the project's trust. Returns
     claude's --model and --effort, or [] on Codex. The cold read (Grill) runs these checks too."""
     if not on_codex:
-        if not native and kind != "Grill" and (problem := claude_sdk.sdk_problem()):
+        if not native and (problem := claude_sdk.sdk_problem()):
             refuse(REFUSALS["claude_sdk"], problem=problem, top=repo.quote(top))
         # A worker always names its models; a cold read with no entry runs on Claude's own.
         chosen = (repo.design_models(config, "claude") if design else

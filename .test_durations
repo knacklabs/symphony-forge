@@ -2851,7 +2851,7 @@
     "tests/test_readloop_specs.py::test_7_specs_pass_the_same_way": 2.5110867079993113,
     "tests/test_reads_wait_for_a_loop_choice.py::test_4_fresh_and_resumed_workers_wait_for_both_read_and_review_choices": 1.0814905000002,
     "tests/test_records.py::test_41_records_ship_through_the_fix_lane": 5.508406461000504,
-    "tests/test_release_version.py::test_1_forge_version_is_1_2_25_everywhere_it_is_recorded": 2.1981100006960332,
+    "tests/test_release_version.py::test_1_forge_version_is_1_2_26_everywhere_it_is_recorded": 2.1981100006960332,
     "tests/test_releases.py::test_5_board_lists_tagged_releases_and_each_items_first_release[earlier-adoption]": 19.19530116696842,
     "tests/test_releases.py::test_5_board_lists_tagged_releases_and_each_items_first_release[new-annotated]": 6.985739041818306,
     "tests/test_releases.py::test_5_board_lists_tagged_releases_and_each_items_first_release[new-lightweight]": 6.625239708926529,

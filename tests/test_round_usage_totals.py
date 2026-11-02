@@ -152,11 +152,10 @@ def test_1_round_records_total_input_cached_output_and_reasoning_tokens(
             setup(repo)
             where = new_story(repo, 'SHOP')
             (where / 'plans/SHOP.md').write_text(DOC, 'utf-8')
-            _install(repo.bin, 'claude', CLAUDE.format(python=sys.executable))
             result = repo.forge('read', 'SHOP')
         assert result.returncode == 0, result.stdout + result.stderr
         end = run_end(repo, 'worker' if kind == 'worker' else 'read')
-        expected = (300, 130, 40, None) if kind == 'worker' else (900, 800, 120, None)
+        expected = (300, 130, 40, None)
     assert tuple(end[key] for key in (
         'input_tokens', 'cached_input_tokens', 'output_tokens',
         'reasoning_output_tokens')) == expected

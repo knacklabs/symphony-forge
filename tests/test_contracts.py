@@ -178,11 +178,13 @@ def _no_spec(repo, gh, tmp_path, monkeypatch, request):
 def _reader_fails(repo, gh, tmp_path, monkeypatch, request):
     setup(repo)
     assert repo.forge("story", "new", "SHOP", "Shoppers can save a basket").returncode == 0
-    # Exceed the pipe buffer so an early provider exit deterministically rejects stdin.
+    # The SDK driver reads the whole request before the provider can fail its query.
     (worktree(repo, "story/SHOP") / "plans" / "SHOP.md").write_text(
         DOC + "\n" + "The reader must report its failure.\n" * 4096, encoding="utf-8")
-    conftest._install(repo.bin, "claude", f"#!{sys.executable}\nimport sys\n"
-                      "sys.stderr.write('claude: the model is unavailable\\n')\nsys.exit(1)\n")
+    edge = repo.bin / "claude_agent_sdk/__init__.py"
+    edge.write_text(edge.read_text("utf-8").replace(
+        '    here = Path(__file__).resolve().parent.parent',
+        '    raise RuntimeError("claude: the model is unavailable")'), encoding="utf-8")
     return (("read", "SHOP"), None, "",
             "The cold read of plans/SHOP.md failed: claude: the model is unavailable\n"
             "Next: forge read SHOP\n")
