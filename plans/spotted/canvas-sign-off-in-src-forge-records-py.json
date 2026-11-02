@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/review.py\tGate: Windows canvas batch findings\tcanvas-sign-off-in-src-forge-records-py",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 1148,
+      "text": "Gate: Windows canvas batch findings",
+      "from": "blocking",
+      "item": "canvas-sign-off-in-src-forge-records-py",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tPreserve the canvas priority bar when carrying earlier findings\tcanvas-sign-off-in-src-forge-records-py",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 950,
+      "text": "Preserve the canvas priority bar when carrying earlier findings",
+      "from": "blocking",
+      "item": "canvas-sign-off-in-src-forge-records-py",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

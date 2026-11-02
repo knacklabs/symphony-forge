@@ -18,7 +18,7 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
-from forge import (__version__, approval, board, board_facts, close, codex, machine, migration_warnings,
+from forge import (__version__, approval, board, board_facts, close, codex, githooks, machine, migration_warnings,
                    journey, native, records, repo, review, spotted, story, score, task, time_records, upgrade)
 from forge.task import _started, developer, github_login, owner, sections, stack_base, start_base, waits_for
 from forge.task import rows as task_rows
@@ -640,7 +640,7 @@ def _story(top: Path, key: str, path: Path | None, text: str,
                     part_statuses.get(item) == "waiting for checks"
                     and (state.get("review") or {}).get("status") == "clean"
                     and state["review"].get("changed") == review.fingerprint(
-                        head, item, top, state, story.landed_ref(top)))
+                        head, item, top, state, githooks.fix_base(top, state, story.landed_ref(top), head)))
                 if base_state.get("status") == "merged":
                     # A squash commit need not become an ancestor after a clean
                     # close. The successful receipt records the base it checked.

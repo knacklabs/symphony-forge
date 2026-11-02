@@ -553,7 +553,7 @@ def _accepted(top: Path, item: str, history: list[dict[str, Any]]) -> str:
             kept = story.DISPOSITION.search(block)
             if kept and kept[1].lower() in ("keep", "defer"):
                 found.append(f"Plan read note {number}: {' '.join(block.split(None, 1)[1].split())}")
-    for (file, title), reason in _settled(history).items():  # every settled finding, whatever settled it
+    for (file, title), reason in _settled(history, priority_only=item == "design-check").items():
         scores = next((f"; {line[0].strip()}" for result in history for f in result.get("findings", [])
                        if (f["file"], f["title"]) == (file, title) and (line := score.LINE.search(f["body"]))), "")
         found.append(f"{title} ({file}): {reason}{scores}")
@@ -582,13 +582,14 @@ def _rulings(top: Path, base: str, history: list[dict[str, Any]]) -> str:
 
 def _history(top: Path, item: str, base: str, previous: dict[str, Any],
              ref: str = "HEAD", *, state: dict[str, Any] | None = None,
-             path: str = "") -> list[dict[str, Any]]:
+             path: str = "", section: str = "") -> list[dict[str, Any]]:
     """Git owns earlier reviews; later dismissals replace that round's original result."""
     path = path or repo.state_path(item)
     rounds = {}
     for sha in repo.git("rev-list", "--reverse", "--first-parent", f"{base}..{ref}" if base else ref, "--", path,
                         cwd=top).split():
-        result = json.loads(repo.git("show", f"{sha}:{path}", cwd=top)).get("review") or {}
+        saved = json.loads(repo.git("show", f"{sha}:{path}", cwd=top))
+        result = (saved.get(section, {}) if section else saved).get("review") or {}
         if result.get("commit"):  # one per round: two rounds at one commit differ in their findings
             if state is not None:
                 bound_review(top, item, state, result)
@@ -600,7 +601,7 @@ def _history(top: Path, item: str, base: str, previous: dict[str, Any],
     return list(rounds.values())
 
 
-def _settled(history: list[dict[str, Any]]) -> dict[tuple[str, str], str]:
+def _settled(history: list[dict[str, Any]], *, priority_only: bool = False) -> dict[tuple[str, str], str]:
     """Earlier rounds' settled findings, one per identity under its first spelling."""
     settled, earlier, names = {}, set(), {}
     for result in history:
@@ -611,7 +612,7 @@ def _settled(history: list[dict[str, Any]]) -> dict[tuple[str, str], str]:
         for finding in score.open_findings(result):
             if finding.get("required_done_when"):
                 continue
-            if (outcome := score.bar(score.of(finding))) in ("follow-up", "live with"):
+            if not priority_only and (outcome := score.bar(score.of(finding))) in ("follow-up", "live with"):
                 settled.setdefault(score.identity(finding["file"], finding["title"]), f"known: below the bar ({outcome})")
             if finding.get("follow_up"):
                 settled.setdefault(score.identity(finding["file"], finding["title"]),
@@ -851,7 +852,8 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         repo.git("clone", "-q", "--no-local", "--no-checkout", str(top), str(tree), cwd=top)
         repo.git("checkout", "-q", "--detach", head, cwd=tree)
         if signoff_prompt:
-            if previous.get("commit"):
+            # Canvas attachments need every current screen, including unchanged images.
+            if previous.get("commit") and item != "design-check":
                 repo.git("fetch", "-q", str(top), previous["commit"], cwd=tree)
                 repo.git("read-tree", previous["commit"], cwd=tree)
                 review_base = previous["commit"]
@@ -946,10 +948,11 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
             if not signoff_prompt:
                 repo.refuse(REFUSALS["failed"], reason=reason, item=item)
         result = {"findings": findings, "blocking_level": "P0" if light else "P1"}
-        if not signoff_prompt or item == "client-signoff":
+        if not signoff_prompt or item in ("client-signoff", "design-check"):
             history = state["signoff_history"] if signoff_prompt else _history(top, item, base, previous, state=state)
-            settled = {score.identity(*key): reason for key, reason in _settled(history).items()}
-            if item == "client-signoff":
+            settled = {score.identity(*key): reason for key, reason in
+                       _settled(history, priority_only=item == "design-check").items()}
+            if item in ("client-signoff", "design-check"):
                 # The owner accepts the limitation in this version of the file,
                 # independent of the next reviewer's wording. Edits reopen it.
                 accepted = {}
@@ -982,7 +985,8 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                 bound_review(top, item, state, result)
         serious = blocking(result)
         if item == "design-check":
-            serious = [(n, f) for n, f in enumerate(findings, 1) if f["priority"] in SERIOUS]
+            serious = [(n, f) for n, f in enumerate(findings, 1)
+                       if f in score.open_findings(result) and f["priority"] in SERIOUS]
         identity = repo.record_event(top, item, "review result", commit=head,
             review_round=round_number(top, item, state),
             outcome="failed" if reason else "blocked" if serious else "clean",
@@ -991,7 +995,7 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         if signoff_prompt:
             if reason:
                 problem, action = "The sign-off review did not finish: " + reason + ".", "check Autoreview"
-            elif serious and item != "client-signoff":
+            elif serious and item not in ("client-signoff", "design-check"):
                 problem = "Customer sign-off review found a blocking issue: " + "; ".join(
                     f["title"] for _, f in serious) + "."
                 action = "fix the prototype"
@@ -1119,7 +1123,8 @@ def _hide_generated(tree: Path, start: str, head: str, *, keep_images: bool = Fa
                        for path in generated))
 
 
-def design_check(top: Path, prompt: str) -> None:
+def design_check(top: Path, prompt: str, history: list[dict[str, Any]],
+                 previous: dict[str, Any]) -> dict[str, Any]:
     """Check the canvas with its own pinned model through the strict review engine."""
     from forge import design
 
@@ -1132,14 +1137,21 @@ def design_check(top: Path, prompt: str) -> None:
     # Leave 8K for executable, configs, schema, output and working-directory arguments.
     size = max(1, 24000 // (len(str(Path(tempfile.gettempdir()).resolve())) * 2 + 256))
     if os.name != "nt" or len(images) <= size:
-        run(top, "design-check", {}, cfg, "", {}, {}, signoff_prompt=prompt)
-        return
+        return run(top, "design-check", {"signoff_history": history}, cfg, "", {}, previous,
+                   signoff_prompt=prompt)
+    combined: dict[str, Any] = {"findings": [], "dismissals": [], "blocking_level": "P1"}
     for start in range(0, len(images), size):
         batch = set(images[start:start + size])
-        run(top, "design-check", {}, cfg, "", {}, {}, images=batch,
+        result = run(top, "design-check", {"signoff_history": history}, cfg, "", {}, previous, images=batch,
             signoff_prompt=prompt + "\n\nThis is one image batch. Check the attached screens against "
             "the whole brief. Other screens have separate batches; do not report them as absent "
             "from this batch.\nAttached screens:\n" + _bullets(sorted(batch)))
+        offset = len(combined["findings"])
+        combined["findings"].extend(result["findings"])
+        combined["dismissals"].extend({**entry, "finding": entry["finding"] + offset}
+                                      for entry in result.get("dismissals", []))
+        combined["commit"] = result["commit"]
+    return combined
 
 
 def _launcher(folder: Path, tree: Path, engine: str) -> Path | None:
