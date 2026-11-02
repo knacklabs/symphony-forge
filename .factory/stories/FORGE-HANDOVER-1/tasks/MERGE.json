@@ -15,7 +15,7 @@
       "gain": 3,
       "harm": 3,
       "line": 246,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -39,38 +39,17 @@
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "8d3c340909b5d794c5839fc6f9dcd34e55e7cb78c6f2254c7f50d3c20a6034e0",
-    "changed": "cf3ae7713217c6e6e96d8cd917c18d302f951c208b4b1b1ea26275503469e71a",
-    "commit": "5c6d1f5fcb2cfe0b0b3e998288f0a8165fb5e59c",
+    "branch_diff": "682c42e12a66822b89643e3bf7076b673af1fc8b092d7f99102ce828b841e057",
+    "changed": "00314c468808c97532512b75139779ec7a663a2ff8f8774493443ae4ab111500",
+    "commit": "70928cfc8f1972574f5e7d0faca09d6743ab4307",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional.\nCase: normal use - A drops a published fix after B cloned the repository, and B runs `forge work <fix>` without fetching first.\nBoth callers run `require_active` before pickup (`worker.py:88`, `close.py:659). That check reads B's stale remote ref (`task.py:721`, `nextstep.py:914-927`). This helper then fetches the dropped state but validates only its branch name, creating a checkout anyway. The worker subsequently overwrites `status = \"dropped\"` with `working` or `fixing` (`worker.py:276`) and commits it, bypassing the required explicit restore. Validate activity against the newly fetched state before returning the checkout.\nAdds work: validate the fetched activity state; F 1 x H 2 = 2; 2 x C = 2",
-        "file": "src/forge/task.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 246,
-        "priority": "P1",
-        "title": "Validate the fetched state before picking up a dropped fix",
-        "work": 2
-      },
-      {
-        "body": "Gain 2, Work 2, Harm 1\nThe proof list claims both cases, but the named tests do not exercise them. Here the reused local branch already equals origin when close runs, so an implementation that refuses divergence without advancing a behind branch would still pass. Advance the published branch after B switches away and verify pickup includes that work. Also exercise `forge next` with an existing checkout, no local receipt, a matching shared ready record and agent merges enabled: the changed tests cover remote-only readiness, local receipts and behind checkouts, but would pass if the new matching-checkout advice at `nextstep.py:1054-1055` were removed.",
-        "file": "tests/test_handover_merge.py",
-        "gain": 2,
-        "harm": 1,
-        "line": 84,
-        "priority": "P2",
-        "title": "Follow-up: cover fast-forward pickup and shared-ready local advice",
-        "work": 2
-      }
-    ],
-    "id": "e4f6fa02-c3c7-4033-9736-03707dbd58a1",
-    "status": "blocked"
+    "findings": [],
+    "id": "03ecb048-a1e7-46ec-a3ab-c7a566bfb458",
+    "status": "clean"
   },
   "round": 5,
   "stacked_on": "FORGE-STACK-1/CLOSE",
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-31T10:55:49.065586+00:00",
@@ -78,6 +57,10 @@
     },
     {
       "at": "2026-11-02T18:24:35.870986+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-02T18:28:14.973526+00:00",
       "step": "review"
     }
   ],
