@@ -1,6 +1,13 @@
 {
   "base": "e425fd53f5a4c94a85e638724a71061c7fdab30c",
   "branch": "fix/repair-auth-dto-zod-rule",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a19dd9-3a4d-7903-bd8f-b0fe341b6060",
+    "head": null,
+    "start": "d1da00dd3b460830170313cd5f4843553a41b682"
+  },
   "done_when": "tests/test_zod_starter.py passes on the default branch, and the invite and reset answers keep their documented shape",
   "fix_kind": "backend",
   "kind": "fix",
