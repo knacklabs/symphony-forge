@@ -373,7 +373,10 @@ def decision_accept(args: argparse.Namespace) -> None:
         if gaps:
             repo.refuse(("Client sign-off needs these changes:\n{gaps}", ""), gaps="\n".join(
                 f"- {problem} Next: {action}" for problem, action in gaps))
-        product_hash = _digest("\0".join(product))
+        from forge import design
+
+        screen_hash = _digest("\0".join(line for line in product
+            if Path(line.partition("\t")[2]).suffix.lower() in design.IMAGES))
         brief_hash = _digest(brief)
         signoff = json.loads(_text(top / ".factory/client-signoff.json") or "{}")
         previous = signoff.get("canvas", {}).get("review") or signoff.get("review") or {}
@@ -384,16 +387,19 @@ def decision_accept(args: argparse.Namespace) -> None:
                 (*review.BOOKKEEPING, "docs/decisions/"))]
             generated_only = not (set(changed) - sync.synced(
                 top, repo.config(top), previous["commit"], "HEAD", changed))
-        if (fields.get("design_checked") != product_hash and not generated_only
+        if (fields.get("design_checked") != screen_hash
                 or fields.get("brief_checked") != brief_hash):
             prompt = (Path(__file__).parent / "templates/design-check.md").read_text(encoding="utf-8")
             prompt += "\n\n## App brief\n" + brief
             prompt += f"\n\n## Sign-off record: {rel}\n{text}"
-            _signoff_review(top, args, quote, "", unchanged=generated_only, canvas=prompt)
+            screens_unchanged = bool(previous.get("commit")) and not any(
+                name == "docs/product/BRIEF.md" or Path(name).suffix.lower() in design.IMAGES
+                for name in changed)
+            _signoff_review(top, args, quote, "", unchanged=screens_unchanged, canvas=prompt)
             if signoff.get("canvas", {}).get("stop"):
                 # The canvas loop consumed this choice; the code review has its own stop.
                 args = argparse.Namespace(**{**vars(args), "resolve": None, "reason": None})
-            text = _set(text, design_checked=product_hash, brief_checked=brief_hash)
+            text = _set(text, design_checked=screen_hash, brief_checked=brief_hash)
             _write(top / rel, text)
         checked = _digest(json.dumps([product, quote, [sections.get(name, "") for name in SIGNOFF_SECTIONS],
                                      story.agents_section(top, "Review rules"), constitution(top)]))

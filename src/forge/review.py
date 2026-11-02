@@ -1133,12 +1133,28 @@ def design_check(top: Path, prompt: str, history: list[dict[str, Any]],
     images = [name for name in repo.git("ls-files", "-z", cwd=top).split("\0")
               if not name.startswith((*BOOKKEEPING, "docs/decisions/"))
               and Path(name).suffix.lower() in design.IMAGES]
+    if history:
+        changed = set(repo.git("diff", "--name-only", "-z", previous["commit"], "HEAD", cwd=top).split("\0"))
+        opened = score.open_findings(previous)
+        targets = {f["file"].replace("\\", "/") for f in opened}
+        # Findings may cite a screen image in their evidence rather than location.
+        evidence = "\n".join(f["body"] for f in opened)
+        if "docs/product/BRIEF.md" not in changed:
+            images = [name for name in images if name in changed or name in targets
+                      or name in evidence or Path(name).name in evidence]
+        prompt += ("\n\n## Later screen check\nReport only defects on the changed screens listed below "
+                   "or in the open earlier findings. Re-check those findings; do not search "
+                   "unchanged screens for new problems. Other screens were checked earlier.\n"
+                   "Screens for this round (including removed images):\n" + _bullets(sorted(
+                       set(images) | {name for name in changed if Path(name).suffix.lower() in design.IMAGES})) +
+                   "\nOpen findings to re-check:\n" + _bullets(
+                       [f["title"] + ": " + f["body"] for f in opened]))
     # The pinned helper stages each attachment under gettempdir(), with fixed-size names.
     # Leave 8K for executable, configs, schema, output and working-directory arguments.
     size = max(1, 24000 // (len(str(Path(tempfile.gettempdir()).resolve())) * 2 + 256))
     if os.name != "nt" or len(images) <= size:
         return run(top, "design-check", {"signoff_history": history}, cfg, "", {}, previous,
-                   signoff_prompt=prompt)
+                   signoff_prompt=prompt, images=set(images))
     combined: dict[str, Any] = {"findings": [], "dismissals": [], "blocking_level": "P1"}
     for start in range(0, len(images), size):
         batch = set(images[start:start + size])
