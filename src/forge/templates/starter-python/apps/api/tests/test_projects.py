@@ -474,8 +474,8 @@ def test_each_projects_endpoint_refuses_a_member_without_its_permission(
                 assert response.status_code == 403, (method, path, response.text)
                 assert response.json()["error"]["code"] == "PERMISSION_DENIED"
                 refused.append(permission)
-        # The starter's mapping lets a member do everything but delete and restore.
-        assert refused == ["delete", "restore"]
+        # The starter's mapping lets a member view and create, but not edit, delete or restore.
+        assert refused == ["edit", "delete", "restore"]
 
     for route, response in call_each_route(client, project_id).items():
         assert response.status_code != 403, (route, response.text)
@@ -586,7 +586,7 @@ def test_an_agent_searches_reads_creates_and_updates_projects_through_mcp_as_its
     # real MCP transport. REST cases do not call these tools; generated feature tests copy this
     # boundary case with field-based payloads. No production test seam.
     owner, csrf = sign_up(client)
-    agent, key = _mcp_agent(client, csrf, "member")
+    agent, key = _mcp_agent(client, csrf, "admin")
 
     async def use_tools() -> str:
         from conftest import agent_client
@@ -755,11 +755,14 @@ def test_a_member_agent_cannot_delete_or_restore_a_project_through_mcp(
                 for action, permission in tool_permissions.items()
                 if f"{MCP_FEATURE}.{permission}" in permissions
             }
-            for action in ("delete", "restore"):
+            for action in ("edit", "delete", "restore"):
                 if f"{MCP_FEATURE}.{action}" in permissions:
                     continue
+                arguments = {MCP_ID_FIELD: project_id}
+                if action == "edit":
+                    arguments.update(_mcp_payload(client, csrf, changed=True))
                 refused = await session.call_tool(
-                    f"{MCP_TOOL_PREFIX}_{action}", {MCP_ID_FIELD: project_id}
+                    f"{MCP_TOOL_PREFIX}_{'update' if action == 'edit' else action}", arguments
                 )
                 assert refused.is_error is True
                 error = _mcp_error(refused)

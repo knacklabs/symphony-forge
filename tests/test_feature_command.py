@@ -229,7 +229,7 @@ def _adopted_starter(repo) -> Path:
     permissions = repo.path / "libs/projects/server/src/projects.permissions.ts"
     original_permissions = permissions.read_text("utf-8")
     customised_permissions = original_permissions.replace(
-        "member: ['view', 'create', 'edit']", "member: []"
+        "member: ['view', 'create']", "member: []"
     )
     assert customised_permissions != original_permissions
     permissions.write_text(customised_permissions, encoding="utf-8")
@@ -252,7 +252,7 @@ def _adopted_python_starter(repo) -> Path:
     permissions = repo.path / "apps/api/app/projects/permissions.py"
     original_permissions = permissions.read_text("utf-8")
     customised_permissions = original_permissions.replace(
-        '"member": ["view", "create", "edit"]', '"member": []'
+        '"member": ["view", "create"]', '"member": []'
     )
     assert customised_permissions != original_permissions
     permissions.write_text(customised_permissions, encoding="utf-8")
@@ -344,8 +344,8 @@ def feature_live_run(repo, gh, tmp_path_factory) -> dict:
             assert built.returncode == 0, built.stdout + built.stderr
         permissions = client / "libs/notes/server/src/notes.permissions.ts"
         mapping = permissions.read_text("utf-8")
-        assert "member: ['view', 'create', 'edit']" in mapping
-        permissions.write_text(mapping.replace("member: ['view', 'create', 'edit']", "member: []"),
+        assert "member: ['view', 'create']" in mapping
+        permissions.write_text(mapping.replace("member: ['view', 'create']", "member: []"),
                                encoding="utf-8")
         _LIVE_RUNS["feature"] = _run_live_starter(
             tmp_path_factory, ((client, Path(".")),), ("GET /health returned 200",))
@@ -362,7 +362,7 @@ def feature_python_client(repo, gh, tmp_path) -> Path:
             assert built.returncode == 0, built.stdout + built.stderr
         permissions = client / "apps/api/app/notes/permissions.py"
         mapping = permissions.read_text("utf-8")
-        allowed = '"member": ["view", "create", "edit"]'
+        allowed = '"member": ["view", "create"]'
         assert allowed in mapping
         permissions.write_text(mapping.replace(allowed, '"member": []', 1), encoding="utf-8")
         _LIVE_RUNS["feature-python-client"] = client
@@ -883,8 +883,8 @@ def _assert_feature_guidance(repo, client: Path, log: Path) -> None:
     assert "As your first step" in brief
     assert "forge task feature <plural> --one <singular> --field '<field>:<kind>'" in brief
     assert "view, create, edit, delete and restore" in brief
-    assert "Members can view, create and edit" in brief
-    assert "cannot delete or restore" in brief
+    assert "Members can view and create" in brief
+    assert "cannot edit, delete or restore" in brief
     assert "see deleted items" in brief
     assert "Admins have all five" in brief
     assert "keep that mapping in one place" in brief
