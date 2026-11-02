@@ -223,7 +223,7 @@ def test_1_design_first_binds_the_screens(repo, gh, tmp_path, claude_payload, ad
     repo.git("merge", "-q", "--ff-only", "fix/prototype-settings")
     for flags in ([], ["--slug", "screen-change"]):
         refused = repo.forge("fix", "start", "Build screens", "--done", "Screens work", "--kind", "ui", *flags)
-        assert refused.returncode == 1 and "prototype-design" in refused.stderr, refused.stdout + refused.stderr
+        assert refused.returncode == 1 and "prototype-plan" in refused.stderr, refused.stdout + refused.stderr
     backend_fix = repo.forge("fix", "start", "Build storage", "--done", "Storage works", "--kind", "backend")
     assert backend_fix.returncode == 0, backend_fix.stdout + backend_fix.stderr
     design_fix = repo.forge("fix", "start", "Draw screens", "--done", "Screens have a design", "--kind", "mechanical")
