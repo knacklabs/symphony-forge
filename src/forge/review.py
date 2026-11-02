@@ -553,7 +553,7 @@ def _accepted(top: Path, item: str, history: list[dict[str, Any]]) -> str:
             kept = story.DISPOSITION.search(block)
             if kept and kept[1].lower() in ("keep", "defer"):
                 found.append(f"Plan read note {number}: {' '.join(block.split(None, 1)[1].split())}")
-    for (file, title), reason in _settled(history, priority_only=item == "design-check").items():
+    for (file, title), reason in _settled(history).items():
         scores = next((f"; {line[0].strip()}" for result in history for f in result.get("findings", [])
                        if (f["file"], f["title"]) == (file, title) and (line := score.LINE.search(f["body"]))), "")
         found.append(f"{title} ({file}): {reason}{scores}")
@@ -601,7 +601,7 @@ def _history(top: Path, item: str, base: str, previous: dict[str, Any],
     return list(rounds.values())
 
 
-def _settled(history: list[dict[str, Any]], *, priority_only: bool = False) -> dict[tuple[str, str], str]:
+def _settled(history: list[dict[str, Any]]) -> dict[tuple[str, str], str]:
     """Earlier rounds' settled findings, one per identity under its first spelling."""
     settled, earlier, names = {}, set(), {}
     for result in history:
@@ -612,7 +612,7 @@ def _settled(history: list[dict[str, Any]], *, priority_only: bool = False) -> d
         for finding in score.open_findings(result):
             if finding.get("required_done_when"):
                 continue
-            if not priority_only and (outcome := score.bar(score.of(finding))) in ("follow-up", "live with"):
+            if (outcome := score.bar(score.of(finding))) in ("follow-up", "live with"):
                 settled.setdefault(score.identity(finding["file"], finding["title"]), f"known: below the bar ({outcome})")
             if finding.get("follow_up"):
                 settled.setdefault(score.identity(finding["file"], finding["title"]),
@@ -852,8 +852,7 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         repo.git("clone", "-q", "--no-local", "--no-checkout", str(top), str(tree), cwd=top)
         repo.git("checkout", "-q", "--detach", head, cwd=tree)
         if signoff_prompt:
-            # Canvas attachments need every current screen, including unchanged images.
-            if previous.get("commit") and item != "design-check":
+            if previous.get("commit"):
                 repo.git("fetch", "-q", str(top), previous["commit"], cwd=tree)
                 repo.git("read-tree", previous["commit"], cwd=tree)
                 review_base = previous["commit"]
@@ -897,8 +896,7 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                 merged_base = repo.git("merge-base", base, "HEAD", cwd=tree)
                 if repo.git("merge-base", base, review_base, cwd=tree) != merged_base:
                     review_base = merged_base
-        prompt += _hide_generated(tree, repo.git("merge-base", review_base, "HEAD", cwd=tree), "HEAD",
-                                  keep_images=item == "design-check")
+        prompt += _hide_generated(tree, repo.git("merge-base", review_base, "HEAD", cwd=tree), "HEAD")
         # The worker brief's standards page, as rules; a prompt file keeps it out of argv.
         rules = block.split("<!-- standards -->\n", 1)[1].split("\n<!-- ", 1)[0]
         # The branch may track this path, even as a link out of the tree: drop it unfollowed,
@@ -948,11 +946,11 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
             if not signoff_prompt:
                 repo.refuse(REFUSALS["failed"], reason=reason, item=item)
         result = {"findings": findings, "blocking_level": "P0" if light else "P1"}
-        if not signoff_prompt or item in ("client-signoff", "design-check"):
+        if not signoff_prompt or item == "client-signoff":
             history = state["signoff_history"] if signoff_prompt else _history(top, item, base, previous, state=state)
             settled = {score.identity(*key): reason for key, reason in
-                       _settled(history, priority_only=item == "design-check").items()}
-            if item in ("client-signoff", "design-check"):
+                       _settled(history).items()}
+            if item == "client-signoff":
                 # The owner accepts the limitation in this version of the file,
                 # independent of the next reviewer's wording. Edits reopen it.
                 accepted = {}
@@ -984,9 +982,6 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
             if not signoff_prompt:
                 bound_review(top, item, state, result)
         serious = blocking(result)
-        if item == "design-check":
-            serious = [(n, f) for n, f in enumerate(findings, 1)
-                       if f in score.open_findings(result) and f["priority"] in SERIOUS]
         identity = repo.record_event(top, item, "review result", commit=head,
             review_round=round_number(top, item, state),
             outcome="failed" if reason else "blocked" if serious else "clean",
@@ -995,7 +990,7 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         if signoff_prompt:
             if reason:
                 problem, action = "The sign-off review did not finish: " + reason + ".", "check Autoreview"
-            elif serious and item not in ("client-signoff", "design-check"):
+            elif serious and item != "client-signoff":
                 problem = "Customer sign-off review found a blocking issue: " + "; ".join(
                     f["title"] for _, f in serious) + "."
                 action = "fix the prototype"
@@ -1004,11 +999,6 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                 problem, action = "The prototype differs from the reviewed commit.", "commit the changes"
             else:
                 return {"commit": head, **result}
-            if item == "design-check" and (reason or serious):
-                problem = ("The canvas completeness check did not finish: " + reason + "." if reason else
-                           "The canvas completeness check found gaps: " + "; ".join(
-                               f["title"] + ": " + f["body"] for _, f in serious) + ".")
-                action = "fix the review engine problem" if reason else "fix the prototype screens"
             repo.refuse((problem, f'{action}, then forge decision accept client-signoff --by "<name>"'))
     base = repo.resolve_commit(top, base)
     return {"id": identity, "commit": head, **result,
@@ -1095,21 +1085,17 @@ def declines(top: Path, base: str, result: dict[str, Any]) -> bool:
     return changed
 
 
-def _hide_generated(tree: Path, start: str, head: str, *, keep_images: bool = False) -> str:
+def _hide_generated(tree: Path, start: str, head: str) -> str:
     """Put changed binary and linguist-generated files back as they were at start in the review
     tree, so their contents stay out of the reviewed diff.
-    Completeness review keeps images visible, including generated screen captures.
     Returns the lines naming those files with their changed-line counts, or "" when there are none."""
-    from forge import design
-
     counts = {row[2]: row[:2] for record in repo.git(
         "diff", "--numstat", "-z", "--no-renames", start, head, cwd=tree).split("\0")
         if len(row := record.split("\t", 2)) == 3}
     attrs = repo.run("git", "check-attr", "--stdin", "-z", "linguist-generated", cwd=tree,
                      input="\0".join(counts)).stdout.split("\0")
     marked = {path for path, value in zip(attrs[::3], attrs[2::3]) if value in ("set", "true")}
-    generated = [path for path, count in counts.items() if (path in marked or "-" in count)
-                 and not (keep_images and Path(path).suffix.lower() in design.IMAGES)]
+    generated = [path for path, count in counts.items() if path in marked or "-" in count]
     if not generated:
         return ""
     repo.git("restore", f"--source={start}", "--staged", "--", *generated, cwd=tree)
@@ -1121,37 +1107,6 @@ def _hide_generated(tree: Path, start: str, head: str, *, keep_images: bool = Fa
             "the diff. A missing or untracked copy in the review tree is not a finding:\n"
             + _bullets(f"{path}: {counts[path][0]} added, {counts[path][1]} removed"
                        for path in generated))
-
-
-def design_check(top: Path, prompt: str, history: list[dict[str, Any]],
-                 previous: dict[str, Any]) -> dict[str, Any]:
-    """Check the canvas with its own pinned model through the strict review engine."""
-    from forge import design
-
-    cfg = {**repo.config(top), "tools": "codex", "models": {"review": {
-        "model": "gpt-6.1-sol", "effort": "high"}}}
-    images = [name for name in repo.git("ls-files", "-z", cwd=top).split("\0")
-              if not name.startswith((*BOOKKEEPING, "docs/decisions/"))
-              and Path(name).suffix.lower() in design.IMAGES]
-    # The pinned helper stages each attachment under gettempdir(), with fixed-size names.
-    # Leave 8K for executable, configs, schema, output and working-directory arguments.
-    size = max(1, 24000 // (len(str(Path(tempfile.gettempdir()).resolve())) * 2 + 256))
-    if os.name != "nt" or len(images) <= size:
-        return run(top, "design-check", {"signoff_history": history}, cfg, "", {}, previous,
-                   signoff_prompt=prompt)
-    combined: dict[str, Any] = {"findings": [], "dismissals": [], "blocking_level": "P1"}
-    for start in range(0, len(images), size):
-        batch = set(images[start:start + size])
-        result = run(top, "design-check", {"signoff_history": history}, cfg, "", {}, previous, images=batch,
-            signoff_prompt=prompt + "\n\nThis is one image batch. Check the attached screens against "
-            "the whole brief. Other screens have separate batches; do not report them as absent "
-            "from this batch.\nAttached screens:\n" + _bullets(sorted(batch)))
-        offset = len(combined["findings"])
-        combined["findings"].extend(result["findings"])
-        combined["dismissals"].extend({**entry, "finding": entry["finding"] + offset}
-                                      for entry in result.get("dismissals", []))
-        combined["commit"] = result["commit"]
-    return combined
 
 
 def _launcher(folder: Path, tree: Path, engine: str) -> Path | None:

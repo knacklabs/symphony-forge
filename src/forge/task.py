@@ -624,7 +624,10 @@ def fix_start(args: argparse.Namespace) -> None:
     parent = branch_item(repo.current_branch(top), top)
     if parent:
         require_active(parent[0], top)
-    base = "HEAD" if parent and not _merged(main, parent[0]) else main
+    # Sign-off reviews cite commits on this branch, even after its squash merge.
+    # The repair's published start tag keeps those commits and its rounds reachable.
+    base = "HEAD" if parent and (not _merged(main, parent[0]) or
+                                 show("HEAD", ".factory/client-signoff.json")) else main
     if prototype and fix_kind == "ui":
         require_prototype_design(top, base)
     state = {"kind": "fix", "why": why, "done_when": done, "base": git("rev-parse", base),

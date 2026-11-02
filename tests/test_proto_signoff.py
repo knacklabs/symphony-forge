@@ -191,8 +191,6 @@ def test_7_review_guards_client_signoff(repo, tmp_path, monkeypatch):
     page = _decision(fix, answers)
     reviewed = repo.git("rev-parse", "HEAD", cwd=fix)
     queue.write_text(json.dumps([
-        {"say": "model: claude-opus-5-5\nthinking: high\nautoreview done",
-         "report": {"review_status": "scoped-clean", "findings": []}},
         {"say": SOL_HIGH, "report": {"review_status": "findings", "findings": [{
             "priority": "P1", "title": "Prototype fails", "body": "Gain 5, Work 2, Harm 1\nDemo cannot finish",
             "code_location": {"file_path": "app.py", "line": 1}}]}}]))
@@ -200,7 +198,7 @@ def test_7_review_guards_client_signoff(repo, tmp_path, monkeypatch):
     assert blocked.returncode == 1
     assert "Prototype fails" in blocked.stderr
     assert "status: proposed" in page.read_text()
-    assert len(queue.with_suffix(".calls.jsonl").read_text().splitlines()) == 2
+    assert len(queue.with_suffix(".calls.jsonl").read_text().splitlines()) == 1
 
     queue.write_text(json.dumps([{"say": SOL_HIGH, "report": {"review_status": "findings", "findings": [{
         "priority": "P0", "title": "Prototype exposes data", "body": "Gain 5, Work 2, Harm 4\nDemo leaks records",
@@ -211,7 +209,7 @@ def test_7_review_guards_client_signoff(repo, tmp_path, monkeypatch):
     # A P0 still blocks; its next step now starts one grouped repair fix.
     assert "Next: forge fix start " in critical.stderr
     assert "status: proposed" in page.read_text()
-    assert len(queue.with_suffix(".calls.jsonl").read_text().splitlines()) == 3
+    assert len(queue.with_suffix(".calls.jsonl").read_text().splitlines()) == 2
 
     changed = answers.replace("Sign-in: agreed (client", "Sign-in: agreed (our default ")
     (fix / "docs/product/BRIEF.md").write_text(_brief_text(changed), encoding="utf-8")
@@ -220,7 +218,7 @@ def test_7_review_guards_client_signoff(repo, tmp_path, monkeypatch):
     assert default.returncode == 1
     assert "Sign-in" in default.stderr
     assert "forge next" in default.stderr
-    assert len(queue.with_suffix(".calls.jsonl").read_text().splitlines()) == 3
+    assert len(queue.with_suffix(".calls.jsonl").read_text().splitlines()) == 2
 
     changed = answers.replace("Sign-in: agreed (client", "Sign-in: agreed (agent")
     (fix / "docs/product/BRIEF.md").write_text(_brief_text(changed), encoding="utf-8")
@@ -230,7 +228,7 @@ def test_7_review_guards_client_signoff(repo, tmp_path, monkeypatch):
     assert "Sign-in" in agent.stderr
     assert "forge next" in agent.stderr
     assert "status: proposed" in page.read_text()
-    assert len(queue.with_suffix(".calls.jsonl").read_text().splitlines()) == 3
+    assert len(queue.with_suffix(".calls.jsonl").read_text().splitlines()) == 2
 
     changed = answers.replace("Sign-in: agreed (client", "Sign-in: agreed (agent + our default")
     (fix / "docs/product/BRIEF.md").write_text(_brief_text(changed), encoding="utf-8")
@@ -241,7 +239,7 @@ def test_7_review_guards_client_signoff(repo, tmp_path, monkeypatch):
     assert "client, salesperson, or developer" in combined.stderr
     assert "forge next" in combined.stderr
     assert "status: proposed" in page.read_text()
-    assert len(queue.with_suffix(".calls.jsonl").read_text().splitlines()) == 3
+    assert len(queue.with_suffix(".calls.jsonl").read_text().splitlines()) == 2
 
     open_answer = answers.replace("Sign-in: agreed (client, 2026-09-28)",
                                   "Sign-in: ask the client (Ravi, 2026-09-28)")
@@ -251,7 +249,7 @@ def test_7_review_guards_client_signoff(repo, tmp_path, monkeypatch):
     assert open_topic.returncode == 1
     assert "Sign-in" in open_topic.stderr
     assert "forge next" in open_topic.stderr
-    assert len(queue.with_suffix(".calls.jsonl").read_text().splitlines()) == 3
+    assert len(queue.with_suffix(".calls.jsonl").read_text().splitlines()) == 2
 
     queue.write_text(json.dumps([{"say": SOL_HIGH,
                                   "report": {"review_status": "scoped-clean", "findings": []}}]))
@@ -342,7 +340,7 @@ def test_7_review_guards_client_signoff(repo, tmp_path, monkeypatch):
     assert f"reviewed_commit: {reviewed}" in page.read_text()
     calls = [json.loads(line) for line in queue.with_suffix(".calls.jsonl").read_text().splitlines()]
     # Uncommitted product changes now stop before either external check.
-    assert len(calls) == 11
+    assert len(calls) == 10
     options = dict(zip(calls[-1]["args"][::2], calls[-1]["args"][1::2]))
     assert options["--engine"] == "codex"
     assert "--model" not in options and "--thinking" not in options
@@ -416,4 +414,4 @@ def test_8_signoff_requires_customer_evidence_and_exact_answers(repo, tmp_path, 
     assert "approved_on: 2026-09-28" in record
     assert "demo: https://demo.example.test" in record
     assert answers in record
-    assert len(queue.with_suffix(".calls.jsonl").read_text().splitlines()) == 2
+    assert len(queue.with_suffix(".calls.jsonl").read_text().splitlines()) == 1

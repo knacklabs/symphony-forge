@@ -1,0 +1,45 @@
+{
+  "base": "7450721ddf8c0cbedf9d84c8311677a59f817675",
+  "branch": "fix/the-sign-in-question-in-the-guide-offers",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a19c08-198b-7b72-a629-d0448545f61d",
+    "head": null,
+    "start": "8ac1fe5266882fb4ef2d9661e9f6e422bac72046"
+  },
+  "done_when": "A new prototype's sign-in question lists email and password first, then one-time codes, then company sign-in, and states that the client chooses the method.",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "194a8a735faf1ff36ed21a4561530bf7f325e41aa3c266d753556bb2d45f0b11",
+    "changed": "08c98c04ac75a8b3b640918bafd670dd25baabb436d5c18a7d2eda15b0800693",
+    "commit": "6a62e82038a8171affa15fdf2677b16e1f262c59",
+    "dismissals": [],
+    "findings": [],
+    "id": "0198fe1d-d933-4521-95ef-93e2ee02b86b",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-02T11:32:01.870412+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-02T12:51:54.612614+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "8b6156dad49bc34a97df9b3190cf197d4bae6924",
+    "keys": {},
+    "round": null
+  },
+  "why": "The sign-in question in the guide offers only two methods, so a client who wants one-time codes sees no choice for it, and the owner wants that option added, with email and password kept as the default and a clear note that the method is the client's choice.",
+  "worker": "codex"
+}
