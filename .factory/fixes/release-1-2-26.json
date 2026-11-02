@@ -1,0 +1,15 @@
+{
+  "base": "78b88454dae093df5dc4265125c41eca62c319ef",
+  "branch": "fix/release-1-2-26",
+  "done_when": "Every version reference names v1.2.26, forge sync output is committed, and the version tests pass",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-02T06:52:36.019867+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Release v1.2.26 with the client sign-off accept repair"
+}
