@@ -7,13 +7,53 @@
     "head": null,
     "start": "6808fbf9f9d29510d90c06475401505705118295"
   },
+  "known": [
+    {
+      "area": "test_a_member_agent_cannot_delete_or_restore_a_project_through_mcp.denied() in src/forge/templates/starter-python/apps/api/tests/test_projects.py",
+      "file": "src/forge/templates/starter-python/apps/api/tests/test_projects.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 765,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Keep the Python starter's required formatting check passing",
+      "work": 1
+    }
+  ],
   "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "9255316c4f30d2f854df459dfe6e3a1070e6fd5e03d63dc6e7233a699ca186c6",
+    "changed": "820a87b2c500c0f6cec260e703a009aca5cd1cb3e5b737df98490737f5ef5771",
+    "commit": "54e7c26fcf63bb682529cbbf1ab5b6385a645a16",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 1, Harm 2\nRaise: Functional.\nCase: normal use - initialize a Python app and run its test command.\nThis call puts both arguments on a 94-character line. The starter's apps/api/pyproject.toml:78 leaves Ruff at its [default 88-column width](https://docs.astral.sh/ruff/settings/#line-length), so the formatter splits these arguments onto separate lines. The shipped package.json:11 requires `ruff format --check`, which [exits nonzero for unformatted files](https://docs.astral.sh/ruff/formatter/#ruff-format). Since package.json:17 runs lint before the API tests, this blocks the normal Python starter test command and its smoke CI. Format this call before shipping it.",
+        "file": "src/forge/templates/starter-python/apps/api/tests/test_projects.py",
+        "gain": 4,
+        "harm": 2,
+        "line": 765,
+        "priority": "P1",
+        "title": "Keep the Python starter's required formatting check passing",
+        "work": 1
+      }
+    ],
+    "id": "8531b5a3-e365-4cc1-8a12-a123e089c78c",
+    "status": "blocked"
+  },
   "round": 2,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-02T05:14:55.163145+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-02T07:42:39.069254+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
