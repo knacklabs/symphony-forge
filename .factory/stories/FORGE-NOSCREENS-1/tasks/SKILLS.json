@@ -1,11 +1,19 @@
 {
   "branch": "task/FORGE-NOSCREENS-1-SKILLS",
   "part_line_limit": 400,
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-02T05:14:47.798079+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "6f659bd6c2aa7fa51cb4cf07cb43ef361e59071d",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
