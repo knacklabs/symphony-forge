@@ -72,7 +72,7 @@
     "status": "blocked"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-02T09:56:00.929300+00:00",
@@ -85,8 +85,12 @@
   ],
   "stop": {
     "at": "2026-11-02T10:03:59.350032+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "src/forge/templates/design-check.md",
-    "wait_id": "1ab2ee19-50ac-48d9-b916-6817d3f435d5"
+    "reason": "The owner chose one more round: repair both review notes.",
+    "wait_id": "1ab2ee19-50ac-48d9-b916-6817d3f435d5",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
