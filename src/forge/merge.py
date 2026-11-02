@@ -69,14 +69,17 @@ def merge(args: argparse.Namespace, *, refreshed: bool = False) -> int:
         pr = json.loads(shown.stdout) if shown.returncode == 0 else {}
     except ValueError:
         pr = {}
-    if (not isinstance(receipt, dict) or receipt.get("review") != "clean"
-            or not isinstance(head, str) or not re.fullmatch(r"[0-9a-f]{40,64}", head)):
+    local_ready = (isinstance(receipt, dict) and receipt.get("review") == "clean"
+                   and isinstance(head, str) and re.fullmatch(r"[0-9a-f]{40,64}", head))
+    if not local_ready or (isinstance(pr, dict) and head != pr.get("headRefOid")):
         shared = time_records.from_body(pr.get("body") or "") if isinstance(pr, dict) else {}
         shared = shared.get("ready") or {}
-        receipt = ({name: shared[name] for name in ("commit", "review", "base") if name in shared}
-                   if shared.get("review") == "clean" and shared.get("commit") == pr.get("headRefOid") else {})
-        head = receipt.get("commit")
-        if not isinstance(head, str) or not re.fullmatch(r"[0-9a-f]{40,64}", head):
+        shared_head = shared.get("commit")
+        if (shared.get("review") == "clean" and isinstance(shared_head, str)
+                and re.fullmatch(r"[0-9a-f]{40,64}", shared_head) and shared_head == pr.get("headRefOid")):
+            receipt = {name: shared[name] for name in ("commit", "review", "base") if name in shared}
+            head = shared_head
+        elif not local_ready:
             repo.refuse(REFUSALS["not_ready"], item=item)
     if (not isinstance(pr, dict) or pr.get("state") not in ("OPEN", "MERGED") or (pr.get("state") == "OPEN" and pr.get("isDraft") is not False)
             or pr.get("baseRefName") != default or pr.get("headRefName") != branch

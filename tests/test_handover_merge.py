@@ -59,6 +59,39 @@ def _clone(env, tmp_path, name: str) -> Repo:
     return Repo(path, env.repo.bin)
 
 
+def test_3_merge_uses_shared_readiness_after_another_machine_closes_again(env, tmp_path):
+    _client(env.repo, env.gh, tmp_path, False)
+    config = env.repo.path / "forge.toml"
+    env.commit(env.repo.path, "forge.toml", config.read_text("utf-8") + 'merge = "agent"\n')
+    env.repo.git("push", "-q", "origin", "main")
+    item, where = env.start_fix()
+    env.open_pr("")
+    assert env.close(item).returncode == 0
+    branch = f"fix/{item}"
+    machine = _clone(env, tmp_path, "returning-machine")
+    closed = machine.forge("close", item)
+    assert closed.returncode == 0, closed.stdout + closed.stderr
+    old_head = machine.git("rev-parse", branch)
+    machine.git("worktree", "remove", str(worktree(machine, branch)))
+
+    env.commit(where, "greeting.txt", "Hello from the other machine\n")
+    closed = env.close(item)
+    assert closed.returncode == 0, closed.stdout + closed.stderr
+    head = env.repo.git("rev-parse", branch)
+    assert head != old_head
+    _pr(env, branch, head, body(env.gh_calls("pr", "edit")[-1]))
+    _github_merge_edge(env.repo, env.repo.git("remote", "get-url", "origin"), branch)
+
+    before = len(env.gh_calls("pr", "merge"))
+    merged = machine.forge("merge", item)
+    assert merged.returncode == 0, merged.stdout + merged.stderr
+    calls = env.gh_calls("pr", "merge")[before:]
+    assert len(calls) == 1
+    assert calls[0][calls[0].index("--match-head-commit") + 1] == head
+    assert not any(line == f"branch refs/heads/{branch}" for line in
+                   machine.git("worktree", "list", "--porcelain").splitlines())
+
+
 @pytest.mark.parametrize("adopted,command", [(False, "work"), (False, "close"), (True, "work")],
                          ids=["new-work", "new-close", "earlier-adopted-work"])
 def test_2_pickup_keeps_a_newly_dropped_fix_inactive(env, adopted, command, tmp_path):
