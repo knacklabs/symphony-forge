@@ -178,6 +178,7 @@ jobs:
       FORGE_GROUP: ${{ matrix.group }}
       FORGE_GROUPS: '6'
       FORGE_CONTAINERS: '1'
+      FORGE_STARTER_LIVE: '1'
       # Measure every test on CI hardware before choosing a performance repair.
       PYTEST_ADDOPTS: '--durations=0'
       GH_TOKEN: ${{ github.token }}
@@ -187,6 +188,10 @@ jobs:
         with:
           fetch-depth: 0
       - run: git remote set-head origin --auto
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: corepack enable
       - uses: actions/setup-python@v6
         with:
           python-version: '3.11'
