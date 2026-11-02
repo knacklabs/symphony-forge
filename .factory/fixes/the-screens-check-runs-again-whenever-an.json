@@ -75,8 +75,8 @@
     "id": "8be5b126-6694-439b-88f0-a4b7ac4ac358",
     "status": "clean"
   },
-  "round": 2,
-  "status": "waiting for checks",
+  "round": 3,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-02T09:14:33.033893+00:00",
@@ -101,10 +101,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": "81f8ede6-440b-4eb5-a9a2-f56f3681216c",
-    "head": "93f9d1c4353d9b9b5b40cc3d16e0b72d1e959ce3",
+    "close": "0ebcc0d6-1de2-46da-84d5-80846cf1bfc8",
+    "head": "2ab3f0ff67e25fd5db594b0555e1f16c3b0e362c",
     "keys": {},
-    "round": 1
+    "round": 2
   },
   "why": "The screens check runs again whenever any app file changes, and each run re-checks every screen at top effort, so it takes long and finds new problems each time.",
   "worker": "codex"
