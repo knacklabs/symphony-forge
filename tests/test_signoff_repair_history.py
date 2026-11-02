@@ -161,8 +161,9 @@ def test_1_repair_checkout_keeps_rounds_settlements_and_owner_stop(
 
     clone = _fresh_repair_checkout(repo, tmp_path, repair_branch)
     before = len(_calls(queue))
-    if not canvas:
-        queue.write_text(json.dumps([_clean(), third_round]), encoding="utf-8")
+    # Close consumes its own clean report. Both sign-off paths must receive the
+    # third-round findings so Forge filters the settled repeat.
+    queue.write_text(json.dumps([third_round] if canvas else [_clean(), third_round]), encoding="utf-8")
     still_stopped = _accept(repo, clone)
     assert still_stopped.returncode == 1, still_stopped.stdout + still_stopped.stderr
     assert "One more round, split or accept?" in still_stopped.stderr
