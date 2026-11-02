@@ -4,7 +4,12 @@ Test audit:
 1. Protect the decision command's saved sign-off history, owner stop and settled findings.
 2. A repair based on the default branch after its parent was merged can drop later sign-off rounds.
 3. Existing sign-off tests stay on one checkout and cannot detect history lost by a squash clone.
-4. The real Forge commands and git merges exercise the boundary; only Autoreview is replaced.
+4. Real Forge commands and git own the boundary; only external services are replaced.
+
+Replay audit: the earlier manual merge bypassed close's reconstruction of the
+repair branch. Main now changes the inherited app while the repair adds its own
+file. Real close must keep main's app and the sign-off record before the squash
+and clone. Only GitHub, CI and Autoreview responses are replaced at their edges.
 """
 import json
 import shlex
@@ -12,6 +17,7 @@ from pathlib import Path
 
 import pytest
 
+from test_close import Forge, GREEN
 from test_proto_signoff import _adopted_client, _client, _decision, _green_full_run, _request_build
 from test_signoff_design import _calls
 
@@ -56,6 +62,42 @@ def _fresh_repair_checkout(repo, tmp_path, repair_branch):
     return clone
 
 
+def _signoff_app_edit(repo, fix):
+    (fix / "app.py").write_text("SIGNOFF_APP = True\n\nSTABLE_APP = True\n", encoding="utf-8")
+    repo.git("add", "app.py", cwd=fix)
+    repo.git("commit", "-qm", "Keep the sign-off app change", cwd=fix)
+
+
+def _default_app_edit(repo, tmp_path):
+    writer = tmp_path / "default app writer"
+    remote = repo.git("remote", "get-url", "origin", cwd=repo.path)
+    repo.git("clone", "-q", remote, str(writer), cwd=repo.path)
+    (writer / "app.py").write_text("DEFAULT_APP = True\n\nSTABLE_APP = True\n", encoding="utf-8")
+    repo.git("add", "app.py", cwd=writer)
+    repo.git("commit", "-qm", "Change the app on main", cwd=writer)
+    repo.git("push", "-q", "origin", "main", cwd=writer)
+    repo.git("fetch", "-q", "origin", cwd=repo.path)
+    _green_full_run(repo)
+
+
+def _close_and_squash_repair(repo, gh, tmp_path, queue, repair, repair_branch):
+    queue.write_text(json.dumps([_clean()]), encoding="utf-8")
+    checks = Forge(repo, gh, tmp_path)
+    checks.checks(GREEN)
+    gh.respond("pr", "list", stdout="[]")
+    gh.respond("pr", "create", stdout="https://github.com/acme/shop/pull/7\n")
+    gh.respond("pr", "edit")
+    gh.respond("pr", "ready")
+    default_head = repo.git("rev-parse", "origin/main", cwd=repair)
+    item = repair_branch.removeprefix("fix/")
+    closed = repo.forge("close", item, cwd=repair)
+    assert closed.returncode == 0, closed.stdout + closed.stderr
+    repo.git("merge-base", "--is-ancestor", default_head, "HEAD", cwd=repair)
+    assert (repair / "app.py").read_text("utf-8") == "DEFAULT_APP = True\n\nSTABLE_APP = True\n"
+    repo.git("merge", "--ff-only", "origin/main", cwd=repo.path)
+    _squash(repo, repair_branch)
+
+
 @pytest.mark.parametrize(
     "setup,canvas",
     [
@@ -66,11 +108,12 @@ def _fresh_repair_checkout(repo, tmp_path, repair_branch):
     ],
 )
 def test_1_repair_checkout_keeps_rounds_settlements_and_owner_stop(
-        repo, tmp_path, monkeypatch, setup, canvas):
+        repo, gh, tmp_path, monkeypatch, setup, canvas):
     if setup is _client:
-        fix, answers, queue = _client(repo, tmp_path, monkeypatch, working_build=not canvas)
+        fix, answers, queue = _client(repo, tmp_path / "signoff", monkeypatch,
+                                      working_build=not canvas)
     else:
-        fix, answers, queue = _adopted_client(repo, tmp_path, monkeypatch)
+        fix, answers, queue = _adopted_client(repo, tmp_path / "signoff", monkeypatch)
         if not canvas:
             _request_build(repo, fix)
             (fix / "app.py").write_text("print('prototype')\n", encoding="utf-8")
@@ -102,21 +145,19 @@ def test_1_repair_checkout_keeps_rounds_settlements_and_owner_stop(
     assert second.returncode == 1, second.stdout + second.stderr
     assert "One more round, split or accept?" in second.stderr
 
+    _signoff_app_edit(repo, fix)
     repair_args = shlex.split(next(line.removeprefix("Next: ") for line in first.stderr.splitlines()
                                     if line.startswith("Next: forge fix start ")))
     started = repo.forge(*repair_args[1:], cwd=fix)
     assert started.returncode == 0, started.stdout + started.stderr
     repair = Path(started.stdout.split(" in ", 1)[1].splitlines()[0])
     repair_branch = repo.git("branch", "--show-current", cwd=repair)
-    changed = repair / checked_file
-    changed.write_text(changed.read_text("utf-8") + "\nThe order remains available after submission.\n",
-                       encoding="utf-8")
-    repo.git("add", checked_file, cwd=repair)
+    (repair / "docs/order-repair.md").write_text("The order remains available after submission.\n",
+                                                  encoding="utf-8")
+    repo.git("add", "docs/order-repair.md", cwd=repair)
     repo.git("commit", "-qm", "Repair order submission", cwd=repair)
-    # Work merges the default branch before repair. Keep the repair's newer
-    # sign-off record and app edits when the earlier squash added the same file.
-    repo.git("merge", "-q", "--no-edit", "-X", "ours", "origin/main", cwd=repair)
-    _squash(repo, repair_branch)
+    _default_app_edit(repo, tmp_path)
+    _close_and_squash_repair(repo, gh, tmp_path, queue, repair, repair_branch)
 
     clone = _fresh_repair_checkout(repo, tmp_path, repair_branch)
     before = len(_calls(queue))
@@ -139,8 +180,8 @@ def test_1_repair_checkout_keeps_rounds_settlements_and_owner_stop(
 
 
 def test_2_adopted_client_with_one_legacy_review_reaches_the_round_two_stop(
-        repo, tmp_path, monkeypatch):
-    fix, answers, queue = _adopted_client(repo, tmp_path, monkeypatch)
+        repo, gh, tmp_path, monkeypatch):
+    fix, answers, queue = _adopted_client(repo, tmp_path / "signoff", monkeypatch)
     _request_build(repo, fix)
     (fix / "app.py").write_text("print('prototype')\n", encoding="utf-8")
     repo.git("add", "app.py", cwd=fix)
@@ -164,25 +205,26 @@ def test_2_adopted_client_with_one_legacy_review_reaches_the_round_two_stop(
 
     parent_branch = repo.git("branch", "--show-current", cwd=fix)
     _squash(repo, parent_branch)
+    _signoff_app_edit(repo, fix)
     repair_args = shlex.split(next(line.removeprefix("Next: ") for line in first.stderr.splitlines()
                                     if line.startswith("Next: forge fix start ")))
     started = repo.forge(*repair_args[1:], cwd=fix)
     assert started.returncode == 0, started.stdout + started.stderr
     repair = Path(started.stdout.split(" in ", 1)[1].splitlines()[0])
     repair_branch = repo.git("branch", "--show-current", cwd=repair)
-    changed = repair / "app.py"
-    changed.write_text(changed.read_text("utf-8") + "\nprint('order retained')\n", encoding="utf-8")
-    repo.git("add", "app.py", cwd=repair)
+    (repair / "docs/order-repair.md").write_text("The order remains available after submission.\n",
+                                                  encoding="utf-8")
+    repo.git("add", "docs/order-repair.md", cwd=repair)
     repo.git("commit", "-qm", "Repair order submission", cwd=repair)
-    repo.git("merge", "-q", "--no-edit", "-X", "ours", "origin/main", cwd=repair)
-    _squash(repo, repair_branch)
+    _default_app_edit(repo, tmp_path)
+    _close_and_squash_repair(repo, gh, tmp_path, queue, repair, repair_branch)
 
     clone = _fresh_repair_checkout(repo, tmp_path, repair_branch)
     queue.write_text(json.dumps([_clean(), _report(finding)]), encoding="utf-8")
     second = _accept(repo, clone)
     assert second.returncode == 1, second.stdout + second.stderr
     assert "One more round, split or accept?" in second.stderr
-    assert len(_calls(queue)) == 4
+    assert len(_calls(queue)) == 5
     prompt = "\n".join(_calls(queue)[-1]["prompt_files"].values())
     assert "Order submission loses the order" in prompt
     assert f"sign-off checkout: {fix}" in first.stderr
