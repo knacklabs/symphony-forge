@@ -4,12 +4,20 @@
   "done_when": "At prototype sign-off, only a finding with Harm 4 or higher, Gain 5, or a P0 stops the work; every other finding goes to Known issues with no repair round and no question.",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-02T11:11:55.112653+00:00",
       "step": "start"
     }
   ],
-  "why": "Sign-off judges a sample-data prototype by production rules: its prompt says the full production proof is due now and never says there is no back end, so labelled demo tools can get P0 and production answers can get Not done, and fix-now findings stop the owner for a repair round (GitHub issue 1303)."
+  "stuck": {
+    "close": null,
+    "head": "32646c41081b2d8674d2651444ffec1fcdaaf993",
+    "keys": {},
+    "round": null
+  },
+  "why": "Sign-off judges a sample-data prototype by production rules: its prompt says the full production proof is due now and never says there is no back end, so labelled demo tools can get P0 and production answers can get Not done, and fix-now findings stop the owner for a repair round (GitHub issue 1303).",
+  "worker": "codex"
 }
