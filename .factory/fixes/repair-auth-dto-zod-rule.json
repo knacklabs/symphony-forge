@@ -1,0 +1,15 @@
+{
+  "base": "e425fd53f5a4c94a85e638724a71061c7fdab30c",
+  "branch": "fix/repair-auth-dto-zod-rule",
+  "done_when": "tests/test_zod_starter.py passes on the default branch, and the invite and reset answers keep their documented shape",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-02T20:00:04.977772+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Main is broken: tests/test_zod_starter.py::test_3 fails, because the merged sign-in part's auth.dto.ts uses a Swagger decorator that the starter's rule forbids; request docs come from the shared Zod schemas. Every pull request that selects this test fails until it is repaired."
+}
