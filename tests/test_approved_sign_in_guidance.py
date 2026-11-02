@@ -36,7 +36,8 @@ def test_1_basic_screens_follow_approved_sign_in(env, tmp_path, previous):
             assert "which basic screens exist and what they hold" in text
             assert "do not build the password screens" in text
     repo.git("add", "-A", cwd=where)
-    repo.git("commit", "-qm", "Refresh guidance", cwd=where)
+    # Init and upgrade already sync current guidance, so another sync can change nothing.
+    repo.git("commit", "--allow-empty", "-qm", "Refresh guidance", cwd=where)
     env.reviews(CLEAN)
     closed = env.close(item)
     assert closed.returncode == 0, closed.stdout + closed.stderr
