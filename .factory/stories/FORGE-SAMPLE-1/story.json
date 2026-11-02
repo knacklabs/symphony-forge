@@ -1,10 +1,22 @@
 {
   "doc": "plans/FORGE-SAMPLE-1.md",
-  "status": "planning",
+  "status": "read",
   "steps": [
     {
       "at": "2026-11-02T17:44:46.189061+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-02T18:09:17.904029+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-11-02T18:14:47.074300+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-11-02T18:18:23.051197+00:00",
+      "step": "read"
     }
   ],
   "title": "Sample-data prototypes get a light sign-off",
