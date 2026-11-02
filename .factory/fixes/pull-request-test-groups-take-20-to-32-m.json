@@ -24,20 +24,41 @@
       "security": false,
       "title": "Not done: Report the slowest group's elapsed time before and after on the same runners",
       "work": null
+    },
+    {
+      "area": ".test_durations",
+      "file": ".test_durations",
+      "gain": null,
+      "harm": null,
+      "line": 1040,
+      "outcome": "open",
+      "reason": "",
+      "round": 5,
+      "security": false,
+      "title": "Refresh timing entries against the current test suite",
+      "work": null
     }
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "b2096a727b72965fb2e2432a92e890e22d9e94839c8a7e655ed65667db7e5052",
-    "changed": "2b2c1a80a5e183d14924c536cf636de67802eb35a443b9936c80beaf2875e5f3",
-    "commit": "63fbbcb2af4016073e33e691b1e69087d7c9f251",
+    "branch_diff": "3b88ab2080c643131d18c6e3ee96e92f22206f7103cbeeb8819c33b8fdb917c4",
+    "changed": "a31aa7b9677d6b0f987e277693520457cf3ed5f756536a700d27ebdfc17126f8",
+    "commit": "10556e7e8aa9d6aaf182a89217dd8f184f86eeb2",
     "dismissals": [],
-    "findings": [],
-    "id": "a05a9206-039d-42d2-8ec7-8498189eedd4",
-    "status": "clean"
+    "findings": [
+      {
+        "body": "The timing refresh contains obsolete test IDs and misses current tests, so CI's inventory check will fail. For example, this entry names a function replaced by `test_5_the_api_records_crashes_and_accepts_private_web_reports` at tests/test_defaults_errors.py:20. Other obsolete entries appear at .test_durations:1042, :1960 and :3310. Current tests such as `test_1_broad_related_tests_wait_for_ci` also have no recorded timing. tests/test_ci_timing_inventory.py:25\u201327 explicitly rejects obsolete IDs. Reconcile the timings with the current suite after the main merges; the earlier 3,865-test inventory proof no longer describes this checkout.",
+        "file": ".test_durations",
+        "line": 1040,
+        "priority": "P1",
+        "title": "Refresh timing entries against the current test suite"
+      }
+    ],
+    "id": "c7458286-902b-437b-9794-5f0e1bb08cf0",
+    "status": "blocked"
   },
   "round": 3,
-  "status": "waiting for checks",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-31T20:25:44.871326+00:00",
@@ -58,8 +79,17 @@
     {
       "at": "2026-11-01T17:29:40.977023+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-11-02T00:57:58.101524+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-11-02T00:57:58.101815+00:00",
+    "file": ".test_durations",
+    "wait_id": "f2ad772e-bd1f-4edd-a251-e9b80701fd9d"
+  },
   "stuck": {
     "close": "6af1462d-be09-40b6-ad38-e4f65864b01a",
     "head": "a7999b0fbe4ae9c56940ac7a91cad4679ee4032d",
