@@ -95,5 +95,7 @@ def test_1_test_only_pull_requests_select_changed_files(repo, gh, tmp_path, adop
         assert ("2 passed" if shared else "1 passed") in selected.stdout
         repo.git("revert", "--no-edit", "HEAD", cwd=client)
 
-    assert "needs.selection.outputs.run-windows != 'false'" in windows
+    # Forge keeps installer coverage on unmarked test-only pull requests.
+    assert "needs.selection.outputs.run-windows != 'false'" not in windows
     assert "ConvertFrom-Json $env:PLATFORM_FILES" in windows
+    assert "'tests/test_installers_explain_docker_start.py' | Sort-Object -Unique" in windows

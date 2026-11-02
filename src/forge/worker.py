@@ -95,8 +95,8 @@ def checkout(item: str) -> tuple[re.Match[str], Path]:
     git("fetch", "-q", "origin", default, cwd=top)
     if task._merged(f"origin/{default}", item, top):
         refuse(REFUSALS["merged"], item=item)
-    trees = story.worktrees(Path.cwd())
-    top = next((trees[branch] for branch in branches if branch in trees), None)
+    trees = story.worktrees(top)
+    top = next((trees[branch] for branch in branches if branch in trees), None) or task.pick_up(item, branches)
     if top is None:
         refuse(REFUSALS["no_checkout"], item=item)
     if not repo.run("git", "rev-parse", "-q", "--verify", "MERGE_HEAD", cwd=top).returncode:
@@ -429,7 +429,7 @@ def ready(top: Path, config: dict[str, Any], kind: str, on_codex: bool,
     the SDK with the declining handler's place and the project's trust. Returns
     claude's --model and --effort, or [] on Codex. The cold read (Grill) runs these checks too."""
     if not on_codex:
-        if not native and kind != "Grill" and (problem := claude_sdk.sdk_problem()):
+        if not native and (problem := claude_sdk.sdk_problem()):
             refuse(REFUSALS["claude_sdk"], problem=problem, top=repo.quote(top))
         # A worker always names its models; a cold read with no entry runs on Claude's own.
         chosen = (repo.design_models(config, "claude") if design else

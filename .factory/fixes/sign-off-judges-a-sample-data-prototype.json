@@ -1,0 +1,105 @@
+{
+  "amendments": [
+    {
+      "at": "2026-11-02T11:56:47.415149+00:00",
+      "because": "The owner decided this on 2 November 2026, after one client's review found a new P0 each round on a prototype with no back end.",
+      "done_when": "At prototype sign-off, only a finding with Harm 4 or higher, Gain 5, or a P0 stops the work; every other finding goes to Known issues with no repair round and no question."
+    },
+    {
+      "at": "2026-11-02T15:17:33.601263+00:00",
+      "because": "Combined testing showed that the merged reuse fix compares the green run with HEAD, so a branch with an app repair is told to run the full tests on main, which cannot include that repair. That is a new deadlock for client sign-off, and it must not ship.",
+      "done_when": "At prototype sign-off, only a finding with Harm 4 or higher, Gain 5, or a P0 stops the work; every other finding goes to Known issues with no repair round and no question. Risks that need a real-data build are build-story work. After round 2, on a repo whose sign-off decision declares only sample data, the owner may accept a remaining P0 with a reason, and it stays a known issue; a repo with real data keeps the hard block."
+    }
+  ],
+  "base": "7450721ddf8c0cbedf9d84c8311677a59f817675",
+  "branch": "fix/sign-off-judges-a-sample-data-prototype",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a19bf5-acd1-7700-a12a-f587fe83c58b",
+    "head": null,
+    "start": "acf6394aacf03b609adf2c7162b56a9207e3ed7e"
+  },
+  "done_when": "At prototype sign-off, only a finding with Harm 4 or higher, Gain 5, or a P0 stops the work; every other finding goes to Known issues with no repair round and no question. Risks that need a real-data build are build-story work. After round 2, on a repo whose sign-off decision declares only sample data, the owner may accept a remaining P0 with a reason, and it stays a known issue; a repo with real data keeps the hard block. Also: a sign-off on a fix branch whose app repair is not yet on the default branch can pass the full-run gate on the default branch's last green run; only changes on the default branch since that run can need a new run.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "_signoff_review() in src/forge/records.py",
+      "file": "src/forge/records.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 541,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Apply the prototype threshold before honoring a saved stop",
+      "work": 2
+    },
+    {
+      "area": "_signoff_review() in src/forge/records.py",
+      "file": "src/forge/records.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 546,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Exclude lesser findings from sign-off questions and split repairs",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "c8a550d69ff4e883b2a7d05f77956e2608d0a23d24f2cf9197f511b5bee7481c",
+    "changed": "22c37d043fdfd51dac45d5af311028bd938b5dd99578a2b3543099d54b2044f9",
+    "commit": "5d14307403724669b2b8ec1e8902e507aac5c26c",
+    "dismissals": [],
+    "findings": [],
+    "id": "3263faa2-665c-4608-821f-4043284e71eb",
+    "status": "clean"
+  },
+  "round": 8,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-02T11:11:55.112653+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-02T11:27:15.158287+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-02T13:54:50.412862+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-02T14:29:47.830567+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-02T15:30:50.946173+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-02T11:27:15.171061+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "src/forge/records.py",
+    "reason": "The owner chose one more round: repair both review notes.",
+    "wait_id": "5148ff16-6f80-48e2-a1a6-dbd4b8bb3838",
+    "worker_round": 2
+  },
+  "stuck": {
+    "close": "41c1ea55-a961-4ff0-8705-3e7838d178cb",
+    "head": "3a4bd5228a24dea42b13c7002456be15d801691f",
+    "keys": {},
+    "round": 7
+  },
+  "why": "Sign-off judges a sample-data prototype by production rules: its prompt says the full production proof is due now and never says there is no back end, so labelled demo tools can get P0 and production answers can get Not done, and fix-now findings stop the owner for a repair round (GitHub issue 1303).",
+  "worker": "codex"
+}

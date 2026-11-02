@@ -655,13 +655,11 @@ def merger(top: Path, state: dict[str, Any]) -> str:
 
 
 def _worktree(item: str) -> Path:
-    """The checkout on the item's own branch: the one its state names. An earlier item's state
-    reaches later branches through the default branch, so the file alone proves nothing."""
+    """Find the item's checkout, including work published on another machine."""
     task.require_active(item)
-    for branch, tree in story.worktrees(repo.root()).items():
-        state = repo.read_state(item, tree)
-        if state and state.get("branch") == branch:
-            return tree
+    branches = [f"task/{item.replace('/', '-')}"] if "/" in item else [f"fix/{item}", f"forge/{item}"]
+    if tree := task.pick_up(item, branches):
+        return tree
     repo.refuse(REFUSALS["not_started"], item=item)
 
 
@@ -699,16 +697,13 @@ def _merge_default(top: Path, item: str, branch: str, default: str,
             and (pr or {}).get("baseRefName") == parent_branch):
         repo.refuse(REFUSALS["base_merged_by_hand"], item=item, base=parent,
                     number=(pr or {}).get("number"), default=default)
-    replay_part = (stacked_part and re.fullmatch(r"[0-9a-f]{40}|[0-9a-f]{64}", base)
-                   and repo.run("git", "merge-base", "--is-ancestor", base, "HEAD", cwd=top).returncode == 0)
     if repo.run("git", "merge-base", "--is-ancestor", target, "HEAD", cwd=top).returncode == 0:
         return
     trial = repo.run("git", "merge-tree", "--write-tree", "--no-messages", "HEAD", target, cwd=top)
     if trial.returncode not in (0, 1):
         trial.check_returncode()
-    if (replay_part or trial.returncode and state.get("kind") == "fix" and repo.ITEM.fullmatch(parent)
-            and re.fullmatch(r"[0-9a-f]{40}|[0-9a-f]{64}", base)
-            and task._merged(target, parent, top)
+    if (re.fullmatch(r"[0-9a-f]{40}|[0-9a-f]{64}", base) and (stacked_part or trial.returncode
+            and state.get("kind") == "fix" and repo.ITEM.fullmatch(parent) and task._merged(target, parent, top))
             and repo.run("git", "merge-base", "--is-ancestor", base, "HEAD", cwd=top).returncode == 0):
         target = repo.git("rev-parse", target, cwd=top)
         original = repo.git("rev-parse", "HEAD", cwd=top)
@@ -743,6 +738,9 @@ def _merge_default(top: Path, item: str, branch: str, default: str,
             proof = review.commit_paragraph(top, baseline, "Proof list:", original)
             repo.git("read-tree", "-u", "-m", tree, cwd=top)
             repo.git("commit", "-q", "-m", "Keep the follow-up's merge edits", "-m", proof, cwd=top)
+        if task.show(original, ".factory/client-signoff.json", top) is not None:
+            repo.git("checkout", original, "--", ".factory/client-signoff.json", cwd=top)
+            repo.commit_state("Keep the sign-off rounds after replay", ".factory/client-signoff.json", top=top)
         published = repo.run("git", "push", "-q", "-u", f"--force-with-lease={remote_ref}:{lease}",
                              "origin", branch, cwd=top)
         if published.returncode:

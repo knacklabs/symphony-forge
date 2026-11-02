@@ -108,7 +108,11 @@ def test_1_one_tests_check_passes_only_when_every_group_passes(repo, gh, tmp_pat
     # Branch protection keeps waiting on the one check named tests.
     check_gate(workflow)
     if kind == "source":
-        assert workflow == (ROOT / ".github/workflows/forge.yml").read_text(encoding="utf-8")
+        # Forge's nightly job adds live-starter setup; client sync keeps its own full run.
+        # The pull-request jobs still match the generated merge gate.
+        committed = jobs((ROOT / ".github/workflows/forge.yml").read_text(encoding="utf-8"))
+        for name in ("docs-check", "tests", "tests-passed", "forge-pr-check"):
+            assert found[name] == committed[name]
 
 
 def test_2_small_split_suite_passes_without_hiding_errors(repo):
