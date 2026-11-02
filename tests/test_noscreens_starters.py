@@ -25,7 +25,7 @@ from test_app_constitution import _fixture_git
 STORY = "FORGE-NOSCREENS-1"
 ROOT = Path(__file__).resolve().parents[1]
 STARTER = ROOT / "src/forge/templates/starter"
-PREVIOUS_STARTER_REF = "v1.2.26"
+PREVIOUS_STARTER_REF = "v1.2.25"
 
 
 def _assert_no_screens(client: Path) -> None:
