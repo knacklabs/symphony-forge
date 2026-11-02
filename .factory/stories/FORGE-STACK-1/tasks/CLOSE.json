@@ -1,0 +1,146 @@
+{
+  "branch": "task/FORGE-STACK-1-CLOSE",
+  "chat": {
+    "approval": "163c341206a7b61eb1165174f54268020096e3131854660f47f52ab7d21c8127",
+    "claude": null,
+    "conversation": "01a18cea-b308-76d3-9e4c-c8ac04c3e701",
+    "head": null,
+    "start": "4067db07079bfc4a5e00e6bce2c7b94b58c9e892"
+  },
+  "known": [
+    {
+      "area": "close() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 361,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Run a full review after replaying a stacked part",
+      "work": 2
+    },
+    {
+      "area": "pr_check() in src/forge/prcheck.py",
+      "file": "src/forge/prcheck.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 355,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Resolve the actual default branch in the PR-check checkout",
+      "work": 2
+    },
+    {
+      "area": "pr_check() in src/forge/prcheck.py",
+      "file": "src/forge/prcheck.py",
+      "gain": 2,
+      "harm": 2,
+      "line": 359,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 8,
+      "security": false,
+      "title": "Follow-up: Recognize the expected stacked check failure in status",
+      "work": 2
+    },
+    {
+      "area": "close() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 223,
+      "outcome": "fixed in round 12",
+      "reason": "",
+      "round": 11,
+      "security": false,
+      "title": "[P1] Preserve ancestry when constructing the stacked review baseline",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "08a0e46d7a2f71e8855a9d7cca0b73b9ed4c36f46a65d39d6c4f295008bf5fe3",
+    "changed": "6b3d4383910e37c260c3b3757184565870fe4642a197821863573c086c425b30",
+    "commit": "7a13a0624efa63293a25f8e619574c11eff3cb46",
+    "dismissals": [],
+    "findings": [],
+    "id": "e9f408db-f4eb-42bb-8d90-fde3ebd28ff1",
+    "status": "clean"
+  },
+  "round": 12,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-30T13:05:18.351033+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-30T13:31:27.132922+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-30T13:38:28.161250+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-30T16:06:14.962584+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-30T16:55:33.355843+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-30T18:30:38.468006+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-31T14:48:54.853949+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-31T17:43:15.408533+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-31T19:13:39.620131+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-31T22:08:41.948912+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-01T01:59:01.518904+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-02T00:59:32.966149+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-02T04:22:56.129852+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-02T00:59:32.966655+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "src/forge/close.py",
+    "reason": "The owner chose one more round: keep the history link in the stacked review baseline.",
+    "wait_id": "df15cf82-1ca8-4383-9767-14c165788231",
+    "worker_round": 11
+  },
+  "stuck": {
+    "close": "9c2ffee8-56dc-4c8e-8b02-07af3fffe49c",
+    "head": "acfc5b68498135906e3cbc94de7738ea58008022",
+    "keys": {},
+    "round": 11
+  },
+  "worker": "codex"
+}

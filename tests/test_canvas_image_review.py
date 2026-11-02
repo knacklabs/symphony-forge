@@ -59,8 +59,12 @@ def test_2_engine_failure_names_engine_repair(repo, tmp_path, monkeypatch):
 
 
 @pytest.mark.skipif(os.name != "nt", reason="Exercise the native Windows process boundary in Windows CI")
-@pytest.mark.parametrize("count", [80, 400])
-def test_3_windows_completeness_reviews_all_screen_images(repo, tmp_path, monkeypatch, count):
+# Test audit: an earlier batch's P0 must survive a clean last batch. The clean
+# transport cases cannot detect last-result-only aggregation. Extend the real
+# command and fake only external tools, with no production seam.
+@pytest.mark.parametrize("count,critical", [(80, False), (400, False), (400, True)],
+                         ids=["80", "400", "earlier-critical"])
+def test_3_windows_completeness_reviews_all_screen_images(repo, tmp_path, monkeypatch, count, critical):
     fix, answers, queue = _client(repo, tmp_path, monkeypatch, working_build=False)
     folder = fix / "docs/design/prototype"
     for number in range(count):
@@ -85,8 +89,18 @@ with tempfile.TemporaryDirectory(prefix="autoreview-codex-review-workspace.") as
         path.write_bytes(Path(name).read_bytes())
         command.extend(["--image", str(path)])
     subprocess.run(command, check=True)
-Path(args[args.index("--json-output") + 1]).write_text(json.dumps({"review_status": "scoped-clean", "findings": []}), encoding="utf-8")
-''', encoding="utf-8")
+findings = []
+if __CRITICAL__ and any(name.endswith("screen-000.png") for name in images):
+    findings = [{"priority": "P0", "title": "Customer data is exposed",
+                 "body": "Gain 5, Work 1, Harm 5\\nThe first screen exposes private customer data.",
+                 "code_location": {"file_path": "docs/design/prototype/SCREENS.md", "line": 1}}]
+report = {"review_status": "findings" if findings else "scoped-clean", "findings": findings}
+record = Path(__REPORTS__)
+with record.open("a", encoding="utf-8") as out:
+    out.write(json.dumps(report) + "\\n")
+Path(args[args.index("--json-output") + 1]).write_text(json.dumps(report), encoding="utf-8")
+'''.replace("__CRITICAL__", repr(critical)).replace(
+        "__REPORTS__", json.dumps(str(queue.with_suffix(".batch-reports.jsonl")))), encoding="utf-8")
     assert shutil.which("node.exe"), "Windows CI requires Node for the npm Codex boundary"
     npm = tmp_path / "node_modules/@openai/codex/bin"
     npm.mkdir(parents=True)
@@ -108,11 +122,19 @@ Path(args[args.index("--json-output") + 1]).write_text(json.dumps({"review_statu
 
     accepted = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
 
-    assert accepted.returncode == 0, accepted.stdout + accepted.stderr
+    assert accepted.returncode == (1 if critical else 0), accepted.stdout + accepted.stderr
     batches = [json.loads(line) for line in queue.with_suffix(".images.jsonl").read_text("utf-8").splitlines()]
     assert sorted(value for batch in batches for value in batch["hashes"]) == expected
     if count == 400:
         assert len(batches) > 1
     assert any(len(subprocess.list2cmdline([word for path in batch["images"] for word in ("--image", path)])) > 8191
                for batch in batches)
-    assert "design_checked:" in page.read_text("utf-8")
+    if critical:
+        reports = [json.loads(line) for line in queue.with_suffix(".batch-reports.jsonl").read_text("utf-8").splitlines()]
+        assert reports[0]["findings"][0]["priority"] == "P0"
+        assert reports[-1]["findings"] == []
+        assert "Customer data is exposed" in accepted.stderr
+        assert "status: proposed" in page.read_text("utf-8")
+        assert "design_checked:" not in page.read_text("utf-8")
+    else:
+        assert "design_checked:" in page.read_text("utf-8")
