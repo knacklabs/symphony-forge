@@ -75,8 +75,13 @@ runpy.run_path({json.dumps(str(original))}, run_name="__main__")
     calls = [json.loads(line) for line in queue.with_suffix(".files.jsonl").read_text("utf-8").splitlines()]
     image = "docs/design/prototype/order-list.svg"
     assert [call["canvas"] for call in calls] == [True, False, True, False]
-    for canvas, signoff in (calls[:2], calls[2:]):
-        assert image in canvas["files"]
+    # The first canvas check includes all images. Removing one image repeats
+    # the check without attaching the unchanged screen. Code reviews still
+    # exclude images in both rounds.
+    assert image in calls[0]["files"] and old_image in calls[0]["files"]
+    assert not any(Path(name).suffix.lower() in {".png", ".jpg", ".jpeg", ".webp", ".svg"}
+                   for name in calls[2]["files"])
+    for signoff in (calls[1], calls[3]):
         assert "PRODUCT.md" in signoff["files"]
         assert not any(Path(name).suffix.lower() in {".png", ".jpg", ".jpeg", ".webp", ".svg"}
                        for name in signoff["files"])

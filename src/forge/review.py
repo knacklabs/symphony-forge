@@ -1137,8 +1137,8 @@ def design_check(top: Path, prompt: str, history: list[dict[str, Any]],
         changed = set(repo.git("diff", "--name-only", "-z", previous["commit"], "HEAD", cwd=top).split("\0"))
         opened = score.open_findings(previous)
         targets = {f["file"].replace("\\", "/") for f in opened}
-        # Findings may cite a screen image in their evidence rather than location.
-        evidence = "\n".join(f["body"] for f in opened)
+        # Findings may name a screen in their title or evidence rather than location.
+        evidence = "\n".join(f["title"] + "\n" + f["body"] for f in opened)
         if "docs/product/BRIEF.md" not in changed:
             images = [name for name in images if name in changed or name in targets
                       or name in evidence or Path(name).name in evidence]
