@@ -58,7 +58,7 @@
     "status": "blocked"
   },
   "round": 3,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-31T20:25:44.871326+00:00",
@@ -87,8 +87,12 @@
   ],
   "stop": {
     "at": "2026-11-02T00:57:58.101815+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": ".test_durations",
-    "wait_id": "f2ad772e-bd1f-4edd-a251-e9b80701fd9d"
+    "reason": "The owner chose one more round: update the test times to match the current tests.",
+    "wait_id": "f2ad772e-bd1f-4edd-a251-e9b80701fd9d",
+    "worker_round": 3
   },
   "stuck": {
     "close": "6af1462d-be09-40b6-ad38-e4f65864b01a",
