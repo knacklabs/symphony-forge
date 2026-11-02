@@ -194,8 +194,13 @@ def test_2_adopted_client_with_one_legacy_review_reaches_the_round_two_stop(
     finding = _finding("Order submission loses the order", "app.py", "Gain 5, Work 2, Harm 4")
     queue.write_text(json.dumps([_clean(), _report(finding)]), encoding="utf-8")
 
+    # Admit the app revision before testing legacy review history. Keep the
+    # main checkout current so the later squash includes the real review record.
+    _green_full_run(repo, product=fix)
+    repo.git("merge", "--ff-only", "origin/main", cwd=repo.path)
     first = _accept(repo, fix)
     assert first.returncode == 1, first.stdout + first.stderr
+    assert "Order submission loses the order" in first.stderr
     legacy = fix / ".factory/client-signoff.json"
     record = json.loads(legacy.read_text("utf-8"))
     if "rounds" in record:
