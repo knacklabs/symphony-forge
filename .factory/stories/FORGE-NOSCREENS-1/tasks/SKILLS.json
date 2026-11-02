@@ -1,5 +1,12 @@
 {
   "branch": "task/FORGE-NOSCREENS-1-SKILLS",
+  "chat": {
+    "approval": "8297d12aa6b1c88eb937d015eb0b123f47849ffa27289e0073d4c4a1293cc35a",
+    "claude": null,
+    "conversation": "01a19ab5-0c46-7e22-beeb-f2d75fde470a",
+    "head": null,
+    "start": "ea66b1ccb60531e7f887c7b1c2575dbce2a45b3d"
+  },
   "part_line_limit": 400,
   "round": 1,
   "status": "working",
