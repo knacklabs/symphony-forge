@@ -28,7 +28,6 @@ def test_1_blocked_signoff_names_one_fix_for_every_blocker(repo, tmp_path, monke
     _decision(fix, answers)
     titles = ["Customer's order cannot save", 'Missing "Cancel" action']
     queue.write_text(json.dumps([
-        {"report": {"review_status": "scoped-clean", "findings": []}},
         {"report": {"review_status": "findings", "findings": [
             {"priority": "P1", "title": title,
              "body": "Gain 5, Work 2, Harm 1\nThe demo cannot finish.",

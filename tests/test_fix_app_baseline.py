@@ -12,7 +12,7 @@ STORY = "FIX-APP-BASELINE"
 ROOT = Path(__file__).resolve().parents[1]
 # The approved guide adds screen ownership, order and the basic screen rules.
 # This package-byte contract remains distinct from the init/sync guidance test.
-BASELINE_SHA256 = "f31a3ccc8846974e6144b22b33c40657c9e521e0e69ce2e7e31f2445b925b56a"
+BASELINE_SHA256 = "ca3e2056481a8fab29393ef06a89395ad6d9e84068b2306d5ff8535844f47dbe"
 
 
 @pytest.mark.platform

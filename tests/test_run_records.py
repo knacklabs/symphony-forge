@@ -195,7 +195,7 @@ def _readers_inherit_worker_environment(repo, monkeypatch, request, family):
     where = new_story(repo, 'SHOP')
     (where / 'plans' / 'SHOP.md').write_text(DOC, 'utf-8')
     if family == 'claude':
-        require_worker_environment(repo.bin / 'claude')
+        require_worker_environment(repo.bin / 'claude_agent_sdk/__init__.py')
     else:
         import os
         from conftest import ROOT, _install
@@ -379,11 +379,13 @@ def _signoff_review_results_have_fresh_ids(repo, tmp_path, monkeypatch):
     from test_close import finding, report, FAILED
     fix, answers, queue = _client(repo, tmp_path / 'signoff', monkeypatch)
     _decision(fix, answers)
-    clean_check = {'say': SOL_HIGH, 'report': report()}
+    # Test audit: keep the blocked/failed/clean occurrence contract. A normal
+    # P1 no longer holds prototype sign-off; use the existing P0 fixture instead.
+    # All event, outcome and fresh-ID assertions remain at the real CLI boundary.
     for index, (outcome, reply) in enumerate([('blocked', {'say': SOL_HIGH, 'report': report(
-            finding('P1', 'Prototype fails'))}), ('failed', FAILED),
+            finding('P0', 'Prototype fails'))}), ('failed', FAILED),
             ('clean', {'say': SOL_HIGH, 'report': report()})]):
-        answers_for_run = [clean_check, reply] if index == 0 else [reply]
+        answers_for_run = [reply]
         queue.write_text(json.dumps(answers_for_run), 'utf-8')
         done = repo.forge('decision', 'accept', 'client-signoff', '--by', 'Ravi', cwd=fix)
         assert (done.returncode == 0) == (outcome == 'clean'), done.stdout + done.stderr
