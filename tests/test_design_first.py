@@ -254,7 +254,7 @@ def test_1_design_first_binds_the_screens(repo, gh, tmp_path, claude_payload, ad
     repo.git("add", "docs/design/prototype/screen.svg", cwd=fix)
     repo.git("commit", "-qm", "Change a screen after its approval", cwd=fix)
     refused = repo.forge("fix", "start", "Build changed screens", "--done", "Screens work", "--kind", "ui", cwd=fix)
-    assert refused.returncode == 1 and "approved design" in refused.stderr, refused.stdout + refused.stderr
+    assert refused.returncode == 1 and "approved plan" in refused.stderr, refused.stdout + refused.stderr
     accepted = repo.forge("decision", "accept", "prototype-design", "--by", "Owner", cwd=fix)
     assert accepted.returncode == 0, accepted.stdout + accepted.stderr
     ui = repo.forge("fix", "start", "Build the new approved screens", "--done", "Screens work", "--kind", "ui", cwd=fix)
