@@ -357,7 +357,9 @@ def _sync_adds_the_rule_once(env):
     _synced(repo, "*.png binary\nplans/roadmap.json merge=forge-roadmap\n")
     assert (repo.path / ".gitattributes").read_text("utf-8") == (
         "*.png binary\nplans/roadmap.json merge=forge-roadmap\n"
-        "plans/spotted.json merge=forge-roadmap\n")
+        "plans/spotted.json merge=forge-roadmap\n"
+        ".claude/skills/impeccable/scripts/impeccable.cmd -text\n"
+        ".codex/skills/impeccable/scripts/impeccable.cmd -text\n")
     again = repo.forge("sync")
     assert again.returncode == 0 and "Wrote .gitattributes" not in again.stdout
 
