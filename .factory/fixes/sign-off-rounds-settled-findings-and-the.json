@@ -11,12 +11,20 @@
   "done_when": "After a repair fix merges, or after the work moves to another computer, the next sign-off accept counts the earlier rounds, keeps their settled findings, and stops for the owner at round two.",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-02T09:09:22.747509+00:00",
       "step": "start"
     }
   ],
-  "why": "Sign-off rounds, settled findings and the owner's stop after round two are lost when a repair fix does not carry the sign-off record from the branch that wrote it. Evidence: _history in src/forge/review.py reads only HEAD's first-parent history of the record; _signoff_review in src/forge/records.py refuses with a repair command that does not say to run it from the sign-off checkout; fix_start in src/forge/task.py stacks on the current branch only when that branch is run from and not yet merged."
+  "stuck": {
+    "close": null,
+    "head": "a6e72d3f4f121e4d2535d724a4ed45a183caa731",
+    "keys": {},
+    "round": null
+  },
+  "why": "Sign-off rounds, settled findings and the owner's stop after round two are lost when a repair fix does not carry the sign-off record from the branch that wrote it. Evidence: _history in src/forge/review.py reads only HEAD's first-parent history of the record; _signoff_review in src/forge/records.py refuses with a repair command that does not say to run it from the sign-off checkout; fix_start in src/forge/task.py stacks on the current branch only when that branch is run from and not yet merged.",
+  "worker": "codex"
 }
