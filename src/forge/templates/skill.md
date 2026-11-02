@@ -683,6 +683,8 @@ Every reviewer gets earlier findings and answers. Settled findings stay settled.
 After two rounds, P0 findings still block until fixed. Other open findings need the owner's choice.
 Record that choice with `forge decision accept client-signoff --by "<name>" --resolve accept|more|split --reason "<human's choice>"`.
 Accept keeps the findings in the item's Known issues. Split creates a separate fix. More permits one more review.
+The canvas completeness check uses these same rounds and owner choices. Accept or split continues
+sign-off without another canvas check while the product and brief stay unchanged. A P0 still blocks.
 These rules apply to new clients and earlier-adopted clients after upgrade.
 Forge reuses passed results while what they checked stays unchanged.
 The product review uses the green full run as test evidence. It needs no separate `forge test` run.
