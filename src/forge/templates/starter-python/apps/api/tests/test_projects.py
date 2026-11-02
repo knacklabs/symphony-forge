@@ -762,7 +762,8 @@ def test_a_member_agent_cannot_delete_or_restore_a_project_through_mcp(
                 if action == "edit":
                     arguments.update(_mcp_payload(client, csrf, changed=True))
                 refused = await session.call_tool(
-                    f"{MCP_TOOL_PREFIX}_{'update' if action == 'edit' else action}", arguments
+                    f"{MCP_TOOL_PREFIX}_{'update' if action == 'edit' else action}",
+                    arguments,
                 )
                 assert refused.is_error is True
                 error = _mcp_error(refused)
