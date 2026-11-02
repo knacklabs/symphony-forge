@@ -1,4 +1,10 @@
-"""Client sign-off is accepted only after a complete product review."""
+"""Client sign-off is accepted only after a complete product review.
+
+Fixture audit: preserve the real decision command's refusal of app changes before a build request.
+A fixture tied to a removed starter screen fails before that assertion; no other setup owns this
+existing-screen case. Keep the command-level case and let the test construct its own screen,
+without a production test seam.
+"""
 
 from __future__ import annotations
 
@@ -83,8 +89,7 @@ def _green_full_run(repo):
         stdout=json.dumps([{"context": "forge-full-suite", "state": "success"}]))
 
 
-def _client(repo, tmp_path, monkeypatch, *, working_build=True, design_model=None,
-            seed_starter=False):
+def _client(repo, tmp_path, monkeypatch, *, working_build=True, design_model=None):
     version = repo.forge("--version").stdout.split()[-1]
     stage = "" if working_build else 'stage = "prototype"\n'
     model = (f'\n[models.design.claude]\nmodel = {json.dumps(design_model[0])}\n'
@@ -97,9 +102,6 @@ def _client(repo, tmp_path, monkeypatch, *, working_build=True, design_model=Non
     _design_records(repo.path, answers)
     if working_build:
         repo.write("app.py", "print('prototype')\n")
-    if seed_starter:
-        source = Path(__file__).parents[1] / "src/forge/templates/starter/apps/web/src/app.tsx"
-        repo.write("apps/web/src/app.tsx", source.read_text("utf-8"))
     repo.git("add", "-A")
     repo.git("commit", "-q", "-m", "Build prototype")
     repo.git("push", "-q", "origin", "main")

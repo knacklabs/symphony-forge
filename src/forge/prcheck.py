@@ -31,6 +31,8 @@ REFUSALS = {
     "not_reviewed": ("The committed review at the head of {branch} is {problem}.",
                      "forge close {item}"),
     "story_doc": ("{problem}", "fix the story doc, then forge read <KEY>"),
+    "stacked": ("{item} builds on {parent}; Forge checks its pull request once it targets {default}.",
+                "forge close {item}"),
 }
 CODE_LIMIT = 5
 WORKFLOW_PATH = ".github/workflows/forge.yml"
@@ -311,7 +313,9 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
                 .replace("<install>", "uv tool install ." if source
                          else sync.install_line("${FORGE_RELEASE#v}"))
                 .replace("<tests-timeout>", f"    timeout-minutes: {45 if source else 30}\n")
-                .replace("<containers>", "      FORGE_CONTAINERS: '1'\n" if source else "")
+                .replace("<containers>", ("      FORGE_CONTAINERS: '1'\n"
+                                          "      # Measure every test on CI hardware before choosing a performance repair.\n"
+                                          "      PYTEST_ADDOPTS: '--durations=0'\n") if source else "")
                 # Forge's own Node client tests download jest and vitest into npm's cache.
                 .replace("<npm-cache>", npm_cache)
                 .replace("<full-npm-cache>", full_npm_cache)
@@ -347,6 +351,14 @@ def pr_check(args: argparse.Namespace) -> int:
     top = repo.root()
     cfg = repo.config(top)  # the base checkout's forge.toml, never the head's
     item, state = _started(top, head, branch)
+    if "/" in item and (parent := state.get("stacked_on")):
+        from forge import task
+
+        event = os.environ.get("GITHUB_EVENT_PATH")
+        default = (json.loads(Path(event).read_text(encoding="utf-8"))["repository"]["default_branch"]
+                   if event else repo.default_branch(top))
+        if not task._merged(f"origin/{default}", parent, top):
+            repo.refuse(REFUSALS["stacked"], item=item, parent=parent, default=default)
     changed = repo.git("diff", "--name-only", f"{base}...{head}", cwd=top).splitlines()
     if "/" not in item:
         missing = [line for line, key in (("Why:", "why"), ("Done when:", "done_when"))

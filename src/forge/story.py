@@ -97,6 +97,9 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
         **{f"{host}/skills/forge/migrate-skill.md":
            (TEMPLATES / "migrate-skill.md").read_text(encoding="utf-8")
            for host in (".claude", ".codex")},
+        **{f"{host}/skills/forge/run-reference.md":
+           (TEMPLATES / "run-reference.md").read_text(encoding="utf-8")
+           for host in (".claude", ".codex")},
         **{f"{host}/skills/forge/fde.md":
            sync._synced_text(".codex/skills/forge/fde.md", "fde.md")
            for host in (".claude", ".codex")},

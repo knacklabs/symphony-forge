@@ -15,7 +15,6 @@ from test_setup import _fresh_client
 from test_starter_tree import (
     API_SECURITY_TESTS,
     API_ZOD_CASES,
-    BROWSER_FLOWS,
     LIVE,
     PYTHON_REACT_PATHS,
     STARTER,
@@ -41,6 +40,47 @@ SERVER_LIBRARIES = (
     ("@app/history-server", "libs/history/server", "server", "history"),
 )
 PYTHON_STARTER = ROOT / "src" / "forge" / "templates" / "starter-python"
+
+
+def _check_module_web_boundary(folder, corepack, env, expected_rule):
+    library = folder / "libs/projects/web"
+    source = library / "src/index.ts"
+    library.mkdir(parents=True)
+    source.parent.mkdir(parents=True)
+    (library / "project.json").write_text(json.dumps({
+        "name": "@app/projects-web",
+        "projectType": "library",
+        "sourceRoot": (Path("libs") / "projects" / "web" / "src").as_posix(),
+        "tags": ["type:web", "scope:projects"],
+    }), encoding="utf-8")
+    (library / "package.json").write_text(json.dumps({
+        "name": "@app/projects-web",
+        "version": "1.0.0",
+        "private": True,
+        "exports": {".": {
+            "@app/source": "./" + Path("src/index.ts").as_posix(),
+            "types": "./" + Path("src/index.ts").as_posix(),
+        }},
+    }), encoding="utf-8")
+    source.write_text("export const page = true;\n", encoding="utf-8")
+    command = [corepack, "pnpm", "run", "lint"]
+    try:
+        clean = subprocess.run(
+            command, cwd=folder, env=env, capture_output=True, text=True,
+            timeout=300, shell=sys.platform == "win32",
+        )
+        assert clean.returncode == 0, clean.stdout + clean.stderr
+        source.write_text("import '@app/organisations-server';\n", encoding="utf-8")
+        blocked = subprocess.run(
+            command, cwd=folder, env=env, capture_output=True, text=True,
+            timeout=300, shell=sys.platform == "win32",
+        )
+        output = blocked.stdout + blocked.stderr
+        assert blocked.returncode != 0, output
+        # ESLint's stylish formatter removes the final period from a diagnostic.
+        assert expected_rule.removesuffix(".") in output, output
+    finally:
+        shutil.rmtree(library)
 
 
 @pytest.fixture(scope="module")
@@ -161,100 +201,18 @@ def test_1_server_code_is_split_by_module(tmp_path_factory, lint_starter):
 
 @pytest.mark.platform
 @pytest.mark.timeout(1800)
-def test_2_screens_live_in_module_web_libraries(tmp_path_factory, lint_starter):
-    # Audit: this protects the starter's screen-library boundary and Tailwind's ability to see it.
-    # A regression that leaves screens or shared UI in apps/web can block a later frontend split;
-    # a missing Tailwind source path silently removes a class used by a module screen. Existing
-    # tests cover server libraries and browser flows, but not the web-library boundary. This test
-    # exercises starter lint, built CSS and the existing browser flows, with no production seam.
-    libraries = (
-        ("core", "core"),
-        ("auth", "auth"),
-        ("history", "history"),
-        ("organisations", "organisations"),
-        ("projects", "projects"),
-    )
-    for module, scope in libraries:
-        library = STARTER / "libs" / module / "web"
-        assert library.is_dir(), library
-        project = json.loads((library / "project.json").read_text(encoding="utf-8"))
-        assert project["name"] == f"@app/{module}-web"
-        assert set(project["tags"]) == {"type:web", f"scope:{scope}"}
-        package = json.loads((library / "package.json").read_text(encoding="utf-8"))
-        assert set(package["exports"]) == {"."}
-        assert package["exports"]["."]["@app/source"] == "./src/index.ts"
-
-    shared_ui = STARTER / "libs/shared/ui"
-    shared_ui_project = json.loads((shared_ui / "project.json").read_text(encoding="utf-8"))
-    assert set(shared_ui_project["tags"]) == {"type:ui", "scope:shared"}
-    shared_ui_package = json.loads((shared_ui / "package.json").read_text(encoding="utf-8"))
-    assert set(shared_ui_package["exports"]) == {
-        "./components/ui/*", "./lib/utils", "./hooks/*", "./components/*",
-    }
-    for module in ("auth", "history", "organisations", "projects"):
-        library = STARTER / "libs" / module / "web"
-        assert (library / "tsconfig.json").is_file(), library
-
-    assert (shared_ui / "src/components/ui").is_dir()
-    assert (STARTER / "apps/web/src/components/app-shell.tsx").is_file()
-    assert (shared_ui / "src/components/auth-page-frame.tsx").is_file()
-    assert (shared_ui / "src/components/theme-provider.tsx").is_file()
-    assert (shared_ui / "src/lib/utils.ts").is_file()
-    assert (shared_ui / "src/hooks/use-mobile.ts").is_file()
-    assert (STARTER / "libs/core/web/src/api-client.ts").is_file()
-    assert (STARTER / "libs/core/web/src/route-error-page.tsx").is_file()
-    assert (STARTER / "libs/core/web/src/query-client.ts").is_file()
-    assert (STARTER / "apps/web/src/pages/settings-page.tsx").is_file()
-    assert (STARTER / "apps/web/src/pages/not-found-page.tsx").is_file()
-    assert not (STARTER / "apps/web/src/features").exists()
-    assert not (STARTER / "apps/web/src/components/ui").exists()
-    css = (STARTER / "apps/web/src/index.css").read_text(encoding="utf-8")
-    assert '@source "../../../libs";' in css
-
+def test_2_a_new_module_web_library_cannot_import_another_modules_server(lint_starter):
+    # Screen code leaves the starter, but module boundaries stay in force for screens agents add.
+    # A fresh module web library with a cross-module server import must fail lint; the retained
+    # server-library tests do not exercise this frontend rule. The temporary app is the real lint
+    # boundary and needs no production seam.
     live, skip_reason = lint_starter
     if live is None:
         if LIVE:
             pytest.skip(skip_reason)
         return
     copy, env, corepack = live
-    clean = subprocess.run(
-        [corepack, "pnpm", "run", "lint"], cwd=copy, env=env,
-        capture_output=True, text=True, timeout=300, shell=sys.platform == "win32",
-    )
-    assert clean.returncode == 0, clean.stdout + clean.stderr
-
-    cases = (
-        ("libs/projects/web/src/reach-in.ts", "import '@app/organisations-web';\n"),
-        ("libs/core/web/src/reach-in.ts", "import '@app/core-server';\n"),
-    )
-    for relative, source in cases:
-        added_file = copy / relative
-        added_file.write_text(source, encoding="utf-8")
-        try:
-            result = subprocess.run(
-                [corepack, "pnpm", "run", "lint"], cwd=copy, env=env,
-                capture_output=True, text=True, timeout=300, shell=sys.platform == "win32",
-            )
-        finally:
-            added_file.unlink(missing_ok=True)
-        output = result.stdout + result.stderr
-        assert result.returncode != 0, output
-        assert "@nx/enforce-module-boundaries" in output, output
-
-    browser = live_run(tmp_path_factory)
-    _require_cases(browser["browser"], BROWSER_FLOWS)
-    assets = list((browser["folder"] / "apps/web/dist").rglob("*.css"))
-    assert assets, "the web build did not emit CSS"
-    built_css = "\n".join(asset.read_text(encoding="utf-8") for asset in assets)
-    project_web = STARTER / "libs/projects/web"
-    class_sources = [
-        path for path in STARTER.rglob("*.tsx")
-        if "-ml-3" in path.read_text(encoding="utf-8")
-    ]
-    assert class_sources and all(path.is_relative_to(project_web) for path in class_sources)
-    assert re.search(r"\.\\?-ml-3(?=\s*\{)", built_css), (
-        "the built CSS is missing -ml-3, a class used by the projects web library"
-    )
+    _check_module_web_boundary(copy, corepack, env, "@nx/enforce-module-boundaries")
 
 
 @pytest.mark.platform
@@ -296,33 +254,11 @@ def test_3_the_python_web_app_uses_the_same_libraries(repo, gh, tmp_path, tmp_pa
         return
 
     live = live_python_run(tmp_path_factory)
-    _require_cases(live["browser"], BROWSER_FLOWS)
     folder = live["folder"]
-    message = "A module web library uses another module only through its contracts."
-    cases = (
-        ("libs/projects/web/src/reach-in.ts", "import '@app/organisations-web';\n"),
-        ("libs/projects/web/src/reach-in.ts",
-         "import '../../../organisations/web/src/index';\n"),
-        ("libs/projects/web/src/pages/reach-in.ts",
-         "import '../../../../organisations/web/src/index';\n"),
-        ("libs/projects/web/src/hooks/reach-in.ts",
-         "import '../../../../auth/server/src/index';\n"),
+    _check_module_web_boundary(
+        folder, shutil.which("corepack"), os.environ.copy(),
+        "A module web library uses another module only through its contracts.",
     )
-    for relative, source in cases:
-        added_file = folder / relative
-        added_file.write_text(source, encoding="utf-8")
-        try:
-            result = subprocess.run(
-                ["corepack", "pnpm", "run", "lint"], cwd=folder,
-                capture_output=True, text=True, timeout=300, shell=sys.platform == "win32",
-            )
-        finally:
-            added_file.unlink(missing_ok=True)
-        output = result.stdout + result.stderr
-        assert result.returncode != 0, output
-        assert "no-restricted-imports" in output, output
-        # ESLint's stylish formatter omits the message's final full stop.
-        assert message.removesuffix(".") in output, output
 
 
 @pytest.mark.platform

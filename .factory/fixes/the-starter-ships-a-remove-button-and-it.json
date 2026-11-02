@@ -1,0 +1,49 @@
+{
+  "base": "e307e40df24243c675c75805ec1ec1df5410695f",
+  "branch": "fix/the-starter-ships-a-remove-button-and-it",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a19124-1e86-7361-9628-f12513d20768",
+    "head": null,
+    "start": "fb894eb183459f8771833f59bd8f5ef0617b2069"
+  },
+  "done_when": "The story doc lists three parts with no Remove button or screen in What changes for you or Done when, and the unmerged Remove-button part is not merged into main.",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "branch_diff": "09f3830a853d725e17522945d36190907a43d82a590bce32d4e424d6d22b7328",
+    "changed": "b83a7b2073329dd895f2de099df8d0ec47ac9c5da6b64ec43c6ef23edf322c07",
+    "commit": "a6e6c918c85dff7398c953f9408b6e12cb7bbe34",
+    "dismissals": [],
+    "findings": [],
+    "id": "d1e818ba-b65b-4ff8-a7d2-28e9ffe9ee7f",
+    "mechanical": true,
+    "status": "clean"
+  },
+  "round": 4,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-31T08:44:09.715795+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-31T08:49:30.256615+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-31T10:10:56.609732+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "3f37dca9-4dd3-484d-9073-5f4d3edbd91c",
+    "head": "b0cc1ce60c7119dbbb0845b6847231f520bbbae4",
+    "keys": {},
+    "round": 1
+  },
+  "why": "The starter ships a Remove button and its own screen, but each client app builds its own screens in its own design, and the story already says the starter has no look of its own.",
+  "worker": "codex"
+}
