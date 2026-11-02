@@ -18,7 +18,7 @@ PYTHON_INVITE_API_CASES = (
     "test_an_admin_changes_another_members_role_but_not_their_own",
     "test_an_admin_cannot_change_the_role_of_another_organisations_account",
     "test_an_invite_link_works_once_and_only_for_its_email",
-    "test_production_refuses_an_invite_without_a_mail_provider",
+    "test_production_returns_an_invite_link_without_a_mail_provider",
 )
 INVITE_API_CASES = (
     "an admin invites a person by email who joins the organisation",
@@ -51,6 +51,7 @@ def test_2_admins_invite_by_email_and_members_cannot_change_roles_or_invite(
     # databases, with only mail represented by the starter's logged test link.
     # AUTH moved TypeScript one-use and expiry into auth.e2e-spec.ts and deliberately permits
     # invites without mail. Require all replacement cases so no contract loses its live owner.
+    # Python now also returns the invite link without mail, rather than refusing it.
     # These report checks add no production seam.
     if not LIVE:
         pytest.skip("set FORGE_STARTER_LIVE=1 to run organisation invites against the live API")
