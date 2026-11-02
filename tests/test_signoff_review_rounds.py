@@ -167,8 +167,10 @@ def test_2_accepted_signoff_survives_only_unchanged_files(
     finding = report["report"]["findings"][0]
     finding.update(priority=priority, title=("Order submission fails" if priority == "P0"
                                            else "Submitting an order still fails"))
-    queue.write_text(json.dumps([
-        {"report": {"review_status": "scoped-clean", "findings": []}}, report]), encoding="utf-8")
+    # No screen or brief changed, so only the code review runs. Deliver the
+    # finding to that review instead of consuming a spare clean canvas result.
+    queue.write_text(json.dumps([report]), encoding="utf-8")
     retried = accept()
     assert retried.returncode == (0 if change == "other" and priority == "P1" else 1), retried.stdout + retried.stderr
+    assert len(calls.read_text("utf-8").splitlines()) == before + 1
     assert set((tmp_path / "reviewed-files.txt").read_text("utf-8").splitlines()) == {target}
