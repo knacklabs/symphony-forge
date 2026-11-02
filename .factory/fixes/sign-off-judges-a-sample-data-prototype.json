@@ -1,4 +1,11 @@
 {
+  "amendments": [
+    {
+      "at": "2026-11-02T11:56:47.415149+00:00",
+      "because": "The owner decided this on 2 November 2026, after one client's review found a new P0 each round on a prototype with no back end.",
+      "done_when": "At prototype sign-off, only a finding with Harm 4 or higher, Gain 5, or a P0 stops the work; every other finding goes to Known issues with no repair round and no question."
+    }
+  ],
   "base": "7450721ddf8c0cbedf9d84c8311677a59f817675",
   "branch": "fix/sign-off-judges-a-sample-data-prototype",
   "chat": {
@@ -8,7 +15,7 @@
     "head": null,
     "start": "acf6394aacf03b609adf2c7162b56a9207e3ed7e"
   },
-  "done_when": "At prototype sign-off, only a finding with Harm 4 or higher, Gain 5, or a P0 stops the work; every other finding goes to Known issues with no repair round and no question.",
+  "done_when": "At prototype sign-off, only a finding with Harm 4 or higher, Gain 5, or a P0 stops the work; every other finding goes to Known issues with no repair round and no question. Risks that need a real-data build are build-story work. After round 2, on a repo whose sign-off decision declares only sample data, the owner may accept a remaining P0 with a reason, and it stays a known issue; a repo with real data keeps the hard block.",
   "fix_kind": "backend",
   "kind": "fix",
   "known": [
