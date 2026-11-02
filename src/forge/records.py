@@ -523,7 +523,8 @@ def _signoff_review(top: Path, args: argparse.Namespace, answers: str, evidence:
     if evidence:
         prompt += ("\n\n" + evidence + "\n\nCheck every demo workflow step against the brief. "
                    "Each step must name a passing test. Refuse a missing step, a missing test, "
-                   "or a test without evidence that it passes. The full production proof is due now."
+                   "or a test without evidence that it passes. Proof covers the prototype demo, "
+                   "not the production build."
                    "\n\n## Test evidence\n"
                    f"The full test run on the latest commit on {repo.default_branch(top)} passed "
                    "(forge-full-suite). Client sign-off checked this result before this review. "
@@ -536,6 +537,19 @@ def _signoff_review(top: Path, args: argparse.Namespace, answers: str, evidence:
     critical = any(f["priority"] == "P0" for f in opened)
     held = ([(n, f) for n, f in enumerate(result["findings"], 1)
              if f in opened and f["priority"] in review.SERIOUS] if canvas else review.blocking(result))
+    if not canvas:
+        result["blocking_level"] = "P0"
+        held = [(n, f) for n, f in enumerate(result["findings"], 1)
+                if f in opened and (f["priority"] == "P0" or score.holds(f, "P0"))]
+        item, state = review.branch_item(repo.current_branch(top), top)
+        held_keys = {score.identity(f["file"], f["title"]) for _, f in held}
+        known = [entry for entry in score.remember([], result, len(history) + 1, {})
+                 if score.identity(entry["file"], entry["title"]) not in held_keys]
+        identities = {score.identity(entry["file"], entry["title"]) for entry in known}
+        state["known"] = [entry for entry in state.get("known", [])
+                          if score.identity(entry["file"], entry["title"]) not in identities] + known
+        repo.write_state(item, state, top)
+        repo.commit_state("Keep lesser sign-off findings as known issues", repo.state_path(item), top=top)
     saved.update(review=result, inputs=inputs,
                  stop=bool(held and len(history) + 1 >= 2 and not critical))
     _write(top / rel, json.dumps(document, indent=2) + "\n")

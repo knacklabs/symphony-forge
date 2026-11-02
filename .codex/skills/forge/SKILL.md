@@ -676,7 +676,12 @@ prototype design files for this gate.
 The check uses Codex's `gpt-6.1-sol` at high effort, independent of `[models.design]`.
 Codex must be installed because only Codex can review the screen images.
 On Windows, large image folders use separate batches to fit the native command line limit.
-Fix all findings from one sign-off review in one fix, then retry `forge decision accept client-signoff`.
+Fix held findings from one sign-off review in one fix, then retry `forge decision accept client-signoff`.
+Judge the sample-data prototype with no production back end. Production work, including
+deployment to the client's account, belongs to build stories. Labelled demo tools on sample
+data are not a P0 unless real data is exposed. Only Harm 4 or higher, Gain 5, or a P0 holds
+the product review; every other finding goes straight to Known issues without a repair
+round or an owner question. A held finding below P0 still needs the owner's choice after two rounds.
 If the review engine fails, fix the engine problem and run the accept command again.
 A canvas-only sign-off needs no working build. A working build gets a full first product review.
 Each later attempt reviews only product files changed since the previous review and its open findings.
@@ -710,7 +715,7 @@ A requested working prototype proves the demo steps and its security and data bo
 Its light review checks demo breakage, security and data loss, using `[models.light_review]`.
 A requested working prototype gets a light review that blocks only on P0 findings.
 A `Not done` against the item's own approved Done-when still blocks at any priority.
-Full proof is due at sign-off.
+Sign-off needs proof of the prototype demo; production proof belongs to the build stories.
 
 After sign-off, every new story carries forward the available canvas, Proof and Decisions into
 `## Proven by the prototype`. Treat that evidence as settled. Plan and cold read only new work

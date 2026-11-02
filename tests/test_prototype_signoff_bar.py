@@ -1,0 +1,63 @@
+"""Prototype sign-off holds only serious harm, maximum gain, or P0.
+
+Test audit: the real decision command must accept lesser findings without a
+repair or owner question and publish them as Known issues. The old P1 bar
+incorrectly requests repairs. Existing rounds tests cover held findings only.
+Only the external reviewer is faked; no production seam is added. Prompt bytes
+are an independent reviewer contract, captured at that same external boundary.
+"""
+import json
+
+import pytest
+
+from test_proto_signoff import _adopted_client, _client, _decision, _request_build
+
+STORY = "sign-off-judges-a-sample-data-prototype"
+pytestmark = pytest.mark.platform
+
+
+@pytest.mark.parametrize("setup,priority,scores,held", [
+    (_client, "P1", "Gain 4, Work 1, Harm 3", False),
+    (_client, "P1", "Gain 1, Work 5, Harm 4", True),
+    (_client, "P1", "Gain 5, Work 5, Harm 1", True),
+    (_client, "P0", "Gain 1, Work 5, Harm 1", True),
+    (_client, "P0", "", True),
+    (_client, "P1", "", False),
+    (_adopted_client, "P1", "Gain 4, Work 1, Harm 3", False),
+], ids=["fix-now", "harm", "gain", "scored-p0", "old-p0", "old-p1", "adopted"])
+def test_1_prototype_signoff_keeps_lesser_findings_without_repair(
+        repo, tmp_path, monkeypatch, setup, priority, scores, held):
+    fix, answers, queue = setup(repo, tmp_path, monkeypatch)
+    if setup is _adopted_client:
+        _request_build(repo, fix)
+        (fix / "app.py").write_text("print('sample orders')\n", encoding="utf-8")
+        repo.git("add", "app.py", cwd=fix)
+        repo.git("commit", "-qm", "Build the sample prototype", cwd=fix)
+    page = _decision(fix, answers)
+    report = {"report": {"review_status": "findings", "findings": [{
+        "priority": priority, "title": "Order labels need work",
+        "body": scores + "\nThe order labels need clearer wording.",
+        "code_location": {"file_path": "app.py", "line": 1}}]}}
+    queue.write_text(json.dumps([
+        {"report": {"review_status": "scoped-clean", "findings": []}}, report]), encoding="utf-8")
+    result = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
+    assert result.returncode == (1 if held else 0), result.stdout + result.stderr
+    calls = [json.loads(line) for line in queue.with_suffix(".calls.jsonl").read_text("utf-8").splitlines()]
+    prompt = "\n".join(calls[-1]["prompt_files"].values())
+    assert "The full production proof is due now" not in prompt
+    assert "no production back end" in prompt
+    assert "labelled demo tools" in prompt
+    assert "client's account" in prompt
+    if held:
+        assert "forge fix start" in result.stderr
+        assert "status: proposed" in page.read_text("utf-8")
+    else:
+        assert "forge fix start" not in result.stderr
+        assert "--resolve" not in result.stderr
+        assert "status: accepted" in page.read_text("utf-8")
+        shown = repo.forge("board", "--json", cwd=fix)
+        assert shown.returncode == 0, shown.stderr
+        kept = [entry for entry in json.loads(shown.stdout)["known_issues"]
+                if entry["title"] == "Order labels need work"]
+        assert len(kept) == 1
+        assert kept[0]["kept"] != "open"
