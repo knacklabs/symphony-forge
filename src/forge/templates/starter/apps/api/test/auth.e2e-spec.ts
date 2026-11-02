@@ -277,7 +277,9 @@ describe('authentication security', () => {
       .post('/api/v1/auth/reset-password')
       .send({ token: resetToken, password: newPassword })
       .expect(200);
-    await request(productionApiBaseUrl)
+    // Both servers share the database. Verify the saved password without consuming
+    // the production sign-in quota owned by api.e2e-spec.ts.
+    await request(apiBaseUrl)
       .post('/api/v1/auth/sign-in')
       .send({ email: member.email, password: newPassword })
       .expect(200);
