@@ -1,6 +1,13 @@
 {
   "base": "e65fe4f96406916b16a7693d694ea23872fbb0e5",
   "branch": "fix/a-saved-sign-off-stop-is-shown-without-c",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a19d5d-5641-78a2-aa0d-aa6b00af16bd",
+    "head": null,
+    "start": "b7e711d2e5273ebe71e7522220a09d58eb1d3729"
+  },
   "done_when": "The sign-off stop is shown only for findings still open on the latest commit, and a version-only upgrade keeps the last green full test run.",
   "fix_kind": "backend",
   "kind": "fix",
