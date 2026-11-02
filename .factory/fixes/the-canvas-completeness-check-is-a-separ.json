@@ -36,8 +36,8 @@
     "id": "4c4fbd33-6193-422e-bd56-02d01df97d1e",
     "status": "clean"
   },
-  "round": 4,
-  "status": "waiting for checks",
+  "round": 5,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-02T10:39:49.970692+00:00",
@@ -70,10 +70,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": "c1dbc868-27d0-4dca-8c35-94865e4b189e",
-    "head": "7567eef47e7ac9d5e6d945577a0cf80e69e6c7e9",
+    "close": "f3d33c05-a76d-4e70-ad5e-78b574d7d5e2",
+    "head": "9757b7b318ccd791d5f331d9d635ef4444469fcb",
     "keys": {},
-    "round": 3
+    "round": 4
   },
   "why": "The canvas completeness check is a separate AI model call that runs on every client sign-off, for prototypes with a working app and for canvas-only ones, and it can hold sign-off over screen gaps the owner no longer wants checked, because the design lives in the artifact and the client approves a demo.",
   "worker": "codex"
