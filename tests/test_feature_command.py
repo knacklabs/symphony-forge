@@ -228,8 +228,9 @@ def _adopted_starter(repo) -> Path:
     _copy_earlier_starter(repo.path)
     permissions = repo.path / "libs/projects/server/src/projects.permissions.ts"
     original_permissions = permissions.read_text("utf-8")
+    # This historical starter still grants edit; sync must preserve its customized mapping.
     customised_permissions = original_permissions.replace(
-        "member: ['view', 'create']", "member: []"
+        "member: ['view', 'create', 'edit']", "member: []"
     )
     assert customised_permissions != original_permissions
     permissions.write_text(customised_permissions, encoding="utf-8")
