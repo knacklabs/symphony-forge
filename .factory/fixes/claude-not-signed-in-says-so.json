@@ -4,12 +4,20 @@
   "done_when": "forge doctor reports that the selected Claude tool is not signed in and says how to sign in, and forge close stops on the first not-logged-in result with one plain line and no retry and no raw JSON",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-03T07:33:15.652500+00:00",
       "step": "start"
     }
   ],
-  "why": "forge doctor passes while the Claude CLI is not signed in, and close then retries and prints raw JSON and not the cause (bug 1328)"
+  "stuck": {
+    "close": null,
+    "head": "8ada0a7018c5e50b4072d934758821d86c07be53",
+    "keys": {},
+    "round": null
+  },
+  "why": "forge doctor passes while the Claude CLI is not signed in, and close then retries and prints raw JSON and not the cause (bug 1328)",
+  "worker": "codex"
 }
