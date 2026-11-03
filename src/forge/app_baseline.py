@@ -28,19 +28,10 @@ LIBRARIES = frozenset({
     "baseui", "theme-ui", "rebass", "@fluentui/react", "@fluentui/react-components",
     "@blueprintjs/core", "@headlessui/react", "daisyui", "flowbite-react",
 })
-COMPONENTS = frozenset("""
-    accordion alert alert-dialog aspect-ratio avatar badge breadcrumb button button-group
-    calendar card carousel chart checkbox collapsible combobox command context-menu
-    data-table date-picker dialog drawer dropdown-menu empty field form hover-card input
-    input-group input-otp item kbd label menubar native-select navigation-menu pagination
-    popover progress radio-group resizable scroll-area select separator sheet sidebar
-    skeleton slider sonner spinner switch table tabs textarea toast toggle toggle-group
-    tooltip typography
-""".split())
 
 
 def check(top: Path, cfg: dict[str, Any], base: str) -> None:
-    """Refuse only libraries and named component copies added by this change."""
+    """Refuse a second UI component library added by this change."""
     if cfg.get("repo") != "client":
         return
     paths = repo.git("ls-tree", "-r", "--name-only", "-z", "HEAD", cwd=top).split("\0")
@@ -57,13 +48,6 @@ def check(top: Path, cfg: dict[str, Any], base: str) -> None:
         return found
 
     problems = sorted(libraries("HEAD") - libraries(base))
-    names = {name.replace("-", "") for name in COMPONENTS}
-    for path in repo.git("diff", "--name-only", "-z", "--no-renames", "--diff-filter=A",
-                         base, "HEAD", cwd=top).split("\0"):
-        file = PurePosixPath(path)
-        ui = any(parts == ("components", "ui") for parts in zip(file.parts, file.parts[1:]))
-        if file.suffix in (".tsx", ".jsx") and not ui and file.stem.lower().replace("-", "") in names:
-            problems.append(path)
     if problems:
         repo.refuse(REFUSALS["shadcn"], problems="; ".join(problems),
                     item=repo.current_branch(top).partition("/")[2])
