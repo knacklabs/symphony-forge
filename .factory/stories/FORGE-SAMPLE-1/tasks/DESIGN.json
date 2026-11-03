@@ -12,17 +12,17 @@
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "35f2e045bd08fc503fb8931e63bb1f549fbb0274bc973011b7a0c9d9fca80444",
-    "changed": "b88fc737688ed66b13e8bc9bd6b1ac9aab37083f1338cfae5115c60aedb04b71",
-    "commit": "4c26e3e667b8f9166ee039df56f1c3f9a0d7d5a6",
+    "branch_diff": "e4fe99578d57e1d4a9e7804e53b38b513947f973ec90c7663dc1aa147d2bfb9f",
+    "changed": "18fc198ac1686dac1bd0f44b7344876406e6c1d625958f31ca4012e0f03127b6",
+    "commit": "b19de061625bca43a4a4e7ae3756a56b31e3884c",
     "dismissals": [],
     "findings": [],
-    "id": "19369176-3653-4a2b-b512-63b80977dde6",
+    "id": "2b20139d-8a63-49f1-9eae-bdeab0f87ce4",
     "status": "clean"
   },
   "round": 2,
   "stacked_on": "FORGE-PARTWARN-1/SIZE",
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-03T01:38:42.614668+00:00",
@@ -30,6 +30,10 @@
     },
     {
       "at": "2026-11-03T04:11:02.726761+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-03T04:16:48.828614+00:00",
       "step": "review"
     }
   ],
