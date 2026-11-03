@@ -1,0 +1,15 @@
+{
+  "base": "7ef60235392f557bf4b68d10d212018becd6838e",
+  "branch": "fix/upgrade-no-install-no-refusal",
+  "done_when": "forge upgrade to the release already installed goes ahead while runs are in progress, and the refusal stays when an install would replace the release that a run is using",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-03T06:49:56.518296+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "forge upgrade refuses because of runs already on the target release, when nothing needs installing and no two releases can mix (bug 1329)"
+}
