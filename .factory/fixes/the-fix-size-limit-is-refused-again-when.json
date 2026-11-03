@@ -11,12 +11,27 @@
   "done_when": "A push of a fix over the size limit goes through, while the commit check and the pull request check still refuse it.",
   "fix_kind": "backend",
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "6dd74d0efdda2d8cfa2a52c00167a14c3180d8852a2c0ba015634add86664326",
+    "changed": "af1aaa3b3612d5c55b0bc987828bd7937a28cfaaa2fa3e7253275c813b063d6c",
+    "commit": "4159c491a02688139432f4e66c244b11aa5f3e80",
+    "dismissals": [],
+    "findings": [],
+    "id": "8ca8bd49-324b-4252-bf58-8fca8bdfcacc",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-02T17:45:05.124445+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-03T02:41:51.764614+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
