@@ -1,0 +1,15 @@
+{
+  "base": "618a2c0c8fbebb26c755dbdbfcec2c86d9213371",
+  "branch": "fix/repair-synced-guide-copies",
+  "done_when": "tests/test_tools_guide.py::test_9 passes on main, and both synced guide copies equal the template",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-03T09:11:50.427286+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Main is broken: tests/test_tools_guide.py::test_9 fails, because the upgrade refusal fix changed the guide template and not its two synced copies"
+}
