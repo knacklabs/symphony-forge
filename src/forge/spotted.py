@@ -137,6 +137,30 @@ def hotspots(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return found
 
 
+def before_signoff(top: Path, ref: str) -> set[str]:
+    """Keys already noted when the default branch first accepted its sign-off."""
+    from forge import story
+
+    cfg = repo.default_config(top)
+    if cfg["repo"] != "client":
+        return set()
+    names = repo.git("ls-tree", "-r", "--name-only", ref, "--", "docs/decisions", cwd=top)
+    for name in sorted(names.splitlines(), reverse=True):
+        if (name != cfg["signoff"] if cfg["signoff"] else not repo.SIGNOFF.fullmatch(name)):
+            continue
+        def accepted(commit: str) -> bool:
+            front = story.FRONTMATTER.match(story.show(top, commit, name) or "")
+            return bool(front and re.search(r"^status:\s*[\"']?accepted[\"']?\s*$", front[1], re.M))
+
+        if not accepted(ref):
+            continue
+        commits = repo.git("log", "--first-parent", "--format=%H", ref, "--", name, cwd=top)
+        for commit in reversed(commits.splitlines()):
+            if accepted(commit):
+                return {entry["key"] for entry in read(top, commit)}
+    return set()
+
+
 def fix_text(path: str, texts: list[str]) -> tuple[str, str]:
     """Plain fix text safe inside double quotes in POSIX, PowerShell and cmd."""
     cleaned = [" ".join(re.sub(r"[^A-Za-z0-9 .,:;/_-]", " ", text).split())
