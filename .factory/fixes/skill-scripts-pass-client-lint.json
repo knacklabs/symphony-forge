@@ -1,6 +1,13 @@
 {
   "base": "9fe77734b05db772714d5dc40fe4e8486c5b466f",
   "branch": "fix/skill-scripts-pass-client-lint",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a19fab-8126-7400-8283-9cd366e1e3da",
+    "head": null,
+    "start": "97e7278a3a7ad8f383b83e1b2528d7980ece07d5"
+  },
   "done_when": "After forge init or forge sync, eslint . reports no problems from the shipped skill scripts in a new app from either starter and in an existing repo whose own eslint config has no ignore for them, and the scripts still run",
   "fix_kind": "mechanical",
   "kind": "fix",
