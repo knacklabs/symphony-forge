@@ -1,6 +1,13 @@
 {
   "base": "6160811bf5a9796e04fdb8bc6c52bccf0622d4cf",
   "branch": "fix/board-fold-stays-open",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1a084-de66-7de1-925c-a00b31c6873b",
+    "head": null,
+    "start": "27481fec3f95027ff9c459ced72696f7007ea607"
+  },
   "done_when": "An open For the builders section on a story page stays open across board refreshes until the person closes it",
   "fix_kind": "mechanical",
   "kind": "fix",
