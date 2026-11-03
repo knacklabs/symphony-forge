@@ -25,7 +25,19 @@ def test_5_installers_check_docker_engine_and_explain_starting_desktop(
     bin_dir.mkdir()
     calls = tmp_path / "docker-calls"
     env = os.environ | {"HOME": str(tmp_path), "LOCALAPPDATA": str(tmp_path),
+                        "CLAUDE_CONFIG_DIR": str(tmp_path / "claude-config"),
+                        "CODEX_HOME": str(tmp_path / "codex-home"),
                         "DOCKER_RUNNING": "0" if not running else "1"}
+    # This test owns Docker startup, not skill installation (test_sales_install owns
+    # that boundary). Keep the other prerequisites ready, isolated from user settings;
+    # otherwise the new skill installs stop the script before its Docker result.
+    # Keep setup here: the release replay replaces test_sales_install with its old
+    # version, which has no skill helper. Collection must work with either version.
+    for host in ("claude-config", "codex-home"):
+        for name in ("impeccable", "emil-design-eng"):
+            folder = tmp_path / host / "skills" / name
+            folder.mkdir(parents=True)
+            (folder / "SKILL.md").write_text(f"{name}\n", encoding="utf-8")
     if os.name == "nt":
         powershell = shutil.which("powershell")
         assert powershell

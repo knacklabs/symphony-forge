@@ -23,7 +23,8 @@ COMMANDS = [{"words": "doctor", "run": "doctor", "changes_state": False,
 REFUSALS = {"problems": ("forge doctor found {count} problem(s); each row above gives its fix.", "forge doctor")}
 INSTALL = {"git": "install git from https://git-scm.com/downloads", "gh": "install gh from https://cli.github.com",
     "uv": "curl -LsSf https://astral.sh/uv/install.sh | sh", "claude": "npm install -g @anthropic-ai/claude-code",
-    "impeccable": "npx skills add pbakaus/impeccable -g", "emil-design-eng": "install emil-design-eng where the worker reads skills",
+    "impeccable": "npx skills add pbakaus/impeccable -g",
+    "emil-design-eng": "npx --yes skills add emilkowalski/skills --skill emil-design-eng -g --yes",
     "autoreview": (f"install skills/autoreview from https://github.com/openclaw/agent-skills at "
                    f"{review.AUTOREVIEW_PIN} into {review.HELPERS[0].parents[1]} or " f"{review.HELPERS[1].parents[1]}")}
 REPAIR = "forge doctor --fix"
