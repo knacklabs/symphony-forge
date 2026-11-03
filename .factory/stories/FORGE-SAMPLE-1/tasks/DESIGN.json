@@ -8,14 +8,29 @@
     "head": null,
     "start": "590d7518278dba2a89a44a559f9eadfd43683f12"
   },
+  "known": [],
   "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "35f2e045bd08fc503fb8931e63bb1f549fbb0274bc973011b7a0c9d9fca80444",
+    "changed": "b88fc737688ed66b13e8bc9bd6b1ac9aab37083f1338cfae5115c60aedb04b71",
+    "commit": "4c26e3e667b8f9166ee039df56f1c3f9a0d7d5a6",
+    "dismissals": [],
+    "findings": [],
+    "id": "19369176-3653-4a2b-b512-63b80977dde6",
+    "status": "clean"
+  },
   "round": 1,
   "stacked_on": "FORGE-PARTWARN-1/SIZE",
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-03T01:38:42.614668+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-03T04:11:02.726761+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
