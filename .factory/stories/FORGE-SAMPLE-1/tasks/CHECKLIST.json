@@ -1,12 +1,52 @@
 {
   "branch": "task/FORGE-SAMPLE-1-CHECKLIST",
+  "known": [
+    {
+      "area": "machine_board() in src/forge/board.py",
+      "file": "src/forge/board.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 824,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Preserve board reads when forge.toml is absent",
+      "work": 1
+    }
+  ],
   "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "62215fece3893c54c1b39c8fa9959294f3ef33dcaec15d195ce336154605bb90",
+    "changed": "dd835b6f582861956b04f48e6ce5e58bc6ef3c467494afe12c8b81be659c8f9f",
+    "commit": "3b93c5cf1a3a3d96e434897d5add98a7cb5175f5",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 1, Harm 2\nRaise: Functional.\nCase: normal use - an agent runs `forge board --json` or `forge next --json` in an existing repository before adoption.\nThis unconditional call invokes `repo.is_prototype(top)` without a configuration, which calls `repo.config(top)` and refuses when forge.toml is absent (repo.py:617\u2013621, 709\u2013715). Consequently, the entire board now fails instead of returning its existing facts. The board already handles this valid state through `_report_config` (nextstep.py:477\u2013482). Pass its existing `configuration(top)` result into `signoff` so non-prototype repositories retain that behavior.",
+        "file": "src/forge/board.py",
+        "gain": 3,
+        "harm": 2,
+        "line": 824,
+        "priority": "P1",
+        "title": "Preserve board reads when forge.toml is absent",
+        "work": 1
+      }
+    ],
+    "id": "6bcd589c-41a9-4b3c-a6e9-f3e0643e9162",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-03T01:38:53.189867+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-03T04:41:53.845870+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
