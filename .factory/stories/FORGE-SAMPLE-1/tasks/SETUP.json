@@ -1,0 +1,12 @@
+{
+  "base": "67e9ae7171b4e5226938c192b02e81a31239fea9",
+  "branch": "task/FORGE-SAMPLE-1-SETUP",
+  "stacked_on": "FORGE-SAMPLE-1/CHECKLIST",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-03T05:03:36.110347+00:00",
+      "step": "start"
+    }
+  ]
+}
