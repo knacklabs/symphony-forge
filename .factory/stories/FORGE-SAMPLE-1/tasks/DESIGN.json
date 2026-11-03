@@ -20,9 +20,9 @@
     "id": "19369176-3653-4a2b-b512-63b80977dde6",
     "status": "clean"
   },
-  "round": 1,
+  "round": 2,
   "stacked_on": "FORGE-PARTWARN-1/SIZE",
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-03T01:38:42.614668+00:00",
@@ -34,10 +34,10 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "f7eac848861c330e4c8cb27b6dc5dd593a20c254",
+    "close": "8f6cc984-fcd4-4150-a047-25d7d6ee588b",
+    "head": "99e3f3c6aab2bf449b92155b73d732e604e2960c",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "worker": "codex"
 }
