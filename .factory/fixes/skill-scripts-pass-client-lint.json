@@ -1,0 +1,15 @@
+{
+  "base": "9fe77734b05db772714d5dc40fe4e8486c5b466f",
+  "branch": "fix/skill-scripts-pass-client-lint",
+  "done_when": "After forge init or forge sync, eslint . reports no problems from the shipped skill scripts in a new app from either starter and in an existing repo whose own eslint config has no ignore for them, and the scripts still run",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-03T04:29:23.030289+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The impeccable skill's five JavaScript files, shipped into .claude and .codex by sync, make eslint . fail with 246 errors in new apps from both starters and in any existing client repo that lints its whole tree"
+}
