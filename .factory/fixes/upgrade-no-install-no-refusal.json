@@ -1,6 +1,13 @@
 {
   "base": "7ef60235392f557bf4b68d10d212018becd6838e",
   "branch": "fix/upgrade-no-install-no-refusal",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1a02c-13f9-7dd0-a4de-69899be7a4b6",
+    "head": null,
+    "start": "bcf3ecd0ef34aeef3daa47695d26350ef6f86e1d"
+  },
   "done_when": "forge upgrade to the release already installed goes ahead while runs are in progress, and the refusal stays when an install would replace the release that a run is using",
   "fix_kind": "mechanical",
   "kind": "fix",
