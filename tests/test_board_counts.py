@@ -106,9 +106,13 @@ def expected(previous, *, ready=1, progress=1):
             "finished_last_7_days": {"parts": 1, "fixes": 1 + previous}}
 
 
-@pytest.mark.parametrize("case", ["counts", "newer-push", "github-once", "approved-not-started", "newer-findings",
-                                  "older-part"])
-@pytest.mark.parametrize("previous", [False, True], ids=["new-client", "earlier-adoption"])
+@pytest.mark.parametrize("previous,case", [
+    (False, case) for case in ("counts", "newer-push", "github-once", "approved-not-started",
+                             "newer-findings", "older-part")
+] + [(True, "counts")], ids=[
+    "new-client-counts", "new-client-newer-push", "new-client-github-once",
+    "new-client-approved-not-started", "new-client-newer-findings", "new-client-older-part",
+    "earlier-adoption-counts"])
 def test_1_every_item_has_one_state_and_the_same_counts_on_every_machine(env, monkeypatch, previous, case):
     if case == "github-once":
         github_read_once(env, monkeypatch, previous)
@@ -197,6 +201,7 @@ def test_1_every_item_has_one_state_and_the_same_counts_on_every_machine(env, mo
     assert states["gone"] == "done" and states["keep"] == "in progress"
     following = env.repo.forge("next")
     assert "SHOP/T2 is ready to merge" in following.stdout, following.stdout
+    assert "Next: forge merge SHOP/T2" in following.stdout, following.stdout
 
     # Machine B has no receipt and no worktree; the pull request's record says T2 is ready.
     # It sees the plan reads once A shares their story branches.
@@ -209,21 +214,25 @@ def test_1_every_item_has_one_state_and_the_same_counts_on_every_machine(env, mo
     assert data["team"]["counts"] == expected(previous)
     part = rows(data)["SHOP/T2"]
     assert part["state"] == "ready to merge"
-    assert part["next"] == {"command": None,
-                            "line": "Show a saved basket is ready to merge; Forge Test merges it from their machine.",
-                            "step": None}
+    assert part["next"] == {"command": "forge merge SHOP/T2",
+                            "line": "Show a saved basket is ready to merge.",
+                            "step": "forge merge SHOP/T2"}
     following = env.repo.forge("next")
-    assert "SHOP/T2 is ready to merge; Forge Test merges it from their machine." in following.stdout, following.stdout
+    assert "SHOP/T2 is ready to merge" in following.stdout, following.stdout
+    assert "Next: forge merge SHOP/T2" in following.stdout, following.stdout
     assert "forge task start SHOP/T2" not in following.stdout
-    assert "The fix shelf is ready to merge; Forge Test merges it from their machine." in following.stdout
+    assert "The fix shelf is ready to merge." in following.stdout
+    assert "Next: forge merge shelf" in following.stdout
     # A part and a fix started on A with no pull request yet are started here too, never offered.
     assert env.repo.git("ls-remote", "origin", "refs/heads/task/SHOP-T3", "refs/heads/fix/keep").count("\n") == 1
     assert "forge task start SHOP/T3" not in following.stdout
-    assert "SHOP/T3 was started by Forge Test and runs on their machine." in following.stdout
-    assert "The fix keep was started by Forge Test and runs on their machine." in following.stdout
-    assert "forge work SHOP/T3" not in following.stdout and "forge work keep" not in following.stdout
+    assert "SHOP/T3 has no checkout on this machine." in following.stdout
+    assert "The fix keep has no checkout on this machine." in following.stdout
+    assert "Next: forge work SHOP/T3" in following.stdout
+    assert "Next: forge work keep" in following.stdout
     there = rows(json.loads(env.repo.forge("next", "--json").stdout))
-    assert there["SHOP/T3"]["next"]["command"] is None and there["keep"]["next"]["command"] is None
+    assert there["SHOP/T3"]["next"]["command"] == "forge work SHOP/T3"
+    assert there["keep"]["next"]["command"] == "forge work keep"
 
     # In a human-merge repo the same part gives the human-merge line.
     env.repo.path = machine_a

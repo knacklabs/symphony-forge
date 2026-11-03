@@ -161,7 +161,8 @@ def _unblocks(top: Path, item: str) -> bool:
 
 
 def _admitted(run: dict[str, Any]) -> bool:
-    return bool(run.get("admitted") or run.get("started_at") or run.get("legacy"))
+    return not run.get("suspended_by") and bool(
+        run.get("admitted") or run.get("started_at") or run.get("legacy"))
 
 
 def _holder(run: dict[str, Any]) -> str:
@@ -178,6 +179,9 @@ def _holder(run: dict[str, Any]) -> str:
 
 def _place(run: dict[str, Any], lane: list[dict[str, Any]], size: int) -> int:
     """Running rounds retain capacity, but do not become waiters when the budget shrinks."""
+    if run.get("suspended_by"):
+        return 1
+    lane = [row for row in lane if not row.get("suspended_by")]
     if _admitted(run):
         return 0
     if run["kind"] == "test":
@@ -185,13 +189,15 @@ def _place(run: dict[str, Any], lane: list[dict[str, Any]], size: int) -> int:
         if waiting[0] == run and test_allocation(lane) < size:
             return 0
         return 1 + waiting.index(run)
+    if run.get("test_backlog") and run["kind"] == "work" and not run.get("near_end"):
+        return 1 + sum(not _admitted(row) for row in lane[:lane.index(run)])
     if run.get("free") or lane.index(run) < size:
         return 0
     return 1 + sum(not _admitted(row) for row in lane[:lane.index(run)])
 
 
 def join(kind: str, repo: Path, item: str | None, model: str | None, effort: str | None) -> dict[str, Any]:
-    """Join a lane; prerequisite agents go first, with arrival order within each group.
+    """Join a lane; finishing rounds and prerequisites go first, FIFO within each group.
 
     Reviews and plan reads take no place from anyone else, but every run
     waits for the machine's load and memory to allow a start."""
@@ -202,12 +208,14 @@ def join(kind: str, repo: Path, item: str | None, model: str | None, effort: str
     unblocks = bool(kind != "test" and item and "/" in item and _unblocks(repo, item))
     title = None
     round_number = None
+    near_end = False
     if item and (match := repository.ITEM.fullmatch(item)):
         state = repository.read_state(item, repo) or {}
         round_number = state.get("round", 0 if kind in ("test", "review") else None)
         if kind == "work":
             round_number = (round_number + 1 if isinstance(round_number, int)
                             else 1 if state.get("status") == "started" else None)
+            near_end = bool(state.get("tests") or (round_number and round_number > 1))
         title = state.get("why") if match["fix"] else state.get("title")
         if match["task"] or (not title and kind == "read"):
             from forge import task
@@ -222,13 +230,25 @@ def join(kind: str, repo: Path, item: str | None, model: str | None, effort: str
              "checkout_root": repo.resolve().as_posix(),
              "repo_name": root.name, "item": item, "title": title, "model": model, "effort": effort,
              "joined_at": repository.now(), "started_at": None, "process": me, "forge": me,
-             "agent": None, "round": round_number, "unblocks": unblocks,
+             "agent": None, "round": round_number, "unblocks": unblocks, "near_end": near_end,
              "output_path": None, "progress": None, "free": kind in ("read", "review")}
     if kind == "test":
         entry["processes"] = 0
     with _queue() as runs:
         runs.append(entry)
+        if kind == "test":
+            for run in runs:
+                if (run["kind"] == "work" and _admitted(run)
+                        and run.get("checkout_root") == entry["checkout_root"]):
+                    run["suspended_by"] = entry["id"]
     _lane_event(entry, "lane joined", at=entry["joined_at"])
+    return _wait(entry)
+
+
+def _wait(entry: dict[str, Any]) -> dict[str, Any]:
+    """Admit a new run or a builder returning from its test command."""
+    kind = entry["kind"]
+    unblocks = bool(entry.get("unblocks"))
     waiting_since = time.monotonic()
     try:
         said: int | str | tuple = 0
@@ -242,13 +262,14 @@ def join(kind: str, repo: Path, item: str | None, model: str | None, effort: str
             with _queue() as runs:
                 mine = next((run for run in runs if run["id"] == entry["id"]), None)
                 if mine is None:
-                    raise repository.Refused("This run was stopped while waiting; it will not start.", "")
+                    raise repo.Refused("This run was stopped while waiting; it will not start.", "")
                 lane = [run for run in runs if (run["kind"] == "test") == (kind == "test")
                         and (kind == "test" or not run.get("free"))]
                 place = _place(mine, lane, size)
                 holders = [run for run in lane if _admitted(run)]
                 occupied = test_allocation(holders) if kind == "test" else len(holders)
-                waiting = (place, tuple(run["id"] for run in holders))
+                backlog = bool(mine.get("test_backlog") and kind == "work" and not mine.get("near_end"))
+                waiting = (place, tuple(run["id"] for run in holders), backlog)
                 busy = None
                 # External jobs also drive load, even when no Forge run has started.
                 # ponytail: the one-minute average lags, so a dip can admit up to half the cores at
@@ -277,11 +298,16 @@ def join(kind: str, repo: Path, item: str | None, model: str | None, effort: str
                     said = "busy"
             elif waiting != said:
                 lines = []
+                if backlog and (not isinstance(said, tuple) or not said[2]):
+                    lines.append("New builds wait for the test line to clear.")
                 # A holder handover can precede admission of the next run without moving us.
                 if not isinstance(said, tuple) or said[0] != place:
-                    lines.append(f"{max(size, occupied)} Forge {'test processes' if kind == 'test' else 'agents'} already run on this machine, so this one waits "
-                                 f"its turn: it is number {place} in line."
-                                 + (f" {_WAIT_REASONS[unblocks]}" if kind != "test" else ""))
+                    reason = ("This round is near the end, so it goes before new builds."
+                              if mine.get("near_end") else _WAIT_REASONS[unblocks])
+                    lines.append(("This one waits " if backlog else
+                                 f"{max(size, occupied)} Forge {'test processes' if kind == 'test' else 'agents'} already run on this machine, so this one waits ")
+                                 + f"its turn: it is number {place} in line."
+                                 + (f" {reason}" if kind != "test" else ""))
                 lines.extend(_holder(run) for run in holders)
                 if lines:
                     print("\n".join(lines), flush=True)
@@ -321,6 +347,13 @@ def leave(entry: dict[str, Any]) -> None:
         runs[:] = [run for run in runs if run["id"] != entry["id"] or
                    (not run.get("native") and run["process"]["pid"] != os.getpid()
                     and _running(run["process"]))]
+        returning = [run for run in runs if run.get("suspended_by") == entry["id"]]
+        for run in returning:
+            run.pop("suspended_by")
+            run.update(admitted=False, started_at=None, near_end=True)
+    # Release the test allocation before reclaiming agent capacity.
+    for run in returning:
+        _wait(run)
 
 
 def _lane_event(entry: dict[str, Any], event: str, **fields: Any) -> None:
@@ -572,9 +605,15 @@ def _queue() -> Iterator[list[dict[str, Any]]]:
                 run["process"] = run["forge"]
                 retained.append(run)
         runs[:] = retained
+        waiting_tests = sum(run["kind"] == "test" and not _admitted(run) for run in runs)
+        places = test_slots()
+        paused = waiting_tests > 2 * places or (waiting_tests > places and any(
+            run.get("test_backlog") for run in runs))
+        for run in runs:
+            run["test_backlog"] = paused
         agents = iter(sorted((run for run in runs if run["kind"] != "test"), key=lambda run:
             0 if _admitted(run) else
-            1 if run.get("unblocks") else 2))
+            1 if run.get("near_end") else 2 if run.get("unblocks") else 3))
         runs[:] = [run if run["kind"] == "test" else next(agents) for run in runs]
         yield runs
         updated = json.dumps(runs)

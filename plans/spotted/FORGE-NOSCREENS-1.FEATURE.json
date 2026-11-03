@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/templates/feature/kinds.toml\tPreserve the money formatter used by API generation\tFORGE-NOSCREENS-1/FEATURE",
+      "kind": "bug",
+      "path": "src/forge/templates/feature/kinds.toml",
+      "line": 69,
+      "text": "Preserve the money formatter used by API generation",
+      "from": "blocking",
+      "item": "FORGE-NOSCREENS-1/FEATURE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/templates/feature/kinds.toml\tUpdate the kind-table tests after removing web settings",
+      "kind": "edge",
+      "path": "src/forge/templates/feature/kinds.toml",
+      "line": 69,
+      "text": "Update the kind-table tests after removing web settings",
+      "from": "review",
+      "item": "FORGE-NOSCREENS-1/FEATURE",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

@@ -220,7 +220,7 @@ def test_5_new_pytest_client_runs_the_proposed_picker_through_close(env, tmp_pat
     assert sorted(receipt.read_text("utf-8").splitlines()) == ["import", "prices"]
 
 
-def test_7_large_pytest_repos_keep_the_shell_command_below_windows_limit(repo):
+def test_8_large_pytest_repos_keep_the_shell_command_below_windows_limit(repo):
     # cmd.exe refuses commands over 8191 characters before pytest can even start.
     repo.write("forge.toml", "test = " + json.dumps(
         f'"{Path(sys.executable).as_posix()}" -m pytest tests -q') + "\n")

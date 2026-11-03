@@ -1,7 +1,6 @@
-"""A worker's run of a few related test files starts while another repo holds the test place."""
+"""Small selections share the test budget, replacing the earlier five-file bypass."""
 import json
 import shutil
-import subprocess
 import sys
 
 import pytest
@@ -23,8 +22,8 @@ STORY = "reviews-skip-agent-line"
                  (5, False, False, "config"))
     if not adopted or case in ((5, False, False, False), (6, False, False, False))
 ])
-def test_2_a_few_related_test_files_do_not_wait_for_the_test_place(env, tmp_path, release_server, monkeypatch,
-                                                                 adopted, file_count, compound, other_suite, doctest):
+def test_2_related_test_selections_share_the_test_budget(env, tmp_path, release_server, monkeypatch,
+                                                      adopted, file_count, compound, other_suite, doctest):
     server, connections = release_server
     repo = env.repo
     if adopted:
@@ -33,7 +32,8 @@ def test_2_a_few_related_test_files_do_not_wait_for_the_test_place(env, tmp_path
         version = repo.forge("--version").stdout.split()[-1]
         config = (repo.path / "forge.toml").read_text("utf-8").replace('version = "v1.2.2"', f'version = "{version}"')
         repo.write("forge.toml", "\n".join(line for line in config.splitlines() if not line.startswith("test =")) + "\n")
-    machine_cores(repo, 4)  # one test place
+    # The holder must fill the shared process budget before we check admission.
+    machine_cores(repo, 4)  # two test processes, both reserved by the holder
     other = _other_repo(tmp_path, repo.bin)
     holder_home = tmp_path / "holder"
     holder_home.mkdir()
@@ -43,7 +43,7 @@ def test_2_a_few_related_test_files_do_not_wait_for_the_test_place(env, tmp_path
     monkeypatch.setenv("PYTHONDONTWRITEBYTECODE", "1")
     repo.write("app.py", "VALUE = 1\n")
     repo.write("pyproject.toml", '[project]\nname = "lane-client"\nversion = "0.0.0"\n')
-    # Five selected files skip the lane; six files and compound commands still wait.
+    # FORGE-BUDGET-1 counts every run, including five files, compound commands and doctests.
     for index in range(file_count):
         repo.write(f"tests/test_app_{index}.py", "from app import VALUE\n"
                    "def test_current_app():\n    assert VALUE == 2\n")
@@ -71,7 +71,7 @@ def test_2_a_few_related_test_files_do_not_wait_for_the_test_place(env, tmp_path
     monkeypatch.setenv("PYTHONPATH", str(folder))
     (folder / "app.py").write_text("VALUE = 2\n", "utf-8")
     # These are the item's tests even when the broad-selection bound applies;
-    # the lane must still distinguish five selected files from six.
+    # both five-file and six-file selections must respect the shared process budget.
     for path in (folder / "tests").glob("test_app_*.py"):
         path.write_text(path.read_text("utf-8") + "\n# Worker test change\n", "utf-8")
     processes = []
@@ -81,24 +81,18 @@ def test_2_a_few_related_test_files_do_not_wait_for_the_test_place(env, tmp_path
         accepted(server, connections, held, holding, output)
         small, small_output = start(folder, tmp_path / "small", repo, "test")
         processes.append(small)
-        if file_count > 5 or compound or other_suite or doctest:
-            _until(lambda: "in line" in small_output.read_text("utf-8") or small.poll() is not None,
-                   "the larger test command to wait for the test place")
-            assert small.poll() is None, small_output.read_text("utf-8")
-            assert "in line" in small_output.read_text("utf-8")
-            connections[0].sendall(b"x")
-            assert holding.wait(timeout=60) == 0, output.read_text("utf-8")
-        try:
-            status = small.wait(timeout=60)
-        except subprocess.TimeoutExpired:
-            status = None
+        _until(lambda: "in line" in small_output.read_text("utf-8") or small.poll() is not None,
+               "the selected tests to wait for the shared test budget")
+        assert small.poll() is None, small_output.read_text("utf-8")
+        assert "in line" in small_output.read_text("utf-8")
+        assert holding.poll() is None
+        connections[0].sendall(b"x")
+        assert holding.wait(timeout=60) == 0, output.read_text("utf-8")
+        status = small.wait(timeout=60)
         said = small_output.read_text("utf-8")
         assert status == 0, said
         assert f"{file_count} passed" in said
         if other_suite:
             assert "full Node suite" in said
-        if file_count <= 5 and not compound and not other_suite and not doctest:
-            assert "in line" not in said
-            assert holding.poll() is None
     finally:
         reap(processes, server, connections)

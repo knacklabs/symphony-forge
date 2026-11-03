@@ -1,0 +1,78 @@
+{
+  "base": "823f647c36f3a27720d771acff0ea2d63132d8a9",
+  "branch": "fix/signoff-one-fix-for-all",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a18c24-74b3-74d0-8fdc-3278477cc8f0",
+    "head": null,
+    "start": "62b73c077aacf98fed1585d39a715b39ad163a51"
+  },
+  "done_when": "A blocked sign-off names one forge fix start step that covers every open blocking finding from that review",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "_signoff_review() in src/forge/records.py",
+      "file": "src/forge/records.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 508,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: A blocked sign-off names one forge fix start step that covers every open blocking finding from that review",
+      "work": 2
+    },
+    {
+      "area": "_signoff_review() in src/forge/records.py",
+      "file": "src/forge/records.py",
+      "gain": 4,
+      "harm": 1,
+      "line": 510,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: existing sign-off tests still require the removed next step",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "dd00c2536a71d5fbef73e6f1fd9cd3659be7af0749a4e689c6a4c66211a5770a",
+    "changed": "21cc485ecc675bc52322d2eabf4238717b9ecaa1b628b16dc377b771d70efc56",
+    "commit": "056ce90a458798888a1712bb60d77d0621c7c120",
+    "dismissals": [],
+    "findings": [],
+    "id": "9ca37bf0-8462-40e4-9784-a03b28c42d30",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-30T09:28:54.732304+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-30T09:34:18.285555+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-30T09:37:51.095663+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "bfcbdf48-060a-4d07-95c8-4b55fee4325e",
+    "head": "2d1c8e55541e0894c5fca6c6421b1d7ab0f21459",
+    "keys": {
+      "the open P0 not done: a blocked sign-off names one forge fix start step that covers every open blocking finding from that review in src/forge/records.py": 1
+    },
+    "round": 1
+  },
+  "why": "When the client sign-off review blocks on several findings, the next step does not say to fix them together, so clients run one fix and one full loop per finding",
+  "worker": "codex"
+}

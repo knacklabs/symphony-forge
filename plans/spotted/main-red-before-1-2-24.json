@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/templates/skill.md\tThe queue guidance still describes the removed five-file test exemption.",
+      "kind": "bug",
+      "path": "src/forge/templates/skill.md",
+      "line": 2051,
+      "text": "The queue guidance still describes the removed five-file test exemption.",
+      "from": "worker",
+      "item": "main-red-before-1-2-24",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

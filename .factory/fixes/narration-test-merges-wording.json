@@ -1,0 +1,30 @@
+{
+  "base": "6d874c9c02dc2ea302994bda8dd244fede7d6a5d",
+  "branch": "fix/narration-test-merges-wording",
+  "done_when": "The narration test checks the merges wording, and passes on main",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "08a01ac400e1b9ea02e01c4b3d55a06d577362322a67868ee11709c7d3c72365",
+    "changed": "2f0c64300a38f77f11492cc7a83e00e301b8f7a6227c287303f5d8759a5e2df8",
+    "commit": "f2162429b018a90f95bde6cec164b6b07d898447",
+    "dismissals": [],
+    "findings": [],
+    "id": "cd0dc353-0e51-4618-abfc-56f310e4099c",
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-29T18:27:38.574968+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-29T18:28:46.889067+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "The plain-English rules changed AGENTS.md to say speak when something merges, but a narration test still looks for when something lands, so it fails on main"
+}

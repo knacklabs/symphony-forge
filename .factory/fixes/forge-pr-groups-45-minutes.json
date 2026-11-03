@@ -1,0 +1,45 @@
+{
+  "base": "4d9b77ad1b6aa77e5a85dd4a71ceb25a8c96d4bd",
+  "branch": "fix/forge-pr-groups-45-minutes",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a18775-edb1-7bd1-9bc7-3d7a3e8a8ac1",
+    "head": null,
+    "start": "f1f80927b2e824982fb164004b14650d67b1d1f3"
+  },
+  "done_when": "Forge's own pull request test groups have a 45-minute limit, and client repos keep 30 minutes",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "3dfc489535aec5b36396f1165da02280e69f93a22073476112ed69a54f5b8234",
+    "changed": "5fc092c97dbb22732283b358ab3898edf97a6e562311269326995de36c93be61",
+    "commit": "870d36496860e94b755203d35e16e9f3e7a2ec9d",
+    "dismissals": [],
+    "findings": [],
+    "id": "38d4913e-d474-4ca9-9271-603d45fb4180",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-29T11:39:51.235700+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-29T11:45:15.559046+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "c3df8f3eb8c340c5f9d19ebf7b3360bf3fcc9bc4",
+    "keys": {},
+    "round": null
+  },
+  "why": "The two test-speed fixes change setup that every Forge test uses, so their pull requests run the whole suite and each test group hits the 30-minute limit; the owner chose a 45-minute limit for Forge's own pull request test groups",
+  "worker": "codex"
+}

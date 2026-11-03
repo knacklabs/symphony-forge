@@ -1,0 +1,48 @@
+{
+  "items": [
+    {
+      "key": "bug\t.forge/review-tests.py\tPreserve Windows coverage for shared fixtures inside test modules\ttest-only-pr-runs-every-group",
+      "kind": "bug",
+      "path": ".forge/review-tests.py",
+      "line": 27,
+      "text": "Preserve Windows coverage for shared fixtures inside test modules",
+      "from": "blocking",
+      "item": "test-only-pr-runs-every-group",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/docskip.py\tRetain coverage for pytest_plugins fixture consumers\ttest-only-pr-runs-every-group",
+      "kind": "bug",
+      "path": "src/forge/docskip.py",
+      "line": 24,
+      "text": "Retain coverage for pytest_plugins fixture consumers",
+      "from": "blocking",
+      "item": "test-only-pr-runs-every-group",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_narration.py\tThe narration test expects lands after the guidance changed to merges.",
+      "kind": "bug",
+      "path": "tests/test_narration.py",
+      "line": 14,
+      "text": "The narration test expects lands after the guidance changed to merges.",
+      "from": "worker",
+      "item": "test-only-pr-runs-every-group",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_zod_rules.py\tThe API guide test expects page-number input after the guide changed to cursor paging.",
+      "kind": "bug",
+      "path": "tests/test_zod_rules.py",
+      "line": 88,
+      "text": "The API guide test expects page-number input after the guide changed to cursor paging.",
+      "from": "worker",
+      "item": "test-only-pr-runs-every-group",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

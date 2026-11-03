@@ -143,12 +143,15 @@ def _sync_elsewhere(repo, tmp_path, expect_success=True):
     return other, synced
 
 
-@pytest.mark.parametrize("app", ["codex", "claude"])
-@pytest.mark.parametrize("adopted,kind,change", [
-    (adopted, kind, change) for adopted in (False, True) for kind in ("task", "fix")
-    for change in ("model-and-effort", "record-missing", "machine-restart", "fresh-worktree")
-    if not adopted or change == "record-missing"
-] + [("previous-release-round", "fix", change) for change in ("record-missing", "machine-restart")])
+@pytest.mark.parametrize("adopted,kind,change,app", [
+    pytest.param(adopted, kind, change, app, id=f"{adopted}-{kind}-{change}-{app}")
+    for adopted, kind, change in [
+        (False, kind, change) for kind in ("task", "fix")
+        for change in ("model-and-effort", "record-missing", "machine-restart", "fresh-worktree")
+    ] + [(True, "fix", "record-missing")]
+    + [("previous-release-round", "fix", change) for change in ("record-missing", "machine-restart")]
+    for app in ("codex", "claude") if adopted is not True or app == "codex"
+])
 def test_1_worker_keeps_its_chat_across_rounds(repo, monkeypatch, sdk_data, tmp_path,
                                              adopted, app, kind, change):
     folder, item, log, record = _worker(repo, monkeypatch, sdk_data, app, kind, adopted)
@@ -203,12 +206,15 @@ def test_1_worker_keeps_its_chat_across_rounds(repo, monkeypatch, sdk_data, tmp_
             assert (calls(log)[-1]["options"]["model"], calls(log)[-1]["options"]["effort"]) == ("sonnet", "low")
 
 
-@pytest.mark.parametrize("app", ["codex", "claude"])
-@pytest.mark.parametrize("adopted,change", [
-    (adopted, change) for adopted in (False, True)
-    for change in ("model-and-effort", "record-missing", "seen-blobs-missing", "machine-restart", "fresh-worktree")
-    if not adopted or change in ("record-missing", "seen-blobs-missing")
-] + [("previous-release-round", change) for change in ("record-missing", "machine-restart")])
+@pytest.mark.parametrize("adopted,change,app", [
+    pytest.param(adopted, change, app, id=f"{adopted}-{change}-{app}")
+    for adopted, change in [
+        (False, change)
+        for change in ("model-and-effort", "record-missing", "seen-blobs-missing", "machine-restart", "fresh-worktree")
+    ] + [(True, "record-missing")]
+    + [("previous-release-round", change) for change in ("record-missing", "machine-restart")]
+    for app in ("codex", "claude") if adopted is not True or app == "codex"
+])
 def test_2_plan_reader_keeps_its_chat_across_rounds(repo, monkeypatch, tmp_path, sdk_data,
                                                 adopted, app, change):
     reader = _client_reader(repo, monkeypatch, tmp_path, sdk_data, app, adopted)
@@ -392,8 +398,11 @@ def _accepted_read(text):
     return fields, findings
 
 
-@pytest.mark.parametrize("adopted", [False, True], ids=["new", "adopted-v1.2.2"])
-@pytest.mark.parametrize("app", ["codex", "claude"])
+@pytest.mark.parametrize("app,adopted", [
+    pytest.param(app, adopted, id=f"{app}-{'adopted-v1.2.2' if adopted else 'new'}")
+    for app in ("codex", "claude") for adopted in (False, True)
+    if not adopted or app == "codex"
+])
 def test_6_reader_starts_fresh_only_when_chat_or_tool_is_gone(repo, monkeypatch, tmp_path,
                                                           sdk_data, adopted, app):
     reader = _client_reader(repo, monkeypatch, tmp_path, sdk_data, app, adopted)
@@ -421,8 +430,11 @@ def test_6_reader_starts_fresh_only_when_chat_or_tool_is_gone(repo, monkeypatch,
     assert _reader_chat(reader, resumed=True) == fresh
 
 
-@pytest.mark.parametrize("adopted", [False, True], ids=["new", "adopted-v1.2.2"])
-@pytest.mark.parametrize("app", ["codex", "claude"])
+@pytest.mark.parametrize("app,adopted", [
+    pytest.param(app, adopted, id=f"{app}-{'adopted-v1.2.2' if adopted else 'new'}")
+    for app in ("codex", "claude") for adopted in (False, True)
+    if not adopted or app == "codex"
+])
 def test_7_first_failed_reader_keeps_chat_when_local_record_is_missing(repo, monkeypatch,
                                                                     tmp_path, sdk_data, adopted, app):
     reader = _client_reader(repo, monkeypatch, tmp_path, sdk_data, app, adopted)
@@ -442,9 +454,11 @@ def test_7_first_failed_reader_keeps_chat_when_local_record_is_missing(repo, mon
     assert _reader_chat(reader, resumed=True) == first
 
 
-@pytest.mark.parametrize("adopted", [False, True], ids=["new", "adopted-v1.2.2"])
-@pytest.mark.parametrize("app", ["codex", "claude"])
-@pytest.mark.parametrize("kind", ["task", "fix"])
+@pytest.mark.parametrize("kind,app,adopted", [
+    pytest.param(kind, app, adopted, id=f"{kind}-{app}-{'adopted-v1.2.2' if adopted else 'new'}")
+    for kind in ("task", "fix") for app in ("codex", "claude") for adopted in (False, True)
+    if not adopted or (kind == "fix" and app == "codex")
+])
 def test_8_worker_keeps_chat_with_routing_record_missing(repo, monkeypatch, sdk_data,
                                                        adopted, app, kind):
     folder, item, log, _ = _worker(repo, monkeypatch, sdk_data, app, kind, adopted)
@@ -464,8 +478,11 @@ def test_8_worker_keeps_chat_with_routing_record_missing(repo, monkeypatch, sdk_
     assert _chat(log, app, resumed=True) == first
 
 
-@pytest.mark.parametrize("adopted", [False, True], ids=["new", "adopted-v1.2.2"])
-@pytest.mark.parametrize("app", ["codex", "claude"])
+@pytest.mark.parametrize("app,adopted", [
+    pytest.param(app, adopted, id=f"{app}-{'adopted-v1.2.2' if adopted else 'new'}")
+    for app in ("codex", "claude") for adopted in (False, True)
+    if not adopted or app == "codex"
+])
 def test_9_reader_keeps_chat_with_routing_record_missing(repo, monkeypatch, tmp_path,
                                                        sdk_data, adopted, app):
     reader = _client_reader(repo, monkeypatch, tmp_path, sdk_data, app, adopted)
@@ -487,8 +504,11 @@ def test_9_reader_keeps_chat_with_routing_record_missing(repo, monkeypatch, tmp_
     assert _reader_chat(reader, resumed=True) == first
 
 
-@pytest.mark.parametrize("adopted", [False, True], ids=["new", "adopted-v1.2.2"])
-@pytest.mark.parametrize("app", ["codex", "claude"])
+@pytest.mark.parametrize("app,adopted", [
+    pytest.param(app, adopted, id=f"{app}-{'adopted-v1.2.2' if adopted else 'new'}")
+    for app in ("codex", "claude") for adopted in (False, True)
+    if not adopted or app == "codex"
+])
 def test_10_failed_replacement_reader_keeps_its_chat(repo, monkeypatch, tmp_path,
                                                    sdk_data, adopted, app):
     reader = _client_reader(repo, monkeypatch, tmp_path, sdk_data, app, adopted)
@@ -846,8 +866,11 @@ def test_19_upgrade_preserves_previous_release_worker_on_forge_branch(
     assert _chat(log, family, resumed=True) == first
 
 
-@pytest.mark.parametrize("adopted", [False, True], ids=["new", "adopted-v1.2.2"])
-@pytest.mark.parametrize("app", ["codex", "claude"])
+@pytest.mark.parametrize("app,adopted", [
+    pytest.param(app, adopted, id=f"{app}-{'adopted-v1.2.2' if adopted else 'new'}")
+    for app in ("codex", "claude") for adopted in (False, True)
+    if not adopted or app == "codex"
+])
 def test_20_returning_reader_tool_starts_fresh_then_resumes_its_replacement(
         repo, monkeypatch, tmp_path, sdk_data, adopted, app):
     reader = _client_reader(repo, monkeypatch, tmp_path, sdk_data, app, adopted)

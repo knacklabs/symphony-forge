@@ -1,0 +1,63 @@
+{
+  "base": "390b30c1e9254e29c9d12fca8953315e9c0812bd",
+  "branch": "fix/signoff-accept-carries-over",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a18bfb-f2ba-7dc1-95e9-4be4c59394e1",
+    "head": null,
+    "start": "45d86918bcc2b4ba7ecff040d990739a850d8365"
+  },
+  "done_when": "After an owner's accept, a later sign-off attempt reviews only files changed since the last sign-off review plus files with open findings, and does not block again on a finding the owner accepted in the same file",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "_signoff_review() in src/forge/records.py",
+      "file": "src/forge/records.py",
+      "gain": 3,
+      "harm": 1,
+      "line": 504,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_7_review_guards_client_signoff",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "e597cd05ee73fcf715354b26868e348247d78257be54cbdd3af59abff2b44678",
+    "changed": "8057486d1b3eef6f7c9f679666b4700d8a3edcc2bc58e74d340e0cb69f24673b",
+    "commit": "87acbe539da47967c51903955de8ebb10715a134",
+    "dismissals": [],
+    "findings": [],
+    "id": "6c56a234-7378-4674-8e85-2254beeac098",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-30T08:44:48.749412+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-30T09:04:14.619968+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-30T09:09:30.237869+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "cb75fefc-c88a-49cd-aacf-035c423628ae",
+    "head": "432d594baef513926fb48a1216da1325d3cae7f4",
+    "keys": {},
+    "round": 2
+  },
+  "why": "After the owner accepts a sign-off finding with --resolve accept, the next sign-off attempt reviews the whole app again and raises the accepted finding again, so client sign-off never finishes",
+  "worker": "codex"
+}

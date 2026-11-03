@@ -16,7 +16,7 @@ from pathlib import Path
 from string import Template
 from typing import Any
 
-from forge import claude_sdk, codex, doctor, machine, native, repo, story, task
+from forge import claude_sdk, codex, doctor, machine, native, repo, roles, story, task
 from forge.repo import git, refuse
 
 HERE = Path(__file__).parent
@@ -70,8 +70,9 @@ REFUSALS = {
     "failed": ("The worker stopped with exit code {status}; its log is {log}.", "forge work {item}"),
     "no_turn": ("Claude ended without running a turn, so no worker ran; it may be waiting on a "
                 "prompt such as a hooks review. Its log is {log}.",
-                "run claude once in {top} and answer its prompt, then forge work {item}"),
+                "forge doctor --fix, then forge work {item}"),
     "sdk": ("{problem}", "forge doctor --fix"),
+    "claude_sdk": ("{problem}", "cd {top} && forge doctor --fix"),
     "turn": ("The Codex turn didn't complete: {why}; its log is {log}.", "forge work {item}"),
     "brief": ('"What changes for you" or "Done when" in the story doc of {item}\'s checkout isn\'t '
               "what story {key} approved, so Forge sends no brief from it.",
@@ -94,8 +95,8 @@ def checkout(item: str) -> tuple[re.Match[str], Path]:
     git("fetch", "-q", "origin", default, cwd=top)
     if task._merged(f"origin/{default}", item, top):
         refuse(REFUSALS["merged"], item=item)
-    trees = story.worktrees(Path.cwd())
-    top = next((trees[branch] for branch in branches if branch in trees), None)
+    trees = story.worktrees(top)
+    top = next((trees[branch] for branch in branches if branch in trees), None) or task.pick_up(item, branches)
     if top is None:
         refuse(REFUSALS["no_checkout"], item=item)
     if not repo.run("git", "rev-parse", "-q", "--verify", "MERGE_HEAD", cwd=top).returncode:
@@ -160,8 +161,10 @@ def _work(args: argparse.Namespace) -> bool:
     tool = getattr(args, "fallback", None) or state.get("tool")
     family = repo.worker(config, "build", design, tool)[0]
     on_codex = family == "codex"
-    # The coordinating app's own tool runs the round as one of the session's subagents.
+    # Codex uses its coordinating session; Claude uses the SDK when it is available.
     is_native = repo.route(config, family, command="work", item=item) == "native"
+    if is_native and not on_codex:
+        is_native = bool(claude_sdk.sdk_problem())
     role = ("frontend" if design else "worker" if match["task"] else
             "coder" if state.get("fix_kind") == "backend" else "fixer")
     if note is None and (question := (asked_open[-1].get("question") if asked_open else None)
@@ -178,8 +181,18 @@ def _work(args: argparse.Namespace) -> bool:
     approval = _approval(match["key"], item, top) if match["task"] else None
     claude = ready(top, config, kind, on_codex, design=design, native=is_native)
     _, chosen, why = repo.worker(config, kind.lower(), design, tool)
+    review.bound_review(top, item, state, state.get("review") or {})
+    findings, failing = _fix_round(state)
+    if not design:
+        failed = bool(findings or state.get("tests") or
+                      any(name == required or name.startswith(required + " (")
+                          for name, _ in failing for required in config.get("checks", [])))
+        chosen = repo.round_effort(chosen, family, failed)
+    if claude:
+        claude[claude.index("--effort") + 1] = chosen["effort"]
     why = "Claude failed this design round" if getattr(args, "fallback", None) else why
-    building = (f"Building {item} with {family.title()} ({chosen['model']}, {chosen['effort']}) "
+    requested = " requested" if is_native else ""
+    building = (f"Building {item} with {family.title()} ({chosen['model']}, {chosen['effort']}{requested}) "
                 f"because {why}")
     if not on_codex or is_native:
         print(building, flush=True)
@@ -233,8 +246,6 @@ def _work(args: argparse.Namespace) -> bool:
             elif not on_codex and previous:
                 fresh = "Forge has no record of its Claude session on this machine"
         state = repo.read_state(item, top) or {}
-        review.bound_review(top, item, state, state.get("review") or {})
-        findings, failing = _fix_round(state)
         stop = state.get("stop") or {}
         if note is None and stop.get("by") == "owner" and stop.get("worker_round") == state.get("round"):
             note = f"The owner chose {stop['choice']}: {stop['reason']}. Follow the owner's choice."
@@ -288,6 +299,7 @@ def _work(args: argparse.Namespace) -> bool:
         nudged = ""
         try:
             if not on_codex:
+                budget = repo.subagent_budget(config, "build" if design else kind.lower())
                 before = story._snapshot(top) if design else None  # pyright: ignore[reportPrivateUsage]
 
                 def before_turn() -> None:
@@ -299,7 +311,7 @@ def _work(args: argparse.Namespace) -> bool:
                 try:
                     final = _claude(item, top, brief, fresh_brief, claude,
                             session, thread, None if fresh == "first turn" else fresh,
-                            before_turn if design else None)
+                            budget, before_turn if design else None)
                 except (repo.Refused, OSError) as error:
                     # Only both with split falls back; one tool, or the owner's chosen one, keeps its
                     # failed round.
@@ -343,7 +355,7 @@ def _work(args: argparse.Namespace) -> bool:
                         print(NUDGING, flush=True)
                         saved = codex.record(top, item)["claude"]
                         try:
-                            nudged = _run(item, top, nudge, claude, resume=saved["id"])
+                            nudged = _run(item, top, nudge, claude, budget, resume=saved["id"])
                         finally:
                             codex._record(codex._item_file(top, item, ".json", kind),
                                 claude={**saved, "head": git("rev-parse", "HEAD", cwd=top)})
@@ -357,6 +369,7 @@ def _work(args: argparse.Namespace) -> bool:
             result = codex.run(top, item, kind, name, brief, "full-access",
                                thread, fresh, approval, note=note, fresh_prompt=fresh_brief,
                                design=design,
+                               effort=chosen["effort"],
                                on_thread=(lambda _: print(building, flush=True)) if on_codex else None)
             outcome = "completed" if result["status"] == "completed" else "failed"
             final = (result.get("text") or "") if outcome == "completed" else None
@@ -364,7 +377,8 @@ def _work(args: argparse.Namespace) -> bool:
             if outcome == "completed" and git("status", "--porcelain", "-uall", cwd=top):
                 print(NUDGING, flush=True)
                 again = codex.run(top, item, kind, name, nudge, "full-access",
-                                  result["conversation"], "", approval, design=design)
+                                  result["conversation"], "", approval, design=design,
+                                  effort=chosen["effort"])
                 if again["status"] != "completed":
                     result, outcome = again, "failed"
                 else:
@@ -415,8 +429,8 @@ def ready(top: Path, config: dict[str, Any], kind: str, on_codex: bool,
     the SDK with the declining handler's place and the project's trust. Returns
     claude's --model and --effort, or [] on Codex. The cold read (Grill) runs these checks too."""
     if not on_codex:
-        if not native and kind != "Grill" and (problem := claude_sdk.sdk_problem()):
-            refuse(REFUSALS["sdk"], problem=problem)
+        if not native and (problem := claude_sdk.sdk_problem()):
+            refuse(REFUSALS["claude_sdk"], problem=problem, top=repo.quote(top))
         # A worker always names its models; a cold read with no entry runs on Claude's own.
         chosen = (repo.design_models(config, "claude") if design else
                   (repo.models if kind == "Grill" else repo.worker_models)(config, kind.lower(),
@@ -603,7 +617,8 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
                           f"or field.\n")
         if match["task"]:
             brief += (f"\nScope: {values['scope']}\nTests: {values['tests']}\n"
-                      f"Existing related tests: {values['existing_tests']}.\n")
+                      f"Existing related tests: {values['existing_tests']}.\n"
+                      f"\n## Current Done when\n\n{values['done']}\n")
         brief += "\n" + values["delegation"] + "\n"
         brief += "\n" + SETTINGS + "\n"
         brief += "\nNever run `forge stop`: only a person can stop a run, after confirmation in the host.\n"
@@ -686,6 +701,7 @@ def _existing_tests(top: Path, scope: list[str]) -> str:
 
 def _claude(item: str, top: Path, brief: str, fresh_brief: str | None, models: list[str],
             session: dict[str, Any] | None, resume: str | None, why: str | None,
+            budget: dict[str, str],
             before_turn: Callable[[], None] | None = None) -> str:
     """A Claude worker's round: continue session `resume` with the short brief, else start a new
     session with the whole brief and say why when there was one to continue. When Claude says it
@@ -702,7 +718,7 @@ def _claude(item: str, top: Path, brief: str, fresh_brief: str | None, models: l
                 before_turn()
             size = log.stat().st_size if log.exists() else 0
             try:
-                return _run(item, top, brief, models, resume=resume)
+                return _run(item, top, brief, models, budget, resume=resume)
             except repo.Refused:
                 # Claude refuses a session it doesn't have before the turn starts, with this line.
                 output = log.read_bytes()[size:].decode("utf-8", "replace")
@@ -721,25 +737,28 @@ def _claude(item: str, top: Path, brief: str, fresh_brief: str | None, models: l
         codex.remember(top, item, codex._json(path))
         if before_turn is not None:
             before_turn()
-        return _run(item, top, fresh_brief or brief, models, session_id=session["id"])
+        return _run(item, top, fresh_brief or brief, models, budget, session_id=session["id"])
     finally:
         if session:
             codex._record(path, claude={**session, "rounds": rounds + 1,
                                         "head": git("rev-parse", "HEAD", cwd=top)})
 
 
-def _run(item: str, top: Path, brief: str, models: list[str],
+def _run(item: str, top: Path, brief: str, models: list[str], budget: dict[str, str],
          *, resume: str | None = None, session_id: str | None = None) -> str:
     """Drive the isolated Claude SDK; stream its messages to the terminal and the log."""
     log = repo.work_log(top, item)
     if problem := claude_sdk.sdk_problem():
-        refuse(REFUSALS["sdk"], problem=problem)
+        refuse(REFUSALS["claude_sdk"], problem=problem, top=repo.quote(top))
     command = [str(claude_sdk.python()), str(claude_sdk.TURN)]
     request = {"prompt": brief, "cwd": str(top),
                "model": models[models.index("--model") + 1],
                "effort": models[models.index("--effort") + 1],
                "permission_mode": "bypassPermissions", "add_dirs": [str(CONVENTIONS)],
-               "resume": resume, "session_id": session_id}
+               "resume": resume, "session_id": session_id,
+               "agents": {name: {"description": description, "prompt": instructions, **budget}
+                          for name, (_, description, instructions) in
+                          {**roles.ROLES, "general-purpose": roles.ROLES["worker"]}.items()}}
     final_result = None
     with repo.record_run(top, item, "worker", family="claude",
                          model=models[models.index("--model") + 1],

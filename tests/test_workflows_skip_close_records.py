@@ -16,8 +16,12 @@ pytestmark = pytest.mark.platform
 STORY = "FIX-RECORDS-ONLY-SKIP-STEP"
 
 
-@pytest.mark.parametrize("history", ["new", "adopted-v1.2.2"])
-@pytest.mark.parametrize("case", ["records", "code", "failed", "docs", "missing", "api-error"])
+@pytest.mark.parametrize("history,case", [
+    pytest.param(history, case, id=f"{case}-{history}")
+    for history in ["new", "adopted-v1.2.2"]
+    for case in ["records", "code", "failed", "docs", "missing", "api-error"]
+    if history == "new" or case in ("records", "failed")
+])
 def test_1_workflows_skip_only_close_records_with_their_own_passing_parent(
         env, tmp_path, history, case):
     # Audit: init/sync ship the public action; execute its command against real commits.

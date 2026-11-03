@@ -1,0 +1,37 @@
+{
+  "items": [
+    {
+      "key": "bug\tdocs/guide.md\tThe overview says review settings are ignored, but the later review section says Forge uses them.",
+      "kind": "bug",
+      "path": "docs/guide.md",
+      "line": 282,
+      "text": "The overview says review settings are ignored, but the later review section says Forge uses them.",
+      "from": "worker",
+      "item": "FORGE-EFFORT-1/SHOWN",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/time_records.py\tAccount for the successful fallback worker when selecting effort\tFORGE-EFFORT-1/SHOWN",
+      "kind": "bug",
+      "path": "src/forge/time_records.py",
+      "line": 339,
+      "text": "Account for the successful fallback worker when selecting effort",
+      "from": "blocking",
+      "item": "FORGE-EFFORT-1/SHOWN",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/time_records.py\tNot done: Each worker run's record and the board's round line show the round number and the effort that round ran at.\tFORGE-EFFORT-1/SHOWN",
+      "kind": "bug",
+      "path": "src/forge/time_records.py",
+      "line": 347,
+      "text": "Not done: Each worker run's record and the board's round line show the round number and the effort that round ran at.",
+      "from": "blocking",
+      "item": "FORGE-EFFORT-1/SHOWN",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

@@ -30,9 +30,11 @@ import argparse
 import hashlib
 import json
 import re
+import string
 from datetime import date
 from itertools import zip_longest
 from pathlib import Path
+from typing import Any
 
 from forge import repo, story
 from forge.story import FRONTMATTER, _record as _front, _text, _write  # pyright: ignore[reportPrivateUsage]
@@ -73,8 +75,6 @@ REFUSALS = {
     "not_proposed": ("{rel} is {status}, so it cannot be accepted.", "forge decision new <new-slug>"),
     "unfilled": ("{rel} has only the template's comments in {sections}; fill them in first.",
                  'forge decision accept {slug} --by "{by}"'),
-    "constitution": ("The app constitution can't be approved yet: {missing}.",
-                     'fill them in, then forge decision accept app-constitution --by "{by}"'),
     "no_superseded": ("{rel} supersedes {old}, but there is no such decision.",
                       'forge decision accept {slug} --by "{by}"'),
     "not_on_roadmap": ("{key} is not on the roadmap (plans/roadmap.json).",
@@ -146,6 +146,8 @@ def spec_confirm(args: argparse.Namespace) -> None:
     rel, text, fields, body = _spec(top, args.slug)
     status = fields.get("status") or "none"
     if status == "confirmed":
+        if fields.get("confirmed_hash") != _digest(body):
+            repo.refuse(REFUSALS["not_confirmed_text"], slug=args.slug)
         print(f"{rel} is already confirmed.")
         return
     if status != "draft":
@@ -161,6 +163,7 @@ def spec_confirm(args: argparse.Namespace) -> None:
         repo.refuse(REFUSALS["no_disposition"], number=number, slug=args.slug, by=by)
     # The rest of the cold read's gate: its latest round passed and the spec is unchanged since.
     story.gate(args.slug, rel, read, repo.git("hash-object", "--", rel, cwd=top))
+    _roadmap_items(args.slug, body)
     _write(top / rel, _set(text, status="confirmed", confirmed_by=f'"{by}"',
                            confirmed_hash=_digest(body)))
     repo.commit_state(f"Confirm the {args.slug} spec", rel, notes, top=top)
@@ -223,12 +226,14 @@ def decision_new(args: argparse.Namespace) -> None:
     rel = f"docs/decisions/{number:04d}-{args.slug}.md"
     text = DECISION.format(date=repo.now()[:10],
                            title=args.slug.replace("-", " ").capitalize())
+    if args.slug == "prototype-plan":
+        text += "\n## Demo steps\n<!-- Number one to six demo steps, with the business task first. -->\n"
     if args.slug.endswith("client-signoff"):
         text = text.replace("supersedes: \"\"\n", "supersedes: \"\"\ncustomer: \"\"\n"
                             "approved_via: \"\"\napproved_on: \"\"\ndemo: \"\"\n")
         text += ("\n<!-- Set approved_via to email, call or chat when the customer replies. -->\n"
                  "\n## Signed design\n<!-- docs/design/prototype/ (<tree id>) -->\n"
-                 "\n## Proof\n<!-- Each demo step and its passing test, for a working build. -->\n"
+                 "\n## Proof\n<!-- Each demo step and its passing test. Use - [ ] 1. Step; tick - [x] only when the client says yes. Screenshots are optional. -->\n"
                  "\n## Decisions\n<!-- What the canvas or prototype proves for production stories. -->\n"
                  "\n## Answers\n<!-- Quote docs/product/BRIEF.md's ## Answers section word for word. -->\n")
     _write(top / rel, text)
@@ -266,27 +271,29 @@ def decision_accept(args: argparse.Namespace) -> None:
 
         prototype_tree = design.prototype_tree(top)
     signed = Path(rel).stem.endswith("client-signoff")
-    recheck = signed and bool(fields.get("design_checked"))
-    if status == "accepted" and not recheck and (not prototype_tree or fields.get("design_tree") == prototype_tree):
+    if status == "accepted" and (not prototype_tree or fields.get("design_tree") == prototype_tree):
         print(f"{rel} is already accepted.")
         return
-    if status != "proposed" and not ((prototype_tree or recheck) and status == "accepted"):
+    if status != "proposed" and not (prototype_tree and status == "accepted"):
         repo.refuse(REFUSALS["not_proposed"], rel=rel, status=status)
-    if Path(rel).stem.endswith("-app-constitution"):
-        missing = _constitution_gaps(top, by)
+    plan = Path(rel).stem.endswith("-prototype-plan")
+    if plan:
+        missing = _plan_gaps(top, body)
         if missing:
-            repo.refuse(REFUSALS["constitution"], missing="; ".join(missing), by=by)
+            repo.refuse(("The prototype plan needs these changes:\n{gaps}", ""), gaps="\n".join(
+                f'- {gap}. Next: fill in the named section, then forge decision accept prototype-plan --by "{by}"'
+                for gap in missing))
     sections = _sections(body)
     unfilled = [name for name in DECISION_SECTIONS
                 if not re.sub(r"<!--.*?-->", "", sections.get(name, ""), flags=re.S).strip()]
-    if unfilled and not signed:
+    if unfilled and not signed and not plan:
         repo.refuse(REFUSALS["unfilled"], rel=rel, sections=", ".join(unfilled), slug=args.slug,
                     by=by)
     if signed:
-        from forge import fullrun, nextstep, open_decisions, review
+        from forge import fullrun, nextstep, open_decisions, review, sync
 
         gaps = []
-        reason = fullrun.green(top)
+        reason = fullrun.green(top, reuse=True)
         if reason:
             gaps.append((reason, fullrun.next_run(top)))
 
@@ -309,6 +316,14 @@ def decision_accept(args: argparse.Namespace) -> None:
         except ValueError:
             gaps.append((f"{rel} needs a real approved_on date.",
                          f"correct {rel}, then {next_step}"))
+        if replied and (plan_text := prototype_plan(top)):
+            demo = re.sub(r"<!--.*?-->", "", _sections(plan_text).get("Demo steps", ""), flags=re.S)
+            steps = re.findall(r"^\s*\d+[.)]\s+(.+)$", demo, re.M)
+            proof = re.sub(r"<!--.*?-->", "", sections.get("Proof", ""), flags=re.S)
+            for number, _ in enumerate(steps, 1):
+                if not re.search(rf"^\s*- \[[xX]\]\s+{number}[.)]\s+", proof, re.M):
+                    gaps.append((f"Demo step {number} is not ticked",
+                                 f"record the client's yes in {rel}'s Proof, then {next_step}"))
         brief = _text(top / "docs/product/BRIEF.md")
         quote = _answer_section(body)
         expected = _answer_section(brief)
@@ -359,7 +374,7 @@ def decision_accept(args: argparse.Namespace) -> None:
             changed += repo.git("ls-files", "--others", "--exclude-standard", cwd=top).splitlines()
             if _app_files(top, changed):
                 gaps.append(("Canvas sign-off cannot include app code on its branch.",
-                             "forge decision new prototype-build"))
+                             "forge decision new prototype-plan"))
         product = [line for line in repo.git("ls-tree", "-r", "-z", "HEAD", cwd=top).split("\0")
                    if line and not line.partition("\t")[2].startswith((*review.BOOKKEEPING, "docs/decisions/"))]
         if repo.git("status", "--porcelain", "--", ".", *[f":(exclude){name}" for name in
@@ -369,24 +384,26 @@ def decision_accept(args: argparse.Namespace) -> None:
         if gaps:
             repo.refuse(("Client sign-off needs these changes:\n{gaps}", ""), gaps="\n".join(
                 f"- {problem} Next: {action}" for problem, action in gaps))
-        product_hash = _digest("\0".join(product))
-        brief_hash = _digest(brief)
-        if fields.get("design_checked") != product_hash or fields.get("brief_checked") != brief_hash:
-            prompt = (Path(__file__).parent / "templates/design-check.md").read_text(encoding="utf-8")
-            prompt += "\n\n## App brief\n" + brief
-            prompt += f"\n\n## Sign-off record: {rel}\n{text}"
-            review.design_check(top, prompt)
-            text = _set(text, design_checked=product_hash, brief_checked=brief_hash)
-            _write(top / rel, text)
+        signoff = json.loads(_text(top / ".factory/client-signoff.json") or "{}")
+        previous = signoff.get("review") or {}
+        generated_only = False
+        if previous.get("commit"):
+            changed = repo.git("diff", "--name-only", "-z", previous["commit"], "HEAD", cwd=top).strip("\0").split("\0")
+            changed = [name for name in changed if name and not name.startswith(
+                (*review.BOOKKEEPING, "docs/decisions/"))]
+            generated_only = not (set(changed) - sync.synced(
+                top, repo.config(top), previous["commit"], "HEAD", changed))
         checked = _digest(json.dumps([product, quote, [sections.get(name, "") for name in SIGNOFF_SECTIONS],
                                      story.agents_section(top, "Review rules"), constitution(top)]))
         if working and (fields.get("review_checked") != checked or not fields.get("reviewed_commit")):
             evidence = "\n\n".join(f"## {name}\n{sections.get(name, '')}" for name in SIGNOFF_SECTIONS)
-            text = _set(text, reviewed_commit=review.signoff(top, quote, evidence), review_checked=checked)
+            text = _set(text, reviewed_commit=_signoff_review(
+                top, args, quote, evidence, unchanged=generated_only,
+                sample_data=fields.get("sample_data") == "true"), review_checked=checked)
         if not replied:  # so the customer is only asked to approve a reviewed version
             _write(top / rel, text)
             repo.commit_state("Save the sign-off checks", rel, top=top)
-            result = "The sign-off review passed" if working else "The canvas completeness check passed"
+            result = "The sign-off review passed" if working else "The sign-off checks passed"
             return print(result + "; you can now ask the customer's named person "
                          "for sign-off. Record their reply in approved_via and approved_on, then "
                          f"{next_step}")
@@ -445,7 +462,156 @@ def _app_files(top: Path, names: list[str], ref: str | None = None) -> list[str]
             or (story.show(top, ref, name) if ref else _text(top / name)) != _text(template)]
 
 
+def _signoff_known(top: Path, result: dict[str, Any], round_number: int) -> None:
+    """Settle lesser product findings before any stop, question or repair uses them."""
+    from forge import review, score
+
+    result["blocking_level"] = "P0"
+    opened = score.open_findings(result)
+    lesser = [n for n, finding in enumerate(result.get("findings", []), 1)
+              if finding in opened and finding["priority"] != "P0" and not score.holds(finding, "P0")]
+    if not lesser:
+        return
+    result.setdefault("dismissals", []).extend(
+        {"finding": number, "because": "known: below the prototype sign-off bar"} for number in lesser)
+    item, state = review.branch_item(repo.current_branch(top), top)
+    known = score.remember([], result, round_number, {})
+    identities = {score.identity(entry["file"], entry["title"]) for entry in known}
+    state["known"] = [entry for entry in state.get("known", [])
+                      if score.identity(entry["file"], entry["title"]) not in identities] + known
+    repo.write_state(item, state, top)
+    repo.commit_state("Keep lesser sign-off findings as known issues", repo.state_path(item), top=top)
+
+
+def _signoff_review(top: Path, args: argparse.Namespace, answers: str, evidence: str,
+                    *, unchanged: bool = False, sample_data: bool = False) -> str:
+    """Keep sign-off rounds in the record across squash merges and reuse owner choices."""
+    from forge import close, review, score
+
+    rel = ".factory/client-signoff.json"
+    document = json.loads(_text(top / rel) or "{}")
+    saved = document
+    previous = saved.get("review") or {}
+    inputs = _digest(json.dumps([answers, evidence, story.agents_section(top, "Review rules"), constitution(top)]))
+    history = saved.get("rounds") or review._history(
+        top, "client-signoff", "", previous, path=rel)
+    if previous:
+        _signoff_known(top, previous, len(history))
+        history[-1] = previous
+        saved["rounds"] = history
+        opened = score.open_findings(previous)
+        saved["stop"] = bool(opened and (saved.get("stop") or sample_data and len(history) >= 2)
+                             and (sample_data or not any(f["priority"] == "P0" for f in opened)))
+        _write(top / rel, json.dumps(document, indent=2) + "\n")
+        repo.commit_state("Apply the prototype bar to saved sign-off findings", rel, top=top)
+    choice, reason = getattr(args, "resolve", None), getattr(args, "reason", None)
+    next_step = ('forge decision accept client-signoff --by "<name>" '
+                 '--resolve <accept|more|split> --reason "<human\'s choice>"')
+    acceptance = (("this accepts a P0 if one remains. A person declared only sample data and no back end, "
+                   "so owner acceptance is allowed here. " if sample_data else "")
+                  + "the findings stay in the item's Known issues with your reason, and sign-off continues.")
+    if choice or reason is not None:
+        if not saved.get("stop") or not choice or not reason or not reason.strip():
+            repo.refuse(("Record the owner's choice only after sign-off stops, with a reason.", next_step))
+        if choice != "more":
+            item, state = review.branch_item(repo.current_branch(top), top)
+            opened = score.open_findings(previous)
+            if choice == "split":
+                details = "; ".join(f"{f['title']} ({f['file']}:{f['line']})" for f in opened)
+                follow_up = close._start_follow_up(top, state, f"Sign-off findings: {details}",
+                                                   f"A review no longer finds: {details}")
+                for finding in opened:
+                    finding["follow_up"] = f"Split into follow-up fix {follow_up}"
+            previous.setdefault("dismissals", []).extend(
+                {"finding": number, "because": f"Human chose {choice}: {reason.strip()}", "accepted": True,
+                 "accepted_commit": repo.git("rev-parse", "HEAD", cwd=top)}
+                for number, finding in enumerate(previous["findings"], 1)
+                if finding in opened and (finding["priority"] != "P0" or sample_data))
+            known = score.remember([], previous, len(history), {})
+            identities = {score.identity(entry["file"], entry["title"]) for entry in known}
+            state["known"] = [entry for entry in state.get("known", [])
+                              if score.identity(entry["file"], entry["title"]) not in identities] + known
+            repo.write_state(item, state, top)
+            repo.commit_state("Record the owner's sign-off findings", repo.state_path(item), top=top)
+        saved["stop"] = False
+        saved["choice"] = {"resolve": choice, "reason": reason.strip()}
+        history[-1] = previous
+        saved["rounds"] = history
+        _write(top / rel, json.dumps(document, indent=2) + "\n")
+        repo.commit_state("Record the owner's sign-off choice", rel, top=top)
+    if saved.get("stop"):
+        repo.refuse((review.stop_question(top, "client-signoff", {
+            "why": "Client sign-off", "done_when": "The prototype matches the client's answers", "review": previous},
+            accept=acceptance), next_step))
+    if (unchanged and not score.open_findings(previous) and choice != "more"
+            and (choice in ("accept", "split") or saved.get("inputs") == inputs)):
+        return previous["commit"]
+    skill = (Path(__file__).parent / "templates" / "skill.md").read_text(encoding="utf-8")
+    table = re.search(r"^\| Topic \|.*?(?=\n\n)", skill, re.M | re.S)
+    block = (Path(__file__).parent / "templates" / "review.md").read_text(encoding="utf-8")
+    prompt = string.Template(block.split("<!-- signoff -->\n", 1)[1]).substitute(
+        answers=answers, topics=table[0] if table else "")
+    prompt += "\n\n## Earlier review rounds\n" + ("\n\n".join(review._previous(old) for old in history) or "- none")
+    prompt += "\n\nSettled findings:\n" + review._accepted(top, "client-signoff", history)
+    if evidence:
+        prompt += ("\n\n" + evidence + "\n\nCheck every demo workflow step against the brief. "
+                   "Each step must name a passing test. Refuse a missing step, a missing test, "
+                   "or a test without evidence that it passes. Proof covers the prototype demo, "
+                   "not the production build."
+                   "\n\n## Test evidence\n"
+                   f"The full test run on {repo.default_branch(top)} passed "
+                   "(forge-full-suite). Client sign-off checked this result before this review. "
+                   "Use this green full run as passing evidence for the tests named in Proof. "
+                   "No separate forge test run is required.")
+    result = review.run(top, "client-signoff", {"signoff_history": history}, repo.config(top),
+                        "", {}, previous, signoff_prompt=prompt, images=set())
+    _signoff_known(top, result, len(history) + 1)
+    opened = score.open_findings(result)
+    critical = any(f["priority"] == "P0" for f in opened)
+    held = [(n, f) for n, f in enumerate(result["findings"], 1) if f in opened]
+    saved.update(review=result, rounds=history + [result], inputs=inputs,
+                 stop=bool(held and len(history) + 1 >= 2 and (not critical or sample_data)))
+    _write(top / rel, json.dumps(document, indent=2) + "\n")
+    repo.commit_state("Record the client sign-off review", rel, top=top)
+    if saved["stop"]:
+        repo.refuse((review.stop_question(top, "client-signoff", {
+            "why": "Client sign-off", "done_when": "The prototype matches the client's answers", "review": result},
+            accept=acceptance), next_step))
+    if critical or held:
+        from shlex import quote
+
+        details = "; ".join(f"{f['title']} ({f['file']}:{f['line']})"
+                            for _, f in held)
+        repair = (f"forge fix start {quote(f'Sign-off findings: {details}')} "
+                  f"--done {quote(f'A review no longer finds: {details}')} --kind mechanical")
+        problem = "Customer sign-off review found a blocking issue: " + "; ".join(f["title"] for f in opened)
+        repo.refuse((problem + f".\nRun the next command from this sign-off checkout: {top}", repair +
+            '\nThen fix and merge it, then from the repair checkout run '
+            'forge decision accept client-signoff --by "<name>"'))
+    return result["commit"]
+
+
+def prototype_plan(top: Path, ref: str | None = None) -> str:
+    """Read an accepted plan from a ref, or the checkout and default branch."""
+    base = ref or story.landed_ref(top)
+    names = repo.git("ls-tree", "-r", "--name-only", base, "--", "docs/decisions", cwd=top).splitlines()
+    if ref is None:
+        names += [path.relative_to(top).as_posix() for path in (top / "docs/decisions").glob("*.md")]
+    for name in set(names):
+        if not re.fullmatch(r"docs/decisions/\d{4,}-prototype-plan\.md", name):
+            continue
+        texts = ((_text(top / name), story.show(top, base, name) or "") if ref is None
+                 else (story.show(top, base, name) or "",))
+        for text in texts:
+            fields, body = _front(text)
+            if fields.get("status") == "accepted":
+                return body
+    return ""
+
+
 def _working_build(top: Path) -> bool:
+    if prototype_plan(top):
+        return True
     base = story.landed_ref(top)
     names = repo.git("ls-tree", "-r", "--name-only", base, "--", "docs/decisions", cwd=top).splitlines()
     names += [path.relative_to(top).as_posix() for path in (top / "docs/decisions").glob("*.md")]
@@ -468,38 +634,31 @@ def constitution(top: Path) -> str:
     names = repo.command_fact(("default file names", ref), top,
                              lambda: repo.git("ls-tree", "-r", "--name-only", ref, cwd=top))
     for name in names.splitlines():
-        if re.fullmatch(r"docs/decisions/\d{4}-app-constitution\.md", name):
+        if re.fullmatch(r"docs/decisions/\d{4}-(?:app-constitution|prototype-plan)\.md", name):
             fields, _ = _front(story.show(top, ref, name) or "")
             if fields.get("status") == "accepted":
                 return text
     return ""
 
 
-def _constitution_gaps(top: Path, by: str) -> list[str]:
+def _plan_gaps(top: Path, body: str) -> list[str]:
     from forge import nextstep
 
     page = top / "docs/product/CONSTITUTION.md"
     missing = [] if page.is_file() else ["docs/product/CONSTITUTION.md is missing"]
     sections = _sections(re.sub(r"<!--.*?-->", "", _text(page), flags=re.S))
-    for name in ("Defaults", "Architecture choices"):
+    for name in ("Defaults", "Roles", "Architecture choices"):
         if not sections.get(name, "").strip():
             missing.append(f"## {name} has no text")
-    for line in sections.get("Architecture choices", "").splitlines():
-        if not line.strip():
-            continue
-        names = re.findall(r"\bdocs/decisions/\d{4}-[a-z0-9]+(?:-[a-z0-9]+)*\.md\b", line)
-        if not names:
-            missing.append(f'architecture choice "{line.strip()}" names no decision record')
-        for name in names:
-            fields, _ = _front(_text(top / name))
-            if not (top / name).is_file() or fields.get("status") != "accepted":
-                slug = Path(name).stem[5:]
-                missing.append(f'{name} needs forge decision accept {slug} --by "{by}"')
+    if repo.is_prototype(top):
+        steps = _sections(re.sub(r"<!--.*?-->", "", body, flags=re.S)).get("Demo steps", "")
+        if not 1 <= len(re.findall(r"^\s*\d+[.)]\s+\S", steps, re.M)) <= 6:
+            missing.append("## Demo steps needs one to six numbered steps")
     brief = _sections(re.sub(r"<!--.*?-->", "", _text(top / "docs/product/BRIEF.md"), flags=re.S))
     for name in ("Summary", "Users", "Things it keeps track of"):
         if not brief.get(name, "").strip():
             missing.append(f"docs/product/BRIEF.md needs ## {name}")
-    if "Personal data" in nextstep.open_must_answer_topics(top):
+    if not repo.is_prototype(top) and "Personal data" in nextstep.open_must_answer_topics(top):
         missing.append("Personal data needs a settled answer in docs/product/BRIEF.md")
     return missing
 
@@ -518,8 +677,6 @@ def roadmap_add(args: argparse.Namespace) -> None:
     if fields.get("confirmed_hash") != _digest(body):
         repo.refuse(REFUSALS["not_confirmed_text"], slug=slug)
     wanted = _roadmap_items(slug, body)
-    if not wanted:
-        repo.refuse(REFUSALS["roadmap_section"], slug=slug, problem="it has none")
     items = repo.roadmap(top)  # refuses a roadmap it can't read
     taken = {item["key"]: item.get("spec") for item in items}
     for key in wanted:
@@ -621,6 +778,8 @@ def _roadmap_items(slug: str, body: str) -> dict[str, str]:
             problem = f"{match[1]} is listed twice" if match else f"{line.strip()!r} is not one"
             repo.refuse(REFUSALS["roadmap_section"], slug=slug, problem=problem)
         items[match[1]] = match[2]
+    if not items:
+        repo.refuse(REFUSALS["roadmap_section"], slug=slug, problem="it has none")
     return items
 
 
@@ -706,7 +865,9 @@ COMMANDS = [
      "listing": "| `forge decision new <slug>` | Writes a decision record |"},
     {"words": "decision accept", "run": "decision_accept", "changes_state": True,
      "help": "Accept a decision after the human confirms in chat",
-     "args": [(('slug',), {}), (('--by',), {"required": True, "metavar": "NAME"})],
+     "args": [(('slug',), {}), (('--by',), {"required": True, "metavar": "NAME"}),
+              (('--resolve',), {"choices": ["accept", "more", "split"]}),
+              (('--reason',), {"help": "The owner's choice after a sign-off review stop"})],
      "position": 220,
      "listing": "| `forge decision accept <slug> --by \"<name>\"` | Accepts a decision after the human confirms it in chat, and lists the spec lines that name a rule ID it names |"},
     {"words": "roadmap add", "run": "roadmap_add", "changes_state": True,

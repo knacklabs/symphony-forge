@@ -42,6 +42,10 @@ def test_5_guide_explains_design_models_and_fallback():
     assert "Claude fails before changing the checkout" in models
     assert "prints and logs the fallback reason" in models
     assert "without a Codex retry" in models
-    assert ("When Claude Code coordinates the round, design work runs as its native "
+    # The approved effort story sends Claude rounds through the SDK when installed.
+    # Native design rounds remain the fallback when that SDK is absent.
+    assert "Claude worker rounds use the Agent SDK whenever installed" in models
+    assert ("When Claude Code coordinates without the SDK, design work runs as "
+            "its native "
             "`frontend` subagent; a failed native round gets no automatic Codex retry") in models
     assert "With one tool selected, Forge reports the failure without a Codex retry" in models

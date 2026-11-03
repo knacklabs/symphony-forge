@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "bug\ttests/test_signoff_review_rounds.py\tGate: sign-off Known issues proof\tclient-sign-off-never-finishes-every-att",
+      "kind": "bug",
+      "path": "tests/test_signoff_review_rounds.py",
+      "line": 80,
+      "text": "Gate: sign-off Known issues proof",
+      "from": "blocking",
+      "item": "client-sign-off-never-finishes-every-att",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/review.py\tNot done: Client sign-off finishes: a later attempt reviews only files changed since the last sign-off review plus its earlier findings, and",
+      "kind": "edge",
+      "path": "src/forge/review.py",
+      "line": 887,
+      "text": "Not done: Client sign-off finishes: a later attempt reviews only files changed since the last sign-off review plus its earlier findings, and",
+      "from": "review",
+      "item": "client-sign-off-never-finishes-every-att",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

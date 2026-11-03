@@ -75,7 +75,7 @@ Other field kinds have no automatic filter or search index. Add no index that no
 ## List paging
 
 Use keyset paging by default: `WHERE (sort, id) < ($lastSort, $lastId) ORDER BY sort DESC, id DESC LIMIT <n + 1>`.
-Show next and previous links and an approximate total: cap the count at 1,000 and show "1,000+" above the cap. Reverse the comparison and order for the previous page, then reverse the returned rows.
+Show next and previous links and an approximate total: cap the count at 10,000 and show "More than 10,000" above the cap. Reverse the comparison and order for the previous page, then reverse the returned rows.
 Use numbered pages only on small admin screens. Existing lists keep their paging.
 
 ## Dashboards and reports
@@ -89,8 +89,12 @@ Partition history by month only past about 50 to 100 million rows or when old mo
 
 ## Job tables
 
-Use a jobs table read with `SELECT ... FOR UPDATE SKIP LOCKED`, or pg-boss in a Node app when the story names it.
-Use pg_cron only for scheduled SQL. No separate queue server at the start.
+When a story first adds background jobs or schedules, add a worker entry in `services.toml`
+and a jobs table read with `SELECT ... FOR UPDATE SKIP LOCKED`. Keep the attempt count and
+last error on the job row. A schedule only inserts job rows; the worker does the work through
+the owning module's public service. Make each job safe to run again after a worker stops.
+The first job is clean-up of old sessions, reset tokens and invites.
+Add these only with the story that needs jobs, not to the starters. No separate queue server.
 
 ## jsonb
 

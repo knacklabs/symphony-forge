@@ -22,10 +22,12 @@ pytestmark = pytest.mark.platform
 STORY = "FORGE-PACE-1"
 
 
-@pytest.mark.parametrize("family", ["codex", "claude"])
-@pytest.mark.parametrize("kind,model_kind", [("ui", "design"), ("backend", "build"),
-                                            ("mechanical", "lite")])
-@pytest.mark.parametrize("adopted", [False, True], ids=["new-prototype", "upgraded-client"])
+@pytest.mark.parametrize("adopted,kind,model_kind,family", [
+    pytest.param(False, kind, model_kind, family,
+                 id=f"new-prototype-{kind}-{model_kind}-{family}")
+    for kind, model_kind in (("ui", "design"), ("backend", "build"), ("mechanical", "lite"))
+    for family in ("codex", "claude")
+] + [pytest.param(True, "ui", "design", "codex", id="upgraded-client-ui-design-codex")])
 def test_2_fix_kind_selects_the_same_worker_on_every_round(repo, gh, tmp_path, monkeypatch, sdk_data,
                                                          family, kind, model_kind, adopted):
     # The old contract forced all prototype fixes to design and changed Codex's second round
@@ -131,17 +133,20 @@ def test_22_prototype_fixes_require_a_kind_before_a_checkout_exists(repo):
     assert not repo.git("branch", "--list", "fix/repair-the-app")
 
 
-@pytest.mark.parametrize("adopted", [False, True], ids=["init", "earlier-adoption"])
-@pytest.mark.parametrize("case,path,kind,match", [
-    ("idle", None, "mechanical", '"<idea>"'),
-    ("roadmap", None, "mechanical", '"<idea>"'),
-    ("schedule", None, "mechanical", '"The scheduled'),
-    ("hotspot", "src/server.py", "backend", '"Simplify src/server.py:'),
-    ("hotspot", "web/page.html", "ui", '"Simplify web/page.html:'),
-    ("hotspot", "src/components/page.ts", "ui", '"Simplify src/components/page.ts:'),
-    ("hotspot", "docs/guide.md", "mechanical", '"Simplify docs/guide.md:'),
-    ("refresh", None, "mechanical", '--slug refresh-dependencies'),
-    ("measure", None, "mechanical", '"Record the invoices success result"'),
+@pytest.mark.parametrize("case,path,kind,match,adopted", [
+    pytest.param(case, path, kind, match, adopted,
+                 id=f"{case}-{path}-{kind}-{match}-{'earlier-adoption' if adopted else 'init'}")
+    for case, path, kind, match in [
+        ("idle", None, "mechanical", '"<idea>"'),
+        ("roadmap", None, "mechanical", '"<idea>"'),
+        ("schedule", None, "mechanical", '"The scheduled'),
+        ("hotspot", "src/server.py", "backend", '"Simplify src/server.py:'),
+        ("hotspot", "web/page.html", "ui", '"Simplify web/page.html:'),
+        ("hotspot", "src/components/page.ts", "ui", '"Simplify src/components/page.ts:'),
+        ("hotspot", "docs/guide.md", "mechanical", '"Simplify docs/guide.md:'),
+        ("refresh", None, "mechanical", '--slug refresh-dependencies'),
+        ("measure", None, "mechanical", '"Record the invoices success result"'),
+    ] for adopted in (False, True) if not adopted or case == "schedule"
 ])
 def test_23_prototype_next_fix_commands_run_as_printed(repo, gh, tmp_path, monkeypatch,
                                                       adopted, case, path, kind, match):

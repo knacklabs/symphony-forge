@@ -1,0 +1,45 @@
+{
+  "base": "390b30c1e9254e29c9d12fca8953315e9c0812bd",
+  "branch": "fix/workflow-groups-rename",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a18bfb-4136-7192-bca5-5613a33cbfef",
+    "head": null,
+    "start": "91dc28d1cf8aa2e8600a8f4ca4331bcd0da7458f"
+  },
+  "done_when": "forge init and forge sync write the tests-passed job with TEST_GROUP_RESULT instead of GROUPS, and the required tests check still passes and fails as before",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "ce4d013847e131164b3247f2d514a67a4aeceb0e12b8e8c2351932e414dd8900",
+    "changed": "99f5a71341a4538135f644ec4355d20fd9bb09e7004d6e0a90431bb479c904e0",
+    "commit": "13a6f0205965b9c53a547537f4eb230ef3ce92a6",
+    "dismissals": [],
+    "findings": [],
+    "id": "72cfd97a-8675-46d7-98af-cab7976f1ad7",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-30T08:44:04.369485+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-30T08:48:40.630219+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "9a941f41d8905cdc8180a525451b27a68cb91b4d",
+    "keys": {},
+    "round": null
+  },
+  "why": "The generated workflow's tests-passed job names an env var GROUPS, a name Bash reserves; strict client reviews keep raising it as a serious finding and clients cannot edit the generated file",
+  "worker": "codex"
+}

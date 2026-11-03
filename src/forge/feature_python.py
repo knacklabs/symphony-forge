@@ -58,8 +58,8 @@ def _remove_marks(text: str) -> str:
 
 
 def _feature_mcp(text: str, include: bool) -> str:
-    """Keep MCP-only code for a starter that ships the server."""
-    matches = [match for match in MARKER.finditer(text) if match["name"] in {"mcp", "mcp-cases"}]
+    """Keep agent tools and retry keys when the app ships both helpers."""
+    matches = [match for match in MARKER.finditer(text) if match["name"] in {"mcp", "mcp-cases", "retry-key"}]
     for match in reversed(matches):
         lines = match.group(0).splitlines(keepends=True)
         replacement = "".join(lines[1:-1]) if include else ""
@@ -448,7 +448,8 @@ def _permissions_source(one: str, plural: str) -> str:
 
 
 def _routes_source(
-    fields: list[dict[str, Any]], one: str, plural: str, kinds: dict[str, Any]
+    fields: list[dict[str, Any]], one: str, plural: str, kinds: dict[str, Any],
+    *, include_mcp: bool,
 ) -> str:
     model = _pascal(one)
     module = _snake(plural)
@@ -516,7 +517,7 @@ def _routes_source(
         f'"/api/v1/{module}', f'"/api/v1/{plural}'
     )
     template = _replace_mark(template, "csv-fields", "\n".join(columns))
-    return _remove_marks(template)
+    return _remove_marks(_feature_mcp(template, include_mcp))
 
 
 def _module_source(one: str, plural: str, *, include_mcp: bool) -> str:
@@ -1091,7 +1092,7 @@ def render_feature_python(
         f"{api}/models.py": _model_source(fields, one, plural, kinds),
         f"{api}/schema.py": _schema_source(fields, one, plural, kinds),
         f"{api}/service.py": _service_source(fields, one, plural, kinds, root, include_mcp=include_mcp),
-        f"{api}/routes.py": _routes_source(fields, one, plural, kinds),
+        f"{api}/routes.py": _routes_source(fields, one, plural, kinds, include_mcp=include_mcp),
         f"{api}/permissions.py": _permissions_source(one, plural),
         f"apps/api/migrations/versions/{migration_name}": migration,
         f"apps/api/tests/test_{module}.py": render_python_tests(

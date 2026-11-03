@@ -1,7 +1,9 @@
 #!/bin/bash
 set -euo pipefail
 
-FORGE_VERSION=1.2.23
+FORGE_VERSION=1.2.27
+IMPECCABLE_URL=https://github.com/pbakaus/impeccable/tree/414603bf14c7a344edb466bb1f85690c77ce8b7d/plugin/skills/impeccable
+EMIL_DESIGN_ENG_URL=https://github.com/emilkowalski/skills/tree/a81dbca07f2217b7103e510c0f13f8d5b017afc9/skills/emil-design-eng
 
 if [[ $# -gt 1 || ( $# -eq 1 && $1 != --check ) ]]; then
   echo 'Use: install-mac.sh [--check]' >&2
@@ -53,6 +55,19 @@ brew_tool() {
   step "$label"
   brew install "$package"
 }
+install_ui_skill() {
+  local name=$1 url=$2
+  local claude_home=${CLAUDE_CONFIG_DIR:-$HOME/.claude}
+  local codex_home=${CODEX_HOME:-$HOME/.codex}
+  if [[ -f "$claude_home/skills/$name/SKILL.md" ]] &&
+     { [[ -f "$codex_home/skills/$name/SKILL.md" ]] || [[ -f "$HOME/.agents/skills/$name/SKILL.md" ]]; }; then
+    if [[ $check != --check ]]; then echo "$name is ready."; fi
+    return
+  fi
+  if [[ $check == --check ]]; then missing "$name"; return; fi
+  step "$name"
+  npx --yes skills add "$url" -g -a claude-code -a codex --yes
+}
 
 install_brew
 brew_tool Git git git
@@ -91,6 +106,9 @@ for tool in claude codex; do
   step "$label"
   npm install -g "$package"
 done
+
+install_ui_skill impeccable "$IMPECCABLE_URL"
+install_ui_skill emil-design-eng "$EMIL_DESIGN_ENG_URL"
 
 if browsers_present; then
   if [[ $check != --check ]]; then echo 'Playwright browsers are ready.'; fi

@@ -33,6 +33,7 @@ class HistoryService:
                 organisation_id=account.organisation_id,
                 actor_account_id=account.id,
                 actor_email=account.email,
+                via_agent=account.via_agent,
                 action=action,
                 summary=summary,
                 subject_id=subject.id if subject else None,

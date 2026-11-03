@@ -85,8 +85,7 @@ def test_5_reactions_are_kept_after_each_demo(skill):
 
 
 def test_6_signoff_is_read_back_and_reviewed_first(repo, signoff, skill):
-    # Canvas-first replaces the old strict-review-only instruction with a completeness check
-    # and a whole-product review only for a working build. Both still precede the customer's reply.
+    # The product review for a working build still precedes the customer's reply.
     # Test audit: protect the shipped pre-reply sequence, which could otherwise ask for approval
     # too soon. Existing runtime sign-off tests do not check the guide delivered by init/sync.
     # Keep this owner-boundary guide check and real accept command; add no seam or duplicate test.
@@ -100,9 +99,8 @@ def test_6_signoff_is_read_back_and_reviewed_first(repo, signoff, skill):
         "`forge decision new client-signoff`",
         'run `forge decision accept client-signoff --by "<name>"` before any reply is recorded',
         "Sign-off checks that the copied Answers section matches `docs/product/BRIEF.md`",
-        "Its completeness review must pass",
         "A canvas-only sign-off needs no working build.",
-        "A working build also gets one strict whole-product review with no serious findings.",
+        "A working build gets a full first product review.",
         "Forge reuses passed results while what they checked stays unchanged.",
         "Before the customer's reply, the command runs these checks and stops without accepting sign-off.",
         "Once it passes, tell the salesperson to ask the customer's named person for sign-off "

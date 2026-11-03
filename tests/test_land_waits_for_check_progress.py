@@ -4,7 +4,6 @@ Audit: premature command exits, failed-answer retries and stalled-check refusals
 Only third-party responses and elapsed wall time are faked; no production test seam is added.
 """
 import json
-import os
 import shutil
 import sys
 
@@ -18,24 +17,7 @@ STORY = "land-waits-ci"
 
 
 @pytest.fixture
-def clock(land, tmp_path, monkeypatch):
-    folder = tmp_path / "clock"
-    folder.mkdir()
-    (folder / "sitecustomize.py").write_text("""import subprocess, time
-from types import SimpleNamespace
-# Child-process deadlines and POSIX wait polling must use real elapsed time.
-subprocess.time = SimpleNamespace(sleep=time.sleep)
-real = time.monotonic
-elapsed = 0
-
-def sleep(seconds):
-    global elapsed
-    elapsed += seconds
-
-time.sleep = sleep
-time.monotonic = lambda: real() + elapsed
-""", encoding="utf-8")
-    monkeypatch.setenv("PYTHONPATH", str(folder) + os.pathsep + os.environ.get("PYTHONPATH", ""))
+def clock(land, fake_clock, monkeypatch):
     monkeypatch.setenv("FORGE_CHECKS_WAIT", "60")
     return land
 
@@ -88,8 +70,9 @@ def test_1_land_waits_through_a_long_run_with_progress(clock, history):
     repo.git("push", "-q", "origin", "main")
     _fix(env, "working", worked=True)
     # More than three fixed waits, with queued->running and completed jobs renewing progress.
-    looks = [look for stage in range(4) for look in [_pending(stage)] * 3]
-    looks += [[dict(row, id=2) for row in _pending(3)]] * 3
+    # Each remote answer now lasts a minute, instead of one 15-second poll.
+    looks = [_pending(stage) for stage in range(4)]
+    looks += [[dict(row, id=2) for row in _pending(3)]]
     _queue(env, RUNS, *_runs(*looks, GREEN))
     done = repo.forge("land", ITEM)
     assert done.returncode == 0, done.stdout + done.stderr
@@ -99,7 +82,7 @@ def test_1_land_waits_through_a_long_run_with_progress(clock, history):
     else:
         assert f"{ITEM} is ready; a human merges" in done.stdout
     assert done.stdout.count(f"Closing {ITEM}.") == 1
-    assert len(env.gh_calls(*RUNS)) >= 16
+    assert len(env.gh_calls(*RUNS)) >= 6
 
 
 @pytest.mark.parametrize("answer", ["{", "failed"])
@@ -146,10 +129,11 @@ def test_3_land_stops_when_github_shows_no_check_progress(clock, answer):
             "has not reported" if answer == "old-head" else "is still running") in done.stderr
     assert not env.gh_calls("pr", "merge")
     if answer == "unreadable":
-        # Each failed progress lookup now exhausts four read attempts and seven seconds.
-        assert len(env.gh_calls(*RUNS)) == 16
+        # Four attempts take seven seconds before the failure cache starts.
+        # The wait's deadline expires before that cached failure does.
+        assert len(env.gh_calls(*RUNS)) == 4
     else:
-        assert 4 <= len(env.gh_calls(*RUNS)) <= 6
+        assert len(env.gh_calls(*RUNS)) == 2
 
 
 def test_4_close_keeps_its_fixed_wait(clock):
@@ -180,7 +164,7 @@ def test_5_land_keeps_progress_waiting_during_merge_revalidation(clock, answer):
     elif answer == "unreadable":
         answers = ["{", *_runs(GREEN)]
     elif answer == "long":
-        answers = _runs(*[look for stage in range(4) for look in [_pending(stage)] * 3], GREEN)
+        answers = _runs(*[_pending(stage) for stage in range(4)], GREEN)
     else:
         answers = _runs(_pending(1))
     _queue(env, RUNS, *_runs(GREEN), *answers)

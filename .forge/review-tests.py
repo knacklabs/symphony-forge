@@ -1,4 +1,5 @@
 """CI may reuse a successful parent workflow for a commit changing only close records."""
+import ast
 import json
 import os
 import re
@@ -10,16 +11,87 @@ from urllib.parse import quote
 
 
 """The docs-only rule, also copied into the self-contained client CI script."""
+import ast
 import posixpath
 import re
 import shutil
 import subprocess
 from pathlib import Path
 
+PATH_LITERALS = r'''(["'`])((?:\\.|(?!\1)[^\\\r\n])*)\1'''
+
+
+def reads_file_relative(source: str, paths: set[str]) -> bool:
+    """Match literals in file-relative paths, not unrelated content assertions."""
+    if not paths or not re.search(r"\b__file__\b", source):
+        return False
+    try:
+        tree = ast.parse(source)
+    except SyntaxError:
+        # Embedded Python and newer syntax still get the conservative check.
+        basenames = {posixpath.basename(path) for path in paths}
+        return any(posixpath.basename(literal[2].replace("\\", "/")) in basenames
+                   for literal in re.finditer(PATH_LITERALS, source))
+    roots = {"__file__": []}
+
+    def components(node: ast.AST) -> list[str]:
+        if isinstance(node, ast.Name):
+            return roots.get(node.id, [])
+        if isinstance(node, ast.Constant) and isinstance(node.value, str):
+            return [node.value.replace("\\", "/")]
+        return [part for child in ast.iter_child_nodes(node) for part in components(child)]
+
+    def rooted(node: ast.AST) -> bool:
+        if isinstance(node, ast.Name):
+            return node.id in roots
+        if isinstance(node, (ast.Attribute, ast.Subscript)):
+            return rooted(node.value)
+        if isinstance(node, ast.BinOp) and isinstance(node.op, (ast.Div, ast.Add)):
+            return rooted(node.left) or rooted(node.right)
+        if isinstance(node, ast.Call):
+            name = getattr(node.func, "id", getattr(node.func, "attr", ""))
+            return name in {"Path", "join", "dirname", "abspath", "realpath", "normpath",
+                            "resolve", "absolute", "joinpath", "with_name", "with_suffix"} and (
+                rooted(node.func) or any(rooted(arg) for arg in node.args))
+        return False
+
+    assignments = [node for node in ast.walk(tree) if isinstance(node, (ast.Assign, ast.AnnAssign))]
+    while True:
+        before = len(roots)
+        for node in assignments:
+            if rooted(node.value):
+                targets = node.targets if isinstance(node, ast.Assign) else [node.target]
+                for target in targets:
+                    if isinstance(target, ast.Name) and target.id not in roots:
+                        roots[target.id] = components(node.value)
+        if len(roots) == before:
+            break
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.BinOp, ast.Call)) and rooted(node):
+            parts = components(node)
+            suffix = posixpath.normpath("/" + posixpath.join(*parts)).lstrip("/") if parts else ""
+            if suffix and any(path == suffix or path.endswith("/" + suffix) for path in paths):
+                return True
+    return False
+
+
+def test_readers(files: list[Path], picked: set[Path]) -> set[Path]:
+    """Keep every text reference, including plugin strings and scoped conftest users."""
+    texts = {path: path.read_text("utf-8-sig") for path in files}
+    while True:
+        names = {path.stem for path in picked}
+        fixtures = [path.parent for path in picked if path.name == "conftest.py"]
+        expanded = picked | {path for path, text in texts.items()
+                             if any(name in text for name in names)
+                             or any(path.is_relative_to(folder) for folder in fixtures)}
+        if expanded == picked:
+            return picked
+        picked = expanded
+
 
 def only_docs(top: Path, base: str, excludes: list[str], *, allow_settings: bool = False,
               head: str = "HEAD") -> bool:
-    """Generated files and test inputs always need the full checks."""
+    """Generated files and inputs read by code always need the full checks."""
     def git(*args: str, input: str | None = None) -> str:
         return subprocess.run([shutil.which("git") or "git", *args], cwd=top, input=input,
                               check=True, capture_output=True, text=True,
@@ -45,23 +117,28 @@ def only_docs(top: Path, base: str, excludes: list[str], *, allow_settings: bool
         patterns = sorted({posixpath.basename(path) for path in changed})
         found = subprocess.run([shutil.which("git") or "git", "grep", "-I", "-l", "-z", "-F",
                                 *[arg for name in patterns for arg in ("-e", name)],
-                                base, head, "--", *tests], cwd=top, capture_output=True,
+                                base, head, "--", ".", *excludes,
+                                ":(exclude,glob)**/.gitattributes"], cwd=top, capture_output=True,
                                 text=True, encoding="utf-8")
         if found.returncode not in (0, 1):
             return False
         targets = {posixpath.normpath(posixpath.join(top.as_posix(), path)) for path in changed}
-        strings = r'''(["'`])((?:\\.|(?!\1)[^\\\r\n])*)\1'''
         quoted = r'''(?:'[^'\r\n]*'|"[^"\r\n]*"|`[^`\r\n]*`)'''
         joined = re.compile(rf"\b(?:Path|join)\(\s*(?:__dirname\s*,\s*)?{quoted}"
                             rf"(?:\s*,\s*{quoted})*\s*\)(?:\s*/\s*{quoted})*")
         for consumer in filter(None, found.stdout.split("\0")):
             folder = posixpath.dirname(consumer.partition(":")[2])
             roots = ("", top.as_posix(), posixpath.join(top.as_posix(), folder))
+            source = git("show", consumer)
+            # File-relative expressions cannot always be resolved from literals alone.
+            # Prefer extra tests when a quoted basename could read the changed input.
+            if reads_file_relative(source, set(changed)):
+                return False
             # A basename finds candidates, not consumers: resolve whole path literals.
             # Fold literal path joins so their components cannot match unrelated root files.
             source = joined.sub(lambda call: repr(posixpath.join(*(
-                value[2] for value in re.finditer(strings, call[0])))), git("show", consumer))
-            for literal in re.finditer(strings, source):
+                value[2] for value in re.finditer(PATH_LITERALS, call[0])))), source)
+            for literal in re.finditer(PATH_LITERALS, source):
                 name = literal[2].replace("\\", "/")
                 if any(posixpath.normpath(posixpath.join(root, name)) in targets for root in roots):
                     return False
@@ -73,6 +150,33 @@ def run(*args: str) -> str:
     # Resolve PATH first, including the .cmd shims used on Windows.
     return subprocess.run([shutil.which(args[0]) or args[0], *args[1:]], check=True,
                           capture_output=True, text=True).stdout.strip()
+
+
+def test_files(top: Path, base: str, excludes: list[str], *, head: str = "HEAD") -> tuple[bool, list[str]]:
+    """Narrow CI only for existing Python test files, never shared test inputs."""
+    paths = subprocess.run([shutil.which("git") or "git", "diff", "--name-only", "-z",
+                            "--no-renames", f"{base}...{head}", "--", ".", *excludes],
+                           cwd=top, check=True, capture_output=True, text=True).stdout
+    changed = list(filter(None, paths.split("\0")))
+    if not changed or any(not (Path(name).name.startswith("test_") or name.endswith("_test.py"))
+                          or not name.endswith(".py") or not (top / name).is_file()
+                          for name in changed):
+        return False, []
+    tests = [top / name for name in run("git", "ls-files", "-z").split("\0")
+             if name.endswith(".py") and (Path(name).name.startswith("test_")
+                                          or name.endswith("_test.py")
+                                          or Path(name).name == "conftest.py")
+             and (top / name).is_file()]
+    changed_tests = {top / name for name in changed}
+    if any(test_readers(tests, {path}) != {path} for path in changed_tests):
+        return False, []
+    platform = []
+    for name in changed:
+        tree = ast.parse((top / name).read_text("utf-8-sig"))
+        if any(isinstance(node, ast.Attribute) and ast.unparse(node) == "pytest.mark.platform"
+               for node in ast.walk(tree)):
+            platform.append(name)
+    return True, platform
 
 
 def reuse() -> bool:
@@ -121,22 +225,28 @@ def reuse() -> bool:
 
 
 docs_only = False
+tests_only, platform_files = False, []
 records_only = "--records-only" in sys.argv[1:]
 try:
     # Sync copies close's classifier and supplies its Git path exclusions.
     if not records_only and os.environ.get("BASE_SHA") and os.environ.get("DOCS_ONLY_EXCLUDES"):
+        tests_only, platform_files = test_files(Path.cwd(), os.environ["BASE_SHA"],
+                                                json.loads(os.environ["DOCS_ONLY_EXCLUDES"]))
         docs_only = only_docs(Path.cwd(), os.environ["BASE_SHA"],
                               json.loads(os.environ["DOCS_ONLY_EXCLUDES"]))
     if records_only:
         passed = os.environ.get("GITHUB_EVENT_NAME") in {"push", "pull_request"} and reuse()
     else:
         passed = docs_only or reuse()
-except (subprocess.CalledProcessError, ValueError, KeyError, TypeError, OSError):
+except (subprocess.CalledProcessError, ValueError, KeyError, TypeError, OSError, SyntaxError):
     # Missing history, unreadable records or unavailable GitHub proof runs the full suite.
     passed = False
 with Path(os.environ["GITHUB_OUTPUT"]).open("a", encoding="utf-8") as output:
     output.write(f"{'records_only' if records_only else 'reuse'}={str(passed).lower()}\n")
     if docs_only:
         output.write("docs-only=true\n")
+    output.write(f"test-only={str(tests_only).lower()}\n")
+    output.write(f"platform-files={json.dumps(platform_files)}\n")
+    output.write(f"run-windows={str(not tests_only or bool(platform_files)).lower()}\n")
 print("docs only: tests skipped" if docs_only else
       "Parent tests passed; only the close record changed." if passed else "Run the test suite.")

@@ -142,14 +142,16 @@ def hand_out(top: Path, item: str, owner: dict[str, Any], entry: dict[str, Any],
     whole.write_text(fresh_brief, encoding="utf-8")
     short.write_text(brief, encoding="utf-8")
     run_id = repo.record_event(top, item, "run start", kind="work", round=round_number,
-                               family=family, model=chosen.get("model"), effort=chosen.get("effort"))
+                               family=family, model=chosen.get("model"), effort=chosen.get("effort"),
+                               requested=True)
     _start(top, item, "Build", owner, entry, result={"round": round_number}, role=role,
            head=repo.git("rev-parse", "HEAD", cwd=top), started=time.time(), at=repo.now(),
            model=chosen, run_id=run_id)
     place = top.resolve().as_posix()
     print(f"Run this round as a background {role} subagent of this session, working in {place}.")
     # forge.local.toml can change the model, and role files hold only forge.toml's.
-    print(f"Start it on {chosen['model']} at {chosen['effort']} effort, over the role's own model.")
+    print(f"Start it on {chosen['model']} at {chosen['effort']} effort, over the role's own model. "
+          "This effort is requested.")
     if resume:
         print(f"Continue subagent {resume} with: Read {short.as_posix()} and follow it.")
         print(f"If this session can't reach it, start a new {role} subagent with: Read "

@@ -1,7 +1,7 @@
 import { createHash, randomBytes } from 'node:crypto';
-import { BadRequestException, ForbiddenException, Inject, Injectable, NotFoundException, Optional, UnprocessableEntityException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Inject, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import type { Membership } from '@prisma/client';
+import type { Membership, Prisma } from '@prisma/client';
 import { MAIL_PROVIDER, PrismaService, type AccountPrincipal, type MailProvider } from '@app/core-server';
 import { HISTORY_API, type HistoryApi } from '@app/history-contracts';
 import { roleSchema, type AgentKey, type AgentTools, type Member, type MemberListQuery, type OrganisationAccount, type OrganisationInvite, type OrganisationPrincipal, type OrganisationsApi, type Role } from '@app/organisations-contracts';
@@ -14,6 +14,7 @@ function memberResponse(member: Membership): Member {
 }
 
 const ROLE_NAMES: Record<Role, string> = { admin: 'Admin', member: 'Member' };
+type InviteOptions = NonNullable<Parameters<OrganisationsApi['invite']>[2]>;
 
 function memberNotFound(): NotFoundException {
   return new NotFoundException({ code: 'MEMBER_NOT_FOUND', message: 'This member was not found.', details: null });
@@ -34,22 +35,25 @@ export class OrganisationsService implements OrganisationsApi {
     @Optional() @Inject(MAIL_PROVIDER) private readonly mailProvider: MailProvider | null = null,
   ) {}
 
-  async invite(email: string, account: OrganisationPrincipal): Promise<void> {
-    if (!this.mailProvider) {
-      throw new UnprocessableEntityException({ code: 'MAIL_NOT_CONFIGURED', message: 'Email is not set up for this app yet.', details: null });
-    }
+  async invite(email: string, account: OrganisationPrincipal, options?: InviteOptions): Promise<string> {
+    const mailProvider = this.mailProvider;
     const token = randomBytes(32).toString('base64url');
     const credentials = { tokenHash: createHash('sha256').update(token).digest('hex'), expiresAtUtc: new Date(Date.now() + INVITE_LIFETIME_MS), modifiedByAccountId: account.id };
-    await this.prisma.invite.upsert({
-      where: { organisationId_email: { organisationId: account.organisationId, email } },
-      create: { organisationId: account.organisationId, email, createdByAccountId: account.id, ...credentials },
-      update: credentials,
+    const result = await this.prisma.$transaction(async (tx) => {
+      const invite = await tx.invite.upsert({
+        where: { organisationId_email: { organisationId: account.organisationId, email } },
+        create: { organisationId: account.organisationId, email, createdByAccountId: account.id, ...credentials },
+        update: credentials,
+      });
+      await options?.afterCreate?.(tx, invite.id);
+      await this.history.record(account, 'member.invited', `Invited ${email}`, undefined, tx);
+      const inviteUrl = new URL('/accept-invite', this.config.getOrThrow<string>('APP_ORIGIN'));
+      inviteUrl.searchParams.set('token', token);
+      if (mailProvider) await mailProvider.sendInvite(email, inviteUrl.toString());
+      return { id: invite.id, url: inviteUrl.toString() };
     });
-    // ponytail: saving the invite and its history are two calls; use a shared transaction if atomic history becomes required.
-    await this.history.record(account, 'member.invited', `Invited ${email}`);
-    const inviteUrl = new URL('/accept-invite', this.config.getOrThrow<string>('APP_ORIGIN'));
-    inviteUrl.searchParams.set('token', token);
-    await this.mailProvider.sendInvite(email, inviteUrl.toString());
+    options?.onLink?.(result.url);
+    return result.id;
   }
 
   async openInvite(token: string): Promise<OrganisationInvite> {
@@ -68,6 +72,36 @@ export class OrganisationsService implements OrganisationsApi {
       } });
       return { ...membership, role: roleSchema.parse(membership.role) };
     });
+  }
+
+  async removeMember(account: OrganisationPrincipal, accountId: string, tx: Prisma.TransactionClient): Promise<void> {
+    if (accountId.toLowerCase() === account.id.toLowerCase()) {
+      throw new ForbiddenException({ code: 'CANNOT_REMOVE_SELF', message: 'You cannot remove yourself.', details: null });
+    }
+    const where = { accountId, organisationId: account.organisationId, deletedAtUtc: null };
+    const member = await tx.membership.findFirst({ where });
+    if (!member) throw memberNotFound();
+    const removed = await tx.membership.updateMany({
+      where,
+      data: { deletedAtUtc: new Date(), deletedByAccountId: account.id, modifiedByAccountId: account.id, agentKeyHash: null },
+    });
+    if (removed.count !== 1) throw memberNotFound();
+    await tx.invite.deleteMany({ where: {
+      organisationId: account.organisationId,
+      OR: [{ createdByAccountId: accountId }, { modifiedByAccountId: accountId }],
+    } });
+    await this.history.record(account, 'member.removed', `Removed ${member.email}`, undefined, tx);
+  }
+
+  async authorizeResetLink(admin: AccountPrincipal, accountId: string, tx: Prisma.TransactionClient): Promise<void> {
+    if (admin.role !== 'admin') {
+      throw new ForbiddenException({ code: 'ADMIN_ONLY', message: 'Only an admin can do this.', details: null });
+    }
+    const member = await tx.membership.findFirst({ where: {
+      accountId, organisationId: admin.organisationId, isAgent: false, deletedAtUtc: null,
+    } });
+    if (!member) throw memberNotFound();
+    await this.history.record(admin, 'member.reset-link-created', `Created a reset link for ${member.email}`, undefined, tx);
   }
 
   async changeRole(account: AccountPrincipal, accountId: string, role: Member['role']): Promise<Member> {

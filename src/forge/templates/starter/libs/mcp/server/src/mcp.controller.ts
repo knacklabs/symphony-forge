@@ -3,12 +3,11 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { All, Controller, Headers, Inject, Req, Res, UnauthorizedException } from '@nestjs/common';
 import { SkipThrottle, ThrottlerStorage, type ThrottlerStorage as ThrottlerStorageType } from '@nestjs/throttler';
-import { Prisma } from '@prisma/client';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { CallToolRequestSchema, GetPromptRequestSchema, ListPromptsRequestSchema, ListResourcesRequestSchema, ListResourceTemplatesRequestSchema, ListToolsRequestSchema, ReadResourceRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import type { Request, Response } from 'express';
-import { callTool, ErrorReporter, getPrompt, listPrompts, listResources, listResourceTemplates, listTools, PrismaService, Public, readResource, ToolError, toolFailure, type AccountPrincipal, type ToolContext } from '@app/core-server';
+import { callTool, ErrorReporter, getPrompt, listPrompts, listResources, listResourceTemplates, listTools, Public, readResource, RetryKeys, ToolError, toolFailure, type ToolContext } from '@app/core-server';
 import { ORGANISATIONS_API, type OrganisationsApi } from '@app/organisations-contracts';
 
 type Agent = NonNullable<Awaited<ReturnType<OrganisationsApi['agentForKey']>>>;
@@ -20,7 +19,7 @@ const CALLS_PER_MINUTE = 120;
 export class McpController {
   constructor(
     @Inject(ORGANISATIONS_API) private readonly organisations: OrganisationsApi,
-    private readonly prisma: PrismaService,
+    private readonly retryKeys: RetryKeys,
     @Inject(ThrottlerStorage) private readonly throttle: ThrottlerStorageType,
     private readonly errorReporter: ErrorReporter,
   ) {}
@@ -73,31 +72,9 @@ export class McpController {
     return {
       account: agent.principal,
       deleteAndRestore: agent.deleteAndRestore,
-      createOnce: (feature, key, create) => this.createOnce(agent.principal, feature, key, create),
+      createOnce: (feature, key, create) => this.retryKeys.once(agent.principal, feature, key, create),
       reportError: (error) => this.reportError(error),
     };
-  }
-
-  private async createOnce(
-    account: AccountPrincipal,
-    tool: string,
-    key: string,
-    create: Parameters<ToolContext['createOnce']>[2],
-  ): Promise<string> {
-    const where = { accountId_tool_key: { accountId: account.id, tool, key } };
-    const existing = await this.prisma.idempotencyKey.findUnique({ where });
-    if (existing) return existing.itemId;
-
-    try {
-      return await create((tx, itemId) => tx.idempotencyKey.create({
-        data: { accountId: account.id, organisationId: account.organisationId, tool, key, itemId },
-      }).then(() => undefined));
-    } catch (error) {
-      if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== 'P2002') throw error;
-      const winner = await this.prisma.idempotencyKey.findUnique({ where });
-      if (!winner) throw error;
-      return winner.itemId;
-    }
   }
 
   private reportError(error: unknown): void {

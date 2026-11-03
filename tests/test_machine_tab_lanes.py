@@ -155,7 +155,9 @@ def test_6_machine_tab_lanes_report_release_rows_and_keep_other_release_admissio
                 assert "in line." not in output.read_text("utf-8")
         data = view()
         assert data["version"] == repo.forge("--version").stdout.strip().split()[-1].removeprefix("v")
-        assert data["agents"]["size"] == 1 and data["tests"] == {"size": 1, "entries": []}
+        # Admission reporting can add fields without changing the Machine tab contract.
+        assert data["agents"]["size"] == 1
+        assert data["tests"]["size"] == 1 and data["tests"]["entries"] == []
         assert data["machine"]["cores"] == 2
         assert data["machine"]["load"] is None or len(data["machine"]["load"]) == 3
         rows = data["agents"]["entries"]
@@ -189,10 +191,13 @@ def test_6_machine_tab_lanes_report_release_rows_and_keep_other_release_admissio
         else:
             assert rows[1]["started_at"] and rows[2]["started_at"] is None
         if scenario == "release":
-            first_folder = worktree(repo, "fix/" + items[0][0])
-            test_run, test_output = start(first_folder, tmp_path / "test-run", repo, "test")
+            # Run independent tests: a builder's own tests lend its agent place,
+            # which admits the older worker and changes the queue under inspection.
+            # This command-level case owns release filtering and global FIFO order;
+            # test_builders_lend_agent_places.py owns lending. No production seam is needed.
+            test_run, test_output = start(repo.path, tmp_path / "test-run", repo, "test")
             test_processes.append(test_run)
-            connection, _ = accepted(server, connections, first_folder, test_run, test_output)
+            connection, _ = accepted(server, connections, repo.path, test_run, test_output)
             # The child marker can reach us before Forge consumes its progress line.
             _until(lambda: view()["tests"]["entries"][0]["progress"] == {"done": 1, "total": 2},
                    "Forge to report the client test's completed result")

@@ -1,0 +1,41 @@
+{
+  "branch": "task/FORGE-REQLOG-1-REQTS",
+  "chat": {
+    "approval": "f69506ac11124d349bb2ce1c2f35106f16c7ca5a7c2c62812f1a08b021bfe04f",
+    "claude": null,
+    "conversation": "01a1838e-72f0-7c43-95eb-97809659852d",
+    "head": null,
+    "start": "31efaabc360b65eb9fe7fdf9fc60a83dd1aefc82"
+  },
+  "known": [],
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "223b036e0ae8a3871bcf931158afc6091b3d060c80acde76180b6e1882f48217",
+    "changed": "05a02ae62c97123264d6153b41b3441f557346d336c91ea0b2dabfcc4f92380b",
+    "commit": "7fd81385097c6d83c51841775d7713803bde198e",
+    "dismissals": [],
+    "findings": [],
+    "id": "56f65913-b4db-4855-9735-ae9707fea92f",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-28T17:18:19.248944+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-28T18:09:41.597957+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "d044556e0fd9ba78620ce26e14a9d41745f533fb",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
+}

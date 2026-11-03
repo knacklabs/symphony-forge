@@ -145,5 +145,5 @@ def test_1_docs_and_assets_get_light_review_and_skip_ci_groups(
         ("success", "cancelled", "false", False),
         ("success", "skipped", "false", False),
     ]:
-        assert (bash("-c", gate_command, env={"DOCS_CHECK": check, "GROUPS": groups,
+        assert (bash("-c", gate_command, env={"DOCS_CHECK": check, "TEST_GROUP_RESULT": groups,
                                              "DOCS_ONLY": docs}).returncode == 0) == expected

@@ -15,6 +15,8 @@ from test_lanes_tests import shell
 from test_machine_shared_test_budget import _run
 from test_setup import _fresh_client
 
+pytestmark = pytest.mark.platform
+
 STORY = "FORGE-BUDGET-1"
 
 
@@ -110,7 +112,7 @@ def _test_runs_share_processes_across_repos(
         doctor = repo.forge("doctor")
         assert f"{budget} test processes shared by all runs." in doctor.stdout
         for host in (".claude", ".codex"):
-            guide = (repo.path / host / "skills/forge/SKILL.md").read_text("utf-8")
+            guide = (repo.path / host / "skills/forge/run-reference.md").read_text("utf-8")
             assert "share one process budget" in guide
         # Free exactly one place: the next queued command must start while any
         # other admitted command still owns its place.

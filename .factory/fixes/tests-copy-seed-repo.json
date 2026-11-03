@@ -1,0 +1,53 @@
+{
+  "base": "7d626406f2579d3d001312612968f9f701b2e2ec",
+  "branch": "fix/tests-copy-seed-repo",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a18438-f6e3-71b1-92e2-9e059a8d891c",
+    "head": null,
+    "start": "42f21e23eda197840a34229a0483af4bf4fc66f4"
+  },
+  "done_when": "tests/conftest.py builds the seed repository and the empty SDK environment once per session and gives each test a private copy, with every test's isolation and the real init and adoption cases kept",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "2cc206c5dad382dd14f75bcd1f73523cd67749886a325a6e1a4322d1ea099ba7",
+    "changed": "46f4ec28fa4ef861dbd644f799e0310c13ccf7cada743164659c8121829c65d0",
+    "commit": "b35db6fbe5d6d59de1a7c907b57bf69d4dc52fe4",
+    "dismissals": [],
+    "findings": [],
+    "id": "ec8705fe-df0b-4205-aa99-c88f48380f28",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-28T20:34:21.922922+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-28T20:45:11.180845+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-29T17:19:29.713661+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-29T17:59:38.748499+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "383c5717-c6cc-4695-afa9-eba985d9f70c",
+    "head": "53f09c6e170c7015e39cc027041638452129bc85",
+    "keys": {},
+    "round": 2
+  },
+  "why": "Every test builds the same seed git repository and empty Claude SDK environment from scratch (3,674 tests, about 0.11 s build against 0.02 s copy)",
+  "worker": "codex"
+}

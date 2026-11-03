@@ -80,7 +80,7 @@ for rule in rules:
 '''
 
 # The SDK stub commits a file as a worker does when its round succeeds.
-COMMITS = '''if not int(os.environ.get("STUB_CLAUDE_EXIT", "0")):
+COMMITS = '''if options.permission_mode != "plan" and not int(os.environ.get("STUB_CLAUDE_EXIT", "0")):
     import subprocess
     done = len(list(Path.cwd().glob("work-*.txt")))
     Path(f"work-{done + 1}.txt").write_text("worked\\n", encoding="utf-8")

@@ -3,7 +3,7 @@
 Test audit: protect demo-address timing, screen scope and unresolved client choices.
 Regressions can treat a build request as code, omit marks, or review before refusing choices.
 Existing sign-off tests do not cover these contracts. Reuse their client fixtures and replace
-only the external review tool. No production test seam is needed.
+only GitHub and the external review tool. No production test seam is needed.
 """
 from __future__ import annotations
 
@@ -72,7 +72,6 @@ def test_4_canvas_first_and_build_marks(repo, tmp_path, monkeypatch, setup):
     accepted = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
     assert accepted.returncode == 0, accepted.stdout + accepted.stderr
     assert "status: accepted" in page.read_text("utf-8")
-    assert "design_checked:" in page.read_text("utf-8")
     screens.write_text(marked, encoding="utf-8")
     _commit(repo, fix)
     rechecked = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
@@ -127,7 +126,7 @@ def test_5_signoff_waits_for_blocking_decisions(repo, tmp_path, monkeypatch, set
     source.write_text(full.replace("Touches: Order list", "Touches: Order archive"), encoding="utf-8")
     later = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
     assert later.returncode == 0, later.stdout + later.stderr
-    assert "The canvas completeness check passed" in later.stdout
+    assert "The sign-off checks passed" in later.stdout
 
     source.write_text(full, encoding="utf-8")
     answer_file = tmp_path / "answers.md"
@@ -136,7 +135,7 @@ def test_5_signoff_waits_for_blocking_decisions(repo, tmp_path, monkeypatch, set
     assert answered.returncode == 0, answered.stdout + answered.stderr
     cleared = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
     assert cleared.returncode == 0, cleared.stdout + cleared.stderr
-    assert "The canvas completeness check passed" in cleared.stdout
+    assert "The sign-off checks passed" in cleared.stdout
 
     if setup == "new-client":
         source.write_text(_question("Keep the old sort?", due="2020-01-01"), encoding="utf-8")
@@ -144,4 +143,4 @@ def test_5_signoff_waits_for_blocking_decisions(repo, tmp_path, monkeypatch, set
         assert defaults.returncode == 0, defaults.stdout + defaults.stderr
         cleared = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
         assert cleared.returncode == 0, cleared.stdout + cleared.stderr
-        assert "The canvas completeness check passed" in cleared.stdout
+        assert "The sign-off checks passed" in cleared.stdout

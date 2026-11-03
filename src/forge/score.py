@@ -31,7 +31,7 @@ def parse(text: str) -> Scores | None:
 
 
 def normalise(title: str, body: str) -> tuple[Scores | None, str]:
-    """Apply the Harm, constitution, shadcn, module tables and database floors, except to work marked Later."""
+    """Apply the Harm, constitution, shadcn, module tables, database and agents floors, except to work marked Later."""
     scores = parse(body)
     if not scores or title.startswith("Later:"):
         return scores, body
@@ -40,7 +40,8 @@ def normalise(title: str, body: str) -> tuple[Scores | None, str]:
     shadcn = title.startswith("shadcn: ")
     module_tables = re.match(r"^(?:\d+\.[ \t]*)?(?:(?:Blocking|Advisory):[ \t]*)?Module tables: ", title.strip())
     database = re.match(r"^(?:\d+\.[ \t]*)?(?:(?:Blocking|Advisory):[ \t]*)?Database: ", title.strip())
-    if constitution or shadcn or module_tables or database:
+    agents = re.match(r"^(?:\d+\.[ \t]*)?(?:(?:Blocking|Advisory):[ \t]*)?Agents: ", title.strip())
+    if constitution or shadcn or module_tables or database or agents:
         gain, work = max(gain, 4), min(work, 2)
     why = next((name for pattern, name in FLOORS
                 if pattern.search(body if name != "migration" else f"{title}\n{body}")), "")
@@ -55,6 +56,8 @@ def normalise(title: str, body: str) -> tuple[Scores | None, str]:
         line += " (floor: module tables)"
     if database:
         line += " (floor: database)"
+    if agents:
+        line += " (floor: agents)"
     return (gain, work, harm), LINE.sub(lambda match: match[1] + line, body, count=1)
 
 
@@ -163,7 +166,7 @@ def remember(known: list[dict[str, Any]], result: dict[str, Any], round_number: 
         raised.add(key := identity(f["file"], f["title"]))
         reason = because.get(n, f.get("follow_up", ""))
         outcome = ("follow-up" if n in accepted else
-                   "lived with" if reason.startswith("settled area") else "accepted" if n in because
+                   "lived with" if reason.startswith(("settled area", "known:")) else "accepted" if n in because
                    else "open" if f.get("required_done_when") or holds(f, result.get("blocking_level"))
                    else "follow-up" if f.get("follow_up") or RARE.search(f.get("body", ""))
                    or bar(of(f)) == "follow-up" else "lived with")

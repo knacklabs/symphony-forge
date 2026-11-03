@@ -22,7 +22,7 @@ def test_1_windows_test_repositories_use_the_data_drive():
     assert re.search(r'New-Item .*D:[/\\]t', setup)
     for variable in ("TEMP", "TMP"):
         assert re.search(rf'{variable}=D:[/\\]t', setup)
-    command = next(line for line in workflow.splitlines() if 'pytest tests -q -n auto' in line)
+    command = next(line for line in workflow.splitlines() if 'pytest @testFiles -q -n auto' in line)
     assert '--basetemp D:/t/pytest' in command
 
 
@@ -42,7 +42,7 @@ def test_2_windows_caches_the_cache_directory_reported_by_npm():
 
 def test_3_windows_uploads_each_groups_own_timings_even_after_failure():
     workflow = WORKFLOW.read_text(encoding="utf-8")
-    command = next(line for line in workflow.splitlines() if 'pytest tests -q -n auto' in line)
+    command = next(line for line in workflow.splitlines() if 'pytest @testFiles -q -n auto' in line)
     assert '--durations=30 --store-durations --clean-durations' in command
     # Clean durations exclude the Linux seed and other groups from each artifact.
     timing_path = re.search(r'--durations-path (.+)$', command)[1]

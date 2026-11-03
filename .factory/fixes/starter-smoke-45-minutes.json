@@ -1,0 +1,30 @@
+{
+  "base": "407ccb178e1c87b6ec155cede73368bfc7d1f8da",
+  "branch": "fix/starter-smoke-45-minutes",
+  "done_when": "The starter-smoke job in starter-smoke.yml has a 45-minute limit",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "aea179e032ad189dc4918633520581e372968207efb9f1e75c4204543180c029",
+    "changed": "f43bfe3b96b10036130f0d1280b53bbfb3ed3945da629a68cc4a7e821a8bec90",
+    "commit": "f2aef2b7136bf2eb349033c53952c028f4b61d76",
+    "dismissals": [],
+    "findings": [],
+    "id": "6d9f9cd2-674d-4fd0-999f-e74406537cf9",
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-31T04:04:52.840458+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-31T04:05:29.259277+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "The TypeScript starter smoke job takes about 29 minutes against a 30-minute limit, so slow runners cancel it on unrelated pull requests"
+}

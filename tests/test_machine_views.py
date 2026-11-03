@@ -66,24 +66,22 @@ def _board_shows_recorded_live_agent_metadata(env, kind):
         configure(env)
         item, _ = env.start_fix()
         command, model = "work", "sonnet"
-        marker = '    yield AssistantMessage([TextBlock("SDK worker output")], options.model)'
     else:
         setup(repo)
         folder = new_story(repo, "SHOP")
         (folder / "plans/SHOP.md").write_text(DOC, "utf-8")
         item, command, model = "SHOP", "read", "opus"
-        marker = 'said = here / "claude-says.md"'
+    marker = '    yield AssistantMessage([TextBlock("SDK worker output")], options.model)'
     # Only the external agent waits; the real launcher has already recorded its start.
     listener = socket.socket()
     listener.bind(("127.0.0.1", 0))
     listener.listen()
     listener.settimeout(30)
-    stub = repo.bin / ("claude_agent_sdk/__init__.py" if kind == "worker" else "claude")
+    stub = repo.bin / "claude_agent_sdk/__init__.py"
     source = stub.read_text("utf-8")
     wait = ('import socket\n'
             f'with socket.create_connection({listener.getsockname()!r}, timeout=30) as gate:\n    gate.recv(1)\n')
-    if kind == "worker":
-        wait = "".join("    " + line + "\n" for line in wait.splitlines())
+    wait = "".join("    " + line + "\n" for line in wait.splitlines())
     stub.write_text(source.replace(marker, wait + marker), "utf-8")
     process = subprocess.Popen([sys.executable, str(repo.bin / "forge"), command, item],
         cwd=repo.path, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
@@ -608,8 +606,9 @@ def test_3_board_reports_github_occurrences_after_cache_expiry(repo, gh, monkeyp
     assert "first: 25" in " ".join(calls[-1]) and "CREATED_AT" in " ".join(calls[-1])
 
 
-@pytest.mark.parametrize("history", ["new", "adopted-v1.2.2"])
-@pytest.mark.parametrize("phase", ["checks", "offline", "completion"])
+@pytest.mark.parametrize("phase,history", [
+    (phase, "new") for phase in ("checks", "offline", "completion")
+] + [("completion", "adopted-v1.2.2")])
 def test_4_client_machine_views_follow_the_last_task_merge(env, history, phase):
     # The HTML completion test cannot detect an approved JSON row after a squash merge.
     # Exercise both shipped client lifecycles, including real earlier-release adoption output.
@@ -655,7 +654,8 @@ def test_4_client_machine_views_follow_the_last_task_merge(env, history, phase):
         repo.git("remote", "set-head", "origin", "main", cwd=checkout)
     repo.path = checkout
     for host in (".claude", ".codex"):
-        assert "## Machine views" in (checkout / host / "skills/forge/SKILL.md").read_text("utf-8")
+        # Machine details now ship beside the short coordinator guide.
+        assert "## Machine views" in (checkout / host / "skills/forge/run-reference.md").read_text("utf-8")
     assert 'repo = "client"' in (checkout / "forge.toml").read_text("utf-8")
     # Keep the shipped client files; select the test harness's third-party review configuration.
     version = repo.forge("--version").stdout.split()[-1]

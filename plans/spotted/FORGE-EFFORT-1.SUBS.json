@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/worker.py\tGate: test_2_claude_ignores_codex_only_subagent_keys_on_first_fix\tFORGE-EFFORT-1/SUBS",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 757,
+      "text": "Gate: test_2_claude_ignores_codex_only_subagent_keys_on_first_fix",
+      "from": "blocking",
+      "item": "FORGE-EFFORT-1/SUBS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_claude_subagents.py\tGate: test_6_claude_builder_gets_haiku_helpers misses kind selection\tFORGE-EFFORT-1/SUBS",
+      "kind": "bug",
+      "path": "tests/test_claude_subagents.py",
+      "line": 63,
+      "text": "Gate: test_6_claude_builder_gets_haiku_helpers misses kind selection",
+      "from": "blocking",
+      "item": "FORGE-EFFORT-1/SUBS",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

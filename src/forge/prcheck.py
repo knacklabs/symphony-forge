@@ -31,6 +31,8 @@ REFUSALS = {
     "not_reviewed": ("The committed review at the head of {branch} is {problem}.",
                      "forge close {item}"),
     "story_doc": ("{problem}", "fix the story doc, then forge read <KEY>"),
+    "stacked": ("{item} builds on {parent}; Forge checks its pull request once it targets {default}.",
+                "forge close {item}"),
 }
 CODE_LIMIT = 5
 WORKFLOW_PATH = ".github/workflows/forge.yml"
@@ -60,6 +62,7 @@ jobs:
     runs-on: <runner>
     outputs:
       docs-only: ${{ steps.docs.outputs.docs-only }}
+      test-only: ${{ steps.docs.outputs.test-only }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -78,16 +81,16 @@ jobs:
   tests:
     needs: docs-check
     if: github.event_name == 'pull_request' && needs.docs-check.outputs.docs-only != 'true'
-    name: test group ${{ matrix.group }} of <groups>
+    name: test group ${{ matrix.group }} of ${{ needs.docs-check.outputs.test-only == 'true' && 1 || <groups> }}
     strategy:
       fail-fast: false
       matrix:
-        group: <group-list>
+        group: ${{ fromJSON(needs.docs-check.outputs.test-only == 'true' && '[1]' || '<group-list>') }}
     runs-on: <runner>
     env:
       UV_FROZEN: '1'
       FORGE_GROUP: ${{ matrix.group }}
-      FORGE_GROUPS: '<groups>'
+      FORGE_GROUPS: ${{ needs.docs-check.outputs.test-only == 'true' && '1' || '<groups>' }}
 <containers><tests-timeout>    steps:
       - uses: actions/checkout@v7
         with:
@@ -117,10 +120,10 @@ jobs:
     runs-on: <runner>
     steps:
 <group-warning>      - env:
-          GROUPS: ${{ needs.tests.result }}
+          TEST_GROUP_RESULT: ${{ needs.tests.result }}
           DOCS_CHECK: ${{ needs.docs-check.result }}
           DOCS_ONLY: ${{ needs.docs-check.outputs.docs-only }}
-        run: test "$DOCS_CHECK" = success && { test "$GROUPS" = success || { test "$DOCS_ONLY" = true && test "$GROUPS" = skipped; }; }
+        run: test "$DOCS_CHECK" = success && { test "$TEST_GROUP_RESULT" = success || { test "$DOCS_ONLY" = true && test "$TEST_GROUP_RESULT" = skipped; }; }
       - if: needs.docs-check.outputs.docs-only == 'true'
         run: "echo 'docs only: tests skipped'"
 
@@ -147,8 +150,16 @@ jobs:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
-          git fetch --no-tags origin "refs/pull/$PR/head"
-          test "$(git rev-parse FETCH_HEAD)" = "$HEAD_SHA"
+          for attempt in 1 2 3 4 5 6 7; do
+            git fetch --no-tags origin "refs/pull/$PR/head"
+            fetched=$(git rev-parse FETCH_HEAD)
+            [ "$fetched" = "$HEAD_SHA" ] && break
+            [ "$attempt" = 7 ] || sleep 5
+          done
+          if [ "$fetched" != "$HEAD_SHA" ]; then
+            echo "GitHub's pull request ref has not caught up: fetched $fetched, expected $HEAD_SHA. A rerun is safe."
+            exit 1
+          fi
 <choose>      - run: <install>
       - id: review
         continue-on-error: true
@@ -309,8 +320,10 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
                 .replace("<docs-excludes>", json.dumps(review.DOC_EXCLUDES))
                 .replace("<install>", "uv tool install ." if source
                          else sync.install_line("${FORGE_RELEASE#v}"))
-                .replace("<tests-timeout>", "    timeout-minutes: 30\n")
-                .replace("<containers>", "      FORGE_CONTAINERS: '1'\n" if source else "")
+                .replace("<tests-timeout>", f"    timeout-minutes: {45 if source else 30}\n")
+                .replace("<containers>", ("      FORGE_CONTAINERS: '1'\n"
+                                          "      # Measure every test on CI hardware before choosing a performance repair.\n"
+                                          "      PYTEST_ADDOPTS: '--durations=0'\n") if source else "")
                 # Forge's own Node client tests download jest and vitest into npm's cache.
                 .replace("<npm-cache>", npm_cache)
                 .replace("<full-npm-cache>", full_npm_cache)
@@ -346,6 +359,14 @@ def pr_check(args: argparse.Namespace) -> int:
     top = repo.root()
     cfg = repo.config(top)  # the base checkout's forge.toml, never the head's
     item, state = _started(top, head, branch)
+    if "/" in item and (parent := state.get("stacked_on")):
+        from forge import task
+
+        event = os.environ.get("GITHUB_EVENT_PATH")
+        default = (json.loads(Path(event).read_text(encoding="utf-8"))["repository"]["default_branch"]
+                   if event else repo.default_branch(top))
+        if not task._merged(f"origin/{default}", parent, top):
+            repo.refuse(REFUSALS["stacked"], item=item, parent=parent, default=default)
     changed = repo.git("diff", "--name-only", f"{base}...{head}", cwd=top).splitlines()
     if "/" not in item:
         missing = [line for line, key in (("Why:", "why"), ("Done when:", "done_when"))

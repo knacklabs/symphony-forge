@@ -12,10 +12,15 @@ const PASSWORD_SALT_BYTES = 16;
 const PASSWORD_SCRYPT_OPTIONS = { N: 2 ** 17, r: 8, p: 1, maxmem: 256 * 1024 * 1024 };
 const SESSION_LIFETIME_MS = 30 * 24 * 60 * 60 * 1000;
 const RESET_TOKEN_LIFETIME_MS = 60 * 60 * 1000;
+const SIGN_IN_LOCK_MS = 15 * 60 * 1000;
+const SIGN_IN_FAILURE_LIMIT = 5;
+// Unknown emails and accounts without a password still pay the same scrypt cost.
+const DUMMY_PASSWORD_HASH = `scrypt$${Buffer.alloc(PASSWORD_SALT_BYTES).toString('base64url')}$${Buffer.alloc(PASSWORD_KEY_BYTES).toString('base64url')}`;
 const RESET_MESSAGE = 'If an account exists, a reset link has been sent.';
 const AGENT_EMAIL_ALPHABET = 'abcdefghijklmnopqrstuvwxyz0123456789';
 // No password matches an empty hash, so an agent account cannot sign in.
 const NO_PASSWORD = '';
+type InviteOptions = NonNullable<Parameters<OrganisationsApi['invite']>[2]>;
 
 export type SessionCookies = { sessionToken: string; csrfToken: string; expiresAtUtc: Date };
 
@@ -86,12 +91,19 @@ export class AuthService implements AuthApi {
     return accountResponse(account, membership.role);
   }
 
-  async invite(email: string, account: AccountPrincipal): Promise<{ message: string }> {
+  async invite(email: string, account: AccountPrincipal, options?: InviteOptions): Promise<string> {
     if (await this.prisma.account.findUnique({ where: { email }, select: { id: true } })) {
       throw new ConflictException({ code: 'EMAIL_ALREADY_REGISTERED', message: 'That person already has an account.', details: null });
     }
-    await this.organisations.invite(email, account);
-    return { message: 'Invite sent.' };
+    return this.organisations.invite(email, account, options);
+  }
+
+  async removeMember(account: AccountPrincipal, accountId: string): Promise<void> {
+    await this.prisma.$transaction(async (tx) => {
+      await this.organisations.removeMember(account, accountId, tx);
+      await tx.session.deleteMany({ where: { accountId } });
+      await tx.passwordResetToken.deleteMany({ where: { accountId } });
+    });
   }
 
   async acceptInvite(token: string, email: string, password: string): Promise<{ account: AccountResponse; cookies: SessionCookies }> {
@@ -134,7 +146,29 @@ export class AuthService implements AuthApi {
 
   async signIn(email: string, password: string): Promise<{ account: AccountResponse; cookies: SessionCookies }> {
     const account = await this.prisma.account.findUnique({ where: { email } });
-    if (!account || !(await verifyPassword(password, account.passwordHash))) {
+    const passwordMatches = await verifyPassword(password, account?.passwordHash || DUMMY_PASSWORD_HASH);
+    const permitted = await this.prisma.$transaction(async (tx) => {
+      const now = new Date();
+      // The upsert's update locks this email's row until the transaction finishes.
+      const attempt = await tx.signInAttempt.upsert({
+        where: { email },
+        create: { email, expiresAtUtc: new Date(now.getTime() + SIGN_IN_LOCK_MS) },
+        update: { updatedAtUtc: now },
+      });
+      if (attempt.failures >= SIGN_IN_FAILURE_LIMIT && attempt.expiresAtUtc > now) return false;
+      if (account && passwordMatches) {
+        await tx.signInAttempt.delete({ where: { email } });
+        return true;
+      }
+      const failures = attempt.expiresAtUtc <= now ? 1 : attempt.failures + 1;
+      await tx.signInAttempt.update({ where: { email }, data: {
+        failures,
+        expiresAtUtc: failures === 1 || failures === SIGN_IN_FAILURE_LIMIT
+          ? new Date(now.getTime() + SIGN_IN_LOCK_MS) : attempt.expiresAtUtc,
+      } });
+      return false;
+    });
+    if (!account || !permitted) {
       throw new UnauthorizedException({ code: 'INVALID_CREDENTIALS', message: 'The email or password is incorrect.', details: null });
     }
     const membership = await this.organisations.membershipFor(account.id);
@@ -153,15 +187,34 @@ export class AuthService implements AuthApi {
     const account = await this.prisma.account.findUnique({ where: { email }, select: { id: true, email: true } });
     if (!account || !this.mailProvider) return { message: RESET_MESSAGE };
 
-    const token = randomBytes(32).toString('base64url');
-    await this.prisma.passwordResetToken.deleteMany({ where: { accountId: account.id } });
-    await this.prisma.passwordResetToken.create({
-      data: { accountId: account.id, tokenHash: sha256(token), expiresAtUtc: new Date(Date.now() + RESET_TOKEN_LIFETIME_MS) },
-    });
-    const resetUrl = new URL('/reset-password', this.config.getOrThrow<string>('APP_ORIGIN'));
-    resetUrl.searchParams.set('token', token);
-    await this.mailProvider.sendPasswordReset(account.email, resetUrl.toString());
+    const { resetUrl } = await this.prisma.$transaction((tx) => this.createResetLink(account.id, tx));
+    await this.mailProvider.sendPasswordReset(account.email, resetUrl);
     return { message: RESET_MESSAGE };
+  }
+
+  async memberResetLink(admin: AccountPrincipal, accountId: string, options?: {
+    afterCreate?: (tx: Prisma.TransactionClient, id: string) => Promise<void>;
+    onLink: (url: string) => void;
+  }): Promise<string> {
+    const result = await this.prisma.$transaction(async (tx) => {
+      await this.organisations.authorizeResetLink(admin, accountId, tx);
+      const link = await this.createResetLink(accountId, tx);
+      await options?.afterCreate?.(tx, link.id);
+      return link;
+    });
+    options?.onLink(result.resetUrl);
+    return result.id;
+  }
+
+  private async createResetLink(accountId: string, tx: Prisma.TransactionClient): Promise<{ id: string; resetUrl: string }> {
+    const token = randomBytes(32).toString('base64url');
+    await tx.passwordResetToken.deleteMany({ where: { accountId } });
+    const reset = await tx.passwordResetToken.create({
+      data: { accountId, tokenHash: sha256(token), expiresAtUtc: new Date(Date.now() + RESET_TOKEN_LIFETIME_MS) },
+    });
+    const url = new URL('/reset-password', this.config.getOrThrow<string>('APP_ORIGIN'));
+    url.searchParams.set('token', token);
+    return { id: reset.id, resetUrl: url.toString() };
   }
 
   async resetPassword(token: string, newPassword: string): Promise<{ message: string }> {

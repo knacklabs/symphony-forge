@@ -1,0 +1,59 @@
+{
+  "base": "39364b91f44cabedfe130c2ec6618c32d8a741fc",
+  "branch": "task/FORGE-REQLOG-1-GUIDE",
+  "chat": {
+    "approval": "f69506ac11124d349bb2ce1c2f35106f16c7ca5a7c2c62812f1a08b021bfe04f",
+    "claude": null,
+    "conversation": "01a1838c-1468-7860-abea-1a921be0453d",
+    "head": null,
+    "start": "dba5b466b58ceaf59eeb0ba9f5cceb7b229c5180"
+  },
+  "known": [],
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "7c44965c4c681675db2066f7d28e75dca83c0431bb17c57f8dbf9a2c57ff5b8b",
+    "changed": "92c2ad37a709ee838ef954f62633305202453f2e01455ffc2d02d879413d1b69",
+    "commit": "d181ab17bd182b52693f61f56ca2d6694b212ade",
+    "dismissals": [],
+    "findings": [],
+    "id": "1ba101a4-1e0b-4e11-9448-8c98e6bdcbf1",
+    "status": "clean"
+  },
+  "round": 5,
+  "stacked_on": "FORGE-AGENTS-1/SKILL",
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-28T17:18:25.536846+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-28T17:35:01.673451+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-28T17:52:35.419885+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-28T18:08:31.652318+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-28T18:29:52.532963+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-28T19:07:09.833584+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "1b889bfa-71aa-43d5-936f-998a83e28ba1",
+    "head": "b9cd33a36ec5c5365ad363116dbe5555e305aaf7",
+    "keys": {},
+    "round": 4
+  },
+  "worker": "codex"
+}

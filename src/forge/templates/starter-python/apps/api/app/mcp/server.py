@@ -1,10 +1,9 @@
 import hashlib
 import re
 import tomllib
-from collections.abc import Callable
 from pathlib import Path
 from typing import Any, cast
-from uuid import UUID, uuid4
+from uuid import uuid4
 
 from fastapi import Request
 from mcp.server.context import ServerRequestContext
@@ -23,18 +22,16 @@ from mcp.types import (
     ReadResourceRequestParams,
     ReadResourceResult,
 )
-from sqlalchemy import select
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, sessionmaker
 from starlette.concurrency import run_in_threadpool
 from starlette.responses import JSONResponse
 from starlette.types import Receive, Scope, Send
 
 from app.core import (
-    AccountPrincipal,
     ToolContext,
     ToolError,
     call_tool,
+    create_once,
     get_prompt,
     list_prompts,
     list_resource_templates,
@@ -45,49 +42,9 @@ from app.core import (
     report_error,
     tool_failure,
 )
-from app.mcp.models import IdempotencyKey
 from app.organisations import AgentAccess, agent_for_key
 
 CALLS_PER_MINUTE = 120
-
-
-def _create_once(
-    db: Session,
-    account: AccountPrincipal,
-    tool: str,
-    key: str,
-    create: Callable[[Callable[[Session, UUID], None]], UUID],
-) -> UUID:
-    statement = select(IdempotencyKey.item_id).where(
-        IdempotencyKey.organisation_id == account.organisation_id,
-        IdempotencyKey.account_id == account.id,
-        IdempotencyKey.tool == tool,
-        IdempotencyKey.key == key,
-    )
-    existing = db.scalar(statement)
-    if existing is not None:
-        return existing
-
-    def after_create(transaction: Session, item_id: UUID) -> None:
-        transaction.add(
-            IdempotencyKey(
-                organisation_id=account.organisation_id,
-                account_id=account.id,
-                tool=tool,
-                key=key,
-                item_id=item_id,
-            )
-        )
-        transaction.flush()
-
-    try:
-        return create(after_create)
-    except IntegrityError:
-        db.rollback()
-        winner = db.scalar(statement)
-        if winner is None:
-            raise
-        return winner
 
 
 def _context(request: Request) -> ToolContext:
@@ -108,7 +65,7 @@ def _context(request: Request) -> ToolContext:
         account=access.principal,
         delete_and_restore=access.delete_and_restore,
         session_factory=cast(sessionmaker[Session], request.app.state.session_factory),
-        create_once=_create_once,
+        create_once=create_once,
         report_error=report,
     )
 

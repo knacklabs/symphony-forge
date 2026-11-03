@@ -109,7 +109,12 @@ def test_1_merge_enable_checks_the_final_published_change_runs_tests_and_waits_f
     assert refused.stderr == OWNER_MERGES
 
 
-@pytest.mark.parametrize("extra", ["file", "setting", "merge value", "mode"])
+@pytest.mark.parametrize("client,extra", [
+    pytest.param(history, extra, id=f"{history}-{extra}")
+    for history in ["new", "adopted-v1.2.2"]
+    for extra in ["file", "setting", "merge value", "mode"]
+    if history == "new" or extra in ("file", "setting")
+], indirect=["client"])
 def test_2_merge_enable_close_refuses_extra_changes_without_a_review(client, extra):
     # Interrupt before review at the real GitHub edge, leaving the generated commit.
     client.gh.respond("pr", "create", stderr="GitHub unavailable", exit=1)

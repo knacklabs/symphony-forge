@@ -51,6 +51,8 @@ def test_1_waiting_run_names_each_holder_and_the_command_that_frees_it(
         with monkeypatch.context() as native:
             native.delenv("CODEX_THREAD_ID", raising=False)
             native.setenv("CLAUDECODE", "1")
+            # Only these session-held rounds use the missing-SDK native fallback.
+            native.setenv("XDG_DATA_HOME", str(tmp_path / "without-claude-sdk"))
             host = Session(repo, tmp_path / "host", "claude-session")
             for item, _ in jobs[:2]:
                 result = host.forge("work", item)

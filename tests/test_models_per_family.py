@@ -78,13 +78,13 @@ def test_3_a_single_entry_asked_for_by_the_other_family_gives_the_default_model(
     assert [line["kind"] for line in _lines(repo.path / ".git" / "forge" / "threads" / "task"
                                             / "BOARD" / "PAGE.log")] == ["Build", "Build"]
     assert _sent(calls, "thread/start")[-1]["config"] == {
-        **QUIET, "features.multi_agent": True, "model": "gpt-6.1-sol", "model_reasoning_effort": "medium"}
+        **QUIET, "features.multi_agent": True, "model": "gpt-6.1-sol", "model_reasoning_effort": "low"}
     monkeypatch.setenv("CODEX_THREAD_ID", "thr-test-coordinator")
     monkeypatch.delenv("CLAUDECODE")
     _work(repo, folder, "claude", f"[models.build]\n{NOVA}")
     options = claude_calls(claude)[-1]["options"]
-    # Omitted Claude entries now default to Sonnet at xhigh, rather than Opus at medium.
-    assert (options["model"], options["effort"]) == ("claude-sonnet-5-5", "xhigh")
+    # Omitted Claude entries now default to Sonnet at low effort.
+    assert (options["model"], options["effort"]) == ("claude-sonnet-5-5", "low")
     assert "gpt-6-nova" not in options.values()
 
 

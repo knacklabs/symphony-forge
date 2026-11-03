@@ -106,7 +106,8 @@ def _exact_pass_is_committed(repo, claude_payload, monkeypatch, tmp_path,
     tip = repo.git("rev-parse", "story/SHOP")
     # Exactly "No findings.", trimmed, passes, and the doc and notes are committed on its branch.
     say(repo, "\n  No findings.  \n\n")
-    assert read(repo).startswith("Round 7 of the cold read of plans/SHOP.md found nothing.")
+    # The SDK streams the reader's messages before Forge prints the round result.
+    assert "Round 7 of the cold read of plans/SHOP.md found nothing." in read(repo).splitlines()
     assert "passed: yes\n" in notes.read_text("utf-8")
     assert repo.git("rev-parse", "story/SHOP~1") == tip
     # The choice already committed the document; the passing round commits its new notes.
@@ -380,7 +381,8 @@ def _failed_merge_leaves_task(repo, claude_payload, monkeypatch, tmp_path,
     roadmap.write_text('{"items": []}\n', encoding="utf-8")
     head = repo.git("rev-parse", "task/BASKET-SPEC")
     said = approve(repo, claude_payload, text)
-    assert "Recorded the approval of Keep baskets." in said
+    # The approved doc replaced the title from the promoted fix.
+    assert "Recorded the approval of Shoppers can save a basket." in said
     assert (f"Forge couldn't bring the approved plan into BASKET/SPEC's branch.\n"
             f"Next: in {fix}, git merge story/BASKET, then forge close BASKET/SPEC") in said
     assert '"approval"' in repo.git("show", "story/BASKET:.factory/stories/BASKET/story.json")

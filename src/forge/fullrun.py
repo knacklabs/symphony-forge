@@ -28,27 +28,46 @@ def latest(top: Path) -> str:
     return repo.git("rev-parse", f"origin/{default}", cwd=top)
 
 
-def green(top: Path) -> str:
+def green(top: Path, *, reuse: bool = False) -> str:
     sha = latest(top)
-    done = repo.run("gh", "api", f"repos/{{owner}}/{{repo}}/commits/{sha}/statuses", cwd=top)
-    try:
-        statuses = json.loads(done.stdout) if not done.returncode else []
-        status = next((row for row in statuses if row.get("context") == STATUS), None)
-    except (ValueError, TypeError, AttributeError):
-        status = None
     default = repo.default_branch(top)
-    if status and status.get("state") == "success":
-        return ""
-    if status and status.get("state") == "failure":
-        return f"The full test run on the latest commit on {default} failed."
-    return f"The latest commit on {default} has no green full test run."
+    missing = f"The latest commit on {default} has no green full test run."
+
+    def forge_only(base: str, target: str) -> bool:
+        from forge import sync
+
+        paths = repo.git("diff", "--name-only", "--no-renames", base, target, cwd=top).splitlines()
+        product = [path for path in paths
+                   if not path.startswith((*review.BOOKKEEPING, "docs/decisions/"))]
+        return not product or set(product) <= sync.synced(
+            top, repo.config(top), base, target, product)
+
+    # ponytail: at most ten commits/status calls; older proof needs a fresh full run.
+    commits = repo.git("rev-list", "--first-parent", "--max-count=10", sha, cwd=top).splitlines() if reuse else [sha]
+    for commit in commits:
+        done = repo.run("gh", "api", f"repos/{{owner}}/{{repo}}/commits/{commit}/statuses", cwd=top)
+        if done.returncode:
+            return missing
+        try:
+            statuses = json.loads(done.stdout)
+            status = next((row for row in statuses if row.get("context") == STATUS), None)
+        except (ValueError, TypeError, AttributeError):
+            return missing
+        if status and status.get("state") == "failure":
+            return (f"The full test run on the latest commit on {default} failed."
+                    if commit == sha else missing)
+        if reuse and not forge_only(commit, sha):
+            return missing
+        if status and status.get("state") == "success":
+            return ""
+    return missing
 
 
 def run(top: Path) -> int:
     command = repo.config(top)["test"]
     if not command:
-        print("forge.toml names no test command, so forge test ran none.")
-        return 0
+        print("The full run ran no tests. Set test in forge.toml to run the whole suite.")
+        return 1
     sha = latest(top)
     default = repo.default_branch(top)
     if repo.git("rev-parse", "HEAD", cwd=top) != sha:
@@ -61,6 +80,20 @@ def run(top: Path) -> int:
             "then forge test --full.", "")
     status, report = review.test_run(top, command, sha, always=True)
     print(report)
+    results = review.results_path(top)
+    evidence = results.read_text("utf-8") if results.is_file() else ""
+    from forge.fasttest import INVOCATION_HEADER, RESULTS_HEADER
+
+    empty_group = (int(os.environ.get("FORGE_GROUPS", "1")) > 1
+                   and any(json.loads(line[len(INVOCATION_HEADER):]).get("collected", 0) > 0
+                           for line in evidence.splitlines() if line.startswith(INVOCATION_HEADER)))
+    pytest_run = RESULTS_HEADER in evidence or re.search(r"\bpytest\b", command)
+    no_results = not re.search(r"^(?:passed|failed|error|skipped|xfail|xpass) .+$", evidence, re.M)
+    runner_empty = re.search(r"\bNo test(?: files|s)? found\b", report, re.I)
+    if not empty_group and (pytest_run and (status == 5 or not status and no_results)
+                            or not pytest_run and runner_empty):
+        print("The full run ran no tests. Set test in forge.toml to run the whole suite.")
+        status = 1
     # The workflow publishes one result after every matrix group, including timed-out jobs.
     if os.environ.get("GITHUB_RUN_ID") and "FORGE_GROUP" in os.environ:
         return status

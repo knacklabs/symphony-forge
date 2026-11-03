@@ -10,7 +10,8 @@ def test_9_synced_guides_explain_tools_and_the_session_handoff(repo):
     version = repo.forge("--version").stdout.split()[-1]
     repo.write("forge.toml", f'version = "{version}"\ntest = "true"\n')
     template = (ROOT / "src/forge/templates/skill.md").read_text(encoding="utf-8")
-    # Fixture sync cannot detect stale guides delivered in this checkout.
+    # Fixture sync cannot detect stale guides delivered in this checkout, including
+    # the SDK recovery steps changed to forge doctor --fix.
     for host in (".claude", ".codex"):
         assert (ROOT / host / "skills/forge/SKILL.md").read_text(encoding="utf-8") == template
     for adopted in (False, True):
@@ -42,5 +43,9 @@ def test_9_synced_guides_explain_tools_and_the_session_handoff(repo):
                              "--round", "forge stop", "unreachable", "Stale rounds record nothing",
                              "nudge", "never edit the brief", "Upgrade Forge", "before adding"):
                 assert contract in tools, contract
+            # The approved effort story gives the SDK priority even in Claude's
+            # own coordinator. Token presence alone cannot protect that instruction.
+            assert "Claude workers use the Claude Agent SDK kit when installed" in tools
+            assert "otherwise their coordinator uses a background subagent" in tools
     brief = (ROOT / "src/forge/templates/brief.md").read_text(encoding="utf-8")
     assert "A subagent never runs `forge handback`, `forge work` or `forge stop` itself." in brief

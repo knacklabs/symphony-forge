@@ -32,6 +32,7 @@ LISTED = {"AGENTS.md", ".gitattributes", ".gitignore", ".forge/hooks.sh", ".forg
           ".claude/skills/forge/standards.md", ".codex/skills/forge/standards.md",
           ".claude/skills/app-baseline/SKILL.md", ".codex/skills/app-baseline/SKILL.md",
           ".claude/skills/database/SKILL.md", ".codex/skills/database/SKILL.md",
+          ".claude/skills/agents/SKILL.md", ".codex/skills/agents/SKILL.md",
           ".claude/skills/remote-approval/SKILL.md", ".codex/hooks.json", ".codex/config.toml", ".codex/skills/forge/SKILL.md",
           ".claude/skills/forge/fde.md", ".codex/skills/forge/fde.md", ".github/workflows/forge.yml",
           ".claude/skills/forge/migrate-skill.md", ".codex/skills/forge/migrate-skill.md",
@@ -40,6 +41,13 @@ LISTED = {"AGENTS.md", ".gitattributes", ".gitignore", ".forge/hooks.sh", ".forg
           *(f"{host}/skills/simplified-technical-english/{name}" for host in (".claude", ".codex")
             for name in PLAIN_ENGLISH), *ROLE_FILES}
 LISTED.add(".forge/design/support.js")
+LISTED.update(f"{host}/skills/forge/run-reference.md" for host in (".claude", ".codex"))
+# Init and sync now also deliver the complete pinned design skills to client repos.
+LISTED.update(f"{host}/skills/{path.relative_to(source).as_posix()}"
+              for source in (Path(__file__).resolve().parents[1] / "src/forge/templates/skills",)
+              for name in ("impeccable", "emil-design-eng")
+              for path in (source / name).rglob("*") if path.is_file()
+              for host in (".claude", ".codex"))
 # The old first commit had only Forge docs and config; it now includes deploy files.
 SCAFFOLD = {"forge.toml", "Dockerfile", ".dockerignore", "services.toml", "docs/product/BRIEF.md", "docs/product/DISCOVERY.md",
             "docs/specs/README.md", "docs/decisions/README.md", "plans/roadmap.json"}
@@ -254,6 +262,17 @@ def test_29_doctor(repo, gh, tmp_path, monkeypatch, case, rows):
     # These doctor cases exercise Claude workers, including its optional Codex trust advice.
     toml.write_text(toml.read_text(encoding="utf-8").replace(
         'workers = "split"', 'workers = "claude"', 1), encoding="utf-8")
+    if case.startswith("impeccable") or case == "no impeccable":
+        # Clients now receive repo copies at init. Global placement still matters in Forge's
+        # own repo, which deliberately receives neither skill, so retain these cases there.
+        repo.git("checkout", "-q", "-b", "fix/global-design-skills", cwd=client)
+        toml.write_text(toml.read_text(encoding="utf-8").replace(
+            'repo = "client"', 'repo = "forge-source"'), encoding="utf-8")
+        synced = repo.forge("sync", cwd=client)
+        assert synced.returncode == 0, synced.stdout + synced.stderr
+        for host in (".claude", ".codex"):
+            for name in ("impeccable", "emil-design-eng"):
+                patient(lambda: shutil.rmtree(client / host / "skills" / name))
     gh.respond("auth", "status")
     _autoreview(tmp_path, monkeypatch)
     home = tmp_path / "home"  # so skills installed on this machine don't count

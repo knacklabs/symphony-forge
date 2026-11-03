@@ -10,7 +10,9 @@ import pytest
 
 STORY = "FIX-APP-BASELINE"
 ROOT = Path(__file__).resolve().parents[1]
-BASELINE_SHA256 = "2f6876a725e67c0576437824ca67dc946d77a9566b4c312e6df764f5514e6d42"
+# The approved guide adds screen ownership, order and the basic screen rules.
+# This package-byte contract remains distinct from the init/sync guidance test.
+BASELINE_SHA256 = "ca3e2056481a8fab29393ef06a89395ad6d9e84068b2306d5ff8535844f47dbe"
 
 
 @pytest.mark.platform

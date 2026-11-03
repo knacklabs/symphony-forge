@@ -11,7 +11,7 @@ already runs a different stack keeps its own.
 | Frontend | React with Vite, React Router and React Compiler | Widely known; fast builds with almost no config |
 | Server data | TanStack Query | Caching, loading and error states without hand-written effects |
 | UI | Tailwind with shadcn/ui | Accessible components you own as code |
-| Lint | ESLint and Prettier | The usual pair; both run in the one `test` script |
+| Lint | ESLint | The usual linter; it runs in the one `test` script |
 | Tests | Vitest, Supertest, Testing Library, Playwright | Unit and HTTP tests plus browser tests of user flows |
 | Workspace | Nx | One build tool for the web app and API; no Nx Cloud |
 | Package manager | pnpm through Corepack | The root package pins pnpm and the lockfile pins every dependency |
@@ -74,7 +74,7 @@ Each of these is a moving part the client pays for as long as the app runs, so n
 advance. The story that needs one names it, with the Done-when item it serves.
 
 - Redis, for a cache or limits shared by several app instances: add when a story's New moving parts names it.
-- A job queue (for example BullMQ) for work that must outlive a request: add when a story's New moving parts names it; until then the work happens inside the request.
+- Background jobs and schedules for work that must outlive a request: the story adds a worker in `services.toml` and a Postgres jobs table read with `FOR UPDATE SKIP LOCKED`, as the database skill says. No separate queue server; until that story, work happens inside the request.
 - Terraform, for the client's cloud infrastructure as code: add when a story's New moving parts names it.
 - OIDC sign-in through the client's identity provider: add when a story's New moving parts names it.
 - A monitoring stack (metrics, traces, dashboards): add when a story's New moving parts names it; until then the structured logs are the record.

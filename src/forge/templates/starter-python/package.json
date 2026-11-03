@@ -56,7 +56,6 @@
     "typescript-eslint": "8.46.2",
     "eslint-plugin-react-hooks": "7.0.1",
     "globals": "16.4.0",
-    "prettier": "3.6.2",
     "openapi-typescript": "7.13.0"
   },
   "packageManager": "pnpm@10.20.0",

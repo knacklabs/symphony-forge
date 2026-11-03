@@ -1,0 +1,50 @@
+{
+  "allow_large": "A version bump for a release the owner asked for touches every file that names the version.",
+  "base": "c9d636b028b1c27397ffa14021915713eb69a3db",
+  "branch": "fix/release-1-2-27",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a19cce-b464-77e2-97ae-4466769ebe15",
+    "head": null,
+    "start": "89dbb8e6960a7e9c7f28038265e92e6e0b8838b8"
+  },
+  "done_when": "Every version reference names v1.2.27, forge sync output is committed, and the version tests pass",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "0c302e02767c60870c2889f8657f392c5c0d4be284f8fb46e38898be3e25637b",
+    "changed": "d61df1bb10d10e4e5d795184cb2e7607366127775ee61e18698b0c9747d0abfd",
+    "commit": "69995033ab8d1e4f1ae28429c1a4b731e4018f98",
+    "dismissals": [],
+    "findings": [],
+    "id": "6434f349-f5c7-4be2-b13f-b7bf4a420636",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-02T15:05:09.856912+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-02T16:00:06.296285+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-02T16:07:04.311132+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "22d4a22db5fd461c0324b5bfb54883d53bf40888",
+    "keys": {},
+    "round": null
+  },
+  "why": "Release v1.2.27 with the client sign-off hotfix",
+  "worker": "codex"
+}

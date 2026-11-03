@@ -49,7 +49,7 @@ def client(env, request):
     return env, request.param
 
 
-def test_1_plans_name_a_source_or_a_need_for_each_item(client):
+def test_3_plans_name_a_source_or_a_need_for_each_item(client):
     env, _ = client
     shop = new_story(env.repo, "SHOP")
     synced = env.repo.forge("sync", cwd=shop)
@@ -64,7 +64,7 @@ def test_1_plans_name_a_source_or_a_need_for_each_item(client):
         assert "plan only the screens marked Build now" in guide
 
 
-def test_2_additions_that_nothing_needs_get_a_not_needed_note(client):
+def test_4_additions_that_nothing_needs_get_a_not_needed_note(client):
     env, adopted = client
     repo = env.repo
     if not adopted:
@@ -109,7 +109,7 @@ def test_2_additions_that_nothing_needs_get_a_not_needed_note(client):
 
 
 @pytest.mark.parametrize("previous", [False, True], ids=["new init", "previous release"])
-def test_3_useful_extras_go_to_the_idea_list(repo, gh, tmp_path, previous):
+def test_5_useful_extras_go_to_the_idea_list(repo, gh, tmp_path, previous):
     log = install_claude(repo)
     if not previous:
         client, made = _fresh_client(repo, gh, tmp_path)

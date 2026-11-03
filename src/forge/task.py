@@ -33,6 +33,8 @@ REFUSALS = {
                 "forge close {other}"),
     "fix_lines": ("A fix needs a one-line why and a one-line done-when.",
                   'forge fix start "<why>" --done "<done when>"'),
+    "fix_placeholder": ("Find the problem to solve does not name a problem to fix. Nothing started.",
+                        'forge start "<the idea you want to explore>"'),
     "fix_kind": ("A prototype fix needs --kind ui, backend or mechanical.",
                  'forge fix start "<why>" --done "<done when>" --kind <kind>'),
     "not_fix": ("{branch} is not a fix, and allow-large works only inside a fix's folder.",
@@ -82,6 +84,76 @@ def approval_hash(text: str) -> str | None:
     from forge import story
 
     return story.approval_hash(text)
+
+
+def apply_review_choice(top: Path, item: str, choice: str, reason: str) -> bool:
+    """Publish a task's owner choice in its builder plan and bring it to the worker."""
+    from forge import story
+
+    match = repo.ITEM.fullmatch(item)
+    if not match or not match["task"]:
+        return False  # fixes already carry their Done-when and choice in their own record
+    key, name = match["key"], match["task"]
+    branch, rel = f"story/{key}", f"plans/{key}.md"
+    retry = f'forge close {item} --resolve {choice} --reason {repo.quote(reason)}'
+    if git("status", "--porcelain", cwd=top):
+        raise repo.Refused("Commit or stash the task's changes before updating its plan.", retry)
+    git("fetch", "-q", "origin", cwd=top)
+    source = story.plan_ref(top, key)
+    folder = story.stories_here(top).get(key)
+    if folder is None:
+        if git("branch", "--list", branch, cwd=top):
+            main = Path(git("rev-parse", "--path-format=absolute", "--git-common-dir", cwd=top)).parent
+            folder = main.parent / f"{main.name}-story-{key}"
+            git("worktree", "add", "-q", str(folder), branch, cwd=top)
+        else:
+            folder = story.add_worktree(top, branch, source)
+    if git("status", "--porcelain", cwd=folder):
+        raise repo.Refused("Commit or stash the story's changes before updating its plan.", retry)
+    updated = run("git", "merge", "-q", "--ff-only", source, cwd=folder)
+    if updated.returncode:
+        raise repo.Refused("The local and published story plans diverged; reconcile them first.", retry)
+    path = folder / rel
+    text = path.read_text(encoding="utf-8")
+    row = rows(sections(text))[name]
+    note = f"Owner's {choice} choice for {name}: {' '.join(reason.split())}"
+    # A failed push or task merge can be retried without creating another follow-up.
+    if note not in text:
+        if choice == "split":
+            existing = rows(sections(text))
+            followup, number = f"{name}-FOLLOWUP", 2
+            while followup in existing:
+                followup, number = f"{name}-FOLLOWUP-{number}", number + 1
+            following = {**row, "ID": followup, "Name": f"Follow-up for {row['Name']}",
+                         "What it delivers": " ".join(reason.split()).replace("|", "/"), "After": name}
+            lines = text.splitlines(keepends=True)
+            index = next(i for i, line in enumerate(lines)
+                         if line.lstrip().startswith("|") and
+                         line.strip().strip("|").split("|")[0].strip("` ") == name)
+            lines.insert(index + 1, "| " + " | ".join(following.values()) + " |\n")
+            text = "".join(lines)
+        more = story.details(text)
+        for covered in (int(n) for n in re.findall(r"\d+", row["Covers"])):
+            more[covered] = (more.get(covered, "") + "\n   " + note).strip()
+        body = "\n".join(f"{n}. {entry}" for n, entry in sorted(more.items())) + "\n\n"
+        found = story.DETAILS.search(text)
+        if found:
+            text = text[:found.start(1)] + body + text[found.end(1):]
+        else:
+            if not story.BUILDERS.search(text):
+                text = text.rstrip() + "\n\n## For the builders\n"
+            text = text.rstrip() + "\n\n### Done-when details\n\n" + body
+        story.parse(text, folder, key=key)
+        path.write_text(text, encoding="utf-8", newline="\n")
+        repo.commit_state(f"Record the owner's {choice} choice in the plan", rel, top=folder)
+    git("push", "-q", "-u", "origin", branch, cwd=folder)
+    merged = run("git", "merge", "-q", "--no-edit", branch, cwd=top)
+    if merged.returncode:
+        if not run("git", "rev-parse", "-q", "--verify", "MERGE_HEAD", cwd=top).returncode:
+            git("merge", "--abort", cwd=top)
+        raise repo.Refused("The updated story plan conflicts with this task; merge the story branch first.",
+                           f"git merge {branch}, resolve and commit, then {retry}")
+    return True
 
 
 # --- branches, checkouts and the default branch ----------------------------------------
@@ -156,6 +228,36 @@ def _folder(name: str) -> Path:
     """A new worktree folder next to the main checkout, named <repo>-<name>."""
     main = Path(git("rev-parse", "--path-format=absolute", "--git-common-dir")).parent
     return main.parent / f"{main.name}-{name}"
+
+
+def pick_up(item: str, branches: list[str]) -> Path | None:
+    """Find the item's checkout, or make one from its published state."""
+    from forge import story
+
+    top = repo.root()
+    for branch, tree in story.worktrees(top).items():
+        state = repo.read_state(item, tree)
+        if state and state.get("branch") == branch:
+            return tree
+    for branch in branches:
+        if run("git", "fetch", "-q", "origin", branch, cwd=top).returncode:
+            continue
+        remote = f"origin/{branch}"
+        state = story.json_of(show(remote, repo.state_path(item), top))
+        if state.get("branch") != branch:
+            continue
+        if "/" not in item and state.get("status") == "dropped":
+            raise repo.Refused(f"Fix {item} is dropped.", f"forge fix drop {item} --undo")
+        path = _folder(item.replace("/", "-") if "/" in item else f"fix-{item}")
+        if git("branch", "--list", branch, cwd=top):
+            git("worktree", "add", "-q", str(path), branch, cwd=top)
+            if run("git", "merge", "--ff-only", "--no-overwrite-ignore", remote, cwd=path).returncode:
+                raise repo.Refused(f"Local and remote work for {item} differ. Reconcile the branch first.",
+                                   f"forge work {item}")
+        else:
+            git("worktree", "add", "-q", "--track", "-b", branch, str(path), remote, cwd=top)
+        return path
+    return None
 
 
 def _new_checkout(item: str, branch: str, folder: str, base: str, state: dict[str, Any],
@@ -532,8 +634,11 @@ def fix_start(args: argparse.Namespace) -> None:
     why, done = args.why.strip(), args.done.strip()
     if args.slug is not None and not re.fullmatch(r"[a-z0-9]+(-[a-z0-9]+)*", args.slug):
         refuse(REFUSALS["bad_slug"], slug=args.slug)
-    main = main_ref()
     slug = args.slug or re.sub(r"[^a-z0-9]+", "-", why.lower()).strip("-")[:40].strip("-") or "fix"
+    problem = re.sub(r"[^a-z0-9]+", "-", why.lower()).strip("-")
+    if any(re.fullmatch(r"find-the-problem-to-solve(?:-\d+)?", value) for value in (problem, slug)):
+        refuse(REFUSALS["fix_placeholder"])
+    main = main_ref()
     taken = {ref.split("/fix/", 1)[1] for ref in git(
         "for-each-ref", "--format=%(refname)", "refs/heads/fix/", "refs/remotes/origin/fix/",
         "refs/tags/forge-start/fix/").splitlines()}
@@ -549,7 +654,10 @@ def fix_start(args: argparse.Namespace) -> None:
     parent = branch_item(repo.current_branch(top), top)
     if parent:
         require_active(parent[0], top)
-    base = "HEAD" if parent and not _merged(main, parent[0]) else main
+    # Sign-off reviews cite commits on this branch, even after its squash merge.
+    # The repair's published start tag keeps those commits and its rounds reachable.
+    base = "HEAD" if parent and (not _merged(main, parent[0]) or
+                                 show("HEAD", ".factory/client-signoff.json")) else main
     if prototype and fix_kind == "ui":
         require_prototype_design(top, base)
     state = {"kind": "fix", "why": why, "done_when": done, "base": git("rev-parse", base),

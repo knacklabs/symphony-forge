@@ -12,9 +12,14 @@ class Settings:
     app_origin: str
     port: int
     app_companies: str
+    log_level: str
 
 
 def load_settings() -> Settings:
+    log_level = os.environ.get("LOG_LEVEL", "info")
+    if log_level not in {"debug", "info", "warn", "error"}:
+        raise RuntimeError("LOG_LEVEL must be debug, info, warn or error.")
+
     app_companies = os.environ.get("APP_COMPANIES", "many")
     if app_companies not in {"one", "many"}:
         raise RuntimeError("APP_COMPANIES must be one or many.")
@@ -67,6 +72,7 @@ def load_settings() -> Settings:
         app_origin=app_origin,
         port=port,
         app_companies=app_companies,
+        log_level=log_level,
     )
 
 

@@ -4,6 +4,7 @@ model ChangeRecord {
   organisationId String   @db.Uuid
   actorAccountId String   @db.Uuid
   actorEmail     String
+  viaAgent       String?
   action         String
   summary        String
   // The changed item, such as a project, so its detail screen can list its own changes.

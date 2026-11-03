@@ -39,6 +39,7 @@ class ChangeRecord(Base):
     actor_email: Mapped[str] = mapped_column(Text)
     action: Mapped[str] = mapped_column(Text)
     summary: Mapped[str] = mapped_column(Text)
+    via_agent: Mapped[str | None] = mapped_column(Text)
     # The changed item, such as a project, so its detail screen can list its own changes.
     subject_id: Mapped[UUID | None] = mapped_column()
     subject_name: Mapped[str | None] = mapped_column(Text)

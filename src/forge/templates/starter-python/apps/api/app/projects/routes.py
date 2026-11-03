@@ -1,7 +1,15 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, Response
+from fastapi import (
+    APIRouter,
+    Depends,
+    # forge:feature:retry-key:start
+    Header,
+    # forge:feature:retry-key:end
+    Query,
+    Response,
+)
 from sqlalchemy.orm import Session as DbSession
 
 from app.auth import require_csrf
@@ -10,6 +18,9 @@ from app.core import (
     CsvColumn,
     ErrorEnvelope,
     SuccessEnvelope,
+    # forge:feature:retry-key:start
+    create_once,
+    # forge:feature:retry-key:end
     csv_response,
     get_db,
     require_permission,
@@ -76,7 +87,28 @@ def create_project(
     ],
     _csrf: Annotated[None, Depends(require_csrf)],
     db: Annotated[DbSession, Depends(get_db)],
+    # forge:feature:retry-key:start
+    idempotency_key: Annotated[
+        str | None,
+        Header(alias="Idempotency-Key", min_length=1, max_length=200),
+    ] = None,
+    # forge:feature:retry-key:end
 ) -> SuccessEnvelope[Project]:
+    # forge:feature:retry-key:start
+    if idempotency_key is not None:
+        project_id = create_once(
+            db,
+            account,
+            "projects_create",
+            idempotency_key,
+            lambda after_create: (
+                ProjectService(db, after_create=after_create)
+                .create(account, input_data)
+                .id
+            ),
+        )
+        return SuccessEnvelope(data=ProjectService(db).get(account, project_id))
+    # forge:feature:retry-key:end
     return SuccessEnvelope(data=ProjectService(db).create(account, input_data))
 
 

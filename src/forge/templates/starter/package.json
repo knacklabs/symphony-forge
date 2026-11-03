@@ -79,7 +79,6 @@
     "typescript-eslint": "8.46.2",
     "eslint-plugin-react-hooks": "7.0.1",
     "globals": "16.4.0",
-    "prettier": "3.6.2",
     "@nx/eslint-plugin": "22.0.1"
   },
   "packageManager": "pnpm@10.20.0",

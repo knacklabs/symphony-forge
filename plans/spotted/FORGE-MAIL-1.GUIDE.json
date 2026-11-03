@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\tdocs/specs/board-for-the-team.read.md\tGate: unrelated board review metadata is outside Scope\tFORGE-MAIL-1/GUIDE",
+      "kind": "bug",
+      "path": "docs/specs/board-for-the-team.read.md",
+      "line": 11,
+      "text": "Gate: unrelated board review metadata is outside Scope",
+      "from": "blocking",
+      "item": "FORGE-MAIL-1/GUIDE",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

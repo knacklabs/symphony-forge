@@ -36,8 +36,6 @@ AGENT_CASES = {
                "test_a_member_cannot_add_an_agent_account_or_change_its_key_or_agent_access",
                "test_an_agent_account_cannot_sign_in_with_a_password"),
 }
-AGENT_FLOW = "an admin adds an agent account, creates its key once and revokes it"
-ACCESS_FLOW = "an admin turns on agent delete and restore for {plural}"
 FEATURE_LINE = ("forge task feature jobs --one job --field 'name:text' "
                 "--field 'status:status(planned|active|done)'")
 CLIENTS_LINE = "forge task feature clients --one client --field 'name:text'"
@@ -140,8 +138,8 @@ def test_2_an_admin_adds_an_agent_account_and_its_key(repo, gh, tmp_path, starte
     # Audit: an agent account that is missing from the member list, a key that shows twice or
     # still works after a revoke, a member who can add agents or change keys, an agent that can
     # sign in with a password, or a change with no history row fails the app's own cases, which
-    # own the behaviour; the browser flow fails when the key stays on the page after Done. Sync
-    # must leave an earlier-adopted app's own files as they are.
+    # own the API behaviour. The starter ships no Members screen; its pending rule spec owns
+    # showing a key once when the client builds that screen. Sync must leave an earlier app alone.
     if starter == "earlier adopted":
         before, after = _adopted_files_after_sync(repo)
         assert after == before
@@ -154,7 +152,6 @@ def test_2_an_admin_adds_an_agent_account_and_its_key(repo, gh, tmp_path, starte
     if LIVE:
         live = _live(starter, request)
         _require_cases(live["api"], AGENT_CASES[starter])
-        _require_cases(live["browser"], (AGENT_FLOW,))
 
 
 @pytest.mark.platform
@@ -172,7 +169,7 @@ def test_3_each_feature_has_its_tools(repo, gh, tmp_path, starter, request):
         shutil.rmtree(client / "libs/mcp")
         built = repo.forge(*shlex.split(FEATURE_LINE)[1:], cwd=client)
         assert built.returncode == 0, built.stdout + built.stderr
-        assert built.stdout.count("This app has no MCP server, so jobs get no agent tools or resources.") == 1
+        assert built.stdout.count("This app has no MCP server or retry keys, so jobs get no agent tools, resources or retry keys.") == 1
         written = _written_paths(built, client)
         # SQL search indexes also end in _search; only the MCP tool name is forbidden.
         forbidden = ("forge:feature:mcp", "JobsTools", "AgentAccessDialog", "agentClient", "afterCreate", "jobs_search")
@@ -191,7 +188,7 @@ def test_3_each_feature_has_its_tools(repo, gh, tmp_path, starter, request):
         shutil.rmtree(python_client / "apps/api/app/mcp")
         built = repo.forge(*shlex.split(FEATURE_LINE)[1:], cwd=python_client)
         assert built.returncode == 0, built.stdout + built.stderr
-        assert built.stdout.count("This app has no MCP server, so jobs get no agent tools or resources.") == 1
+        assert built.stdout.count("This app has no MCP server or retry keys, so jobs get no agent tools, resources or retry keys.") == 1
         written = _written_paths(built, python_client)
         assert "apps/api/app/jobs/tools.py" not in written
         python_forbidden = (
@@ -217,15 +214,17 @@ def test_3_each_feature_has_its_tools(repo, gh, tmp_path, starter, request):
         repo, gh, tmp_path, "--starter", "react" if starter == "typescript" else "python")
     assert initialized.returncode == 0, initialized.stdout + initialized.stderr
     if starter == "typescript":
-        for line, plural, words in ((CLIENTS_LINE, "clients", "clients"),
-                                    (FEATURE_LINE, "jobs", "jobs"),
-                                    ("forge task feature work-orders --one work-order --field 'name:text' "
-                                     "--field 'client?:link(clients)'", "work-orders", "work orders")):
+        for line, plural in (
+            (CLIENTS_LINE, "clients"),
+            (FEATURE_LINE, "jobs"),
+            (
+                "forge task feature work-orders --one work-order --field 'name:text' "
+                "--field 'client?:link(clients)'",
+                "work-orders",
+            ),
+        ):
             built = repo.forge(*shlex.split(line)[1:], cwd=client)
             assert built.returncode == 0, built.stdout + built.stderr
-            if plural != "clients":
-                page = (client / f"libs/{plural}/web/src/pages/{plural}-page.tsx").read_text("utf-8")
-                assert f'feature="{plural}"' in page and f'label="{words}"' in page, page
             if plural == "jobs":
                 tools = (client / "libs/jobs/server/src/jobs.tools.ts").read_text("utf-8")
                 assert "feature: 'jobs'" in tools and "JOB_PERMISSIONS" in tools
@@ -246,10 +245,8 @@ def test_3_each_feature_has_its_tools(repo, gh, tmp_path, starter, request):
         concise = re.search(r"\bconcise\s*=\s*(\[[^\]]*\])", tools)
         assert concise and ast.literal_eval(concise[1]) == ["name", "status"]
     if LIVE:
-        _require_cases(_live(starter, request)["browser"], (ACCESS_FLOW.format(plural="projects"),))
         if starter == "typescript":
             live = feature_live_run(repo, gh, request.getfixturevalue("tmp_path_factory"))
-            require_feature_cases(live["browser"], "jobs.spec.ts", (ACCESS_FLOW.format(plural="jobs"),))
             require_feature_cases(live["api"], "jobs.e2e-spec.ts", (
                 "an agent searches, reads, creates and updates jobs through MCP as its account",
                 "a member agent cannot delete or restore a job through MCP",

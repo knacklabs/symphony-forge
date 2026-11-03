@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "bug\tdocs/specs/lean-forge-v1.md\tThe legacy spec names the third client-app principle differently from the standards, so the standards test stops before checking the logger example.",
+      "kind": "bug",
+      "path": "docs/specs/lean-forge-v1.md",
+      "line": 342,
+      "text": "The legacy spec names the third client-app principle differently from the standards, so the standards test stops before checking the logger example.",
+      "from": "worker",
+      "item": "FORGE-REQLOG-1/GUIDE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_standards.py\tThe page already had 325 lines before this task, above this test's 320-line limit; adding the required bullets leaves this assertion unresolved.",
+      "kind": "bug",
+      "path": "tests/test_standards.py",
+      "line": 34,
+      "text": "The page already had 325 lines before this task, above this test's 320-line limit; adding the required bullets leaves this assertion unresolved.",
+      "from": "worker",
+      "item": "FORGE-REQLOG-1/GUIDE",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
