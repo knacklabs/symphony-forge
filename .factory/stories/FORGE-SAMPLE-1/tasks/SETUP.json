@@ -1,12 +1,20 @@
 {
   "base": "67e9ae7171b4e5226938c192b02e81a31239fea9",
   "branch": "task/FORGE-SAMPLE-1-SETUP",
+  "round": 1,
   "stacked_on": "FORGE-SAMPLE-1/CHECKLIST",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-03T05:03:36.110347+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "a8a6586ba9158ed52e8098f11d9e1ef31d2a82df",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
