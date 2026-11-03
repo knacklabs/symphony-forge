@@ -645,3 +645,8 @@ For a working prototype, the sign-off Proof section lists each demo step and its
 run on main must be green.
 The light review checks only demo breakage, security and data loss. Its model and effort come
 from `[models.light_review]`, or the review model at medium effort when that setting is absent.
+
+<!-- sample-data-proof -->
+## Sample-data proof
+While `sample_data = true`, walk each demo step in a browser and record its result in the `Proof list:`.
+Do not add or run automated tests or CI. This replaces the test and proof instructions above.

@@ -17,6 +17,7 @@ def step_line(top: Path, cfg: dict[str, Any], history: dict[str, Any] | None = N
     ref = story.landed_ref(top)
     brief = story.show(top, ref, "docs/product/BRIEF.md") or ""
     sections = records._sections(re.sub(r"<!--.*?-->", "", brief, flags=re.S))
+    step_name: str | None = None
     if cfg["repo"] == "forge-source":
         number = 5
     elif repo.is_prototype(top, cfg, (ref,)):
@@ -32,6 +33,9 @@ def step_line(top: Path, cfg: dict[str, Any], history: dict[str, Any] | None = N
                 number = 3
             else:
                 number = 4
+    elif repo.sample_data(top, cfg, ref):
+        number = 5
+        step_name = "set up tests"
     else:
         if history is not None:
             completed = history["stories"].values()
@@ -47,7 +51,7 @@ def step_line(top: Path, cfg: dict[str, Any], history: dict[str, Any] | None = N
             number = 6
         else:
             number = 7
-    return f"Step {number} of 7: {STEPS[number - 1]}."
+    return f"Step {number} of 7: {step_name or STEPS[number - 1]}."
 
 
 def started(top: Path, item: str, state: dict[str, Any], kind: str) -> str | None:

@@ -521,6 +521,14 @@ screens last.
 Push back when a requested feature does not serve the problem card: explain why and
 offer to note it for after sign-off. Keep the same app as it grows into production.
 
+If the prototype holds only made-up data and has no back end, ask the person, then have the
+coordinator set `sample_data = true` in `forge.toml`. An existing sign-off record's
+`sample_data: true` still works until this setting is present. Forge skips tests and CI while the
+setting is on; walk the demo steps in a browser. Real data or a back end keeps tests from day one.
+After sign-off, `forge next` shows setting up tests as the first step. In a coordinator-owned fix,
+set the test command and CI checks as needed, then turn off the setting. Close blocks that fix until
+the `Personal data` answer is settled.
+
 For a requested working prototype, build the demo-data loader in the first version, so the customer sees their own kind of
 work instead of empty screens (see demo-data.md). Use the customer's words
 from `## Words they use` in `docs/product/DISCOVERY.md` for screen labels. Tell the salesperson

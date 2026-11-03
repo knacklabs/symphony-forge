@@ -576,12 +576,19 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
                                            repo.config(top)["interfaces"]) or "none",
                       allowance=state.get("allow_large") or "No recorded allowance")
     values["prototype_proof"] = ""
-    if not match["task"] and repo.is_prototype(top):
+    sample_data = not match["task"] and repo.sample_data(top)
+    if sample_data:
+        template = (HERE / "templates" / "brief.md").read_text(encoding="utf-8")
+        values["prototype_proof"] = template.split("<!-- sample-data-proof -->\n", 1)[1].strip()
+        values["test_step"] = ("walk each demo step in a browser and record its result in the `Proof list:`; "
+                                "do not add or run automated tests or CI while `sample_data = true`")
+    elif not match["task"] and repo.is_prototype(top):
         from forge import design
 
         if design.working_build(top, story.landed_ref(top)):
-            values["prototype_proof"] = (HERE / "templates" / "brief.md").read_text(
-                encoding="utf-8").split("<!-- prototype-proof -->\n", 1)[1].strip()
+            template = (HERE / "templates" / "brief.md").read_text(encoding="utf-8")
+            values["prototype_proof"] = template.split("<!-- prototype-proof -->\n", 1)[1].split(
+                "<!-- sample-data-proof -->\n", 1)[0].strip()
     if user_facing:
         on.add("user-facing")
     values["design_context"], owned_design = design_context(top, design_text, user_facing)
@@ -626,10 +633,14 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
         if user_facing:
             brief += "\n" + LIVE_RUN + "\n"
         brief += ("\nBefore you stop, commit your work first, then " + values["test_step"] + "\n")
-        brief += ("\n`forge close` pushes the committed branch and runs CI on every platform. "
-                  "CI output reaches you in your next round. If you need CI evidence, commit and "
-                  "stop instead of asking the coordinator to push or run CI. CI is the merge gate. "
-                  "Commit your local proof in the `Proof list:` without waiting for CI results or timings.\n")
+        if sample_data:
+            brief += ("\nWhile `sample_data = true`, `forge close` does not run tests or CI. "
+                      "Commit your browser-walk results in the `Proof list:`.\n")
+        else:
+            brief += ("\n`forge close` pushes the committed branch and runs CI on every platform. "
+                      "CI output reaches you in your next round. If you need CI evidence, commit and "
+                      "stop instead of asking the coordinator to push or run CI. CI is the merge gate. "
+                      "Commit your local proof in the `Proof list:` without waiting for CI results or timings.\n")
         if note is not None:
             brief += f"\n## From the coordinator\n\n{note}\n"
         if question:

@@ -86,7 +86,7 @@ WHY, DONE = "Let the agent merge this repo's ready pull requests.", 'The default
 
 
 def close(args: argparse.Namespace) -> int:
-    from forge import backfill
+    from forge import backfill, records
     from forge.merge import ENABLE
 
     item = args.item
@@ -242,7 +242,7 @@ def close(args: argparse.Namespace) -> int:
     task.restore_default_settings(item, top, state, default)
     repo.resume_pin(top, cfg["version"], getattr(args, "land_rounds", None), accepted=choice == "accept",
                     before=getattr(args, "pin_before", None))
-    cfg = repo.config(top)
+    cfg = records.sample_data_off(top, item)
     local_tests = cfg["test_place"] == "local"
     if not local_tests and "tests" in state:
         state.pop("tests")
@@ -493,7 +493,7 @@ def close(args: argparse.Namespace) -> int:
     tmp.write_text(json.dumps(ready) + "\n", encoding="utf-8")
     os.replace(tmp, path)
     _publish(top, item, state, branch, default, pr, result, evidence)
-    proof = "its tests passed on this machine" if local_tests else "green checks"
+    proof = "no tests or CI in sample-data mode" if repo.sample_data(top, cfg) else "its tests passed on this machine" if local_tests else "green checks"
     if merge == "agent":
         print(f"Ready: {item} has a clean review and {proof}.")
         print(f"Next: forge merge {item}")
