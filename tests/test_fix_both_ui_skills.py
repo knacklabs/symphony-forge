@@ -2,6 +2,9 @@
 
 import json
 import os
+import shutil
+
+from conftest import patient
 
 from test_close import env  # noqa: F401 (pytest fixture)
 from test_setup import _autoreview, _executable, _fresh_client, _stub_forge
@@ -69,6 +72,16 @@ def test_3_doctor_requires_both_ui_skills_where_the_worker_reads_them(repo, gh, 
     config = client / "forge.toml"
     config.write_text(config.read_text("utf-8").replace('workers = "split"',
                                                        'workers = "claude"', 1), "utf-8")
+    # Client init now supplies both skills. Preserve this global-folder placement contract in
+    # Forge's own repo, where sync deliberately supplies neither skill.
+    repo.git("checkout", "-q", "-b", "fix/global-design-skills", cwd=client)
+    config.write_text(config.read_text("utf-8").replace(
+        'repo = "client"', 'repo = "forge-source"'), "utf-8")
+    synced = repo.forge("sync", cwd=client)
+    assert synced.returncode == 0, synced.stdout + synced.stderr
+    for host in (".claude", ".codex"):
+        for name in ("impeccable", "emil-design-eng"):
+            patient(lambda: shutil.rmtree(client / host / "skills" / name))
     gh.respond("auth", "status")
     _autoreview(tmp_path, monkeypatch)
     _stub_forge(tmp_path, monkeypatch)
