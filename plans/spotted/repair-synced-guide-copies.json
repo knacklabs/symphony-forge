@@ -1,0 +1,37 @@
+{
+  "items": [
+    {
+      "key": "bug\ttests/test_tools_guide.py\tThe checked-in coordinator guides differ from the shipped template.",
+      "kind": "bug",
+      "path": "tests/test_tools_guide.py",
+      "line": 16,
+      "text": "The checked-in coordinator guides differ from the shipped template.",
+      "from": "worker",
+      "item": "many-land-runs-each-poll-github-for-chec",
+      "status": "done",
+      "closed_by": "repair-synced-guide-copies"
+    },
+    {
+      "key": "bug\ttests/test_tools_guide.py\tThe checked-in guides lack the incoming batch CI repair guidance and fail the guide check.",
+      "kind": "bug",
+      "path": "tests/test_tools_guide.py",
+      "line": 16,
+      "text": "The checked-in guides lack the incoming batch CI repair guidance and fail the guide check.",
+      "from": "worker",
+      "item": "FORGE-STACK-1/CLOSE",
+      "status": "done",
+      "closed_by": "repair-synced-guide-copies"
+    },
+    {
+      "key": "bug\ttests/test_tools_guide.py\tThe tool guide test fails in Linux group six; the job output omits its assertion details.",
+      "kind": "bug",
+      "path": "tests/test_tools_guide.py",
+      "line": 7,
+      "text": "The tool guide test fails in Linux group six; the job output omits its assertion details.",
+      "from": "worker",
+      "item": "approval-commit-title",
+      "status": "done",
+      "closed_by": "repair-synced-guide-copies"
+    }
+  ]
+}

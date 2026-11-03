@@ -346,6 +346,15 @@ def doctor(args: argparse.Namespace) -> int:
     for tool in ("git", "gh", "uv"):
         if not shutil.which(tool): add(f"{tool} is not installed or not on PATH.", INSTALL[tool])
     if shutil.which("gh") and repo.run("gh", "auth", "status", cwd=top).returncode: add("gh is not signed in to GitHub.", "gh auth login")
+    if cfg["tools"] == "claude" and (claude := shutil.which("claude")):
+        try:
+            status = subprocess.run([claude, "auth", "status"], cwd=top, input="",
+                                    capture_output=True, text=True, encoding="utf-8", timeout=15)
+            auth = json.loads(status.stdout)
+            if isinstance(auth, dict) and auth.get("loggedIn") is False:
+                add("Claude is not signed in.", "run claude and sign in")
+        except (OSError, subprocess.TimeoutExpired, ValueError):
+            pass  # An unavailable status check is not evidence of missing sign-in.
     if needs_sdk and (problem := sdk_failed or codex.sdk_problem()): add(problem)
     needs_claude_sdk = workers != "codex" and not os.environ.get("CLAUDECODE")
     claude_failed = ""

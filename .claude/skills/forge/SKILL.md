@@ -993,9 +993,10 @@ An open upgrade or local work still refuses and stays in place. Ignored configur
 also stay in place; only recognized cache directories may be discarded.
 
 1. Ask which release to move to, recommending the newest.
-2. Wait until no Forge runs are in progress anywhere on the machine. Let workers, plan reads,
-   tests and close finish first. An install during a close can mix two releases.
-   `forge upgrade` names the items in the machine's lanes and asks you to wait if any remain.
+2. If the target release differs from the release on PATH, wait until no Forge runs are in
+   progress anywhere on the machine. An install during a close can mix two releases.
+   `forge upgrade` names those runs and asks you to wait. If the target release is already on
+   PATH, upgrade skips the install and continues while other runs remain in progress.
 3. Run `forge upgrade <release>` in the main checkout, on the default branch. It installs the
    release, has that release refresh Forge's files in the fix, commits them and closes the fix.
    Its commit includes the upgrade's proof list; close reports tests and review results together.
