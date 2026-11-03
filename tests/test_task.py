@@ -122,9 +122,11 @@ def test_16_task_start(repo):
     started = repo.forge("task", "start", "BOARD/PAGE")
     assert started.returncode == 0, started.stderr
     folder = repo.path.parent / "repo-BOARD-PAGE"
-    first, second = started.stdout.splitlines()
+    # The approved size rule adds a reminder between the existing start and next lines.
+    first, reminder, second = started.stdout.splitlines()
     assert first.startswith("Started BOARD/PAGE on task/BOARD-PAGE in ")
     assert Path(first.split(" in ", 1)[1]).resolve() == folder.resolve()
+    assert reminder == "Keep this part to about 400 changed lines outside tests and docs; close only warns when it is larger."
     assert second == "Next: forge work BOARD/PAGE"
     assert repo.git("branch", "--show-current", cwd=folder) == "task/BOARD-PAGE"
     assert repo.git("rev-parse", "task/BOARD-PAGE~1") == repo.git("rev-parse", "story/BOARD")

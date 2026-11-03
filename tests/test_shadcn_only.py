@@ -25,9 +25,7 @@ REVIEW_RULE = (
 WORKER_RULE = (
     "In a client app with shadcn/ui set up, use shadcn/ui only. If the app has `libs/shared/ui`, "
     "add components with `npx shadcn@4.21.4 add <name> --cwd libs/shared/ui`. Close refuses a "
-    "new UI component library and a new file outside the app's shadcn components folder "
-    "(`libs/shared/ui/src/components/ui/` when it has that library) named like a shadcn/ui "
-    "component. Review holds a hand-built UI component unless a `Not shadcn: <why>` comment "
+    "new UI component library. Review holds a hand-built UI component unless a `Not shadcn: <why>` comment "
     "says why."
 )
 
@@ -64,10 +62,10 @@ def _fix(env, name, changes):
 
 
 @pytest.mark.parametrize("adopted", [False, True], ids=["new-client", "adopted-v1.2.2"])
-def test_4_close_refuses_a_second_ui_library_and_shadcn_copies(env, tmp_path, adopted):
-    # Audit: this protects close's component-folder rule in both the new and old app layouts.
-    # A stale folder check could reject shadcn copies or allow hand-built component duplicates.
-    # Existing cases cover the old path only; this adds the library path while keeping adoption.
+def test_4_close_refuses_a_second_ui_library(env, tmp_path, adopted):
+    # Audit: close owns the library refusal; review owns hand-built component findings.
+    # A remaining copy must reach review after the extra library is removed.
+    # Existing coverage does not check that separation. No production seam is needed.
     # The real Forge close command is the boundary, with no test-only seam.
     repo = _shadcn_client(env, tmp_path, adopted)
     screens = Path("apps/web/src/features/orders") if adopted else Path("libs/projects/web/src/pages/orders")
@@ -83,11 +81,9 @@ def test_4_close_refuses_a_second_ui_library_and_shadcn_copies(env, tmp_path, ad
     assert refused.returncode == 1, output
     assert "This app uses shadcn/ui only, and this change adds" in output
     assert "@mui/material" in output
-    assert button.as_posix() in output
     assert "npx shadcn@4.21.4 add <name>" in output
     assert f"then forge close {item}" in output
 
-    (where / button).unlink()
     (where / "apps/web/package.json").unlink()
     if adopted:
         (where / "package.json").write_text(

@@ -1,0 +1,71 @@
+{
+  "branch": "task/FORGE-PARTWARN-1-SIZE",
+  "chat": {
+    "approval": "96650b49918f4a7a8406890c308180380f318f06f2aa7923113e75ea87860eff",
+    "claude": null,
+    "conversation": "01a19ea1-11b9-7b90-9d36-681cf4d0860f",
+    "head": null,
+    "start": "ffe20facee5f5adff73b04401568a28ca6eb7af1"
+  },
+  "known": [
+    {
+      "area": "remote_state() in src/forge/nextstep.py",
+      "file": "src/forge/nextstep.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 882,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: A story approved before this change shows its next step with no size question",
+      "work": 2
+    }
+  ],
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "9e336e0af4ae7680b9472aa182f472b8caa023d75c0c9573567503195d1c969c",
+    "changed": "4e4783d6dec4d81cc26ea363ae631b43c6d879872468828013eb69e1d7bfa895",
+    "commit": "ac77139a71bb2b2f9c5faeb6d8d10b869bca40fa",
+    "dismissals": [],
+    "findings": [],
+    "id": "3831a0ac-e1ab-4448-932b-6292966cc26e",
+    "status": "clean"
+  },
+  "round": 5,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-02T23:38:02.907374+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-03T00:33:22.881189+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-03T00:57:43.229461+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-03T01:35:24.288584+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-03T02:03:21.606921+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-03T02:45:05.388477+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "24ff0d68-7595-4d56-9a8f-efca0b3487e9",
+    "head": "78fdcf10b378e1c09a0eff5b43c273014eb0eb77",
+    "keys": {},
+    "round": 4
+  },
+  "worker": "codex"
+}

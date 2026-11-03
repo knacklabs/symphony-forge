@@ -503,13 +503,13 @@ def start(args: argparse.Namespace) -> None:
     base = stacked or start_base(main, key, tasks[task])
     carry = (source, [rel for rel in (doc_rel, notes_rel, state_rel, design_folder) if rel and show(source, rel) is not None]
              ) if source != base else None
-    # Earlier approvals keep their agreed parts, including ones not started yet.
-    state = {"part_line_limit": approval["part_line_limit"]} if approval.get("part_line_limit") else {}
+    state = {}
     if stacked:
         state.update(stacked_on=blockers[0], base=git("rev-parse", stacked))
     path = _new_checkout(item, branch, f"{key}-{task}", base, state, f"Start {item}", carry)
     on = f" on top of {blockers[0]}" if stacked else ""
     print(f"Started {item}{on} on {branch} in {path}")
+    print("Keep this part to about 400 changed lines outside tests and docs; close only warns when it is larger.")
     print(f"Next: forge work {item}")
 
 

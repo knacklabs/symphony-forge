@@ -528,6 +528,12 @@
       "title": "Hand over client work to another machine",
       "status": "pending",
       "order": 110
+    },
+    {
+      "key": "FORGE-PARTWARN-1",
+      "title": "Warn instead of stop for story parts over 400 lines",
+      "status": "pending",
+      "order": 111
     }
   ],
   "epics": [
