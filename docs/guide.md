@@ -83,9 +83,14 @@ the problem, say why and offer to note it for after sign-off.
 Client repos get pinned copies of impeccable and emil-design-eng with their licences at init and sync, with or without a web app; both laptop installers install them too.
 Make each app's design from the whole brief: its purpose, users, records, fields, choice-list
 options and key flows. Run impeccable's init when PRODUCT.md is missing. Use impeccable and
-emil-design-eng to shape and review the design. Make a Claude Design artifact with a shadcn design
-system and named shadcn components. On a Codex-only host without artifact tools, use HTML artboards
-in the repo. Keep the canvas available to show the customer at the demo. New clients
+emil-design-eng to shape and review the design when making it through Forge.
+Any way of making the design works, through Forge or separately. Keep one link in `## Design`
+in the brief; it need not be saved in the repo. A UI fix needs no saved design images.
+When using Forge, use a shadcn design system and named shadcn components.
+Before the demo, read the linked design when the host can and compare its screen list with the app.
+If the link cannot be read, use saved design pages, or ask the person for the screen list.
+Say plainly that the design was not read; missing access or saved pages never refuses sign-off.
+Keep the design available to show the customer at the demo. New clients
 get this process at init; existing clients can use the brief and design they have after upgrade and
 sync. Client sign-off does not require a root DESIGN.md, SCREENS.md or CHECKS.md, or a specific
 `Things it keeps track of` heading.

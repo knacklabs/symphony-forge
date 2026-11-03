@@ -528,6 +528,12 @@
       "title": "Hand over client work to another machine",
       "status": "pending",
       "order": 110
+    },
+    {
+      "key": "FORGE-SAMPLE-1",
+      "title": "Sample-data prototypes get a light sign-off",
+      "status": "pending",
+      "order": 112
     }
   ],
   "epics": [
