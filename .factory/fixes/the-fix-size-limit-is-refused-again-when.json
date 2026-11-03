@@ -22,8 +22,8 @@
     "id": "8ca8bd49-324b-4252-bf58-8fca8bdfcacc",
     "status": "clean"
   },
-  "round": 1,
-  "status": "waiting for checks",
+  "round": 2,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-02T17:45:05.124445+00:00",
@@ -35,10 +35,10 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "136af77671c12795e4dad258b5a1a6bc4339bf5f",
+    "close": "846cf1d5-d2c7-4b76-8f48-67d2d22f957f",
+    "head": "a94afea3c49a76b874b7e4d7fa22373f4a2779a6",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "The fix size limit is refused again when a branch is pushed, and the close check for copied shadcn/ui components repeats a review rule, so one problem gets more than one refusal.",
   "worker": "codex"
