@@ -631,6 +631,11 @@ default or agent as its source. Record an open request as
 `- <Topic>: ask the client (<who asked>, <date>)`; replace it with the sourced answer when the
 client replies. Only a may-wait topic can read `- <Topic>: later, when <trigger>`.
 
+In a prototype, `forge next` and the board show one line, such as "Sign-off: 3 open questions, signer
+Sam Lee", and when nothing else is in progress, a checklist under it. Each item names the phrase that
+fixes it: when the client answers, say `The client answered <item>: <answer>`, then record the answer
+in the brief in a normal fix. A `not known yet` answer is not listed, except Personal data.
+
 **Canvas and app design.** Make each app's design from the whole `docs/product/BRIEF.md`: its
 purpose, users, records, fields, choice-list options and key flows. Use impeccable and
 emil-design-eng when making it through Forge. Any way of making the design works, through Forge

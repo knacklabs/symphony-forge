@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "improve\tsrc/forge/nextstep.py\topen_must_answer_topics treats a \"not known yet\" Personal data answer as settled, while the plan wants it open at the close that turns sample_data off; SETUP owns that.",
+      "kind": "improve",
+      "path": "src/forge/nextstep.py",
+      "line": 109,
+      "text": "open_must_answer_topics treats a \"not known yet\" Personal data answer as settled, while the plan wants it open at the close that turns sample_data off; SETUP owns that.",
+      "from": "worker",
+      "item": "FORGE-SAMPLE-1/CHECKLIST",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
