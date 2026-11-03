@@ -10,6 +10,17 @@
       "item": "FORGE-NOSCREENS-1/AUTHPY",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/starter-python/eslint.config.mjs\tApp lint scans bundled agent skills and stops the live Python smoke checks on vendor JavaScript errors.",
+      "kind": "bug",
+      "path": "src/forge/templates/starter-python/eslint.config.mjs",
+      "line": 7,
+      "text": "App lint scans bundled agent skills and stops the live Python smoke checks on vendor JavaScript errors.",
+      "from": "worker",
+      "item": "FORGE-NOSCREENS-1/AUTHPY",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
