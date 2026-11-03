@@ -1,3 +1,4 @@
+/* eslint-disable */
 /**
  * Browser-side DOM helpers for Impeccable live mode.
  *

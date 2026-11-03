@@ -1,0 +1,71 @@
+{
+  "base": "9fe77734b05db772714d5dc40fe4e8486c5b466f",
+  "branch": "fix/skill-scripts-pass-client-lint",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a19fab-8126-7400-8283-9cd366e1e3da",
+    "head": null,
+    "start": "97e7278a3a7ad8f383b83e1b2528d7980ece07d5"
+  },
+  "done_when": "After forge init or forge sync, eslint . reports no problems from the shipped skill scripts in a new app from either starter and in an existing repo whose own eslint config has no ignore for them, and the scripts still run",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "src/forge/templates/skills/impeccable/scripts/live-browser-session.js",
+      "file": "src/forge/templates/skills/impeccable/scripts/live-browser-session.js",
+      "gain": 3,
+      "harm": 1,
+      "line": 1,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: eslint . still reports problems from shipped skill scripts",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "02f1ef0845b84a95b5166a9183896dbc5238eed73b41b5864e4ff3260fa98aca",
+    "changed": "f66f7a0c17f3f757278a95d04fdf3db0dcd541efdd36891e164839d73264bd8f",
+    "commit": "446496b8a726f8479ecdcf10f419e0b2fc2a5c6c",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 2, Harm 1\nRaise: Not done.\nCase: normal use - initialize an app from either starter and run eslint . with its generated configuration.\n\nThe new blanket disable produces an unused-disable warning in live-browser-session.js and live-browser-ignores.js, in both host copies. These helpers otherwise satisfy the starters' rules and browser/node globals (src/forge/templates/starter/eslint.config.mjs:9\u201311 and starter-python/eslint.config.mjs:8\u201310). [ESLint 9.38 defaults to reporting unused disable directives](https://raw.githubusercontent.com/eslint/eslint/v9.38.0/lib/config/default-config.js), so the promised absence of problems remains unmet even though warnings normally leave the exit status zero. This is additional evidence not addressed by the coordinator's recommendation to annotate all five files.\n\nThe regression misses this because tests/test_shipped_scripts_lint.py:38 replaces both starter configurations with one lacking browser globals: its artificial window errors make these disable comments appear necessary. Preserve the real starter configurations when checking this case and address the unused directives.",
+        "file": "src/forge/templates/skills/impeccable/scripts/live-browser-session.js",
+        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
+        "gain": 3,
+        "harm": 1,
+        "line": 1,
+        "priority": "P1",
+        "title": "Not done: eslint . still reports problems from shipped skill scripts",
+        "work": 2
+      }
+    ],
+    "id": "4c872f1c-c8a8-4caf-bf59-6e81f1fc63cb",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-03T04:29:23.030289+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-03T04:35:25.199691+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "532dc11d17fcaf17a976e86fc304a6ab77e6e5fe",
+    "keys": {},
+    "round": null
+  },
+  "why": "The impeccable skill's five JavaScript files, shipped into .claude and .codex by sync, make eslint . fail with 246 errors in new apps from both starters and in any existing client repo that lints its whole tree",
+  "worker": "codex"
+}
