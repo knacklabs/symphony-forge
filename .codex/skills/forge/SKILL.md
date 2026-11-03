@@ -638,10 +638,11 @@ in the brief in a normal fix. A `not known yet` answer is not listed, except Per
 
 **Canvas and app design.** Make each app's design from the whole `docs/product/BRIEF.md`: its
 purpose, users, records, fields, choice-list options and key flows. Use impeccable and
-emil-design-eng. Run impeccable's init when PRODUCT.md is missing. Make the screens in a Claude
-Design artifact with a shadcn design system and named shadcn components. On a Codex-only host
-without an artifact tool, make HTML artboards in the repo. Keep the canvas available for the
-customer and the sign-off review. New clients get this process at init; existing clients can use
+emil-design-eng when making it through Forge. Any way of making the design works, through Forge
+or separately. Keep one link to it in `## Design` in the brief; it need not be saved in the repo.
+When using Forge, run impeccable's init when PRODUCT.md is missing, and use a shadcn design
+system and named shadcn components. Keep the design available for the
+customer and the sign-off review. A UI fix needs no saved design images. New clients get this process at init; existing clients can use
 their current brief and design after upgrade and sync. Client sign-off does not require a root
 DESIGN.md, SCREENS.md or CHECKS.md, or a specific `Things it keeps track of` heading.
 When the canvas has a SCREENS.md screen list, add `Build: now` or `Build: later` to each screen.
@@ -671,9 +672,11 @@ client-signoff` (customer, demo address for a working build, and the answers pag
 approved via and approved on empty), and run `forge decision accept client-signoff --by "<name>"`
 before any reply is recorded. Put each demo step and its test under `## Proof` for a working build,
 and settled choices under `## Decisions`.
-Before the demo, the Claude agent reads the design artifact and lists its screens.
-It compares them with the app, then builds what is missing or tells the person.
-On a Codex-only host, compare the app with the design pages saved in the repo.
+Before the demo, read the design from the brief's link when the host can and list its screens.
+Compare them with the app, then build what is missing or tell the person.
+If the host cannot read the link, use the design pages saved in the repo, or ask the person
+for the screen list when there are no saved pages. Say plainly that the design was not read.
+Missing access or saved pages never refuses the demo or sign-off.
 Sign-off checks that the copied Answers section matches `docs/product/BRIEF.md` and that the full
 run on main is green. When a precondition is
 missing, the refusal lists every gap and the next action for each. Existing clients can complete
