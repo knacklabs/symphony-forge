@@ -1,6 +1,13 @@
 {
   "base": "67e9ae7171b4e5226938c192b02e81a31239fea9",
   "branch": "task/FORGE-SAMPLE-1-SETUP",
+  "chat": {
+    "approval": "4e15298f84b3bf2da57eaaa3a529c1d3ae30604d1bbea3b33d6dd16f1efab4f4",
+    "claude": null,
+    "conversation": "01a19fca-b798-7363-8f9b-c6e885d8f670",
+    "head": null,
+    "start": "5c9c545ff85067b13d035984d471b07fff14404c"
+  },
   "round": 1,
   "stacked_on": "FORGE-SAMPLE-1/CHECKLIST",
   "status": "working",
