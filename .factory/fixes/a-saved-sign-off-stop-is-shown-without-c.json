@@ -11,12 +11,27 @@
   "done_when": "The sign-off stop is shown only for findings still open on the latest commit, and a version-only upgrade keeps the last green full test run.",
   "fix_kind": "backend",
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "60ad754755b8ecf3a9e9d3a66566bd8dc58ce83f62c4aec1e4a7d5a0c8fa9b32",
+    "changed": "b53ab70a91f285f7a5127844375c5d5d38f9b31b0f59c3feaba214e27f6c11c9",
+    "commit": "9572ea7a693c6be18903da63ff7da397efe35250",
+    "dismissals": [],
+    "findings": [],
+    "id": "5430839a-c76c-4a92-a48c-a62182c39306",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-02T17:44:22.842155+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-03T02:11:19.764863+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
