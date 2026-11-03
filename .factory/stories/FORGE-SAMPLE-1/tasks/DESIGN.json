@@ -2,12 +2,20 @@
   "base": "0fe0b5c8536b2f965867238f29d0f08e06e9fd56",
   "branch": "task/FORGE-SAMPLE-1-DESIGN",
   "part_line_limit": 400,
+  "round": 1,
   "stacked_on": "FORGE-PARTWARN-1/SIZE",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-03T01:38:42.614668+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "f7eac848861c330e4c8cb27b6dc5dd593a20c254",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
