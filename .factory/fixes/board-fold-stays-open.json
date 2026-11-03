@@ -4,12 +4,20 @@
   "done_when": "An open For the builders section on a story page stays open across board refreshes until the person closes it",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-03T08:26:55.661738+00:00",
       "step": "start"
     }
   ],
-  "why": "The board's auto-refresh closes the For the builders section on a story page while a person reads it (bug 1332)"
+  "stuck": {
+    "close": null,
+    "head": "edfec0bf1580dfec0cbc2ec9654cc395d70982dc",
+    "keys": {},
+    "round": null
+  },
+  "why": "The board's auto-refresh closes the For the builders section on a story page while a person reads it (bug 1332)",
+  "worker": "codex"
 }
