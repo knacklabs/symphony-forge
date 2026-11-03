@@ -172,7 +172,8 @@ def _assert_python_api_output(
     assert all(filter_match and repr(plural) in filter_match[1] for filter_match in filters)
     revisions = {}
     migration_dir = client / "apps/api/migrations/versions"
-    for path in migration_dir.glob("[0-9][0-9][0-9][0-9]_*.py"):
+    # Dated revisions also belong to the ancestry, but not the feature sequence.
+    for path in migration_dir.glob("[0-9]*_*.py"):
         module = ast.parse(path.read_text("utf-8"), filename=str(path))
         assignments = {}
         for node in module.body:
@@ -193,7 +194,8 @@ def _assert_python_api_output(
     prior_revisions = {revision: parent for revision, parent in prior.values()}
     prior_parents = {parent for parent in prior_revisions.values() if parent is not None}
     [current_head] = set(prior_revisions) - prior_parents
-    next_number = max(int(path.name[:4]) for path in prior) + 1
+    next_number = max(int(match[1]) for path in prior
+                      if (match := re.match(r"(\d{4})_", path.name))) + 1
     assert int(migration_path.name[:4]) == next_number
     assert generated_revision not in prior_revisions
     assert generated_parent == current_head
