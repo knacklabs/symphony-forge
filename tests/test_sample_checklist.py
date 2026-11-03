@@ -107,3 +107,13 @@ def test_6_signoff_status_and_open_items_show_in_next_and_on_the_board(repo, gh,
                       encoding="utf-8")
     assert board() == {"line": "", "open": []}
     assert "Sign-off:" not in repo.forge("next", cwd=client).stdout
+
+
+@pytest.mark.platform
+def test_6_a_repo_with_no_forge_toml_has_an_empty_signoff(repo):
+    """The board and forge next --json still work where there is no settings file."""
+    (repo.path / "forge.toml").unlink(missing_ok=True)
+    for command in (("board", "--json"), ("next", "--json")):
+        shown = repo.forge(*command)
+        assert shown.returncode == 0, shown.stdout + shown.stderr
+        assert json.loads(shown.stdout)["signoff"] == {"line": "", "open": []}
