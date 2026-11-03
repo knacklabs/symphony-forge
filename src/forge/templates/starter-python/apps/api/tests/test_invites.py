@@ -179,7 +179,9 @@ def test_an_admin_invites_a_person_by_email_who_joins_the_organisation(
             headers={"x-csrf-token": member_csrf},
             json={"name": "Updated member project", "status": "archived"},
         )
-        assert updated.status_code == 200, updated.text
+        # Members can create and view their projects, but cannot edit them.
+        assert updated.status_code == 403, updated.text
+        assert updated.json()["error"]["code"] == "PERMISSION_DENIED"
         deleted = member.delete(
             f"/api/v1/projects/{project_id}",
             headers={"x-csrf-token": member_csrf},
@@ -189,8 +191,8 @@ def test_an_admin_invites_a_person_by_email_who_joins_the_organisation(
         projects = member.get("/api/v1/projects?limit=20&sortBy=name&sortOrder=asc")
         assert projects.status_code == 200, projects.text
         assert [item["name"] for item in projects.json()["data"]["items"]] == [
+            "Member project",
             "Shared project",
-            "Updated member project",
         ]
 
 
