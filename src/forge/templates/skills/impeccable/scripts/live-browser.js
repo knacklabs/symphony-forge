@@ -1,3 +1,4 @@
+/* eslint-disable */
 /**
  * Impeccable Live Variant Mode - Browser Script
  *
