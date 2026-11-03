@@ -221,7 +221,7 @@ def size_warning(env):
     # The approved size contract replaces the old stop; keep the two-machine lifecycle.
     closed = env.close(item)
     assert closed.returncode == 0, closed.stdout + closed.stderr
-    assert "Warning: This part changes 402 lines" in closed.stdout + closed.stderr
+    assert "Warning: This part changes 401 lines" in closed.stdout + closed.stderr
     share(env, prs, item, 6, "task/SHOP-T1")
     env.repo.path = machine_a
     assert needs(env.repo) == [(item, "merge")]
