@@ -1,6 +1,13 @@
 {
   "base": "03566c13cbe5b17271277c76c0c619884e376462",
   "branch": "fix/release-1-2-28",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1a173-d746-7c93-aa14-aa928077b670",
+    "head": null,
+    "start": "a1c0fa0a4242ec37c0049b866b9e553c397a4a5a"
+  },
   "done_when": "Every version reference names v1.2.28, forge sync output is committed, and the version tests pass",
   "fix_kind": "mechanical",
   "kind": "fix",
