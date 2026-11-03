@@ -14,7 +14,7 @@
       "gain": 4,
       "harm": 3,
       "line": 98,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -25,27 +25,16 @@
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "2235ff9a4f01a3fa3ee3b5f81dd476e4793a9d7cf2eed3bd6f0ef7dd0eea12a0",
-    "changed": "587cd0f1d086eb961090afaf15718d77e37f6d33d3d5b89cf48dec436d2a4a6d",
-    "commit": "0fafb8013d55862701a9cd79a860603b6f543e30",
+    "branch_diff": "66289da2687cfa669143af457156a325524153997a03bed6f6915d771a46136d",
+    "changed": "8ee53d809e1238577373862c1f0752a67ae0fe49178860246a9e554540038415",
+    "commit": "c300fb35d8e37abc23f5e4c0a028f1c622f10661",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - an agent builds the basic screens and enables their shipped browser rules.\nThese schemas return `inviteUrl` and `resetUrl`, but Python apps inherit the shared browser specs through `src/forge/init.py:165\u2013166`. Those specs read `data.link` in `accept-invite.spec.ts:26\u201328`, `reset-password.spec.ts:23\u201325`, and `members.spec.ts:73\u201377,176\u2013180`. Consequently, invite and reset tests receive undefined links and fail even with correctly implemented screens. The sibling sign-in rule at `sign-in.spec.ts:46\u201348` also requires a 429 and lock-specific message, whereas the changed service returns the neutral 401 at `auth/service.py:315\u2013317`. Update the shared rule specs to match the delivered API contracts, preserving the neutral refusal behavior.",
-        "file": "src/forge/templates/starter-python/apps/api/app/auth/schema.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 98,
-        "priority": "P1",
-        "title": "Gate: shipped browser rules disagree with the Python API",
-        "work": 2
-      }
-    ],
-    "id": "fc10b040-8085-4ba4-bb94-64c2b2d7f628",
-    "status": "blocked"
+    "findings": [],
+    "id": "9cf99d3b-77a3-4b30-85cd-8254d111df80",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-02T18:49:52.746962+00:00",
@@ -53,6 +42,10 @@
     },
     {
       "at": "2026-11-03T04:11:26.553451+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-03T04:14:16.501818+00:00",
       "step": "review"
     }
   ],
