@@ -1,6 +1,13 @@
 {
   "base": "618a2c0c8fbebb26c755dbdbfcec2c86d9213371",
   "branch": "fix/repair-synced-guide-copies",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1a0ae-3a43-79e2-a694-6362781907ff",
+    "head": null,
+    "start": "f9d05e5f444c047c3e8f6a9231e5e8b8745cd1e1"
+  },
   "done_when": "tests/test_tools_guide.py::test_9 passes on main, and both synced guide copies equal the template",
   "fix_kind": "mechanical",
   "kind": "fix",
