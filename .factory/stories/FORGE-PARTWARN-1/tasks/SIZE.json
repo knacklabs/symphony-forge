@@ -7,13 +7,54 @@
     "head": null,
     "start": "ffe20facee5f5adff73b04401568a28ca6eb7af1"
   },
+  "known": [
+    {
+      "area": "remote_state() in src/forge/nextstep.py",
+      "file": "src/forge/nextstep.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 882,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: A story approved before this change shows its next step with no size question",
+      "work": 2
+    }
+  ],
   "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "7619d9816d010d61f27b56d04e7884e24bf9ab844fd7df01062e7130000794c7",
+    "changed": "1295817b0bbfbd8c5d7b041ad6767d71f53f861b92934c731081f09059273e1f",
+    "commit": "b3827b62ad59f573646a8a9d82477d0f435a7e07",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 2\nRaise: Not done.\nCase: normal use - viewing a published part with an old size stop and no local branch or checkout.\nThe filtering here is undone by `at_ref`: `src/forge/nextstep.py:938-939` rereads the published state without `without_size_stop` and replaces the filtered state. With no local branch, its early return at line 936 does not apply. Consequently, `_item` displays the old question and `forge close ... --resolve` instruction again. The board also calls `at_ref` (`src/forge/board.py:397`), restoring the same obsolete owner question. Apply the normalization to this final state read too. This leaves Done-when 3 unmet for the published-state scenario already covered by `test_5_a_saved_size_stop_shows_no_question_from_published_state`.",
+        "file": "src/forge/nextstep.py",
+        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
+        "gain": 4,
+        "harm": 2,
+        "line": 882,
+        "priority": "P1",
+        "title": "Not done: A story approved before this change shows its next step with no size question",
+        "work": 2
+      }
+    ],
+    "id": "d6370ac6-76da-4810-a2dc-8edd906ffafa",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-02T23:38:02.907374+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-03T00:33:22.881189+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
