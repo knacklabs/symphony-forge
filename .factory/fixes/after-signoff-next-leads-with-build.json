@@ -36,8 +36,8 @@
     "id": "84e81d07-a05f-4194-8a2f-48f463c867fa",
     "status": "clean"
   },
-  "round": 2,
-  "status": "waiting for checks",
+  "round": 3,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-03T04:36:47.558445+00:00",
@@ -62,10 +62,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": "a5db84b3-a1c3-44ed-8fb6-115c21f1047e",
-    "head": "091322d9b5e5733879c9fbddd20ae3f35cbbcef9",
+    "close": "e202bd38-2970-481b-ab72-118f58839ff6",
+    "head": "d5bbdf053248eb31346342986c96c9535e09c965",
     "keys": {},
-    "round": 1
+    "round": 2
   },
   "why": "After an accepted sign-off, forge next leads with repair work on prototype files and does not say the app constitution comes next (bug 1310)",
   "worker": "codex"
