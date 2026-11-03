@@ -1112,9 +1112,7 @@ recording succeeds; if the repo pins a newer release, install that pinned releas
   and none for settings, docs, deletions or test-only items: the check the item names proves those.
 - Keep tasks small: at most three Done-when items and about 400 changed lines each, counting
   additions and removals outside tests, Markdown files, docs/, plans/ and .factory/.
-  Close stops a part over 400 lines before review;
-  split it, or record an allowance with a reason by running `forge fix allow-large "<reason>"`
-  in the part's folder, the same way fixes work. Stories approved before this limit keep working.
+  Forge prints the rule when a part starts and close warns when a part is larger; split large parts when you plan them.
 - Keep each part's builder notes to its goal, files and one test per rule.
 - When a plan adds a new feature to a TypeScript or Python starter app, name its plural,
   singular and fields in the builder notes, and give the worker's first-step command:
@@ -1931,7 +1929,7 @@ bar, a disposition with the scores in its reason for one below it, and the stop 
 stop. Approval and merge steps stay the owner's.
 
 When two rounds in a row leave close's tests failing or the same P0 open, `forge work`
-stops the item. Close also stops a story part that grows past its line limit. Either prints a
+stops the item. It prints a
 ready-to-ask question: what the item delivers, what is stuck, what the worker tried, and the
 choices. Ask the owner exactly that question. Record the choice with
 `forge close <item> --resolve <switch|same|narrow|split> --reason "<human's choice>"`, then

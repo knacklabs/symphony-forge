@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "edge\tsrc/forge/nextstep.py\tNot done: A story approved before this change shows its next step with no size question",
+      "kind": "edge",
+      "path": "src/forge/nextstep.py",
+      "line": 882,
+      "text": "Not done: A story approved before this change shows its next step with no size question",
+      "from": "review",
+      "item": "FORGE-PARTWARN-1/SIZE",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
