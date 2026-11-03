@@ -1882,8 +1882,9 @@ other refusals' next actions instead of repeatedly retrying them.
 
 A worker or review notes problems outside its change as spotted items, which Forge keeps in
 spotted records and nobody edits by hand. A spotted item never widens the change in hand,
-except a bug that blocks it. When `forge next` names a file that keeps breaking, start its fix
-command at once, like any ready item, without asking the owner.
+except a bug that blocks it. Follow the first step from `forge next` before other ready fixes.
+When it names a file that keeps breaking, start its fix command without asking the owner.
+Problems noted before accepted client sign-off no longer count towards these lines.
 When `forge next` says the latest scheduled run of the default branch failed, it names the
 failed jobs and tests; start its fix command the same way, or follow the step it gives for the
 fix already started.
