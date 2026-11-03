@@ -90,7 +90,7 @@ function facts(snapshot) {
     || row.time_breakdown.nothing_running != null);
   const ids = new Set([...stories.filter(mine), ...cards].map((row) => row.id));
   return {
-    viewer, stages,
+    viewer, stages, signoff: snapshot.signoff || { line: '', open: [] },
     asks: snapshot.team.needs_you.filter((ask) => viewer === null || ids.has(ask.id)),
     merged: viewer === null ? (kind === 'all' ? counted.parts + counted.fixes : counted[kind === 'task' ? 'parts' : 'fixes'])
       : recent.length,
@@ -140,6 +140,16 @@ function strip(shown) {
     shown.viewer === '' ? el('p', { class: 'note' }, 'Your GitHub login is unknown, so no item shows as yours.') : null,
     shown.asks.slice(0, ASKS).map(ask),
     more('asks', 'Needs you', shown.asks, ASKS));
+}
+
+// What is open before a prototype's sign-off: one quiet line, then each item with the phrase that fixes it.
+function signoff(shown) {
+  const { line, open: items } = shown.signoff;
+  if (!line) return null;
+  return el('section', { class: 'signoff', 'aria-label': 'Open before sign-off' },
+    el('p', { class: 'signoff-line' }, line),
+    el('ul', {}, items.map((entry) => el('li', {}, el('span', { class: 'signoff-item' }, entry.item),
+      el('span', { class: 'signoff-say' }, `Say: "${entry.say}"`)))));
 }
 
 function switcher() {
@@ -223,6 +233,7 @@ function render(main, snapshot) {
   const shown = facts(snapshot);
   const screen = el('div', { class: 'now' },
     strip(shown),
+    signoff(shown),
     el('div', { class: 'work' },
       el('section', { class: 'pipeline', 'aria-label': 'In flight' }, switcher(),
         el('div', { class: 'stages' }, STAGES.map((entry) => stage(entry, shown)))),
