@@ -94,6 +94,22 @@ class MessageResponse(AuthSchema):
     message: str = Field(max_length=200)
 
 
+class InviteResponse(MessageResponse):
+    invite_url: str | None = Field(
+        default=None,
+        exclude_if=lambda value: value is None,
+        description="Copy this single-use invite link. A retry returns no link.",
+    )
+
+
+class ResetLinkResponse(MessageResponse):
+    reset_url: str | None = Field(
+        default=None,
+        exclude_if=lambda value: value is None,
+        description="Copy this single-use reset link. A retry returns no link.",
+    )
+
+
 class SessionData(AuthSchema):
     account: Account
     session_token: str = Field(max_length=64)
