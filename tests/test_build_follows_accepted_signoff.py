@@ -5,6 +5,7 @@ Existing hotspot tests have no sign-off transition. Reuse real commands and
 fixtures, with no production seam. Cover new and earlier-adopted clients.
 """
 import json
+import shlex
 
 import pytest
 
@@ -60,3 +61,17 @@ def test_1_accepted_signoff_leads_with_build_and_excludes_old_problems(
         assert shown.returncode == 0, shown.stderr
         assert ("PRODUCT.md keeps breaking: 3 noted problems are open there." in shown.stdout) == (count == 3)
         assert next(line for line in shown.stdout.splitlines() if line.startswith("Next: ")).startswith(command)
+
+    if client == "working-build":
+        # Own the continuation at the same command boundary: priority must not
+        # create another constitution fix after the first one starts. Existing
+        # constitution tests have no competing post-sign-off repair advice.
+        step = next(line.removeprefix("Next: ") for line in shown.stdout.splitlines()
+                    if line.startswith("Next: "))
+        started = repo.forge(*shlex.split(step)[1:])
+        assert started.returncode == 0, started.stdout + started.stderr
+        work = next(line.removeprefix("Next: ") for line in started.stdout.splitlines()
+                    if line.startswith("Next: "))
+        continued = repo.forge("next", "--json")
+        assert continued.returncode == 0, continued.stderr
+        assert json.loads(continued.stdout)["next"]["command"] == work

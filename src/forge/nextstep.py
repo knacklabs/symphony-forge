@@ -230,6 +230,7 @@ def _report(top: Path, history: dict[str, Any] | None = None,
     """The lines `forge next` prints, and one state line per story and fix with its human touches."""
     lines: list[str] = []
     states: list[str] = []
+    fixes: list[tuple[dict[str, Any], list[str]]] = []
     refusals: dict[Path, str] = {}
     # Only forge next asks GitHub for scheduled runs; hooks stay offline. An open fix for a
     # failed run shows its own lines under it.
@@ -310,6 +311,7 @@ def _report(top: Path, history: dict[str, Any] | None = None,
             if branch in merged_prs:
                 state = {**state, "status": "merged"}
             found = _item(name, f"The fix {name}", state, top, path, prs, refusals)
+            fixes.append((state, found))
             if alert := branch not in merged_prs and claim(state):
                 pinned += alert[:-1] + found
             else:
@@ -331,6 +333,7 @@ def _report(top: Path, history: dict[str, Any] | None = None,
             if state.get("status") == "dropped" or name in promoted:
                 continue
             found = _item(name, f"The fix {name}", state, top, None, prs, refusals)
+            fixes.append((state, found))
             if alert := claim(state):
                 pinned += alert[:-1] + found
             else:
@@ -376,8 +379,18 @@ def _report(top: Path, history: dict[str, Any] | None = None,
     if ((top / "forge.toml").is_file() and cfg["repo"] == "client"
             and not any(line.startswith("Next: git worktree remove ") for line in lines)
             and not repo.is_prototype(top, cfg) and not records.constitution(top)):
+        ongoing = next((found for state, found in fixes
+                        if found and state.get("status") not in ("merged", "done")
+                        and re.search(r"\b(?:constitution|prototype plan)\b",
+                                      f"{state.get('why', '')} {state.get('done_when', '')}", re.I)), [])
         build = ["Before its next story, this app needs its approved constitution.",
-                  "Next: " + story.REFUSALS["constitution"][1]]
+                 *(ongoing or ["Next: " + story.REFUSALS["constitution"][1]])]
+        lines = [line for line in lines if line not in ongoing]
+        pinned = [line for line in pinned if line not in ongoing]
+        # A live app without a sign-off keeps its existing advice order.
+        if not ongoing and repo.is_prototype(top, {**cfg, "stage": "prototype"}):
+            lines += build
+            build = []
     return (build + _due(top, history) + pinned + [line for alert in alerts.values() for line in alert]
             + _hotspots(top, trees) + lines), states
 
