@@ -25,8 +25,8 @@
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "162134249a803f022f652d9dacd6b00fb24a9e756bcb0e87cd049b26b4196dec",
-    "changed": "e463fca15b31de7bd4041ff3c6c24e719291e166ed724aed8ebea2119eeb4f38",
+    "branch_diff": "9e336e0af4ae7680b9472aa182f472b8caa023d75c0c9573567503195d1c969c",
+    "changed": "4e4783d6dec4d81cc26ea363ae631b43c6d879872468828013eb69e1d7bfa895",
     "commit": "ac77139a71bb2b2f9c5faeb6d8d10b869bca40fa",
     "dismissals": [],
     "findings": [],
