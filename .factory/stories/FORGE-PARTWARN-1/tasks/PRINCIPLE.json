@@ -1,11 +1,19 @@
 {
   "branch": "task/FORGE-PARTWARN-1-PRINCIPLE",
   "part_line_limit": 400,
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-03T00:31:05.688739+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "3aee7230088ca129aefc6d9778960ba19ba375b3",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
