@@ -1,6 +1,13 @@
 {
   "base": "9fe77734b05db772714d5dc40fe4e8486c5b466f",
   "branch": "fix/known-issue-fixed-means-repaired",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a19fb2-d653-74f2-9e96-15b7c07cb188",
+    "head": null,
+    "start": "da9114cab7fac4ec288a91740e68aa2d2eb7a423"
+  },
   "done_when": "A known issue says fixed only when a repair closed it, an entry a later review did not report again stays open, and a Claude-built fix prints no Codex chat link message",
   "fix_kind": "mechanical",
   "kind": "fix",
