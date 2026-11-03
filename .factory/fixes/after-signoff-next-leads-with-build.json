@@ -4,12 +4,20 @@
   "done_when": "After an accepted sign-off, forge next leads with the step that starts the build, shows no keeps-breaking line for problems noted before the sign-off, and the sign-off result says the app constitution comes next",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-03T04:36:47.558445+00:00",
       "step": "start"
     }
   ],
-  "why": "After an accepted sign-off, forge next leads with repair work on prototype files and does not say the app constitution comes next (bug 1310)"
+  "stuck": {
+    "close": null,
+    "head": "895cc6d88fc971831cadf6ea9fe11f59bb9c528f",
+    "keys": {},
+    "round": null
+  },
+  "why": "After an accepted sign-off, forge next leads with repair work on prototype files and does not say the app constitution comes next (bug 1310)",
+  "worker": "codex"
 }
