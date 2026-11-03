@@ -9,13 +9,19 @@
   },
   "part_line_limit": 400,
   "round": 1,
-  "status": "working",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-02T18:49:52.746962+00:00",
       "step": "start"
     }
   ],
+  "stop": {
+    "question": "Starter ships no screens: The Python API locks sign-in and shows links is stuck. It should deliver: The same lock, links and cases in the Python starter, with an Alembic migration. Regenerate `libs/shared/api-types`.\nIt changes 663 lines outside tests, over its limit of 400.\nThe worker tried: Lock Python sign-in and return admin links.\nChoose one: switch this item to Claude; keep Codex for one more round; or narrow or split it.",
+    "size": true,
+    "tool": "codex",
+    "wait_id": "b195096e-1df0-4f09-a235-ea675e118d1f"
+  },
   "stuck": {
     "close": null,
     "head": "8cab92b58e4137563eec5f38d3c25ad163ff562a",
