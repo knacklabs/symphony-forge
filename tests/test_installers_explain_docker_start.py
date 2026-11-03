@@ -8,8 +8,6 @@ from pathlib import Path
 
 import pytest
 
-from test_sales_install import _install_ui_skills
-
 pytestmark = pytest.mark.platform
 
 STORY = "FIX-SKIPPED-TEMPLATES"
@@ -33,8 +31,13 @@ def test_5_installers_check_docker_engine_and_explain_starting_desktop(
     # This test owns Docker startup, not skill installation (test_sales_install owns
     # that boundary). Keep the other prerequisites ready, isolated from user settings;
     # otherwise the new skill installs stop the script before its Docker result.
-    # Reuse the existing fixture helper, with no production seam or duplicate test.
-    _install_ui_skills(tmp_path / "claude-config/skills", tmp_path / "codex-home/skills")
+    # Keep setup here: the release replay replaces test_sales_install with its old
+    # version, which has no skill helper. Collection must work with either version.
+    for host in ("claude-config", "codex-home"):
+        for name in ("impeccable", "emil-design-eng"):
+            folder = tmp_path / host / "skills" / name
+            folder.mkdir(parents=True)
+            (folder / "SKILL.md").write_text(f"{name}\n", encoding="utf-8")
     if os.name == "nt":
         powershell = shutil.which("powershell")
         assert powershell
