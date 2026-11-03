@@ -935,7 +935,7 @@ def at_ref(top: Path, item: str, state: dict[str, Any], pr: dict[str, Any] | Non
     ref = review_ref(top, branch, pr)
     if not ref or ref == _commit(top, f"refs/heads/{branch}"):
         return state
-    there = story.json_of(story.show(top, ref, repo.state_path(item)))
+    there = repo.without_size_stop(story.json_of(story.show(top, ref, repo.state_path(item))))
     return {**there, "branch": branch} if there else state
 
 
