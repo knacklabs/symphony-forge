@@ -459,7 +459,10 @@ Four principles govern every change.
    about 150 lines or one model call or user step, 3 for more, or a new table, job, workflow or
    flag.
 3. Choose the simplest option.
-4. Rules are stated, not policed: add no check, gate or refusal only to enforce a rule.
+4. Forge does the right thing by default where it can. It refuses only when a mistake
+   costs a lot or is hard to undo. It states a rule only when a mistake is cheap and
+   something later catches it. People should not need to know how to use agents well
+   for Forge to work.
 
 If evidence changes your approach, explain the change in a later commit instead of rewriting
 the original lines. Add an abstraction layer only at the edge to an outside service.

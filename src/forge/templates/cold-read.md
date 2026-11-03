@@ -114,7 +114,10 @@ Four principles govern every change.
    about 150 lines or one model call or user step, 3 for more, or a new table, job, workflow or
    flag.
 3. Choose the simplest option.
-4. Rules are stated, not policed: add no check, gate or refusal only to enforce a rule.
+4. Forge does the right thing by default where it can. It refuses only when a mistake
+   costs a lot or is hard to undo. It states a rule only when a mistake is cheap and
+   something later catches it. People should not need to know how to use agents well
+   for Forge to work.
 
 Mark each finding that asks for added work beyond the Done-when items (another check, retry, guard
 or flag) with a body line `Adds work: <what>; F <f> x H <h> = <p>; 2 x C = <c>`. When p is less
