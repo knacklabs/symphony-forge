@@ -2,6 +2,10 @@ $summary
 
 # Worker brief
 
+"Find the problem to solve" is a discovery placeholder, not a problem for a fix.
+Forge refuses it before it creates a branch. Use `forge start "<the idea>"` to explore an idea;
+discovery asks a question and starts no fix. Workers work only on their brief.
+
 Settled findings stay settled. Each reader and reviewer gets earlier rounds' notes and answers,
 including findings already fixed or dismissed. Do not reopen them with the same finding text
 (cold reads) or title and file (reviews); report a new defect with distinct text and new evidence.
@@ -128,6 +132,7 @@ the part waits for its base to merge. After that merge, run `forge close <part>`
 If a base exists only on this machine, finish its work and run `forge close <base>` to publish
 and review it before you start a part on top of it.
 
+You can continue, close and merge published work on another machine with `forge work`, `forge close` and `forge merge`.
 Before every work round, Forge fetches and merges the default branch before it reads settings or writes the brief.
 If that merge conflicts, the worker gets its normal full brief with one added line to finish and commit the merge first.
 `forge work` refuses a fix or task whose pull request is already merged. Start a new fix with `forge fix start` for follow-up work.
@@ -476,7 +481,7 @@ The command copies the installed starter's projects feature, not the app's proje
 It builds the API, agent tools, change history and tests without writing pages or changing the web app.
 Keep its organisation scoping, soft delete, restore and transactional change history.
 Each feature checks view, create, edit, delete and restore permissions on every screen and API call.
-Admins have all five. Members can view, create and edit, but cannot delete or restore and never
+Admins have all five. Members can view and create, but cannot edit, delete or restore and never
 see deleted items. Change the role mapping in the feature's permissions file only when the plan
 asks for it; keep that mapping in one place. Add unsupported field kinds by hand. If the command
 refuses a non-starter or an older starter, follow its named missing parts and build the feature

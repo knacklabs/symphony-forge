@@ -228,6 +228,7 @@ def _adopted_starter(repo) -> Path:
     _copy_earlier_starter(repo.path)
     permissions = repo.path / "libs/projects/server/src/projects.permissions.ts"
     original_permissions = permissions.read_text("utf-8")
+    # This historical starter still grants edit; sync must preserve its customized mapping.
     customised_permissions = original_permissions.replace(
         "member: ['view', 'create', 'edit']", "member: []"
     )
@@ -252,7 +253,7 @@ def _adopted_python_starter(repo) -> Path:
     permissions = repo.path / "apps/api/app/projects/permissions.py"
     original_permissions = permissions.read_text("utf-8")
     customised_permissions = original_permissions.replace(
-        '"member": ["view", "create", "edit"]', '"member": []'
+        '"member": ["view", "create"]', '"member": []'
     )
     assert customised_permissions != original_permissions
     permissions.write_text(customised_permissions, encoding="utf-8")
@@ -344,8 +345,8 @@ def feature_live_run(repo, gh, tmp_path_factory) -> dict:
             assert built.returncode == 0, built.stdout + built.stderr
         permissions = client / "libs/notes/server/src/notes.permissions.ts"
         mapping = permissions.read_text("utf-8")
-        assert "member: ['view', 'create', 'edit']" in mapping
-        permissions.write_text(mapping.replace("member: ['view', 'create', 'edit']", "member: []"),
+        assert "member: ['view', 'create']" in mapping
+        permissions.write_text(mapping.replace("member: ['view', 'create']", "member: []"),
                                encoding="utf-8")
         _LIVE_RUNS["feature"] = _run_live_starter(
             tmp_path_factory, ((client, Path(".")),), ("GET /health returned 200",))
@@ -362,7 +363,7 @@ def feature_python_client(repo, gh, tmp_path) -> Path:
             assert built.returncode == 0, built.stdout + built.stderr
         permissions = client / "apps/api/app/notes/permissions.py"
         mapping = permissions.read_text("utf-8")
-        allowed = '"member": ["view", "create", "edit"]'
+        allowed = '"member": ["view", "create"]'
         assert allowed in mapping
         permissions.write_text(mapping.replace(allowed, '"member": []', 1), encoding="utf-8")
         _LIVE_RUNS["feature-python-client"] = client
@@ -883,8 +884,8 @@ def _assert_feature_guidance(repo, client: Path, log: Path) -> None:
     assert "As your first step" in brief
     assert "forge task feature <plural> --one <singular> --field '<field>:<kind>'" in brief
     assert "view, create, edit, delete and restore" in brief
-    assert "Members can view, create and edit" in brief
-    assert "cannot delete or restore" in brief
+    assert "Members can view and create" in brief
+    assert "cannot edit, delete or restore" in brief
     assert "see deleted items" in brief
     assert "Admins have all five" in brief
     assert "keep that mapping in one place" in brief
@@ -930,6 +931,17 @@ def _plan_line_builds_the_feature_in_one_step(repo, gh, tmp_path, shell, starter
             ("clients", "client", CLIENT_LINE),
             ("jobs", "job", JOBS_LINE),
         ):
+            # Audit: feature wiring adds relations and a catalog entry without changing
+            # existing auth models or catalog entries. Replacing an old app's content
+            # must fail, while new-only auth tables are valid. Whole-file equality
+            # cannot express that contract; use the existing command, with no seam.
+            shared_before = {
+                rel: (client / rel).read_text("utf-8")
+                for rel in (
+                    "apps/api/prisma/schema/auth.prisma",
+                    "apps/api/test/database.e2e-spec.ts",
+                )
+            } if starter == "typescript" else {}
             result = _run_line(repo, client, shell, line)
             assert result.returncode == 0, result.stdout + result.stderr
             written = _written_paths(result, client)
@@ -942,6 +954,24 @@ def _plan_line_builds_the_feature_in_one_step(repo, gh, tmp_path, shell, starter
             outputs[label][plural] = {
                 rel: (client / rel).read_bytes() for rel in written
             }
+            if starter == "typescript":
+                model = one.capitalize()
+                additions = {
+                    "apps/api/prisma/schema/auth.prisma": "\n" + "\n".join(
+                        f'  {verb}{plural.capitalize()} {model}[] @relation("{model}{relation}By")'
+                        for verb, relation in (
+                            ("created", "Created"), ("modified", "Modified"), ("deleted", "Deleted"),
+                        )
+                    ),
+                    "apps/api/test/database.e2e-spec.ts": f" {model}: '{plural}',",
+                }
+                for rel, addition in additions.items():
+                    after = (client / rel).read_text("utf-8")
+                    assert after.count(addition) == 1, rel
+                    assert after.replace(addition, "", 1) == shared_before[rel], rel
+                    # Compare only this feature's addition across releases. The preservation
+                    # assertion above checks every other character, with native newlines read as LF.
+                    outputs[label][plural][rel] = addition.encode("utf-8")
             assert migration in [client / rel for rel in written]
         if log is not None:
             _assert_feature_guidance(repo, client, log)
