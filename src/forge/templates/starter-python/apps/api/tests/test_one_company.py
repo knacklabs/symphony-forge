@@ -112,7 +112,7 @@ def test_a_one_company_app_refuses_sign_up_and_still_takes_invites() -> None:
         assert project.status_code == 201, project.text
 
         member = credentials()
-        token = invite(client, csrf, member["email"], "one-company-api")
+        token = invite(client, csrf, member["email"])
 
     with one_company_client() as member_client:
         joined = member_client.post(
@@ -148,7 +148,7 @@ def test_a_one_company_app_becomes_many_company_by_its_setting_alone(
         assert project.status_code == 201, project.text
 
         member = credentials()
-        token = invite(one_company, csrf, member["email"], "one-company-api")
+        token = invite(one_company, csrf, member["email"])
 
     with one_company_client() as member_client:
         joined = member_client.post(
