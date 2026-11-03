@@ -1,5 +1,12 @@
 {
   "branch": "task/FORGE-PARTWARN-1-PRINCIPLE",
+  "chat": {
+    "approval": "96650b49918f4a7a8406890c308180380f318f06f2aa7923113e75ea87860eff",
+    "claude": null,
+    "conversation": "01a19ed1-503c-7c93-ab1a-a063b96eefec",
+    "head": null,
+    "start": "02f7fb90c320d4675e3f66590cbfae7b998cbb05"
+  },
   "part_line_limit": 400,
   "round": 1,
   "status": "working",
