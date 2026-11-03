@@ -74,11 +74,17 @@ def test_5_only_named_tests_job_ships_and_doctor_compares_protection(repo, gh, t
 
     repo.write("web/package.json", '{"name":"web"}\n')
     web = repo.forge("doctor")
-    assert "impeccable is required for UI work" in web.stdout
+    # This command test owns workflow/protection checks as a web app appears.
+    # Sync already supplied the design skills, so detecting the web app must not
+    # invent a missing dependency. Global discovery has its own doctor test;
+    # retain this lifecycle case without adding a test or production seam.
+    for name in ("impeccable", "emil-design-eng"):
+        assert f"{name} is required for UI work" not in web.stdout
 
     repo.write("package.json", '{"dependencies":{"react":"*"}}\n')
     frontend = repo.forge("doctor")
-    assert "impeccable is required for UI work" in frontend.stdout
+    for name in ("impeccable", "emil-design-eng"):
+        assert f"{name} is required for UI work" not in frontend.stdout
 
     repo.write("forge.toml", (repo.path / "forge.toml").read_text(encoding="utf-8").replace(
         '["lint", "forge-pr-check"]', '["tests", "forge-pr-check"]'))

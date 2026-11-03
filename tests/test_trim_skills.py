@@ -40,13 +40,21 @@ OLD_COPIES = (
     "src/forge/templates/skills/test-audit/NOTICE.md",
     "src/forge/templates/skills/remote-approval/SKILL.md",
 )
+# Preserve the existing distribution boundary: wheels, source archives and editable installs
+# must now include all of the pinned design skill support files as well.
+SOURCES.update({f"{host}/skills/{path.relative_to(ROOT / 'src/forge/templates/skills').as_posix()}":
+                path.relative_to(ROOT).as_posix()
+                for name in ("impeccable", "emil-design-eng")
+                for path in (ROOT / "src/forge/templates/skills" / name).rglob("*") if path.is_file()
+                for host in (".claude", ".codex")})
 
 
 @pytest.mark.platform
 def test_2_sync_ships_one_source_copy_in_wheel_sdist_and_editable(repo, tmp_path):
     assert all(not (ROOT / rel).exists() for rel in OLD_COPIES)
-    # read_text normalizes CRLF checkouts, matching sync's read and LF byte write.
-    originals = {source: (ROOT / source).read_text(encoding="utf-8").encode("utf-8")
+    # Existing skills use LF; the pinned Windows launcher keeps its upstream CRLF bytes.
+    originals = {source: ((ROOT / source).read_bytes() if source.endswith("/impeccable.cmd") else
+                          (ROOT / source).read_text(encoding="utf-8").encode("utf-8"))
                  for source in set(SOURCES.values())}
     assert {source: hashlib.sha256(originals[source]).hexdigest()
             for source in PRE_TRIM_SHA256} == PRE_TRIM_SHA256
