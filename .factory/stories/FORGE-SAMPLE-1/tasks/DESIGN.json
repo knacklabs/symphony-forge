@@ -1,6 +1,13 @@
 {
   "base": "0fe0b5c8536b2f965867238f29d0f08e06e9fd56",
   "branch": "task/FORGE-SAMPLE-1-DESIGN",
+  "chat": {
+    "approval": "4e15298f84b3bf2da57eaaa3a529c1d3ae30604d1bbea3b33d6dd16f1efab4f4",
+    "claude": null,
+    "conversation": "01a19f0f-637c-70e0-8e5d-e0b8ce5bed47",
+    "head": null,
+    "start": "590d7518278dba2a89a44a559f9eadfd43683f12"
+  },
   "part_line_limit": 400,
   "round": 1,
   "stacked_on": "FORGE-PARTWARN-1/SIZE",
