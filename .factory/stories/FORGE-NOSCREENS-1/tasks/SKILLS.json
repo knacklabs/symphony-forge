@@ -65,24 +65,16 @@
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "51ba2687482983c330dbef57d848d4615831f94ba04ce996502d9c740e9fed9b",
-    "changed": "60d65f7f784605cdf8228bb6f66f1a883a6cd996e270108921de32b72f93606c",
-    "commit": "481ed2fb1d941be068e0f56475f3a626f3a99c69",
+    "branch_diff": "e50eef03313e1bc4a1b6e92e4e6dfc34ff61e71a4653847c8e571801786a1e8b",
+    "changed": "092607deb614021202921d50a7537dd8565ece2a65e5cb5ffcd8c46d008cef6e",
+    "commit": "0298966d258ed94835c963b161873f468ba81aa1",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "chunk 6/6:\n\nWhen DESIGN.md is open and the user clicks Exit, teardown removes the bar and other chrome but never removes `designHost`, which is mounted at lines 12460\u201312480. The fixed, interactive panel therefore remains over the host page after live mode exits. Remove and reset the design panel alongside the other chrome.",
-        "file": "src/forge/templates/skills/impeccable/scripts/live-browser.js",
-        "line": 12393,
-        "priority": "P2",
-        "title": "[P2] Remove the design panel when exiting live mode"
-      }
-    ],
-    "id": "3a0c4768-994a-4fe1-8bc9-c069f75813cb",
+    "findings": [],
+    "id": "07e1f191-ae7b-484e-9fd9-256dd8807ad1",
     "status": "clean"
   },
   "round": 9,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-02T05:14:47.798079+00:00",
@@ -114,6 +106,10 @@
     },
     {
       "at": "2026-11-02T23:42:41.298832+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-03T00:18:29.392074+00:00",
       "step": "review"
     }
   ],
