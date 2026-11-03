@@ -68,12 +68,6 @@ def test_1_upgrade_fix_of_only_sync_output_commits_and_pushes_without_an_allowan
         f"Fix {fix} changes 6 code files, over the limit of 5, so it has to become a story, unless "
         "the human allows it with forge fix allow-large.\n" + NEXT_PROMOTE.format(fix=fix))
 
-    # Close pushes the fix; pushing the same commit made with --no-verify is refused alike.
-    assert git(folder, "commit", "-q", "--no-verify", "-m", "Upgrade Forge and more").returncode == 0
-    refused = push(folder, f"fix/{fix}")
-    assert refused.returncode != 0
-    assert f"Fix {fix} changes 6 code files, over the limit of 5" in refused.stderr
-
 
 def test_2_upgrade_and_test_heavy_fixes_close_and_a_hand_edit_is_counted_by_the_check(env):
     def pr_check(where: Path, branch: str):

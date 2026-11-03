@@ -539,7 +539,7 @@ def _signoff_review(top: Path, args: argparse.Namespace, answers: str, evidence:
         saved["rounds"] = history
         _write(top / rel, json.dumps(document, indent=2) + "\n")
         repo.commit_state("Record the owner's sign-off choice", rel, top=top)
-    if saved.get("stop"):
+    if saved.get("stop") and unchanged:
         repo.refuse((review.stop_question(top, "client-signoff", {
             "why": "Client sign-off", "done_when": "The prototype matches the client's answers", "review": previous},
             accept=acceptance), next_step))

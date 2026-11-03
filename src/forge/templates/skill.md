@@ -695,6 +695,8 @@ round or an owner question. A held finding below P0 still needs the owner's choi
 If the review engine fails, fix the engine problem and run the accept command again.
 A canvas-only sign-off needs no working build. A working build gets a full first product review.
 Each later attempt reviews only product files changed since the previous review and its open findings.
+If product files changed after a saved stop, review them before asking the owner about remaining findings.
+With no product change, repeat the saved question without another review.
 Every reviewer gets earlier findings and answers. Settled findings stay settled.
 Only a person may write `sample_data: true` in the sign-off decision's front matter.
 It declares that the prototype holds only sample data and has no back end. After two
@@ -708,6 +710,7 @@ Record that choice with `forge decision accept client-signoff --by "<name>" --re
 Accept keeps the findings in the item's Known issues. Split creates a separate fix. More permits one more review.
 These rules apply to new clients and earlier-adopted clients after upgrade.
 Forge reuses passed results while what they checked stays unchanged.
+A version-only change to forge.toml keeps the last green full run. Any other settings change needs a new full run.
 The product review uses the green full run as test evidence. It needs no separate `forge test` run.
 If the product review cannot finish, the refusal names its saved raw report when one exists.
 Before the customer's reply, the command runs these checks and stops without accepting sign-off.
