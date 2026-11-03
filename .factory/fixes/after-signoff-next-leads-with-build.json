@@ -18,7 +18,7 @@
       "gain": 4,
       "harm": 3,
       "line": 381,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -28,27 +28,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "74c0d1423b9f6a4bfc095cbeaf012de00acc41c8747a98c991f34284f683c41d",
-    "changed": "5ed58a4e0fb8ca61b8f347ba8f8a15b0fc2345122494dbf9027f20e0e53261e5",
-    "commit": "36584cbfb1b300c9a4fe059edaca4e7b42ab698c",
+    "branch_diff": "320e755b6bdaee33d5aa0141377fa937cb6b4dfbe6c47324b1cd9abe45da38f0",
+    "changed": "49c61f27b25aa2ad0664fdfe427f99bba51fc4c9be8a771051101fd566743f38",
+    "commit": "5f484d892290dc6227cb3a64f14be79e2f827985",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - run `forge next` again after starting the constitution fix.\nPrepending `build` unconditionally makes `forge fix start \"Write the prototype plan\"` outrank the existing fix's work, close, or merge action until the constitution lands. `machine_next` selects only the first Next line, and `fix_start` automatically numbers duplicate names (`src/forge/task.py:646`), so following the recommendation creates additional fixes instead of progressing the first one. This also contradicts the existing command-level assertion at `tests/test_app_constitution.py:140`, which requires `next --json` to recommend working on the fix just started. Preserve that continuation when prioritizing the build step.",
-        "file": "src/forge/nextstep.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 381,
-        "priority": "P1",
-        "title": "Preserve the next action for an existing constitution fix",
-        "work": 2
-      }
-    ],
-    "id": "8cc7de4f-2fd9-496a-9bde-e35e8b946305",
-    "status": "blocked"
+    "findings": [],
+    "id": "84e81d07-a05f-4194-8a2f-48f463c867fa",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-03T04:36:47.558445+00:00",
@@ -56,6 +45,10 @@
     },
     {
       "at": "2026-11-03T04:43:41.050450+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-03T05:06:35.387261+00:00",
       "step": "review"
     }
   ],
