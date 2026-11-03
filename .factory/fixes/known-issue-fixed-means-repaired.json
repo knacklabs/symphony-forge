@@ -4,12 +4,20 @@
   "done_when": "A known issue says fixed only when a repair closed it, an entry a later review did not report again stays open, and a Claude-built fix prints no Codex chat link message",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-03T04:36:52.210785+00:00",
       "step": "start"
     }
   ],
-  "why": "A known issue is labelled fixed because a later review did not report it again, which is not evidence of a repair (bug 1308)"
+  "stuck": {
+    "close": null,
+    "head": "e41d555efa7660b298749cc25f111a4fb5f61d19",
+    "keys": {},
+    "round": null
+  },
+  "why": "A known issue is labelled fixed because a later review did not report it again, which is not evidence of a repair (bug 1308)",
+  "worker": "codex"
 }
