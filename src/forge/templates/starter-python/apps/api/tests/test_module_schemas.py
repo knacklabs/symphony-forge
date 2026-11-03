@@ -14,6 +14,7 @@ EXPECTED_TABLE_SCHEMAS = (
     "core.organisation",
     "core.password_reset_token",
     "core.session",
+    "core.sign_in_attempt",
     "history.change_record",
     "mcp.idempotency_key",
     "projects.project",

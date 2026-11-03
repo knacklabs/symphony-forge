@@ -29,10 +29,10 @@ async function inviteAndJoin(page: Page, browser: Browser, email: string): Promi
   await inviteDialog.getByRole('button', { name: 'Invite' }).click();
   const response = await inviteResponse;
   expect(response.status()).toBe(201);
-  const body = await response.json() as { data: { link: string } };
+  const body = await response.json() as { data: { inviteUrl: string } };
   await page.getByRole('button', { name: 'Copy' }).click();
   const inviteLink = await page.evaluate(() => navigator.clipboard.readText());
-  expect(inviteLink).toBe(body.data.link);
+  expect(inviteLink).toBe(body.data.inviteUrl);
   const inviteUrl = new URL(inviteLink);
   expect(inviteUrl.pathname).toBe('/accept-invite');
   expect(inviteUrl.searchParams.get('token')).toBeTruthy();
@@ -70,11 +70,11 @@ test('members lets an admin copy an invite link', async ({ page, request }) => {
   await inviteDialog.getByRole('button', { name: 'Invite' }).click();
   const response = await inviteResponse;
   expect(response.status()).toBe(201);
-  const body = await response.json() as { data: { link: string } };
-  const link = new URL(body.data.link);
+  const body = await response.json() as { data: { inviteUrl: string } };
+  const link = new URL(body.data.inviteUrl);
   expect(link.pathname).toBe('/accept-invite');
   await inviteDialog.getByRole('button', { name: 'Copy' }).click();
-  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(body.data.link);
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(body.data.inviteUrl);
 });
 
 test('members lists roles and shows member controls only to admins', async ({ page, browser, request }) => {
@@ -173,11 +173,11 @@ test('members shows a reset link once with a Copy button', async ({ page, browse
     await memberRow.getByRole('button', { name: 'Reset link' }).click();
     const response = await resetResponse;
     expect(response.ok()).toBeTruthy();
-    const body = await response.json() as { data: { link: string } };
+    const body = await response.json() as { data: { resetUrl: string } };
     const resetDialog = page.getByRole('dialog');
     await resetDialog.getByRole('button', { name: 'Copy' }).click();
     const copiedLink = await page.evaluate(() => navigator.clipboard.readText());
-    expect(copiedLink).toBe(body.data.link);
+    expect(copiedLink).toBe(body.data.resetUrl);
     const resetLink = new URL(copiedLink);
     expect(resetLink.pathname).toBe('/reset-password');
     expect(resetLink.searchParams.get('token')).toBeTruthy();
