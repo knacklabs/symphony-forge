@@ -1,0 +1,15 @@
+{
+  "base": "9fe77734b05db772714d5dc40fe4e8486c5b466f",
+  "branch": "fix/after-signoff-next-leads-with-build",
+  "done_when": "After an accepted sign-off, forge next leads with the step that starts the build, shows no keeps-breaking line for problems noted before the sign-off, and the sign-off result says the app constitution comes next",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-03T04:36:47.558445+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "After an accepted sign-off, forge next leads with repair work on prototype files and does not say the app constitution comes next (bug 1310)"
+}
