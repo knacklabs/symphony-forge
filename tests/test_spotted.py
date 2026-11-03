@@ -15,6 +15,10 @@ from test_codex_worker import _codex_repo, _sent, sdk_data  # noqa: F401 (sdk_da
 from test_task import story
 from test_worker import calls, install_claude
 
+# Shared attributes include Windows launcher byte preservation; keep these
+# existing command tests in the platform subset without changing their assertions.
+pytestmark = pytest.mark.platform
+
 STORY = "FORGE-SPOTTED-1"
 LIST = "plans/spotted.json"
 OWN = "plans/spotted/tidy-readme.json"
@@ -357,7 +361,9 @@ def _sync_adds_the_rule_once(env):
     _synced(repo, "*.png binary\nplans/roadmap.json merge=forge-roadmap\n")
     assert (repo.path / ".gitattributes").read_text("utf-8") == (
         "*.png binary\nplans/roadmap.json merge=forge-roadmap\n"
-        "plans/spotted.json merge=forge-roadmap\n")
+        "plans/spotted.json merge=forge-roadmap\n"
+        ".claude/skills/impeccable/scripts/impeccable.cmd -text\n"
+        ".codex/skills/impeccable/scripts/impeccable.cmd -text\n")
     again = repo.forge("sync")
     assert again.returncode == 0 and "Wrote .gitattributes" not in again.stdout
 

@@ -132,10 +132,12 @@ def fingerprint(commit: str, item: str, top: Path, state: dict[str, Any], base: 
     if branch_diff:
         # Close alone uses both sides of the diff to reuse a review after a base-only merge.
         # Sort header/path pairs: diff.orderFile can reorder even raw Git output.
+        # Filter the result, not argv: a synced upgrade can exceed Windows' command limit.
         raw = (repo.git("--literal-pathspecs", "diff", "--raw", "--no-abbrev", "--no-renames",
-                        "--no-ext-diff", "--no-color", "-z", ancestor, commit, "--",
-                        *sorted(changed), cwd=top) if changed else "").split("\0")
-        entries = sorted(zip(raw[::2], raw[1::2]), key=lambda entry: entry[1])
+                        "--no-ext-diff", "--no-color", "-z", ancestor, commit,
+                        cwd=top) if changed else "").split("\0")
+        entries = sorted((entry for entry in zip(raw[::2], raw[1::2]) if entry[1] in changed),
+                         key=lambda entry: entry[1])
         digest = hashlib.sha256("\0".join(
             f"{path}\0{entry}" for entry, path in entries).encode("utf-8"))
     else:
