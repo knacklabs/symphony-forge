@@ -160,6 +160,8 @@ def write_file(top: Path, rel: str, text: str) -> None:
         repo.refuse(REFUSALS["outside"], path=rel)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_bytes(text.encode("utf-8"))
+    if rel in {f"{host}/skills/impeccable/scripts/impeccable" for host in (".claude", ".codex")}:
+        path.chmod(0o755)
 
 
 def _span(text: str, rel: str) -> tuple[int, int]:
@@ -360,7 +362,10 @@ def _access_comment(top: str) -> str:
 
 
 def merge_attributes(text: str) -> str:
-    missing = [rule for rule in (ROADMAP_RULE, SPOTTED_RULE) if rule not in text.splitlines()]
+    # The pinned Windows launcher has CRLF bytes; Git must keep the upstream copy unchanged.
+    rules = (ROADMAP_RULE, SPOTTED_RULE, *(f"{host}/skills/impeccable/scripts/impeccable.cmd -text"
+                                         for host in (".claude", ".codex")))
+    missing = [rule for rule in rules if rule not in text.splitlines()]
     if missing:
         text = (f"{text.rstrip()}\n" if text.strip() else "") + "".join(f"{rule}\n" for rule in missing)
     return text
@@ -557,7 +562,8 @@ def differing(top: Path, wanted: dict[str, str]) -> list[str]:
     changed = []
     for rel, text in wanted.items():
         path = top / rel
-        current = path.read_bytes().decode("utf-8") if rel == "AGENTS.md" and path.is_file() else read(path)
+        raw = rel == "AGENTS.md" or rel.endswith("/skills/impeccable/scripts/impeccable.cmd")
+        current = path.read_bytes().decode("utf-8") if raw and path.is_file() else read(path)
         if rel == "AGENTS.md":
             current, text = current.replace("\r\n", "\n"), text.replace("\r\n", "\n")
         if current != text or not text and path.exists(): changed.append(rel)
