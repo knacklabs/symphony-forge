@@ -83,9 +83,15 @@ def test_20_pre_commit(repo):
         "the human allows it with forge fix allow-large.\n" + NEXT_PROMOTE.format(fix=fix))
 
 
-def test_21_pre_push(repo):
-    hooked(repo)
+@pytest.mark.parametrize("synced", [False, True], ids=["new-repo", "earlier-hooks-synced"])
+def test_21_pre_push(repo, synced):
+    # Audit: real Git push must accept a large fix after a commit bypass elsewhere.
+    # The old refusal cases covered the opposite contract. No test-only seam is needed.
+    hooked(repo, interfaces=["**/routes/**"])
     fix, folder = start_fix(repo, "Fix the login typo")
+    if synced:
+        updated = repo.forge("sync", cwd=folder)
+        assert updated.returncode == 0, updated.stderr
     assert commit(folder, "src/app.py").returncode == 0
     assert push(folder, f"fix/{fix}").returncode == 0
 
@@ -94,18 +100,15 @@ def test_21_pre_push(repo):
     assert ("main changes only through a merged pull request, so this push is refused.\n"
             "Next: forge close <item>\n") in to_main.stderr
 
-    # Commits made with --no-verify skip pre-commit, but not pre-push. The destination names the
-    # fix, so pushing the branch, its commit ID or another branch to it is refused alike.
-    assert commit(folder, *(f"src/f{n}.py" for n in range(5)), flags=("--no-verify",)).returncode == 0
+    # Commit and pull request checks own fix limits. Push must not repeat their refusal.
+    assert commit(folder, *(f"src/f{n}.py" for n in range(5)), "api/routes/users.py",
+                  flags=("--no-verify",)).returncode == 0
     sha = subprocess.run(["git", "rev-parse", "HEAD"], cwd=folder, capture_output=True, text=True,
                          check=True).stdout.strip()
     subprocess.run(["git", "branch", "side"], cwd=folder, check=True)
     for refspec in (f"fix/{fix}", f"{sha}:refs/heads/fix/{fix}", f"side:fix/{fix}"):
         over = push(folder, refspec)
-        assert over.returncode != 0, refspec
-        assert (f"Fix {fix} changes 6 code files, over the limit of 5, so it has to become a story, "
-                "unless the human allows it with forge fix allow-large.\n"
-                + NEXT_PROMOTE.format(fix=fix)) in over.stderr, refspec
+        assert over.returncode == 0, over.stderr
 
 
 def test_39_fix_lines_and_permission(repo):
