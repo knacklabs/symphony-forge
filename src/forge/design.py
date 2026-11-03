@@ -145,10 +145,22 @@ def snapshot(top: Path, folder: str, ref: str | None = None) -> tuple[str, list[
     return digest, files
 
 
+def source(top: Path, ref: str = "HEAD") -> str:
+    """The brief's design link, or the saved design pages for an older client."""
+    from forge import story
+
+    brief = story.show(top, ref, "docs/product/BRIEF.md") or ""
+    section = story.sections(re.sub(r"<!--.*?-->", "", brief, flags=re.S)).get("Design", "")
+    link = re.search(r"https?://[^\s<>\)]+", section)
+    if link:
+        return link[0]
+    return repo.git("ls-tree", "-r", "--name-only", ref, "--", "docs/design/prototype/", cwd=top)
+
+
 def require_prototype(top: Path, base: str) -> None:
     from forge import records, story
 
-    if records.prototype_plan(top, base):
+    if source(top, base).startswith(("https://", "http://")) or records.prototype_plan(top, base):
         return
     next_step = ('forge decision new prototype-plan, then '
                  'forge decision accept prototype-plan --by "<name>"')
