@@ -11,12 +11,27 @@
   "done_when": "forge upgrade to the release already installed goes ahead while runs are in progress, and the refusal stays when an install would replace the release that a run is using",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "841d57fdf170a992bed7dd249c3065ac103f3565aee047ad0adeafc05eb40ca2",
+    "changed": "a7aa1e37e36afb26a7793f8ef782d8d907d0d54520f950dce5fe6e24efa3c0f8",
+    "commit": "3f976c4841dd1b9d69f6402563ed50eb53a038d5",
+    "dismissals": [],
+    "findings": [],
+    "id": "81e47b1a-a846-41b6-a235-776ceea3dbf1",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-03T06:49:56.518296+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-03T06:53:43.909729+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
