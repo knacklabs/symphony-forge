@@ -512,8 +512,8 @@
       "order": 110
     },
     {
-      "key": "FORGE-SAMPLE-1",
-      "title": "Sample-data prototypes get a light sign-off",
+      "key": "FORGE-PARTWARN-1",
+      "title": "Warn instead of stop for story parts over 400 lines",
       "status": "pending",
       "order": 111
     },
@@ -530,10 +530,10 @@
       "order": 110
     },
     {
-      "key": "FORGE-PARTWARN-1",
-      "title": "Warn instead of stop for story parts over 400 lines",
+      "key": "FORGE-SAMPLE-1",
+      "title": "Sample-data prototypes get a light sign-off",
       "status": "pending",
-      "order": 111
+      "order": 112
     }
   ],
   "epics": [

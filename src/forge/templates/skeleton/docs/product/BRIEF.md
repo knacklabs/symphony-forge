@@ -26,6 +26,10 @@ Keep this under one page. It says what the product is and why; stories say how.
 
 1. **Flow name:** the user does X, sees Y, and the result is Z
 
+## Design
+
+<!-- One link to the design, made through Forge or separately. It need not be saved in this repo. -->
+
 ## Constraints
 
 <!-- What the flows alone don't say: sign-in, integrations, hosting, rules, speed. -->
