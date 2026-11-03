@@ -1,3 +1,4 @@
+/* eslint-disable */
 /**
  * Browser-side resolution of project detector waivers for Impeccable live mode.
  *
