@@ -1,0 +1,119 @@
+{
+  "base": "2a895d37c4bb500391881c88ced6179c5be81290",
+  "branch": "task/FORGE-HANDOVER-1-MERGE",
+  "chat": {
+    "approval": "eeaf92f22fb9bf529745eb4625ac7a62de4fdcbf8fac67ad339fc196203eefc7",
+    "claude": null,
+    "conversation": "01a1919e-15e7-7f33-80fb-dfca397cc5e0",
+    "head": null,
+    "start": "0247acc00ffc5c1c0be9944730af3afc46f615ff"
+  },
+  "known": [
+    {
+      "area": "pick_up() in src/forge/task.py",
+      "file": "src/forge/task.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 246,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Validate the fetched state before picking up a dropped fix",
+      "work": 2
+    },
+    {
+      "area": "test_1_a_ready_item_merges_from_a_machine_with_no_checkout() in tests/test_handover_merge.py",
+      "file": "tests/test_handover_merge.py",
+      "gain": 2,
+      "harm": 1,
+      "line": 84,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Follow-up: cover fast-forward pickup and shared-ready local advice",
+      "work": 2
+    },
+    {
+      "area": "merge() in src/forge/merge.py",
+      "file": "src/forge/merge.py",
+      "gain": null,
+      "harm": null,
+      "line": 72,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 5,
+      "security": false,
+      "title": "[P2] Fall back to shared readiness when the local receipt is stale",
+      "work": null
+    }
+  ],
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "c30dd4150368413f660104eb1f1d814c2aed11d54f43a588797ffceecfe0e08c",
+    "changed": "ca0a62463115276a9e69af0104ae63e2650370e246774448df51916382ca9d98",
+    "commit": "a80f96292e55396fc21c95f26d98a04de52c545f",
+    "dismissals": [],
+    "findings": [],
+    "id": "6d4054ee-20ab-4a0b-aa05-62bb8112c1d4",
+    "status": "clean"
+  },
+  "round": 13,
+  "stacked_on": "FORGE-STACK-1/CLOSE",
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-31T10:55:49.065586+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-02T18:24:35.870986+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-02T18:28:14.973526+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-02T18:57:55.845846+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-02T19:25:41.961677+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-02T20:18:40.861714+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-02T20:56:37.124439+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-02T21:41:04.534756+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-02T21:44:40.831130+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-02T21:48:59.731782+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-02T22:59:32.154860+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "8cc25445-0869-4972-a05f-1ed626829d1f",
+    "head": "a76753815e42120a29341bbd29c4c7bdb13cd401",
+    "keys": {},
+    "round": 12
+  },
+  "worker": "codex"
+}

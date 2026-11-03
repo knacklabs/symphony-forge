@@ -13,7 +13,42 @@ from test_setup import _fresh_client
 STORY = "FORGE-NOSCREENS-1"
 ROOT = Path(__file__).resolve().parents[1]
 RULE_SCREENS = ("sign-in", "reset-password", "accept-invite", "members")
+AUTH_CASES = (
+    'five failed sign-ins lock the email for 15 minutes',
+    'an unknown email is counted and locked the same way',
+    'a good sign-in clears the count',
+    'an unknown email takes about as long to refuse as a wrong password',
+    'an invite answers its link and the link opens once',
+    'an expired invite link is refused',
+    'an admin makes a reset link that works once',
+    'an expired reset link is refused',
+    'a member cannot make a reset link',
+    "an admin cannot make a reset link for another organisation's member",
+    'production admin can create and use a reset link without a mail provider',
+    'an admin removes a member, who is signed out at once',
+)
 LIVE = os.environ.get("FORGE_STARTER_LIVE") == "1"
+
+
+@pytest.mark.platform
+@pytest.mark.timeout(1800)
+@pytest.mark.parametrize('starter', ['typescript', 'earlier adopted'])
+def test_4_auth_gives_links_and_locks_without_guessing(repo, gh, tmp_path, tmp_path_factory, starter):
+    # Audit: init ships executable auth cases; sync preserves earlier apps. Missing shipped
+    # cases or an app rewrite fails here. The live HTTP suite owns runtime assertions;
+    # existing init tests do not check this auth delivery contract. No production seam.
+    from test_noscreens_starters import _earlier_app
+    from test_starter_tree import _require_cases, live_run
+
+    if starter == 'earlier adopted':
+        client = _earlier_app(repo, gh, tmp_path)
+        assert not (client / 'apps/web/e2e/rules').exists()
+        return
+    client, initialized = _fresh_client(repo, gh, tmp_path, '--starter')
+    assert initialized.returncode == 0, initialized.stdout + initialized.stderr
+    assert (client / 'apps/api/test/auth.e2e-spec.ts').is_file()
+    if LIVE:
+        _require_cases(live_run(tmp_path_factory)['api'], AUTH_CASES)
 
 
 def _install_client(client: Path, tmp_path: Path):

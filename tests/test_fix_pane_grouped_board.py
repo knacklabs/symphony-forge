@@ -256,14 +256,14 @@ def a_worker_question_needs_you_with_its_answer_step(request, tmp_path):
 
 def opened_waiting_rows_and_a_remote_ready_row_show_their_state_and_step(_request, tmp_path):
     board = copy.deepcopy(PREVIOUS["board"])
-    board["items"][0]["next"] = {"command": None, "step": None,
-                                 "line": "Polish the guide is ready to merge; Forge Test merges it from their machine."}
+    board["items"][0]["next"] = {"command": "forge merge polish", "step": None,
+                                 "line": "Polish the guide is ready to merge."}
     board["items"][1]["next"]["step"] = "forge read WAIT"
     shown = board_tab(tmp_path, canned={"board": board, "next": FIXTURE["next"]}, press="waiting")
     assert ("READY TO MERGE\nPolish the guide\n  Ready to merge\n \n"
             "  Build → Tests → Review → CI → Merge\n \n"
             "  Plan read  none\n  Review     none\n  CI         none\n \n"
-            "  Next: Polish the guide is ready to merge; Forge Test merges it from their machine.") in shown, shown
+            "  Next: forge merge polish") in shown, shown
     assert ("Hide waiting or not started (1)\nBoard shows each story in plain English  WAIT\n"
             "  Planning\n \n  Build → Tests → Review → CI → Merge\n \n"
             "  Plan read  none\n  Review     none\n  CI         none\n \n"

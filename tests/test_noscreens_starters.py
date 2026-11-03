@@ -73,6 +73,11 @@ def _earlier_app(repo, gh, tmp_path):
         destination = client / relative
         destination.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(old_starter / relative, destination)
+    for directory in sorted(
+        (client / "apps").rglob("*"), key=lambda path: len(path.parts), reverse=True,
+    ):
+        if directory.is_dir() and not directory.is_symlink() and not any(directory.iterdir()):
+            directory.rmdir()
     assert (client / "apps/web/src/app.tsx").is_file()
     repo.git("checkout", "-q", "-b", "fix/noscreens-sync", cwd=client)
     repo.git("add", "-A", cwd=client)

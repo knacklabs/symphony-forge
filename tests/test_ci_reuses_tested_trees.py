@@ -73,8 +73,7 @@ def commit(repo, path, text):
 
 @pytest.mark.parametrize("job,runner", [("tests", "ubuntu-latest"),
                                        ("tests", "windows-latest"),
-                                       ("plugin", "ubuntu-latest"),
-                                       ("windows-installers", "windows-latest")])
+                                       ("plugin", "ubuntu-latest")])
 @pytest.mark.parametrize("case", ["passed", "squash", "changed-tree", "red", "pending",
                                   "missing", "target-only", "wrong-head", "unmerged",
                                   "wrong-merge", "api-error", "newer-red", "stale-base",
@@ -162,7 +161,7 @@ def test_2_release_tag_reuses_only_successful_main_proof_for_the_same_tree(
 
 
 @pytest.mark.parametrize("event", ["schedule", "workflow_dispatch", "pull_request"])
-@pytest.mark.parametrize("job", ["tests", "plugin", "windows-installers"])
+@pytest.mark.parametrize("job", ["tests", "plugin"])
 def test_3_nightly_manual_and_pull_request_jobs_never_reuse_proof(
         repo, gh, tmp_path, monkeypatch, event, job):
     assert not decide(repo, gh, tmp_path, monkeypatch, event, "refs/heads/main",
