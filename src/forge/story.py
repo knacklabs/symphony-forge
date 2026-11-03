@@ -64,7 +64,7 @@ REFUSALS = {
     "prototype": ("Stories wait for the customer's sign-off. Build and demo the prototype first.",
                   "forge next"),
     "constitution": ("New stories wait for this app's approved constitution in docs/product/CONSTITUTION.md.",
-                     'forge fix start "Write the app constitution" --done "The owner approved docs/product/CONSTITUTION.md"'),
+                     'forge fix start "Write the prototype plan" --done "The owner approved the prototype plan"'),
 }
 
 TEMPLATES = Path(__file__).parent / "templates"

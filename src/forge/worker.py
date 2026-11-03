@@ -95,8 +95,8 @@ def checkout(item: str) -> tuple[re.Match[str], Path]:
     git("fetch", "-q", "origin", default, cwd=top)
     if task._merged(f"origin/{default}", item, top):
         refuse(REFUSALS["merged"], item=item)
-    trees = story.worktrees(Path.cwd())
-    top = next((trees[branch] for branch in branches if branch in trees), None)
+    trees = story.worktrees(top)
+    top = next((trees[branch] for branch in branches if branch in trees), None) or task.pick_up(item, branches)
     if top is None:
         refuse(REFUSALS["no_checkout"], item=item)
     if not repo.run("git", "rev-parse", "-q", "--verify", "MERGE_HEAD", cwd=top).returncode:

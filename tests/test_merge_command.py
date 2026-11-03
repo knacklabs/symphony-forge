@@ -11,7 +11,7 @@ from pathlib import Path
 import pytest
 
 from conftest import GH_STUB, _install
-from test_close import GREEN, env, run
+from test_close import GREEN, body, env, run
 from test_codex_reader import GRILL
 from test_codex_worker import ROOT, _toml
 from test_codex_worker import sdk_data  # noqa: F401
@@ -113,6 +113,10 @@ def _archiving_codex(repo, sdk_data, tmp_path, monkeypatch):
 def test_4_merge_refuses_a_changed_head_and_checks_the_recorded_head(env):
     item, where = _ready(env)
     head = env.repo.git("rev-parse", "HEAD", cwd=where)
+    published_body = body(env.gh_calls("pr", "edit")[-1])
+    env.gh.respond("pr", "view", stdout=json.dumps({
+        "number": 7, "state": "OPEN", "baseRefName": "main", "headRefOid": head,
+        "headRefName": "fix/tidy-readme", "title": "Tidy readme", "isDraft": False, "body": ""}))
     ready = env.repo.path / ".git" / "forge" / "ready" / f"{item}.json"
     saved = ready.read_text("utf-8")
     ready.unlink()
@@ -127,7 +131,8 @@ def test_4_merge_refuses_a_changed_head_and_checks_the_recorded_head(env):
     ready.write_text(saved, encoding="utf-8")
     env.gh.respond("pr", "view", stdout=json.dumps({
         "number": 7, "state": "OPEN", "baseRefName": "main", "headRefOid": "wrong",
-        "headRefName": "fix/tidy-readme", "title": "Tidy readme", "isDraft": False}))
+        "headRefName": "fix/tidy-readme", "title": "Tidy readme", "isDraft": False,
+        "body": published_body}))
     changed = env.repo.forge("merge", item)
     assert changed.returncode != 0
     assert changed.stderr == (f"The pull request's head changed since Forge recorded {item} ready.\n"
@@ -136,7 +141,8 @@ def test_4_merge_refuses_a_changed_head_and_checks_the_recorded_head(env):
 
     env.gh.respond("pr", "view", stdout=json.dumps({
         "number": 7, "state": "CLOSED", "baseRefName": "main", "headRefOid": head,
-        "headRefName": "fix/tidy-readme", "title": "Tidy readme", "isDraft": False}))
+        "headRefName": "fix/tidy-readme", "title": "Tidy readme", "isDraft": False,
+        "body": published_body}))
     closed_pr = env.repo.forge("merge", item)
     assert closed_pr.stderr == (f"Forge needs an open pull request for {item} targeting main "
                                 f"from fix/tidy-readme.\nNext: open or correct its pull request, "
@@ -145,7 +151,8 @@ def test_4_merge_refuses_a_changed_head_and_checks_the_recorded_head(env):
 
     env.gh.respond("pr", "view", stdout=json.dumps({
         "number": 7, "state": "OPEN", "baseRefName": "other", "headRefOid": head,
-        "headRefName": "fix/tidy-readme", "title": "Tidy readme", "isDraft": False}))
+        "headRefName": "fix/tidy-readme", "title": "Tidy readme", "isDraft": False,
+        "body": published_body}))
     wrong_target = env.repo.forge("merge", item)
     assert wrong_target.stderr == (f"Forge needs an open pull request for {item} targeting main "
                                    f"from fix/tidy-readme.\nNext: open or correct its pull request, "
@@ -154,7 +161,8 @@ def test_4_merge_refuses_a_changed_head_and_checks_the_recorded_head(env):
 
     env.gh.respond("pr", "view", stdout=json.dumps({
         "number": 7, "state": "OPEN", "baseRefName": "main", "headRefOid": head,
-        "headRefName": "fix/tidy-readme", "title": "Tidy readme", "isDraft": False}))
+        "headRefName": "fix/tidy-readme", "title": "Tidy readme", "isDraft": False,
+        "body": published_body}))
     env.checks([run("tests", "failure"), run("forge-pr-check")])
     before_checks = len(env.gh_calls("api"))
     red = env.repo.forge("merge", item)
