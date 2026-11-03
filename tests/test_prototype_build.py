@@ -154,7 +154,7 @@ def test_3_close_refuses_prototype_app_changes_until_the_owner_accepts_the_build
 
     refused = env.close(item)
     assert refused.returncode == 1, refused.stdout + refused.stderr
-    assert "Next: forge decision new prototype-build" in refused.stderr
+    assert "Next: forge decision new prototype-plan" in refused.stderr
     assert env.review_calls() == []
 
     page = _accept_build_decision(env.repo)

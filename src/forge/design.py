@@ -53,9 +53,11 @@ def has_app_code(top: Path, ref: str, base: str = "") -> bool:
                     for path in skeleton.rglob("*") if path.is_file())
     managed = repo.command_fact(("prototype managed paths",), top,
         lambda: {*scaffold, *sync.files(top, repo.config(top), check_syntax=False)})
-    excluded = [f":(exclude,literal){name}" for name in managed]
+    folders = ("docs/", "plans/", ".factory/", ".forge/", ".github/", ".claude/", ".codex/")
+    # Folder exclusions already cover shipped skills; do not repeat every file on Windows argv.
+    excluded = [f":(exclude,literal){name}" for name in managed if not name.startswith(folders)]
     excluded += [f":(exclude,glob){name}**" for name in
-                 ("docs/", "plans/", ".factory/", ".forge/", ".github/", ".claude/", ".codex/")]
+                 folders]
     excluded.append(":(exclude,glob,icase)**/*.md")
     args = (("diff", "--name-only", "--no-renames", f"{base}...{ref}") if base else
             ("log", "--first-parent", "--diff-merges=first-parent", "--format=", "--name-only", ref))
@@ -63,10 +65,12 @@ def has_app_code(top: Path, ref: str, base: str = "") -> bool:
 
 
 def working_build(top: Path, base: str) -> bool:
-    from forge import story
+    from forge import records, story
 
     def find() -> bool:
         for ref in ("HEAD", base):
+            if records.prototype_plan(top, ref):
+                return True
             names = repo.git("ls-tree", "-r", "--name-only", ref, "--", "docs/decisions", cwd=top)
             for name in names.splitlines():
                 if not re.fullmatch(r"docs/decisions/\d{4,}-prototype-build\.md", name):
@@ -82,8 +86,8 @@ def working_build(top: Path, base: str) -> bool:
 def require_working_build(top: Path, base: str) -> None:
     if (repo.is_prototype(top, refs=(base, "HEAD")) and has_app_code(top, "HEAD", base)
             and not working_build(top, base)):
-        repo.refuse(("This prototype needs the owner's accepted request before app code can merge.",
-                     "forge decision new prototype-build"))
+        repo.refuse(("This prototype needs the owner's approved plan before app code can merge.",
+                     "forge decision new prototype-plan"))
 
 
 def check(top: Path, text: str, ref: str | None = None, *, required: bool = True) -> str | None:
@@ -141,12 +145,25 @@ def snapshot(top: Path, folder: str, ref: str | None = None) -> tuple[str, list[
     return digest, files
 
 
-def require_prototype(top: Path, base: str) -> None:
+def source(top: Path, ref: str = "HEAD") -> str:
+    """The brief's design link, or the saved design pages for an older client."""
     from forge import story
 
-    next_step = ('save the screens and images in docs/design/prototype/ in a mechanical fix, '
-                 'then forge decision new prototype-design and '
-                 'forge decision accept prototype-design --by "<name>"')
+    brief = story.show(top, ref, "docs/product/BRIEF.md") or ""
+    section = story.sections(re.sub(r"<!--.*?-->", "", brief, flags=re.S)).get("Design", "")
+    link = re.search(r"https?://[^\s<>\)]+", section)
+    if link:
+        return link[0]
+    return repo.git("ls-tree", "-r", "--name-only", ref, "--", "docs/design/prototype/", cwd=top)
+
+
+def require_prototype(top: Path, base: str) -> None:
+    from forge import records, story
+
+    if source(top, base).startswith(("https://", "http://")) or records.prototype_plan(top, base):
+        return
+    next_step = ('forge decision new prototype-plan, then '
+                 'forge decision accept prototype-plan --by "<name>"')
     names = repo.git("ls-tree", "-r", "--name-only", base, "--", "docs/decisions", cwd=top).splitlines()
     for name in names:
         if not re.fullmatch(r"docs/decisions/\d{4}-prototype-design\.md", name):
@@ -160,7 +177,7 @@ def require_prototype(top: Path, base: str) -> None:
                     repo.refuse(("This prototype needs PRODUCT.md from the design skill's init before a UI fix can start.",
                                  "run impeccable init, commit PRODUCT.md in a mechanical fix, then retry this UI fix"))
                 return
-    repo.refuse(("This prototype needs an approved design before a UI fix can start.", next_step))
+    repo.refuse(("This prototype needs an approved plan before a UI fix can start.", next_step))
 
 
 def prototype_tree(top: Path) -> str:

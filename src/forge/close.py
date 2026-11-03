@@ -230,24 +230,15 @@ def close(args: argparse.Namespace) -> int:
     if "/" in item:
         key = item.split("/")[0]
         design.check(top, story.show(top, story.plan_ref(top, key), f"plans/{key}.md") or "", "HEAD", required=False)
-    if "/" in item and (limit := state.get("part_line_limit")) and not state.get("allow_large"):
+    if "/" in item:
         excluded = list(review.DOC_EXCLUDES)
         excluded += [path.replace(":(glob)", ":(exclude,glob)") for path in repo.TEST_PATHS]
         stats = repo.git("diff", "--numstat", "-z", "--no-renames", f"{review_ref}...HEAD",
                          "--", ".", *excluded, cwd=top)
         lines = sum(int(number) for record in stats.split("\0")
                     for number in record.split("\t", 2)[:2] if number.isdigit())
-        if lines > limit:
-            stop = state.get("stop") or {}
-            if stop.get("size") and not stop.get("choice"):
-                repo.refuse(REFUSALS["stuck"], item=item, question=stop["question"])
-            # A recorded answer holds until a worker round has run on it.
-            if not stop.get("question") or stop.get("choice") and stop.get("worker_round") != state.get("round"):
-                stuck_stop(top, item, state, cfg, f"It changes {lines} lines outside tests, "
-                           f"over its limit of {limit}.", size=True)
-            repo.refuse(REFUSALS["chosen"], item=item)  # the answer waits for its worker round
-    if (state.get("stop") or {}).get("size"):  # the part fits again or is allowed: no question
-        state.pop("stop")
+        if lines > 400:
+            print(f"Warning: This part changes {lines} lines outside tests and docs; aim for about 400.")
     task.restore_default_settings(item, top, state, default)
     repo.resume_pin(top, cfg["version"], getattr(args, "land_rounds", None), accepted=choice == "accept",
                     before=getattr(args, "pin_before", None))
@@ -561,9 +552,7 @@ def _start_follow_up(top: Path, state: dict[str, Any], why: str, done: str) -> s
 
 
 def check_stop(item: str, state: dict[str, Any], top: Path | None = None) -> None:
-    """A recorded choice or size allowance releases a stop; a clean review does not."""
-    if (state.get("stop") or {}).get("size") and state.get("allow_large"):
-        return
+    """A recorded choice releases a stop; a clean review does not."""
     if state.get("stop") and "question" in state["stop"]:
         if not state["stop"].get("choice"):
             repo.refuse(REFUSALS["stuck"], item=item, question=state["stop"]["question"])
@@ -605,8 +594,7 @@ def stuck_round(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any]
                       "round": state.get("round")}
 
 
-def stuck_stop(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any], what: str,
-               size: bool = False) -> None:
+def stuck_stop(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any], what: str) -> None:
     """Stop the item and refuse with a question the coordinator can ask the owner as it is."""
     title, _, delivers = _title(top, item, state)
     tool = state.get("tool") or state.get("worker") or repo.worker(cfg, "build", False)[0]
@@ -619,7 +607,7 @@ def stuck_stop(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
     question = (f"{title} is stuck. It should deliver: {delivers}\n{what}\n"
                 f"The worker tried: {'; '.join(dict.fromkeys(tried)) or 'no new commits'}.\n"
                 f"Choose one: {'; '.join(choices)}.")
-    state.update(stop={"question": question, "tool": tool, **({"size": True} if size else {})},
+    state.update(stop={"question": question, "tool": tool},
                  status="hotspot")
     state["stop"]["wait_id"] = repo.record_event(top, item, "owner wait start", reason="stuck")
     _save(top, item, state, f"{item} is stuck; Forge asks the owner")
@@ -655,13 +643,11 @@ def merger(top: Path, state: dict[str, Any]) -> str:
 
 
 def _worktree(item: str) -> Path:
-    """The checkout on the item's own branch: the one its state names. An earlier item's state
-    reaches later branches through the default branch, so the file alone proves nothing."""
+    """Find the item's checkout, including work published on another machine."""
     task.require_active(item)
-    for branch, tree in story.worktrees(repo.root()).items():
-        state = repo.read_state(item, tree)
-        if state and state.get("branch") == branch:
-            return tree
+    branches = [f"task/{item.replace('/', '-')}"] if "/" in item else [f"fix/{item}", f"forge/{item}"]
+    if tree := task.pick_up(item, branches):
+        return tree
     repo.refuse(REFUSALS["not_started"], item=item)
 
 

@@ -3,3 +3,6 @@
 .codex/hooks.json text eol=lf
 plans/roadmap.json merge=forge-roadmap
 plans/spotted.json merge=forge-roadmap
+src/forge/templates/skills/impeccable/scripts/impeccable.cmd -text
+.claude/skills/impeccable/scripts/impeccable.cmd -text
+.codex/skills/impeccable/scripts/impeccable.cmd -text

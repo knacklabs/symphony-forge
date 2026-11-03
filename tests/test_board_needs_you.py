@@ -58,7 +58,7 @@ def older(env, prs, name):
     published(env, prs)
 
 
-@pytest.mark.parametrize("case", ["waits", "blocking-problems", "size-choice"])
+@pytest.mark.parametrize("case", ["waits", "blocking-problems", "size-warning"])
 @pytest.mark.parametrize("previous", [False, True], ids=["new-client", "earlier-adoption"])
 def test_2_needs_you_lists_every_wait_oldest_first_on_every_machine(env, monkeypatch, previous, case):
     client(env, previous)
@@ -71,8 +71,8 @@ def test_2_needs_you_lists_every_wait_oldest_first_on_every_machine(env, monkeyp
     env.commit(env.repo.path, "forge.toml", toml.read_text("utf-8")
                + 'models.lite = { model = "sonnet", effort = "medium" }\n')
     env.repo.git("push", "-q", "origin", "main")
-    if case == "size-choice":
-        size_choice(env)
+    if case == "size-warning":
+        size_warning(env)
         return
     seed(env, "src/a.py")
     approved_constitution(env.repo)
@@ -198,9 +198,11 @@ def test_2_needs_you_lists_every_wait_oldest_first_on_every_machine(env, monkeyp
         assert team["needs_you"] == [] and "0 need you" in team["sentence"], where
 
 
-def size_choice(env):
-    """A teammate's part grows past its size limit on a pull request someone else opened: close
-    stops it with a question and publishes it, so the opener's machine sees it too."""
+def size_warning(env):
+    """A teammate's large part warns and publishes without an extra owner choice.
+
+    The opener's machine still shows the normal human merge wait, not a size question.
+    """
     prs = {}
     item, _ = env.start_approved_task(STORY_DOC, changes={"app.py": "x = 1\n"})
     env.repo.git("merge", "-q", "--no-edit", "story/SHOP")
@@ -216,11 +218,13 @@ def size_choice(env):
     resumed = env.tmp / "size-part-b"
     env.repo.git("worktree", "add", "-q", "-b", "task/SHOP-T1", str(resumed), "origin/task/SHOP-T1")
     env.commit(resumed, "app.py", "new = 1\n" * 401)
-    stopped = env.close(item)
-    assert stopped.returncode == 1 and "over its limit" in stopped.stdout + stopped.stderr, stopped.stderr
+    # The approved size contract replaces the old stop; keep the two-machine lifecycle.
+    closed = env.close(item)
+    assert closed.returncode == 0, closed.stdout + closed.stderr
+    assert "Warning: This part changes 401 lines" in closed.stdout + closed.stderr
     share(env, prs, item, 6, "task/SHOP-T1")
     env.repo.path = machine_a
-    assert (item, "review loop") in needs(env.repo)
+    assert needs(env.repo) == [(item, "merge")]
 
 
 def blocking_problems(env):

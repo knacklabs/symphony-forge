@@ -75,8 +75,6 @@ REFUSALS = {
     "not_proposed": ("{rel} is {status}, so it cannot be accepted.", "forge decision new <new-slug>"),
     "unfilled": ("{rel} has only the template's comments in {sections}; fill them in first.",
                  'forge decision accept {slug} --by "{by}"'),
-    "constitution": ("The app constitution can't be approved yet: {missing}.",
-                     'fill them in, then forge decision accept app-constitution --by "{by}"'),
     "no_superseded": ("{rel} supersedes {old}, but there is no such decision.",
                       'forge decision accept {slug} --by "{by}"'),
     "not_on_roadmap": ("{key} is not on the roadmap (plans/roadmap.json).",
@@ -228,12 +226,14 @@ def decision_new(args: argparse.Namespace) -> None:
     rel = f"docs/decisions/{number:04d}-{args.slug}.md"
     text = DECISION.format(date=repo.now()[:10],
                            title=args.slug.replace("-", " ").capitalize())
+    if args.slug == "prototype-plan":
+        text += "\n## Demo steps\n<!-- Number one to six demo steps, with the business task first. -->\n"
     if args.slug.endswith("client-signoff"):
         text = text.replace("supersedes: \"\"\n", "supersedes: \"\"\ncustomer: \"\"\n"
                             "approved_via: \"\"\napproved_on: \"\"\ndemo: \"\"\n")
         text += ("\n<!-- Set approved_via to email, call or chat when the customer replies. -->\n"
                  "\n## Signed design\n<!-- docs/design/prototype/ (<tree id>) -->\n"
-                 "\n## Proof\n<!-- Each demo step and its passing test, for a working build. -->\n"
+                 "\n## Proof\n<!-- Each demo step and its passing test. Use - [ ] 1. Step; tick - [x] only when the client says yes. Screenshots are optional. -->\n"
                  "\n## Decisions\n<!-- What the canvas or prototype proves for production stories. -->\n"
                  "\n## Answers\n<!-- Quote docs/product/BRIEF.md's ## Answers section word for word. -->\n")
     _write(top / rel, text)
@@ -276,14 +276,17 @@ def decision_accept(args: argparse.Namespace) -> None:
         return
     if status != "proposed" and not (prototype_tree and status == "accepted"):
         repo.refuse(REFUSALS["not_proposed"], rel=rel, status=status)
-    if Path(rel).stem.endswith("-app-constitution"):
-        missing = _constitution_gaps(top, by)
+    plan = Path(rel).stem.endswith("-prototype-plan")
+    if plan:
+        missing = _plan_gaps(top, body)
         if missing:
-            repo.refuse(REFUSALS["constitution"], missing="; ".join(missing), by=by)
+            repo.refuse(("The prototype plan needs these changes:\n{gaps}", ""), gaps="\n".join(
+                f'- {gap}. Next: fill in the named section, then forge decision accept prototype-plan --by "{by}"'
+                for gap in missing))
     sections = _sections(body)
     unfilled = [name for name in DECISION_SECTIONS
                 if not re.sub(r"<!--.*?-->", "", sections.get(name, ""), flags=re.S).strip()]
-    if unfilled and not signed:
+    if unfilled and not signed and not plan:
         repo.refuse(REFUSALS["unfilled"], rel=rel, sections=", ".join(unfilled), slug=args.slug,
                     by=by)
     if signed:
@@ -313,6 +316,14 @@ def decision_accept(args: argparse.Namespace) -> None:
         except ValueError:
             gaps.append((f"{rel} needs a real approved_on date.",
                          f"correct {rel}, then {next_step}"))
+        if replied and (plan_text := prototype_plan(top)):
+            demo = re.sub(r"<!--.*?-->", "", _sections(plan_text).get("Demo steps", ""), flags=re.S)
+            steps = re.findall(r"^\s*\d+[.)]\s+(.+)$", demo, re.M)
+            proof = re.sub(r"<!--.*?-->", "", sections.get("Proof", ""), flags=re.S)
+            for number, _ in enumerate(steps, 1):
+                if not re.search(rf"^\s*- \[[xX]\]\s+{number}[.)]\s+", proof, re.M):
+                    gaps.append((f"Demo step {number} is not ticked",
+                                 f"record the client's yes in {rel}'s Proof, then {next_step}"))
         brief = _text(top / "docs/product/BRIEF.md")
         quote = _answer_section(body)
         expected = _answer_section(brief)
@@ -363,7 +374,7 @@ def decision_accept(args: argparse.Namespace) -> None:
             changed += repo.git("ls-files", "--others", "--exclude-standard", cwd=top).splitlines()
             if _app_files(top, changed):
                 gaps.append(("Canvas sign-off cannot include app code on its branch.",
-                             "forge decision new prototype-build"))
+                             "forge decision new prototype-plan"))
         product = [line for line in repo.git("ls-tree", "-r", "-z", "HEAD", cwd=top).split("\0")
                    if line and not line.partition("\t")[2].startswith((*review.BOOKKEEPING, "docs/decisions/"))]
         if repo.git("status", "--porcelain", "--", ".", *[f":(exclude){name}" for name in
@@ -528,7 +539,7 @@ def _signoff_review(top: Path, args: argparse.Namespace, answers: str, evidence:
         saved["rounds"] = history
         _write(top / rel, json.dumps(document, indent=2) + "\n")
         repo.commit_state("Record the owner's sign-off choice", rel, top=top)
-    if saved.get("stop"):
+    if saved.get("stop") and unchanged:
         repo.refuse((review.stop_question(top, "client-signoff", {
             "why": "Client sign-off", "done_when": "The prototype matches the client's answers", "review": previous},
             accept=acceptance), next_step))
@@ -580,7 +591,27 @@ def _signoff_review(top: Path, args: argparse.Namespace, answers: str, evidence:
     return result["commit"]
 
 
+def prototype_plan(top: Path, ref: str | None = None) -> str:
+    """Read an accepted plan from a ref, or the checkout and default branch."""
+    base = ref or story.landed_ref(top)
+    names = repo.git("ls-tree", "-r", "--name-only", base, "--", "docs/decisions", cwd=top).splitlines()
+    if ref is None:
+        names += [path.relative_to(top).as_posix() for path in (top / "docs/decisions").glob("*.md")]
+    for name in set(names):
+        if not re.fullmatch(r"docs/decisions/\d{4,}-prototype-plan\.md", name):
+            continue
+        texts = ((_text(top / name), story.show(top, base, name) or "") if ref is None
+                 else (story.show(top, base, name) or "",))
+        for text in texts:
+            fields, body = _front(text)
+            if fields.get("status") == "accepted":
+                return body
+    return ""
+
+
 def _working_build(top: Path) -> bool:
+    if prototype_plan(top):
+        return True
     base = story.landed_ref(top)
     names = repo.git("ls-tree", "-r", "--name-only", base, "--", "docs/decisions", cwd=top).splitlines()
     names += [path.relative_to(top).as_posix() for path in (top / "docs/decisions").glob("*.md")]
@@ -603,38 +634,31 @@ def constitution(top: Path) -> str:
     names = repo.command_fact(("default file names", ref), top,
                              lambda: repo.git("ls-tree", "-r", "--name-only", ref, cwd=top))
     for name in names.splitlines():
-        if re.fullmatch(r"docs/decisions/\d{4}-app-constitution\.md", name):
+        if re.fullmatch(r"docs/decisions/\d{4}-(?:app-constitution|prototype-plan)\.md", name):
             fields, _ = _front(story.show(top, ref, name) or "")
             if fields.get("status") == "accepted":
                 return text
     return ""
 
 
-def _constitution_gaps(top: Path, by: str) -> list[str]:
+def _plan_gaps(top: Path, body: str) -> list[str]:
     from forge import nextstep
 
     page = top / "docs/product/CONSTITUTION.md"
     missing = [] if page.is_file() else ["docs/product/CONSTITUTION.md is missing"]
     sections = _sections(re.sub(r"<!--.*?-->", "", _text(page), flags=re.S))
-    for name in ("Defaults", "Architecture choices"):
+    for name in ("Defaults", "Roles", "Architecture choices"):
         if not sections.get(name, "").strip():
             missing.append(f"## {name} has no text")
-    for line in sections.get("Architecture choices", "").splitlines():
-        if not line.strip():
-            continue
-        names = re.findall(r"\bdocs/decisions/\d{4}-[a-z0-9]+(?:-[a-z0-9]+)*\.md\b", line)
-        if not names:
-            missing.append(f'architecture choice "{line.strip()}" names no decision record')
-        for name in names:
-            fields, _ = _front(_text(top / name))
-            if not (top / name).is_file() or fields.get("status") != "accepted":
-                slug = Path(name).stem[5:]
-                missing.append(f'{name} needs forge decision accept {slug} --by "{by}"')
+    if repo.is_prototype(top):
+        steps = _sections(re.sub(r"<!--.*?-->", "", body, flags=re.S)).get("Demo steps", "")
+        if not 1 <= len(re.findall(r"^\s*\d+[.)]\s+\S", steps, re.M)) <= 6:
+            missing.append("## Demo steps needs one to six numbered steps")
     brief = _sections(re.sub(r"<!--.*?-->", "", _text(top / "docs/product/BRIEF.md"), flags=re.S))
     for name in ("Summary", "Users", "Things it keeps track of"):
         if not brief.get(name, "").strip():
             missing.append(f"docs/product/BRIEF.md needs ## {name}")
-    if "Personal data" in nextstep.open_must_answer_topics(top):
+    if not repo.is_prototype(top) and "Personal data" in nextstep.open_must_answer_topics(top):
         missing.append("Personal data needs a settled answer in docs/product/BRIEF.md")
     return missing
 

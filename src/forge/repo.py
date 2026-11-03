@@ -1092,6 +1092,15 @@ def state_path(item: str) -> str:
     return f".factory/stories/{item}/story.json"
 
 
+def without_size_stop(data: dict[str, Any]) -> dict[str, Any]:
+    """Ignore obsolete size questions without migrating saved state."""
+    if (data.get("stop") or {}).get("size"):
+        data = {key: value for key, value in data.items() if key != "stop"}
+        if data.get("status") == "hotspot":
+            data["status"] = "working"
+    return data
+
+
 def read_state(item: str, top: Path | None = None) -> dict[str, Any] | None:
     """An item's state in this checkout, or None when Forge never started it here."""
     rel = state_path(item)
@@ -1104,7 +1113,7 @@ def read_state(item: str, top: Path | None = None) -> dict[str, Any] | None:
         refuse(REFUSALS["bad_state"], path=rel, problem=exc)
     if not isinstance(data, dict):
         refuse(REFUSALS["bad_state"], path=rel, problem="it is not a JSON object")
-    return data
+    return without_size_stop(data)
 
 
 def write_state(item: str, data: dict[str, Any], top: Path | None = None) -> str:

@@ -93,7 +93,7 @@ def test_3_each_feature_checks_its_permissions(repo, gh, tmp_path, starter, requ
             (repo.path / path).parent.mkdir(parents=True, exist_ok=True)
             (repo.path / path).write_text(
                 (STARTER / path).read_text("utf-8").replace(
-                    "member: ['view', 'create', 'edit']", "member: []"), encoding="utf-8")
+                    "member: ['view', 'create']", "member: []"), encoding="utf-8")
         before = {path.relative_to(repo.path): path.read_bytes()
                   for path in (repo.path / "libs").rglob("*") if path.is_file()}
         repo.git("checkout", "-b", "fix/check-permissions-upgrade")
@@ -140,7 +140,7 @@ def test_3_each_feature_checks_its_permissions(repo, gh, tmp_path, starter, requ
                 mapping,
             ), mapping
             expected_member = '"member": []' if plural == "notes" else (
-                '"member": ["view", "create", "edit"]'
+                '"member": ["view", "create"]'
             )
             assert expected_member in mapping, mapping
         if LIVE:
@@ -162,10 +162,10 @@ def test_3_each_feature_checks_its_permissions(repo, gh, tmp_path, starter, requ
         (source / controller).read_text("utf-8"))
     assert routes == {route: [permission] for route, permission in ROUTE_PERMISSIONS.items()}
     # The one place that maps each role to its permissions: admins all five, members not
-    # delete or restore.
+    # edit, delete or restore.
     mapping = (source / permissions).read_text("utf-8")
     assert re.search(r"""admin["']?: \[["']view["'], ["']create["'], ["']edit["'], ["']delete["'], ["']restore["']\]""", mapping), mapping
-    assert re.search(r"""member["']?: \[["']view["'], ["']create["'], ["']edit["']\]""", mapping), mapping
+    assert re.search(r"""member["']?: \[["']view["'], ["']create["']\]""", mapping), mapping
 
     client, initialized = _fresh_client(
         repo, gh, tmp_path, "--starter", "react" if typescript else "python")

@@ -6,7 +6,7 @@ import shutil
 from datetime import datetime, timedelta
 from pathlib import Path
 
-from forge import repo, review
+from forge import repo, review, story
 
 STATUS = "forge-full-suite"
 
@@ -39,6 +39,12 @@ def green(top: Path, *, reuse: bool = False) -> str:
         paths = repo.git("diff", "--name-only", "--no-renames", base, target, cwd=top).splitlines()
         product = [path for path in paths
                    if not path.startswith((*review.BOOKKEEPING, "docs/decisions/"))]
+        if "forge.toml" in product:
+            before = story.show(top, base, "forge.toml") or ""
+            after = story.show(top, target, "forge.toml") or ""
+            if re.sub(r"(?m)^version[ \t]*=.*\n?", "", before, count=1) == re.sub(
+                    r"(?m)^version[ \t]*=.*\n?", "", after, count=1):
+                product.remove("forge.toml")
         return not product or set(product) <= sync.synced(
             top, repo.config(top), base, target, product)
 

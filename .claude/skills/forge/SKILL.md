@@ -633,10 +633,11 @@ client replies. Only a may-wait topic can read `- <Topic>: later, when <trigger>
 
 **Canvas and app design.** Make each app's design from the whole `docs/product/BRIEF.md`: its
 purpose, users, records, fields, choice-list options and key flows. Use impeccable and
-emil-design-eng. Run impeccable's init when PRODUCT.md is missing. Make the screens in a Claude
-Design artifact with a shadcn design system and named shadcn components. On a Codex-only host
-without an artifact tool, make HTML artboards in the repo. Keep the canvas available for the
-customer and the sign-off review. New clients get this process at init; existing clients can use
+emil-design-eng when making it through Forge. Any way of making the design works, through Forge
+or separately. Keep one link to it in `## Design` in the brief; it need not be saved in the repo.
+When using Forge, run impeccable's init when PRODUCT.md is missing, and use a shadcn design
+system and named shadcn components. Keep the design available for the
+customer and the sign-off review. A UI fix needs no saved design images. New clients get this process at init; existing clients can use
 their current brief and design after upgrade and sync. Client sign-off does not require a root
 DESIGN.md, SCREENS.md or CHECKS.md, or a specific `Things it keeps track of` heading.
 When the canvas has a SCREENS.md screen list, add `Build: now` or `Build: later` to each screen.
@@ -666,9 +667,11 @@ client-signoff` (customer, demo address for a working build, and the answers pag
 approved via and approved on empty), and run `forge decision accept client-signoff --by "<name>"`
 before any reply is recorded. Put each demo step and its test under `## Proof` for a working build,
 and settled choices under `## Decisions`.
-Before the demo, the Claude agent reads the design artifact and lists its screens.
-It compares them with the app, then builds what is missing or tells the person.
-On a Codex-only host, compare the app with the design pages saved in the repo.
+Before the demo, read the design from the brief's link when the host can and list its screens.
+Compare them with the app, then build what is missing or tell the person.
+If the host cannot read the link, use the design pages saved in the repo, or ask the person
+for the screen list when there are no saved pages. Say plainly that the design was not read.
+Missing access or saved pages never refuses the demo or sign-off.
 Sign-off checks that the copied Answers section matches `docs/product/BRIEF.md` and that the full
 run on main is green. When a precondition is
 missing, the refusal lists every gap and the next action for each. Existing clients can complete
@@ -692,6 +695,8 @@ round or an owner question. A held finding below P0 still needs the owner's choi
 If the review engine fails, fix the engine problem and run the accept command again.
 A canvas-only sign-off needs no working build. A working build gets a full first product review.
 Each later attempt reviews only product files changed since the previous review and its open findings.
+If product files changed after a saved stop, review them before asking the owner about remaining findings.
+With no product change, repeat the saved question without another review.
 Every reviewer gets earlier findings and answers. Settled findings stay settled.
 Only a person may write `sample_data: true` in the sign-off decision's front matter.
 It declares that the prototype holds only sample data and has no back end. After two
@@ -705,6 +710,7 @@ Record that choice with `forge decision accept client-signoff --by "<name>" --re
 Accept keeps the findings in the item's Known issues. Split creates a separate fix. More permits one more review.
 These rules apply to new clients and earlier-adopted clients after upgrade.
 Forge reuses passed results while what they checked stays unchanged.
+A version-only change to forge.toml keeps the last green full run. Any other settings change needs a new full run.
 The product review uses the green full run as test evidence. It needs no separate `forge test` run.
 If the product review cannot finish, the refusal names its saved raw report when one exists.
 Before the customer's reply, the command runs these checks and stops without accepting sign-off.
@@ -1109,9 +1115,7 @@ recording succeeds; if the repo pins a newer release, install that pinned releas
   and none for settings, docs, deletions or test-only items: the check the item names proves those.
 - Keep tasks small: at most three Done-when items and about 400 changed lines each, counting
   additions and removals outside tests, Markdown files, docs/, plans/ and .factory/.
-  Close stops a part over 400 lines before review;
-  split it, or record an allowance with a reason by running `forge fix allow-large "<reason>"`
-  in the part's folder, the same way fixes work. Stories approved before this limit keep working.
+  Forge prints the rule when a part starts and close warns when a part is larger; split large parts when you plan them.
 - Keep each part's builder notes to its goal, files and one test per rule.
 - When a plan adds a new feature to a TypeScript or Python starter app, name its plural,
   singular and fields in the builder notes, and give the worker's first-step command:
@@ -1928,7 +1932,7 @@ bar, a disposition with the scores in its reason for one below it, and the stop 
 stop. Approval and merge steps stay the owner's.
 
 When two rounds in a row leave close's tests failing or the same P0 open, `forge work`
-stops the item. Close also stops a story part that grows past its line limit. Either prints a
+stops the item. It prints a
 ready-to-ask question: what the item delivers, what is stuck, what the worker tried, and the
 choices. Ask the owner exactly that question. Record the choice with
 `forge close <item> --resolve <switch|same|narrow|split> --reason "<human's choice>"`, then

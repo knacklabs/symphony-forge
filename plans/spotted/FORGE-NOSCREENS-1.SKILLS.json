@@ -1,0 +1,48 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/templates/skills/impeccable/scripts/live-browser.js\tEscape saved class names before querying insert anchors\tFORGE-NOSCREENS-1/SKILLS",
+      "kind": "bug",
+      "path": "src/forge/templates/skills/impeccable/scripts/live-browser.js",
+      "line": 2172,
+      "text": "Escape saved class names before querying insert anchors",
+      "from": "blocking",
+      "item": "FORGE-NOSCREENS-1/SKILLS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/skills/impeccable/scripts/live-browser.js\t[P1] Allow keyboard focus to leave the Steer field\tFORGE-NOSCREENS-1/SKILLS",
+      "kind": "bug",
+      "path": "src/forge/templates/skills/impeccable/scripts/live-browser.js",
+      "line": 11526,
+      "text": "[P1] Allow keyboard focus to leave the Steer field",
+      "from": "blocking",
+      "item": "FORGE-NOSCREENS-1/SKILLS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/sync.py\t[P2] Preserve launcher executability when skills are added on Windows",
+      "kind": "edge",
+      "path": "src/forge/sync.py",
+      "line": 164,
+      "text": "[P2] Preserve launcher executability when skills are added on Windows",
+      "from": "review",
+      "item": "FORGE-NOSCREENS-1/SKILLS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/templates/skills/impeccable/scripts/live-browser.js\t[P2] Remove the design panel when exiting live mode",
+      "kind": "edge",
+      "path": "src/forge/templates/skills/impeccable/scripts/live-browser.js",
+      "line": 12393,
+      "text": "[P2] Remove the design panel when exiting live mode",
+      "from": "review",
+      "item": "FORGE-NOSCREENS-1/SKILLS",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

@@ -172,7 +172,9 @@ def _keeps_gitattributes(repo) -> None:
     assert adopted.returncode == 0, adopted.stdout + adopted.stderr
     assert repo.git("show", f"{BRANCH}:.gitattributes") == (
         "*.png binary\nplans/roadmap.json merge=forge-roadmap\n"
-        "plans/spotted.json merge=forge-roadmap")
+        "plans/spotted.json merge=forge-roadmap\n"
+        ".claude/skills/impeccable/scripts/impeccable.cmd -text\n"
+        ".codex/skills/impeccable/scripts/impeccable.cmd -text")
 
 
 @pytest.mark.parametrize("case", ["adopts", "team gitattributes", "taken files", "state file",

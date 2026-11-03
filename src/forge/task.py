@@ -33,6 +33,8 @@ REFUSALS = {
                 "forge close {other}"),
     "fix_lines": ("A fix needs a one-line why and a one-line done-when.",
                   'forge fix start "<why>" --done "<done when>"'),
+    "fix_placeholder": ("Find the problem to solve does not name a problem to fix. Nothing started.",
+                        'forge start "<the idea you want to explore>"'),
     "fix_kind": ("A prototype fix needs --kind ui, backend or mechanical.",
                  'forge fix start "<why>" --done "<done when>" --kind <kind>'),
     "not_fix": ("{branch} is not a fix, and allow-large works only inside a fix's folder.",
@@ -226,6 +228,36 @@ def _folder(name: str) -> Path:
     """A new worktree folder next to the main checkout, named <repo>-<name>."""
     main = Path(git("rev-parse", "--path-format=absolute", "--git-common-dir")).parent
     return main.parent / f"{main.name}-{name}"
+
+
+def pick_up(item: str, branches: list[str]) -> Path | None:
+    """Find the item's checkout, or make one from its published state."""
+    from forge import story
+
+    top = repo.root()
+    for branch, tree in story.worktrees(top).items():
+        state = repo.read_state(item, tree)
+        if state and state.get("branch") == branch:
+            return tree
+    for branch in branches:
+        if run("git", "fetch", "-q", "origin", branch, cwd=top).returncode:
+            continue
+        remote = f"origin/{branch}"
+        state = story.json_of(show(remote, repo.state_path(item), top))
+        if state.get("branch") != branch:
+            continue
+        if "/" not in item and state.get("status") == "dropped":
+            raise repo.Refused(f"Fix {item} is dropped.", f"forge fix drop {item} --undo")
+        path = _folder(item.replace("/", "-") if "/" in item else f"fix-{item}")
+        if git("branch", "--list", branch, cwd=top):
+            git("worktree", "add", "-q", str(path), branch, cwd=top)
+            if run("git", "merge", "--ff-only", "--no-overwrite-ignore", remote, cwd=path).returncode:
+                raise repo.Refused(f"Local and remote work for {item} differ. Reconcile the branch first.",
+                                   f"forge work {item}")
+        else:
+            git("worktree", "add", "-q", "--track", "-b", branch, str(path), remote, cwd=top)
+        return path
+    return None
 
 
 def _new_checkout(item: str, branch: str, folder: str, base: str, state: dict[str, Any],
@@ -471,13 +503,13 @@ def start(args: argparse.Namespace) -> None:
     base = stacked or start_base(main, key, tasks[task])
     carry = (source, [rel for rel in (doc_rel, notes_rel, state_rel, design_folder) if rel and show(source, rel) is not None]
              ) if source != base else None
-    # Earlier approvals keep their agreed parts, including ones not started yet.
-    state = {"part_line_limit": approval["part_line_limit"]} if approval.get("part_line_limit") else {}
+    state = {}
     if stacked:
         state.update(stacked_on=blockers[0], base=git("rev-parse", stacked))
     path = _new_checkout(item, branch, f"{key}-{task}", base, state, f"Start {item}", carry)
     on = f" on top of {blockers[0]}" if stacked else ""
     print(f"Started {item}{on} on {branch} in {path}")
+    print("Keep this part to about 400 changed lines outside tests and docs; close only warns when it is larger.")
     print(f"Next: forge work {item}")
 
 
@@ -602,8 +634,11 @@ def fix_start(args: argparse.Namespace) -> None:
     why, done = args.why.strip(), args.done.strip()
     if args.slug is not None and not re.fullmatch(r"[a-z0-9]+(-[a-z0-9]+)*", args.slug):
         refuse(REFUSALS["bad_slug"], slug=args.slug)
-    main = main_ref()
     slug = args.slug or re.sub(r"[^a-z0-9]+", "-", why.lower()).strip("-")[:40].strip("-") or "fix"
+    problem = re.sub(r"[^a-z0-9]+", "-", why.lower()).strip("-")
+    if any(re.fullmatch(r"find-the-problem-to-solve(?:-\d+)?", value) for value in (problem, slug)):
+        refuse(REFUSALS["fix_placeholder"])
+    main = main_ref()
     taken = {ref.split("/fix/", 1)[1] for ref in git(
         "for-each-ref", "--format=%(refname)", "refs/heads/fix/", "refs/remotes/origin/fix/",
         "refs/tags/forge-start/fix/").splitlines()}
