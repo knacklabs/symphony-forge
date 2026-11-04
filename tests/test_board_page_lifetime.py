@@ -25,7 +25,8 @@ from test_board_server import client, get  # noqa: F401
 STORY = "board-stops-with-no-page"
 
 
-def test_1_no_page_pauses_work_and_stops_after_thirty_minutes(client, tmp_path):
+@pytest.mark.parametrize("page_opens", [False, True], ids=["never-opened", "last-page-closed"])
+def test_1_no_page_pauses_work_and_stops_after_thirty_minutes(client, tmp_path, page_opens):
     clock, work = tmp_path / "elapsed", tmp_path / "background"
     clock.write_text("0", encoding="utf-8")
     work.write_text("", encoding="utf-8")
@@ -34,12 +35,14 @@ def test_1_no_page_pauses_work_and_stops_after_thirty_minutes(client, tmp_path):
     launcher = client.bin / "forge"
     source = launcher.read_text("utf-8")
     instrument = f'''
-import time, pathlib
+import os, time, pathlib
 _real_clock = time.monotonic
 _clock_file = pathlib.Path({json.dumps(clock.as_posix())})
 time.monotonic = lambda: _real_clock() + float(_clock_file.read_text("utf-8"))
 def _observe(event, args):
-    fetch = event == "subprocess.Popen" and args[1][:2] == ["git", "fetch"]
+    fetch = (event == "subprocess.Popen"
+             and pathlib.Path(os.fsdecode(args[0])).stem.casefold() == "git"
+             and args[1][1:2] == ["fetch"])
     build = (event == "open" and isinstance(args[0], str)
              and args[0].endswith("board-snapshot.json.tmp") and args[1] == "w")
     if fetch or build:
@@ -61,6 +64,14 @@ sys.addaudithook(_observe)
     lines = queue.Queue()
     threading.Thread(target=lambda: [*map(lines.put, process.stdout), lines.put(None)], daemon=True).start()
     streams = []
+
+    def stopped():
+        assert process.wait(timeout=10) == 0
+        output = []
+        while (line := lines.get(timeout=10)) is not None:
+            output.append(line)
+        assert "The board stopped because no page was open for 30 minutes." in "".join(output)
+
     try:
         while (line := lines.get(timeout=60)) is not None:
             if found := re.search(r"http://127\.0\.0\.1:\d+/\?token=[\w-]+", line):
@@ -72,6 +83,11 @@ sys.addaudithook(_observe)
         with pytest.raises(subprocess.TimeoutExpired):
             process.wait(timeout=2)
         assert work.read_text("utf-8") == "", "A board with no page did background work"
+        if not page_opens:
+            advance(1810)
+            stopped()
+            assert work.read_text("utf-8") == "", "An unattended board did background work before exit"
+            return
         address = urlsplit(url)
 
         def open_page():
@@ -110,11 +126,7 @@ sys.addaudithook(_observe)
             process.wait(timeout=2)
         assert work.read_text("utf-8") == before, "The closed pages left background work active"
         advance(5810)
-        assert process.wait(timeout=10) == 0
-        output = []
-        while (line := lines.get(timeout=10)) is not None:
-            output.append(line)
-        assert "The board stopped because no page was open for 30 minutes." in "".join(output)
+        stopped()
     finally:
         for connection, response in streams:
             response.close()
