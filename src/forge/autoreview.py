@@ -16,28 +16,29 @@ PRIORITIES = ("P0", "P1", "P2", "P3")
 TOKENS = ("input_tokens", "cached_input_tokens", "output_tokens", "reasoning_output_tokens")
 
 
-def spent(path: Path) -> dict[str, Any]:
-    """The review engine's token use summed over its runs (a chunked review has one per pass,
-    a retry one more) and its first chat, read once: Codex's `exec --json` events or Claude's
-    results."""
+def spent(folder: Path) -> dict[str, Any]:
+    """Sum the engine processes' separate streams and keep the first chat."""
     runs: list[dict[str, Any]] = []
-    with contextlib.suppress(OSError):
-        for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
-            try:
-                event = json.loads(line)
-            except ValueError:
-                continue
-            if not isinstance(event, dict):
-                continue
-            usage = event.get("usage")
-            if event.get("type") == "thread.started":
-                runs.append({"chat": event.get("thread_id")})
-            elif event.get("type") == "turn.completed" and isinstance(usage, dict) and runs:
-                # Codex reports the thread's running total, so its last turn holds the run's use.
-                runs[-1].update({key: usage.get(key) for key in TOKENS})
-            elif event.get("type") == "result" and isinstance(usage, dict):
-                runs.append({"chat": event.get("session_id"), **repo.claude_tokens(usage)})
-        path.unlink()
+    for path in sorted(folder.glob("*.jsonl")):
+        with contextlib.suppress(OSError):
+            calls: list[dict[str, Any]] = []
+            for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
+                try:
+                    event = json.loads(line)
+                except ValueError:
+                    continue
+                if not isinstance(event, dict):
+                    continue
+                usage = event.get("usage")
+                if event.get("type") == "thread.started":
+                    calls.append({"chat": event.get("thread_id")})
+                elif event.get("type") == "turn.completed" and isinstance(usage, dict) and calls:
+                    # Codex's last turn holds this process's running token total.
+                    calls[-1].update({key: usage.get(key) for key in TOKENS})
+                elif event.get("type") == "result" and isinstance(usage, dict):
+                    calls.append({"chat": event.get("session_id"), **repo.claude_tokens(usage)})
+            runs.extend(calls)
+            path.unlink()
     if not runs:
         return {}
     return {"chat": runs[0]["chat"], **{key: sum(counts) if (counts := [
@@ -55,8 +56,16 @@ def attempt(argv: list[str], cwd: Path, out: Path,
                             **codex.GROUP)
     with proc, machine.agent_process(proc):
         last = ""
+        pending = b""
         for line in proc.stdout or []:  # streamed as bytes: its progress is how a person watches it
             line = line.replace(b"\0", b"")
+            # Claude's failure trailer contains its result JSON. Hold it until we
+            # can name a sign-in failure without printing the raw result first.
+            if "claude" in argv and (pending or line.lstrip().startswith(b"{")
+                                      or b"claude engine failed" in line):
+                pending += line
+                last = line.decode("utf-8", "replace").strip() or last
+                continue
             sys.stderr.buffer.write(line)
             sys.stderr.flush()
             last = line.decode("utf-8", "replace").strip() or last
@@ -68,6 +77,19 @@ def attempt(argv: list[str], cwd: Path, out: Path,
             if line.strip():
                 repo.record_progress(top, item, run_id, step=" ".join(last.split()), **selected)
         code = proc.wait()
+    trailer = pending.decode("utf-8", "replace")
+    for match in re.finditer(r"(?m)^\s*\{", trailer):
+        try:
+            result, _ = json.JSONDecoder().raw_decode(trailer[match.end() - 1:])
+        except ValueError:
+            continue
+        if (result.get("is_error") is True and isinstance(result.get("result"), str)
+                and result["result"].startswith("Not logged in")):
+            raise repo.Refused("Claude is not signed in. Next: run claude and sign in, "
+                               f"then forge close {item}.", "")
+    if pending:
+        sys.stderr.buffer.write(pending)
+        sys.stderr.flush()
     try:
         # Decode first: JSON represents null characters as escaped text.
         report = json.loads(out.read_text(encoding="utf-8"), object_hook=lambda fields: {

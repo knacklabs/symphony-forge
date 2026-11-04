@@ -1,5 +1,4 @@
 from app.core.config import Settings
-from app.core.errors import ApiError
 from app.core.logging import log_event
 
 
@@ -22,9 +21,8 @@ class MailProvider:
 
     def send_invite(self, _email: str, invite_url: str) -> None:
         if self.settings.app_env not in {"development", "test"}:
-            raise ApiError(
-                422, "MAIL_NOT_CONFIGURED", "Email is not set up for this app yet."
-            )
+            # The admin receives the link in the API response when mail is absent.
+            return
         log_event(
             None,
             "info",

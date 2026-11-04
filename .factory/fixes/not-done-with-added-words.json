@@ -1,0 +1,45 @@
+{
+  "base": "00c609a81f4a5d2fa09466f7105c2513ba53cd5a",
+  "branch": "fix/not-done-with-added-words",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1a5ff-a6df-7990-b9dd-ccf735652616",
+    "head": null,
+    "start": "475d852efd2755415f4023fcece86c9d60f952d9"
+  },
+  "done_when": "A Not done finding whose title holds an owner-approved Done-when item, also with added words after it, blocks close and does not become a follow-up. A Not done finding about builder details stays a follow-up.",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "a868d6720b48157dc95ba40cfd130ad0c1a7180e71b5085321288d7fd52edd7d",
+    "changed": "d5817301c6bc8452af986e85a0dbdf3f87e31b31bc564654285bf865e7d6b621",
+    "commit": "343bb93fe1c5ec30a1269994f27a4240e18b73c1",
+    "dismissals": [],
+    "findings": [],
+    "id": "2283f9df-60ba-4772-a61d-009c41eb683e",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-04T09:58:23.530741+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-04T10:04:55.161424+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "36555f49004b4f1f79832eaf58b7ab6a7b84d5eb",
+    "keys": {},
+    "round": null
+  },
+  "why": "A fix merges while review says its own Done-when is not done: when a Not done finding's title holds the fix's Done-when with added words, Forge treats it as advice (GitHub issue 1273).",
+  "worker": "codex"
+}

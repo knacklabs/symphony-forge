@@ -5,16 +5,23 @@ changes a screen.
 
 ## Layout
 
+The starter keeps the web build setup, theme and API client, but has no route table, app shell or
+screens. Before adding screens, use the app's existing design. If it has none, draft one on a
+design canvas from the client's brand; use a neutral design when there is no brand. As the agent
+builds each API a person uses, it builds that screen in the client's design.
+Webhooks, endpoints only agents or other systems call, and background jobs get no screen.
+This layout shows where the agent adds screens.
+
 ```
 apps/web/src/
-  app.tsx           React Router route table
+  app.tsx           React Router route table, added with the first screen
   main.tsx
-  components/app-shell.tsx
+  components/app-shell.tsx, added with the first screen
   index.css         app theme
-  pages/            not-found and settings screens
+  pages/            screens added with their APIs
 libs/<module>/web/src/
   hooks/
-  pages/            screens for the module
+  pages/            screens added with the module's APIs
 libs/core/web/src/
   api-client.ts
   query-client.ts

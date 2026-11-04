@@ -1,103 +1,61 @@
-"""Close keeps new story parts small, and both client hosts receive the planning rule."""
+"""Large parts warn without a stop, and both client hosts receive the rule."""
 import json
+import tomllib
 from pathlib import Path
 
 import pytest
 
-from test_close import STORY_DOC, approve_story, env  # noqa: F401
+from test_close import GREEN, STORY_DOC, approve_story, env  # noqa: F401
 from test_setup import _fresh_client
-from test_worker import install_claude
-from test_upgrade_command import (_repo_adopted_on_the_previous_release,
+from test_upgrade_command import (NAME, RELEASE, _repo_adopted_on_the_previous_release,
                                  unsynced_up)  # noqa: F401
 
 STORY = "part-size-limit"
 
 
-@pytest.mark.parametrize("case", [
-    "400 lines", "401 lines", "deleted lines", "added plus removed",
-    "tests excluded", "bookkeeping excluded", "recorded allowance",
-    "already started", "already approved",
-])
-def test_1_close_stops_large_parts_unless_allowed_or_already_in_flight(env, case):
-    # Close is the owner: an oversized change must stop before publishing or buying a review.
-    # Existing close tests cover fix file counts, but not a story part's changed-line limit.
-    count = 400 if case in {"400 lines", "tests excluded", "bookkeeping excluded"} else 401
-    before = 401 if case == "deleted lines" else 200 if case == "added plus removed" else 0
-    if before:
-        env.commit(env.repo.path, "app.py", "old = 1\n" * before, "Existing application")
+@pytest.mark.parametrize("case", ["400 lines", "401 lines", "deleted lines", "tests and docs excluded"])
+def test_1_close_warns_about_a_large_part_and_goes_on(env, case):
+    # Close owns counting and continuation; the former contract stopped before review.
+    if case == "deleted lines":
+        env.commit(env.repo.path, "app.py", "old = 1\n" * 401)
         env.repo.git("push", "-q", "origin", "main")
-    changes = {"app.py": "new = 1\n" * (0 if case == "deleted lines" else
-                                        201 if case == "added plus removed" else count)}
-    if case == "tests excluded":
-        changes.update({path: "assert True\n" * 401 for path in (
+    count = 400 if case == "400 lines" else 401
+    changes = {"app.py": "new = 1\n" * (0 if case == "deleted lines" else count)}
+    if case == "tests and docs excluded":
+        changes = {"app.py": "new = 1\n" * 300}
+        changes.update({path: "assert True\n" * 600 for path in (
             "tests/test_app.py", "web/app.test.ts", "web/app.spec.ts",
             "server/test_api.py", "server/api_test.py", "server/testing/helper.py")})
-    if case == "bookkeeping excluded":
-        changes["plans/builder-notes.md"] = "Notes\n" * 401
-    if case == "already started":
-        item, where = env.start_task(changes=changes)
-    elif case == "already approved":
-        approve_story(env.repo, STORY_DOC)
-        # An earlier release's approval has no part-size rule, even for a task started later.
-        tree = env.repo.git("worktree", "list", "--porcelain").split("\n\n")
-        where = Path(next(entry.splitlines()[0].removeprefix("worktree ") for entry in tree
-                          if "branch refs/heads/story/SHOP" in entry))
-        rel = ".factory/stories/SHOP/story.json"
-        state = json.loads((where / rel).read_text("utf-8"))
-        state["approval"].pop("part_line_limit", None)
-        env.commit(where, rel, json.dumps(state), "Earlier release approval")
-        env.repo.git("merge", "-q", "--ff-only", "story/SHOP")
-        env.repo.git("push", "-q", "origin", "main")
-        started = env.repo.forge("task", "start", "SHOP/T1")
-        assert started.returncode == 0, started.stdout + started.stderr
-        where = Path(started.stdout.splitlines()[0].rsplit(" in ", 1)[1])
-        item = "SHOP/T1"
-        for path, text in changes.items():
-            env.commit(where, path, text)
-    else:
-        item, where = env.start_approved_task(STORY_DOC, changes=changes)
-    if case == "recorded allowance":
-        blank = env.repo.forge("fix", "allow-large", " ", cwd=where)
-        assert blank.returncode == 1, blank.stdout + blank.stderr
-        allowed = env.repo.forge("fix", "allow-large", "One indivisible application change",
-                                 cwd=where)
-        assert allowed.returncode == 0, allowed.stdout + allowed.stderr
-    published = env.repo.git("rev-parse", "origin/task/SHOP-T1") if case != "already started" else None
-
+        changes.update({"docs/design.html": "Design\n" * 600,
+                        "plans/notes.txt": "Notes\n" * 600})
+    item, where = env.start_approved_task(STORY_DOC, changes=changes)
     done = env.close(item)
+    assert done.returncode == 0, done.stdout + done.stderr
+    warnings = [line for line in (done.stdout + done.stderr).splitlines()
+                if line.startswith("Warning: This part changes")]
+    assert warnings == (["Warning: This part changes 401 lines outside tests and docs; aim for about 400."]
+                        if case in {"401 lines", "deleted lines"} else [])
+    assert len(env.review_calls()) == 1
+    assert len(env.gh_calls("pr", "create")) == 1
+    assert "stop" not in json.loads((where / ".factory/stories/SHOP/tasks/T1.json").read_text())
 
-    if case in {"401 lines", "deleted lines", "added plus removed"}:
-        assert done.returncode == 1, done.stdout + done.stderr
-        # Growing past the limit stops the part and asks the owner, like a stuck worker.
-        assert done.stderr.splitlines()[-4:-2] == [
-            "It changes 401 lines outside tests, over its limit of 400.", "The worker tried: Work."]
-        assert done.stderr.splitlines()[-1] == (
-            f'Next: forge close {item} --resolve <switch|same|narrow|split> --reason "<human\'s choice>"')
-        assert env.review_calls() == []
-        assert env.gh_calls("pr", "create") == []
-        assert env.repo.git("rev-parse", "origin/task/SHOP-T1") == published
-        if case == "401 lines":
-            # After the owner answers, close doesn't ask again before the worker's round runs.
-            chosen = env.close(item, "--resolve", "same", "--reason", "Shrink it in one more round")
-            assert chosen.returncode == 0, chosen.stdout + chosen.stderr
-            again = env.close(item)
-            assert again.returncode == 1
-            assert again.stderr.splitlines()[-2:] == [
-                "The owner's choice is recorded; the worker's next round follows it.",
-                f"Next: forge work {item}"]
-            install_claude(env.repo)
-            worked = env.repo.forge("work", item)
-            assert worked.returncode == 0, worked.stdout + worked.stderr
-    else:
-        assert done.returncode == 0, done.stdout + done.stderr
-        assert len(env.review_calls()) == 1
-        assert len(env.gh_calls("pr", "create")) == 1
-        if case == "recorded allowance":
-            assert "Recorded allowance: One indivisible application change" in env.prompt()
+
+def test_2_a_part_start_prints_the_size_rule(env):
+    # Start output owns the reminder; fixes must not receive a part rule.
+    approve_story(env.repo, STORY_DOC)
+    started = env.repo.forge("task", "start", "SHOP/T1")
+    assert started.returncode == 0, started.stdout + started.stderr
+    lines = started.stdout.splitlines()
+    assert lines[0].startswith("Started ")
+    assert lines[1] == "Keep this part to about 400 changed lines outside tests and docs; close only warns when it is larger."
+    assert lines[2].startswith("Next:")
+    fixed = env.repo.forge("fix", "start", "Repair a typo", "--done", "The typo is fixed")
+    assert fixed.returncode == 0, fixed.stdout + fixed.stderr
+    assert "400 changed lines" not in fixed.stdout
 
 
 @pytest.mark.parametrize("adoption", ["new init", "previous release upgrade and sync"])
-def test_2_clients_receive_compact_part_planning_guidance(unsynced_up, adoption):
+def test_3_the_guide_says_close_only_warns(unsynced_up, adoption):
     # The guide is a shipped prompt contract: inspect both actual command-generated guides,
     # not the source template. uv and GitHub are faked only at their external boundaries.
     up = unsynced_up
@@ -110,8 +68,72 @@ def test_2_clients_receive_compact_part_planning_guidance(unsynced_up, adoption)
     for host in (".codex", ".claude"):
         guide = " ".join((client / host / "skills/forge/SKILL.md").read_text("utf-8").split())
         assert "Keep each part's builder notes to its goal, files and one test per rule." in guide
-        assert "Close stops a part over 400 lines before review;" in guide
-        assert ('split it, or record an allowance with a reason by running '
-                '`forge fix allow-large "<reason>"` in the part\'s folder, '
-                'the same way fixes work.') in guide
-        assert "Stories approved before this limit keep working." in guide
+        assert "about 400 changed lines" in guide
+        assert "close warns when a part is larger" in guide
+        assert "Close stops a part over 400 lines" not in guide
+        assert "Stories approved before this limit keep working" not in guide
+
+
+def _old_size_stop(up, adoption):
+    settings = up.toml()
+    version = tomllib.loads(settings)["version"]
+    if adoption == "new init":
+        client, made = _fresh_client(up.repo, up.env.gh, up.tmp)
+        assert made.returncode == 0, made.stdout + made.stderr
+        up.repo.path = client
+    else:
+        _repo_adopted_on_the_previous_release(up)
+        up.repo.git("merge", "-q", "--ff-only", f"fix/{NAME}")
+        settings = settings.replace(version, RELEASE)
+    up.on_main("forge.toml", settings, "Configure test worker")
+    up.repo.git("config", "core.hooksPath", (up.tmp / "no-hooks").as_posix())
+    up.env.checks(GREEN)
+    approve_story(up.repo, STORY_DOC)
+    trees = up.repo.git("worktree", "list", "--porcelain").split("\n\n")
+    story_path = Path(next(entry.splitlines()[0].removeprefix("worktree ") for entry in trees
+                           if "branch refs/heads/story/SHOP" in entry))
+    rel = ".factory/stories/SHOP/story.json"
+    state = json.loads((story_path / rel).read_text("utf-8"))
+    state["approval"]["part_line_limit"] = 400
+    up.env.commit(story_path, rel, json.dumps(state), "Old approval limit")
+    up.repo.git("merge", "-q", "--ff-only", "story/SHOP")
+    up.repo.git("push", "-q", "origin", "main")
+    started = up.repo.forge("task", "start", "SHOP/T1")
+    assert started.returncode == 0, started.stdout + started.stderr
+    where = Path(started.stdout.splitlines()[0].rsplit(" in ", 1)[1])
+    up.env.commit(where, "app.py", "value = 1\n" * 401)
+    rel = ".factory/stories/SHOP/tasks/T1.json"
+    state = json.loads((where / rel).read_text("utf-8"))
+    state.update(part_line_limit=400, status="hotspot",
+                 stop={"question": "OLD SIZE QUESTION", "size": True})
+    up.env.commit(where, rel, json.dumps(state), "Saved old size question")
+    return where
+
+
+@pytest.mark.parametrize("adoption", ["new init", "previous release"])
+def test_4_an_approval_with_a_saved_limit_or_size_stop_still_closes(unsynced_up, adoption):
+    # Real next and close must ignore an old local stop; no migration or allowance is needed.
+    up = unsynced_up
+    _old_size_stop(up, adoption)
+    next_step = up.repo.forge("next")
+    assert next_step.returncode == 0, next_step.stdout + next_step.stderr
+    assert "OLD SIZE QUESTION" not in next_step.stdout
+    assert "--resolve" not in next_step.stdout
+    done = up.env.close("SHOP/T1")
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "Warning: This part changes 401 lines" in done.stdout + done.stderr
+
+
+@pytest.mark.parametrize("adoption", ["new init", "previous release"])
+def test_5_a_saved_size_stop_shows_no_question_from_published_state(unsynced_up, adoption):
+    # Published state bypasses read_state, so both views must filter the old question too.
+    up = unsynced_up
+    where = _old_size_stop(up, adoption)
+    up.repo.git("push", "-q", "origin", "task/SHOP-T1", cwd=where)
+    up.repo.git("worktree", "remove", str(where))
+    up.repo.git("branch", "-D", "task/SHOP-T1")
+    for command in (("next",), ("board", "--json")):
+        shown = up.repo.forge(*command)
+        assert shown.returncode == 0, shown.stdout + shown.stderr
+        assert "OLD SIZE QUESTION" not in shown.stdout
+        assert "--resolve" not in shown.stdout

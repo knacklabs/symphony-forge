@@ -10,13 +10,14 @@ inside Forge and goes into every worker's brief. How Forge behaves is set by its
 
 You need git, the GitHub CLI (`gh`, signed in with `gh auth login`), `uv`, and the agent your
 repo uses: Claude Code, Codex, or both for split workers. Either agent can coordinate the work;
-with one tool, that tool reads plans; with both, the first cold read uses the other installed tool,
-or the coordinating session's `reader` subagent when the other tool is unavailable.
+with one tool selected, that tool reads plans. With both selected, the first read uses the other
+installed tool, or the coordinator's tool if the other is unavailable. Later reads keep that
+reader while available. A native read uses a separate `reader` subagent.
 `forge.toml` chooses which one builds tasks and fixes.
 Install the release a repo pins (uv brings Python 3.11 or later if you don't have it):
 
 ```
-uv tool install git+https://github.com/knacklabs/symphony-forge@v1.2.25
+uv tool install git+https://github.com/knacklabs/symphony-forge@v1.2.28
 ```
 
 `forge --version` prints the installed version. Each repo pins its release in `forge.toml`, and
@@ -79,11 +80,17 @@ the answers in `docs/product/BRIEF.md`. Ask each build-changing question when it
 one at a time, and record the answer and who gave it. If a requested feature does not help test
 the problem, say why and offer to note it for after sign-off.
 
+Client repos get pinned copies of impeccable and emil-design-eng with their licences at init and sync, with or without a web app; both laptop installers install them too.
 Make each app's design from the whole brief: its purpose, users, records, fields, choice-list
 options and key flows. Run impeccable's init when PRODUCT.md is missing. Use impeccable and
-emil-design-eng to shape and review the design. Make a Claude Design artifact with a shadcn design
-system and named shadcn components. On a Codex-only host without artifact tools, use HTML artboards
-in the repo. Keep the canvas available to show the customer and for sign-off review. New clients
+emil-design-eng to shape and review the design when making it through Forge.
+Any way of making the design works, through Forge or separately. Keep one link in `## Design`
+in the brief; it need not be saved in the repo. A UI fix needs no saved design images.
+When using Forge, use a shadcn design system and named shadcn components.
+Before the demo, read the linked design when the host can and compare its screen list with the app.
+If the link cannot be read, use saved design pages, or ask the person for the screen list.
+Say plainly that the design was not read; missing access or saved pages never refuses sign-off.
+Keep the design available to show the customer at the demo. New clients
 get this process at init; existing clients can use the brief and design they have after upgrade and
 sync. Client sign-off does not require a root DESIGN.md, SCREENS.md or CHECKS.md, or a specific
 `Things it keeps track of` heading.
@@ -99,11 +106,18 @@ fix started before sign-off can exceed the usual fix size and change an interfac
 tests, review and a pull request. Save and confirm specs as the work reveals them. Before sign-off,
 `forge next` shows which required answers are still open. Its light rounds prove the demo steps,
 security and data boundaries, with `[models.light_review]`. Full proof is due at sign-off.
+The design comes first. Before any screen, use the app's existing design. If it has none, draft
+one on a design canvas from the client's brand; use a neutral design when there is no brand. Every
+API a person uses gets its screen in the client's design, built by the agent when it builds the API, with no
+need to ask. Webhooks, endpoints only agents or other systems call, and background jobs get no
+screen. Build the basic screens first, then the business screens. The demo opens on the client's
+business task, and the basic screens are shown last.
+
 Resolve the answers, then run the sign-off checks before the customer is asked. Write the record
 with `forge decision new client-signoff`, leave `approved_via` and `approved_on` empty, and run
-`forge decision accept`. Forge checks the copied Answers section and full test run, then reviews
-the canvas against the whole brief. A working prototype also gets one strict whole-product review;
-a canvas-only sign-off does not need that review. If the checks pass, Forge says you can ask the
+`forge decision accept`. Forge checks the copied Answers section and full test run.
+A working prototype gets one strict whole-product review;
+a canvas-only sign-off needs no model review. If the checks pass, Forge says you can ask the
 customer's named person for sign-off.
 The customer's named person approves the canvas or requested demo and the quoted answers. Set `approved_via` to
 `email`, `call` or `chat` and `approved_on` to the reply date. Run `forge decision accept` again
@@ -111,14 +125,10 @@ to record it. Put each demo step and its test under `## Proof` for a working bui
 choices under `## Decisions`.
 
 Sign-off checks that the copied Answers section matches `docs/product/BRIEF.md` and that the full
-run on main is green. Its completeness review must pass after judging the screens against the whole
-brief, including its purpose, users, records, fields, choices and key flows. It needs no separate
-screen list. Missing screens, fields,
-choice-list options or flows hold sign-off. When a precondition is missing, the refusal lists every
+run on main is green. When a precondition is missing, the refusal lists every
 gap and the next action for each. An existing client can sign off after upgrade with the brief and
 design it has; no prototype design files are required for this gate.
-The completeness review uses `claude-opus-5-5` at high, independent of `[models.design]`.
-Without Claude it uses `gpt-6.1-sol` at high and reports the fallback.
+The whole-product code review uses the selected review tool and `[models.review]`.
 Fix gaps, then retry `forge decision accept client-signoff`.
 A canvas-only sign-off needs no working build. A working prototype gets a full first product review.
 Later attempts review only product files changed since the last review and its open findings.
@@ -136,7 +146,9 @@ repo, trying either command early tells you to build and demo the prototype and 
 Every new story carries forward the available canvas, Proof and Decisions into
 `## Proven by the prototype`. The plan and cold read treat this as settled evidence and cover
 only new work or production risks. Start from the prototype canvas or a newer design approved with the plan.
-Forge's own repo keeps its existing story flow. For the full sign-off contract, see the
+Forge's own repo keeps its existing story flow. For the first production release, follow the
+[production checklist](start-a-prototype.md#prepare-the-first-production-release).
+For the sign-off history, see the
 [prototype sign-off spec](specs/prototype-signoff.md) and
 [decision 0095](decisions/0095-prototype-before-stories.md).
 
@@ -162,8 +174,10 @@ forge task feature clients --one client --field 'name:text'
 forge task feature jobs --one job --field 'name:text' --field 'description?:long-text' --field 'status:status(planned|active|done)' --field 'client?:link(clients)' --field 'hoursBudget?:number' --field 'budget?:money' --field 'dueDate?:date' --field 'contactEmail?:email' --field 'billable:yes-no'
 ```
 
-The command copies the installed starter's projects feature with the plan's fields, including
-its organisation checks, change history and permissions. Admins can view, create, edit, delete
+The command copies the installed starter's projects API, tools, history and tests with the plan's
+fields. It writes no pages. Build each person-facing API's screen in the client's design with that
+API; webhooks, agent-only and system-only endpoints, and background jobs get no screen. The feature
+keeps its organisation checks, change history and permissions. Admins can view, create, edit, delete
 and restore; members can view, create and edit and never see deleted items. The plan can change
 the roles in one permission mapping per feature. Fields can be text, long text, number, money,
 date, yes or no, email, a status list or a link to one other feature's item; `?` makes one
@@ -219,7 +233,7 @@ tools. New repos get the guide text at init; existing repos get it on upgrade an
 with no MCP server, `services.toml` change or app files. In an older starter without MCP
 support, the feature command builds the feature without tools and says so.
 
-In a client repo, finish the canvas checks and customer sign-off above before starting here.
+In a client repo, finish the sign-off checks and customer sign-off above before starting here.
 A working prototype also needs its strict whole-product review.
 
 1. Start from the problem you want to solve. A spec is optional; if using a confirmed spec,
@@ -228,7 +242,9 @@ A working prototype also needs its strict whole-product review.
    changes for the client, why, when it's done, the tasks, any new moving parts and the risks.
    Its own branch adds a missing roadmap entry. The title seeds Why; write the problem,
    today's workaround and its cost there, without a separate spec read or confirmation.
-   Before the cold read, design each added screen or changed flow with the process above.
+   Before the cold read, design each added screen or changed flow with the process above. Build
+   each screen with its person-facing API; APIs used only by agents or other systems and background
+   jobs get no screen.
    Save the artboards, images, SCREENS.md and CHECKS.md in `docs/design/<KEY>/`.
    End `## What changes for you` with `Design: docs/design/<KEY>/ (<tree id>)`.
    Get the tree id with `git rev-parse HEAD:docs/design/<KEY>` after committing the folder.
@@ -276,9 +292,9 @@ with one tool `workers` is ignored, including for design work. Upgrade Forge bef
 with any choice. Claude worker rounds use the Agent SDK whenever installed, including in
 a Claude coordinator. Without it, that coordinator uses its background subagent. Codex rounds
 in a Codex coordinator stay native; other Codex rounds use the app server. Plan reads on
-the coordinator's tool stay native. Reviews use the repo's tool through Autoreview's own default model
-and effort; with both they use Codex when installed, otherwise Claude. Existing review model
-entries are ignored and doctor shows a note; upgrading preserves the repo's settings.
+the coordinator's tool stay native. Code reviews use the selected tool and its `[models.review]`
+model and effort through Autoreview. With both selected, reviews use Codex when installed,
+otherwise Claude. Unset entries use Autoreview's defaults.
 
 For a native plan read, `forge read <target>` hands out the `reader` role, the plan's checkout
 and its prompt. Run that background subagent in your session, then record its final message

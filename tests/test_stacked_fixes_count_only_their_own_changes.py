@@ -71,7 +71,7 @@ def land_on_default(repo, parent=None, path="src/unrelated.py"):
 
 
 def check_limits(repo, fix, where):
-    """Each gate accepts five own paths and refuses the sixth and an own interface."""
+    """Commit and PR checks accept five own paths and refuse a sixth or an interface."""
     allowed = commit(where, flags=("--allow-empty",))
     assert allowed.returncode == 0, allowed.stderr
     head = repo.git("rev-parse", "HEAD", cwd=where)
@@ -91,13 +91,10 @@ def check_limits(repo, fix, where):
         refused = commit(where, path)
         assert refused.returncode != 0
         assert f"Fix {fix} {hook_problem}, so it has to become a story" in refused.stderr
-        # A commit made on a machine with no hooks still gets checked at push and in CI.
+        # A commit made on a machine with no hooks still gets checked in CI.
         # commit-tree makes that object without bypassing or changing the installed hooks.
         tree = repo.git("write-tree", cwd=where)
         candidate = repo.git("commit-tree", tree, "-p", head, "-m", "Unhooked machine", cwd=where)
-        refused = push(where, f"{candidate}:refs/heads/fix/{fix}")
-        assert refused.returncode != 0
-        assert f"Fix {fix} {hook_problem}, so it has to become a story" in refused.stderr
         checked = pr_check(repo, fix, candidate)
         assert checked.returncode == 1
         assert checked.stderr.splitlines()[-2].startswith(

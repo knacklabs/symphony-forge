@@ -1,0 +1,50 @@
+{
+  "allow_large": "A version bump for a release the owner asked for touches every file that names the version.",
+  "base": "78b88454dae093df5dc4265125c41eca62c319ef",
+  "branch": "fix/release-1-2-26",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a19b08-4ba8-7b51-b000-83bd4f0bb259",
+    "head": null,
+    "start": "3072aa22a903969393b15ff5cc8e30f23d11656d"
+  },
+  "done_when": "Every version reference names v1.2.26, forge sync output is committed, and the version tests pass",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "4734cf18c6c4693d57556b17f35f7de8e972d4365c8f52614a80cf35aeaf0411",
+    "changed": "eb8d9e14c2bbf6819832c5b612a1d9f381cfc30e6d73c121ab4977d3e2c935f2",
+    "commit": "71d0c8206c8ab3da92f9600ff09dafc8943208a0",
+    "dismissals": [],
+    "findings": [],
+    "id": "53457820-662f-425a-b746-f31ad5fb01c2",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-02T06:52:36.019867+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-02T06:59:14.236914+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-02T07:03:02.380424+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "cc956c3e-1945-4ce9-a0e5-16c753b3e672",
+    "head": "b2d89df282067ad8d9a8ea9fc2d7af10da9c74a9",
+    "keys": {},
+    "round": 2
+  },
+  "why": "Release v1.2.26 with the client sign-off accept repair",
+  "worker": "codex"
+}

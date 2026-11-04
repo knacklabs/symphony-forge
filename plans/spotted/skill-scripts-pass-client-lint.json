@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "edge\tsrc/forge/templates/skills/impeccable/scripts/live-browser-session.js\tNot done: eslint . still reports problems from shipped skill scripts",
+      "kind": "edge",
+      "path": "src/forge/templates/skills/impeccable/scripts/live-browser-session.js",
+      "line": 1,
+      "text": "Not done: eslint . still reports problems from shipped skill scripts",
+      "from": "review",
+      "item": "skill-scripts-pass-client-lint",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

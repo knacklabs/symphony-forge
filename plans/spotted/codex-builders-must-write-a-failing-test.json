@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\ttests/test_worker_approval_requests.py\tNot done: A Codex builder runs forge test in its round without a permission refusal.\tcodex-builders-must-write-a-failing-test",
+      "kind": "bug",
+      "path": "tests/test_worker_approval_requests.py",
+      "line": 19,
+      "text": "Not done: A Codex builder runs forge test in its round without a permission refusal.",
+      "from": "blocking",
+      "item": "codex-builders-must-write-a-failing-test",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

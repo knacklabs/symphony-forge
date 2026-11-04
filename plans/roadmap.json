@@ -510,6 +510,36 @@
       "title": "After a demo: waiting items show in the app, notes become changes, and releases get a backup before Promote",
       "status": "pending",
       "order": 110
+    },
+    {
+      "key": "FORGE-NOSCREENS-1",
+      "title": "Starter ships no screens",
+      "status": "pending",
+      "order": 110
+    },
+    {
+      "key": "FORGE-PARTWARN-1",
+      "title": "Warn instead of stop for story parts over 400 lines",
+      "status": "pending",
+      "order": 111
+    },
+    {
+      "key": "FORGE-ONEPLAN-1",
+      "title": "One prototype approval, then the agent builds every record type",
+      "status": "pending",
+      "order": 110
+    },
+    {
+      "key": "FORGE-HANDOVER-1",
+      "title": "Hand over client work to another machine",
+      "status": "pending",
+      "order": 110
+    },
+    {
+      "key": "FORGE-SAMPLE-1",
+      "title": "Sample-data prototypes get a light sign-off",
+      "status": "pending",
+      "order": 112
     }
   ],
   "epics": [

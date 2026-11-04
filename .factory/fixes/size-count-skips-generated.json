@@ -1,0 +1,53 @@
+{
+  "base": "03566c13cbe5b17271277c76c0c619884e376462",
+  "branch": "fix/size-count-skips-generated",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1a4d4-6548-7272-9fb4-27cb4df891dd",
+    "head": null,
+    "start": "b18ebb43541141370265044fda05dba86070fa9a"
+  },
+  "done_when": "Files marked linguist-generated count towards neither a story part's size warning nor a fix's code-file limit, and the guide says so",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "7be6858bd2c0aeb787e7d0cef0eb30904fb8cf85fac3b73064d0e5ca227147a7",
+    "changed": "21275496b4ff94e7cc41d801857b9fa272f90f46c10e2e7a8fe3c5409e851d73",
+    "commit": "aa3ec3fcbdf59a6ab2fdb74bebc0efafed6a1292",
+    "dismissals": [],
+    "findings": [],
+    "id": "4e54282b-ad9d-4941-b532-a3f32f09692d",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-04T04:32:16.753304+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-04T05:05:53.120587+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-04T06:02:24.855800+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-04T07:27:53.984954+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "3bc85b4a-280f-4783-a993-2a979ed8a2b3",
+    "head": "1850e4fd5e9dd72b85c28951b060ee146114630d",
+    "keys": {},
+    "round": 2
+  },
+  "why": "The part size count includes files marked linguist-generated, such as a large openapi.json, though the guide says to mark such files",
+  "worker": "codex"
+}

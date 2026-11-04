@@ -199,7 +199,10 @@ Four principles govern every change.
    about 150 lines or one model call or user step, 3 for more, or a new table, job, workflow or
    flag.
 3. Choose the simplest option.
-4. Rules are stated, not policed: add no check, gate or refusal only to enforce a rule.
+4. Forge does the right thing by default where it can. It refuses only when a mistake
+   costs a lot or is hard to undo. It states a rule only when a mistake is cheap and
+   something later catches it. People should not need to know how to use agents well
+   for Forge to work.
 
 Mark each finding that asks for added work beyond the Done-when items (another check, retry, guard
 or flag) with a body line `Adds work: <what>; F <f> x H <h> = <p>; 2 x C = <c>`. When p is less
@@ -328,6 +331,12 @@ emil-design-eng checklist item on the changed screens as P1 `Gate: UI check`.
 
 In an app with shadcn/ui set up (a `components.json`), report a new UI component that hand-builds what a shadcn/ui component or block already does as a P1 finding titled `shadcn: <the component>`, unless a `Not shadcn: <why>` comment at the component says why shadcn/ui cannot do it. A composite built from shadcn/ui components is not a finding, and neither is a library or component the default branch already has.
 
+<!-- screens -->
+In a client repo with a web app, report as P1, titled `Screen: <route>`, a route this change
+adds that people use, when the change adds no screen for it. Webhooks, agent-only routes,
+MCP, system endpoints and jobs are not findings, nor is a screen marked `Build: later`.
+
+<!-- app-rules -->
 On client app screens, report an emoji that this change adds as an icon or decoration as a
 finding titled `Icons: <the screen>`. Report an icon from outside the starter's `lucide-react`
 library the same way; shadcn/ui is set to `lucide`. Keyboard key labels such as the Command key
@@ -512,12 +521,29 @@ or add a queue requirement.
 Forge's standards page follows: the same page every worker's brief carries. Check the change
 against each of its rules that applies to a concern the change has. Report every rule the change
 breaks as a P1 finding titled `Standard: <the rule it breaks>`, quoting the rule in the body. A
-rule for a concern the change doesn't have is not a finding. Where the approved story doc or the
-repo's own AGENTS.md rules differ from the page, they win.
+rule for a concern the change doesn't have is not a finding. Where the approved story doc, the
+repo's own AGENTS.md rules, the app's approved sign-in answer, specs or decisions in
+`docs/decisions` differ from the page, they win. Do not report a file that `forge sync` writes
+against the app. In an existing app, apply the rules to new and changed work. Do not ask an
+existing app to rebuild what it already has.
 
 $standards
 <!-- signoff -->
 ## Client prototype sign-off review
+Judge a prototype as a prototype. Production items, including deployment to the client's account,
+belong to the build stories. A clearly labelled demo tool is not a P0 when the prototype holds
+only sample data and has no back end, as its own files show.
+A security hole in a real API or sign-in, or any exposed real data, stays a P0.
+Risks that exist only in a real-data build the prototype is not, such as
+browser-held codes or data in a prototype with no back end, are
+build-story work and Known issues, not a P0.
+Answers about production are choices for those stories, not missing prototype work.
+Only Harm 4 or higher, Gain 5, or a P0 holds sign-off. Every other finding goes to
+Known issues without a repair round or a question to the owner.
+After two rounds, the owner may accept a remaining P0 with a reason only when a person
+wrote `sample_data: true` in the sign-off decision's front matter. This declares only
+sample data and no back end. The finding stays in Known issues. With the field absent
+or false, P0 findings keep blocking and cannot be accepted by the owner.
 Review the product diff against the customer's answers and the topic table below.
 The first review includes every tracked product file against an empty root. Later reviews
 include only product files changed since the previous sign-off review, plus a re-check of its

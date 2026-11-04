@@ -1,0 +1,71 @@
+{
+  "base": "9fe77734b05db772714d5dc40fe4e8486c5b466f",
+  "branch": "fix/known-issue-fixed-means-repaired",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a19fb2-d653-74f2-9e96-15b7c07cb188",
+    "head": null,
+    "start": "da9114cab7fac4ec288a91740e68aa2d2eb7a423"
+  },
+  "done_when": "A known issue says fixed only when a repair closed it, an entry a later review did not report again stays open, and a Claude-built fix prints no Codex chat link message",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "remember() in src/forge/score.py",
+      "file": "src/forge/score.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 183,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: A known issue says fixed only when a repair closed it, an entry a later review did not report again stays open",
+      "work": 3
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "06754af2a9540828d1b1aa935dcf1b93362b88e362de13bea1dcc3d6d7f6d2a3",
+    "changed": "db1be95c871a9ba1bbb55450a4e4d1ed73ed4dbadbd62270a8920109cf0ece15",
+    "commit": "7a9741bc88fe4767e434edd40f3cd682c0eb710a",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 5, Work 3, Harm 3\nRaise: Not done\nCase: normal use - successive client sign-off reviews omit an unresolved finding.\nThe repair restriction added here only changes saved known-findings accounting. The sign-off path still calls `review._settled`, whose unchanged implementation at src/forge/review.py:612\u2013613 labels any earlier finding omitted from a later review `fixed: absent from a later review`. That label reaches subsequent sign-off prompts through src/forge/records.py:555, and src/forge/review.py:977\u2013978 filters the finding out even if a reviewer reports it again. Thus an omission still becomes a claimed repair and can suppress an unresolved blocker. Apply the repair-evidence rule to this settlement path too. The new test seeds `known` directly and exercises `forge close`, so it does not cover this actual sign-off sequence.",
+        "file": "src/forge/score.py",
+        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
+        "gain": 5,
+        "harm": 3,
+        "line": 183,
+        "priority": "P1",
+        "title": "Not done: A known issue says fixed only when a repair closed it, an entry a later review did not report again stays open",
+        "work": 3
+      }
+    ],
+    "id": "7b650218-aab9-4953-80fe-ea2e5c2fcfe8",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-03T04:36:52.210785+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-03T04:46:55.447821+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "e41d555efa7660b298749cc25f111a4fb5f61d19",
+    "keys": {},
+    "round": null
+  },
+  "why": "A known issue is labelled fixed because a later review did not report it again, which is not evidence of a repair (bug 1308)",
+  "worker": "codex"
+}
