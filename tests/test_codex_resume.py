@@ -247,7 +247,7 @@ def _continued_context(repo, monkeypatch, sdk_data):
     resume, nudge = _sent(calls, "thread/resume")
     assert (resume["threadId"], resume["config"]) == ("thr-stub-1", FIX_CONFIG)
     assert nudge["threadId"] == "thr-stub-1"
-    assert (resume["sandbox"], resume["approvalPolicy"]) == ("danger-full-access", "never")
+    assert (resume["sandbox"], resume["approvalPolicy"]) == ("danger-full-access", "on-request")
     assert Path(resume["cwd"]).resolve() == folder.resolve()
     # The chat is named on start and keeps that name when this fix round resumes it.
     assert [named["name"] for named in _sent(calls, "thread/name/set")] == ["BOARD · The page"]

@@ -32,7 +32,7 @@ COMMANDS = [{
     "args": [(('--json',), {"action": "store_true", "help": "Print the machine view"}),
              (('--out',), {"metavar": "PATH", "help": "write every item's facts here as JSON instead"})],
     "position": 60,
-    "listing": "| `forge board` | Opens the live board page on this computer until Ctrl-C (`--out <path>` writes every item's facts as JSON instead) |",
+    "listing": "| `forge board` | Opens the live board page on this computer; stops after 30 minutes with no page open or Ctrl-C (`--out <path>` writes every item's facts as JSON instead) |",
 }]
 
 CHECK_DATE = "2026-11-15"  # ponytail: the rebuild's check date, from the spec's success measure
@@ -66,7 +66,8 @@ def board(args: Any) -> int:
             if args.json:
                 reads = pool.submit(_machine_prs, top), pool.submit(board_facts.prs, top)
                 local = pool.submit(local_history)
-            if repo.run("git", "fetch", "-q", "--prune", "--tags", "origin", cwd=top).returncode:
+            if (args.json or args.out) and repo.run(
+                    "git", "fetch", "-q", "--prune", "--tags", "origin", cwd=top).returncode:
                 print("Could not refresh work from GitHub; showing the local git records.", file=sys.stderr)
             if args.json:
                 view = machine_board(top, reads=reads)
