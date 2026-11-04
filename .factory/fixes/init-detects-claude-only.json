@@ -48,8 +48,8 @@
     "id": "4cd4357b-afbc-437d-a654-1e6c78388107",
     "status": "clean"
   },
-  "round": 1,
-  "status": "waiting for checks",
+  "round": 2,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-04T05:04:29.765990+00:00",
@@ -61,10 +61,10 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "141b65dc55191c45d7849e60dc92346f25be1042",
+    "close": "62d808c8-ce01-4c82-a100-1e86a77b95a4",
+    "head": "422ee91a42eef98fec32550106b815b9706a3ab2",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "forge init writes workers = split, so a person with only a Claude subscription hits Codex with no question asked",
   "worker": "codex"
