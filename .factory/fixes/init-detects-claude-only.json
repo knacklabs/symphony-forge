@@ -11,12 +11,53 @@
   "done_when": "forge init sets tools = claude and says so when only Claude is signed in, keeps split when both are signed in, and forge doctor says when a repo needs Codex and Codex is not signed in",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [
+    {
+      "area": "doctor() in src/forge/doctor.py",
+      "file": "src/forge/doctor.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 351,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: forge doctor says when a repo needs Codex and Codex is not signed in",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "55a5589dc00c52c7d4af932b34f29f3a9675300a0264e5d5cfa770b37034cb2e",
+    "changed": "d7715aea31be5447698c2343501f01695195f21b6570493766b47f8d97479c1b",
+    "commit": "f10ada76fa755ec5942a4d84b04743fdf92cad85",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done\nCase: normal use - a repo uses Claude workers while Codex remains its review tool.\nWith tools = \"both\", workers = \"claude\", and an installed but signed-out Codex, on_codex is false and this check never runs. However, src/forge/review.py:910\u2013914 selects installed Codex for reviews regardless of workers, so close still needs its sign-in. The same omission occurs when an item's Claude override replaces a split worker setting at doctor.py:337\u2013339. Doctor therefore omits the promised warning and codex login advice. Include review routing when deciding whether Codex is needed, and correct tests/test_init_uses_signed_in_tools.py:52, which currently expects no warning for this configuration.",
+        "file": "src/forge/doctor.py",
+        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
+        "gain": 4,
+        "harm": 3,
+        "line": 351,
+        "priority": "P1",
+        "title": "Not done: forge doctor says when a repo needs Codex and Codex is not signed in",
+        "work": 2
+      }
+    ],
+    "id": "4cd4357b-afbc-437d-a654-1e6c78388107",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-04T05:04:29.765990+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-04T05:13:24.243345+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
