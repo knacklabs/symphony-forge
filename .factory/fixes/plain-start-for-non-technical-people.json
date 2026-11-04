@@ -1,0 +1,15 @@
+{
+  "base": "fd7cda2b1ba2d55bd5a29aacf27b2db498182fa9",
+  "branch": "fix/plain-start-for-non-technical-people",
+  "done_when": "docs/start.md tells Claude, in plain steps for Mac and Windows, how to install only what notes, the brief and the design need, sign the person in to GitHub, and create a private repo in the named company GitHub. The shipped guide tells every agent to lead in plain words with the next step, also after a break, to write a plain message for the named developer when it cannot recover, and to write a handover summary after client sign-off. forge next shows no sign-off question list until the repo has a client note or a brief with content, on new repos and on repos adopted earlier.",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-04T12:42:13.824162+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "A salesperson or FDE with little Claude Code experience cannot start alone: nothing tells Claude how to set them up, guide them in plain words, or hand over to a developer, and forge next lists 7 sign-off questions before they have shared an idea."
+}
