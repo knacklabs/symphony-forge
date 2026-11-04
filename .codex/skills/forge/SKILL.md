@@ -658,7 +658,7 @@ be settled before work continues, except before closing a fix that turns off sam
 In a prototype, `forge next` and the board show one sign-off status line. When nothing else is in
 progress, they show open questions as a checklist, with the phrase that fixes each item. When the
 client replies, update the matching line in the brief. A `not known yet` answer is accepted and is
-not an open question.
+not listed as open, except Personal data, which needs a settled answer before real data.
 
 **Canvas and app design.** Make each app's design from the whole `docs/product/BRIEF.md`: its
 purpose, users, records, fields, choice-list options and key flows. Use impeccable and

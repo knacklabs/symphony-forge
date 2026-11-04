@@ -607,6 +607,11 @@ the customer's answers, the design material Forge provides, and the app routes F
 Find what is missing for the requested demo. Do not review the whole source or ask for a full test
 run. A production choice belongs to a later story.
 
+Judge a prototype as a prototype. A clearly labelled demo tool with only made-up data and no
+back end is not a P0. Browser-held demo codes and other risks that exist only in a later real-data
+build belong to build stories and Known issues. A security hole in a real API or sign-in, or any
+exposed real data, stays a P0.
+
 An absent answer, an open client question, or `ask the client`, `later` or `not known yet` in the
 Answers section is not a finding by itself. Report a concrete gap only when it leaves a needed
 demo behavior or route missing from the app. Do not report unknown answers as missing demo

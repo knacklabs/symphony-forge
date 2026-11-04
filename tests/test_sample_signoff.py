@@ -114,7 +114,9 @@ def test_1_a_sample_data_signoff_runs_only_the_gap_check(
         prompt = "\n\n".join(calls[0]["prompt_files"].values())
         assert "Sample-data sign-off gap check" in prompt
         assert "whole-source" not in prompt
-        assert "full test run passed" not in prompt
+        assert "## Client prototype sign-off review" not in prompt
+        assert "## Test evidence" not in prompt
+        assert "Client sign-off checked this result before this review" not in prompt
         assert not (tmp_path / "review-base-files.txt").read_text("utf-8").splitlines()
         reviewed = set((tmp_path / "reviewed-tree.txt").read_text("utf-8").splitlines())
         assert reviewed == {

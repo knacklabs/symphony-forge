@@ -32,7 +32,7 @@ import json
 import re
 import string
 from datetime import date
-from fnmatch import fnmatch
+from fnmatch import fnmatchcase
 from pathlib import Path
 from typing import Any
 
@@ -232,8 +232,8 @@ def decision_new(args: argparse.Namespace) -> None:
         text = text.replace("supersedes: \"\"\n", "supersedes: \"\"\ncustomer: \"\"\n"
                             "approved_via: \"\"\napproved_on: \"\"\ndemo: \"\"\n")
         text += ("\n<!-- Record how the customer replied in approved_via. -->\n"
-                 "\n## Signed design\n<!-- docs/design/prototype/ (<tree id>) -->\n"
-                 "\n## Proof\n<!-- Each demo step and its passing test. Use - [ ] 1. Step; tick - [x] only when the client says yes. Screenshots are optional. -->\n"
+                 "\n## Signed design\n<!-- The design source used for the demo, if available. -->\n"
+                 "\n## Proof\n<!-- Each demo step and its evidence. Unmarked prototypes name a passing test. Use - [ ] 1. Step; tick - [x] only when the client says yes. Screenshots are optional. -->\n"
                  "\n## Decisions\n<!-- What the canvas or prototype proves for production stories. -->\n"
                  "\n## Answers\n<!-- Forge copies docs/product/BRIEF.md's ## Answers section here. -->\n")
     _write(top / rel, text)
@@ -529,10 +529,11 @@ def _signoff_review(top: Path, args: argparse.Namespace, answers: str, evidence:
                    "Use this green full run as passing evidence for the tests named in Proof. "
                    "No separate forge test run is required.")
     only = None
+    design_unread = False
     if sample_data:
         from forge import design
 
-        names = repo.git("ls-tree", "-r", "--name-only", "HEAD", cwd=top).splitlines()
+        names = [name for name in repo.git("ls-tree", "-r", "--name-only", "-z", "HEAD", cwd=top).split("\0") if name]
         patterns = repo.config(top)["interfaces"]
         router = re.compile(r"\b(?:createBrowserRouter|createHashRouter|createMemoryRouter|useRoutes|RouterProvider)\b|<Route\b|@\w+\.(?:route|get|post|put|patch|delete)\(")
         only = {name for name in names if name == "docs/product/BRIEF.md"
@@ -543,21 +544,21 @@ def _signoff_review(top: Path, args: argparse.Namespace, answers: str, evidence:
                     or any(part in ("tests", "test", "__tests__") for part in Path(name).parts)
                     or re.search(r"(?:^|/)(?:test_|[^/]+\.(?:test|spec)\.)", name)):
                 continue
-            if (any(fnmatch(name, pattern) for pattern in patterns)
+            if (any(fnmatchcase(name, pattern) or fnmatchcase(name, pattern.replace("**/", ""))
+                    for pattern in patterns)
                     or re.search(r"(?:^|/)(?:router|routes)\.[^/]+$", name)
                     or router.search(path.read_text(encoding="utf-8", errors="replace"))):
                 only.add(name)
         source = design.source(top)
+        design_unread = not source
         screens = re.search(r"(?m)^- Screens:.*$", _text(top / "docs/product/BRIEF.md"))
         prompt += "\n\n## Design source\n" + (source or (screens[0] if screens else "No design link, saved pages or screen list."))
         prompt += ("\nRead the design link when your host can. Otherwise read the saved design pages, "
                    "or use the brief's Screens list. If you cannot read the design, report a low-score "
                    "note titled Design not read and ask for the screen list. This never blocks sign-off.")
-        if not source:
-            print("The design was not read. Next: ask the person for the screen list in docs/product/BRIEF.md.")
     result = review.run(top, "client-signoff", {"signoff_history": history}, repo.config(top),
                         "", {}, previous, signoff_prompt=prompt, images=set(), only=only)
-    if sample_data and any("design not read" in finding["title"].lower() for finding in result["findings"]):
+    if design_unread or sample_data and any("design not read" in finding["title"].lower() for finding in result["findings"]):
         print("The design was not read. Next: ask the person for the screen list in docs/product/BRIEF.md.")
     _signoff_known(top, result, len(history) + 1)
     opened = score.open_findings(result)
