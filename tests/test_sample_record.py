@@ -92,4 +92,4 @@ def test_3_the_signoff_record_merges_alone_without_review_or_tests(
     repo.git("pull", "--ff-only", "origin", "main")
     following = repo.forge("next")
     assert following.returncode == 0, following.stderr
-    assert "prototype" not in following.stdout.splitlines()[0].lower()
+    assert following.stdout.splitlines()[0] == "Step 5 of 7: build."
