@@ -1,6 +1,13 @@
 {
   "base": "03566c13cbe5b17271277c76c0c619884e376462",
   "branch": "fix/doctor-no-codex-fast-on-claude",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1a447-86ca-7231-8128-bae6ecad9361",
+    "head": null,
+    "start": "046dc15c3500d0153cb0ecefb6902daf1a26e46d"
+  },
   "done_when": "forge doctor leaves out the Codex Fast line when the repo does not use Codex, and still prints it when it does",
   "fix_kind": "mechanical",
   "kind": "fix",
