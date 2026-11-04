@@ -71,7 +71,7 @@
     "id": "ec2c340d-8834-4f79-acda-c69c63427ba6",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -93,10 +93,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": null,
-    "head": "9e4ea6d9355fcb394bb9b61a76fa102b5c918aa0",
+    "close": "957de093-0c53-4fa8-8a00-2e33a8029102",
+    "head": "0699b48cbff078c140cfa98095eb4836b01d6b72",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "Each forge board starts a new live server that never stops and keeps working with no page open, so copies pile up and use CPU (GitHub issue 1282).",
   "worker": "codex"
