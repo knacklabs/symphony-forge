@@ -1,6 +1,13 @@
 {
   "base": "6cb95b2a744f3fcfc90a71daefa62076a2ba3cd8",
   "branch": "fix/windows-and-live-tests-nightly",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1a4f1-dfd2-75e2-a32c-7f4b5309fae8",
+    "head": null,
+    "start": "6523c661b037c72f8b76ffc738a7c22c4ba557c9"
+  },
   "done_when": "Windows tests run only nightly and on a manual full run and not on pull requests, the live starter tests run nightly in the starter workflow including the organisation invites test, and the full run stays under its limit",
   "fix_kind": "mechanical",
   "kind": "fix",
