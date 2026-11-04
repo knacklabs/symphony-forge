@@ -19,8 +19,9 @@ Keep the company and developer details in the project's notes after setup.
 Explain each step in one short sentence. Ask the person only for a choice or a sign-in you cannot complete.
 
 Check each installed tool before you install it. Use the computer's tools where possible.
-Install only git, GitHub CLI (`gh`), uv, and Forge. Forge supplies the design skills.
-Do not install Docker, a test browser, Node, Codex, or a development stack for this first step.
+Install only git, GitHub CLI (`gh`), uv, Forge, and Node.js with npm for the browser-only web app.
+Forge supplies the design skills.
+Do not install Docker, a test browser, Codex, a server, or a database for this first step.
 
 ### Mac
 
@@ -32,6 +33,10 @@ Do not install Docker, a test browser, Node, Codex, or a development stack for t
    ```sh
    curl -LsSf https://astral.sh/uv/install.sh | sh
    ```
+
+4. Run `node --version` and `npm --version`.
+   If absent, get the Mac `.pkg` installer from [Node.js downloads](https://nodejs.org/en/download).
+   Choose the long-term support release for this Mac. Guide the person through the installer.
 
 ### Windows
 
@@ -50,8 +55,13 @@ Use PowerShell for these steps.
    powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
    ```
 
+4. Run `node --version` and `npm --version`.
+   If absent, get the Windows `.msi` installer from [Node.js downloads](https://nodejs.org/en/download).
+   Choose the long-term support release for this computer. Guide the person through the installer.
+
 After an installer, open a new terminal if the command is unavailable.
 Check `git --version`, `gh --version`, and `uv --version` before you continue on either system.
+Also check `node --version` and `npm --version`.
 
 ### Sign in and create the project
 
@@ -77,7 +87,7 @@ Check `git --version`, `gh --version`, and `uv --version` before you continue on
    Set them with `git config --local user.name` and `git config --local user.email` in this repo.
 
    This prepares the notes and brief. It also installs the bundled impeccable and emil-design-eng design skills.
-   Follow the shipped Forge guide for the design. Add no other tool for setup.
+   Follow the shipped Forge guide for the sales demo. Add no other tool for setup.
 
 6. Run `forge next`. Tell the person that setup is complete and ask for their idea or client notes.
    Save those notes under `docs/context/`. Use them to write `docs/product/BRIEF.md` before you ask about missing details.

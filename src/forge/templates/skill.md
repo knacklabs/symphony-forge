@@ -20,9 +20,23 @@ When stuck, retry a safe step after you check what already happened. Never repea
 an action that can lose data or create a second item. If you cannot recover, write
 a plain message for the named developer: the goal, what stopped, what you tried,
 the repo link, and what help you need. Let the person send it.
-After client sign-off, write a handover summary for that developer in the repo:
-the client goal, approved design and answers, repo link, current step, open choices,
-and the next development step. Tell the person where the summary is.
+
+For a sales demo, save transcripts in `docs/context/`. Mark each point from a transcript
+as "Heard from the customer" and name its transcript. Keep your guesses separate.
+Use Claude for the design, with the shipped design skills. Then build a browser-only
+web app with fake data, no server, no database, and no sign-in. Label extra features
+"Demo only". Put this line on the demo: "This demo uses sample data. Its features are
+not commitments." Never put real customer data in a demo, because anyone with its
+link can open it. Deploy through Mainline from the GitHub repo only when the person
+asks. Follow the Mainline setup and deployment rules below.
+
+When the customer converts, write one handover page in the repo for the named FDE
+(the developer who will work with the customer). Include the customer, what they
+liked, what you showed, and what the FDE must confirm. Tell the person where the
+page is. The FDE decides for each feature to use it, change it, or build it from
+scratch. Anything that goes into real use gets the normal tests and review.
+Conversion is not the client sign-off. The FDE continues discovery and gets that
+sign-off through the normal flow.
 
 Mainline Deploy is available to install through the organization's plugin catalog. Do not assume
 that the plugin and MCP are installed or that the user is signed in.
