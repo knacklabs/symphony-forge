@@ -1,10 +1,18 @@
 {
   "branch": "task/FORGE-HANDOVER-1-HANDOVER",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-04T21:09:04.775819+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "474c391a22558ae089948db144eb194a452aaede",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
