@@ -245,7 +245,7 @@ with no MCP server, `services.toml` change or app files. In an older starter wit
 support, the feature command builds the feature without tools and says so.
 
 In a client repo, finish the sign-off checks and customer sign-off above before starting here.
-A working prototype also needs its strict whole-product review.
+A prototype without the sample-data mark also needs its strict whole-product review.
 
 1. Start from the problem you want to solve. A spec is optional; if using a confirmed spec,
    add its stories with `forge roadmap add <spec>` as before.
