@@ -10,6 +10,17 @@
       "item": "release-1-2-28",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "edge\t.github/workflows/forge.yml\tGate: live starter tests in the full suite",
+      "kind": "edge",
+      "path": ".github/workflows/forge.yml",
+      "line": 189,
+      "text": "Gate: live starter tests in the full suite",
+      "from": "review",
+      "item": "release-1-2-28",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
