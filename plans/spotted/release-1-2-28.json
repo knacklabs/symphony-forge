@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\t.github/workflows/forge.yml\tGate: live starter tests in the full suite\trelease-1-2-28",
+      "kind": "bug",
+      "path": ".github/workflows/forge.yml",
+      "line": 189,
+      "text": "Gate: live starter tests in the full suite",
+      "from": "blocking",
+      "item": "release-1-2-28",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
