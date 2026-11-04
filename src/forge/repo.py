@@ -637,11 +637,12 @@ def sample_data(top: Path, cfg: dict[str, Any] | None = None, ref: str | None = 
         if saved and saved.returncode:
             return False
         text = saved.stdout if saved else (top / "forge.toml").read_text("utf-8")
-        cfg = _config_text(text)
+        # A past release can have settings that this release no longer accepts.
+        cfg = {**DEFAULTS, **tomllib.loads(text)} if ref else _config_text(text)
     if cfg.get("repo") != "client" or cfg.get("stage") != "prototype":
         return False
     if "sample_data" in cfg:
-        return cfg["sample_data"]
+        return cfg["sample_data"] is True
     names = (git("ls-tree", "-r", "--name-only", ref, "--", "docs/decisions/", cwd=top).splitlines()
              if ref else [path.relative_to(top).as_posix() for path in top.glob("docs/decisions/*.md")])
     texts = (git("show", f"{ref}:{name}", cwd=top) if ref else (top / name).read_text("utf-8") for name in names
