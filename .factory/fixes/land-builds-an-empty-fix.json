@@ -47,7 +47,7 @@
     "id": "8e69e8ec-2ecd-478d-93fc-47a9ffc59baa",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -69,10 +69,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": null,
-    "head": "13603321dac646f0f35e2c5a9116978a1deb0a32",
+    "close": "99ef1251-4188-47e9-9d0b-332c1831ecef",
+    "head": "3d718b9999025d9a39a78ae5b4630c262cc3fa36",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "forge land merges a fix that has no code change after a clean review of an empty diff, for example after forge fix amend (GitHub issue 1260).",
   "worker": "codex"
