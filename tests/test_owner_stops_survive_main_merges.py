@@ -1,4 +1,4 @@
-"""Only a recorded choice releases an owner stop, even beside a clean review after a merge."""
+"""Current owner stops survive a merge; obsolete size questions do not."""
 import json
 
 import pytest
@@ -23,8 +23,11 @@ def test_1_owner_stop_survives_main_merge_until_the_choice_is_recorded(land, pre
     client(env, previous)
     if kind == "size":
         item, where = env.start_approved_task(STORY_DOC, changes={"app.py": "x = 1\n" * 401})
-        held = env.close(item)
-        assert held.returncode == 1 and "over its limit" in held.stderr
+        # Earlier releases saved size questions. Current close must ignore them after a merge.
+        state = saved(where, item)
+        state.update(part_line_limit=400, status="hotspot",
+                     stop={"question": "Old size question", "size": True})
+        env.commit(where, ".factory/stories/SHOP/tasks/T1.json", json.dumps(state), "Old size stop")
     elif kind == "stuck":
         config = (env.repo.path / "forge.toml").read_text("utf-8")
         env.commit(env.repo.path, "forge.toml", config.replace('workers = "split"', 'workers = "claude"'))
@@ -37,8 +40,9 @@ def test_1_owner_stop_survives_main_merge_until_the_choice_is_recorded(land, pre
     else:
         item, where = stopped(env)
         held = env.close(item)
-    assert "--resolve" in held.stderr
-    question = held.stderr
+    if kind != "size":
+        assert "--resolve" in held.stderr
+        question = held.stderr
 
     # Another change lands on main, then the worker brings main into the stopped item.
     merged = env.commit(env.repo.path, "NEWS.md", "Other work landed\n")
@@ -46,8 +50,13 @@ def test_1_owner_stop_survives_main_merge_until_the_choice_is_recorded(land, pre
     env.repo.git("merge", "-q", "--no-edit", "origin/main", cwd=where)
     env.repo.git("merge-base", "--is-ancestor", merged, "HEAD", cwd=where)
     if kind == "size":
-        # Main or a repair can make the part fit; that does not answer the owner's question.
-        env.commit(where, "app.py", "x = 1\n")
+        env.reviews(CLEAN)
+        closed = env.close(item)
+        assert closed.returncode == 0, closed.stdout + closed.stderr
+        assert "Warning: This part changes 401 lines" in closed.stdout + closed.stderr
+        assert "Old size question" not in closed.stdout + closed.stderr
+        assert "--resolve" not in closed.stdout + closed.stderr
+        return
     elif clean:
         # Earlier clients can leave a later clean result beside an unanswered stop.
         # Reproduce that persisted input; the real close command must retain the question.

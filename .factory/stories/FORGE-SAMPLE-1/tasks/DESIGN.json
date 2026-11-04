@@ -1,0 +1,47 @@
+{
+  "base": "0fe0b5c8536b2f965867238f29d0f08e06e9fd56",
+  "branch": "task/FORGE-SAMPLE-1-DESIGN",
+  "chat": {
+    "approval": "4e15298f84b3bf2da57eaaa3a529c1d3ae30604d1bbea3b33d6dd16f1efab4f4",
+    "claude": null,
+    "conversation": "01a19f0f-637c-70e0-8e5d-e0b8ce5bed47",
+    "head": null,
+    "start": "590d7518278dba2a89a44a559f9eadfd43683f12"
+  },
+  "known": [],
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "e4fe99578d57e1d4a9e7804e53b38b513947f973ec90c7663dc1aa147d2bfb9f",
+    "changed": "18fc198ac1686dac1bd0f44b7344876406e6c1d625958f31ca4012e0f03127b6",
+    "commit": "b19de061625bca43a4a4e7ae3756a56b31e3884c",
+    "dismissals": [],
+    "findings": [],
+    "id": "2b20139d-8a63-49f1-9eae-bdeab0f87ce4",
+    "status": "clean"
+  },
+  "round": 2,
+  "stacked_on": "FORGE-PARTWARN-1/SIZE",
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-03T01:38:42.614668+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-03T04:11:02.726761+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-03T04:16:48.828614+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "8f6cc984-fcd4-4150-a047-25d7d6ee588b",
+    "head": "99e3f3c6aab2bf449b92155b73d732e604e2960c",
+    "keys": {},
+    "round": 1
+  },
+  "worker": "codex"
+}

@@ -199,7 +199,10 @@ Four principles govern every change.
    about 150 lines or one model call or user step, 3 for more, or a new table, job, workflow or
    flag.
 3. Choose the simplest option.
-4. Rules are stated, not policed: add no check, gate or refusal only to enforce a rule.
+4. Forge does the right thing by default where it can. It refuses only when a mistake
+   costs a lot or is hard to undo. It states a rule only when a mistake is cheap and
+   something later catches it. People should not need to know how to use agents well
+   for Forge to work.
 
 Mark each finding that asks for added work beyond the Done-when items (another check, retry, guard
 or flag) with a body line `Adds work: <what>; F <f> x H <h> = <p>; 2 x C = <c>`. When p is less
@@ -537,10 +540,8 @@ build-story work and Known issues, not a P0.
 Answers about production are choices for those stories, not missing prototype work.
 Only Harm 4 or higher, Gain 5, or a P0 holds sign-off. Every other finding goes to
 Known issues without a repair round or a question to the owner.
-After two rounds, the owner may accept a remaining P0 with a reason only when a person
-wrote `sample_data: true` in the sign-off decision's front matter. This declares only
-sample data and no back end. The finding stays in Known issues. With the field absent
-or false, P0 findings keep blocking and cannot be accepted by the owner.
+Without the sample-data setting, P0 findings keep blocking and cannot be accepted by the owner.
+At the round limit, other held findings need the owner's choice.
 Review the product diff against the customer's answers and the topic table below.
 The first review includes every tracked product file against an empty root. Later reviews
 include only product files changed since the previous sign-off review, plus a re-check of its
@@ -551,6 +552,8 @@ Check the working prototype's demo workflow, data handling, sign-in, integration
 security, accessibility, and whether the implementation matches the answers. Report every
 blocking mismatch or missing working path as a P0 or P1 finding. Do not accept a sign-off on
 the strength of a template or a test stub alone. Give concrete file and line evidence.
+An absent answer, an open client question, or `ask the client`, `later` or `not known yet` in the
+Answers section is not a finding by itself.
 
 Report a query in one module on a table another module owns as a P1 finding titled
 `Module tables: <the query>`.
@@ -592,6 +595,39 @@ The exact docs/product/BRIEF.md answers page section reviewed and quoted by the 
 
 $answers
 
-The twelve topics and their required timing:
+The twelve topics and their suggested timing. They are prompts, not gates:
 
 $topics
+
+<!-- sample-signoff -->
+## Sample-data sign-off gap check
+
+This is one gap check before the demo. It runs once and has no repair rounds. Read the brief,
+the customer's answers, the design material Forge provides, and the app routes Forge provides.
+Find what is missing for the requested demo. Do not review the whole source or ask for a full test
+run. A production choice belongs to a later story.
+
+Judge a prototype as a prototype. A clearly labelled demo tool with only made-up data and no
+back end is not a P0. Browser-held demo codes and other risks that exist only in a later real-data
+build belong to build stories and Known issues. A security hole in a real API or sign-in, or any
+exposed real data, stays a P0.
+
+An absent answer, an open client question, or `ask the client`, `later` or `not known yet` in the
+Answers section is not a finding by itself. Report a concrete gap only when it leaves a needed
+demo behavior or route missing from the app. Do not report unknown answers as missing demo
+behavior. A design link that could not be read is not a finding by itself; use any saved design
+pages or the screen list Forge provides.
+
+Current Answers section from the brief:
+
+$answers
+
+Topics and suggested timing:
+
+$topics
+
+Report every concrete gap with its file and line. Score each finding on Gain, Work and Harm from 1
+to 5. A security hole, data leak or data loss in normal use is P0. Other gaps are P1. Only a P0,
+Gain 5 or Harm 4 or higher needs the owner's choice now. Every lower finding goes to Known issues
+without a repair request. The owner may accept a held finding with a reason. If no concrete gap
+remains, report no findings.

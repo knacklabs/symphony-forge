@@ -1,0 +1,45 @@
+{
+  "base": "7ef60235392f557bf4b68d10d212018becd6838e",
+  "branch": "fix/upgrade-no-install-no-refusal",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1a02c-13f9-7dd0-a4de-69899be7a4b6",
+    "head": null,
+    "start": "bcf3ecd0ef34aeef3daa47695d26350ef6f86e1d"
+  },
+  "done_when": "forge upgrade to the release already installed goes ahead while runs are in progress, and the refusal stays when an install would replace the release that a run is using",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "0078485f717fa003b4f20fccf89eb321cf6b199378a30f57f9df906f288f147c",
+    "changed": "bdaabbdb229b6e74cbbef6ad5b30d63a29b6a44721697e67fe4063609ef04675",
+    "commit": "3f976c4841dd1b9d69f6402563ed50eb53a038d5",
+    "dismissals": [],
+    "findings": [],
+    "id": "81e47b1a-a846-41b6-a235-776ceea3dbf1",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-03T06:49:56.518296+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-03T06:53:43.909729+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "ce856cbf4c2db8ad683d8d0358eb4ca0837ca65e",
+    "keys": {},
+    "round": null
+  },
+  "why": "forge upgrade refuses because of runs already on the target release, when nothing needs installing and no two releases can mix (bug 1329)",
+  "worker": "codex"
+}

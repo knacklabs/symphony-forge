@@ -132,10 +132,12 @@ def fingerprint(commit: str, item: str, top: Path, state: dict[str, Any], base: 
     if branch_diff:
         # Close alone uses both sides of the diff to reuse a review after a base-only merge.
         # Sort header/path pairs: diff.orderFile can reorder even raw Git output.
+        # Filter the result, not argv: a synced upgrade can exceed Windows' command limit.
         raw = (repo.git("--literal-pathspecs", "diff", "--raw", "--no-abbrev", "--no-renames",
-                        "--no-ext-diff", "--no-color", "-z", ancestor, commit, "--",
-                        *sorted(changed), cwd=top) if changed else "").split("\0")
-        entries = sorted(zip(raw[::2], raw[1::2]), key=lambda entry: entry[1])
+                        "--no-ext-diff", "--no-color", "-z", ancestor, commit,
+                        cwd=top) if changed else "").split("\0")
+        entries = sorted((entry for entry in zip(raw[::2], raw[1::2]) if entry[1] in changed),
+                         key=lambda entry: entry[1])
         digest = hashlib.sha256("\0".join(
             f"{path}\0{entry}" for entry, path in entries).encode("utf-8"))
     else:
@@ -395,7 +397,8 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False,
     results.unlink(missing_ok=True)
     try:
         if not command:
-            return 0, "forge.toml names no test command, so close ran none."
+            return 0, ("Sample-data mode skips tests and CI." if repo.sample_data(top)
+                       else "forge.toml names no test command, so close ran none.")
         # Worker tests always run; close skips documentation before it enters the test lane.
         if not always and docs_only(top, base):
             said = DOCS_ONLY.format(command=command)
@@ -825,7 +828,7 @@ def round_number(top: Path, item: str, state: dict[str, Any]) -> int | None:
 def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         base: str, selected: dict[str, str], previous: dict[str, Any],
         signoff_prompt: str = "", light: bool = False, tested: str = "",
-        images: set[str] | None = None) -> dict[str, Any]:
+        images: set[str] | None = None, only: set[str] | None = None) -> dict[str, Any]:
     """Review the branch head once, retrying once when a run doesn't finish. Returns the result."""
     from forge import design, records, story  # story imports review indirectly
     prototype = (light and not signoff_prompt and state.get("kind") == "fix"
@@ -842,6 +845,10 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
     product = ([name for name in repo.git("ls-files", "-z", f"--with-tree={head}", cwd=top).split("\0")
                 if name and not name.startswith((*BOOKKEEPING, "docs/decisions/"))]
                if signoff_prompt else [])
+    if signoff_prompt and only is not None:
+        product = [name for name in product if name in only and name != STANDARDS
+                   and (images is None or Path(name).suffix.lower() not in design.IMAGES
+                        or name in images)]
     _sweep()
     with tempfile.TemporaryDirectory(prefix="forge-review-", ignore_cleanup_errors=True) as folder:
         tmp = Path(folder)
@@ -852,7 +859,19 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         repo.git("clone", "-q", "--no-local", "--no-checkout", str(top), str(tree), cwd=top)
         repo.git("checkout", "-q", "--detach", head, cwd=tree)
         if signoff_prompt:
-            if previous.get("commit"):
+            if only is not None:
+                review_base = repo.git("commit-tree", EMPTY_TREE, "-m", "Empty product review base",
+                                       cwd=tree)
+                excluded = set(repo.git("ls-files", "-z", cwd=tree).split("\0")) - {"", *product}
+                if excluded:
+                    command = ("git", "--literal-pathspecs", "rm", "-r", "-f", "-q",
+                               "--ignore-unmatch", "--pathspec-from-file=-", "--pathspec-file-nul")
+                    removed = repo.run(*command, cwd=tree,
+                                       input="\0".join(sorted(excluded)) + "\0")
+                    if removed.returncode:
+                        raise subprocess.CalledProcessError(removed.returncode, command,
+                                                            removed.stdout, removed.stderr)
+            elif previous.get("commit"):
                 repo.git("fetch", "-q", str(top), previous["commit"], cwd=tree)
                 repo.git("read-tree", previous["commit"], cwd=tree)
                 review_base = previous["commit"]
@@ -903,8 +922,10 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         # then create the file afresh ("x" refuses anything still there).
         repo.git("rm", "-r", "-f", "-q", "--ignore-unmatch", "--", STANDARDS, cwd=tree)
         with (tree / STANDARDS).open("x", encoding="utf-8") as page:
-            page.write(prompt if prototype else prompt + "\n\n" + string.Template(rules).substitute(
-                standards=(Path(__file__).parent / "standards.md").read_text(encoding="utf-8").strip()))
+            page.write(prompt if prototype or (signoff_prompt and only is not None) else
+                       prompt + "\n\n" + string.Template(rules).substitute(
+                           standards=(Path(__file__).parent / "standards.md").read_text(
+                               encoding="utf-8").strip()))
         engine = cfg["tools"]
         if engine == "both":
             engine = "codex" if shutil.which(os.environ.get("CODEX_BIN") or "codex") else "claude"
@@ -1036,8 +1057,10 @@ def bound_review(top: Path, item: str, state: dict[str, Any], result: dict[str, 
     for finding in findings:
         title = re.sub(r"^\[P[0-3]\]\s*", "", finding["title"])
         missed = re.match(r"Not done\s*:\s*(.*)", title, re.I)
+        approved_missed = missed and any(
+            item and sentence(missed[1]).startswith(item) for item in approved)
         must = score.MUST.match(title)
-        if (missed and sentence(missed[1]) in approved) or (must and must[1].strip().casefold() in kinds):
+        if approved_missed or (must and must[1].strip().casefold() in kinds):
             if not finding.get("required_done_when") or finding.get("follow_up"):
                 finding["required_done_when"] = True
                 finding.pop("follow_up", None)
@@ -1048,7 +1071,7 @@ def bound_review(top: Path, item: str, state: dict[str, Any], result: dict[str, 
         reason = ""
         if score.RARE.search(finding["body"]):
             reason = "Rare case outside normal use"
-        elif missed and sentence(missed[1]) not in approved:
+        elif missed and not approved_missed:
             reason = "Not done names no owner-approved Done-when item; builder details are guidance."
         elif score.below_added_work_minimum(finding, minimum):
             reason = f"{score.ADDED_WORK_REASON}{minimum}."

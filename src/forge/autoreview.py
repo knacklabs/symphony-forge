@@ -56,8 +56,16 @@ def attempt(argv: list[str], cwd: Path, out: Path,
                             **codex.GROUP)
     with proc, machine.agent_process(proc):
         last = ""
+        pending = b""
         for line in proc.stdout or []:  # streamed as bytes: its progress is how a person watches it
             line = line.replace(b"\0", b"")
+            # Claude's failure trailer contains its result JSON. Hold it until we
+            # can name a sign-in failure without printing the raw result first.
+            if "claude" in argv and (pending or line.lstrip().startswith(b"{")
+                                      or b"claude engine failed" in line):
+                pending += line
+                last = line.decode("utf-8", "replace").strip() or last
+                continue
             sys.stderr.buffer.write(line)
             sys.stderr.flush()
             last = line.decode("utf-8", "replace").strip() or last
@@ -69,6 +77,19 @@ def attempt(argv: list[str], cwd: Path, out: Path,
             if line.strip():
                 repo.record_progress(top, item, run_id, step=" ".join(last.split()), **selected)
         code = proc.wait()
+    trailer = pending.decode("utf-8", "replace")
+    for match in re.finditer(r"(?m)^\s*\{", trailer):
+        try:
+            result, _ = json.JSONDecoder().raw_decode(trailer[match.end() - 1:])
+        except ValueError:
+            continue
+        if (result.get("is_error") is True and isinstance(result.get("result"), str)
+                and result["result"].startswith("Not logged in")):
+            raise repo.Refused("Claude is not signed in. Next: run claude and sign in, "
+                               f"then forge close {item}.", "")
+    if pending:
+        sys.stderr.buffer.write(pending)
+        sys.stderr.flush()
     try:
         # Decode first: JSON represents null characters as escaped text.
         report = json.loads(out.read_text(encoding="utf-8"), object_hook=lambda fields: {

@@ -1,10 +1,45 @@
 from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Index, Text, func, text
+from sqlalchemy import (
+    CheckConstraint,
+    DateTime,
+    ForeignKey,
+    Index,
+    Integer,
+    Text,
+    func,
+    text,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core import Base
+
+
+class SignInAttempt(Base):
+    """Temporary sign-in counters include emails without an account."""
+
+    __tablename__ = "sign_in_attempt"
+    __table_args__ = (
+        CheckConstraint("email = lower(email)", name="sign_in_attempt_email_lower"),
+        CheckConstraint(
+            "char_length(email) BETWEEN 1 AND 254", name="sign_in_attempt_email_length"
+        ),
+        {"schema": "core"},
+    )
+
+    id: Mapped[UUID] = mapped_column(primary_key=True, server_default=text("uuidv7()"))
+    email: Mapped[str] = mapped_column(Text, unique=True, nullable=False)
+    failures: Mapped[int] = mapped_column(Integer, server_default="0", nullable=False)
+    expires_at_utc: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
+    created_at_utc: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    updated_at_utc: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
 
 
 class Account(Base):

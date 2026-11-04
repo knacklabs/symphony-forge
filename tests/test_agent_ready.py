@@ -34,7 +34,7 @@ def _new_client(repo, gh, tmp_path, starter="typescript"):
 @pytest.mark.timeout(1800)
 @pytest.mark.parametrize("starter", ["typescript", "python", "earlier adopted"])
 def test_1_a_create_sent_again_with_its_retry_key_makes_one_item(repo, gh, tmp_path, starter, request):
-    # Audit: HTTP/MCP own storage and email delivery after a retry. The screen removal also
+    # Audit: HTTP/MCP own storage and link disclosure after a retry. The screen removal also
     # removes create/invite hooks and their form flows, so only the API cases remain here.
     # Init/sync is the public packaging boundary. No production seam is needed.
     if starter == "earlier adopted":
@@ -53,8 +53,7 @@ def test_1_a_create_sent_again_with_its_retry_key_makes_one_item(repo, gh, tmp_p
                 "makes_one_project",
             ))
             require_feature_cases(live["api"], "test_invites", (
-                "test_an_invite_sent_again_with_the_same_idempotency_key_sends_one_email_"
-                "and_makes_one_invitation",
+                "test_an_invite_retry_with_the_same_key_returns_no_link_and_makes_one_invitation",
             ))
             require_feature_cases(live["api"], "test_mcp", (
                 "test_a_retried_project_create_with_the_same_idempotency_key_makes_one_project",
@@ -65,7 +64,7 @@ def test_1_a_create_sent_again_with_its_retry_key_makes_one_item(repo, gh, tmp_p
         live = live_run(request.getfixturevalue("tmp_path_factory"))
         _require_cases(live["api"], (
             "a project create sent again with the same Idempotency-Key makes one project",
-            "an invite sent again with the same Idempotency-Key sends one email and makes one invitation",
+            "an invite retry with the same key returns no link and makes one invitation",
             "a retried project create with the same idempotency key makes one project",
         ))
 

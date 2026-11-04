@@ -14,11 +14,11 @@ $spec
 For a story, check the confirmed spec before calling it missing. Forge includes its path and text
 above when it finds the spec in any local branch, including a promoted task branch.
 
-For a story, read this checkout's `docs/product/BRIEF.md` `## Answers` section. When a Done-when
-item needs a topic marked `later`, report `Decide first: <topic>` as a finding. The agent must ask
-that one question, record the answer in the finding's disposition and the story's Notes as
-`Decided: <topic>: <answer> (<source>, <date>)`, and make the story's first task update the answers
-page. Do not call a deferred topic open when no Done-when item needs it.
+For a story, read this checkout's `docs/product/BRIEF.md` `## Answers` section as context. An
+unanswered topic, an open client question, or an answer marked `later` or `not known yet` does not
+block planning. If work needs an answer that is missing, use a sensible default and record the
+question as an open decision with its default and effect. Do not report the missing answer as a
+finding. Report a finding only for a defect in the plan itself.
 
 When a note needs a choice only the client can make, put this block inside the note, indented
 under it, just before the note's score line. The block has no score line of its own: the note's
@@ -114,7 +114,10 @@ Four principles govern every change.
    about 150 lines or one model call or user step, 3 for more, or a new table, job, workflow or
    flag.
 3. Choose the simplest option.
-4. Rules are stated, not policed: add no check, gate or refusal only to enforce a rule.
+4. Forge does the right thing by default where it can. It refuses only when a mistake
+   costs a lot or is hard to undo. It states a rule only when a mistake is cheap and
+   something later catches it. People should not need to know how to use agents well
+   for Forge to work.
 
 Mark each finding that asks for added work beyond the Done-when items (another check, retry, guard
 or flag) with a body line `Adds work: <what>; F <f> x H <h> = <p>; 2 x C = <c>`. When p is less

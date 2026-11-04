@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "bug\t.github/workflows/forge-next.yml\tRemove the deleted installer job from required checks\tpull-requests-print-the-net-line-count-i",
+      "kind": "bug",
+      "path": ".github/workflows/forge-next.yml",
+      "line": 42,
+      "text": "Remove the deleted installer job from required checks",
+      "from": "blocking",
+      "item": "pull-requests-print-the-net-line-count-i",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\t.github/workflows/forge.yml\tNot done: Each check runs once per pull request, and the live starter tests still run every night.\tpull-requests-print-the-net-line-count-i",
+      "kind": "bug",
+      "path": ".github/workflows/forge.yml",
+      "line": 181,
+      "text": "Not done: Each check runs once per pull request, and the live starter tests still run every night.",
+      "from": "blocking",
+      "item": "pull-requests-print-the-net-line-count-i",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

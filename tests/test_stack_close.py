@@ -16,18 +16,6 @@ from test_worker import install_claude
 STORY = "FORGE-STACK-1/CLOSE"
 
 
-def _set_part_limit(repo):
-    repo.git("switch", "-q", "story/STACK")
-    path = ".factory/stories/STACK/story.json"
-    state = json.loads((repo.path / path).read_text("utf-8"))
-    state["approval"]["part_line_limit"] = 400
-    repo.write(path, json.dumps(state))
-    repo.git("add", path)
-    repo.git("commit", "-q", "-m", "Approve the part size limit")
-    repo.git("push", "-q", "origin", "story/STACK")
-    repo.git("switch", "-q", "main")
-
-
 def _stacked_pair(env, previous, child_review=None):
     repo = configured(env, previous)
     base_work, _ = start(repo, "A")
@@ -77,7 +65,6 @@ def _retarget_manual_child(env):
 @pytest.mark.parametrize("main_advanced", [False, True], ids=["same-main", "worker-merged-main"])
 def test_3_stacked_close_uses_only_its_changes_and_waits_for_its_base(env, previous, main_advanced):
     repo = configured(env, previous)
-    _set_part_limit(repo)
     base_work, _ = start(repo, "A")
     env.commit(base_work, "app.py", "A_VALUE = 1\n" * 300, "Build the base part")
     base_close = env.close("STACK/A")

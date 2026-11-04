@@ -230,6 +230,36 @@ def _folder(name: str) -> Path:
     return main.parent / f"{main.name}-{name}"
 
 
+def pick_up(item: str, branches: list[str]) -> Path | None:
+    """Find the item's checkout, or make one from its published state."""
+    from forge import story
+
+    top = repo.root()
+    for branch, tree in story.worktrees(top).items():
+        state = repo.read_state(item, tree)
+        if state and state.get("branch") == branch:
+            return tree
+    for branch in branches:
+        if run("git", "fetch", "-q", "origin", branch, cwd=top).returncode:
+            continue
+        remote = f"origin/{branch}"
+        state = story.json_of(show(remote, repo.state_path(item), top))
+        if state.get("branch") != branch:
+            continue
+        if "/" not in item and state.get("status") == "dropped":
+            raise repo.Refused(f"Fix {item} is dropped.", f"forge fix drop {item} --undo")
+        path = _folder(item.replace("/", "-") if "/" in item else f"fix-{item}")
+        if git("branch", "--list", branch, cwd=top):
+            git("worktree", "add", "-q", str(path), branch, cwd=top)
+            if run("git", "merge", "--ff-only", "--no-overwrite-ignore", remote, cwd=path).returncode:
+                raise repo.Refused(f"Local and remote work for {item} differ. Reconcile the branch first.",
+                                   f"forge work {item}")
+        else:
+            git("worktree", "add", "-q", "--track", "-b", branch, str(path), remote, cwd=top)
+        return path
+    return None
+
+
 def _new_checkout(item: str, branch: str, folder: str, base: str, state: dict[str, Any],
                   message: str, carry: tuple[str, list[str]] | None = None) -> Path:
     """Make the branch in its own worktree and commit the item's state there, after a first
@@ -473,13 +503,13 @@ def start(args: argparse.Namespace) -> None:
     base = stacked or start_base(main, key, tasks[task])
     carry = (source, [rel for rel in (doc_rel, notes_rel, state_rel, design_folder) if rel and show(source, rel) is not None]
              ) if source != base else None
-    # Earlier approvals keep their agreed parts, including ones not started yet.
-    state = {"part_line_limit": approval["part_line_limit"]} if approval.get("part_line_limit") else {}
+    state = {}
     if stacked:
         state.update(stacked_on=blockers[0], base=git("rev-parse", stacked))
     path = _new_checkout(item, branch, f"{key}-{task}", base, state, f"Start {item}", carry)
     on = f" on top of {blockers[0]}" if stacked else ""
     print(f"Started {item}{on} on {branch} in {path}")
+    print("Keep this part to about 400 changed lines outside tests and docs; close only warns when it is larger.")
     print(f"Next: forge work {item}")
 
 
@@ -659,6 +689,20 @@ def allow_large(args: argparse.Namespace) -> None:
     print(f"{kind.capitalize()} {name} may now go over the {limit}.")
 
 
+def unbuilt_fix(item: str, state: dict, top: Path) -> bool:
+    """State updates are not work; a work commit can change other Forge records."""
+    if state.get("kind") != "fix":
+        return False
+    path = repo.state_path(item)
+    start = repo.git("log", "-1", "--diff-filter=A", "--format=%H", "--", path, cwd=top)
+    if not start:
+        return False
+    own = set(repo.git("rev-list", "--no-merges", "HEAD", "--not", start,
+                       f"origin/{repo.default_branch(top)}", cwd=top).splitlines())
+    return not any(sha in own and (not files or any(file != path for file in files))
+                   for sha, _, files in repo.commit_log(top, start))
+
+
 def amend(args: argparse.Namespace) -> None:
     if (args.done is None) == (args.append is None):
         refuse(REFUSALS["amend_choice"], fix=args.item)
@@ -681,7 +725,8 @@ def amend(args: argparse.Namespace) -> None:
     repo.commit_state(f"Change the fix's done-when\n\n{ruling}",
                       repo.write_state(args.item, state, top), top=top)
     print(f"Fix {args.item} is now done when: {state['done_when']}")
-    print(f"Next: forge close {args.item}")
+    command = "work" if unbuilt_fix(args.item, state, top) else "close"
+    print(f"Next: forge {command} {args.item}")
 
 
 def require_active(item: str, top: Path | None = None) -> None:

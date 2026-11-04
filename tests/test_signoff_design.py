@@ -31,7 +31,7 @@ def _refuses_app_code_until_a_build_is_requested(repo, tmp_path, monkeypatch, st
     refused = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
 
     assert refused.returncode == 1, refused.stdout + refused.stderr
-    assert "forge decision new prototype-build" in refused.stderr
+    assert "forge decision new prototype-plan" in refused.stderr
     assert "status: proposed" in page.read_text("utf-8")
     assert not _calls(queue)
 

@@ -9,6 +9,7 @@ import os
 import tomllib
 
 from conftest import ROOT, _install
+from test_codex_setup import _signed_in_codex
 from test_codex_worker import QUIET, _sent, sdk_data  # noqa: F401 (fixture)
 from test_setup import _autoreview, _stub_forge
 from test_subagent_roles import _settings
@@ -79,6 +80,7 @@ def test_1_this_repo_works_on_codex_low_and_reviews_on_codex(repo, monkeypatch, 
 
 def test_2_forge_doctor_passes_on_this_repos_forge_toml(repo, gh, tmp_path, monkeypatch,
                                                    sdk_data):
+    _signed_in_codex(repo)
     repo.write("forge.toml", (ROOT / "forge.toml").read_text(encoding="utf-8"))
     repo.git("add", "forge.toml")
     repo.git("commit", "-q", "-m", "Configure Forge")
