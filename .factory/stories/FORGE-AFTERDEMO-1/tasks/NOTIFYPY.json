@@ -1,10 +1,18 @@
 {
   "branch": "task/FORGE-AFTERDEMO-1-NOTIFYPY",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-04T21:03:14.954620+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "d38b65b0371bf75154093a7ebfa280ec75415f0a",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
