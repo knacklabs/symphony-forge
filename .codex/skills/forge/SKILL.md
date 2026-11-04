@@ -10,6 +10,8 @@ Start with `forge next`. It says where things stand and gives the exact next com
 
 ## Guide a person with little technical experience
 
+Only when their words leave the work unclear, ask one short question about their work and part in it: are they showing a customer an idea, finding out what a customer needs, or building the real app? Ask about the work, not their job title. Take that path when they answer. Never wait for the answer: choose the likeliest path, say which you chose, and continue. Store nothing and add no setting.
+
 Lead in plain words. Tell the person where they are, what you will do next, and what
 you need from them. Use everyday words instead of Forge's terms or commands with
 this person. Ask for their idea or client notes first, not the sign-off answers.
