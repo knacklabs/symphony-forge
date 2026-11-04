@@ -336,6 +336,8 @@ gh issue create --repo knacklabs/symphony-forge --title "<short plain title>" --
 
 ## Laptop setup and after cloning
 
+Before `forge init` writes any files in a new or existing repo, it checks Git's author identity. If Git refuses it, set `git config user.name "Your Name"` and `git config user.email "you@example.com"`, then run init again.
+
 When `forge init` writes settings, it checks `claude auth status` and `codex login status`.
 If only Claude is signed in, it sets `tools = "claude"` and `workers = "claude"` and says so.
 Otherwise it keeps split workers. An unavailable check keeps that default unless the binary is missing.
