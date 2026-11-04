@@ -1,6 +1,13 @@
 {
   "base": "00c609a81f4a5d2fa09466f7105c2513ba53cd5a",
   "branch": "fix/board-stops-with-no-page",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1a5ff-b01f-7981-ab30-71597fcb2609",
+    "head": null,
+    "start": "29ad244f7e64ed3d52f8d8d9a7c053f42c5c6fdd"
+  },
   "done_when": "A forge board server with no page open for 30 minutes stops by itself and says so. While no page is open it does not fetch from GitHub or rebuild the board. An open page keeps it running.",
   "fix_kind": "mechanical",
   "kind": "fix",
