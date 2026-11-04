@@ -689,6 +689,20 @@ def allow_large(args: argparse.Namespace) -> None:
     print(f"{kind.capitalize()} {name} may now go over the {limit}.")
 
 
+def unbuilt_fix(item: str, state: dict, top: Path) -> bool:
+    """State updates are not work; a work commit can change other Forge records."""
+    if state.get("kind") != "fix":
+        return False
+    path = repo.state_path(item)
+    start = repo.git("log", "-1", "--diff-filter=A", "--format=%H", "--", path, cwd=top)
+    if not start:
+        return False
+    own = set(repo.git("rev-list", "--no-merges", "HEAD", "--not", start,
+                       f"origin/{repo.default_branch(top)}", cwd=top).splitlines())
+    return not any(sha in own and (not files or any(file != path for file in files))
+                   for sha, _, files in repo.commit_log(top, start))
+
+
 def amend(args: argparse.Namespace) -> None:
     if (args.done is None) == (args.append is None):
         refuse(REFUSALS["amend_choice"], fix=args.item)
@@ -711,7 +725,8 @@ def amend(args: argparse.Namespace) -> None:
     repo.commit_state(f"Change the fix's done-when\n\n{ruling}",
                       repo.write_state(args.item, state, top), top=top)
     print(f"Fix {args.item} is now done when: {state['done_when']}")
-    print(f"Next: forge close {args.item}")
+    command = "work" if unbuilt_fix(args.item, state, top) else "close"
+    print(f"Next: forge {command} {args.item}")
 
 
 def require_active(item: str, top: Path | None = None) -> None:
