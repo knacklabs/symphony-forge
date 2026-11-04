@@ -11,12 +11,27 @@
   "done_when": "forge init with no git identity refuses before it writes any file, and names the two git config commands to run. Doctor is not the next step for this.",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "9b06fbbdf3a549d01b56ea94b868864ae67ec327da9a34ced9f47d9feccce0a1",
+    "changed": "7e37028d4a75a5e16d2a8518ec16c3dc4450b007509f78576badaacc9a29e124",
+    "commit": "2a8d212d2afecb3839807fd4578ab9721642a1c9",
+    "dismissals": [],
+    "findings": [],
+    "id": "de088163-3b78-40fc-9c78-9a30a79cd707",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-04T09:58:39.570516+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-04T10:07:54.958696+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
