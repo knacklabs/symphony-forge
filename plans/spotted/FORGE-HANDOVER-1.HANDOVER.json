@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\tplans/FORGE-HANDOVER-1.md\tAbbreviated task selectors made bare forge test report that no tests ran.",
+      "kind": "bug",
+      "path": "plans/FORGE-HANDOVER-1.md",
+      "line": 90,
+      "text": "Abbreviated task selectors made bare forge test report that no tests ran.",
+      "from": "worker",
+      "item": "FORGE-HANDOVER-1/HANDOVER",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
