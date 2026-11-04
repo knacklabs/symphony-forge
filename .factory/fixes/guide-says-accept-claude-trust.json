@@ -1,6 +1,13 @@
 {
   "base": "03566c13cbe5b17271277c76c0c619884e376462",
   "branch": "fix/guide-says-accept-claude-trust",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1a447-c728-7a32-938c-c6df96ce4a61",
+    "head": null,
+    "start": "f979eb551663aafe6d8139510fd81f29096216c1"
+  },
   "done_when": "The shipped guide's setup steps tell a person to open Claude Code in the repo once and accept the trust question, in the guide and both synced copies",
   "fix_kind": "mechanical",
   "kind": "fix",
