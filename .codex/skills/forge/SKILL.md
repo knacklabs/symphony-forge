@@ -8,6 +8,40 @@ description: Run Forge, which takes a story from approval to a merged pull reque
 
 Start with `forge next`. It says where things stand and gives the exact next command.
 
+## Guide a person with little technical experience
+
+Only when their words leave the work unclear, ask one short question about their work and part in it: are they showing a customer an idea, finding out what a customer needs, or building the real app? Ask about the work, not their job title. Take that path when they answer. Never wait for the answer: choose the likeliest path, say which you chose, and continue. Store nothing and add no setting.
+
+Lead in plain words. Tell the person where they are, what you will do next, and what
+you need from them. Use everyday words instead of Forge's terms or commands with
+this person. Ask for their idea or client notes first, not the sign-off answers.
+After a break, read the saved notes and run `forge next`, then explain the current
+step and continue from it. Do not ask the person to repeat answers you already have.
+Show the design on a screen share by default. Share a link only if the person chooses.
+When stuck, retry a safe step after you check what already happened. Never repeat
+an action that can lose data or create a second item. If you cannot recover, write
+a plain message for the named developer: the goal, what stopped, what you tried,
+the repo link, and what help you need. Let the person send it.
+
+For a sales demo, save transcripts in `docs/context/`. Mark each point from a transcript
+as "Heard from the customer" and name its transcript. Keep your guesses separate.
+Use Claude for the design. Require impeccable and emil-design-eng from the first
+design onward, for both the Claude design artifact and the browser-only web app.
+Then build a browser-only web app with fake data, no server, no database, and no
+sign-in. Label extra features
+"Demo only". Put this line on the demo: "This demo uses sample data. Its features are
+not commitments." Never put real customer data in a demo, because anyone with its
+link can open it. Deploy through Mainline from the GitHub repo only when the person
+asks. Follow the Mainline setup and deployment rules below.
+
+When the customer converts, write one handover page in the repo for the named FDE
+(the developer who will work with the customer). Include the customer, what they
+liked, what you showed, and what the FDE must confirm. Tell the person where the
+page is. The FDE decides for each feature to use it, change it, or build it from
+scratch. Anything that goes into real use gets the normal tests and review.
+Conversion is not the client sign-off. The FDE continues discovery and gets that
+sign-off through the normal flow.
+
 Mainline Deploy is available to install through the organization's plugin catalog. Do not assume
 that the plugin and MCP are installed or that the user is signed in.
 Use Mainline Deploy only when the user explicitly requests deployment. First check whether it is

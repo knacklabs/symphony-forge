@@ -1,8 +1,9 @@
 generator client {
   provider = "prisma-client-js"
+  previewFeatures = ["partialIndexes"]
 }
 
 datasource db {
   provider = "postgresql"
-  schemas  = ["core", "history", "mcp", "projects"]
+  schemas  = ["core", "history", "mcp", "notifications", "projects"]
 }

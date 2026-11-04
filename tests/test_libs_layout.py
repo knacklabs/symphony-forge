@@ -38,6 +38,8 @@ SERVER_LIBRARIES = (
     ("@app/organisations-server", "libs/organisations/server", "server", "organisations"),
     ("@app/history-contracts", "libs/history/contracts", "contracts", "history"),
     ("@app/history-server", "libs/history/server", "server", "history"),
+    ("@app/notifications-contracts", "libs/notifications/contracts", "contracts", "notifications"),
+    ("@app/notifications-server", "libs/notifications/server", "server", "notifications"),
 )
 PYTHON_STARTER = ROOT / "src" / "forge" / "templates" / "starter-python"
 

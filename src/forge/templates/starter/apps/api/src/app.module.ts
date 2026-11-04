@@ -7,6 +7,7 @@ import { AuthModule, SessionGuard } from '@app/auth-server';
 import { HealthModule } from './health/health.module';
 import { ProjectsModule } from '@app/projects-server';
 import { HistoryModule } from '@app/history-server';
+import { NotificationsModule } from '@app/notifications-server';
 import { OrganisationsModule } from '@app/organisations-server';
 import { McpModule } from '@app/mcp-server';
 
@@ -21,6 +22,7 @@ import { McpModule } from '@app/mcp-server';
     OrganisationsModule,
     McpModule,
     HistoryModule,
+    NotificationsModule,
     HealthModule,
   ],
   providers: [

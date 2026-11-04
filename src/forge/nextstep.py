@@ -120,7 +120,7 @@ def signoff(top: Path, cfg: dict[str, Any] | None = None) -> dict[str, Any]:
     from forge import open_decisions
 
     empty: dict[str, Any] = {"line": "", "open": []}
-    if not repo.is_prototype(top, cfg):
+    if not repo.is_prototype(top, cfg) or not journey.has_client_input(top):
         return empty
     answers = parse_answers(top)
     topics = open_must_answer_topics(top)
