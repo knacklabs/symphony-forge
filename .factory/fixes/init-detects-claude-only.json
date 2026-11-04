@@ -4,12 +4,20 @@
   "done_when": "forge init sets tools = claude and says so when only Claude is signed in, keeps split when both are signed in, and forge doctor says when a repo needs Codex and Codex is not signed in",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-04T05:04:29.765990+00:00",
       "step": "start"
     }
   ],
-  "why": "forge init writes workers = split, so a person with only a Claude subscription hits Codex with no question asked"
+  "stuck": {
+    "close": null,
+    "head": "141b65dc55191c45d7849e60dc92346f25be1042",
+    "keys": {},
+    "round": null
+  },
+  "why": "forge init writes workers = split, so a person with only a Claude subscription hits Codex with no question asked",
+  "worker": "codex"
 }
