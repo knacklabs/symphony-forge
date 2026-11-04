@@ -76,14 +76,15 @@ def upgrade(args: argparse.Namespace) -> int:
     if dirty:
         repo.refuse(REFUSALS["dirty"], files=", ".join(entry[3:] for entry in dirty.split("\0") if entry),
                     again=again)
-    runs = machine.entries()
+    release = args.release or _newest(top)
+    if not RELEASE.fullmatch(release):
+        repo.refuse(REFUSALS["bad_release"], release=release)
+    needs_install = _on_path()[0] != release
+    runs = machine.entries() if needs_install else []
     if runs:
         repo.refuse(REFUSALS["running"], runs="\n".join(
             f"- {run['repo_name']}: {run['item'] or 'test command'} ({run['kind']})"
             for run in runs), again=again)
-    release = args.release or _newest(top)
-    if not RELEASE.fullmatch(release):
-        repo.refuse(REFUSALS["bad_release"], release=release)
     pinned = repo.default_config(top)["version"]  # fetches the default branch first
     if _numbers(release) <= _numbers(pinned):
         repo.refuse(REFUSALS["not_newer"], default=default, pinned=pinned, release=release)
@@ -151,7 +152,7 @@ def upgrade(args: argparse.Namespace) -> int:
     quicktest.suggest(path, repo.config(path))
 
     # 3 and 4. The release installed, and the forge on PATH is it.
-    if _on_path()[0] == release:
+    if not needs_install:
         print(f"Forge {release} is already installed, so the install was skipped.", flush=True)
     else:
         install = INSTALL.format(release=release)

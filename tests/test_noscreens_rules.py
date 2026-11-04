@@ -32,23 +32,30 @@ LIVE = os.environ.get("FORGE_STARTER_LIVE") == "1"
 
 @pytest.mark.platform
 @pytest.mark.timeout(1800)
-@pytest.mark.parametrize('starter', ['typescript', 'earlier adopted'])
+@pytest.mark.parametrize('starter', ['typescript', 'python', 'earlier adopted'])
 def test_4_auth_gives_links_and_locks_without_guessing(repo, gh, tmp_path, tmp_path_factory, starter):
     # Audit: init ships executable auth cases; sync preserves earlier apps. Missing shipped
     # cases or an app rewrite fails here. The live HTTP suite owns runtime assertions;
     # existing init tests do not check this auth delivery contract. No production seam.
     from test_noscreens_starters import _earlier_app
-    from test_starter_tree import _require_cases, live_run
+    from test_starter_tree import _require_cases, live_python_run, live_run
 
     if starter == 'earlier adopted':
         client = _earlier_app(repo, gh, tmp_path)
         assert not (client / 'apps/web/e2e/rules').exists()
         return
-    client, initialized = _fresh_client(repo, gh, tmp_path, '--starter')
+    args = ('--starter', 'python') if starter == 'python' else ('--starter',)
+    client, initialized = _fresh_client(repo, gh, tmp_path, *args)
     assert initialized.returncode == 0, initialized.stdout + initialized.stderr
-    assert (client / 'apps/api/test/auth.e2e-spec.ts').is_file()
+    auth_test = 'apps/api/tests/test_auth.py' if starter == 'python' else 'apps/api/test/auth.e2e-spec.ts'
+    assert (client / auth_test).is_file()
     if LIVE:
-        _require_cases(live_run(tmp_path_factory)['api'], AUTH_CASES)
+        run = live_python_run if starter == 'python' else live_run
+        expected = AUTH_CASES
+        if starter == 'python':
+            # Python's existing removal case keeps its pytest function name.
+            expected = AUTH_CASES[:-1] + ('test_an_admin_removes_a_member_who_is_signed_out_at_once',)
+        _require_cases(run(tmp_path_factory)['api'], expected)
 
 
 def _install_client(client: Path, tmp_path: Path):

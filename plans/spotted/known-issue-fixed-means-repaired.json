@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "edge\tsrc/forge/score.py\tNot done: A known issue says fixed only when a repair closed it, an entry a later review did not report again stays open",
+      "kind": "edge",
+      "path": "src/forge/score.py",
+      "line": 183,
+      "text": "Not done: A known issue says fixed only when a repair closed it, an entry a later review did not report again stays open",
+      "from": "review",
+      "item": "known-issue-fixed-means-repaired",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

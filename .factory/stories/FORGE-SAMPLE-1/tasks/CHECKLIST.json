@@ -18,26 +18,15 @@
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "62215fece3893c54c1b39c8fa9959294f3ef33dcaec15d195ce336154605bb90",
-    "changed": "dd835b6f582861956b04f48e6ce5e58bc6ef3c467494afe12c8b81be659c8f9f",
-    "commit": "3b93c5cf1a3a3d96e434897d5add98a7cb5175f5",
+    "branch_diff": "0024dcc4cab27ba78506f3101002024f472ec806120c6f5a26bf60828983e754",
+    "changed": "a65533eefbb15bfa8731ea816bc1ce8860eb1b1e15203553fd47c5598ca12530",
+    "commit": "2ce8bd11f452d122276c53670df1e2daf09c1041",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 3, Work 1, Harm 2\nRaise: Functional.\nCase: normal use - an agent runs `forge board --json` or `forge next --json` in an existing repository before adoption.\nThis unconditional call invokes `repo.is_prototype(top)` without a configuration, which calls `repo.config(top)` and refuses when forge.toml is absent (repo.py:617\u2013621, 709\u2013715). Consequently, the entire board now fails instead of returning its existing facts. The board already handles this valid state through `_report_config` (nextstep.py:477\u2013482). Pass its existing `configuration(top)` result into `signoff` so non-prototype repositories retain that behavior.",
-        "file": "src/forge/board.py",
-        "gain": 3,
-        "harm": 2,
-        "line": 824,
-        "priority": "P1",
-        "title": "Preserve board reads when forge.toml is absent",
-        "work": 1
-      }
-    ],
-    "id": "6bcd589c-41a9-4b3c-a6e9-f3e0643e9162",
+    "findings": [],
+    "id": "2abe969b-5e5a-41a5-b9c7-4aba1b2c66bf",
     "status": "clean"
   },
-  "round": 1,
+  "round": 2,
   "status": "waiting for checks",
   "steps": [
     {
@@ -47,13 +36,21 @@
     {
       "at": "2026-11-03T04:41:53.845870+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-11-03T05:07:48.000452+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-03T09:47:08.160594+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "9a2a7354a4bd62b4e003a615524d13d11b30ef59",
+    "close": "2e4d1672-bc1a-4960-b0e6-29e2bffcbe8f",
+    "head": "67e9ae7171b4e5226938c192b02e81a31239fea9",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "worker": "claude"
 }

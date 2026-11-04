@@ -20,8 +20,8 @@ async function createResetLink(request: APIRequestContext, email: string): Promi
     headers: { 'x-csrf-token': await csrfToken(created) },
   });
   expect(resetLinkResponse.ok()).toBeTruthy();
-  const resetLinkBody = await resetLinkResponse.json() as { data: { link: string } };
-  const resetLink = resetLinkBody.data.link;
+  const resetLinkBody = await resetLinkResponse.json() as { data: { resetUrl: string } };
+  const resetLink = resetLinkBody.data.resetUrl;
   expect(new URL(resetLink).pathname).toBe('/reset-password');
   return resetLink;
 }

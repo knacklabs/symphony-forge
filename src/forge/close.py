@@ -397,7 +397,8 @@ def close(args: argparse.Namespace) -> int:
     round_number = sum(step["step"] == "review" for step in state.get("steps", []))
     if not fresh or dismissals or refreshed:
         score.remember(_known(top, item, state, review_ref, previous), result, round_number,
-                       {} if fresh else areas)
+                       {} if fresh else areas,
+                       repaired=previous if not (fresh or records_only or switch or replayed) else None)
     if (serious and round_number >= (2 if "/" in item else 1) and
             not any(score.holds(f, "P0") for _, f in serious) and (not fresh or not state.get("stop"))):
         stopped = {"file": serious[0][1]["file"], "at": repo.now(),
@@ -1148,6 +1149,8 @@ def _title(top: Path, item: str, state: dict[str, Any]) -> tuple[str, str, str]:
 
 def _attach(top: Path, item: str, branch: str) -> None:
     """Link the pull request in the item's recorded Codex chat; a failure never stops the close."""
+    if (repo.read_state(item, top) or {}).get("worker") == "claude":
+        return
     try:
         if codex.record(top, item).get("conversation") and not codex.attach(top, item, json.loads(
                 _gh(top, "pr", "view", branch, "--json", "number,url,headRefName"))):

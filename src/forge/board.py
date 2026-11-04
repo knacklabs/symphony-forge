@@ -821,7 +821,7 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
                     [(rel, state, where) for rel, (state, where) in best.items() if rel not in merged]
                     + [(rel, state, where) for rel, state, where in history["copies"] if where == landed])
                 if (match := STATE.fullmatch(rel))}, landed),
-            "viewer": viewer, "signoff": nextstep.signoff(top),
+            "viewer": viewer, "signoff": nextstep.signoff(top, configuration(top)),
             "items": list(items.values()),
             "dependency_maps": maps, "team": team, "events": recent,
             "lanes": machine.view(), "machine": machine.load()}
