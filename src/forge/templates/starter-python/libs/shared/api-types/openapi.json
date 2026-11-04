@@ -2199,6 +2199,38 @@
         }
       }
     },
+    "/api/v1/notifications": {
+      "get": {
+        "tags": [
+          "Notifications"
+        ],
+        "summary": "List the records that wait for you, with a count.",
+        "description": "Only your open entries in your organisation, newest first. Returns up to 100 entries and the count of all open entries.",
+        "operationId": "list_notifications_api_v1_notifications_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope_NotificationsList_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/error-reports": {
       "post": {
         "tags": [
@@ -2944,6 +2976,88 @@
         ],
         "title": "MessageResponse"
       },
+      "NotificationEntry": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id",
+            "description": "The waiting entry identifier.",
+            "examples": [
+              "019a3500-0000-7000-8000-000000000001"
+            ]
+          },
+          "subjectId": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Subjectid",
+            "description": "The record that needs an action.",
+            "examples": [
+              "019a3500-0000-7000-8000-000000000002"
+            ]
+          },
+          "subjectName": {
+            "type": "string",
+            "title": "Subjectname",
+            "description": "The record name.",
+            "examples": [
+              "October budget"
+            ]
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "The action that waits for you.",
+            "examples": [
+              "Approve the budget."
+            ]
+          },
+          "createdAtUtc": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Createdatutc",
+            "description": "When the entry was created, in UTC.",
+            "examples": [
+              "2026-10-31T10:00:00Z"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "subjectId",
+          "subjectName",
+          "message",
+          "createdAtUtc"
+        ],
+        "title": "NotificationEntry"
+      },
+      "NotificationsList": {
+        "properties": {
+          "count": {
+            "type": "integer",
+            "title": "Count",
+            "description": "The number of all records that wait for you.",
+            "examples": [
+              2
+            ]
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/NotificationEntry"
+            },
+            "type": "array",
+            "title": "Items",
+            "description": "Up to 100 open entries, newest first."
+          }
+        },
+        "type": "object",
+        "required": [
+          "count",
+          "items"
+        ],
+        "title": "NotificationsList"
+      },
       "Project": {
         "properties": {
           "id": {
@@ -3531,6 +3645,35 @@
           "data"
         ],
         "title": "SuccessEnvelope[NoneType]"
+      },
+      "SuccessEnvelope_NotificationsList_": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "const": true,
+            "title": "Success",
+            "default": true
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NotificationsList"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "error": {
+            "type": "null",
+            "title": "Error"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "title": "SuccessEnvelope[NotificationsList]"
       },
       "SuccessEnvelope_ProjectListResponse_": {
         "properties": {

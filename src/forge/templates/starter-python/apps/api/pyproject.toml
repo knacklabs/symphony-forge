@@ -66,6 +66,13 @@ protected_modules = ["app.mcp.*"]
 allowed_importers = ["app.mcp"]
 broken_contract_guidance = "A module uses another module only through its public service in its __init__.py, never through its internal files."
 
+[[tool.importlinter.contracts]]
+name = "notifications internals"
+type = "protected"
+protected_modules = ["app.notifications.*"]
+allowed_importers = ["app.notifications"]
+broken_contract_guidance = "A module uses another module only through its public service in its __init__.py, never through its internal files."
+
 [tool.mypy]
 strict = true
 plugins = ["pydantic.mypy"]
