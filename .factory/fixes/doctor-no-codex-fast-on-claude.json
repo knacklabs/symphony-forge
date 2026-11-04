@@ -4,12 +4,20 @@
   "done_when": "forge doctor leaves out the Codex Fast line when the repo does not use Codex, and still prints it when it does",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-04T01:58:24.675583+00:00",
       "step": "start"
     }
   ],
-  "why": "forge doctor prints the Codex Fast line in a Claude-only repo, which reads as if Codex is still used (bug 1336)"
+  "stuck": {
+    "close": null,
+    "head": "782969eaf179bf99a6af2d4122775720059bad44",
+    "keys": {},
+    "round": null
+  },
+  "why": "forge doctor prints the Codex Fast line in a Claude-only repo, which reads as if Codex is still used (bug 1336)",
+  "worker": "codex"
 }
