@@ -11,12 +11,27 @@
   "done_when": "A Not done finding whose title holds an owner-approved Done-when item, also with added words after it, blocks close and does not become a follow-up. A Not done finding about builder details stays a follow-up.",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "a868d6720b48157dc95ba40cfd130ad0c1a7180e71b5085321288d7fd52edd7d",
+    "changed": "d5817301c6bc8452af986e85a0dbdf3f87e31b31bc564654285bf865e7d6b621",
+    "commit": "343bb93fe1c5ec30a1269994f27a4240e18b73c1",
+    "dismissals": [],
+    "findings": [],
+    "id": "2283f9df-60ba-4772-a61d-009c41eb683e",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-04T09:58:23.530741+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-04T10:04:55.161424+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
