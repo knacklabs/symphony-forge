@@ -28,28 +28,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "55a5589dc00c52c7d4af932b34f29f3a9675300a0264e5d5cfa770b37034cb2e",
-    "changed": "d7715aea31be5447698c2343501f01695195f21b6570493766b47f8d97479c1b",
-    "commit": "f10ada76fa755ec5942a4d84b04743fdf92cad85",
+    "branch_diff": "12b1dc8c25f4b55d82fdc505e9fbc5162e76766e114e913eb96f5bd647cc0879",
+    "changed": "e7d8b01e72e979c365c2ac9199564d670736e0b4cca9101f20eacac1b1ac7663",
+    "commit": "5a4c18473693fd11dce01e67b7a17b9b0d768d1d",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done\nCase: normal use - a repo uses Claude workers while Codex remains its review tool.\nWith tools = \"both\", workers = \"claude\", and an installed but signed-out Codex, on_codex is false and this check never runs. However, src/forge/review.py:910\u2013914 selects installed Codex for reviews regardless of workers, so close still needs its sign-in. The same omission occurs when an item's Claude override replaces a split worker setting at doctor.py:337\u2013339. Doctor therefore omits the promised warning and codex login advice. Include review routing when deciding whether Codex is needed, and correct tests/test_init_uses_signed_in_tools.py:52, which currently expects no warning for this configuration.",
-        "file": "src/forge/doctor.py",
-        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
-        "gain": 4,
-        "harm": 3,
-        "line": 351,
-        "priority": "P1",
-        "title": "Not done: forge doctor says when a repo needs Codex and Codex is not signed in",
-        "work": 2
-      }
-    ],
-    "id": "4cd4357b-afbc-437d-a654-1e6c78388107",
+    "findings": [],
+    "id": "e897092e-56fe-46d6-80d0-c639c8ae179b",
     "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-04T05:04:29.765990+00:00",
@@ -57,6 +45,10 @@
     },
     {
       "at": "2026-11-04T05:13:24.243345+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-04T05:50:48.426959+00:00",
       "step": "review"
     }
   ],
