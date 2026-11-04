@@ -48,7 +48,7 @@
     "status": "blocked"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-04T09:58:27.760565+00:00",
@@ -61,8 +61,12 @@
   ],
   "stop": {
     "at": "2026-11-04T10:17:43.743190+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "src/forge/land.py",
-    "wait_id": "dbb183cf-eaec-4cf8-b187-ff532daba581"
+    "reason": "Owner chose one more round: a builder that finishes without a commit must not start another build.",
+    "wait_id": "dbb183cf-eaec-4cf8-b187-ff532daba581",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
