@@ -32,7 +32,7 @@ COMMANDS = [{
     "args": [(('--json',), {"action": "store_true", "help": "Print the machine view"}),
              (('--out',), {"metavar": "PATH", "help": "write every item's facts here as JSON instead"})],
     "position": 60,
-    "listing": "| `forge board` | Opens the live board page on this computer until Ctrl-C (`--out <path>` writes every item's facts as JSON instead) |",
+    "listing": "| `forge board` | Opens the live board page on this computer; stops after 30 minutes with no page open or Ctrl-C (`--out <path>` writes every item's facts as JSON instead) |",
 }]
 
 CHECK_DATE = "2026-11-15"  # ponytail: the rebuild's check date, from the spec's success measure

@@ -380,6 +380,8 @@ before returning. Returning builders and repair rounds go before new builds;
 new builds pause above twice the test lane capacity and resume at capacity or below.
 
 `forge board` opens a live page on 127.0.0.1 with a per-run token and refreshes by itself;
+it stops after 30 minutes with no page open and does not fetch or rebuild while no page is open.
+The page's events stream keeps it live. Ctrl-C stops it at once.
 `--out <path>` writes JSON instead. The JSON views are `forge board --json` and
 `forge next --json`. Both views add `team` for the team's summary.
 The run reference explains the board fields and page behaviour.
