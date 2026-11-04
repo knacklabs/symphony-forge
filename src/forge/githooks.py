@@ -229,7 +229,8 @@ def _promote(fix: str, state: dict[str, Any], cfg: dict[str, Any], base: str, he
         refuse(REFUSALS["promote"], fix=fix, problem=f"changes the interface {touched[0]}")
     # Test files and forge sync's own output don't count toward the size.
     tests = git("diff", "--name-only", "--no-renames", "-z", *diff, "--", *repo.TEST_PATHS)
-    code = [path for path in code if path not in tests.split("\0")]
+    generated = repo.generated_files(repo.root(), code, head)
+    code = [path for path in code if path not in tests.split("\0") and path not in generated]
     if len(code) > LIMIT:
         from forge import sync
 
