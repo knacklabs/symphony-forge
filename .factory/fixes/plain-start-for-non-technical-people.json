@@ -1,4 +1,11 @@
 {
+  "amendments": [
+    {
+      "at": "2026-11-04T12:51:39.210908+00:00",
+      "because": "The owner set the sales-led flow on 4 Nov 2026: fake-data web app, deploy, conversion, then FDE discovery.",
+      "done_when": "docs/start.md tells Claude, in plain steps for Mac and Windows, how to install only what notes, the brief and the design need, sign the person in to GitHub, and create a private repo in the named company GitHub. The shipped guide tells every agent to lead in plain words with the next step, also after a break, to write a plain message for the named developer when it cannot recover, and to write a handover summary after client sign-off. forge next shows no sign-off question list until the repo has a client note or a brief with content, on new repos and on repos adopted earlier."
+    }
+  ],
   "base": "fd7cda2b1ba2d55bd5a29aacf27b2db498182fa9",
   "branch": "fix/plain-start-for-non-technical-people",
   "chat": {
@@ -8,7 +15,7 @@
     "head": null,
     "start": "a3184afb19e32e084405d6d78f66ec76e4f7b5bd"
   },
-  "done_when": "docs/start.md tells Claude, in plain steps for Mac and Windows, how to install only what notes, the brief and the design need, sign the person in to GitHub, and create a private repo in the named company GitHub. The shipped guide tells every agent to lead in plain words with the next step, also after a break, to write a plain message for the named developer when it cannot recover, and to write a handover summary after client sign-off. forge next shows no sign-off question list until the repo has a client note or a brief with content, on new repos and on repos adopted earlier.",
+  "done_when": "docs/start.md tells Claude, in plain steps for Mac and Windows, how to install only what notes, the design and a browser-only web app need, including Node, sign the person in to GitHub, and create a private repo in the named company GitHub. The shipped guide tells every agent to lead in plain words with the next step, also after a break, and to write a plain message for the named developer when it cannot recover. The shipped guide gives the sales flow: transcripts marked as heard from the customer, a Claude design, a browser-only web app with fake data, extra features labelled Demo only, one line on the demo saying the data is sample data and its features are not commitments, deploy through Mainline when asked, and on conversion one handover page for the FDE. The shipped guide says the FDE decides for each feature to use it, change it or build it from scratch, and conversion is not the client sign-off. forge next shows no sign-off question list until the repo has a client note or a brief with content, on new repos and on repos adopted earlier.",
   "fix_kind": "mechanical",
   "kind": "fix",
   "round": 1,
