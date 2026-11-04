@@ -12,6 +12,7 @@ model Organisation {
   projects            Project[]
   invites             Invite[]
   idempotencyKeys     IdempotencyKey[]
+  notifications       Notification[]
 
   @@index([createdByAccountId], map: "idx_Organisation_createdByAccountId")
   @@index([modifiedByAccountId], map: "idx_Organisation_modifiedByAccountId")

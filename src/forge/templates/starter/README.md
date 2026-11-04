@@ -92,6 +92,14 @@ Zod schemas in each module's contracts library check request bodies and queries.
 `libs/organisations` owns organisations, admin and member roles, and email invites. Each account
 belongs to one organisation, and every query checks that organisation. Admins invite people and
 change roles; members cannot. `libs/history` records these admin actions for the change history.
+`libs/notifications` holds records that wait for a person. `GET /api/v1/notifications` gives that
+person's open entries, newest first (up to 100), and the count of all their open entries.
+A feature calls `NotificationsApi.notify(principal, recipientAccountId, subjectId, subjectName,
+message, tx)` in the same transaction as its change. It calls `resolve(principal, subjectId, tx)`
+when the action is done. A reassignment resolves the old entries and adds the new entry in one
+transaction. The list limits entries to the signed-in person and their company.
+The agent builds the list screen in the client's design. Forge ships no screen, email, read mark,
+delete action or agent tool for this list. New apps get this module. Sync keeps existing app code.
 When the agent builds the Members screen, an admin can copy an invite link and send it by chat if
 the app has no mail provider. Email invites need a mail provider.
 

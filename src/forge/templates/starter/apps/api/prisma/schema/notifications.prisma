@@ -1,0 +1,20 @@
+// Waiting entries are an operational log, like change history, rather than editable records.
+model Notification {
+  id                 String       @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  organisationId     String       @db.Uuid
+  recipientAccountId String       @db.Uuid
+  subjectId          String       @db.Uuid
+  subjectName        String
+  message            String
+  createdAtUtc       DateTime     @default(now()) @db.Timestamptz(3)
+  resolvedAtUtc      DateTime?    @db.Timestamptz(3)
+  organisation       Organisation @relation(fields: [organisationId], references: [id], onDelete: Restrict)
+  recipientAccount   Account      @relation(fields: [recipientAccountId], references: [id], onDelete: Restrict)
+
+  @@index([organisationId], map: "idx_Notification_organisationId_fk")
+  @@index([recipientAccountId], map: "idx_Notification_recipientAccountId_fk")
+  @@index([subjectId], map: "idx_Notification_subjectId_fk")
+  @@index([organisationId, recipientAccountId, createdAtUtc(sort: Desc), id(sort: Desc)], map: "idx_Notification_list", where: { resolvedAtUtc: null })
+  @@index([organisationId, subjectId], map: "idx_Notification_subjectId_open", where: { resolvedAtUtc: null })
+  @@schema("notifications")
+}

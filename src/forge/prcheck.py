@@ -225,6 +225,8 @@ CHOOSE = r"""          pin() {
 def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
     from forge import sync
 
+    if repo.sample_data(top, cfg):
+        return {}
     node = ""
     if (top / "package.json").is_file() or re.search(r"\b(?:npm|npx|pnpm|yarn|node)\b", cfg["test"]):
         node = ("      - uses: actions/setup-node@v7\n"

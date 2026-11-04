@@ -80,6 +80,13 @@ the answers in `docs/product/BRIEF.md`. Ask each build-changing question when it
 one at a time, and record the answer and who gave it. If a requested feature does not help test
 the problem, say why and offer to note it for after sign-off.
 
+Keep one `## Answers` section in the brief and update it during the talks. Record an open question
+as `ask the client`, and record a current unknown as `not known yet`. These answers are accepted:
+no missing answer or open client question blocks planning, review, close, merge or sign-off. A repo
+that never declared sample data keeps today's refusal for an open `Personal data` answer when
+approving the app's rules page. A sample-data repo can approve its rules page and start stories with
+that answer open, but close waits for a settled answer on a fix that turns off sample data.
+
 Client repos get pinned copies of impeccable and emil-design-eng with their licences at init and sync, with or without a web app; both laptop installers install them too.
 Make each app's design from the whole brief: its purpose, users, records, fields, choice-list
 options and key flows. Run impeccable's init when PRODUCT.md is missing. Use impeccable and
@@ -104,8 +111,15 @@ The owner accepts it with `forge decision accept prototype-build --by "<name>"`.
 Build and demo the prototype only after that acceptance, through `forge fix start`, `forge work` and `forge close`. A prototype
 fix started before sign-off can exceed the usual fix size and change an interface; it still gets
 tests, review and a pull request. Save and confirm specs as the work reveals them. Before sign-off,
-`forge next` shows which required answers are still open. Its light rounds prove the demo steps,
-security and data boundaries, with `[models.light_review]`. Full proof is due at sign-off.
+`forge next` shows open answers, but they do not block work. Its light rounds prove the demo steps,
+security and data boundaries, with `[models.light_review]`. Demo proof is due at sign-off.
+If the prototype holds only made-up data and has no back end, ask the person, then have the
+coordinator set `sample_data = true` in `forge.toml`. An existing sign-off record's
+`sample_data: true` still works until this setting is present. Forge skips tests and CI while the
+setting is on; walk the demo steps in a browser. Real data or a back end keeps tests from day one.
+After sign-off, `forge next` shows setting up tests as the first step. In a coordinator-owned fix,
+set the test command and CI checks as needed, then turn off the setting. Close blocks that fix until
+the `Personal data` answer is settled.
 The design comes first. Before any screen, use the app's existing design. If it has none, draft
 one on a design canvas from the client's brand; use a neutral design when there is no brand. Every
 API a person uses gets its screen in the client's design, built by the agent when it builds the API, with no
@@ -113,30 +127,29 @@ need to ask. Webhooks, endpoints only agents or other systems call, and backgrou
 screen. Build the basic screens first, then the business screens. The demo opens on the client's
 business task, and the basic screens are shown last.
 
-Resolve the answers, then run the sign-off checks before the customer is asked. Write the record
-with `forge decision new client-signoff`, leave `approved_via` and `approved_on` empty, and run
-`forge decision accept`. Forge checks the copied Answers section and full test run.
-A working prototype gets one strict whole-product review;
-a canvas-only sign-off needs no model review. If the checks pass, Forge says you can ask the
-customer's named person for sign-off.
-The customer's named person approves the canvas or requested demo and the quoted answers. Set `approved_via` to
-`email`, `call` or `chat` and `approved_on` to the reply date. Run `forge decision accept` again
-to record it. Put each demo step and its test under `## Proof` for a working build, and settled
-choices under `## Decisions`.
+Write the sign-off record with `forge decision new client-signoff`, and leave `approved_via` and
+`approved_on` empty. Forge copies the current `## Answers` section into the sign-off record, so nobody copies it
+by hand. Put each demo step under `## Proof` for a working build. For a prototype without the
+sample-data mark, also name the passing test for each step. A marked sample-data prototype has no
+test requirement before sign-off. Put settled choices under `## Decisions`. Run
+`forge decision accept client-signoff --by "<name>"` before asking the customer to
+sign off. After the check passes and the customer replies, set `approved_via` to the reply and, if
+known, `approved_on` to its date. Run `forge decision accept client-signoff --by "<name>"` to
+record the signer's name.
 
-Sign-off checks that the copied Answers section matches `docs/product/BRIEF.md` and that the full
-run on main is green. When a precondition is missing, the refusal lists every
-gap and the next action for each. An existing client can sign off after upgrade with the brief and
-design it has; no prototype design files are required for this gate.
-The whole-product code review uses the selected review tool and `[models.review]`.
-Fix gaps, then retry `forge decision accept client-signoff`.
-A canvas-only sign-off needs no working build. A working prototype gets a full first product review.
-Later attempts review only product files changed since the last review and its open findings.
-Reviewers get earlier findings and answers. Settled findings stay settled.
-After two rounds, P0 findings still block until fixed. Other open findings need the owner's choice.
-Use `forge decision accept client-signoff --by "<name>" --resolve accept|more|split --reason "<human's choice>"`.
-Accept keeps the findings in the item's Known issues. Split creates a separate fix. More permits one more review.
-New clients and earlier-adopted clients get these rules on upgrade.
+A prototype marked `sample_data = true` in `forge.toml` gets one gap check before the demo, with no
+full test run or whole-source review. The check reads the brief, answers, design and app routes.
+All other findings go to Known issues without a repair request. A P0, Gain 5 or Harm 4 or higher
+stops for the owner's choice at once. The owner may accept a held finding with a reason
+or ask for a repair. A prototype without the setting keeps the current full-run and whole-source
+review rules. An existing sign-off record with `sample_data: true` keeps working for an
+earlier-adopted repo.
+
+Only the coordinator writes `sample_data = true` in `forge.toml`, after asking the person. A worker
+cannot change the setting. Existing clients get the new sign-off behaviour after the setting is
+written, and get the brief rules after upgrade and sync. No prototype design files are required for
+sign-off. A canvas-only sign-off needs no working build. Reviewers get earlier findings and answers;
+settled findings stay settled. New and earlier-adopted clients get the brief rules on upgrade.
 Forge reuses each passed result while what it checked stays unchanged.
 
 Only after accepted client sign-off, create stories with `forge story new`. Specs are optional;
@@ -234,7 +247,7 @@ with no MCP server, `services.toml` change or app files. In an older starter wit
 support, the feature command builds the feature without tools and says so.
 
 In a client repo, finish the sign-off checks and customer sign-off above before starting here.
-A working prototype also needs its strict whole-product review.
+A prototype without the sample-data mark also needs its strict whole-product review.
 
 1. Start from the problem you want to solve. A spec is optional; if using a confirmed spec,
    add its stories with `forge roadmap add <spec>` as before.

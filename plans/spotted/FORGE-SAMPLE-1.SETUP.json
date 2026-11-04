@@ -1,0 +1,48 @@
+{
+  "items": [
+    {
+      "key": "edge\tsrc/forge/fasttest.py\tThe worker test selection still reads short test names from the active story plan and collects no tests.",
+      "kind": "edge",
+      "path": "src/forge/fasttest.py",
+      "line": 635,
+      "text": "The worker test selection still reads short test names from the active story plan and collects no tests.",
+      "from": "worker",
+      "item": "FORGE-SAMPLE-1/SETUP",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/repo.py\tFollow-up: suppress the unusable full-run reminder in sample mode",
+      "kind": "edge",
+      "path": "src/forge/repo.py",
+      "line": 655,
+      "text": "Follow-up: suppress the unusable full-run reminder in sample mode",
+      "from": "review",
+      "item": "FORGE-SAMPLE-1/SETUP",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/worker.py\tFollow-up: preserve sample-data instructions for story workers",
+      "kind": "edge",
+      "path": "src/forge/worker.py",
+      "line": 581,
+      "text": "Follow-up: preserve sample-data instructions for story workers",
+      "from": "review",
+      "item": "FORGE-SAMPLE-1/SETUP",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\ttests/test_sample_setup.py\tNot done: a worker cannot write `sample_data` in `forge.toml`",
+      "kind": "edge",
+      "path": "tests/test_sample_setup.py",
+      "line": 124,
+      "text": "Not done: a worker cannot write `sample_data` in `forge.toml`",
+      "from": "review",
+      "item": "FORGE-SAMPLE-1/SETUP",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "name": "@app/notifications-server",
+  "projectType": "library",
+  "sourceRoot": "libs/notifications/server/src",
+  "tags": ["type:server", "scope:notifications"]
+}

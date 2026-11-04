@@ -8,6 +8,7 @@
     "@app/core-server": "workspace:*",
     "@app/history-server": "workspace:*",
     "@app/mcp-server": "workspace:*",
+    "@app/notifications-server": "workspace:*",
     "@app/organisations-server": "workspace:*",
     "@app/projects-server": "workspace:*"
   }
