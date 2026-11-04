@@ -54,8 +54,8 @@
     "id": "2c7751c3-b664-4e44-9450-6cc57f4544d4",
     "status": "clean"
   },
-  "round": 4,
-  "status": "waiting for checks",
+  "round": 5,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-04T12:42:13.824162+00:00",
@@ -67,10 +67,10 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "dbe21c0372c484f0ef572ef6c3c5ca1bf3d191e9",
+    "close": "5b3214cc-d9df-41ce-919c-e4b1a0133d58",
+    "head": "3f5c88612da4d049de17f66f341b88d91b4198b8",
     "keys": {},
-    "round": null
+    "round": 4
   },
   "why": "A salesperson or FDE with little Claude Code experience cannot start alone: nothing tells Claude how to set them up, guide them in plain words, or hand over to a developer, and forge next lists 7 sign-off questions before they have shared an idea.",
   "worker": "codex"
