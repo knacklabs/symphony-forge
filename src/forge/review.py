@@ -397,7 +397,8 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False,
     results.unlink(missing_ok=True)
     try:
         if not command:
-            return 0, "forge.toml names no test command, so close ran none."
+            return 0, ("Sample-data mode skips tests and CI." if repo.sample_data(top)
+                       else "forge.toml names no test command, so close ran none.")
         # Worker tests always run; close skips documentation before it enters the test lane.
         if not always and docs_only(top, base):
             said = DOCS_ONLY.format(command=command)

@@ -643,6 +643,22 @@ def constitution(top: Path) -> str:
     return ""
 
 
+def sample_data_off(top: Path, item: str) -> dict[str, Any]:
+    """Real data needs its personal-data answer before the settings change can close."""
+    from forge import nextstep
+
+    cfg = repo.config(top)
+    base = repo.git("merge-base", "HEAD", story.landed_ref(top), cwd=top)
+    if repo.sample_data(top, ref=base) and not repo.sample_data(top, cfg):
+        answers = nextstep.parse_answers(top).get("Personal data", [])
+        if ("Personal data" in nextstep.open_must_answer_topics(top)
+                or len(answers) == 1 and answers[0]
+                and answers[0][0].strip().lower() in ("ask the client", "later", "not known yet")):
+            repo.refuse(("Personal data needs a settled answer before sample_data turns off.",
+                         "write and commit the Personal data answer in docs/product/BRIEF.md, then forge close {item}"), item=item)
+    return cfg
+
+
 def _plan_gaps(top: Path, body: str) -> list[str]:
     from forge import nextstep
 
@@ -660,7 +676,7 @@ def _plan_gaps(top: Path, body: str) -> list[str]:
     for name in ("Summary", "Users", "Things it keeps track of"):
         if not brief.get(name, "").strip():
             missing.append(f"docs/product/BRIEF.md needs ## {name}")
-    if not repo.is_prototype(top) and "Personal data" in nextstep.open_must_answer_topics(top):
+    if not repo.is_prototype(top) and not repo.sample_data(top) and "Personal data" in nextstep.open_must_answer_topics(top):
         missing.append("Personal data needs a settled answer in docs/product/BRIEF.md")
     return missing
 

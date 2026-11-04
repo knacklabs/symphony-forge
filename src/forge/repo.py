@@ -586,7 +586,7 @@ def record_run(top: Path, item: str, kind: str, **fields: Any):
 
 # ponytail: stop_default only loads settings from earlier releases; stops always wait for the owner.
 KEYS = {"version": str, "repo": str, "stage": str, "workers": str, "tools": str, "test": str, "fast_test": str,
-        "signoff": str, "runner": str, "codex_fast": str, "stop_default": str,
+        "signoff": str, "sample_data": bool, "runner": str, "codex_fast": str, "stop_default": str,
         "merge": str, "stack": str, "test_place": str, "checks": list, "interfaces": list,
         "always_test": list, "groups": int, "models": dict,
         "added_work_min_gain": int, "always_block": list}
@@ -637,7 +637,7 @@ def config(top: Path | None = None) -> dict[str, Any]:
     if not path.is_file():
         refuse(REFUSALS["no_config"])
     try:
-        return _config_text(path.read_text(encoding="utf-8"), path.parent)
+        return _sample_settings(path.parent, _config_text(path.read_text(encoding="utf-8"), path.parent))
     except UnicodeDecodeError as exc:
         refuse(REFUSALS["bad_config"], problem=exc)
 
@@ -645,6 +645,29 @@ def config(top: Path | None = None) -> dict[str, Any]:
 def test_place(cfg: dict[str, Any]) -> str:
     """The explicit place, or the old config's place based on whether it names checks."""
     return cfg.get("test_place", "ci" if cfg.get("checks") else "local")
+
+
+def sample_data(top: Path, cfg: dict[str, Any] | None = None, ref: str | None = None) -> bool:
+    """The explicit setting wins over the earlier sign-off record's sample-data line."""
+    if cfg is None:
+        text = read_blob(top, f"{ref}:forge.toml") if ref else (top / "forge.toml").read_text("utf-8")
+        if text is None:
+            return False
+        # A past release can have settings that this release no longer accepts.
+        cfg = {**DEFAULTS, **tomllib.loads(text)} if ref else _config_text(text)
+    if cfg.get("repo") != "client" or cfg.get("stage") != "prototype":
+        return False
+    if "sample_data" in cfg:
+        return cfg["sample_data"] is True
+    return any(re.search(r"^sample_data:\s*[\"']?true[\"']?\s*$", text.split("---")[1], re.M)
+               for name, text in _signoff_texts(top, cfg, (ref or "",))
+               if (cfg["signoff"] or SIGNOFF.fullmatch(name)) and text.startswith("---"))
+
+
+def _sample_settings(top: Path, cfg: dict[str, Any], ref: str | None = None) -> dict[str, Any]:
+    """Leave files and branch protection intact while sample prototypes use browser proof."""
+    return ({**cfg, "test": "", "fast_test": "", "checks": [], "test_place": "local"}
+            if sample_data(top, cfg, ref) else cfg)
 
 
 def pytest_split(top: Path, command: str) -> bool:
@@ -706,7 +729,7 @@ def default_config(top: Path) -> dict[str, Any]:
     found = run("git", "show", f"origin/{default}:forge.toml", cwd=top)
     if found.returncode:
         refuse(REFUSALS["no_config"])
-    return _config_text(found.stdout)
+    return _sample_settings(top, _config_text(found.stdout), f"origin/{default}")
 
 
 def review_settings(top: Path) -> dict[str, Any]:
@@ -733,26 +756,19 @@ def is_prototype(top: Path, cfg: dict[str, Any] | None = None, refs: tuple[str, 
         return False
     from forge import story
 
-    pinned = cfg["signoff"]
-
-    def wanted(name: str) -> bool:
-        return name == pinned if pinned else name.endswith("client-signoff.md")
-
-    local_names = [path.relative_to(top).as_posix() for path in top.glob("docs/decisions/*.md")
-                   if wanted(path.relative_to(top).as_posix())]
-
-    def texts():
-        if not refs:
-            yield from ((top / name).read_text(encoding="utf-8") for name in local_names)
-        for ref in refs or (story.landed_ref(top),):
-            # Probe known names on the requested ref; local acceptance never stands in for it.
-            yield from (story.show(top, ref, name) or "" for name in local_names)
-            names = git("ls-tree", "-r", "--name-only", ref, "--", "docs/decisions", cwd=top).splitlines()
-            yield from (story.show(top, ref, name) or "" for name in names
-                        if name not in local_names and wanted(name))
-
     return not any(re.search(r"^status:\s*[\"']?accepted\b", text.split("---")[1], re.M)
-                   for text in texts() if text.startswith("---"))
+                   for _, text in _signoff_texts(top, cfg, refs or ("", story.landed_ref(top))) if text.startswith("---"))
+
+
+def _signoff_texts(top: Path, cfg: dict[str, Any], refs: tuple[str, ...]):
+    """Read the pinned sign-off, or matching decisions, from the requested trees or checkout."""
+    for ref in refs:
+        names = (git("ls-tree", "-r", "--name-only", ref, "--", "docs/decisions", cwd=top).splitlines()
+                 if ref else [path.relative_to(top).as_posix() for path in top.glob("docs/decisions/*.md")])
+        for name in names:
+            if name == cfg["signoff"] or not cfg["signoff"] and name.endswith("client-signoff.md"):
+                yield name, (read_blob(top, f"{ref}:{name}") or "" if ref
+                             else (top / name).read_text(encoding="utf-8"))
 
 
 def _config_text(text: str, top: Path | None = None) -> dict[str, Any]:
@@ -920,6 +936,8 @@ def _config_problem(data: dict[str, Any]) -> str:
             return "added_work_min_gain must be 3, 4 or 5"
         if kind is str and not isinstance(value, str):
             return f"{key} must be a string"
+        if kind is bool and type(value) is not bool:
+            return f"{key} must be true or false"
         if kind is int and not (type(value) is int and value >= 1):
             return f"{key} must be a whole number of 1 or more"
         if kind is list and not (isinstance(value, list) and all(isinstance(v, str) for v in value)):
