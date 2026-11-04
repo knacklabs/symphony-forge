@@ -64,17 +64,17 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "ad8bf0df548a9cab889acc29a34a71a05061d21952378262f33d3821fec4f18b",
-    "changed": "49ccd1b9647ba83804a41d969e25598a795e1d222202332eb2252183bb320796",
-    "commit": "f889dce256bf48f224ee1076d869262f66406ec5",
+    "branch_diff": "67bff4db51bccc9e82e0d5a3cbaf7fbaecf38125224796e108766544563d5f74",
+    "changed": "bdd0163765c1273ddcab0778684bb645135e53f8fbc488fccb12b681f608c597",
+    "commit": "9a50b6740157315600e98725f81d6f096cc87f2a",
     "dismissals": [],
     "findings": [],
-    "id": "240fa82e-d77a-4fa8-95c6-a47dc9f26916",
+    "id": "6c97fa78-fd42-4132-b886-6d4fe2e1afd8",
     "status": "clean"
   },
   "round": 6,
   "stacked_on": "FORGE-SAMPLE-1/CHECKLIST",
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-03T05:03:36.110347+00:00",
@@ -94,6 +94,10 @@
     },
     {
       "at": "2026-11-04T08:49:34.801661+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-04T09:22:34.997783+00:00",
       "step": "review"
     }
   ],
