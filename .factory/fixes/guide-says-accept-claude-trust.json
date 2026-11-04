@@ -11,12 +11,27 @@
   "done_when": "The shipped guide's setup steps tell a person to open Claude Code in the repo once and accept the trust question, in the guide and both synced copies",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "99f79c46cbf8bdb2775d1ef8df1bfbaa5ab82135084f3298a44730d330235169",
+    "changed": "678c327bee41b4a06749b3b765bbe1436dfe523f9ac30ec93fae80b44a07d4f6",
+    "commit": "e7f495b3e06d35f275e012aa90b724de8c12d2d4",
+    "dismissals": [],
+    "findings": [],
+    "id": "9e453a7c-c788-4a24-842f-b448420eb135",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-04T01:58:40.066742+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-04T05:40:29.906929+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
