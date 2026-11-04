@@ -638,7 +638,7 @@ def sample_data(top: Path, cfg: dict[str, Any] | None = None, ref: str | None = 
             return False
         text = saved.stdout if saved else (top / "forge.toml").read_text("utf-8")
         cfg = _config_text(text)
-    if cfg["repo"] != "client" or cfg["stage"] != "prototype":
+    if cfg.get("repo") != "client" or cfg.get("stage") != "prototype":
         return False
     if "sample_data" in cfg:
         return cfg["sample_data"]
