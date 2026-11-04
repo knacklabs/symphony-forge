@@ -1,6 +1,13 @@
 {
   "base": "0ed4652e88ac5f3c96910d6de1ec3e2b4444b4dc",
   "branch": "task/FORGE-SAMPLE-1-RECORD",
+  "chat": {
+    "approval": "4e15298f84b3bf2da57eaaa3a529c1d3ae30604d1bbea3b33d6dd16f1efab4f4",
+    "claude": null,
+    "conversation": "01a1a601-06d9-7ab1-9e79-1cabc2dbd4b4",
+    "head": null,
+    "start": "a964d900ea058422a3ed33f71b67f72928b8b4db"
+  },
   "round": 1,
   "stacked_on": "FORGE-SAMPLE-1/SETUP",
   "status": "working",
