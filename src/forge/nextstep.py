@@ -390,9 +390,6 @@ def _report(top: Path, history: dict[str, Any] | None = None,
         if shown["line"]:  # the checklist waits until nothing else is in progress
             notice = [shown["line"], *(f'- {row["item"]}. Say: "{row["say"]}"' for row in shown["open"] if quiet)]
             lines = notice + lines if len(trees) > 1 else lines + notice
-        if (cfg["repo"] == "client" and repo.sample_data(top, cfg)
-                and not repo.is_prototype(top, cfg, (story.landed_ref(top),))):
-            lines.insert(0, "Set up tests before the first build, then turn off sample data.")
     if _needs_demo_address(top):
         lines += ["Next: connect the repo on our deploy platform, pick a subdomain, and record its "
                   "address in docs/product/BRIEF.md under ## Demo as - Address: <url>."]

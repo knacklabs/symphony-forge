@@ -8,6 +8,10 @@ Test audit:
 3. No existing test owns this setting's command behavior; these cases use real Forge commands
    and fake only review and GitHub at their edges.
 4. No production seam is needed.
+
+An unfinished round must keep the same sample-data proof in its commit reminder.
+Normal reminder coverage does not exercise a sample-data repo. The worker stub
+deliberately leaves work unfinished so the real reminder path sends the second prompt.
 """
 from __future__ import annotations
 
@@ -87,6 +91,9 @@ def test_2_a_sample_data_repo_runs_no_tests_or_ci_until_its_first_build_step(
         workflow.parent.mkdir(parents=True, exist_ok=True)
         workflow.write_text("name: client's existing checks\n", encoding="utf-8")
     workflow_before = workflow.read_bytes() if workflow.exists() else None
+    if case == "earlier adopted":
+        # Upgrade generated files on a branch, as an earlier client's real sync requires.
+        repo.git("switch", "-qc", "fix/sample-setup")
 
     _settings(config, sample_data="true")
     invalid = repo.forge("sync")
@@ -103,13 +110,16 @@ def test_2_a_sample_data_repo_runs_no_tests_or_ci_until_its_first_build_step(
     assert not marker.exists()
     before_signoff = repo.forge("next")
     assert before_signoff.returncode == 0, before_signoff.stderr
-    assert "Set up tests before the first build, then turn off sample data." not in before_signoff.stdout
+    assert "set up tests" not in before_signoff.stdout
 
     # General build admission has its own owner; this fixture records that earlier approval.
     repo.write("docs/decisions/0000-prototype-build.md",
                '---\nstatus: accepted\nconfirmed_by: "Owner"\n---\n# Build the sample demo\n')
     repo.git("add", "-A")
     _fixture_git(repo, tmp_path, "commit", "-q", "-m", "Enable the sample-data prototype")
+    if case == "earlier adopted":
+        repo.git("switch", "-q", "main")
+        repo.git("merge", "-q", "--ff-only", "fix/sample-setup")
     _fixture_git(repo, tmp_path, "push", "-q", "origin", "main")
     started = repo.forge("fix", "start", "Tidy readme", "--done", "The readme is ready",
                          "--kind", "mechanical")
@@ -136,11 +146,15 @@ def test_2_a_sample_data_repo_runs_no_tests_or_ci_until_its_first_build_step(
     log = install_claude(repo)
     built = repo.forge("work", item)
     assert built.returncode == 0, built.stdout + built.stderr
-    prompt = calls(log)[-1]["brief"]
-    assert "## Sample-data proof" in prompt
-    assert "walk each demo step in a browser" in prompt
-    assert "Do not add or run automated tests or CI." in prompt
-    assert "The full run on main must be green." not in prompt
+    prompts = calls(log)
+    assert len(prompts) == 2  # The initial brief and the real unfinished-round reminder.
+    for sent in prompts:
+        prompt = sent["brief"]
+        assert "## Sample-data proof" in prompt
+        assert "walk each demo step in a browser" in prompt
+        assert "Do not add or run automated tests or CI." in prompt
+        assert "The full run on main must be green." not in prompt
+        assert "run the change's related tests through `forge test`" not in prompt
     env.commit(where, "app.py", "print('sample demo path')\n", "Add a sample demo path")
 
     env.reviews(CLEAN)
@@ -161,14 +175,21 @@ def test_2_a_sample_data_repo_runs_no_tests_or_ci_until_its_first_build_step(
     shutil.move(str(origin), merge_area / "remote.git")
     repo.git("remote", "set-url", "origin", str(merge_area / "remote.git"), cwd=top)
     env.tmp = merge_area
+    gh.respond("pr", "view", stdout=json.dumps({
+        "number": 7, "state": "OPEN", "baseRefName": "main",
+        "headRefName": "fix/tidy-readme", "headRefOid": repo.git("rev-parse", "HEAD", cwd=where),
+        "title": "Tidy readme", "isDraft": False, "body": ""}))
     _merge_at_github(env)
     merged = repo.forge("merge", item)
     assert merged.returncode == 0, merged.stdout + merged.stderr
     assert not marker.exists()
     sample_calls = env.gh.calls()[calls_before_close:]
     assert not [call for call in sample_calls if call[:2] == ["pr", "checks"]]
-    assert not [call for call in sample_calls if any(".check_runs[]" in arg for arg in call)]
+    # Timing history reads use filter=all. CI waits query the current head's check runs.
+    assert not [call for call in sample_calls if "filter=all" not in call
+                and any("/check-runs" in arg for arg in call)]
     (repo.bin / "github-merged").unlink(missing_ok=True)
+    gh.respond("pr", "view", stdout="{}")
 
     repo.git("checkout", "main", cwd=top)
     repo.git("pull", "--ff-only", "origin", "main", cwd=top)
@@ -180,7 +201,7 @@ def test_2_a_sample_data_repo_runs_no_tests_or_ci_until_its_first_build_step(
     _fixture_git(repo, tmp_path, "push", "-q", "origin", "main", cwd=top)
     after_signoff = repo.forge("next")
     assert after_signoff.returncode == 0, after_signoff.stderr
-    assert "Set up tests before the first build, then turn off sample data." in after_signoff.stdout
+    assert after_signoff.stdout.splitlines()[0] == "Step 5 of 7: set up tests."
 
     # Without the switch, Forge keeps the normal prototype proof and runs the configured test.
     brief = top / "docs/product/BRIEF.md"
@@ -195,18 +216,22 @@ def test_2_a_sample_data_repo_runs_no_tests_or_ci_until_its_first_build_step(
     _fixture_git(repo, tmp_path, "push", "-q", "origin", "main", cwd=top)
     no_switch = repo.forge("next")
     assert no_switch.returncode == 0, no_switch.stderr
-    assert "Set up tests before the first build, then turn off sample data." not in no_switch.stdout
+    assert "set up tests" not in no_switch.stdout
     started = repo.forge("fix", "start", "Tidy app", "--done", "The app is tidy",
                          "--kind", "mechanical", cwd=top)
     assert started.returncode == 0, started.stdout + started.stderr
     item = "tidy-app"
     where = Path(re.search(r" in (.+)\n", started.stdout)[1])
     monkeypatch.setenv("STUB_CLAUDE_LEAVE", "app.py")
+    previous_calls = len(calls(log))
     normal_worker = repo.forge("work", item)
     assert normal_worker.returncode == 0, normal_worker.stdout + normal_worker.stderr
-    prompt = calls(log)[-1]["brief"]
+    prompt = calls(log)[previous_calls]["brief"]
     assert "Run any test command you start in the foreground and wait for it to finish." in prompt
     assert "## Sample-data proof" not in prompt
+    reminder = calls(log)[-1]["brief"]
+    assert "run the change's related tests through `forge test`" in reminder
+    assert "## Sample-data proof" not in reminder
     env.commit(where, "app.py", "print('prototype')\n", "Keep the prototype working")
     env.reviews(CLEAN)
     env.open_pr("")

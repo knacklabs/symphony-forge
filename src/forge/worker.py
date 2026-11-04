@@ -41,6 +41,8 @@ SETTINGS = ("Workers never edit `forge.toml`. Never edit it even temporarily. It
             "change in your last message instead. To run an extra suite, run its command directly "
             "alongside `forge test`.")
 TEST_STEPS = {
+    "sample": ("walk each demo step in a browser and record its result in the `Proof list:`; "
+               "do not add or run automated tests or CI while `sample_data = true`."),
     "local": ("run the change's related tests through `forge test` in the foreground once, at the "
               "end of your turn. Wait for it to finish; rerun only what failed. Run tests only "
               "through `forge test`: it runs forge.toml's `fast_test`, "
@@ -292,7 +294,7 @@ def _work(args: argparse.Namespace) -> bool:
                             fresh_brief or brief, thread, fresh, chosen, family)
             return False
         start, clock = repo.now(), time.monotonic()
-        nudge = commit_nudge(config["test_place"])
+        nudge = commit_nudge(top)
         outcome = "failed"
         final = None
         asked = ""
@@ -578,10 +580,8 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
     values["prototype_proof"] = ""
     sample_data = not match["task"] and repo.sample_data(top)
     if sample_data:
-        template = (HERE / "templates" / "brief.md").read_text(encoding="utf-8")
-        values["prototype_proof"] = template.split("<!-- sample-data-proof -->\n", 1)[1].strip()
-        values["test_step"] = ("walk each demo step in a browser and record its result in the `Proof list:`; "
-                                "do not add or run automated tests or CI while `sample_data = true`")
+        values["prototype_proof"] = sample_proof()
+        values["test_step"] = TEST_STEPS["sample"]
     elif not match["task"] and repo.is_prototype(top):
         from forge import design
 
@@ -659,9 +659,19 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
     return Template(text).safe_substitute(values), subject
 
 
-def commit_nudge(test_place: str) -> str:
+def sample_proof() -> str:
+    """The same sample-data proof in the full brief and an unfinished-round reminder."""
+    return (HERE / "templates" / "brief.md").read_text(encoding="utf-8").split(
+        "<!-- sample-data-proof -->\n", 1)[1].strip()
+
+
+def commit_nudge(top: Path) -> str:
     """Ask the worker to finish the round using its repo's selected test place."""
-    return Template(COMMIT_NUDGE).safe_substitute(test_step=TEST_STEPS[test_place])
+    cfg = repo.config(top)
+    sample = repo.sample_data(top, cfg)
+    prompt = Template(COMMIT_NUDGE).safe_substitute(
+        test_step=TEST_STEPS["sample" if sample else cfg["test_place"]])
+    return prompt + ("\n" + sample_proof() + "\n" if sample else "")
 
 
 def design_context(top: Path, text: str, user_facing: bool) -> tuple[str, str]:
