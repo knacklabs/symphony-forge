@@ -18,6 +18,9 @@ from test_starter_tree import (
 MIGRATION = Path(
     "apps/api/prisma/migrations/20261026000150_module_schemas/migration.sql"
 )
+NOTIFICATIONS_MIGRATION = Path(
+    "apps/api/prisma/migrations/20261104000000_notifications/migration.sql"
+)
 PYTHON_STARTER = Path(__file__).resolve().parents[1] / "src/forge/templates/starter-python"
 PYTHON_MIGRATION = Path("apps/api/migrations/versions/0008_module_schemas.py")
 
@@ -61,7 +64,8 @@ def _starter_keeps_each_module_tables_in_its_own_schema(
     client, initialized = _fresh_client(repo, gh, tmp_path, "--starter", kind)
     assert initialized.returncode == 0, initialized.stdout + initialized.stderr
     if kind == "react":
-        assert (client / MIGRATION).read_bytes() == (STARTER / MIGRATION).read_bytes()
+        for migration in (MIGRATION, NOTIFICATIONS_MIGRATION):
+            assert (client / migration).read_bytes() == (STARTER / migration).read_bytes()
     else:
         assert (client / PYTHON_MIGRATION).read_bytes() == (PYTHON_STARTER / PYTHON_MIGRATION).read_bytes()
 

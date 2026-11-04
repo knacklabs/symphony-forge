@@ -299,11 +299,12 @@ def test_5_feature_columns_come_from_the_kind_table(repo, gh, tmp_path, tmp_path
         # Fresh-generator coverage cannot catch duplicate properties. Exercise the same CLI,
         # including a second feature, without a new production seam.
         base = client / "apps/api/prisma/schema/base.prisma"
-        # Prisma rejects multiline generator arrays; keep this existing preview valid.
-        base.write_text(base.read_text("utf-8").replace(
-            "generator client {",
-            'generator client {\n  previewFeatures = ["relationJoins"]',
-            1,
+        # The starter already enables partialIndexes for notifications. Add the second
+        # preview to that same array so the input remains a valid Prisma generator.
+        base.write_text(re.sub(
+            r"\bpreviewFeatures\s*=\s*\[",
+            'previewFeatures = ["relationJoins", ',
+            base.read_text("utf-8"), count=1,
         ), encoding="utf-8")
     written = set()
     for index, line in enumerate((CUSTOMERS_LINE, INVOICES_LINE)):

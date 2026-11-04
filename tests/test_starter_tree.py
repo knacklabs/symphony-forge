@@ -353,7 +353,7 @@ def test_1_the_starter_is_a_runnable_stack(request):
         assert (STARTER / rel).is_file(), rel
     assert not (STARTER / "package-lock.json").exists(), "the starter still uses npm's lockfile"
     for rel in (Path("apps") / "web", Path("apps") / "api", *(Path("libs") / name for name in
-                                                               ("auth", "core", "history", "mcp", "organisations", "projects", "shared"))):
+                                                               ("auth", "core", "history", "mcp", "notifications", "organisations", "projects", "shared"))):
         assert (STARTER / rel).is_dir(), rel
 
     package = _json(STARTER / "package.json")
@@ -396,7 +396,7 @@ def test_1_the_starter_is_a_runnable_stack(request):
     # The module library layout and its type/scope tags have one owner in test_libs_layout.
 
     schemas = {path.name for path in (STARTER / "apps" / "api" / "prisma" / "schema").glob("*.prisma")}
-    assert schemas == {"base.prisma", "auth.prisma", "history.prisma", "mcp.prisma",
+    assert schemas == {"base.prisma", "auth.prisma", "history.prisma", "mcp.prisma", "notifications.prisma",
                        "organisations.prisma", "projects.prisma"}, schemas
 
     command = f"node {(Path('scripts') / 'test.mjs').as_posix()}"
