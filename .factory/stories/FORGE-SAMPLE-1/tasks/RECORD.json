@@ -68,9 +68,9 @@
     "id": "378e7be0-e97b-4e7f-ad00-e10c7f7d29c6",
     "status": "clean"
   },
-  "round": 1,
+  "round": 2,
   "stacked_on": "FORGE-SAMPLE-1/SETUP",
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-04T09:57:52.563187+00:00",
@@ -82,10 +82,10 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "165ca044e76eca44758c342a85502ca7a54a752e",
+    "close": "f4c1c431-c5c4-4eba-96c7-bdc93b92bd64",
+    "head": "a26b7eddf8dd112d8fbd078a9224bc33cc5c66e8",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "worker": "codex"
 }
