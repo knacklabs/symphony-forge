@@ -754,20 +754,20 @@ def is_prototype(top: Path, cfg: dict[str, Any] | None = None, refs: tuple[str, 
     cfg = cfg if cfg is not None else config(top)
     if cfg["repo"] != "client" or cfg["stage"] != "prototype":
         return False
+    from forge import story
+
     return not any(re.search(r"^status:\s*[\"']?accepted\b", text.split("---")[1], re.M)
-                   for _, text in _signoff_texts(top, cfg, refs) if text.startswith("---"))
+                   for _, text in _signoff_texts(top, cfg, refs or ("", story.landed_ref(top))) if text.startswith("---"))
 
 
 def _signoff_texts(top: Path, cfg: dict[str, Any], refs: tuple[str, ...]):
     """Read the pinned sign-off, or matching decisions, from the requested trees or checkout."""
-    from forge import story
-
-    for ref in refs or ("", story.landed_ref(top)):
+    for ref in refs:
         names = (git("ls-tree", "-r", "--name-only", ref, "--", "docs/decisions", cwd=top).splitlines()
                  if ref else [path.relative_to(top).as_posix() for path in top.glob("docs/decisions/*.md")])
         for name in names:
             if name == cfg["signoff"] or not cfg["signoff"] and name.endswith("client-signoff.md"):
-                yield name, (story.show(top, ref, name) or "" if ref
+                yield name, (read_blob(top, f"{ref}:{name}") or "" if ref
                              else (top / name).read_text(encoding="utf-8"))
 
 
