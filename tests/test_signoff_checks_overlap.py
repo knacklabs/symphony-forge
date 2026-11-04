@@ -75,7 +75,7 @@ def test_1_signoff_review_parts_overlap_without_extra_model_calls(repo, tmp_path
 
         def rendezvous():
             overlaps = []
-            for _ in range(2):  # Canvas and product each have thirteen calls.
+            for _ in range(1):  # Only the product review has thirteen calls.
                 peers = []
                 try:
                     peers.append(listener.accept()[0])
@@ -106,4 +106,4 @@ def test_1_signoff_review_parts_overlap_without_extra_model_calls(repo, tmp_path
             overlaps = observed.result()
     assert result.returncode == 0, result.stdout + result.stderr
     assert "status: accepted" in page.read_text("utf-8")
-    assert overlaps == [13, 13], "Independent parts waited for earlier parts to finish"
+    assert overlaps == [13], "Independent parts waited for earlier parts to finish"

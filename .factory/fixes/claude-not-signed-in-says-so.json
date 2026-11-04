@@ -1,0 +1,45 @@
+{
+  "base": "468ca0bf9b3848cad8194bc24b2c6fe90b5d5d52",
+  "branch": "fix/claude-not-signed-in-says-so",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1a053-b961-7490-a5f0-2a152381108a",
+    "head": null,
+    "start": "f12ae02edce71f96900855f26e66a9cfe7e7733c"
+  },
+  "done_when": "forge doctor reports that the selected Claude tool is not signed in and says how to sign in, and forge close stops on the first not-logged-in result with one plain line and no retry and no raw JSON",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "a2080522aed42bd1a4ea6ae13c738aa5d92f321cd8a2e7a80d80ea61e3ef13d5",
+    "changed": "b02451752f2665974b12346641f883292f9a97e01c77bc9896caf8b68d45982e",
+    "commit": "43835c2c5695537036c31022c156b954ad524d21",
+    "dismissals": [],
+    "findings": [],
+    "id": "5b1ad14a-a3f5-4f14-8df1-546a78c8e932",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-03T07:33:15.652500+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-03T07:40:26.848234+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "8ada0a7018c5e50b4072d934758821d86c07be53",
+    "keys": {},
+    "round": null
+  },
+  "why": "forge doctor passes while the Claude CLI is not signed in, and close then retries and prints raw JSON and not the cause (bug 1328)",
+  "worker": "codex"
+}

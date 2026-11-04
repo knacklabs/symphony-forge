@@ -584,7 +584,7 @@ describe('projects MCP tools', () => {
     // Audit: protects the real agent path through search, get, create, update and history attribution.
     // A wrong projection, role, or actor would fail here; REST project tests cannot exercise MCP calls.
     const { client, csrf } = await signedIn();
-    const agent = await addMcpAgent(client, csrf, 'member');
+    const agent = await addMcpAgent(client, csrf, 'admin');
     const mcp = await agentClient(agent.key);
     const mark = randomUUID();
     try {
@@ -643,9 +643,15 @@ describe('projects MCP tools', () => {
     const mcp = await agentClient(agent.key);
     try {
       const tools = (await mcp.listTools()).tools.filter(({ name }) => name.startsWith('projects_')).map(({ name }) => name);
-      expect(tools).toEqual(expect.arrayContaining(['projects_search', 'projects_get', 'projects_create', 'projects_update']));
+      expect(tools).toEqual(expect.arrayContaining(['projects_search', 'projects_get', 'projects_create']));
+      expect(tools).not.toContain('projects_update');
       expect(tools).not.toContain('projects_delete');
       expect(tools).not.toContain('projects_restore');
+      const updateDenied = await mcp.callTool({ name: 'projects_update', arguments: {
+        project_id: project.id, name: 'Denied update', status: 'archived',
+      } });
+      expect(('isError' in updateDenied) ? updateDenied.isError : false).toBe(true);
+      expect(resultError(updateDenied)).toMatchObject({ kind: 'not_allowed', retryable: false });
       const denied = await mcp.callTool({ name: 'projects_delete', arguments: { project_id: project.id } });
       expect(('isError' in denied) ? denied.isError : false).toBe(true);
       expect(resultError(denied)).toMatchObject({ kind: 'not_allowed', retryable: false });
@@ -753,7 +759,7 @@ describe('projects MCP tools', () => {
     // Audit: verifies repeated updates leave one change event and a stable updated timestamp.
     // The REST service's usual update case does not retry the same MCP call.
     const { client, csrf } = await signedIn();
-    const agent = await addMcpAgent(client, csrf, 'member');
+    const agent = await addMcpAgent(client, csrf, 'admin');
     const mark = randomUUID();
     const mcp = await agentClient(agent.key);
     try {

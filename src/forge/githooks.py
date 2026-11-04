@@ -1,9 +1,8 @@
-"""The git hooks. pre-commit keeps commits on Forge's own branches and fixes small; pre-push keeps
-the default branch pull-request-only and catches fix commits made with --no-verify."""
+"""The git hooks. pre-commit keeps commits on Forge's own branches and fixes small;
+pre-push keeps the default branch pull-request-only and checks release tags."""
 from __future__ import annotations
 
 import argparse
-import json
 import os
 import re
 import sys
@@ -170,15 +169,6 @@ def pre_push(args: argparse.Namespace) -> None:
                 if tagged != release_main:
                     refuse(REFUSALS["release_tag"], tag=tag, default=default)
                 continue
-        # The destination names the fix, whatever the source: a branch, a tag or a commit ID.
-        kind, _, fix = remote_ref.removeprefix("refs/heads/").partition("/")
-        if kind not in ("fix", "forge") or set(sha) == {"0"}:  # a deletion pushes no commits
-            continue
-        match = repo.ITEM.fullmatch(fix)
-        state = task.show(sha, repo.state_path(fix)) if match and match["fix"] else None
-        # The pushed commit's own state decides; without one there is no allow-large reason.
-        state = json.loads(state) if state else {}
-        _promote(fix, state, repo.config(), _base(state, sha), sha)
 
 
 def _base(state: dict[str, Any], *tips: str) -> str:
@@ -239,7 +229,8 @@ def _promote(fix: str, state: dict[str, Any], cfg: dict[str, Any], base: str, he
         refuse(REFUSALS["promote"], fix=fix, problem=f"changes the interface {touched[0]}")
     # Test files and forge sync's own output don't count toward the size.
     tests = git("diff", "--name-only", "--no-renames", "-z", *diff, "--", *repo.TEST_PATHS)
-    code = [path for path in code if path not in tests.split("\0")]
+    generated = repo.generated_files(repo.root(), code, head)
+    code = [path for path in code if path not in tests.split("\0") and path not in generated]
     if len(code) > LIMIT:
         from forge import sync
 

@@ -114,6 +114,30 @@ def open_must_answer_topics(top: Path) -> list[str]:
             or answers[topic][0][0] in ("ask the client", "later")]
 
 
+def signoff(top: Path, cfg: dict[str, Any] | None = None) -> dict[str, Any]:
+    """The sign-off status line and the open items, each with the phrase that fixes it.
+    Empty outside a prototype and once nothing is open."""
+    from forge import open_decisions
+
+    empty: dict[str, Any] = {"line": "", "open": []}
+    if not repo.is_prototype(top, cfg):
+        return empty
+    answers = parse_answers(top)
+    topics = open_must_answer_topics(top)
+    personal = answers.get("Personal data", [])  # a placeholder cannot settle a regulated-data question
+    if len(personal) == 1 and personal[0] and personal[0][0].strip().lower() == "not known yet":
+        topics = [topic for topic in MUST_ANSWER_TOPICS if topic in (*topics, "Personal data")]
+    names = [*topics, *(item["question"].rstrip("?. ") for item in open_decisions.items(top) if not item["missing"])]
+    if not names:
+        return empty
+    # ponytail: the demo-step count joins this line once FORGE-ONEPLAN-1 records demo steps.
+    who = answers.get("Sign-off person", [])
+    signer = who[0][0].split(",")[0].strip() if "Sign-off person" not in topics and who and who[0] else ""
+    parts = [f"{len(names)} open question{'s' * (len(names) != 1)}", *([f"signer {signer}"] if signer else [])]
+    return {"line": f"Sign-off: {', '.join(parts)}",
+            "open": [{"item": name, "say": f"The client answered {name}: <answer>"} for name in names]}
+
+
 @repo.command_cache(snapshot=True)
 def next_step(args: Any) -> int:
     top = repo.root()
@@ -230,6 +254,7 @@ def _report(top: Path, history: dict[str, Any] | None = None,
     """The lines `forge next` prints, and one state line per story and fix with its human touches."""
     lines: list[str] = []
     states: list[str] = []
+    fixes: list[tuple[dict[str, Any], list[str]]] = []
     refusals: dict[Path, str] = {}
     # Only forge next asks GitHub for scheduled runs; hooks stay offline. An open fix for a
     # failed run shows its own lines under it.
@@ -310,6 +335,7 @@ def _report(top: Path, history: dict[str, Any] | None = None,
             if branch in merged_prs:
                 state = {**state, "status": "merged"}
             found = _item(name, f"The fix {name}", state, top, path, prs, refusals)
+            fixes.append((state, found))
             if alert := branch not in merged_prs and claim(state):
                 pinned += alert[:-1] + found
             else:
@@ -331,6 +357,7 @@ def _report(top: Path, history: dict[str, Any] | None = None,
             if state.get("status") == "dropped" or name in promoted:
                 continue
             found = _item(name, f"The fix {name}", state, top, None, prs, refusals)
+            fixes.append((state, found))
             if alert := claim(state):
                 pinned += alert[:-1] + found
             else:
@@ -351,6 +378,7 @@ def _report(top: Path, history: dict[str, Any] | None = None,
                     cd = f"cd {repo.quote(str(path))} && " if path != top else ""
                     lines += [f"{review.plain(title[1]) if title else spec.stem} is ready for confirmation.",
                               f'Next: {cd}forge spec confirm {spec.stem} --by "<name>"']
+    quiet = not lines and not pinned
     lines = _refresh(top, trees) + (lines or ([] if pinned else _idle(top)))
     if (top / "forge.toml").is_file():
         cfg = _report_config(top, refusals)
@@ -358,13 +386,10 @@ def _report(top: Path, history: dict[str, Any] | None = None,
             from forge import open_decisions
 
             lines += open_decisions.due_lines(top)
-        if repo.is_prototype(top, cfg):
-            open_topics = open_must_answer_topics(top)
-            if open_topics:
-                notice = ["Open before sign-off in docs/product/BRIEF.md:",
-                          *(f"- {topic}" for topic in open_topics),
-                          "Next: answer these topics in docs/product/BRIEF.md, then forge next"]
-                lines = notice + lines if len(trees) > 1 else lines + notice
+        shown = signoff(top, cfg)
+        if shown["line"]:  # the checklist waits until nothing else is in progress
+            notice = [shown["line"], *(f'- {row["item"]}. Say: "{row["say"]}"' for row in shown["open"] if quiet)]
+            lines = notice + lines if len(trees) > 1 else lines + notice
     if _needs_demo_address(top):
         lines += ["Next: connect the repo on our deploy platform, pick a subdomain, and record its "
                   "address in docs/product/BRIEF.md under ## Demo as - Address: <url>."]
@@ -372,12 +397,23 @@ def _report(top: Path, history: dict[str, Any] | None = None,
     if (history is None or numbers) and repo.now()[:10] >= board.CHECK_DATE:
         lines.append(board.numbers_line(top, _report_config(top, refusals)["checks"]))
     lines += [f"{path}: {reason}" for path, reason in refusals.items()]
+    build = []
     if ((top / "forge.toml").is_file() and cfg["repo"] == "client"
             and not any(line.startswith("Next: git worktree remove ") for line in lines)
             and not repo.is_prototype(top, cfg) and not records.constitution(top)):
-        lines += ["Before its next story, this app needs its approved constitution.",
-                  "Next: " + story.REFUSALS["constitution"][1]]
-    return (_due(top, history) + pinned + [line for alert in alerts.values() for line in alert]
+        ongoing = next((found for state, found in fixes
+                        if found and state.get("status") not in ("merged", "done")
+                        and re.search(r"\b(?:constitution|prototype plan)\b",
+                                      f"{state.get('why', '')} {state.get('done_when', '')}", re.I)), [])
+        build = ["Before its next story, this app needs its approved constitution.",
+                 *(ongoing or ["Next: " + story.REFUSALS["constitution"][1]])]
+        lines = [line for line in lines if line not in ongoing]
+        pinned = [line for line in pinned if line not in ongoing]
+        # A live app without a sign-off keeps its existing advice order.
+        if not ongoing and repo.is_prototype(top, {**cfg, "stage": "prototype"}):
+            lines += build
+            build = []
+    return (build + _due(top, history) + pinned + [line for alert in alerts.values() for line in alert]
             + _hotspots(top, trees) + lines), states
 
 
@@ -406,6 +442,8 @@ def _hotspots(top: Path, trees: dict[str, Path]) -> list[str]:
     ref = story.landed_ref(top)
     try:
         items = spotted.read(top, ref)
+        old = spotted.before_signoff(top, ref) if items else set()
+        items = [entry for entry in items if entry["key"] not in old]
     except spotted.Unreadable as problem:
         return [f"{spotted.PATH} on the default branch can't be read, so no hotspots are "
                 f"listed: {problem}."]
@@ -879,10 +917,10 @@ def remote_state(top: Path, item: str, branch: str, pr: dict[str, Any] | None = 
     or without a pull request) and no worktree here: its state at the pull request's head."""
     if not pr and history is not None:  # the board's own bulk read of the branches; a local-only one counts too
         refs = history["ref_states"]
-        return (refs.get(f"refs/remotes/origin/{branch}") or refs.get(f"refs/heads/{branch}")
-                or {}).get(repo.state_path(item)) or {}
+        return repo.without_size_stop((refs.get(f"refs/remotes/origin/{branch}") or refs.get(f"refs/heads/{branch}")
+                or {}).get(repo.state_path(item)) or {})
     ref = review_ref(top, branch, pr)
-    return story.json_of(story.show(top, ref, repo.state_path(item))) if ref else {}
+    return repo.without_size_stop(story.json_of(story.show(top, ref, repo.state_path(item)))) if ref else {}
 
 
 def branch_tips(top: Path) -> dict[str, str]:
@@ -935,7 +973,7 @@ def at_ref(top: Path, item: str, state: dict[str, Any], pr: dict[str, Any] | Non
     ref = review_ref(top, branch, pr)
     if not ref or ref == _commit(top, f"refs/heads/{branch}"):
         return state
-    there = story.json_of(story.show(top, ref, repo.state_path(item)))
+    there = repo.without_size_stop(story.json_of(story.show(top, ref, repo.state_path(item))))
     return {**there, "branch": branch} if there else state
 
 
@@ -1041,6 +1079,8 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
                 review.stop_question(path or top, item, state),
                 "Next: " + close.REFUSALS["hotspot"][1].format(item=item, **stop)]
     if not path and status not in ("ready", "merged", "done"):  # its checkout is on another machine
+        if pr or _commit(top, f"refs/remotes/origin/{state.get('branch', '')}"):
+            return [f"{label} has no checkout on this machine.", f"Next: forge work {item}"]
         starter = board._starters(top).get(repo.state_path(item)) or "the person who started it"
         return [f"{label} was started by {starter} and runs on their machine."]
     if question := codex.record(top, item).get("question"):  # close and work refuse until it is answered
@@ -1049,13 +1089,14 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
     if receipt.get("tidied") is True:
         return []
     if status == "ready" and not path and repo.merge_setting(top) == "agent":
-        starter = board._starters(top).get(repo.state_path(item)) or "the person who started it"
-        return [f"{label} is ready to merge; {starter} merges it from their machine."]
+        return [f"{label} is ready to merge.", f"Next: forge merge {item}"]
     if status == "ready" and path and receipt.get("shared"):
         if repo.git("rev-parse", "HEAD", cwd=path) == receipt["commit"]:  # close here writes the receipt
+            if repo.merge_setting(top) == "agent":
+                return [f"{label} is ready to merge.", f"Next: forge merge {item}"]
             return [f"{label} was closed clean on another machine; close it here to check it again.",
                     f"Next: forge close {item}"]
-        if repo.merge_setting(top) == "agent":  # forge merge needs this machine's receipt
+        if repo.merge_setting(top) == "agent":
             return [f"{label} is ready to merge, but this worktree is behind its pull request.",
                     f"Next: git -C {repo.quote(str(path))} pull, then forge close {item}"]
     if status == "merged" and path:

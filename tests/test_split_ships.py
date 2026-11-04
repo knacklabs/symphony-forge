@@ -34,6 +34,12 @@ SOURCES = {
     ".forge/records-only/action.yml": "src/forge/templates/records-only-action.yml",
     ".forge/design/support.js": "src/forge/templates/design/support.js",
 }
+# The new contract includes every support file in the pinned design skills, for both hosts.
+SOURCES.update({f"{host}/skills/{path.relative_to(ROOT / 'src/forge/templates/skills').as_posix()}":
+                path.relative_to(ROOT).as_posix()
+                for name in ("impeccable", "emil-design-eng")
+                for path in (ROOT / "src/forge/templates/skills" / name).rglob("*") if path.is_file()
+                for host in (".claude", ".codex")})
 # Built from code rather than copied: keep their output paths in the sync contract.
 GENERATED = {"plain": {".gitattributes", ".gitignore", ".forge/hooks.sh", ".forge/review-tests.py", ".claude/settings.json", ".codex/hooks.json",
                        ".codex/config.toml", ".github/workflows/forge.yml", "git-hook/pre-commit",
@@ -46,7 +52,7 @@ GENERATED["claude_node"] = GENERATED["plain"] | {"CLAUDE.md"}
 def test_3_sync_keeps_previous_output_and_gathers_new_owner(repo, case, tmp_path):
     repo.git("checkout", "-q", "-b", "fix/sync-compatibility")
     # Exercise this checkout's sync, rather than routing to a historical release.
-    repo.write("forge.toml", 'version = "v1.2.26"\ntest = "echo ok"\n'
+    repo.write("forge.toml", 'version = "v1.2.28"\ntest = "echo ok"\n'
                              'checks = ["tests", "forge-pr-check"]\n')
     if case == "claude_node":
         repo.write("CLAUDE.md", "# Team notes\n")

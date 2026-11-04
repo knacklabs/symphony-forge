@@ -1,0 +1,45 @@
+{
+  "base": "bedb684c948e462274bb62920e1fcc56ccbffed0",
+  "branch": "fix/forge-pr-check-fails-with-no-message-whe",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a19d8f-6671-7302-b84f-d88c00fece4f",
+    "head": null,
+    "start": "b98af59ea49f782bfb808becbf9fdadcd7509352"
+  },
+  "done_when": "The review check waits briefly for the pull request ref to catch up, and if it still differs, it prints a plain message that says so.",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "47d61cd93213a07cbc63ca700bee7334260fb216793db2c54e707866c2285ee7",
+    "changed": "51929b38b794208484775a12db12f93fbf67dd5f54bfa20c4c38e94047fb3346",
+    "commit": "cf39398b90e116b673eefd600501e784795df248",
+    "dismissals": [],
+    "findings": [],
+    "id": "8579c78d-04ec-4e7b-8471-9abbdff52d14",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-02T18:39:27.465851+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-02T21:24:01.298695+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "d2b2cdecffbfeb698b87d3d8efef6bda3c8ac6a2",
+    "keys": {},
+    "round": null
+  },
+  "why": "forge-pr-check fails with no message when GitHub's pull request ref has not caught up with the commit that close just pushed, so close reports failed checks until a plain rerun passes.",
+  "worker": "codex"
+}

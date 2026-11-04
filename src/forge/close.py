@@ -230,24 +230,17 @@ def close(args: argparse.Namespace) -> int:
     if "/" in item:
         key = item.split("/")[0]
         design.check(top, story.show(top, story.plan_ref(top, key), f"plans/{key}.md") or "", "HEAD", required=False)
-    if "/" in item and (limit := state.get("part_line_limit")) and not state.get("allow_large"):
+    if "/" in item:
         excluded = list(review.DOC_EXCLUDES)
         excluded += [path.replace(":(glob)", ":(exclude,glob)") for path in repo.TEST_PATHS]
         stats = repo.git("diff", "--numstat", "-z", "--no-renames", f"{review_ref}...HEAD",
                          "--", ".", *excluded, cwd=top)
-        lines = sum(int(number) for record in stats.split("\0")
-                    for number in record.split("\t", 2)[:2] if number.isdigit())
-        if lines > limit:
-            stop = state.get("stop") or {}
-            if stop.get("size") and not stop.get("choice"):
-                repo.refuse(REFUSALS["stuck"], item=item, question=stop["question"])
-            # A recorded answer holds until a worker round has run on it.
-            if not stop.get("question") or stop.get("choice") and stop.get("worker_round") != state.get("round"):
-                stuck_stop(top, item, state, cfg, f"It changes {lines} lines outside tests, "
-                           f"over its limit of {limit}.", size=True)
-            repo.refuse(REFUSALS["chosen"], item=item)  # the answer waits for its worker round
-    if (state.get("stop") or {}).get("size"):  # the part fits again or is allowed: no question
-        state.pop("stop")
+        counts = [row for record in stats.split("\0") if len(row := record.split("\t", 2)) == 3]
+        generated = repo.generated_files(top, [row[2] for row in counts], "HEAD")
+        lines = sum(int(number) for added, deleted, path in counts if path not in generated
+                    for number in (added, deleted) if number.isdigit())
+        if lines > 400:
+            print(f"Warning: This part changes {lines} lines outside tests and docs; aim for about 400.")
     task.restore_default_settings(item, top, state, default)
     repo.resume_pin(top, cfg["version"], getattr(args, "land_rounds", None), accepted=choice == "accept",
                     before=getattr(args, "pin_before", None))
@@ -406,7 +399,8 @@ def close(args: argparse.Namespace) -> int:
     round_number = sum(step["step"] == "review" for step in state.get("steps", []))
     if not fresh or dismissals or refreshed:
         score.remember(_known(top, item, state, review_ref, previous), result, round_number,
-                       {} if fresh else areas)
+                       {} if fresh else areas,
+                       repaired=previous if not (fresh or records_only or switch or replayed) else None)
     if (serious and round_number >= (2 if "/" in item else 1) and
             not any(score.holds(f, "P0") for _, f in serious) and (not fresh or not state.get("stop"))):
         stopped = {"file": serious[0][1]["file"], "at": repo.now(),
@@ -561,9 +555,7 @@ def _start_follow_up(top: Path, state: dict[str, Any], why: str, done: str) -> s
 
 
 def check_stop(item: str, state: dict[str, Any], top: Path | None = None) -> None:
-    """A recorded choice or size allowance releases a stop; a clean review does not."""
-    if (state.get("stop") or {}).get("size") and state.get("allow_large"):
-        return
+    """A recorded choice releases a stop; a clean review does not."""
     if state.get("stop") and "question" in state["stop"]:
         if not state["stop"].get("choice"):
             repo.refuse(REFUSALS["stuck"], item=item, question=state["stop"]["question"])
@@ -605,8 +597,7 @@ def stuck_round(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any]
                       "round": state.get("round")}
 
 
-def stuck_stop(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any], what: str,
-               size: bool = False) -> None:
+def stuck_stop(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any], what: str) -> None:
     """Stop the item and refuse with a question the coordinator can ask the owner as it is."""
     title, _, delivers = _title(top, item, state)
     tool = state.get("tool") or state.get("worker") or repo.worker(cfg, "build", False)[0]
@@ -619,7 +610,7 @@ def stuck_stop(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
     question = (f"{title} is stuck. It should deliver: {delivers}\n{what}\n"
                 f"The worker tried: {'; '.join(dict.fromkeys(tried)) or 'no new commits'}.\n"
                 f"Choose one: {'; '.join(choices)}.")
-    state.update(stop={"question": question, "tool": tool, **({"size": True} if size else {})},
+    state.update(stop={"question": question, "tool": tool},
                  status="hotspot")
     state["stop"]["wait_id"] = repo.record_event(top, item, "owner wait start", reason="stuck")
     _save(top, item, state, f"{item} is stuck; Forge asks the owner")
@@ -655,13 +646,11 @@ def merger(top: Path, state: dict[str, Any]) -> str:
 
 
 def _worktree(item: str) -> Path:
-    """The checkout on the item's own branch: the one its state names. An earlier item's state
-    reaches later branches through the default branch, so the file alone proves nothing."""
+    """Find the item's checkout, including work published on another machine."""
     task.require_active(item)
-    for branch, tree in story.worktrees(repo.root()).items():
-        state = repo.read_state(item, tree)
-        if state and state.get("branch") == branch:
-            return tree
+    branches = [f"task/{item.replace('/', '-')}"] if "/" in item else [f"fix/{item}", f"forge/{item}"]
+    if tree := task.pick_up(item, branches):
+        return tree
     repo.refuse(REFUSALS["not_started"], item=item)
 
 
@@ -699,16 +688,13 @@ def _merge_default(top: Path, item: str, branch: str, default: str,
             and (pr or {}).get("baseRefName") == parent_branch):
         repo.refuse(REFUSALS["base_merged_by_hand"], item=item, base=parent,
                     number=(pr or {}).get("number"), default=default)
-    replay_part = (stacked_part and re.fullmatch(r"[0-9a-f]{40}|[0-9a-f]{64}", base)
-                   and repo.run("git", "merge-base", "--is-ancestor", base, "HEAD", cwd=top).returncode == 0)
     if repo.run("git", "merge-base", "--is-ancestor", target, "HEAD", cwd=top).returncode == 0:
         return
     trial = repo.run("git", "merge-tree", "--write-tree", "--no-messages", "HEAD", target, cwd=top)
     if trial.returncode not in (0, 1):
         trial.check_returncode()
-    if (replay_part or trial.returncode and state.get("kind") == "fix" and repo.ITEM.fullmatch(parent)
-            and re.fullmatch(r"[0-9a-f]{40}|[0-9a-f]{64}", base)
-            and task._merged(target, parent, top)
+    if (re.fullmatch(r"[0-9a-f]{40}|[0-9a-f]{64}", base) and (stacked_part or trial.returncode
+            and state.get("kind") == "fix" and repo.ITEM.fullmatch(parent) and task._merged(target, parent, top))
             and repo.run("git", "merge-base", "--is-ancestor", base, "HEAD", cwd=top).returncode == 0):
         target = repo.git("rev-parse", target, cwd=top)
         original = repo.git("rev-parse", "HEAD", cwd=top)
@@ -743,6 +729,9 @@ def _merge_default(top: Path, item: str, branch: str, default: str,
             proof = review.commit_paragraph(top, baseline, "Proof list:", original)
             repo.git("read-tree", "-u", "-m", tree, cwd=top)
             repo.git("commit", "-q", "-m", "Keep the follow-up's merge edits", "-m", proof, cwd=top)
+        if task.show(original, ".factory/client-signoff.json", top) is not None:
+            repo.git("checkout", original, "--", ".factory/client-signoff.json", cwd=top)
+            repo.commit_state("Keep the sign-off rounds after replay", ".factory/client-signoff.json", top=top)
         published = repo.run("git", "push", "-q", "-u", f"--force-with-lease={remote_ref}:{lease}",
                              "origin", branch, cwd=top)
         if published.returncode:
@@ -1162,6 +1151,8 @@ def _title(top: Path, item: str, state: dict[str, Any]) -> tuple[str, str, str]:
 
 def _attach(top: Path, item: str, branch: str) -> None:
     """Link the pull request in the item's recorded Codex chat; a failure never stops the close."""
+    if (repo.read_state(item, top) or {}).get("worker") == "claude":
+        return
     try:
         if codex.record(top, item).get("conversation") and not codex.attach(top, item, json.loads(
                 _gh(top, "pr", "view", branch, "--json", "number,url,headRefName"))):

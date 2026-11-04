@@ -71,7 +71,8 @@ def test_1_the_principles_reach_the_guide_and_the_worker(repo, gh, tmp_path, pre
             assert phrase in guide, (host, phrase)
     brief = flat(calls(log)[-1]["brief"])
     for phrase in ("why deleting code or a step does not solve it", "its F x H and 2 x C",
-                   "Rules are stated, not policed", "3 a P0", "1 rare, 2 weekly, 3 daily",
+                   "costs a lot or is hard to undo", "something later catches it",
+                   "3 a P0", "1 rare, 2 weekly, 3 daily",
                    "1 for 20 lines or fewer with no model call or user step",
                    "2 for up to about 150 lines or one model call or user step",
                    "3 for more, or a new table, job, workflow or flag"):
@@ -123,7 +124,7 @@ def test_2_added_work_is_weighed_against_its_cost(env, adopted):
                        "When p is less than 2 x C, score its Gain 2 or less",
                        "a cold read keeps it with its disposition in the read notes",
                        "A check that a Done-when item promises is not added work",
-                       "Rules are stated, not policed", "3 a P0"):
+                       "costs a lot or is hard to undo", "something later catches it", "3 a P0"):
             assert phrase in prompt, phrase
     # Known limits are listed as Lived with in the pull request, not in stdout.
     recorded = body(env.gh_calls("pr", "edit")[-1])

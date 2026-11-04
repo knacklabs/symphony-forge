@@ -83,7 +83,7 @@ Open that address and check the demo loads before you show the customer.
 
 Show the approved canvas or requested live demo and confirm the required answers with the customer's named sign-off
 person. First ask the agent to run the [sign-off checks](guide.md#a-new-client-project).
-The canvas check needs Codex even when Claude builds and reviews code. After the checks pass,
+After the checks pass,
 ask for the customer's approval. Ask the agent to record that approval, its date and where it happened,
 the canvas or live demo address and the answers the customer approved. After sign-off, the repo's own
 merge setting applies.

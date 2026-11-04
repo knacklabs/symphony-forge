@@ -116,7 +116,7 @@ describe('database', () => {
     const catalog = tables.output.match(/\{.*\}/)?.[0];
     expect(catalog, tables.output).toBeDefined();
     expect(JSON.parse(catalog!)).toEqual({
-      Account: 'core', Session: 'core', PasswordResetToken: 'core',
+      Account: 'core', Session: 'core', PasswordResetToken: 'core', SignInAttempt: 'core',
       Organisation: 'core', Membership: 'core', Invite: 'core',
       Project: 'projects', ChangeRecord: 'history', IdempotencyKey: 'mcp',
     });

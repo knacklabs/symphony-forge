@@ -82,7 +82,7 @@ def test_2_live_repo_gets_no_prototype_rules(request, repo, rule):
         assert "allow_large" not in json.loads(
             (fix / ".factory/fixes/tidy-the-readme.json").read_text("utf-8"))
         # forge next's prototype notices: no open sign-off topics.
-        assert "Open before sign-off" not in repo.forge("next").stdout
+        assert "Sign-off:" not in repo.forge("next").stdout
     elif rule == "close and merge":
         forge = request.getfixturevalue("env")
         toml = forge.repo.path / "forge.toml"

@@ -150,8 +150,16 @@ jobs:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
-          git fetch --no-tags origin "refs/pull/$PR/head"
-          test "$(git rev-parse FETCH_HEAD)" = "$HEAD_SHA"
+          for attempt in 1 2 3 4 5 6 7; do
+            git fetch --no-tags origin "refs/pull/$PR/head"
+            fetched=$(git rev-parse FETCH_HEAD)
+            [ "$fetched" = "$HEAD_SHA" ] && break
+            [ "$attempt" = 7 ] || sleep 5
+          done
+          if [ "$fetched" != "$HEAD_SHA" ]; then
+            echo "GitHub's pull request ref has not caught up: fetched $fetched, expected $HEAD_SHA. A rerun is safe."
+            exit 1
+          fi
 <choose>      - run: <install>
       - id: review
         continue-on-error: true
@@ -430,7 +438,8 @@ def promote_problem(changed: list[str], interfaces: list[str], top: Path, base: 
     from forge import story, sync, worker
 
     tests = repo.git("diff", "--name-only", "--no-renames", base, head, "--", *worker.TEST_PATHS, cwd=top)
-    code = [path for path in code if path not in tests.splitlines()]
+    generated = repo.generated_files(top, code, head)
+    code = [path for path in code if path not in tests.splitlines() and path not in generated]
     if len(code) > CODE_LIMIT:
         # Sync's output for the forge.toml the change pins: an upgrade's check runs that release.
         cfg = repo._config_text(story.show(top, head, "forge.toml") or "")

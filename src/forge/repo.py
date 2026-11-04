@@ -14,6 +14,7 @@ import shlex
 import shutil
 import subprocess
 import sys
+import tempfile
 import time
 import tomllib
 import uuid
@@ -77,7 +78,11 @@ class Refused(Exception):
 def refuse(entry: tuple[str, str], code: int = 1, **values: Any) -> NoReturn:
     """Raise one entry of a module's REFUSALS table, filled in with values."""
     problem, next_step = entry
-    raise Refused(problem.format(**values), next_step.format(**values), code, entry)
+    def fill(text: str) -> str:
+        # Findings and engine errors are literal text, not format templates.
+        return re.sub(r"(?<!\{)\{(\w+)(![rsa])?(:[^{}]*)?\}(?!\})",
+                      lambda m: m[0].format(**values) if m[1] in values else m[0], text)
+    raise Refused(fill(problem), fill(next_step), code, entry)
 
 
 # --- git -------------------------------------------------------------------------------
@@ -401,6 +406,22 @@ def git(*args: str, cwd: str | os.PathLike[str] | None = None,
     if done.returncode:
         raise subprocess.CalledProcessError(done.returncode, ["git", *args], done.stdout, done.stderr)
     return done.stdout.strip()
+
+
+def generated_files(top: Path, paths: list[str], head: str = "") -> set[str]:
+    """Read generated marks from the staged index, or a committed head without checking it out."""
+    if not paths:
+        return set()
+    with tempfile.TemporaryDirectory() as folder:
+        env = dict(os.environ)
+        if head:
+            env["GIT_INDEX_FILE"] = str(Path(folder) / "index")
+            git("read-tree", head, cwd=top, env=env)
+        attrs = run("git", "check-attr", "--cached", "--stdin", "-z", "linguist-generated",
+                    cwd=top, env=env, input="\0".join(paths))
+        attrs.check_returncode()
+        values = attrs.stdout.split("\0")
+        return {path for path, value in zip(values[::3], values[2::3]) if value in ("set", "true")}
 
 
 def commit_log(top: Path, base: str, head: str = "HEAD") -> list[tuple[str, str, list[str]]]:
@@ -1088,6 +1109,15 @@ def state_path(item: str) -> str:
     return f".factory/stories/{item}/story.json"
 
 
+def without_size_stop(data: dict[str, Any]) -> dict[str, Any]:
+    """Ignore obsolete size questions without migrating saved state."""
+    if (data.get("stop") or {}).get("size"):
+        data = {key: value for key, value in data.items() if key != "stop"}
+        if data.get("status") == "hotspot":
+            data["status"] = "working"
+    return data
+
+
 def read_state(item: str, top: Path | None = None) -> dict[str, Any] | None:
     """An item's state in this checkout, or None when Forge never started it here."""
     rel = state_path(item)
@@ -1100,7 +1130,7 @@ def read_state(item: str, top: Path | None = None) -> dict[str, Any] | None:
         refuse(REFUSALS["bad_state"], path=rel, problem=exc)
     if not isinstance(data, dict):
         refuse(REFUSALS["bad_state"], path=rel, problem="it is not a JSON object")
-    return data
+    return without_size_stop(data)
 
 
 def write_state(item: str, data: dict[str, Any], top: Path | None = None) -> str:

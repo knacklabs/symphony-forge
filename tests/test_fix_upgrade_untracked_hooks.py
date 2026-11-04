@@ -41,11 +41,18 @@ def test_1_untracked_hook_files_never_block_an_upgrade_but_a_stale_tracked_file_
     env.repo.git("commit", "-q", "-m", "Sync Forge's files", cwd=where)
 
     # Install-time files can also appear in close's throwaway checkout, before its status check.
+    # Gate: this same upgrade must close with all shipped skills through a batch launcher.
+    # Per-file review pathspecs exceed cmd.exe's limit. Model that transport limit on every
+    # platform here; the existing boundary test still lets real Git judge hooks and revisions.
+    # No other test covers this full synced upgrade, and no production seam is needed.
     real_git = shutil.which("git")
     runtime_status = env.repo.bin / "sync-runtime-status.txt"
     conftest._install(env.repo.bin, "git", f'''#!{sys.executable}
 import pathlib, subprocess, sys
 args = sys.argv[1:]
+if len(subprocess.list2cmdline(["git", *args])) > 8191:
+    sys.stderr.write("The command line is too long.\\n")
+    sys.exit(1)
 result = subprocess.call([{json.dumps(real_git)}, *args])
 if result == 0 and args[:2] == ["worktree", "add"] and "-b" in args:
     branch = args[args.index("-b") + 1]

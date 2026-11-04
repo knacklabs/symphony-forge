@@ -7,7 +7,7 @@ PROJECT_PERMISSIONS = define_permissions(
     "projects",
     {
         "admin": ["view", "create", "edit", "delete", "restore"],
-        "member": ["view", "create", "edit"],
+        "member": ["view", "create"],
     },
 )
 # forge:feature:permission-map:end

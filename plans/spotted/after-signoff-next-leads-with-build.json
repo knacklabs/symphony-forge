@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tPreserve the next action for an existing constitution fix\tafter-signoff-next-leads-with-build",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 381,
+      "text": "Preserve the next action for an existing constitution fix",
+      "from": "blocking",
+      "item": "after-signoff-next-leads-with-build",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

@@ -17,7 +17,7 @@ reader while available. A native read uses a separate `reader` subagent.
 Install the release a repo pins (uv brings Python 3.11 or later if you don't have it):
 
 ```
-uv tool install git+https://github.com/knacklabs/symphony-forge@v1.2.26
+uv tool install git+https://github.com/knacklabs/symphony-forge@v1.2.28
 ```
 
 `forge --version` prints the installed version. Each repo pins its release in `forge.toml`, and
@@ -80,11 +80,17 @@ the answers in `docs/product/BRIEF.md`. Ask each build-changing question when it
 one at a time, and record the answer and who gave it. If a requested feature does not help test
 the problem, say why and offer to note it for after sign-off.
 
+Client repos get pinned copies of impeccable and emil-design-eng with their licences at init and sync, with or without a web app; both laptop installers install them too.
 Make each app's design from the whole brief: its purpose, users, records, fields, choice-list
 options and key flows. Run impeccable's init when PRODUCT.md is missing. Use impeccable and
-emil-design-eng to shape and review the design. Make a Claude Design artifact with a shadcn design
-system and named shadcn components. On a Codex-only host without artifact tools, use HTML artboards
-in the repo. Keep the canvas available to show the customer and for sign-off review. New clients
+emil-design-eng to shape and review the design when making it through Forge.
+Any way of making the design works, through Forge or separately. Keep one link in `## Design`
+in the brief; it need not be saved in the repo. A UI fix needs no saved design images.
+When using Forge, use a shadcn design system and named shadcn components.
+Before the demo, read the linked design when the host can and compare its screen list with the app.
+If the link cannot be read, use saved design pages, or ask the person for the screen list.
+Say plainly that the design was not read; missing access or saved pages never refuses sign-off.
+Keep the design available to show the customer at the demo. New clients
 get this process at init; existing clients can use the brief and design they have after upgrade and
 sync. Client sign-off does not require a root DESIGN.md, SCREENS.md or CHECKS.md, or a specific
 `Things it keeps track of` heading.
@@ -109,9 +115,9 @@ business task, and the basic screens are shown last.
 
 Resolve the answers, then run the sign-off checks before the customer is asked. Write the record
 with `forge decision new client-signoff`, leave `approved_via` and `approved_on` empty, and run
-`forge decision accept`. Forge checks the copied Answers section and full test run, then reviews
-the canvas against the whole brief. A working prototype also gets one strict whole-product review;
-a canvas-only sign-off does not need that review. If the checks pass, Forge says you can ask the
+`forge decision accept`. Forge checks the copied Answers section and full test run.
+A working prototype gets one strict whole-product review;
+a canvas-only sign-off needs no model review. If the checks pass, Forge says you can ask the
 customer's named person for sign-off.
 The customer's named person approves the canvas or requested demo and the quoted answers. Set `approved_via` to
 `email`, `call` or `chat` and `approved_on` to the reply date. Run `forge decision accept` again
@@ -119,15 +125,10 @@ to record it. Put each demo step and its test under `## Proof` for a working bui
 choices under `## Decisions`.
 
 Sign-off checks that the copied Answers section matches `docs/product/BRIEF.md` and that the full
-run on main is green. Its completeness review must pass after judging the screens against the whole
-brief, including its purpose, users, records, fields, choices and key flows. It needs no separate
-screen list. Missing screens, fields,
-choice-list options or flows hold sign-off. When a precondition is missing, the refusal lists every
+run on main is green. When a precondition is missing, the refusal lists every
 gap and the next action for each. An existing client can sign off after upgrade with the brief and
 design it has; no prototype design files are required for this gate.
-The canvas completeness check always uses Codex with `gpt-6.1-sol` at high. It needs Codex
-even with `tools = "claude"`. It ignores `[models.design]` and `[models.review]`.
-The separate whole-product code review uses the selected review tool and `[models.review]`.
+The whole-product code review uses the selected review tool and `[models.review]`.
 Fix gaps, then retry `forge decision accept client-signoff`.
 A canvas-only sign-off needs no working build. A working prototype gets a full first product review.
 Later attempts review only product files changed since the last review and its open findings.
@@ -232,7 +233,7 @@ tools. New repos get the guide text at init; existing repos get it on upgrade an
 with no MCP server, `services.toml` change or app files. In an older starter without MCP
 support, the feature command builds the feature without tools and says so.
 
-In a client repo, finish the canvas checks and customer sign-off above before starting here.
+In a client repo, finish the sign-off checks and customer sign-off above before starting here.
 A working prototype also needs its strict whole-product review.
 
 1. Start from the problem you want to solve. A spec is optional; if using a confirmed spec,
@@ -293,7 +294,7 @@ a Claude coordinator. Without it, that coordinator uses its background subagent.
 in a Codex coordinator stay native; other Codex rounds use the app server. Plan reads on
 the coordinator's tool stay native. Code reviews use the selected tool and its `[models.review]`
 model and effort through Autoreview. With both selected, reviews use Codex when installed,
-otherwise Claude. Unset entries use Autoreview's defaults. The canvas check always uses Codex.
+otherwise Claude. Unset entries use Autoreview's defaults.
 
 For a native plan read, `forge read <target>` hands out the `reader` role, the plan's checkout
 and its prompt. Run that background subagent in your session, then record its final message

@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/records.py\tApply the prototype threshold before honoring a saved stop\tsign-off-judges-a-sample-data-prototype",
+      "kind": "bug",
+      "path": "src/forge/records.py",
+      "line": 541,
+      "text": "Apply the prototype threshold before honoring a saved stop",
+      "from": "blocking",
+      "item": "sign-off-judges-a-sample-data-prototype",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/records.py\tExclude lesser findings from sign-off questions and split repairs\tsign-off-judges-a-sample-data-prototype",
+      "kind": "bug",
+      "path": "src/forge/records.py",
+      "line": 546,
+      "text": "Exclude lesser findings from sign-off questions and split repairs",
+      "from": "blocking",
+      "item": "sign-off-judges-a-sample-data-prototype",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

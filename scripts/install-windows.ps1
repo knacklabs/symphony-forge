@@ -1,7 +1,9 @@
 param([switch]$Check)
 
 $ErrorActionPreference = 'Stop'
-$ForgeVersion = '1.2.26'
+$ForgeVersion = '1.2.28'
+$ImpeccableUrl = 'https://github.com/pbakaus/impeccable/tree/414603bf14c7a344edb466bb1f85690c77ce8b7d/plugin/skills/impeccable'
+$EmilDesignEngUrl = 'https://github.com/emilkowalski/skills/tree/a81dbca07f2217b7103e510c0f13f8d5b017afc9/skills/emil-design-eng'
 
 function Has-Tool($Name) { return [bool](Get-Command $Name -ErrorAction SilentlyContinue) }
 function Missing($Name) { Write-Output "Missing: $Name" }
@@ -14,6 +16,26 @@ function Install-Package($Label, $Command, $Id) {
     Write-Output "Installing $Label..."
     & winget install --id $Id --exact --source winget --accept-package-agreements --accept-source-agreements
     if ($LASTEXITCODE -ne 0) { throw "$Label did not install. Check the message above, then run this script again." }
+}
+function Ui-Skill-Present($Name) {
+    $homeDir = if ($env:HOME) { $env:HOME } else { $HOME }
+    $claudeHome = if ($env:CLAUDE_CONFIG_DIR) { $env:CLAUDE_CONFIG_DIR } else { Join-Path $homeDir '.claude' }
+    $codexHome = if ($env:CODEX_HOME) { $env:CODEX_HOME } else { Join-Path $homeDir '.codex' }
+    $claudeSkill = Join-Path $claudeHome "skills/$Name/SKILL.md"
+    $codexSkill = Join-Path $codexHome "skills/$Name/SKILL.md"
+    $agentsSkill = Join-Path $homeDir ".agents/skills/$Name/SKILL.md"
+    return (Test-Path $claudeSkill -PathType Leaf) -and
+        ((Test-Path $codexSkill -PathType Leaf) -or (Test-Path $agentsSkill -PathType Leaf))
+}
+function Install-UiSkill($Name, $Url) {
+    if (Ui-Skill-Present $Name) {
+        if (-not $Check) { Write-Output "$Name is ready." }
+        return
+    }
+    if ($Check) { Missing $Name; return }
+    Write-Output "Installing $Name..."
+    & npx.cmd --yes skills add $Url -g -a claude-code -a codex --yes
+    if ($LASTEXITCODE -ne 0) { throw "$Name did not install. Check the message above, then run this script again." }
 }
 function Browsers-Present {
     $root = Join-Path $env:LOCALAPPDATA 'ms-playwright'
@@ -113,6 +135,9 @@ foreach ($tool in @(@('claude', 'Claude Code', '@anthropic-ai/claude-code'),
     & npm.cmd install -g $tool[2]
     if ($LASTEXITCODE -ne 0) { throw "$($tool[1]) did not install. Check the message above, then run this script again." }
 }
+
+Install-UiSkill 'impeccable' $ImpeccableUrl
+Install-UiSkill 'emil-design-eng' $EmilDesignEngUrl
 
 if (Browsers-Present) {
     if (-not $Check) { Write-Output 'Playwright browsers are ready.' }

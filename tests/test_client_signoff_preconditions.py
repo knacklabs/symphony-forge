@@ -35,10 +35,7 @@ def test_1_signoff_passes_without_ritual_records(repo, tmp_path, monkeypatch, ad
     assert accepted.returncode == 0, accepted.stdout + accepted.stderr
     assert "status: accepted" in page.read_text("utf-8")
     calls = [json.loads(line) for line in queue.with_suffix(".calls.jsonl").read_text("utf-8").splitlines()]
-    assert len(calls) == 2
-    prompt = "\n".join(calls[0]["prompt_files"].values())
-    assert "## Orders" in prompt
-    assert "screen images" in prompt
+    assert len(calls) == 1
 
 
 @pytest.mark.parametrize("adopted", [False, True], ids=["new-client", "earlier-release"])

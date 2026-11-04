@@ -2,6 +2,10 @@ $summary
 
 # Worker brief
 
+"Find the problem to solve" is a discovery placeholder, not a problem for a fix.
+Forge refuses it before it creates a branch. Use `forge start "<the idea>"` to explore an idea;
+discovery asks a question and starts no fix. Workers work only on their brief.
+
 Settled findings stay settled. Each reader and reviewer gets earlier rounds' notes and answers,
 including findings already fixed or dismissed. Do not reopen them with the same finding text
 (cold reads) or title and file (reviews); report a new defect with distinct text and new evidence.
@@ -88,7 +92,7 @@ Close records a reused review against the current branch after a replay. Land re
 when only Forge's review check reports a stale or missing review. If that check still fails,
 land stops without a worker round.
 
-The client sign-off code review excludes images; the canvas completeness check reviews them.
+The client sign-off code review excludes images. Canvas-only sign-off runs no model review.
 Sign-off runs each review's independent parts side by side inside its existing machine review run.
 It keeps the same model calls and result order.
 Normal reviews, reviews of docs and assets, and sign-off reviews use the selected tool's model and optional effort from
@@ -97,7 +101,8 @@ uses Autoreview's default. New and earlier-adopted repos get this behaviour on t
 
 After a red close test, a blocking review finding or a failed required check, a build, fix or
 lite round raises only its effort. Codex uses at least high and Claude at least xhigh.
-Design rounds keep their fixed effort. Claude uses the SDK when installed. Native rounds
+Design rounds keep their fixed effort. External Claude workers and cold reads use the Agent SDK;
+if it is missing, run `forge doctor --fix`. Cold reads use plan mode. Native rounds
 request the effort in their instructions and record it as requested.
 New repos start build, fix and lite at low effort on both tools. Existing repos keep
 their configured models and efforts; a failure round uses the higher of that effort
@@ -127,6 +132,7 @@ the part waits for its base to merge. After that merge, run `forge close <part>`
 If a base exists only on this machine, finish its work and run `forge close <base>` to publish
 and review it before you start a part on top of it.
 
+You can continue, close and merge published work on another machine with `forge work`, `forge close` and `forge merge`.
 Before every work round, Forge fetches and merges the default branch before it reads settings or writes the brief.
 If that merge conflicts, the worker gets its normal full brief with one added line to finish and commit the merge first.
 `forge work` refuses a fix or task whose pull request is already merged. Start a new fix with `forge fix start` for follow-up work.
@@ -455,7 +461,10 @@ Four principles govern every change.
    about 150 lines or one model call or user step, 3 for more, or a new table, job, workflow or
    flag.
 3. Choose the simplest option.
-4. Rules are stated, not policed: add no check, gate or refusal only to enforce a rule.
+4. Forge does the right thing by default where it can. It refuses only when a mistake
+   costs a lot or is hard to undo. It states a rule only when a mistake is cheap and
+   something later catches it. People should not need to know how to use agents well
+   for Forge to work.
 
 If evidence changes your approach, explain the change in a later commit instead of rewriting
 the original lines. Add an abstraction layer only at the edge to an outside service.
@@ -477,7 +486,7 @@ The command copies the installed starter's projects feature, not the app's proje
 It builds the API, agent tools, change history and tests without writing pages or changing the web app.
 Keep its organisation scoping, soft delete, restore and transactional change history.
 Each feature checks view, create, edit, delete and restore permissions on every screen and API call.
-Admins have all five. Members can view, create and edit, but cannot delete or restore and never
+Admins have all five. Members can view and create, but cannot edit, delete or restore and never
 see deleted items. Change the role mapping in the feature's permissions file only when the plan
 asks for it; keep that mapping in one place. Add unsupported field kinds by hand. If the command
 refuses a non-starter or an older starter, follow its named missing parts and build the feature
@@ -503,7 +512,7 @@ A feature's resources come from `defineFeatureTools`; add none by hand. Add a pr
 `definePrompt` only when your part names it, with a strict `arguments` schema and one
 permission. Never send an elicitation or a sampling request.
 
-In a client app with shadcn/ui set up, use shadcn/ui only. If the app has `libs/shared/ui`, add components with `npx shadcn@4.21.4 add <name> --cwd libs/shared/ui`. Close refuses a new UI component library and a new file outside the app's shadcn components folder (`libs/shared/ui/src/components/ui/` when it has that library) named like a shadcn/ui component. Review holds a hand-built UI component unless a `Not shadcn: <why>` comment says why.
+In a client app with shadcn/ui set up, use shadcn/ui only. If the app has `libs/shared/ui`, add components with `npx shadcn@4.21.4 add <name> --cwd libs/shared/ui`. Close refuses a new UI component library. Review holds a hand-built UI component unless a `Not shadcn: <why>` comment says why.
 
 In an app with modules, use another module only through its public service, and never query a
 table it owns. The tests' module-boundary lint fails an import across modules, and a review holds
