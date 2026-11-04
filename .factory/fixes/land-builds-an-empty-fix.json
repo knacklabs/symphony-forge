@@ -4,12 +4,20 @@
   "done_when": "forge land on a fix with no commits beyond its start and state records runs forge work first, and it merges only after the builder round. A fix whose real work is only Forge's records can still merge when it has a work commit.",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-04T09:58:27.760565+00:00",
       "step": "start"
     }
   ],
-  "why": "forge land merges a fix that has no code change after a clean review of an empty diff, for example after forge fix amend (GitHub issue 1260)."
+  "stuck": {
+    "close": null,
+    "head": "13603321dac646f0f35e2c5a9116978a1deb0a32",
+    "keys": {},
+    "round": null
+  },
+  "why": "forge land merges a fix that has no code change after a clean review of an empty diff, for example after forge fix amend (GitHub issue 1260).",
+  "worker": "codex"
 }
