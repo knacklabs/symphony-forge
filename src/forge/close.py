@@ -235,8 +235,10 @@ def close(args: argparse.Namespace) -> int:
         excluded += [path.replace(":(glob)", ":(exclude,glob)") for path in repo.TEST_PATHS]
         stats = repo.git("diff", "--numstat", "-z", "--no-renames", f"{review_ref}...HEAD",
                          "--", ".", *excluded, cwd=top)
-        lines = sum(int(number) for record in stats.split("\0")
-                    for number in record.split("\t", 2)[:2] if number.isdigit())
+        counts = [row for record in stats.split("\0") if len(row := record.split("\t", 2)) == 3]
+        generated = repo.generated_files(top, [row[2] for row in counts], "HEAD")
+        lines = sum(int(number) for added, deleted, path in counts if path not in generated
+                    for number in (added, deleted) if number.isdigit())
         if lines > 400:
             print(f"Warning: This part changes {lines} lines outside tests and docs; aim for about 400.")
     task.restore_default_settings(item, top, state, default)

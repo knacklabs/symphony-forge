@@ -1518,6 +1518,7 @@ Follow-up replay and merging default-branch updates before the underlying item l
 
 Mark generated files such as migration snapshots `linguist-generated` in `.gitattributes`, so
 reviews show them only as counts of changed lines.
+They count towards neither a part's size warning nor a fix's code-file limit.
 
 Read the worker's final handoff and resolve its stated blockers before `forge close`.
 Before close, the worker puts a `Proof list:` paragraph in its last commit message: each Done-when
