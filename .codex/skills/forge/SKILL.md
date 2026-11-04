@@ -533,6 +533,14 @@ screens last.
 Push back when a requested feature does not serve the problem card: explain why and
 offer to note it for after sign-off. Keep the same app as it grows into production.
 
+If the prototype holds only made-up data and has no back end, ask the person, then have the
+coordinator set `sample_data = true` in `forge.toml`. An existing sign-off record's
+`sample_data: true` still works until this setting is present. Forge skips tests and CI while the
+setting is on; walk the demo steps in a browser. Real data or a back end keeps tests from day one.
+After sign-off, `forge next` shows setting up tests as the first step. In a coordinator-owned fix,
+set the test command and CI checks as needed, then turn off the setting. Close blocks that fix until
+the `Personal data` answer is settled.
+
 For a requested working prototype, build the demo-data loader in the first version, so the customer sees their own kind of
 work instead of empty screens (see demo-data.md). Use the customer's words
 from `## Words they use` in `docs/product/DISCOVERY.md` for screen labels. Tell the salesperson
@@ -619,34 +627,42 @@ answers. In the options column, our default is first where there is one; questio
 no default. Offer **Ask the client** on every question and add it to the customer call script in
 `docs/product/DISCOVERY.md`. For a topic that may wait, also offer **Decide later**. Standards
 already decide logging, security and error handling; take those defaults and include them in the
-read-back without asking again. The first seven topics must have answers from the client,
-salesperson or developer before sign-off; a default or agent-only answer does not settle them.
+read-back without asking again. Use the table to time the questions. Open answers do not block work
+or sign-off, and `not known yet` is an accepted answer.
 
-| Topic | Question | Options (default first) | Before sign-off |
+| Topic | Question | Options (default first) | Ask by |
 |---|---|---|---|
-| Sign-off person | Who at the customer approves the prototype? | name and role | must |
-| Demo workflow | Which one task should the demo let them do from start to finish? | from the problem card | must |
-| Users and roles | Who uses it, and what can each kind of user do? | admin and staff; other | must |
-| Existing systems | Which systems must this work with? | none; CRM; accounting; email or SMS; payments; company sign-in | must |
-| Sign-in | How will people sign in? The client chooses the method. | email and password (default if the client gives no other answer); one-time codes; company sign-in (Google or Microsoft) | must |
-| Personal data | Will it hold personal, health or payment data, or data that must stay in one country? | none; personal only; regulated | must |
-| Production host | Where will the real app run? | our platform; the client's cloud; the client's servers | must |
-| Data import | Does data need to come in from today's tools? | no; a spreadsheet; another system | may wait |
-| Email or SMS | Which provider sends messages? | none yet; the client's provider | may wait |
-| Domain | Which web address? | our subdomain; the client's domain | may wait |
-| Backups and uptime | How much downtime or data loss is acceptable? | the platform's daily backups; stricter | may wait |
-| Log retention | How long must logs be kept? | the platform's default; longer | may wait |
+| Sign-off person | Who at the customer approves the prototype? | name and role | before sign-off |
+| Demo workflow | Which one task should the demo let them do from start to finish? | from the problem card | before the demo |
+| Users and roles | Who uses it, and what can each kind of user do? | admin and staff; other | before sign-off |
+| Existing systems | Which systems must this work with? | none; CRM; accounting; email or SMS; payments; company sign-in | before sign-off |
+| Sign-in | How will people sign in? The client chooses the method. | email and password (default if the client gives no other answer); one-time codes; company sign-in (Google or Microsoft) | before sign-off |
+| Personal data | Will it hold personal, health or payment data, or data that must stay in one country? | none; personal only; regulated | before sign-off |
+| Production host | Where will the real app run? | our platform; the client's cloud; the client's servers | before sign-off |
+| Data import | Does data need to come in from today's tools? | no; a spreadsheet; another system | when a story needs it |
+| Email or SMS | Which provider sends messages? | none yet; the client's provider | when a story needs it |
+| Domain | Which web address? | our subdomain; the client's domain | when a story needs it |
+| Backups and uptime | How much downtime or data loss is acceptable? | the platform's daily backups; stricter | when a story needs it |
+| Log retention | How long must logs be kept? | the platform's default; longer | when a story needs it |
 
-Keep one `## Answers` section in `docs/product/BRIEF.md`, one line per topic. Record an answer as
-`- <Topic>: <answer> (<source>, <YYYY-MM-DD>)`, with the client, salesperson, developer, our
-default or agent as its source. Record an open request as
-`- <Topic>: ask the client (<who asked>, <date>)`; replace it with the sourced answer when the
-client replies. Only a may-wait topic can read `- <Topic>: later, when <trigger>`.
+Ask topics at the suggested time when possible. These are conversation prompts, not gates: a
+missing answer or an open client question never blocks planning, review, ordinary close, merge or
+sign-off. A repo that never declared sample data keeps today's refusal for an open `Personal data`
+answer when approving the app's rules page. A sample-data repo can approve its rules page and start
+stories with that answer open, but close waits for a settled answer on a fix that turns off sample
+data.
+Keep one `## Answers` section in `docs/product/BRIEF.md`, one running list written during the talks,
+with one line per topic. Record an answer as `- <Topic>: <answer> (<source>, <YYYY-MM-DD>)`, with
+the client, salesperson, developer, our default or agent as its source. Record an open request as
+`- <Topic>: ask the client (<who asked>, <date>)`; replace it when the client replies. Record a
+current unknown as `- <Topic>: not known yet (<source>, <YYYY-MM-DD>)`. If the person defers an
+answer, record `- <Topic>: later, when <trigger>`. These answers are accepted; no answer needs to
+be settled before work continues, except before closing a fix that turns off sample data.
 
-In a prototype, `forge next` and the board show one line, such as "Sign-off: 3 open questions, signer
-Sam Lee", and when nothing else is in progress, a checklist under it. Each item names the phrase that
-fixes it: when the client answers, say `The client answered <item>: <answer>`, then record the answer
-in the brief in a normal fix. A `not known yet` answer is not listed, except Personal data.
+In a prototype, `forge next` and the board show one sign-off status line. When nothing else is in
+progress, they show open questions as a checklist, with the phrase that fixes each item. When the
+client replies, update the matching line in the brief. A `not known yet` answer is accepted and is
+not listed as open, except Personal data, which needs a settled answer before real data.
 
 **Canvas and app design.** Make each app's design from the whole `docs/product/BRIEF.md`: its
 purpose, users, records, fields, choice-list options and key flows. Use impeccable and
@@ -673,32 +689,45 @@ For small changes to existing screens that add no screen and change no flow, use
 The build applies any existing app theme and follows the approved story design, including its
 components and fields. Workers and reviewers receive that design context.
 
-**Sign-off.** Before anyone asks for sign-off, hold one read-back call with the customer that
-goes through every item from `forge decision open` and every answer on the answers page: our
-defaults, the agent's guesses and the topics marked later. Settle every open must-answer topic
-in that call: `forge next` lists those still
-missing, malformed, or marked ask the client or later, and sign-off also refuses one answered by
-our default or the agent, so record each as the client, salesperson or developer answered it. Then
-write `forge decision new
-client-signoff` (customer, demo address for a working build, and the answers page copied word for word, leaving
-approved via and approved on empty), and run `forge decision accept client-signoff --by "<name>"`
-before any reply is recorded. Put each demo step and its test under `## Proof` for a working build,
-and settled choices under `## Decisions`.
+**Sign-off.** Before the demo, read back the brief and open items with the customer. The suggested
+times in the topic table are prompts, not gates. No missing answer, open client question, or answer
+marked `later` or `not known yet` blocks planning, review, close, merge or sign-off, except that a
+fix which turns off sample data waits for a settled `Personal data` answer. Write
+`forge decision new client-signoff` with the customer and the demo proof for a working build. Leave
+`approved_via` and `approved_on` empty. Forge writes the current `## Answers` section into the
+sign-off record. Do not copy it by hand. Put each demo step under `## Proof` for a working build.
+For a prototype without the sample-data mark, also name the passing test for each step. A marked
+sample-data prototype has no test requirement before sign-off. Put settled choices under
+`## Decisions`. Run `forge decision accept client-signoff --by "<name>"` before asking
+the customer to sign off. After the check passes and the customer replies, set `approved_via` to the
+reply and, if known, `approved_on` to its date. Run
+`forge decision accept client-signoff --by "<name>"` to record the signer's name.
 Before the demo, read the design from the brief's link when the host can and list its screens.
 Compare them with the app, then build what is missing or tell the person.
 If the host cannot read the link, use the design pages saved in the repo, or ask the person
 for the screen list when there are no saved pages. Say plainly that the design was not read.
 Missing access or saved pages never refuses the demo or sign-off.
-Sign-off checks that the copied Answers section matches `docs/product/BRIEF.md` and that the full
-run on main is green. When a precondition is
-missing, the refusal lists every gap and the next action for each. Existing clients can complete
-sign-off with the brief and design they have after upgrade and sync; they do not need to add
-prototype design files for this gate.
-Fix held findings from one sign-off review in one fix. Run the printed repair command from
-the sign-off checkout that the refusal names. The repair includes the sign-off record and
-publishes its earlier review commits, even when that checkout's first fix already merged.
-After the repair merges, retry `forge decision accept client-signoff` from its checkout.
-The record keeps earlier rounds and owner choices after a squash merge or a move to another computer.
+Sign-off keeps the demo proof and the customer's record. A prototype marked `sample_data = true`
+in `forge.toml` gets one gap check before the demo, with no full test run or whole-source review.
+The check reads the brief, answers, design and app routes. Findings below Gain 5 and Harm 4 go to
+Known issues without a repair request. A P0, Gain 5 or Harm 4 or higher stops for the owner's
+choice at once. The owner can accept a held finding with a reason or ask for a repair. A prototype
+without the setting keeps the current full-run and whole-source review rules. An existing sign-off
+record with `sample_data: true` keeps working for an earlier-adopted repo.
+
+Only the coordinator writes `sample_data = true` in `forge.toml`, after asking the person. A worker
+cannot change this setting. Existing clients get the new sign-off behaviour after the setting is
+written, and get the brief rules after upgrading and syncing. They do not need to add prototype
+design files for sign-off. A sample-data repo may approve its rules page and start stories with an
+open `Personal data` answer. A repo that never declared sample data keeps today's refusal at rules
+page approval.
+
+For a prototype without the setting, fix held findings from one sign-off review in one fix. Run the
+printed repair command from the sign-off checkout that the refusal names. The repair includes the
+sign-off record and publishes its earlier review commits, even when that checkout's first fix
+already merged. After the repair merges, retry `forge decision accept client-signoff` from its
+checkout. The record keeps earlier rounds and owner choices after a squash merge or a move to
+another computer.
 Judge a prototype as a prototype. Production work, including deployment to the client's account,
 belongs to build stories. A clearly labelled demo tool is not a P0 when the prototype holds
 only sample data and has no back end, as its own files show.
@@ -706,40 +735,36 @@ A security hole in a real API or sign-in, or any exposed real data, stays a P0.
 Risks that exist only in a real-data build the prototype is not, such as browser-held
 codes or data in a prototype with no back end, belong to build stories and Known issues,
 not P0 findings.
-Only Harm 4 or higher, Gain 5, or a P0 holds
-the product review; every other finding goes straight to Known issues without a repair
-round or an owner question. A held finding below P0 still needs the owner's choice after two rounds.
+Only Harm 4 or higher, Gain 5, or a P0 holds the product review; every other finding goes straight
+to Known issues without a repair round or an owner question. For an unmarked prototype, a held
+finding below P0 still needs the owner's choice after two rounds.
 If the review engine fails, fix the engine problem and run the accept command again.
-A canvas-only sign-off needs no working build. A working build gets a full first product review.
-Each later attempt reviews only product files changed since the previous review and its open findings.
+A canvas-only sign-off needs no working build. An unmarked working prototype gets a full first
+product review. Each later attempt reviews only product files changed since the previous review and
+its open findings.
 If product files changed after a saved stop, review them before asking the owner about remaining findings.
 With no product change, repeat the saved question without another review.
-Every reviewer gets earlier findings and answers. Settled findings stay settled.
-Only a person may write `sample_data: true` in the sign-off decision's front matter.
-It declares that the prototype holds only sample data and has no back end. After two
-rounds, a remaining P0 then stops for the owner's choice, and `--resolve accept` keeps
-it in Known issues with the owner's reason. The question explains that this accepts a
-P0 only because of the sample-data declaration. Without the field, or with
-`sample_data: false`, a P0 keeps the hard block and has no owner acceptance path.
-Earlier repos keep that hard block until a person adds the field; there is no migration.
-Other open held findings need the owner's choice after two rounds.
-Record that choice with `forge decision accept client-signoff --by "<name>" --resolve accept|more|split --reason "<human's choice>"`.
-Accept keeps the findings in the item's Known issues. Split creates a separate fix. More permits one more review.
-These rules apply to new clients and earlier-adopted clients after upgrade.
+Every reviewer gets earlier findings and answers. Settled findings stay settled. A sample-data
+prototype uses its one gap check and has no review rounds. If that check finds a P0, Gain 5 or Harm
+4 or higher, Forge asks the owner at once. The owner can run
+`forge decision accept client-signoff --by "<name>" --resolve accept --reason "<reason>"` to keep
+the finding in Known issues, or ask for a repair. Without the sample-data
+setting, a P0 keeps the current hard block. A repo that already wrote `sample_data: true` in its
+sign-off record keeps working. New and earlier-adopted clients get the brief rules after upgrade
+and sync.
 Forge reuses passed results while what they checked stays unchanged.
 A version-only change to forge.toml keeps the last green full run. Any other settings change needs a new full run.
-The product review uses the green full run as test evidence. It needs no separate `forge test` run.
+For an unmarked working prototype, the product review uses the green full run as test evidence. It
+needs no separate `forge test` run.
 If the product review cannot finish, the refusal names its saved raw report when one exists.
-Before the customer's reply, the command runs these checks and stops without accepting sign-off.
-Autoreview uses the
-repo's tool and `[models.review]` settings, with Autoreview's defaults for unset values. Fix what it finds and run it again. Once it passes, tell the salesperson to ask the
-customer's named person for sign-off their own way. Draft no sign-off email; Forge sends nothing. When they bring the reply back, record
-it in `approved_via` and `approved_on`, then run `forge decision accept client-signoff --by
-"<name>"` again to accept. The customer's reply is the approval evidence the sign-off decision
-records. Set `approved_via` to `email`, `call` or `chat` and `approved_on` to the reply date.
+The sign-off review uses the repo's selected tool and `[models.review]` settings, with
+Autoreview's defaults for unset values. Once any required check passes, ask the customer's named
+person for sign-off their own way. Forge sends nothing. When the customer replies, record the
+reply in the sign-off record and run `forge decision accept client-signoff --by "<name>"` to record
+the signer.
 
-The Answers check ignores trailing whitespace and line-ending differences. A refusal names the first
-different line in the Answers section, including its heading.
+Forge writes the current Answers section into the sign-off record, so the record always quotes the
+brief used for sign-off.
 
 Every normal, light and sign-off review runs through the external Autoreview program:
 Claude when `tools = "claude"`, Codex when `tools = "codex"`. With `tools = "both"`,
@@ -758,10 +783,9 @@ or production risks. Start from the prototype canvas or a newer design approved 
 Plan the first stories only from screens marked `Build: now`. A `Build: later` screen stays on
 the signed canvas as the source for a later story.
 
-When a later story needs a topic marked later, its cold read reports `Decide first: <topic>`.
-Ask that one question, put the answer in the finding's disposition and the story's Notes as
-`Decided: <topic>: <answer> (<source>, <date>)`, and make the first task update the answers page.
-Until the decision, use a fake provider for an external service.
+When a story needs an answer that is still open or marked `later`, ask the question then and update
+the brief when the client replies. An open answer is context, not a blocker, in a cold read. Use a
+fake provider for an external service while its provider choice is open.
 
 ## App constitution
 

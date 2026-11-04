@@ -1,0 +1,77 @@
+{
+  "base": "0ed4652e88ac5f3c96910d6de1ec3e2b4444b4dc",
+  "branch": "task/FORGE-SAMPLE-1-RECORD",
+  "chat": {
+    "approval": "4e15298f84b3bf2da57eaaa3a529c1d3ae30604d1bbea3b33d6dd16f1efab4f4",
+    "claude": null,
+    "conversation": "01a1a601-06d9-7ab1-9e79-1cabc2dbd4b4",
+    "head": null,
+    "start": "a964d900ea058422a3ed33f71b67f72928b8b4db"
+  },
+  "known": [
+    {
+      "area": "close() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 291,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Close and merge need no review and no tests for it",
+      "work": 2
+    },
+    {
+      "area": "close() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 291,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: update the shipped sign-off instructions for the record-only pull request",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "0f8a7d70911ea76ca131b0321d4b902116217999fa26b383c1def85d3fadcba0",
+    "changed": "442323309a40aabe87e35e764f4b388d6d1091ddeff06b004ab4fc32de417f7c",
+    "commit": "4c90bebe2c9ae93fcff4cbf683d44bb5e75a210f",
+    "dismissals": [],
+    "findings": [],
+    "id": "89e46b05-ec4e-4005-befb-9cdba7317da6",
+    "status": "clean"
+  },
+  "round": 3,
+  "stacked_on": "FORGE-SAMPLE-1/SETUP",
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-04T09:57:52.563187+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-04T18:07:26.464500+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-04T18:36:40.299971+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-04T19:10:48.818563+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "854c7934-e2eb-43e8-8083-7cd4a0a3340c",
+    "head": "fc9bb04878f498d8469df0858f71db68f5904c80",
+    "keys": {},
+    "round": 2
+  },
+  "worker": "codex"
+}

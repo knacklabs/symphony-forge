@@ -1,0 +1,103 @@
+{
+  "base": "0ed4652e88ac5f3c96910d6de1ec3e2b4444b4dc",
+  "branch": "task/FORGE-SAMPLE-1-SIGNOFF",
+  "chat": {
+    "approval": "4e15298f84b3bf2da57eaaa3a529c1d3ae30604d1bbea3b33d6dd16f1efab4f4",
+    "claude": null,
+    "conversation": "01a1a5ff-b1bc-7273-839b-5b9797f0820f",
+    "head": null,
+    "start": "fce52876cfb134616e78afcb5bf34c661841986d"
+  },
+  "known": [
+    {
+      "area": "run() in src/forge/review.py",
+      "file": "src/forge/review.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 850,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Otherwise they use design pages saved in the repo",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/skill.md",
+      "file": "src/forge/templates/skill.md",
+      "gain": 4,
+      "harm": 2,
+      "line": 701,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Include the required --by argument in the pre-demo command",
+      "work": 1
+    },
+    {
+      "area": "test_5_an_open_question_does_not_block_signoff() in tests/test_signoff_scope.py",
+      "file": "tests/test_signoff_scope.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 94,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: restore the helper still called by the canvas sign-off tests",
+      "work": 1
+    },
+    {
+      "area": "test_11_prototype_precedes_signoff_and_stories_in_the_docs() in tests/test_proto_docs.py",
+      "file": "tests/test_proto_docs.py",
+      "gain": 4,
+      "harm": 1,
+      "line": 24,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_11_prototype_precedes_signoff_and_stories_in_the_docs",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "e14d850dd3a932805e7770d65aa9651776cb2cbed89cfd2ee63dead2dcff8669",
+    "changed": "ec6caab472950c585374b3499801af6f0677751ba9cd1f8770424ba96f2c7140",
+    "commit": "60bfb97c93ed3994d61b05158278b4e6eed4420c",
+    "dismissals": [],
+    "findings": [],
+    "id": "bc64f557-5929-4e28-85a6-f6da691e4a8d",
+    "status": "clean"
+  },
+  "round": 3,
+  "stacked_on": "FORGE-SAMPLE-1/SETUP",
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-04T09:57:39.704585+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-04T17:10:31.821778+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-04T17:17:45.787610+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-04T17:53:04.263056+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "86ba3fd5-ce13-448a-b8d0-0f7bef538d36",
+    "head": "24bde6ed5619956dd782deb1753e608c5c69b8d7",
+    "keys": {},
+    "round": 2
+  },
+  "worker": "codex"
+}

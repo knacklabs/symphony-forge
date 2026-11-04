@@ -44,20 +44,20 @@ def test_2_signoff_lists_every_missing_precondition(repo, tmp_path, monkeypatch,
     fix, answers, queue = make(repo, tmp_path, monkeypatch)
     if adopted:
         _request_build(repo, fix)
-    page = _decision(fix, answers, customer="Unknown", via="letter", on="yesterday", demo="invalid",
-                     quote=answers.replace("agreed", "different"), proof="")
+    page = _decision(fix, answers, customer="", proof="")
     head = repo.git("rev-parse", "origin/main", cwd=fix)
     StubGh(repo.bin).respond("api", f"repos/{{owner}}/{{repo}}/commits/{head}/statuses", stdout="[]")
     brief = fix / "docs/product/BRIEF.md"
-    brief.write_text(brief.read_text("utf-8").replace("Sign-in: agreed (client", "Sign-in: agreed (agent"), encoding="utf-8")
+    brief.write_text(brief.read_text("utf-8").replace(
+        "Salespeople keep track of customer orders.",
+        "Salespeople keep track of customer orders every day."), encoding="utf-8")
     refused = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
     assert refused.returncode == 1
-    for gap in ("green full test run", "customer", "approved_via", "approved_on", "demo", "Answers",
-                "Sign-in", "Proof section", "prototype differs from the reviewed commit"):
+    for gap in ("green full test run", "customer name", "Proof section",
+                "prototype differs from the reviewed commit"):
         assert gap in refused.stderr, refused.stderr
     run_action = "gh workflow run forge.yml" if adopted else "forge test --full"
-    for action in (run_action, "correct docs/decisions/", "copy its Answers section", "forge next",
-                   "Proof section", "commit the changes"):
+    for action in (run_action, "write the signer's name", "fill in", "commit the changes"):
         assert action in refused.stderr, refused.stderr
     assert "status: proposed" in page.read_text("utf-8")
     assert not queue.with_suffix(".calls.jsonl").exists()

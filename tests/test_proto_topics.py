@@ -24,8 +24,15 @@ def test_4_sync_gives_both_agents_the_prototype_route_and_twelve_topics(repo):
     rows = [line.split("|")[1].strip() for line in prototype.splitlines()
             if line.startswith("| ") and line.split("|")[1].strip() in TOPICS]
     assert rows == list(TOPICS)
-    assert prototype.count("| must |") == 7
-    assert prototype.count("| may wait |") == 5
+    prose = " ".join(prototype.split())
+    assert "| Ask by |" in prototype
+    assert "before sign-off" in prose
+    assert "before the demo" in prose
+    assert "when a story needs it" in prose
+    assert "conversation prompts, not gates" in prose
+    assert "never blocks planning, review, ordinary close, merge or sign-off" in prose
+    assert "| must |" not in prototype
+    assert "| may wait |" not in prototype
     assert "- <Topic>: <answer> (<source>, <YYYY-MM-DD>)" in prototype
 
 
@@ -70,8 +77,10 @@ def test_9_cold_read_instructs_reader_to_resolve_deferred_answers(repo, monkeypa
     read = repo.forge("read", "DEMO")
     assert read.returncode == 0, read.stderr
     [call] = calls(log)
-    prompt = call["brief"]
-    for instruction in ("docs/product/BRIEF.md", "later", "Decide first: <topic>",
-                        "Decided: <topic>: <answer> (<source>, <date>)",
-                        "first task", "disposition"):
+    prompt = " ".join(call["brief"].split())
+    for instruction in ("docs/product/BRIEF.md", "later", "not known yet", "sensible default",
+                        "open decision with its default and effect",
+                        "Do not report the missing answer"):
         assert instruction in prompt
+    assert "Decide first: <topic>" not in prompt
+    assert "Decided: <topic>:" not in prompt

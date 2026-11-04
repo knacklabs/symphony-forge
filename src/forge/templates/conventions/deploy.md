@@ -6,7 +6,8 @@ Client sign-off approves the product direction, not production readiness. Plan a
 remaining production work through stories and reviewed pull requests. Before the first Promote:
 
 1. Confirm the client's production host, account owner, region, domain, budget and release
-   approver. Record the decisions, but no secrets, in the repo.
+   approver. Check the `Personal data` answer in `docs/product/BRIEF.md`. Record the decisions,
+   but no secrets, in the repo.
 2. Confirm production access, secrets, HTTPS, DNS, database access, migrations and external
    services. Check the release in a non-production environment with a green full test run,
    the customer's main task and permissions for each role.
