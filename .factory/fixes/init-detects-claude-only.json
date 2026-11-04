@@ -1,6 +1,13 @@
 {
   "base": "6cb95b2a744f3fcfc90a71daefa62076a2ba3cd8",
   "branch": "fix/init-detects-claude-only",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1a4f1-f345-7803-8728-bed0da7ab532",
+    "head": null,
+    "start": "20d6837e0500a2a30ea60f5603bec5787a847c74"
+  },
   "done_when": "forge init sets tools = claude and says so when only Claude is signed in, keeps split when both are signed in, and forge doctor says when a repo needs Codex and Codex is not signed in",
   "fix_kind": "mechanical",
   "kind": "fix",
