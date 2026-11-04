@@ -1,10 +1,18 @@
 {
   "branch": "task/FORGE-ONEPLAN-1-GUIDE",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-04T18:03:59.654263+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "c95bba07586246a4bcb1fd38bca0f062c96c1cea",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
