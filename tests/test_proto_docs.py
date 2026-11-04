@@ -7,6 +7,10 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_11_prototype_precedes_signoff_and_stories_in_the_docs():
+    # Audit: this owns the documented sign-off sequence and command spelling.
+    # An incomplete pre-demo command fails before the real command can check
+    # the prototype; runtime sign-off tests do not exercise copied guide text.
+    # Keep the existing documentation contract without a production seam.
     decision = ROOT / "docs/decisions/0095-prototype-before-stories.md"
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     guide = (ROOT / "docs/guide.md").read_text(encoding="utf-8")
@@ -15,9 +19,9 @@ def test_11_prototype_precedes_signoff_and_stories_in_the_docs():
     # The new seven-step README journey has its own owner-boundary test.
     route = " ".join(guide.split("### A new client project", 1)[1].split("## Commands", 1)[0].split())
     assert route.index("Start with FDE discovery") < route.index("Build and demo the prototype")
-    assert route.index("Write the sign-off record") < route.index(
-        "Run `forge decision accept client-signoff` before asking")
-    assert route.index("Run `forge decision accept client-signoff` before asking") < route.index(
+    pre_demo = 'Run `forge decision accept client-signoff --by "<name>"` before asking'
+    assert route.index("Write the sign-off record") < route.index(pre_demo)
+    assert route.index(pre_demo) < route.index(
         "After the check passes and the customer replies") < route.index(
             "Only after accepted client sign-off")
     assert route.index("Only after accepted client sign-off") < route.index("create stories")

@@ -4,7 +4,9 @@ Test audit: the canvas-only command accepts while a Build-now question is open, 
 person can still answer it afterward. A regression could restore the old decision gate or
 try to run a product review. The new sample-data test covers a working demo with a gap check,
 not this canvas-only lifecycle. Reuse the command fixtures and external boundaries; no
-production test seam is needed.
+production test seam is needed. Preview setup must leave both reply fields empty
+through the existing decision fixture, so these cases reach the real command
+instead of failing on a missing test helper.
 """
 from __future__ import annotations
 
@@ -54,7 +56,7 @@ def test_4_canvas_first_and_build_marks(repo, tmp_path, monkeypatch, setup):
     marked = screens.read_text("utf-8").replace("Build: now\n", "")
     screens.write_text(marked, encoding="utf-8")
     _commit(repo, fix)
-    page = _preview(fix, answers)
+    page = _decision(fix, answers, via="", on="")
     refused = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
     assert refused.returncode == 1, refused.stdout + refused.stderr
     assert "SCREENS.md: Order list needs Build: now or Build: later" in refused.stderr
@@ -91,7 +93,7 @@ def test_5_an_open_question_does_not_block_signoff(repo, tmp_path, monkeypatch, 
                        "\n## Order archive\nBuild: later\nImage: order-list.svg\n"
                        "Fields:\n- order name: text, required\n", encoding="utf-8")
     _commit(repo, fix)
-    _preview(fix, answers)
+    _decision(fix, answers, via="", on="")
     source = fix / "docs/decisions/open-questions.md"
     question = "Which {order} comes first?"
     full = _question(question)

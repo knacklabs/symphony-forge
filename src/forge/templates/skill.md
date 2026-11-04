@@ -698,7 +698,7 @@ fix which turns off sample data waits for a settled `Personal data` answer. Writ
 sign-off record. Do not copy it by hand. Put each demo step under `## Proof` for a working build.
 For a prototype without the sample-data mark, also name the passing test for each step. A marked
 sample-data prototype has no test requirement before sign-off. Put settled choices under
-`## Decisions`. Run `forge decision accept client-signoff` before asking
+`## Decisions`. Run `forge decision accept client-signoff --by "<name>"` before asking
 the customer to sign off. After the check passes and the customer replies, set `approved_via` to the
 reply and, if known, `approved_on` to its date. Run
 `forge decision accept client-signoff --by "<name>"` to record the signer's name.
