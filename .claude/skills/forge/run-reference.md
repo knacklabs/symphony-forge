@@ -62,8 +62,10 @@ failed refreshes keep the last rows. The mod adds no background work or dependen
 `forge board` opens the board as a live page on this computer: a server on 127.0.0.1 at a free
 port, with a per-run token in the page address that every request must carry, so no other computer
 and no old link can open it. The page refreshes by itself when the work changes, and the server
-stops when the command ends (Ctrl-C). It rebuilds only the rows whose inputs changed and fetches
-from GitHub at most once a minute. `--out <path>` writes every item's facts as JSON instead,
+stops after 30 minutes with no page open, or when you press Ctrl-C. While no page is open,
+it does not fetch or rebuild. An open events stream keeps it live. With a page open, it rebuilds
+only the rows whose inputs changed and fetches from GitHub at most once a minute.
+`--out <path>` writes every item's facts as JSON instead,
 finished ones included.
 
 `forge board --json` and `forge next --json` print JSON for the Claude Code mod and
@@ -375,4 +377,3 @@ changed it redraws and runs nothing. A failed re-read submits nothing and toasts
 `Couldn't check the next step: <reason>`; a failed submit toasts
 `Couldn't run the next step: <reason>`. A null command or busy Claude has no hotkey
 and shows the plain next-step line instead. Typing into a nonempty prompt stays typing.
-
