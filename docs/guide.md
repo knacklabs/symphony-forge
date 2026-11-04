@@ -568,6 +568,22 @@ run. The board and `forge next` read the outcome from git. Existing done records
 To correct an outcome later, run `forge story done <KEY> "<outcome>"` on an existing work branch;
 the correction ships with that branch's pull request, and the command opens no separate one.
 
+## Hand over
+
+1. **Push everything.** In each worktree, commit and push. Through an ordinary fix, copy
+   new decisions and lessons from `.git/forge/handoff.md` into `docs/handover.md`, and merge it.
+   Use `## Decisions and lessons`, with one line per decision or lesson. Keep the file under
+   about 30 lines and drop lines that are no longer true. Keep Current state uncommitted;
+   `forge next` gets it from git and GitHub.
+2. **Reassign.** Run `forge assign <KEY or KEY/TASK> <login>` for each story and part.
+   Fixes cannot be reassigned; the new machine continues them without this step.
+3. **Continue.** On the new machine, run `forge next`, then `forge work`, `forge close` or
+   `forge merge` on each item. Forge makes the checkout from GitHub.
+
+A new clone shows the default branch's committed decisions and lessons at session start.
+New repos get this guide at init; existing repos get it with `forge sync` and the behaviour
+with the Forge release. Neither gets `docs/handover.md` until its first hand over.
+
 ## Upgrading a repo
 
 You never edit `forge.toml` by hand. Ask your coding agent to upgrade Forge, or to change any

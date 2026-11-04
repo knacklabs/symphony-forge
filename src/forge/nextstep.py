@@ -10,7 +10,6 @@ from __future__ import annotations
 import json
 import os
 import re
-import shlex
 import shutil
 import tempfile
 from concurrent.futures import ThreadPoolExecutor
@@ -20,6 +19,7 @@ from typing import Any
 
 from forge import (__version__, approval, board, board_facts, close, codex, githooks, machine, migration_warnings,
                    journey, native, records, repo, review, spotted, story, score, task, time_records, upgrade)
+from forge.board_facts import machine_next
 from forge.task import _started, developer, github_login, owner, sections, stack_base, start_base, unbuilt_fix, waits_for
 from forge.task import rows as task_rows
 
@@ -183,46 +183,17 @@ def next_step(args: Any) -> int:
     return 0
 
 
-def machine_next(lines: list[str]) -> dict[str, str | None]:
-    """Only the first Next line can be offered as a runnable step."""
-    line = next((line for line in lines if line.startswith("Next: ")), None)
-    command = line.removeprefix("Next: ") if line else ""
-    try:
-        words = shlex.split(command, comments=True)
-    except ValueError:
-        words = []
-    # Treat shell operators outside quotes as syntax, but allow quoted titles containing them.
-    lexer = shlex.shlex(command, posix=False, punctuation_chars=";&|<>`$()")
-    lexer.whitespace_split = True
-    try:
-        syntax = list(lexer)
-    except ValueError:
-        syntax = [";"]
-    unsafe = any(token and all(c in ";&|<>`$()" for c in token) for token in syntax)
-    runnable = (len(words) >= 2 and words[0] == "forge" and not unsafe
-                and not any(token in ("then", "or") for token in syntax)
-                and not re.search(r"<[^>]*>|\$\(|`|[\r\n]", command))
-    if runnable:
-        from forge.cli import _parser
-        try:
-            _parser().parse_args(words[1:])
-        except repo.Refused:
-            runnable = False
-    # A trailing shell comment explains the worker; it is not part of the command.
-    if runnable:
-        command = shlex.join(words) if "#" in command else command
-    return {"command": command if runnable else None,
-            "line": next((text for text in lines if not text.startswith("Next: ")),
-                         "Nothing in progress."),
-            "step": line.removeprefix("Next: ") if line else None}
-
-
 def context_hook(args: Any) -> int:
     top = repo.root()
     lines, states = _report(top)
     step = ([journey.step_line(top, _report_config(top, {}), idle=_idle(top)[0] in lines)]
             if (top / "forge.toml").is_file() else [])
     print("\n".join(step + lines + states))
+    notes = story.show(top, story.landed_ref(top), "docs/handover.md") or ""
+    heading = "## Decisions and lessons\n"
+    if heading in notes:
+        section = notes.split(heading, 1)[1].split("\n## ", 1)[0].rstrip()
+        print(heading + section)
     return 0
 
 

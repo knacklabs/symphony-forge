@@ -59,7 +59,7 @@ def _clone(env, tmp_path, name: str) -> Repo:
     return Repo(path, env.repo.bin)
 
 
-def test_3_merge_uses_shared_readiness_after_another_machine_closes_again(env, tmp_path):
+def test_5_merge_uses_shared_readiness_after_another_machine_closes_again(env, tmp_path):
     _client(env.repo, env.gh, tmp_path, False)
     config = env.repo.path / "forge.toml"
     env.commit(env.repo.path, "forge.toml", config.read_text("utf-8") + 'merge = "agent"\n')
@@ -94,7 +94,7 @@ def test_3_merge_uses_shared_readiness_after_another_machine_closes_again(env, t
 
 @pytest.mark.parametrize("adopted,command", [(False, "work"), (False, "close"), (True, "work")],
                          ids=["new-work", "new-close", "earlier-adopted-work"])
-def test_2_pickup_keeps_a_newly_dropped_fix_inactive(env, adopted, command, tmp_path):
+def test_4_pickup_keeps_a_newly_dropped_fix_inactive(env, adopted, command, tmp_path):
     _client(env.repo, env.gh, tmp_path, adopted)
     item, _ = env.start_fix()
     branch = f"fix/{item}"
