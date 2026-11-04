@@ -235,8 +235,10 @@ def close(args: argparse.Namespace) -> int:
         excluded += [path.replace(":(glob)", ":(exclude,glob)") for path in repo.TEST_PATHS]
         stats = repo.git("diff", "--numstat", "-z", "--no-renames", f"{review_ref}...HEAD",
                          "--", ".", *excluded, cwd=top)
-        lines = sum(int(number) for record in stats.split("\0")
-                    for number in record.split("\t", 2)[:2] if number.isdigit())
+        counts = [row for record in stats.split("\0") if len(row := record.split("\t", 2)) == 3]
+        generated = repo.generated_files(top, [row[2] for row in counts], "HEAD")
+        lines = sum(int(number) for added, deleted, path in counts if path not in generated
+                    for number in (added, deleted) if number.isdigit())
         if lines > 400:
             print(f"Warning: This part changes {lines} lines outside tests and docs; aim for about 400.")
     task.restore_default_settings(item, top, state, default)
@@ -397,7 +399,8 @@ def close(args: argparse.Namespace) -> int:
     round_number = sum(step["step"] == "review" for step in state.get("steps", []))
     if not fresh or dismissals or refreshed:
         score.remember(_known(top, item, state, review_ref, previous), result, round_number,
-                       {} if fresh else areas)
+                       {} if fresh else areas,
+                       repaired=previous if not (fresh or records_only or switch or replayed) else None)
     if (serious and round_number >= (2 if "/" in item else 1) and
             not any(score.holds(f, "P0") for _, f in serious) and (not fresh or not state.get("stop"))):
         stopped = {"file": serious[0][1]["file"], "at": repo.now(),
@@ -1148,6 +1151,8 @@ def _title(top: Path, item: str, state: dict[str, Any]) -> tuple[str, str, str]:
 
 def _attach(top: Path, item: str, branch: str) -> None:
     """Link the pull request in the item's recorded Codex chat; a failure never stops the close."""
+    if (repo.read_state(item, top) or {}).get("worker") == "claude":
+        return
     try:
         if codex.record(top, item).get("conversation") and not codex.attach(top, item, json.loads(
                 _gh(top, "pr", "view", branch, "--json", "number,url,headRefName"))):

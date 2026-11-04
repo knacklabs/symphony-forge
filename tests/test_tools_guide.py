@@ -34,7 +34,8 @@ def test_9_synced_guides_explain_tools_and_the_session_handoff(repo):
                 if intent != "Use both":
                     assert "forge sync" in row
             tools = skill.split("## Tools\n", 1)[1].split("\n## ", 1)[0]
-            assert len(tools.splitlines()) <= 40
+            assert len(tools.splitlines()) <= 40, (
+                "Keep the Tools section within 40 lines. Put setup steps under Laptop setup and after cloning.")
             tools = " ".join(tools.split())
             for contract in ("the app the developer opens", "both", "workers",
                              "background subagent", "other tool", "kit", "Codex app server",

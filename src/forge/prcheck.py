@@ -438,7 +438,8 @@ def promote_problem(changed: list[str], interfaces: list[str], top: Path, base: 
     from forge import story, sync, worker
 
     tests = repo.git("diff", "--name-only", "--no-renames", base, head, "--", *worker.TEST_PATHS, cwd=top)
-    code = [path for path in code if path not in tests.splitlines()]
+    generated = repo.generated_files(top, code, head)
+    code = [path for path in code if path not in tests.splitlines() and path not in generated]
     if len(code) > CODE_LIMIT:
         # Sync's output for the forge.toml the change pins: an upgrade's check runs that release.
         cfg = repo._config_text(story.show(top, head, "forge.toml") or "")

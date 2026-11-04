@@ -253,11 +253,10 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
     finished_prs = board_facts.merged_prs(github)
     remembered = {branch for branch, pr in people_branches.items() if pr.get("author") or pr.get("mergedBy")}
     merged_prs = {pr["headRefName"] for pr in finished_prs}
-    visible_branches = remembered | merged_prs
     # The upgrade's six-week history is visible immediately, including older finished rows.
     history = {**history, "expired": history["expired"] - {
         rel for rel, (state, _) in best.items()
-        if state.get("branch") in visible_branches}}
+        if state.get("branch") in remembered | merged_prs}}
     by_branch.update({p["headRefName"]: p for p in finished_prs})
     merged_details = {p["headRefName"]: p for p in finished_prs}
     merged_dates = {branch: pr.get("mergedAt") for branch, pr in merged_details.items()}
@@ -822,7 +821,7 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
                     [(rel, state, where) for rel, (state, where) in best.items() if rel not in merged]
                     + [(rel, state, where) for rel, state, where in history["copies"] if where == landed])
                 if (match := STATE.fullmatch(rel))}, landed),
-            "viewer": viewer,
+            "viewer": viewer, "signoff": nextstep.signoff(top, configuration(top)),
             "items": list(items.values()),
             "dependency_maps": maps, "team": team, "events": recent,
             "lanes": machine.view(), "machine": machine.load()}

@@ -144,12 +144,41 @@ ADOPT_DONE = ("Forge runs this repo as a live app: forge.toml names its tests, a
               "folders, and AGENTS.md keeps the team's lines and its house rules.")
 
 
+def signed_in(tool: str, top: Path | None = None) -> bool | None:
+    """Read the CLI's status; an unavailable check leaves sign-in unknown."""
+    binary = shutil.which(tool)
+    if not binary:
+        return False
+    command = [binary, "auth", "status"] if tool == "claude" else [binary, "login", "status"]
+    try:
+        status = subprocess.run(command, cwd=top, input="", capture_output=True, text=True,
+                                encoding="utf-8", timeout=15)
+        if tool == "claude":
+            auth = json.loads(status.stdout)
+            value = auth.get("loggedIn") if isinstance(auth, dict) else None
+            return value if isinstance(value, bool) else None
+        if status.returncode == 0:
+            return True
+        if status.returncode == 1 and "Not logged in" in status.stdout + status.stderr:
+            return False
+    except (OSError, subprocess.TimeoutExpired, ValueError):
+        pass
+    return None
+
+
 def _settings(stage: str, test_place: str, test: str, checks: list[str], interfaces: list[str],
               merge: str = "", runner: str = "ubuntu-latest") -> str:
+    claude, codex = signed_in("claude"), signed_in("codex")
+    workers = 'workers = "split"\n'
+    if claude is True and codex is False:
+        workers = 'tools = "claude"\nworkers = "claude"\n'
+        print("Only Claude is signed in. Forge uses Claude for all work.")
+    elif claude is False and codex is False:
+        print("Sign in to Claude or Codex before you start work. Forge keeps split workers.")
     return ("# Forge's settings. Your coding agent keeps this file: ask it to change a setting or "
             "upgrade Forge.\n"
             f'version = "v{__version__}"\nrepo = "client"\nstage = "{stage}"\n'
-            + (f'merge = "{merge}"\n' if merge else "") + 'workers = "split"\n'
+            + (f'merge = "{merge}"\n' if merge else "") + workers +
             f'test_place = "{test_place}"\n'
             'groups = 1\n'
             f"test = {json.dumps(test)}\n"
@@ -188,9 +217,10 @@ def _scaffold(top: Path, actions: str, runner: str = "ubuntu-latest",
     test = ("node scripts/test.mjs" if starter else
             next((command for marker, command in STACKS if (top / marker).is_file()), NODE_TEST))
     return {
-        "forge.toml": _settings("prototype", "ci" if actions == "yes" else "local", test,
+        "forge.toml": (sync.read(top / "forge.toml") if (top / "forge.toml").exists() else
+                       _settings("prototype", "ci" if actions == "yes" else "local", test,
                                 ["tests", "forge-pr-check"] if actions == "yes" else [],
-                                INTERFACES, runner=runner),
+                                INTERFACES, runner=runner)),
         **{path.relative_to(skeleton).as_posix(): path.read_text(encoding="utf-8")
            for path in sorted(skeleton.rglob("*")) if path.is_file()
            and (starter or test == NODE_TEST or path.name not in ("Dockerfile", ".dockerignore", "services.toml"))},

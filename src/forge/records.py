@@ -423,6 +423,8 @@ def decision_accept(args: argparse.Namespace) -> None:
     repo.commit_state(f"Accept the {args.slug} decision", *changed, top=top)
     also = f"; {changed[1]} is now superseded" if old else ""
     print(f"Accepted {rel}, confirmed by {by}{also}.")
+    if signed:
+        print("The app constitution comes next.")
     rules = sorted(set(RULE_ID.findall(re.sub(r"<!--.*?-->", "", body, flags=re.S))),
                    key=lambda rule: int(rule[2:]))
     if rules:

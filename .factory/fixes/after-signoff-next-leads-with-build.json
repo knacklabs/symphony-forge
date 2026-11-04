@@ -1,0 +1,76 @@
+{
+  "base": "9fe77734b05db772714d5dc40fe4e8486c5b466f",
+  "branch": "fix/after-signoff-next-leads-with-build",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a19fb2-d583-7873-8925-6143c53ea99f",
+    "head": null,
+    "start": "4e8eb94eb73be998c0dd062faf9bf273cef7bb8b"
+  },
+  "done_when": "After an accepted sign-off, forge next leads with the step that starts the build, shows no keeps-breaking line for problems noted before the sign-off, and the sign-off result says the app constitution comes next",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "_report() in src/forge/nextstep.py",
+      "file": "src/forge/nextstep.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 381,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Preserve the next action for an existing constitution fix",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "3d592345dbecb6ecf8b46b2346b8ef056b77cf0e6cf7c94458f9f5849c44b949",
+    "changed": "5f5ccaeae0f60cb140d46a97e6d941bd05ff74c9ee0f8b942c76bd6ce873dc98",
+    "commit": "65453380ec33d6aac94aef14cf9166b7c739bdd9",
+    "dismissals": [],
+    "findings": [],
+    "id": "e9ed2e06-3b8f-40cc-b940-1af2ed7c4714",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-03T04:36:47.558445+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-03T04:43:41.050450+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-03T05:06:35.387261+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-03T05:48:22.457509+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-03T04:43:41.062480+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "src/forge/nextstep.py",
+    "reason": "The owner chose one more round to repair the case of an existing constitution fix",
+    "wait_id": "d98313d1-6ec1-4bab-b4ae-4bf5e2f2ce0e",
+    "worker_round": 1
+  },
+  "stuck": {
+    "close": "e202bd38-2970-481b-ab72-118f58839ff6",
+    "head": "d5bbdf053248eb31346342986c96c9535e09c965",
+    "keys": {},
+    "round": 2
+  },
+  "why": "After an accepted sign-off, forge next leads with repair work on prototype files and does not say the app constitution comes next (bug 1310)",
+  "worker": "codex"
+}

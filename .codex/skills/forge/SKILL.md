@@ -336,6 +336,14 @@ gh issue create --repo knacklabs/symphony-forge --title "<short plain title>" --
 
 ## Laptop setup and after cloning
 
+When `forge init` writes settings, it checks `claude auth status` and `codex login status`.
+If only Claude is signed in, it sets `tools = "claude"` and `workers = "claude"` and says so.
+Otherwise it keeps split workers. An unavailable check keeps that default unless the binary is missing.
+If neither tool is signed in, it asks you to sign in. Existing repos keep their settings.
+`forge doctor` says when the repo needs Codex but Codex is not signed in, and gives `codex login`.
+
+If you use Claude, open Claude Code in the repo once and accept the trust question before running headless Claude commands.
+
 The repeatable laptop installers are published for
 [Mac](https://raw.githubusercontent.com/knacklabs/symphony-forge/main/scripts/install-mac.sh)
 and [Windows](https://raw.githubusercontent.com/knacklabs/symphony-forge/main/scripts/install-windows.ps1).
@@ -630,6 +638,11 @@ Keep one `## Answers` section in `docs/product/BRIEF.md`, one line per topic. Re
 default or agent as its source. Record an open request as
 `- <Topic>: ask the client (<who asked>, <date>)`; replace it with the sourced answer when the
 client replies. Only a may-wait topic can read `- <Topic>: later, when <trigger>`.
+
+In a prototype, `forge next` and the board show one line, such as "Sign-off: 3 open questions, signer
+Sam Lee", and when nothing else is in progress, a checklist under it. Each item names the phrase that
+fixes it: when the client answers, say `The client answered <item>: <answer>`, then record the answer
+in the brief in a normal fix. A `not known yet` answer is not listed, except Personal data.
 
 **Canvas and app design.** Make each app's design from the whole `docs/product/BRIEF.md`: its
 purpose, users, records, fields, choice-list options and key flows. Use impeccable and
@@ -988,9 +1001,10 @@ An open upgrade or local work still refuses and stays in place. Ignored configur
 also stay in place; only recognized cache directories may be discarded.
 
 1. Ask which release to move to, recommending the newest.
-2. Wait until no Forge runs are in progress anywhere on the machine. Let workers, plan reads,
-   tests and close finish first. An install during a close can mix two releases.
-   `forge upgrade` names the items in the machine's lanes and asks you to wait if any remain.
+2. If the target release differs from the release on PATH, wait until no Forge runs are in
+   progress anywhere on the machine. An install during a close can mix two releases.
+   `forge upgrade` names those runs and asks you to wait. If the target release is already on
+   PATH, upgrade skips the install and continues while other runs remain in progress.
 3. Run `forge upgrade <release>` in the main checkout, on the default branch. It installs the
    release, has that release refresh Forge's files in the fix, commits them and closes the fix.
    Its commit includes the upgrade's proof list; close reports tests and review results together.
@@ -1512,6 +1526,7 @@ Follow-up replay and merging default-branch updates before the underlying item l
 
 Mark generated files such as migration snapshots `linguist-generated` in `.gitattributes`, so
 reviews show them only as counts of changed lines.
+They count towards neither a part's size warning nor a fix's code-file limit.
 
 Read the worker's final handoff and resolve its stated blockers before `forge close`.
 Before close, the worker puts a `Proof list:` paragraph in its last commit message: each Done-when
@@ -1885,8 +1900,9 @@ other refusals' next actions instead of repeatedly retrying them.
 
 A worker or review notes problems outside its change as spotted items, which Forge keeps in
 spotted records and nobody edits by hand. A spotted item never widens the change in hand,
-except a bug that blocks it. When `forge next` names a file that keeps breaking, start its fix
-command at once, like any ready item, without asking the owner.
+except a bug that blocks it. Follow the first step from `forge next` before other ready fixes.
+When it names a file that keeps breaking, start its fix command without asking the owner.
+Problems noted before accepted client sign-off no longer count towards these lines.
 When `forge next` says the latest scheduled run of the default branch failed, it names the
 failed jobs and tests; start its fix command the same way, or follow the step it gives for the
 fix already started.

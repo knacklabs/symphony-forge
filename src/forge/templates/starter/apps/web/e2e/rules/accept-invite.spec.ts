@@ -23,8 +23,8 @@ test('an invite link works once and then shows the API message', async ({ page, 
     data: { email: invitedEmail },
   });
   expect(inviteResponse.ok()).toBeTruthy();
-  const inviteBody = await inviteResponse.json() as { data: { link: string } };
-  const inviteLink = inviteBody.data.link;
+  const inviteBody = await inviteResponse.json() as { data: { inviteUrl: string } };
+  const inviteLink = inviteBody.data.inviteUrl;
   expect(new URL(inviteLink).pathname).toBe('/accept-invite');
 
   await page.goto(inviteLink);
