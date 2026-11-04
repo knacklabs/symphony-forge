@@ -271,9 +271,9 @@ def close(args: argparse.Namespace) -> int:
             return 1
     spotted.check(top, item)
     design.require_working_build(top, review_ref)
-    app_baseline.check(top, cfg, repo.git("merge-base", "HEAD", review_ref, cwd=top))
+    app_baseline.check(top, cfg, baseline := repo.git("merge-base", "HEAD", review_ref, cwd=top))
     app_baseline.services(top, cfg)
-    app_baseline.migrations(top, cfg, repo.git("merge-base", "HEAD", review_ref, cwd=top))
+    app_baseline.migrations(top, cfg, baseline)
     if not migrating:
         _synced(top, item)
     # Reconcile remote work before choosing tests or reusing an earlier review.
