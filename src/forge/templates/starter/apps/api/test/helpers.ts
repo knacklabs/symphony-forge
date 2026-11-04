@@ -72,3 +72,32 @@ export function psql(sql: string): { status: number; output: string } {
   ], { encoding: 'utf8', timeout: sqlTimeoutMilliseconds, killSignal: 'SIGKILL' });
   return { status: result.status ?? 1, output: `${result.error?.message ?? ''}${result.stdout}${result.stderr}` };
 }
+
+/** Calls the real notifications service from a one-off app context in the API container. */
+export function callNotifications(scriptBody: string): unknown {
+  const source = `
+import 'reflect-metadata';
+import { NestFactory } from '@nestjs/core';
+import { AppModule } from './apps/api/dist/app.module.js';
+import { PrismaService } from './libs/core/server/dist/index.js';
+import { NOTIFICATIONS_API } from './libs/notifications/contracts/dist/index.js';
+import { ORGANISATIONS_API } from './libs/organisations/contracts/dist/index.js';
+
+const app = await NestFactory.createApplicationContext(AppModule, { logger: false, abortOnError: false });
+try {
+  const notifications = app.get(NOTIFICATIONS_API);
+  const organisations = app.get(ORGANISATIONS_API);
+  const prisma = app.get(PrismaService);
+  const result = await (async () => { ${scriptBody} })();
+  process.stdout.write(JSON.stringify(result));
+} finally {
+  await app.close();
+}
+`;
+  const result = spawnSync('docker', [
+    'compose', '-f', 'compose.test.yml', 'exec', '-T', 'api', 'node', '--input-type=module', '-',
+  ], { input: source, encoding: 'utf8', timeout: 30_000, killSignal: 'SIGKILL' });
+  const output = `${result.error?.message ?? ''}${result.stdout}${result.stderr}`;
+  if (result.status !== 0) throw new Error(`The notifications service call failed: ${output}`);
+  return JSON.parse(result.stdout) as unknown;
+}

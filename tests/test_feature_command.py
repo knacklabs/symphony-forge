@@ -933,15 +933,22 @@ def _plan_line_builds_the_feature_in_one_step(repo, gh, tmp_path, shell, starter
             ("clients", "client", CLIENT_LINE),
             ("jobs", "job", JOBS_LINE),
         ):
-            # Audit: feature wiring adds relations and a catalog entry without changing
-            # existing auth models or catalog entries. Replacing an old app's content
-            # must fail, while new-only auth tables are valid. Whole-file equality
-            # cannot express that contract; use the existing command, with no seam.
+            # Feature wiring preserves each app's existing modules, including notifications
+            # in new apps. Compare the feature additions across releases, and check that
+            # removing those additions restores each app's own original configuration.
             shared_before = {
                 rel: (client / rel).read_text("utf-8")
                 for rel in (
                     "apps/api/prisma/schema/auth.prisma",
                     "apps/api/test/database.e2e-spec.ts",
+                    "apps/api/prisma/schema/base.prisma",
+                    "apps/api/prisma/schema/organisations.prisma",
+                    "apps/api/src/app.module.ts",
+                    "apps/api/package.json",
+                    "apps/api/tsconfig.json",
+                    "eslint.config.mjs",
+                    "scripts/test-build.mjs",
+                    "pnpm-lock.yaml",
                 )
             } if starter == "typescript" else {}
             result = _run_line(repo, client, shell, line)
@@ -966,14 +973,59 @@ def _plan_line_builds_the_feature_in_one_step(repo, gh, tmp_path, shell, starter
                         )
                     ),
                     "apps/api/test/database.e2e-spec.ts": f" {model}: '{plural}',",
+                    "apps/api/prisma/schema/organisations.prisma": f"\n  {plural} {model}[]",
+                    "apps/api/src/app.module.ts": (
+                        f"\nimport {{ {plural.capitalize()}Module }} from '@app/{plural}-server';",
+                        f"\n    {plural.capitalize()}Module,",
+                    ),
+                    "eslint.config.mjs": (
+                        f"\n          {{ sourceTag: 'scope:{plural}', onlyDependOnLibsWithTags: "
+                        f"['scope:{plural}', 'scope:core', 'scope:shared', 'type:contracts'] }},"
+                    ),
+                    "scripts/test-build.mjs": f" 'libs/{plural}/server/dist', 'libs/{plural}/contracts/dist',",
                 }
                 for rel, addition in additions.items():
                     after = (client / rel).read_text("utf-8")
-                    assert after.count(addition) == 1, rel
-                    assert after.replace(addition, "", 1) == shared_before[rel], rel
+                    parts = (addition,) if isinstance(addition, str) else addition
+                    for part in parts:
+                        assert after.count(part) == 1, rel
+                        after = after.replace(part, "", 1)
+                    assert after == shared_before[rel], rel
                     # Compare only this feature's addition across releases. The preservation
                     # assertion above checks every other character, with native newlines read as LF.
-                    outputs[label][plural][rel] = addition.encode("utf-8")
+                    outputs[label][plural][rel] = "".join(parts).encode("utf-8")
+                for rel, key, addition in (
+                    ("apps/api/package.json", "dependencies", {f"@app/{plural}-server": "workspace:*"}),
+                    ("apps/api/tsconfig.json", "references", [{"path": f"../../libs/{plural}/server"}]),
+                ):
+                    expected = json.loads(shared_before[rel])
+                    if isinstance(addition, dict):
+                        expected[key].update(addition)
+                    else:
+                        expected[key].extend(addition)
+                    assert json.loads((client / rel).read_text("utf-8")) == expected, rel
+                    outputs[label][plural][rel] = json.dumps(addition).encode("utf-8")
+                rel = "apps/api/prisma/schema/base.prisma"
+                after = (client / rel).read_text("utf-8").replace(f' "{plural}",', '', 1)
+                if '"partialIndexes"' not in shared_before[rel]:
+                    after = after.replace('\n  previewFeatures = ["partialIndexes"]', '', 1)
+                assert after == shared_before[rel], rel
+                outputs[label][plural][rel] = plural.encode("utf-8")
+                rel = "pnpm-lock.yaml"
+                after = (client / rel).read_text("utf-8")
+                blocks = re.findall(
+                    rf"(?ms)^  libs/{re.escape(plural)}/(?:contracts|server):.*?(?=^  \S|^\S|\Z)", after,
+                )
+                assert len(blocks) == 2, after
+                dependency = (f"      '@app/{plural}-server':\n        specifier: workspace:*\n"
+                              f"        version: link:../../libs/{plural}/server\n")
+                assert after.count(dependency) == 1
+                for block in (*blocks, dependency):
+                    after = after.replace(block, "", 1)
+                assert [line for line in after.splitlines() if line.strip()] == [
+                    line for line in shared_before[rel].splitlines() if line.strip()
+                ]
+                outputs[label][plural][rel] = ("".join(blocks) + dependency).encode("utf-8")
             assert migration in [client / rel for rel in written]
         if log is not None:
             _assert_feature_guidance(repo, client, log)
@@ -982,6 +1034,8 @@ def _plan_line_builds_the_feature_in_one_step(repo, gh, tmp_path, shell, starter
         # Earlier apps keep their screen importers. Compare the generated API/feature blocks;
         # test_2 owns preservation of the app's web files and web importer.
         for label in outputs:
+            if starter == "typescript":
+                continue  # Shared files already contain only the verified feature additions.
             lock = outputs[label][plural]["pnpm-lock.yaml"].decode("utf-8")
             importers = re.findall(
                 rf"(?ms)^  (?:apps/api|libs/{re.escape(plural)}/(?:contracts|server)):.*?(?=^  \S|^\S|\Z)",
