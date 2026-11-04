@@ -4,12 +4,20 @@
   "done_when": "Files marked linguist-generated count towards neither a story part's size warning nor a fix's code-file limit, and the guide says so",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-04T04:32:16.753304+00:00",
       "step": "start"
     }
   ],
-  "why": "The part size count includes files marked linguist-generated, such as a large openapi.json, though the guide says to mark such files"
+  "stuck": {
+    "close": null,
+    "head": "c75d3515635ec2c76002da59c1fd24b4819a37d8",
+    "keys": {},
+    "round": null
+  },
+  "why": "The part size count includes files marked linguist-generated, such as a large openapi.json, though the guide says to mark such files",
+  "worker": "codex"
 }
