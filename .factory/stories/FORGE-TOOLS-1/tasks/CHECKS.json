@@ -1,12 +1,20 @@
 {
   "base": "e55a18a6066ebbdeeefcaba19b7f6375b1d5e59f",
   "branch": "task/FORGE-TOOLS-1-CHECKS",
+  "round": 1,
   "stacked_on": "FORGE-HANDOVER-1/HANDOVER",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-04T23:32:50.241522+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "3271599c850b56024647cfa2625aec9a20e154a3",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
