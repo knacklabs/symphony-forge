@@ -17,7 +17,6 @@ MANY_COMPANY_API_CASES = (
     "defaults to many and accepts one or many",
     "rejects an unsupported value",
 )
-INVITE_ONLY_FLOW = "a one-company app has no sign-up and the admin invites people"
 
 
 @pytest.mark.platform
@@ -37,18 +36,15 @@ def test_2_setup_makes_the_company_and_its_first_admin(tmp_path_factory, request
 @pytest.mark.platform
 @pytest.mark.timeout(3600)
 def test_3_a_one_company_app_is_invite_only(tmp_path_factory, request):
-    # Both live API reports and both browser reports own this contract: the shared web app runs
-    # against each starter's one-company service.
+    # Both live API reports own this contract. The starter no longer ships a sign-up screen.
     if not LIVE:
         pytest.skip("set FORGE_STARTER_LIVE=1 to run one-company API checks")
     python = request.getfixturevalue("live_python_starter")
     _require_cases(python["api"], (
         "test_a_one_company_app_refuses_sign_up_and_still_takes_invites",
     ))
-    _require_cases(python["browser"], (INVITE_ONLY_FLOW,))
     typescript = live_run(tmp_path_factory)
     _require_cases(typescript["api"], INVITE_API_CASES)
-    _require_cases(typescript["browser"], (INVITE_ONLY_FLOW,))
 
 
 @pytest.mark.platform
@@ -70,11 +66,10 @@ def test_4_many_stays_the_default_and_the_switch_needs_no_migration(tmp_path_fac
     pytest.param(("python",), "apps/api/app/setup_company.py", id="python"),
 ])
 def test_5_both_starters_pass_the_one_company_cases(repo, gh, tmp_path, starter, setup):
-    # Audit: a new repo from either starter must carry the one-company service, the setting, the
-    # setup command and the browser flow, or the live cases of items 2 to 4 cannot run there.
+    # A new repo from either starter must carry the one-company service, setting and setup command,
+    # so the live API cases of items 2 to 4 can run there. Screens are built by the client agent.
     client, initialized = _fresh_client(repo, gh, tmp_path, "--starter", *starter)
     assert initialized.returncode == 0, initialized.stdout + initialized.stderr
     assert "one-company-api:" in (client / "compose.test.yml").read_text(encoding="utf-8")
     assert "APP_COMPANIES=many" in (client / ".env.example").read_text(encoding="utf-8").splitlines()
     assert (client / setup).is_file()
-    assert (client / "apps/web/e2e/one-company.spec.ts").is_file()

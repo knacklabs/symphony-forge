@@ -1,0 +1,139 @@
+{
+  "base": "67e9ae7171b4e5226938c192b02e81a31239fea9",
+  "branch": "task/FORGE-SAMPLE-1-SETUP",
+  "chat": {
+    "approval": "4e15298f84b3bf2da57eaaa3a529c1d3ae30604d1bbea3b33d6dd16f1efab4f4",
+    "claude": null,
+    "conversation": "01a19fca-b798-7363-8f9b-c6e885d8f670",
+    "head": null,
+    "start": "5c9c545ff85067b13d035984d471b07fff14404c"
+  },
+  "known": [
+    {
+      "area": "test_2_a_sample_data_repo_runs_no_tests_or_ci_until_its_first_build_step() in tests/test_sample_setup.py",
+      "file": "tests/test_sample_setup.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 124,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: a worker cannot write `sample_data` in `forge.toml`",
+      "work": 2
+    },
+    {
+      "area": "_brief() in src/forge/worker.py",
+      "file": "src/forge/worker.py",
+      "gain": 2,
+      "harm": 2,
+      "line": 581,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Follow-up: preserve sample-data instructions for story workers",
+      "work": 2
+    },
+    {
+      "area": "_sample_settings() in src/forge/repo.py",
+      "file": "src/forge/repo.py",
+      "gain": 2,
+      "harm": 2,
+      "line": 655,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Follow-up: suppress the unusable full-run reminder in sample mode",
+      "work": 1
+    },
+    {
+      "area": "_plan_gaps() in src/forge/records.py",
+      "file": "src/forge/records.py",
+      "gain": 2,
+      "harm": 2,
+      "line": 679,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Later: SIGNOFF still owns the remaining brief and sign-off exemptions",
+      "work": 3
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "690ea2bb4751f2de7b5b683ed14c14c4cafd5216a613979652977e9fc79e4001",
+    "changed": "8debafbca6b9071e3c5c368b8e3b2b661b1b54b8e0849e37d9ff1438a9f6c639",
+    "commit": "c55ef4cde9d3156950178940a8ab7274474b1210",
+    "dismissals": [],
+    "findings": [],
+    "id": "4a080c1e-00d6-4b88-869d-60021232fd46",
+    "status": "clean"
+  },
+  "round": 10,
+  "stacked_on": "FORGE-SAMPLE-1/CHECKLIST",
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-03T05:03:36.110347+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-04T05:43:10.488707+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-04T07:29:43.142403+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-04T08:15:10.872391+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-04T08:49:34.801661+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-04T09:22:34.997783+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-04T10:16:47.778548+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-04T11:07:31.773549+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-04T11:53:47.994418+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-04T12:35:51.144951+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-04T13:20:53.209910+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-04T13:26:05.390741+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-04T14:34:38.607310+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "3f461b40-2167-4505-8405-e9588b248e5b",
+    "head": "7f59e6dadb61e816646b7c95b474628979ceb500",
+    "keys": {},
+    "round": 9
+  },
+  "worker": "codex"
+}

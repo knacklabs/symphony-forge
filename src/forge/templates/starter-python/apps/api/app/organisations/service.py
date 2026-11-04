@@ -84,7 +84,7 @@ class OrganisationsService:
         mail: MailProvider,
         app_origin: str,
         after_create: Callable[[Session, UUID], None] | None = None,
-    ) -> UUID:
+    ) -> tuple[UUID, str]:
         token = secrets.token_urlsafe(32)
         credentials = {
             "token_hash": hashlib.sha256(token.encode()).hexdigest(),
@@ -108,13 +108,28 @@ class OrganisationsService:
         ).one()
         if after_create is not None:
             after_create(self.db, invite_id)
-        # A provider refusal rolls back the pending invite with the request's session.
-        mail.send_invite(
-            email, f"{app_origin}/accept-invite?{urlencode({'token': token})}"
-        )
+        invite_url = f"{app_origin}/accept-invite?{urlencode({'token': token})}"
+        mail.send_invite(email, invite_url)
         self.history.record(account, "member.invited", f"Invited {email}")
         self.db.commit()
-        return invite_id
+        return invite_id, invite_url
+
+    def authorize_reset_link(self, admin: AccountPrincipal, account_id: UUID) -> None:
+        member = self.db.scalar(
+            select(Membership)
+            .where(
+                Membership.account_id == account_id,
+                Membership.organisation_id == admin.organisation_id,
+                Membership.is_agent.is_(False),
+                Membership.deleted_at_utc.is_(None),
+            )
+            .with_for_update()
+        )
+        if member is None:
+            raise _member_not_found()
+        self.history.record(
+            admin, "member.reset-link-created", "Created a password reset link"
+        )
 
     def open_invite(self, token: str) -> OpenInvite:
         invite = self.db.scalar(

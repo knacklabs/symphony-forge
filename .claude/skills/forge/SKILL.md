@@ -8,6 +8,40 @@ description: Run Forge, which takes a story from approval to a merged pull reque
 
 Start with `forge next`. It says where things stand and gives the exact next command.
 
+## Guide a person with little technical experience
+
+Only when their words leave the work unclear, ask one short question about their work and part in it: are they showing a customer an idea, finding out what a customer needs, or building the real app? Ask about the work, not their job title. Take that path when they answer. Never wait for the answer: choose the likeliest path, say which you chose, and continue. Store nothing and add no setting.
+
+Lead in plain words. Tell the person where they are, what you will do next, and what
+you need from them. Use everyday words instead of Forge's terms or commands with
+this person. Ask for their idea or client notes first, not the sign-off answers.
+After a break, read the saved notes and run `forge next`, then explain the current
+step and continue from it. Do not ask the person to repeat answers you already have.
+Show the design on a screen share by default. Share a link only if the person chooses.
+When stuck, retry a safe step after you check what already happened. Never repeat
+an action that can lose data or create a second item. If you cannot recover, write
+a plain message for the named developer: the goal, what stopped, what you tried,
+the repo link, and what help you need. Let the person send it.
+
+For a sales demo, save transcripts in `docs/context/`. Mark each point from a transcript
+as "Heard from the customer" and name its transcript. Keep your guesses separate.
+Use Claude for the design. Require impeccable and emil-design-eng from the first
+design onward, for both the Claude design artifact and the browser-only web app.
+Then build a browser-only web app with fake data, no server, no database, and no
+sign-in. Label extra features
+"Demo only". Put this line on the demo: "This demo uses sample data. Its features are
+not commitments." Never put real customer data in a demo, because anyone with its
+link can open it. Deploy through Mainline from the GitHub repo only when the person
+asks. Follow the Mainline setup and deployment rules below.
+
+When the customer converts, write one handover page in the repo for the named FDE
+(the developer who will work with the customer). Include the customer, what they
+liked, what you showed, and what the FDE must confirm. Tell the person where the
+page is. The FDE decides for each feature to use it, change it, or build it from
+scratch. Anything that goes into real use gets the normal tests and review.
+Conversion is not the client sign-off. The FDE continues discovery and gets that
+sign-off through the normal flow.
+
 Mainline Deploy is available to install through the organization's plugin catalog. Do not assume
 that the plugin and MCP are installed or that the user is signed in.
 Use Mainline Deploy only when the user explicitly requests deployment. First check whether it is
@@ -125,9 +159,9 @@ Every client repo moves through seven steps. `forge next` names the current step
 1. **Ideas and client notes.** The person gives you the client notes or an idea. Put each note in `docs/context/` and read them all before you ask anything. You can say: "Here are the client notes" or "I have an idea: <idea>".
 2. **Brief.** You write `docs/product/BRIEF.md` from the notes, and ask only about a point that changes a screen, a field or a flow. You can say: "The brief looks right" or "Change this in the brief: <change>".
 3. **Canvas design.** You make the screens on a design canvas, which the client can click through in Play mode, and the owner or FDE approves the canvas. You can say: "Show me the screens" or "Change this screen: <change>".
-4. **Sign-off.** The client's named person approves the canvas and the answers, and the owner chooses Build now or Later. You can say: "The client approved it; build now" or "The client approved it; build it later".
+4. **Sign-off.** Run the sign-off checks, then ask the client's named person to approve the canvas and answers. Build now and Later are planned choices, not available commands. Ask the owner what work to start or defer. You can say: "Record the client approval, then plan the first change".
 5. **Build.** You plan stories and fixes, build each one with its tests and a review, and merge it. You can say: "Build this next: <idea>" or "What is ready to merge?".
-6. **Deploy on Mainline.** When the person asks, you set up Mainline and deploy dev. A person presses Promote in Mainline for production. You can say: "Deploy this on Mainline".
+6. **Deploy on Mainline.** Confirm the client's host and complete production preparation below. When the person asks for Mainline deployment, set up Mainline and deploy dev. An authorized person presses Promote for production. A client host without Mainline uses its agreed release process. You can say: "Deploy this on Mainline" or "Use the client's servers".
 7. **Run and improve.** People use the app, and each new request or problem goes back to step 5. You can say: "Users asked for <request>" or "This is broken: <problem>".
 
 **The cold read loop.** A reader who did not write the plan reads it cold and lists its gaps. You fix the plan, and the reader reads it again. After two rounds that still have open notes, Forge stops and the owner chooses: accept, read again, or split. It exists because a gap found in the plan costs minutes, but the same gap found in the code costs a build round.
@@ -144,7 +178,9 @@ When a person asks what they can do, or seems unsure, run `forge next`, name the
 
 When a Forge command refuses, tell the person in plain words what Forge stopped, why, and the fix that it names. Then do the fix, or ask the choice. When the refusal looks like a Forge fault (a wrong or confusing message, a refusal of a correct step, a crash, or a success that did nothing), say so and offer to file a Forge bug as Reporting a Forge bug, below, says. File it when the person agrees.
 
-Before sign-off FORGE-SIGNOFF-1 adds Build now and Later; until then, record "build it later" with `forge start "Do this later: <the first story's idea>"`.
+Build now and Later at sign-off are planned, not available. Record "build it later" with
+`forge start "Do this later: <the first story's idea>"`. For work the owner wants now, record
+client sign-off first, then use the normal story flow.
 
 ## Save decisions and ideas
 
@@ -177,14 +213,21 @@ recommendation first. Save the answer before moving to the next question.
 
 If the default branch moved after close, `forge merge` compares its new changed files with the item's changed files.
 It merges the default branch locally to check the combined change.
-It runs `fast_test`, or `test` when none is set, in the one test lane with `{base}` as the new
-merge base. It merges the pull request only after the tests pass. A failure names the failed tests
-and gives `forge work <item>` as the next step. This is always on, with no setting. With no
+It runs `fast_test`, or `test` when none is set, in the one test lane with `{base}` as the
+pull request's checked head. This selects tests for incoming default-branch changes instead of
+the pull request's own files, on the combined code. It merges only after those tests pass. A failure names the failed tests
+and gives `forge work <item>` as the next step. With no
 default-branch move, merge runs no extra tests. New repos get this rule at init; existing repos
 get it on upgrade and sync.
 If the file sets do not overlap, Forge restores the original head and merges without a push or another check wait.
 If the file sets overlap, Forge keeps the local merge, reuses the existing review and commits its coverage of the combined change.
 It pushes that commit, waits for its required checks, then merges.
+In repos whose tests run in pull request CI, close already leaves the laptop tests to CI.
+When merge's pytest selection exceeds one quarter of the suite's test files, including
+`always_test`, merge also skips the laptop run. It publishes the combined change and waits
+for that commit's CI, even when the changed files do not overlap. This uses the existing
+pytest picker, with no new test collection. Other runners and custom fast commands keep
+their local retest. Repos whose tests run only on the laptop keep their local runs.
 The nightly full run on the default branch covers the rest. With no retest, the usual CI wait applies.
 Before the retest, Forge refuses uncommitted changes and names their files. After tests and
 checks, Forge fetches the default branch again. If it moved again, Forge checks the new
@@ -327,6 +370,16 @@ gh issue create --repo knacklabs/symphony-forge --title "<short plain title>" --
 
 ## Laptop setup and after cloning
 
+Before `forge init` writes any files in a new or existing repo, it checks Git's author identity. If Git refuses it, set `git config user.name "Your Name"` and `git config user.email "you@example.com"`, then run init again.
+
+When `forge init` writes settings, it checks `claude auth status` and `codex login status`.
+If only Claude is signed in, it sets `tools = "claude"` and `workers = "claude"` and says so.
+Otherwise it keeps split workers. An unavailable check keeps that default unless the binary is missing.
+If neither tool is signed in, it asks you to sign in. Existing repos keep their settings.
+`forge doctor` says when the repo needs Codex but Codex is not signed in, and gives `codex login`.
+
+If you use Claude, open Claude Code in the repo once and accept the trust question before running headless Claude commands.
+
 The repeatable laptop installers are published for
 [Mac](https://raw.githubusercontent.com/knacklabs/symphony-forge/main/scripts/install-mac.sh)
 and [Windows](https://raw.githubusercontent.com/knacklabs/symphony-forge/main/scripts/install-windows.ps1).
@@ -351,372 +404,23 @@ Read the [migration playbook](migrate-skill.md) before running `forge migrate --
 or `forge migrate`. It ships beside this skill and covers the human's agreement,
 preservation review, merge, cleanup and rollback. Follow it in order.
 
-## Machine views
+## Waiting or stopped runs
 
-Forge gives agents half the available cores (at least one place), across all repos. Work rounds
-share a line. Plan reads and close reviews take no place in that line. Every run, including
-tests, reviews and plan reads, waits while the machine's
-one-minute load per core is 1.5 or more, even when no other Forge run is active; where the OS reports no load
-(Windows) the memory and core budgets still apply. Waiting items that other planned work waits on go
-first, first-come within each group; each waiting run says its place and why. The test
-lane makes all test runs share one process budget: the cores left after the agent share and busy
-local CI jobs, with at least one process. Small selections count too. Each run takes its allocation
-from the remaining budget. A worker's test runs use at most two processes. Nested pytest pickers
-keep the parent run's allocation. Older-release entries without an allocation count as the old
-default share, half the machine's cores. `forge doctor` names these older runs and shows both lane
-budgets, free memory and its floor, test processes in use, and busy runners.
-Every run waits when free memory is below 1.5 GB or ten percent of RAM, whichever is larger.
-An unreadable memory source does not block work. Each busy local `Runner.Worker` reserves one core
-from Forge's half-core budget, with at least one core left for Forge. Waiting runs check memory
-and runner use again on each pass and start when capacity returns. On Mac and Linux, doctor warns when a GitHub Actions self-hosted runner
-runs on this machine: its CPUs count against Forge's load limit.
+When a run is waiting or stopped, read the [run reference](run-reference.md) for
+machine queues, board JSON fields and the Claude Code pane. Use `forge next` for
+the current next step. Only a person can stop a run, after host confirmation;
+workers never run `forge stop`.
 
-`forge board --json` includes both machine-wide lanes, their sizes and entries in queue order,
-alongside OS load and memory. Each entry has an `id`, `kind`, `repo_root`, `repo_name`, `item`,
-`model`, `effort`, `joined_at`, `started_at`, `process`, `output_path` and `progress`.
-Waiting entries have no start time. Test output and progress are null until the test runner sets
-them. The process includes its pid and start identity; a reused pid cannot hold an old place, but
-the run keeps it while its own Forge process runs.
+A builder lends its agent place while tests wait or run, then waits to reclaim it
+before returning. Returning builders and repair rounds go before new builds;
+new builds pause above twice the test lane capacity and resume at capacity or below.
 
-Only a person runs `forge stop <item>` (optionally `--repo <root>`) to stop that item's entries in
-both lanes, or `forge stop --id <id>` to stop one entry. The host asks for confirmation first.
-Workers never run it. A waiting run leaves the line; a running run's verified process tree ends
-before its place is freed. An unverifiable identity refuses without terminating anything.
-Stopping an item also clears its abandoned item lock when no live run holds it, so the next
-round can start even when the coordinating session stays open.
-This applies to runs Forge launched. A handed-out native run has no process tree, so
-`forge stop` frees its hold and the coordinator stops the subagent in its session.
-
-In Claude Code's Forge pane, the Machine tab shows this release's agents and test lane across
-repos, who waits next, local item gates, and machine load when the OS provides it. Desktop draws
-an agent tree; narrow terminals use a list. Select a run, press `o` for its last 200 output lines
-or `s` to ask the person whether to stop that exact run. A run that ends or is replaced during
-confirmation is not stopped. Press `l` to show or hide recent events. The spinner names this
-session's place in line. `/forge` includes the machine summary where panes cannot draw.
-Lanes record each item's title when it joins, so other repos' stories and tasks keep their
-plain names in rows, selectors and stop confirmation. Only this repo's board adds tool,
-round, current step and gates.
-`forge lanes --json` supplies the Machine tab; other releases still count towards admission but
-are left out of its rows. New repos receive the mod on setup; existing repos receive it on
-upgrade and `forge sync`. An unreadable output or a failed refresh is explained in the pane;
-failed refreshes keep the last rows. The mod adds no background work or dependencies.
-
-`forge board` opens the board as a live page on this computer: a server on 127.0.0.1 at a free
-port, with a per-run token in the page address that every request must carry, so no other computer
-and no old link can open it. The page refreshes by itself when the work changes, and the server
-stops when the command ends (Ctrl-C). It rebuilds only the rows whose inputs changed and fetches
-from GitHub at most once a minute. `--out <path>` writes every item's facts as JSON instead,
-finished ones included.
-
-`forge board --json` and `forge next --json` print JSON for the Claude Code mod and
-other readers. The usual commands still print text. Both views
-include `version` (the running Forge release) and `repo_root` (the resolved main
-worktree path, shared by the repo's worktrees).
-`forge next --json` uses the same 60-second GitHub cache as `forge board --json`, while text
-`forge next` reads GitHub live.
-Pull request creates, edits and draft changes keep this shared cache. They show within a minute.
-Merges clear it at once. Each command fetches the default branch's settings at most once.
-After close, a matching receipt still shows "ready to merge" while the cached list lacks the pull request's link.
-
-Both views' `items` has one row per story and fix, with tasks in the story's `children`.
-Finished stories, tasks and fixes older than seven days are left out of `--json`;
-`--out` keeps them. The live page reads the same rows, so each state and time on it matches the
-JSON. Each story shows its key small beside its title, the one ID on the board. Story rows carry
-`read_rounds`: each cold-read round of the plan with its number, its findings' first lines and
-their dispositions (`cut`, `defer` or `keep` with its `reason`), and `read_at` on the latest round
-only. Each call reads current state without a history cache.
-Assigned merged parts stay omitted rather than appearing as unstarted. Backticks around
-task IDs in the plan are ignored by the board.
-`forge board --json` supplies `dependency_maps`: one entry per roadmap story
-with `planned` (false for a story with no plan yet, which has no parts), `done` (its finished
-parts) and its full planned parts, plain titles, labelled states and `waits_for` item references,
-including old merged dependencies omitted from active rows. Each unfinished part has `column`:
-0 when it waits on nothing unfinished, else one more than the largest column it waits on, across
-stories, so parts in one column can run at the same time; parts that wait on each other share a
-column and say so in `note`. Finished parts have a null `column`. When fixes are open, an entry
-with `kind: "fixes"` lists them in column 0 with `running` and `started_on` (the story part a
-stacked fix was started on). Startability and scope
-blockers come from the same rules as `forge next`, including approval and required rereads.
-Both views add `team`: `sentence`, `counts`, `needs_you`, `in_progress`, `blocked`, `pace`,
-`go_live`, `trends` and `around_forge`; a key not worked out yet is null. Every story, part and
-fix row has one `state`, and `team.counts` counts each kind apart, finished ones included:
-`stories` (done, building, approved but not started, waiting for approval, planning, no plan yet),
-`parts` of approved stories and `fixes` (done, ready to merge, in progress, to do), and
-`finished_last_7_days`. A story is building only once one of its parts has started. Rows also
-carry `merged_at`, and `approved_by` is a name or null.
-GitHub's pull request lists are read at most once a minute: the open ones and one search per
-week for the last six full weeks and this one.
-`team.pace` counts parts and fixes merged on the default branch per full week (Monday to Monday
-UTC) for six weeks. `team.go_live` gives a date range for the parts of approved stories still to
-merge, from the last three and six weeks' pace: `range`, `about` when the two agree, `not enough
-history` when the oldest merged part is under three weeks old or the last three weeks merged none,
-or `done`; it counts the stories with no plan yet as the unknown, and `team.sentence` says the
-same in a count, not names. `team.in_progress` lists the stories and fixes in
-progress (`id`, `title`, `kind`, `state`). `team.trends` counts merged pull requests per week for the team and each person
-(alphabetical, no totals or ranking), split into through Forge (a `story/`, `task/` or `fix/`
-branch) and around it; `team.around_forge` lists the ones merged around Forge in the last 7 days.
-Both are null without GitHub, and a week capped at 1,000 results is null.
-`team.needs_you` lists every item that waits on a person, oldest first, each with its `reason`,
-`since` and `waited_seconds`: `approval` (a plan waiting for approval), `review loop` (a review
-loop or stuck-worker choice), `worker question`, `conflict` (a merge conflict close stopped on),
-`merge` (a ready pull request a human merges) and `blocked plan`, with the question or the
-problem `forge next` reports in `detail`. Close and `forge work` publish
-these waits to the pull request, so every machine lists the same ones; answer a worker question
-with `forge work <item> --note` on any machine. `team.blocked` lists started parts and fixes
-idle 24 hours or more (`stalled`) and the unfinished part the most unfinished parts wait on
-(`blocks the most`), longest first, each
-with `detail` and `seconds`. `team.sentence` counts both. Ask the human about each Needs you
-item as `forge next` words it.
-Active parts and fixes show recorded
-Build, Tests, Review, CI and Merge times for their current round, with the current stage
-marked. Missing times remain unknown. New clients get this at init; earlier adopted clients
-get it after upgrading Forge and syncing. Cards and JSON use the same `status` and `took`
-derivation; running stages include their elapsed time. Roadmap completion marks the story
-and its parts finished. Finished items never stall; idle items past one day expose
-`stalled`, `idle_seconds`, and `waits_on`. A story's idle clock includes its parts' activity;
-a running part keeps the story active and a finished part resets its idle clock, including
-a merge reported by GitHub before its commit is fetched. An older
-worker round or a worker whose recorded lock is demonstrably dead is not a live run.
-Live readers, workers and reviews take precedence
-over a saved status, including in `forge next`. Approval history uses one display name per
-Git email, honoring mailmap, and fix titles shorten at a word boundary.
-Each row has `id`, `kind`, plain `title`, `stage`, `worker` (kind, model and
-`started_at`, or null), `pr` (number, url and checks: pass, fail, running or unknown),
-`findings` (count and titles), `round`, `stages`, `total_seconds`, `occurrences`,
-`approval`, `needs_person`, and its own `next`. `needs_person` is true while the item waits on
-a person, by the same decision as `team.needs_you`.
-A story awaiting approval has `approval.doc`, the
-absolute path to its document in its own worktree; other rows have null approval.
-Task and fix rows add `time_breakdown` and `rounds`; story rows add `outcome` (null until done).
-An empty board has an empty items list. Missing state shows unknown. No run start,
-end, round or occurrence id is invented when its producer has not recorded one.
-The last task's merged outcome marks its story done, even when the saved story
-state still says approved. New clients get these views and this guide at init;
-existing clients get them after upgrading Forge and running sync.
-Tasks and fixes are ready only while close's clean review matches the pull request's head
-(the local branch when it already holds that head) and the checks are not failing. The clean
-review is this machine's receipt or the readiness close published in the pull request, so every
-machine agrees. On a machine with no worktree for a ready item, its next step names the person
-who started it to merge it from their machine (or, in a human-merge repo, the pull request to
-merge); with the worktree here but no receipt, it is `forge close <item>`, which checks it again
-and writes the receipt that `forge merge` needs. A failed
-rerun shows `checks failed` with `forge work` as its next step, even after a successful
-close. A running rerun or unavailable checks retain a matching receipt's readiness;
-green checks alone cannot grant it. The item's next step uses the same evidence.
-If the next step cannot be checked,
-the row stays visible with no runnable command; check the connection and run `forge next` again.
-
-Stages are Build, Tests, Review, CI and Merge, in that order. Each carries status,
-started_at, ended_at and seconds for the current round from Forge's timing records;
-unrecorded values are null. For tasks and fixes, total_seconds is elapsed time from the item's recorded start
-(or first recorded activity) to now, including idle time; a finished item needs a recorded end.
-Their snapshot already includes live time, so do not add a running stage's timer to it.
-Worker-owned tests are separated from building in the breakdown, while close's tests and
-`forge test` still appear in the Tests stage. A skipped test has status skipped. Run starts and ends
-provide live worker and reader metadata; completed timing durations supply stage end
-times. Values remain null where the producer has not recorded them.
-
-`time_breakdown` separates building, own tests, reviewing, fixing findings, waiting for CI,
-waiting in line, waiting for the owner and nothing running. Overlapping steps count once:
-tests and recorded waits come out of the enclosing worker's time. `rounds` retains each round's
-plain `line`, its finding titles, priorities and files, and its new and repeated finding counts.
-Round lines number review attempts; the row's current `round` still identifies its worker turn.
-Repeated means the same title and file appeared in an earlier recorded review. A missing
-earlier review makes unseen findings' new-versus-repeat counts unknown. Repeats observed in the
-retained history remain known even beside unseen findings whose classification is unknown.
-CI lines distinguish passed, failed and gave up while queued or
-running; losing contact with GitHub without a known result stays unknown.
-An earlier release's failed CI timing without an explicit result also stays unknown.
-Old records are not filled in with guessed findings, durations or zeroes. A known original start
-can give an elapsed total even when some earlier activity is unknown; that unknown time is not
-called idle and the known breakdown need not add up to the elapsed total. Gaps between legacy
-timings stay unknown until complete activity recording begins. Earlier run and question events
-do not establish completeness; historical questions without a recorded end stay unknown.
-
-Quote the item's round lines when explaining a long run, then quote the relevant breakdown
-categories rather than adding overlapping stage timers. The board page shows these same
-details. The pull request's short **How it went** section comes from the same logs and keeps
-earlier findings after later reviews. Forge keeps the pull request body in an agent squash
-merge; when the human merges, keep this section in the squash commit body too. New repos get
-this guide and the recording behaviour at init; previously adopted repos get them on upgrade
-and sync. Their earlier unrecorded history remains unknown. If a fresh clone or missing local
-logs cannot reconstruct already published measurements, How it went retains them and shows
-the current checkout's observations separately. Quote each snapshot separately; do not add
-their totals, because their intervals may overlap.
-
-Quote the item's round lines when explaining a long run, then quote the relevant breakdown
-categories rather than adding overlapping stage timers. The board page shows these same
-details. The pull request's **How it went** section carries intervals, review rounds (including
-clean reviews), and waits with their ends. The shared record has a fixed size: while it is over, the oldest
-detail of any kind (round lines, intervals, then raw events such as repeated CI waits) folds into
-one "Rounds 1–N" line of totals and finding counts, oldest first; the newest round keeps its own numbered line,
-and its folded retries add to it. Free text in each entry is cut to 300 characters, and a round
-too big on its own, such as a huge review, folds whole into its line. Live progress stays local. So a
-long item stays inside GitHub's body limit, and folding never changes its total time. Close and merge retain observations from other
-checkouts and recompute repeated findings and overlapping time. The board reads this shared
-record alongside local observations; `source` says which it had. A GitHub merge ends the last
-wait at its merge time and names its merger. Story time counts each instant once: working when
-any part or recorded plan read is working, waiting when none is working and any is waiting,
-otherwise unknown. Inside a part's folded time range, the story's split between working and
-waiting is approximate; the totals stay exact. Human times use rounded plain units; JSON keeps raw seconds. Rebuilt history
-keeps its label and missing evidence remains unknown. New repos get this at init; existing
-repos, including earlier adoptions, get it on upgrade and sync.
-Worker questions and their answers refresh an existing pull request's record; a question before
-its first pull request stays local. A first-close merge conflict opens the pull request so its
-owner wait travels too, and resolving it records the wait's end.
-Resuming work ends a published merge wait even when another checkout started it. History
-refreshes retain the pull request's readiness; close publishes readiness for a newly checked head.
-Board and next reads use the current pull request history and head; cached checks apply only
-to the head they describe.
-Questions on older pull requests without local publication evidence stay local.
-Every pull request body stays within GitHub's size limit. Forge leaves tool-command prose out
-of the shared time record, shortens duplicated and advisory detail before the contract, and
-says plainly when it shortened anything. Exceptionally large time histories retain recent
-evidence and current readiness; omitted time stays unknown. Full contracts and proof stay in git.
-Items report working, waiting and unknown seconds alongside their detailed categories. An
-unfinished story's runway continues through now, including unknown time after its last read
-or recorded part activity; a read without a duration establishes a date, never guessed work.
-
-Live rows add `activity` (status and a running action), `idle_since` and `stalled`
-after 24 idle hours. A recorded worker adds tool, model, effort, round, start,
-elapsed seconds and its latest tool step; close's live `tests` adds elapsed and
-done/total where the runner reports progress. `gates` has plan_read, review and ci,
-each with status; blocked reviews add count and running CI adds elapsed seconds.
-PR failures list job and cause (timeout or failed); findings add items with title
-and priority and a dismissed count. Both views' `events` list the last 20 run,
-review and question records as time, item and one plain line, newest last.
-Queue places stay absent until the shared lane entries ship.
-
-The newest 25 open pull requests get checks in one GitHub request, cached for 60
-seconds in the shared Git directory. Older pull requests and unreachable GitHub
-show unknown checks. Required checks, including matrix variants, must succeed;
-skipped or neutral required checks show fail, while optional ones count as passed.
-A failed check occurrence keeps GitHub's own identity:
-`check-run:<databaseId>:<completedAt>` or `status:<id>`. A rerun with a later
-completion is a new occurrence. Each occurrence has id, kind and plain title;
-run completions, undismissed review findings (including advisory findings) and unanswered
-worker questions retain the ids in Forge's event records. Advisory occurrences do not
-change the merge gate. Readiness uses the clean review's id plus the current head
-commit. Runs that start and finish between board refreshes still appear as completions.
-
-Both views' `next` contains `command`, `line` and `step`. Command is the first Next line
-only when it is one runnable Forge command without a placeholder or alternative;
-otherwise it is null. Line carries the plain current state from the text report. Step is
-the first Next line's text even when it is not one runnable command, or null without one.
-Release notices appear in the text output and never replace the machine view's state line.
-Use each board row's next step for that item, never another
-item's step. Machine views do not grant approval or permission to merge.
-
-The shared mod contract fixture is `tests/fixtures/board.json`; command coverage
-in `tests/test_machine_views.py` checks both views against it.
-
-## Claude Code plugin core
-
-The Claude Code mod reads Forge's machine views, runs `forge` commands and draws;
-it never edits repo files or replaces the commands' approval and merge rules.
-All its consumers share one snapshot. On load, then every 10 seconds, one refresh
-runs `forge next --json` and `forge lanes --json` together. The next output also
-supplies the board rows, so the pane reads them once per refresh.
-If that Forge has no lanes command, lane data is absent. A due refresh is skipped
-while the previous one runs, rather than queued. There is no extra fetch on `/forge`.
-Drawing ticks advance live timers every second without fetching state.
-
-A failed or malformed refresh, or a command taking over 60 seconds, keeps the
-last good rows and adds a dim `Couldn't refresh: <first line of the error>`.
-It retries on the next tick. Only a non-zero command result containing
-`unrecognized arguments: --json` shows
-`This repo's Forge is too old for the pane: upgrade Forge here.`
-Other failures use the normal refresh error. The board command owns the
-60-second GitHub checks cache described above; a check changing without a local
-edit appears on the next refresh after that cache expires. Unknown checks stay
-unknown, including when GitHub is unreachable.
-
-## Installing the mod
-
-`forge sync` installs or updates the mod from Forge's latest release at user scope,
-one per machine, independently of each repo's pinned Forge version. It needs
-Claude Code v2.1.287 or newer on PATH. When the marketplace is missing, sync runs
-`claude plugin marketplace add knacklabs/symphony-forge`, then always runs
-`claude plugin marketplace update forge`. It runs
-`claude plugin install forge@forge --scope user` for a new user install, or
-`claude plugin update forge@forge --scope user` for an existing one.
-Sync writes no repo files for the mod; Codex's setup and workflow are unchanged.
-
-Without `claude`, sync skips the mod. A failed install or update (including no
-network or old Claude Code) prints one warning line and sync still succeeds;
-run `forge sync` to retry. `forge doctor` warns when Claude Code is missing or
-older than v2.1.287 and keeps exit status 0. In a running session, use
-`/reload-plugins` or restart to load the updated mod. Desktop's WSL sessions load
-no plugins; use the `forge` command there.
-
-The mod runs `forge` from PATH with argv and no shell, in the session's repo root.
-It does not change the repo's pin. If the pane or strip says that repo's Forge is
-too old, upgrade Forge in that repo; other refresh errors follow the core's retry
-behaviour above. Sessions without the mod keep using the commands as today.
-
-## Approving with the pane
-
-The pane has no Approve button: Claude Code's mod API cannot supply the story's exact text
-to its native plan-approval prompt. Use Plan Mode and the story doc `forge next`
-names, following Planning a story below. The existing approval hook and its trust
-checks are unchanged. Plan Mode remains the approval path in Claude Code, Codex,
-the VS Code chat panel and sessions without the mod; installing the mod changes
-no approval rule.
-
-## The pane and strip
-
-Type `/forge` at any width, including 80 columns, to open and focus the pane.
-The mod requests it at interactive session start too; Claude Code places it
-automatically at 144 columns, or 110 after the person has opened it once.
-The strip below that wide-screen threshold ends with `/forge for the board`.
-The pane's Board tab, on the terminal and the Desktop app's Code tab alike, opens
-with one summary line, such as `3 in progress · 1 needs you · 2 stuck · go-live Oct 20`.
-Each part shows only when the board's `team` fact behind it is known and not zero; when
-none of them applies, the line counts the rows the tab shows in its own group words instead,
-such as `1 moving · 2 ready to merge · 3 waiting`; an empty board says only `Nothing in progress.`. An older Forge with no `team` shows no summary line. Below it come the board's
-own sentence (`team.sentence`) and its labelled totals, one line per kind, such as
-`Fixes — Done: 0; Ready to merge: 0; In progress: 1; To do: 0`, words built from
-`team.counts`. Groups follow in this order, each only when it has items, and each in the board's own
-order: NEEDS YOU (one row per `team.needs_you` entry, oldest first, with how long it has waited,
-such as `waiting 3h`), STUCK (one row per `team.blocked` entry with its reason in words and its
-age, such as `1 unfinished part waits on it · 2d`, and the longest stall in days), MOVING (the board's In progress, `team.in_progress`, except what is ready to merge;
-a running item shows its current stage and how long, such as `Review running · 12 min`),
-READY TO MERGE (the rest of `team.in_progress`, each saying Ready to merge, with the checks in words when known, and its merge
-step; an item merged from another machine shows `forge next`'s line naming who merges it), then a
-folded count of the work waiting or not started (planned stories and fixes not started), opened with a native button to the same rows. Each item shows its plain title, the story key small
-beside it, one line of state in words and, where there is something to do, its next step
-(`next.step`) after `→`. At most five rows show per group, then `and N more · forge board for all`.
-An older Forge without the `team` lists draws the same groups from each row's `needs_person`,
-stalled, running and ready flags, and shows no sentence or totals.
-Outside those totals, the pane never shows zero counts, unknown times, raw timestamps, priority codes or
-dismissed counts; findings read `Review found 3 problems`. Dates are short (`Oct 5`) or
-relative (`12 min`, `8 days`), and every time rounds as the board's do (`2m`, never `1m 30s`). Stage chains, round lines and the time breakdown stay on
-the board page. An empty board says `Nothing in progress.` `/forge` always returns the
-same lines as text, as well as opening the pane. Where mods draw nothing (the VS Code
-chat panel, `claude -p` and Remote Control from a phone or claude.ai), that text is the
-status reply. It uses the last completed snapshot, including any refresh error. Until a
-first refresh succeeds, the pane, the strip and `/forge` say `Loading Forge…`, or
-`Couldn't refresh: <first line of the error>` once that refresh failed.
-
-The strip above the prompt uses at most three lines. Its first line shows
-`Agents N/M (W waiting) · Tests N/M (K waiting) · <running item or idle> · 1: <next command>`.
-It also shows a recorded current worker step. The other lines show up to two active items
-from this repo, each with Build → Tests → Review → CI → Merge, its round and total
-time. A third active item replaces the last line with `+N more · /forge for all`.
-Finished stages show ✓ and their duration, the current stage ● and a live timer,
-and failed stages ✗ in red. Unreached stages have only their name; skipped tests
-show `Tests –`. Symbols carry the meaning without colour. The total uses the elapsed-time
-snapshot, which includes live and idle time without counting concurrent stages
-twice. At widths under 80 columns it is one line: running and waiting counts, the first
-active item's current stage and time, its total and the next step; without lane data,
-the first line is only the next step; the narrow strip has no item or lane summary.
-
-Press `1` on an empty prompt when Claude is idle to run the displayed next command
-as the user. Before submitting, the mod re-reads `forge next --json`: if the command
-changed it redraws and runs nothing. A failed re-read submits nothing and toasts
-`Couldn't check the next step: <reason>`; a failed submit toasts
-`Couldn't run the next step: <reason>`. A null command or busy Claude has no hotkey
-and shows the plain next-step line instead. Typing into a nonempty prompt stays typing.
+`forge board` opens a live page on 127.0.0.1 with a per-run token and refreshes by itself;
+it stops after 30 minutes with no page open and does not fetch or rebuild while no page is open.
+The page's events stream keeps it live. Ctrl-C stops it at once.
+`--out <path>` writes JSON instead. The JSON views are `forge board --json` and
+`forge next --json`. Both views add `team` for the team's summary.
+The run reference explains the board fields and page behaviour.
 
 ## Events
 
@@ -851,9 +555,25 @@ the request, demo it, review the whole prototype and answers, and obtain the cus
 then write the app's constitution; then create stories. Use prototype fixes before sign-off. The
 salesperson can be the FDE at first;
 the developer takes over with `docs/product/DISCOVERY.md`, `docs/product/BRIEF.md` and the customer
-call script. Build the prototype on the starter app. Rename or remove the `Project` placeholder.
+call script. The design comes first. Use the app's existing design; if it has none, draft one on
+a design canvas from the client's brand, or use a neutral design when there is no brand.
+Every API a person uses gets its screen in the client's design, built by the agent with the API,
+with no need to ask. Webhooks, endpoints only agents or systems call, and background jobs get none.
+Build the prototype on the starter app. Build the basic screens first, in the client's design;
+the starter has none, and has a `Project` API. Rename or remove the `Project` placeholder.
+The app's approved sign-in answer, spec or decision decides which basic screens exist and what they hold; for another method, such as one-time codes or company sign-in, do not build the password screens.
+Build the business screens next. The demo opens on the client's business task; show the basic
+screens last.
 Push back when a requested feature does not serve the problem card: explain why and
 offer to note it for after sign-off. Keep the same app as it grows into production.
+
+If the prototype holds only made-up data and has no back end, ask the person, then have the
+coordinator set `sample_data = true` in `forge.toml`. An existing sign-off record's
+`sample_data: true` still works until this setting is present. Forge skips tests and CI while the
+setting is on; walk the demo steps in a browser. Real data or a back end keeps tests from day one.
+After sign-off, `forge next` shows setting up tests as the first step. In a coordinator-owned fix,
+set the test command and CI checks as needed, then turn off the setting. Close blocks that fix until
+the `Personal data` answer is settled.
 
 For a requested working prototype, build the demo-data loader in the first version, so the customer sees their own kind of
 work instead of empty screens (see demo-data.md). Use the customer's words
@@ -894,6 +614,30 @@ Mainline Deploy as above. After the requested deployment is verified, record its
 `## Demo` in `docs/product/BRIEF.md` as `- Address: <url>`. Copy that address into the sign-off
 decision. A canvas-only prototype needs no demo address.
 
+**Production preparation.** Client sign-off approves the product direction, not production
+readiness. The coordinator confirms the host, account owner, region, domain, budget and release
+approver with the client. Record these decisions without secrets. The platform administrator
+provides access and environment setup. Name who owns support, alerts, backups and recovery.
+Plan remaining production work through stories and reviewed pull requests.
+
+Before the first Promote, follow First production release in Forge's packaged how-to,
+`forge/templates/conventions/deploy.md`.
+Confirm production access and secrets, HTTPS, DNS, database access, migrations and external
+services. Check the release in a non-production environment with a green full test run,
+the customer's main task and permissions for each role. Confirm a current backup and a
+demonstrated restore, recovery steps and an app and database rollback plan. Agree the release
+time and any data import or downtime. Only the authorized person presses Promote. Confirm the
+production address and main task after release. If a check fails, use the agreed rollback plan
+and notify the support contact. Workers never deploy.
+
+**Client cloud or servers.** Confirm this choice before deploy setup. Ask the platform
+administrator whether Mainline supports the requested target. For a supported target, follow
+the installed Mainline Deploy skill after an explicit deployment request. Otherwise, record
+the host and constraints and plan the required deploy work as a story. Name who owns server
+and network access, secrets, certificates, the database, backups, alerts and release. Use the
+client's approved release process and the same production checklist. A host without Mainline
+has no Mainline Promote step. Do not invent install commands or change the client's host choice.
+
 **The demo.** Every demo follows five steps, in order:
 
 1. their workaround today;
@@ -917,36 +661,50 @@ answers. In the options column, our default is first where there is one; questio
 no default. Offer **Ask the client** on every question and add it to the customer call script in
 `docs/product/DISCOVERY.md`. For a topic that may wait, also offer **Decide later**. Standards
 already decide logging, security and error handling; take those defaults and include them in the
-read-back without asking again. The first seven topics must have answers from the client,
-salesperson or developer before sign-off; a default or agent-only answer does not settle them.
+read-back without asking again. Use the table to time the questions. Open answers do not block work
+or sign-off, and `not known yet` is an accepted answer.
 
-| Topic | Question | Options (default first) | Before sign-off |
+| Topic | Question | Options (default first) | Ask by |
 |---|---|---|---|
-| Sign-off person | Who at the customer approves the prototype? | name and role | must |
-| Demo workflow | Which one task should the demo let them do from start to finish? | from the problem card | must |
-| Users and roles | Who uses it, and what can each kind of user do? | admin and staff; other | must |
-| Existing systems | Which systems must this work with? | none; CRM; accounting; email or SMS; payments; company sign-in | must |
-| Sign-in | How will people sign in? | email and password; company sign-in (Google or Microsoft) | must |
-| Personal data | Will it hold personal, health or payment data, or data that must stay in one country? | none; personal only; regulated | must |
-| Production host | Where will the real app run? | our platform; the client's cloud; the client's servers | must |
-| Data import | Does data need to come in from today's tools? | no; a spreadsheet; another system | may wait |
-| Email or SMS | Which provider sends messages? | none yet; the client's provider | may wait |
-| Domain | Which web address? | our subdomain; the client's domain | may wait |
-| Backups and uptime | How much downtime or data loss is acceptable? | the platform's daily backups; stricter | may wait |
-| Log retention | How long must logs be kept? | the platform's default; longer | may wait |
+| Sign-off person | Who at the customer approves the prototype? | name and role | before sign-off |
+| Demo workflow | Which one task should the demo let them do from start to finish? | from the problem card | before the demo |
+| Users and roles | Who uses it, and what can each kind of user do? | admin and staff; other | before sign-off |
+| Existing systems | Which systems must this work with? | none; CRM; accounting; email or SMS; payments; company sign-in | before sign-off |
+| Sign-in | How will people sign in? The client chooses the method. | email and password (default if the client gives no other answer); one-time codes; company sign-in (Google or Microsoft) | before sign-off |
+| Personal data | Will it hold personal, health or payment data, or data that must stay in one country? | none; personal only; regulated | before sign-off |
+| Production host | Where will the real app run? | our platform; the client's cloud; the client's servers | before sign-off |
+| Data import | Does data need to come in from today's tools? | no; a spreadsheet; another system | when a story needs it |
+| Email or SMS | Which provider sends messages? | none yet; the client's provider | when a story needs it |
+| Domain | Which web address? | our subdomain; the client's domain | when a story needs it |
+| Backups and uptime | How much downtime or data loss is acceptable? | the platform's daily backups; stricter | when a story needs it |
+| Log retention | How long must logs be kept? | the platform's default; longer | when a story needs it |
 
-Keep one `## Answers` section in `docs/product/BRIEF.md`, one line per topic. Record an answer as
-`- <Topic>: <answer> (<source>, <YYYY-MM-DD>)`, with the client, salesperson, developer, our
-default or agent as its source. Record an open request as
-`- <Topic>: ask the client (<who asked>, <date>)`; replace it with the sourced answer when the
-client replies. Only a may-wait topic can read `- <Topic>: later, when <trigger>`.
+Ask topics at the suggested time when possible. These are conversation prompts, not gates: a
+missing answer or an open client question never blocks planning, review, ordinary close, merge or
+sign-off. A repo that never declared sample data keeps today's refusal for an open `Personal data`
+answer when approving the app's rules page. A sample-data repo can approve its rules page and start
+stories with that answer open, but close waits for a settled answer on a fix that turns off sample
+data.
+Keep one `## Answers` section in `docs/product/BRIEF.md`, one running list written during the talks,
+with one line per topic. Record an answer as `- <Topic>: <answer> (<source>, <YYYY-MM-DD>)`, with
+the client, salesperson, developer, our default or agent as its source. Record an open request as
+`- <Topic>: ask the client (<who asked>, <date>)`; replace it when the client replies. Record a
+current unknown as `- <Topic>: not known yet (<source>, <YYYY-MM-DD>)`. If the person defers an
+answer, record `- <Topic>: later, when <trigger>`. These answers are accepted; no answer needs to
+be settled before work continues, except before closing a fix that turns off sample data.
+
+In a prototype, `forge next` and the board show one sign-off status line. When nothing else is in
+progress, they show open questions as a checklist, with the phrase that fixes each item. When the
+client replies, update the matching line in the brief. A `not known yet` answer is accepted and is
+not listed as open, except Personal data, which needs a settled answer before real data.
 
 **Canvas and app design.** Make each app's design from the whole `docs/product/BRIEF.md`: its
 purpose, users, records, fields, choice-list options and key flows. Use impeccable and
-emil-design-eng. Run impeccable's init when PRODUCT.md is missing. Make the screens in a Claude
-Design artifact with a shadcn design system and named shadcn components. On a Codex-only host
-without an artifact tool, make HTML artboards in the repo. Keep the canvas available for the
-customer and the sign-off review. New clients get this process at init; existing clients can use
+emil-design-eng when making it through Forge. Any way of making the design works, through Forge
+or separately. Keep one link to it in `## Design` in the brief; it need not be saved in the repo.
+When using Forge, run impeccable's init when PRODUCT.md is missing, and use a shadcn design
+system and named shadcn components. Keep the design available for the
+customer and the sign-off review. A UI fix needs no saved design images. New clients get this process at init; existing clients can use
 their current brief and design after upgrade and sync. Client sign-off does not require a root
 DESIGN.md, SCREENS.md or CHECKS.md, or a specific `Things it keeps track of` heading.
 When the canvas has a SCREENS.md screen list, add `Build: now` or `Build: later` to each screen.
@@ -965,49 +723,82 @@ For small changes to existing screens that add no screen and change no flow, use
 The build applies any existing app theme and follows the approved story design, including its
 components and fields. Workers and reviewers receive that design context.
 
-**Sign-off.** Before anyone asks for sign-off, hold one read-back call with the customer that
-goes through every item from `forge decision open` and every answer on the answers page: our
-defaults, the agent's guesses and the topics marked later. Settle every open must-answer topic
-in that call: `forge next` lists those still
-missing, malformed, or marked ask the client or later, and sign-off also refuses one answered by
-our default or the agent, so record each as the client, salesperson or developer answered it. Then
-write `forge decision new
-client-signoff` (customer, demo address for a working build, and the answers page copied word for word, leaving
-approved via and approved on empty), and run `forge decision accept client-signoff --by "<name>"`
-before any reply is recorded. Put each demo step and its test under `## Proof` for a working build,
-and settled choices under `## Decisions`.
-Sign-off checks that the copied Answers section matches `docs/product/BRIEF.md` and that the full
-run on main is green. Its completeness review must pass after judging the screens against the whole
-brief, including its purpose, users, records, fields, choices and key flows; it does not require a
-separate screen list. Missing screens, fields, options or flows hold sign-off. When a precondition is
-missing, the refusal lists every gap and the next action for each. Existing clients can complete
-sign-off with the brief and design they have after upgrade and sync; they do not need to add
-prototype design files for this gate.
-The check uses Codex's `gpt-6.1-sol` at high effort, independent of `[models.design]`.
-Codex must be installed because only Codex can review the screen images.
-On Windows, large image folders use separate batches to fit the native command line limit.
-Fix all findings from one sign-off review in one fix, then retry `forge decision accept client-signoff`.
-If the review engine fails, fix the engine problem and run the accept command again.
-A canvas-only sign-off needs no working build. A working build gets a full first product review.
-Each later attempt reviews only product files changed since the previous review and its open findings.
-Every reviewer gets earlier findings and answers. Settled findings stay settled.
-After two rounds, P0 findings still block until fixed. Other open findings need the owner's choice.
-Record that choice with `forge decision accept client-signoff --by "<name>" --resolve accept|more|split --reason "<human's choice>"`.
-Accept keeps the findings in the item's Known issues. Split creates a separate fix. More permits one more review.
-These rules apply to new clients and earlier-adopted clients after upgrade.
-Forge reuses passed results while what they checked stays unchanged.
-The product review uses the green full run as test evidence. It needs no separate `forge test` run.
-If the product or completeness review cannot finish, the refusal names its saved raw report when one exists.
-Before the customer's reply, the command runs these checks and stops without accepting sign-off.
-Autoreview uses the
-repo's tool and `[models.review]` settings, with Autoreview's defaults for unset values. Fix what it finds and run it again. Once it passes, tell the salesperson to ask the
-customer's named person for sign-off their own way. Draft no sign-off email; Forge sends nothing. When they bring the reply back, record
-it in `approved_via` and `approved_on`, then run `forge decision accept client-signoff --by
-"<name>"` again to accept. The customer's reply is the approval evidence the sign-off decision
-records. Set `approved_via` to `email`, `call` or `chat` and `approved_on` to the reply date.
+**Sign-off.** Before the demo, read back the brief and open items with the customer. The suggested
+times in the topic table are prompts, not gates. No missing answer, open client question, or answer
+marked `later` or `not known yet` blocks planning, review, close, merge or sign-off, except that a
+fix which turns off sample data waits for a settled `Personal data` answer. Write
+`forge decision new client-signoff` with the customer and the demo proof for a working build. Leave
+`approved_via` and `approved_on` empty. Forge writes the current `## Answers` section into the
+sign-off record. Do not copy it by hand. Put each demo step under `## Proof` for a working build.
+For a prototype without the sample-data mark, also name the passing test for each step. A marked
+sample-data prototype has no test requirement before sign-off. Put settled choices under
+`## Decisions`. Run `forge decision accept client-signoff --by "<name>"` before asking
+the customer to sign off. After the check passes and the customer replies, set `approved_via` to the
+reply and, if known, `approved_on` to its date. Run
+`forge decision accept client-signoff --by "<name>"` to record the signer's name.
+Before the demo, read the design from the brief's link when the host can and list its screens.
+Compare them with the app, then build what is missing or tell the person.
+If the host cannot read the link, use the design pages saved in the repo, or ask the person
+for the screen list when there are no saved pages. Say plainly that the design was not read.
+Missing access or saved pages never refuses the demo or sign-off.
+Sign-off keeps the demo proof and the customer's record. A prototype marked `sample_data = true`
+in `forge.toml` gets one gap check before the demo, with no full test run or whole-source review.
+The check reads the brief, answers, design and app routes. Findings below Gain 5 and Harm 4 go to
+Known issues without a repair request. A P0, Gain 5 or Harm 4 or higher stops for the owner's
+choice at once. The owner can accept a held finding with a reason or ask for a repair. A prototype
+without the setting keeps the current full-run and whole-source review rules. An existing sign-off
+record with `sample_data: true` keeps working for an earlier-adopted repo.
 
-The Answers check ignores trailing whitespace and line-ending differences. A refusal names the first
-different line in the Answers section, including its heading.
+Only the coordinator writes `sample_data = true` in `forge.toml`, after asking the person. A worker
+cannot change this setting. Existing clients get the new sign-off behaviour after the setting is
+written, and get the brief rules after upgrading and syncing. They do not need to add prototype
+design files for sign-off. A sample-data repo may approve its rules page and start stories with an
+open `Personal data` answer. A repo that never declared sample data keeps today's refusal at rules
+page approval.
+
+For a prototype without the setting, fix held findings from one sign-off review in one fix. Run the
+printed repair command from the sign-off checkout that the refusal names. The repair includes the
+sign-off record and publishes its earlier review commits, even when that checkout's first fix
+already merged. After the repair merges, retry `forge decision accept client-signoff` from its
+checkout. The record keeps earlier rounds and owner choices after a squash merge or a move to
+another computer.
+Judge a prototype as a prototype. Production work, including deployment to the client's account,
+belongs to build stories. A clearly labelled demo tool is not a P0 when the prototype holds
+only sample data and has no back end, as its own files show.
+A security hole in a real API or sign-in, or any exposed real data, stays a P0.
+Risks that exist only in a real-data build the prototype is not, such as browser-held
+codes or data in a prototype with no back end, belong to build stories and Known issues,
+not P0 findings.
+Only Harm 4 or higher, Gain 5, or a P0 holds the product review; every other finding goes straight
+to Known issues without a repair round or an owner question. For an unmarked prototype, a held
+finding below P0 still needs the owner's choice after two rounds.
+If the review engine fails, fix the engine problem and run the accept command again.
+A canvas-only sign-off needs no working build. An unmarked working prototype gets a full first
+product review. Each later attempt reviews only product files changed since the previous review and
+its open findings.
+If product files changed after a saved stop, review them before asking the owner about remaining findings.
+With no product change, repeat the saved question without another review.
+Every reviewer gets earlier findings and answers. Settled findings stay settled. A sample-data
+prototype uses its one gap check and has no review rounds. If that check finds a P0, Gain 5 or Harm
+4 or higher, Forge asks the owner at once. The owner can run
+`forge decision accept client-signoff --by "<name>" --resolve accept --reason "<reason>"` to keep
+the finding in Known issues, or ask for a repair. Without the sample-data
+setting, a P0 keeps the current hard block. A repo that already wrote `sample_data: true` in its
+sign-off record keeps working. New and earlier-adopted clients get the brief rules after upgrade
+and sync.
+Forge reuses passed results while what they checked stays unchanged.
+A version-only change to forge.toml keeps the last green full run. Any other settings change needs a new full run.
+For an unmarked working prototype, the product review uses the green full run as test evidence. It
+needs no separate `forge test` run.
+If the product review cannot finish, the refusal names its saved raw report when one exists.
+The sign-off review uses the repo's selected tool and `[models.review]` settings, with
+Autoreview's defaults for unset values. Once any required check passes, ask the customer's named
+person for sign-off their own way. Forge sends nothing. When the customer replies, record the
+reply in the sign-off record and run `forge decision accept client-signoff --by "<name>"` to record
+the signer.
+
+Forge writes the current Answers section into the sign-off record, so the record always quotes the
+brief used for sign-off.
 
 Every normal, light and sign-off review runs through the external Autoreview program:
 Claude when `tools = "claude"`, Codex when `tools = "codex"`. With `tools = "both"`,
@@ -1018,7 +809,7 @@ A requested working prototype proves the demo steps and its security and data bo
 Its light review checks demo breakage, security and data loss, using `[models.light_review]`.
 A requested working prototype gets a light review that blocks only on P0 findings.
 A `Not done` against the item's own approved Done-when still blocks at any priority.
-Full proof is due at sign-off.
+Sign-off needs proof of the prototype demo; production proof belongs to the build stories.
 
 After sign-off, every new story carries forward the available canvas, Proof and Decisions into
 `## Proven by the prototype`. Treat that evidence as settled. Plan and cold read only new work
@@ -1026,10 +817,9 @@ or production risks. Start from the prototype canvas or a newer design approved 
 Plan the first stories only from screens marked `Build: now`. A `Build: later` screen stays on
 the signed canvas as the source for a later story.
 
-When a later story needs a topic marked later, its cold read reports `Decide first: <topic>`.
-Ask that one question, put the answer in the finding's disposition and the story's Notes as
-`Decided: <topic>: <answer> (<source>, <date>)`, and make the first task update the answers page.
-Until the decision, use a fake provider for an external service.
+When a story needs an answer that is still open or marked `later`, ask the question then and update
+the brief when the client replies. An open answer is context, not a blocker, in a cold read. Use a
+fake provider for an external service while its provider choice is open.
 
 ## App constitution
 
@@ -1075,7 +865,7 @@ In an app made from the Python starter, whose tests run import-linter, copy thes
 - Built in: each module keeps its tables in its own Postgres schema, with core tables in core; links between business modules store an indexed id without a foreign key, and links to core keep their foreign key.
 - A module uses another module only through its public service, never through its tables.
 - The tests run import-linter, so an import of another module's internal files fails them.
-- Built in: the API serves an MCP server at /mcp. An admin adds agent accounts on the Members screen, with a role and a key that shows once; agents use each feature's tools with that role's permissions, and delete and restore tools stay off until an admin turns them on for the feature.
+- Built in: the API serves an MCP server at /mcp. An admin adds agent accounts with a role and a key that shows once through the Members API; the agent builds the Members screen in the client's design; agents use each feature's tools with that role's permissions, and delete and restore tools stay off until an admin turns them on for the feature.
 - Built in: each feature also offers its items, its field guide and its allowed values as MCP resources; agents get a prompt only for a task under `## Agent tasks`; the MCP server never uses elicitation or sampling.
 - Built in: every action goes through its feature's service and permission, from the screens, the API and agents; each feature's create takes a retry key; an agent that a person signs in acts as that person, and the change history records both; reports are named, typed reads in their feature's report service.
 
@@ -1088,6 +878,25 @@ docs/product/CONSTITUTION.md. Use the defaults in
 `## Answers` in the brief already gives a settled answer. Skip a defaulted question that `## Answers`
 already answers. Check the brief's `Personal data` answer; ask whether any data is private or
 regulated only when that answer is missing, then record the answer in `## Answers`.
+
+If the answer is regulated, such as health or finance data, ask these questions before the first story.
+Skip a question only when the brief already has a settled answer:
+
+- In which country or region must the data stay, including backups and copies held by service providers?
+- How long must each kind of record stay, and when must the app permanently remove it?
+
+Record the answers in the brief's `## Answers`. Add these three rules to the constitution,
+for any stack, before the owner approves it:
+
+- Read history: record who read which record and when, through every path that reads regulated data.
+  Keep record identifiers in this history, not the record contents. Restrict access to the history.
+  Ordinary API request logs do not provide this history.
+- Data location: keep regulated data, backups and service-provider copies in the country or region from the brief.
+- Retention: apply the period from the brief to each kind of record and permanently remove old records when it ends.
+  Cover backups, copies and read history in the policy. Soft delete alone does not remove old records.
+
+These are requirements for the app to build, not features already built into the starter.
+Use the client's answers, not a guessed country or period. Plan the work that these rules need in the first story that handles regulated data.
 
 Use this outline, and do not copy product facts from the brief into the constitution:
 
@@ -1115,7 +924,7 @@ The product facts are in docs/product/BRIEF.md.
 - Built in: admins invite people by email and remove members, which signs them out at once; members cannot invite, remove people or change roles.
 - Built in: dates and times are stored in UTC and shown in the person's time zone, and money is stored as an exact decimal with its currency code; the helpers in @app/shared-util format them.
 - Built in: each table has a CSV export, admin actions write change history, and records are soft deleted.
-- Built in: the API serves an MCP server at /mcp. An admin adds agent accounts on the Members screen, with a role and a key that shows once; agents use each feature's tools with that role's permissions, and delete and restore tools stay off until an admin turns them on for the feature.
+- Built in: the API serves an MCP server at /mcp. An admin adds agent accounts with a role and a key that shows once through the Members API; the agent builds the Members screen in the client's design; agents use each feature's tools with that role's permissions, and delete and restore tools stay off until an admin turns them on for the feature.
 - Built in: each feature also offers its items, its field guide and its allowed values as MCP resources; agents get a prompt only for a task under `## Agent tasks`; the MCP server never uses elicitation or sampling.
 - Built in: every action goes through its feature's service and permission, from the screens, the API and agents; each feature's create takes a retry key; an agent that a person signs in acts as that person, and the change history records both; reports are named, typed reads in their feature's report service.
 - Built in: each UI or API crash writes one error report to the logs.
@@ -1254,9 +1063,10 @@ An open upgrade or local work still refuses and stays in place. Ignored configur
 also stay in place; only recognized cache directories may be discarded.
 
 1. Ask which release to move to, recommending the newest.
-2. Wait until no Forge runs are in progress anywhere on the machine. Let workers, plan reads,
-   tests and close finish first. An install during a close can mix two releases.
-   `forge upgrade` names the items in the machine's lanes and asks you to wait if any remain.
+2. If the target release differs from the release on PATH, wait until no Forge runs are in
+   progress anywhere on the machine. An install during a close can mix two releases.
+   `forge upgrade` names those runs and asks you to wait. If the target release is already on
+   PATH, upgrade skips the install and continues while other runs remain in progress.
 3. Run `forge upgrade <release>` in the main checkout, on the default branch. It installs the
    release, has that release refresh Forge's files in the fix, commits them and closes the fix.
    Its commit includes the upgrade's proof list; close reports tests and review results together.
@@ -1381,9 +1191,7 @@ recording succeeds; if the repo pins a newer release, install that pinned releas
   and none for settings, docs, deletions or test-only items: the check the item names proves those.
 - Keep tasks small: at most three Done-when items and about 400 changed lines each, counting
   additions and removals outside tests, Markdown files, docs/, plans/ and .factory/.
-  Close stops a part over 400 lines before review;
-  split it, or record an allowance with a reason by running `forge fix allow-large "<reason>"`
-  in the part's folder, the same way fixes work. Stories approved before this limit keep working.
+  Forge prints the rule when a part starts and close warns when a part is larger; split large parts when you plan them.
 - Keep each part's builder notes to its goal, files and one test per rule.
 - When a plan adds a new feature to a TypeScript or Python starter app, name its plural,
   singular and fields in the builder notes, and give the worker's first-step command:
@@ -1395,6 +1203,8 @@ forge task feature clients --one client --field 'name:text'
 forge task feature jobs --one job --field 'name:text' --field 'description?:long-text' --field 'status:status(planned|active|done)' --field 'client?:link(clients)' --field 'hoursBudget?:number' --field 'budget?:money' --field 'dueDate?:date' --field 'contactEmail?:email' --field 'billable:yes-no'
 ```
 
+  The command builds the feature's API, agent tools, change history and tests. It writes no pages;
+  the agent builds the screens for APIs that people use, in the client's design.
   A feature needs a text field for its name. The nine kinds are text, long-text, number, money,
   date, yes-no, email, status and link; `?` makes a field optional. Add other kinds by hand.
   The worker runs the command; the human makes no technical choices and never types it.
@@ -1459,12 +1269,17 @@ setup-only, platform or "foundation" stories. Cut a story that answers no proble
 when linked to a spec, it must also serve that spec's behaviour.
 
 Start every task and fix `forge next` lists as ready at once, and close each as its worker
-finishes. One machine runs agents on half its available cores (at least one; work rounds, plan reads and close
-reviews), across all its repos; the rest wait in line. Every run also waits while load per
+finishes. One machine runs work rounds on half its available cores (at least one place),
+across all its repos; the rest wait in line. Reads and reviews take no agent place.
+Builders lend their places during test commands and wait for admission again before continuing.
+Returning builders and failed-test repairs go before new builds. New builds pause above twice
+the test lane's place count of waiting test items and resume at that count or below.
+Every run also waits while load per
 core is 1.5 or more, including when external jobs cause the load, or free memory is below its floor.
-Busy local CI jobs reduce the available budget until they finish. Items that other planned work waits on go
+Busy local CI jobs reduce the available budget until they finish. Within the remaining work, items that other planned work waits on go
 first, first-come within each group; runs print their place and why when they start waiting and
-each time it changes. Running agents keep their places. A run that dies frees its place once its agent ends. A waiting
+each time it changes. Running agents keep their places except during test commands.
+A run that dies frees its place once its agent ends. A waiting
 run is working as meant: keep watching it. When a fix changed a story's plan on the default branch, `forge next` and `forge task start` say
 so with the command that merges it into the story branch; run it, then carry on. Forge compares
 content history, never commit dates: an older copy on the default branch does not block a start.
@@ -1773,6 +1588,7 @@ Follow-up replay and merging default-branch updates before the underlying item l
 
 Mark generated files such as migration snapshots `linguist-generated` in `.gitattributes`, so
 reviews show them only as counts of changed lines.
+They count towards neither a part's size warning nor a fix's code-file limit.
 
 Read the worker's final handoff and resolve its stated blockers before `forge close`.
 Before close, the worker puts a `Proof list:` paragraph in its last commit message: each Done-when
@@ -1859,8 +1675,14 @@ In CI mode, `forge.yml` also runs `forge test --full` once a day on the default 
 `workflow_dispatch`. To start a full run now, run `gh workflow run forge.yml --ref <default>`.
 Local mode has no scheduled job; when `forge next` says the daily run is due, run `forge test --full`
 in the main checkout when the machine is quiet. A green full run on the latest default-branch
-commit is required before pushing a release tag or accepting `client-signoff`. Everyday merges do
-not wait for it.
+commit is required before pushing a release tag. Client sign-off can reuse a green full run
+within the latest ten default-branch commits when only exact `forge sync` output or records
+under `.factory/`, `plans/` or `docs/decisions/` changed on the default branch.
+App, test or lock-file changes on the default branch need a fresh full run.
+An app repair on the sign-off branch can use the default branch's green run.
+A failed latest full run still blocks.
+Earlier clients need no migration, and accepted sign-off records stay valid. Everyday merges do
+not wait for a full run.
 A failed scheduled or manual full run appears in `forge next` with its failed test names.
 The required `forge-pr-check` fails a pull request from a branch Forge did not start.
 Before the first committed review, this check stays pending. A stale or blocked review still
@@ -1983,6 +1805,8 @@ review and green checks on the final pushed head. After `forge fix amend`, close
 the pull request's Done when line. Use `--append "<text>"` to add text with a space between
 the old and new text. `--done "<done when>"` replaces the whole Done-when. Both options show
 the old and new text before writing, and need `--because "<why>"`.
+Land runs work first for a fix with only its start and state records, including after amend.
+A work commit can change only Forge records. Amend and next direct that fix to close.
 Upgrade close leaves the repo's local git hooks alone,
 including when it regenerates conflicted Forge files with the newly pinned release.
 If conflicted-merge handling fails, close aborts the merge and reports the error before retrying.
@@ -2058,13 +1882,15 @@ can enter close. Among changes whose bases are ready, the oldest starts first. A
 not yet ready that changes a file an older change in the run also changes waits until that one
 merges or stops; Forge's own `plans/spotted.json` and `.factory/` files never count. Only one run
 works in a repo at a time. When two closes in the run collide on git's ref lock while fetching,
-the run starts that change again once and says so. It runs no fix rounds: a change that needs a worker or the owner stops
-alone and the others go on. The run ends with `Merged (n): ... · Ready to merge (n): ... · Needs
+the run starts that change again once and says so. A failed CI check gets one fix round on
+that change's builder thread, then close runs again. Other worker or owner stops affect only
+that change, and the others go on. The run ends with `Merged (n): ... · Ready to merge (n): ... · Needs
 you (n): ...`, then each stopped change with its reason and next step: `forge land <item>` for
-its fix rounds, or, for a stopped change, close's own question and next step, which only the owner
+its next run, or, for a stopped change, close's own question and next step, which only the owner
 answers. Close waits for the owner's recorded choice. A failed
-CI job whose log names none of the change's files runs again once; a second failure stops that
-change. Forge's review check follows review recovery instead. Where a human merges, the run closes
+CI job whose log names none of the change's files runs again once before the fix round.
+If CI still fails after the fix round, the change stops with its reason.
+Forge's review check follows review recovery instead. Where a human merges, the run closes
 every change, holds none and merges none, and lists the ready ones oldest first, with stacked fixes after their bases,
 with their pull request links: merge them
 in that order.
@@ -2138,8 +1964,9 @@ other refusals' next actions instead of repeatedly retrying them.
 
 A worker or review notes problems outside its change as spotted items, which Forge keeps in
 spotted records and nobody edits by hand. A spotted item never widens the change in hand,
-except a bug that blocks it. When `forge next` names a file that keeps breaking, start its fix
-command at once, like any ready item, without asking the owner.
+except a bug that blocks it. Follow the first step from `forge next` before other ready fixes.
+When it names a file that keeps breaking, start its fix command without asking the owner.
+Problems noted before accepted client sign-off no longer count towards these lines.
 When `forge next` says the latest scheduled run of the default branch failed, it names the
 failed jobs and tests; start its fix command the same way, or follow the step it gives for the
 fix already started.
@@ -2185,7 +2012,7 @@ bar, a disposition with the scores in its reason for one below it, and the stop 
 stop. Approval and merge steps stay the owner's.
 
 When two rounds in a row leave close's tests failing or the same P0 open, `forge work`
-stops the item. Close also stops a story part that grows past its line limit. Either prints a
+stops the item. It prints a
 ready-to-ask question: what the item delivers, what is stuck, what the worker tried, and the
 choices. Ask the owner exactly that question. Record the choice with
 `forge close <item> --resolve <switch|same|narrow|split> --reason "<human's choice>"`, then

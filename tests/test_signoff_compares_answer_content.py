@@ -1,4 +1,12 @@
-"""Sign-off compares answer content and identifies the first different line."""
+"""Sign-off saves the current Answers section and ignores quote formatting.
+
+Test audit:
+1. Protect the sign-off record's Answers quote against stale substantive content.
+2. A changed, removed, added, indented or blank answer could remain in the saved record.
+3. The sample-data brief test covers a generic stale quote; this strict-path command test covers
+   substantive content differences and the earlier-adopted path. Test 1 owns whitespace only.
+4. The test runs Forge's decision command and uses no production seam.
+"""
 import shutil
 
 import pytest
@@ -56,16 +64,16 @@ def test_1_signoff_ignores_trailing_whitespace_and_line_endings(
     accepted = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
     assert accepted.returncode == 0, accepted.stderr
     assert "status: accepted" in page.read_text("utf-8")
-    assert len(queue.with_suffix(".calls.jsonl").read_text("utf-8").splitlines()) == 2
+    assert len(queue.with_suffix(".calls.jsonl").read_text("utf-8").splitlines()) == 1
 
 
-@pytest.mark.parametrize("history, change, line", [
-    ("new", "changed", 3), ("new", "removed", 8), ("new", "added", 9),
-    ("new", "indent", 3), ("new", "internal blank", 3),
-    ("adopted", "changed", 3),
+@pytest.mark.parametrize("history, change", [
+    ("new", "changed"), ("new", "removed"), ("new", "added"),
+    ("new", "indent"), ("new", "internal blank"),
+    ("adopted", "changed"),
 ])
-def test_2_signoff_refusal_names_the_first_different_answer_line(
-        repo, gh, tmp_path, monkeypatch, history, change, line):
+def test_2_signoff_replaces_stale_answers_with_the_brief(
+        repo, gh, tmp_path, monkeypatch, history, change):
     repo, fix, answers, queue = _signoff(repo, gh, tmp_path, monkeypatch, history)
     lines = answers.splitlines()
     if change == "changed":
@@ -80,10 +88,11 @@ def test_2_signoff_refusal_names_the_first_different_answer_line(
     else:
         lines.insert(2, "")
     page = _decision(fix, answers, quote="\n".join(lines) + "\n\n")
-    refused = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
-    assert refused.returncode == 1
-    assert f"first differ at line {line} of the Answers section" in refused.stderr
-    assert "docs/product/BRIEF.md" in refused.stderr
-    assert "copy its Answers section" in refused.stderr
-    assert "status: proposed" in page.read_text("utf-8")
-    assert not queue.with_suffix(".calls.jsonl").exists()
+    accepted = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
+    assert accepted.returncode == 0, accepted.stdout + accepted.stderr
+    saved = page.read_text("utf-8")
+    assert "status: accepted" in saved
+    saved_answers = saved.split("## Answers\n", 1)[1].rstrip()
+    brief_answers = answers.split("## Answers\n", 1)[1].rstrip()
+    assert saved_answers == brief_answers
+    assert len(queue.with_suffix(".calls.jsonl").read_text("utf-8").splitlines()) == 1

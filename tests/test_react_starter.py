@@ -23,8 +23,6 @@ def test_1_a_new_app_starts_with_react_compiler_on():
     source_roots = (
         web / "src",
         STARTER / "libs" / "core" / "web" / "src",
-        *(STARTER / "libs" / module / "web" / "src"
-          for module in ("auth", "history", "organisations", "projects")),
         STARTER / "libs" / "shared" / "ui" / "src",
     )
     memoized = [

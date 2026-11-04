@@ -49,8 +49,8 @@ def test_8_ready_pull_request_without_worktree_follows_the_merge_policy(env, mer
         assert next_step["command"] is None
         assert "merges it from their machine" not in next_line
     else:
-        assert "merges it from their machine" in next_line and next_step["command"] is None
-        assert "is ready to merge:" not in next_line
+        assert next_line == "Readme greets new readers is ready to merge."
+        assert next_step["command"] == f"forge merge {item}"
 
 
 def _client(repo, gh, tmp_path, adopted):
@@ -206,10 +206,9 @@ def test_7_current_remote_failures_survive_missing_or_behind_local_branch(
         assert row["stage"] == "checks failed" and row["status"] == "Checks failed"
         assert row["pr"]["checks"] == "fail" and row["pr"]["failures"]
         assert any(event["kind"] == "checks_failed" for event in row["occurrences"])
-        # With no checkout here, the work runs on the machine of whoever started it.
-        assert row["next"]["command"] == ("forge work page" if local == "behind" else None)
+        assert row["next"]["command"] == "forge work page"
         if local == "remote-only":
-            assert row["next"]["line"].endswith("was started by Forge Test and runs on their machine.")
+            assert row["next"]["line"] == "Repair the page has no checkout on this machine."
     assert _row(full, "page")["status"] == "Checks failed"
     if local == "behind":
         plain = repo.forge("next")

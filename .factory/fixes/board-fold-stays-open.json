@@ -1,0 +1,45 @@
+{
+  "base": "6160811bf5a9796e04fdb8bc6c52bccf0622d4cf",
+  "branch": "fix/board-fold-stays-open",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1a084-de66-7de1-925c-a00b31c6873b",
+    "head": null,
+    "start": "27481fec3f95027ff9c459ced72696f7007ea607"
+  },
+  "done_when": "An open For the builders section on a story page stays open across board refreshes until the person closes it",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "344800dc214278e96b8201878e94b43c84e2cbb3a8d8bb503acd29eb33c73f3a",
+    "changed": "0147fcc6270d82d066f88693011a215397baeec4d66961d886d5c2045508108e",
+    "commit": "d1e3df4b5cd37a390bc838cebfa25234c9f3f8f4",
+    "dismissals": [],
+    "findings": [],
+    "id": "e08014e9-61ce-4e35-93c1-629c0ed1497e",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-03T08:26:55.661738+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-03T08:31:49.929349+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "edfec0bf1580dfec0cbc2ec9654cc395d70982dc",
+    "keys": {},
+    "round": null
+  },
+  "why": "The board's auto-refresh closes the For the builders section on a story page while a person reads it (bug 1332)",
+  "worker": "codex"
+}

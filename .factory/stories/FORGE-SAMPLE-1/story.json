@@ -1,0 +1,38 @@
+{
+  "approval": {
+    "at": "2026-11-02T18:19:27.335674+00:00",
+    "by": "human-via-Claude",
+    "event": "toolu_01H58QXUZChpL7XkAS1bnfMN",
+    "hash": "4e15298f84b3bf2da57eaaa3a529c1d3ae30604d1bbea3b33d6dd16f1efab4f4",
+    "part_line_limit": 400,
+    "round": 3,
+    "runtime": "claude",
+    "session": "c01a489d-c76f-41c1-8371-d6f0052b027c"
+  },
+  "doc": "plans/FORGE-SAMPLE-1.md",
+  "status": "approved",
+  "steps": [
+    {
+      "at": "2026-11-02T17:44:46.189061+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-02T18:09:17.904029+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-11-02T18:14:47.074300+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-11-02T18:18:23.051197+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-11-02T18:19:27.335857+00:00",
+      "step": "approved"
+    }
+  ],
+  "title": "Sample-data prototypes get a light sign-off",
+  "touches": 1
+}

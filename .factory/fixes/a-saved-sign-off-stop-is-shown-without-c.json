@@ -1,0 +1,45 @@
+{
+  "base": "e65fe4f96406916b16a7693d694ea23872fbb0e5",
+  "branch": "fix/a-saved-sign-off-stop-is-shown-without-c",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a19d5d-5641-78a2-aa0d-aa6b00af16bd",
+    "head": null,
+    "start": "b7e711d2e5273ebe71e7522220a09d58eb1d3729"
+  },
+  "done_when": "The sign-off stop is shown only for findings still open on the latest commit, and a version-only upgrade keeps the last green full test run.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "60ad754755b8ecf3a9e9d3a66566bd8dc58ce83f62c4aec1e4a7d5a0c8fa9b32",
+    "changed": "b53ab70a91f285f7a5127844375c5d5d38f9b31b0f59c3feaba214e27f6c11c9",
+    "commit": "9572ea7a693c6be18903da63ff7da397efe35250",
+    "dismissals": [],
+    "findings": [],
+    "id": "5430839a-c76c-4a92-a48c-a62182c39306",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-02T17:44:22.842155+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-03T02:11:19.764863+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "01a33aa633376e37d62eb5583948d174b0ad0d75",
+    "keys": {},
+    "round": null
+  },
+  "why": "A saved sign-off stop is shown without checking commits pushed after that round, so the owner can be asked about a finding that a repair already closed. A forge.toml version change after an upgrade also counts as a product change, so the client must run the full tests again before sign-off.",
+  "worker": "codex"
+}

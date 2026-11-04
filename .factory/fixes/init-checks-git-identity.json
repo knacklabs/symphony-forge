@@ -1,0 +1,45 @@
+{
+  "base": "00c609a81f4a5d2fa09466f7105c2513ba53cd5a",
+  "branch": "fix/init-checks-git-identity",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1a601-6aad-75d3-8558-3ebe47e1cf9a",
+    "head": null,
+    "start": "ec863a32dfcb1c720d8e601a8949850266547c62"
+  },
+  "done_when": "forge init with no git identity refuses before it writes any file, and names the two git config commands to run. Doctor is not the next step for this.",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "9b06fbbdf3a549d01b56ea94b868864ae67ec327da9a34ced9f47d9feccce0a1",
+    "changed": "7e37028d4a75a5e16d2a8518ec16c3dc4450b007509f78576badaacc9a29e124",
+    "commit": "2a8d212d2afecb3839807fd4578ab9721642a1c9",
+    "dismissals": [],
+    "findings": [],
+    "id": "de088163-3b78-40fc-9c78-9a30a79cd707",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-04T09:58:39.570516+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-04T10:07:54.958696+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "274acfe6e9e01ee0f53bde2e3e83d88e19b66ad7",
+    "keys": {},
+    "round": null
+  },
+  "why": "forge init on a machine with no git name or email writes all its files, fails at the commit, and a rerun leaves services.toml out of the first commit (GitHub issue 1326).",
+  "worker": "codex"
+}

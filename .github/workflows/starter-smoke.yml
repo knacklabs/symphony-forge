@@ -1,33 +1,15 @@
 name: Starter smoke
 
 on:
+  schedule:
+    - cron: '0 3 * * *'
   workflow_dispatch:
   pull_request:
     paths:
       - src/forge/templates/starter/**
       - src/forge/templates/starter-python/**
-      - src/forge/templates/skeleton/.dockerignore
-      - src/forge/templates/skeleton/Dockerfile
-      - src/forge/init.py
       - src/forge/feature*.py
       - src/forge/templates/feature/**
-      - tests/test_feature_command.py
-      - tests/test_starter_tree.py
-      - tests/test_python_starter.py
-      - tests/test_libs_layout.py
-      - tests/test_one_company.py
-      - tests/test_defaults_*.py
-      - tests/test_database_*.py
-      - tests/test_module_schemas.py
-      - tests/test_feature_projects.py
-      - tests/test_feature_access.py
-      - tests/test_mcp.py
-      - tests/test_agent_ready.py
-      - tests/test_member_removal.py
-      - tests/test_request_log.py
-      - tests/test_mcp_resources.py
-      - tests/test_proxy_error_pages.py
-      - .github/workflows/starter-smoke.yml
 
 permissions:
   contents: read
@@ -38,6 +20,8 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
@@ -45,7 +29,21 @@ jobs:
       - name: Run the real starter stack and browser flows
         env:
           FORGE_STARTER_LIVE: '1'
-        run: uv run --frozen --python 3.11 pytest tests/test_starter_tree.py tests/test_libs_layout.py tests/test_one_company.py tests/test_defaults_*.py tests/test_database_*.py tests/test_module_schemas.py tests/test_feature_projects.py tests/test_feature_command.py tests/test_feature_access.py tests/test_mcp.py tests/test_agent_ready.py tests/test_request_log.py tests/test_mcp_resources.py tests/test_proxy_error_pages.py -k "not python" -q -x -n 0 --timeout=1800
+        run: uv run --frozen --python 3.11 pytest tests/test_starter_tree.py tests/test_libs_layout.py tests/test_one_company.py tests/test_defaults_*.py tests/test_database_*.py tests/test_module_schemas.py tests/test_feature_projects.py tests/test_feature_command.py tests/test_feature_access.py tests/test_mcp.py tests/test_agent_ready.py tests/test_request_log.py tests/test_mcp_resources.py tests/test_proxy_error_pages.py tests/test_noscreens_rules.py tests/test_notifications.py -k "not python and not test_2_admins_invite_by_email_and_members_cannot_change_roles_or_invite" -q -x -n 0 --timeout=1800
+
+  organisation-invites-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: astral-sh/setup-uv@v6
+      - name: Run organisation invites against both starter stacks
+        env:
+          FORGE_STARTER_LIVE: '1'
+        run: uv run --frozen --python 3.11 pytest tests/test_defaults_organisations.py::test_2_admins_invite_by_email_and_members_cannot_change_roles_or_invite -q -x -n 0 --timeout=3300
 
   member-removal-smoke:
     runs-on: ubuntu-latest
@@ -73,7 +71,7 @@ jobs:
       - name: Run the Python starter stack and browser flows
         env:
           FORGE_STARTER_LIVE: '1'
-        run: uv run --frozen --python 3.11 pytest tests/test_python_starter.py tests/test_libs_layout.py tests/test_database_*.py tests/test_feature_projects.py tests/test_mcp.py tests/test_mcp_resources.py -k "python and not test_5_feature_columns_come_from_the_kind_table" -q -n 0 --timeout=1800
+        run: uv run --frozen --python 3.11 pytest tests/test_python_starter.py tests/test_libs_layout.py tests/test_database_*.py tests/test_feature_projects.py tests/test_mcp.py tests/test_mcp_resources.py tests/test_noscreens_rules.py -k "python and not test_5_feature_columns_come_from_the_kind_table" -q -n 0 --timeout=1800
 
   python-database-kinds-smoke:
     runs-on: ubuntu-latest
@@ -89,7 +87,7 @@ jobs:
           FORGE_STARTER_LIVE: '1'
         run: uv run --frozen --python 3.11 pytest 'tests/test_database_kinds.py::test_5_feature_columns_come_from_the_kind_table[python]' -q -n 0 --timeout=1800
 
-  python-feature-screens-smoke:
+  python-feature-api-smoke:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -98,7 +96,7 @@ jobs:
         with:
           node-version: '24'
       - uses: astral-sh/setup-uv@v6
-      - name: Run the Python feature stack and browser flows
+      - name: Run the Python feature API stack
         env:
           FORGE_STARTER_LIVE: '1'
         run: uv run --frozen --python 3.11 pytest tests/test_feature_command.py -k "python and test_2_the_new_feature_works_like_projects" -q -n 0 --timeout=1800

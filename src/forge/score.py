@@ -156,7 +156,7 @@ def open_findings(result: dict[str, Any]) -> list[dict[str, Any]]:
 
 
 def remember(known: list[dict[str, Any]], result: dict[str, Any], round_number: int,
-             areas: dict[tuple[str, str], str]) -> list[dict[str, Any]]:
+             areas: dict[tuple[str, str], str], *, repaired: dict[str, Any] | None = None) -> list[dict[str, Any]]:
     """Add a round to the known findings, never removed; only open or owner-accepted entries change."""
     because = {d["finding"]: d["because"] for d in result.get("dismissals", [])}
     accepted = {d["finding"] for d in result.get("dismissals", []) if d.get("accepted")}
@@ -166,7 +166,7 @@ def remember(known: list[dict[str, Any]], result: dict[str, Any], round_number: 
         raised.add(key := identity(f["file"], f["title"]))
         reason = because.get(n, f.get("follow_up", ""))
         outcome = ("follow-up" if n in accepted else
-                   "lived with" if reason.startswith("settled area") else "accepted" if n in because
+                   "lived with" if reason.startswith(("settled area", "known:")) else "accepted" if n in because
                    else "open" if f.get("required_done_when") or holds(f, result.get("blocking_level"))
                    else "follow-up" if f.get("follow_up") or RARE.search(f.get("body", ""))
                    or bar(of(f)) == "follow-up" else "lived with")
@@ -178,7 +178,10 @@ def remember(known: list[dict[str, Any]], result: dict[str, Any], round_number: 
         elif (by[key]["outcome"] == "open" or by[key]["reason"].startswith(ADDED_WORK_REASON)
               or any(d.get("accepted") and d["finding"] == n for d in result["dismissals"])):
             by[key].update(outcome=outcome, reason=reason)
+    # A repair review rechecks its previous open findings. Other known entries
+    # were outside that review, so their absence says nothing about a repair.
+    checked = {identity(f["file"], f["title"]) for f in open_findings(repaired or {})}
     for key, entry in by.items():
-        if entry["outcome"] == "open" and key not in raised:
+        if entry["outcome"] == "open" and key in checked and key not in raised:
             entry["outcome"] = f"fixed in round {round_number}"
     return known

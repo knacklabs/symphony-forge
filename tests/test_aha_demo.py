@@ -85,34 +85,32 @@ def test_5_reactions_are_kept_after_each_demo(skill):
 
 
 def test_6_signoff_is_read_back_and_reviewed_first(repo, signoff, skill):
-    # Canvas-first replaces the old strict-review-only instruction with a completeness check
-    # and a whole-product review only for a working build. Both still precede the customer's reply.
+    # The product review for a working build still precedes the customer's reply.
     # Test audit: protect the shipped pre-reply sequence, which could otherwise ask for approval
     # too soon. Existing runtime sign-off tests do not check the guide delivered by init/sync.
     # Keep this owner-boundary guide check and real accept command; add no seam or duplicate test.
+    # Open answers must remain readable before the reply without becoming approval gates.
     section = " ".join(_prototype(skill).split())
     steps = (
-        "Before anyone asks for sign-off, hold one read-back call",
-        "goes through every item from `forge decision open` and every answer on the answers page: "
-        "our defaults, the agent's guesses and the topics marked later",
-        "Settle every open must-answer topic in that call",
-        "Then write",
+        "Before the demo, read back the brief and open items with the customer.",
+        "No missing answer, open client question, or answer marked `later` or `not known yet` "
+        "blocks planning, review, close, merge or sign-off",
         "`forge decision new client-signoff`",
-        'run `forge decision accept client-signoff --by "<name>"` before any reply is recorded',
-        "Sign-off checks that the copied Answers section matches `docs/product/BRIEF.md`",
-        "Its completeness review must pass",
+        "Leave `approved_via` and `approved_on` empty.",
+        "Forge writes the current `## Answers` section into the sign-off record. Do not copy it by hand.",
+        'Run `forge decision accept client-signoff --by "<name>"` before asking the customer to sign off.',
+        "After the check passes and the customer replies, set `approved_via` to the reply and, "
+        "if known, `approved_on` to its date.",
+        'Run `forge decision accept client-signoff --by "<name>"` to record the signer\'s name.',
+        "gets one gap check before the demo, with no full test run or whole-source review.",
         "A canvas-only sign-off needs no working build.",
-        "A working build gets a full first product review.",
+        "An unmarked working prototype gets a full first product review.",
         "Forge reuses passed results while what they checked stays unchanged.",
-        "Before the customer's reply, the command runs these checks and stops without accepting sign-off.",
-        "Once it passes, tell the salesperson to ask the customer's named person for sign-off "
-        "their own way.",
-        "When they bring the reply back, record it in `approved_via` and `approved_on`",
-        'run `forge decision accept client-signoff --by "<name>"` again to accept.',
+        "Once any required check passes, ask the customer's named person for sign-off their own way.",
+        "When the customer replies, record the reply in the sign-off record",
     )
     _assert_in_order(section, steps)
-    assert "Draft no sign-off email; Forge sends nothing." in section
-    assert "The customer's reply is the approval evidence the sign-off decision records." in section
+    assert "Forge sends nothing." in section
     assert "sign-off email for" not in section and "Before the sign-off email" not in section
 
     # The skill once recorded the recap reply's answers as `client recap reply`, a source

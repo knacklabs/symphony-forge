@@ -83,6 +83,23 @@ def snapshot(url):
     return json.loads(body)
 
 
+@contextmanager
+def open_page(url):
+    """Keep the page's events stream open for tests of periodic remote refresh."""
+    address = urlsplit(url)
+    stream = http.client.HTTPConnection(address.hostname, address.port, timeout=60)
+    answer = None
+    try:
+        stream.request("GET", f"/events?{address.query}")
+        answer = stream.getresponse()
+        assert answer.status == 200
+        yield answer
+    finally:
+        if answer is not None:
+            answer.close()
+        stream.close()
+
+
 def fix(repo, slug):
     started = repo.forge("fix", "start", f"Readers see {slug}", "--done", "The board agrees", "--slug", slug, "--kind", "backend")
     assert started.returncode == 0, started.stderr
@@ -201,7 +218,8 @@ def test_4_a_teammates_pushed_assignment_shows_after_the_next_fetch(client, tmp_
     def story(url):
         return next(row for row in snapshot(url)["items"] if row["id"] == "SHOP")
 
-    with live(client, FORGE_BOARD_FETCH_WAIT="1") as url:
+    # Periodic refresh now belongs to an open page, rather than an unattended server.
+    with live(client, FORGE_BOARD_FETCH_WAIT="1") as url, open_page(url):
         assert story(url)["owner"] is None and not story(url)["children"]
         pushed(teammate, "Give the basket to page-dev", {"plans/SHOP.md": DOC.replace(
             "## Tasks\n", "## Tasks\n\nOwner: page-dev\n", 1)})

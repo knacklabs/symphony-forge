@@ -15,7 +15,9 @@ def test_1_client_signoff_accepts_chat(repo, gh, tmp_path, monkeypatch, history)
     created = repo.forge("decision", "new", "client-signoff", cwd=fix)
     assert created.returncode == 0, created.stderr
     template = (fix / "docs/decisions/0001-client-signoff.md").read_text("utf-8")
-    # Email and call were the only choices. The owner's new contract also accepts chat.
+    # Audit: the generated reply instruction must permit free-form evidence. The
+    # real accept below checks chat; runtime acceptance cannot check shipped wording.
+    # Keep this existing init/adoption boundary without adding a production seam.
     page = _decision(fix, answers, via="chat", on="2026-10-22")
     accepted = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
     assert accepted.returncode == 0, accepted.stderr
@@ -26,5 +28,5 @@ def test_1_client_signoff_accepts_chat(repo, gh, tmp_path, monkeypatch, history)
     assert "approved_on: 2026-10-22" in record
     assert 'confirmed_by: "Ravi"' in record
     assert "reviewed_commit:" in record
-    assert len(queue.with_suffix(".calls.jsonl").read_text("utf-8").splitlines()) == 2
-    assert "email, call or chat" in template
+    assert len(queue.with_suffix(".calls.jsonl").read_text("utf-8").splitlines()) == 1
+    assert "Record how the customer replied in approved_via." in template

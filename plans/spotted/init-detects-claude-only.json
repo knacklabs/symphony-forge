@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "edge\tsrc/forge/doctor.py\tNot done: forge doctor says when a repo needs Codex and Codex is not signed in",
+      "kind": "edge",
+      "path": "src/forge/doctor.py",
+      "line": 351,
+      "text": "Not done: forge doctor says when a repo needs Codex and Codex is not signed in",
+      "from": "review",
+      "item": "init-detects-claude-only",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

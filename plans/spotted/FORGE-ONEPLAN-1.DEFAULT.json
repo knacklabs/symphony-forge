@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/templates/starter-python/apps/api/tests/test_projects.py\tKeep the Python starter's required formatting check passing\tFORGE-ONEPLAN-1/DEFAULT",
+      "kind": "bug",
+      "path": "src/forge/templates/starter-python/apps/api/tests/test_projects.py",
+      "line": 765,
+      "text": "Keep the Python starter's required formatting check passing",
+      "from": "blocking",
+      "item": "FORGE-ONEPLAN-1/DEFAULT",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
