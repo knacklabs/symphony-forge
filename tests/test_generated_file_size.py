@@ -9,6 +9,7 @@ from test_upgrade_command import (NAME, RELEASE, _repo_adopted_on_the_previous_r
                                  unsynced_up)  # noqa: F401
 
 STORY = "size-count-skips-generated"
+pytestmark = pytest.mark.platform
 
 
 @pytest.mark.parametrize("adoption", ["new init", "previous release"])
