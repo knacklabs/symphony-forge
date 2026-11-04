@@ -11,6 +11,20 @@ STEPS = ("ideas and client notes", "brief", "canvas design", "sign-off", "build"
          "deploy on Mainline", "run and improve")
 
 
+def has_client_input(top: Path) -> bool:
+    """Local notes or brief content, excluding Forge's empty scaffold."""
+    from forge.sync import TEMPLATES
+
+    scaffold = (TEMPLATES / "skeleton/docs/product/BRIEF.md").read_text(encoding="utf-8")
+    placeholders = {line.strip() for line in scaffold.splitlines()}
+    inputs = [top / "docs/product/BRIEF.md", *(top / "docs/context").rglob("*")]
+    return any(line.strip() and (path != inputs[0] or (
+                   not line.lstrip().startswith("#") and line.strip() not in placeholders))
+               for path in inputs if path.is_file()
+               for line in re.sub(r"<!--.*?-->", "", path.read_text(
+                   encoding="utf-8", errors="replace"), flags=re.S).splitlines())
+
+
 def step_line(top: Path, cfg: dict[str, Any], history: dict[str, Any] | None = None,
               *, idle: bool = False) -> str:
     """Name the first journey step whose landed facts still need work."""

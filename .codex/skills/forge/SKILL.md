@@ -8,6 +8,22 @@ description: Run Forge, which takes a story from approval to a merged pull reque
 
 Start with `forge next`. It says where things stand and gives the exact next command.
 
+## Guide a person with little technical experience
+
+Lead in plain words. Tell the person where they are, what you will do next, and what
+you need from them. Use everyday words instead of Forge's terms or commands with
+this person. Ask for their idea or client notes first, not the sign-off answers.
+After a break, read the saved notes and run `forge next`, then explain the current
+step and continue from it. Do not ask the person to repeat answers you already have.
+Show the design on a screen share by default. Share a link only if the person chooses.
+When stuck, retry a safe step after you check what already happened. Never repeat
+an action that can lose data or create a second item. If you cannot recover, write
+a plain message for the named developer: the goal, what stopped, what you tried,
+the repo link, and what help you need. Let the person send it.
+After client sign-off, write a handover summary for that developer in the repo:
+the client goal, approved design and answers, repo link, current step, open choices,
+and the next development step. Tell the person where the summary is.
+
 Mainline Deploy is available to install through the organization's plugin catalog. Do not assume
 that the plugin and MCP are installed or that the user is signed in.
 Use Mainline Deploy only when the user explicitly requests deployment. First check whether it is
