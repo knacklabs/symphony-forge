@@ -1,0 +1,15 @@
+{
+  "base": "03566c13cbe5b17271277c76c0c619884e376462",
+  "branch": "fix/guide-says-accept-claude-trust",
+  "done_when": "The shipped guide's setup steps tell a person to open Claude Code in the repo once and accept the trust question, in the guide and both synced copies",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-04T01:58:40.066742+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "A new Claude user is not told to accept Claude Code's trust question once in the repo, so a headless Claude run warns that it ignores the repo's permissions (bug 1335)"
+}
