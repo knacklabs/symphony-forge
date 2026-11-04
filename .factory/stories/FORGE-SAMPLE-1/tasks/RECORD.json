@@ -1,0 +1,12 @@
+{
+  "base": "0ed4652e88ac5f3c96910d6de1ec3e2b4444b4dc",
+  "branch": "task/FORGE-SAMPLE-1-RECORD",
+  "stacked_on": "FORGE-SAMPLE-1/SETUP",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-04T09:57:52.563187+00:00",
+      "step": "start"
+    }
+  ]
+}
