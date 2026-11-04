@@ -23,8 +23,10 @@ the repo link, and what help you need. Let the person send it.
 
 For a sales demo, save transcripts in `docs/context/`. Mark each point from a transcript
 as "Heard from the customer" and name its transcript. Keep your guesses separate.
-Use Claude for the design, with the shipped design skills. Then build a browser-only
-web app with fake data, no server, no database, and no sign-in. Label extra features
+Use Claude for the design. Require impeccable and emil-design-eng from the first
+design onward, for both the Claude design artifact and the browser-only web app.
+Then build a browser-only web app with fake data, no server, no database, and no
+sign-in. Label extra features
 "Demo only". Put this line on the demo: "This demo uses sample data. Its features are
 not commitments." Never put real customer data in a demo, because anyone with its
 link can open it. Deploy through Mainline from the GitHub repo only when the person

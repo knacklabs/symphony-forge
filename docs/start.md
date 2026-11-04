@@ -87,6 +87,10 @@ Also check `node --version` and `npm --version`.
    Set them with `git config --local user.name` and `git config --local user.email` in this repo.
 
    This prepares the notes and brief. It also installs the bundled impeccable and emil-design-eng design skills.
+   Before the first design, confirm that `.claude/skills/impeccable/SKILL.md` and `.claude/skills/emil-design-eng/SKILL.md` exist.
+   If either is missing, run `forge sync` and check again.
+
+   Use both skills from the first design onward, for the Claude design artifact and the browser-only web app.
    Follow the shipped Forge guide for the sales demo. Add no other tool for setup.
 
 6. Run `forge next`. Tell the person that setup is complete and ask for their idea or client notes.
