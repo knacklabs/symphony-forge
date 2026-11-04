@@ -1,7 +1,8 @@
 name: forge-next
 
 # Reuse passed proof on identical release tags.
-# Pull requests run related Linux tests in forge.yml and Windows platform tests here.
+# Pull requests run related Linux tests in forge.yml and the plugin check here.
+# Windows runs nightly and in the manual full run before a release.
 
 on:
   pull_request:
@@ -66,6 +67,7 @@ jobs:
 
   tests:
     needs: selection
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     # Keep these matrix checks separate from the required Linux tests check in forge.yml.
     name: ${{ matrix.os == 'windows-latest' && 'platform-sensitive tests' || 'full suite' }} on ${{ matrix.os }}, group ${{ matrix.group }} of ${{ matrix.groups }}
     env:
