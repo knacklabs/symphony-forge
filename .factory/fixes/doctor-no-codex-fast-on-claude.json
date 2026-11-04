@@ -1,0 +1,45 @@
+{
+  "base": "03566c13cbe5b17271277c76c0c619884e376462",
+  "branch": "fix/doctor-no-codex-fast-on-claude",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1a447-86ca-7231-8128-bae6ecad9361",
+    "head": null,
+    "start": "046dc15c3500d0153cb0ecefb6902daf1a26e46d"
+  },
+  "done_when": "forge doctor leaves out the Codex Fast line when the repo does not use Codex, and still prints it when it does",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "49ad2f597dcc6288666313a3ed35bf94bcad89e9387a2a5931ecba48602e83a5",
+    "changed": "cfb27068c359d502b51aa6367c3d451472abb35480f7db3228e0581e10759ad9",
+    "commit": "9f120fea9e41efa7fd9c571c9840e8ddabb1bd8b",
+    "dismissals": [],
+    "findings": [],
+    "id": "5d146763-fbf3-4530-a392-cedb0da46cf3",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-04T01:58:24.675583+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-04T05:05:18.970788+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "782969eaf179bf99a6af2d4122775720059bad44",
+    "keys": {},
+    "round": null
+  },
+  "why": "forge doctor prints the Codex Fast line in a Claude-only repo, which reads as if Codex is still used (bug 1336)",
+  "worker": "codex"
+}
