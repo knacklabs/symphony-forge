@@ -1,0 +1,72 @@
+{
+  "base": "00c609a81f4a5d2fa09466f7105c2513ba53cd5a",
+  "branch": "fix/land-builds-an-empty-fix",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1a5ff-a84d-7a51-9057-83eea11d47ed",
+    "head": null,
+    "start": "5ca399111b556bc47fb11b44bc87d25fe982a822"
+  },
+  "done_when": "forge land on a fix with no commits beyond its start and state records runs forge work first, and it merges only after the builder round. A fix whose real work is only Forge's records can still merge when it has a work commit.",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "land() in src/forge/land.py",
+      "file": "src/forge/land.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 79,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Preserve completed native rounds before starting another build",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "43021afb453f56d5b5465213978d8f5e89b4d33d3641853cd097312b1a2e7b72",
+    "changed": "328899813d67606b76b33db49d926d9ad0ce2ab214cc4364c4ea62aecf9e5a96",
+    "commit": "edf7f406c73b0d63811c07793b09ce5de0df58ce",
+    "dismissals": [],
+    "findings": [],
+    "id": "7a667374-31eb-481b-a66f-28d238508bdd",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-04T09:58:27.760565+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-04T10:17:43.730968+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-04T10:47:30.527986+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-04T10:17:43.743190+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "src/forge/land.py",
+    "reason": "Owner chose one more round: a builder that finishes without a commit must not start another build.",
+    "wait_id": "dbb183cf-eaec-4cf8-b187-ff532daba581",
+    "worker_round": 1
+  },
+  "stuck": {
+    "close": "99ef1251-4188-47e9-9d0b-332c1831ecef",
+    "head": "3d718b9999025d9a39a78ae5b4630c262cc3fa36",
+    "keys": {},
+    "round": 1
+  },
+  "why": "forge land merges a fix that has no code change after a clean review of an empty diff, for example after forge fix amend (GitHub issue 1260).",
+  "worker": "codex"
+}

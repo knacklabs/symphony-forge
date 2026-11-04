@@ -1,0 +1,85 @@
+{
+  "base": "00c609a81f4a5d2fa09466f7105c2513ba53cd5a",
+  "branch": "fix/board-stops-with-no-page",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1a5ff-b01f-7981-ab30-71597fcb2609",
+    "head": null,
+    "start": "29ad244f7e64ed3d52f8d8d9a7c053f42c5c6fdd"
+  },
+  "done_when": "A forge board server with no page open for 30 minutes stops by itself and says so. While no page is open it does not fetch from GitHub or rebuild the board. An open page keeps it running.",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "src/forge/board.py",
+      "file": "src/forge/board.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 35,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: While no page is open it does not fetch from GitHub or rebuild the board.",
+      "work": 2
+    },
+    {
+      "area": "test_1_no_page_pauses_work_and_stops_after_thirty_minutes() in tests/test_board_page_lifetime.py",
+      "file": "tests/test_board_page_lifetime.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 71,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_no_page_pauses_work_and_stops_after_thirty_minutes",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "cc6bd36f20004ac95f6787554975bf482dfbd73669ca3c59b1ada37c7a0d71f0",
+    "changed": "21f0d91d45951f36e9c3bbe96b835c77bb707b5f2d747ad991412916c0ad8ec6",
+    "commit": "5b169d6b76e97e56dcef45858139140ffed6472c",
+    "dismissals": [],
+    "findings": [],
+    "id": "8fe33a50-789a-4818-9793-007ed3f8d54f",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-04T09:58:31.878045+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-04T10:09:10.499909+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-04T10:41:25.842909+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-04T10:09:10.512593+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "src/forge/board.py",
+    "reason": "Owner chose one more round: repair the fetch at start and prove the case where nobody ever opens the page.",
+    "wait_id": "6b1b33a4-2b81-4dca-b12b-60eb7d94829f",
+    "worker_round": 1
+  },
+  "stuck": {
+    "close": "957de093-0c53-4fa8-8a00-2e33a8029102",
+    "head": "0699b48cbff078c140cfa98095eb4836b01d6b72",
+    "keys": {},
+    "round": 1
+  },
+  "why": "Each forge board starts a new live server that never stops and keeps working with no page open, so copies pile up and use CPU (GitHub issue 1282).",
+  "worker": "codex"
+}

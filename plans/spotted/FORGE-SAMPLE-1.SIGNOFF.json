@@ -1,0 +1,70 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/templates/skill.md\tInclude the required --by argument in the pre-demo command\tFORGE-SAMPLE-1/SIGNOFF",
+      "kind": "bug",
+      "path": "src/forge/templates/skill.md",
+      "line": 701,
+      "text": "Include the required --by argument in the pre-demo command",
+      "from": "blocking",
+      "item": "FORGE-SAMPLE-1/SIGNOFF",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_git_process_ceiling.py\tThe close-with-history check counted 91 Git commands against its limit of 90.",
+      "kind": "bug",
+      "path": "tests/test_git_process_ceiling.py",
+      "line": 104,
+      "text": "The close-with-history check counted 91 Git commands against its limit of 90.",
+      "from": "worker",
+      "item": "FORGE-SAMPLE-1/SIGNOFF",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_proto_docs.py\tGate: test_11_prototype_precedes_signoff_and_stories_in_the_docs\tFORGE-SAMPLE-1/SIGNOFF",
+      "kind": "bug",
+      "path": "tests/test_proto_docs.py",
+      "line": 24,
+      "text": "Gate: test_11_prototype_precedes_signoff_and_stories_in_the_docs",
+      "from": "blocking",
+      "item": "FORGE-SAMPLE-1/SIGNOFF",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_signoff_scope.py\tGate: restore the helper still called by the canvas sign-off tests\tFORGE-SAMPLE-1/SIGNOFF",
+      "kind": "bug",
+      "path": "tests/test_signoff_scope.py",
+      "line": 94,
+      "text": "Gate: restore the helper still called by the canvas sign-off tests",
+      "from": "blocking",
+      "item": "FORGE-SAMPLE-1/SIGNOFF",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/review.py\tNot done: Otherwise they use design pages saved in the repo",
+      "kind": "edge",
+      "path": "src/forge/review.py",
+      "line": 850,
+      "text": "Not done: Otherwise they use design pages saved in the repo",
+      "from": "review",
+      "item": "FORGE-SAMPLE-1/SIGNOFF",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "improve\tdocs/guide.md\tThe broad strict-review sentence also covered sample-data prototypes, so it now names only prototypes without the sample-data mark.",
+      "kind": "improve",
+      "path": "docs/guide.md",
+      "line": 248,
+      "text": "The broad strict-review sentence also covered sample-data prototypes, so it now names only prototypes without the sample-data mark.",
+      "from": "worker",
+      "item": "FORGE-SAMPLE-1/SIGNOFF",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
