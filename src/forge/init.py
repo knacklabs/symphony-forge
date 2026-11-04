@@ -36,6 +36,9 @@ COMMANDS = [{
 }]
 
 REFUSALS = {
+    "identity": ("Git cannot use your name or email to make a commit. No files were written.",
+                 'git config user.name "Your Name", then git config user.email "you@example.com", '
+                 'then run forge init again'),
     "starter_history": ("This repo already has commits, so forge init --starter cannot set it up.",
                         "use a new repo for the starter"),
     "starter_app": ("forge init --starter found an existing app file: {path}.",
@@ -361,6 +364,8 @@ def _stronger(current: dict[str, Any], checks: list[str], removed: set[str]) -> 
 
 def init(args: argparse.Namespace) -> None:
     top = repo.root()
+    if repo.run("git", "var", "GIT_AUTHOR_IDENT", cwd=top).returncode:
+        repo.refuse(REFUSALS["identity"])
     history = repo.run("git", "rev-parse", "--verify", "-q", "HEAD", cwd=top).returncode == 0
     if args.actions is None and not history:
         repo.refuse(REFUSALS["actions"])
