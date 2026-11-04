@@ -227,10 +227,12 @@ def _moves(repo, gh, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     # Only the old Forge's gstack lines go; the client's own stay, and sync ignores forge.local.toml.
     assert repo.git("show", "forge/migrate-v1:.gitignore") == (
         "node_modules/\n.env\n.gstack/slug-cache/\nforge.local.toml")
-    # ... and sync adds the roadmap's and the spotted list's merge rules after them.
+    # Sync adds its merge rules and preserves the pinned Windows launcher's bytes.
     assert repo.git("show", "forge/migrate-v1:.gitattributes") == (
         "*.png binary\nplans/roadmap.json merge=forge-roadmap\n"
-        "plans/spotted.json merge=forge-roadmap")
+        "plans/spotted.json merge=forge-roadmap\n"
+        ".claude/skills/impeccable/scripts/impeccable.cmd -text\n"
+        ".codex/skills/impeccable/scripts/impeccable.cmd -text")
     toml = repo.git("show", "forge/migrate-v1:forge.toml")
     assert f'version = "{version}"' in toml and f"\ntest = {json.dumps(TEST)}\n" in toml
     # The client's sign-off record, pinned in harness.yaml, is pinned in forge.toml.

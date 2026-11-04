@@ -84,7 +84,7 @@ class OrganisationsService:
         mail: MailProvider,
         app_origin: str,
         after_create: Callable[[Session, UUID], None] | None = None,
-    ) -> UUID:
+    ) -> tuple[UUID, str]:
         token = secrets.token_urlsafe(32)
         credentials = {
             "token_hash": hashlib.sha256(token.encode()).hexdigest(),
@@ -108,13 +108,28 @@ class OrganisationsService:
         ).one()
         if after_create is not None:
             after_create(self.db, invite_id)
-        # A provider refusal rolls back the pending invite with the request's session.
-        mail.send_invite(
-            email, f"{app_origin}/accept-invite?{urlencode({'token': token})}"
-        )
+        invite_url = f"{app_origin}/accept-invite?{urlencode({'token': token})}"
+        mail.send_invite(email, invite_url)
         self.history.record(account, "member.invited", f"Invited {email}")
         self.db.commit()
-        return invite_id
+        return invite_id, invite_url
+
+    def authorize_reset_link(self, admin: AccountPrincipal, account_id: UUID) -> None:
+        member = self.db.scalar(
+            select(Membership)
+            .where(
+                Membership.account_id == account_id,
+                Membership.organisation_id == admin.organisation_id,
+                Membership.is_agent.is_(False),
+                Membership.deleted_at_utc.is_(None),
+            )
+            .with_for_update()
+        )
+        if member is None:
+            raise _member_not_found()
+        self.history.record(
+            admin, "member.reset-link-created", "Created a password reset link"
+        )
 
     def open_invite(self, token: str) -> OpenInvite:
         invite = self.db.scalar(
@@ -159,6 +174,36 @@ class OrganisationsService:
         )
         self.db.commit()
         return AccountPrincipal(account_id, email, invite.organisation_id, "member")
+
+    def remove_member(self, account: AccountPrincipal, account_id: UUID) -> None:
+        if account_id == account.id:
+            raise ApiError(403, "CANNOT_REMOVE_SELF", "You cannot remove yourself.")
+        email = self.db.scalar(
+            update(Membership)
+            .where(
+                Membership.account_id == account_id,
+                Membership.organisation_id == account.organisation_id,
+                Membership.deleted_at_utc.is_(None),
+            )
+            .values(
+                deleted_at_utc=datetime.now(UTC),
+                deleted_by_account_id=account.id,
+                modified_by_account_id=account.id,
+                agent_key_hash=None,
+            )
+            .returning(Membership.email)
+        )
+        if email is None:
+            raise _member_not_found()
+        self.db.execute(
+            delete(Invite).where(
+                Invite.organisation_id == account.organisation_id,
+                (Invite.created_by_account_id == account_id)
+                | (Invite.modified_by_account_id == account_id),
+            )
+        )
+        self.history.record(account, "member.removed", f"Removed {email}")
+        # Auth commits the removal together with the member's sessions.
 
     def change_role(
         self, account: AccountPrincipal, account_id: UUID, role: Role

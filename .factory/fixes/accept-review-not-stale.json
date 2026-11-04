@@ -1,0 +1,45 @@
+{
+  "base": "f53ee86582457189f0d6ed0d8b0b577c4b04d133",
+  "branch": "fix/accept-review-not-stale",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a18d0f-4ae9-7d42-acf4-346d424f754f",
+    "head": null,
+    "start": "a85ea073d63f04d3a92d22a40bde8800eec39911"
+  },
+  "done_when": "After an accept at the round limit, the first forge close's clean review passes forge-pr-check on the commit it pushed",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "0f504041cbd69468da259a82a110bbfb83ab0f47e611248a83c3702072b23e82",
+    "changed": "fc4de651179871316ec1de7f03e70a0eeaba51c5d4f917fab7deb31f30632dbe",
+    "commit": "da82380ce8bc1b5be2f86939d012b7e1f0c5bb17",
+    "dismissals": [],
+    "findings": [],
+    "id": "c6174004-707a-4146-a008-bed344f97f19",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-30T13:45:42.572467+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-30T13:53:17.599573+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "e2a26cee524bdb1b85a9458c05895194c75cce00",
+    "keys": {},
+    "round": null
+  },
+  "why": "After close --resolve accept, forge-pr-check says the clean review close just pushed is out of date, so a second close is needed (issue 1244)",
+  "worker": "codex"
+}

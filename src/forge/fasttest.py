@@ -6,6 +6,7 @@ import os
 import re
 import shlex
 import subprocess
+import sys
 import tempfile
 import tomllib
 from pathlib import Path
@@ -22,7 +23,7 @@ COMMANDS = [{"words": "test", "run": "test", "changes_state": False,
 
 def git_files(*args: str) -> list[str]:
     return subprocess.run(["git", *args, "-z"], check=True, capture_output=True,
-                          text=True).stdout.rstrip("\0").split("\0")
+                          text=True).stdout.split("\0")[:-1]
 
 
 def module_parts(path: Path) -> list[str]:
@@ -382,14 +383,38 @@ def related(base: str) -> tuple[list[str], list[str], bool, list[str]]:
                       or any(mentions(path, module, source) for module, source in modules)}
     readers = tests + [Path(name) for name in files
                        if Path(name).name == "conftest.py" and Path(name).is_file()]
+    inputs = {name for name in changed if Path(name).suffix != ".py"}
+    picked |= {path for path in readers
+               if docskip.reads_file_relative(path.read_text("utf-8-sig"), inputs)}
     picked = docskip.test_readers(readers, picked)
     return sorted(path.as_posix() for path in picked if path in tests), everything, False, missed
+
+
+def broad_ci_selection(top: Path, base: str) -> bool:
+    """Use the existing pytest file inventory before taking the laptop test place."""
+    cfg = repo.config(top)
+    if cfg["test_place"] != "ci" or not cfg["checks"]:
+        return False
+    # Other fast commands can choose a different set; keep their current local proof.
+    if cfg["fast_test"] and not re.search(r"\bforge test --pytest\s", cfg["fast_test"]):
+        return False
+    if not any(kind == "python" for kind, _, _ in quicktest.test_parts(top, cfg["test"])):
+        return False
+    # Selection reads repo-relative paths. A child keeps the coordinator's cwd unchanged.
+    code = (f"import sys; sys.path.insert(0, {str(Path(__file__).parents[1])!r}); "
+            "from forge.fasttest import related; "
+            "picked, tests, _, _ = related(sys.argv[1]); "
+            "print(len(set(picked) | set(sys.argv[2:])) * 4 > len(tests))")
+    always = [name.split("::", 1)[0] for name in cfg["always_test"]]
+    selected = repo.run(sys.executable, "-c", code, base, *always, cwd=top)
+    selected.check_returncode()
+    return selected.stdout.strip() == "True"
 
 
 # The temporary pytest plugin: skip unpicked files, keep picked tests and each always_test entry,
 # and fail the run when an entry ran no test. xdist forwards each test's report to the controller.
 SELECTION = """import os, pathlib, pytest
-IGNORE, PICKED, ALWAYS = {}, {}, {}
+IGNORE, PICKED, ALWAYS, REQUIRED = {}, {}, {}, {}
 RAN, ROOT = set(), []
 def pytest_configure(config):
     config.option.ignore = (config.option.ignore or []) + IGNORE
@@ -419,7 +444,7 @@ def pytest_sessionfinish(session):
     # rejects missing files and nodes. One-group runs retain the ran-no-test check.
     if int(os.environ.get("FORGE_GROUPS", "1")) > 1:
         return
-    for entry in ALWAYS:
+    for entry in REQUIRED:
         if not any(runs(nodeid, entry) for nodeid in
                    RAN | set(getattr(session.config, "_forge_prior_passed", []))):
             print("\\nforge.toml's always_test names " + entry
@@ -596,6 +621,7 @@ def pytest_tests(base: str, command: str, entry: dict | None = None) -> int:
     excluded = []
     # Read as forge test --pytest reads test: close has already checked forge.toml.
     always = tomllib.loads(Path("forge.toml").read_text("utf-8")).get("always_test", [])
+    required = always[:]
     picked, tests, shared_changed, missed = related(base)
     # Tests that run the program from outside never name its files, so say what local runs miss.
     from forge import review  # imported late: review's imports lead back here
@@ -606,7 +632,19 @@ def pytest_tests(base: str, command: str, entry: dict | None = None) -> int:
               "The nightly full run covers the rest.", flush=True)
         item = review.branch_item(repo.current_branch(Path.cwd()), Path.cwd())
         if item and "/" in item[0]:
-            named = review.cells(review.task(Path.cwd(), item[0])[2].get("tests", ""))
+            notes = review.task(Path.cwd(), item[0])[2].get("tests", "")
+            named, file = [], ""
+            # Task cells contain Markdown and prose, not a comma-separated path list.
+            for match in re.finditer(
+                    r"(?<![\w/.-])(?:[\w./-]+\.py\b(?:::[\w.-]+(?:\[[^\]\n]*\])?)*"
+                    r"|::[\w.-]+(?:\[[^\]\n]*\])?(?:::[\w.-]+)*)", notes):
+                name = match.group()
+                if name.startswith("::"):
+                    if not file:
+                        continue
+                    name = file + name
+                file = name.split("::", 1)[0]
+                named.append(name)
             always = list(dict.fromkeys(always + named))
             picked = []
         else:
@@ -632,7 +670,7 @@ def pytest_tests(base: str, command: str, entry: dict | None = None) -> int:
         if excluded or always:
             selection = Path(folder) / "_forge_pytest_selection.py"
             selection.write_text(SELECTION.format(repr(excluded), repr(None if shared_changed else picked),
-                                                  repr(always)), "utf-8")
+                                                  repr(always), repr(required)), "utf-8")
             environment["PYTHONPATH"] = os.pathsep.join(
                 [folder, environment.get("PYTHONPATH", "")])
         if entry is None:

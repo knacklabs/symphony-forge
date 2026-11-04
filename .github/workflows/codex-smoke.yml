@@ -11,6 +11,7 @@ on:
       - src/forge/codex.py
       - src/forge/codex_turn.py
       - tests/test_codex_smoke.py
+      - tests/test_worker_approval_requests.py
       - tests/test_fix_codex_test_home.py
       - tests/conftest.py
       - .github/workflows/codex-smoke.yml
@@ -42,4 +43,4 @@ jobs:
           python="$HOME/.local/share/forge/codex-sdk/openai-codex-0.159.2/bin/python"
           printenv OPENAI_API_KEY | "$("$python" -c 'import codex_cli_bin; print(codex_cli_bin.bundled_codex_path())')" login --with-api-key
       - if: env.OPENAI_API_KEY != ''
-        run: uv run --python 3.11 pytest tests/test_codex_smoke.py tests/test_fix_codex_test_home.py -v -s
+        run: uv run --python 3.11 pytest tests/test_codex_smoke.py tests/test_fix_codex_test_home.py tests/test_worker_approval_requests.py::test_2_builder_runs_forge_test_and_observes_its_failure -v -s

@@ -212,7 +212,10 @@ def test_6_new_and_previously_adopted_clients_get_hotspot_guidance(repo, gh, pre
         for sentence in (
             "A worker or review notes problems outside its change as spotted items, which Forge keeps in spotted records and nobody edits by hand.",
             "A spotted item never widens the change in hand, except a bug that blocks it.",
-            "When `forge next` names a file that keeps breaking, start its fix command at once, like any ready item, without asking the owner.",
+            # The build step now takes priority over repair advice after sign-off.
+            "Follow the first step from `forge next` before other ready fixes.",
+            "When it names a file that keeps breaking, start its fix command without asking the owner.",
+            "Problems noted before accepted client sign-off no longer count towards these lines.",
             # Recovery now also handles a clash seen during the check wait; both hosts teach it.
             "When GitHub reports a clash during the check wait or refuses a merge because the branch is behind or conflicting, `forge merge` retries close and merge once.",
             # Merge now refreshes a moved default before retesting. Only an unchanged

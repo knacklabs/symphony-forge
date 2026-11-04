@@ -190,7 +190,7 @@ def test_1_looping_item_retains_findings_ci_give_up_owner_wait_and_pull_request_
         assert round_["line"] in published
     assert "Basket disappears" in published and "Basket loses quantities" in published
     for host in (".codex", ".claude"):
-        guide = (where / host / "skills/forge/SKILL.md").read_text("utf-8")
+        guide = (where / host / "skills/forge/run-reference.md").read_text("utf-8")
         for phrase in ("time_breakdown", "rounds", "How it went", "unknown"):
             assert phrase in guide
 

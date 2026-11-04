@@ -26,7 +26,7 @@ REFUSALS = {
     "one_run": ("A land run already works in this repo.", "wait for it to end, then forge land --all"),
     "note_all": ("Give one change with --note.", 'forge land <item> --note "<text>"'),
 }
-# A child of forge land --all: fix rounds off, so a change that needs a worker or the owner stops.
+# A child of forge land --all: lend its queue place while close waits for CI.
 QUEUED = "FORGE_LAND_QUEUED"
 SLOT_WAIT, SLOT_RESUME = "::forge-land-wait::", "::forge-land-resume::"
 IN_CLOSE = ("reviewing", "fixing", "waiting for checks", "ready")
@@ -76,9 +76,10 @@ def land(args: argparse.Namespace) -> int:
         # A completed session round handed back at this HEAD made no commit; it goes to close.
         handed = codex.record(top, item).get("native") or {}
         if not merged and state.get("kind") not in ("story-done", "migrate", "adopt") and (
-                step.note is not None or status == "started" and head == start or
+                step.note is not None or (task.unbuilt_fix(item, state, top) or
+                status == "started" and head == start or
                 status == "working" and
-                repo.git("log", "-1", "--format=%s", cwd=top) == f"{item} is working" and
+                repo.git("log", "-1", "--format=%s", cwd=top) == f"{item} is working") and
                 (handed.get("head"), handed.get("outcome")) != (head, "completed")):
             say(f"Building {item}.")
             step.land_rounds = rounds
@@ -116,7 +117,7 @@ def land(args: argparse.Namespace) -> int:
                         else "the failing checks" if red and (queued or failing) else "")
                 if not what:
                     raise
-                if queued:  # forge land <item> runs this change's fix rounds
+                if queued and not (red and failing):
                     raise repo.Refused(str(error).split("\nNext: ")[0], f"forge land {item}",
                                        error.code, error.entry) from None
                 if rounds >= 1:
@@ -129,6 +130,10 @@ def land(args: argparse.Namespace) -> int:
                 if _handed_out(step, top):
                     return 0
                 continue
+            stacked_on = (repo.read_state(item, top) or {}).get("stacked_on")
+            if stacked_on and not task._merged(
+                    f"origin/{repo.default_branch(top)}", stacked_on, top):
+                return 0
             # Merged since close looked: close again, so its merged path reports and tidies.
             if not merged and _merged(top, branch):
                 merged = True

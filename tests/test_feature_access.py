@@ -40,10 +40,6 @@ ROUTE_PERMISSIONS = {
     ("delete", ":id"): "delete",
     ("post", ":id/restore"): "restore",
 }
-FLOWS = (
-    "a member does not see the project actions they lack",
-    "an admin shows deleted projects and restores one",
-)
 CASES = {
     "projects-typescript": ("each projects endpoint refuses a member without its permission",
                             "an admin restores a deleted project"),
@@ -83,8 +79,8 @@ def _python_routes(text: str) -> dict[tuple[str, str], list[str]]:
 def test_3_each_feature_checks_its_permissions(repo, gh, tmp_path, starter, request):
     # Audit: a route with a missing, duplicate or wrong permission, or a member who can reach a
     # denied endpoint, fails the route or live check. Projects-only tests and generated
-    # TypeScript tests do not exercise generated Python routes. The generated API and browser are
-    # the behavior boundary, with no production seam. Sync must preserve earlier app permissions.
+    # TypeScript tests do not exercise generated Python routes. Generated API cases are the
+    # behavior boundary, with no production seam. Sync must preserve earlier app permissions.
     if starter == "earlier adopted":
         # An app adopted on an earlier release that has since edited its own permissions.
         shutil.copytree(ROOT / "tests/fixtures/adopted-v1.2.2/client", repo.path,
@@ -97,7 +93,7 @@ def test_3_each_feature_checks_its_permissions(repo, gh, tmp_path, starter, requ
             (repo.path / path).parent.mkdir(parents=True, exist_ok=True)
             (repo.path / path).write_text(
                 (STARTER / path).read_text("utf-8").replace(
-                    "member: ['view', 'create', 'edit']", "member: []"), encoding="utf-8")
+                    "member: ['view', 'create']", "member: []"), encoding="utf-8")
         before = {path.relative_to(repo.path): path.read_bytes()
                   for path in (repo.path / "libs").rglob("*") if path.is_file()}
         repo.git("checkout", "-b", "fix/check-permissions-upgrade")
@@ -123,14 +119,10 @@ def test_3_each_feature_checks_its_permissions(repo, gh, tmp_path, starter, requ
             assert routes == {route: [permission] for route, permission in ROUTE_PERMISSIONS.items()}
         if LIVE:
             live = feature_live_run(repo, gh, request.getfixturevalue("tmp_path_factory"))
-            for plural, one in (("jobs", "job"), ("notes", "note")):
+            for plural in ("jobs", "notes"):
                 require_feature_cases(live["api"], f"{plural}.e2e-spec.ts",
                                       (f"each {plural} endpoint refuses a member without its permission",))
-                require_feature_cases(live["browser"], f"{plural}.spec.ts",
-                                      (f"a member does not see the {one} actions they lack",))
             require_feature_cases(live["api"], "jobs.e2e-spec.ts", ("an admin restores a deleted job",))
-            require_feature_cases(live["browser"], "jobs.spec.ts",
-                                  ("an admin shows deleted jobs and restores one",))
         return
 
     if starter == "feature-python":
@@ -148,25 +140,18 @@ def test_3_each_feature_checks_its_permissions(repo, gh, tmp_path, starter, requ
                 mapping,
             ), mapping
             expected_member = '"member": []' if plural == "notes" else (
-                '"member": ["view", "create", "edit"]'
+                '"member": ["view", "create"]'
             )
             assert expected_member in mapping, mapping
         if LIVE:
             live = feature_python_live_run(repo, gh, request.getfixturevalue("tmp_path_factory"))
-            for plural, one in (("jobs", "job"), ("notes", "note")):
+            for plural in ("jobs", "notes"):
                 require_feature_cases(
                     live["api"], f"test_{plural}",
                     (f"test_each_{plural}_endpoint_refuses_a_member_without_its_permission",),
                 )
-                require_feature_cases(
-                    live["browser"], f"{plural}.spec.ts",
-                    (f"a member does not see the {one} actions they lack",),
-                )
             require_feature_cases(
                 live["api"], "test_jobs", ("test_an_admin_restores_a_deleted_job",)
-            )
-            require_feature_cases(
-                live["browser"], "jobs.spec.ts", ("an admin shows deleted jobs and restores one",)
             )
         return
 
@@ -177,10 +162,10 @@ def test_3_each_feature_checks_its_permissions(repo, gh, tmp_path, starter, requ
         (source / controller).read_text("utf-8"))
     assert routes == {route: [permission] for route, permission in ROUTE_PERMISSIONS.items()}
     # The one place that maps each role to its permissions: admins all five, members not
-    # delete or restore.
+    # edit, delete or restore.
     mapping = (source / permissions).read_text("utf-8")
     assert re.search(r"""admin["']?: \[["']view["'], ["']create["'], ["']edit["'], ["']delete["'], ["']restore["']\]""", mapping), mapping
-    assert re.search(r"""member["']?: \[["']view["'], ["']create["'], ["']edit["']\]""", mapping), mapping
+    assert re.search(r"""member["']?: \[["']view["'], ["']create["']\]""", mapping), mapping
 
     client, initialized = _fresh_client(
         repo, gh, tmp_path, "--starter", "react" if typescript else "python")
@@ -190,4 +175,3 @@ def test_3_each_feature_checks_its_permissions(repo, gh, tmp_path, starter, requ
         live = (live_run(request.getfixturevalue("tmp_path_factory")) if typescript
                 else request.getfixturevalue("live_python_starter"))
         _require_cases(live["api"], CASES[starter])
-        _require_cases(live["browser"], FLOWS)

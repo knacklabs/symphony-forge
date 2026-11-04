@@ -1,0 +1,74 @@
+{
+  "amendments": [
+    {
+      "at": "2026-11-04T12:51:39.210908+00:00",
+      "because": "The owner set the sales-led flow on 4 Nov 2026: fake-data web app, deploy, conversion, then FDE discovery.",
+      "done_when": "docs/start.md tells Claude, in plain steps for Mac and Windows, how to install only what notes, the brief and the design need, sign the person in to GitHub, and create a private repo in the named company GitHub. The shipped guide tells every agent to lead in plain words with the next step, also after a break, to write a plain message for the named developer when it cannot recover, and to write a handover summary after client sign-off. forge next shows no sign-off question list until the repo has a client note or a brief with content, on new repos and on repos adopted earlier."
+    }
+  ],
+  "base": "fd7cda2b1ba2d55bd5a29aacf27b2db498182fa9",
+  "branch": "fix/plain-start-for-non-technical-people",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1a695-215f-7bd3-abde-3fe747510d63",
+    "head": null,
+    "start": "a3184afb19e32e084405d6d78f66ec76e4f7b5bd"
+  },
+  "done_when": "docs/start.md tells Claude, in plain steps for Mac and Windows, how to install only what notes, the design and a browser-only web app need, including Node, sign the person in to GitHub, and create a private repo in the named company GitHub. The shipped guide tells every agent to lead in plain words with the next step, also after a break, and to write a plain message for the named developer when it cannot recover. The shipped guide gives the sales flow: transcripts marked as heard from the customer, a Claude design, a browser-only web app with fake data, extra features labelled Demo only, one line on the demo saying the data is sample data and its features are not commitments, deploy through Mainline when asked, and on conversion one handover page for the FDE. The shipped guide says the FDE decides for each feature to use it, change it or build it from scratch, and conversion is not the client sign-off. forge next shows no sign-off question list until the repo has a client note or a brief with content, on new repos and on repos adopted earlier.",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "has_client_input() in src/forge/journey.py",
+      "file": "src/forge/journey.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 20,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Exclude filesystem metadata from client-input detection",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "a84aa5c64f9a01467ee594219a54b727ade4cd7c33c1d14bbe449d77ed400900",
+    "changed": "36d3db1023665a21c1d9ca0c41359789013e3ced32e254aaff1062b1d44e48b5",
+    "commit": "d20c7fcde6b6e6c7376237326d3a3d3f56ddc346",
+    "dismissals": [],
+    "findings": [],
+    "id": "c83f1cb0-12ed-48b1-8946-a7a9f960f7ec",
+    "status": "clean"
+  },
+  "round": 5,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-04T12:42:13.824162+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-04T13:01:12.954589+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-04T13:43:11.289502+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-04T20:27:30.227138+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "5b3214cc-d9df-41ce-919c-e4b1a0133d58",
+    "head": "3f5c88612da4d049de17f66f341b88d91b4198b8",
+    "keys": {},
+    "round": 4
+  },
+  "why": "A salesperson or FDE with little Claude Code experience cannot start alone: nothing tells Claude how to set them up, guide them in plain words, or hand over to a developer, and forge next lists 7 sign-off questions before they have shared an idea.",
+  "worker": "codex"
+}

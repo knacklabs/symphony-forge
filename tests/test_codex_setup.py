@@ -66,7 +66,17 @@ def _workers(top: Path, kind: str) -> None:
                            toml.read_text(encoding="utf-8")), encoding="utf-8")
 
 
+def _signed_in_codex(repo) -> None:
+    # These SDK/trust tests require a signed-in CLI, independent of the host machine.
+    _install(repo.bin, "codex", f"#!{sys.executable}\nimport sys\n"
+             "if sys.argv[1:] == ['login', 'status']:\n"
+             "    print('Logged in using ChatGPT')\n"
+             "    sys.exit(0)\n"
+             "sys.exit(2)\n")
+
+
 def test_11_codex_doctor(repo, gh, tmp_path, monkeypatch):
+    _signed_in_codex(repo)
     client, init = _fresh_client(repo, gh, tmp_path)
     assert init.returncode == 0, init.stderr
     gh.respond("auth", "status")

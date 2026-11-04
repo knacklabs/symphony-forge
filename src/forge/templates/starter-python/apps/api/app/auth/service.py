@@ -9,17 +9,20 @@ from urllib.parse import urlencode
 from uuid import UUID, uuid7
 
 from sqlalchemy import delete, select
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session as DbSession
 
-from app.auth.models import Account, PasswordResetToken, Session
+from app.auth.models import Account, PasswordResetToken, Session, SignInAttempt
 from app.auth.schema import (
     AcceptInviteInput,
     AddAgentInput,
     Agent,
     AuthOptions,
     CredentialsInput,
+    InviteResponse,
     MessageResponse,
+    ResetLinkResponse,
     ResetPasswordInput,
     SessionData,
 )
@@ -44,6 +47,15 @@ _PASSWORD_SCRYPT_P = 1
 _PASSWORD_SCRYPT_MAXMEM = 256 * 1024 * 1024
 _SESSION_LIFETIME = timedelta(days=30)
 _RESET_TOKEN_LIFETIME = timedelta(hours=1)
+_SIGN_IN_LOCK = timedelta(minutes=15)
+_SIGN_IN_FAILURE_LIMIT = 5
+# Unknown emails and accounts without passwords pay the same scrypt cost.
+_DUMMY_PASSWORD_HASH = (
+    "scrypt$"
+    + base64.urlsafe_b64encode(bytes(_PASSWORD_SALT_BYTES)).decode().rstrip("=")
+    + "$"
+    + base64.urlsafe_b64encode(bytes(_PASSWORD_KEY_BYTES)).decode().rstrip("=")
+)
 _RESET_MESSAGE = "If an account exists, a reset link has been sent."
 _AGENT_EMAIL_ALPHABET = "abcdefghijklmnopqrstuvwxyz0123456789"
 # No password matches an empty hash, so an agent account cannot sign in.
@@ -185,12 +197,24 @@ class AuthService:
             ) from error
         return account
 
+    def remove_member(self, account: AccountPrincipal, account_id: UUID) -> None:
+        self.organisations.remove_member(account, account_id)
+        self.db.execute(delete(Session).where(Session.account_id == account_id))
+        self.db.execute(
+            delete(PasswordResetToken).where(
+                PasswordResetToken.account_id == account_id
+            )
+        )
+        self.db.commit()
+
     def invite(
         self,
         email: str,
         account: AccountPrincipal,
         idempotency_key: str | None = None,
-    ) -> MessageResponse:
+    ) -> InviteResponse:
+        invite_url: str | None = None
+
         def create_invite(
             after_create: Callable[[DbSession, UUID], None] | None,
         ) -> UUID:
@@ -203,13 +227,15 @@ class AuthService:
                     "EMAIL_ALREADY_REGISTERED",
                     "That person already has an account.",
                 )
-            return self.organisations.invite(
+            nonlocal invite_url
+            invite_id, invite_url = self.organisations.invite(
                 email,
                 account,
                 self.mail_provider,
                 self.settings.app_origin,
                 after_create=after_create,
             )
+            return invite_id
 
         if idempotency_key is not None:
             create_once(
@@ -221,7 +247,7 @@ class AuthService:
             )
         else:
             create_invite(None)
-        return MessageResponse(message="Invite sent.")
+        return InviteResponse(message="Invite created.", invite_url=invite_url)
 
     def accept_invite(self, input_data: AcceptInviteInput) -> SessionData:
         invite = self.organisations.open_invite(input_data.token)
@@ -258,9 +284,35 @@ class AuthService:
         account = self.db.scalar(
             select(Account).where(Account.email == credentials.email)
         )
-        if account is None or not _verify_password(
-            credentials.password, account.password_hash
-        ):
+        password_matches = _verify_password(
+            credentials.password,
+            account.password_hash
+            if account and account.password_hash
+            else _DUMMY_PASSWORD_HASH,
+        )
+        now = datetime.now(UTC)
+        # The upsert locks this email's row until its counter is committed.
+        attempt = self.db.scalars(
+            insert(SignInAttempt)
+            .values(email=credentials.email, expires_at_utc=now + _SIGN_IN_LOCK)
+            .on_conflict_do_update(
+                index_elements=["email"], set_={"updated_at_utc": now}
+            )
+            .returning(SignInAttempt)
+        ).one()
+        locked = (
+            attempt.failures >= _SIGN_IN_FAILURE_LIMIT and attempt.expires_at_utc > now
+        )
+        if not locked and account is not None and password_matches:
+            self.db.delete(attempt)
+        elif not locked:
+            attempt.failures = (
+                1 if attempt.expires_at_utc <= now else attempt.failures + 1
+            )
+            if attempt.failures in (1, _SIGN_IN_FAILURE_LIMIT):
+                attempt.expires_at_utc = now + _SIGN_IN_LOCK
+        self.db.commit()
+        if locked or account is None or not password_matches:
             raise ApiError(
                 401, "INVALID_CREDENTIALS", "The email or password is incorrect."
             )
@@ -295,26 +347,58 @@ class AuthService:
         if account is None:
             return MessageResponse(message=_RESET_MESSAGE)
 
+        _, reset_url = self._create_reset_link(account.id)
+        self.db.commit()
+        self.mail_provider.send_password_reset(account.email, reset_url)
+        return MessageResponse(message=_RESET_MESSAGE)
+
+    def member_reset_link(
+        self,
+        admin: AccountPrincipal,
+        account_id: UUID,
+        idempotency_key: str | None = None,
+    ) -> ResetLinkResponse:
+        # Check scope even on a retry, so removed members cannot receive links.
+        self.organisations.authorize_reset_link(admin, account_id)
+        reset_url: str | None = None
+
+        def create_link(after_create: Callable[[DbSession, UUID], None] | None) -> UUID:
+            nonlocal reset_url
+            reset_id, url = self._create_reset_link(account_id)
+            if after_create is not None:
+                after_create(self.db, reset_id)
+            self.db.commit()
+            reset_url = url
+            return reset_id
+
+        if idempotency_key is None:
+            create_link(None)
+        else:
+            create_once(
+                self.db, admin, "members_reset-link", idempotency_key, create_link
+            )
+        return ResetLinkResponse(message="Reset link created.", reset_url=reset_url)
+
+    def _create_reset_link(self, account_id: UUID) -> tuple[UUID, str]:
         token = _token()
+        reset_id = uuid7()
         self.db.execute(
             delete(PasswordResetToken).where(
-                PasswordResetToken.account_id == account.id
+                PasswordResetToken.account_id == account_id
             )
         )
         self.db.add(
             PasswordResetToken(
-                id=uuid7(),
-                account_id=account.id,
+                id=reset_id,
+                account_id=account_id,
                 token_hash=_sha256(token),
                 expires_at_utc=datetime.now(UTC) + _RESET_TOKEN_LIFETIME,
             )
         )
-        self.db.commit()
         reset_url = (
             f"{self.settings.app_origin}/reset-password?{urlencode({'token': token})}"
         )
-        self.mail_provider.send_password_reset(account.email, reset_url)
-        return MessageResponse(message=_RESET_MESSAGE)
+        return reset_id, reset_url
 
     def reset_password(self, input_data: ResetPasswordInput) -> MessageResponse:
         password_hash = _hash_password(input_data.password)

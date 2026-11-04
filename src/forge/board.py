@@ -32,7 +32,7 @@ COMMANDS = [{
     "args": [(('--json',), {"action": "store_true", "help": "Print the machine view"}),
              (('--out',), {"metavar": "PATH", "help": "write every item's facts here as JSON instead"})],
     "position": 60,
-    "listing": "| `forge board` | Opens the live board page on this computer until Ctrl-C (`--out <path>` writes every item's facts as JSON instead) |",
+    "listing": "| `forge board` | Opens the live board page on this computer; stops after 30 minutes with no page open or Ctrl-C (`--out <path>` writes every item's facts as JSON instead) |",
 }]
 
 CHECK_DATE = "2026-11-15"  # ponytail: the rebuild's check date, from the spec's success measure
@@ -66,7 +66,8 @@ def board(args: Any) -> int:
             if args.json:
                 reads = pool.submit(_machine_prs, top), pool.submit(board_facts.prs, top)
                 local = pool.submit(local_history)
-            if repo.run("git", "fetch", "-q", "--prune", "--tags", "origin", cwd=top).returncode:
+            if (args.json or args.out) and repo.run(
+                    "git", "fetch", "-q", "--prune", "--tags", "origin", cwd=top).returncode:
                 print("Could not refresh work from GitHub; showing the local git records.", file=sys.stderr)
             if args.json:
                 view = machine_board(top, reads=reads)
@@ -253,11 +254,10 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
     finished_prs = board_facts.merged_prs(github)
     remembered = {branch for branch, pr in people_branches.items() if pr.get("author") or pr.get("mergedBy")}
     merged_prs = {pr["headRefName"] for pr in finished_prs}
-    visible_branches = remembered | merged_prs
     # The upgrade's six-week history is visible immediately, including older finished rows.
     history = {**history, "expired": history["expired"] - {
         rel for rel, (state, _) in best.items()
-        if state.get("branch") in visible_branches}}
+        if state.get("branch") in remembered | merged_prs}}
     by_branch.update({p["headRefName"]: p for p in finished_prs})
     merged_details = {p["headRefName"]: p for p in finished_prs}
     merged_dates = {branch: pr.get("mergedAt") for branch, pr in merged_details.items()}
@@ -765,7 +765,7 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
                       "Waiting" if current else readiness.get(key, {}).get("parts", {}).get(tid, "Not started"))
             parts.append({"id": item, "title": spec.get("Name") or "A part with no name yet",
                           "owner": task.developer(spec) or task.owner(text),
-                          "status": status, "waits_for": waits})
+                          "status": readiness.get(key, {}).get("stacked", {}).get(tid, status), "waits_for": waits})
         phase = ("done" if key in completed else
                  readiness.get(key, {}).get("stage", "planning"))
         if items.get(key, {}).get("worker"):
@@ -822,7 +822,7 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
                     [(rel, state, where) for rel, (state, where) in best.items() if rel not in merged]
                     + [(rel, state, where) for rel, state, where in history["copies"] if where == landed])
                 if (match := STATE.fullmatch(rel))}, landed),
-            "viewer": viewer,
+            "viewer": viewer, "signoff": nextstep.signoff(top, configuration(top)),
             "items": list(items.values()),
             "dependency_maps": maps, "team": team, "events": recent,
             "lanes": machine.view(), "machine": machine.load()}
@@ -981,7 +981,7 @@ def _copies(top: Path, landed: str, history: Item | None = None) -> list[tuple[s
                 if tree != base_tree:
                     snapshots[tree] = dict(snapshots[base_tree])
     texts = _blob_texts(top, list(dict.fromkeys(blob for files in snapshots.values() for blob in files.values())))
-    blobs = {blob: story.json_of(text) for blob, text in texts.items()}
+    blobs = {blob: repo.without_size_stop(story.json_of(text)) for blob, text in texts.items()}
     state_files = {tree: {rel: blob for rel, blob in sorted(files.items()) if STATE.fullmatch(rel)}
                    for tree, files in snapshots.items()}
     # Bulk Git supplies clean state; changed and untracked state still needs fresh disk reads.
@@ -1007,7 +1007,7 @@ def _copies(top: Path, landed: str, history: Item | None = None) -> list[tuple[s
                 else:
                     text = (path / rel).read_text(encoding="utf-8")
                     if text not in parsed:
-                        parsed[text] = story.json_of(text)
+                        parsed[text] = repo.without_size_stop(story.json_of(text))
                     state = parsed[text]
                 found.append((rel, state, path))
     seen_states = set()

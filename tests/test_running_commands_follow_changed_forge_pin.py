@@ -99,8 +99,10 @@ subprocess.run(["git", "merge", "-q", "--no-edit", "origin/main"], check=True,
                stdin=subprocess.DEVNULL, timeout=60)
 '''
     upgrade = "".join("    " + line + "\n" for line in upgrade.splitlines())
-    module.write_text(worker.replace('    if not int(os.environ.get(',
-                      upgrade + '    if not int(os.environ.get(', 1), "utf-8")
+    # Attach the model's edit to the SDK message boundary, independently of the
+    # land fixture's separate commit behavior.
+    module.write_text(worker.replace('    yield AssistantMessage(',
+                      upgrade + '    yield AssistantMessage(', 1), "utf-8")
 
 
 @pytest.mark.parametrize("adoption", ["fresh", "earlier-adopted"])

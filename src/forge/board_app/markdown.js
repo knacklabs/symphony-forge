@@ -92,13 +92,17 @@ function blocks(lines, into) {
 }
 
 // The plan as a fragment: everything from "## For the builders" on is folded under a summary.
-export function renderPlan(text) {
+export function renderPlan(text, folds = {}) {
   const lines = text.replace(/\r\n?/g, '\n').split('\n');
   const fold = lines.findIndex((line) => /^##\s+For the builders\s*$/.test(line));
   const out = document.createDocumentFragment();
   blocks(fold < 0 ? lines : lines.slice(0, fold), out);
   if (fold >= 0) {
     const folded = el('details', el('summary', 'For the builders'));
+    folded.open = Boolean(folds.builders);
+    folded.addEventListener('toggle', () => {
+      if (folded.isConnected) folds.builders = folded.open;
+    });
     blocks(lines.slice(fold + 1), folded);
     out.append(folded);
   }

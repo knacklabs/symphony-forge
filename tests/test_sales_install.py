@@ -11,6 +11,22 @@ pytestmark = pytest.mark.platform
 
 STORY = "FORGE-SALES-1"
 ROOT = Path(__file__).resolve().parents[1]
+IMPECCABLE_URL = (
+    "https://github.com/pbakaus/impeccable/tree/414603bf14c7a344edb466bb1f85690c77ce8b7d"
+    "/plugin/skills/impeccable"
+)
+EMIL_DESIGN_ENG_URL = (
+    "https://github.com/emilkowalski/skills/tree/a81dbca07f2217b7103e510c0f13f8d5b017afc9"
+    "/skills/emil-design-eng"
+)
+
+
+def _install_ui_skills(*skills_dirs: Path) -> None:
+    for skills_dir in skills_dirs:
+        for skill in ("impeccable", "emil-design-eng"):
+            folder = skills_dir / skill
+            folder.mkdir(parents=True, exist_ok=True)
+            (folder / "SKILL.md").write_text(f"{skill}\n", encoding="utf-8")
 
 
 def _stub(folder: Path, name: str, body: str) -> None:
@@ -24,7 +40,9 @@ def _mac_check_and_install(tmp_path):
     bin_dir.mkdir()
     log = tmp_path / "calls"
     _stub(bin_dir, "brew", "exit 0")
-    env = os.environ | {"PATH": str(bin_dir), "HOME": str(tmp_path)}
+    env = os.environ | {"PATH": str(bin_dir), "HOME": str(tmp_path),
+                        "CLAUDE_CONFIG_DIR": str(tmp_path / "claude-config"),
+                        "CODEX_HOME": str(tmp_path / "codex-home")}
     script = ROOT / "scripts/install-mac.sh"
 
     check = subprocess.run(["/bin/bash", str(script), "--check"], env=env,
@@ -38,6 +56,8 @@ def _mac_check_and_install(tmp_path):
     assert "Forge" in check.stdout
     assert "Claude Code" in check.stdout
     assert "Codex" in check.stdout
+    assert "Missing: impeccable" in check.stdout.splitlines()
+    assert "Missing: emil-design-eng" in check.stdout.splitlines()
     assert "Playwright browsers" in check.stdout
     assert all(line.startswith("Missing: ") for line in check.stdout.splitlines())
     assert not log.exists()
@@ -55,7 +75,7 @@ def _mac_check_and_install(tmp_path):
     _stub(installed, "uv", f'echo "uv $*" >> "{log}"\n'
           f'case "$*" in "tool dir --bin") echo "{bin_dir}";; '
           f'*"tool install"*) /bin/cp "{installed / "forge"}" "{bin_dir / "forge"}";; esac')
-    _stub(installed, "forge", 'echo "forge v1.2.25"')
+    _stub(installed, "forge", 'echo "forge v1.2.28"')
     _stub(bin_dir, "brew", f'echo "brew $*" >> "{log}"\n'
           f'case "$2" in git|node|uv) /bin/cp "{installed}/$2" "{bin_dir}/$2";; esac')
     _stub(bin_dir, "npm", f'echo "npm $*" >> "{log}"')
@@ -67,11 +87,13 @@ def _mac_check_and_install(tmp_path):
     calls = log.read_text().splitlines()
     assert calls == ["brew install git", "brew install gh", "brew install node",
                      "brew install --cask docker", "brew install uv",
-                     "uv tool install --force git+https://github.com/knacklabs/symphony-forge@v1.2.25", "uv tool update-shell",
+                     "uv tool install --force git+https://github.com/knacklabs/symphony-forge@v1.2.28", "uv tool update-shell",
                      "uv tool dir --bin", "npm install -g @anthropic-ai/claude-code",
                      "npm install -g @openai/codex",
+                     f"npx --yes skills add {IMPECCABLE_URL} -g -a claude-code -a codex --yes",
+                     f"npx --yes skills add {EMIL_DESIGN_ENG_URL} -g -a claude-code -a codex --yes",
                      "npx --yes playwright install chromium firefox webkit"]
-    assert "forge v1.2.25" in full.stdout
+    assert "forge v1.2.28" in full.stdout
     assert "sign in" in full.stdout.lower()
     assert "new terminal" in full.stdout.lower()
 
@@ -80,7 +102,11 @@ def _mac_homebrew_authorization_and_ready_tools(tmp_path):
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir()
     log = tmp_path / "calls"
-    env = os.environ | {"PATH": str(bin_dir), "HOME": str(tmp_path)}
+    claude_config = tmp_path / "claude-config"
+    codex_home = tmp_path / "codex-home"
+    env = os.environ | {"PATH": str(bin_dir), "HOME": str(tmp_path),
+                        "CLAUDE_CONFIG_DIR": str(claude_config),
+                        "CODEX_HOME": str(codex_home)}
     script = ROOT / "scripts/install-mac.sh"
     _stub(bin_dir, "curl", f'echo "curl $*" >> "{log}"\necho "exit 23"')
     _stub(tmp_path, "brew", f'echo "brew $*" >> "{log}"')
@@ -108,7 +134,8 @@ def _mac_homebrew_authorization_and_ready_tools(tmp_path):
     _stub(bin_dir, "uv", "exit 0")
     _stub(bin_dir, "claude", "exit 0")
     _stub(bin_dir, "codex", "exit 0")
-    _stub(bin_dir, "forge", 'echo "forge v1.2.25"')
+    _stub(bin_dir, "forge", 'echo "forge v1.2.28"')
+    _install_ui_skills(claude_config / "skills", codex_home / "skills")
     for kind in ("chromium", "firefox", "webkit"):
         (tmp_path / "Library/Caches/ms-playwright" / f"{kind}-1").mkdir(parents=True)
     check = subprocess.run(["/bin/bash", str(script), "--check"], env=env,
@@ -119,7 +146,7 @@ def _mac_homebrew_authorization_and_ready_tools(tmp_path):
     assert full.returncode == 0, full.stderr
     assert log.read_text().splitlines() == ["sudo -v",
                                            "curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh"]
-    assert "forge v1.2.25" in full.stdout
+    assert "forge v1.2.28" in full.stdout
 
 
 def _windows_check_and_install(tmp_path):
@@ -133,8 +160,12 @@ def _windows_check_and_install(tmp_path):
     assert powershell
     system_root = Path(os.environ["SystemRoot"])
     system_path = os.pathsep.join(str(system_root / part) for part in ("System32", "", "System32/WindowsPowerShell/v1.0"))
+    claude_config = tmp_path / "claude-config"
+    codex_home = tmp_path / "codex-home"
     env = os.environ | {"PATH": str(bin_dir) + os.pathsep + system_path,
                         "PATHEXT": ".CMD;.BAT", "LOCALAPPDATA": str(tmp_path),
+                        "HOME": str(tmp_path), "USERPROFILE": str(tmp_path),
+                        "CLAUDE_CONFIG_DIR": str(claude_config), "CODEX_HOME": str(codex_home),
                         "UV_TOOL_BIN_DIR": str(tmp_path / "tools")}
     script = ROOT / "scripts/install-windows.ps1"
     check = subprocess.run([powershell, "-NoProfile", "-File", str(script), "-Check"],
@@ -143,7 +174,8 @@ def _windows_check_and_install(tmp_path):
     assert set(check.stdout.splitlines()) == {
         "Missing: Git", "Missing: GitHub CLI", "Missing: Node", "Missing: Docker",
         "Missing: uv", "Missing: Forge",
-        "Missing: Claude Code", "Missing: Codex", "Missing: Playwright browsers"}
+        "Missing: Claude Code", "Missing: Codex", "Missing: impeccable",
+        "Missing: emil-design-eng", "Missing: Playwright browsers"}
     assert all(line.startswith("Missing: ") for line in check.stdout.splitlines())
     assert not log.exists()
     installed = tmp_path / "installed"
@@ -155,7 +187,7 @@ def _windows_check_and_install(tmp_path):
         f'if "%1 %2 %3"=="tool dir --bin" echo {tool_bin}\n'
         f'if "%1 %2"=="tool install" copy /Y "{installed / "forge.cmd"}" "{tool_bin / "forge.cmd"}" >nul\n',
         encoding="utf-8")
-    (installed / "forge.cmd").write_text("@echo forge v1.2.25\n", encoding="utf-8")
+    (installed / "forge.cmd").write_text("@echo forge v1.2.28\n", encoding="utf-8")
     for name in ("git", "node"):
         (installed / f"{name}.cmd").write_text("@echo off\n", encoding="utf-8")
     for name in ("claude", "codex"):
@@ -199,11 +231,13 @@ def _windows_check_and_install(tmp_path):
         "winget install --id OpenJS.NodeJS.LTS --exact --source winget --accept-package-agreements --accept-source-agreements",
         "winget install --id astral-sh.uv --exact --source winget --accept-package-agreements --accept-source-agreements",
         "winget install --id Docker.DockerDesktop --exact --source winget --accept-package-agreements --accept-source-agreements",
-        "uv tool install --force git+https://github.com/knacklabs/symphony-forge@v1.2.25",
+        "uv tool install --force git+https://github.com/knacklabs/symphony-forge@v1.2.28",
         "uv tool update-shell", "uv tool dir --bin",
         "npm install -g @anthropic-ai/claude-code", "npm install -g @openai/codex",
+        f"npx --yes skills add {IMPECCABLE_URL} -g -a claude-code -a codex --yes",
+        f"npx --yes skills add {EMIL_DESIGN_ENG_URL} -g -a claude-code -a codex --yes",
         "npx --yes playwright install chromium firefox webkit"]
-    assert "forge v1.2.25" in full.stdout
+    assert "forge v1.2.28" in full.stdout
     assert "sign in" in full.stdout.lower()
     assert "claude.cmd" in full.stdout and "codex.cmd" in full.stdout
     assert "new powershell window" in full.stdout.lower()
@@ -220,15 +254,20 @@ def _windows_wsl2_restart_and_all_present(tmp_path):
     log = tmp_path / "calls"
     system_root = Path(os.environ["SystemRoot"])
     env = os.environ | {"PATH": str(bin_dir) + os.pathsep + str(system_root / "System32"),
-                        "PATHEXT": ".CMD;.BAT", "LOCALAPPDATA": str(tmp_path)}
+                        "PATHEXT": ".CMD;.BAT", "LOCALAPPDATA": str(tmp_path),
+                        "HOME": str(tmp_path), "USERPROFILE": str(tmp_path),
+                        "CLAUDE_CONFIG_DIR": str(tmp_path / "claude-config"),
+                        "CODEX_HOME": str(tmp_path / "codex-home")}
     for name in ("git", "gh", "node", "docker", "uv", "claude", "codex"):
         (bin_dir / f"{name}.cmd").write_text("@echo off\n", encoding="utf-8")
     for name in ("winget", "npm", "npx"):
         (bin_dir / f"{name}.cmd").write_text(
             f'@echo off\necho {name} %* >> "{log}"\n', encoding="utf-8")
-    (bin_dir / "forge.cmd").write_text("@echo forge v1.2.25\n", encoding="utf-8")
+    (bin_dir / "forge.cmd").write_text("@echo forge v1.2.28\n", encoding="utf-8")
     for kind in ("chromium", "firefox", "webkit"):
         (tmp_path / "ms-playwright" / f"{kind}-1").mkdir(parents=True)
+    _install_ui_skills(tmp_path / "claude-config" / "skills",
+                       tmp_path / ".agents" / "skills")
     (bin_dir / "wsl.cmd").write_text("@echo Default Version: 2\n", encoding="utf-8")
     script = ROOT / "scripts/install-windows.ps1"
     powershell = shutil.which("powershell")
@@ -237,7 +276,7 @@ def _windows_wsl2_restart_and_all_present(tmp_path):
     assert check.returncode == 0 and check.stdout.strip() == ""
     full = subprocess.run([powershell, "-NoProfile", "-File", str(script)],
                           env=env, capture_output=True, text=True)
-    assert full.returncode == 0 and "forge v1.2.25" in full.stdout
+    assert full.returncode == 0 and "forge v1.2.28" in full.stdout
     assert not log.exists()
     # wsl.exe exists on a fresh laptop but fails on --status with its message on stderr.
     (bin_dir / "wsl.cmd").write_text(

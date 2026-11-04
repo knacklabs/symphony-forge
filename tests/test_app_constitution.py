@@ -23,16 +23,16 @@ CONSTITUTION_REFUSAL = (
     "New stories wait for this app's approved constitution in docs/product/CONSTITUTION.md."
 )
 CONSTITUTION_STEP = (
-    'Next: forge fix start "Write the app constitution" --done '
-    '"The owner approved docs/product/CONSTITUTION.md"'
+    'Next: forge fix start "Write the prototype plan" --done '
+    '"The owner approved the prototype plan"'
 )
 GUIDE_SENTENCES = (
     "Write them in docs/product/BRIEF.md. Record the options for each choice list with the thing "
     "it belongs to. The prototype and sign-off review use the whole brief.",
     "Make each architecture choice yourself, from the answers and the code, and write it as one "
-    "plain line with its reason and its decision record.",
+    "plain line with its reason.",
     "A live app answers both halves at adoption: ask only what the code cannot answer.",
-    "No new story starts until the owner approves the constitution.",
+    "No new story starts until the owner approves the prototype plan.",
 )
 
 
@@ -227,9 +227,11 @@ def test_2_the_constitution_is_approved_only_when_complete(repo, tmp_path, gh, a
                          "The owner approved docs/product/CONSTITUTION.md", "--kind", "mechanical")
     assert started.returncode == 0, started.stdout + started.stderr
     fix = Path(re.search(r" in (.+)\n", started.stdout)[1])
-    created_record = repo.forge("decision", "new", "app-constitution", cwd=fix)
+    # Plan approval replaces the constitution and per-choice approvals. These repos
+    # are past sign-off, so the personal-data answer still belongs to this approval.
+    created_record = repo.forge("decision", "new", "prototype-plan", cwd=fix)
     assert created_record.returncode == 0, created_record.stdout + created_record.stderr
-    app_record = next((fix / "docs/decisions").glob("*-app-constitution.md"))
+    app_record = next((fix / "docs/decisions").glob("*-prototype-plan.md"))
     app_record.write_text(
         '---\nstatus: proposed\n---\n\n# App constitution\n\n'
         "## Context\nThe owner needs a record of the app's architecture.\n\n"
@@ -245,102 +247,56 @@ def test_2_the_constitution_is_approved_only_when_complete(repo, tmp_path, gh, a
         "A basket has items and a saved time.\n\n## Answers\n"
         "- Personal data: no private or regulated data (client, 2026-10-22)\n",
         encoding="utf-8")
-    missing_constitution = repo.forge("decision", "accept", "app-constitution", "--by", "Ravi",
+    missing_constitution = repo.forge("decision", "accept", "prototype-plan", "--by", "Ravi",
                                      cwd=fix)
     assert missing_constitution.returncode == 1
-    assert "The app constitution can't be approved yet:" in missing_constitution.stderr
+    assert "The prototype plan needs these changes:" in missing_constitution.stderr
     assert "docs/product/CONSTITUTION.md" in missing_constitution.stderr
     assert "status: proposed" in app_record.read_text("utf-8")
 
     constitution = fix / "docs/product/CONSTITUTION.md"
     constitution.parent.mkdir(parents=True, exist_ok=True)
-    storage_started = repo.forge("decision", "new", "postgres-storage", cwd=fix)
-    assert storage_started.returncode == 0, storage_started.stdout + storage_started.stderr
-    storage = next((fix / "docs/decisions").glob("*-postgres-storage.md"))
-    storage.write_text(
-        '---\nstatus: proposed\n---\n\n# Store app data in Postgres\n\n'
-        "## Context\nThe app needs durable storage.\n\n"
-        "## Decision\nStore app data in Postgres.\n\n"
-        "## Consequences\nThe app uses a relational database.\n",
-        encoding="utf-8")
-    accepted_storage = repo.forge("decision", "accept", "postgres-storage", "--by", "Ravi",
-                                  cwd=fix)
-    assert accepted_storage.returncode == 0, accepted_storage.stdout + accepted_storage.stderr
     constitution.write_text(
         "# App constitution\n\n## Defaults\n<!-- Add defaults here. -->\n\n"
         "## Architecture choices\n"
-        f"- Storage: Postgres, see docs/decisions/{storage.name}.\n",
+        "- Storage: Postgres, because orders need durable storage.\n",
         encoding="utf-8")
-    empty_defaults = repo.forge("decision", "accept", "app-constitution", "--by", "Ravi", cwd=fix)
+    empty_defaults = repo.forge("decision", "accept", "prototype-plan", "--by", "Ravi", cwd=fix)
     assert empty_defaults.returncode == 1
     assert "## Defaults" in empty_defaults.stderr
 
     constitution.write_text(
         "# App constitution\n\n## Defaults\nUse the secure defaults listed in the guide.\n\n"
-        "## Architecture choices\n- Store data safely.\n",
-        encoding="utf-8")
-    unlinked = repo.forge("decision", "accept", "app-constitution", "--by", "Ravi", cwd=fix)
-    assert unlinked.returncode == 1
-    assert 'architecture choice "- Store data safely." names no decision record' in unlinked.stderr
-
-    constitution.write_text(
-        "# App constitution\n\n## Defaults\nUse the secure defaults listed in the guide.\n\n"
-        "## Architecture choices\n"
-        "- Store data safely: docs/decisions/9999-not-present.md.\n",
-        encoding="utf-8")
-    missing_record = repo.forge("decision", "accept", "app-constitution", "--by", "Ravi", cwd=fix)
-    assert missing_record.returncode == 1
-    assert "docs/decisions/9999-not-present.md" in missing_record.stderr
-    assert 'forge decision accept not-present --by "Ravi"' in missing_record.stderr
-
-    constitution.write_text(
-        "# App constitution\n\n## Defaults\nUse the secure defaults listed in the guide.\n\n"
         "## Architecture choices\n<!-- Add choices here. -->\n",
         encoding="utf-8")
-    empty_choices = repo.forge("decision", "accept", "app-constitution", "--by", "Ravi", cwd=fix)
+    empty_choices = repo.forge("decision", "accept", "prototype-plan", "--by", "Ravi", cwd=fix)
     assert empty_choices.returncode == 1
     assert "## Architecture choices" in empty_choices.stderr
 
-    proposed_start = repo.forge("decision", "new", "user-sign-in", cwd=fix)
-    assert proposed_start.returncode == 0, proposed_start.stdout + proposed_start.stderr
-    proposed = next((fix / "docs/decisions").glob("*-user-sign-in.md"))
-    proposed.write_text(
-        '---\nstatus: proposed\n---\n\n# Require sign-in\n\n'
-        "## Context\nThe app has private customer data.\n\n"
-        "## Decision\nRequire an account before use.\n\n"
-        "## Consequences\nCustomers must sign in.\n",
-        encoding="utf-8")
     constitution.write_text(
         "# App constitution\n\n## Defaults\nUse the secure defaults listed in the guide.\n\n"
-        "## Architecture choices\n"
-        f"- Sign-in: Require an account, see docs/decisions/{proposed.name}.\n",
+        "## Roles\nAdmins do everything. Members view and create.\n\n"
+        "## Architecture choices\n- Require an account because orders are private.\n",
         encoding="utf-8")
-    proposed_choice = repo.forge("decision", "accept", "app-constitution", "--by", "Ravi", cwd=fix)
-    assert proposed_choice.returncode == 1
-    assert f"docs/decisions/{proposed.name}" in proposed_choice.stderr
-    assert 'forge decision accept user-sign-in --by "Ravi"' in proposed_choice.stderr
-
-    accepted_choice = repo.forge("decision", "accept", "user-sign-in", "--by", "Ravi", cwd=fix)
-    assert accepted_choice.returncode == 0, accepted_choice.stdout + accepted_choice.stderr
     old_brief = brief.read_text("utf-8")
 
     brief.write_text(old_brief.replace(
         "## Summary\nShoppers save baskets for later.\n\n",
         "## Summary\n<!-- Add a summary. -->\n\n"), encoding="utf-8")
-    missing_summary = repo.forge("decision", "accept", "app-constitution", "--by", "Ravi",
+    missing_summary = repo.forge("decision", "accept", "prototype-plan", "--by", "Ravi",
                                  cwd=fix)
     assert missing_summary.returncode == 1
     assert "docs/product/BRIEF.md needs ## Summary" in missing_summary.stderr
 
     brief.write_text(old_brief.replace("## Users\nShoppers use the app.\n\n", ""),
                      encoding="utf-8")
-    missing_users = repo.forge("decision", "accept", "app-constitution", "--by", "Ravi", cwd=fix)
+    missing_users = repo.forge("decision", "accept", "prototype-plan", "--by", "Ravi", cwd=fix)
     assert missing_users.returncode == 1
     assert "docs/product/BRIEF.md needs ## Users" in missing_users.stderr
 
     brief.write_text(old_brief.replace("## Things it keeps track of\nA basket has items and a saved time.\n\n", ""),
                      encoding="utf-8")
-    missing_things = repo.forge("decision", "accept", "app-constitution", "--by", "Ravi", cwd=fix)
+    missing_things = repo.forge("decision", "accept", "prototype-plan", "--by", "Ravi", cwd=fix)
     assert missing_things.returncode == 1
     assert "## Things it keeps track of" in missing_things.stderr
     for answer in (None, "no private or regulated data", "ask the client", "later, when scope is known"):
@@ -356,13 +312,13 @@ def test_2_the_constitution_is_approved_only_when_complete(repo, tmp_path, gh, a
         else:
             text = old_brief.replace("no private or regulated data", answer)
         brief.write_text(text, encoding="utf-8")
-        open_personal_data = repo.forge("decision", "accept", "app-constitution", "--by", "Ravi",
+        open_personal_data = repo.forge("decision", "accept", "prototype-plan", "--by", "Ravi",
                                         cwd=fix)
         assert open_personal_data.returncode == 1
         assert "Personal data" in open_personal_data.stderr
 
     brief.write_text(old_brief, encoding="utf-8")
-    accepted = repo.forge("decision", "accept", "app-constitution", "--by", "Ravi", cwd=fix)
+    accepted = repo.forge("decision", "accept", "prototype-plan", "--by", "Ravi", cwd=fix)
     assert accepted.returncode == 0, accepted.stdout + accepted.stderr
     assert "Accepted docs/decisions/" in accepted.stdout
     assert "status: accepted" in app_record.read_text("utf-8")
@@ -380,6 +336,10 @@ def test_3_reviews_and_reads_hold_work_against_the_constitution(env, tmp_path, m
     repo = env.repo
     constitution = (repo.path / "docs/product/CONSTITUTION.md").read_text("utf-8")
     record = next(repo.path.glob("docs/decisions/*-app-constitution.md"))
+    # The plan now approves these same constitution choices for reviews and reads.
+    plan = record.with_name(record.name.replace("-app-constitution.md", "-prototype-plan.md"))
+    record.rename(plan)
+    record = plan
 
     def approval(accepted):
         text = record.read_text("utf-8")
@@ -390,6 +350,7 @@ def test_3_reviews_and_reads_hold_work_against_the_constitution(env, tmp_path, m
         _fixture_git(repo, tmp_path, "commit", "-qm", "Change constitution approval")
         _fixture_git(repo, tmp_path, "push", "-q", "origin", "main")
 
+    approval(True)
     if case.startswith("read"):
         _install(repo.bin, "claude", READER.format(python=sys.executable))
         shop = new_story(repo, "SHOP")

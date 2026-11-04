@@ -1,8 +1,9 @@
 import hashlib
 from datetime import UTC, datetime
 from typing import Annotated, cast
+from uuid import UUID
 
-from fastapi import APIRouter, Depends, Header, Request, Response
+from fastapi import APIRouter, Depends, Header, Path, Request, Response
 from sqlalchemy import select
 from sqlalchemy.orm import Session as DbSession
 
@@ -16,7 +17,9 @@ from app.auth.schema import (
     AuthOptions,
     CredentialsInput,
     ForgotPasswordInput,
+    InviteResponse,
     MessageResponse,
+    ResetLinkResponse,
     ResetPasswordInput,
 )
 from app.auth.service import AuthService
@@ -38,6 +41,7 @@ router = APIRouter(prefix="/api/v1/auth", tags=["Auth"])
 invites_router = APIRouter(prefix="/api/v1/invites", tags=["Organisations"])
 # In auth, because it makes the account, as sign-up and invites do.
 agents_router = APIRouter(prefix="/api/v1/agents", tags=["Organisations"])
+members_router = APIRouter(prefix="/api/v1/members", tags=["Organisations"])
 
 
 def _settings(request: Request) -> Settings:
@@ -181,12 +185,10 @@ def sign_up(
 @invites_router.post(
     "",
     status_code=201,
-    response_model=SuccessEnvelope[MessageResponse],
-    responses={
-        status: {"model": ErrorEnvelope} for status in (400, 401, 403, 409, 422)
-    },
+    response_model=SuccessEnvelope[InviteResponse],
+    responses={status: {"model": ErrorEnvelope} for status in (400, 401, 403, 409)},
     summary="Invite a person to your organisation.",
-    description="Admins invite an email without an account. A new invite replaces its seven-day link. Production requires a mail provider.",
+    description="Admins receive a seven-day, single-use link with or without email. A new invite replaces the link. A retry with the same key returns no link.",
 )
 def invite(
     request: Request,
@@ -197,10 +199,63 @@ def invite(
         str | None,
         Header(alias="Idempotency-Key", min_length=1, max_length=200),
     ] = None,
-) -> SuccessEnvelope[MessageResponse]:
+) -> SuccessEnvelope[InviteResponse]:
     return SuccessEnvelope(
         data=_service(request, db).invite(input_data.email, account, idempotency_key)
     )
+
+
+@members_router.post(
+    "/{account_id}/reset-link",
+    status_code=201,
+    response_model=SuccessEnvelope[ResetLinkResponse],
+    responses={status: {"model": ErrorEnvelope} for status in (400, 401, 403, 404)},
+    summary="Make a password reset link for a member.",
+    description="Admins receive a single-use link valid for one hour, with or without email. A new link replaces earlier links. A retry with the same key returns no link.",
+)
+def member_reset_link(
+    request: Request,
+    account_id: Annotated[
+        UUID,
+        Path(
+            description="A human member of your organisation.",
+            examples=["b3e1d349-1d8e-481c-8c69-99ea576f94c7"],
+        ),
+    ],
+    account: Annotated[AccountPrincipal, Depends(admin_only)],
+    db: Annotated[DbSession, Depends(get_db)],
+    idempotency_key: Annotated[
+        str | None, Header(alias="Idempotency-Key", min_length=1, max_length=200)
+    ] = None,
+) -> SuccessEnvelope[ResetLinkResponse]:
+    return SuccessEnvelope(
+        data=_service(request, db).member_reset_link(
+            account, account_id, idempotency_key
+        )
+    )
+
+
+@members_router.delete(
+    "/{account_id}",
+    response_model=SuccessEnvelope[None],
+    responses={status: {"model": ErrorEnvelope} for status in (400, 401, 403, 404)},
+    summary="Remove a member from your organisation.",
+    description="Only admins can remove members. You cannot remove yourself. Removal ends sessions, cancels the member's invites and records the change.",
+)
+def remove_member(
+    request: Request,
+    account_id: Annotated[
+        UUID,
+        Path(
+            description="The account of another member in your organisation.",
+            examples=["b3e1d349-1d8e-481c-8c69-99ea576f94c7"],
+        ),
+    ],
+    account: Annotated[AccountPrincipal, Depends(admin_only)],
+    db: Annotated[DbSession, Depends(get_db)],
+) -> SuccessEnvelope[None]:
+    _service(request, db).remove_member(account, account_id)
+    return SuccessEnvelope(data=None)
 
 
 @agents_router.post(
@@ -254,6 +309,7 @@ def accept_invite(
         429: {"model": ErrorEnvelope},
     },
     summary="Sign in and start a server session.",
+    description="Five failed sign-ins lock an email for fifteen minutes. Wrong passwords, unknown emails and locked emails receive the same refusal.",
 )
 def sign_in(
     request: Request,

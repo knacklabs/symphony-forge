@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "bug\tplans/FORGE-SAMPLE-1.md\tThe Tests cell uses an incomplete test name, so the worker test command collects no tests.",
+      "kind": "bug",
+      "path": "plans/FORGE-SAMPLE-1.md",
+      "line": 128,
+      "text": "The Tests cell uses an incomplete test name, so the worker test command collects no tests.",
+      "from": "worker",
+      "item": "FORGE-SAMPLE-1/RECORD",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/close.py\tNot done: Close and merge need no review and no tests for it",
+      "kind": "edge",
+      "path": "src/forge/close.py",
+      "line": 291,
+      "text": "Not done: Close and merge need no review and no tests for it",
+      "from": "review",
+      "item": "FORGE-SAMPLE-1/RECORD",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

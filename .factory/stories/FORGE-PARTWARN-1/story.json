@@ -1,0 +1,34 @@
+{
+  "approval": {
+    "at": "2026-11-02T17:58:15.527522+00:00",
+    "by": "human-via-Claude",
+    "event": "toolu_01JpmG1Gn3V4WHzXHubytnY1",
+    "hash": "96650b49918f4a7a8406890c308180380f318f06f2aa7923113e75ea87860eff",
+    "part_line_limit": 400,
+    "round": 2,
+    "runtime": "claude",
+    "session": "c01a489d-c76f-41c1-8371-d6f0052b027c"
+  },
+  "doc": "plans/FORGE-PARTWARN-1.md",
+  "status": "approved",
+  "steps": [
+    {
+      "at": "2026-11-02T17:44:50.288412+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-02T17:52:33.981631+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-11-02T17:54:37.220153+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-11-02T17:58:15.527699+00:00",
+      "step": "approved"
+    }
+  ],
+  "title": "Warn instead of stop for story parts over 400 lines",
+  "touches": 1
+}

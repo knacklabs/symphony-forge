@@ -11,12 +11,27 @@ STEPS = ("ideas and client notes", "brief", "canvas design", "sign-off", "build"
          "deploy on Mainline", "run and improve")
 
 
+def has_client_input(top: Path) -> bool:
+    """Local notes or brief content, excluding Forge's empty scaffold."""
+    from forge.sync import TEMPLATES
+
+    scaffold = (TEMPLATES / "skeleton/docs/product/BRIEF.md").read_text(encoding="utf-8")
+    placeholders = {line.strip() for line in scaffold.splitlines()}
+    inputs = [top / "docs/product/BRIEF.md", *(top / "docs/context").rglob("*")]
+    return any(line.strip() and (path != inputs[0] or (
+                   not line.lstrip().startswith("#") and line.strip() not in placeholders))
+               for path in inputs if path.is_file()
+               for line in re.sub(r"<!--.*?-->", "", path.read_text(
+                   encoding="utf-8", errors="replace"), flags=re.S).splitlines())
+
+
 def step_line(top: Path, cfg: dict[str, Any], history: dict[str, Any] | None = None,
               *, idle: bool = False) -> str:
     """Name the first journey step whose landed facts still need work."""
     ref = story.landed_ref(top)
     brief = story.show(top, ref, "docs/product/BRIEF.md") or ""
     sections = records._sections(re.sub(r"<!--.*?-->", "", brief, flags=re.S))
+    step_name: str | None = None
     if cfg["repo"] == "forge-source":
         number = 5
     elif repo.is_prototype(top, cfg, (ref,)):
@@ -32,6 +47,9 @@ def step_line(top: Path, cfg: dict[str, Any], history: dict[str, Any] | None = N
                 number = 3
             else:
                 number = 4
+    elif repo.sample_data(top, cfg, ref):
+        number = 5
+        step_name = "set up tests"
     else:
         if history is not None:
             completed = history["stories"].values()
@@ -47,7 +65,7 @@ def step_line(top: Path, cfg: dict[str, Any], history: dict[str, Any] | None = N
             number = 6
         else:
             number = 7
-    return f"Step {number} of 7: {STEPS[number - 1]}."
+    return f"Step {number} of 7: {step_name or STEPS[number - 1]}."
 
 
 def started(top: Path, item: str, state: dict[str, Any], kind: str) -> str | None:

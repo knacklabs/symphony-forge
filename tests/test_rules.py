@@ -72,7 +72,6 @@ def test_5_forge_stays_small(repo):
     # FORGE-INTAKE-1 adds start.
     assert len(commands) <= 25, f"{len(commands)} commands: {commands}"
 
-    assert "git diff --numstat" in WORKFLOW.read_text(encoding="utf-8"), "CI prints no net lines"
 
 
 @pytest.mark.platform

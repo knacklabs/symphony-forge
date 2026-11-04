@@ -243,7 +243,8 @@ describe('starter API', () => {
     expect(known.body).toEqual(unknown.body);
 
     const logs = execFileSync('docker', ['compose', '-f', 'compose.test.yml', 'logs', '--no-color', 'production-api'], { encoding: 'utf8' });
-    expect(logs).not.toContain('/reset-password');
+    // A reset request logs its route. Links and their secret tokens must stay out.
+    expect(logs).not.toMatch(/https?:\/\/[^\s"]*\/reset-password|\/reset-password\?/);
     expect(logs).not.toMatch(/[A-Za-z0-9_-]{43}/);
   });
 });

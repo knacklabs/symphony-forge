@@ -1,0 +1,75 @@
+{
+  "branch": "task/FORGE-NOSCREENS-1-AUTHPY",
+  "chat": {
+    "approval": "8297d12aa6b1c88eb937d015eb0b123f47849ffa27289e0073d4c4a1293cc35a",
+    "claude": null,
+    "conversation": "01a19d98-fd43-75a2-aef8-7e56ccc0658f",
+    "head": null,
+    "start": "4fe644be523ab8abbc87069cf4072a6a9602b981"
+  },
+  "known": [
+    {
+      "area": "src/forge/templates/starter-python/apps/api/app/auth/schema.py",
+      "file": "src/forge/templates/starter-python/apps/api/app/auth/schema.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 98,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: shipped browser rules disagree with the Python API",
+      "work": 2
+    }
+  ],
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "d8facde5fd2f7cdb899fc442ed582d98d1f46dd38f5dadd3e79018bb9cb23d31",
+    "changed": "15618e5ced7f5060395eab60a5bbe32a27d1b1395784b068861bc8557c27fdcb",
+    "commit": "b68fae36399d29cc0a1231db521281704f4a6494",
+    "dismissals": [],
+    "findings": [],
+    "id": "f879867d-8974-4d2b-afeb-8a1d1e111916",
+    "status": "clean"
+  },
+  "round": 6,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-02T18:49:52.746962+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-03T04:11:26.553451+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-03T04:14:16.501818+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-03T04:18:39.810952+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-03T04:24:32.360468+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-03T05:33:04.243095+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-03T06:21:22.611590+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "3e3a4bff-d5ef-4671-9dca-bf1bf2bee921",
+    "head": "5a1ef58dfcdd770392c031ec0ffa5a94546b31ba",
+    "keys": {},
+    "round": 5
+  },
+  "worker": "codex"
+}

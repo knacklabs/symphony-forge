@@ -1,0 +1,6 @@
+{
+  "name": "@app/notifications-contracts",
+  "projectType": "library",
+  "sourceRoot": "libs/notifications/contracts/src",
+  "tags": ["type:contracts", "scope:notifications"]
+}

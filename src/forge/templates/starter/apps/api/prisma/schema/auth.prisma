@@ -1,3 +1,15 @@
+// Temporary pre-authentication state also covers emails with no account.
+model SignInAttempt {
+  id           String   @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  email        String   @unique
+  failures     Int      @default(0)
+  expiresAtUtc DateTime @db.Timestamptz(3)
+  createdAtUtc DateTime @default(now()) @db.Timestamptz(3)
+  updatedAtUtc DateTime @updatedAt @db.Timestamptz(3)
+
+  @@schema("core")
+}
+
 model Account {
   id                  String   @id @default(dbgenerated("uuidv7()")) @db.Uuid
   email               String   @unique
@@ -18,6 +30,7 @@ model Account {
   modifiedProjects  Project[] @relation("ProjectModifiedBy")
   deletedProjects   Project[] @relation("ProjectDeletedBy")
   idempotencyKeys   IdempotencyKey[]
+  notifications     Notification[]
 
   @@index([createdByAccountId], map: "idx_Account_createdByAccountId")
   @@index([modifiedByAccountId], map: "idx_Account_modifiedByAccountId")

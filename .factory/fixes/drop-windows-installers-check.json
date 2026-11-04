@@ -1,0 +1,53 @@
+{
+  "base": "e7abb17344534e7ab54d927806b8498b94c5f8c4",
+  "branch": "fix/drop-windows-installers-check",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a19dac-55df-7972-a515-6f9cc1178ebb",
+    "head": null,
+    "start": "adad2cac5b8a55fb1155479ce49680b0fe20604e"
+  },
+  "done_when": "forge.toml's checks name only tests and forge-pr-check on the default branch",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "732c20a080fb6cbd278975e25f9bb4b8202e3db6e75650515b50b6e1a16a2762",
+    "changed": "d024de6c1b64939429219fa952bd5e9a40abad3dd2bf45966d9c645c8d3e4684",
+    "commit": "51e46ffeff8c23dcb2dfe03677456be419764eb5",
+    "dismissals": [],
+    "findings": [],
+    "id": "261381c9-7bbf-490e-8860-1a1ef31ac9b1",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-02T19:01:38.220903+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-02T19:02:21.372137+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-02T19:13:04.135872+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-02T19:19:14.794091+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "28561f09-39d1-4e8a-bfa5-bc39a5eaf73c",
+    "head": "96a252197570bd4f31dd482b758670ce910ee986",
+    "keys": {},
+    "round": null
+  },
+  "why": "Forge waits for checks named on the default branch's forge.toml, so a pull request that removes the windows-installers job waits forever for that job. Drop the name from forge.toml first, as a change of its own, so that branch protection and forge.toml agree and the CI cleanup can then merge.",
+  "worker": "codex"
+}

@@ -1,9 +1,9 @@
-"""Code sign-off excludes images while canvas review retains them.
+"""Code sign-off excludes images on the first review and a repair retry.
 
 Test audit:
-1. Protect the files delivered to the two real review commands.
+1. Protect the files delivered to the real product review command.
 2. An unfiltered current or earlier snapshot sends screenshots to code review.
-3. Existing canvas tests never check image exclusion on an acceptance retry.
+3. Existing first-review tests do not check image exclusion on a repair retry.
 4. Replace only external Autoreview; no production seam is needed.
 """
 from __future__ import annotations
@@ -23,7 +23,7 @@ STORY = "signoff-skips-screenshots"
 
 @pytest.mark.platform
 @pytest.mark.parametrize("setup", [_client, _adopted_client], ids=["new", "upgraded"])
-def test_1_code_signoff_excludes_images_but_canvas_keeps_them(repo, tmp_path, monkeypatch, setup):
+def test_1_code_signoff_excludes_images(repo, tmp_path, monkeypatch, setup):
     fix, answers, queue = setup(repo, tmp_path, monkeypatch)
     if setup is _adopted_client:
         _request_build(repo, fix)
@@ -36,7 +36,6 @@ def test_1_code_signoff_excludes_images_but_canvas_keeps_them(repo, tmp_path, mo
     repo.git("add", old_image, cwd=fix)
     repo.git("commit", "-qm", "Add an earlier screen", cwd=fix)
     queue.write_text(json.dumps([
-        {"report": {"review_status": "scoped-clean", "findings": []}},
         {"report": {"review_status": "findings", "findings": [{
             "priority": "P1", "title": "Product purpose is missing",
             "body": "Gain 5, Work 2, Harm 4\nThe normal product purpose is missing.",
@@ -50,10 +49,9 @@ import json, os, runpy, subprocess, sys
 from pathlib import Path
 args = sys.argv[1:]
 base = args[args.index("--base") + 1]
-prompt = Path(args[args.index("--prompt-file") + 1]).read_text("utf-8")
 names = subprocess.check_output(["git", "diff", "--name-only", base, "HEAD"], encoding="utf-8").splitlines()
 with Path(os.environ["AUTOREVIEW_STUB"]).with_suffix(".files.jsonl").open("a", encoding="utf-8") as out:
-    out.write(json.dumps({{"canvas": "# Canvas completeness check" in prompt, "files": names}}) + "\\n")
+    out.write(json.dumps({{"files": names}}) + "\\n")
 runpy.run_path({json.dumps(str(original))}, run_name="__main__")
 ''', encoding="utf-8")
 
@@ -73,10 +71,8 @@ runpy.run_path({json.dumps(str(original))}, run_name="__main__")
 
     assert accepted.returncode == 0, accepted.stdout + accepted.stderr
     calls = [json.loads(line) for line in queue.with_suffix(".files.jsonl").read_text("utf-8").splitlines()]
-    image = "docs/design/prototype/order-list.svg"
-    assert [call["canvas"] for call in calls] == [True, False, True, False]
-    for canvas, signoff in (calls[:2], calls[2:]):
-        assert image in canvas["files"]
+    assert len(calls) == 2
+    for signoff in calls:
         assert "PRODUCT.md" in signoff["files"]
         assert not any(Path(name).suffix.lower() in {".png", ".jpg", ".jpeg", ".webp", ".svg"}
                        for name in signoff["files"])

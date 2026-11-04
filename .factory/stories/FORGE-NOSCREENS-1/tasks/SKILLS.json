@@ -1,0 +1,123 @@
+{
+  "allow_large": "The lines are the two upstream design skills copied unchanged, with their licences, as the owner approved in the plan on 31 October 2026 (about 4.4 MB for each client repo).",
+  "branch": "task/FORGE-NOSCREENS-1-SKILLS",
+  "chat": {
+    "approval": "8297d12aa6b1c88eb937d015eb0b123f47849ffa27289e0073d4c4a1293cc35a",
+    "claude": null,
+    "conversation": "01a19ab5-0c46-7e22-beeb-f2d75fde470a",
+    "head": null,
+    "start": "ea66b1ccb60531e7f887c7b1c2575dbce2a45b3d"
+  },
+  "known": [
+    {
+      "area": "src/forge/templates/skills/impeccable/scripts/live-browser.js",
+      "file": "src/forge/templates/skills/impeccable/scripts/live-browser.js",
+      "gain": 3,
+      "harm": 3,
+      "line": 2172,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Escape saved class names before querying insert anchors",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/skills/impeccable/scripts/live-browser.js",
+      "file": "src/forge/templates/skills/impeccable/scripts/live-browser.js",
+      "gain": 3,
+      "harm": 3,
+      "line": 11526,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "[P1] Allow keyboard focus to leave the Steer field",
+      "work": 2
+    },
+    {
+      "area": "write_file() in src/forge/sync.py",
+      "file": "src/forge/sync.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 164,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 5,
+      "security": false,
+      "title": "[P2] Preserve launcher executability when skills are added on Windows",
+      "work": 3
+    },
+    {
+      "area": "src/forge/templates/skills/impeccable/scripts/live-browser.js",
+      "file": "src/forge/templates/skills/impeccable/scripts/live-browser.js",
+      "gain": null,
+      "harm": null,
+      "line": 12393,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 7,
+      "security": false,
+      "title": "[P2] Remove the design panel when exiting live mode",
+      "work": null
+    }
+  ],
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "e50eef03313e1bc4a1b6e92e4e6dfc34ff61e71a4653847c8e571801786a1e8b",
+    "changed": "092607deb614021202921d50a7537dd8565ece2a65e5cb5ffcd8c46d008cef6e",
+    "commit": "0298966d258ed94835c963b161873f468ba81aa1",
+    "dismissals": [],
+    "findings": [],
+    "id": "07e1f191-ae7b-484e-9fd9-256dd8807ad1",
+    "status": "clean"
+  },
+  "round": 9,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-02T05:14:47.798079+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-02T07:53:13.079947+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-02T07:55:41.168813+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-02T08:33:48.400695+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-02T09:34:57.044988+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-02T21:37:48.649987+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-02T22:14:10.606325+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-02T23:42:41.298832+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-03T00:18:29.392074+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "102b1050-ffc3-4e0c-983c-a224cd7f110c",
+    "head": "6281d7cf646789aeaeb2d7dfddd883494a036ebe",
+    "keys": {},
+    "round": 8
+  },
+  "worker": "codex"
+}

@@ -114,6 +114,7 @@ change is dogfooded on Forge itself before clients get it.
 
 ## Review rules
 
+- Report as P1 any screen, page, route table or app shell that a change adds under `src/forge/templates/starter` or `src/forge/templates/starter-python`.
 - A change to Forge says what a new client repo (init or adoption) and an existing client repo (on
   upgrade to the new release) each get. Each rule keeps its full cases on a new repo plus at least
   one case on an existing repo adopted on an earlier release. Keep more existing-repo cases only
@@ -137,7 +138,10 @@ These govern every change to Forge, as they govern every app that Forge builds.
    about 150 lines or one model call or user step, 3 for more, or a new table, job, workflow or
    flag.
 3. Choose the simplest option.
-4. Rules are stated, not policed: add no check, gate or refusal only to enforce a rule.
+4. Forge does the right thing by default where it can. It refuses only when a mistake
+   costs a lot or is hard to undo. It states a rule only when a mistake is cheap and
+   something later catches it. People should not need to know how to use agents well
+   for Forge to work.
 
 ### Forge's 13 principles
 
@@ -159,6 +163,11 @@ These govern Forge itself. Each has a check: an acceptance criterion, a CI check
 
 ### Tests for Forge
 
+- Before each builder round ends, run the cheap repo checks with
+  `uv run --frozen --python 3.11 pytest -q tests/test_rules.py::test_4_one_test_per_rule tests/test_rules.py::test_5_forge_stays_small`.
+  This step also applies in CI test mode. Fix failures in the same round, rerun
+  the failed checks, and commit the repairs. These existing checks cover duplicate
+  rule labels, tests with no rule, and files over 1,200 lines.
 - Each rule keeps its full cases on a new repo plus at least one earlier-adopted repo case.
   Keep more adopted-repo cases only where Forge takes a different path for it. In a test audit,
   report extra adopted-repo cases that repeat the new-repo path as deletion candidates, not gaps.

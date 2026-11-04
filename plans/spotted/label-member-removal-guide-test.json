@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\ttests/test_member_removal_guide.py\tNot done: tests/test_rules.py passes on main with the member removal guide test labelled FORGE-MAIL-1\tlabel-member-removal-guide-test",
+      "kind": "bug",
+      "path": "tests/test_member_removal_guide.py",
+      "line": 10,
+      "text": "Not done: tests/test_rules.py passes on main with the member removal guide test labelled FORGE-MAIL-1",
+      "from": "blocking",
+      "item": "label-member-removal-guide-test",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

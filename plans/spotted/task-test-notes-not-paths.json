@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "edge\tsrc/forge/fasttest.py\tNot done: When a task's Tests column holds prose or annotated names, forge test runs the named test files and never reports the prose as a m",
+      "kind": "edge",
+      "path": "src/forge/fasttest.py",
+      "line": 614,
+      "text": "Not done: When a task's Tests column holds prose or annotated names, forge test runs the named test files and never reports the prose as a m",
+      "from": "review",
+      "item": "task-test-notes-not-paths",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

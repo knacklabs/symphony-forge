@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/doctor.py\tMake the advertised SDK repair select the switched item's checkout\tFORGE-TOOLS-1/SDKFIX",
+      "kind": "bug",
+      "path": "src/forge/doctor.py",
+      "line": 336,
+      "text": "Make the advertised SDK repair select the switched item's checkout",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/SDKFIX",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/worker.py\tFollow-up: update the shipped no-turn recovery guidance",
+      "kind": "edge",
+      "path": "src/forge/worker.py",
+      "line": 73,
+      "text": "Follow-up: update the shipped no-turn recovery guidance",
+      "from": "review",
+      "item": "FORGE-TOOLS-1/SDKFIX",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

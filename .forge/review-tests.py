@@ -11,11 +11,68 @@ from urllib.parse import quote
 
 
 """The docs-only rule, also copied into the self-contained client CI script."""
+import ast
 import posixpath
 import re
 import shutil
 import subprocess
 from pathlib import Path
+
+PATH_LITERALS = r'''(["'`])((?:\\.|(?!\1)[^\\\r\n])*)\1'''
+
+
+def reads_file_relative(source: str, paths: set[str]) -> bool:
+    """Match literals in file-relative paths, not unrelated content assertions."""
+    if not paths or not re.search(r"\b__file__\b", source):
+        return False
+    try:
+        tree = ast.parse(source)
+    except SyntaxError:
+        # Embedded Python and newer syntax still get the conservative check.
+        basenames = {posixpath.basename(path) for path in paths}
+        return any(posixpath.basename(literal[2].replace("\\", "/")) in basenames
+                   for literal in re.finditer(PATH_LITERALS, source))
+    roots = {"__file__": []}
+
+    def components(node: ast.AST) -> list[str]:
+        if isinstance(node, ast.Name):
+            return roots.get(node.id, [])
+        if isinstance(node, ast.Constant) and isinstance(node.value, str):
+            return [node.value.replace("\\", "/")]
+        return [part for child in ast.iter_child_nodes(node) for part in components(child)]
+
+    def rooted(node: ast.AST) -> bool:
+        if isinstance(node, ast.Name):
+            return node.id in roots
+        if isinstance(node, (ast.Attribute, ast.Subscript)):
+            return rooted(node.value)
+        if isinstance(node, ast.BinOp) and isinstance(node.op, (ast.Div, ast.Add)):
+            return rooted(node.left) or rooted(node.right)
+        if isinstance(node, ast.Call):
+            name = getattr(node.func, "id", getattr(node.func, "attr", ""))
+            return name in {"Path", "join", "dirname", "abspath", "realpath", "normpath",
+                            "resolve", "absolute", "joinpath", "with_name", "with_suffix"} and (
+                rooted(node.func) or any(rooted(arg) for arg in node.args))
+        return False
+
+    assignments = [node for node in ast.walk(tree) if isinstance(node, (ast.Assign, ast.AnnAssign))]
+    while True:
+        before = len(roots)
+        for node in assignments:
+            if rooted(node.value):
+                targets = node.targets if isinstance(node, ast.Assign) else [node.target]
+                for target in targets:
+                    if isinstance(target, ast.Name) and target.id not in roots:
+                        roots[target.id] = components(node.value)
+        if len(roots) == before:
+            break
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.BinOp, ast.Call)) and rooted(node):
+            parts = components(node)
+            suffix = posixpath.normpath("/" + posixpath.join(*parts)).lstrip("/") if parts else ""
+            if suffix and any(path == suffix or path.endswith("/" + suffix) for path in paths):
+                return True
+    return False
 
 
 def test_readers(files: list[Path], picked: set[Path]) -> set[Path]:
@@ -66,18 +123,22 @@ def only_docs(top: Path, base: str, excludes: list[str], *, allow_settings: bool
         if found.returncode not in (0, 1):
             return False
         targets = {posixpath.normpath(posixpath.join(top.as_posix(), path)) for path in changed}
-        strings = r'''(["'`])((?:\\.|(?!\1)[^\\\r\n])*)\1'''
         quoted = r'''(?:'[^'\r\n]*'|"[^"\r\n]*"|`[^`\r\n]*`)'''
         joined = re.compile(rf"\b(?:Path|join)\(\s*(?:__dirname\s*,\s*)?{quoted}"
                             rf"(?:\s*,\s*{quoted})*\s*\)(?:\s*/\s*{quoted})*")
         for consumer in filter(None, found.stdout.split("\0")):
             folder = posixpath.dirname(consumer.partition(":")[2])
             roots = ("", top.as_posix(), posixpath.join(top.as_posix(), folder))
+            source = git("show", consumer)
+            # File-relative expressions cannot always be resolved from literals alone.
+            # Prefer extra tests when a quoted basename could read the changed input.
+            if reads_file_relative(source, set(changed)):
+                return False
             # A basename finds candidates, not consumers: resolve whole path literals.
             # Fold literal path joins so their components cannot match unrelated root files.
             source = joined.sub(lambda call: repr(posixpath.join(*(
-                value[2] for value in re.finditer(strings, call[0])))), git("show", consumer))
-            for literal in re.finditer(strings, source):
+                value[2] for value in re.finditer(PATH_LITERALS, call[0])))), source)
+            for literal in re.finditer(PATH_LITERALS, source):
                 name = literal[2].replace("\\", "/")
                 if any(posixpath.normpath(posixpath.join(root, name)) in targets for root in roots):
                     return False

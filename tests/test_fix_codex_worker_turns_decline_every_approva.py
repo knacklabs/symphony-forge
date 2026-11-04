@@ -15,13 +15,12 @@ def _answers(calls, before):
 def test_1_full_access_turn_accepts_and_read_only_turn_declines(repo, monkeypatch, sdk_data, claude_session):
     folder, calls = _codex_repo(repo, monkeypatch, sdk_data)
 
-    # forge work: Codex never asks and its automatic reviewer isn't used, and each request that
-    # still arrives is accepted, so what it asks runs, and each acceptance is logged.
+    # forge work routes requests to Forge, where each is accepted and logged.
     built = repo.forge("work", "BOARD/PAGE")
     assert built.returncode == 0, built.stdout + built.stderr
     [start], [turn] = _sent(calls, "thread/start"), _sent(calls, "turn/start")
     for sent in (start, turn):
-        assert sent["approvalPolicy"] == "never" and "approvalsReviewer" not in sent
+        assert (sent["approvalPolicy"], sent["approvalsReviewer"]) == ("on-request", "user")
     assert _answers(calls, 0) == [(KNOWN, ACCEPT, True), (UNKNOWN, ACCEPT, True)]
     assert (folder / "ran-stub-ask-1").exists() and (folder / "ran-stub-ask-2").exists()
     log = (repo.path / ".git" / "forge" / "work-BOARD-PAGE.log").read_text(encoding="utf-8")

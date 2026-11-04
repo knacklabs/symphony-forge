@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/templates/starter/apps/web/e2e/projects.spec.ts\tThe generated TypeScript invoice browser case fails to reach its detail heading after Enter on the named link in the starter smoke check.",
+      "kind": "bug",
+      "path": "src/forge/templates/starter/apps/web/e2e/projects.spec.ts",
+      "line": 115,
+      "text": "The generated TypeScript invoice browser case fails to reach its detail heading after Enter on the named link in the starter smoke check.",
+      "from": "worker",
+      "item": "FORGE-MAIL-1/REMOVEPY",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
