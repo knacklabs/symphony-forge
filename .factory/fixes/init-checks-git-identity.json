@@ -1,0 +1,15 @@
+{
+  "base": "00c609a81f4a5d2fa09466f7105c2513ba53cd5a",
+  "branch": "fix/init-checks-git-identity",
+  "done_when": "forge init with no git identity refuses before it writes any file, and names the two git config commands to run. Doctor is not the next step for this.",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-04T09:58:39.570516+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "forge init on a machine with no git name or email writes all its files, fails at the commit, and a rerun leaves services.toml out of the first commit (GitHub issue 1326)."
+}
