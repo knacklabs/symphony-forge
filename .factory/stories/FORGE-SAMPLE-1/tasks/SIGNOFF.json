@@ -1,6 +1,13 @@
 {
   "base": "0ed4652e88ac5f3c96910d6de1ec3e2b4444b4dc",
   "branch": "task/FORGE-SAMPLE-1-SIGNOFF",
+  "chat": {
+    "approval": "4e15298f84b3bf2da57eaaa3a529c1d3ae30604d1bbea3b33d6dd16f1efab4f4",
+    "claude": null,
+    "conversation": "01a1a5ff-b1bc-7273-839b-5b9797f0820f",
+    "head": null,
+    "start": "fce52876cfb134616e78afcb5bf34c661841986d"
+  },
   "round": 1,
   "stacked_on": "FORGE-SAMPLE-1/SETUP",
   "status": "working",
