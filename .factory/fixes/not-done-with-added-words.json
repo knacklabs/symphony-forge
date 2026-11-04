@@ -4,12 +4,20 @@
   "done_when": "A Not done finding whose title holds an owner-approved Done-when item, also with added words after it, blocks close and does not become a follow-up. A Not done finding about builder details stays a follow-up.",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-04T09:58:23.530741+00:00",
       "step": "start"
     }
   ],
-  "why": "A fix merges while review says its own Done-when is not done: when a Not done finding's title holds the fix's Done-when with added words, Forge treats it as advice (GitHub issue 1273)."
+  "stuck": {
+    "close": null,
+    "head": "36555f49004b4f1f79832eaf58b7ab6a7b84d5eb",
+    "keys": {},
+    "round": null
+  },
+  "why": "A fix merges while review says its own Done-when is not done: when a Not done finding's title holds the fix's Done-when with added words, Forge treats it as advice (GitHub issue 1273).",
+  "worker": "codex"
 }
