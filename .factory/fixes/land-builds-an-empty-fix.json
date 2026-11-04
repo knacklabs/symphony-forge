@@ -11,14 +11,59 @@
   "done_when": "forge land on a fix with no commits beyond its start and state records runs forge work first, and it merges only after the builder round. A fix whose real work is only Forge's records can still merge when it has a work commit.",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [
+    {
+      "area": "land() in src/forge/land.py",
+      "file": "src/forge/land.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 79,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Preserve completed native rounds before starting another build",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "c27e5ca071d034c0399a48335d639fe117b5919714fc74b0c8f1a2f72669100b",
+    "changed": "90cbe6bb045944fe58aecf5b82b57fdcbd5aefec2c7e20fdc62a567195bf237b",
+    "commit": "29cefb48a4b1e008a5a1bdc09f2aa5387f723ad7",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - a native Codex or Claude builder finishes without making a commit, then the coordinator resumes forge land.\nHandback records completion at the current HEAD in src/forge/native.py:284\u2013292. However, unbuilt_fix remains true when history contains only start and state commits. This new OR condition therefore bypasses the existing completed-handback exemption and launches another builder round on every resume, preventing close and merge. The existing command test at tests/test_tools_native_work.py:286\u2013289 explicitly requires a round that commits nothing to proceed to close. Apply the completed-round exemption to the new predicate as well.",
+        "file": "src/forge/land.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 79,
+        "priority": "P1",
+        "title": "Preserve completed native rounds before starting another build",
+        "work": 2
+      }
+    ],
+    "id": "8e69e8ec-2ecd-478d-93fc-47a9ffc59baa",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-04T09:58:27.760565+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-04T10:17:43.730968+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-11-04T10:17:43.743190+00:00",
+    "file": "src/forge/land.py",
+    "wait_id": "dbb183cf-eaec-4cf8-b187-ff532daba581"
+  },
   "stuck": {
     "close": null,
     "head": "13603321dac646f0f35e2c5a9116978a1deb0a32",
