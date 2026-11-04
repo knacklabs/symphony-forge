@@ -1,9 +1,10 @@
 """Canvas scope and client choices at the real sign-off command.
 
-Test audit: protect demo-address timing, screen scope and unresolved client choices.
-Regressions can treat a build request as code, omit marks, or review before refusing choices.
-Existing sign-off tests do not cover these contracts. Reuse their client fixtures and replace
-only GitHub and the external review tool. No production test seam is needed.
+Test audit: the canvas-only command accepts while a Build-now question is open, and the
+person can still answer it afterward. A regression could restore the old decision gate or
+try to run a product review. The new sample-data test covers a working demo with a gap check,
+not this canvas-only lifecycle. Reuse the command fixtures and external boundaries; no
+production test seam is needed.
 """
 from __future__ import annotations
 
@@ -20,13 +21,6 @@ pytestmark = pytest.mark.platform
 def _commit(repo, fix):
     repo.git("add", "docs/design/prototype/SCREENS.md", cwd=fix)
     repo.git("commit", "-qm", "Set screen scope", cwd=fix)
-
-
-def _preview(fix, answers):
-    page = _decision(fix, answers)
-    page.write_text(page.read_text("utf-8").replace("approved_via: email\n", "").replace(
-        "approved_on: 2026-09-28\n", ""), encoding="utf-8")
-    return page
 
 
 @pytest.mark.parametrize("setup", ["canvas-demo", "working-demo", "new-client", "adopted-v1.2.2"])
@@ -87,7 +81,7 @@ def test_4_canvas_first_and_build_marks(repo, tmp_path, monkeypatch, setup):
 
 
 @pytest.mark.parametrize("setup", ["new-client", "adopted-v1.2.2"])
-def test_5_signoff_waits_for_blocking_decisions(repo, tmp_path, monkeypatch, setup):
+def test_5_an_open_question_does_not_block_signoff(repo, tmp_path, monkeypatch, setup):
     make = _adopted_client if setup == "adopted-v1.2.2" else _client
     options = {} if setup == "adopted-v1.2.2" else {"working_build": False}
     fix, answers, queue = make(repo, tmp_path, monkeypatch, **options)
@@ -102,45 +96,20 @@ def test_5_signoff_waits_for_blocking_decisions(repo, tmp_path, monkeypatch, set
     question = "Which {order} comes first?"
     full = _question(question)
     source.write_text("# Choices\n\n" + full, encoding="utf-8")
+    repo.git("add", "docs/decisions/open-questions.md", cwd=fix)
+    repo.git("commit", "-qm", "Record an open client question", cwd=fix)
+    page = _decision(fix, answers, customer="Sam Lee", via="letter", on="")
 
-    refused = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
-    assert refused.returncode == 1, refused.stdout + refused.stderr
-    assert "Sign-off waits for 1 open decisions on Build now screens:" in refused.stderr
-    assert f"- {question} (docs/decisions/open-questions.md, line 3)" in refused.stderr
-    for field in ("Why we ask: It changes the order list.", "Default: Keep the current order.",
-                  "Why this default: It matches the current workflow.",
-                  "If the default stands: Staff keep the current order."):
-        assert field in refused.stderr
-    assert 'forge decision answer --from <file> --by "<name>"' in refused.stderr
-    assert '--defaults, then forge decision accept client-signoff --by "Ravi"' in refused.stderr
+    accepted = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
+
+    assert accepted.returncode == 0, accepted.stdout + accepted.stderr
+    assert "status: accepted" in page.read_text("utf-8")
+    assert question in source.read_text("utf-8")
     assert not _calls(queue)
-    if setup == "new-client":
-        source.write_text("# Choices\n\n" + full.replace(
-            "    Why this default: It matches the current workflow.\n", "").replace(
-            "    Due: 2026-11-03\n", ""), encoding="utf-8")
-        incomplete = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
-        assert incomplete.returncode == 1, incomplete.stdout + incomplete.stderr
-        assert "Why this default: not written yet" in incomplete.stderr
-        assert not _calls(queue)
-
-    source.write_text(full.replace("Touches: Order list", "Touches: Order archive"), encoding="utf-8")
-    later = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
-    assert later.returncode == 0, later.stdout + later.stderr
-    assert "The sign-off checks passed" in later.stdout
-
-    source.write_text(full, encoding="utf-8")
     answer_file = tmp_path / "answers.md"
-    answer_file.write_text(f"- Open question: {question}\n  Answer: Keep the current order.\n", encoding="utf-8")
-    answered = repo.forge("decision", "answer", "--from", str(answer_file), "--by", "Ravi", cwd=fix)
+    answer_file.write_text(f"- Open question: {question}\n  Answer: Keep the current order.\n",
+                           encoding="utf-8")
+    answered = repo.forge("decision", "answer", "--from", str(answer_file), "--by", "Ravi",
+                          cwd=fix)
     assert answered.returncode == 0, answered.stdout + answered.stderr
-    cleared = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
-    assert cleared.returncode == 0, cleared.stdout + cleared.stderr
-    assert "The sign-off checks passed" in cleared.stdout
-
-    if setup == "new-client":
-        source.write_text(_question("Keep the old sort?", due="2020-01-01"), encoding="utf-8")
-        defaults = repo.forge("decision", "answer", "--defaults", cwd=fix)
-        assert defaults.returncode == 0, defaults.stdout + defaults.stderr
-        cleared = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
-        assert cleared.returncode == 0, cleared.stdout + cleared.stderr
-        assert "The sign-off checks passed" in cleared.stdout
+    assert "Answer: Keep the current order." in source.read_text("utf-8")
