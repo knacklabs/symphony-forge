@@ -114,7 +114,7 @@
     "id": "44023bbb-6ab6-4958-b6f4-a3cdbd7c2fd5",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "stacked_on": "FORGE-SAMPLE-1/SETUP",
   "status": "fixing",
   "steps": [
@@ -128,10 +128,10 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "72bf2d367c91842a3a7dfa2e8e6634328e24dda1",
+    "close": "8ef67619-9fda-4b80-a99b-275dd89967bb",
+    "head": "63c6f4fa4073722d201a4bd4b6246fbd2b0aec22",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "worker": "codex"
 }
