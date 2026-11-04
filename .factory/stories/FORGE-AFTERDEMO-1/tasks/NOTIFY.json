@@ -1,5 +1,12 @@
 {
   "branch": "task/FORGE-AFTERDEMO-1-NOTIFY",
+  "chat": {
+    "approval": "4fc7539eb593977e4763aa2eb4f588415e4f4d3cc89c17b50b2293a2671b6060",
+    "claude": null,
+    "conversation": "01a1a671-81ea-7c70-be3b-5de49497261b",
+    "head": null,
+    "start": "a92413c1fc84c61a17f00ddcfc6f49e321bbff35"
+  },
   "round": 1,
   "status": "working",
   "steps": [
