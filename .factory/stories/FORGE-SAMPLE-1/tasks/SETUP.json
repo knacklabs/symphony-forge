@@ -72,9 +72,9 @@
     "id": "6c97fa78-fd42-4132-b886-6d4fe2e1afd8",
     "status": "clean"
   },
-  "round": 6,
+  "round": 7,
   "stacked_on": "FORGE-SAMPLE-1/CHECKLIST",
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-03T05:03:36.110347+00:00",
@@ -102,10 +102,10 @@
     }
   ],
   "stuck": {
-    "close": "82498839-5cf0-4bd5-994b-9d40721e1d09",
-    "head": "9824a6f5a38e10eb0974bceb42b9ca0ce37ef2a7",
+    "close": "9cde4de0-58fa-4345-9909-0d7935585f83",
+    "head": "0ed4652e88ac5f3c96910d6de1ec3e2b4444b4dc",
     "keys": {},
-    "round": 5
+    "round": 6
   },
   "worker": "codex"
 }
