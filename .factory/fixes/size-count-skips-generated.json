@@ -11,12 +11,27 @@
   "done_when": "Files marked linguist-generated count towards neither a story part's size warning nor a fix's code-file limit, and the guide says so",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "89c2f7d58ddc3b345f09125eeb9ddefc2af9f04e1dc6c80d149dff19599b69ad",
+    "changed": "693f190d25ea8ac219d81b33e685dc145e5d0348788163f99af3298c2e28d34f",
+    "commit": "0d084e1f8029523fd95d3f736738e54cbf5fe009",
+    "dismissals": [],
+    "findings": [],
+    "id": "cf7e5641-8b90-4fd1-8e56-9a7ae0d647c3",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-04T04:32:16.753304+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-04T05:05:53.120587+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
