@@ -8,13 +8,123 @@
     "head": null,
     "start": "fce52876cfb134616e78afcb5bf34c661841986d"
   },
+  "known": [
+    {
+      "area": "run() in src/forge/review.py",
+      "file": "src/forge/review.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 850,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Otherwise they use design pages saved in the repo",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/skill.md",
+      "file": "src/forge/templates/skill.md",
+      "gain": 4,
+      "harm": 2,
+      "line": 701,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Include the required --by argument in the pre-demo command",
+      "work": 1
+    },
+    {
+      "area": "test_5_an_open_question_does_not_block_signoff() in tests/test_signoff_scope.py",
+      "file": "tests/test_signoff_scope.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 94,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: restore the helper still called by the canvas sign-off tests",
+      "work": 1
+    },
+    {
+      "area": "test_11_prototype_precedes_signoff_and_stories_in_the_docs() in tests/test_proto_docs.py",
+      "file": "tests/test_proto_docs.py",
+      "gain": 4,
+      "harm": 1,
+      "line": 24,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_11_prototype_precedes_signoff_and_stories_in_the_docs",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "f5b0f1da337fb391182a6b9a14180519d906196e409bc3d5b3cf8b63a051cf07",
+    "changed": "f27ce5cff449069f2f38ef6ed7520d0163c076345093864989038dc63e2a94d5",
+    "commit": "6045178c71ee622323fe6391ca8f9a7c396d51b5",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 2\nRaise: Not done\nCase: normal use - an earlier-adopted prototype uses saved SVG or PNG design pages without a design link.\nThe new filter excludes every design image because records.py:560 passes images=set(). The excluded files are then physically removed from the review checkout at review.py:865\u2013870. Although design.source() lists these pages, the gap check cannot read them. A valid image-only design therefore loses the fallback promised by Done-when 5. The saved-pages test checks filenames in the prompt without checking that the pages reach the reviewer.",
+        "file": "src/forge/review.py",
+        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
+        "gain": 4,
+        "harm": 2,
+        "line": 850,
+        "priority": "P1",
+        "title": "Not done: Otherwise they use design pages saved in the repo",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 1, Harm 2\nRaise: Functional\nCase: normal use - a coordinator follows the shipped sign-off instructions before the demo.\nThis command omits --by, but records.py:879 still declares that argument required. Argument parsing therefore stops before any sign-off check runs. The same unusable command appears in docs/guide.md:135 and both synced Forge skill copies. Include the required argument in each pre-demo instruction.",
+        "file": "src/forge/templates/skill.md",
+        "gain": 4,
+        "harm": 2,
+        "line": 701,
+        "priority": "P1",
+        "title": "Include the required --by argument in the pre-demo command",
+        "work": 1
+      },
+      {
+        "body": "Gain 4, Work 1, Harm 2\nRaise: Test\nCase: normal use - the test suite runs the new-client and earlier-adopted canvas sign-off cases.\nThe patch deletes _preview without replacing its remaining calls at lines 57 and 94. It is neither defined nor imported anywhere in this module, so both parameterizations of test_4 and test_5 raise NameError before their behavior assertions. Restore the helper or replace both callers so these required proof tests can run.",
+        "file": "tests/test_signoff_scope.py",
+        "gain": 4,
+        "harm": 2,
+        "line": 94,
+        "priority": "P1",
+        "title": "Gate: restore the helper still called by the canvas sign-off tests",
+        "work": 1
+      },
+      {
+        "body": "Gain 4, Work 1, Harm 1\nRaise: Test\nCase: normal use - the required documentation test runs in the suite.\nThe new assertion requires \u201cForge copies the current `## Answers` section into the sign-off record\u201d, while docs/guide.md:131 actually says \u201cForge copies the current Answers section into the record\u201d. Whitespace normalization cannot reconcile those differences, so this assertion deterministically fails. Align the documentation check with the delivered contract.",
+        "file": "tests/test_proto_docs.py",
+        "gain": 4,
+        "harm": 1,
+        "line": 24,
+        "priority": "P1",
+        "title": "Gate: test_11_prototype_precedes_signoff_and_stories_in_the_docs",
+        "work": 1
+      }
+    ],
+    "id": "44023bbb-6ab6-4958-b6f4-a3cdbd7c2fd5",
+    "status": "blocked"
+  },
   "round": 1,
   "stacked_on": "FORGE-SAMPLE-1/SETUP",
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-04T09:57:39.704585+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-04T17:10:31.821778+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
