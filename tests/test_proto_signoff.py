@@ -261,12 +261,16 @@ def test_7_review_guards_client_signoff(repo, tmp_path, monkeypatch):
 
     brief.write_text(_brief_text(changed), encoding="utf-8")
     repo.git("add", "docs/product/BRIEF.md", cwd=fix)
-    page = _decision(fix, changed, customer="Sam Lee", via="letter", on="")
+    # Automatic quoting restores the same Answers, so change proof to exercise a
+    # fresh external review with no reported model rather than reuse its saved result.
+    page = _decision(fix, changed, customer="Sam Lee", via="letter", on="",
+                     proof="The order flow passes. Check absent model selection.")
 
     queue.write_text(json.dumps([{"report": {"review_status": "scoped-clean", "findings": []}}]))
     missing_selection = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
     assert missing_selection.returncode == 0, missing_selection.stderr
     assert "status: accepted" in page.read_text()
+    assert len(queue.with_suffix(".calls.jsonl").read_text().splitlines()) == 4
     # Test audit: these existing cases own strict external-review failures and
     # model selection. Changed proof makes each reach the reviewer despite reuse;
     # keep every failure assertion and the total call count. No new seam is needed.

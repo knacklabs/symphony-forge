@@ -7,6 +7,8 @@ not this canvas-only lifecycle. Reuse the command fixtures and external boundari
 production test seam is needed. Preview setup must leave both reply fields empty
 through the existing decision fixture, so these cases reach the real command
 instead of failing on a missing test helper.
+After sign-off, answers still live in the accepted decision. The question source
+points to that decision instead of copying its answer.
 """
 from __future__ import annotations
 
@@ -114,4 +116,6 @@ def test_5_an_open_question_does_not_block_signoff(repo, tmp_path, monkeypatch, 
     answered = repo.forge("decision", "answer", "--from", str(answer_file), "--by", "Ravi",
                           cwd=fix)
     assert answered.returncode == 0, answered.stdout + answered.stderr
-    assert "Answer: Keep the current order." in source.read_text("utf-8")
+    [record] = (fix / "docs/decisions").glob("*-client-answers.md")
+    assert f"- {question}\n  Answer: Keep the current order." in record.read_text("utf-8")
+    assert f"Answered in {record.stem}: {question}" in source.read_text("utf-8")
