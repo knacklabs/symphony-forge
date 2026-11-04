@@ -1,6 +1,13 @@
 {
   "base": "00c609a81f4a5d2fa09466f7105c2513ba53cd5a",
   "branch": "fix/not-done-with-added-words",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1a5ff-a6df-7990-b9dd-ccf735652616",
+    "head": null,
+    "start": "475d852efd2755415f4023fcece86c9d60f952d9"
+  },
   "done_when": "A Not done finding whose title holds an owner-approved Done-when item, also with added words after it, blocks close and does not become a follow-up. A Not done finding about builder details stays a follow-up.",
   "fix_kind": "mechanical",
   "kind": "fix",
