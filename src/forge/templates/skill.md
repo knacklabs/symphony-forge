@@ -265,6 +265,12 @@ next, and status, numbers and uncertainty kept exact.
 ## Tools
 
 **Who does what.** The coordinator is the app the developer opens: Claude Code or Codex.
+When `forge init` writes settings, it checks `claude auth status` and `codex login status`.
+If only Claude is signed in, it sets `tools = "claude"` and `workers = "claude"` and says so.
+Otherwise it keeps split workers. An unavailable check keeps that default unless the binary is missing.
+If neither tool is signed in, it asks you to sign in. Existing repos keep their settings.
+`forge doctor` says when the repo needs Codex but Codex is not signed in, and gives `codex login`.
+
 `tools` in `forge.toml` says which tools run Forge's work: `"claude"`, `"codex"`, or
 `"both"` (the default when absent). One tool puts every item on it, including design work
 with its own design model; `workers` is ignored. With both, `workers` keeps its usual meaning.
@@ -335,6 +341,8 @@ gh issue create --repo knacklabs/symphony-forge --title "<short plain title>" --
 ```
 
 ## Laptop setup and after cloning
+
+If you use Claude, open Claude Code in the repo once and accept the trust question before running headless Claude commands.
 
 The repeatable laptop installers are published for
 [Mac](https://raw.githubusercontent.com/knacklabs/symphony-forge/main/scripts/install-mac.sh)
