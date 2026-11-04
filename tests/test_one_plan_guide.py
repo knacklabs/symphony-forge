@@ -40,8 +40,11 @@ def test_2_the_guide_says_one_plan_then_build_every_record_type(repo, guided_cli
     if request.node.callspec.params["guided_client"] == "previous release":
         changed = repo.git("diff", "--name-only", "HEAD~1", "HEAD", cwd=guided_client).splitlines()
         assert changed
-        assert all(name.startswith((".claude/skills/", ".codex/skills/")) or
-                   name in ("AGENTS.md", "CLAUDE.md") for name in changed), changed
+        # An earlier release also gains Forge's host roles, hooks, settings and
+        # CI files. Allow those managed paths while still excluding app code.
+        assert all(name.startswith((".claude/", ".codex/", ".forge/", ".github/workflows/")) or
+                   name in ("AGENTS.md", "CLAUDE.md", ".gitattributes", ".gitignore")
+                   for name in changed), changed
         assert not repo.git("status", "--porcelain", "-uall", cwd=guided_client)
 
 
