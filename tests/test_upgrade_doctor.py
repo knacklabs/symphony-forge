@@ -79,13 +79,12 @@ def test_5_doctor_says_which_forge_version_it_compares_with(repo, gh, tmp_path, 
 
     if case == "all is well":
         assert done.returncode == 0, done.stdout + done.stderr
-        # The verdict still leads; comparison, machine split and the Fast policy follow it.
+        # The Claude-only verdict includes comparison and machine details without Codex speed.
         assert done.stdout == (f"Everything checks out for Forge {installed}.\n"
                                + _compared(installed, installed)
                                + "This machine: 6 cores, so 3 agents at once and 3 test processes shared by all runs.\n"
                                + "Memory: 8.0 GB free, floor 1.6 GB.\n"
-                               + "Test processes in use: 0. Busy runners: 0 (0 cores reserved).\n"
-                               + "- Codex Fast: on for every fix, after the first repair round, or when other planned work waits; models without Fast run normally.\n"), done.stdout
+                               + "Test processes in use: 0. Busy runners: 0 (0 cores reserved).\n"), done.stdout
         return
     assert done.returncode == 1, done.stdout + done.stderr
     assert "- gh is not signed in to GitHub.\n  Fix: gh auth login\n" in done.stdout, done.stdout

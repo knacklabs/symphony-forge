@@ -523,22 +523,23 @@ def doctor(args: argparse.Namespace) -> int:
                 processes.stdout, re.M):
             print("- Warning: a GitHub Actions self-hosted runner runs on this machine. "
                   "Its CPUs count against Forge's load limit.")
-    fast = {"needed": "on for every fix, after the first repair round, or when other planned work waits",
-            "off": "off", "always": "always on"}[cfg["codex_fast"]]
-    from forge import event_log
-    history = event_log.read(top)
-    last = next((row for row in reversed(history) if row.get("event") == "codex speed"), None)
-    said = ("" if last is None else " The last Codex turn ran with Fast."
-            if last["tier"] not in (None, "default") and last["tier"] == last["requested_tier"] else
-            " Codex reported a different speed from the one Forge requested."
-            if last["tier"] not in (None, "default") else
-            " Codex did not report the last turn's speed." if last["tier"] is None else
-            " The last Codex turn wanted Fast, but Codex reported normal speed."
-            if last.get("fast_wanted") and last["requested_tier"] != "default" else
-            " The last Codex turn ran at normal speed.")
-    if last and last.get("fast_wanted") and last["requested_tier"] == "default":
-        said = f" The last Codex turn wanted Fast, but {last['model']} doesn't offer it." + said
-    print(f"- Codex Fast: {fast}; models without Fast run normally.{said}")
+    if on_codex:
+        fast = {"needed": "on for every fix, after the first repair round, or when other planned work waits",
+                "off": "off", "always": "always on"}[cfg["codex_fast"]]
+        from forge import event_log
+        history = event_log.read(top)
+        last = next((row for row in reversed(history) if row.get("event") == "codex speed"), None)
+        said = ("" if last is None else " The last Codex turn ran with Fast."
+                if last["tier"] not in (None, "default") and last["tier"] == last["requested_tier"] else
+                " Codex reported a different speed from the one Forge requested."
+                if last["tier"] not in (None, "default") else
+                " Codex did not report the last turn's speed." if last["tier"] is None else
+                " The last Codex turn wanted Fast, but Codex reported normal speed."
+                if last.get("fast_wanted") and last["requested_tier"] != "default" else
+                " The last Codex turn ran at normal speed.")
+        if last and last.get("fast_wanted") and last["requested_tier"] == "default":
+            said = f" The last Codex turn wanted Fast, but {last['model']} doesn't offer it." + said
+        print(f"- Codex Fast: {fast}; models without Fast run normally.{said}")
     claude = shutil.which("claude")
     version = None
     if claude:

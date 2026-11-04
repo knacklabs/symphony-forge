@@ -342,6 +342,8 @@ gh issue create --repo knacklabs/symphony-forge --title "<short plain title>" --
 
 ## Laptop setup and after cloning
 
+If you use Claude, open Claude Code in the repo once and accept the trust question before running headless Claude commands.
+
 The repeatable laptop installers are published for
 [Mac](https://raw.githubusercontent.com/knacklabs/symphony-forge/main/scripts/install-mac.sh)
 and [Windows](https://raw.githubusercontent.com/knacklabs/symphony-forge/main/scripts/install-windows.ps1).
