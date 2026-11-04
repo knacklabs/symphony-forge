@@ -22,8 +22,8 @@
     "id": "cf7e5641-8b90-4fd1-8e56-9a7ae0d647c3",
     "status": "clean"
   },
-  "round": 1,
-  "status": "waiting for checks",
+  "round": 2,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-04T04:32:16.753304+00:00",
@@ -35,10 +35,10 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "c75d3515635ec2c76002da59c1fd24b4819a37d8",
+    "close": "6e06bbdc-3281-4a4e-99b2-1d8864ed69c3",
+    "head": "0adf798fa043a62bde6e10488b4cce6196c8477f",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "The part size count includes files marked linguist-generated, such as a large openapi.json, though the guide says to mark such files",
   "worker": "codex"
