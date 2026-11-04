@@ -4,12 +4,20 @@
   "done_when": "A forge board server with no page open for 30 minutes stops by itself and says so. While no page is open it does not fetch from GitHub or rebuild the board. An open page keeps it running.",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-04T09:58:31.878045+00:00",
       "step": "start"
     }
   ],
-  "why": "Each forge board starts a new live server that never stops and keeps working with no page open, so copies pile up and use CPU (GitHub issue 1282)."
+  "stuck": {
+    "close": null,
+    "head": "9e4ea6d9355fcb394bb9b61a76fa102b5c918aa0",
+    "keys": {},
+    "round": null
+  },
+  "why": "Each forge board starts a new live server that never stops and keeps working with no page open, so copies pile up and use CPU (GitHub issue 1282).",
+  "worker": "codex"
 }
