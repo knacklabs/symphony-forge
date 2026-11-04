@@ -1,6 +1,13 @@
 {
   "base": "00c609a81f4a5d2fa09466f7105c2513ba53cd5a",
   "branch": "fix/land-builds-an-empty-fix",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1a5ff-a84d-7a51-9057-83eea11d47ed",
+    "head": null,
+    "start": "5ca399111b556bc47fb11b44bc87d25fe982a822"
+  },
   "done_when": "forge land on a fix with no commits beyond its start and state records runs forge work first, and it merges only after the builder round. A fix whose real work is only Forge's records can still merge when it has a work commit.",
   "fix_kind": "mechanical",
   "kind": "fix",
