@@ -30,9 +30,9 @@ GUIDE_SENTENCES = (
     "Write them in docs/product/BRIEF.md. Record the options for each choice list with the thing "
     "it belongs to. The prototype and sign-off review use the whole brief.",
     "Make each architecture choice yourself, from the answers and the code, and write it as one "
-    "plain line with its reason and its decision record.",
+    "plain line with its reason.",
     "A live app answers both halves at adoption: ask only what the code cannot answer.",
-    "No new story starts until the owner approves the constitution.",
+    "No new story starts until the owner approves the prototype plan.",
 )
 
 

@@ -545,14 +545,20 @@ choice and one line of why into the story's Why, or the spec's Behaviour when us
 New clients get these steps at init; existing clients get the same guide after upgrade and sync.
 
 In a new client repo, follow the FDE route: start with discovery of the customer's job,
-workaround, cost, people, frequency and evidence. Start with a canvas, as described below.
-The canvas in Play mode is the default clickable prototype: the customer clicks through it,
-and can sign off on it alone. Build a working prototype only when the FDE
-requests one to prove something the canvas cannot, such as real data or speed. Record that
-request with `forge decision new prototype-build`; the owner accepts it with
-`forge decision accept prototype-build --by "<name>"`. Then build the smallest working demo that proves
-the request, demo it, review the whole prototype and answers, and obtain the customer's named sign-off;
-then write the app's constitution; then create stories. Use prototype fixes before sign-off. The
+workaround, cost, people, frequency and evidence. Then write the prototype plan: record types
+with their fields in `docs/product/BRIEF.md`, the Roles table and architecture choices in
+`docs/product/CONSTITUTION.md`, one link to the design in the BRIEF, and the demo steps.
+The design can be made through Forge or separately; the BRIEF holds one link to it.
+Each demo step is one Done-when item in the plan, with the client's business task first and
+basic screens (sign-in, members, settings) last. Create the plan record with
+`forge decision new prototype-plan`.
+Run `forge decision accept prototype-plan --by "<name>"` once, then build.
+This replaces separate canvas, working-build, constitution and architecture-record approvals.
+The approval before the prototype needs neither a saved design nor a personal-data answer.
+Right after approval, build every record type in the plan with `forge task feature`, with the Roles table and without more questions.
+For each record type whose row differs from the command's default (member view, create), edit that feature's one `definePermissions` call.
+Build the screens in the client's design, demo the prototype and obtain the customer's named sign-off;
+then create stories. Use prototype fixes before sign-off. The
 salesperson can be the FDE at first;
 the developer takes over with `docs/product/DISCOVERY.md`, `docs/product/BRIEF.md` and the customer
 call script. The design comes first. Use the app's existing design; if it has none, draft one on
@@ -575,7 +581,7 @@ After sign-off, `forge next` shows setting up tests as the first step. In a coor
 set the test command and CI checks as needed, then turn off the setting. Close blocks that fix until
 the `Personal data` answer is settled.
 
-For a requested working prototype, build the demo-data loader in the first version, so the customer sees their own kind of
+For every prototype, build the demo-data loader in the first version, so the customer sees their own kind of
 work instead of empty screens (see demo-data.md). Use the customer's words
 from `## Words they use` in `docs/product/DISCOVERY.md` for screen labels. Tell the salesperson
 they can point at the screen: click an element in the demo build, write what's wrong and paste the
@@ -710,9 +716,8 @@ DESIGN.md, SCREENS.md or CHECKS.md, or a specific `Things it keeps track of` hea
 When the canvas has a SCREENS.md screen list, add `Build: now` or `Build: later` to each screen.
 Put the whole product on the canvas, every screen, state and flow, later ones too, and mark
 `Build: now` only what the first stories build.
-Before sign-off, use impeccable's critique and polish and the emil-design-eng checklist. The owner
-or FDE can approve the canvas with `forge decision new prototype-design` and
-`forge decision accept prototype-design --by "<name>"`.
+Before sign-off, use impeccable's critique and polish and the emil-design-eng checklist.
+The one prototype plan approval covers the design.
 
 For each story that adds a screen or changes a flow, use this design process before its cold read.
 Save the folder under `docs/design/<KEY>/`. End `## What changes for you` with
@@ -730,6 +735,11 @@ fix which turns off sample data waits for a settled `Personal data` answer. Writ
 `forge decision new client-signoff` with the customer and the demo proof for a working build. Leave
 `approved_via` and `approved_on` empty. Forge writes the current `## Answers` section into the
 sign-off record. Do not copy it by hand. Put each demo step under `## Proof` for a working build.
+Run each demo step from the plan in a browser and write its Proof line unticked.
+Write the tick only when the client says yes during the demo, with how and when the client replied.
+The FDE records each tick as `- [x]`; Forge refuses sign-off while a step has no tick.
+You may save `docs/product/demo/<n>.png` as evidence; no screenshot is required or checked.
+A screenshot-only change skips code review.
 For a prototype without the sample-data mark, also name the passing test for each step. A marked
 sample-data prototype has no test requirement before sign-off. Put settled choices under
 `## Decisions`. Run `forge decision accept client-signoff --by "<name>"` before asking
@@ -872,12 +882,13 @@ In an app made from the Python starter, whose tests run import-linter, copy thes
 In any other app, record the
 stack, package manager and folder layout that the app already uses, and leave out ## Fixed rules.
 
-After the customer's sign-off and before the first story, finish the app's constitution in
+Before the prototype plan approval, finish the app's constitution in
 docs/product/CONSTITUTION.md. Use the defaults in
 [Constitution defaults](fde.md#constitution-defaults), except where
 `## Answers` in the brief already gives a settled answer. Skip a defaulted question that `## Answers`
-already answers. Check the brief's `Personal data` answer; ask whether any data is private or
-regulated only when that answer is missing, then record the answer in `## Answers`.
+already answers. Ask for the `Personal data` answer at the plan approval after sign-off only
+when the app never declared made-up data only. Do not ask at the approval before the prototype,
+or at either approval for an app marked as made-up data only. Record the answer in `## Answers`.
 
 If the answer is regulated, such as health or finance data, ask these questions before the first story.
 Skip a question only when the brief already has a settled answer:
@@ -914,6 +925,12 @@ The product facts are in docs/product/BRIEF.md.
 ## Defaults
 - <the question in plain words>: <the default or the person's answer>
 
+## Roles
+| Record type | Role | Actions |
+| --- | --- | --- |
+| <each record type> | admin | view, create, edit, delete, restore |
+| <each record type> | member | view, create |
+
 ## Fixed rules
 - One app on pnpm and Prisma, split into modules.
 - Each module owns its tables, in its own schema file.
@@ -936,7 +953,7 @@ The product facts are in docs/product/BRIEF.md.
 - <the task>: <feature>; inputs: <the inputs it needs>, or None
 
 ## Architecture choices
-- <the choice>: <its reason, in one plain line> (docs/decisions/NNNN-<slug>.md)
+- <the choice>: <its reason, in one plain line>
 ```
 
 Copy `## Principles` into every app's constitution word for word, and ask nothing about it. Do not
@@ -944,11 +961,12 @@ add it to an approved constitution: the principles reach that app through its br
 and reviews.
 
 Make each architecture choice yourself, from the answers and the code, and write it as one plain
-line with its reason and its decision record. Record the stack that the code already uses. For
+line with its reason. Record the stack that the code already uses. For
 parts with no code, use the stack default: an Nx workspace with React (Vite and React Router),
 NestJS and Postgres. Use a FastAPI backend only when the person asks for it. A FastAPI backend starts from
 forge init --starter python.
-Each architecture choice names an accepted record in docs/decisions/NNNN-<slug>.md.
+Draft the Roles table from the client notes. Where the notes say nothing, admins have all five
+actions and members view and create. Keep each feature's role mapping in one place.
 
 Follow the database skill (.codex/skills/database/SKILL.md) for new tables and extensions.
 Follow the agents skill (.codex/skills/agents/SKILL.md) for any agent, chat, voice or in-app assistant work. When a part adds one, the plan names the skill's sections that apply and the model service it uses.
@@ -959,22 +977,19 @@ Architecture choices in `docs/product/CONSTITUTION.md`.
 A live app answers both halves at adoption: ask only what the code cannot answer. Record the stack
 the code already uses.
 
-Create and accept a decision record for each architecture choice with
-`forge decision new <slug>` and `forge decision accept <slug> --by "<name>"`. Create the
-constitution approval record with `forge decision new app-constitution`. When the brief answers
-what the app is for, who uses it, what it keeps track of and whether its data is private or
-regulated, and the constitution has its defaults and accepted architecture records, run
-`forge decision accept app-constitution --by "<owner>"`. The owner approves the constitution once.
-If it is not ready, fill in the missing answers, defaults or decisions, then run the accept command
-again.
-
-No new story starts until the owner approves the constitution. Existing stories, parts and fixes
-continue, and prototype work is not held. When `forge next` has a worktree cleanup step, finish
-cleanup first. The constitution reminder returns after cleanup. If the constitution is missing, start the constitution
-fix Forge names with `forge fix start "Write the app constitution" --done "The owner approved
-docs/product/CONSTITUTION.md"`, then complete it before starting a story. A review or cold read in an app with an
+The owner approves the roles, architecture choices and defaults together in the prototype plan,
+with `forge decision accept prototype-plan --by "<name>"`. No separate constitution or
+architecture decision approval is needed. Fill any missing plan details before running accept again.
+Existing accepted canvas, build and constitution approvals stay valid and are never asked again.
+An existing app past sign-off without constitution approval gets the plan approval next, without
+a canvas or demo steps, and with the personal-data question unless it declared made-up data only.
+No new story starts until the owner approves the prototype plan. Existing stories, parts and fixes
+continue. When `forge next` has a worktree cleanup step, finish cleanup first, then follow its
+plan step. A review or cold read in an app with an
 approved constitution checks work against its text; a conflict is a P1 finding or note. A change
 to documents only keeps its light review, which holds only P0 findings.
+A full review after sign-off holds work that goes against the Roles table and architecture choices.
+The light review of a prototype fix holds only serious problems (P0).
 
 ## Adopt a live app
 
