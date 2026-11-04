@@ -4,12 +4,20 @@
   "done_when": "The shipped guide's setup steps tell a person to open Claude Code in the repo once and accept the trust question, in the guide and both synced copies",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-04T01:58:40.066742+00:00",
       "step": "start"
     }
   ],
-  "why": "A new Claude user is not told to accept Claude Code's trust question once in the repo, so a headless Claude run warns that it ignores the repo's permissions (bug 1335)"
+  "stuck": {
+    "close": null,
+    "head": "c18cb425d5a2a6f9f77ce79b9de5eda4d2e598db",
+    "keys": {},
+    "round": null
+  },
+  "why": "A new Claude user is not told to accept Claude Code's trust question once in the repo, so a headless Claude run warns that it ignores the repo's permissions (bug 1335)",
+  "worker": "codex"
 }
