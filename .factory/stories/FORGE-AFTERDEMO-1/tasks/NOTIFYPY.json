@@ -14,7 +14,7 @@
       "gain": 4,
       "harm": 2,
       "line": 60,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -24,27 +24,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "fb7b0364433403f38e058521ac2daffb61b03a643cd89c1958670944fb49c744",
-    "changed": "6eb207e39cfd47b349c1a601cf3d7b757bda28bf2fb5290d0902250593c1cb45",
-    "commit": "7d667dd71bef169fafef7bbf9b2ca5d81d7c28c9",
+    "branch_diff": "69974e5c45228bb8654898d62cd81edc0d0a6f83ab57878e75763bc2a93ab9fe",
+    "changed": "b607a9a488ca24e7d7975e37346ed43ca93b9705f43cd52f29ff6b56add593cf",
+    "commit": "deeaee03e70e66fbbcc9b9478b05a79236145660",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 1, Harm 2\nRaise: Test. Case: normal use - running the Python starter's checks. `call_notifications` calls `json.loads` here, but conftest.py never imports `json`. The import inside `source` runs only in the container subprocess and cannot bind the host module's name. Ruff therefore fails with F821, and executing the notifications case raises NameError after its first successful service call, before checking the list. Import `json` at module scope.",
-        "file": "src/forge/templates/starter-python/apps/api/tests/conftest.py",
-        "gain": 4,
-        "harm": 2,
-        "line": 60,
-        "priority": "P1",
-        "title": "Gate: notifications test helper uses json without importing it",
-        "work": 1
-      }
-    ],
-    "id": "90dfe62d-bebd-44f4-a2ef-526c6a819819",
-    "status": "blocked"
+    "findings": [],
+    "id": "7bf970d1-6f8b-4b93-9ed8-2516ca96b610",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-04T21:03:14.954620+00:00",
@@ -52,6 +41,10 @@
     },
     {
       "at": "2026-11-04T21:13:36.693789+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-04T21:15:12.318901+00:00",
       "step": "review"
     }
   ],
