@@ -1,0 +1,12 @@
+{
+  "base": "e55a18a6066ebbdeeefcaba19b7f6375b1d5e59f",
+  "branch": "task/FORGE-TOOLS-1-CHECKS",
+  "stacked_on": "FORGE-HANDOVER-1/HANDOVER",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-04T23:32:50.241522+00:00",
+      "step": "start"
+    }
+  ]
+}
