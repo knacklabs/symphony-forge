@@ -1,4 +1,4 @@
-"""Linux runs the whole suite; Windows runs platform tests beside it on each pull request."""
+"""Pull requests use Linux; nightly and manual runs include Windows."""
 import json
 import re
 import tomllib
@@ -25,8 +25,8 @@ def matrix_rows(event, ref="refs/heads/main"):
     workflow = WORKFLOW.read_text(encoding="utf-8")
     tests_job = workflow.split("  tests:\n", 1)[1].split("  net-lines:\n", 1)[0]
     # The gating workflow owns Linux's pull-request groups.
-    if re.search(r"^    if: github.event_name != 'pull_request'$", tests_job, re.M) and (
-            event == "pull_request"):
+    guard = re.search(r"^    if: (.+)$", tests_job, re.M)
+    if guard and not expression("${{ " + guard[1] + " }}", event_name=event, ref=ref):
         return []
     selection = re.search(r"include: >-\n(.+?)\n    runs-on:", tests_job, re.S)
     assert selection, "List the platform groups for each event"
@@ -36,8 +36,8 @@ def matrix_rows(event, ref="refs/heads/main"):
 
 
 @pytest.mark.parametrize("event,counts", [
-    ("pull_request", {"windows-latest": 5}),
-    ("tag", {"windows-latest": 5}),
+    ("pull_request", {}),
+    ("tag", {}),
     ("schedule", {"windows-latest": 5}),
     ("workflow_dispatch", {"windows-latest": 5}),
 ])
