@@ -432,6 +432,8 @@ def ready(top: Path, config: dict[str, Any], kind: str, on_codex: bool,
     claude's --model and --effort, or [] on Codex. The cold read (Grill) runs these checks too."""
     if not on_codex:
         if not native and (problem := claude_sdk.sdk_problem()):
+            if config["tools"] != "both":
+                refuse(repo.REFUSALS["tool_missing"], tool=config["tools"], name="Claude Agent SDK")
             refuse(REFUSALS["claude_sdk"], problem=problem, top=repo.quote(top))
         # A worker always names its models; a cold read with no entry runs on Claude's own.
         chosen = (repo.design_models(config, "claude") if design else
@@ -440,6 +442,8 @@ def ready(top: Path, config: dict[str, Any], kind: str, on_codex: bool,
         return ["--model", chosen["model"], "--effort", chosen["effort"]] if chosen else []
     problem = None if native else codex.sdk_problem(reuse=True)  # native sessions need no driver SDK
     if problem:
+        if config["tools"] != "both":
+            refuse(repo.REFUSALS["tool_missing"], tool=config["tools"], name="Codex SDK")
         refuse(REFUSALS["sdk"], problem=problem)
     if not design:  # a design round's Codex models are design_models', which never refuse
         codex.settings(config, kind)

@@ -34,6 +34,7 @@ TEST_PATHS = [":(glob)**/test*/**", ":(glob)**/*.test.*", ":(glob)**/*.spec.*",
 CACHES = {".venv", "node_modules", "__pycache__", ".pytest_cache", ".ruff_cache", ".mypy_cache"}
 
 REFUSALS = {
+    "tool_missing": ("forge.toml's tools is {tool}, so this runs on {name}, which isn't installed. Forge won't use the other tool instead.", "forge doctor --fix"),
     "no_repo": ("This folder is not inside a git repository.", "cd <your repo>"),
     "missing_tool": ("{tool} is not installed or not on PATH.", "forge doctor"),
     "no_session": ("Forge runs this repo's work inside a Claude Code or Codex session, and none is "
@@ -1167,7 +1168,6 @@ def write_state(item: str, data: dict[str, Any], top: Path | None = None) -> str
 
 def now() -> str:
     """The current UTC time. FORGE_NOW overrides it, so tests can drive dated steps."""
-    # ponytail: an env override is the whole clock seam.
     return os.environ.get("FORGE_NOW") or datetime.now(timezone.utc).isoformat()
 
 
