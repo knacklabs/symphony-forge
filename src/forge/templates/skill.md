@@ -336,6 +336,8 @@ gh issue create --repo knacklabs/symphony-forge --title "<short plain title>" --
 
 ## Laptop setup and after cloning
 
+Before `forge init` writes any files in a new or existing repo, it checks Git's author identity. If Git refuses it, set `git config user.name "Your Name"` and `git config user.email "you@example.com"`, then run init again.
+
 When `forge init` writes settings, it checks `claude auth status` and `codex login status`.
 If only Claude is signed in, it sets `tools = "claude"` and `workers = "claude"` and says so.
 Otherwise it keeps split workers. An unavailable check keeps that default unless the binary is missing.
@@ -380,6 +382,8 @@ before returning. Returning builders and repair rounds go before new builds;
 new builds pause above twice the test lane capacity and resume at capacity or below.
 
 `forge board` opens a live page on 127.0.0.1 with a per-run token and refreshes by itself;
+it stops after 30 minutes with no page open and does not fetch or rebuild while no page is open.
+The page's events stream keeps it live. Ctrl-C stops it at once.
 `--out <path>` writes JSON instead. The JSON views are `forge board --json` and
 `forge next --json`. Both views add `team` for the team's summary.
 The run reference explains the board fields and page behaviour.
@@ -1767,6 +1771,8 @@ review and green checks on the final pushed head. After `forge fix amend`, close
 the pull request's Done when line. Use `--append "<text>"` to add text with a space between
 the old and new text. `--done "<done when>"` replaces the whole Done-when. Both options show
 the old and new text before writing, and need `--because "<why>"`.
+Land runs work first for a fix with only its start and state records, including after amend.
+A work commit can change only Forge records. Amend and next direct that fix to close.
 Upgrade close leaves the repo's local git hooks alone,
 including when it regenerates conflicted Forge files with the newly pinned release.
 If conflicted-merge handling fails, close aborts the merge and reports the error before retrying.

@@ -1057,8 +1057,10 @@ def bound_review(top: Path, item: str, state: dict[str, Any], result: dict[str, 
     for finding in findings:
         title = re.sub(r"^\[P[0-3]\]\s*", "", finding["title"])
         missed = re.match(r"Not done\s*:\s*(.*)", title, re.I)
+        approved_missed = missed and any(
+            item and sentence(missed[1]).startswith(item) for item in approved)
         must = score.MUST.match(title)
-        if (missed and sentence(missed[1]) in approved) or (must and must[1].strip().casefold() in kinds):
+        if approved_missed or (must and must[1].strip().casefold() in kinds):
             if not finding.get("required_done_when") or finding.get("follow_up"):
                 finding["required_done_when"] = True
                 finding.pop("follow_up", None)
@@ -1069,7 +1071,7 @@ def bound_review(top: Path, item: str, state: dict[str, Any], result: dict[str, 
         reason = ""
         if score.RARE.search(finding["body"]):
             reason = "Rare case outside normal use"
-        elif missed and sentence(missed[1]) not in approved:
+        elif missed and not approved_missed:
             reason = "Not done names no owner-approved Done-when item; builder details are guidance."
         elif score.below_added_work_minimum(finding, minimum):
             reason = f"{score.ADDED_WORK_REASON}{minimum}."

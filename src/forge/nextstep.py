@@ -20,7 +20,7 @@ from typing import Any
 
 from forge import (__version__, approval, board, board_facts, close, codex, githooks, machine, migration_warnings,
                    journey, native, records, repo, review, spotted, story, score, task, time_records, upgrade)
-from forge.task import _started, developer, github_login, owner, sections, stack_base, start_base, waits_for
+from forge.task import _started, developer, github_login, owner, sections, stack_base, start_base, unbuilt_fix, waits_for
 from forge.task import rows as task_rows
 
 COMMANDS = [
@@ -1124,6 +1124,8 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
             and native.lock_alive(lock) is False):
         sentence, step = "Tests are running for {label}.", "wait for them to finish, then forge next"
     switch = (state.get("why"), state.get("done_when")) == (close.WHY, close.DONE)
+    if status == "started" and path and state.get("kind") == "fix" and not unbuilt_fix(item, state, path):
+        sentence, step = "{label} has a work commit.", "forge close {item}"
     if (status == "ready" and state.get("kind") != "migrate" and not switch
             and repo.merge_setting(top) == "agent"):
         sentence, step = "{label} is ready to merge.", "forge merge {item}"
