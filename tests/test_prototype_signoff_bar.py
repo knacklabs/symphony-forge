@@ -13,6 +13,7 @@ a report. An old leading clean canvas response would hide the finding under
 test. Remove that obsolete fixture response and keep all behavior assertions.
 """
 import json
+import re
 
 import pytest
 
@@ -164,10 +165,10 @@ def test_3_signoff_questions_and_split_include_only_held_findings(repo, tmp_path
     assert "The owner defers" not in lesser[0]["reason"]
 
 
-# Test audit: only a person's sample-data declaration permits accepting a P0
-# after two rounds. Existing tests cover the unconditional P0 block, not this
-# owner path or its absence on upgraded repos. Exercise the decision command,
-# saved stop and public Known issues; reuse the external reviewer fixture.
+# Test audit: a declared sample-data prototype gets an owner choice on a P0 at its
+# first gap check; a prototype without the declaration keeps the P0 repair path.
+# Existing tests cover P0 blocking but not the sample declaration or its adopted-repo
+# fallback. Exercise the decision command and Known issues; fake only the reviewer.
 @pytest.mark.parametrize("setup,sample_data", [
     (_client, "true"), (_client, None), (_client, "false"),
     (_adopted_client, "true"), (_adopted_client, None),
@@ -175,13 +176,25 @@ def test_3_signoff_questions_and_split_include_only_held_findings(repo, tmp_path
 def test_4_only_declared_sample_prototypes_allow_the_owner_to_accept_p0(
         repo, tmp_path, monkeypatch, setup, sample_data):
     fix, answers, queue = setup(repo, tmp_path, monkeypatch)
+    config = fix / "forge.toml"
+    text = config.read_text("utf-8")
+    first_table = re.search(r"(?m)^\[[^\r\n]+\]\s*$", text)
+    root = text[:first_table.start()] if first_table else text
+    tables = text[first_table.start():] if first_table else ""
+    root = re.sub(r"(?m)^(?:stage|sample_data)\s*=.*\n", "", root)
+    root += 'stage = "prototype"\n'
+    if setup is _client and sample_data is not None:
+        root += f"sample_data = {sample_data}\n"
+    config.write_text(root + tables, encoding="utf-8")
+    repo.git("add", "forge.toml", cwd=fix)
+    repo.git("commit", "-qm", "Set the prototype sample-data mode", cwd=fix)
     if setup is _adopted_client:
         _request_build(repo, fix)
         (fix / "app.py").write_text("print('sample orders')\n", encoding="utf-8")
         repo.git("add", "app.py", cwd=fix)
         repo.git("commit", "-qm", "Build the adopted prototype", cwd=fix)
     page = _decision(fix, answers)
-    if sample_data is not None:
+    if sample_data is not None and setup is _adopted_client:
         page.write_text(page.read_text("utf-8").replace(
             "status: proposed", f"status: proposed\nsample_data: {sample_data}"), encoding="utf-8")
     report = {"report": {"review_status": "findings", "findings": [{
@@ -193,6 +206,31 @@ def test_4_only_declared_sample_prototypes_allow_the_owner_to_accept_p0(
     def accept(*args):
         return repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", *args, cwd=fix)
 
+    if sample_data == "true":
+        stopped = accept()
+        assert stopped.returncode == 1, stopped.stdout + stopped.stderr
+        assert "--resolve <accept|more|split>" in stopped.stderr
+        assert "Browser-held order codes" in stopped.stderr
+        assert "forge fix start" not in stopped.stderr
+        calls = queue.with_suffix(".calls.jsonl")
+        before = calls.read_text("utf-8")
+        assert len(before.splitlines()) == 1
+        resolved = accept("--resolve", "accept", "--reason", "The owner accepts the sample risk")
+        assert resolved.returncode == 0, resolved.stdout + resolved.stderr
+        assert calls.read_text("utf-8") == before
+        assert "status: accepted" in page.read_text("utf-8")
+        shown = repo.forge("board", "--json", cwd=fix)
+        assert shown.returncode == 0, shown.stderr
+        kept = [entry for entry in json.loads(shown.stdout)["known_issues"]
+                if entry["title"] == "Browser-held order codes"]
+        assert len(kept) == 1
+        assert "The owner accepts the sample risk" in kept[0]["reason"]
+        assert kept[0]["kept"] != "open"
+        prompt = "\n".join(json.loads(before.splitlines()[-1])["prompt_files"].values())
+        assert "Sample-data sign-off gap check" in prompt
+        assert "A security hole in a real API or sign-in" in prompt
+        return
+
     first = accept()
     assert first.returncode == 1, first.stdout + first.stderr
     assert "forge fix start" in first.stderr
@@ -203,33 +241,13 @@ def test_4_only_declared_sample_prototypes_allow_the_owner_to_accept_p0(
     assert second.returncode == 1, second.stdout + second.stderr
     calls = queue.with_suffix(".calls.jsonl")
     before = calls.read_text("utf-8")
-    if sample_data == "true":
-        assert "One more round, split or accept?" in second.stderr
-        assert "accepts a P0" in second.stderr
-        assert "only sample data and no back end" in second.stderr
-        again = accept()
-        assert again.returncode == 1
-        assert "accepts a P0" in again.stderr
-        assert calls.read_text("utf-8") == before
-    else:
-        assert "forge fix start" in second.stderr
-        assert "One more round" not in second.stderr
+    assert "forge fix start" in second.stderr
+    assert "One more round" not in second.stderr
     resolved = accept("--resolve", "accept", "--reason", "The owner accepts the sample risk")
     assert calls.read_text("utf-8") == before
-    if sample_data == "true":
-        assert resolved.returncode == 0, resolved.stdout + resolved.stderr
-        assert "status: accepted" in page.read_text("utf-8")
-        shown = repo.forge("board", "--json", cwd=fix)
-        assert shown.returncode == 0, shown.stderr
-        kept = [entry for entry in json.loads(shown.stdout)["known_issues"]
-                if entry["title"] == "Browser-held order codes"]
-        assert len(kept) == 1
-        assert "The owner accepts the sample risk" in kept[0]["reason"]
-        assert kept[0]["kept"] != "open"
-    else:
-        assert resolved.returncode == 1
-        assert "only after sign-off stops" in resolved.stderr
-        assert "status: proposed" in page.read_text("utf-8")
+    assert resolved.returncode == 1
+    assert "only after sign-off stops" in resolved.stderr
+    assert "status: proposed" in page.read_text("utf-8")
     prompt = "\n".join(json.loads(before.splitlines()[-1])["prompt_files"].values())
     assert "Risks that exist only in a real-data build" in prompt
     assert "browser-held codes or data" in prompt

@@ -14,11 +14,11 @@ $spec
 For a story, check the confirmed spec before calling it missing. Forge includes its path and text
 above when it finds the spec in any local branch, including a promoted task branch.
 
-For a story, read this checkout's `docs/product/BRIEF.md` `## Answers` section. When a Done-when
-item needs a topic marked `later`, report `Decide first: <topic>` as a finding. The agent must ask
-that one question, record the answer in the finding's disposition and the story's Notes as
-`Decided: <topic>: <answer> (<source>, <date>)`, and make the story's first task update the answers
-page. Do not call a deferred topic open when no Done-when item needs it.
+For a story, read this checkout's `docs/product/BRIEF.md` `## Answers` section as context. An
+unanswered topic, an open client question, or an answer marked `later` or `not known yet` does not
+block planning. If work needs an answer that is missing, use a sensible default and record the
+question as an open decision with its default and effect. Do not report the missing answer as a
+finding. Report a finding only for a defect in the plan itself.
 
 When a note needs a choice only the client can make, put this block inside the note, indented
 under it, just before the note's score line. The block has no score line of its own: the note's
