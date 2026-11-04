@@ -129,8 +129,10 @@ business task, and the basic screens are shown last.
 
 Write the sign-off record with `forge decision new client-signoff`, and leave `approved_via` and
 `approved_on` empty. Forge copies the current Answers section into the record, so nobody copies it
-by hand. Put each demo step and its test under `## Proof` for a working build, and settled choices
-under `## Decisions`. Run `forge decision accept client-signoff` before asking the customer to
+by hand. Put each demo step under `## Proof` for a working build. For a prototype without the
+sample-data mark, also name the passing test for each step. A marked sample-data prototype has no
+test requirement before sign-off. Put settled choices under `## Decisions`. Run
+`forge decision accept client-signoff` before asking the customer to
 sign off. After the check passes and the customer replies, set `approved_via` to the reply and, if
 known, `approved_on` to its date. Run `forge decision accept client-signoff --by "<name>"` to
 record the signer's name.

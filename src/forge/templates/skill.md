@@ -691,8 +691,10 @@ marked `later` or `not known yet` blocks planning, review, close, merge or sign-
 fix which turns off sample data waits for a settled `Personal data` answer. Write
 `forge decision new client-signoff` with the customer and the demo proof for a working build. Leave
 `approved_via` and `approved_on` empty. Forge writes the current `## Answers` section into the
-sign-off record. Do not copy it by hand. Put each demo step under `## Proof` for a working build,
-and settled choices under `## Decisions`. Run `forge decision accept client-signoff` before asking
+sign-off record. Do not copy it by hand. Put each demo step under `## Proof` for a working build.
+For a prototype without the sample-data mark, also name the passing test for each step. A marked
+sample-data prototype has no test requirement before sign-off. Put settled choices under
+`## Decisions`. Run `forge decision accept client-signoff` before asking
 the customer to sign off. After the check passes and the customer replies, set `approved_via` to the
 reply and, if known, `approved_on` to its date. Run
 `forge decision accept client-signoff --by "<name>"` to record the signer's name.
