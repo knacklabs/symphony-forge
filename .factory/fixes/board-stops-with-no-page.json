@@ -72,7 +72,7 @@
     "status": "blocked"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-04T09:58:31.878045+00:00",
@@ -85,8 +85,12 @@
   ],
   "stop": {
     "at": "2026-11-04T10:09:10.512593+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "src/forge/board.py",
-    "wait_id": "6b1b33a4-2b81-4dca-b12b-60eb7d94829f"
+    "reason": "Owner chose one more round: repair the fetch at start and prove the case where nobody ever opens the page.",
+    "wait_id": "6b1b33a4-2b81-4dca-b12b-60eb7d94829f",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
