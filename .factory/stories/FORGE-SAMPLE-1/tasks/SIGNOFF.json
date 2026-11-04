@@ -1,12 +1,20 @@
 {
   "base": "0ed4652e88ac5f3c96910d6de1ec3e2b4444b4dc",
   "branch": "task/FORGE-SAMPLE-1-SIGNOFF",
+  "round": 1,
   "stacked_on": "FORGE-SAMPLE-1/SETUP",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-04T09:57:39.704585+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "72bf2d367c91842a3a7dfa2e8e6634328e24dda1",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
