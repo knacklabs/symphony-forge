@@ -32,6 +32,9 @@
       "path": "../../libs/mcp/server"
     },
     {
+      "path": "../../libs/notifications/server"
+    },
+    {
       "path": "../../libs/organisations/server"
     },
     {

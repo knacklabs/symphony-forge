@@ -210,6 +210,9 @@ importers:
       '@app/mcp-server':
         specifier: workspace:*
         version: link:../../libs/mcp/server
+      '@app/notifications-server':
+        specifier: workspace:*
+        version: link:../../libs/notifications/server
       '@app/organisations-server':
         specifier: workspace:*
         version: link:../../libs/organisations/server
@@ -281,6 +284,17 @@ importers:
       '@app/organisations-contracts':
         specifier: workspace:*
         version: link:../../organisations/contracts
+
+  libs/notifications/contracts: {}
+
+  libs/notifications/server:
+    dependencies:
+      '@app/core-server':
+        specifier: workspace:*
+        version: link:../../core/server
+      '@app/notifications-contracts':
+        specifier: workspace:*
+        version: link:../contracts
 
   libs/organisations/contracts: {}
 
