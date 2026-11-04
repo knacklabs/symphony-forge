@@ -19,8 +19,8 @@
       "gain": 4,
       "harm": 3,
       "line": 189,
-      "outcome": "open",
-      "reason": "",
+      "outcome": "follow-up",
+      "reason": "Split into follow-up fix review-findings-split-from-release-1-2-2",
       "round": 1,
       "security": false,
       "title": "Gate: live starter tests in the full suite",
@@ -37,6 +37,7 @@
       {
         "body": "Gain 4, Work 2, Harm 3\nRaise: Test\nCase: normal use - the scheduled full-suite run on main.\nRemoving FORGE_STARTER_LIVE makes existing live starter checks skip or omit their runtime assertions; for example, tests/test_defaults_history.py:18-19 now skips its real API test. Removing Node 24 and Corepack setup also removes prerequisites checked by tests/test_starter_tree.py:163-168. The separate starter-smoke workflow has no scheduled trigger, so it does not replace this nightly coverage. The full-suite status can consequently turn green without exercising these contracts. Preserve the live-test setting and prerequisites in the generated nightly workflow.",
         "file": ".github/workflows/forge.yml",
+        "follow_up": "Split into follow-up fix review-findings-split-from-release-1-2-2",
         "gain": 4,
         "harm": 3,
         "line": 189,
@@ -46,10 +47,10 @@
       }
     ],
     "id": "c0c6bf3b-b22c-4c86-90ba-f3baf8c4d89a",
-    "status": "blocked"
+    "status": "clean"
   },
   "round": 4,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-03T12:47:44.510602+00:00",
@@ -62,8 +63,15 @@
   ],
   "stop": {
     "at": "2026-11-04T02:00:29.142640+00:00",
+    "by": "owner",
+    "choice": "split",
     "file": ".github/workflows/forge.yml",
-    "wait_id": "4ff461e6-87c0-4e0c-be20-d255a30d49d9"
+    "fixes": [
+      "review-findings-split-from-release-1-2-2"
+    ],
+    "reason": "The owner moved the nightly live starter tests to their own fix: run them in the starter workflow on a schedule, so the full run stays under its limit",
+    "wait_id": "4ff461e6-87c0-4e0c-be20-d255a30d49d9",
+    "worker_round": 4
   },
   "stuck": {
     "close": null,
