@@ -650,22 +650,18 @@ def test_place(cfg: dict[str, Any]) -> str:
 def sample_data(top: Path, cfg: dict[str, Any] | None = None, ref: str | None = None) -> bool:
     """The explicit setting wins over the earlier sign-off record's sample-data line."""
     if cfg is None:
-        saved = run("git", "show", f"{ref}:forge.toml", cwd=top) if ref else None
-        if saved and saved.returncode:
+        text = read_blob(top, f"{ref}:forge.toml") if ref else (top / "forge.toml").read_text("utf-8")
+        if text is None:
             return False
-        text = saved.stdout if saved else (top / "forge.toml").read_text("utf-8")
         # A past release can have settings that this release no longer accepts.
         cfg = {**DEFAULTS, **tomllib.loads(text)} if ref else _config_text(text)
     if cfg.get("repo") != "client" or cfg.get("stage") != "prototype":
         return False
     if "sample_data" in cfg:
         return cfg["sample_data"] is True
-    names = (git("ls-tree", "-r", "--name-only", ref, "--", "docs/decisions/", cwd=top).splitlines()
-             if ref else [path.relative_to(top).as_posix() for path in top.glob("docs/decisions/*.md")])
-    texts = (git("show", f"{ref}:{name}", cwd=top) if ref else (top / name).read_text("utf-8") for name in names
-             if name == cfg["signoff"] or not cfg["signoff"] and SIGNOFF.fullmatch(name))
     return any(re.search(r"^sample_data:\s*[\"']?true[\"']?\s*$", text.split("---")[1], re.M)
-               for text in texts if text and text.startswith("---"))
+               for name, text in _signoff_texts(top, cfg, (ref or "",))
+               if (cfg["signoff"] or SIGNOFF.fullmatch(name)) and text.startswith("---"))
 
 
 def _sample_settings(top: Path, cfg: dict[str, Any], ref: str | None = None) -> dict[str, Any]:
@@ -758,28 +754,21 @@ def is_prototype(top: Path, cfg: dict[str, Any] | None = None, refs: tuple[str, 
     cfg = cfg if cfg is not None else config(top)
     if cfg["repo"] != "client" or cfg["stage"] != "prototype":
         return False
+    return not any(re.search(r"^status:\s*[\"']?accepted\b", text.split("---")[1], re.M)
+                   for _, text in _signoff_texts(top, cfg, refs) if text.startswith("---"))
+
+
+def _signoff_texts(top: Path, cfg: dict[str, Any], refs: tuple[str, ...]):
+    """Read the pinned sign-off, or matching decisions, from the requested trees or checkout."""
     from forge import story
 
-    pinned = cfg["signoff"]
-
-    def wanted(name: str) -> bool:
-        return name == pinned if pinned else name.endswith("client-signoff.md")
-
-    local_names = [path.relative_to(top).as_posix() for path in top.glob("docs/decisions/*.md")
-                   if wanted(path.relative_to(top).as_posix())]
-
-    def texts():
-        if not refs:
-            yield from ((top / name).read_text(encoding="utf-8") for name in local_names)
-        for ref in refs or (story.landed_ref(top),):
-            # Probe known names on the requested ref; local acceptance never stands in for it.
-            yield from (story.show(top, ref, name) or "" for name in local_names)
-            names = git("ls-tree", "-r", "--name-only", ref, "--", "docs/decisions", cwd=top).splitlines()
-            yield from (story.show(top, ref, name) or "" for name in names
-                        if name not in local_names and wanted(name))
-
-    return not any(re.search(r"^status:\s*[\"']?accepted\b", text.split("---")[1], re.M)
-                   for text in texts() if text.startswith("---"))
+    for ref in refs or ("", story.landed_ref(top)):
+        names = (git("ls-tree", "-r", "--name-only", ref, "--", "docs/decisions", cwd=top).splitlines()
+                 if ref else [path.relative_to(top).as_posix() for path in top.glob("docs/decisions/*.md")])
+        for name in names:
+            if name == cfg["signoff"] or not cfg["signoff"] and name.endswith("client-signoff.md"):
+                yield name, (story.show(top, ref, name) or "" if ref
+                             else (top / name).read_text(encoding="utf-8"))
 
 
 def _config_text(text: str, top: Path | None = None) -> dict[str, Any]:
