@@ -1,13 +1,63 @@
 import os
 import subprocess
+import textwrap
 from collections.abc import AsyncIterator, Iterator
 from contextlib import asynccontextmanager
+from typing import cast
 
 import httpx
 import httpx2
 import pytest
 from mcp.client.session import ClientSession
 from mcp.client.streamable_http import streamable_http_client
+
+
+def call_notifications(script: str) -> object:
+    """Call the real service in the API container with its configured database."""
+    source = f"""
+import json
+from uuid import UUID
+
+from app.core import create_database, load_settings
+from app.history import HistoryService
+from app.notifications import NotificationsService
+from app.organisations import OrganisationsService
+
+settings = load_settings()
+engine, session_factory = create_database(settings.database_url)
+try:
+    with session_factory() as db:
+{textwrap.indent(textwrap.dedent(script).strip(), "        ")}
+        print(json.dumps(result))
+finally:
+    engine.dispose()
+    """
+    result = subprocess.run(
+        [
+            "docker",
+            "compose",
+            "-f",
+            "compose.test.yml",
+            "exec",
+            "-T",
+            "api",
+            "uv",
+            "run",
+            "--no-sync",
+            "python",
+            "-",
+        ],
+        cwd="../..",
+        input=source,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        check=False,
+        timeout=30,
+    )
+    output = result.stdout + result.stderr
+    assert result.returncode == 0, f"The notifications service call failed: {output}"
+    return cast(object, json.loads(result.stdout))
 
 
 @pytest.fixture(scope="module", autouse=True)

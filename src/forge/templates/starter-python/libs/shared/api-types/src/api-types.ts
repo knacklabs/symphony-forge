@@ -459,6 +459,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/notifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the records that wait for you, with a count.
+         * @description Only your open entries in your organisation, newest first. Returns up to 100 entries and the count of all open entries.
+         */
+        get: operations["list_notifications_api_v1_notifications_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/error-reports": {
         parameters: {
             query?: never;
@@ -805,6 +825,56 @@ export interface components {
             /** Message */
             message: string;
         };
+        /** NotificationEntry */
+        NotificationEntry: {
+            /**
+             * Id
+             * Format: uuid
+             * @description The waiting entry identifier.
+             * @example 019a3500-0000-7000-8000-000000000001
+             */
+            id: string;
+            /**
+             * Subjectid
+             * Format: uuid
+             * @description The record that needs an action.
+             * @example 019a3500-0000-7000-8000-000000000002
+             */
+            subjectId: string;
+            /**
+             * Subjectname
+             * @description The record name.
+             * @example October budget
+             */
+            subjectName: string;
+            /**
+             * Message
+             * @description The action that waits for you.
+             * @example Approve the budget.
+             */
+            message: string;
+            /**
+             * Createdatutc
+             * Format: date-time
+             * @description When the entry was created, in UTC.
+             * @example 2026-10-31T10:00:00Z
+             */
+            createdAtUtc: string;
+        };
+        /** NotificationsList */
+        NotificationsList: {
+            /**
+             * Count
+             * @description The number of all records that wait for you.
+             * @example 2
+             */
+            count: number;
+            /**
+             * Items
+             * @description Up to 100 open entries, newest first.
+             */
+            items: components["schemas"]["NotificationEntry"][];
+        };
         /** Project */
         Project: {
             /**
@@ -1043,6 +1113,18 @@ export interface components {
             success: true;
             /** Data */
             data: null;
+            /** Error */
+            error?: null;
+        };
+        /** SuccessEnvelope[NotificationsList] */
+        SuccessEnvelope_NotificationsList_: {
+            /**
+             * Success
+             * @default true
+             * @constant
+             */
+            success: true;
+            data: components["schemas"]["NotificationsList"] | null;
             /** Error */
             error?: null;
         };
@@ -2717,6 +2799,35 @@ export interface operations {
             };
             /** @description Forbidden */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    list_notifications_api_v1_notifications_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuccessEnvelope_NotificationsList_"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
                 headers: {
                     [name: string]: unknown;
                 };

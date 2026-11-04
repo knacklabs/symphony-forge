@@ -17,6 +17,7 @@ EXPECTED_TABLE_SCHEMAS = (
     "core.sign_in_attempt",
     "history.change_record",
     "mcp.idempotency_key",
+    "notifications.notification",
     "projects.project",
 )
 
@@ -66,8 +67,8 @@ def test_each_module_keeps_its_tables_in_its_own_schema(
         "JOIN pg_namespace AS source_schema ON source_schema.oid = source_table.relnamespace "
         "JOIN pg_class AS target_table ON target_table.oid = c.confrelid "
         "JOIN pg_namespace AS target_schema ON target_schema.oid = target_table.relnamespace "
-        "WHERE c.contype = 'f' AND source_schema.nspname IN ('history', 'mcp', 'projects') "
-        "AND target_schema.nspname IN ('history', 'mcp', 'projects') "
+        "WHERE c.contype = 'f' AND source_schema.nspname IN ('history', 'mcp', 'notifications', 'projects') "
+        "AND target_schema.nspname IN ('history', 'mcp', 'notifications', 'projects') "
         "AND source_schema.nspname <> target_schema.nspname) "
         "THEN 'cross-schema foreign key found' ELSE 'no cross-schema foreign keys' END"
     )
