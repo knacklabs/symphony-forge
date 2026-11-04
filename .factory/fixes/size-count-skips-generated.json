@@ -1,6 +1,13 @@
 {
   "base": "03566c13cbe5b17271277c76c0c619884e376462",
   "branch": "fix/size-count-skips-generated",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1a4d4-6548-7272-9fb4-27cb4df891dd",
+    "head": null,
+    "start": "b18ebb43541141370265044fda05dba86070fa9a"
+  },
   "done_when": "Files marked linguist-generated count towards neither a story part's size warning nor a fix's code-file limit, and the guide says so",
   "fix_kind": "mechanical",
   "kind": "fix",
