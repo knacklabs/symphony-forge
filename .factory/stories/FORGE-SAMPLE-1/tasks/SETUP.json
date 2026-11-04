@@ -64,59 +64,17 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "fcacf0c187ac2276f07e40cecd0867ce5dee0d093f9838db51e61fdd1aee5534",
-    "changed": "82c2a87449fe61cb6586787a8629fc07e89ad9d09705e5ef982ccf49453a9359",
-    "commit": "5a8203d0a017626214923c7e594b8e1af4e1f779",
+    "branch_diff": "550b0849cac23377e812413fe7a339c49b5e86433384bf1308c065015c71a59e",
+    "changed": "4556d637049f3307e4c0f0c47c4002077ae381f5b714d654c9202a8a9f50add6",
+    "commit": "640c8e1a058b9259a7d513a49a697a5210a53473",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done\nCase: normal use - a worker handles a settings fix whose Done when names forge.toml.\nThe refusal proof uses a readme fix, which exercises only the restricted case. In src/forge/githooks.py:133, worker commits are permitted when task.settings_allowed succeeds; src/forge/task.py:212 grants that permission whenever Done when contains `forge.toml`. Native handback has the same exception at src/forge/native.py:255. Consequently, workers can change sample_data in the dedicated settings fixes used by this flow, despite Done-when 2 requiring that they cannot. Enforce the restriction on that path and extend the command-level proof.",
-        "file": "tests/test_sample_setup.py",
-        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
-        "gain": 4,
-        "harm": 3,
-        "line": 124,
-        "priority": "P1",
-        "title": "Not done: a worker cannot write `sample_data` in `forge.toml`",
-        "work": 2
-      },
-      {
-        "body": "Gain 2, Work 2, Harm 2\nThe `not match[\"task\"]` condition excludes story workers from sample mode. After sign-off, sample mode explicitly continues until the settings fix disables it, so a story started during that interval receives instructions to add automated tests and run `forge test`; continued rounds also receive the CI-required paragraph. Meanwhile, configuration still disables those tests and checks. Apply the sample-proof selection to tasks as well as fixes; the current proof exercises fixes only.",
-        "file": "src/forge/worker.py",
-        "gain": 2,
-        "harm": 2,
-        "line": 581,
-        "priority": "P2",
-        "title": "Follow-up: preserve sample-data instructions for story workers",
-        "work": 2
-      },
-      {
-        "body": "Gain 2, Work 1, Harm 2\nForcing test_place to local also activates fullrun.notices, called by `forge next` at src/forge/nextstep.py:152. With GitHub available and no recent full-suite status\u2014the normal sample-prototype state\u2014src/forge/fullrun.py:161 tells the coordinator to run `forge test --full`. That command then fails at fullrun.py:74 because this same configuration clears the test command. The reminder repeats while sample mode remains enabled.\nAdds work: suppress full-run reminders in sample mode; F 3 x H 2 = 6; 2 x C = 2",
-        "file": "src/forge/repo.py",
-        "gain": 2,
-        "harm": 2,
-        "line": 655,
-        "priority": "P2",
-        "title": "Follow-up: suppress the unusable full-run reminder in sample mode",
-        "work": 1
-      },
-      {
-        "body": "Gain 2, Work 3, Harm 2\nThe new personal-data exemption applies to plan approval only. Sign-off still rejects open brief answers and client questions at src/forge/records.py:337\u2013355, requires a manually matching Answers quote at lines 327\u2013336, and validates customer format, reply method and demo address at lines 306\u2013313. Thus the remaining Done-when 4 clauses are not delivered here. The Tasks table assigns those changes and their command-level proof to SIGNOFF, so this is deferred advice rather than a blocking SETUP omission.",
-        "file": "src/forge/records.py",
-        "gain": 2,
-        "harm": 2,
-        "line": 679,
-        "priority": "P2",
-        "title": "Later: SIGNOFF still owns the remaining brief and sign-off exemptions",
-        "work": 3
-      }
-    ],
-    "id": "af3246cc-4e55-4216-b036-3e9610561587",
+    "findings": [],
+    "id": "246a80a4-a1cc-4dfb-bcb5-ab942be576ff",
     "status": "clean"
   },
   "round": 3,
   "stacked_on": "FORGE-SAMPLE-1/CHECKLIST",
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-03T05:03:36.110347+00:00",
@@ -124,6 +82,10 @@
     },
     {
       "at": "2026-11-04T05:43:10.488707+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-04T07:29:43.142403+00:00",
       "step": "review"
     }
   ],
