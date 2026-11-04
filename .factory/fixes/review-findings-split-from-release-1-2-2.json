@@ -1,0 +1,16 @@
+{
+  "base": "8f1388273eee3d5ca730bd9a1066b20994bb0625",
+  "branch": "fix/review-findings-split-from-release-1-2-2",
+  "done_when": "A review no longer finds: Gate: live starter tests in the full suite (.github/workflows/forge.yml:189)",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "stacked_on": "release-1-2-28",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-04T04:31:25.331091+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Review findings split from release-1-2-28: Gate: live starter tests in the full suite (.github/workflows/forge.yml:189)"
+}
