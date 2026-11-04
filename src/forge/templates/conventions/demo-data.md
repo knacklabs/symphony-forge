@@ -5,12 +5,16 @@ builds the prototype's first version or changes its demo data.
 
 ## What it holds
 
-- The loader lives in the app at `apps/api/src/demo/`. It is app code, not a module, and may
-  read every table. Forge ships this page, not the code.
+- The loader lives in the app at `apps/api/src/demo/` for TypeScript, or `apps/api/app/demo/` for
+  Python. It is app code, not a module, and may read every table. Forge ships this page, not the
+  code.
+- About 20 records for each record type make the prototype realistic. Use the records in the
+  client's words.
+- Use the records for the prototype and its demo run only, never production.
 - Its records are shaped from the column headers of the spreadsheet or form the client uses today,
   and every label comes from the "Words they use" list in `docs/product/DISCOVERY.md`.
-- The values are made up but look like theirs. It holds no real personal data: no real names,
-  emails, phone numbers or addresses, even when the client's own sheet has them.
+- The values are made up but look like theirs. Use no real personal data: no real names, emails,
+  phone numbers or addresses, even when the client's own sheet has them.
 
 ## When it runs
 

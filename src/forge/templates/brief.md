@@ -488,8 +488,8 @@ It builds the API, agent tools, change history and tests without writing pages o
 Keep its organisation scoping, soft delete, restore and transactional change history.
 Each feature checks view, create, edit, delete and restore permissions on every screen and API call.
 Admins have all five. Members can view and create, but cannot edit, delete or restore and never
-see deleted items. Change the role mapping in the feature's permissions file only when the plan
-asks for it; keep that mapping in one place. Add unsupported field kinds by hand. If the command
+see deleted items. Change the role mapping in the feature's permissions file only when the plan's
+Roles table asks for it; keep that mapping in one place. Add unsupported field kinds by hand. If the command
 refuses a non-starter or an older starter, follow its named missing parts and build the feature
 by hand in the app's existing layout. Existing apps keep their code on upgrade and sync.
 
@@ -644,7 +644,8 @@ $prototype_proof
 For this unsigned prototype, test only the demo workflow steps, security and data boundaries.
 Map those tests in the commit's Proof list. No per-function proof is due in these rounds.
 This replaces the broader test and proof requirements above. The full proof is due at sign-off.
-For a working prototype, the sign-off Proof section lists each demo step and its test. The full
+For a working prototype, the sign-off Proof section lists each demo step and its test; a screenshot
+may be added as evidence. The full
 run on main must be green.
 The light review checks only demo breakage, security and data loss. Its model and effort come
 from `[models.light_review]`, or the review model at medium effort when that setting is absent.

@@ -74,7 +74,12 @@ exact next command. The same text appears when a Claude Code or Codex session st
 New clients get this flow at init; existing clients get the same guide after upgrade and sync.
 
 Start with FDE discovery: ask about the customer's job, current workaround, its cost and the
-evidence. Start with a canvas that shows the app's screens.
+evidence. Write one prototype plan with the record types and fields in the brief, a Roles table
+and architecture choices with one plain reason each in the constitution, one design link in the
+brief, and the demo steps. The default Roles table gives admins all five actions and members view
+and create. Ask for the `Personal data` answer at plan approval after sign-off, unless the app is
+marked as made-up data only. An app already past sign-off with no constitution approval gets this approval
+next, with no design or demo steps. Accepted canvas, build and constitution approvals stay valid.
 A salesperson can lead at first; a developer can take over from `docs/product/DISCOVERY.md` and
 the answers in `docs/product/BRIEF.md`. Ask each build-changing question when it first matters,
 one at a time, and record the answer and who gave it. If a requested feature does not help test
@@ -91,8 +96,8 @@ Client repos get pinned copies of impeccable and emil-design-eng with their lice
 Make each app's design from the whole brief: its purpose, users, records, fields, choice-list
 options and key flows. Run impeccable's init when PRODUCT.md is missing. Use impeccable and
 emil-design-eng to shape and review the design when making it through Forge.
-Any way of making the design works, through Forge or separately. Keep one link in `## Design`
-in the brief; it need not be saved in the repo. A UI fix needs no saved design images.
+Make the design through Forge or separately. Keep one link in `## Design` in the brief; it need
+not be saved in the repo. A UI fix needs no saved design images.
 When using Forge, use a shadcn design system and named shadcn components.
 Before the demo, read the linked design when the host can and compare its screen list with the app.
 If the link cannot be read, use saved design pages, or ask the person for the screen list.
@@ -101,18 +106,19 @@ Keep the design available to show the customer at the demo. New clients
 get this process at init; existing clients can use the brief and design they have after upgrade and
 sync. Client sign-off does not require a root DESIGN.md, SCREENS.md or CHECKS.md, or a specific
 `Things it keeps track of` heading.
-Before sign-off, run impeccable's critique and polish and the emil-design-eng checklist. The owner
-or FDE can approve the canvas with `forge decision new prototype-design` and
-`forge decision accept prototype-design --by "<name>"`.
-
-The customer can sign off on the canvas alone. A working prototype needs an FDE request to prove
-something the canvas cannot, such as real data or speed. Record it with `forge decision new prototype-build`.
-The owner accepts it with `forge decision accept prototype-build --by "<name>"`.
-Build and demo the prototype only after that acceptance, through `forge fix start`, `forge work` and `forge close`. A prototype
-fix started before sign-off can exceed the usual fix size and change an interface; it still gets
-tests, review and a pull request. Save and confirm specs as the work reveals them. Before sign-off,
+Before approval, run impeccable's critique and polish and the emil-design-eng checklist. Create
+the plan record with `forge decision new prototype-plan`, then run
+`forge decision accept prototype-plan --by "<name>"` once, then build. Right after approval, build
+every record type in the plan with `forge task feature`, with the Roles table and without more
+questions. For each record type whose row differs from the command's default (member view, create),
+edit that feature's one `definePermissions` call. Build and demo the prototype through
+`forge fix start`, `forge work` and `forge close`.
+A prototype fix started before sign-off can exceed the usual fix size and change an interface; it
+still gets tests, review and a pull request. Save and confirm specs as the work reveals them. Before sign-off,
 `forge next` shows open answers, but they do not block work. Its light rounds prove the demo steps,
-security and data boundaries, with `[models.light_review]`. Demo proof is due at sign-off.
+security and data boundaries, with `[models.light_review]`; they hold only P0 problems. A full
+review after sign-off holds work that goes against the Roles table or architecture choices. Demo
+proof is due at sign-off.
 If the prototype holds only made-up data and has no back end, ask the person, then have the
 coordinator set `sample_data = true` in `forge.toml`. An existing sign-off record's
 `sample_data: true` still works until this setting is present. Forge skips tests and CI while the
@@ -121,7 +127,7 @@ After sign-off, `forge next` shows setting up tests as the first step. In a coor
 set the test command and CI checks as needed, then turn off the setting. Close blocks that fix until
 the `Personal data` answer is settled.
 The design comes first. Before any screen, use the app's existing design. If it has none, draft
-one on a design canvas from the client's brand; use a neutral design when there is no brand. Every
+one from the client's brand; use a neutral design when there is no brand. Every
 API a person uses gets its screen in the client's design, built by the agent when it builds the API, with no
 need to ask. Webhooks, endpoints only agents or other systems call, and background jobs get no
 screen. Build the basic screens first, then the business screens. The demo opens on the client's
@@ -129,9 +135,15 @@ business task, and the basic screens are shown last.
 
 Write the sign-off record with `forge decision new client-signoff`, and leave `approved_via` and
 `approved_on` empty. Forge copies the current `## Answers` section into the sign-off record, so nobody copies it
-by hand. Put each demo step under `## Proof` for a working build. For a prototype without the
-sample-data mark, also name the passing test for each step. A marked sample-data prototype has no
-test requirement before sign-off. Put settled choices under `## Decisions`. Run
+by hand. The plan supplies the demo steps, with one Done-when item for each step. Put the client's
+business task first and the sign-in, members and settings screens last. Run each step in a browser
+and write its `## Proof` line unticked. Tick a step only when the client says yes during the demo,
+and record how and when the client replied. Forge refuses sign-off while a step has no tick.
+You can save `docs/product/demo/<n>.png` as evidence; no screenshot is required.
+A screenshot-only change skips code review. For a prototype without the sample-data mark, also
+name the passing test for each step. A
+marked sample-data prototype has no test requirement before sign-off. Put settled choices under
+`## Decisions`. Run
 `forge decision accept client-signoff --by "<name>"` before asking the customer to
 sign off. After the check passes and the customer replies, set `approved_via` to the reply and, if
 known, `approved_on` to its date. Run `forge decision accept client-signoff --by "<name>"` to
