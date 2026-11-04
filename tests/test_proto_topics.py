@@ -8,6 +8,9 @@ TOPICS = (
 
 
 def test_4_sync_gives_both_agents_the_prototype_route_and_twelve_topics(repo):
+    # Audit: sync must deliver the prototype route and all twelve topics to both hosts.
+    # Stale or missing guide copies break this contract; other topic tests cover init
+    # and cold-read prompts. Keep this command-boundary check without a production seam.
     version = repo.forge("--version").stdout.split()[-1]
     repo.write("forge.toml", f'version = "{version}"\nrepo = "forge-source"\n')
     repo.git("checkout", "-q", "-b", "fix/prototype-guidance")
@@ -18,7 +21,10 @@ def test_4_sync_gives_both_agents_the_prototype_route_and_twelve_topics(repo):
     assert len(copies) == 1
     [skill] = copies
     prototype = skill.split("\n## Prototype\n")[1].split("\n## ")[0]
-    assert "discovery" in prototype and "smallest working" in prototype
+    # The one-plan flow replaced the separate request for a smallest working build.
+    assert "discovery" in prototype and "prototype plan" in prototype
+    assert 'decision accept prototype-plan --by "<name>"' in prototype
+    assert "demo the prototype" in prototype
     assert "review" in prototype and "sign-off" in prototype and "stories" in prototype
     assert "one" in prototype and "Ask the client" in prototype and "Decide later" in prototype
     rows = [line.split("|")[1].strip() for line in prototype.splitlines()

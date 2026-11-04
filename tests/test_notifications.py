@@ -1,4 +1,4 @@
-"""The TypeScript waiting-list API ships to new apps and leaves adopted app code alone."""
+"""The waiting-list API ships to new apps and leaves adopted app code alone."""
 import json
 import shutil
 from pathlib import Path
@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 
 from test_setup import _fresh_client
-from test_starter_tree import LIVE, _require_cases, live_run
+from test_starter_tree import LIVE, _require_cases, live_python_run, live_run
 
 STORY = "FORGE-AFTERDEMO-1"
 ROOT = Path(__file__).resolve().parents[1]
@@ -14,13 +14,14 @@ ROOT = Path(__file__).resolve().parents[1]
 
 @pytest.mark.platform
 @pytest.mark.timeout(1800)
-@pytest.mark.parametrize("starter", ["typescript", "earlier adopted"])
+@pytest.mark.parametrize("starter", ["typescript", "python", "earlier adopted"])
 def test_1_a_waiting_record_shows_in_the_persons_list(
     repo, gh, tmp_path, starter, tmp_path_factory,
 ):
-    # Audit: init must deliver the notifications API files, while sync must preserve an app
-    # adopted before this release. Runtime behavior belongs to the copied API e2e case below;
-    # no existing init/sync or API test covers this feature. These are the real Forge boundaries.
+    # Audit: init must deliver the notifications API files in either starter, while sync must
+    # preserve an app adopted before this release. Runtime behavior belongs to the copied API
+    # cases; no existing init/sync or API test covers this feature. These are the real Forge
+    # boundaries, and no production seam is used.
     if starter == "earlier adopted":
         shutil.copytree(ROOT / "tests/fixtures/adopted-v1.2.2/client", repo.path,
                         dirs_exist_ok=True)
@@ -55,8 +56,25 @@ def test_1_a_waiting_record_shows_in_the_persons_list(
         assert after == before
         return
 
-    client, initialized = _fresh_client(repo, gh, tmp_path, "--starter")
+    init_args = ("--starter", "python") if starter == "python" else ("--starter",)
+    client, initialized = _fresh_client(repo, gh, tmp_path, *init_args)
     assert initialized.returncode == 0, initialized.stdout + initialized.stderr
+
+    if starter == "python":
+        api = client / "apps/api"
+        assert (api / "app/notifications").is_dir()
+        assert (api / "tests/test_notifications.py").is_file()
+        migrations = api / "migrations/versions"
+        assert any(
+            path.is_file() and path.name.endswith("_notifications.py")
+            for path in migrations.iterdir()
+        )
+        if LIVE:
+            _require_cases(
+                live_python_run(tmp_path_factory)["api"],
+                ("test_a_person_sees_the_records_that_wait_for_them_with_a_count",),
+            )
+        return
 
     expected = (
         Path("apps/api/prisma/schema/notifications.prisma"),
