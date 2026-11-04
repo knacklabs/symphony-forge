@@ -1755,6 +1755,8 @@ review and green checks on the final pushed head. After `forge fix amend`, close
 the pull request's Done when line. Use `--append "<text>"` to add text with a space between
 the old and new text. `--done "<done when>"` replaces the whole Done-when. Both options show
 the old and new text before writing, and need `--because "<why>"`.
+Land runs work first for a fix with only its start and state records, including after amend.
+A work commit can change only Forge records. Amend and next direct that fix to close.
 Upgrade close leaves the repo's local git hooks alone,
 including when it regenerates conflicted Forge files with the newly pinned release.
 If conflicted-merge handling fails, close aborts the merge and reports the error before retrying.
