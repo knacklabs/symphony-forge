@@ -8,6 +8,8 @@ STORY = "FORGE-SALES-1"
 
 
 def test_3_sync_teaches_demo_rounds_and_platform_handoff(repo):
+    # The guide now calls the decision a sign-off record. Protect the commands
+    # that create and accept it, alongside the demo rounds and platform handoff.
     version = repo.forge("--version").stdout.split()[-1]
     repo.write("forge.toml", f'version = "{version}"\nrepo = "client"\n')
     repo.git("checkout", "-q", "-b", "fix/demo-guidance")
@@ -18,7 +20,8 @@ def test_3_sync_teaches_demo_rounds_and_platform_handoff(repo):
         prototype = skill.split("\n## Prototype\n")[1].split("\n## ")[0]
         for instruction in ("one conversation", "one prototype fix", "demo round",
                             "next version is ready to demo", "reviewer found", "deploy platform",
-                            "sign-off decision"):
+                            "forge decision new client-signoff",
+                            "forge decision accept client-signoff"):
             assert instruction in prototype
 
 
