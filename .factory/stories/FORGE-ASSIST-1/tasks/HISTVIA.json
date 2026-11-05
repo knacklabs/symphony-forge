@@ -1,5 +1,12 @@
 {
   "branch": "task/FORGE-ASSIST-1-HISTVIA",
+  "chat": {
+    "approval": "c276549ec321871ed6b007a41985ed8ac0386fa2eb30ff0ce7b634bfea33d386",
+    "claude": null,
+    "conversation": "01a1ad56-3341-76f2-ae80-88f17c5365ed",
+    "head": null,
+    "start": "4a0747b62d389fd9f2136ff62bb4854d31720113"
+  },
   "round": 1,
   "status": "working",
   "steps": [
