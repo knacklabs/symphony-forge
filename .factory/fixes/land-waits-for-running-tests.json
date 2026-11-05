@@ -1,6 +1,13 @@
 {
   "base": "c2c77fbcb2c3967df64f07b77b6f5487b8f89771",
   "branch": "fix/land-waits-for-running-tests",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1ab34-13ee-7853-84fc-43e4048c57af",
+    "head": null,
+    "start": "d433e2429d7635cd2b0779a50930b2399518667e"
+  },
   "done_when": "While any check is still in progress, land keeps waiting past the no-progress limit up to a clear upper limit, and when it stops the message says no decision is needed and how to resume",
   "fix_kind": "mechanical",
   "kind": "fix",
