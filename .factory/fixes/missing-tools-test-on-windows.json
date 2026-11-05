@@ -1,6 +1,13 @@
 {
   "base": "c79ce1781b485d2dde8fe69a784ac318811c81aa",
   "branch": "fix/missing-tools-test-on-windows",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1a9b6-6eeb-78e2-8844-683593e0c4f7",
+    "head": null,
+    "start": "06c8b5ef1f375604cd603d36934ba1b49537be60"
+  },
   "done_when": "tests/test_tools_missing.py passes in the Windows run of forge-next.yml, with every case on Linux and macOS still proving the same behaviour",
   "fix_kind": "mechanical",
   "kind": "fix",
