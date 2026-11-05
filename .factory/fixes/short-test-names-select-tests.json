@@ -11,12 +11,53 @@
   "done_when": "A task's Tests column with short names runs the matching tests, and a selection that matches nothing says so plainly and does not pass as if tests ran",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [
+    {
+      "area": "src/forge/fasttest.py",
+      "file": "src/forge/fasttest.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 440,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Unmatched task selections can pass when always_test runs",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "67d6a89b2a3fd64900ef66029ae753aa9f7f9b69536ce46892e4e497530134a4",
+    "changed": "1b1154c76d4c236560c3a9c1f7c4de9a3715de2fac7d32d94de077a21d59afc4",
+    "commit": "a4aa8d973ecd63d777b651ee705159bd650f6790",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Not done\nCase: normal use - a repository configures always_test and a task names a nonexistent test in an existing file. The collection hook retains the always_test cases, while session completion validates only REQUIRED, which contains always_test entries (src/forge/fasttest.py:455\u2013460). If those cases pass, forge test returns success even though none of the task's named tests matched, and prints no no-tests warning. This misses the Done-when requirement that an unmatched selection must not pass as if its tests ran. Validate that the task selection itself matched independently of always_test; the new empty-selection test currently exercises only the case without always_test.",
+        "file": "src/forge/fasttest.py",
+        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
+        "gain": 3,
+        "harm": 3,
+        "line": 440,
+        "priority": "P1",
+        "title": "Not done: Unmatched task selections can pass when always_test runs",
+        "work": 2
+      }
+    ],
+    "id": "fbac1566-8883-478f-9f85-a4cd0850669e",
+    "status": "clean"
+  },
   "round": 2,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-05T10:12:27.962242+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-05T13:12:10.617000+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
