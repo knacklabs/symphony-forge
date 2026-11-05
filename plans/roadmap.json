@@ -540,6 +540,12 @@
       "title": "After a demo: waiting items show in the app, notes become changes, and releases get a backup before Promote",
       "status": "pending",
       "order": 113
+    },
+    {
+      "key": "FORGE-SECAUDIT-1",
+      "title": "Security audit skill for client apps",
+      "status": "pending",
+      "order": 114
     }
   ],
   "epics": [
