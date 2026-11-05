@@ -11,14 +11,59 @@
   "done_when": "forge test runs the configured test command on Windows for a forge.toml that PowerShell or Windows tools wrote, and a repo with no test command still says so",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [
+    {
+      "area": "tests/test_test_explains_sample_data_skip.py",
+      "file": "tests/test_test_explains_sample_data_skip.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 15,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: Include the Windows regression in platform test selection",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "617805339e27cfdbe945078d860e4a8def8b092a2cb17bd94e2cf48ef7c7f4de",
+    "changed": "5de04892f52a62f0389005a4cbf852504766953c5fe3c023a2edc39a3f47e59e",
+    "commit": "601373571ad059b2184b3c4514775ae5bad6237c",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 1, Harm 2\nRaise: Test\nCase: normal use - running the full suite or Windows CI.\nThis test lacks `@pytest.mark.platform`. Its CRLF case triggers the platform-sensitive policy in tests/test_platform_sensitive_selection.py:40\u201345, so that existing check fails. Windows CI also uses `-m platform` (.github/workflows/forge-next.yml:135), which excludes this regression entirely. Add the platform marker so the policy passes and Windows runs the promised coverage. The claimed pull-request Windows proof also needs an actual check: the Windows job currently runs only on schedule or workflow_dispatch (line 70).",
+        "file": "tests/test_test_explains_sample_data_skip.py",
+        "gain": 4,
+        "harm": 2,
+        "line": 15,
+        "priority": "P1",
+        "title": "Gate: Include the Windows regression in platform test selection",
+        "work": 1
+      }
+    ],
+    "id": "de1cc1da-d31b-4721-ae82-76b550d497bb",
+    "status": "blocked"
+  },
   "round": 2,
-  "status": "working",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-05T19:49:02.861775+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-05T20:03:35.589625+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-11-05T20:03:35.602070+00:00",
+    "file": "tests/test_test_explains_sample_data_skip.py",
+    "wait_id": "36b03f1e-960f-46d6-995d-d13a25c0129c"
+  },
   "stuck": {
     "close": null,
     "head": "94509a00f8ade58786a5e54edd07b5c2e511241a",
