@@ -693,6 +693,21 @@ def allow_large(args: argparse.Namespace) -> None:
     print(f"{kind.capitalize()} {name} may now go over the {limit}.")
 
 
+def require_fix_changes(item: str, state: dict, top: Path) -> None:
+    """Close and land cannot publish an interrupted fix's bookkeeping as its result."""
+    if state.get("kind") != "fix":
+        return
+    files = repo.git("diff", "--name-only", "--no-renames",
+                     f"origin/{repo.default_branch(top)}...HEAD", cwd=top).splitlines()
+    if any(path and not path.startswith((".factory/", "plans/spotted/"))
+           and path != "plans/spotted.json" for path in files):
+        return
+    untracked = repo.git("ls-files", "--others", "--exclude-standard", cwd=top)
+    detail = f"\nUntracked files in the worktree: {untracked}" if untracked else ""
+    raise repo.Refused(f"The build round did not finish. This fix changes only Forge's records.{detail}",
+                       f"forge work {item}")
+
+
 def unbuilt_fix(item: str, state: dict, top: Path) -> bool:
     """State updates are not work; a work commit can change other Forge records."""
     if state.get("kind") != "fix":
