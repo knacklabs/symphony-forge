@@ -54,6 +54,19 @@ def test_1_shipped_skill_scripts_allow_whole_tree_lint(repo, gh, tmp_path, case)
     scripts = [report for report in reports if "/skills/impeccable/scripts/" in
                report["filePath"].replace("\\", "/")]
     assert len(scripts) == 10, lint.stdout
+    # Security validators also ship into both hosts. Whole-tree lint must cover
+    # them; running their CLI on invalid input proves they still execute.
+    validators = [report for report in reports if "/skills/security-audit/" in
+                  report["filePath"].replace("\\", "/")]
+    assert len(validators) == 4, lint.stdout
+    assert not any(report["messages"] for report in validators), validators
+    invalid = tmp_path / "invalid.json"
+    invalid.write_text("{}\n", encoding="utf-8")
+    for report in validators:
+        checked = subprocess.run([shutil.which("node"), report["filePath"], str(invalid)],
+                                 capture_output=True, text=True, encoding="utf-8", timeout=30)
+        assert checked.returncode == 1, checked.stdout + checked.stderr
+        assert "Error" not in checked.stderr, checked.stderr
     assert not any(report["messages"] for report in scripts), scripts
     # Load every delivered script with the actual JS runtime. The live overlay
     # has a supported no-window exit; the helpers and screenshot bundle load.

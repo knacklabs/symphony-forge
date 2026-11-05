@@ -519,6 +519,24 @@ A new clone shows the default branch's committed decisions and lessons at sessio
 New repos get this guide at init; existing repos get it with `forge sync` and the behaviour
 with the Forge release. Neither gets `docs/handover.md` until its first hand over.
 
+## Security check
+
+Suggest the `security-audit` skill once at each of two moments: when a prototype is
+about to stop using sample data and take real data, and at Deploy on Mainline.
+Run it when a person asks. You can say: "Check the app's security".
+Ask first, because it uses many model calls; say that the cost is not yet measured
+on a client app. Use standard mode unless the person asks for a narrower check
+to spend less. The check never runs by itself, on each pull request or on a
+fake-data demo. It never blocks a pull request, a merge or a launch. Forge adds
+no check, command or record for it; a new session can suggest it again.
+
+Tell the owner each confirmed finding in plain words; the owner decides what to
+do. Write reports outside the repo, in the skill's default folder,
+`~/security-audit-skill/<repo>/run-<N>`. Never paste a report's weakness details
+into a pull request, an issue or a commit. A fix follows the normal Forge flow
+in plain words. Explain the limits: it reads code and runs the app only in a
+safe sandbox, so it does not replace a penetration test. Name all parts not read.
+
 ## Coaching
 
 The first time each of these happens for a person, add one plain sentence saying what just
