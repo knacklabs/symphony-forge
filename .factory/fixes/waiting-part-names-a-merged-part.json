@@ -1,6 +1,13 @@
 {
   "base": "c2c77fbcb2c3967df64f07b77b6f5487b8f89771",
   "branch": "fix/waiting-part-names-a-merged-part",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1ab30-ea08-7002-b77e-6c73768bb1be",
+    "head": null,
+    "start": "d5ee9f5bd331fc2c7c4243dbb5b2f3fcf0722e6b"
+  },
   "done_when": "When the part below is merged but the base branch lacks it, the message names the real step that lets the part start, and following that step lets the part start; a new repo and an earlier-adopted repo are covered",
   "fix_kind": "mechanical",
   "kind": "fix",
