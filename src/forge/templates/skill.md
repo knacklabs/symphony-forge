@@ -1848,7 +1848,10 @@ set (using pytest selection when supported), with `{base}` as the merge base wit
 `origin/<default branch>`, in the same fair machine-wide test lane as close.
 It prints the report close keeps and always runs, including docs-only and
 uncommitted changes. If the remote default branch is missing it says to fetch it; if forge.toml
-names no test command it says so and exits successfully. Forge sets `PYTEST_XDIST_AUTO_NUM_WORKERS`
+names no test command it says so and exits successfully. In a sample-data prototype, it says
+tests are off until client sign-off. After sign-off, ask the coordinator to set
+`sample_data = false` in `forge.toml` to turn tests on. This also overrides an earlier sign-off's
+`sample_data: true`. Forge sets `PYTEST_XDIST_AUTO_NUM_WORKERS`
 and `FORGE_TEST_CPUS` to the run's allocation from the shared process budget. A worker's session
 requests at most two processes, so its own `pytest -n auto` also stays at two. A fixed `-n` in
 its test command is capped with `--maxprocesses`, also outside a worker session.

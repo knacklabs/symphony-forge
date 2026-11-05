@@ -1,0 +1,37 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tSample-data mode says no test command is configured even when the file names one.",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 318,
+      "text": "Sample-data mode says no test command is configured even when the file names one.",
+      "from": "worker",
+      "item": "test-command-found-on-windows",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/repo.py\tA UTF-8 BOM causes a settings parse refusal instead of reading the valid TOML that follows it.",
+      "kind": "bug",
+      "path": "src/forge/repo.py",
+      "line": 778,
+      "text": "A UTF-8 BOM causes a settings parse refusal instead of reading the valid TOML that follows it.",
+      "from": "worker",
+      "item": "test-command-found-on-windows",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_test_explains_sample_data_skip.py\tGate: Include the Windows regression in platform test selection\ttest-command-found-on-windows",
+      "kind": "bug",
+      "path": "tests/test_test_explains_sample_data_skip.py",
+      "line": 15,
+      "text": "Gate: Include the Windows regression in platform test selection",
+      "from": "blocking",
+      "item": "test-command-found-on-windows",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
