@@ -12,12 +12,27 @@
   "done_when": "The version is 1.2.29, generated files are synced, this repo is pinned to v1.2.29, and the tests pass",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "6758ba46d3bafb8db233c4940d86c3da74d334a9e59ac465cd004db16733f3c2",
+    "changed": "1248da2189748c815b140a895ae0d38cb56dd65994ab12841abc0b4dad7f8ce1",
+    "commit": "29d29c3e7e42f1f8bb1c1cb67114d9b849207520",
+    "dismissals": [],
+    "findings": [],
+    "id": "c5d8d755-f262-4792-b718-498861adc685",
+    "status": "clean"
+  },
   "round": 2,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-05T05:37:13.485597+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-05T05:42:59.073195+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
