@@ -8,8 +8,8 @@
       "text": "Exclude roadmap and story records from the work check",
       "from": "blocking",
       "item": "refuse-fix-with-only-records",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/task.py\tRefuse records-only results when main already contains the code\trefuse-fix-with-only-records",
@@ -19,8 +19,8 @@
       "text": "Refuse records-only results when main already contains the code",
       "from": "blocking",
       "item": "refuse-fix-with-only-records",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     }
   ]
 }
