@@ -1,6 +1,13 @@
 {
   "base": "0a67593557f5d9f5b73a5034c797f6c8b0f14511",
   "branch": "fix/test-errors-in-combined-output",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1aba0-04fa-77e1-a4a1-9e0cd8f51213",
+    "head": null,
+    "start": "3b3d2ac359f73811e4f5201a8ff788647baf4a88"
+  },
   "done_when": "The two tests pass by checking what a person sees in the combined output, and a malformed manifest or missing lock still shows its error with no traceback",
   "fix_kind": "mechanical",
   "kind": "fix",
