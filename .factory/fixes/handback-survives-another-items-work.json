@@ -1,6 +1,13 @@
 {
   "base": "c2c77fbcb2c3967df64f07b77b6f5487b8f89771",
   "branch": "fix/handback-survives-another-items-work",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1ab31-09bb-7891-8658-ab37ae4871ee",
+    "head": null,
+    "start": "174d8eed9432737c854a3ca7d2c3c61a9ed36cc0"
+  },
   "done_when": "Starting a second item's forge work leaves the first item's running round able to hand back, proved by a command test that reproduces the reported order",
   "fix_kind": "mechanical",
   "kind": "fix",
