@@ -285,6 +285,9 @@ def test_2_unsafe_starts_name_the_blocker_without_creating_work(env, previous, c
                 repo.git("push", "-q", "origin", "main")
             part, command = "D", "forge next"
             problem = "STACK/D waits for STACK/B, which builds on STACK/A, so it starts once STACK/A merges."
+            if case.startswith("stacked-merged"):
+                problem = "STACK/D waits for STACK/B to include the merge of STACK/A from main."
+                command = "forge close STACK/B"
     refuses_without_start(repo, part, problem, command)
     if case.startswith("stacked-merged") or case == "stacked-human-merged":
         # CLOSE owns automatic replay. Put B's own commits onto merged main
