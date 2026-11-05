@@ -1,6 +1,13 @@
 {
   "base": "c2a5294f5a063bd4c6da3d9fe86ba3fdaafbbc56",
   "branch": "task/FORGE-AFTERDEMO-1-GUIDE",
+  "chat": {
+    "approval": "4fc7539eb593977e4763aa2eb4f588415e4f4d3cc89c17b50b2293a2671b6060",
+    "claude": null,
+    "conversation": "01a1a92e-e26b-7781-b478-39548682b97f",
+    "head": null,
+    "start": "9ebf8bcc7edf50ffdbfdf8d293c33d97922f06d7"
+  },
   "round": 1,
   "stacked_on": "FORGE-TOOLS-1/CHECKS",
   "status": "working",
