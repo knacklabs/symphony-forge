@@ -463,8 +463,24 @@ existing command flow.
 a compaction. Before each compaction Forge rewrites its current-state part from `forge next` and
 keeps everything under `## Decisions and lessons`. Add one line there at each milestone: a story
 approved, a task merged, a decision the owner made, a lesson learned or a mistake you won't
-repeat. After a compaction or in a new session, read it first. The file is local and never
-committed.
+repeat. After a compaction or in a new session, read it first. The scratch file stays local and is
+never committed. At hand over, copy its settled notes to `docs/handover.md` through a fix.
+
+## Hand over
+
+1. **Push everything.** In each worktree, commit and push. Through an ordinary fix, copy
+   new decisions and lessons from `.git/forge/handoff.md` into `docs/handover.md`, and merge it.
+   Use `## Decisions and lessons`, with one line per decision or lesson. Keep the file under
+   about 30 lines and drop lines that are no longer true. Keep Current state uncommitted;
+   `forge next` gets it from git and GitHub.
+2. **Reassign.** Run `forge assign <KEY or KEY/TASK> <login>` for each story and part.
+   Fixes cannot be reassigned; the new machine continues them without this step.
+3. **Continue.** On the new machine, run `forge next`, then `forge work`, `forge close` or
+   `forge merge` on each item. Forge makes the checkout from GitHub.
+
+A new clone shows the default branch's committed decisions and lessons at session start.
+New repos get this guide at init; existing repos get it with `forge sync` and the behaviour
+with the Forge release. Neither gets `docs/handover.md` until its first hand over.
 
 ## Coaching
 
