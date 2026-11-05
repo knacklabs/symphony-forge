@@ -4,12 +4,20 @@
   "done_when": "When a fix's branch changes only Forge's own records against the default branch, close and land refuse it with a plain line saying the build round did not finish and the next step, and a fix with code still merges",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-05T20:10:36.303594+00:00",
       "step": "start"
     }
   ],
-  "why": "forge land merged a fix whose build round was killed partway: the branch held only Forge's thread record, the review said nothing to review and then clean, and the merge carried no code (issue 1387)"
+  "stuck": {
+    "close": null,
+    "head": "4d97ec2b026c36602b2b3b8cca027d517c6e816e",
+    "keys": {},
+    "round": null
+  },
+  "why": "forge land merged a fix whose build round was killed partway: the branch held only Forge's thread record, the review said nothing to review and then clean, and the merge carried no code (issue 1387)",
+  "worker": "codex"
 }
