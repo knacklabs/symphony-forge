@@ -47,7 +47,7 @@
     "id": "de1cc1da-d31b-4721-ae82-76b550d497bb",
     "status": "blocked"
   },
-  "round": 2,
+  "round": 3,
   "status": "fixing",
   "steps": [
     {
@@ -69,10 +69,10 @@
     "worker_round": 2
   },
   "stuck": {
-    "close": null,
-    "head": "94509a00f8ade58786a5e54edd07b5c2e511241a",
+    "close": "c5414a50-9f19-4318-931c-556506adaa8e",
+    "head": "49b3cfb6e3a3d667fea8f69fe391adb10f4f7873",
     "keys": {},
-    "round": null
+    "round": 2
   },
   "why": "forge test on Windows says forge.toml names no test command while forge.toml sets test (issue 1381)",
   "worker": "codex"
