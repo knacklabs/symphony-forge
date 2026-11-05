@@ -1,0 +1,15 @@
+{
+  "base": "28ce710ae1ee26deec467deccfa90fb1146a0055",
+  "branch": "fix/sync-survives-missing-chat-checkout",
+  "done_when": "forge sync finishes with exit status 0 and one plain warning when a saved chat checkout is gone, keeps that chat record, and moves the other chat records as before",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-05T17:53:40.562882+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "forge sync crashes with an uncaught error after writing its files, when a saved chat record points at a temporary checkout that no longer exists (issue 1370)"
+}
