@@ -1,0 +1,15 @@
+{
+  "base": "c2c77fbcb2c3967df64f07b77b6f5487b8f89771",
+  "branch": "fix/waiting-part-names-a-merged-part",
+  "done_when": "When the part below is merged but the base branch lacks it, the message names the real step that lets the part start, and following that step lets the part start; a new repo and an earlier-adopted repo are covered",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-05T10:10:18.040731+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "forge task start and forge next say a part starts once a named part merges, after that part has already merged, because its base branch does not yet contain the merge (issue 1154)"
+}
