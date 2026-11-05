@@ -1,0 +1,15 @@
+{
+  "base": "f65b03cc3e118ba2c39e5c4fca646f5cf989e24c",
+  "branch": "fix/lane-test-current-wording",
+  "done_when": "The test checks the current wording and passes",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-05T14:26:35.455798+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "One lane test on main still expects the old wording of the message shown when no related tests are selected"
+}
