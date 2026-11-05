@@ -1,6 +1,13 @@
 {
   "base": "c2c77fbcb2c3967df64f07b77b6f5487b8f89771",
   "branch": "fix/drop-approved-unstarted-story",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1ab37-057f-79f0-9d54-a566b0bd975e",
+    "head": null,
+    "start": "83af80653041094049911497765b1446ceb2d641"
+  },
   "done_when": "An approved story with no started part and no part records can be dropped, keeps its remote branch, and leaves forge next and the board; a story with a started part is still refused",
   "fix_kind": "mechanical",
   "kind": "fix",
