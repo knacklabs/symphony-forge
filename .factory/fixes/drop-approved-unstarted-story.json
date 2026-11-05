@@ -1,0 +1,15 @@
+{
+  "base": "c2c77fbcb2c3967df64f07b77b6f5487b8f89771",
+  "branch": "fix/drop-approved-unstarted-story",
+  "done_when": "An approved story with no started part and no part records can be dropped, keeps its remote branch, and leaves forge next and the board; a story with a started part is still refused",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-05T10:12:32.642645+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "forge story drop refuses an approved story that has no started part, and gives no next step (issue 1362)"
+}
