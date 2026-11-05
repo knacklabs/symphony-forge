@@ -143,6 +143,9 @@ client repos get this check from the installed Forge command.
 
 Send every new idea through `forge start "<their words>"`. Never ask the human whether it is a
 story or a fix. When the answer is a fix, run its `forge land <fix>` in the background and watch it.
+For an idea that extends an existing story, the explorer can return that story's key with
+`Lane: plan`. Handback reuses its branch and worktree and adds to its plan. Read the revised plan
+before approval.
 
 The human approves stories and chooses between options. In a client repo before the default
 branch has an accepted sign-off, the agent runs `forge merge <item>` once `forge close` says Ready.
@@ -1845,7 +1848,10 @@ set (using pytest selection when supported), with `{base}` as the merge base wit
 `origin/<default branch>`, in the same fair machine-wide test lane as close.
 It prints the report close keeps and always runs, including docs-only and
 uncommitted changes. If the remote default branch is missing it says to fetch it; if forge.toml
-names no test command it says so and exits successfully. Forge sets `PYTEST_XDIST_AUTO_NUM_WORKERS`
+names no test command it says so and exits successfully. In a sample-data prototype, it says
+tests are off until client sign-off. After sign-off, ask the coordinator to set
+`sample_data = false` in `forge.toml` to turn tests on. This also overrides an earlier sign-off's
+`sample_data: true`. Forge sets `PYTEST_XDIST_AUTO_NUM_WORKERS`
 and `FORGE_TEST_CPUS` to the run's allocation from the shared process budget. A worker's session
 requests at most two processes, so its own `pytest -n auto` also stays at two. A fixed `-n` in
 its test command is capped with `--maxprocesses`, also outside a worker session.
@@ -1856,6 +1862,8 @@ Lower caps and Jest's serial options `--runInBand` and `-i` stay as written.
 Forge does not change npm, pnpm or yarn scripts to set their worker budget.
 It keeps existing `NODE_OPTIONS` and adds a Node preload that caps the actual runner's arguments,
 so package scripts keep their lifecycle hooks and share the same process budget.
+Each run copies the installed preload helper to its own temporary folder, so replacement
+workers can still load it if an upgrade removes the installation during the run.
 Those scripts can read `FORGE_TEST_CPUS`. If the test command runs Vitest through a script
 with Vitest projects, pass `--maxWorkers=${FORGE_TEST_CPUS:-2}` on the command line,
 for example `npm test -- --maxWorkers=${FORGE_TEST_CPUS:-2}`, instead of setting the cap
