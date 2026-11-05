@@ -9,13 +9,25 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 import tomllib
 from pathlib import Path
 
 import pytest
 
-from conftest import patient
+from conftest import _install, patient
 from test_close import PIN
+from test_codex_worker import PIN as SDK_PIN, sdk_data  # noqa: F401
+
+
+@pytest.fixture
+def doctor_sdks(repo, monkeypatch, sdk_data):
+    """Healthy driver SDKs for doctor cases that exercise other machine settings."""
+    monkeypatch.setenv("XDG_DATA_HOME", str(sdk_data))
+    _install(repo.bin, "doctor-codex", f'#!{sys.executable}\nimport sys\n'
+             f'print("codex-cli {SDK_PIN}" if sys.argv[1:] == ["--version"] else "Logged in using ChatGPT")\n')
+    program = repo.bin / ("doctor-codex.cmd" if os.name == "nt" else "doctor-codex")
+    monkeypatch.setenv("CODEX_BIN", str(program))
 
 # Forge's subagent roles, including the native cold reader, which sync writes for both hosts.
 ROLE_FILES = {f"{folder}/{name}{suffix}" for name in (
@@ -255,7 +267,7 @@ def _fresh_client(repo, gh, tmp_path: Path, *init_args: str) -> tuple[Path, subp
     ("impeccable only in the repo's .agents", (NO_IMPECCABLE,)),
     ("impeccable in CLAUDE_CONFIG_DIR", ()),
 ])
-def test_29_doctor(repo, gh, tmp_path, monkeypatch, case, rows):
+def test_29_doctor(repo, gh, tmp_path, monkeypatch, case, rows, doctor_sdks):
     client, init = _fresh_client(repo, gh, tmp_path)
     assert init.returncode == 0, init.stderr
     toml = client / "forge.toml"
