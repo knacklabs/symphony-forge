@@ -1,4 +1,11 @@
 {
+  "amendments": [
+    {
+      "at": "2026-11-05T16:28:29.001715+00:00",
+      "because": "The full run on main found the guide copies out of date for the same kind of reason",
+      "done_when": "The test checks the current wording and passes"
+    }
+  ],
   "base": "f65b03cc3e118ba2c39e5c4fca646f5cf989e24c",
   "branch": "fix/lane-test-current-wording",
   "chat": {
@@ -8,7 +15,7 @@
     "head": null,
     "start": "83c5e9094ac60ca29f0871943b1166cc5ce33a26"
   },
-  "done_when": "The test checks the current wording and passes",
+  "done_when": "The lane test checks the current wording, the guide copies in this repo match the shipped guide, and both tests pass",
   "fix_kind": "mechanical",
   "kind": "fix",
   "known": [],
