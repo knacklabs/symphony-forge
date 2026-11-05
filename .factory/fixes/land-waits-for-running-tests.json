@@ -28,27 +28,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "37e2deac439473b110fa88927bf0d3674d8451e08f7c8a537936db0d78dae1de",
+    "branch_diff": "1820cd9a988dfc10c4547e03a35d0427040eb241e4e7256c8eae4832b402ae5d",
     "changed": "2d7500fdbb0665eeca7cb60e16855e29a3b83c963e37e0719640966329aeb92d",
-    "commit": "8510dfa464dc916da34eee3b4097dd9a045e56aa",
+    "commit": "7ab628248d0bd655f4bf54bc874f093e13ffe35f",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 3, Work 2, Harm 2\nRaise: Functional\nCase: normal use - `forge land --all` reaches the wait limit while healthy checks remain running.\nThis condition suppresses the individual command's `needs you` message, but the queue still puts every nonzero child exit into `needs` at src/forge/land.py:420\u2013425 and reports it under `Needs you` at line 431. Consequently, a routine check-wait timeout still requests human attention in the final summary, contradicting the new refusal's statement that no decision is needed. Preserve the wait-ended distinction in the queue's result handling as well.",
-        "file": "src/forge/land.py",
-        "gain": 3,
-        "harm": 2,
-        "line": 159,
-        "priority": "P1",
-        "title": "Keep check-wait timeouts out of the land queue's Needs you summary",
-        "work": 2
-      }
-    ],
-    "id": "fd208bf6-bced-4052-a640-273ca7fa3c70",
+    "findings": [],
+    "id": "3661934a-9da9-4a74-891b-b134f29620cc",
     "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-05T10:10:36.799880+00:00",
@@ -56,6 +45,10 @@
     },
     {
       "at": "2026-11-05T10:29:13.267641+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-05T11:02:03.907971+00:00",
       "step": "review"
     }
   ],
