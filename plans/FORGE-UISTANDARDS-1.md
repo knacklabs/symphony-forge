@@ -4,39 +4,23 @@
 
 ## What changes for you
 
-<What the people who use this will notice, in plain English. No IDs, codes or jargon. End each
-item with its source in plain words, such as (Source: the client's note on late orders, 12 Oct),
-or with the sourced item that needs it, such as (Needed by: the Customers screen). A source is a
-client note, a brief answer, a decision, a screen marked Build now at sign-off, a fixed rule of
-the app, or the owner's own request with its date. Name each screen, field, endpoint, tool and
-setting that the plan adds in one of these items.>
-
-<!-- For user-facing parts: run impeccable init if PRODUCT.md is absent. Design the screens
-in a Claude Design artifact; on a Codex-only host without artifact tools, use HTML artboards.
-Save each screen and its images in docs/design/<KEY>/. Copy .forge/design/support.js beside
-the HTML screens and run it for a 1440 by 900 PNG per screen. Commit the folder. Use its git tree
-id (git rev-parse HEAD:docs/design/<KEY>) in the last line below. For small changes to existing
-screens that add no screen and change no flow, use Design: none (<why>) instead.
-Remove this comment and omit
-the Design line for a backend-only story. Cold read follows the design; one plan approval binds
-these exact files. A folder edit needs its new tree id and a new plan approval.
-The rule starts with the next plan read and approval. Plans approved without a Design line
-before this rule keep their existing approval. -->
-Design: docs/design/<KEY>/ (<tree id>)
+- Every client app gets one fixed baseline list: a collapsible sidebar with an icon rail, a top bar with search, one page title shown once, one spacing scale, one type scale, one main button per view, clear labels and error text, empty, loading and error states, a select or a search box chosen by how long the list is, phone-width layout, plain wording and realistic sample data.
+- Before a design canvas is shown, and again at close, the design checker from impeccable and a few small Forge checks run.
+- Each design canvas is also checked as screenshots at desktop and phone width before it is shown.
+- Each client app gets its own look, chosen from five facts in the client's notes and written into a DESIGN.md file, with fixed rules for contrast, text size, focus and states.
+- App screens use the quieter app mode of impeccable.
+- A new client repo gets all of this when it starts. An existing client repo gets it when it upgrades to the new release, and its existing apps are checked only on the files a change touches.
 
 ## Why
 
-Client app designs stop looking machine-made
-
-
+Client app designs and canvases look generic and machine-made. The app baseline covers screens, states and the app shell, but it has no spacing scale, no type scale, no per-app design file, and no screenshot check at desktop and phone width. Its visual check is one review pass at the end.
 
 ## Done when
 
-<!-- One bold plain sentence per result, which the owner approves: no code names, file paths or
-test names. Its evidence, edge cases and proving tests go under the same number in Done-when
-details. -->
-
-1. **Something anyone can observe once this is done.**
+1. **A new client app starts with the shared baseline list, its own DESIGN.md, and the design checker and screenshots at desktop and phone width before any canvas is shown.**
+2. **Close stops a design that fails the design checker or the small Forge checks.**
+3. **An existing client app is checked only on the files a change touches.**
+4. **Forge's own tests show each rule working on a new client repo and on an existing client repo.**
 
 ## Risks
 
