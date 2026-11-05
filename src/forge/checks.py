@@ -23,6 +23,8 @@ REFUSALS = {
     "timeout": ("On the pull request, the tests ran out of time{duration}.",
                 "rerun the tests job, or split the suite, then forge close {item}"),
     "not_green": ("The checks are not green yet: {reason}.", "forge close {item}"),
+    "wait_ended": ("The check wait ended: {reason}. No decision is needed. "
+                   "Run forge land again to resume without restarting checks.", "forge land {item}"),
     "conflict": ("GitHub reports this pull request clashes with the default branch, so it runs no checks on it.",
                  "forge close {item}, which brings the default branch in"),
 }
@@ -68,6 +70,7 @@ def _wait(top: Path, item: str, sha: str, names: list[str], branch: str, progres
     # ponytail: an env override is the whole wait seam (tests set 0 to look once).
     timeout = float(os.environ.get("FORGE_CHECKS_WAIT", "1800" if progress else "600"))
     deadline = time.monotonic() + timeout
+    running_deadline = time.monotonic() + 90 * 60
     previous = None
     queued_since = None
     printed_minute = None
@@ -76,8 +79,10 @@ def _wait(top: Path, item: str, sha: str, names: list[str], branch: str, progres
              if progress else None)
     while True:
         queued = False
+        running = False
         try:
             seen, snapshot, check_runs, pr = _status(top, item, sha, branch, cache, requested)
+            running = any(run.get("status") == "in_progress" for run in check_runs)
             result["state"] = ("running" if any(state == PENDING for _, state in seen)
                                else "queued" if any(state == QUEUED for _, state in seen)
                                else "unknown")
@@ -118,18 +123,25 @@ def _wait(top: Path, item: str, sha: str, names: list[str], branch: str, progres
                       "shared runners may be busy or no runner may match the runner setting "
                       "in forge.toml.", flush=True)
                 printed_minute = minute
-            # A repo cannot tell a busy shared pool from an absent runner. Zero is
-            # the explicit one-look override; ordinary queue time never ends a wait.
-            if timeout > 0:
+            # Keep close's queue policy and the explicit wait override. Land's
+            # normal short limit still applies when no check actually starts.
+            if timeout > 0 and (not progress or "FORGE_CHECKS_WAIT" in os.environ):
                 deadline = now + timeout
         else:
             queued_since = printed_minute = None
         left = deadline - time.monotonic()
+        if progress:
+            remaining = running_deadline - time.monotonic()
+            left = (remaining if running and "FORGE_CHECKS_WAIT" not in os.environ
+                    else min(left, remaining))
         if left <= 0:
             if result["state"] in ("queued", "running"):
                 result["outcome"] = "gave_up_" + result["state"]
             if progress:
-                reason = f"GitHub has shown no check progress for {timeout / 60:g} minutes: {reason}"
+                reason = (f"The wait reached its 90 minutes limit: {reason}"
+                          if remaining <= 0 else
+                          f"GitHub has shown no check progress for {timeout / 60:g} minutes: {reason}")
+                repo.refuse(REFUSALS["wait_ended"], reason=reason, item=item)
             repo.refuse(REFUSALS["not_green"], reason=reason, item=item)
         # Queued checks keep backpressure; running checks need no local close place.
         waiting(not queued)
