@@ -4,12 +4,20 @@
   "done_when": "forge test --full prints the exact command it ran before its result, and the guide says a full run covers only forge.toml's test command",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-05T10:10:32.284342+00:00",
       "step": "start"
     }
   ],
-  "why": "forge test --full reports success without saying what it ran, so a short forge.toml test reads as a full pass when the real suite is in another workflow (issue 1367)"
+  "stuck": {
+    "close": null,
+    "head": "70dd7ab6c610048a622d4d3687f86860e3c3c9cc",
+    "keys": {},
+    "round": null
+  },
+  "why": "forge test --full reports success without saying what it ran, so a short forge.toml test reads as a full pass when the real suite is in another workflow (issue 1367)",
+  "worker": "codex"
 }
