@@ -23,8 +23,7 @@ STORY = "FIX-TASK-TEST-NOTES"
 ], ids=["markdown-notes", "adopted-nodes", "abbreviated-filtered-nodes", "prose-only"])
 def test_1_task_test_notes_run_named_tests_without_settings_errors(
         env, monkeypatch, adopted, notes, expected, keyword):
-    run_task(env, monkeypatch, adopted, notes, expected, keyword,
-             empty=not expected)
+    run_task(env, monkeypatch, adopted, notes, expected, keyword)
 
 
 def run_task(env, monkeypatch, adopted, notes, expected, keyword, *, empty=False, extra=""):
@@ -64,8 +63,10 @@ def run_task(env, monkeypatch, adopted, notes, expected, keyword, *, empty=False
     result = env.repo.forge("test", cwd=where)
     output = result.stdout + result.stderr
     assert (result.returncode != 0) == empty, output
-    if empty:
+    if not expected:
         assert "No tests ran" in output, output
+        if not empty:
+            assert "No tests ran: no changed or module-related test files were selected." in output
     assert {path.name for path in log.iterdir()} == expected, output
     assert "always_test names" not in output
     assert "Broad selection:" in output

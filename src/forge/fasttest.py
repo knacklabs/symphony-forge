@@ -660,8 +660,7 @@ def pytest_tests(base: str, command: str, entry: dict | None = None) -> int:
         if not picked and not always and not named:
             print("No tests ran: no changed or module-related test files were selected.")
             checks = " && ".join(part for kind, part, _ in parts if kind != "python")
-            status = subprocess.run(checks, shell=True, env=environment).returncode if checks else 0
-            return status or 5
+            return subprocess.run(checks, shell=True, env=environment).returncode if checks else 0
         # Keep shell setup, test roots and pytest settings in the repo's full command.
         listed = {entry.split("::")[0] for entry in always + named}
         excluded = [path for path in tests if path not in picked and path not in listed]
