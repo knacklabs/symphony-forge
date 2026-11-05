@@ -4,12 +4,20 @@
   "done_when": "A forge test run with no output for 10 minutes prints one plain line saying how long it has been silent and how to stop it, and the run is not killed",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-05T10:10:27.434626+00:00",
       "step": "start"
     }
   ],
-  "why": "A forge test run can sit silent at 0% CPU with no sign that it is stuck (issue 1366)"
+  "stuck": {
+    "close": null,
+    "head": "ba288156a9033d6c4b6d2ec2e8738da45534c873",
+    "keys": {},
+    "round": null
+  },
+  "why": "A forge test run can sit silent at 0% CPU with no sign that it is stuck (issue 1366)",
+  "worker": "codex"
 }
