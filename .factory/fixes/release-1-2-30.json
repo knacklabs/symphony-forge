@@ -5,12 +5,20 @@
   "done_when": "The version is 1.2.30, generated files are synced, this repo is pinned to v1.2.30, and the tests pass",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-05T18:54:55.290696+00:00",
       "step": "start"
     }
   ],
-  "why": "Release v1.2.30: publish what merged since v1.2.29"
+  "stuck": {
+    "close": null,
+    "head": "35d6e47a2b02639d2d8c61c240df36dc8118c69e",
+    "keys": {},
+    "round": null
+  },
+  "why": "Release v1.2.30: publish what merged since v1.2.29",
+  "worker": "codex"
 }
