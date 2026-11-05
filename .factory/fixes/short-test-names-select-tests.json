@@ -1,0 +1,15 @@
+{
+  "base": "c2c77fbcb2c3967df64f07b77b6f5487b8f89771",
+  "branch": "fix/short-test-names-select-tests",
+  "done_when": "A task's Tests column with short names runs the matching tests, and a selection that matches nothing says so plainly and does not pass as if tests ran",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-05T10:12:27.962242+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "A task's short test names such as test_2 select no tests, so forge test quietly runs nothing (issue 1359)"
+}
