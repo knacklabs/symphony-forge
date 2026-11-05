@@ -44,7 +44,7 @@
     "id": "ce186636-2952-481b-aa1f-ef9ef9d7d6e1",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "stacked_on": "FORGE-HANDOVER-1/HANDOVER",
   "status": "fixing",
   "steps": [
@@ -58,10 +58,10 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "3271599c850b56024647cfa2625aec9a20e154a3",
+    "close": "02d5f282-73a6-47d9-938d-29675dc39888",
+    "head": "617a69c79efc6c8f2dfe74232274b5d496d95876",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "worker": "codex"
 }
