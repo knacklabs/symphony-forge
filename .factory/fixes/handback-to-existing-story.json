@@ -1,6 +1,13 @@
 {
   "base": "9d620e670b072e95a2cbf6c073cb8d3fab4a71c5",
   "branch": "fix/handback-to-existing-story",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1ad56-4850-7583-ab71-bf486f60dd33",
+    "head": null,
+    "start": "86af871757c039b8a9bce6634aa0b9030a840151"
+  },
   "done_when": "Handing back an intake as a plan for an existing story key adds it to that story with no git error, or refuses before using the intake with a plain reason and next step",
   "fix_kind": "mechanical",
   "kind": "fix",
