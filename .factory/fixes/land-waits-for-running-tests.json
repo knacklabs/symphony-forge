@@ -4,12 +4,20 @@
   "done_when": "While any check is still in progress, land keeps waiting past the no-progress limit up to a clear upper limit, and when it stops the message says no decision is needed and how to resume",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-05T10:10:36.799880+00:00",
       "step": "start"
     }
   ],
-  "why": "forge land stops as needs you after 30 minutes while test groups are still running normally (issue 1360)"
+  "stuck": {
+    "close": null,
+    "head": "26e1eb0f4aac7b9b4c4533484c1cdcaaa5120381",
+    "keys": {},
+    "round": null
+  },
+  "why": "forge land stops as needs you after 30 minutes while test groups are still running normally (issue 1360)",
+  "worker": "codex"
 }
