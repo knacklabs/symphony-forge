@@ -1,0 +1,15 @@
+{
+  "base": "9d620e670b072e95a2cbf6c073cb8d3fab4a71c5",
+  "branch": "fix/refuse-fix-with-only-records",
+  "done_when": "When a fix's branch changes only Forge's own records against the default branch, close and land refuse it with a plain line saying the build round did not finish and the next step, and a fix with code still merges",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-05T20:10:36.303594+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "forge land merged a fix whose build round was killed partway: the branch held only Forge's thread record, the review said nothing to review and then clean, and the merge carried no code (issue 1387)"
+}
