@@ -1,0 +1,72 @@
+{
+  "base": "703ba9090a1dbb251d9a64b0becd5ab22f798bdf",
+  "branch": "fix/test-command-found-on-windows",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1ad42-7edb-7691-9b94-c1b87c6b2a19",
+    "head": null,
+    "start": "6328d09b9ee5a62075326cd5ee563a089e8d7591"
+  },
+  "done_when": "forge test runs the configured test command on Windows for a forge.toml that PowerShell or Windows tools wrote, and a repo with no test command still says so",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "tests/test_test_explains_sample_data_skip.py",
+      "file": "tests/test_test_explains_sample_data_skip.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 15,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: Include the Windows regression in platform test selection",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "4eb213b45fa7da46f99603c420748aaf715c1f914c52fe0d9ea3b213b9483079",
+    "changed": "e76d821d7acd063291c2d81870b6c8a00c647d0bba616d3458d8f6a30f758da7",
+    "commit": "aa0b0871ac8e6bad205ced4a6b09c33f5f0ccadd",
+    "dismissals": [],
+    "findings": [],
+    "id": "b86c8f69-31d6-4ea6-b42e-30bc37b0c8ea",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-05T19:49:02.861775+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-05T20:03:35.589625+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-05T20:09:18.126407+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-05T20:03:35.602070+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "tests/test_test_explains_sample_data_skip.py",
+    "reason": "Owner chose one more round: mark the new test to run on Windows",
+    "wait_id": "36b03f1e-960f-46d6-995d-d13a25c0129c",
+    "worker_round": 2
+  },
+  "stuck": {
+    "close": "c5414a50-9f19-4318-931c-556506adaa8e",
+    "head": "49b3cfb6e3a3d667fea8f69fe391adb10f4f7873",
+    "keys": {},
+    "round": 2
+  },
+  "why": "forge test on Windows says forge.toml names no test command while forge.toml sets test (issue 1381)",
+  "worker": "codex"
+}
