@@ -495,6 +495,8 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False,
         if len(lines) > 80:  # the tail is the last 30 picked; the earliest skip lines fill the rest
             lines = [*lines[:50], f"({len(lines) - 80} skip lines cut here)", *lines[-30:]]
         if done.returncode:
+            if done.returncode == 5:
+                lines.append("No tests ran. Check the task's Tests column and the test command or filters.")
             report = results.read_text("utf-8") if results.is_file() else ""
             failures = sorted({node for outcome, node in re.findall(r"^(\w+) (.+)$", report, re.M)
                                if outcome in ("failed", "error")})

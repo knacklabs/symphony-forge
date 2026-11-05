@@ -23,6 +23,11 @@ STORY = "FIX-TASK-TEST-NOTES"
 ], ids=["markdown-notes", "adopted-nodes", "abbreviated-filtered-nodes", "prose-only"])
 def test_1_task_test_notes_run_named_tests_without_settings_errors(
         env, monkeypatch, adopted, notes, expected, keyword):
+    run_task(env, monkeypatch, adopted, notes, expected, keyword,
+             empty=not expected)
+
+
+def run_task(env, monkeypatch, adopted, notes, expected, keyword, *, empty=False, extra=""):
     # Existing bounded-worker coverage uses only a plain node. Real pytest receipts
     # expose notes becoming paths without a new production seam or fake selection.
     if adopted:
@@ -43,6 +48,8 @@ def test_1_task_test_notes_run_named_tests_without_settings_errors(
         env.repo.write(f"tests/test_case_{number}.py",
                        f"def test_first_{number}():\n    assert 2 + 2 == 4\n"
                        f"def test_second_{number}():\n    assert 3 + 3 == 6\n")
+    if extra:
+        env.repo.write("tests/test_case_1.py", extra)
     env.repo.git("add", "-A")
     env.repo.git("commit", "-qm", "Set up real client tests")
     if adopted:
@@ -56,7 +63,9 @@ def test_1_task_test_notes_run_named_tests_without_settings_errors(
         monkeypatch.setenv("PYTEST_ADDOPTS", "-k " + keyword)
     result = env.repo.forge("test", cwd=where)
     output = result.stdout + result.stderr
-    assert result.returncode == 0, output
+    assert (result.returncode != 0) == empty, output
+    if empty:
+        assert "No tests ran" in output, output
     assert {path.name for path in log.iterdir()} == expected, output
     assert "always_test names" not in output
     assert "Broad selection:" in output

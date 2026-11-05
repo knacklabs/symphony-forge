@@ -413,8 +413,8 @@ def broad_ci_selection(top: Path, base: str) -> bool:
 
 # The temporary pytest plugin: skip unpicked files, keep picked tests and each always_test entry,
 # and fail the run when an entry ran no test. xdist forwards each test's report to the controller.
-SELECTION = """import os, pathlib, pytest
-IGNORE, PICKED, ALWAYS, REQUIRED = {}, {}, {}, {}
+SELECTION = """import os, pathlib, pytest, re
+IGNORE, PICKED, ALWAYS, REQUIRED, TASKS = {}, {}, {}, {}, {}
 RAN, ROOT = set(), []
 def pytest_configure(config):
     config.option.ignore = (config.option.ignore or []) + IGNORE
@@ -424,12 +424,16 @@ def name(nodeid):  # relative to the repo, as forge.toml names it, whatever pyte
     return pathlib.Path(os.path.relpath(ROOT[0] / file)).as_posix() + ("::" + rest if rest else "")
 def runs(nodeid, entry):
     return nodeid == entry or nodeid.startswith((entry + "::", entry + "["))
+def task_runs(nodeid, entry):
+    return re.match(re.escape(entry) + r"(?=$|_|::|\\[)", nodeid) is not None
 def pytest_collection_modifyitems(config, items):
-    if PICKED is None or not ALWAYS:
+    if PICKED is None or not (ALWAYS or TASKS):
         return
     def kept(item):
         nodeid = name(item.nodeid)
-        return nodeid.split("::")[0] in PICKED or any(runs(nodeid, entry) for entry in ALWAYS)
+        return (nodeid.split("::")[0] in PICKED
+                or any(runs(nodeid, entry) for entry in ALWAYS)
+                or any(task_runs(nodeid, entry) for entry in TASKS))
     dropped = [item for item in items if not kept(item)]
     if dropped:
         config.hook.pytest_deselected(items=dropped)
@@ -622,6 +626,7 @@ def pytest_tests(base: str, command: str, entry: dict | None = None) -> int:
     # Read as forge test --pytest reads test: close has already checked forge.toml.
     always = tomllib.loads(Path("forge.toml").read_text("utf-8")).get("always_test", [])
     required = always[:]
+    named = []
     picked, tests, shared_changed, missed = related(base)
     # Tests that run the program from outside never name its files, so say what local runs miss.
     from forge import review  # imported late: review's imports lead back here
@@ -645,7 +650,6 @@ def pytest_tests(base: str, command: str, entry: dict | None = None) -> int:
                     name = file + name
                 file = name.split("::", 1)[0]
                 named.append(name)
-            always = list(dict.fromkeys(always + named))
             picked = []
         else:
             changed = git_files("diff", "--no-renames", "--name-only", base)
@@ -653,32 +657,34 @@ def pytest_tests(base: str, command: str, entry: dict | None = None) -> int:
             picked = [path for path in tests if path in changed]
         shared_changed = False
     if not shared_changed:
-        if not picked and not always:
-            print("No changed or module-related test files to run.")
+        if not picked and not always and not named:
+            print("No tests ran: no changed or module-related test files were selected.")
             checks = " && ".join(part for kind, part, _ in parts if kind != "python")
-            return subprocess.run(checks, shell=True, env=environment).returncode if checks else 0
+            status = subprocess.run(checks, shell=True, env=environment).returncode if checks else 0
+            return status or 5
         # Keep shell setup, test roots and pytest settings in the repo's full command.
-        listed = {entry.split("::")[0] for entry in always}
+        listed = {entry.split("::")[0] for entry in always + named}
         excluded = [path for path in tests if path not in picked and path not in listed]
     if shared_changed:
         print("Shared test inputs changed; running " +
               ("all Python tests." if mixed else "the full test command."), flush=True)
     else:
-        print("Related tests: " + ", ".join(picked + always), flush=True)
+        print("Related tests: " + ", ".join(picked + always + named), flush=True)
     # A temporary pytest hook supports pre-8.2 clients without filling cmd.exe's command line.
     with tempfile.TemporaryDirectory(prefix="forge-pytest-") as folder:
-        if excluded or always:
+        if excluded or always or named:
             selection = Path(folder) / "_forge_pytest_selection.py"
             selection.write_text(SELECTION.format(repr(excluded), repr(None if shared_changed else picked),
-                                                  repr(always), repr(required)), "utf-8")
+                                                  repr(always), repr(required), repr(named)), "utf-8")
             environment["PYTHONPATH"] = os.pathsep.join(
                 [folder, environment.get("PYTHONPATH", "")])
+        arguments = always + list(dict.fromkeys(name.split("::", 1)[0] for name in named))
         if entry is None:
-            return subprocess.run(narrow_command(command, excluded, workers, always), shell=True,
+            return subprocess.run(narrow_command(command, excluded, workers, arguments), shell=True,
                                   env=environment).returncode
         from forge import codex
 
-        with subprocess.Popen(narrow_command(command, excluded, workers, always), shell=True,
+        with subprocess.Popen(narrow_command(command, excluded, workers, arguments), shell=True,
                               env=environment, **codex.GROUP) as process:
             try:
                 machine.started(entry, process.pid)
