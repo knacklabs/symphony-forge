@@ -1,6 +1,13 @@
 {
   "base": "0a67593557f5d9f5b73a5034c797f6c8b0f14511",
   "branch": "fix/drop-refuses-merged-parts",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1aba0-0ffc-73b2-bd53-17423a423804",
+    "head": null,
+    "start": "07f8b43fb715be7fd43e09139e47c905b83afd6b"
+  },
   "done_when": "A story with a merged part is refused with its reason and next step, and an approved story with no started part can still be dropped",
   "fix_kind": "mechanical",
   "kind": "fix",
