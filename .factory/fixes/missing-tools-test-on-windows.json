@@ -11,12 +11,27 @@
   "done_when": "tests/test_tools_missing.py passes in the Windows run of forge-next.yml, with every case on Linux and macOS still proving the same behaviour",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "ac371684e4eef26e227028c72e248418c5851249c644968adcbe6372d33d0566",
+    "changed": "4b98160c05bcfc0202c3e831ce2720f7db7c29d300314ce384965b7f7ce04727",
+    "commit": "ec3d6113f7a53a04fe2de82afd23691adc424773",
+    "dismissals": [],
+    "findings": [],
+    "id": "638050ae-17d1-44ae-b992-84631ce2f3c2",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-05T03:17:23.991246+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-05T03:50:16.948773+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
