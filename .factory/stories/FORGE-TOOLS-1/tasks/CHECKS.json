@@ -33,9 +33,9 @@
     "id": "d4409905-44ca-4809-9da3-4adf80086281",
     "status": "clean"
   },
-  "round": 3,
+  "round": 4,
   "stacked_on": "FORGE-HANDOVER-1/HANDOVER",
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-04T23:32:50.241522+00:00",
@@ -55,10 +55,10 @@
     }
   ],
   "stuck": {
-    "close": "b682dfce-fdd3-46b5-8687-3ea9401c15d5",
-    "head": "c2a5294f5a063bd4c6da3d9fe86ba3fdaafbbc56",
+    "close": "eb6bf410-e7f2-4ceb-8dbd-d5bf8ab9ad0e",
+    "head": "d3a47e64b947b592180561c411ab3ac2e1a293ec",
     "keys": {},
-    "round": 2
+    "round": 3
   },
   "worker": "codex"
 }
