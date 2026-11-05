@@ -8,13 +8,53 @@
     "head": null,
     "start": "2f5c33400768d57203f846f4b6e67e82144a7c96"
   },
+  "known": [
+    {
+      "area": "doctor() in src/forge/doctor.py",
+      "file": "src/forge/doctor.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 345,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Doctor skips repairable SDKs when their standalone CLI is absent",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "0615ee4de876a3305991106db982a19ed726100575ff08b32fefe474b6289ba4",
+    "changed": "db2199f9d6058985c0ebe61e88516153c6f7dc24005b65c9031bea3f345d1840",
+    "commit": "b5bc3a0e328e138bb1a18b8777d04b9bf2b5fb3e",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - a both-tools repo selects Codex workers from a Claude session, but the Codex SDK and standalone Codex CLI are absent.\nThe new programs[\"codex\"] condition suppresses both the missing-SDK row and its --fix installer. However, worker.py:164-184 still routes this work through the Codex kit and refuses its missing SDK with instructions to run doctor --fix. The SDK supplies its own executable (codex.py:38-47), so doctor could install the required dependency without a standalone CLI. Following the prescribed recovery command now leaves the worker blocked. The equivalent programs[\"claude\"] condition at doctor.py:359 has the same problem for Claude kits; tests/test_tools_agent_sdk.py:102-108 explicitly exercises SDK reads without the standalone Claude CLI. Determine SDK repair eligibility from reachable kit runs rather than requiring the standalone executable.",
+        "file": "src/forge/doctor.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 345,
+        "priority": "P1",
+        "title": "Doctor skips repairable SDKs when their standalone CLI is absent",
+        "work": 2
+      }
+    ],
+    "id": "ce186636-2952-481b-aa1f-ef9ef9d7d6e1",
+    "status": "blocked"
+  },
   "round": 1,
   "stacked_on": "FORGE-HANDOVER-1/HANDOVER",
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-04T23:32:50.241522+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-05T00:14:25.878394+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
