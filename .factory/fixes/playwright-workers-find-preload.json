@@ -4,12 +4,20 @@
   "done_when": "After one browser test fails, the remaining browser tests still run under forge test, and the preload helper is found from where Forge is installed",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-05T19:49:08.082777+00:00",
       "step": "start"
     }
   ],
-  "why": "Playwright's replacement workers in a client app cannot load Forge's preload helper, so browser tests after the first failure do not run (issue 1379)"
+  "stuck": {
+    "close": null,
+    "head": "4ae9a30427f6919171a0588606a71939356c4764",
+    "keys": {},
+    "round": null
+  },
+  "why": "Playwright's replacement workers in a client app cannot load Forge's preload helper, so browser tests after the first failure do not run (issue 1379)",
+  "worker": "codex"
 }
