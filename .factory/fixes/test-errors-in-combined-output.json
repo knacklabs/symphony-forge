@@ -1,0 +1,45 @@
+{
+  "base": "0a67593557f5d9f5b73a5034c797f6c8b0f14511",
+  "branch": "fix/test-errors-in-combined-output",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1aba0-04fa-77e1-a4a1-9e0cd8f51213",
+    "head": null,
+    "start": "3b3d2ac359f73811e4f5201a8ff788647baf4a88"
+  },
+  "done_when": "The two tests pass by checking what a person sees in the combined output, and a malformed manifest or missing lock still shows its error with no traceback",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "c14d4a49fbeceee4f83498c232667aaced929ea159d4487aad2b3babcecaf14a",
+    "changed": "fc8293ecc789aeeb9ebeb05988562a9e14d8cda671e8591b921751598cc7a0ce",
+    "commit": "832430ef8156d8bc311a16d3c56c45c9601d9f8c",
+    "dismissals": [],
+    "findings": [],
+    "id": "1cb76a9b-774d-4398-a789-e933c7f3e53c",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-05T12:12:07.509362+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-05T12:15:59.568067+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "d49ee6136ed50ee5c7a04363995b916efedeef9f",
+    "keys": {},
+    "round": null
+  },
+  "why": "Two tests on main fail because forge test now sends a test run's error text to standard output, and the tests still look for it on standard error",
+  "worker": "codex"
+}

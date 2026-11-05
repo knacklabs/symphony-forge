@@ -166,7 +166,7 @@ def story_drop(args: Any) -> None:
         raise repo.Refused(f"{key} has not started.", "forge next")
     parts = repo.git("for-each-ref", "--format=%(refname)", f"refs/heads/task/{key}-*",
                      f"refs/remotes/origin/task/{key}-*", cwd=top)
-    records = sorted({path for part in (ref, *parts.splitlines())
+    records = sorted({path for part in (ref, f"origin/{repo.default_branch(top)}", *parts.splitlines())
                       for path in repo.git("ls-tree", "-r", "--name-only", part, "--",
                                            f".factory/stories/{key}/tasks/", cwd=top).splitlines()})
     if records:

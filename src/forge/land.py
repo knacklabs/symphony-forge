@@ -156,7 +156,7 @@ def land(args: argparse.Namespace) -> int:
                 conflict_retry = True
     except repo.Refused as error:
         _problems(top, item)
-        if rounds <= 1:
+        if rounds <= 1 and error.entry is not checks.REFUSALS["wait_ended"]:
             say(f"Stopped: {item} needs you.")
         if error.entry == close.REFUSALS["hotspot"]:
             problem, _, next_step = str(error).partition("\nNext: ")

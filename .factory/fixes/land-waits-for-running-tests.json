@@ -1,0 +1,67 @@
+{
+  "base": "c2c77fbcb2c3967df64f07b77b6f5487b8f89771",
+  "branch": "fix/land-waits-for-running-tests",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1ab34-13ee-7853-84fc-43e4048c57af",
+    "head": null,
+    "start": "d433e2429d7635cd2b0779a50930b2399518667e"
+  },
+  "done_when": "While any check is still in progress, land keeps waiting past the no-progress limit up to a clear upper limit, and when it stops the message says no decision is needed and how to resume",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "land() in src/forge/land.py",
+      "file": "src/forge/land.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 159,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Keep check-wait timeouts out of the land queue's Needs you summary",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "eb876ea52bbf3fa7bce8919046f5f35eb7b1c1cadf4dfd76fe6f8800792a8847",
+    "changed": "1e2d756de57f720fc971049510c322de73eb91fd226354056c32e2e1c9bdeac0",
+    "commit": "17e5819d114f5417a473218bdb6489ca47b09c08",
+    "dismissals": [],
+    "findings": [],
+    "id": "7b500e51-0bfe-4a18-9149-17d2373e359b",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-05T10:10:36.799880+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-05T10:29:13.267641+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-05T11:02:03.907971+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-05T12:20:14.322659+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "8fd3cd95-32d6-4fa8-abd4-ae9c038658d0",
+    "head": "1b4cd79dbd67005306155168c85a0c3f00db23dc",
+    "keys": {},
+    "round": 1
+  },
+  "why": "forge land stops as needs you after 30 minutes while test groups are still running normally (issue 1360)",
+  "worker": "codex"
+}

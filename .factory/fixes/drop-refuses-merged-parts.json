@@ -1,0 +1,45 @@
+{
+  "base": "0a67593557f5d9f5b73a5034c797f6c8b0f14511",
+  "branch": "fix/drop-refuses-merged-parts",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1aba0-0ffc-73b2-bd53-17423a423804",
+    "head": null,
+    "start": "07f8b43fb715be7fd43e09139e47c905b83afd6b"
+  },
+  "done_when": "A story with a merged part is refused with its reason and next step, and an approved story with no started part can still be dropped",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "65e12aebd17a3de271ff29f2168eb1b0b1c1fbcdacd498d70f4ce12d7605972e",
+    "changed": "0a6f68279e977af16772963bb9ea52f9be59d5f26b52fba89b6615f194b9585e",
+    "commit": "4144184b208277d0cc615b798af1d1ac81bb5e72",
+    "dismissals": [],
+    "findings": [],
+    "id": "c685ca0f-64cb-487b-8732-0c63ebbcc32b",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-05T12:12:12.423471+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-05T13:05:59.899530+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "a9ba3f9314efab52e243c64bf5fac459ad986c4f",
+    "keys": {},
+    "round": null
+  },
+  "why": "forge story drop lets a person drop a story whose part already merged and whose part branch was cleaned up, which hides the remaining parts from forge next",
+  "worker": "codex"
+}

@@ -101,7 +101,7 @@ the next merge.
 | "Add to this fix's Done-when" | `forge fix amend <fix> --append "<text>" --because "<why>"` |
 | "This fix is too big" | `forge story new <KEY> --from-fix <fix>` |
 | "Make it a story" (a fix) | Add the key to the fix's roadmap and commit it, then `forge story new <KEY> --from-fix <fix>` |
-| "Make it a fix" or "Just fix it" (a plan with no started part or part records, even if approved) | `forge fix start "<its Problem>" --done "<its first Done-when>"`, then `forge story drop <KEY> --because "Moved to the fix <fix>"` |
+| "Make it a fix" or "Just fix it" (a plan with no started part or part records, even if approved; merged parts count after branch cleanup) | `forge fix start "<its Problem>" --done "<its first Done-when>"`, then `forge story drop <KEY> --because "Moved to the fix <fix>"` |
 | "Do it later" (a fix) | `forge fix drop <fix> --because "The owner wants it later"`, then `forge start "Do this later: <its why> (kept on fix <fix>)"`. `fix drop --undo` brings it back |
 | "Do it now" (an idea-list entry) | `forge start "<the owner's new words>: <the entry's idea without its deferral words>"`, for example `forge start "Do it now: add dark mode"`. Then remove the entry from the main checkout's file while it is waiting, or else in the new item's branch |
 | "Let this fix go over the limit" | `forge fix allow-large "<reason>"` |
@@ -1943,9 +1943,13 @@ round if the check is still red.
 Use `forge land <item>` for build, close, fix rounds and merge where agent merges are allowed;
 otherwise it hands the ready pull request to the human. It replaces private landing and CI-wait
 loops, with bounded check waiting and fix rounds. Land waits for the pushed head's checks while
-GitHub shows progress or checks remain queued, retrying unreadable or failed answers. It stops
+GitHub shows progress or a check is in progress, retrying unreadable or failed answers. It stops
 waiting on green or failed checks, or after 30 minutes without a check starting, finishing or
-being replaced while none are queued, and says which checks are still running, missing, or
+being replaced while none are in progress. Each wait ends at 90 minutes,
+even if checks remain in progress. At either wait limit, no decision is needed.
+Run `forge land <item>` again to resume without restarting checks.
+`FORGE_CHECKS_WAIT` keeps its explicit no-progress wait instead of the longer running-check wait.
+Land says which checks are still running, missing, or
 unreadable. Close on its own still waits at most ten minutes while none are queued. When it
 stops, follow its refusal and the
 Closing section above, then run it again. Run it in the background and keep watching it.
