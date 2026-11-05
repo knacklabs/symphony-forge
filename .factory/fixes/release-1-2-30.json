@@ -1,4 +1,5 @@
 {
+  "allow_large": "A release bump touches every file that records the version, plus the generated files forge sync refreshes",
   "base": "4df5bb4e76dc1fa4cf651be68dfba85ee4a1883d",
   "branch": "fix/release-1-2-30",
   "done_when": "The version is 1.2.30, generated files are synced, this repo is pinned to v1.2.30, and the tests pass",
