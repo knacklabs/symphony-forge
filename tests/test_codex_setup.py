@@ -199,11 +199,14 @@ def test_11_codex_doctor(repo, gh, tmp_path, monkeypatch):
     in_worktree = repo.forge("doctor", cwd=worktree)
     assert in_worktree.returncode == 0, in_worktree.stdout + in_worktree.stderr
 
-    # Claude workers: no Codex rows and no approval note, even with no SDK and no trust entry, and
+    # A Claude-only repo: no Codex rows or approval note, even with no SDK or trust entry, and
     # --fix installs nothing.
     shutil.rmtree(env)
     (codex_home / "config.toml").unlink()
     _workers(client, "claude")
+    config = client / "forge.toml"
+    config.write_text(config.read_text("utf-8").replace(
+        'workers = "claude"', 'workers = "claude"\ntools = "claude"'), encoding="utf-8")
     repo.git("add", "forge.toml", cwd=client)
     repo.git("commit", "-q", "-m", "Use Claude workers", cwd=client)
     repo.git("push", "-q", "origin", "main", cwd=client)
@@ -217,9 +220,11 @@ def test_11_codex_doctor(repo, gh, tmp_path, monkeypatch):
     assert not env.exists()
     assert len((repo.bin / "uv-calls.jsonl").read_text(encoding="utf-8").splitlines()) == 2
 
-    # Under Claude Code with Codex installed the cold read runs on Codex, so with Claude workers
-    # doctor checks the SDK and --fix installs it; trust stays advice. (Without a codex command it
-    # is a Claude-only team and doctor skips the SDK; that case has its own fix test.)
+    # Permit both tools again: a Codex cold read needs its SDK; trust stays advice.
+    config.write_text(config.read_text("utf-8").replace('tools = "claude"', 'tools = "both"'), "utf-8")
+    repo.git("add", "forge.toml", cwd=client)
+    repo.git("commit", "-q", "-m", "Permit both tools", cwd=client)
+    repo.git("push", "-q", "origin", "main", cwd=client)
     _install(repo.bin, "codex", "#!/bin/sh\n")
     monkeypatch.setenv("CLAUDECODE", "1")
     reader = repo.forge("doctor", cwd=client)
