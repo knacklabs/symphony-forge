@@ -11,12 +11,27 @@
   "done_when": "The two tests pass by checking what a person sees in the combined output, and a malformed manifest or missing lock still shows its error with no traceback",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "c14d4a49fbeceee4f83498c232667aaced929ea159d4487aad2b3babcecaf14a",
+    "changed": "fc8293ecc789aeeb9ebeb05988562a9e14d8cda671e8591b921751598cc7a0ce",
+    "commit": "832430ef8156d8bc311a16d3c56c45c9601d9f8c",
+    "dismissals": [],
+    "findings": [],
+    "id": "1cb76a9b-774d-4398-a789-e933c7f3e53c",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-05T12:12:07.509362+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-05T12:15:59.568067+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
