@@ -1,10 +1,14 @@
 {
   "doc": "plans/FORGE-SECAUDIT-1.md",
-  "status": "planning",
+  "status": "read",
   "steps": [
     {
       "at": "2026-11-05T06:43:04.092111+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-05T06:48:27.092846+00:00",
+      "step": "read"
     }
   ],
   "title": "Security audit skill for client apps",
