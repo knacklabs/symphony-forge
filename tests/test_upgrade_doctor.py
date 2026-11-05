@@ -14,6 +14,7 @@ from conftest import _install, machine_cores
 
 from test_doctor_fix_files import _land, _set
 from test_setup import _autoreview, _fresh_client, _stub_forge, _version
+from test_setup import doctor_sdks, sdk_data  # noqa: F401
 from test_runs_wait_for_machine_load import runner_process_list
 
 INSTALL = "uv tool install git+https://github.com/knacklabs/symphony-forge@{pin}"
@@ -35,7 +36,7 @@ def _compared(installed: str, pinned: str) -> str:
 @pytest.mark.parametrize("case", ["clean", "drifted", "old pin clean", "old pin drifted",
                                   "all is well", "can't compare"])
 def test_5_doctor_says_which_forge_version_it_compares_with(repo, gh, tmp_path, monkeypatch,
-                                                            case):
+                                                            case, request):
     machine_cores(repo, 6)
     # The exact-output contract describes a machine without a runner, including on CI hosts.
     if os.name != "nt":
@@ -60,6 +61,7 @@ def test_5_doctor_says_which_forge_version_it_compares_with(repo, gh, tmp_path, 
         (client / "AGENTS.md").write_text("<!-- forge:end -->\nOurs.\n<!-- forge:begin -->\n",
                                           encoding="utf-8")
     if case == "all is well":
+        request.getfixturevalue("doctor_sdks")
         toml.write_text(toml.read_text(encoding="utf-8").replace(
             'workers = "split"', 'workers = "claude"', 1), encoding="utf-8")
         (tmp_path / "home").mkdir()
@@ -79,13 +81,12 @@ def test_5_doctor_says_which_forge_version_it_compares_with(repo, gh, tmp_path, 
 
     if case == "all is well":
         assert done.returncode == 0, done.stdout + done.stderr
-        # The verdict still leads; comparison, machine split and the Fast policy follow it.
+        # The Claude-only verdict includes comparison and machine details without Codex speed.
         assert done.stdout == (f"Everything checks out for Forge {installed}.\n"
                                + _compared(installed, installed)
                                + "This machine: 6 cores, so 3 agents at once and 3 test processes shared by all runs.\n"
                                + "Memory: 8.0 GB free, floor 1.6 GB.\n"
-                               + "Test processes in use: 0. Busy runners: 0 (0 cores reserved).\n"
-                               + "- Codex Fast: on for every fix, after the first repair round, or when other planned work waits; models without Fast run normally.\n"), done.stdout
+                               + "Test processes in use: 0. Busy runners: 0 (0 cores reserved).\n"), done.stdout
         return
     assert done.returncode == 1, done.stdout + done.stderr
     assert "- gh is not signed in to GitHub.\n  Fix: gh auth login\n" in done.stdout, done.stdout

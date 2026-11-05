@@ -65,12 +65,12 @@ def test_4_a_new_app_starts_from_the_client_notes(client, adoption):
 
 @pytest.mark.parametrize("adoption", ["new init", "previous release upgrade and sync"])
 def test_5_the_constitution_starts_with_the_defaults_and_fixed_rules(client, adoption):
-    # Defaults now start before the prototype; approval still happens once after sign-off.
+    # Defaults and the constitution are ready for the one plan approval before the prototype.
     sentences = (
         "Before the prototype, take the product answers from the client notes: what the app is "
         "for, who uses it, the records and fields it needs, the options of each choice list, and "
         "the key flows.",
-        "After the customer's sign-off and before the first story, finish the app's "
+        "Before the prototype plan approval, finish the app's "
         "constitution in docs/product/CONSTITUTION.md.",
         "At the start, write docs/product/CONSTITUTION.md with every default from Constitution "
         "defaults filled in, and raise a default with the FDE only when the notes contradict it.",

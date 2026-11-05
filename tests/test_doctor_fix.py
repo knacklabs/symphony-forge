@@ -55,6 +55,7 @@ sys.exit(3)
 
 def _client(repo, version: str = "", workers: str = "claude") -> None:
     repo.write("forge.toml", f'version = "{version or _version(repo)}"\nworkers = "{workers}"\n'
+                             f'tools = "{"both" if workers == "split" else workers}"\n'
                              'test = "true"\nchecks = ["tests"]\n')
     repo.git("add", "forge.toml")
     repo.git("commit", "-q", "-m", "Set up client")
@@ -205,6 +206,9 @@ def _sdk(repo, tmp_path, monkeypatch, workers: str) -> Path:
 def _the_codex_sdk_is_installed_only_where_codex_is_used(repo, gh, tmp_path, monkeypatch, case):
     log = _sdk(repo, tmp_path, monkeypatch, case.split()[0])
     if case == "claude under Claude Code":
+        # This witness permits both tools, so the other kit still needs repair.
+        config = repo.path / "forge.toml"
+        config.write_text(config.read_text("utf-8").replace('tools = "claude"', 'tools = "both"'), "utf-8")
         monkeypatch.setenv("CLAUDECODE", "1")
         _install(repo.bin, "codex", "#!/bin/sh\nexit 0\n")
     done = repo.forge("doctor", "--fix")

@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "bug\tplans/FORGE-HANDOVER-1.md\tAbbreviated task selectors made bare forge test report that no tests ran.",
+      "kind": "bug",
+      "path": "plans/FORGE-HANDOVER-1.md",
+      "line": 90,
+      "text": "Abbreviated task selectors made bare forge test report that no tests ran.",
+      "from": "worker",
+      "item": "FORGE-HANDOVER-1/HANDOVER",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_proto_topics.py\tThe prototype guide check fails because its expected smallest working wording is absent.",
+      "kind": "bug",
+      "path": "tests/test_proto_topics.py",
+      "line": 21,
+      "text": "The prototype guide check fails because its expected smallest working wording is absent.",
+      "from": "worker",
+      "item": "FORGE-HANDOVER-1/HANDOVER",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

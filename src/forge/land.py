@@ -76,9 +76,10 @@ def land(args: argparse.Namespace) -> int:
         # A completed session round handed back at this HEAD made no commit; it goes to close.
         handed = codex.record(top, item).get("native") or {}
         if not merged and state.get("kind") not in ("story-done", "migrate", "adopt") and (
-                step.note is not None or status == "started" and head == start or
+                step.note is not None or (task.unbuilt_fix(item, state, top) or
+                status == "started" and head == start or
                 status == "working" and
-                repo.git("log", "-1", "--format=%s", cwd=top) == f"{item} is working" and
+                repo.git("log", "-1", "--format=%s", cwd=top) == f"{item} is working") and
                 (handed.get("head"), handed.get("outcome")) != (head, "completed")):
             say(f"Building {item}.")
             step.land_rounds = rounds
@@ -155,7 +156,7 @@ def land(args: argparse.Namespace) -> int:
                 conflict_retry = True
     except repo.Refused as error:
         _problems(top, item)
-        if rounds <= 1:
+        if rounds <= 1 and error.entry is not checks.REFUSALS["wait_ended"]:
             say(f"Stopped: {item} needs you.")
         if error.entry == close.REFUSALS["hotspot"]:
             problem, _, next_step = str(error).partition("\nNext: ")

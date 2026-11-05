@@ -10,7 +10,14 @@
     "session": "c01a489d-c76f-41c1-8371-d6f0052b027c"
   },
   "doc": "plans/FORGE-MAIL-1.md",
-  "status": "approved",
+  "finished": "2026-10-31T08:24:48+00:00",
+  "merged": {
+    "GUIDE": "2026-10-30T15:47:33+00:00",
+    "REMOVE": "2026-10-30T17:58:42+00:00",
+    "REMOVEPY": "2026-10-31T08:24:48+00:00"
+  },
+  "outcome": "An admin can remove a member through the API in both starters: the member's sessions end at once, the invites they sent are cancelled, and the change history records it.",
+  "status": "done",
   "steps": [
     {
       "at": "2026-10-28T10:54:50.373411+00:00",
@@ -39,6 +46,10 @@
     {
       "at": "2026-10-31T09:37:55.185601+00:00",
       "step": "approved"
+    },
+    {
+      "at": "2026-11-05T00:56:48.576271+00:00",
+      "step": "done"
     }
   ],
   "title": "Email and member removal for client apps",

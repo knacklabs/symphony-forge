@@ -8,6 +8,9 @@ TOPICS = (
 
 
 def test_4_sync_gives_both_agents_the_prototype_route_and_twelve_topics(repo):
+    # Audit: sync must deliver the prototype route and all twelve topics to both hosts.
+    # Stale or missing guide copies break this contract; other topic tests cover init
+    # and cold-read prompts. Keep this command-boundary check without a production seam.
     version = repo.forge("--version").stdout.split()[-1]
     repo.write("forge.toml", f'version = "{version}"\nrepo = "forge-source"\n')
     repo.git("checkout", "-q", "-b", "fix/prototype-guidance")
@@ -18,14 +21,24 @@ def test_4_sync_gives_both_agents_the_prototype_route_and_twelve_topics(repo):
     assert len(copies) == 1
     [skill] = copies
     prototype = skill.split("\n## Prototype\n")[1].split("\n## ")[0]
-    assert "discovery" in prototype and "smallest working" in prototype
+    # The one-plan flow replaced the separate request for a smallest working build.
+    assert "discovery" in prototype and "prototype plan" in prototype
+    assert 'decision accept prototype-plan --by "<name>"' in prototype
+    assert "demo the prototype" in prototype
     assert "review" in prototype and "sign-off" in prototype and "stories" in prototype
     assert "one" in prototype and "Ask the client" in prototype and "Decide later" in prototype
     rows = [line.split("|")[1].strip() for line in prototype.splitlines()
             if line.startswith("| ") and line.split("|")[1].strip() in TOPICS]
     assert rows == list(TOPICS)
-    assert prototype.count("| must |") == 7
-    assert prototype.count("| may wait |") == 5
+    prose = " ".join(prototype.split())
+    assert "| Ask by |" in prototype
+    assert "before sign-off" in prose
+    assert "before the demo" in prose
+    assert "when a story needs it" in prose
+    assert "conversation prompts, not gates" in prose
+    assert "never blocks planning, review, ordinary close, merge or sign-off" in prose
+    assert "| must |" not in prototype
+    assert "| may wait |" not in prototype
     assert "- <Topic>: <answer> (<source>, <YYYY-MM-DD>)" in prototype
 
 
@@ -70,8 +83,10 @@ def test_9_cold_read_instructs_reader_to_resolve_deferred_answers(repo, monkeypa
     read = repo.forge("read", "DEMO")
     assert read.returncode == 0, read.stderr
     [call] = calls(log)
-    prompt = call["brief"]
-    for instruction in ("docs/product/BRIEF.md", "later", "Decide first: <topic>",
-                        "Decided: <topic>: <answer> (<source>, <date>)",
-                        "first task", "disposition"):
+    prompt = " ".join(call["brief"].split())
+    for instruction in ("docs/product/BRIEF.md", "later", "not known yet", "sensible default",
+                        "open decision with its default and effect",
+                        "Do not report the missing answer"):
         assert instruction in prompt
+    assert "Decide first: <topic>" not in prompt
+    assert "Decided: <topic>:" not in prompt

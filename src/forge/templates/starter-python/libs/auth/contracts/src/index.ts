@@ -36,6 +36,10 @@ export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
 
 export type Account = components['schemas']['Account'];
 
+export type InviteResponse = components['schemas']['InviteResponse'];
+
+export type ResetLinkResponse = components['schemas']['ResetLinkResponse'];
+
 export const inviteSchema = forgotPasswordSchema;
 
 export const acceptInviteSchema = signUpSchema.extend({

@@ -1,0 +1,62 @@
+{
+  "branch": "task/FORGE-AFTERDEMO-1-NOTIFYPY",
+  "chat": {
+    "approval": "4fc7539eb593977e4763aa2eb4f588415e4f4d3cc89c17b50b2293a2671b6060",
+    "claude": null,
+    "conversation": "01a1a860-3c28-7470-a839-776a0f988604",
+    "head": null,
+    "start": "4a03113f213b38fb39e4adcc9c9e2a10953d68ca"
+  },
+  "known": [
+    {
+      "area": "call_notifications() in src/forge/templates/starter-python/apps/api/tests/conftest.py",
+      "file": "src/forge/templates/starter-python/apps/api/tests/conftest.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 60,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: notifications test helper uses json without importing it",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "4542c6eb67578b009791a5f42888612ef5230c84a83636926b1f2c2d7d47bac0",
+    "changed": "eb31a915b37a9702400da407306ec2f86c9001524071aeeb8c7bb21827b1ac94",
+    "commit": "ccf1a8cc672098439f8f4d9d9a45990346888dc1",
+    "dismissals": [],
+    "findings": [],
+    "id": "29540d62-8dbe-44c2-9b2e-9073d354c0e8",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-04T21:03:14.954620+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-04T21:13:36.693789+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-04T21:15:12.318901+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-04T22:42:28.704269+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "e75de140-ff9f-44f9-ac47-1fd27a71a90e",
+    "head": "5a093ab99a03560395d5659a47f1debc04c3fea3",
+    "keys": {},
+    "round": 2
+  },
+  "worker": "codex"
+}

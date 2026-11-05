@@ -81,6 +81,25 @@ main:not([hidden]):has(> .now) {
 
 .needs > .note { align-self: center; }
 
+/* Open before sign-off: quiet text only, no colour and no badge. */
+.signoff { flex: none; }
+
+.signoff-line {
+  margin: 0 0 var(--space-2);
+  font-size: var(--size-label);
+  color: var(--ink-2);
+}
+
+.signoff ul {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: var(--space-2) var(--space-4);
+}
+
+.signoff li { display: flex; flex-direction: column; }
+.signoff-item { font-weight: 600; }
+.signoff-say { font-size: var(--size-label); color: var(--ink-2); }
+
 .ask {
   width: 300px;
   display: flex;

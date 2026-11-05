@@ -6,7 +6,8 @@ Client sign-off approves the product direction, not production readiness. Plan a
 remaining production work through stories and reviewed pull requests. Before the first Promote:
 
 1. Confirm the client's production host, account owner, region, domain, budget and release
-   approver. Record the decisions, but no secrets, in the repo.
+   approver. Check the `Personal data` answer in `docs/product/BRIEF.md`. Record the decisions,
+   but no secrets, in the repo.
 2. Confirm production access, secrets, HTTPS, DNS, database access, migrations and external
    services. Check the release in a non-production environment with a green full test run,
    the customer's main task and permissions for each role.
@@ -103,5 +104,10 @@ serving. Expand, then contract: add a new table or column before code uses it, k
 or column for two releases, and remove it only when no live release uses it. A Mainline rollback
 restores the previous release's code and keeps the database, so each migration must work with
 that code still running.
+
+When a release adds a migration file, Mainline takes a backup at Promote.
+Mainline runs one test restore before the first launch.
+Mainline checks the release for the added file itself and does both; the agent does neither and writes no mark.
+The migration rule belongs to FORGE-EXPAND-1.
 
 Mainline sends error alerts from the app's `error` log lines. Each carries an `errorId`, which the person sees on the error screen, so search the platform logs for it. In an app whose `.env.example` names `LOG_LEVEL`, set it in the platform's settings to change how much the app writes.

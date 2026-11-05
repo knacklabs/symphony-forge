@@ -187,6 +187,7 @@
           "Auth"
         ],
         "summary": "Sign in and start a server session.",
+        "description": "Five failed sign-ins lock an email for fifteen minutes. Wrong passwords, unknown emails and locked emails receive the same refusal.",
         "operationId": "sign_in_api_v1_auth_sign_in_post",
         "requestBody": {
           "content": {
@@ -452,7 +453,7 @@
           "Organisations"
         ],
         "summary": "Invite a person to your organisation.",
-        "description": "Admins invite an email without an account. A new invite replaces its seven-day link. Production requires a mail provider.",
+        "description": "Admins receive a seven-day, single-use link with or without email. A new invite replaces the link. A retry with the same key returns no link.",
         "operationId": "invite_api_v1_invites_post",
         "parameters": [
           {
@@ -490,7 +491,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SuccessEnvelope_MessageResponse_"
+                  "$ref": "#/components/schemas/SuccessEnvelope_InviteResponse_"
                 }
               }
             }
@@ -536,14 +537,14 @@
             "description": "Conflict"
           },
           "422": {
+            "description": "Validation Error",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
+                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
-            },
-            "description": "Unprocessable Content"
+            }
           }
         }
       }
@@ -616,6 +617,113 @@
                 }
               }
             }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/members/{account_id}/reset-link": {
+      "post": {
+        "tags": [
+          "Organisations"
+        ],
+        "summary": "Make a password reset link for a member.",
+        "description": "Admins receive a single-use link valid for one hour, with or without email. A new link replaces earlier links. A retry with the same key returns no link.",
+        "operationId": "member_reset_link_api_v1_members__account_id__reset_link_post",
+        "parameters": [
+          {
+            "name": "account_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "A human member of your organisation.",
+              "examples": [
+                "b3e1d349-1d8e-481c-8c69-99ea576f94c7"
+              ],
+              "title": "Account Id"
+            },
+            "description": "A human member of your organisation."
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 200
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Idempotency-Key"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope_ResetLinkResponse_"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
           },
           "422": {
             "description": "Validation Error",
@@ -2091,6 +2199,38 @@
         }
       }
     },
+    "/api/v1/notifications": {
+      "get": {
+        "tags": [
+          "Notifications"
+        ],
+        "summary": "List the records that wait for you, with a count.",
+        "description": "Only your open entries in your organisation, newest first. Returns up to 100 entries and the count of all open entries.",
+        "operationId": "list_notifications_api_v1_notifications_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope_NotificationsList_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/error-reports": {
       "post": {
         "tags": [
@@ -2692,6 +2832,33 @@
         ],
         "title": "HistoryEntry"
       },
+      "InviteResponse": {
+        "properties": {
+          "message": {
+            "type": "string",
+            "maxLength": 200,
+            "title": "Message"
+          },
+          "inviteUrl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Inviteurl",
+            "description": "Copy this single-use invite link. A retry returns no link."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "title": "InviteResponse"
+      },
       "Member": {
         "properties": {
           "id": {
@@ -2808,6 +2975,88 @@
           "message"
         ],
         "title": "MessageResponse"
+      },
+      "NotificationEntry": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id",
+            "description": "The waiting entry identifier.",
+            "examples": [
+              "019a3500-0000-7000-8000-000000000001"
+            ]
+          },
+          "subjectId": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Subjectid",
+            "description": "The record that needs an action.",
+            "examples": [
+              "019a3500-0000-7000-8000-000000000002"
+            ]
+          },
+          "subjectName": {
+            "type": "string",
+            "title": "Subjectname",
+            "description": "The record name.",
+            "examples": [
+              "October budget"
+            ]
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "The action that waits for you.",
+            "examples": [
+              "Approve the budget."
+            ]
+          },
+          "createdAtUtc": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Createdatutc",
+            "description": "When the entry was created, in UTC.",
+            "examples": [
+              "2026-10-31T10:00:00Z"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "subjectId",
+          "subjectName",
+          "message",
+          "createdAtUtc"
+        ],
+        "title": "NotificationEntry"
+      },
+      "NotificationsList": {
+        "properties": {
+          "count": {
+            "type": "integer",
+            "title": "Count",
+            "description": "The number of all records that wait for you.",
+            "examples": [
+              2
+            ]
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/NotificationEntry"
+            },
+            "type": "array",
+            "title": "Items",
+            "description": "Up to 100 open entries, newest first."
+          }
+        },
+        "type": "object",
+        "required": [
+          "count",
+          "items"
+        ],
+        "title": "NotificationsList"
       },
       "Project": {
         "properties": {
@@ -2997,6 +3246,33 @@
           "archived"
         ],
         "title": "ProjectStatus"
+      },
+      "ResetLinkResponse": {
+        "properties": {
+          "message": {
+            "type": "string",
+            "maxLength": 200,
+            "title": "Message"
+          },
+          "resetUrl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reseturl",
+            "description": "Copy this single-use reset link. A retry returns no link."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "title": "ResetLinkResponse"
       },
       "ResetPasswordInput": {
         "properties": {
@@ -3231,6 +3507,35 @@
         ],
         "title": "SuccessEnvelope[HealthResponse]"
       },
+      "SuccessEnvelope_InviteResponse_": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "const": true,
+            "title": "Success",
+            "default": true
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/InviteResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "error": {
+            "type": "null",
+            "title": "Error"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "title": "SuccessEnvelope[InviteResponse]"
+      },
       "SuccessEnvelope_MemberListResponse_": {
         "properties": {
           "success": {
@@ -3341,6 +3646,35 @@
         ],
         "title": "SuccessEnvelope[NoneType]"
       },
+      "SuccessEnvelope_NotificationsList_": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "const": true,
+            "title": "Success",
+            "default": true
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NotificationsList"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "error": {
+            "type": "null",
+            "title": "Error"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "title": "SuccessEnvelope[NotificationsList]"
+      },
       "SuccessEnvelope_ProjectListResponse_": {
         "properties": {
           "success": {
@@ -3398,6 +3732,35 @@
           "data"
         ],
         "title": "SuccessEnvelope[Project]"
+      },
+      "SuccessEnvelope_ResetLinkResponse_": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "const": true,
+            "title": "Success",
+            "default": true
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ResetLinkResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "error": {
+            "type": "null",
+            "title": "Error"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "title": "SuccessEnvelope[ResetLinkResponse]"
       },
       "SuccessEnvelope_list_HistoryEntry__": {
         "properties": {

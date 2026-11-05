@@ -337,7 +337,10 @@ def preserve_chats(top: Path) -> None:
             if owner is None and folder == "read" and not branch and (
                     top / "docs/specs" / f"{item}.md").is_file():
                 owner = top  # A landed spec's notes travel with the upgrade fix to the default branch.
-            if owner is None:
+            if owner is None or not owner.is_dir():
+                if owner is not None:
+                    print(f"Warning: The checkout for {item}'s chat no longer exists. "
+                          "Its saved chat record stays on this machine.")
                 return
             try:
                 kind = "Grill" if folder == "read" else "Fix"
@@ -546,8 +549,8 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
     request instead of a turn.
 
     `kind` is Build, Lite, Fix or Grill; its models come from the checkout's forge.toml, read now.
-    `sandbox` is the SDK's name for it: "full-access" or "read-only". Approvals are always "never";
-    a request Codex still sends is accepted with full access and declined when read-only.
+    `sandbox` is the SDK's name for it: "full-access" or "read-only". Full-access turns route
+    approval requests to Forge for acceptance; read-only turns use "never" and decline requests.
     Events go to the terminal and the item's work log.
     The item's record gets the driver's identity as soon as it starts, before Codex does, then the
     app-server's, the conversation with its checkout and approval and the turn about to start

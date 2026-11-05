@@ -122,7 +122,11 @@ def test_10_doctor_checks_the_selected_tool_instead_of_workers(env, tmp_path, mo
     checked = repo.forge("doctor", cwd=client)
     assert config.read_bytes() == before
     if tools == "claude":
-        assert checked.returncode == 0, checked.stdout + checked.stderr
+        # Both apps are installed, so even this Claude session can later coordinate
+        # from Codex and need the Claude driver. Doctor now reports that missing SDK.
+        assert checked.returncode == 1, checked.stdout + checked.stderr
+        assert "forge doctor found 1 problem(s)" in checked.stderr, checked.stdout + checked.stderr
+        assert "Claude Agent SDK" in checked.stdout
         assert "Codex SDK" not in checked.stdout
         assert "trust_level" not in checked.stdout
         assert "worker reads skills" not in checked.stdout

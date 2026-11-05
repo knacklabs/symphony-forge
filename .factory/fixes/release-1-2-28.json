@@ -1,0 +1,84 @@
+{
+  "allow_large": "A release bump changes the version in every reference across many files",
+  "base": "03566c13cbe5b17271277c76c0c619884e376462",
+  "branch": "fix/release-1-2-28",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1a173-d746-7c93-aa14-aa928077b670",
+    "head": null,
+    "start": "a1c0fa0a4242ec37c0049b866b9e553c397a4a5a"
+  },
+  "done_when": "Every version reference names v1.2.28, forge sync output is committed, and the version tests pass",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": ".github/workflows/forge.yml",
+      "file": ".github/workflows/forge.yml",
+      "gain": 4,
+      "harm": 3,
+      "line": 189,
+      "outcome": "follow-up",
+      "reason": "Split into follow-up fix review-findings-split-from-release-1-2-2",
+      "round": 1,
+      "security": false,
+      "title": "Gate: live starter tests in the full suite",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "5f722e87ef11d95879362000d74f913e084ace8e86ca9d91c4151cdbbef384bf",
+    "changed": "b33ff5bfeb96b370c68c0f913ab65746a6b368e0b2dde0f66bf0ae8c5357ff65",
+    "commit": "27cb6b817ae9a98db5ec52f9b3297eeac672d4c0",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Test\nCase: normal use - the scheduled full-suite run on main.\nRemoving FORGE_STARTER_LIVE makes existing live starter checks skip or omit their runtime assertions; for example, tests/test_defaults_history.py:18-19 now skips its real API test. Removing Node 24 and Corepack setup also removes prerequisites checked by tests/test_starter_tree.py:163-168. The separate starter-smoke workflow has no scheduled trigger, so it does not replace this nightly coverage. The full-suite status can consequently turn green without exercising these contracts. Preserve the live-test setting and prerequisites in the generated nightly workflow.",
+        "file": ".github/workflows/forge.yml",
+        "follow_up": "Split into follow-up fix review-findings-split-from-release-1-2-2",
+        "gain": 4,
+        "harm": 3,
+        "line": 189,
+        "priority": "P1",
+        "title": "Gate: live starter tests in the full suite",
+        "work": 2
+      }
+    ],
+    "id": "c0c6bf3b-b22c-4c86-90ba-f3baf8c4d89a",
+    "status": "clean"
+  },
+  "round": 4,
+  "status": "fixing",
+  "steps": [
+    {
+      "at": "2026-11-03T12:47:44.510602+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-04T02:00:29.127719+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-04T02:00:29.142640+00:00",
+    "by": "owner",
+    "choice": "split",
+    "file": ".github/workflows/forge.yml",
+    "fixes": [
+      "review-findings-split-from-release-1-2-2"
+    ],
+    "reason": "The owner moved the nightly live starter tests to their own fix: run them in the starter workflow on a schedule, so the full run stays under its limit",
+    "wait_id": "4ff461e6-87c0-4e0c-be20-d255a30d49d9",
+    "worker_round": 4
+  },
+  "stuck": {
+    "close": null,
+    "head": "e22b17fdc021a564189e7216bc532b97cf48dce7",
+    "keys": {},
+    "round": null
+  },
+  "why": "Release v1.2.28",
+  "worker": "codex"
+}

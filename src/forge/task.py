@@ -27,6 +27,7 @@ REFUSALS = {
     "base_local": ("{item} waits for {base} to publish reviewed changes.", "forge close {base}"),
     "base_not_built": ("{item} builds on {base}, whose latest changes haven't passed review.", "forge close {base}"),
     "base_stacked": ("{item} waits for {base}, which builds on {below}, so it starts once {below} merges.", "forge next"),
+    "base_behind": ("{item} waits for {base} to include the merge of {below} from {default}.", "forge close {base}"),
     "base_older": ("{item} waits for {base}, which runs an older Forge release, so it starts once {base} merges.", "forge next"),
     "two_bases": ("{item} waits for {deps}, so it starts once all but one of them merge.", "forge next"),
     "overlap": ("{item} would change {paths}, which {other} is changing and hasn't merged yet.",
@@ -503,13 +504,13 @@ def start(args: argparse.Namespace) -> None:
     base = stacked or start_base(main, key, tasks[task])
     carry = (source, [rel for rel in (doc_rel, notes_rel, state_rel, design_folder) if rel and show(source, rel) is not None]
              ) if source != base else None
-    # Earlier approvals keep their agreed parts, including ones not started yet.
-    state = {"part_line_limit": approval["part_line_limit"]} if approval.get("part_line_limit") else {}
+    state = {}
     if stacked:
         state.update(stacked_on=blockers[0], base=git("rev-parse", stacked))
     path = _new_checkout(item, branch, f"{key}-{task}", base, state, f"Start {item}", carry)
     on = f" on top of {blockers[0]}" if stacked else ""
     print(f"Started {item}{on} on {branch} in {path}")
+    print("Keep this part to about 400 changed lines outside tests and docs; close only warns when it is larger.")
     print(f"Next: forge work {item}")
 
 
@@ -540,8 +541,11 @@ def stack_base(item: str, blockers: list[str], main: str, top: Path | None = Non
         refuse(REFUSALS["base_not_started"], item=item, base=base)
     if below := state.get("stacked_on"):
         merged = forge_merged(main, below, top)
-        if not merged or run("git", "merge-base", "--is-ancestor", merged, ref, cwd=top).returncode:
+        if not merged:
             refuse(REFUSALS["base_stacked"], item=item, base=base, below=below)
+        if run("git", "merge-base", "--is-ancestor", merged, ref, cwd=top).returncode:
+            refuse(REFUSALS["base_behind"], item=item, base=base, below=below,
+                   default=main.removeprefix("origin/"))
     if repo._pin(show(ref, "forge.toml", top) or "") != repo._pin(show(main, "forge.toml", top) or ""):
         refuse(REFUSALS["base_older"], item=item, base=base)
     from forge import review
@@ -689,6 +693,20 @@ def allow_large(args: argparse.Namespace) -> None:
     print(f"{kind.capitalize()} {name} may now go over the {limit}.")
 
 
+def unbuilt_fix(item: str, state: dict, top: Path) -> bool:
+    """State updates are not work; a work commit can change other Forge records."""
+    if state.get("kind") != "fix":
+        return False
+    path = repo.state_path(item)
+    start = repo.git("log", "-1", "--diff-filter=A", "--format=%H", "--", path, cwd=top)
+    if not start:
+        return False
+    own = set(repo.git("rev-list", "--no-merges", "HEAD", "--not", start,
+                       f"origin/{repo.default_branch(top)}", cwd=top).splitlines())
+    return not any(sha in own and (not files or any(file != path for file in files))
+                   for sha, _, files in repo.commit_log(top, start))
+
+
 def amend(args: argparse.Namespace) -> None:
     if (args.done is None) == (args.append is None):
         refuse(REFUSALS["amend_choice"], fix=args.item)
@@ -711,7 +729,8 @@ def amend(args: argparse.Namespace) -> None:
     repo.commit_state(f"Change the fix's done-when\n\n{ruling}",
                       repo.write_state(args.item, state, top), top=top)
     print(f"Fix {args.item} is now done when: {state['done_when']}")
-    print(f"Next: forge close {args.item}")
+    command = "work" if unbuilt_fix(args.item, state, top) else "close"
+    print(f"Next: forge {command} {args.item}")
 
 
 def require_active(item: str, top: Path | None = None) -> None:

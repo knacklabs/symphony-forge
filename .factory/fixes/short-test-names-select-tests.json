@@ -1,0 +1,63 @@
+{
+  "base": "c2c77fbcb2c3967df64f07b77b6f5487b8f89771",
+  "branch": "fix/short-test-names-select-tests",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1ab36-6bc1-7dd1-a79d-b58906559629",
+    "head": null,
+    "start": "b3c99586126cc5bebea2b893e882e7e0bd27beca"
+  },
+  "done_when": "A task's Tests column with short names runs the matching tests, and a selection that matches nothing says so plainly and does not pass as if tests ran",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "src/forge/fasttest.py",
+      "file": "src/forge/fasttest.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 440,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Unmatched task selections can pass when always_test runs",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "c128bb29a4bab7921904e3bd8872b07b7b44ac93e91a59645da731d51b87943a",
+    "changed": "2831b10e985b0974d3a827feb01da8cca8df0711a0aedf40ec98a6f6cbf0bd5f",
+    "commit": "797c331a2118db1fd5c0a701f68fa259549d5555",
+    "dismissals": [],
+    "findings": [],
+    "id": "fb9b8011-ce47-4ca3-9fa1-8a8da4128d18",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-05T10:12:27.962242+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-05T13:12:10.617000+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-05T13:17:09.552610+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "1c0d7d46-7db8-4484-bc4c-e5678532a775",
+    "head": "0e854c9782c7f3174ed7962eaea11ff5aff227a2",
+    "keys": {},
+    "round": 2
+  },
+  "why": "A task's short test names such as test_2 select no tests, so forge test quietly runs nothing (issue 1359)",
+  "worker": "codex"
+}

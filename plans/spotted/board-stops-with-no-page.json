@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/board.py\tNot done: While no page is open it does not fetch from GitHub or rebuild the board.\tboard-stops-with-no-page",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 35,
+      "text": "Not done: While no page is open it does not fetch from GitHub or rebuild the board.",
+      "from": "blocking",
+      "item": "board-stops-with-no-page",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

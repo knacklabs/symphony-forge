@@ -1,4 +1,4 @@
-"""A part's design copies and documentation do not consume its code limit."""
+"""A part's design copies and documentation do not trigger a size warning."""
 import tomllib
 
 import pytest
@@ -13,8 +13,8 @@ STORY = "part-size-code-only"
 
 @pytest.mark.parametrize("adoption", ["new init", "previous release upgrade"])
 def test_1_close_counts_code_without_design_copies_or_markdown(unsynced_up, adoption):
-    # Audit: the real close must accept 300 code lines under a 400-line limit even with
-    # 600 design lines. The old size test covers tests/plans, but not docs or Markdown.
+    # Audit: real close must show no warning for 300 code lines even with 600 design lines.
+    # The main size test covers tests/plans, but not every design or Markdown path.
     # Only external tools are faked; no seam supplies the size decision.
     up = unsynced_up
     env = up.env
@@ -49,6 +49,7 @@ def test_1_close_counts_code_without_design_copies_or_markdown(unsynced_up, adop
     done = env.close(item)
 
     assert done.returncode == 0, done.stdout + done.stderr
+    assert "Warning: This part changes" not in done.stdout + done.stderr
     assert len(env.review_calls()) == reviews + 1
     assert len(env.gh_calls("pr", "create")) == publications + 1
     for host in (".codex", ".claude"):

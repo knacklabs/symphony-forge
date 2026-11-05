@@ -534,6 +534,24 @@
       "title": "Hand over client work to another machine",
       "status": "pending",
       "order": 110
+    },
+    {
+      "key": "FORGE-SAMPLE-1",
+      "title": "Sample-data prototypes get a light sign-off",
+      "status": "pending",
+      "order": 112
+    },
+    {
+      "key": "FORGE-AFTERDEMO-1",
+      "title": "After a demo: waiting items show in the app, notes become changes, and releases get a backup before Promote",
+      "status": "pending",
+      "order": 113
+    },
+    {
+      "key": "FORGE-SECAUDIT-1",
+      "title": "Security audit skill for client apps",
+      "status": "pending",
+      "order": 114
     }
   ],
   "epics": [

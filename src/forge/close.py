@@ -86,7 +86,7 @@ WHY, DONE = "Let the agent merge this repo's ready pull requests.", 'The default
 
 
 def close(args: argparse.Namespace) -> int:
-    from forge import backfill
+    from forge import backfill, records
     from forge.merge import ENABLE
 
     item = args.item
@@ -198,6 +198,7 @@ def close(args: argparse.Namespace) -> int:
         return done
 
     previous = state.get("review") or {}
+    review.require_engine(cfg)  # before merging the default branch or committing any state
     legacy_diff = None
     if (previous and "branch_diff" not in previous and previous.get("changed") ==
             review.fingerprint("HEAD", item, top, state, f"origin/{default}")):
@@ -230,28 +231,21 @@ def close(args: argparse.Namespace) -> int:
     if "/" in item:
         key = item.split("/")[0]
         design.check(top, story.show(top, story.plan_ref(top, key), f"plans/{key}.md") or "", "HEAD", required=False)
-    if "/" in item and (limit := state.get("part_line_limit")) and not state.get("allow_large"):
+    if "/" in item:
         excluded = list(review.DOC_EXCLUDES)
         excluded += [path.replace(":(glob)", ":(exclude,glob)") for path in repo.TEST_PATHS]
         stats = repo.git("diff", "--numstat", "-z", "--no-renames", f"{review_ref}...HEAD",
                          "--", ".", *excluded, cwd=top)
-        lines = sum(int(number) for record in stats.split("\0")
-                    for number in record.split("\t", 2)[:2] if number.isdigit())
-        if lines > limit:
-            stop = state.get("stop") or {}
-            if stop.get("size") and not stop.get("choice"):
-                repo.refuse(REFUSALS["stuck"], item=item, question=stop["question"])
-            # A recorded answer holds until a worker round has run on it.
-            if not stop.get("question") or stop.get("choice") and stop.get("worker_round") != state.get("round"):
-                stuck_stop(top, item, state, cfg, f"It changes {lines} lines outside tests, "
-                           f"over its limit of {limit}.", size=True)
-            repo.refuse(REFUSALS["chosen"], item=item)  # the answer waits for its worker round
-    if (state.get("stop") or {}).get("size"):  # the part fits again or is allowed: no question
-        state.pop("stop")
+        counts = [row for record in stats.split("\0") if len(row := record.split("\t", 2)) == 3]
+        generated = repo.generated_files(top, [row[2] for row in counts], "HEAD")
+        lines = sum(int(number) for added, deleted, path in counts if path not in generated
+                    for number in (added, deleted) if number.isdigit())
+        if lines > 400:
+            print(f"Warning: This part changes {lines} lines outside tests and docs; aim for about 400.")
     task.restore_default_settings(item, top, state, default)
     repo.resume_pin(top, cfg["version"], getattr(args, "land_rounds", None), accepted=choice == "accept",
                     before=getattr(args, "pin_before", None))
-    cfg = repo.config(top)
+    cfg = records.sample_data_off(top, item)
     local_tests = cfg["test_place"] == "local"
     if not local_tests and "tests" in state:
         state.pop("tests")
@@ -278,9 +272,9 @@ def close(args: argparse.Namespace) -> int:
             return 1
     spotted.check(top, item)
     design.require_working_build(top, review_ref)
-    app_baseline.check(top, cfg, repo.git("merge-base", "HEAD", review_ref, cwd=top))
+    app_baseline.check(top, cfg, baseline := repo.git("merge-base", "HEAD", review_ref, cwd=top))
     app_baseline.services(top, cfg)
-    app_baseline.migrations(top, cfg, repo.git("merge-base", "HEAD", review_ref, cwd=top))
+    app_baseline.migrations(top, cfg, baseline)
     if not migrating:
         _synced(top, item)
     # Reconcile remote work before choosing tests or reusing an earlier review.
@@ -295,7 +289,7 @@ def close(args: argparse.Namespace) -> int:
     branch_diff = review.fingerprint(head, item, top, state, base,
                                      branch_diff=True)
     ancestor = repo.git("merge-base", base, head, cwd=top)
-    records_only = all(path.startswith(review.BOOKKEEPING) for path in repo.git(
+    records_only = all(path.startswith(review.BOOKKEEPING) or repo.SIGNOFF.fullmatch(path) for path in repo.git(
         "diff", "--name-only", "-z", "--no-renames", ancestor, head, cwd=top).split("\0") if path)
     if records_only:
         print("nothing to review: only Forge's records changed", flush=True)
@@ -406,7 +400,8 @@ def close(args: argparse.Namespace) -> int:
     round_number = sum(step["step"] == "review" for step in state.get("steps", []))
     if not fresh or dismissals or refreshed:
         score.remember(_known(top, item, state, review_ref, previous), result, round_number,
-                       {} if fresh else areas)
+                       {} if fresh else areas,
+                       repaired=previous if not (fresh or records_only or switch or replayed) else None)
     if (serious and round_number >= (2 if "/" in item else 1) and
             not any(score.holds(f, "P0") for _, f in serious) and (not fresh or not state.get("stop"))):
         stopped = {"file": serious[0][1]["file"], "at": repo.now(),
@@ -502,7 +497,7 @@ def close(args: argparse.Namespace) -> int:
     tmp.write_text(json.dumps(ready) + "\n", encoding="utf-8")
     os.replace(tmp, path)
     _publish(top, item, state, branch, default, pr, result, evidence)
-    proof = "its tests passed on this machine" if local_tests else "green checks"
+    proof = "no tests or CI in sample-data mode" if repo.sample_data(top, cfg) else "its tests passed on this machine" if local_tests else "green checks"
     if merge == "agent":
         print(f"Ready: {item} has a clean review and {proof}.")
         print(f"Next: forge merge {item}")
@@ -561,9 +556,7 @@ def _start_follow_up(top: Path, state: dict[str, Any], why: str, done: str) -> s
 
 
 def check_stop(item: str, state: dict[str, Any], top: Path | None = None) -> None:
-    """A recorded choice or size allowance releases a stop; a clean review does not."""
-    if (state.get("stop") or {}).get("size") and state.get("allow_large"):
-        return
+    """A recorded choice releases a stop; a clean review does not."""
     if state.get("stop") and "question" in state["stop"]:
         if not state["stop"].get("choice"):
             repo.refuse(REFUSALS["stuck"], item=item, question=state["stop"]["question"])
@@ -605,8 +598,7 @@ def stuck_round(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any]
                       "round": state.get("round")}
 
 
-def stuck_stop(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any], what: str,
-               size: bool = False) -> None:
+def stuck_stop(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any], what: str) -> None:
     """Stop the item and refuse with a question the coordinator can ask the owner as it is."""
     title, _, delivers = _title(top, item, state)
     tool = state.get("tool") or state.get("worker") or repo.worker(cfg, "build", False)[0]
@@ -619,7 +611,7 @@ def stuck_stop(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
     question = (f"{title} is stuck. It should deliver: {delivers}\n{what}\n"
                 f"The worker tried: {'; '.join(dict.fromkeys(tried)) or 'no new commits'}.\n"
                 f"Choose one: {'; '.join(choices)}.")
-    state.update(stop={"question": question, "tool": tool, **({"size": True} if size else {})},
+    state.update(stop={"question": question, "tool": tool},
                  status="hotspot")
     state["stop"]["wait_id"] = repo.record_event(top, item, "owner wait start", reason="stuck")
     _save(top, item, state, f"{item} is stuck; Forge asks the owner")
@@ -1160,6 +1152,8 @@ def _title(top: Path, item: str, state: dict[str, Any]) -> tuple[str, str, str]:
 
 def _attach(top: Path, item: str, branch: str) -> None:
     """Link the pull request in the item's recorded Codex chat; a failure never stops the close."""
+    if (repo.read_state(item, top) or {}).get("worker") == "claude":
+        return
     try:
         if codex.record(top, item).get("conversation") and not codex.attach(top, item, json.loads(
                 _gh(top, "pr", "view", branch, "--json", "number,url,headRefName"))):

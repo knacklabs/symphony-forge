@@ -1,0 +1,45 @@
+{
+  "base": "28ce710ae1ee26deec467deccfa90fb1146a0055",
+  "branch": "fix/sync-survives-missing-chat-checkout",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1acd8-77ae-7ad1-928f-02e9f0d46856",
+    "head": null,
+    "start": "a25f3d88f7920c78a391335e9749f3ca02d274da"
+  },
+  "done_when": "forge sync finishes with exit status 0 and one plain warning when a saved chat checkout is gone, keeps that chat record, and moves the other chat records as before",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "86a9d7ca5f027d8d735c4d482d7d1038626bebc52764cf94b73f8e932c3cd3ba",
+    "changed": "9df97263e99361e0cce50ca34c4b8767e60db40bb5a067f078462336d2530812",
+    "commit": "d14b828db501551beaa092e057088d9f261a315d",
+    "dismissals": [],
+    "findings": [],
+    "id": "e7b50e52-6dd2-4bfa-a3de-b6989508b9b6",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-05T17:53:40.562882+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-05T17:58:13.498731+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "9c94d47b6858ed0390d11f2c5b01bd41123f00f5",
+    "keys": {},
+    "round": null
+  },
+  "why": "forge sync crashes with an uncaught error after writing its files, when a saved chat record points at a temporary checkout that no longer exists (issue 1370)",
+  "worker": "codex"
+}

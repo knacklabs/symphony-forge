@@ -22,6 +22,7 @@ COMMANDS = [{"words": "doctor", "run": "doctor", "changes_state": False,
 }]
 REFUSALS = {"problems": ("forge doctor found {count} problem(s); each row above gives its fix.", "forge doctor")}
 INSTALL = {"git": "install git from https://git-scm.com/downloads", "gh": "install gh from https://cli.github.com",
+    "codex": "npm install -g @openai/codex",
     "uv": "curl -LsSf https://astral.sh/uv/install.sh | sh", "claude": "npm install -g @anthropic-ai/claude-code",
     "impeccable": "npx skills add pbakaus/impeccable -g",
     "emil-design-eng": "npx --yes skills add emilkowalski/skills --skill emil-design-eng -g --yes",
@@ -337,8 +338,12 @@ def doctor(args: argparse.Namespace) -> int:
     if item := task.branch_item(repo.current_branch(top), top):
         workers = item[1].get("tool") or workers
     on_codex = workers != "claude"  # split runs Codex and Claude
-    needs_sdk = on_codex or bool(cfg["tools"] == "both" and os.environ.get("CLAUDECODE")
-                                and shutil.which(os.environ.get("CODEX_BIN") or "codex"))
+    programs = {"codex": shutil.which(os.environ.get("CODEX_BIN") or "codex"),
+                "claude": shutil.which("claude")}
+    if cfg["tools"] != "both" and not programs[cfg["tools"]]:
+        add(f"{cfg['tools']} is not installed or not on PATH.", INSTALL[cfg["tools"]])
+    # Kits supply their own executables; their repair needs no standalone program.
+    needs_sdk = bool(cfg["tools"] == "both" or cfg["tools"] == "codex" and programs["claude"])
     sdk_failed = ""
     if args.fix and needs_sdk and shutil.which("uv") and codex.sdk_problem():
         try: codex.install()
@@ -346,8 +351,12 @@ def doctor(args: argparse.Namespace) -> int:
     for tool in ("git", "gh", "uv"):
         if not shutil.which(tool): add(f"{tool} is not installed or not on PATH.", INSTALL[tool])
     if shutil.which("gh") and repo.run("gh", "auth", "status", cwd=top).returncode: add("gh is not signed in to GitHub.", "gh auth login")
+    if cfg["tools"] == "claude" and init.signed_in("claude", top) is False:
+        add("Claude is not signed in.", "run claude and sign in")
+    if on_codex and init.signed_in("codex", top) is False:
+        add("Codex is not signed in.", "codex login")
     if needs_sdk and (problem := sdk_failed or codex.sdk_problem()): add(problem)
-    needs_claude_sdk = workers != "codex" and not os.environ.get("CLAUDECODE")
+    needs_claude_sdk = bool(cfg["tools"] == "both" or cfg["tools"] == "claude" and programs["codex"])
     claude_failed = ""
     if args.fix and needs_claude_sdk and shutil.which("uv") and claude_sdk.sdk_problem():
         try: claude_sdk.install()
@@ -519,22 +528,23 @@ def doctor(args: argparse.Namespace) -> int:
                 processes.stdout, re.M):
             print("- Warning: a GitHub Actions self-hosted runner runs on this machine. "
                   "Its CPUs count against Forge's load limit.")
-    fast = {"needed": "on for every fix, after the first repair round, or when other planned work waits",
-            "off": "off", "always": "always on"}[cfg["codex_fast"]]
-    from forge import event_log
-    history = event_log.read(top)
-    last = next((row for row in reversed(history) if row.get("event") == "codex speed"), None)
-    said = ("" if last is None else " The last Codex turn ran with Fast."
-            if last["tier"] not in (None, "default") and last["tier"] == last["requested_tier"] else
-            " Codex reported a different speed from the one Forge requested."
-            if last["tier"] not in (None, "default") else
-            " Codex did not report the last turn's speed." if last["tier"] is None else
-            " The last Codex turn wanted Fast, but Codex reported normal speed."
-            if last.get("fast_wanted") and last["requested_tier"] != "default" else
-            " The last Codex turn ran at normal speed.")
-    if last and last.get("fast_wanted") and last["requested_tier"] == "default":
-        said = f" The last Codex turn wanted Fast, but {last['model']} doesn't offer it." + said
-    print(f"- Codex Fast: {fast}; models without Fast run normally.{said}")
+    if on_codex:
+        fast = {"needed": "on for every fix, after the first repair round, or when other planned work waits",
+                "off": "off", "always": "always on"}[cfg["codex_fast"]]
+        from forge import event_log
+        history = event_log.read(top)
+        last = next((row for row in reversed(history) if row.get("event") == "codex speed"), None)
+        said = ("" if last is None else " The last Codex turn ran with Fast."
+                if last["tier"] not in (None, "default") and last["tier"] == last["requested_tier"] else
+                " Codex reported a different speed from the one Forge requested."
+                if last["tier"] not in (None, "default") else
+                " Codex did not report the last turn's speed." if last["tier"] is None else
+                " The last Codex turn wanted Fast, but Codex reported normal speed."
+                if last.get("fast_wanted") and last["requested_tier"] != "default" else
+                " The last Codex turn ran at normal speed.")
+        if last and last.get("fast_wanted") and last["requested_tier"] == "default":
+            said = f" The last Codex turn wanted Fast, but {last['model']} doesn't offer it." + said
+        print(f"- Codex Fast: {fast}; models without Fast run normally.{said}")
     claude = shutil.which("claude")
     version = None
     if claude:

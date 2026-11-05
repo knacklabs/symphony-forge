@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "edge\tsrc/forge/templates/skills/security-audit/validate-coverage-ledger.cjs\tBoth mandatory validators reject every input on Windows",
+      "kind": "edge",
+      "path": "src/forge/templates/skills/security-audit/validate-coverage-ledger.cjs",
+      "line": 725,
+      "text": "Both mandatory validators reject every input on Windows",
+      "from": "review",
+      "item": "FORGE-SECAUDIT-1/SKILL",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

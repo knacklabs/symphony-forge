@@ -1,5 +1,5 @@
 """`forge board`'s live page: a server on 127.0.0.1 at a free port that answers only with this run's
-token and stops with the command. A request serves the last snapshot while the cheaply checked
+token and stops after 30 minutes without a page. A request serves the last snapshot while the cheaply checked
 inputs are unchanged; otherwise one background thread rebuilds only the changed rows, a request
 waits at most REBUILD_WAIT and then gets the last snapshot marked as updating, and `/events` says
 "changed" when a new one exists. The last snapshot and its rows are saved, so a restart is instant.
@@ -13,6 +13,7 @@ import json
 import os
 import re
 import secrets
+import select
 import subprocess
 import sys
 import threading
@@ -42,6 +43,7 @@ FETCH_WAIT = float(os.environ.get("FORGE_BOARD_FETCH_WAIT", "60"))
 # How long a request waits for a rebuild before it gets the last snapshot marked as updating.
 REBUILD_WAIT = float(os.environ.get("FORGE_BOARD_REBUILD_WAIT", "0.5"))
 TICK = 1.0  # seconds between the events stream's input checks
+IDLE_WAIT = 30 * 60  # seconds without an open page before the server stops
 DENIED = "This board link is not valid. Open the board again to get a new link."
 ASSIGN_WAIT = 300  # seconds `forge assign` may take, a fetch and a push included
 ASSIGNING = threading.Lock()  # one assignment at a time: two would commit in the same story checkout
@@ -90,6 +92,7 @@ class Snapshots:
         self.saved = self.common / "forge" / "board-snapshot.json"
         self.lock = threading.Lock()  # one derivation at a time: they share the row cache
         self.done = threading.Condition()
+        self.viewers, self.closed_at = 0, time.monotonic()
         self.wanted = threading.Event()
         self.forced, self.cache = False, {"rows": {}, "rebuilt": []}
         self.inputs: tuple[str, str] | None = None
@@ -230,11 +233,16 @@ class Snapshots:
         """At most once a minute: the remote's refs, then GitHub's facts with them."""
         while True:
             time.sleep(FETCH_WAIT)
+            with self.done:
+                if not self.viewers:
+                    continue
             # Not repo.run: its command cache belongs to the rebuild running now.
             subprocess.run(["git", "fetch", "-q", "--prune", "--tags", "origin"], cwd=self.top,
                            stdin=subprocess.DEVNULL, capture_output=True)
-            self.forced = True
-            self.wanted.set()
+            with self.done:
+                if self.viewers:  # a fetch already in progress can finish after the last page closes
+                    self.forced = True
+                    self.wanted.set()
 
 
 def handler(snapshots: Snapshots, token: str) -> type[BaseHTTPRequestHandler]:
@@ -329,6 +337,17 @@ def handler(snapshots: Snapshots, token: str) -> type[BaseHTTPRequestHandler]:
 
         def events(self) -> None:
             """Says "changed" each time a new snapshot exists; the page then reads /board.json."""
+            with snapshots.done:
+                snapshots.viewers += 1
+            try:
+                self.stream()
+            finally:
+                with snapshots.done:
+                    snapshots.viewers -= 1
+                    if not snapshots.viewers:
+                        snapshots.closed_at = time.monotonic()
+
+        def stream(self) -> None:
             self.send_response(200)
             for name, value in (("Content-Type", "text/event-stream"), ("Cache-Control", "no-store"),
                                 ("X-Content-Type-Options", "nosniff")):
@@ -338,7 +357,10 @@ def handler(snapshots: Snapshots, token: str) -> type[BaseHTTPRequestHandler]:
             self.wfile.write(b"retry: 10000\n\n")
             self.wfile.flush()
             while True:
-                time.sleep(TICK)
+                # An events request sends no more input. Readability means the page
+                # closed, so stop watching before asking for another rebuild.
+                if select.select([self.connection], [], [], TICK)[0]:
+                    return
                 version = snapshots.changed()
                 quiet += TICK
                 if version != sent:
@@ -356,19 +378,23 @@ def serve(top: Path) -> int:
     print("Reading the work for the board…", flush=True)
     snapshots = Snapshots(top)
     threading.Thread(target=snapshots.keep_building, daemon=True).start()
-    if not snapshots.body:
-        snapshots.now()  # no saved board yet: the page waits for this first build, once
-    snapshots.changed()  # a saved board starts its rebuild now when the work moved since
     token = secrets.token_urlsafe(24)
     server = ThreadingHTTPServer(("127.0.0.1", 0), handler(snapshots, token))
     server.daemon_threads = True
+    server.timeout = TICK
     url = f"http://127.0.0.1:{server.server_address[1]}/?token={token}"
-    print(f"The board is live at {url}\nIt stays live until you press Ctrl-C.", flush=True)
+    print(f"The board is live at {url}\nIt stops after 30 minutes with no page open, or when you press Ctrl-C.",
+          flush=True)
     threading.Thread(target=snapshots.keep_fetching, daemon=True).start()
     if sys.stdout.isatty():  # ponytail: open it for a person at a terminal; never in a pipe or a test
         webbrowser.open(url)
     try:
-        server.serve_forever()
+        while True:
+            server.handle_request()
+            with snapshots.done:
+                if not snapshots.viewers and time.monotonic() - snapshots.closed_at >= IDLE_WAIT:
+                    print("The board stopped because no page was open for 30 minutes.", flush=True)
+                    break
     except KeyboardInterrupt:
         pass
     finally:

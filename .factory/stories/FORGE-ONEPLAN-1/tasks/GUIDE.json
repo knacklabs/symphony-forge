@@ -1,0 +1,48 @@
+{
+  "branch": "task/FORGE-ONEPLAN-1-GUIDE",
+  "chat": {
+    "approval": "2b9d66eb593f4d5160c0e452f9f88dd8337aa5846825e9be4c2a644dd0324581",
+    "claude": null,
+    "conversation": "01a1a7bb-a015-7ff2-91b4-98277252497a",
+    "head": null,
+    "start": "78ade2fbf9d0a4bccbaf8bf5feddc046afc7b62f"
+  },
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "c22db36ca3e9532be693f55820d012e239288b977740075f0eb97fbc82dad9e7",
+    "changed": "cf6ef67f4e2e427dbeca7e1dc8b2bcc305393a0a12ad9e5aba6ef428978ee11e",
+    "commit": "de6645d1a4bbd7796cfe51efb53885c76130ec30",
+    "dismissals": [],
+    "findings": [],
+    "id": "7b739809-49ea-4af6-b780-280b863b8d2e",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-04T18:03:59.654263+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-04T18:13:08.089672+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-04T18:20:33.694968+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-04T21:04:59.530470+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "1b717edd-9310-4f94-a57a-6971cc1fedbe",
+    "head": "72c997a42bb0cfec3b9d16c65f862c105deba4bd",
+    "keys": {},
+    "round": 1
+  },
+  "worker": "codex"
+}

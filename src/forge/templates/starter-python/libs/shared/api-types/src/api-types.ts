@@ -70,7 +70,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Sign in and start a server session. */
+        /**
+         * Sign in and start a server session.
+         * @description Five failed sign-ins lock an email for fifteen minutes. Wrong passwords, unknown emails and locked emails receive the same refusal.
+         */
         post: operations["sign_in_api_v1_auth_sign_in_post"];
         delete?: never;
         options?: never;
@@ -157,7 +160,7 @@ export interface paths {
         put?: never;
         /**
          * Invite a person to your organisation.
-         * @description Admins invite an email without an account. A new invite replaces its seven-day link. Production requires a mail provider.
+         * @description Admins receive a seven-day, single-use link with or without email. A new invite replaces the link. A retry with the same key returns no link.
          */
         post: operations["invite_api_v1_invites_post"];
         delete?: never;
@@ -180,6 +183,26 @@ export interface paths {
          * @description Only admins can add agent accounts. The account’s email is the name with six random characters at agents.invalid, and it has no password. Create its key next.
          */
         post: operations["add_agent_api_v1_agents_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/members/{account_id}/reset-link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Make a password reset link for a member.
+         * @description Admins receive a single-use link valid for one hour, with or without email. A new link replaces earlier links. A retry with the same key returns no link.
+         */
+        post: operations["member_reset_link_api_v1_members__account_id__reset_link_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -428,6 +451,26 @@ export interface paths {
          * @description Only admins can export change history. The file includes all changes, newest first.
          */
         get: operations["export_history_api_v1_history_export_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/notifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the records that wait for you, with a count.
+         * @description Only your open entries in your organisation, newest first. Returns up to 100 entries and the count of all open entries.
+         */
+        get: operations["list_notifications_api_v1_notifications_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -716,6 +759,16 @@ export interface components {
              */
             createdAtUtc: string;
         };
+        /** InviteResponse */
+        InviteResponse: {
+            /** Message */
+            message: string;
+            /**
+             * Inviteurl
+             * @description Copy this single-use invite link. A retry returns no link.
+             */
+            inviteUrl?: string | null;
+        };
         /** Member */
         Member: {
             /**
@@ -771,6 +824,56 @@ export interface components {
         MessageResponse: {
             /** Message */
             message: string;
+        };
+        /** NotificationEntry */
+        NotificationEntry: {
+            /**
+             * Id
+             * Format: uuid
+             * @description The waiting entry identifier.
+             * @example 019a3500-0000-7000-8000-000000000001
+             */
+            id: string;
+            /**
+             * Subjectid
+             * Format: uuid
+             * @description The record that needs an action.
+             * @example 019a3500-0000-7000-8000-000000000002
+             */
+            subjectId: string;
+            /**
+             * Subjectname
+             * @description The record name.
+             * @example October budget
+             */
+            subjectName: string;
+            /**
+             * Message
+             * @description The action that waits for you.
+             * @example Approve the budget.
+             */
+            message: string;
+            /**
+             * Createdatutc
+             * Format: date-time
+             * @description When the entry was created, in UTC.
+             * @example 2026-10-31T10:00:00Z
+             */
+            createdAtUtc: string;
+        };
+        /** NotificationsList */
+        NotificationsList: {
+            /**
+             * Count
+             * @description The number of all records that wait for you.
+             * @example 2
+             */
+            count: number;
+            /**
+             * Items
+             * @description Up to 100 open entries, newest first.
+             */
+            items: components["schemas"]["NotificationEntry"][];
         };
         /** Project */
         Project: {
@@ -849,6 +952,16 @@ export interface components {
          * @enum {string}
          */
         ProjectStatus: "active" | "archived";
+        /** ResetLinkResponse */
+        ResetLinkResponse: {
+            /** Message */
+            message: string;
+            /**
+             * Reseturl
+             * @description Copy this single-use reset link. A retry returns no link.
+             */
+            resetUrl?: string | null;
+        };
         /** ResetPasswordInput */
         ResetPasswordInput: {
             /** Token */
@@ -942,6 +1055,18 @@ export interface components {
             /** Error */
             error?: null;
         };
+        /** SuccessEnvelope[InviteResponse] */
+        SuccessEnvelope_InviteResponse_: {
+            /**
+             * Success
+             * @default true
+             * @constant
+             */
+            success: true;
+            data: components["schemas"]["InviteResponse"] | null;
+            /** Error */
+            error?: null;
+        };
         /** SuccessEnvelope[MemberListResponse] */
         SuccessEnvelope_MemberListResponse_: {
             /**
@@ -991,6 +1116,18 @@ export interface components {
             /** Error */
             error?: null;
         };
+        /** SuccessEnvelope[NotificationsList] */
+        SuccessEnvelope_NotificationsList_: {
+            /**
+             * Success
+             * @default true
+             * @constant
+             */
+            success: true;
+            data: components["schemas"]["NotificationsList"] | null;
+            /** Error */
+            error?: null;
+        };
         /** SuccessEnvelope[ProjectListResponse] */
         SuccessEnvelope_ProjectListResponse_: {
             /**
@@ -1012,6 +1149,18 @@ export interface components {
              */
             success: true;
             data: components["schemas"]["Project"] | null;
+            /** Error */
+            error?: null;
+        };
+        /** SuccessEnvelope[ResetLinkResponse] */
+        SuccessEnvelope_ResetLinkResponse_: {
+            /**
+             * Success
+             * @default true
+             * @constant
+             */
+            success: true;
+            data: components["schemas"]["ResetLinkResponse"] | null;
             /** Error */
             error?: null;
         };
@@ -1449,7 +1598,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SuccessEnvelope_MessageResponse_"];
+                    "application/json": components["schemas"]["SuccessEnvelope_InviteResponse_"];
                 };
             };
             /** @description Bad Request */
@@ -1488,13 +1637,13 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
-            /** @description Unprocessable Content */
+            /** @description Validation Error */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -1550,6 +1699,76 @@ export interface operations {
             };
             /** @description Conflict */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    member_reset_link_api_v1_members__account_id__reset_link_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Idempotency-Key"?: string | null;
+            };
+            path: {
+                /** @description A human member of your organisation. */
+                account_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuccessEnvelope_ResetLinkResponse_"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -2580,6 +2799,35 @@ export interface operations {
             };
             /** @description Forbidden */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    list_notifications_api_v1_notifications_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuccessEnvelope_NotificationsList_"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
                 headers: {
                     [name: string]: unknown;
                 };

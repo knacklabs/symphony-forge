@@ -20,6 +20,7 @@ import pytest
 from conftest import _install, patient
 from test_close import env  # noqa: F401
 from test_setup import _autoreview, _executable, _fresh_client, _stub_forge, _version
+from test_setup import doctor_sdks, sdk_data  # noqa: F401
 
 pytestmark = pytest.mark.platform
 
@@ -771,8 +772,9 @@ def _signing_in_to_github_stays_a_plain_step(repo, gh, tmp_path, monkeypatch, _)
     assert done.returncode == 1
 
 
-def _exit_codes(repo, gh, tmp_path, monkeypatch, _):
+def _exit_codes(repo, gh, tmp_path, monkeypatch, request):
     client = _client(repo, gh, tmp_path, monkeypatch)
+    request.getfixturevalue("doctor_sdks")
     _old_hosts(repo, client)
     folder = _start_fix(repo, client)
     # Everything else checks out: GitHub, Claude, Codex's trust, and the host hooks' forge.
@@ -888,5 +890,5 @@ def test_4_doctor_brings_forges_files_up_to_date_through_a_fix(repo, gh, tmp_pat
     (_signing_in_to_github_stays_a_plain_step, [None], ()),
     (_exit_codes, [None], SHELL)))
 def test_5_doctor_never_overwrites_a_change_made_by_hand(repo, gh, tmp_path, monkeypatch, case,
-                                                        value):
-    case(repo, gh, tmp_path, monkeypatch, value)
+                                                        value, request):
+    case(repo, gh, tmp_path, monkeypatch, request if case is _exit_codes else value)

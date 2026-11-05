@@ -119,6 +119,7 @@ describe('database', () => {
       Account: 'core', Session: 'core', PasswordResetToken: 'core', SignInAttempt: 'core',
       Organisation: 'core', Membership: 'core', Invite: 'core',
       Project: 'projects', ChangeRecord: 'history', IdempotencyKey: 'mcp',
+      Notification: 'notifications',
     });
     const foreignKeys = psql(`
       SELECT count(*) FROM pg_constraint c
@@ -126,8 +127,8 @@ describe('database', () => {
       JOIN pg_namespace source_schema ON source_schema.oid = source.relnamespace
       JOIN pg_class target ON target.oid = c.confrelid
       JOIN pg_namespace target_schema ON target_schema.oid = target.relnamespace
-      WHERE c.contype = 'f' AND source_schema.nspname IN ('history', 'projects')
-        AND target_schema.nspname IN ('history', 'projects')
+      WHERE c.contype = 'f' AND source_schema.nspname IN ('history', 'projects', 'notifications')
+        AND target_schema.nspname IN ('history', 'projects', 'notifications')
         AND source_schema.nspname <> target_schema.nspname
     `);
     expect(foreignKeys.status, foreignKeys.output).toBe(0);

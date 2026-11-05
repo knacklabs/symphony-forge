@@ -11,6 +11,7 @@ from conftest import ROOT, _install, patient
 from test_codex_fast_when_work_waits import _policy, _tiers
 from test_codex_worker import _codex_repo, _sent, sdk_data  # noqa: F401
 from test_setup import _autoreview, _fresh_client, _stub_forge
+from test_setup import doctor_sdks  # noqa: F401
 
 STORY = "fast-mode-visible"
 
@@ -96,7 +97,7 @@ def test_1_each_turn_says_and_records_whether_fast_ran(
 
 @pytest.mark.parametrize("history", [False, True])
 def test_2_doctor_verdict_depends_on_problems_not_turn_history(
-        repo, gh, tmp_path, monkeypatch, history):
+        repo, gh, tmp_path, monkeypatch, history, doctor_sdks):
     client, made = _fresh_client(repo, gh, tmp_path)
     assert made.returncode == 0, made.stderr
     gh.respond("auth", "status")

@@ -163,7 +163,8 @@ def test_1_repair_checkout_keeps_rounds_settlements_and_owner_stop(
     still_stopped = _accept(repo, clone)
     assert still_stopped.returncode == 1, still_stopped.stdout + still_stopped.stderr
     assert "One more round, split or accept?" in still_stopped.stderr
-    assert len(_calls(queue)) == before
+    # The repair changed product inputs, so recheck before repeating the stop.
+    assert len(_calls(queue)) == before + 1
 
     more = _accept(repo, clone, "--resolve", "more", "--reason", "The owner wants one more round")
     assert more.returncode == 1, more.stdout + more.stderr

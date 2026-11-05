@@ -13,6 +13,7 @@ const TONE = { Building: 'moving', Review: 'moving', Ready: 'ready', Merged: 're
 let Board;
 let drawer = null; // { id, node, opener, seen }
 let page = null; // { id, node, tab, row, seen }
+const planFolds = new Map(); // story -> section open states, for this board session
 
 function el(tag, attrs = {}, ...children) {
   const node = document.createElement(tag);
@@ -321,11 +322,13 @@ function overview(row) {
 }
 
 function plan(row, panel) {
+  if (!planFolds.has(row.id)) planFolds.set(row.id, {});
+  const folds = planFolds.get(row.id);
   const doc = el('article', { class: 'plan' }, el('p', { class: 'quiet' }, 'Reading the plan…'));
   fetch(`plan/${encodeURIComponent(row.id)}${TOKEN}`, { cache: 'no-store' })
     .then(async (answer) => {
       const text = await answer.text();
-      if (answer.ok) return doc.replaceChildren(renderPlan(text)), restoreLostFocus(doc);
+      if (answer.ok) return doc.replaceChildren(renderPlan(text, folds)), restoreLostFocus(doc);
       let reason = 'The board could not read the plan. Open the tab again in a moment.';
       try {
         reason = JSON.parse(text).error;

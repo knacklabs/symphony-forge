@@ -397,7 +397,8 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False,
     results.unlink(missing_ok=True)
     try:
         if not command:
-            return 0, "forge.toml names no test command, so close ran none."
+            return 0, ("Sample-data mode skips tests and CI." if repo.sample_data(top)
+                       else "forge.toml names no test command, so close ran none.")
         # Worker tests always run; close skips documentation before it enters the test lane.
         if not always and docs_only(top, base):
             said = DOCS_ONLY.format(command=command)
@@ -494,6 +495,8 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False,
         if len(lines) > 80:  # the tail is the last 30 picked; the earliest skip lines fill the rest
             lines = [*lines[:50], f"({len(lines) - 80} skip lines cut here)", *lines[-30:]]
         if done.returncode:
+            if done.returncode == 5:
+                lines.append("No tests ran. Check the task's Tests column and the test command or filters.")
             report = results.read_text("utf-8") if results.is_file() else ""
             failures = sorted({node for outcome, node in re.findall(r"^(\w+) (.+)$", report, re.M)
                                if outcome in ("failed", "error")})
@@ -824,11 +827,24 @@ def round_number(top: Path, item: str, state: dict[str, Any]) -> int | None:
     return max([finished, *recorded]) + 1
 
 
+def require_engine(cfg: dict[str, Any]) -> str:
+    """Select the review program and refuse a missing single-tool engine before any writes."""
+    tool = cfg["tools"]
+    if tool == "both":
+        return "codex" if shutil.which(os.environ.get("CODEX_BIN") or "codex") else "claude"
+    program = (os.environ.get("CODEX_BIN") or "codex") if tool == "codex" else "claude"
+    if not shutil.which(program):
+        repo.refuse(repo.REFUSALS["tool_missing"], tool=tool,
+                    name="Codex" if tool == "codex" else "Claude Code")
+    return tool
+
+
 def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         base: str, selected: dict[str, str], previous: dict[str, Any],
         signoff_prompt: str = "", light: bool = False, tested: str = "",
-        images: set[str] | None = None) -> dict[str, Any]:
+        images: set[str] | None = None, only: set[str] | None = None) -> dict[str, Any]:
     """Review the branch head once, retrying once when a run doesn't finish. Returns the result."""
+    selected_engine = require_engine(cfg)
     from forge import design, records, story  # story imports review indirectly
     prototype = (light and not signoff_prompt and state.get("kind") == "fix"
                  and repo.is_prototype(top, cfg, (base, "HEAD")) and design.working_build(top, base))
@@ -844,6 +860,10 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
     product = ([name for name in repo.git("ls-files", "-z", f"--with-tree={head}", cwd=top).split("\0")
                 if name and not name.startswith((*BOOKKEEPING, "docs/decisions/"))]
                if signoff_prompt else [])
+    if signoff_prompt and only is not None:
+        product = [name for name in product if name in only and name != STANDARDS
+                   and (images is None or Path(name).suffix.lower() not in design.IMAGES
+                        or name in images)]
     _sweep()
     with tempfile.TemporaryDirectory(prefix="forge-review-", ignore_cleanup_errors=True) as folder:
         tmp = Path(folder)
@@ -854,7 +874,19 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         repo.git("clone", "-q", "--no-local", "--no-checkout", str(top), str(tree), cwd=top)
         repo.git("checkout", "-q", "--detach", head, cwd=tree)
         if signoff_prompt:
-            if previous.get("commit"):
+            if only is not None:
+                review_base = repo.git("commit-tree", EMPTY_TREE, "-m", "Empty product review base",
+                                       cwd=tree)
+                excluded = set(repo.git("ls-files", "-z", cwd=tree).split("\0")) - {"", *product}
+                if excluded:
+                    command = ("git", "--literal-pathspecs", "rm", "-r", "-f", "-q",
+                               "--ignore-unmatch", "--pathspec-from-file=-", "--pathspec-file-nul")
+                    removed = repo.run(*command, cwd=tree,
+                                       input="\0".join(sorted(excluded)) + "\0")
+                    if removed.returncode:
+                        raise subprocess.CalledProcessError(removed.returncode, command,
+                                                            removed.stdout, removed.stderr)
+            elif previous.get("commit"):
                 repo.git("fetch", "-q", str(top), previous["commit"], cwd=tree)
                 repo.git("read-tree", previous["commit"], cwd=tree)
                 review_base = previous["commit"]
@@ -905,11 +937,11 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         # then create the file afresh ("x" refuses anything still there).
         repo.git("rm", "-r", "-f", "-q", "--ignore-unmatch", "--", STANDARDS, cwd=tree)
         with (tree / STANDARDS).open("x", encoding="utf-8") as page:
-            page.write(prompt if prototype else prompt + "\n\n" + string.Template(rules).substitute(
-                standards=(Path(__file__).parent / "standards.md").read_text(encoding="utf-8").strip()))
-        engine = cfg["tools"]
-        if engine == "both":
-            engine = "codex" if shutil.which(os.environ.get("CODEX_BIN") or "codex") else "claude"
+            page.write(prompt if prototype or (signoff_prompt and only is not None) else
+                       prompt + "\n\n" + string.Template(rules).substitute(
+                           standards=(Path(__file__).parent / "standards.md").read_text(
+                               encoding="utf-8").strip()))
+        engine = selected_engine
         argv = [sys.executable, str(helper()), "--mode", "branch", "--base", review_base,
                 "--engine", engine,
                 "--max-priority", "P3",  # the P0-only level applies after scoring
@@ -1038,8 +1070,10 @@ def bound_review(top: Path, item: str, state: dict[str, Any], result: dict[str, 
     for finding in findings:
         title = re.sub(r"^\[P[0-3]\]\s*", "", finding["title"])
         missed = re.match(r"Not done\s*:\s*(.*)", title, re.I)
+        approved_missed = missed and any(
+            item and sentence(missed[1]).startswith(item) for item in approved)
         must = score.MUST.match(title)
-        if (missed and sentence(missed[1]) in approved) or (must and must[1].strip().casefold() in kinds):
+        if approved_missed or (must and must[1].strip().casefold() in kinds):
             if not finding.get("required_done_when") or finding.get("follow_up"):
                 finding["required_done_when"] = True
                 finding.pop("follow_up", None)
@@ -1050,7 +1084,7 @@ def bound_review(top: Path, item: str, state: dict[str, Any], result: dict[str, 
         reason = ""
         if score.RARE.search(finding["body"]):
             reason = "Rare case outside normal use"
-        elif missed and sentence(missed[1]) not in approved:
+        elif missed and not approved_missed:
             reason = "Not done names no owner-approved Done-when item; builder details are guidance."
         elif score.below_added_work_minimum(finding, minimum):
             reason = f"{score.ADDED_WORK_REASON}{minimum}."

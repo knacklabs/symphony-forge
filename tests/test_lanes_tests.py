@@ -399,5 +399,5 @@ def check_worker_picker_tests_dirty_code_even_with_only_docs_committed(env, monk
     result = repo.forge("test", cwd=folder)
     assert result.returncode == 0, result.stdout + result.stderr
     assert result.stdout.count("The nightly full run covers the rest.") == 1, result.stdout
-    assert "No changed or module-related test files to run." in result.stdout
+    assert "No tests ran: no changed or module-related test files were selected." in result.stdout
     assert "unrelated test was selected" not in result.stdout

@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/templates/starter-python/apps/api/tests/conftest.py\tGate: notifications test helper uses json without importing it\tFORGE-AFTERDEMO-1/NOTIFYPY",
+      "kind": "bug",
+      "path": "src/forge/templates/starter-python/apps/api/tests/conftest.py",
+      "line": 60,
+      "text": "Gate: notifications test helper uses json without importing it",
+      "from": "blocking",
+      "item": "FORGE-AFTERDEMO-1/NOTIFYPY",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

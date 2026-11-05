@@ -1,0 +1,62 @@
+{
+  "branch": "task/FORGE-SECAUDIT-1-SKILL",
+  "chat": {
+    "approval": "26b7a7447245eebcacf70f90747272651a4801c2b3e2c9465caa63291acfd7ff",
+    "claude": null,
+    "conversation": "01a1aab3-d1eb-7fc3-a4de-7f447b375f87",
+    "head": null,
+    "start": "ed915c096e70297697b92cb9a8979d9fd8349d5b"
+  },
+  "known": [
+    {
+      "area": "src/forge/templates/skills/security-audit/validate-coverage-ledger.cjs",
+      "file": "src/forge/templates/skills/security-audit/validate-coverage-ledger.cjs",
+      "gain": null,
+      "harm": null,
+      "line": 725,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Both mandatory validators reject every input on Windows",
+      "work": null
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "bccb43053d5767d964f5b76c38c0e02024e47466b0da3943b90bdcb22feff9b7",
+    "changed": "caa79d61aff9c603f3dddf3b95794a4f2061924c144406ff8d3bbfcbe8ddbbe2",
+    "commit": "69708de1c98cbcb9bcfdff3629b7309181b0caee",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "chunk 2/2:\n\nOn native Windows, Node does not expose `O_NOFOLLOW` or `O_NONBLOCK` ([Node documentation](https://nodejs.org/docs/latest-v22.x/api/fs.html#file-open-constants)), so this guard always throws, including for a valid empty-array ledger. `validate-findings.cjs` has the same guard, as do the shipped host copies. Consequently, a Windows user cannot pass the mandatory ledger validation before hunting or complete the audit workflow. Provide a safe Windows validation path and test successful validation too: the added CLI test only expects exit code 1 for invalid input, so this unconditional refusal passes it.",
+        "file": "src/forge/templates/skills/security-audit/validate-coverage-ledger.cjs",
+        "line": 725,
+        "priority": "P2",
+        "title": "Both mandatory validators reject every input on Windows"
+      }
+    ],
+    "id": "cf9ef368-597e-45c0-8a52-ecfee449f2b0",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-05T07:54:16.688316+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-05T08:06:04.456574+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "7e203040ef2d5c4745cfcf8c666aa7816bd8ffd7",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
+}

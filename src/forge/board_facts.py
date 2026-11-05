@@ -10,6 +10,7 @@ import math
 import os
 import re
 import shutil
+import shlex
 from collections import Counter
 from concurrent.futures import Future, ThreadPoolExecutor
 from contextlib import ExitStack
@@ -20,6 +21,42 @@ from typing import Any
 from forge import board_trends, repo, story, time_records
 
 Item = dict[str, Any]
+
+
+def machine_next(lines: list[str]) -> dict[str, str | None]:
+    """Only the first Next line can be offered as a runnable step."""
+    line = next((line for line in lines if line.startswith("Next: ")), None)
+    command = line.removeprefix("Next: ") if line else ""
+    try:
+        words = shlex.split(command, comments=True)
+    except ValueError:
+        words = []
+    # Treat shell operators outside quotes as syntax, but allow quoted titles containing them.
+    lexer = shlex.shlex(command, posix=False, punctuation_chars=";&|<>`$()")
+    lexer.whitespace_split = True
+    try:
+        syntax = list(lexer)
+    except ValueError:
+        syntax = [";"]
+    unsafe = any(token and all(c in ";&|<>`$()" for c in token) for token in syntax)
+    runnable = (len(words) >= 2 and words[0] == "forge" and not unsafe
+                and not any(token in ("then", "or") for token in syntax)
+                and not re.search(r"<[^>]*>|\$\(|`|[\r\n]", command))
+    if runnable:
+        from forge.cli import _parser
+        try:
+            _parser().parse_args(words[1:])
+        except repo.Refused:
+            runnable = False
+    # A trailing shell comment explains the worker; it is not part of the command.
+    if runnable:
+        command = shlex.join(words) if "#" in command else command
+    return {"command": command if runnable else None,
+            "line": next((text for text in lines if not text.startswith("Next: ")),
+                         "Nothing in progress."),
+            "step": line.removeprefix("Next: ") if line else None}
+
+
 STORY_STATES = ("done", "building", "approved, not started", "waiting for approval", "planning", "no plan yet")
 IN_PROGRESS_STATES = ("building", "in progress", "ready to merge")  # the board page's In progress group
 WORK_STATES = ("done", "ready to merge", "in progress", "to do")

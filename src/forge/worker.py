@@ -41,6 +41,8 @@ SETTINGS = ("Workers never edit `forge.toml`. Never edit it even temporarily. It
             "change in your last message instead. To run an extra suite, run its command directly "
             "alongside `forge test`.")
 TEST_STEPS = {
+    "sample": ("walk each demo step in a browser and record its result in the `Proof list:`; "
+               "do not add or run automated tests or CI while `sample_data = true`."),
     "local": ("run the change's related tests through `forge test` in the foreground once, at the "
               "end of your turn. Wait for it to finish; rerun only what failed. Run tests only "
               "through `forge test`: it runs forge.toml's `fast_test`, "
@@ -292,7 +294,7 @@ def _work(args: argparse.Namespace) -> bool:
                             fresh_brief or brief, thread, fresh, chosen, family)
             return False
         start, clock = repo.now(), time.monotonic()
-        nudge = commit_nudge(config["test_place"])
+        nudge = commit_nudge(top)
         outcome = "failed"
         final = None
         asked = ""
@@ -430,6 +432,8 @@ def ready(top: Path, config: dict[str, Any], kind: str, on_codex: bool,
     claude's --model and --effort, or [] on Codex. The cold read (Grill) runs these checks too."""
     if not on_codex:
         if not native and (problem := claude_sdk.sdk_problem()):
+            if config["tools"] != "both":
+                refuse(repo.REFUSALS["tool_missing"], tool=config["tools"], name="Claude Agent SDK")
             refuse(REFUSALS["claude_sdk"], problem=problem, top=repo.quote(top))
         # A worker always names its models; a cold read with no entry runs on Claude's own.
         chosen = (repo.design_models(config, "claude") if design else
@@ -438,6 +442,8 @@ def ready(top: Path, config: dict[str, Any], kind: str, on_codex: bool,
         return ["--model", chosen["model"], "--effort", chosen["effort"]] if chosen else []
     problem = None if native else codex.sdk_problem(reuse=True)  # native sessions need no driver SDK
     if problem:
+        if config["tools"] != "both":
+            refuse(repo.REFUSALS["tool_missing"], tool=config["tools"], name="Codex SDK")
         refuse(REFUSALS["sdk"], problem=problem)
     if not design:  # a design round's Codex models are design_models', which never refuse
         codex.settings(config, kind)
@@ -576,12 +582,17 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
                                            repo.config(top)["interfaces"]) or "none",
                       allowance=state.get("allow_large") or "No recorded allowance")
     values["prototype_proof"] = ""
-    if not match["task"] and repo.is_prototype(top):
+    sample_data = not match["task"] and repo.sample_data(top)
+    if sample_data:
+        values["prototype_proof"] = sample_proof()
+        values["test_step"] = TEST_STEPS["sample"]
+    elif not match["task"] and repo.is_prototype(top):
         from forge import design
 
         if design.working_build(top, story.landed_ref(top)):
-            values["prototype_proof"] = (HERE / "templates" / "brief.md").read_text(
-                encoding="utf-8").split("<!-- prototype-proof -->\n", 1)[1].strip()
+            template = (HERE / "templates" / "brief.md").read_text(encoding="utf-8")
+            values["prototype_proof"] = template.split("<!-- prototype-proof -->\n", 1)[1].split(
+                "<!-- sample-data-proof -->\n", 1)[0].strip()
     if user_facing:
         on.add("user-facing")
     values["design_context"], owned_design = design_context(top, design_text, user_facing)
@@ -626,10 +637,14 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
         if user_facing:
             brief += "\n" + LIVE_RUN + "\n"
         brief += ("\nBefore you stop, commit your work first, then " + values["test_step"] + "\n")
-        brief += ("\n`forge close` pushes the committed branch and runs CI on every platform. "
-                  "CI output reaches you in your next round. If you need CI evidence, commit and "
-                  "stop instead of asking the coordinator to push or run CI. CI is the merge gate. "
-                  "Commit your local proof in the `Proof list:` without waiting for CI results or timings.\n")
+        if sample_data:
+            brief += ("\nWhile `sample_data = true`, `forge close` does not run tests or CI. "
+                      "Commit your browser-walk results in the `Proof list:`.\n")
+        else:
+            brief += ("\n`forge close` pushes the committed branch and runs CI on every platform. "
+                      "CI output reaches you in your next round. If you need CI evidence, commit and "
+                      "stop instead of asking the coordinator to push or run CI. CI is the merge gate. "
+                      "Commit your local proof in the `Proof list:` without waiting for CI results or timings.\n")
         if note is not None:
             brief += f"\n## From the coordinator\n\n{note}\n"
         if question:
@@ -648,9 +663,19 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
     return Template(text).safe_substitute(values), subject
 
 
-def commit_nudge(test_place: str) -> str:
+def sample_proof() -> str:
+    """The same sample-data proof in the full brief and an unfinished-round reminder."""
+    return (HERE / "templates" / "brief.md").read_text(encoding="utf-8").split(
+        "<!-- sample-data-proof -->\n", 1)[1].strip()
+
+
+def commit_nudge(top: Path) -> str:
     """Ask the worker to finish the round using its repo's selected test place."""
-    return Template(COMMIT_NUDGE).safe_substitute(test_step=TEST_STEPS[test_place])
+    cfg = repo.config(top)
+    sample = repo.sample_data(top, cfg)
+    prompt = Template(COMMIT_NUDGE).safe_substitute(
+        test_step=TEST_STEPS["sample" if sample else cfg["test_place"]])
+    return prompt + ("\n" + sample_proof() + "\n" if sample else "")
 
 
 def design_context(top: Path, text: str, user_facing: bool) -> tuple[str, str]:

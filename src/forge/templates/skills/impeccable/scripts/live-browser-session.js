@@ -1,3 +1,4 @@
+/* eslint-disable */
 /**
  * Browser-side durable session helpers for Impeccable live mode.
  *

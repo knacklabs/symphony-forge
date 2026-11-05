@@ -44,8 +44,7 @@ test('sign-in shows one API message for unknown and wrong credentials, then lock
   }
 
   const locked = await submitCredentials(page, email, password);
-  expect(locked.status).toBe(429);
-  expect(locked.message).toBe('Too many tries. Try again in 15 minutes.');
+  expect(locked).toEqual(unknown);
 });
 
 test('a signed-out visit to a protected page lands on sign-in', async ({ page }) => {

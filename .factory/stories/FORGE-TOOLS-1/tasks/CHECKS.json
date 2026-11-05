@@ -1,0 +1,68 @@
+{
+  "base": "e55a18a6066ebbdeeefcaba19b7f6375b1d5e59f",
+  "branch": "task/FORGE-TOOLS-1-CHECKS",
+  "chat": {
+    "approval": "cfc81a0c59c7e0dfa5cdf9a93d176cd9c217c3ccb5cc97f1dc76007ce0b55a05",
+    "claude": null,
+    "conversation": "01a1a8e8-c935-7521-aaef-b89b2b8d925a",
+    "head": null,
+    "start": "2f5c33400768d57203f846f4b6e67e82144a7c96"
+  },
+  "known": [
+    {
+      "area": "doctor() in src/forge/doctor.py",
+      "file": "src/forge/doctor.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 345,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Doctor skips repairable SDKs when their standalone CLI is absent",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "50e6f06448d0a7f099fa3a278cd0d2e7f3b42943afb994b7c2656332ce28a34c",
+    "changed": "efd0c17bdca9099d5cdc4eca51fab98fb03da25bc5f23a0f10d50b757744c3de",
+    "commit": "af0d34806017c9edf34096bbfa8e87d1dcb66dfd",
+    "dismissals": [],
+    "findings": [],
+    "id": "160ced71-e430-4f95-832f-72056c4e3e9a",
+    "status": "clean"
+  },
+  "round": 4,
+  "stacked_on": "FORGE-HANDOVER-1/HANDOVER",
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-04T23:32:50.241522+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-05T00:14:25.878394+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-05T00:17:52.319569+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-05T00:57:41.734361+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-05T01:50:33.161651+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "eb6bf410-e7f2-4ceb-8dbd-d5bf8ab9ad0e",
+    "head": "d3a47e64b947b592180561c411ab3ac2e1a293ec",
+    "keys": {},
+    "round": 3
+  },
+  "worker": "codex"
+}

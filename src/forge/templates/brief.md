@@ -23,7 +23,8 @@ If unreadable Autoreview output stops close, the refusal shows the saved output 
 From the second review round, close checks the previous round's findings and new P0s that
 happen in normal use. A round-one fix that breaks the main path counts as a P0. At the round
 limit, open findings below P0 need the owner's choice before they become follow-ups. `Not done` blocks
-only against an owner-approved Done-when item (the fix's whole Done-when line or any sentence in it); builder details
+only against an owner-approved Done-when item (the fix's whole Done-when line or any sentence in it),
+including a title that starts with that item and adds words after it; builder details
 are guidance and never block as `Not done`.
 Close blocks a `Not done` on the item's own Done-when even below the score bar or in a light
 review. Each non-blocking finding close lists shows its own reason with its Gain, Work and Harm scores.
@@ -81,6 +82,10 @@ Land prints the owner's question, open findings and failing checks, then exits w
 (needs a choice) instead of waiting. The coordinator records the choice, then runs `forge land <item>`
 again. Other stops and session subagent handoffs also print the open findings and failing checks.
 While land waits, commands share each pull request head's status snapshot across worktrees for 60 seconds.
+Land waits up to 90 minutes while a check is in progress, even without a status change.
+Checks that never start have a 30-minute no-progress limit. At either limit,
+no decision is needed. Run `forge land <item>` again to resume without restarting checks.
+`FORGE_CHECKS_WAIT` keeps its explicit no-progress wait instead of the longer running-check wait.
 
 When the owner narrows or splits a stopped story part, close writes the choice into that part's
 builder details and merges the plan into the task branch. The next worker round gets those details.
@@ -102,7 +107,9 @@ uses Autoreview's default. New and earlier-adopted repos get this behaviour on t
 After a red close test, a blocking review finding or a failed required check, a build, fix or
 lite round raises only its effort. Codex uses at least high and Claude at least xhigh.
 Design rounds keep their fixed effort. External Claude workers and cold reads use the Agent SDK;
-if it is missing, run `forge doctor --fix`. Cold reads use plan mode. Native rounds
+if it is missing, run `forge doctor --fix`. In a repo on one tool, a missing review program or
+driver SDK stops the run before its state commit. Run `forge doctor --fix` to repair the SDK.
+Cold reads use plan mode. Native rounds
 request the effort in their instructions and record it as requested.
 New repos start build, fix and lite at low effort on both tools. Existing repos keep
 their configured models and efforts; a failure round uses the higher of that effort
@@ -126,6 +133,7 @@ makes new parts wait for merges. A part that builds on another part keeps that b
 moves its own changes onto the default branch after the base merges through Forge.
 Close reviews only the stacked part's own changes and waits for its base to merge before CI and merge.
 After Forge merges the base, run the printed `forge close <part>` step to move the part onto the default branch.
+If a new part waits for its base to include an earlier merge, close that base first, then start the new part again.
 After a merge outside Forge, follow close's printed pull request target correction, then close the part again.
 The board and `forge next` show the part's base. After a clean review, they say that
 the part waits for its base to merge. After that merge, run `forge close <part>`.
@@ -332,6 +340,8 @@ skill whenever you write or change a test. Before you stop, commit your work fir
 For a pytest repo, the shipped picker is `forge test --pytest <base>`; it runs the repo's own
 test command without installing Forge in the project. This picker belongs in `fast_test`;
 workers run bare `forge test` to enter the lane.
+Codex full-access worker turns send permission requests to Forge, which accepts them,
+including requests to run `forge test`. Read-only turns decline permission requests.
 Root dependency files select the full test command. A nested project's dependency files
 select that project's tests and test files that name those dependency paths.
 A test module is shared setup when another test or conftest.py names it, including in a
@@ -485,8 +495,8 @@ It builds the API, agent tools, change history and tests without writing pages o
 Keep its organisation scoping, soft delete, restore and transactional change history.
 Each feature checks view, create, edit, delete and restore permissions on every screen and API call.
 Admins have all five. Members can view and create, but cannot edit, delete or restore and never
-see deleted items. Change the role mapping in the feature's permissions file only when the plan
-asks for it; keep that mapping in one place. Add unsupported field kinds by hand. If the command
+see deleted items. Change the role mapping in the feature's permissions file only when the plan's
+Roles table asks for it; keep that mapping in one place. Add unsupported field kinds by hand. If the command
 refuses a non-starter or an older starter, follow its named missing parts and build the feature
 by hand in the app's existing layout. Existing apps keep their code on upgrade and sync.
 
@@ -510,7 +520,15 @@ A feature's resources come from `defineFeatureTools`; add none by hand. Add a pr
 `definePrompt` only when your part names it, with a strict `arguments` schema and one
 permission. Never send an elicitation or a sampling request.
 
-In a client app with shadcn/ui set up, use shadcn/ui only. If the app has `libs/shared/ui`, add components with `npx shadcn@4.21.4 add <name> --cwd libs/shared/ui`. Close refuses a new UI component library and a new file outside the app's shadcn components folder (`libs/shared/ui/src/components/ui/` when it has that library) named like a shadcn/ui component. Review holds a hand-built UI component unless a `Not shadcn: <why>` comment says why.
+In a client app with shadcn/ui set up, use shadcn/ui only. If the app has `libs/shared/ui`, add components with `npx shadcn@4.21.4 add <name> --cwd libs/shared/ui`. Close refuses a new UI component library. Review holds a hand-built UI component unless a `Not shadcn: <why>` comment says why.
+
+In a feature that makes a record wait for a person, use the `notifications` module.
+Add `notify` in the same transaction as the change that makes a record wait;
+add `resolve` in the transaction of the action.
+A reassignment is `resolve` then `notify` in one transaction.
+Build the list and the count in the client's design, as FORGE-NOSCREENS-1 requires.
+No email until the SNS story. An app without the module gets it by hand from the
+Waiting records names in the guide when a feature first needs it.
 
 In an app with modules, use another module only through its public service, and never query a
 table it owns. The tests' module-boundary lint fails an import across modules, and a review holds
@@ -641,7 +659,13 @@ $prototype_proof
 For this unsigned prototype, test only the demo workflow steps, security and data boundaries.
 Map those tests in the commit's Proof list. No per-function proof is due in these rounds.
 This replaces the broader test and proof requirements above. The full proof is due at sign-off.
-For a working prototype, the sign-off Proof section lists each demo step and its test. The full
+For a working prototype, the sign-off Proof section lists each demo step and its test; a screenshot
+may be added as evidence. The full
 run on main must be green.
 The light review checks only demo breakage, security and data loss. Its model and effort come
 from `[models.light_review]`, or the review model at medium effort when that setting is absent.
+
+<!-- sample-data-proof -->
+## Sample-data proof
+While `sample_data = true`, walk each demo step in a browser and record its result in the `Proof list:`.
+Do not add or run automated tests or CI. This replaces the test and proof instructions above.
