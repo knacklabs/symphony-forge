@@ -1,10 +1,18 @@
 {
   "branch": "task/FORGE-ASSIST-1-HISTVIA",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-05T20:10:32.066128+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "87ec9460fb87ce17be37467a7535e1ed1688c5dd",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
