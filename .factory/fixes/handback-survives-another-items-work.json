@@ -4,12 +4,20 @@
   "done_when": "Starting a second item's forge work leaves the first item's running round able to hand back, proved by a command test that reproduces the reported order",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-05T10:10:23.007295+00:00",
       "step": "start"
     }
   ],
-  "why": "A build round's handback is refused as stopped or replaced when nothing stopped it, after another item's forge work starts (issue 1285)"
+  "stuck": {
+    "close": null,
+    "head": "363538bc0e305afd594fac44677969270e7370e9",
+    "keys": {},
+    "round": null
+  },
+  "why": "A build round's handback is refused as stopped or replaced when nothing stopped it, after another item's forge work starts (issue 1285)",
+  "worker": "codex"
 }
