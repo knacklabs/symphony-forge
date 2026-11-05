@@ -9,14 +9,24 @@
     "start": "d2ea4e132a5c7bdfe908c7c8cffb6c826ed806b4"
   },
   "done_when": "Test stand-in programs are written once per content into a shared read-only folder and linked into each test, Windows keeps copies, and the suite runs at least 8 percent faster on macOS with every test still passing",
+  "drop": {
+    "at": "2026-11-05T05:37:08.919922+00:00",
+    "because": "The owner dropped it on 5 Nov 2026: no finished work and far behind main",
+    "by": "vrknetha <vrknetha@gmail.com> 1793857028 +0530",
+    "status": "working"
+  },
   "fix_kind": "mechanical",
   "kind": "fix",
   "round": 2,
-  "status": "working",
+  "status": "dropped",
   "steps": [
     {
       "at": "2026-10-18T10:31:49.152754+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-05T05:37:08.920381+00:00",
+      "step": "drop"
     }
   ],
   "stuck": {
