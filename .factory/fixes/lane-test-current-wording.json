@@ -22,8 +22,8 @@
     "id": "ff6c6ac6-c819-43e7-8d9d-c12b05eac39c",
     "status": "clean"
   },
-  "round": 1,
-  "status": "waiting for checks",
+  "round": 2,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-05T14:26:35.455798+00:00",
@@ -35,10 +35,10 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "0c2d30c5e7316794d6450560a6c94c7603980999",
+    "close": "71f0f295-db95-4044-8204-37118865939a",
+    "head": "023409504931182838737260d85a471e84a9f386",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "One lane test on main still expects the old wording of the message shown when no related tests are selected",
   "worker": "codex"
