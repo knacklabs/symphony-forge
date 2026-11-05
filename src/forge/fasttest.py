@@ -1,6 +1,8 @@
 """Pick related tests in Forge; run pytest in the client's own environment."""
 import ast
+import codecs
 import configparser
+import io
 import json
 import os
 import re
@@ -8,6 +10,8 @@ import shlex
 import subprocess
 import sys
 import tempfile
+import threading
+import time
 import tomllib
 from pathlib import Path
 
@@ -547,6 +551,44 @@ def pytest_sessionfinish(session):
 """
 
 
+def test_output(process, *, lines=True):
+    """Report long silent waits while preserving partial output as activity."""
+    last_output = last_notice = time.monotonic()
+    stopped = threading.Event()
+
+    def watch():
+        nonlocal last_notice
+        while not stopped.wait(1):
+            now = time.monotonic()
+            if now - max(last_output, last_notice) >= 600 and process.poll() is None:
+                print(f"Tests have had no output for {int((now - last_output) // 60)} minutes. "
+                      "You can stop this run with forge stop.", flush=True)
+                last_notice = now
+
+    watcher = threading.Thread(target=watch, daemon=True)
+    watcher.start()
+    pending = ""
+    decoder = io.IncrementalNewlineDecoder(
+        codecs.getincrementaldecoder("utf-8")("replace"), translate=lines)
+    try:
+        for chunk in iter(lambda: process.stdout.buffer.read1(65536), b""):
+            last_output = time.monotonic()
+            text = decoder.decode(chunk)
+            if not lines:
+                yield text
+                continue
+            pending += text
+            while "\n" in pending:
+                line, pending = pending.split("\n", 1)
+                yield line + "\n"
+        pending += decoder.decode(b"", final=True)
+        if pending:
+            yield pending
+    finally:
+        stopped.set()
+        watcher.join()
+
+
 def test_process(top, item, command, env, entry, ran, log):
     """Stream one attempt's progress and stop its process group on interruption."""
     from forge import codex
@@ -558,7 +600,7 @@ def test_process(top, item, command, env, entry, ran, log):
         try:
             machine.started(entry, process.pid)
             output, total, completed, finished = [], None, 0, set()
-            for line in process.stdout:
+            for line in test_output(process):
                 sink.write(line)
                 sink.flush()
                 output.append(line)
@@ -684,9 +726,12 @@ def pytest_tests(base: str, command: str, entry: dict | None = None) -> int:
         from forge import codex
 
         with subprocess.Popen(narrow_command(command, excluded, workers, arguments), shell=True,
-                              env=environment, **codex.GROUP) as process:
+                              env=environment, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                              text=True, encoding="utf-8", errors="replace", **codex.GROUP) as process:
             try:
                 machine.started(entry, process.pid)
+                for chunk in test_output(process, lines=False):
+                    print(chunk, end="", flush=True)
                 return process.wait()
             except BaseException:
                 codex._stop(codex.identity(process.pid) or {"pid": process.pid}, True)
