@@ -4,12 +4,20 @@
   "done_when": "An approved story with no started part and no part records can be dropped, keeps its remote branch, and leaves forge next and the board; a story with a started part is still refused",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-05T10:12:32.642645+00:00",
       "step": "start"
     }
   ],
-  "why": "forge story drop refuses an approved story that has no started part, and gives no next step (issue 1362)"
+  "stuck": {
+    "close": null,
+    "head": "3c921e058e86cf6b92e84cc8c5315e576dd57b75",
+    "keys": {},
+    "round": null
+  },
+  "why": "forge story drop refuses an approved story that has no started part, and gives no next step (issue 1362)",
+  "worker": "codex"
 }
