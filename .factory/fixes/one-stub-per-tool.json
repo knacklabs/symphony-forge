@@ -2,12 +2,22 @@
   "base": "2845df61d0a256a343a91c5fccd8b23cbfc579f8",
   "branch": "fix/one-stub-per-tool",
   "done_when": "Tests use one shared stub per outside tool from the test support files, and no test file defines its own copy",
+  "drop": {
+    "at": "2026-11-05T05:37:00.897134+00:00",
+    "because": "The owner dropped it on 5 Nov 2026: no finished work and far behind main",
+    "by": "vrknetha <vrknetha@gmail.com> 1793857020 +0530",
+    "status": "started"
+  },
   "kind": "fix",
-  "status": "started",
+  "status": "dropped",
   "steps": [
     {
       "at": "2026-10-12T18:28:24.027181+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-05T05:37:00.897278+00:00",
+      "step": "drop"
     }
   ],
   "why": "Each test file keeps its own stub of GitHub, Autoreview, Codex or Claude, so one stub bug (stdin encoding, a missing score line) was fixed in four or five places"
