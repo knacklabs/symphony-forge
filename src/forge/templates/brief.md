@@ -517,6 +517,14 @@ permission. Never send an elicitation or a sampling request.
 
 In a client app with shadcn/ui set up, use shadcn/ui only. If the app has `libs/shared/ui`, add components with `npx shadcn@4.21.4 add <name> --cwd libs/shared/ui`. Close refuses a new UI component library. Review holds a hand-built UI component unless a `Not shadcn: <why>` comment says why.
 
+In a feature that makes a record wait for a person, use the `notifications` module.
+Add `notify` in the same transaction as the change that makes a record wait;
+add `resolve` in the transaction of the action.
+A reassignment is `resolve` then `notify` in one transaction.
+Build the list and the count in the client's design, as FORGE-NOSCREENS-1 requires.
+No email until the SNS story. An app without the module gets it by hand from the
+Waiting records names in the guide when a feature first needs it.
+
 In an app with modules, use another module only through its public service, and never query a
 table it owns. The tests' module-boundary lint fails an import across modules, and a review holds
 a new query on another module's tables.
