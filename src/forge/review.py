@@ -825,11 +825,24 @@ def round_number(top: Path, item: str, state: dict[str, Any]) -> int | None:
     return max([finished, *recorded]) + 1
 
 
+def require_engine(cfg: dict[str, Any]) -> str:
+    """Select the review program and refuse a missing single-tool engine before any writes."""
+    tool = cfg["tools"]
+    if tool == "both":
+        return "codex" if shutil.which(os.environ.get("CODEX_BIN") or "codex") else "claude"
+    program = (os.environ.get("CODEX_BIN") or "codex") if tool == "codex" else "claude"
+    if not shutil.which(program):
+        repo.refuse(repo.REFUSALS["tool_missing"], tool=tool,
+                    name="Codex" if tool == "codex" else "Claude Code")
+    return tool
+
+
 def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         base: str, selected: dict[str, str], previous: dict[str, Any],
         signoff_prompt: str = "", light: bool = False, tested: str = "",
         images: set[str] | None = None, only: set[str] | None = None) -> dict[str, Any]:
     """Review the branch head once, retrying once when a run doesn't finish. Returns the result."""
+    selected_engine = require_engine(cfg)
     from forge import design, records, story  # story imports review indirectly
     prototype = (light and not signoff_prompt and state.get("kind") == "fix"
                  and repo.is_prototype(top, cfg, (base, "HEAD")) and design.working_build(top, base))
@@ -926,9 +939,7 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                        prompt + "\n\n" + string.Template(rules).substitute(
                            standards=(Path(__file__).parent / "standards.md").read_text(
                                encoding="utf-8").strip()))
-        engine = cfg["tools"]
-        if engine == "both":
-            engine = "codex" if shutil.which(os.environ.get("CODEX_BIN") or "codex") else "claude"
+        engine = selected_engine
         argv = [sys.executable, str(helper()), "--mode", "branch", "--base", review_base,
                 "--engine", engine,
                 "--max-priority", "P3",  # the P0-only level applies after scoring

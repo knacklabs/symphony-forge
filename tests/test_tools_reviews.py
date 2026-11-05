@@ -76,7 +76,10 @@ def _doctor_defaults(env, tmp_path, monkeypatch, adopted):
     monkeypatch.delenv("CLAUDECODE", raising=False)
     _stub_forge(tmp_path, monkeypatch)
     checked = repo.forge("doctor", cwd=client)
-    assert checked.returncode == 0, checked.stdout + checked.stderr
+    # Both programs are installed, so Codex's kit is reachable even with Claude workers.
+    # Missing-tool coverage owns repair; this case still checks the review-model note.
+    assert checked.returncode == 1, checked.stdout + checked.stderr
+    assert "Codex SDK" in checked.stdout
     note = "- Note: reviews don't use forge.toml's review model; Autoreview runs on its own default model and effort."
     assert note not in checked.stdout
     assert config.read_bytes() == before

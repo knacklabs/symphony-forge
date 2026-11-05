@@ -198,6 +198,7 @@ def close(args: argparse.Namespace) -> int:
         return done
 
     previous = state.get("review") or {}
+    review.require_engine(cfg)  # before merging the default branch or committing any state
     legacy_diff = None
     if (previous and "branch_diff" not in previous and previous.get("changed") ==
             review.fingerprint("HEAD", item, top, state, f"origin/{default}")):

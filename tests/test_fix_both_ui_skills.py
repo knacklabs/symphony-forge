@@ -8,6 +8,7 @@ from conftest import patient
 
 from test_close import env  # noqa: F401 (pytest fixture)
 from test_setup import _autoreview, _executable, _fresh_client, _stub_forge
+from test_setup import doctor_sdks, sdk_data  # noqa: F401
 from test_worker import calls, install_claude
 
 import pytest
@@ -66,7 +67,7 @@ def test_2_worker_and_review_get_both_ui_skills_and_blocking_checks(env):
 
 @pytest.mark.platform
 def test_3_doctor_requires_both_ui_skills_where_the_worker_reads_them(repo, gh, tmp_path,
-                                                                       monkeypatch):
+                                                                       monkeypatch, doctor_sdks):
     client, initialized = _fresh_client(repo, gh, tmp_path)
     assert initialized.returncode == 0, initialized.stderr
     config = client / "forge.toml"

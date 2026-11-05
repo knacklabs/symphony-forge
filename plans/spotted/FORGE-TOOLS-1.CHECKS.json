@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/doctor.py\tDoctor skips repairable SDKs when their standalone CLI is absent\tFORGE-TOOLS-1/CHECKS",
+      "kind": "bug",
+      "path": "src/forge/doctor.py",
+      "line": 345,
+      "text": "Doctor skips repairable SDKs when their standalone CLI is absent",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/CHECKS",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

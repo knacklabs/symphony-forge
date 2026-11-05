@@ -89,7 +89,10 @@ def test_6_claude_workers_use_resumable_sdk_turns_and_stop_their_tree(
             try:
                 missing = host.forge("read", "SHOP", cwd=shop)
                 assert missing.returncode == 1, missing.stdout + missing.stderr
-                assert f"The Claude Agent SDK {PIN} isn't installed" in missing.stderr
+                # One-tool repos now use the common missing-tool refusal.
+                assert missing.stderr == (
+                    "forge.toml's tools is claude, so this runs on Claude Agent SDK, which isn't installed. "
+                    "Forge won't use the other tool instead.\nNext: forge doctor --fix\n")
                 assert "forge doctor --fix" in missing.stderr
                 assert calls(sdk_log) == []
                 assert not (shop / "plans/SHOP.read.md").exists()
