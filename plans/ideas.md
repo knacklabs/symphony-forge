@@ -1,1 +1,2 @@
 - 2026-10-30: Email for client apps (password reset, invites, sign-up check) through SNS or SES directly, when a client needs it (moved out of FORGE-MAIL-1 on 30 Oct 2026 by the owner)
+- 2026-11-05: An in-app chat assistant for client apps, built only when a client asks. The plan is on the story/FORGE-ASSIST-1 branch; the owner approves it with that client's facts.

@@ -57,7 +57,7 @@ LISTED.update(f"{host}/skills/forge/run-reference.md" for host in (".claude", ".
 # Init and sync now also deliver the complete pinned design skills to client repos.
 LISTED.update(f"{host}/skills/{path.relative_to(source).as_posix()}"
               for source in (Path(__file__).resolve().parents[1] / "src/forge/templates/skills",)
-              for name in ("impeccable", "emil-design-eng")
+              for name in ("impeccable", "emil-design-eng", "security-audit")
               for path in (source / name).rglob("*") if path.is_file()
               for host in (".claude", ".codex"))
 # The old first commit had only Forge docs and config; it now includes deploy files.

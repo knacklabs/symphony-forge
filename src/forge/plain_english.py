@@ -1,4 +1,4 @@
-"""Ship the bundled Simplified Technical English skill to both agent hosts."""
+"""Ship bundled writing and security audit skills to both agent hosts."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -13,5 +13,8 @@ FILES = ("SKILL.md", "LICENSE", "NOTICE.md", "references/writing-rules.md",
 def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
     from forge import sync
 
-    return {f"{host}/{SKILL}/{name}": (sync.TEMPLATES / SKILL / name).read_text(encoding="utf-8")
-            for host in (".claude", ".codex") for name in FILES}
+    paths = [sync.TEMPLATES / SKILL / name for name in FILES]
+    paths.extend(sorted((sync.TEMPLATES / "skills/security-audit").rglob("*")))
+    return {f"{host}/{path.relative_to(sync.TEMPLATES).as_posix()}":
+            path.read_bytes().decode("utf-8")
+            for host in (".claude", ".codex") for path in paths if path.is_file()}
