@@ -1,0 +1,60 @@
+{
+  "amendments": [
+    {
+      "at": "2026-11-05T16:28:29.001715+00:00",
+      "because": "The full run on main found the guide copies out of date for the same kind of reason",
+      "done_when": "The test checks the current wording and passes"
+    }
+  ],
+  "base": "f65b03cc3e118ba2c39e5c4fca646f5cf989e24c",
+  "branch": "fix/lane-test-current-wording",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1ac1a-de16-7621-a79b-85e30841e816",
+    "head": null,
+    "start": "83c5e9094ac60ca29f0871943b1166cc5ce33a26"
+  },
+  "done_when": "The lane test checks the current wording, the guide copies in this repo match the shipped guide, and both tests pass",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "1d9f4ae4c938eee17a36786ab5bf84f93a26202fe84a6a7c4f1f61125614af65",
+    "changed": "18a39a16f817416f9e0f42c117edb98a2a24d7faa1c475004416e17d1633bf5c",
+    "commit": "3ffb0457eb3e21579649ccd37beda181e8bc894e",
+    "dismissals": [],
+    "findings": [],
+    "id": "b6d59b7e-5112-4b1d-b05d-3b0c42e772ed",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-05T14:26:35.455798+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-05T14:29:40.596118+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-05T15:10:29.777919+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-05T16:32:16.833095+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "6a2a1ed8-65d5-457f-b041-023b5b9478b9",
+    "head": "4b00e824a9895a303c19effdcfcb42f753fd0e0d",
+    "keys": {},
+    "round": 2
+  },
+  "why": "One lane test on main still expects the old wording of the message shown when no related tests are selected",
+  "worker": "codex"
+}
