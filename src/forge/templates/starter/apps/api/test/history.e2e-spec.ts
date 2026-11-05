@@ -1,8 +1,34 @@
 import request from 'supertest';
 import { describe, expect, it } from 'vitest';
-import { apiBaseUrl, credentials, csrfToken, invite } from './helpers';
+import { apiBaseUrl, callNotifications, credentials, csrfToken, invite } from './helpers';
 
 describe('change history', () => {
+  it('the history list carries viaAgent; the CSV Who column shows the email followed by ", via the assistant"; a change with no agent shows the email only', async () => {
+    const person = credentials();
+    const client = request.agent(apiBaseUrl);
+    const signedUp = await client.post('/api/v1/auth/sign-up').send(person).expect(201);
+    // Record through the real service in the API container; there is no assistant route yet.
+    expect(callNotifications(`
+      const history = app.get('HistoryApi');
+      const membership = await organisations.membershipFor(${JSON.stringify(signedUp.body.data.id)});
+      if (!membership) throw new Error('The person has no membership.');
+      const principal = { id: ${JSON.stringify(signedUp.body.data.id)}, email: ${JSON.stringify(person.email)}, organisationId: membership.organisationId };
+      await history.record({ ...principal, viaAgent: 'the assistant' }, 'project.created', 'Assistant change');
+      await history.record(principal, 'project.updated', 'Direct change');
+      return 'recorded';
+    `)).toBe('recorded');
+    const listed = await client.get('/api/v1/history').expect(200);
+    expect(listed.body.data).toHaveLength(2);
+    expect(listed.body.data.find((entry: { summary: string }) => entry.summary === 'Assistant change'))
+      .toEqual(expect.objectContaining({ actorEmail: person.email, viaAgent: 'the assistant' }));
+    const direct = listed.body.data.find((entry: { summary: string }) => entry.summary === 'Direct change');
+    expect(direct.actorEmail).toBe(person.email);
+    expect(direct).not.toHaveProperty('viaAgent');
+    const csv = (await client.get('/api/v1/history/export').expect(200)).text;
+    expect(csv).toContain(`,"${person.email}, via the assistant",Assistant change\r\n`);
+    expect(csv).toContain(`,${person.email},Direct change\r\n`);
+  });
+
   it('an invite and a role change write change history', async () => {
     const admin = credentials();
     const invited = credentials();

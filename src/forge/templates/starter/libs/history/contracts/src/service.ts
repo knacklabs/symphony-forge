@@ -11,7 +11,7 @@ export type HistoryPrincipal = {
 /** The changed item; its name prefixes the summary on the Change history screen. */
 export type HistorySubject = { id: string; name: string };
 
-export type HistoryEntry = { id: string; actorEmail: string; summary: string; createdAtUtc: string };
+export type HistoryEntry = { id: string; actorEmail: string; viaAgent?: string; summary: string; createdAtUtc: string };
 
 export interface HistoryApi {
   /** `tx` is the caller's open transaction, so the change and its history row commit together. */

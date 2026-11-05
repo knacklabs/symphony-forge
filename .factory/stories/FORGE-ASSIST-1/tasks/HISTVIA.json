@@ -1,0 +1,40 @@
+{
+  "branch": "task/FORGE-ASSIST-1-HISTVIA",
+  "chat": {
+    "approval": "c276549ec321871ed6b007a41985ed8ac0386fa2eb30ff0ce7b634bfea33d386",
+    "claude": null,
+    "conversation": "01a1ad56-3341-76f2-ae80-88f17c5365ed",
+    "head": null,
+    "start": "4a0747b62d389fd9f2136ff62bb4854d31720113"
+  },
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "d655ccf3e0edfeffb84e8fac9109fc163a850608397b3343f56b89616d0bf0ca",
+    "changed": "4133cb78f05b26b7360b8374b938342fd9ae12227e71746e9d2cbd4bde673584",
+    "commit": "acfee577333ce7b0f8dd6eb46831a2f0ccd68678",
+    "dismissals": [],
+    "findings": [],
+    "id": "c89ed00a-45eb-4f92-8331-21bddf21bb47",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-05T20:10:32.066128+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-05T20:20:34.276274+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "87ec9460fb87ce17be37467a7535e1ed1688c5dd",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
+}
