@@ -4,12 +4,20 @@
   "done_when": "tests/test_tools_missing.py passes in the Windows run of forge-next.yml, with every case on Linux and macOS still proving the same behaviour",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-05T03:17:23.991246+00:00",
       "step": "start"
     }
   ],
-  "why": "On Windows the new missing-tools test fails in three cases (doctor-codex, doctor-kit-codex-both, doctor-both-both), so the full Windows run before a release is red"
+  "stuck": {
+    "close": null,
+    "head": "1b07a62fb798b36e2b6889acbc81d5fcf58ec2c3",
+    "keys": {},
+    "round": null
+  },
+  "why": "On Windows the new missing-tools test fails in three cases (doctor-codex, doctor-kit-codex-both, doctor-both-both), so the full Windows run before a release is red",
+  "worker": "codex"
 }
