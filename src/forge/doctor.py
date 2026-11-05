@@ -342,8 +342,8 @@ def doctor(args: argparse.Namespace) -> int:
                 "claude": shutil.which("claude")}
     if cfg["tools"] != "both" and not programs[cfg["tools"]]:
         add(f"{cfg['tools']} is not installed or not on PATH.", INSTALL[cfg["tools"]])
-    needs_sdk = bool(programs["codex"] and (cfg["tools"] == "both" or
-                    cfg["tools"] == "codex" and programs["claude"]))
+    # Kits supply their own executables; their repair needs no standalone program.
+    needs_sdk = bool(cfg["tools"] == "both" or cfg["tools"] == "codex" and programs["claude"])
     sdk_failed = ""
     if args.fix and needs_sdk and shutil.which("uv") and codex.sdk_problem():
         try: codex.install()
@@ -356,8 +356,7 @@ def doctor(args: argparse.Namespace) -> int:
     if on_codex and init.signed_in("codex", top) is False:
         add("Codex is not signed in.", "codex login")
     if needs_sdk and (problem := sdk_failed or codex.sdk_problem()): add(problem)
-    needs_claude_sdk = bool(programs["claude"] and (cfg["tools"] == "both" or
-                           cfg["tools"] == "claude" and programs["codex"]))
+    needs_claude_sdk = bool(cfg["tools"] == "both" or cfg["tools"] == "claude" and programs["codex"])
     claude_failed = ""
     if args.fix and needs_claude_sdk and shutil.which("uv") and claude_sdk.sdk_problem():
         try: claude_sdk.install()

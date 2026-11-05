@@ -24,7 +24,6 @@ def _hide(repo, names):
         "import shutil\n_original_which = shutil.which\n"
         f"shutil.which = lambda name, *a, **k: None if name in {names!r} else _original_which(name, *a, **k)\n"
         "from forge.cli import main"), encoding="utf-8")
-    return original
 
 
 @pytest.mark.platform
@@ -32,7 +31,7 @@ def _hide(repo, names):
     ("review", "claude"), ("review", "codex"), ("review-override", "codex"),
     ("work", "claude"), ("work", "codex"), ("read", "claude"), ("read", "codex"),
     ("doctor", "claude"), ("doctor", "codex"), ("doctor-both", "both"),
-    ("doctor-adopted", "claude"),
+    ("doctor-adopted", "claude"), ("doctor-kit-codex", "both"),
 ])
 def test_8_missing_tools_stop_plainly_and_doctor_repairs_them(env, tmp_path, monkeypatch, case, tool):
     repo = env.repo
@@ -54,23 +53,23 @@ def test_8_missing_tools_stop_plainly_and_doctor_repairs_them(env, tmp_path, mon
     if case.startswith("doctor"):
         _install(repo.bin, "codex", f'#!{sys.executable}\nimport sys\n'
                  f'print("codex-cli {PIN}" if sys.argv[1:] == ["--version"] else "Logged in using ChatGPT")\n')
-        # Both + only Codex must show the Codex SDK row regardless of workers or host.
+        # The SDK supplies its own program. Keep a standalone program absent
+        # through repair so doctor's recovery works for SDK-only kit runs too.
         if tool == "both":
-            _hide(repo, ["claude"])
+            _hide(repo, ["codex"] if case == "doctor-kit-codex" else ["claude"])
         (claude / "forge-sdk-ready").unlink(missing_ok=True)
         (codex / "forge-sdk-ready").unlink(missing_ok=True)
         if tool != "both":
-            original = _hide(repo, [tool])
+            _hide(repo, [tool])
             missing = repo.forge("doctor")
             assert f"{tool} is not installed or not on PATH." in missing.stdout
             assert ("npm install -g @openai/codex" if tool == "codex" else
                     "npm install -g @anthropic-ai/claude-code") in missing.stdout
-            (repo.bin / "forge").write_text(original, encoding="utf-8")
         checked = repo.forge("doctor")
         label = "Claude Agent SDK" if tool == "claude" else "Codex SDK"
         assert label in checked.stdout, checked.stdout + checked.stderr
         if tool == "both":
-            assert "Claude Agent SDK" not in checked.stdout
+            assert "Claude Agent SDK" in checked.stdout
         uv = UV_STUB.format(python=sys.executable, program=str(repo.bin / "codex"), pin=PIN)
         # The package manager supplies the SDK's public module and distribution metadata.
         claude_install = '''elif args[-1].startswith("claude-agent-sdk=="):
@@ -88,9 +87,13 @@ else:
         assert f"Installed the {label}" in fixed.stdout, fixed.stdout + fixed.stderr
         again = repo.forge("doctor")
         assert label not in again.stdout, again.stdout + again.stderr
+        if tool == "both":
+            assert "Claude Agent SDK" not in again.stdout, again.stdout + again.stderr
         requests = [json.loads(line) for line in (repo.bin / "uv-calls.jsonl").read_text("utf-8").splitlines()]
         package = f"claude-agent-sdk=={CLAUDE_PIN}" if tool == "claude" else f"openai-codex=={PIN}"
         assert any(call[-1] == package for call in requests)
+        if tool == "both":
+            assert any(call[-1] == f"claude-agent-sdk=={CLAUDE_PIN}" for call in requests)
         return
     if case == "read":
         approved_constitution(repo)
