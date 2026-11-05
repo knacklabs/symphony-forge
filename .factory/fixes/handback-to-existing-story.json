@@ -36,8 +36,8 @@
     "id": "8be60a38-dab0-459e-ab15-e45cc4684732",
     "status": "clean"
   },
-  "round": 2,
-  "status": "waiting for checks",
+  "round": 3,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-05T20:10:41.129964+00:00",
@@ -62,10 +62,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": "445d8304-fa91-4c37-b1e4-b853d3b3c863",
-    "head": "d71399cf874f1b39dc9b2064098b34ebdf5d34d9",
+    "close": "7db1ec24-b1b7-452d-8365-0d613885deae",
+    "head": "58c621bc7dbdb8e09ebec763fcbf80b8a983554a",
     "keys": {},
-    "round": 1
+    "round": 2
   },
   "why": "Handing back an intake as a plan with a story key that already has a branch prints a raw git worktree error and points to forge doctor, although the intake is used (issue 1388)",
   "worker": "codex"
