@@ -227,10 +227,6 @@ def test_3_a_big_idea_starts_a_story_with_a_first_plan(intake):
     next_step = repo.forge("next", cwd=top)
     assert next_step.returncode == 0, next_step.stdout + next_step.stderr
     assert "forge read SAVE" in next_step.stdout
-    occupied = _offer(intake, "Another basket idea")
-    refused = _back(intake, occupied, reply)
-    assert refused.returncode == 1
-    assert "already" in refused.stderr.lower()
 
 
 def _plan(key="SAVE"):

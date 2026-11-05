@@ -817,10 +817,10 @@ def story_checkout(key: str, top: Path | None = None) -> Path:
 
 
 def add_worktree(top: Path, branch: str, start: str) -> Path:
-    """A new branch in its own worktree, next to the main checkout."""
+    """A branch in its own worktree; start at itself to check out an existing branch."""
     main = Path(repo.git("rev-parse", "--path-format=absolute", "--git-common-dir", cwd=top)).parent
     path = main.parent / f"{main.name}-{branch.replace('/', '-')}"
-    repo.git("worktree", "add", "-q", "-b", branch, str(path), start, cwd=top)
+    repo.git("worktree", "add", "-q", *([] if start == branch else ["-b", branch]), str(path), start, cwd=top)
     return path
 
 

@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/intake.py\tPreserve plan structure when appending intake requirements\thandback-to-existing-story",
+      "kind": "bug",
+      "path": "src/forge/intake.py",
+      "line": 141,
+      "text": "Preserve plan structure when appending intake requirements",
+      "from": "blocking",
+      "item": "handback-to-existing-story",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
