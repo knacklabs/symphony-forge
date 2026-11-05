@@ -11,7 +11,7 @@
   "done_when": "forge test runs the configured test command on Windows for a forge.toml that PowerShell or Windows tools wrote, and a repo with no test command still says so",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "round": 1,
+  "round": 2,
   "status": "working",
   "steps": [
     {
