@@ -546,6 +546,12 @@
       "title": "Security audit skill for client apps",
       "status": "pending",
       "order": 114
+    },
+    {
+      "key": "FORGE-UISTANDARDS-1",
+      "title": "Client app designs stop looking machine-made",
+      "status": "pending",
+      "order": 115
     }
   ],
   "epics": [
