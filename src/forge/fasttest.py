@@ -315,7 +315,11 @@ def test(args) -> int:
         top = repo.root()
         cfg = repo.config(top)
         if not (cfg["fast_test"] or cfg["test"]):
-            print("forge.toml names no test command, so forge test ran none.")
+            if repo.sample_data(top, cfg):
+                print("This is a sample-data prototype, so tests are off until client sign-off.\n"
+                      "After sign-off, ask the coordinator to set sample_data = false in forge.toml.")
+            else:
+                print("forge.toml names no test command, so forge test ran none.")
             return 0
         base = f"origin/{repo.default_branch(top)}"
         if repo.run("git", "rev-parse", "--verify", base, cwd=top).returncode:
