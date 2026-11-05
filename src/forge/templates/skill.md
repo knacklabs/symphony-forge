@@ -1759,6 +1759,7 @@ Init writes `groups = 1` for new and adopted repos. An upgrade adds no `groups` 
 existing repo with a direct pytest command and pytest-split keeps its six groups. Each group then
 runs its share of the related tests through `forge test --change`. The required `tests` check passes
 only when every job passes; branch protection keeps the same `tests` check.
+A full run covers only `forge.toml`'s `test` command; if the repo's whole suite runs elsewhere, point that setting at it.
 In CI mode, `forge.yml` also runs `forge test --full` once a day on the default branch and supports
 `workflow_dispatch`. To start a full run now, run `gh workflow run forge.yml --ref <default>`.
 Local mode has no scheduled job; when `forge next` says the daily run is due, run `forge test --full`
