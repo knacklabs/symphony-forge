@@ -1,6 +1,13 @@
 {
   "base": "703ba9090a1dbb251d9a64b0becd5ab22f798bdf",
   "branch": "fix/windows-git-diff-option-order",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1ad42-7d70-7a10-a85a-e40a50687e1c",
+    "head": null,
+    "start": "3ec37c4be81c6e42354259292e2b3453a80f67ba"
+  },
   "done_when": "A chosen pytest file runs through forge test on Windows and on Linux, and git diff gets its options before any path",
   "fix_kind": "mechanical",
   "kind": "fix",
