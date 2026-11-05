@@ -337,7 +337,10 @@ def preserve_chats(top: Path) -> None:
             if owner is None and folder == "read" and not branch and (
                     top / "docs/specs" / f"{item}.md").is_file():
                 owner = top  # A landed spec's notes travel with the upgrade fix to the default branch.
-            if owner is None:
+            if owner is None or not owner.is_dir():
+                if owner is not None:
+                    print(f"Warning: The checkout for {item}'s chat no longer exists. "
+                          "Its saved chat record stays on this machine.")
                 return
             try:
                 kind = "Grill" if folder == "read" else "Fix"
