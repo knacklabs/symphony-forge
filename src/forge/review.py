@@ -411,6 +411,7 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False,
             results.write_text(passed.read_text("utf-8"), "utf-8")
             return 0, skipped
         entry = machine.join("test", top, item, None, None)
+        preload_folder = tempfile.TemporaryDirectory(prefix="forge-node-")
         try:
             if passed and passed.exists():  # the close this one waited for passed the same files
                 results.write_text(passed.read_text("utf-8"), "utf-8")
@@ -418,7 +419,7 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False,
             from forge import fasttest
 
             env = {**os.environ, "FORGE_WORKER": "1"}
-            fasttest.node_worker_environment(env)
+            fasttest.node_worker_environment(env, preload_folder.name)
             # Every pytest the command starts, the client's own or Forge's picker, loads Forge's
             # results hook, which no command option can turn off.
             hook = repo.forge_dir(top) / "pytest"
@@ -486,6 +487,7 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False,
                 # The run's per-test results, so a close that skips this run still lists them.
                 passed.write_text(results.read_text("utf-8") if results.is_file() else "", "utf-8")
         finally:
+            preload_folder.cleanup()
             machine.leave(entry)
         out = [line.rstrip() for line in done.stdout.splitlines()]
         picked = sorted({i for n, line in enumerate(out) if "skip" in line.lower()

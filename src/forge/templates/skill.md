@@ -1856,6 +1856,8 @@ Lower caps and Jest's serial options `--runInBand` and `-i` stay as written.
 Forge does not change npm, pnpm or yarn scripts to set their worker budget.
 It keeps existing `NODE_OPTIONS` and adds a Node preload that caps the actual runner's arguments,
 so package scripts keep their lifecycle hooks and share the same process budget.
+Each run copies the installed preload helper to its own temporary folder, so replacement
+workers can still load it if an upgrade removes the installation during the run.
 Those scripts can read `FORGE_TEST_CPUS`. If the test command runs Vitest through a script
 with Vitest projects, pass `--maxWorkers=${FORGE_TEST_CPUS:-2}` on the command line,
 for example `npm test -- --maxWorkers=${FORGE_TEST_CPUS:-2}`, instead of setting the cap

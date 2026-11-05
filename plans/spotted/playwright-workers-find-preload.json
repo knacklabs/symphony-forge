@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "edge\ttests/test_node_preload_lifetime.py\tFollow-up: Cover real Playwright replacement workers on Windows",
+      "kind": "edge",
+      "path": "tests/test_node_preload_lifetime.py",
+      "line": 33,
+      "text": "Follow-up: Cover real Playwright replacement workers on Windows",
+      "from": "review",
+      "item": "playwright-workers-find-preload",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

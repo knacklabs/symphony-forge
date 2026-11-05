@@ -25,8 +25,8 @@ COMMANDS = [{"words": "test", "run": "test", "changes_state": False,
              "listing": "| `forge test` | Run fast_test (else test) in the machine test lane; `--change` runs the change's related tests and checks; `--pytest <base>` picks related pytest tests. |"}]
 
 
-def git_files(*args: str) -> list[str]:
-    return subprocess.run(["git", *args, "-z"], check=True, capture_output=True,
+def git_files(command: str, *args: str) -> list[str]:
+    return subprocess.run(["git", command, "-z", *args], check=True, capture_output=True,
                           text=True).stdout.split("\0")[:-1]
 
 
@@ -64,10 +64,12 @@ def pytest_options(arguments: list[str]) -> str:
 XDIST = re.compile(r'''(?:^|[\s"'=])(?:-n(?:\s|\d|auto|logical)|--numprocesses(?:=|\s))''')
 
 
-def node_worker_environment(environment: dict[str, str]) -> None:
+def node_worker_environment(environment: dict[str, str], folder: str) -> None:
     """Enforce the allocation when a Node runner starts, including inside package scripts."""
-    preload = "--require " + json.dumps(Path(__file__).with_name("node_workers.cjs").as_posix(),
-                                       ensure_ascii=False)
+    # Replacement workers can start after an upgrade removes this installation.
+    helper = Path(folder) / "node_workers.cjs"
+    helper.write_bytes(Path(__file__).with_name("node_workers.cjs").read_bytes())
+    preload = "--require " + json.dumps(helper.as_posix(), ensure_ascii=False)
     options = environment.get("NODE_OPTIONS", "")
     if preload not in options:
         environment["NODE_OPTIONS"] = f"{options} {preload}".strip()
@@ -661,7 +663,6 @@ def pytest_tests(base: str, command: str, entry: dict | None = None) -> int:
     workers = machine.test_cpus(allocation)
     environment["PYTEST_XDIST_AUTO_NUM_WORKERS"] = workers
     environment["FORGE_TEST_CPUS"] = workers
-    node_worker_environment(environment)
     if entry is not None:
         environment["FORGE_TEST_LANE"] = entry["id"]
     excluded = []
@@ -713,6 +714,7 @@ def pytest_tests(base: str, command: str, entry: dict | None = None) -> int:
         print("Related tests: " + ", ".join(picked + always + named), flush=True)
     # A temporary pytest hook supports pre-8.2 clients without filling cmd.exe's command line.
     with tempfile.TemporaryDirectory(prefix="forge-pytest-") as folder:
+        node_worker_environment(environment, folder)
         if excluded or always or named:
             selection = Path(folder) / "_forge_pytest_selection.py"
             selection.write_text(SELECTION.format(repr(excluded), repr(None if shared_changed else picked),
