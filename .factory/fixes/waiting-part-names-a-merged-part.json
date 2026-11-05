@@ -22,8 +22,8 @@
     "id": "ca333905-fc5f-4f45-87dd-e1c94567f1c3",
     "status": "clean"
   },
-  "round": 1,
-  "status": "waiting for checks",
+  "round": 2,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-05T10:10:18.040731+00:00",
@@ -39,10 +39,10 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "fc8be25a5a6e53e46ce969d80a0c98ab9155b5b6",
+    "close": "aeb31e4d-683c-4540-ba91-68b30e7a3e76",
+    "head": "15fb66433cbf84c85ec97f173fd9fce11dc8b7f7",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "forge task start and forge next say a part starts once a named part merges, after that part has already merged, because its base branch does not yet contain the merge (issue 1154)",
   "worker": "codex"
