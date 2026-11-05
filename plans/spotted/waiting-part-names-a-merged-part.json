@@ -10,6 +10,17 @@
       "item": "waiting-part-names-a-merged-part",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_lanes_tests.py\tThe dirty-picker case still expects the former empty-selection message after the command text changed.",
+      "kind": "bug",
+      "path": "tests/test_lanes_tests.py",
+      "line": 402,
+      "text": "The dirty-picker case still expects the former empty-selection message after the command text changed.",
+      "from": "worker",
+      "item": "waiting-part-names-a-merged-part",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
