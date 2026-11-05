@@ -1,0 +1,15 @@
+{
+  "base": "c2c77fbcb2c3967df64f07b77b6f5487b8f89771",
+  "branch": "fix/silent-test-run-says-so",
+  "done_when": "A forge test run with no output for 10 minutes prints one plain line saying how long it has been silent and how to stop it, and the run is not killed",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-05T10:10:27.434626+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "A forge test run can sit silent at 0% CPU with no sign that it is stuck (issue 1366)"
+}
