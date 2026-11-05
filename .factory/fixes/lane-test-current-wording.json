@@ -11,12 +11,27 @@
   "done_when": "The test checks the current wording and passes",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "087fbd047e0d24506f53095f44e382c07fdba67d3d19f3fe9e539f26836837be",
+    "changed": "7946862edf4d2d0cb4a94711c3feac8e33df270d5d830d65515fe5d69f159ee1",
+    "commit": "94123d165c8ec32d82db70ef6116d750930cb968",
+    "dismissals": [],
+    "findings": [],
+    "id": "ff6c6ac6-c819-43e7-8d9d-c12b05eac39c",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-05T14:26:35.455798+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-05T14:29:40.596118+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
