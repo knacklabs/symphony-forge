@@ -18,7 +18,7 @@
       "gain": 4,
       "harm": 2,
       "line": 15,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -28,27 +28,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "617805339e27cfdbe945078d860e4a8def8b092a2cb17bd94e2cf48ef7c7f4de",
-    "changed": "5de04892f52a62f0389005a4cbf852504766953c5fe3c023a2edc39a3f47e59e",
-    "commit": "601373571ad059b2184b3c4514775ae5bad6237c",
+    "branch_diff": "4eb213b45fa7da46f99603c420748aaf715c1f914c52fe0d9ea3b213b9483079",
+    "changed": "e76d821d7acd063291c2d81870b6c8a00c647d0bba616d3458d8f6a30f758da7",
+    "commit": "aa0b0871ac8e6bad205ced4a6b09c33f5f0ccadd",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 1, Harm 2\nRaise: Test\nCase: normal use - running the full suite or Windows CI.\nThis test lacks `@pytest.mark.platform`. Its CRLF case triggers the platform-sensitive policy in tests/test_platform_sensitive_selection.py:40\u201345, so that existing check fails. Windows CI also uses `-m platform` (.github/workflows/forge-next.yml:135), which excludes this regression entirely. Add the platform marker so the policy passes and Windows runs the promised coverage. The claimed pull-request Windows proof also needs an actual check: the Windows job currently runs only on schedule or workflow_dispatch (line 70).",
-        "file": "tests/test_test_explains_sample_data_skip.py",
-        "gain": 4,
-        "harm": 2,
-        "line": 15,
-        "priority": "P1",
-        "title": "Gate: Include the Windows regression in platform test selection",
-        "work": 1
-      }
-    ],
-    "id": "de1cc1da-d31b-4721-ae82-76b550d497bb",
-    "status": "blocked"
+    "findings": [],
+    "id": "b86c8f69-31d6-4ea6-b42e-30bc37b0c8ea",
+    "status": "clean"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-05T19:49:02.861775+00:00",
@@ -56,6 +45,10 @@
     },
     {
       "at": "2026-11-05T20:03:35.589625+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-05T20:09:18.126407+00:00",
       "step": "review"
     }
   ],
