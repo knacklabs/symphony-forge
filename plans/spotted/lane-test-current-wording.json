@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\ttests/test_tools_guide.py\tCI reports that the checked-in host guides differ from their template.",
+      "kind": "bug",
+      "path": "tests/test_tools_guide.py",
+      "line": 16,
+      "text": "CI reports that the checked-in host guides differ from their template.",
+      "from": "worker",
+      "item": "lane-test-current-wording",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
