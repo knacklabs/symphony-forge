@@ -1,6 +1,13 @@
 {
   "base": "9d620e670b072e95a2cbf6c073cb8d3fab4a71c5",
   "branch": "fix/refuse-fix-with-only-records",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1ad56-393a-7a62-9e60-5b448cd52021",
+    "head": null,
+    "start": "edc0f466304ecbe2f7a79b1de697d786c4d80089"
+  },
   "done_when": "When a fix's branch changes only Forge's own records against the default branch, close and land refuse it with a plain line saying the build round did not finish and the next step, and a fix with code still merges",
   "fix_kind": "mechanical",
   "kind": "fix",
