@@ -48,7 +48,7 @@
     "status": "blocked"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-05T20:10:41.129964+00:00",
@@ -61,8 +61,12 @@
   ],
   "stop": {
     "at": "2026-11-05T20:17:11.779046+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "src/forge/intake.py",
-    "wait_id": "0ebc8cdc-0ae3-4c07-a84f-4409b494aaff"
+    "reason": "Harm 3 defect: the joined text lands in the wrong section, so one more round fixes it",
+    "wait_id": "0ebc8cdc-0ae3-4c07-a84f-4409b494aaff",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
