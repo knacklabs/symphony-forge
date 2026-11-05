@@ -47,8 +47,8 @@
     "id": "fd208bf6-bced-4052-a640-273ca7fa3c70",
     "status": "clean"
   },
-  "round": 1,
-  "status": "waiting for checks",
+  "round": 2,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-05T10:10:36.799880+00:00",
@@ -60,10 +60,10 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "26e1eb0f4aac7b9b4c4533484c1cdcaaa5120381",
+    "close": "8fd3cd95-32d6-4fa8-abd4-ae9c038658d0",
+    "head": "1b4cd79dbd67005306155168c85a0c3f00db23dc",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "forge land stops as needs you after 30 minutes while test groups are still running normally (issue 1360)",
   "worker": "codex"
