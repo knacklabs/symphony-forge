@@ -25,15 +25,15 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "ff86ad7172a69f8c34523125400a0ff5bc0135ceb4997283f75590efd8ea2b87",
-    "changed": "cb7fb70c75c1cdb5570ba23c6f239596f61aee527e4a6460f7b859e1045b92c2",
-    "commit": "cbfdde4025b165852027d053800906573965bba8",
+    "branch_diff": "50e6f06448d0a7f099fa3a278cd0d2e7f3b42943afb994b7c2656332ce28a34c",
+    "changed": "efd0c17bdca9099d5cdc4eca51fab98fb03da25bc5f23a0f10d50b757744c3de",
+    "commit": "af0d34806017c9edf34096bbfa8e87d1dcb66dfd",
     "dismissals": [],
     "findings": [],
-    "id": "e279187a-eabb-471d-b9af-94bffeb9913d",
+    "id": "160ced71-e430-4f95-832f-72056c4e3e9a",
     "status": "clean"
   },
-  "round": 2,
+  "round": 4,
   "stacked_on": "FORGE-HANDOVER-1/HANDOVER",
   "status": "waiting for checks",
   "steps": [
@@ -48,13 +48,21 @@
     {
       "at": "2026-11-05T00:17:52.319569+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-11-05T00:57:41.734361+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-05T01:50:33.161651+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
-    "close": "02d5f282-73a6-47d9-938d-29675dc39888",
-    "head": "617a69c79efc6c8f2dfe74232274b5d496d95876",
+    "close": "eb6bf410-e7f2-4ceb-8dbd-d5bf8ab9ad0e",
+    "head": "d3a47e64b947b592180561c411ab3ac2e1a293ec",
     "keys": {},
-    "round": 1
+    "round": 3
   },
   "worker": "codex"
 }
