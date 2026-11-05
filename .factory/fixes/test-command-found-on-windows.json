@@ -1,0 +1,15 @@
+{
+  "base": "703ba9090a1dbb251d9a64b0becd5ab22f798bdf",
+  "branch": "fix/test-command-found-on-windows",
+  "done_when": "forge test runs the configured test command on Windows for a forge.toml that PowerShell or Windows tools wrote, and a repo with no test command still says so",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-05T19:49:02.861775+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "forge test on Windows says forge.toml names no test command while forge.toml sets test (issue 1381)"
+}
