@@ -1,63 +1,133 @@
 # Client app designs stop looking machine-made
 
-<n> parts · Risks: ... · New moving parts: ...
+3 parts · Risks: none one-way · New moving parts: Forge now starts impeccable's checker program at close and at the canvas step; the program is downloaded once per computer
 
 ## What changes for you
 
-- Every client app gets one fixed baseline list: a collapsible sidebar with an icon rail, a top bar with search, one page title shown once, one spacing scale, one type scale, one main button per view, clear labels and error text, empty, loading and error states, a select or a search box chosen by how long the list is, phone-width layout, plain wording and realistic sample data.
-- Before a design canvas is shown, and again at close, the design checker from impeccable and a few small Forge checks run.
-- Each design canvas is also checked as screenshots at desktop and phone width before it is shown.
-- Each client app gets its own look, chosen from five facts in the client's notes and written into a DESIGN.md file, with fixed rules for contrast, text size, focus and states.
-- App screens use the quieter app mode of impeccable.
-- A new client repo gets all of this when it starts. An existing client repo gets it when it upgrades to the new release, and its existing apps are checked only on the files a change touches.
+- Every client app gets one fixed baseline list in its app-baseline skill. The list names: a sidebar that folds to an icon rail, a top bar with search, one page title shown once, one spacing scale, one type scale, one main button per view, clear labels and error text, empty, loading and error states, a select list for a short list and a search box for a long one, a layout that works at phone width, plain wording and realistic sample data. (Source: your decision, 6 Nov 2026)
+- The design checker from impeccable runs on every design canvas before you see it. Close runs it again on the files a change touches, and close refuses a UI change that fails it. The checker uses no model. (Source: your decision, 6 Nov 2026)
+- The checker is a small program. impeccable downloads it once per computer, and it needs the network for that one download. When the computer is offline and has never downloaded it, Forge says in one line that the checker did not run, and the other checks still run. (Source: your decision, 6 Nov 2026; the offline rule is the planner's choice)
+- Forge adds a few small free checks for what code can show: a spacing value outside the scale (for example `p-[13px]`), the same title in the top bar and in the page header, and an app shell whose sidebar cannot fold to an icon rail or whose top bar has no search. They run on canvases and at close. They use no model. (Source: your decision, 6 Nov 2026)
+- Each design canvas is also drawn as screenshots at desktop width (1440) and phone width (375) before you see it. Code checks that the page does not scroll sideways at phone width. The agent checks the rest of a short list by looking at the two images: the sidebar becomes a sheet, one main button, the title shown once, and tables that scroll inside their own box. (Source: your decision, 6 Nov 2026)
+- Each client app gets its own look. The agent picks it from five facts in the client's notes: the industry, who uses the app and how often, the kind of screen (work, read or persuade), two or three brand words, and the brand files the client already has. The pick is written into a DESIGN.md file. The agent then asks one question: "Would a different client of this type get the same pick?" If yes, it changes one choice. (Source: your decision, 6 Nov 2026)
+- Some rules never change from one app to the next: text contrast of 4.5 to 1 (3 to 1 for large text), body text of 16 pixels (14 in dense tables), a visible focus mark, reduced motion, buttons and links at least 24 pixels (44 on touch screens), empty, loading and error states, one spacing scale, tabular numbers, one icon library (Lucide) and no emoji. A client's own brand files win, but they must pass the contrast rule. (Source: your decision, 6 Nov 2026)
+- An existing client app is checked only on the files a change touches. Nothing blocks the upgrade. (Source: your decision, 6 Nov 2026)
+- Forge keeps impeccable and Emil's design skill, and adds no third design skill. From Anthropic's frontend-design skill it takes three ideas, in its own words: a short brief step before a design, wording rules (a verb on every button, one name for one action, an error says the problem and the way out, no apology), and a list of three common machine looks to avoid: cream, a serif font and terracotta; near-black with a neon accent; and thin editorial lines everywhere. (Source: your decision, 6 Nov 2026)
+- App screens use impeccable's Operate mode, which asks for restraint, and not its bold mode. (Source: your decision, 6 Nov 2026)
+- A new client repo gets the baseline list, the look method, the guard rules and the checks when it starts. An existing client repo gets the same text and the same checks when it upgrades to the new release and runs `forge sync`. Its app code does not change. (Source: your decision, 6 Nov 2026)
+
+Design: none (Forge ships rules and checks, not screens. No screen is added or changed in a starter; owner rule, 31 Oct 2026)
 
 ## Why
 
-Client app designs and canvases look generic and machine-made. The app baseline covers screens, states and the app shell, but it has no spacing scale, no type scale, no per-app design file, and no screenshot check at desktop and phone width. Its visual check is one review pass at the end.
+Client app designs and canvases look generic and machine-made. The app baseline covers screens, states and the app shell, but it has no spacing scale, no type scale, no per-app design file, and no screenshot check at desktop and phone width. Its visual check is one review pass at the end, so a design with the title shown twice, uneven spacing or a page that breaks at phone width reaches the owner.
 
 ## Done when
 
-1. **A new client app starts with the shared baseline list, its own DESIGN.md, and the design checker and screenshots at desktop and phone width before any canvas is shown.**
-2. **Close stops a design that fails the design checker or the small Forge checks.**
-3. **An existing client app is checked only on the files a change touches.**
-4. **Forge's own tests show each rule working on a new client repo and on an existing client repo.**
+1. **A new client repo and an existing client repo that has run `forge sync` get the baseline list, the look method with its five facts and DESIGN.md, the fixed guard rules and the Operate-mode rule in the app-baseline skill, the worker brief and the review rules, and the repo's app code is unchanged.**
+2. **A design canvas saved in a story's design folder is checked before it is shown: the design checker, the small checks, and screenshots at 1440 and 375 width. A canvas that fails writes no images, and the plan's read refuses a design folder that fails or has no DESIGN.md.**
+3. **Close refuses a UI change when a changed file fails the design checker or a small check, and names the file and the problem. In an existing app, a file the change does not touch is never checked.**
+4. **An upgrade of an existing client app writes only text files and changes no app code. The first check it meets is on the next change that touches a UI file or adds a design canvas.**
 
 ## Risks
 
-<!-- Each one-way step: deleting data, a destructive migration, a new vendor. -->
+Risks: none one-way. Each part reverts with its pull request. Nothing is deleted and no data changes.
 
-Risks: none
+Trade-off: the design checker needs a one-time download from GitHub. A computer that is offline and has never downloaded it skips the checker, with one plain line at close and at the canvas step, and a bad design can pass on that computer. The next run that is online catches it. Refusing instead would stop all UI work offline. The planner chose the line, and you can change it.
+
+Trade-off: in an existing app, a changed file is checked whole, not only the lines the change adds. A file with old problems fails the first time someone touches it. The way out is a short inline comment that waives one false alarm, or the checker's own ignore list in `.impeccable/config.json`. The refusal says so. (Source: your decision, 6 Nov 2026)
+
+Trade-off: the small checks read code, so they miss a title that comes from a variable and a shell that is built in an unusual way. They catch the common case: the same words twice in one screen file. The review keeps its judgment for the rest.
+
+Trade-off: Forge cannot count the items in a list from code, so "a select for a short list and a search box for a long one" is a written rule that the review checks, not a code check.
+
+Trade-off: a design folder made by hand with no phone-width image is not refused. Refusing it would also refuse designs that were approved before this release. The rendering step writes both images or none.
+
+Trade-off: an existing app without DESIGN.md is refused once, at the plan's read of the next story that adds a design canvas. It is one file, and the refusal names the step that writes it. Asking at the next canvas and not at the upgrade is the planner's choice.
 
 ## For the builders
 
 <!-- Everything from here down is for the agents. The owner doesn't see it when approving, and
 tightening it needs no new approval. -->
 
+Rules for every part. No new `forge` command, no new model call, no new setting and no screen. Nothing under `src/forge/templates/starter` or `src/forge/templates/starter-python` changes: the review reports a screen, page, route table or app shell added there as P1. The skill text borrows ideas from Anthropic's frontend-design skill in Forge's own words and copies none of its text, because that skill is licensed.
+
+Each new test file starts with `STORY = "FORGE-UISTANDARDS-1"`. Tests run the forge command and never import forge. There is one test per Done-when number, so the numbers stay unique across the files: `test_1` and `test_4` in `tests/test_uistandards_words.py`, `test_2` in `tests/test_uistandards_canvas.py`, `test_3` in `tests/test_uistandards_close.py`. Each is parametrized with a new repo case and an earlier-adopted repo case (`_adopted_files_after_sync` in `tests/test_mcp.py`, or the `forge-v1.2.2` fixture as `tests/test_design_skills.py` uses it). Before a round ends, run the two cheap checks from AGENTS.md.
+
+### What exists (evidence)
+
+Checked in this worktree on 6 Nov 2026. A part checks each name again before it starts.
+
+- Baseline text. `.codex/skills/app-baseline/SKILL.md` (173 lines) holds the shell, the page header, tokens only, states, Lucide and motion as prose. It has nothing on title placement, a spacing scale, a type scale or select against search. `ships` in `src/forge/app_baseline.py` writes it to `.claude/skills/app-baseline/SKILL.md` and `.codex/skills/app-baseline/SKILL.md` through `sync._synced_text`, and `pyproject.toml` force-includes the `.codex` copy as `forge/templates/skills/app-baseline/SKILL.md`. `tests/test_fix_app_baseline.py` pins that file's bytes in `BASELINE_SHA256`, so a change to the skill must update the hash in the same part.
+- Close. `src/forge/close.py:275` calls `app_baseline.check(top, cfg, base)`, then `services` and `migrations`. `check` already refuses a second UI library through `REFUSALS["shadcn"]` and `repo.refuse`, only when `cfg["repo"] == "client"`. `close.py` has 1,192 lines and the ceiling is 1,200 (`test_5_forge_stays_small`), so the new checks hook in through `app_baseline.check` and `close.py` does not change.
+- The design folder. `design.check` in `src/forge/design.py` finds the `Design:` line, the tree id and the images. It is called by the plan check (`src/forge/story.py:211`), the cold read (`src/forge/story.py:415`), approval (`src/forge/approval.py:133`), task start (`src/forge/task.py:427`) and close (`src/forge/close.py:233`). Task start, close and the older-approval callers (`approval.py:93`, `story.py:178`, `story.py:675`) pass `required=False`, which is how an older approval adopts a rule at its next read. The callers with the default `required=True` are the plan check, the read and the approval.
+- The render step. `src/forge/templates/design/support.js` (54 lines) is the one way Forge makes design images. `src/forge/story.py:91` writes it to `.forge/design/support.js`, and the agent copies it beside the artboards. It renders each `.html` file to a 1440 by 900 PNG with a local Chrome (`--screenshot`) and runs nothing else. `skill.md:778-790` says to use impeccable's init, critique and polish and Emil's checklist before sign-off, and that any way of making the design works for a prototype, with a link in the brief.
+- impeccable. `src/forge/design_skills.py` `ships` writes the pinned copy (`src/forge/templates/skills/impeccable`, commit in `FORGE-NOTICE.md`, engine `0.1.18` in `scripts/VERSION`) to both hosts, for client repos only. `src/forge/sync.py:164` sets the launcher `scripts/impeccable` executable. `scripts/impeccable.cmd` is the Windows launcher. `reference/mode-operate.md` holds the Operate mode. `reference/document.md` writes a root `DESIGN.md` in the Google DESIGN.md format, and the detector reads DESIGN.md and `.impeccable/config.json` (the `--no-design-system` and `--no-config` options). `src/forge/worker.py:621` and `:701` already give the worker and the reviewer DESIGN.md.
+- Prose rules today. `brief.md:398-409` and `review.md:324-330` and `:385-388` say "Prototypes use impeccable's Operate mode" and report a missing impeccable pass as P1 `Gate: UI check`. Nothing in code checks a canvas or a UI file.
+
+### How the design checker runs
+
+Read from `src/forge/templates/skills/impeccable/scripts/impeccable` on 6 Nov 2026, and run once against the engine already cached on this machine.
+
+- The checker is a native program, not `npx` and not Node. `scripts/impeccable` is a shell launcher (`impeccable.cmd` on Windows). The pinned folder ships no program: there is no `scripts/bin/` folder. The launcher looks for a program in this order: `$IMPECCABLE_BIN`, `scripts/bin/<os>-<arch>/`, `~/.impeccable/bin/impeccable`, the cached `~/.impeccable/bin/0.1.18/impeccable` (checked against `engine-checksums.txt`), and `impeccable` on the path. If none exists it downloads `engine-v0.1.18/impeccable-<os>-<arch>` from `https://github.com/pbakaus/impeccable/releases`, checks it against the sha256 in `engine-checksums.txt`, and caches it. So the first run on a computer needs the network and write access to `~/.impeccable`. Later runs need neither.
+- With no cached program and no network, the launcher prints `impeccable: could not download engine ...` to stderr and exits 127.
+- A scan of files needs no browser. `impeccable detect --json <files or folders>` printed a JSON list on stdout (fields `antipattern`, `name`, `category`, `severity`, `file`, `line`, `snippet`) and exited 2 with a finding, 0 clean, 1 when a target could not be scanned. This was tried on the cached 0.1.6 engine, not on the pinned 0.1.18, so CHECKS re-proves the options and exit codes on 0.1.18 in its boundary test. A scan of a URL (`file://...`) starts a browser and took about 9 seconds, so Forge uses file scans only.
+- Forge reads only the exit code, `file`, `line`, `name` and `snippet`, and ignores the other fields and any new ones (principle 7). Findings the engine calls advisory never change the exit code, so they never block.
+- Forge finds the launcher at `<top>/.claude/skills/impeccable/scripts/impeccable`, else the `.codex` copy (`.cmd` on Windows), and runs it with `cwd=top` so `.impeccable/config.json` and DESIGN.md apply. A client repo with neither copy, an exit code other than 0 or 2, or a missing launcher is "the checker did not run": one line to stderr (`The design checker did not run: <first line of its message>. The other checks ran.`), and the close or read goes on.
+- The tests never need the network: they set `IMPECCABLE_BIN` to a stand-in program that prints a fixed JSON list and exits 0 or 2, which both launchers honour first. One boundary test runs the real pinned launcher on one clean and one gradient-text file and checks exit 0 and 2 and the JSON fields. It carries `@pytest.mark.platform` and skips when the launcher cannot get the program.
+
+### How "before a canvas is shown" is enforced
+
+A canvas is an HTML file that the agent writes into `docs/design/<KEY>/` or `docs/design/prototype/`. The owner is shown the images, not the HTML. Forge has two places to run code, and the plan uses both. A design made elsewhere (a link in the brief) is out of Forge's reach, and the written rule says to run `impeccable detect <url>` on it.
+
+1. Author time, `support.js`. Before it renders, it runs the checker (`detect --json <folder>`) and the small checks on every `.html` file there, through the same launcher. On a finding it prints the file, the line and the rule, writes no PNG and exits 1, so the agent has no image to show. When it passes, it writes `<screen>.png` at 1440 by 900 and `<screen>-375.png` at 375 by 812. It then loads each screen once at 375 with a one-line script added to a temporary copy, and fails when the page is wider than 375 (`document.documentElement.scrollWidth`). Chrome's `--dump-dom` returns the value. This runs for story folders and for `docs/design/prototype/` alike, and a prototype sign-off gets no new completeness check.
+2. Plan time, `design.check`. When `required` is true (the plan check, the read, the approval), it also runs the same checks on the folder's `.html` files, through one function in the new module, and refuses a design folder that fails or has no root `DESIGN.md`. A hand-made PNG that never went through `support.js` is caught here. The callers with `required=False` (task start, close, an older approval) skip this, so an approved design in flight is never re-checked.
+
+Because `design.check` already reads the folder by tree id, the tree id stays the proof that the checked files are the approved ones. When it reads a ref and not the checkout, the new function writes the `.html` files from git to a temporary folder first, as `snapshot` does with its index.
+
 ### Done-when details
 
-<!-- Under each Done-when item's number: its evidence, edge cases and the tests that prove it.
-Workers and reviewers get the entries of the items they cover. An item with nothing to add has
-no entry. -->
+1. Words, new and existing.
+   - New text in `.codex/skills/app-baseline/SKILL.md` (and its synced `.claude` copy): the baseline list from the owner's section with numbers. One h1 per page, in the page header; the top bar holds breadcrumbs (from depth 3), search (Cmd or Ctrl K) and the user menu and never the title again. A sidebar with `collapsible="icon"`: icons with tooltips and an `aria-label` when folded, Cmd or Ctrl B, the state remembered. The 4-pixel Tailwind scale only, no arbitrary spacing values, one page padding, a 24 pixel section gap and a 16 pixel card gap and field gap, table rows of 32 to 40 pixels in data apps. A type scale of 12, 14, 16, 20, 24 and 30, at most two families, hierarchy by weight and colour, tabular and right-aligned numbers. One accent, semantic tokens only, status colour only with an icon and a word. One primary button per view, a verb on every button, visible labels (a placeholder is not a label), errors in text beside the field, single-column forms. A select for fewer than 7 options, a search box (combobox) for 7 or more, a radio group for 2 to 4. Loading, empty (first use, no result, cleared), error, no permission and partial data. 375 pixels with no page scroll, tables scroll inside their own box, the sidebar becomes a sheet. Plain words, no lorem ipsum, no "John Doe", realistic data with units.
+   - The look method in the same skill: the five facts, the map to tokens (font pairing, one accent, radius, density, tone), the written record in DESIGN.md through impeccable's `document` step, the "same pick for any other client of this type?" question, the three machine looks to avoid, and the guard rules that never vary. Client brand files win but must pass contrast.
+   - `src/forge/templates/skill.md`, in the paragraph at lines 778-790: the brief step, the five facts, DESIGN.md before the first canvas, and the sentence that `support.js` checks and renders at 1440 and 375 and that the plan's read refuses a failing design folder. `src/forge/templates/brief.md:398-409` and `review.md:324-330`, `:385-388`: "Prototypes use" becomes "App screens and prototypes use impeccable's Operate mode"; `review.md` gets one P1 line, `Gate: UI standards`, for a changed screen that breaks the baseline list in a way the checks cannot see (a select for a long list, a title repeated through a variable, several primary buttons). `docs/guide.md` gets the same two sentences as one short paragraph.
+   - Tests. `test_1` runs `forge init` (new) and `forge sync` on an earlier-adopted repo and checks that both hosts get the app-baseline text with the baseline list, the five facts and the guard rules, that the brief and review text name Operate mode for app screens, and that no file under `apps/` or `libs/` changed. It also bumps `BASELINE_SHA256` in `tests/test_fix_app_baseline.py`.
+2. Canvas check.
+   - Cases. A folder with one clean `.html` file: `support.js` (run with `CHROME_BIN` set to the stand-in browser that `tests/test_design_docs.py` or `tests/test_design_first.py` already uses, else the real Chrome in the platform job) writes both PNGs. A folder with a file that has `p-[13px]`, or two `<h1>`, or a stand-in checker that exits 2: it exits 1 and writes no PNG. A page wider than 375 fails. The plan's read refuses a design folder whose `.html` fails, and one with no root `DESIGN.md`, naming the file and the next step. A plan whose approval is older (`required=False` path) is not re-checked.
+   - New and existing. New: the full cases above. Existing: one case on an earlier-adopted repo whose older approved design folder has no `-375.png` and no DESIGN.md: task start and close still pass, and a new story with a design folder is refused once for DESIGN.md.
+3. Close.
+   - The new module holds one function that takes the list of changed files and returns the problems: (a) the checker's findings for the changed `.tsx`, `.jsx`, `.html`, `.css`, `.vue` and `.svelte` files, in groups of 50 files, skipping `**/components/ui/**` (shadcn's own copies) and test files; (b) the spacing check, a regular expression over the same files for Tailwind spacing classes (`p`, `px`, `py`, `pt`, `pb`, `pl`, `pr`, `m*`, `gap`, `gap-x`, `gap-y`, `space-x`, `space-y`) with a plain length in square brackets, such as `p-[13px]` or `gap-[0.7rem]`, and not `var(...)` or `calc(...)`; (c) the title check, with the standard library's `html.parser` for `.html` and a literal-text pattern for `.tsx`: more than one `<h1>`, or an `<h1>` text equal to the text of another heading in a `<header>` outside `<main>`, in one file; (d) the shell check, for a changed file that contains `<Sidebar`: it must have `collapsible="icon"`, and the app's sources must have `CommandDialog`, `CommandInput`, `role="search"` or `type="search"` somewhere. The failure each catches: the checker catches gradient text, low contrast, nested cards and the other machine tells; the spacing check catches a stray 13 pixel gap; the title check catches the title shown twice; the shell check catches a sidebar that cannot fold and a top bar with no search.
+   - `app_baseline.check` calls it after the library check, when `cfg["repo"] == "client"`, on `git diff --name-only --diff-filter=ACMR <base> HEAD`. The refusal is `REFUSALS["design"]`: "This change fails the design checks: {problems}." with the next step "fix them, or waive a false alarm with an inline impeccable-disable comment that says why, then forge close {item}". The problems list names `file:line rule` for the checker and `file: <what>` for the small checks. Results are memoized with `repo.command_fact` keyed by the base and HEAD, as `design.snapshot` is, so a second close of the same commit runs nothing.
+   - Cases. New repo: each of the four problems refuses and names its file; a clean change passes; a checker that did not run (no `IMPECCABLE_BIN`, no cache, no network) prints the one line and the other checks still run. Existing: a repo adopted on an earlier release with an old file full of `p-[13px]` that the change does not touch passes, and the same file touched by the change is refused with the waiver text. One boundary test, as described above.
+4. Upgrade.
+   - `test_4` runs `forge sync` on an earlier-adopted repo that has an old UI file with problems and checks that sync exits 0, writes only text files (skills, guides, `.forge/design/support.js`), changes no file under `apps/` or `libs/`, and that `forge doctor` says nothing new about it. The checks in item 3 and the DESIGN.md ask in item 2 are the only places the upgrade shows up, and each runs on a later change.
 
-1. <Evidence, edge cases and the tests that prove item 1.>
+### New and existing repos
+
+- **New repos** (`forge init`, `forge init --starter`, `forge init --starter python`, adoption): the baseline list, the look method, the guard rules and the Operate-mode rule, through the synced skill, the brief and the review. The close checks, the canvas checks and the new `support.js` work from the first change. The agent writes DESIGN.md from the five facts at the first design canvas, and the plan's read asks for it.
+- **Existing repos** (on upgrade, after `forge sync`): the same text and the same new `support.js`. No app file changes and nothing blocks the upgrade. The close checks run on the files a change touches. The plan's read asks for DESIGN.md at the next story that adds a design canvas, and not before. An approved design in flight is not re-checked.
 
 ## Tasks
 
-<!-- One row per task. Covers: the Done-when numbers it delivers, at most three. Scope: the paths
-it may change. Tests: the tests it adds or changes. After: the tasks it waits for. When two tasks
-share a function, field, file format or command, the first task pins it: it commits the shared
-names and stubs plus one test that crosses both sides, and the tasks that use it list it under
-After. Split tasks so each owns its files; shared lines (command table, guide list, registry) go
-to one task or a small last wiring task; After only when a task needs another task's code. The
-Developer column is optional: the lead fills or changes a GitHub username here, below For the
-builders, without another approval. Leave it blank for an unassigned part. Forge next uses
-the caller's GitHub login; another developer may start it with a warning. Existing tables
-without Developer still work. The moving-parts line stays last: "none", or each new dependency, service, datastore,
-queue, background job or abstraction layer, with the Done-when item that needs it. -->
-
 | ID | Name | What it delivers | Covers | Scope | Tests | After | User-facing | Developer |
 |---|---|---|---|---|---|---|---|---|
+| CHECKS | Close runs the design checker and the small checks | The new module with the checker call, the spacing, title and shell checks and the one function that returns the problems for a list of files, the call from `app_baseline.check`, the refusal text, the one-line note when the checker did not run, and the boundary test on the real pinned launcher. | 3 | `src/forge/ui_checks.py`, `src/forge/app_baseline.py`, `tests/test_uistandards_close.py` | `tests/test_uistandards_close.py` (`test_3`, new) | | no | |
+| CANVAS | A canvas is checked and drawn at two widths before it is shown | `support.js` runs the checks first, writes the 1440 and 375 images and fails on sideways scroll at 375; `design.check` runs the same function on the folder's `.html` files and refuses a missing DESIGN.md, when `required` is true. | 2 | `src/forge/design.py`, `src/forge/templates/design/support.js`, `tests/test_uistandards_canvas.py` | `tests/test_uistandards_canvas.py` (`test_2`, new) | CHECKS | no | |
+| WORDS | The baseline list, the look method, the guard rules and Operate mode in the skills | The new baseline and look-method text in the app-baseline skill and its synced copy, the canvas paragraph in the coordinator's guide, the Operate-mode and `Gate: UI standards` lines in the worker brief and the review rules, the guide paragraph, the new hash, and the new and existing repo cases. | 1, 4 | `.codex/skills/app-baseline/SKILL.md`, `.claude/skills/app-baseline/SKILL.md`, `src/forge/templates/skill.md`, `src/forge/templates/brief.md`, `src/forge/templates/review.md`, `docs/guide.md`, `tests/test_fix_app_baseline.py`, `tests/test_uistandards_words.py` | `tests/test_uistandards_words.py` (`test_1`, `test_4`, new) | CHECKS, CANVAS | no | |
 
-New moving parts: none
+Order. CHECKS first: it pins the one function that CANVAS calls (`ui_checks.problems(top, files)` returning a list of `file: problem` strings, and `ui_checks.engine(top)` returning the launcher path or none), with the boundary test that crosses both sides. CANVAS second. WORDS last, so the text states what the code does: the offline line, the canvas step and the refusal names. WORDS has six text files and two test files and no code file besides the tests. The text is one rule set that must read the same in each place, so splitting it would leave a part whose text contradicts the behaviour. The column says no for user-facing because no part changes a screen.
+
+New moving parts: Forge starts impeccable's checker program at close and at the canvas step (Done-when 2 and 3); the existing launcher downloads it once per computer from GitHub, checked against the sha256 that the pinned skill ships.
 
 ## Notes
+
+- **Owner decisions (6 Nov 2026, settled).** All six are in "What changes for you": the checker on every canvas and at close, with close refusing; three small free checks and the 1440 and 375 screenshot pass with a short list; the per-app look from five facts with fixed guard rules; existing apps checked only on changed files with nothing blocking the upgrade; impeccable and Emil only, with three borrowed ideas from Anthropic's frontend-design skill; Operate mode for app screens.
+- **Planner's choices, open for the owner.** (1) When the checker cannot run, Forge says so in one line and does not refuse; the other checks still run. (2) The plan's read, and so the first story that adds a design canvas in an existing app, asks for DESIGN.md once; prototype sign-off asks for none, because `skill.md:786` says sign-off does not require it. (3) A touched file is checked whole, as the owner's words "the files a change touches" say, and not only its added lines. (4) The 7-option limit between a select and a search box comes from the research list, not from an owner decision.
+- **Scores (F x H >= 2 x C).**
+  - Spacing check: F 3, H 1, C 1. 3 >= 2. Kept.
+  - Title check: F 3, H 1, C 1. 3 >= 2. Kept.
+  - Shell check: F 2, H 1, C 1. 2 >= 2. Kept.
+  - Width check at 375: F 2, H 2 (a broken step on a phone), C 1. 4 >= 2. Kept.
+  - The checker at close and on canvases: F 3, H 1, C 2 (one launcher call, about 150 lines in the module). 3 < 4. It fails the score. It stays because the owner decided it on 6 Nov 2026. The plan keeps the cost down: no new command, no setting, no model call, one module, and the existing launcher and its own ignore comments.
+  - DESIGN.md check at the read: F 1 (once per app), H 1, C 1. 1 < 2. It fails the score; it stays because the first Done-when item of the owner's draft says every new app starts with DESIGN.md, and the check is a few lines in `design.check`.
+- **Left out.** A check that the title text in a top bar equals the title of a route that comes from a variable, a check of the item count behind a select, and a 375 image for every `.html` file at the read. Each would add more code than the failure is worth, or would refuse an older approved design.
