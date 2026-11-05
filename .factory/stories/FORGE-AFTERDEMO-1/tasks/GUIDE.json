@@ -1,12 +1,20 @@
 {
   "base": "c2a5294f5a063bd4c6da3d9fe86ba3fdaafbbc56",
   "branch": "task/FORGE-AFTERDEMO-1-GUIDE",
+  "round": 1,
   "stacked_on": "FORGE-TOOLS-1/CHECKS",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-05T00:49:22.004763+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "f051e2248dcc3d3d1c8a654a583ef377ab958f21",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
