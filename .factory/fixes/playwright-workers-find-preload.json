@@ -11,12 +11,52 @@
   "done_when": "After one browser test fails, the remaining browser tests still run under forge test, and the preload helper is found from where Forge is installed",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [
+    {
+      "area": "test_1_remaining_workers_run_after_failure_and_install_removal() in tests/test_node_preload_lifetime.py",
+      "file": "tests/test_node_preload_lifetime.py",
+      "gain": 2,
+      "harm": 2,
+      "line": 33,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Follow-up: Cover real Playwright replacement workers on Windows",
+      "work": 3
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "3853034f6bcb4df420a7bb7cb386ba1bf49414d1a3a5161231a425a6f74478da",
+    "changed": "d0177f8ad8b2baeda3a3054e8b64d0d7aef9f94b042b6add1e2600d8f2660a63",
+    "commit": "e1d40798e9684318ea9c16040bc3ada626b3e072",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 2, Work 3, Harm 2\nThe proof list explicitly identifies real Playwright execution on Windows as missing. This regression starts two plain Node processes; it verifies preload lifetime but never exercises Playwright replacing a failed browser worker. Add the declared follow-up through `forge test --change`, checking that subsequent browser cases execute after the installed helper disappears.\nAdds work: real Playwright regression on Windows; F 1 x H 2 = 2; 2 x C = 4",
+        "file": "tests/test_node_preload_lifetime.py",
+        "gain": 2,
+        "harm": 2,
+        "line": 33,
+        "priority": "P2",
+        "title": "Follow-up: Cover real Playwright replacement workers on Windows",
+        "work": 3
+      }
+    ],
+    "id": "cdbab283-c22e-4ce3-95a0-4e0fc173b65d",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-05T19:49:08.082777+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-05T19:58:38.359858+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
