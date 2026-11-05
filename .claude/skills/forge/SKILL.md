@@ -101,7 +101,7 @@ the next merge.
 | "Add to this fix's Done-when" | `forge fix amend <fix> --append "<text>" --because "<why>"` |
 | "This fix is too big" | `forge story new <KEY> --from-fix <fix>` |
 | "Make it a story" (a fix) | Add the key to the fix's roadmap and commit it, then `forge story new <KEY> --from-fix <fix>` |
-| "Make it a fix" or "Just fix it" (a plan in planning) | `forge fix start "<its Problem>" --done "<its first Done-when>"`, then `forge story drop <KEY> --because "Moved to the fix <fix>"` |
+| "Make it a fix" or "Just fix it" (a plan with no started part or part records, even if approved) | `forge fix start "<its Problem>" --done "<its first Done-when>"`, then `forge story drop <KEY> --because "Moved to the fix <fix>"` |
 | "Do it later" (a fix) | `forge fix drop <fix> --because "The owner wants it later"`, then `forge start "Do this later: <its why> (kept on fix <fix>)"`. `fix drop --undo` brings it back |
 | "Do it now" (an idea-list entry) | `forge start "<the owner's new words>: <the entry's idea without its deferral words>"`, for example `forge start "Do it now: add dark mode"`. Then remove the entry from the main checkout's file while it is waiting, or else in the new item's branch |
 | "Let this fix go over the limit" | `forge fix allow-large "<reason>"` |

@@ -1,0 +1,71 @@
+{
+  "base": "c2c77fbcb2c3967df64f07b77b6f5487b8f89771",
+  "branch": "fix/drop-approved-unstarted-story",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1ab37-057f-79f0-9d54-a566b0bd975e",
+    "head": null,
+    "start": "83af80653041094049911497765b1446ceb2d641"
+  },
+  "done_when": "An approved story with no started part and no part records can be dropped, keeps its remote branch, and leaves forge next and the board; a story with a started part is still refused",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "story_drop() in src/forge/intake.py",
+      "file": "src/forge/intake.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 169,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: An approved story with no started part and no part records can be dropped, keeps its remote branch, and leaves forge next and the\n",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "b8da96bd704f58de6ff5e897ba42a76d74da497e4ee3cf703ff0512d3fe8790b",
+    "changed": "d3c68e7f211452172920e277b1977d76b8b7bcfd3b505bbcbfcb139e3e2d335a",
+    "commit": "f2e473766d566ab4afc06f80aa6b7fee1688f0cc",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done\nCase: normal use - Drop a partially completed story after its first part merges and Forge cleans up the part branch.\nThe record scan checks only the story ref and surviving task branches. Task start creates a separate branch without advancing the approved story branch (`src/forge/task.py:268\u2013283`), and normal merge cleanup deletes the remote and local task branches (`src/forge/merge.py:280\u2013311`). The merged part record then exists on the default branch, which this scan omits. Removing the approval refusal therefore lets this story be dropped despite having a started part, hiding its remaining work from next and the board. Include the landed ref in the record check. The new test exercises only an unmerged part, so it passes despite this gap.",
+        "file": "src/forge/intake.py",
+        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
+        "gain": 4,
+        "harm": 3,
+        "line": 169,
+        "priority": "P1",
+        "title": "Not done: An approved story with no started part and no part records can be dropped, keeps its remote branch, and leaves forge next and the\n",
+        "work": 2
+      }
+    ],
+    "id": "c6ec6ea4-92a0-4d12-9816-808d3fb5a8aa",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-05T10:12:32.642645+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-05T12:06:41.947893+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "3c921e058e86cf6b92e84cc8c5315e576dd57b75",
+    "keys": {},
+    "round": null
+  },
+  "why": "forge story drop refuses an approved story that has no started part, and gives no next step (issue 1362)",
+  "worker": "codex"
+}

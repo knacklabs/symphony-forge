@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "edge\tsrc/forge/intake.py\tNot done: An approved story with no started part and no part records can be dropped, keeps its remote branch, and leaves forge next and the",
+      "kind": "edge",
+      "path": "src/forge/intake.py",
+      "line": 169,
+      "text": "Not done: An approved story with no started part and no part records can be dropped, keeps its remote branch, and leaves forge next and the",
+      "from": "review",
+      "item": "drop-approved-unstarted-story",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

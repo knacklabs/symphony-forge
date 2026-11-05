@@ -324,7 +324,6 @@ def test_5_one_short_instruction_moves_an_idea_and_leaves_one_item(intake, move,
     if age == "adopted" and move != "fix":
         pytest.skip("Only plan-to-fix has a distinct earlier-adopted path.")
     from test_fix_drop import _github
-    from test_story import DOC, claude_plan
     _signed_off(intake)
     approved_constitution(repo, where=top)
     database = _github(repo)
@@ -368,8 +367,8 @@ def test_5_one_short_instruction_moves_an_idea_and_leaves_one_item(intake, move,
         # Dropping it must refuse even though no approval exists yet.
         refused = repo.forge("story", "drop", "WELCOME-MOBILE", "--because", "Just fix it", cwd=top)
         assert refused.returncode == 1
-        assert refused.stderr == ("WELCOME-MOBILE is approved or has started parts, so it can't be dropped.\n"
-                                  "Next: forge next\n")
+        assert refused.stderr == ("WELCOME-MOBILE has started parts, so it cannot be dropped.\n"
+                                  "Next: forge close WELCOME-MOBILE/SPEC\n")
     elif move == "fix":
         if age == "new":
             for key, because, problem in (
@@ -422,25 +421,6 @@ def test_5_one_short_instruction_moves_an_idea_and_leaves_one_item(intake, move,
         _visible(repo, top, fix, "SAVE")
         if age == "adopted":
             return  # The earlier-adopted case owns the move; new repos keep all refusal cases.
-        # The real read and approval hook make a later drop unsafe.
-        _started(intake, "Another saved basket", _plan("APPROVED"))
-        where = _checkout(repo, top, "story/APPROVED")
-        approved_doc = DOC.replace("| yes |", "| no |")
-        (where / "plans/APPROVED.md").write_text(approved_doc, "utf-8")
-        read = owner.forge("read", "APPROVED", cwd=where)
-        assert read.returncode == 0, read.stdout + read.stderr
-        if read.stdout.lstrip().startswith("{"):
-            handout = json.loads(read.stdout)
-            read = owner.forge("handback", "APPROVED", "--round", str(handout["round"]),
-                               "--subagent", "plan-reader", "--text", "No findings.", cwd=where)
-            assert read.returncode == 0, read.stdout + read.stderr
-        approval = repo.forge("hook", "approval", input=json.dumps(claude_plan(claude_payload, approved_doc,
-                                                                              cwd=where)), cwd=where)
-        assert approval.returncode == 0, approval.stdout + approval.stderr
-        refused = repo.forge("story", "drop", "APPROVED", "--because", "Just fix it", cwd=top)
-        assert refused.returncode == 1
-        assert refused.stderr == ("APPROVED is approved or has started parts, so it can't be dropped.\n"
-                                  "Next: forge next\n")
         # A clean Git status can hide the owner's ignored working files.
         # Dropping the plan must retain those files as well as remote history.
         _started(intake, "Keep private working notes", _plan("PRIVATE"))
