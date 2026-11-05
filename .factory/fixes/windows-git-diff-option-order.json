@@ -4,12 +4,20 @@
   "done_when": "A chosen pytest file runs through forge test on Windows and on Linux, and git diff gets its options before any path",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-05T19:48:57.835176+00:00",
       "step": "start"
     }
   ],
-  "why": "forge test --pytest with a chosen test file fails on Windows before any test runs, because Forge passes git diff its -z option after a path (issues 1378 and 1383)"
+  "stuck": {
+    "close": null,
+    "head": "2800f4d171c750713d9d8c6be55db094f1a8f353",
+    "keys": {},
+    "round": null
+  },
+  "why": "forge test --pytest with a chosen test file fails on Windows before any test runs, because Forge passes git diff its -z option after a path (issues 1378 and 1383)",
+  "worker": "codex"
 }
