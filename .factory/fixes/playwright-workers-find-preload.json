@@ -1,0 +1,15 @@
+{
+  "base": "703ba9090a1dbb251d9a64b0becd5ab22f798bdf",
+  "branch": "fix/playwright-workers-find-preload",
+  "done_when": "After one browser test fails, the remaining browser tests still run under forge test, and the preload helper is found from where Forge is installed",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-05T19:49:08.082777+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Playwright's replacement workers in a client app cannot load Forge's preload helper, so browser tests after the first failure do not run (issue 1379)"
+}
