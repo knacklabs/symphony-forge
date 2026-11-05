@@ -1,0 +1,15 @@
+{
+  "base": "703ba9090a1dbb251d9a64b0becd5ab22f798bdf",
+  "branch": "fix/windows-git-diff-option-order",
+  "done_when": "A chosen pytest file runs through forge test on Windows and on Linux, and git diff gets its options before any path",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-05T19:48:57.835176+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "forge test --pytest with a chosen test file fails on Windows before any test runs, because Forge passes git diff its -z option after a path (issues 1378 and 1383)"
+}
