@@ -1,6 +1,13 @@
 {
   "base": "c2c77fbcb2c3967df64f07b77b6f5487b8f89771",
   "branch": "fix/silent-test-run-says-so",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1ab31-0f27-7b91-a33d-cd1e98247ab0",
+    "head": null,
+    "start": "ddfeaf72dd0ea1c954cb26aae23c530f2a9e82c2"
+  },
   "done_when": "A forge test run with no output for 10 minutes prints one plain line saying how long it has been silent and how to stop it, and the run is not killed",
   "fix_kind": "mechanical",
   "kind": "fix",
