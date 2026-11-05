@@ -18,7 +18,7 @@
       "gain": 4,
       "harm": 3,
       "line": 141,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -28,27 +28,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "987d7396ea9edc9600fea7c0372f40ee30ecda8da11ed591370038ec88e08ed8",
-    "changed": "6498008b6e13b284a92d89b1640121ac128657232dd183bc17e0260777c42ef7",
-    "commit": "b1f4b9fbe4ccf4054c71b765e0a44bfc431e2373",
+    "branch_diff": "1760d133a0319b6d79c61e666b296799d30344567239b8465de9d0fc4e879826",
+    "changed": "e4f83d69f288eaec8aab3d15a0cd65893427cd88afa5409986ca882bf4a9a25b",
+    "commit": "e827b397d3639f2f27c7f31e680b5add6adecca2",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - extending an existing story with intervening sections or a saved design.\nThe joining path appends each field immediately before the named following heading, rather than within its owning section. For the supported layout in tests/test_story.py:36\u201350 (`Done when`, then `Tasks`, then `Risks`), the new Done items land inside Tasks. Likewise, plans/FORGE-INTAKE-1.md:45 has a section between Done when and Risks. The parser in src/forge/story.py:460\u2013486 stops each section at the next heading, so these additions are excluded from the story's requirements despite handback reporting success.\nThe same append also places new Change bullets after an existing trailing `Design:` line. src/forge/design.py:101\u2013113 requires that metadata to remain the last line of What changes for you, so extending a previously valid user-facing plan makes its next read fail.\nInsert additions inside their actual sections and preserve trailing design metadata. The new regression test only joins freshly generated plans, so neither established-plan case is covered.",
-        "file": "src/forge/intake.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 141,
-        "priority": "P1",
-        "title": "Preserve plan structure when appending intake requirements",
-        "work": 2
-      }
-    ],
-    "id": "25d68ace-ed39-472a-b64b-93ea54bbd6b0",
-    "status": "blocked"
+    "findings": [],
+    "id": "8be60a38-dab0-459e-ab15-e45cc4684732",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-05T20:10:41.129964+00:00",
@@ -56,6 +45,10 @@
     },
     {
       "at": "2026-11-05T20:17:11.765179+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-05T20:21:59.718404+00:00",
       "step": "review"
     }
   ],
