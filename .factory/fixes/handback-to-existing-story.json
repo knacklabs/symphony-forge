@@ -11,14 +11,59 @@
   "done_when": "Handing back an intake as a plan for an existing story key adds it to that story with no git error, or refuses before using the intake with a plain reason and next step",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [
+    {
+      "area": "act() in src/forge/intake.py",
+      "file": "src/forge/intake.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 141,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Preserve plan structure when appending intake requirements",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "987d7396ea9edc9600fea7c0372f40ee30ecda8da11ed591370038ec88e08ed8",
+    "changed": "6498008b6e13b284a92d89b1640121ac128657232dd183bc17e0260777c42ef7",
+    "commit": "b1f4b9fbe4ccf4054c71b765e0a44bfc431e2373",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - extending an existing story with intervening sections or a saved design.\nThe joining path appends each field immediately before the named following heading, rather than within its owning section. For the supported layout in tests/test_story.py:36\u201350 (`Done when`, then `Tasks`, then `Risks`), the new Done items land inside Tasks. Likewise, plans/FORGE-INTAKE-1.md:45 has a section between Done when and Risks. The parser in src/forge/story.py:460\u2013486 stops each section at the next heading, so these additions are excluded from the story's requirements despite handback reporting success.\nThe same append also places new Change bullets after an existing trailing `Design:` line. src/forge/design.py:101\u2013113 requires that metadata to remain the last line of What changes for you, so extending a previously valid user-facing plan makes its next read fail.\nInsert additions inside their actual sections and preserve trailing design metadata. The new regression test only joins freshly generated plans, so neither established-plan case is covered.",
+        "file": "src/forge/intake.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 141,
+        "priority": "P1",
+        "title": "Preserve plan structure when appending intake requirements",
+        "work": 2
+      }
+    ],
+    "id": "25d68ace-ed39-472a-b64b-93ea54bbd6b0",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-05T20:10:41.129964+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-05T20:17:11.765179+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-11-05T20:17:11.779046+00:00",
+    "file": "src/forge/intake.py",
+    "wait_id": "0ebc8cdc-0ae3-4c07-a84f-4409b494aaff"
+  },
   "stuck": {
     "close": null,
     "head": "1a210e411122451bc2fd2b68578fc1d4f367d678",
