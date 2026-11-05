@@ -1,6 +1,13 @@
 {
   "base": "28ce710ae1ee26deec467deccfa90fb1146a0055",
   "branch": "fix/sync-survives-missing-chat-checkout",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1acd8-77ae-7ad1-928f-02e9f0d46856",
+    "head": null,
+    "start": "a25f3d88f7920c78a391335e9749f3ca02d274da"
+  },
   "done_when": "forge sync finishes with exit status 0 and one plain warning when a saved chat checkout is gone, keeps that chat record, and moves the other chat records as before",
   "fix_kind": "mechanical",
   "kind": "fix",
