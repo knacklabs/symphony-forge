@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "edge\tsrc/forge/fullrun.py\tNot done: forge test --full prints the exact command it ran before its result",
+      "kind": "edge",
+      "path": "src/forge/fullrun.py",
+      "line": 87,
+      "text": "Not done: forge test --full prints the exact command it ran before its result",
+      "from": "review",
+      "item": "full-run-names-its-command",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
