@@ -1,10 +1,18 @@
 {
   "branch": "task/FORGE-SECAUDIT-1-SKILL",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-05T07:54:16.688316+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "7e203040ef2d5c4745cfcf8c666aa7816bd8ffd7",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
