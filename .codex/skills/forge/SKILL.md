@@ -162,7 +162,8 @@ Every client repo moves through seven steps. `forge next` names the current step
 4. **Sign-off.** Run the sign-off checks, then ask the client's named person to approve the canvas and answers. Build now and Later are planned choices, not available commands. Ask the owner what work to start or defer. You can say: "Record the client approval, then plan the first change".
 5. **Build.** You plan stories and fixes, build each one with its tests and a review, and merge it. You can say: "Build this next: <idea>" or "What is ready to merge?".
 6. **Deploy on Mainline.** Confirm the client's host and complete production preparation below. When the person asks for Mainline deployment, set up Mainline and deploy dev. An authorized person presses Promote for production. A client host without Mainline uses its agreed release process. You can say: "Deploy this on Mainline" or "Use the client's servers".
-7. **Run and improve.** People use the app, and each new request or problem goes back to step 5. You can say: "Users asked for <request>" or "This is broken: <problem>".
+   When a release adds a migration file, Mainline takes a backup at Promote. Mainline runs one test restore before the first launch. Mainline checks the release for the added file itself and does both; the agent does neither and writes no mark. The migration rule belongs to FORGE-EXPAND-1.
+7. **Run and improve.** People use the app, and each new request or problem goes back to step 5. Follow [After a demo](#after-a-demo) for demo notes. You can say: "Users asked for <request>" or "This is broken: <problem>".
 
 **The cold read loop.** A reader who did not write the plan reads it cold and lists its gaps. You fix the plan, and the reader reads it again. After two rounds that still have open notes, Forge stops and the owner chooses: accept, read again, or split. It exists because a gap found in the plan costs minutes, but the same gap found in the code costs a build round.
 
@@ -181,6 +182,42 @@ When a Forge command refuses, tell the person in plain words what Forge stopped,
 Build now and Later at sign-off are planned, not available. Record "build it later" with
 `forge start "Do this later: <the first story's idea>"`. For work the owner wants now, record
 client sign-off first, then use the normal story flow.
+
+## Waiting records
+
+The `notifications` module holds `Notification` in schema `notifications`, with
+`id`, `organisationId`, `recipientAccountId`, `subjectId`, `subjectName`, `message`,
+`createdAtUtc` and `resolvedAtUtc` (null while the record waits).
+TypeScript uses `NotificationsApi` in `libs/notifications/contracts/src/service.ts`,
+token `NOTIFICATIONS_API`, and `NotificationsPrincipal = { id, organisationId }`.
+Call `notify(principal, recipientAccountId, subjectId, subjectName, message, tx?)` to add
+an open entry and `resolve(principal, subjectId, tx?)` to close all open entries for that
+record in the principal's organisation. Pass the feature's transaction as `tx`.
+Python uses `NotificationsService` in `app.notifications.service`:
+`notify(account, recipient_account_id, subject_id, subject_name, message)` and
+`resolve(account, subject_id)` use the caller's session and never commit.
+
+Add `notify` in the same transaction as the change that makes a record wait;
+add `resolve` in the transaction of the action.
+A reassignment is `resolve` then `notify` in one transaction.
+`GET /api/v1/notifications` gives the signed-in person's own entries in their organisation:
+`data: { count, items }`, with at most 100 open entries, newest first, and a count of all
+their open entries. Each item has `id`, `subjectId`, `subjectName`, `message` and `createdAtUtc`.
+Build the list and the count in the client's design, as FORGE-NOSCREENS-1 requires.
+No email until the SNS story.
+An app without the `notifications` module gets it by hand, from these names, when a feature first needs it.
+`forge sync` delivers this guide and keeps the app's code and migrations unchanged.
+
+## After a demo
+
+Save the notes or transcript in `docs/context/` and read them all.
+Show one list of changes, one line per change, in the client's words, with who asked and which screen or record it touches.
+Two ideas in one sentence become two lines.
+Put questions the notes leave open below the list as "Need an answer".
+The FDE answers once: OK, or edits.
+After the OK, run `forge start "<change>"` for each line; Forge picks a fix or a story for each.
+Nothing starts before the OK. The OK is the FDE's reply; Forge stores no record of it.
+A change the FDE says can wait goes to the later list with `forge start "Do this later: <idea>"`, after the OK.
 
 ## Save decisions and ideas
 
@@ -891,6 +928,7 @@ In an app made from the Python starter, whose tests run import-linter, copy thes
 - Built in: each module keeps its tables in its own Postgres schema, with core tables in core; links between business modules store an indexed id without a foreign key, and links to core keep their foreign key.
 - A module uses another module only through its public service, never through its tables.
 - The tests run import-linter, so an import of another module's internal files fails them.
+- Built in: the API lists each person's waiting records with a count.
 - Built in: the API serves an MCP server at /mcp. An admin adds agent accounts with a role and a key that shows once through the Members API; the agent builds the Members screen in the client's design; agents use each feature's tools with that role's permissions, and delete and restore tools stay off until an admin turns them on for the feature.
 - Built in: each feature also offers its items, its field guide and its allowed values as MCP resources; agents get a prompt only for a task under `## Agent tasks`; the MCP server never uses elicitation or sampling.
 - Built in: every action goes through its feature's service and permission, from the screens, the API and agents; each feature's create takes a retry key; an agent that a person signs in acts as that person, and the change history records both; reports are named, typed reads in their feature's report service.
@@ -953,6 +991,7 @@ The product facts are in docs/product/BRIEF.md.
 - Built in: each module keeps its tables in its own Postgres schema, with core tables in core; links between business modules store an indexed id without a foreign key, and links to core keep their foreign key.
 - A module uses another module only through its public service, never through its tables.
 - The tests run Nx's module-boundary lint, so an import across modules fails them.
+- Built in: the API lists each person's waiting records with a count.
 - Built in: each account belongs to one organisation, as an admin or a member, and every query is scoped to that organisation.
 - Built in: admins invite people by email and remove members, which signs them out at once; members cannot invite, remove people or change roles.
 - Built in: dates and times are stored in UTC and shown in the person's time zone, and money is stored as an exact decimal with its currency code; the helpers in @app/shared-util format them.

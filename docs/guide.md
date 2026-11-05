@@ -177,6 +177,8 @@ For the sign-off history, see the
 [prototype sign-off spec](specs/prototype-signoff.md) and
 [decision 0095](decisions/0095-prototype-before-stories.md).
 
+The agent's guide explains how features add and clear each person's waiting records, how demo notes become one list of changes with one FDE OK before work starts, and how Mainline owns the backup at Promote for a release that adds a migration file and one test restore before launch.
+
 ## Commands
 
 See the [command list](commands.md) for every Forge command.
