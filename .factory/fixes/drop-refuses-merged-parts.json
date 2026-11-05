@@ -4,12 +4,20 @@
   "done_when": "A story with a merged part is refused with its reason and next step, and an approved story with no started part can still be dropped",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-05T12:12:12.423471+00:00",
       "step": "start"
     }
   ],
-  "why": "forge story drop lets a person drop a story whose part already merged and whose part branch was cleaned up, which hides the remaining parts from forge next"
+  "stuck": {
+    "close": null,
+    "head": "a9ba3f9314efab52e243c64bf5fac459ad986c4f",
+    "keys": {},
+    "round": null
+  },
+  "why": "forge story drop lets a person drop a story whose part already merged and whose part branch was cleaned up, which hides the remaining parts from forge next",
+  "worker": "codex"
 }
