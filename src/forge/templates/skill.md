@@ -143,6 +143,9 @@ client repos get this check from the installed Forge command.
 
 Send every new idea through `forge start "<their words>"`. Never ask the human whether it is a
 story or a fix. When the answer is a fix, run its `forge land <fix>` in the background and watch it.
+For an idea that extends an existing story, the explorer can return that story's key with
+`Lane: plan`. Handback reuses its branch and worktree and adds to its plan. Read the revised plan
+before approval.
 
 The human approves stories and chooses between options. In a client repo before the default
 branch has an accepted sign-off, the agent runs `forge merge <item>` once `forge close` says Ready.
