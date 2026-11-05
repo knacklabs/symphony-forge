@@ -21,6 +21,17 @@
       "item": "waiting-part-names-a-merged-part",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_tools_guide.py\tThe checked-in host guides omit the merged-parts qualification that another fix added to the source template.",
+      "kind": "bug",
+      "path": "tests/test_tools_guide.py",
+      "line": 16,
+      "text": "The checked-in host guides omit the merged-parts qualification that another fix added to the source template.",
+      "from": "worker",
+      "item": "waiting-part-names-a-merged-part",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
