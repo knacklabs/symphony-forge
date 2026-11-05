@@ -8,6 +8,7 @@ on:
     paths:
       - src/forge/templates/starter/**
       - src/forge/templates/starter-python/**
+      - src/forge/templates/skills/agents/assistant-module/**
       - src/forge/feature*.py
       - src/forge/templates/feature/**
 
@@ -29,7 +30,7 @@ jobs:
       - name: Run the real starter stack and browser flows
         env:
           FORGE_STARTER_LIVE: '1'
-        run: uv run --frozen --python 3.11 pytest tests/test_starter_tree.py tests/test_libs_layout.py tests/test_one_company.py tests/test_defaults_*.py tests/test_database_*.py tests/test_module_schemas.py tests/test_feature_projects.py tests/test_feature_command.py tests/test_feature_access.py tests/test_mcp.py tests/test_agent_ready.py tests/test_request_log.py tests/test_mcp_resources.py tests/test_proxy_error_pages.py tests/test_noscreens_rules.py tests/test_notifications.py -k "not python and not test_2_admins_invite_by_email_and_members_cannot_change_roles_or_invite" -q -x -n 0 --timeout=1800
+        run: uv run --frozen --python 3.11 pytest tests/test_starter_tree.py tests/test_libs_layout.py tests/test_one_company.py tests/test_defaults_*.py tests/test_database_*.py tests/test_module_schemas.py tests/test_feature_projects.py tests/test_feature_command.py tests/test_feature_access.py tests/test_mcp.py tests/test_agent_ready.py tests/test_request_log.py tests/test_mcp_resources.py tests/test_proxy_error_pages.py tests/test_noscreens_rules.py tests/test_notifications.py tests/test_assistant_*.py -k "not python and not test_2_admins_invite_by_email_and_members_cannot_change_roles_or_invite" -q -x -n 0 --timeout=1800
 
   organisation-invites-smoke:
     runs-on: ubuntu-latest
@@ -71,7 +72,7 @@ jobs:
       - name: Run the Python starter stack and browser flows
         env:
           FORGE_STARTER_LIVE: '1'
-        run: uv run --frozen --python 3.11 pytest tests/test_python_starter.py tests/test_libs_layout.py tests/test_database_*.py tests/test_feature_projects.py tests/test_mcp.py tests/test_mcp_resources.py tests/test_noscreens_rules.py -k "python and not test_5_feature_columns_come_from_the_kind_table" -q -n 0 --timeout=1800
+        run: uv run --frozen --python 3.11 pytest tests/test_python_starter.py tests/test_libs_layout.py tests/test_database_*.py tests/test_feature_projects.py tests/test_mcp.py tests/test_mcp_resources.py tests/test_noscreens_rules.py tests/test_assistant_*.py -k "python and not test_5_feature_columns_come_from_the_kind_table" -q -n 0 --timeout=1800
 
   python-database-kinds-smoke:
     runs-on: ubuntu-latest
