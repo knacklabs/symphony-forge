@@ -82,6 +82,10 @@ Land prints the owner's question, open findings and failing checks, then exits w
 (needs a choice) instead of waiting. The coordinator records the choice, then runs `forge land <item>`
 again. Other stops and session subagent handoffs also print the open findings and failing checks.
 While land waits, commands share each pull request head's status snapshot across worktrees for 60 seconds.
+Land waits up to 90 minutes while a check is in progress, even without a status change.
+Checks that never start have a 30-minute no-progress limit. At either limit,
+no decision is needed. Run `forge land <item>` again to resume without restarting checks.
+`FORGE_CHECKS_WAIT` keeps its explicit no-progress wait instead of the longer running-check wait.
 
 When the owner narrows or splits a stopped story part, close writes the choice into that part's
 builder details and merges the plan into the task branch. The next worker round gets those details.

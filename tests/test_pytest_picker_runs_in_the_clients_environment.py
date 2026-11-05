@@ -160,7 +160,8 @@ def test_4_forges_own_fast_command_works_with_an_older_release_on_path(repo, tmp
     result = subprocess.run(command, shell=True, cwd=source, capture_output=True,
                             text=True, timeout=120)
     assert result.returncode == 0, result.stdout + result.stderr
-    assert "No changed or module-related test files to run." in result.stdout
+    # An empty selection remains a valid skip and now states plainly that no tests ran.
+    assert "No tests ran: no changed or module-related test files were selected." in result.stdout
 
 
 def _client_tests(client, python):
