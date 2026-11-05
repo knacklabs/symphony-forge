@@ -1,0 +1,45 @@
+{
+  "base": "703ba9090a1dbb251d9a64b0becd5ab22f798bdf",
+  "branch": "fix/windows-git-diff-option-order",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1ad42-7d70-7a10-a85a-e40a50687e1c",
+    "head": null,
+    "start": "3ec37c4be81c6e42354259292e2b3453a80f67ba"
+  },
+  "done_when": "A chosen pytest file runs through forge test on Windows and on Linux, and git diff gets its options before any path",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "10daad770b0570691b1d7d7b4f7921389c52df3c4793c3b8218d897054396f68",
+    "changed": "b66e8f0bae7b25aa13eddcd0f1adac0288eed887fa8e9f58885becb39749197a",
+    "commit": "d1ab8d09547d1152bf1b679ac2e40968e805db2b",
+    "dismissals": [],
+    "findings": [],
+    "id": "6c5a9ff8-5b15-4f9a-9da2-d549143d9cb8",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-05T19:48:57.835176+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-05T19:54:23.143054+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "2800f4d171c750713d9d8c6be55db094f1a8f353",
+    "keys": {},
+    "round": null
+  },
+  "why": "forge test --pytest with a chosen test file fails on Windows before any test runs, because Forge passes git diff its -z option after a path (issues 1378 and 1383)",
+  "worker": "codex"
+}

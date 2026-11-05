@@ -25,8 +25,8 @@ COMMANDS = [{"words": "test", "run": "test", "changes_state": False,
              "listing": "| `forge test` | Run fast_test (else test) in the machine test lane; `--change` runs the change's related tests and checks; `--pytest <base>` picks related pytest tests. |"}]
 
 
-def git_files(*args: str) -> list[str]:
-    return subprocess.run(["git", *args, "-z"], check=True, capture_output=True,
+def git_files(command: str, *args: str) -> list[str]:
+    return subprocess.run(["git", command, "-z", *args], check=True, capture_output=True,
                           text=True).stdout.split("\0")[:-1]
 
 
