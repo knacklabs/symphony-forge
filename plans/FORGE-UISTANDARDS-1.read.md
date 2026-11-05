@@ -1,13 +1,13 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-11-05T21:10:05.765147+00:00
-seconds: 210.507
-read_hash: 884ff6fd687b30f5fd792194459a17455e74c501
-round: 1
-passed: no
-doc_seen: 884ff6fd687b30f5fd792194459a17455e74c501
+read_at: 2026-11-05T21:14:05.850696+00:00
+seconds: 78.928
+read_hash: a4823ec6011b8a4a393e7c42a88ac42bc5ac0516
+round: 2
+passed: yes
+doc_seen: a4823ec6011b8a4a393e7c42a88ac42bc5ac0516
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+notes_seen: bc0d108a8c22bf4afa837e38dc530d6bdb39e978
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a1ad88-f507-7e01-b472-6e5a0a917f5f
 session:
@@ -75,3 +75,21 @@ Only a genuine trade-off goes to the human, as a question with options.
    
    Gain 2, Work 1, Harm 1
    Disposition: cut
+
+## Round 2
+
+6. Advisory: Plan gap: the new shipped-file inventory edit is outside every task’s scope.
+
+   Raise: Plan gap. `plans/FORGE-UISTANDARDS-1.md:85` requires updating `tests/test_split_ships.py`, but CHECKS’s Scope and Tests cells at line 125 omit it. That test compares the complete shipped inventory (`tests/test_split_ships.py:68`), so delivering `ui-checks.js` without updating it fails the existing test. Assign the file and its test to CHECKS.
+   
+   Gain 3, Work 1, Harm 2
+   Disposition: keep - below the bar (follow-up)
+
+7. Advisory: the revised shell-fold rule rejects a correctly split sidebar.
+
+   Raise: Functional. `plans/FORGE-UISTANDARDS-1.md:110` identifies the shell by `<SidebarProvider>` but requires `<Sidebar collapsible="icon">` in that same file. A layout rendering `<SidebarProvider><AppSidebar /></SidebarProvider>` fails even when `AppSidebar` correctly renders the folding sidebar. The shipped library separates these responsibilities: the provider accepts children (`src/forge/templates/starter/libs/shared/ui/src/components/ui/sidebar.tsx:56`), while `collapsible` belongs to Sidebar (`:154`). Unlike the search check, the fold check allows no imported component lookup. This is a new false refusal introduced by the shell-rule revision.
+   
+   Case: normal use - a client keeps its sidebar component separate from its layout.
+   
+   Gain 3, Work 2, Harm 2
+   Disposition: keep - below the bar (follow-up)
