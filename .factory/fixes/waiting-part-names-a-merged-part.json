@@ -1,0 +1,57 @@
+{
+  "base": "c2c77fbcb2c3967df64f07b77b6f5487b8f89771",
+  "branch": "fix/waiting-part-names-a-merged-part",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1ab30-ea08-7002-b77e-6c73768bb1be",
+    "head": null,
+    "start": "d5ee9f5bd331fc2c7c4243dbb5b2f3fcf0722e6b"
+  },
+  "done_when": "When the part below is merged but the base branch lacks it, the message names the real step that lets the part start, and following that step lets the part start; a new repo and an earlier-adopted repo are covered",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "3191c8152a095eb4e29b6eaa9d03ef428144622b7a16c3a982b20a7adc5e1b45",
+    "changed": "2861dfa4945374bde180c97c614cf554d67cf25ff4b6f8a4da665799117f64d9",
+    "commit": "03c3af9c2ba0883ca31d79088f9c729e8a054bbe",
+    "dismissals": [],
+    "findings": [],
+    "id": "628d8411-8f45-4cde-b9f8-b04acb653ed4",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-05T10:10:18.040731+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-05T11:31:31.507088+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-05T13:22:24.161589+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-05T13:51:54.954133+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-05T15:51:39.076626+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "788ccded-ec23-4b0f-a99d-44f8c827a406",
+    "head": "a3f12efd8ee0985750012d2e64a2acdfc1b39ef4",
+    "keys": {},
+    "round": 2
+  },
+  "why": "forge task start and forge next say a part starts once a named part merges, after that part has already merged, because its base branch does not yet contain the merge (issue 1154)",
+  "worker": "codex"
+}

@@ -133,6 +133,7 @@ makes new parts wait for merges. A part that builds on another part keeps that b
 moves its own changes onto the default branch after the base merges through Forge.
 Close reviews only the stacked part's own changes and waits for its base to merge before CI and merge.
 After Forge merges the base, run the printed `forge close <part>` step to move the part onto the default branch.
+If a new part waits for its base to include an earlier merge, close that base first, then start the new part again.
 After a merge outside Forge, follow close's printed pull request target correction, then close the part again.
 The board and `forge next` show the part's base. After a clean review, they say that
 the part waits for its base to merge. After that merge, run `forge close <part>`.
