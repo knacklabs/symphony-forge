@@ -9,7 +9,7 @@ import pytest
 
 from conftest import ROOT, _install, patient
 from test_close import env  # noqa: F401
-from test_codex_setup import PIN, UV_STUB
+from test_codex_setup import PIN, UV_STUB, _program
 from test_story import approved_constitution, new_story
 
 STORY = "FORGE-TOOLS-1"
@@ -70,7 +70,10 @@ def test_8_missing_tools_stop_plainly_and_doctor_repairs_them(env, tmp_path, mon
         assert label in checked.stdout, checked.stdout + checked.stderr
         if tool == "both":
             assert "Claude Agent SDK" in checked.stdout
-        uv = UV_STUB.format(python=sys.executable, program=str(repo.bin / "codex"), pin=PIN)
+        # The SDK executes its bundled program directly, without PATH's .cmd wrapper.
+        program = tmp_path / ("bundled-codex.cmd" if os.name == "nt" else "bundled-codex")
+        _program(program, f"echo codex-cli {PIN}")
+        uv = UV_STUB.format(python=sys.executable, program=str(program), pin=PIN)
         # The package manager supplies the SDK's public module and distribution metadata.
         claude_install = '''elif args[-1].startswith("claude-agent-sdk=="):
     site = pathlib.Path(subprocess.run([args[args.index("--python") + 1], "-c",
