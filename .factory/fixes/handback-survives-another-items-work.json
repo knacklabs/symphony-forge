@@ -9,14 +9,24 @@
     "start": "174d8eed9432737c854a3ca7d2c3c61a9ed36cc0"
   },
   "done_when": "Starting a second item's forge work leaves the first item's running round able to hand back, proved by a command test that reproduces the reported order",
+  "drop": {
+    "at": "2026-11-05T10:18:24.977532+00:00",
+    "because": "Could not reproduce issue 1285: two overlapping native rounds both handed back in new and adopted repos. No code changed; the issue stays open for a mixed Codex and Claude reproduction",
+    "by": "vrknetha <vrknetha@gmail.com> 1793873904 +0530",
+    "status": "working"
+  },
   "fix_kind": "mechanical",
   "kind": "fix",
   "round": 1,
-  "status": "working",
+  "status": "dropped",
   "steps": [
     {
       "at": "2026-11-05T10:10:23.007295+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-05T10:18:24.977698+00:00",
+      "step": "drop"
     }
   ],
   "stuck": {
