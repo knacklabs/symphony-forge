@@ -11,7 +11,7 @@
   "done_when": "A task's Tests column with short names runs the matching tests, and a selection that matches nothing says so plainly and does not pass as if tests ran",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "round": 1,
+  "round": 2,
   "status": "working",
   "steps": [
     {
