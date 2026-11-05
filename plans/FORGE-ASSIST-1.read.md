@@ -1,13 +1,13 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-11-03T02:10:30.035616+00:00
-seconds: 108.716
-read_hash: 9b05c1ada81519b51d633335623d228160cb5e7c
-round: 4
-passed: yes
-doc_seen: 9b05c1ada81519b51d633335623d228160cb5e7c
+read_at: 2026-11-05T20:01:34.178278+00:00
+seconds: 265.993
+read_hash: 1e77c4129ca00e83a7d78807af757ff49bf08e4a
+round: 5
+passed: no
+doc_seen: 1e77c4129ca00e83a7d78807af757ff49bf08e4a
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 765740952a26ded17e4c6c1ce23b749afdf36f73
+notes_seen: 275ec86b71ada878694d0cdf375e5a701f117859
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a182e5-1300-7962-994a-2b3033a5d7ad
 session:
@@ -145,3 +145,10 @@ No findings.
 ## Round 4
 
 No findings.
+
+## Round 5
+
+18. Advisory: GUIDE leaves the shipped model rule contradicting the new template.
+    Raise: Plan gap. [GUIDE](/plans/FORGE-ASSIST-1.md:214) adds page rules but never updates the [existing Must rule](/src/forge/templates/skills/agents/SKILL.md:394) requiring Mainline and forbidding provider keys. Client reviewers are [instructed to hold violations](/src/forge/templates/review.md:367). The owner's provider-key decision is settled; the gap is carrying that exception into the shipped guidance, so clients can use the template without another override.
+    Case: normal use - a client's agent copies the template, then review flags its required provider key.
+    Gain 4, Work 1, Harm 2
