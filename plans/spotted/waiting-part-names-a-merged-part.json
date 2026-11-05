@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/codex.py\tSource sync crashes if a saved chat checkout no longer exists.",
+      "kind": "bug",
+      "path": "src/forge/codex.py",
+      "line": 347,
+      "text": "Source sync crashes if a saved chat checkout no longer exists.",
+      "from": "worker",
+      "item": "waiting-part-names-a-merged-part",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

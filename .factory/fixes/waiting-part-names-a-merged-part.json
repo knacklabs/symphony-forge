@@ -11,12 +11,27 @@
   "done_when": "When the part below is merged but the base branch lacks it, the message names the real step that lets the part start, and following that step lets the part start; a new repo and an earlier-adopted repo are covered",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "bd6a6c50ec6896ff8d55e28710b4dd615261d8c6b5480fbe1bb9c5652d444893",
+    "changed": "5767d479f6f23cdeeaf9e566077a11b9c36776eb8add770e67fd8b0e648b1f0d",
+    "commit": "e31f005e231953420982d6f89964e6ec4d40d7a2",
+    "dismissals": [],
+    "findings": [],
+    "id": "9e8ed21b-a291-4ce0-aded-125f27147aaa",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-05T10:10:18.040731+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-05T11:31:31.507088+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
