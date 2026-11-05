@@ -1,6 +1,13 @@
 {
   "base": "703ba9090a1dbb251d9a64b0becd5ab22f798bdf",
   "branch": "fix/playwright-workers-find-preload",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1ad42-80d5-7a41-8076-5b4ec2f16852",
+    "head": null,
+    "start": "30fda08f8f45d9ded58608141934f3067b35c54c"
+  },
   "done_when": "After one browser test fails, the remaining browser tests still run under forge test, and the preload helper is found from where Forge is installed",
   "fix_kind": "mechanical",
   "kind": "fix",
