@@ -1,0 +1,15 @@
+{
+  "base": "0a67593557f5d9f5b73a5034c797f6c8b0f14511",
+  "branch": "fix/test-errors-in-combined-output",
+  "done_when": "The two tests pass by checking what a person sees in the combined output, and a malformed manifest or missing lock still shows its error with no traceback",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-05T12:12:07.509362+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Two tests on main fail because forge test now sends a test run's error text to standard output, and the tests still look for it on standard error"
+}
