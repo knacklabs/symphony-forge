@@ -84,6 +84,7 @@ def run(top: Path) -> int:
         raise repo.Refused(
             "The full run must use only committed files. Next: commit or set aside the changes, "
             "then forge test --full.", "")
+    print(f"Full run command: {repo.grouped(top, command)}", flush=True)
     status, report = review.test_run(top, command, sha, always=True)
     print(report)
     results = review.results_path(top)
