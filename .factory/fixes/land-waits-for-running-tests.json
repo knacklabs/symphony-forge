@@ -1,0 +1,15 @@
+{
+  "base": "c2c77fbcb2c3967df64f07b77b6f5487b8f89771",
+  "branch": "fix/land-waits-for-running-tests",
+  "done_when": "While any check is still in progress, land keeps waiting past the no-progress limit up to a clear upper limit, and when it stops the message says no decision is needed and how to resume",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-05T10:10:36.799880+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "forge land stops as needs you after 30 minutes while test groups are still running normally (issue 1360)"
+}
