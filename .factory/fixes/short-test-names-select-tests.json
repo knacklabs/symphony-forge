@@ -48,8 +48,8 @@
     "id": "fbac1566-8883-478f-9f85-a4cd0850669e",
     "status": "clean"
   },
-  "round": 2,
-  "status": "waiting for checks",
+  "round": 3,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-05T10:12:27.962242+00:00",
@@ -61,10 +61,10 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "584f32493315a4cafc3ebd4a2caf2d3842b35d52",
+    "close": "1c0d7d46-7db8-4484-bc4c-e5678532a775",
+    "head": "0e854c9782c7f3174ed7962eaea11ff5aff227a2",
     "keys": {},
-    "round": null
+    "round": 2
   },
   "why": "A task's short test names such as test_2 select no tests, so forge test quietly runs nothing (issue 1359)",
   "worker": "codex"
