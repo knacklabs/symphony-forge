@@ -27,6 +27,7 @@ REFUSALS = {
     "base_local": ("{item} waits for {base} to publish reviewed changes.", "forge close {base}"),
     "base_not_built": ("{item} builds on {base}, whose latest changes haven't passed review.", "forge close {base}"),
     "base_stacked": ("{item} waits for {base}, which builds on {below}, so it starts once {below} merges.", "forge next"),
+    "base_behind": ("{item} waits for {base} to include the merge of {below} from {default}.", "forge close {base}"),
     "base_older": ("{item} waits for {base}, which runs an older Forge release, so it starts once {base} merges.", "forge next"),
     "two_bases": ("{item} waits for {deps}, so it starts once all but one of them merge.", "forge next"),
     "overlap": ("{item} would change {paths}, which {other} is changing and hasn't merged yet.",
@@ -540,8 +541,11 @@ def stack_base(item: str, blockers: list[str], main: str, top: Path | None = Non
         refuse(REFUSALS["base_not_started"], item=item, base=base)
     if below := state.get("stacked_on"):
         merged = forge_merged(main, below, top)
-        if not merged or run("git", "merge-base", "--is-ancestor", merged, ref, cwd=top).returncode:
+        if not merged:
             refuse(REFUSALS["base_stacked"], item=item, base=base, below=below)
+        if run("git", "merge-base", "--is-ancestor", merged, ref, cwd=top).returncode:
+            refuse(REFUSALS["base_behind"], item=item, base=base, below=below,
+                   default=main.removeprefix("origin/"))
     if repo._pin(show(ref, "forge.toml", top) or "") != repo._pin(show(main, "forge.toml", top) or ""):
         refuse(REFUSALS["base_older"], item=item, base=base)
     from forge import review
