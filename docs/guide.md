@@ -17,7 +17,7 @@ reader while available. A native read uses a separate `reader` subagent.
 Install the release a repo pins (uv brings Python 3.11 or later if you don't have it):
 
 ```
-uv tool install git+https://github.com/knacklabs/symphony-forge@v1.2.28
+uv tool install git+https://github.com/knacklabs/symphony-forge@v1.2.29
 ```
 
 `forge --version` prints the installed version. Each repo pins its release in `forge.toml`, and
