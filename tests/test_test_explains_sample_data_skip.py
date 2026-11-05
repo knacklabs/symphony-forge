@@ -12,6 +12,7 @@ from test_sample_setup import _prepared_client, _settings
 STORY = "FIX-TEST-COMMAND-FOUND-ON-WINDOWS"
 
 
+@pytest.mark.platform
 @pytest.mark.parametrize("case,source", [
     ("new client", "setting"),
     ("new client", "sign-off"),
