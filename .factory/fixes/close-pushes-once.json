@@ -1,6 +1,13 @@
 {
   "base": "899c9e1bfe3ad643b3a3a37d4edbf630d5e76efb",
   "branch": "fix/close-pushes-once",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1b0f0-1ab5-72f0-87cb-dd64463a1000",
+    "head": null,
+    "start": "77480a4d49314d1dfefe7a213deb67782de00490"
+  },
   "done_when": "One close round publishes the item's branch once, after the review is saved, so the pull request's CI runs once per round on the final commit, and remote reconciliation and the review block still work",
   "fix_kind": "mechanical",
   "kind": "fix",
