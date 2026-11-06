@@ -75,7 +75,9 @@ def _disable_assistant(client: Path) -> None:
             raise AssertionError(f"copy step did not match all API services in {compose}")
         compose_text = compose_text.replace(line, "")
     compose.write_text(compose_text, encoding="utf-8")
-    for name in ("assistant-api.e2e-spec.ts", "assistant-chats.e2e-spec.ts"):
+    # Module-dependent cases run in the enabled app above. The disabled app
+    # proves ordinary routes work without assistant providers or settings.
+    for name in ("assistant-api.e2e-spec.ts", "assistant-chats.e2e-spec.ts", "assistant-model.e2e-spec.ts"):
         (client / "apps/api/test" / name).unlink()
 
 
@@ -113,6 +115,12 @@ def test_6_the_template_copies_in_and_runs(repo, gh, tmp_path, tmp_path_factory,
 
     enabled = _run_assistant_app(client, tmp_path_factory, monkeypatch)
     _require_cases(enabled["api"], (
+        "only the model file reads the provider key and the module contains no key",
+        "missing required settings stop startup with a plain message",
+        "the model uses the configured provider, key and address",
+        "monthly spend stops at the cap and last month does not count",
+        "the prompt stays within its UTF-8 byte budget and has a version",
+        "the secret check finds labelled secrets and valid cards but not plain text",
         "a person lists only their own chats",
         "a person reads messages and a pending confirmation",
         "another person and an admin get 404 for a chat",
