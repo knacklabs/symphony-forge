@@ -8,13 +8,99 @@
     "head": null,
     "start": "705288c3d6e895358642fc0d001f341eb7577e5a"
   },
+  "known": [
+    {
+      "area": "src/forge/templates/skills/agents/assistant-module/python/apps/api/app/assistant/guard.py",
+      "file": "src/forge/templates/skills/agents/assistant-module/python/apps/api/app/assistant/guard.py",
+      "gain": 4,
+      "harm": 4,
+      "line": 7,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": true,
+      "title": "Agents: Never take secrets by speech or chat",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/skills/agents/assistant-module/python/apps/api/app/assistant/README.md",
+      "file": "src/forge/templates/skills/agents/assistant-module/python/apps/api/app/assistant/README.md",
+      "gain": 4,
+      "harm": 2,
+      "line": 23,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Keep the documented schema inventory entries as strings",
+      "work": 1
+    },
+    {
+      "area": "src/forge/templates/skills/agents/assistant-module/python/apps/api/app/assistant/README.md",
+      "file": "src/forge/templates/skills/agents/assistant-module/python/apps/api/app/assistant/README.md",
+      "gain": 4,
+      "harm": 2,
+      "line": 125,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Document settings for all three test API containers",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "af2f8ab580fead521c7db128d5a8b6f2e09f9dce6520735dc73ddde75324b9ac",
+    "changed": "2d748a2441482ae3068ed56ab4b0c52d044bed5266dbf2b9c5522d849ba415fe",
+    "commit": "873f236e59dd28c25ce262c6f84ed0376d019e50",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 4 (floor: agents)\nRaise: Security. Case: normal use - someone pastes `OTP 123456` or `password hunter2` into chat. The matcher requires `:`, `=` or `is` after the label, so both labelled secrets return false. These are outside the accepted limitation for unlabelled passwords. The README at lines 164\u2013168 instructs callers to save/send messages when this check returns false, allowing these secrets into checkpoints and provider requests. Recognize whitespace-separated labelled values and cover them in the guard cases.\nAdds work: extend the existing label matcher; F 2 x H 3 = 6; 2 x C = 2",
+        "file": "src/forge/templates/skills/agents/assistant-module/python/apps/api/app/assistant/guard.py",
+        "gain": 4,
+        "harm": 4,
+        "line": 7,
+        "priority": "P1",
+        "title": "Agents: Never take secrets by speech or chat",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 1, Harm 2\nRaise: Functional. Case: normal use - an agent follows the README to copy the module. The replacement snippet contains adjacent singleton tuples without separating commas. Inserting it into `EXPECTED_TABLE_SCHEMAS` breaks Python parsing; adding commas still leaves nested tuples where strings are required by `starter-python/apps/api/tests/test_module_schemas.py:60`. Restore comma-terminated string entries. The copy helper already inserts the correct strings, so its passing tests would miss this broken installation instruction.",
+        "file": "src/forge/templates/skills/agents/assistant-module/python/apps/api/app/assistant/README.md",
+        "gain": 4,
+        "harm": 2,
+        "line": 23,
+        "priority": "P1",
+        "title": "Keep the documented schema inventory entries as strings",
+        "work": 1
+      },
+      {
+        "body": "Gain 4, Work 1, Harm 2\nRaise: Functional. Case: normal use - a copied app runs its documented `node scripts/test.mjs` check. Host settings or `.env` entries do not automatically enter Compose containers. The starter's `compose.test.yml:17`, `:33` and `:50` explicitly list each API's environment and omit the assistant variables. The new `cleanup.py:78` therefore stops startup with a missing-key error. The test helper supplies the missing configuration at `tests/assistant_copy_python.py:59\u201375`, but the README never tells adopters to apply that necessary step. Include equivalent dummy settings for all three test services in the copy instructions.",
+        "file": "src/forge/templates/skills/agents/assistant-module/python/apps/api/app/assistant/README.md",
+        "gain": 4,
+        "harm": 2,
+        "line": 125,
+        "priority": "P1",
+        "title": "Document settings for all three test API containers",
+        "work": 1
+      }
+    ],
+    "id": "a316af88-cf55-431b-a905-d31b4abb8e2a",
+    "status": "blocked"
+  },
   "round": 1,
   "stacked_on": "FORGE-ASSIST-1/PYSTORE",
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-06T07:43:24.763386+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-06T08:03:32.262391+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
