@@ -1,6 +1,13 @@
 {
   "base": "b6fa4e01292ab0e510161c4155c59d5083609e60",
   "branch": "fix/review-findings-split-from-support-js-pa",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1b067-4604-7fc3-9f1c-2b37a6b934f4",
+    "head": null,
+    "start": "5a5ca87ff6c31b6d9b26366696067478d089983e"
+  },
   "done_when": "A review no longer finds: Gate: run the starter lint proofs on this pull request (tests/test_uistandards_canvas.py:71)",
   "fix_kind": "mechanical",
   "kind": "fix",
