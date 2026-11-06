@@ -1,0 +1,15 @@
+{
+  "base": "899c9e1bfe3ad643b3a3a37d4edbf630d5e76efb",
+  "branch": "fix/balance-test-groups",
+  "done_when": "The test duration data is refreshed from current Linux CI timings and the six groups of a full pull request run finish within a few minutes of each other",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-06T12:57:45.602260+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Forge's six pull request test groups are uneven (24.5 to 38.1 minutes in one run) because the duration data that splits them is stale; repo.py's duration-based split already exists"
+}
