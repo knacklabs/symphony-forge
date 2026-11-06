@@ -10,7 +10,9 @@ Run these commands from the app root. Use `.codex/skills` or `.claude/skills`, a
 cp -R .codex/skills/agents/assistant-module/typescript/libs/assistant libs/assistant
 cp .codex/skills/agents/assistant-module/typescript/apps/api/prisma/schema/assistant.prisma apps/api/prisma/schema/assistant.prisma
 cp -R .codex/skills/agents/assistant-module/typescript/apps/api/prisma/migrations/20261106000000_assistant apps/api/prisma/migrations/20261106000000_assistant
+cp -R .codex/skills/agents/assistant-module/typescript/apps/api/prisma/migrations/20261106010000_assistant_usage apps/api/prisma/migrations/20261106010000_assistant_usage
 cp .codex/skills/agents/assistant-module/typescript/apps/api/test/assistant-chats.e2e-spec.ts apps/api/test/assistant-chats.e2e-spec.ts
+cp .codex/skills/agents/assistant-module/typescript/apps/api/test/assistant-model.e2e-spec.ts apps/api/test/assistant-model.e2e-spec.ts
 ```
 
 For a Claude app, replace `.codex/skills` with `.claude/skills` in each command.
@@ -42,6 +44,7 @@ In `apps/api/prisma/schema/auth.prisma`, add these fields to `Account`:
 ```prisma
 createdChats  AssistantChat[] @relation("ChatCreatedBy")
 modifiedChats AssistantChat[] @relation("ChatModifiedBy")
+assistantUsage AssistantUsage[]
 ```
 
 Add `@app/assistant-server` as a `workspace:*` dependency in `apps/api/package.json`. Add `../../libs/assistant/server` to the references in `apps/api/tsconfig.json`. Add the assistant scope rule to `eslint.config.mjs`. Permit assistant code to use assistant, core, shared and contracts libraries.
@@ -77,6 +80,10 @@ Add `corepack pnpm run assistant:setup` after `prisma migrate deploy` in the `CM
 ## Settings
 
 When the app imports the assistant module, set `ASSISTANT_AI_KEY`, `ASSISTANT_MODEL`, `ASSISTANT_SPEND_CAP_USD`, `ASSISTANT_PRICE_INPUT_USD_PER_MTOK` and `ASSISTANT_PRICE_OUTPUT_USD_PER_MTOK`. Set `ASSISTANT_AI_URL` only for an OpenAI-compatible service with a custom address. Keep each value in the app's `.env` or its host settings. Do not put a key in code.
+
+Add `AssistantModel` and `AssistantUsage` from `@app/assistant-server` to the API module's providers. They check the settings at start-up. Dollar amounts must be non-negative decimal strings with at most six decimal places. Zero sets a used-up cap or a free token price. Prices use US dollars per million tokens. `AssistantUsage.cost` rounds the total cost up to one micro-dollar per turn.
+
+Before a turn, call `AssistantUsage.canStart`. After the turn, call `record(accountId, chatId, inputTokens, outputTokens)`. These billing rows contain no message text. They remain after the chat expires, with an empty chat link. The cap counts the current UTC calendar month across the whole app.
 
 Build the Assistant page in the app's design by the `The assistant page` section in the agents skill. The template contains no page or route.
 

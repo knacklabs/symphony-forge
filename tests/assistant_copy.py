@@ -21,9 +21,17 @@ def copy_assistant(app: Path) -> None:
         skill / "apps" / "api" / "prisma" / "migrations" / "20261106000000_assistant",
         app / "apps" / "api" / "prisma" / "migrations" / "20261106000000_assistant",
     )
+    shutil.copytree(
+        skill / "apps" / "api" / "prisma" / "migrations" / "20261106010000_assistant_usage",
+        app / "apps" / "api" / "prisma" / "migrations" / "20261106010000_assistant_usage",
+    )
     shutil.copyfile(
         skill / "apps" / "api" / "test" / "assistant-chats.e2e-spec.ts",
         app / "apps" / "api" / "test" / "assistant-chats.e2e-spec.ts",
+    )
+    shutil.copyfile(
+        skill / "apps" / "api" / "test" / "assistant-model.e2e-spec.ts",
+        app / "apps" / "api" / "test" / "assistant-model.e2e-spec.ts",
     )
 
     base_schema = app / "apps" / "api" / "prisma" / "schema" / "base.prisma"
@@ -50,6 +58,7 @@ def copy_assistant(app: Path) -> None:
         "  deletedProjects   Project[] @relation(\"ProjectDeletedBy\")\n"
         "  createdChats      AssistantChat[] @relation(\"ChatCreatedBy\")\n"
         "  modifiedChats     AssistantChat[] @relation(\"ChatModifiedBy\")\n"
+        "  assistantUsage    AssistantUsage[]\n"
     ))
 
     api_package = app / "apps" / "api" / "package.json"
