@@ -123,6 +123,11 @@ def walk(env, claude_payload, monkeypatch) -> dict:
     # an existing work branch; story done itself no longer opens an outcome fix.
     step("23T10:55", "fix", "start", "Correct the cart outcome", "--done",
          "The board describes what the cart achieved", "--slug", "cart-done")
+    # The outcome command records state on an existing work branch. Give this
+    # fix real documentation work so close does not reject a records-only result.
+    # The command-wide tests still check default-branch isolation and state ownership.
+    env.commit(worktree(repo, "fix/cart-done"), "docs/cart-outcome.md",
+               f"# Cart outcome\n\n{OUTCOME}\n", "Describe the cart outcome")
     seen["done"] = step("23T11:00", "story", "done", "CART", OUTCOME,
                         cwd=worktree(repo, "fix/cart-done"))
     step("23T11:10", "close", "cart-done")

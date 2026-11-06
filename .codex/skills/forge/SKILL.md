@@ -1903,7 +1903,9 @@ the pull request's Done when line. Use `--append "<text>"` to add text with a sp
 the old and new text. `--done "<done when>"` replaces the whole Done-when. Both options show
 the old and new text before writing, and need `--because "<why>"`.
 Land runs work first for a fix with only its start and state records, including after amend.
-A work commit can change only Forge records. Amend and next direct that fix to close.
+A fix that changes only `.factory/` and spotted records against the default branch cannot merge.
+Close and land say the build round did not finish and give `forge work <fix>` as the next step.
+The refusal lists untracked files in the worktree. Code and documentation fixes can still merge.
 Upgrade close leaves the repo's local git hooks alone,
 including when it regenerates conflicted Forge files with the newly pinned release.
 If conflicted-merge handling fails, close aborts the merge and reports the error before retrying.

@@ -12,10 +12,11 @@ STORY = "FIX-RECORDS-ONLY-REVIEW"
 
 @pytest.mark.parametrize(("history", "planning_record"), [
     ("new", False), ("new", True), ("adopted-v1.2.2", True)])
-def test_1_close_records_a_clean_review_when_main_already_has_the_product_change(
+def test_1_close_refuses_a_fix_when_main_already_has_the_product_change(
         env, tmp_path, history, planning_record):
     # Audit: real close and git merge. Only GitHub and Autoreview are fake.
-    # A model call on an empty product diff is the regression; CI must still gate close.
+    # Main can acquire the product change after work completes. The new contract
+    # refuses this empty fix instead of recording a clean review and publishing it.
     _client(env.repo, env.gh, tmp_path, history)
     item, where = env.start_fix()
     env.start("land-product", "fix/land-product", ".factory/fixes/land-product.json",
@@ -32,16 +33,10 @@ def test_1_close_records_a_clean_review_when_main_already_has_the_product_change
 
     closed = env.close(item)
 
-    assert "nothing to review: only Forge's records changed" in closed.stdout
+    assert "The build round did not finish." in closed.stderr
+    assert f"forge work {item}" in closed.stderr
     assert not env.review_calls()
     assert closed.returncode != 0
-    assert "Checks failed on the pull request: tests." in closed.stderr
-    # A second close must reuse the clean review rather than call a model.
-    env.checks([run("tests"), run("forge-pr-check")])
-    closed = env.close(item)
-    assert closed.returncode == 0, closed.stdout + closed.stderr
-    assert not env.review_calls()
-    assert "Ready" in closed.stdout
     expected = [".factory/fixes/tidy-readme.json"]
     if planning_record:
         expected.append("plans/spotted/tidy-readme.json")
