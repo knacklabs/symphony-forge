@@ -91,4 +91,4 @@ Only a genuine trade-off goes to the human, as a question with options.
    Raise: Plan gap.
    `plans/FORGE-AFFECTED-1.md:114` already estimates 450 changed lines outside tests, exceeding the requested roughly 400-line task boundary. Its split waits until 500 lines, although the task already combines two selection implementations and their test-script changes.
    Gain 3, Work 2, Harm 2
-   Disposition: cut - the starters are now two parts, STARTERS_TS and STARTERS_PY, each under about 350 lines.
+   Disposition: cut - the starters are now two parts, STARTERS-TS and STARTERS-PY, each under about 350 lines.
