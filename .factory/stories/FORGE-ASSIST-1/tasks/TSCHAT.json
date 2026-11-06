@@ -1,5 +1,12 @@
 {
   "branch": "task/FORGE-ASSIST-1-TSCHAT",
+  "chat": {
+    "approval": "c276549ec321871ed6b007a41985ed8ac0386fa2eb30ff0ce7b634bfea33d386",
+    "claude": null,
+    "conversation": "01a1af4e-ca94-7043-af12-783261212cdf",
+    "head": null,
+    "start": "b7f9b0c7c11c4470ca987f919f9c618ea2d9bb21"
+  },
   "round": 1,
   "status": "working",
   "steps": [
