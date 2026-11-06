@@ -1,0 +1,15 @@
+{
+  "base": "9da63076e04477ccf254d4a14998eac15754db47",
+  "branch": "fix/ui-checks-passes-app-lint",
+  "done_when": "A new app from each starter with .forge/design/ui-checks.js passes its own lint, and tests/test_feature_command.py::test_4_the_feature_keeps_history_and_its_tests_pass_at_once[python] passes",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-06T05:47:49.449060+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The design checker script that Forge copies into a client app fails the Python starter's lint: its first line declares process as a global, and the starter's lint already treats process as built-in, so python-feature-history-smoke fails on main"
+}
