@@ -49,8 +49,8 @@
     "id": "bde9d376-fcbd-4709-be9f-811357f453c8",
     "status": "clean"
   },
-  "round": 3,
-  "status": "waiting for checks",
+  "round": 4,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-06T16:29:53.284666+00:00",
@@ -75,10 +75,10 @@
     "worker_round": 2
   },
   "stuck": {
-    "close": "268ce754-b0e6-42df-96a2-7ec20878de8d",
-    "head": "0a755fe70ab8e85f09d85abbbded932638de2e11",
+    "close": "55f4dd1a-e17a-42df-85b4-179494e9fc31",
+    "head": "42c3291aaf1a506e45a13a917ebf46570a7ddbe6",
     "keys": {},
-    "round": 2
+    "round": 3
   },
   "why": "Main broke six times on 6 Nov 2026 because pull request test selection skipped Forge's cheap whole-repo rule tests (platform markers, synced guide copies, one test per rule, size ceiling), so a change passed its own checks and broke every later pull request",
   "worker": "codex"
