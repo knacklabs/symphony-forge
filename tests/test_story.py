@@ -143,6 +143,7 @@ def setup(repo, kind="forge-source", keys=("SHOP",)):
     if kind == "client":
         approved_constitution(repo)
     # These user-facing plans need screens under the new design-first contract.
+    repo.write("DESIGN.md", "# App look\n\nUse a clear, quiet design for the basket shop.\n")
     repo.write("docs/design/baskets/screen.svg", DESIGN_IMAGE)
     repo.git("add", "-A")
     repo.git("commit", "-q", "-m", "Set up Forge")
@@ -165,6 +166,11 @@ def new_story(repo, key, title="Shoppers can save a basket"):
     made = repo.forge("story", "new", key, title)
     assert made.returncode == 0, made.stderr
     path = worktree(repo, f"story/{key}")
+    # New reads require the app's look; older approvals keep their original contract.
+    if not (path / "DESIGN.md").exists():
+        (path / "DESIGN.md").write_text("# App look\n\nUse a clear, quiet design for the basket shop.\n", encoding="utf-8")
+        repo.git("add", "DESIGN.md", cwd=path)
+        repo.git("commit", "-qm", "Save the app look for new story reads", cwd=path)
     image = path / "docs/design/baskets/screen.svg"
     if not image.exists():
         image.parent.mkdir(parents=True, exist_ok=True)

@@ -56,7 +56,7 @@ class Cleanup:
             except TimeoutError:
                 try:
                     await asyncio.to_thread(self.delete_expired, datetime.now(UTC))
-                except (SQLAlchemyError, PostgresError):
+                except SQLAlchemyError, PostgresError:
                     # Keep the timer alive and report failure without chat content.
                     log_event(
                         None,

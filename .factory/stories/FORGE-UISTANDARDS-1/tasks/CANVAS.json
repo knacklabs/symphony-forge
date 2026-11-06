@@ -1,0 +1,79 @@
+{
+  "branch": "task/FORGE-UISTANDARDS-1-CANVAS",
+  "chat": {
+    "approval": "90ab5b372e60739c93194d142be47fe7ab2cfd5e697497654d7ebb7d7859b30b",
+    "claude": null,
+    "conversation": "01a1af5e-7230-7310-a298-ca212274f5c3",
+    "head": null,
+    "start": "30b6b5dc091a1e5e62ee0c206c68805b04b5fb7e"
+  },
+  "known": [
+    {
+      "area": "src/forge/templates/design/support.js",
+      "file": "src/forge/templates/design/support.js",
+      "gain": 5,
+      "harm": 3,
+      "line": 61,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: screenshots at 1440 and 375 width",
+      "work": 3
+    },
+    {
+      "area": "src/forge/templates/design/support.js",
+      "file": "src/forge/templates/design/support.js",
+      "gain": 3,
+      "harm": 3,
+      "line": 54,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: A canvas that fails writes no images",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "445927ddf612790620486d7740cb7544b6581bbebcf53c20c45152d28ff299f1",
+    "changed": "36897aafd70f2c4c7d2c0f39c1e3dd1883d6f62256bd1bede0522556c682720e",
+    "commit": "af7e5ab6633a1e9f3e8f770c0b51e21485a5f473",
+    "dismissals": [],
+    "findings": [],
+    "id": "3d749c56-f8f6-41f1-b4b6-86337ffe50bb",
+    "status": "clean"
+  },
+  "round": 4,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-06T05:39:01.424313+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-06T05:54:05.599313+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-06T06:52:50.991029+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-06T07:47:19.457212+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-06T08:20:02.425680+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "0e159e0d-9453-4787-9dc1-bbe7a9426e0d",
+    "head": "c5d7215599f1b1a41ff99aedb23923d3b070e82c",
+    "keys": {},
+    "round": 3
+  },
+  "worker": "codex"
+}

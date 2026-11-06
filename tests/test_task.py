@@ -65,6 +65,9 @@ def story(repo, doc=DOC, approved=DOC, key="BOARD"):
     repo.git("checkout", "-q", *([] if exists else ["-b"]), f"story/{key}")
     repo.write(f"plans/{key}.md", doc)
     # These task and worker tests now start from an approved design as well as approved outcomes.
+    # A later read in a worker lifecycle test needs the app look too.
+    if not (repo.path / "DESIGN.md").exists():
+        repo.write("DESIGN.md", "# App look\n\nUse a clear, quiet design for the basket shop.\n")
     repo.write("docs/design/baskets/screen.svg", DESIGN_IMAGE)
     repo.write(f".factory/stories/{key}/story.json", json.dumps(state))
     repo.git("add", "-A")

@@ -37,15 +37,15 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "0bd7bef93bdca191b8fb776792f14867fca3d80d167279548e65b8927c0bdd3c",
-    "changed": "951aa420ba2c98a3b26479d2c64ebfab954d182a78066a7dcbedf4527f6b9410",
-    "commit": "62283412ba2ea0fefd1fbc069e11892002065e46",
+    "branch_diff": "3839bb402ab3f5e3e323c3e63798e1cc10e07cf52271b61dc210a2aeff77db1b",
+    "changed": "648d111d8ce025e52ab1556c9f67851353433aa3d71c2039bad772651da5f3d9",
+    "commit": "5a617f7953cb17269b857eed8e88568594def8e8",
     "dismissals": [],
     "findings": [],
-    "id": "ffd8c71b-58d1-447d-8826-455ff309e95a",
+    "id": "e932c233-2d5d-4922-837c-c4a650339da1",
     "status": "clean"
   },
-  "round": 3,
+  "round": 4,
   "status": "waiting for checks",
   "steps": [
     {
@@ -63,13 +63,17 @@
     {
       "at": "2026-11-06T07:14:42.654073+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-11-06T08:09:41.922386+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
-    "close": "ad440a10-4901-4156-811e-17d94f1ec58c",
-    "head": "8f2f6cc7236a4a9d74761c9ea3f72830175a57db",
+    "close": "2ff91786-0bcf-4c08-bf16-ec2fe283c7cd",
+    "head": "e0ea79a99d44da0bbda6f52b189e83bda47bc89b",
     "keys": {},
-    "round": 2
+    "round": 3
   },
   "worker": "codex"
 }

@@ -493,6 +493,10 @@ def _repo_adopted_on_the_previous_release(up):
     shutil.copytree(conftest.ROOT / "tests/fixtures/adopted-v1.2.2/client", up.repo.path,
                     dirs_exist_ok=True)
     up.repo.git("switch", "-q", "-c", "adoption")
+    # This shared client also starts new plan reads after the upgrade. Supply
+    # its app look before adoption; the upgrade must preserve it, not create it.
+    if not (up.repo.path / "DESIGN.md").exists():
+        up.repo.write("DESIGN.md", "# App look\n\nUse a clear, quiet design for the basket shop.\n")
     up.repo.git("add", "-A")
     up.repo.git("commit", "-q", "-m", "Adopt Forge v1.2.2")
     up.repo.git("switch", "-q", "main")
