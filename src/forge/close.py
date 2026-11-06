@@ -962,8 +962,7 @@ def _publish(top: Path, item: str, state: dict[str, Any], branch: str, default: 
         # Keep rendered local observations, but no record that would retire the missing-history retry.
         history = re.sub(r"\n<!-- forge:time-record \{.*?\} -->", "", history, flags=re.S)
     block = _block(result, "\n\n".join(part for part in (history, proof, check) if part))
-    draft = (result["status"] == "blocked" or bool(state.get("tests")) or
-             (pr is None and result["status"] == "reviewing"))
+    draft = pr is None or result["status"] == "blocked" or bool(state.get("tests"))
     # The body goes through a file under .git/forge/: in argv it meets length limits, and a
     # multi-line argument can't pass through a Windows .cmd shim.
     body_file = repo.forge_dir(top) / f"pr-body-{item.replace('/', '-')}.md"
@@ -979,8 +978,10 @@ def _publish(top: Path, item: str, state: dict[str, Any], branch: str, default: 
         print(f"Opened the pull request: {url.strip()}")
         number = int(url.strip().rsplit("/", 1)[1])
         repo.record_event(top, item, "pull request published", number=number)
-        return {"number": number, "state": "OPEN",
-                "body": body_file.read_text(encoding="utf-8"), "isDraft": is_draft}
+        # Share the publication event, which did not exist when the initial body was rendered.
+        return _publish(top, item, state, branch, default,
+                        {"number": number, "state": "OPEN",
+                         "body": body_file.read_text(encoding="utf-8"), "isDraft": is_draft}, result, evidence)
     if not any(event.get("item") == item and event.get("event") == "pull request published"
                and event.get("number") == pr["number"] for event in time_records.read(top, "events")):
         repo.record_event(top, item, "pull request published", number=pr["number"])

@@ -76,15 +76,15 @@ if args and args[0] == "api" and "--jq" in args:
         polls = here / "polls"
         count = int(polls.read_text()) + 1 if polls.exists() else 1
         polls.write_text(str(count))
-        # Bound a broken wait: GitHub eventually reports a running check, which
-        # still cannot succeed until Forge cancels both blocking runs.
+        # A blocker keeps this run queued until cancellation releases it, regardless
+        # of history reads before the wait. The command's no-progress limit bounds
+        # a missing cancellation; reading the history must not release the queue.
         released = set(NEEDED) <= cancelled and (not STUCK or count >= 3)
-        answer(GREEN if released else QUEUED if count < 3 else RUNNING)
+        answer(GREEN if released else QUEUED)
 if args[:2] == ["pr", "list"] and any(arg.startswith("headRefOid,state") for arg in args):
     answer(PR)
 '''.replace("NEEDED", repr(expected)).replace("STUCK_STATE", repr(stuck_state)).replace("STUCK", repr(stuck)).replace("ROWS", repr(json.dumps(rows))).replace("GREEN", repr(json.dumps(GREEN))).replace(
-        "QUEUED", repr(json.dumps(queued))).replace("RUNNING", repr(json.dumps([
-            run("tests", None, "in_progress"), run("forge-pr-check")]))).replace("PR)", repr(json.dumps([
+        "QUEUED", repr(json.dumps(queued))).replace("PR)", repr(json.dumps([
             {"state": "OPEN", "headRefOid": head, "number": 7, "headRefName": BRANCH}])) + ")")
     stub = env.repo.bin / "gh"
     patient(lambda: stub.write_text(stub.read_text("utf-8").replace(
