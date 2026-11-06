@@ -101,6 +101,15 @@ def copy_assistant(app: Path) -> None:
         "    HealthModule,\n"
         "    AssistantModule,\n"
     ))
+    # The copied app has five additional tables even when the module is not
+    # imported. Keep the exact catalog check and include their owning schema.
+    _replace_once(app / "apps/api/test/database.e2e-spec.ts",
+                  "      Notification: 'notifications',\n", (
+        "      Notification: 'notifications',\n"
+        "      AssistantChat: 'assistant',\n"
+        "      checkpoints: 'assistant', checkpoint_blobs: 'assistant',\n"
+        "      checkpoint_writes: 'assistant', checkpoint_migrations: 'assistant',\n"
+    ))
 
 
 def _replace_once(path: Path, old: str, new: str) -> None:

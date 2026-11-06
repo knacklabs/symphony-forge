@@ -75,6 +75,16 @@ Add the `assistant:setup` script to the root `package.json`:
 
 Add `corepack pnpm run assistant:setup` after `prisma migrate deploy` in the `CMD` in `Dockerfile`. The setup command creates LangGraph's tables before the API starts.
 
+In `apps/api/test/database.e2e-spec.ts`, extend the expected catalog in `each module keeps its tables in its own schema` with these entries. Keep the existing entries and the exact equality assertion.
+
+```ts
+AssistantChat: 'assistant',
+checkpoints: 'assistant', checkpoint_blobs: 'assistant',
+checkpoint_writes: 'assistant', checkpoint_migrations: 'assistant',
+```
+
+Keep these entries when the module is not imported. Its migration and storage setup still create the tables.
+
 ## Settings
 
 When the app imports the assistant module, set `ASSISTANT_AI_KEY`, `ASSISTANT_MODEL`, `ASSISTANT_SPEND_CAP_USD`, `ASSISTANT_PRICE_INPUT_USD_PER_MTOK` and `ASSISTANT_PRICE_OUTPUT_USD_PER_MTOK`. Set `ASSISTANT_AI_URL` only for an OpenAI-compatible service with a custom address. Keep each value in the app's `.env` or its host settings. Do not put a key in code.
