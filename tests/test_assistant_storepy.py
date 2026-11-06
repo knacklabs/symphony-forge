@@ -69,7 +69,10 @@ def test_4_python_expired_chats_are_deleted(repo, gh, tmp_path, tmp_path_factory
     script.write_text(
         text.replace(
             sync,
-            "  run('uv', ['--directory', 'apps/api', 'lock']);\n" + sync,
+            "  const frozen = environment.UV_FROZEN;\n"
+            "  environment.UV_FROZEN = '0';\n"
+            "  run('uv', ['--directory', 'apps/api', 'lock']);\n"
+            "  environment.UV_FROZEN = frozen;\n" + sync,
         ),
         encoding="utf-8",
     )

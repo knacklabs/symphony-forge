@@ -17,7 +17,7 @@ From the app root, copy these paths from
 In the copied app's `apps/api/tests/test_module_schemas.py`, add these entries at
 the start of `EXPECTED_TABLE_SCHEMAS`, before the existing `core.*` entries:
 
-```python
+```text
     "assistant.chat",
     "assistant.checkpoint_blobs",
     "assistant.checkpoint_migrations",
@@ -34,6 +34,9 @@ Alembic head, set the copied revision's `down_revision` to that head. Keep one
 Alembic history. Add `langgraph-checkpoint-postgres==3.2.0` to the dependencies in
 `apps/api/pyproject.toml`, then run `uv --directory apps/api lock` and
 `uv --directory apps/api sync --frozen`. Commit the updated lock file.
+If the host sets `UV_FROZEN=1`, set it to `0` for the lock command only. That
+command must update the lock file for the added dependency. Restore the host's
+value after the lock command; keep `--frozen` on the sync command.
 
 Import `app.assistant` in `apps/api/migrations/env.py` to register the model.
 LangGraph owns its four tables; Alembic must leave them unchanged. Add this
