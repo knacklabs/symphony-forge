@@ -560,6 +560,12 @@
       "order": 107
     },
     {
+      "key": "FORGE-FULLCAP-1",
+      "title": "Waiting parts start and merge on their own once the part before them is done",
+      "status": "pending",
+      "order": 116
+    },
+    {
       "key": "FORGE-AFFECTED-1",
       "title": "Tests run once, and only for the parts a change touches",
       "status": "pending",
