@@ -347,7 +347,7 @@ def _report(top: Path, history: dict[str, Any] | None = None,
                 record, findings = story._record(text)  # pyright: ignore[reportPrivateUsage]
                 spec_text = spec.read_text(encoding="utf-8")
                 fields, body = story._record(spec_text)  # pyright: ignore[reportPrivateUsage]
-                if story.stopped(record, findings, repo.config(top)["cold_read_rounds"]):
+                if story.stopped(record, findings, repo.config(path)["cold_read_rounds"]):
                     lines += _read_loop(spec.stem, spec_text, text, path)
                 elif (fields.get("status") == "draft" and story.passed(record, findings)
                       and record.get("read_hash") == repo.git("hash-object", "--", str(spec), cwd=path)):
@@ -700,7 +700,7 @@ def _story(top: Path, key: str, path: Path | None, text: str,
         ready = [name for name in ready
                  if not assignments[name] or assignments[name].casefold() == login.casefold()]
         ready.sort(key=lambda name: not assignments[name])
-    reread = _next_round(key, notes, doc_hash, title, required, text, top)
+    reread = _next_round(key, notes, doc_hash, title, required, text, path or top)
     if readiness is not None:
         readiness["waits"] = waits
     if reread:  # a doc changed after approval gets a round before its next task starts
@@ -747,7 +747,7 @@ def _approval(top: Path, key: str, path: Path, title: str, digest: str,
     """Planning, read or waiting for approval: what's missing, or how to ask for approval."""
     notes = story._text(path / "plans" / f"{key}.read.md")  # pyright: ignore[reportPrivateUsage]
     reread = _next_round(key, notes, repo.git("hash-object", "--", f"plans/{key}.md", cwd=path), title,
-                         story.rounds(notes), text, top)
+                         story.rounds(notes), text, path)
     if reread:
         return reread
     try:
