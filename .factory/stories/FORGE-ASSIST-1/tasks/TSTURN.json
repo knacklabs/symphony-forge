@@ -1,0 +1,12 @@
+{
+  "base": "58f5e6728ec761a67a467552ebb931158e23653c",
+  "branch": "task/FORGE-ASSIST-1-TSTURN",
+  "stacked_on": "FORGE-ASSIST-1/TSMODEL",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-06T07:43:14.207846+00:00",
+      "step": "start"
+    }
+  ]
+}
