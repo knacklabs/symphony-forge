@@ -4,12 +4,20 @@
   "done_when": "Close runs its tests locally unless a required check runs the repo's tests; a repo whose checks hold no test job gets local tests at close, and doctor warns when the test command looks like a change selector rather than the full suite",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-06T14:59:30.766082+00:00",
       "step": "start"
     }
   ],
-  "why": "In a client repo whose forge.toml lists only forge-pr-check under checks and sets no test_place, repo.test_place picks ci mode, so close skips its local tests and waits only for checks that run no app tests, and says Ready with no app test run; the nightly full run also runs the test command, which may be a change selector"
+  "stuck": {
+    "close": null,
+    "head": "03c467243cba2be5440b021efb6e45ab91857fed",
+    "keys": {},
+    "round": null
+  },
+  "why": "In a client repo whose forge.toml lists only forge-pr-check under checks and sets no test_place, repo.test_place picks ci mode, so close skips its local tests and waits only for checks that run no app tests, and says Ready with no app test run; the nightly full run also runs the test command, which may be a change selector",
+  "worker": "codex"
 }
