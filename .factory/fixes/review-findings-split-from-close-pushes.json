@@ -48,7 +48,7 @@
     "id": "bac4f488-c877-4a1a-8633-49a0411c0c45",
     "status": "blocked"
   },
-  "round": 2,
+  "round": 3,
   "stacked_on": "close-pushes-once",
   "status": "fixing",
   "steps": [
@@ -62,10 +62,12 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "43e363d9d391919e9cd12f1825a237100df1bcdd",
-    "keys": {},
-    "round": null
+    "close": "2a04825c-935a-4b43-ac42-ce8d650b81c1",
+    "head": "d70b17348c538735f0d1b28555015d91eb8bad22",
+    "keys": {
+      "the open P0 not done: a review no longer finds: [p1] defer the acceptance push until final review bookkeeping is saved (src/forge/close.py:423) in src/forge/close.py": 1
+    },
+    "round": 2
   },
   "why": "Review findings split from close-pushes-once: [P1] Defer the acceptance push until final review bookkeeping is saved (src/forge/close.py:423)",
   "worker": "codex"
