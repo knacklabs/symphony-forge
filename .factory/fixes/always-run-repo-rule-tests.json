@@ -11,7 +11,7 @@
   "done_when": "Every Forge pull request check runs the cheap whole-repo rule tests (tests/test_platform_sensitive_selection.py, tests/test_tools_guide.py synced-guides test, tests/test_rules.py rule and size checks) on top of the selected tests, adding under a minute",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "round": 1,
+  "round": 2,
   "status": "working",
   "steps": [
     {
