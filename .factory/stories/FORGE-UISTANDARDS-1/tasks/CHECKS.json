@@ -1,10 +1,18 @@
 {
   "branch": "task/FORGE-UISTANDARDS-1-CHECKS",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-06T02:46:48.987743+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "1eade195a2d22efb78f250a320aaf57d2e4af5fe",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
