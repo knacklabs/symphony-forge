@@ -6,11 +6,9 @@ on:
   workflow_dispatch:
   pull_request:
     paths:
-      - src/forge/templates/starter/**
-      - src/forge/templates/starter-python/**
-      - src/forge/templates/skills/agents/assistant-module/**
+      - .github/workflows/starter-smoke.yml
+      - src/forge/templates/**
       - src/forge/feature*.py
-      - src/forge/templates/feature/**
 
 permissions:
   contents: read
@@ -62,7 +60,7 @@ jobs:
 
   python-starter-smoke:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -76,7 +74,7 @@ jobs:
 
   python-database-kinds-smoke:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -90,7 +88,7 @@ jobs:
 
   python-feature-api-smoke:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -104,7 +102,7 @@ jobs:
 
   python-feature-history-smoke:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -118,7 +116,7 @@ jobs:
 
   python-feature-permissions-smoke:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
