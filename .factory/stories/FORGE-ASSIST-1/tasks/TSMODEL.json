@@ -66,7 +66,7 @@
     "id": "4a86d8e0-869c-4a75-bf67-791763b56072",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -79,10 +79,12 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "b6b1f3b4f5084d30128ce1b89c3746556bab35cc",
-    "keys": {},
-    "round": null
+    "close": "6c8e7c19-e13c-4de6-9460-0e78702f35c6",
+    "head": "9532f47ac0c1cc4952c8f82dc388786f02906b17",
+    "keys": {
+      "the open P0 agents: never take secrets by speech or chat in src/forge/templates/skills/agents/assistant-module/typescript/libs/assistant/server/src/assistant.guard.ts": 1
+    },
+    "round": 1
   },
   "worker": "codex"
 }
