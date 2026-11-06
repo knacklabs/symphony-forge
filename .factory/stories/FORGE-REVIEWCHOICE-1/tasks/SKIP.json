@@ -1,5 +1,12 @@
 {
   "branch": "task/FORGE-REVIEWCHOICE-1-SKIP",
+  "chat": {
+    "approval": "e698cc269ca139e014b35ef35cbd9d8e8e7bc54a410f93b0607aaec91e85ff35",
+    "claude": null,
+    "conversation": "01a1b2ea-acb1-77f1-9f18-ec8f2336c839",
+    "head": null,
+    "start": "067d432982e027a5f4979c4092f022232e305e07"
+  },
   "round": 1,
   "status": "working",
   "steps": [
