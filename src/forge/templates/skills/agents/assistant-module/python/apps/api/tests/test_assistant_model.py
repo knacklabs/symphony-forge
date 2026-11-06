@@ -11,12 +11,12 @@ from pathlib import Path
 import httpx
 import pytest
 from sqlalchemy.orm import Session, sessionmaker
+from test_api import sign_up
 
 from app.assistant import assistant_lifespan
 from app.assistant.guard import contains_secret
 from app.assistant.model import create_model, load_settings
 from app.assistant.prompt import PROMPT_VERSION, SYSTEM_PROMPT
-from test_api import sign_up
 
 API = Path(__file__).resolve().parents[1]
 ASSISTANT = API / "app" / "assistant"

@@ -149,6 +149,7 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
     source = sync.TEMPLATES / "skills/agents/assistant-module"
     files.update({f"{host}/skills/agents/assistant-module/{path.relative_to(source).as_posix()}":
                   path.read_text(encoding="utf-8")
-                  for path in sorted(source.rglob("*")) if path.is_file()
+                  for path in sorted(source.rglob("*"))
+                  if path.is_file() and "__pycache__" not in path.parts
                   for host in (".claude", ".codex")})
     return files

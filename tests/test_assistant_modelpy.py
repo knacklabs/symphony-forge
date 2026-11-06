@@ -1,11 +1,16 @@
 """The Python assistant model template keeps its key and monthly cap in settings."""
 
+import py_compile
 import runpy
+import subprocess
+import sys
+import zipfile
 from pathlib import Path
 
 import pytest
 
 from assistant_copy_python import copy_assistant_python
+from conftest import FORGE_SHIM, _install
 from test_agent_ready import _new_client
 from test_mcp import _adopted_files_after_sync
 from test_starter_tree import LIVE, _require_cases, _run_live_starter
@@ -37,6 +42,32 @@ def test_5_python_key_and_cap_come_from_settings(
             assert contains_secret(message), message
         assert not contains_secret("hunter2")  # The approved unlabelled limit stays.
         return
+
+    # An installed wheel has Python bytecode beside its source templates. Exercise
+    # both init and sync against that package, not only the editable checkout.
+    built = subprocess.run(
+        ["uv", "build", "--wheel", "--out-dir", str(tmp_path / "dist")],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=120,
+    )
+    assert built.returncode == 0, built.stdout + built.stderr
+    package = tmp_path / "installed"
+    with zipfile.ZipFile(next((tmp_path / "dist").glob("*.whl"))) as wheel:
+        wheel.extractall(package)
+    compiled = py_compile.compile(
+        str(
+            package
+            / "forge/templates/skills/agents/assistant-module/python/apps/api/app/assistant/guard.py"
+        ),
+        doraise=True,
+    )
+    assert Path(compiled).is_file()
+    _install(
+        repo.bin, "forge", FORGE_SHIM.format(python=sys.executable, src=str(package))
+    )
     if target == "earlier adopted":
         before, after = _adopted_files_after_sync(repo)
         assert before == after
