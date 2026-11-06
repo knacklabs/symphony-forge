@@ -14,7 +14,7 @@ import pytest
 
 from test_close import blocked, env  # noqa: F401
 from test_fix_plan_reads_capped import _client as read_client
-from test_readloop_gates import say
+from test_readloop_gates import dispose_all, say
 from test_records import SPEC
 from test_story import DOC, new_story
 from test_two_round_limit import client as prepare_client, note
@@ -87,6 +87,7 @@ def test_3_cold_read_and_task_review_round_limits_are_configurable(env, case):
                                 "The owner wants one more read", cwd=where)
             assert chosen.returncode == 0, chosen.stdout + chosen.stderr
             assert "Next: forge read SHOP" in chosen.stdout
+            dispose_all(where / "plans/SHOP.read.md")
             say(repo, "No findings.\n")
             second = repo.forge("read", "SHOP", cwd=where)
             assert second.returncode == 0, second.stdout + second.stderr
