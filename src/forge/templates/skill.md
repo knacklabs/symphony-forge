@@ -129,6 +129,7 @@ the next merge.
 | "Set up a new repo" | Before `forge init`, answer "Does this repo run GitHub Actions?" from the repo's settings: `gh api repos/{owner}/{repo}/actions/permissions` gives `enabled`. Ask the human only if the settings do not answer it. Pass `--actions yes` or `--actions no`; yes uses CI checks, while no selects laptop tests with `checks = []`. Then use `forge init --starter` for a new React app, `forge init --starter python` for a new app whose owner asks for a Python backend, or `forge init` for another stack. Propose a `fast_test` as in step 9 of Adopt a live app, below |
 | "Bring our live app into Forge" | Adopt a live app, below |
 | "Change the test command" | Ask, then in a fix: edit `forge.toml` (never its `merge` setting), `forge close <fix>` |
+| "Use fewer cold-read or task-review rounds" | Ask the owner which limit to change; then in a fix set `cold_read_rounds` or `task_review_rounds` to `1` in `forge.toml`, then run `forge close <fix>` |
 | "Run everything in Claude" | Ask, then in a fix: set `tools = "claude"`, `workers = "claude"` in `forge.toml`, then `forge sync`, `forge close <fix>` |
 | "Run everything in Codex" | Ask, then in a fix: set `tools = "codex"`, `workers = "codex"` in `forge.toml`, then `forge sync`, `forge close <fix>` |
 | "Use both" | Ask, then in a fix: set `tools = "both"` in `forge.toml`, `forge close <fix>` |
@@ -168,9 +169,9 @@ Every client repo moves through seven steps. `forge next` names the current step
    When a release adds a migration file, Mainline takes a backup at Promote. Mainline runs one test restore before the first launch. Mainline checks the release for the added file itself and does both; the agent does neither and writes no mark. The migration rule belongs to FORGE-EXPAND-1.
 7. **Run and improve.** People use the app, and each new request or problem goes back to step 5. Follow [After a demo](#after-a-demo) for demo notes. You can say: "Users asked for <request>" or "This is broken: <problem>".
 
-**The cold read loop.** A reader who did not write the plan reads it cold and lists its gaps. You fix the plan, and the reader reads it again. After two rounds that still have open notes, Forge stops and the owner chooses: accept, read again, or split. It exists because a gap found in the plan costs minutes, but the same gap found in the code costs a build round.
+**The cold read loop.** A reader who did not write the plan reads it cold and lists its gaps. You fix the plan, and the reader reads it again. At the round limit (the repo's setting, two by default), Forge stops and the owner chooses: accept, read again, or split. It exists because a gap found in the plan costs minutes, but the same gap found in the code costs a build round.
 
-**The build and review loop.** A worker builds the part and its tests, then a separate review checks the change. A serious problem goes back to the worker for another round. A task gets two review rounds and a fix gets one. At the limit Forge stops and asks the owner, but a P0 problem keeps the loop going. It exists because a reviewer sees problems that the worker cannot see in its own work.
+**The build and review loop.** A worker builds the part and its tests, then a separate review checks the change. A serious problem goes back to the worker for another round. A task gets review rounds up to the repo's setting, two by default, and a fix gets one. At the round limit (the repo's setting, two by default), Forge stops and asks the owner, but a P0 problem keeps the loop going. It exists because a reviewer sees problems that the worker cannot see in its own work.
 
 **The CI checks.** GitHub runs the repo's checks on the pull request. Close waits while they are queued or running, and a red check goes back to the worker. They exist because the checks run the tests on a clean machine, the same way for every change.
 
@@ -863,7 +864,7 @@ codes or data in a prototype with no back end, belong to build stories and Known
 not P0 findings.
 Only Harm 4 or higher, Gain 5, or a P0 holds the product review; every other finding goes straight
 to Known issues without a repair round or an owner question. For an unmarked prototype, a held
-finding below P0 still needs the owner's choice after two rounds.
+finding below P0 still needs the owner's choice at the review's round limit.
 If the review engine fails, fix the engine problem and run the accept command again.
 A canvas-only sign-off needs no working build. An unmarked working prototype gets a full first
 product review. Each later attempt reviews only product files changed since the previous review and
@@ -1220,7 +1221,7 @@ Follow the agents skill (.codex/skills/agents/SKILL.md) for any agent, chat, voi
 A cold read passes when no note is at the bar (blocking): the plan is wrong, contradicts itself,
 or a builder could not act on it. Readers prefix numbered findings with `Blocking:` or
 `Advisory:`. Advisory and below-bar notes need no disposition from you or another round; unmarked
-findings block in round one. A cold read stops after round two when notes below P0 are still
+findings block in round one. A cold read stops at the round limit (the repo's setting, two by default) when notes below P0 are still
 open, or when P0 notes are open in two rounds in a row.
 New repos get this rule on init; existing repos get it on upgrade plus sync.
 
@@ -1639,7 +1640,9 @@ restore after they fetch.
 
 ## Closing
 
-A fix gets one review round; a story part gets two. At the round limit, open findings below P0
+In `forge.toml`, `cold_read_rounds` sets the cold-read limit and `task_review_rounds` sets the task-review limit. Each accepts 1 or 2 and defaults to 2. Fixes keep one review round.
+
+At the round limit (the repo's setting, two by default), open findings below P0
 stop the item and ask the owner: one more round, split or accept.
 Accept makes the open findings follow-ups in Known issues with the owner's reason.
 An open P0 never stops for the owner; the worker keeps fixing it. When the same P0 stays open
@@ -2092,7 +2095,7 @@ When `forge next` says the latest scheduled run of the default branch failed, it
 failed jobs and tests; start its fix command the same way, or follow the step it gives for the
 fix already started.
 
-Close stops at review round two for a story part or round one for a fix when findings below P0
+Close stops at the round limit (the repo's setting, two by default) for a story part or after one round for a fix when findings below P0
 remain open. It asks the owner: "One more round, split or accept?" Close, land and work show
 the same question until the owner records a choice. An open P0 returns to the worker.
 An older release's unanswered stop also waits for the owner.
@@ -2140,7 +2143,7 @@ choices. Ask the owner exactly that question. Record the choice with
 `forge work <item>`. Switch runs this item's next rounds on the other tool, as `forge next` shows;
 every choice buys one more round before Forge asks again.
 
-A cold read stops after round two when notes below P0 are still open, or when P0 notes are open
+A cold read stops at the round limit (the repo's setting, two by default) when notes below P0 are still open, or when P0 notes are open
 in two rounds in a row. This applies to stories, specs and decisions alike.
 Ask the owner: "One more round, split or accept?" Do not read again
 until the choice is recorded with

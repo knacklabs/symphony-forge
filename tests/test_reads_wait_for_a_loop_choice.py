@@ -16,6 +16,6 @@ def test_4_fresh_and_resumed_workers_wait_for_both_read_and_review_choices(env):
         result = env.repo.forge("work", item)
         assert result.returncode == 0, result.stdout + result.stderr
         brief = " ".join(calls(log)[-1]["brief"].split())
-        assert "round two" in brief and "P0" in brief
+        assert "task review limit" in brief and "P0" in brief
         assert "forge read" in brief and "<accept|more|split>" in brief
     assert calls(log)[-1]["options"]["resume"]

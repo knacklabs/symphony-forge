@@ -404,7 +404,7 @@ def close(args: argparse.Namespace) -> int:
         score.remember(_known(top, item, state, review_ref, previous), result, round_number,
                        {} if fresh else areas,
                        repaired=previous if not (fresh or records_only or switch or replayed) else None)
-    if (serious and round_number >= (2 if "/" in item else 1) and
+    if (serious and round_number >= (cfg["task_review_rounds"] if "/" in item else 1) and
             not any(score.holds(f, "P0") for _, f in serious) and (not fresh or not state.get("stop"))):
         stopped = {"file": serious[0][1]["file"], "at": repo.now(),
                    "wait_id": repo.record_event(top, item, "owner wait start", reason="review loop")}
