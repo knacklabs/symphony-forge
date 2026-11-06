@@ -7,12 +7,52 @@
     "head": null,
     "start": "97ebbab755431a110351faa9d38b82bc8c29cb87"
   },
+  "known": [
+    {
+      "area": "startable() in src/forge/nextstep.py",
+      "file": "src/forge/nextstep.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 188,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Exclude refusal hints from the startable list",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "fea0d4dd591986a7e5f7b8583ac053d55b4d5e5d88a9870d75491857b4dcff7c",
+    "changed": "819192bdc5567822f2b963d4b5492d67ff9638edf2556c215a193af959928b88",
+    "commit": "21d3d1e719a7310bcf4dc2d1f0a8db0ab51a67ec",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - A is being built, B depends on A, and C depends on B.\nB cannot start because A has not passed review. However, C's base_not_started refusal supplies `Next: forge task start STORY/B` (src/forge/task.py:26), and _story includes that follow-up command at src/forge/nextstep.py:696. This new helper consequently returns B as startable even though task start B refuses it. Keep refusal follow-up commands out of the admitted offers. The agreement test misses this because it checks one selected part and requires a trailing space, whereas refusal hints end immediately after the item.",
+        "file": "src/forge/nextstep.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 188,
+        "priority": "P1",
+        "title": "Exclude refusal hints from the startable list",
+        "work": 2
+      }
+    ],
+    "id": "4840f18c-3edd-44ef-8fcf-42c082441237",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-06T10:18:09.384047+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-06T10:28:59.919351+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
