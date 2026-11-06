@@ -1,12 +1,20 @@
 {
   "base": "d4e844077858528cdf1191e28c2b9702b8c1e9f5",
   "branch": "task/FORGE-ASSIST-1-PYCHAT",
+  "round": 1,
   "stacked_on": "FORGE-ASSIST-1/PYSTORE",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-06T07:43:19.390515+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "3b8b188623767d18b67af73f9b4d458e43cd21b9",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
