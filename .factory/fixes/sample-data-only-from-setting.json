@@ -4,12 +4,20 @@
   "done_when": "Sample-data mode is on only when forge.toml says sample_data = true; a client repo whose old sign-off record says sample data but whose forge.toml has no sample_data setting runs its tests at close and in forge test, and close no longer says Ready without tests",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-06T11:56:09.174235+00:00",
       "step": "start"
     }
   ],
-  "why": "After an upgrade, close skips tests and CI and says Ready in a real client app, and forge test says no test command is set, because repo.sample_data falls back to an old sign-off record that says sample_data: true while forge.toml has stage = prototype and no sample_data setting (issues 1401 and 1400)"
+  "stuck": {
+    "close": null,
+    "head": "09aa772d6f11966273d929ea3c659ca778d3adeb",
+    "keys": {},
+    "round": null
+  },
+  "why": "After an upgrade, close skips tests and CI and says Ready in a real client app, and forge test says no test command is set, because repo.sample_data falls back to an old sign-off record that says sample_data: true while forge.toml has stage = prototype and no sample_data setting (issues 1401 and 1400)",
+  "worker": "codex"
 }
