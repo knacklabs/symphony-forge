@@ -22,8 +22,8 @@
     "id": "4eb4bc0c-23ef-4208-8c1a-0b9ded61c818",
     "status": "clean"
   },
-  "round": 1,
-  "status": "waiting for checks",
+  "round": 2,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-06T14:59:30.766082+00:00",
@@ -35,10 +35,10 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "03c467243cba2be5440b021efb6e45ab91857fed",
+    "close": "616ade04-1d16-44e5-a729-8f02e2599e4d",
+    "head": "560540c7c63bd161d05b35a201938397351839a3",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "In a client repo whose forge.toml lists only forge-pr-check under checks and sets no test_place, repo.test_place picks ci mode, so close skips its local tests and waits only for checks that run no app tests, and says Ready with no app test run; the nightly full run also runs the test command, which may be a change selector",
   "worker": "codex"
