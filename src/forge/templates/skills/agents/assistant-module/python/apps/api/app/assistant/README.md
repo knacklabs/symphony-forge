@@ -186,7 +186,14 @@ The check finds labelled passwords, keys and one-time codes, and card numbers
 with a valid checksum. It cannot identify a bare password without a label.
 
 The model test copies this package into a new Python app and checks the monthly
-sum against real Postgres. New starter apps have no assistant code or tables.
-An upgrade changes no existing app code. Both receive the optional module through
-the agents skill. Copying the template is an explicit app change. The turn and
-page remain outside this part.
+sum against real Postgres.
+
+## Remaining assistant parts
+
+Chat routes and turn handling arrive in later parts. Build the
+Assistant page in the client's design by the agents skill's assistant page rules.
+The storage test copies this package into a new Python app and calls the public
+clean-up service against real Postgres. The chat API part owns the full copy-in
+and API proof. New starter apps have no assistant code or tables; upgrading an
+existing app changes no app code. Both receive the optional module through the
+agents skill. Copying this template is an explicit app change.
