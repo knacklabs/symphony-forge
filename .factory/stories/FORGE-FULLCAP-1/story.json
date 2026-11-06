@@ -1,0 +1,12 @@
+{
+  "doc": "plans/FORGE-FULLCAP-1.md",
+  "status": "planning",
+  "steps": [
+    {
+      "at": "2026-11-06T09:56:06.660042+00:00",
+      "step": "start"
+    }
+  ],
+  "title": "Waiting parts start and merge on their own once the part before them is done",
+  "touches": 0
+}

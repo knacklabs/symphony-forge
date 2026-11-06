@@ -558,6 +558,12 @@
       "title": "Client apps get an optional in-app assistant",
       "status": "pending",
       "order": 107
+    },
+    {
+      "key": "FORGE-FULLCAP-1",
+      "title": "Waiting parts start and merge on their own once the part before them is done",
+      "status": "pending",
+      "order": 116
     }
   ],
   "epics": [
