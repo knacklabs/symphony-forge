@@ -11,6 +11,7 @@ cp -R .codex/skills/agents/assistant-module/typescript/libs/assistant libs/assis
 cp .codex/skills/agents/assistant-module/typescript/apps/api/prisma/schema/assistant.prisma apps/api/prisma/schema/assistant.prisma
 cp -R .codex/skills/agents/assistant-module/typescript/apps/api/prisma/migrations/20261106000000_assistant apps/api/prisma/migrations/20261106000000_assistant
 cp .codex/skills/agents/assistant-module/typescript/apps/api/test/assistant-chats.e2e-spec.ts apps/api/test/assistant-chats.e2e-spec.ts
+cp .codex/skills/agents/assistant-module/typescript/apps/api/test/assistant-api.e2e-spec.ts apps/api/test/assistant-api.e2e-spec.ts
 ```
 
 For a Claude app, replace `.codex/skills` with `.claude/skills` in each command.
@@ -46,7 +47,7 @@ modifiedChats AssistantChat[] @relation("ChatModifiedBy")
 
 Add `@app/assistant-server` as a `workspace:*` dependency in `apps/api/package.json`. Add `../../libs/assistant/server` to the references in `apps/api/tsconfig.json`. Add the assistant scope rule to `eslint.config.mjs`. Permit assistant code to use assistant, core, shared and contracts libraries.
 
-Add `@langchain/langgraph-checkpoint-postgres` at version `1.1.2` to the root and `apps/api/package.json`. Import `ConfigService` from `@nestjs/config`, `PostgresSaver` from `@langchain/langgraph-checkpoint-postgres`, and `AssistantChatsService` and `AssistantCleanup` from `@app/assistant-server`. Add both assistant classes to the `providers` list in `apps/api/src/app.module.ts`. Add a `PostgresSaver` provider that uses the app's `DATABASE_URL` and schema `assistant`. Return the saver with `onModuleDestroy: () => saver.end()` so the app closes its connection.
+Add `@langchain/langgraph-checkpoint-postgres` at version `1.1.2` to the root and `apps/api/package.json`. Import `AssistantModule` from `@app/assistant-server` in `apps/api/src/app.module.ts` and add it to `imports`. The module provides the chat service, clean-up timer and Postgres checkpointer. It closes the checkpointer connection when the app stops.
 
 Raise the app's `zod` version to `4.3.6`. The server package pins all its libraries:
 
@@ -82,4 +83,15 @@ Build the Assistant page in the app's design by the `The assistant page` section
 
 ## Storage calls
 
-Use the chat's `id` as LangGraph's `thread_id`. Call `ownChat` before any checkpoint read or model call. Call `touch` when the turn accepts a new message. The turn must refuse secrets before this call. Chat routes, model calls and the page belong to the later assistant parts.
+Use the chat's `id` as LangGraph's `thread_id`. Call `ownChat` before any checkpoint read or model call. Call `touch` when the turn accepts a new message. The turn must refuse secrets before this call. Model calls and the page belong to later assistant parts.
+
+## Chat API
+
+The app's session and CSRF guards protect the routes under `/api/v1/assistant/chats`.
+`POST` with an empty object creates a chat and returns `{ id }`. Use `Idempotency-Key` to retry without a second chat.
+`GET` lists only the caller's chats, most recent message first, with `limit`, `after` and `before` for cursor paging.
+`GET /:id` returns the chat's public dates, user and assistant text, and its open confirm card. It never returns system messages, tool arguments or model metadata. Another person's chat returns 404, even to an admin.
+
+The contracts package defines the five blocks and the stream events. Each stream event uses `{ event, data }`; `done` has an empty data object. A pending interrupt carries `title`, `lines` and `expiresAt` in its value. The read endpoint uses the interrupt's own id as `confirmId`.
+
+Run the app's normal test command after the copy. The starter's API test pattern includes both copied test files. To leave the module off, omit `AssistantModule` from the app's imports. The ordinary API needs no assistant settings in that state.
