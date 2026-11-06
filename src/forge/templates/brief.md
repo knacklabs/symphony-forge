@@ -522,6 +522,11 @@ permission. Never send an elicitation or a sampling request.
 
 In a client app with shadcn/ui set up, use shadcn/ui only. If the app has `libs/shared/ui`, add components with `npx shadcn@4.21.4 add <name> --cwd libs/shared/ui`. Close refuses a new UI component library. Review holds a hand-built UI component unless a `Not shadcn: <why>` comment says why.
 
+Close checks only changed client UI files with the pinned design checker and the small design checks.
+A refusal names the file, the rule and its waiver comment. Fix the problem, or use that comment
+with a reason. If the checker cannot run, close prints one line and runs the other checks.
+Without Node, close prints one line and skips the design checks. Sync changes no app code.
+
 In a feature that makes a record wait for a person, use the `notifications` module.
 Add `notify` in the same transaction as the change that makes a record wait;
 add `resolve` in the transaction of the action.
