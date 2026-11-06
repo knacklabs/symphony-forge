@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "edge\ttests/test_assistant_chats.py\tNot done: A test copies the template into a new app, in each language, and runs it.",
+      "kind": "edge",
+      "path": "tests/test_assistant_chats.py",
+      "line": 114,
+      "text": "Not done: A test copies the template into a new app, in each language, and runs it.",
+      "from": "review",
+      "item": "FORGE-ASSIST-1/TSCHAT",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
