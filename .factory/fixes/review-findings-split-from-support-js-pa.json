@@ -11,13 +11,28 @@
   "done_when": "A review no longer finds: Gate: run the starter lint proofs on this pull request (tests/test_uistandards_canvas.py:71)",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "d045946afed92049523a108123afccc1f9f83e8fa4736ba5de608ea474f8e8b3",
+    "changed": "c54067a805069fb8f036383d25a204a8ef3d0d096ab3f583ab35c638ac1c0c2e",
+    "commit": "1f10d761a04d8fb37fd654899c3d6993665b754e",
+    "dismissals": [],
+    "findings": [],
+    "id": "f59b7ff4-df29-4ad0-a201-43ed3562cfce",
+    "status": "clean"
+  },
   "round": 1,
   "stacked_on": "support-js-passes-app-lint",
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-06T10:27:55.450240+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-06T10:32:15.521889+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
