@@ -4,12 +4,20 @@
   "done_when": "A new app from each starter with .forge/design/support.js and ui-checks.js passes its own lint, and tests/test_database_kinds.py::test_5_feature_columns_come_from_the_kind_table[python] passes",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-06T10:12:49.461044+00:00",
       "step": "start"
     }
   ],
-  "why": "The design render script that Forge copies into a client app, support.js, fails the Python starter's lint again: the canvas design part added a line that declares process as a global, which the starter's lint already treats as built-in, so python-database-kinds-smoke fails on main"
+  "stuck": {
+    "close": null,
+    "head": "7c4d4e32703e89283e135ff0686b59f555cbeeb8",
+    "keys": {},
+    "round": null
+  },
+  "why": "The design render script that Forge copies into a client app, support.js, fails the Python starter's lint again: the canvas design part added a line that declares process as a global, which the starter's lint already treats as built-in, so python-database-kinds-smoke fails on main",
+  "worker": "codex"
 }
