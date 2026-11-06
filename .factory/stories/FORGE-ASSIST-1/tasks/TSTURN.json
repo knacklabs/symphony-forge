@@ -113,7 +113,7 @@
     "id": "920c9abf-06cb-435f-83cd-ecb951923e1b",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "stacked_on": "FORGE-ASSIST-1/TSMODEL",
   "status": "fixing",
   "steps": [
@@ -127,10 +127,10 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "4398fd89e5502378774b689e07d59f90723c4341",
+    "close": "85cad992-2d32-46e1-8841-ef0889c3c9c3",
+    "head": "2d5a66506297ba580f2caf1d000e27e4a4028bfa",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "worker": "codex"
 }
