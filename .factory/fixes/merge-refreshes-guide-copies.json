@@ -41,37 +41,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "d821e35a5b3ec6cba241cc6a4ba32597e67f98c7def6768709f0c543f8656349",
-    "changed": "9b1bce37f7f505ef124f2fc408e4ae2ade78cff11967d39db9e7ce7f3c9262a2",
-    "commit": "7812624e3f72ab2ebbd5183795703fcb88f8fde3",
+    "branch_diff": "3032dc4a26bec60da7231c10f1af497b89288684454041a859243bc038a9e71a",
+    "changed": "a9473cf2013554d8eb29d8b93b6e0d4dfddb0700530a2311094ee2aa3542301b",
+    "commit": "12e0590a96837749e69a7d5eabcb6671d2793f5c",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 3, Work 2, Harm 2\nRaise: Functional\nCase: normal use - main changes a canonical guide such as `.codex/skills/test-audit/SKILL.md`, and close merges it into an open branch.\nThe incoming-change filter excludes canonical guide sources outside `src/forge/templates`. `review.py:58-62` renders both hosts' test-audit copies from that Codex file through `sync._synced_text` (`sync.py:427-430`). Consequently, this merge returns before refreshing the Claude copy, leaving the hosts with different guidance. The same omission affects `.codex/skills/app-baseline/SKILL.md` and `.codex/skills/forge/fde.md`, used by `app_baseline.py:142` and `story.py:103-104`. Include these existing renderer inputs in the refresh trigger.",
-        "file": "src/forge/sync.py",
-        "gain": 3,
-        "harm": 2,
-        "line": 603,
-        "priority": "P1",
-        "title": "Refresh mirrored guides when canonical skill sources change",
-        "work": 2
-      },
-      {
-        "body": "Gain 2, Work 2, Harm 2\nCase: normal use - an already checked branch changes guide templates and their synced copies, while main advances in an unrelated file.\nThis comparison includes all guide differences between main and the item branch, including edits already checked before the merge. It therefore sets `overlap` even when the merge required no guide repair. Lines 143-159 then publish another head and wait for CI instead of preserving the previously checked head. Compare the guide changes introduced by the merge and refresh, so existing guide edits alone do not trigger another CI round. The added close-only test does not exercise this merge retention decision.",
-        "file": "src/forge/merge.py",
-        "gain": 2,
-        "harm": 2,
-        "line": 125,
-        "priority": "P2",
-        "title": "Follow-up: Distinguish new guide repairs from existing branch edits",
-        "work": 2
-      }
-    ],
-    "id": "35ce214b-9e0f-4f34-b9c6-ed3c3ec4bcc3",
+    "findings": [],
+    "id": "245f2689-d20d-4bba-9a40-7ee27ddf6070",
     "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-06T15:10:52.001791+00:00",
@@ -79,6 +58,10 @@
     },
     {
       "at": "2026-11-06T15:20:56.703260+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-06T16:29:05.853936+00:00",
       "step": "review"
     }
   ],
