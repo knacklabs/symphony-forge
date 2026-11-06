@@ -11,12 +11,27 @@
   "done_when": "On Windows, Mac and Linux the canvas renderer passes a page that fits 375 pixels and still refuses a page that scrolls sideways at that width",
   "fix_kind": "backend",
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "fdff7458b95db04afd93c4e7901600b790667020d82552e9c79375c486c19de2",
+    "changed": "8a960a37df5857f9bec722d7d2044dede228ba8ca4a7a81754e44b4aee1795d2",
+    "commit": "6b18e63e539e4572eef604284e1f45baef6311af",
+    "dismissals": [],
+    "findings": [],
+    "id": "4675d2be-2d30-4cbb-a9b8-a01056ad0614",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-06T22:53:16.866056+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-06T23:29:20.218936+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
