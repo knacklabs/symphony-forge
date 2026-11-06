@@ -107,3 +107,4 @@ Only a genuine trade-off goes to the human, as a question with options.
     Case: normal use - STARTERS-PY builds and reaches its checks before STARTERS-TS merges.
     `plans/FORGE-AFFECTED-1.md:89` requires `test_6` to assert the generated `fast_test`, but line 118 postpones that assertion until both tasks have merged. STARTERS-PY has no prerequisite in its task row at line 116. Current `src/forge/init.py:172-190` emits no `fast_test`; STARTERS-TS supplies that behavior. The Python task therefore cannot complete its specified proof before merging unless it waits for the actual code dependency or omits the assertion.
     Gain 3, Work 1, Harm 3
+    Disposition: cut - STARTERS-PY now has After: STARTERS-TS, the smaller change, so `test_6` can assert the generated `fast_test`.
