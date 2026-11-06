@@ -1,10 +1,18 @@
 {
   "branch": "task/FORGE-ASSIST-1-PYSTORE",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-06T05:21:54.718299+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "860e8aa42a5d35b91f6aaa5387eab8f04cee807b",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
