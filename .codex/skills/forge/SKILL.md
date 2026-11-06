@@ -1397,6 +1397,7 @@ This also works from an older story checkout or a stale default checkout: task s
 the upgrade before Forge can forward the command to the checkout's older release.
 `forge next` names the unmerged item a part waits on for overlapping files, including another
 story's work, using the same overlap rule as `forge task start`.
+`forge next` lists a part only when `forge task start` would accept it, and names the reason when it would not.
 
 ## Cold read findings
 
