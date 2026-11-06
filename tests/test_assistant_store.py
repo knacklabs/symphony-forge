@@ -1,5 +1,6 @@
 """The copied TypeScript assistant erases inactive chats and checkpoint copies."""
 import json
+import shutil
 from pathlib import Path
 
 import pytest
@@ -20,6 +21,14 @@ def test_4_expired_chats_are_deleted(repo, gh, tmp_path, tmp_path_factory):
     # method accepts time in production, so no production test seam is needed.
     client = _new_client(repo, gh, tmp_path)
     assert not (client / "libs/assistant").exists()
+    # GUIDE owns delivery through init/sync. Stage this part's source template
+    # so its storage proof can run before GUIDE ships, without a production seam.
+    shutil.copytree(
+        Path(__file__).resolve().parents[1]
+        / "src/forge/templates/skills/agents/assistant-module/typescript",
+        client / ".codex/skills/agents/assistant-module/typescript",
+        dirs_exist_ok=True,
+    )
     copy_assistant(client)
     if not LIVE:
         return
