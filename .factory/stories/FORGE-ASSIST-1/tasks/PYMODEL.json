@@ -1,0 +1,12 @@
+{
+  "base": "d4e844077858528cdf1191e28c2b9702b8c1e9f5",
+  "branch": "task/FORGE-ASSIST-1-PYMODEL",
+  "stacked_on": "FORGE-ASSIST-1/PYSTORE",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-06T07:43:24.763386+00:00",
+      "step": "start"
+    }
+  ]
+}
