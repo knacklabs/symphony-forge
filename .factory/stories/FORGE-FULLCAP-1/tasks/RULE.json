@@ -1,10 +1,18 @@
 {
   "branch": "task/FORGE-FULLCAP-1-RULE",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-06T10:18:09.384047+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "5c10c7e2ae1eb70532bb90f86c5e9af7bd267db8",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
