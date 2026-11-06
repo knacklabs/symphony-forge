@@ -13,6 +13,10 @@
     {
       "at": "2026-11-06T11:45:51.253795+00:00",
       "step": "read"
+    },
+    {
+      "at": "2026-11-06T11:48:48.658148+00:00",
+      "step": "read"
     }
   ],
   "title": "After a conflict, close reviews only the conflict fix, and plans keep task files apart",
