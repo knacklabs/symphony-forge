@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tExclude refusal hints from the startable list\tFORGE-FULLCAP-1/RULE",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 188,
+      "text": "Exclude refusal hints from the startable list",
+      "from": "blocking",
+      "item": "FORGE-FULLCAP-1/RULE",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

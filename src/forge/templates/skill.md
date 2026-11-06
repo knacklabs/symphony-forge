@@ -1205,7 +1205,12 @@ fix's folder:
    declared ranges; recursive `yarn up -R` starts in Yarn 3.
 2. Pull each Dockerfile's base image at its current tag, or move it to the newest patch of the
    same tag, and rebuild the image.
-3. Follow the repo's `test_place`: in local mode, run the related tests through
+3. Without an explicit `test_place`, use CI only if `checks` names a check other than
+   `forge-pr-check`, which runs no app tests. Otherwise close runs tests locally.
+   An explicit choice keeps its value. New and earlier-adopted repos get this default on upgrade.
+   Keep `test` as the full suite for the nightly run and change selection in `fast_test`.
+   Doctor warns about a `test` that looks like change selection, without failing the check.
+   Follow the repo's `test_place`: in local mode, run the related tests through
    `forge test`; in CI mode, do not run them here. Commit, then `forge close <fix>`.
 
 ## Planning a story
@@ -1392,6 +1397,7 @@ This also works from an older story checkout or a stale default checkout: task s
 the upgrade before Forge can forward the command to the checkout's older release.
 `forge next` names the unmerged item a part waits on for overlapping files, including another
 story's work, using the same overlap rule as `forge task start`.
+`forge next` lists a part only when `forge task start` would accept it, and names the reason when it would not.
 
 ## Cold read findings
 
