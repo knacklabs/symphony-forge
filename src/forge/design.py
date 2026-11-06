@@ -120,6 +120,17 @@ def check(top: Path, text: str, ref: str | None = None, *, required: bool = True
         repo.refuse(("The design folder has no screen images.", next_step))
     if actual != expected:
         repo.refuse(("The design folder changed; its tree id no longer matches the plan.", next_step))
+    if required:
+        from forge import ui_checks
+
+        if not (top / "DESIGN.md").is_file():
+            repo.refuse(("DESIGN.md is missing from the repo root.",
+                         "write the app's look in DESIGN.md, then run forge read <KEY>"))
+        problems = ui_checks.problems(top, [folder + name for name in files
+                                           if PurePosixPath(name).suffix.lower() == ".html"])
+        if problems:
+            repo.refuse(("The design folder fails the design checks:\n" + "\n".join(problems),
+                         "fix the named files, or add the shown waiver with a reason, then run forge read <KEY>"))
     return folder
 
 
