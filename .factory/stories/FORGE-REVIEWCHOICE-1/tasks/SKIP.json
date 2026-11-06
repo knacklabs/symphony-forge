@@ -14,7 +14,7 @@
       "gain": 4,
       "harm": 3,
       "line": 36,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -37,38 +37,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "689b839a705aa19a1c9b37ffb9759e7e7ee77548598ab53461cff3f97f5b517c",
-    "changed": "1cee3cb853ec0373a156b597c2c999f878bc1459bb9b70e41eac1e54cdb3b095",
-    "commit": "08745c058f85cb4dd8585f66af0cef1ca2882c6b",
+    "branch_diff": "c283882e65b734908e05bee4276e76b24be0a7235c728a86fb272cc18f6e03ca",
+    "changed": "d2ded60206f8f9fd3d393d297a643a5268da2495e1f8c5327619d4834ce17839",
+    "commit": "a7c4921f901df01d27a09ce6b0e9a05d74b1f46c",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done.\nCase: normal use - continuing a shared item after merging remote review history into a locally advanced branch.\nThis call uses review._history, whose traversal follows only first parents (src/forge/review.py:596). If the remote branch contains a blocked round followed by a clean round, merging it into a stale clone with local work puts those rounds behind the merge's second parent. The first-parent traversal sees the latest clean snapshot but misses the earlier block, so --no-review is accepted. close_remote.reconcile also creates this merge shape at src/forge/close_remote.py:56; checking again after reconciliation does not recover the omitted rounds. The permanent refusal must inspect the item's review history across merged parents. The current stale-clone test only exercises a fast-forward.",
-        "file": "src/forge/review_skip.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 36,
-        "priority": "P1",
-        "required_done_when": true,
-        "title": "Not done: Close refuses the skip after a blocking review, and tests, CI, the design checks and the merge step still run on a skipped item.",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 1\nRaise: Test.\nCase: normal use - GitHub requires merging an updated default branch while a skipped close waits for CI.\nThe unchanged-diff case never exercises the retry it claims to prove. Its helper adds only NEWS.md on main, and the inherited PR-list stub supplies no BEHIND status (tests/test_close.py:285). For that conflict-free change, _merge_default returns without merging at src/forge/close.py:753-755, leaving HEAD unchanged and avoiding the recursive close. These assertions therefore pass even if a base-only retry loses the saved skip and unnecessarily runs a model review. Make this case require the default-branch merge and verify its ancestry before asserting that the skip survives.",
-        "file": "tests/test_reviewchoice_skip.py",
-        "gain": 3,
-        "harm": 1,
-        "line": 199,
-        "priority": "P1",
-        "title": "Gate: test_1_person_can_skip_model_review[retry-same]",
-        "work": 2
-      }
-    ],
-    "id": "d12045a5-ef35-4fb2-8e52-2d60d9d51ed3",
-    "status": "blocked"
+    "findings": [],
+    "id": "786cbf14-9a9b-46ed-9118-add769f077f1",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-06T22:11:02.348690+00:00",
@@ -76,6 +54,10 @@
     },
     {
       "at": "2026-11-06T22:37:38.179531+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-06T22:43:04.159596+00:00",
       "step": "review"
     }
   ],
