@@ -552,6 +552,12 @@
       "title": "Client app designs stop looking machine-made",
       "status": "pending",
       "order": 115
+    },
+    {
+      "key": "FORGE-ASSIST-1",
+      "title": "Client apps get an optional in-app assistant",
+      "status": "pending",
+      "order": 107
     }
   ],
   "epics": [

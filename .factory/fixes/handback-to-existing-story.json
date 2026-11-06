@@ -1,0 +1,76 @@
+{
+  "base": "9d620e670b072e95a2cbf6c073cb8d3fab4a71c5",
+  "branch": "fix/handback-to-existing-story",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1ad56-4850-7583-ab71-bf486f60dd33",
+    "head": null,
+    "start": "86af871757c039b8a9bce6634aa0b9030a840151"
+  },
+  "done_when": "Handing back an intake as a plan for an existing story key adds it to that story with no git error, or refuses before using the intake with a plain reason and next step",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "act() in src/forge/intake.py",
+      "file": "src/forge/intake.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 141,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Preserve plan structure when appending intake requirements",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "e9e827d5b7e7b4dfe1a24be8f8775966d8dbd5f062ca135469871a843dd7ed4d",
+    "changed": "4f69517c6ab3de3d99033856462027a980c1eab9f89babffe15edf51aa1e948c",
+    "commit": "d29fb1a6fb609a50358e8898505122ec434b9623",
+    "dismissals": [],
+    "findings": [],
+    "id": "6b705f23-93f6-45ed-8b66-740c98fa472b",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-05T20:10:41.129964+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-05T20:17:11.765179+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-05T20:21:59.718404+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-05T21:06:50.850537+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-05T20:17:11.779046+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "src/forge/intake.py",
+    "reason": "Harm 3 defect: the joined text lands in the wrong section, so one more round fixes it",
+    "wait_id": "0ebc8cdc-0ae3-4c07-a84f-4409b494aaff",
+    "worker_round": 1
+  },
+  "stuck": {
+    "close": "7db1ec24-b1b7-452d-8365-0d613885deae",
+    "head": "58c621bc7dbdb8e09ebec763fcbf80b8a983554a",
+    "keys": {},
+    "round": 2
+  },
+  "why": "Handing back an intake as a plan with a story key that already has a branch prints a raw git worktree error and points to forge doctor, although the intake is used (issue 1388)",
+  "worker": "codex"
+}
