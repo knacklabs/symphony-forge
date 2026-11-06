@@ -58,6 +58,11 @@ def client(repo, gh, tmp_path, request):
     patient(lambda: (folder / "forge.toml").write_text(config, "utf-8"))
     synced = repo.forge("sync", cwd=folder)
     assert synced.returncode == 0, synced.stdout + synced.stderr
+    # Prepare the look before story creation so its tip still proves the roadmap
+    # change made by the command, rather than a later fixture-only look commit.
+    if not (folder / "DESIGN.md").exists():
+        (folder / "DESIGN.md").write_text(
+            "# App look\n\nUse a clear, quiet design for the basket shop.\n", encoding="utf-8")
     repo.git("add", "-A", cwd=folder)
     repo.git("commit", "-qm", "Upgrade and sync client guidance", cwd=folder)
     _merge_fixture(repo, folder, "fix/prepare-client-settings")
