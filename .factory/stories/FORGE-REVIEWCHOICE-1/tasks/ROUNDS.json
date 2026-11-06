@@ -70,9 +70,9 @@
     "id": "ec75f7c1-2ac4-4fdf-a93b-0a62452de948",
     "status": "clean"
   },
-  "round": 3,
+  "round": 4,
   "stacked_on": "FORGE-FULLCAP-1/RULE",
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-06T11:41:46.181800+00:00",
@@ -92,10 +92,10 @@
     }
   ],
   "stuck": {
-    "close": "78b5f3b3-4967-4e92-8b23-d0f1a0ea25a5",
-    "head": "afefe3c1090b98ba03d2fb0663a59df065695469",
+    "close": "587cb6de-deda-435c-9bb5-c853e1c8e591",
+    "head": "2435250bbd9d8a7eb8c9c543b2644a05e932cb5c",
     "keys": {},
-    "round": 2
+    "round": 3
   },
   "worker": "codex"
 }
