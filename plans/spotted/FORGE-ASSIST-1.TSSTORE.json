@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\ttests/test_assistant_store.py\tGate: retention test depends on template delivery that does not exist yet\tFORGE-ASSIST-1/TSSTORE",
+      "kind": "bug",
+      "path": "tests/test_assistant_store.py",
+      "line": 23,
+      "text": "Gate: retention test depends on template delivery that does not exist yet",
+      "from": "blocking",
+      "item": "FORGE-ASSIST-1/TSSTORE",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

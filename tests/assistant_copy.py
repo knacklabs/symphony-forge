@@ -1,0 +1,130 @@
+"""Copy the optional assistant module into a new TypeScript starter app."""
+import json
+import shutil
+from pathlib import Path
+
+
+def copy_assistant(app: Path) -> None:
+    """Apply the TypeScript README steps to an app created by `forge init`."""
+    skill = app / ".codex" / "skills" / "agents" / "assistant-module" / "typescript"
+    if not skill.exists():
+        skill = app / ".claude" / "skills" / "agents" / "assistant-module" / "typescript"
+    if not skill.is_dir():
+        raise AssertionError(f"the assistant template is missing from {skill}")
+
+    shutil.copytree(skill / "libs" / "assistant", app / "libs" / "assistant")
+    shutil.copyfile(
+        skill / "apps" / "api" / "prisma" / "schema" / "assistant.prisma",
+        app / "apps" / "api" / "prisma" / "schema" / "assistant.prisma",
+    )
+    shutil.copytree(
+        skill / "apps" / "api" / "prisma" / "migrations" / "20261106000000_assistant",
+        app / "apps" / "api" / "prisma" / "migrations" / "20261106000000_assistant",
+    )
+    shutil.copyfile(
+        skill / "apps" / "api" / "test" / "assistant-chats.e2e-spec.ts",
+        app / "apps" / "api" / "test" / "assistant-chats.e2e-spec.ts",
+    )
+
+    base_schema = app / "apps" / "api" / "prisma" / "schema" / "base.prisma"
+    _replace_once(
+        base_schema,
+        'schemas  = ["core", "history", "mcp", "notifications", "projects"]',
+        'schemas  = ["assistant", "core", "history", "mcp", "notifications", "projects"]',
+    )
+    _replace_once(app / "prisma.config.ts", "export default defineConfig({\n", (
+        "export default defineConfig({\n"
+        "  experimental: { externalTables: true },\n"
+        "  tables: { external: [\n"
+        "    'assistant.checkpoints', 'assistant.checkpoint_blobs',\n"
+        "    'assistant.checkpoint_writes', 'assistant.checkpoint_migrations',\n"
+        "  ] },\n"
+    ))
+    organisations = app / "apps" / "api" / "prisma" / "schema" / "organisations.prisma"
+    _replace_once(organisations, "  notifications       Notification[]\n", (
+        "  notifications       Notification[]\n"
+        "  assistantChats      AssistantChat[]\n"
+    ))
+    auth = app / "apps" / "api" / "prisma" / "schema" / "auth.prisma"
+    _replace_once(auth, "  deletedProjects   Project[] @relation(\"ProjectDeletedBy\")\n", (
+        "  deletedProjects   Project[] @relation(\"ProjectDeletedBy\")\n"
+        "  createdChats      AssistantChat[] @relation(\"ChatCreatedBy\")\n"
+        "  modifiedChats     AssistantChat[] @relation(\"ChatModifiedBy\")\n"
+    ))
+
+    api_package = app / "apps" / "api" / "package.json"
+    _edit_json(api_package, lambda data: data["dependencies"].update({
+        "@app/assistant-server": "workspace:*",
+        "@langchain/langgraph-checkpoint-postgres": "1.1.2",
+    }))
+    api_tsconfig = app / "apps" / "api" / "tsconfig.json"
+    _edit_json(api_tsconfig, lambda data: data["references"].append({
+        "path": "../../libs/assistant/server",
+    }))
+    root_package = app / "package.json"
+    def edit_root_package(data):
+        data["dependencies"].update({"zod": "4.3.6"})
+        data["dependencies"]["@langchain/langgraph-checkpoint-postgres"] = "1.1.2"
+        data["scripts"].update({
+            "assistant:setup": (
+                "pnpm --filter @app/assistant-server exec node --input-type=module -e "
+                "\"import { PostgresSaver } from '@langchain/langgraph-checkpoint-postgres'; "
+                "const saver = PostgresSaver.fromConnString(process.env.DATABASE_URL, "
+                "{ schema: 'assistant' }); try { await saver.setup(); } "
+                "finally { await saver.end(); }\""
+            ),
+        })
+    _edit_json(root_package, edit_root_package)
+    eslint_config = app / "eslint.config.mjs"
+    _replace_once(
+        eslint_config,
+        "          { sourceTag: 'scope:notifications', onlyDependOnLibsWithTags: ['scope:notifications', 'scope:core', 'scope:shared', 'type:contracts'] },\n",
+        "          { sourceTag: 'scope:notifications', onlyDependOnLibsWithTags: ['scope:notifications', 'scope:core', 'scope:shared', 'type:contracts'] },\n"
+        "          { sourceTag: 'scope:assistant', onlyDependOnLibsWithTags: ['scope:assistant', 'scope:core', 'scope:shared', 'type:contracts'] },\n",
+    )
+    dockerfile = app / "Dockerfile"
+    _replace_once(
+        dockerfile,
+        "; exec corepack pnpm run start:prod\"]",
+        "; corepack pnpm run assistant:setup || { echo 'Assistant storage setup failed. Check DATABASE_URL and the assistant package.' >&2; exit 1; }; exec corepack pnpm run start:prod\"]",
+    )
+    app_module = app / "apps" / "api" / "src" / "app.module.ts"
+    _replace_once(
+        app_module,
+        "import { ConfigModule } from '@nestjs/config';\n",
+        "import { ConfigModule, ConfigService } from '@nestjs/config';\n",
+    )
+    _replace_once(app_module, "import { Module } from '@nestjs/common';\n", (
+        "import { Module } from '@nestjs/common';\n"
+        "import { PostgresSaver } from '@langchain/langgraph-checkpoint-postgres';\n"
+        "import { AssistantChatsService, AssistantCleanup } from '@app/assistant-server';\n"
+    ))
+    _replace_once(app_module, "    { provide: APP_INTERCEPTOR, useClass: EnvelopeInterceptor },\n", (
+        "    { provide: APP_INTERCEPTOR, useClass: EnvelopeInterceptor },\n"
+        "    AssistantChatsService,\n"
+        "    AssistantCleanup,\n"
+        "    {\n"
+        "      provide: PostgresSaver,\n"
+        "      inject: [ConfigService],\n"
+        "      useFactory: (config: ConfigService) => {\n"
+        "        const saver = PostgresSaver.fromConnString(\n"
+        "          config.getOrThrow<string>('DATABASE_URL'),\n"
+        "          { schema: 'assistant' },\n"
+        "        );\n"
+        "        return Object.assign(saver, { onModuleDestroy: () => saver.end() });\n"
+        "      },\n"
+        "    },\n"
+    ))
+
+
+def _replace_once(path: Path, old: str, new: str) -> None:
+    text = path.read_text(encoding="utf-8")
+    if text.count(old) != 1:
+        raise AssertionError(f"copy step did not match one location in {path}")
+    path.write_text(text.replace(old, new), encoding="utf-8")
+
+
+def _edit_json(path: Path, edit) -> None:
+    data = json.loads(path.read_text(encoding="utf-8"))
+    edit(data)
+    path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")

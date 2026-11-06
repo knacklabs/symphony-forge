@@ -1,0 +1,62 @@
+{
+  "branch": "task/FORGE-ASSIST-1-TSSTORE",
+  "chat": {
+    "approval": "c276549ec321871ed6b007a41985ed8ac0386fa2eb30ff0ce7b634bfea33d386",
+    "claude": null,
+    "conversation": "01a1aec1-0c28-7b22-ba82-35f1a22e16ca",
+    "head": null,
+    "start": "cd4b4f15d47bc189d30356fe17c6e3deccdb206d"
+  },
+  "known": [
+    {
+      "area": "test_4_expired_chats_are_deleted() in tests/test_assistant_store.py",
+      "file": "tests/test_assistant_store.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 23,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: retention test depends on template delivery that does not exist yet",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "9a5bf7e199d422d5941a197d682c5036a7f4b858dd86c35b295b8c943d5f8a24",
+    "changed": "d3a8733d86d631bdb72831d2934a99f6b860ba28cf21f3f8f2f3f753266a9525",
+    "commit": "be5b97f8413965b6320d778f96a1bd26b14af269",
+    "dismissals": [],
+    "findings": [],
+    "id": "23b9b7ef-317d-48bb-9978-9dcbe87e1b15",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-06T02:46:58.585349+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-06T03:08:48.169424+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-06T03:12:01.790140+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-06T04:24:09.855460+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "25fb8104-c7ed-432f-8c8b-8396a6a07a4f",
+    "head": "c78ca04fb7ba0899b160049315eb7b2122c1e707",
+    "keys": {},
+    "round": 2
+  },
+  "worker": "codex"
+}
