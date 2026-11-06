@@ -24,27 +24,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "052c1a081a45c9f61fa5890d6ed47f2b0ebf6303b4c0951c88149aa87490ea79",
-    "changed": "2db403406ad2441867b3d7e12611a860fc85ee8cffacd105a077f141cd7872bb",
-    "commit": "fac9ee03c377f74ad66ad0b789c35b99227d67aa",
+    "branch_diff": "d330b6caf718df7f96d61720cb3d63afbaaf4bef06812d762fccb669ac989163",
+    "changed": "c36dbc9bfc3a3479c396c38e20b86fb76f1d32a9590eb2c14524160f126596ef",
+    "commit": "09b4ba365740cc385a839250e7465532e6b68f8d",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 2, Work 2, Harm 1\nThe proof list explicitly identifies the missing runtime test for this supported fallback. This case disables impeccable, but leaves Node available; neither parametrization exercises close without Node. Removing the fallback in ui_checks.py:19\u201322 would therefore leave these tests green while close refused instead of printing the promised one-line skip message. Add a command-level case confirming that close proceeds and reports the skip when Node is unavailable.\nAdds work: one no-Node close case; F 1 x H 2 = 2; 2 x C = 2",
-        "file": "tests/test_uistandards_close.py",
-        "gain": 2,
-        "harm": 1,
-        "line": 239,
-        "priority": "P2",
-        "title": "Follow-up: Exercise close when Node is unavailable",
-        "work": 2
-      }
-    ],
-    "id": "2869dace-8457-477c-8c17-e5f9d768ff21",
+    "findings": [],
+    "id": "677c4406-2e99-4d11-b912-d38ad5812cbd",
     "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-06T02:46:48.987743+00:00",
@@ -52,6 +41,10 @@
     },
     {
       "at": "2026-11-06T03:11:47.138120+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-06T04:07:38.820344+00:00",
       "step": "review"
     }
   ],
