@@ -623,7 +623,7 @@ if changed:
     repo.git('add', '--', *changed, cwd=top)
     repo.git('commit', '-q', '--amend', '--no-edit', cwd=top)
 """
-    repo.run(sys.executable, "-c", script, cwd=top).check_returncode()
+    repo.run(sys.executable, "-B", "-c", script, cwd=top).check_returncode()
 
 
 def install_shims(top: Path, cfg: dict[str, Any]) -> bool:
