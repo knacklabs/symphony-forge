@@ -778,7 +778,15 @@ progress, they show open questions as a checklist, with the phrase that fixes ea
 client replies, update the matching line in the brief. A `not known yet` answer is accepted and is
 not listed as open, except Personal data, which needs a settled answer before real data.
 
-**Canvas and app design.** Make each app's design from the whole `docs/product/BRIEF.md`: its
+**Canvas and app design.** Before the first canvas, write a short brief from the industry,
+who uses the app and how often, the screen's job (work, read or persuade), two or three
+brand words and existing brand files; map them to font pairing, one accent, radius,
+density and tone, then record DESIGN.md through impeccable's document step using the
+app-baseline list and fixed guard rules, and use impeccable's Operate mode for app screens
+and prototypes. `support.js` checks each canvas and renders it at 1440 and 375 pixels
+before it is shown; the plan's read refuses a failing design folder or one with no DESIGN.md.
+
+Make each app's design from the whole `docs/product/BRIEF.md`: its
 purpose, users, records, fields, choice-list options and key flows. Use impeccable and
 emil-design-eng when making it through Forge. Any way of making the design works, through Forge
 or separately. Keep one link to it in `## Design` in the brief; it need not be saved in the repo.
@@ -1384,6 +1392,7 @@ This also works from an older story checkout or a stale default checkout: task s
 the upgrade before Forge can forward the command to the checkout's older release.
 `forge next` names the unmerged item a part waits on for overlapping files, including another
 story's work, using the same overlap rule as `forge task start`.
+`forge next` lists a part only when `forge task start` would accept it, and names the reason when it would not.
 
 ## Cold read findings
 

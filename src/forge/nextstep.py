@@ -708,7 +708,7 @@ def _story(top: Path, key: str, path: Path | None, text: str,
             readiness["stage"] = "planning"
         return lines + reread, list(states.values())
     if readiness is not None:
-        readiness["parts"].update({name: "Can start now" if name in ready else "Waiting"
+        readiness["parts"].update({name: "Can start now" if not admission[name][1] else "Waiting"
                                    for name, deps in waits.items()})
         remaining = [f"{key}/{name}" for name in states if name not in merged]
         if remaining and all(part_statuses.get(item) == "ready" for item in remaining):
