@@ -72,7 +72,7 @@
     "status": "blocked"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-06T12:57:40.608819+00:00",
@@ -85,8 +85,12 @@
   ],
   "stop": {
     "at": "2026-11-06T13:06:02.647153+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "src/forge/close.py",
-    "wait_id": "561c6e60-0f1b-4572-911e-36251d0afbe4"
+    "reason": "Finding 2 has Harm 3 (close could mark Ready with remote work it did not review or test), and a Harm 3 finding keeps fixing under the owner's round rule; finding 1 is fixed in the same round.",
+    "wait_id": "561c6e60-0f1b-4572-911e-36251d0afbe4",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
