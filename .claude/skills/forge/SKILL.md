@@ -648,9 +648,9 @@ Push back when a requested feature does not serve the problem card: explain why 
 offer to note it for after sign-off. Keep the same app as it grows into production.
 
 If the prototype holds only made-up data and has no back end, ask the person, then have the
-coordinator set `sample_data = true` in `forge.toml`. An existing sign-off record's
-`sample_data: true` still works until this setting is present. Forge skips tests and CI while the
-setting is on; walk the demo steps in a browser. Real data or a back end keeps tests from day one.
+coordinator set `sample_data = true` in `forge.toml`. A sign-off record does not turn sample mode
+on. Forge skips tests and CI while the setting is on; walk the demo steps in a browser.
+Real data or a back end keeps tests from day one.
 After sign-off, `forge next` shows setting up tests as the first step. In a coordinator-owned fix,
 set the test command and CI checks as needed, then turn off the setting. Close blocks that fix until
 the `Personal data` answer is settled.
@@ -778,7 +778,15 @@ progress, they show open questions as a checklist, with the phrase that fixes ea
 client replies, update the matching line in the brief. A `not known yet` answer is accepted and is
 not listed as open, except Personal data, which needs a settled answer before real data.
 
-**Canvas and app design.** Make each app's design from the whole `docs/product/BRIEF.md`: its
+**Canvas and app design.** Before the first canvas, write a short brief from the industry,
+who uses the app and how often, the screen's job (work, read or persuade), two or three
+brand words and existing brand files; map them to font pairing, one accent, radius,
+density and tone, then record DESIGN.md through impeccable's document step using the
+app-baseline list and fixed guard rules, and use impeccable's Operate mode for app screens
+and prototypes. `support.js` checks each canvas and renders it at 1440 and 375 pixels
+before it is shown; the plan's read refuses a failing design folder or one with no DESIGN.md.
+
+Make each app's design from the whole `docs/product/BRIEF.md`: its
 purpose, users, records, fields, choice-list options and key flows. Use impeccable and
 emil-design-eng when making it through Forge. Any way of making the design works, through Forge
 or separately. Keep one link to it in `## Design` in the brief; it need not be saved in the repo.
@@ -830,8 +838,8 @@ in `forge.toml` gets one gap check before the demo, with no full test run or who
 The check reads the brief, answers, design and app routes. Findings below Gain 5 and Harm 4 go to
 Known issues without a repair request. A P0, Gain 5 or Harm 4 or higher stops for the owner's
 choice at once. The owner can accept a held finding with a reason or ask for a repair. A prototype
-without the setting keeps the current full-run and whole-source review rules. An existing sign-off
-record with `sample_data: true` keeps working for an earlier-adopted repo.
+without the setting keeps the current full-run and whole-source review rules, including an
+earlier-adopted repo whose sign-off record says `sample_data: true`.
 
 Only the coordinator writes `sample_data = true` in `forge.toml`, after asking the person. A worker
 cannot change this setting. Existing clients get the new sign-off behaviour after the setting is
@@ -867,8 +875,8 @@ prototype uses its one gap check and has no review rounds. If that check finds a
 4 or higher, Forge asks the owner at once. The owner can run
 `forge decision accept client-signoff --by "<name>" --resolve accept --reason "<reason>"` to keep
 the finding in Known issues, or ask for a repair. Without the sample-data
-setting, a P0 keeps the current hard block. A repo that already wrote `sample_data: true` in its
-sign-off record keeps working. New and earlier-adopted clients get the brief rules after upgrade
+setting, a P0 keeps the current hard block. Only `sample_data = true` in `forge.toml` turns sample
+mode on. New and earlier-adopted clients get the brief rules after upgrade
 and sync.
 Forge reuses passed results while what they checked stays unchanged.
 A version-only change to forge.toml keeps the last green full run. Any other settings change needs a new full run.
@@ -1850,8 +1858,8 @@ It prints the report close keeps and always runs, including docs-only and
 uncommitted changes. If the remote default branch is missing it says to fetch it; if forge.toml
 names no test command it says so and exits successfully. In a sample-data prototype, it says
 tests are off until client sign-off. After sign-off, ask the coordinator to set
-`sample_data = false` in `forge.toml` to turn tests on. This also overrides an earlier sign-off's
-`sample_data: true`. Forge sets `PYTEST_XDIST_AUTO_NUM_WORKERS`
+`sample_data = false` in `forge.toml` to turn tests on. A missing setting also leaves tests on,
+regardless of an earlier sign-off's `sample_data: true`. Forge sets `PYTEST_XDIST_AUTO_NUM_WORKERS`
 and `FORGE_TEST_CPUS` to the run's allocation from the shared process budget. A worker's session
 requests at most two processes, so its own `pytest -n auto` also stays at two. A fixed `-n` in
 its test command is capped with `--maxprocesses`, also outside a worker session.
