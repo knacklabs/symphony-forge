@@ -51,17 +51,17 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "9e449754c54599894ebf920c2de4a5c03d6b87e3ed64ce7a72e224af4377fdea",
-    "changed": "2004ecc7e3b559080106e6dc07b43ce67cade0e25f464a658adc2fbc1eee2f81",
-    "commit": "5a7d78149d80e2e0b40da1a76519523e94856de3",
+    "branch_diff": "1fbb639796b324f2e0d7b933fe718058ea59e1bbcec8415d932a4213820b16f1",
+    "changed": "2707f75af0c16aed3f92180872e8a510ef0765d428b706add72084fec920dd7f",
+    "commit": "79e72f77b14874ce522bb8380b780a9bfc375631",
     "dismissals": [],
     "findings": [],
-    "id": "4a2c5693-4142-4314-b521-dda1f0a5b1f1",
+    "id": "8c61085d-49f5-4fe9-973d-76e59a03efe0",
     "status": "clean"
   },
   "round": 6,
   "stacked_on": "FORGE-FULLCAP-1/RULE",
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-06T11:41:46.181800+00:00",
@@ -85,6 +85,10 @@
     },
     {
       "at": "2026-11-06T19:23:05.824068+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-06T20:10:44.787594+00:00",
       "step": "review"
     }
   ],
