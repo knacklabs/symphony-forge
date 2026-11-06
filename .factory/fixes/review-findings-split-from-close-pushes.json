@@ -1,0 +1,16 @@
+{
+  "base": "649508fbe90b0da81d4dd9433d5cd00a44b602f6",
+  "branch": "fix/review-findings-split-from-close-pushes",
+  "done_when": "A review no longer finds: [P1] Defer the acceptance push until final review bookkeeping is saved (src/forge/close.py:423)",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "stacked_on": "close-pushes-once",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-06T15:16:12.795925+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Review findings split from close-pushes-once: [P1] Defer the acceptance push until final review bookkeeping is saved (src/forge/close.py:423)"
+}
