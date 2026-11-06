@@ -1,10 +1,22 @@
 {
   "doc": "plans/FORGE-AFFECTED-1.md",
-  "status": "planning",
+  "status": "read",
   "steps": [
     {
       "at": "2026-11-06T12:18:34.580340+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-06T12:35:21.459896+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-11-06T12:42:20.816208+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-11-06T12:44:59.827064+00:00",
+      "step": "read"
     }
   ],
   "title": "Tests run once, and only for the parts a change touches",
