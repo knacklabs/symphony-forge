@@ -107,8 +107,16 @@ process.stdout.write(JSON.stringify(messages));
   });
 
   it('the model uses the configured provider, key and address', () => {
-    const source = testModuleSource(`
+    const source = `
+import 'reflect-metadata';
+import { Module } from '@nestjs/common';
+import { NestFactory } from '@nestjs/core';
+import { PrismaService } from './libs/core/server/dist/index.js';
 import { createServer } from 'node:http';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { join, resolve } from 'node:path';
+import { tmpdir } from 'node:os';
+import { pathToFileURL } from 'node:url';
 const provider = createServer((request, response) => {
   let body = '';
   request.setEncoding('utf8');
@@ -129,26 +137,82 @@ await new Promise((resolve, reject) => {
   provider.listen(0, '127.0.0.1', resolve);
 });
 let context;
+let chatId;
+const appRoot = process.cwd();
+const originalCwd = process.cwd();
+const originalEnv = { ...process.env };
+const dotenvDir = mkdtempSync(join(tmpdir(), 'assistant-model-'));
 try {
   const address = provider.address();
-  const settings = ${JSON.stringify(SETTINGS)};
+  const settings = {
+    ...${JSON.stringify(SETTINGS)},
+    ASSISTANT_SPEND_CAP_USD: '0.000102',
+    ASSISTANT_PRICE_INPUT_USD_PER_MTOK: '1.01',
+    ASSISTANT_PRICE_OUTPUT_USD_PER_MTOK: '2.01',
+  };
   settings.ASSISTANT_AI_URL = 'http://127.0.0.1:' + address.port + '/v1';
+  for (const name of [
+    'ASSISTANT_AI_KEY', 'ASSISTANT_MODEL', 'ASSISTANT_AI_URL', 'ASSISTANT_SPEND_CAP_USD',
+    'ASSISTANT_PRICE_INPUT_USD_PER_MTOK', 'ASSISTANT_PRICE_OUTPUT_USD_PER_MTOK',
+  ]) delete process.env[name];
+  const appSettings = {
+    APP_ENV: 'test',
+    DATABASE_URL: process.env.DATABASE_URL,
+    APP_ORIGIN: process.env.APP_ORIGIN,
+    ...settings,
+  };
+  writeFileSync(join(dotenvDir, '.env'), Object.entries(appSettings)
+    .map(([name, value]) => name + '=' + JSON.stringify(value)).join('\\n') + '\\n');
+  process.chdir(dotenvDir);
+  const { AppModule } = await import(pathToFileURL(resolve(appRoot, 'apps/api/dist/app.module.js')).href);
+  const assistant = await import(pathToFileURL(resolve(appRoot, 'libs/assistant/server/dist/index.js')).href);
   class ProviderModule {}
-  Module({ providers: [
-    AssistantModel,
-    { provide: ConfigService, useValue: { get: (name) => settings[name] } },
-  ] })(ProviderModule);
+  Module({ imports: [AppModule], providers: [assistant.AssistantModel, assistant.AssistantUsage] })(ProviderModule);
   context = await NestFactory.createApplicationContext(ProviderModule, { logger: false, abortOnError: false });
-  const result = await context.get(AssistantModel).client.invoke('Say hello.');
-  process.stdout.write(JSON.stringify({ reply: result.content, request: globalThis.providerRequest }));
+  const prisma = context.get(PrismaService);
+  const membership = await prisma.membership.findUniqueOrThrow({ where: { accountId: ${JSON.stringify(accountId)} } });
+  const chat = await context.select(AppModule).get(assistant.AssistantChatsService).create({
+    id: membership.accountId, organisationId: membership.organisationId,
+    email: 'model-settings@example.test', role: 'admin',
+  });
+  chatId = chat.id;
+  const usage = context.get(assistant.AssistantUsage);
+  const belowCap = await usage.canStart();
+  const costMicros = usage.cost(59, 21);
+  await usage.record(membership.accountId, chat.id, 59, 21);
+  const atCap = await usage.canStart();
+  const result = await context.get(assistant.AssistantModel).client.invoke('Say hello.');
+  process.stdout.write(JSON.stringify({
+    reply: result.content, request: globalThis.providerRequest, belowCap, atCap, costMicros: String(costMicros),
+  }));
 } finally {
-  if (context) await context.close();
-  await new Promise((resolve, reject) => provider.close(error => error ? reject(error) : resolve()));
+  try {
+    if (context) {
+      if (chatId) {
+        const prisma = context.get(PrismaService);
+        await prisma.assistantUsage.deleteMany({ where: { chatId } });
+        await prisma.assistantChat.deleteMany({ where: { id: chatId } });
+      }
+      await context.close();
+    }
+  } finally {
+    try {
+      await new Promise((resolve, reject) => provider.close(error => error ? reject(error) : resolve()));
+    } finally {
+      process.chdir(originalCwd);
+      for (const name of Object.keys(process.env)) if (!(name in originalEnv)) delete process.env[name];
+      Object.assign(process.env, originalEnv);
+      rmSync(dotenvDir, { recursive: true, force: true });
+    }
+  }
 }
-`);
+`;
     const result = runInApi(source) as {
       reply: string;
       request: { path: string; authorization: string; body: { model: string } };
+      belowCap: boolean;
+      atCap: boolean;
+      costMicros: string;
     };
     expect(result.reply).toBe('ready');
     expect(result.request).toMatchObject({
@@ -156,6 +220,7 @@ try {
       authorization: `Bearer ${SETTINGS.ASSISTANT_AI_KEY}`,
       body: { model: SETTINGS.ASSISTANT_MODEL },
     });
+    expect(result).toMatchObject({ belowCap: true, atCap: false, costMicros: '102' });
   });
 
   it('monthly spend stops at the cap and last month does not count', () => {
@@ -243,6 +308,14 @@ try {
   });
 
   it('the secret check finds labelled secrets and valid cards but not plain text', () => {
+    // Quoted labels and multiple card candidates are ordinary pasted text.
+    // The same pure guard owns these formats before storage; no extra seam.
+    expect(containsSecret('{"password":"example-value"}')).toBe(true);
+    expect(containsSecret('{"otp":"123456"}')).toBe(true);
+    expect(containsSecret("{'PIN': '1234'}")).toBe(true);
+    expect(containsSecret('4111 1111 1111 1111 4111 1111 1111 1111')).toBe(true);
+    expect(containsSecret('378282246310005 4111111111111111')).toBe(true);
+    expect(containsSecret('41111111111111111111')).toBe(false);
     expect(containsSecret('My password is example-value')).toBe(true);
     expect(containsSecret('The one-time code: 123456')).toBe(true);
     expect(containsSecret('Card number 4111 1111 1111 1111')).toBe(true);

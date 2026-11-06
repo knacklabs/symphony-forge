@@ -81,6 +81,14 @@ Add `corepack pnpm run assistant:setup` after `prisma migrate deploy` in the `CM
 
 When the app imports the assistant module, set `ASSISTANT_AI_KEY`, `ASSISTANT_MODEL`, `ASSISTANT_SPEND_CAP_USD`, `ASSISTANT_PRICE_INPUT_USD_PER_MTOK` and `ASSISTANT_PRICE_OUTPUT_USD_PER_MTOK`. Set `ASSISTANT_AI_URL` only for an OpenAI-compatible service with a custom address. Keep each value in the app's `.env` or its host settings. Do not put a key in code.
 
+The starter validator returns only core settings. Keep the other values in the result from `ConfigModule.forRoot`. Set its `validate` option in `apps/api/src/app.module.ts` to:
+
+```ts
+values => ({ ...values, ...validateEnvironment(values) })
+```
+
+This keeps the assistant settings in `ConfigService` after the starter checks its settings.
+
 Add `AssistantModel` and `AssistantUsage` from `@app/assistant-server` to the API module's providers. They check the settings at start-up. Dollar amounts must be non-negative decimal strings with at most six decimal places. Zero sets a used-up cap or a free token price. Prices use US dollars per million tokens. `AssistantUsage.cost` rounds the total cost up to one micro-dollar per turn.
 
 Before a turn, call `AssistantUsage.canStart`. After the turn, call `record(accountId, chatId, inputTokens, outputTokens)`. These billing rows contain no message text. They remain after the chat expires, with an empty chat link. The cap counts the current UTC calendar month across the whole app.

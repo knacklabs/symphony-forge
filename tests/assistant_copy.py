@@ -103,6 +103,11 @@ def copy_assistant(app: Path) -> None:
         "import { ConfigModule } from '@nestjs/config';\n",
         "import { ConfigModule, ConfigService } from '@nestjs/config';\n",
     )
+    _replace_once(
+        app_module,
+        "    ConfigModule.forRoot({ isGlobal: true, validate: validateEnvironment }),\n",
+        "    ConfigModule.forRoot({ isGlobal: true, validate: values => ({ ...values, ...validateEnvironment(values) }) }),\n",
+    )
     _replace_once(app_module, "import { Module } from '@nestjs/common';\n", (
         "import { Module } from '@nestjs/common';\n"
         "import { PostgresSaver } from '@langchain/langgraph-checkpoint-postgres';\n"
