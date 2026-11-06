@@ -14,7 +14,7 @@ STORY = "FORGE-ASSIST-1"
 
 @pytest.mark.platform
 @pytest.mark.timeout(1800)
-def test_4_expired_chats_are_deleted(repo, gh, tmp_path, tmp_path_factory):
+def test_4_expired_chats_are_deleted(repo, gh, tmp_path, tmp_path_factory, monkeypatch):
     # Audit: retention includes the owner row, checkpoint blobs and pending writes.
     # A wrong cutoff, missing checkpoint erase or stale activity time breaks it.
     # No existing case owns optional chat retention. The requested public cleanup
@@ -41,8 +41,12 @@ def test_4_expired_chats_are_deleted(repo, gh, tmp_path, tmp_path_factory):
     package.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
     script = client / "scripts/test.mjs"
     script.write_text(script.read_text(encoding="utf-8").replace(
-        "['pnpm', 'install', '--frozen-lockfile']", "['pnpm', 'install']",
+        "['pnpm', 'install', '--frozen-lockfile']",
+        "['pnpm', 'install', '--no-frozen-lockfile']",
     ), encoding="utf-8")
+    # The copied app must update its lockfile even when CI makes installs frozen
+    # by default. The outer fixture clears CI, so set it at this boundary.
+    monkeypatch.setenv("CI", "true")
     result = _run_live_starter(tmp_path_factory, [(client, Path('.'))])
     _require_cases(result["api"], (
         "a chat 31 days after its last message is deleted with its checkpoints",

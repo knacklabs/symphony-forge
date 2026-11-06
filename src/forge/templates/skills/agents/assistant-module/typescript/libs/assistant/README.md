@@ -62,7 +62,7 @@ Raise the app's `zod` version to `4.3.6`. The server package pins all its librar
 
 LangChain 1.6.1 requires `@langchain/core` 1.3.4 or newer. The template uses the compatible 1.3.5 release.
 
-Run `corepack pnpm install` to update the lock file.
+Run `corepack pnpm install --no-frozen-lockfile` to update the lock file. Use this command in CI too.
 
 Add the `assistant:setup` script to the root `package.json`:
 
