@@ -28,10 +28,10 @@ function messagesFrom(value: unknown): BaseMessage[] {
   return Array.isArray(value) ? value.filter((message): message is BaseMessage => BaseMessage.isInstance(message)) : [];
 }
 
-function decided(message: BaseMessage, confirmId: string): boolean {
-  if (!(message instanceof ToolMessage)) return false;
+function confirmReceipt(message: BaseMessage): string | undefined {
+  if (!(message instanceof ToolMessage)) return undefined;
   const artifact = artifactSchema.safeParse(message.artifact);
-  return artifact.success && artifact.data.confirmId === confirmId;
+  return artifact.success ? artifact.data.confirmId : undefined;
 }
 
 function refusal(text: string): string {
@@ -84,29 +84,55 @@ export class AssistantTurn {
         tools: called, durationMs: Math.round(performance.now() - started), firstReplyMs,
       });
       const graph = this.agents.create(account, id, called);
-      const config = { configurable: { thread_id: id }, recursionLimit: 12,
+      const config = { configurable: { thread_id: id }, recursionLimit: 16,
         signal: AbortSignal.timeout(120_000) };
       const state = await graph.getState(config);
       const saved = messagesFrom(state.values.messages);
-      const open = state.tasks.flatMap((task) => task.interrupts ?? [])[0];
-      const card = open ? confirmPropsSchema.parse({
-        ...confirmPropsSchema.omit({ confirmId: true }).parse(open.value), confirmId: open.id,
-      }) : null;
+      const cardFrom = (tasks: typeof state.tasks) => {
+        const open = tasks.flatMap((task) => task.interrupts ?? [])[0];
+        return open ? confirmPropsSchema.parse({
+          ...confirmPropsSchema.omit({ confirmId: true }).parse(open.value), confirmId: open.id,
+        }) : null;
+      };
+      const card = cardFrom(state.tasks);
       const replay = 'text' in input
         ? saved.some((message) => message.id === input.requestId)
-        : saved.some((message) => decided(message, input.confirmId));
+        : saved.some((message) => confirmReceipt(message) === input.confirmId);
       if (replay) {
         // A checkpointed message id and the tool's saved receipt survive an API
         // restart, so a lost response never starts a second model turn or write.
-        const start = 'text' in input ? saved.findIndex((message) => message.id === input.requestId) : saved.length;
-        const next = saved.findIndex((message, index) => index > start && message instanceof HumanMessage);
-        for (const message of saved.slice(start + 1, next < 0 ? undefined : next)) {
+        let response = state;
+        if (!('text' in input)) {
+          const belongsToDecision = (messages: BaseMessage[]) => {
+            const receipt = messages.findIndex((message) => confirmReceipt(message) === input.confirmId);
+            return receipt >= 0 && !messages.slice(receipt + 1).some((message) =>
+              message instanceof HumanMessage || confirmReceipt(message) !== undefined);
+          };
+          if (!belongsToDecision(saved)) {
+            // A later decision or message must not leak into this response.
+            // The newest checkpoint before it holds the original answer/card.
+            let found = false;
+            for await (const previous of graph.getStateHistory(config)) {
+              if (!belongsToDecision(messagesFrom(previous.values.messages))) continue;
+              response = previous;
+              found = true;
+              break;
+            }
+            if (!found) throw new Error('The saved assistant answer is not available.');
+          }
+        }
+        const messages = messagesFrom(response.values.messages);
+        const start = 'text' in input ? messages.findIndex((message) => message.id === input.requestId) + 1
+          : messages.findIndex((message) => confirmReceipt(message) === input.confirmId);
+        const next = messages.findIndex((message, index) => index >= start && message instanceof HumanMessage);
+        for (const message of messages.slice(start, next < 0 ? undefined : next)) {
           if (message instanceof ToolMessage) toolEvents(message, emit);
           if (isAIMessage(message) && typeof message.content === 'string' && message.content) {
             emit({ event: 'text', data: { delta: message.content } });
           }
         }
-        if (card && next < 0) emit({ event: 'confirm', data: card });
+        const responseCard = cardFrom(response.tasks);
+        if (responseCard && next < 0) emit({ event: 'confirm', data: responseCard });
         emit({ event: 'done', data: {} });
         return;
       }

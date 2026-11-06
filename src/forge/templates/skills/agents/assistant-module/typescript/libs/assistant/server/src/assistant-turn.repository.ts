@@ -1,20 +1,24 @@
 import { ConflictException, Injectable } from '@nestjs/common';
-import { PrismaService } from '@app/core-server';
+import { ConfigService } from '@nestjs/config';
+import { Client } from 'pg';
 
 @Injectable()
 export class AssistantTurnRepository {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly config: ConfigService) {}
 
   async locked<T>(chatId: string, run: () => Promise<T>): Promise<T> {
-    // A transaction-scoped advisory lock works across API processes and is
-    // released on every exit, including an interrupt or a broken connection.
-    return this.prisma.$transaction(async (transaction) => {
-      const [row] = await transaction.$queryRaw<{ locked: boolean }[]>`
-        SELECT pg_try_advisory_xact_lock(hashtextextended(${chatId}, 0)) AS locked
-      `;
-      if (!row.locked) throw new ConflictException({ code: 'TURN_RUNNING',
+    // Keep the lock off the application pool: the running turn needs that pool
+    // for permissions, tools and billing. Ending this session releases its lock.
+    const client = new Client({ connectionString: this.config.getOrThrow<string>('DATABASE_URL'),
+      connectionTimeoutMillis: 5_000 });
+    try {
+      await client.connect();
+      const result = await client.query<{ locked: boolean }>(
+        'SELECT pg_try_advisory_lock(hashtextextended($1, 0)) AS locked', [chatId],
+      );
+      if (!result.rows[0].locked) throw new ConflictException({ code: 'TURN_RUNNING',
         message: 'An answer is still running. Wait for it to finish.' });
-      return run();
-    }, { timeout: 150_000 });
+      return await run();
+    } finally { await client.end(); }
   }
 }

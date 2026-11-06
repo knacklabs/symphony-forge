@@ -49,6 +49,9 @@ TURN_CASES = {
         "a second message while a turn runs gets 409",
         "two changes asked at once give one card at a time: confirm the first, cancel the second, and only the first is saved",
         "a confirmId that is not the open one gets 409 and runs nothing",
+        "ten gated turns leave the projects API available",
+        "a repeated unavailable tool error ends plainly after one retry",
+        "a repeated invalid_input tool error ends plainly after one retry",
     ),
     3: (
         "the assistant lists only what the person's role allows",
@@ -61,7 +64,7 @@ TURN_CASES = {
         "another person's chat id and confirmId on the confirm endpoint get 404 and the pending write does not run",
     ),
     5: (
-        "a used-up cap streams the limit line and the app's other routes work",
+        "a used-up cap streams the limit line and the app's other routes still work",
         "each turn writes one usage row for the person with its cost",
         "each turn logs one line with the prompt version and a hashed account id and no message text",
     ),
@@ -114,7 +117,7 @@ class _AssistantProviderHandler(BaseHTTPRequestHandler):
             self.server.calls[case] += 1
             call_number = self.server.calls[case]
             release = self.server.releases.setdefault(case, threading.Event())
-        if case == "concurrent" and call_number == 1:
+        if case == "pool" or (case == "concurrent" and call_number == 1):
             release.wait(120)
 
         tool_calls = _model_tool_calls(case, arguments, messages)
@@ -153,7 +156,7 @@ class _AssistantProviderHandler(BaseHTTPRequestHandler):
         created = 1_800_000_000
         chunks = [
             {"id": completion_id, "object": "chat.completion.chunk", "created": created,
-             "model": model, "choices": [{"index": 0, "delta": delta,
+             "model": model, "choices": [{"index": 0, "delta": {"role": "assistant", **delta},
                                              "finish_reason": finish_reason}]},
             {"id": completion_id, "object": "chat.completion.chunk", "created": created,
              "model": model, "choices": [], "usage": {
@@ -243,6 +246,8 @@ def _case_and_arguments(text):
 def _model_tool_calls(case, arguments, messages):
     turn_messages = _messages_after_last_user(messages)
     tool_messages = [message for message in turn_messages if message.get("role") == "tool"]
+    if case == "tool-errors":
+        return [_tool_call("demo_failure", {"kind": arguments.get("kind", "unavailable")})]
     if case == "two-writes" and tool_messages:
         # The initial reply has a deferred call and the first real result. A
         # third receipt means the reissued second action has also finished.
@@ -308,7 +313,7 @@ def _messages_after_last_user(messages):
 def _model_answer(case, messages):
     tool_text = "\n".join(str(message.get("content", "")) for message in
                           _messages_after_last_user(messages) if message.get("role") == "tool")
-    if case == "cancel" and "cancelled" in tool_text.lower():
+    if case in ("cancel", "two-writes") and "cancelled" in tool_text.lower():
         return "I left the project unchanged."
     if case == "permission" and "Your agent account's role cannot use projects_update." in tool_text:
         return ("Your agent account's role cannot use projects_update. An admin can change its role "
@@ -338,7 +343,7 @@ def _turn_app(client: Path, provider: _AssistantProvider):
     shutil.copyfile(TEMPLATE / TURN_SPEC, client / TURN_SPEC)
     test_tools = client / "apps/api/src/assistant-test-tools.ts"
     test_tools.write_text(
-        """import { defineTool } from '@app/core-server';
+        """import { defineTool, JsonLogger, ToolError } from '@app/core-server';
 import { z } from 'zod';
 
 defineTool({
@@ -364,6 +369,22 @@ defineTool({
     idempotentHint: true, openWorldHint: false,
   },
   call: async () => ({ summary: 'This tool has no display entry.', data: {} }),
+});
+
+const assistantTestLogger = new JsonLogger();
+defineTool({
+  name: 'demo_failure', feature: 'projects', permission: 'projects.view',
+  description: 'Return the selected tool error for assistant retry coverage.',
+  input: z.object({ kind: z.enum(['unavailable', 'invalid_input']) }),
+  output: z.object({}),
+  annotations: {
+    title: 'Read failing test tool', readOnlyHint: true, destructiveHint: false,
+    idempotentHint: true, openWorldHint: false,
+  },
+  call: async (_principal, { kind }) => {
+    assistantTestLogger.log('Assistant test tool failure', 'AssistantTest', { kind });
+    throw new ToolError(kind, 'The test tool failed.');
+  },
 });
 """,
         encoding="utf-8",

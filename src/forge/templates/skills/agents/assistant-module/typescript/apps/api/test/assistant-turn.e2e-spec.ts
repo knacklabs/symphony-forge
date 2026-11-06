@@ -74,12 +74,14 @@ function parseEvents(body: string): StreamEvent[] {
   });
 }
 
-async function ask(account: SignedIn, chatId: string, text: string, key = randomUUID()) {
-  const response = await account.client.post(`/api/v1/assistant/chats/${chatId}/messages`)
+async function ask(account: SignedIn, chatId: string, text: string, key = randomUUID(), responseTimeoutMs?: number) {
+  const pending = account.client.post(`/api/v1/assistant/chats/${chatId}/messages`)
     .set('x-csrf-token', account.csrf)
     .set('Idempotency-Key', key)
     .set('Accept', 'text/event-stream')
-    .send({ text }).expect(200);
+    .send({ text });
+  if (responseTimeoutMs !== undefined) pending.timeout({ response: responseTimeoutMs });
+  const response = await pending.expect(200);
   expect(response.headers['content-type']).toContain('text/event-stream');
   return { response, events: parseEvents(response.text) };
 }
@@ -347,9 +349,12 @@ describe('assistant turn API', () => {
   it('confirm sent twice makes one change', async () => {
     const name = `Assistant one change ${randomUUID()}`;
     const { chatId, confirmId } = await startWrite(person, 'case:write', name);
-    await decide(person, chatId, confirmId, 'confirm');
+    const first = await decide(person, chatId, confirmId, 'confirm');
+    const firstOutput = { text: deltas(first.events), blocks: blocks(first.events) };
+    expect(firstOutput.text.length + firstOutput.blocks.length).toBeGreaterThan(0);
     const callsAfterFirst = await providerCalls('write');
-    await decide(person, chatId, confirmId, 'confirm');
+    const replay = await decide(person, chatId, confirmId, 'confirm');
+    expect({ text: deltas(replay.events), blocks: blocks(replay.events) }).toEqual(firstOutput);
     expect(await providerCalls('write')).toBe(callsAfterFirst);
     expect((await projectNames(person)).filter((value) => value === name)).toHaveLength(1);
   });
@@ -411,6 +416,47 @@ describe('assistant turn API', () => {
     expect(result.events.at(-1)).toEqual({ event: 'done', data: {} });
   });
 
+  it.each(['unavailable', 'invalid_input'] as const)(
+    'a repeated %s tool error ends plainly after one retry', async (kind) => {
+      const chatId = await createChat(person);
+      const before = await providerCalls('tool-errors');
+      const failedToolLogs = () => logEvents('api').filter(({ message, context }) =>
+        message === 'Assistant test tool failure' && context?.kind === kind).length;
+      const failedToolLogsBefore = failedToolLogs();
+      const { events } = await ask(person, chatId, `case:tool-errors ${JSON.stringify({ kind })}`);
+      expect(await providerCalls('tool-errors')).toBe(before + 2);
+      await vi.waitFor(() => expect(failedToolLogs()).toBe(failedToolLogsBefore + 2), { timeout: 10_000 });
+      expect(events.filter(({ event }) => event === 'error')).toEqual([{
+        event: 'error', data: { message: 'The assistant could not finish this answer. Try a new message.' },
+      }]);
+      expect(events.at(-1)).toEqual({ event: 'done', data: {} });
+      await projectSearch(person);
+    },
+  );
+
+  it('ten gated turns leave the projects API available', async () => {
+    const chatIds = await Promise.all(Array.from({ length: 10 }, () => createChat(person)));
+    const before = await providerCalls('pool');
+    const turns = chatIds.map((chatId) => ask(person, chatId, 'case:pool', randomUUID(), 25_000));
+    let settled: PromiseSettledResult<Awaited<ReturnType<typeof ask>>>[] = [];
+    try {
+      await vi.waitFor(async () => expect(await providerCalls('pool')).toBe(before + 10), { timeout: 20_000 });
+      await person.client.get('/api/v1/projects?sortBy=name&sortOrder=asc')
+        .timeout({ response: 2_000 }).expect(200);
+    } finally {
+      try {
+        await releaseProvider('pool');
+      } finally {
+        settled = await Promise.allSettled(turns);
+      }
+    }
+    expect(settled).toHaveLength(10);
+    expect(settled.every((result) => result.status === 'fulfilled')).toBe(true);
+    for (const result of settled) {
+      if (result.status === 'fulfilled') expect(result.value.events.at(-1)).toEqual({ event: 'done', data: {} });
+    }
+  }, 60_000);
+
   it('two changes asked at once give one card at a time: confirm the first, cancel the second, and only the first is saved', async () => {
     const firstName = `Assistant first ${randomUUID()}`;
     const secondName = `Assistant second ${randomUUID()}`;
@@ -421,11 +467,27 @@ describe('assistant turn API', () => {
     expect(firstCards).toHaveLength(1);
     expect(firstCards[0].lines).toEqual(expect.arrayContaining([`name: ${firstName}`]));
 
-    const afterFirst = await decide(person, chatId, firstCards[0].confirmId as string, 'confirm');
+    const firstConfirmId = firstCards[0].confirmId as string;
+    const afterFirst = await decide(person, chatId, firstConfirmId, 'confirm');
     const secondCards = confirmations(afterFirst.events);
     expect(secondCards).toHaveLength(1);
     expect(secondCards[0].lines).toEqual(expect.arrayContaining([`name: ${secondName}`]));
-    await decide(person, chatId, secondCards[0].confirmId as string, 'cancel');
+    const secondDecision = await decide(person, chatId, secondCards[0].confirmId as string, 'cancel');
+    expect(deltas(secondDecision.events)).toContain('I left the project unchanged.');
+    const callsAfterSecondDecision = await providerCalls('two-writes');
+    const replayFirst = await decide(person, chatId, firstConfirmId, 'confirm');
+    expect({
+      text: deltas(replayFirst.events),
+      blocks: blocks(replayFirst.events),
+      confirms: confirmations(replayFirst.events),
+    }).toEqual({
+      text: deltas(afterFirst.events),
+      blocks: blocks(afterFirst.events),
+      confirms: secondCards,
+    });
+    expect(deltas(replayFirst.events)).not.toContain('I left the project unchanged.');
+    expect(confirmations(replayFirst.events)).toEqual(secondCards);
+    expect(await providerCalls('two-writes')).toBe(callsAfterSecondDecision);
 
     const names = await projectNames(person);
     expect(names).toContain(firstName);

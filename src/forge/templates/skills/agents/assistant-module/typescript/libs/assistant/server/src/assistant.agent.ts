@@ -10,6 +10,8 @@ import { AssistantModel } from './assistant.model';
 import { ASSISTANT_PROMPT } from './assistant.prompt';
 
 const CONFIRM_MILLISECONDS = 15 * 60 * 1000;
+const DEFERRED_ACTION = 'This action has not run. Request it separately after the first action finishes.';
+const failedArtifactSchema = z.object({ result: z.object({ isError: z.boolean().optional() }).optional() });
 const decisionSchema = z.object({
   confirmId: z.string(), decision: z.enum(['confirm', 'cancel']), expiresAt: z.iso.datetime(),
 });
@@ -30,7 +32,6 @@ export class AssistantAgent {
     };
     const available = listTools(context);
     const descriptions = available.slice(0, 15);
-    const failures = new Map<string, number>();
     const tools = descriptions.map((description) => new DynamicStructuredTool({
       name: description.name, description: description.description ?? description.name,
       schema: description.inputSchema,
@@ -62,11 +63,6 @@ export class AssistantAgent {
         };
         called.push(description.name);
         const result = await callTool(description.name, args, toolContext);
-        if (result.isError) {
-          const count = (failures.get(description.name) ?? 0) + 1;
-          failures.set(description.name, count);
-          if (count >= 2) throw new Error('The assistant could not complete this action.');
-        }
         const summary = result.content.filter((part) => part.type === 'text').map((part) => part.text).join('\n');
         return [JSON.stringify({ summary, data: result.structuredContent, isError: result.isError ?? false }),
           { result, ...(decision ? { confirmId: decision.confirmId } : {}) }];
@@ -75,6 +71,22 @@ export class AssistantAgent {
     return createReactAgent({
       llm: this.model.client.bindTools(tools, { parallel_tool_calls: false }),
       tools, checkpointer: this.checkpoints, prompt: ASSISTANT_PROMPT,
+      preModelHook: (state: typeof MessagesAnnotation.State) => {
+        // ToolNode catches tool exceptions. Stop in a separate graph node,
+        // before another model call, using the failures saved in this turn.
+        const failures = new Map<string, number>();
+        for (let index = state.messages.length - 1; index >= 0; index -= 1) {
+          const message = state.messages[index];
+          if (message.getType() === 'human') break;
+          if (!(message instanceof ToolMessage) || !message.name || message.content === DEFERRED_ACTION) continue;
+          const artifact = failedArtifactSchema.safeParse(message.artifact);
+          if (message.status !== 'error' && !(artifact.success && artifact.data.result?.isError)) continue;
+          const count = (failures.get(message.name) ?? 0) + 1;
+          if (count >= 2) throw new Error('The assistant could not complete this action.');
+          failures.set(message.name, count);
+        }
+        return {};
+      },
       postModelHook: async (state: typeof MessagesAnnotation.State) => {
         const last = state.messages.at(-1);
         if (!last || !isAIMessage(last)) return {};
@@ -94,10 +106,10 @@ export class AssistantAgent {
                 content = result.content.filter((part) => part.type === 'text').map((part) => part.text).join('\n');
               }
             } catch { content = 'This tool is not available. Use one of the supplied tools.'; }
-            messages.push(new ToolMessage({ content, tool_call_id: call.id, status: 'error' }));
+            messages.push(new ToolMessage({ content, name: call.name, tool_call_id: call.id, status: 'error' }));
           } else if (pending) {
-            messages.push(new ToolMessage({ content: 'This action has not run. Request it separately after the first action finishes.',
-              tool_call_id: call.id, status: 'error' }));
+            messages.push(new ToolMessage({ content: DEFERRED_ACTION,
+              name: call.name, tool_call_id: call.id, status: 'error' }));
           } else pending = true;
         }
         return { messages };
