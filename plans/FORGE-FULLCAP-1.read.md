@@ -1,13 +1,13 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-11-06T10:12:11.519132+00:00
-seconds: 396.617
-read_hash: af21e63d6c4321e837d4c28d2a586cd92d1a09d5
-round: 1
-passed: no
-doc_seen: af21e63d6c4321e837d4c28d2a586cd92d1a09d5
+read_at: 2026-11-06T10:16:32.562944+00:00
+seconds: 130.611
+read_hash: 3177734f9f7b90aeb9417232ec76ed78a11495ec
+round: 2
+passed: yes
+doc_seen: 3177734f9f7b90aeb9417232ec76ed78a11495ec
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+notes_seen: bc66e434fcd59a2767ca19ef1bd0f0a2dc1f567f
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a1b052-22ca-7671-bc27-34bf0069924a
 session:
@@ -59,3 +59,12 @@ Only a genuine trade-off goes to the human, as a question with options.
    `plans/FORGE-FULLCAP-1.md:45,70,77,85` repeats every behavioral case for both repo histories. The adopted fixture upgrades and syncs before entering the shared command path (`tests/test_close_keeps_reviews_for_unchanged_branch_diffs.py:23-47`). The Review rules require full new-repo coverage and one adopted-repo witness per rule; additional identical adopted cases are deletion candidates. Keep the distinct init and upgrade delivery checks.
    Gain 2, Work 1, Harm 1
    Disposition: cut - each rule now keeps full new-repo cases and one adopted case; only item 4's init and sync delivery checks run on both.
+
+## Round 2
+
+5. Advisory: A stale local review can exclude a child that passed review on another machine.
+   Raise: Functional
+   Case: normal use - the coordinator retains an older child branch with a blocked review; a teammate repairs it and publishes a clean review.
+   `plans/FORGE-FULLCAP-1.md:66` chooses the local branch whenever it exists, so the older blocked review excludes the child before the queue runs. The existing queue reconciles newer published state through `nextstep.at_ref` (`src/forge/land.py:307`, `src/forge/nextstep.py:922-948`), but the proposed selection prevents it reaching that step. Unlike finding 1's missing checkout, this case has a stale local branch. The new test removes that branch (`plans/FORGE-FULLCAP-1.md:71`) and misses the failure.
+   Gain 3, Work 2, Harm 2
+   Disposition: keep - below the bar (follow-up)
