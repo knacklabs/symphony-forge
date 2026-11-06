@@ -1,6 +1,13 @@
 {
   "base": "ed075c0ff52872549d181a7024ed85d79cebc45d",
   "branch": "fix/mark-affected-own-platform",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1b1b1-eda1-7672-a2d0-10cfe7dd67a5",
+    "head": null,
+    "start": "a6e87527bfd5eaca077d9f3775cbff6678847ea0"
+  },
   "done_when": "tests/test_platform_sensitive_selection.py passes on main with test_affected_own test_4 marked",
   "fix_kind": "mechanical",
   "kind": "fix",
