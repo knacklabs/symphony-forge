@@ -4,39 +4,19 @@
 
 ## What changes for you
 
-<What the people who use this will notice, in plain English. No IDs, codes or jargon. End each
-item with its source in plain words, such as (Source: the client's note on late orders, 12 Oct),
-or with the sourced item that needs it, such as (Needed by: the Customers screen). A source is a
-client note, a brief answer, a decision, a screen marked Build now at sign-off, a fixed rule of
-the app, or the owner's own request with its date. Name each screen, field, endpoint, tool and
-setting that the plan adds in one of these items.>
-
-<!-- For user-facing parts: run impeccable init if PRODUCT.md is absent. Design the screens
-in a Claude Design artifact; on a Codex-only host without artifact tools, use HTML artboards.
-Save each screen and its images in docs/design/<KEY>/. Copy .forge/design/support.js beside
-the HTML screens and run it for a 1440 by 900 PNG per screen. Commit the folder. Use its git tree
-id (git rev-parse HEAD:docs/design/<KEY>) in the last line below. For small changes to existing
-screens that add no screen and change no flow, use Design: none (<why>) instead.
-Remove this comment and omit
-the Design line for a backend-only story. Cold read follows the design; one plan approval binds
-these exact files. A folder edit needs its new tree id and a new plan approval.
-The rule starts with the next plan read and approval. Plans approved without a Design line
-before this rule keep their existing approval. -->
-Design: docs/design/<KEY>/ (<tree id>)
+- After a task brings in main and fixes a conflict, close reviews only the lines that resolved the conflict, keeps the earlier clean review, and still runs all tests in full. A merge with no conflict still needs no new review, as it does today.
+- The planner searches the code for each task's Scope before writing it, and the plan check refuses two tasks whose Scopes can touch the same file unless one waits for the other through After. Shared names go to the first task or to a small last wiring task.
+- New client repos get both at init. Existing client repos get both on upgrade, and a story already in flight gets the refusal at its next plan check, with a plain next step.
 
 ## Why
 
-After a conflict, close reviews only the conflict fix, and plans keep task files apart
-
-
+Close reuses an earlier review only when the whole branch diff is unchanged, so a task that fixes a conflict after another task merged gets a full new review, which takes time. Task start checks file overlap only against started tasks, and with stacking on by default an overlapping task is usually stacked, not refused, so plans with shared files reach building and cause the conflicts. The worker brief also allows edits outside Scope, so some conflicts come from files no Scope check can see. Forge already needs Git 2.38 or newer for git merge-tree, which also has git show --remerge-diff, so the review step adds no new Git minimum.
 
 ## Done when
 
-<!-- One bold plain sentence per result, which the owner approves: no code names, file paths or
-test names. Its evidence, edge cases and proving tests go under the same number in Done-when
-details. -->
-
-1. **Something anyone can observe once this is done.**
+1. **A task that merges main with a conflict is reviewed only on its conflict fix, and its tests still run in full.**
+2. **A plan with two tasks whose Scopes can touch the same file, and no After link between them, is refused before approval, and the refusal names both tasks.**
+3. **Stories already in flight get that refusal at their next plan check with a plain next step; new and existing client repos both get both changes.**
 
 ## Risks
 
