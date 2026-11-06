@@ -1,10 +1,18 @@
 {
   "branch": "task/FORGE-UISTANDARDS-1-CANVAS",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-06T05:39:01.424313+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "94a2357a12ba581bfaff9a12ca00e7bb8866b6bf",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
