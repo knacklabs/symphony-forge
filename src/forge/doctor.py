@@ -316,6 +316,13 @@ def doctor(args: argparse.Namespace) -> int:
     cfg = repo.config(top)
     if warning := repo.group_warning(top, cfg):
         print(f"- Warning: {warning}")
+    test, fast = cfg["test"], cfg["fast_test"]
+    same_selection = (test != fast and bool(fast)
+                      and test.replace("{base}", "").split() == fast.replace("{base}", "").split())
+    if test and (same_selection or "{base}" in test or re.search(
+            r"\b(changed|changedSince|onlyChanged|affected|related)\b|--(?:pytest|change|lf|ff|last-failed)\b", test)):
+        print("- Warning: The nightly full run needs test to run the full suite. "
+              "The test command looks like a change selector. Keep change selection in fast_test.")
     install = sync.install_line(cfg["version"])
     rows: list[tuple[str, str]] = []
     def add(problem: str, fix: str = REPAIR) -> None: rows.append((problem, fix))
