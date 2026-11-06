@@ -4,13 +4,21 @@
   "done_when": "A review no longer finds: Gate: run the starter lint proofs on this pull request (tests/test_uistandards_canvas.py:71)",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "round": 1,
   "stacked_on": "support-js-passes-app-lint",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-06T10:27:55.450240+00:00",
       "step": "start"
     }
   ],
-  "why": "Review findings split from support-js-passes-app-lint: Gate: run the starter lint proofs on this pull request (tests/test_uistandards_canvas.py:71)"
+  "stuck": {
+    "close": null,
+    "head": "17726cb3d7c4166efdc8c552aa5280e5f355f88d",
+    "keys": {},
+    "round": null
+  },
+  "why": "Review findings split from support-js-passes-app-lint: Gate: run the starter lint proofs on this pull request (tests/test_uistandards_canvas.py:71)",
+  "worker": "codex"
 }
