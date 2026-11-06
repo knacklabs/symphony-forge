@@ -9,7 +9,7 @@ import { HistoryService } from './history.service';
 
 const HISTORY_CSV_COLUMNS: CsvColumn<HistoryEntry>[] = [
   { header: 'When (UTC)', value: (record) => formatDateTime(record.createdAtUtc, 'UTC') },
-  { header: 'Who', value: (record) => record.actorEmail },
+  { header: 'Who', value: (record) => record.viaAgent ? `${record.actorEmail}, via ${record.viaAgent}` : record.actorEmail },
   { header: 'What', value: (record) => record.summary },
 ];
 

@@ -116,20 +116,38 @@ def act(top: Path, fields: dict[str, list[str]], idea: str) -> None:
                                          kind=fields["Kind"][0], slug=None, next="land"))
     elif lane == "plan":
         key = fields["Key"][0]
+        branch = f"story/{key}"
+        joining = bool(repo.git("branch", "--list", branch, cwd=top))
         output = io.StringIO()
-        with redirect_stdout(output):
-            story.new(argparse.Namespace(key=key, title=fields["Title"][0], from_fix=None))
-        checkout = story.story_checkout(key, top)
+        if joining:
+            checkout = before.get(branch) or story.add_worktree(top, branch, branch)
+            output.write(f"Added the idea to the story {key} in {checkout}.\n"
+                         f"Next: update plans/{key}.md there, then forge read {key}\n")
+        else:
+            with redirect_stdout(output):
+                story.new(argparse.Namespace(key=key, title=fields["Title"][0], from_fix=None))
+            checkout = story.story_checkout(key, top)
         doc = checkout / f"plans/{key}.md"
         text = doc.read_text(encoding="utf-8")
-        sections = [("What changes for you", "Why", "\n".join("- " + line for line in fields["Change"])),
-                    ("Why", "Done when", fields["Problem"][0]),
-                    ("Done when", "Risks", "\n".join(f"{n}. **{line}**" for n, line in enumerate(fields["Done"], 1)))]
-        for heading, following, body in sections:
-            text = re.sub(rf"(?ms)^## {heading}\n.*?(?=^## {following}\n)",
-                          lambda match: f"## {heading}\n\n{body}\n\n", text)
+        done_count = 0
+        if joining:
+            done_text = story.sections(text)["Done when"]
+            done_count = len(re.findall(r"(?m)^\d+\. ", done_text))
+        sections = [("What changes for you", "\n".join("- " + line for line in fields["Change"])),
+                    ("Why", fields["Problem"][0]),
+                    ("Done when", "\n".join(f"{n}. **{line}**" for n, line in enumerate(fields["Done"], done_count + 1)))]
+        for heading, body in sections:
+            def extend(match: re.Match) -> str:
+                existing = match[0].rstrip() if joining else f"## {heading}"
+                design = ""
+                if heading == "What changes for you" and existing.splitlines()[-1].startswith("Design:"):
+                    existing, _, design = existing.rpartition("\n")
+                    design = "\n\n" + design
+                return existing.rstrip() + "\n\n" + body + design + "\n\n"
+            text = re.sub(rf"(?ms)^## {heading}\n.*?(?=^## |\Z)", extend, text)
         doc.write_text(text, encoding="utf-8", newline="\n")
-        repo.commit_state("Draft the first plan from the idea", f"plans/{key}.md", top=checkout)
+        repo.commit_state("Add the idea to the plan" if joining else "Draft the first plan from the idea",
+                          f"plans/{key}.md", top=checkout)
         print(output.getvalue(), end="")
     after = story.worktrees(top)
     if ideas.exists():
