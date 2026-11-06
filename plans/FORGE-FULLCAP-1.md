@@ -4,39 +4,22 @@
 
 ## What changes for you
 
-<What the people who use this will notice, in plain English. No IDs, codes or jargon. End each
-item with its source in plain words, such as (Source: the client's note on late orders, 12 Oct),
-or with the sourced item that needs it, such as (Needed by: the Customers screen). A source is a
-client note, a brief answer, a decision, a screen marked Build now at sign-off, a fixed rule of
-the app, or the owner's own request with its date. Name each screen, field, endpoint, tool and
-setting that the plan adds in one of these items.>
-
-<!-- For user-facing parts: run impeccable init if PRODUCT.md is absent. Design the screens
-in a Claude Design artifact; on a Codex-only host without artifact tools, use HTML artboards.
-Save each screen and its images in docs/design/<KEY>/. Copy .forge/design/support.js beside
-the HTML screens and run it for a 1440 by 900 PNG per screen. Commit the folder. Use its git tree
-id (git rev-parse HEAD:docs/design/<KEY>) in the last line below. For small changes to existing
-screens that add no screen and change no flow, use Design: none (<why>) instead.
-Remove this comment and omit
-the Design line for a backend-only story. Cold read follows the design; one plan approval binds
-these exact files. A folder edit needs its new tree id and a new plan approval.
-The rule starts with the next plan read and approval. Plans approved without a Design line
-before this rule keep their existing approval. -->
-Design: docs/design/<KEY>/ (<tree id>)
+- After a part merges, its stacked parts that already have a clean review also merge, and each part that can now start gets one line.
+- The coordinator cannot end its turn while Forge lists a part that can start and none is running. A part that waits on a person does not count.
+- After every merge, the coordinator starts each listed part in the background before it replies, on Claude and on Codex.
+- Forge lists a part as able to start only when starting it would succeed.
+- New client repos get all of this at init. Existing client repos get it on upgrade.
 
 ## Why
 
-Waiting parts start and merge on their own once the part before them is done
-
-
+After a part merges, nothing starts the parts that waited for it unless the coordinator reads the next-step list and starts them by hand. The merge output for a stacked part names a close step, not a merge, and nothing calls the merge again. Forge already has a run that merges stacked parts base-first (forge land --all, in the land module), but nothing calls it after a merge. A stacked part still needs its own close step to move onto the default branch and wait for checks, so merging it inside the base merge is a longer run, not one quick step. The turn stop check is a gate on every turn end, so it needs a loop guard and a cost check against the speed rules.
 
 ## Done when
 
-<!-- One bold plain sentence per result, which the owner approves: no code names, file paths or
-test names. Its evidence, edge cases and proving tests go under the same number in Done-when
-details. -->
-
-1. **Something anyone can observe once this is done.**
+1. **After a base part merges, its clean stacked part merges, or its line says it can now start, with no extra step from a person.**
+2. **A test shows that a part listed as able to start is one that task start accepts, including the case where the base lacks the default branch's merge.**
+3. **A test shows the stop check holds a turn while a startable part is idle, and lets it end when only waits on a person remain.**
+4. **Tests cover one new client repo and one existing repo adopted on an earlier release.**
 
 ## Risks
 
