@@ -412,6 +412,7 @@ def _adopted_skip(env):
     assert env.review_calls() == []
 
 
+@pytest.mark.platform
 @pytest.mark.parametrize("case", [
     "fix", "task", "long-values", "invalid-missing-by", "invalid-blank-by",
     "invalid-missing-reason", "invalid-blank-reason", "invalid-dismiss", "invalid-resolve",
@@ -439,6 +440,7 @@ def test_1_person_can_skip_model_review(env, tmp_path, monkeypatch, case):
         _missing_tool_skip(env, monkeypatch)
 
 
+@pytest.mark.platform
 @pytest.mark.parametrize("case", [
     "blocked-worker-clean", "blocked-dismiss", "blocked-accept", "stale-clone", "diverged-clone",
     "blocked-adopted", "red-local-test", "red-ci", "red-design", "ready-board",
