@@ -32,8 +32,8 @@ def requested(args: argparse.Namespace, top: Path, item: str,
             args.dismiss or args.because or getattr(args, "resolve", None)):
         repo.refuse(REFUSALS["bad_skip"], item=item)
     # Committed rounds survive another clone. Dismissal and acceptance cannot
-    # erase the fact that a round held the review bar.
-    history = review._history(top, item, "", state.get("review") or {})
+    # erase a block, including one merged from another machine's branch history.
+    history = review._history(top, item, "", state.get("review") or {}, include_merged=True)
     if any(review.blocking({**result, "dismissals": []}) for result in history):
         repo.refuse(REFUSALS["skip_blocked"], item=item)
     return {"by": " ".join(by.split())[:200], "reason": " ".join(reason.split())[:200]}

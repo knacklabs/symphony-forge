@@ -9,6 +9,10 @@ Test-audit answers:
    new command contract and combines related paths rather than repeating scenarios at each layer.
 4. The tests use Forge's real CLI and existing external-service stubs; no production test seam is
    needed.
+
+The merged-history case protects the permanent refusal when another machine's earlier block
+is behind a merge's second parent. The fast-forward case cannot expose a first-parent-only
+history walk. A local product commit creates that distinct merge shape without a test seam.
 """
 from __future__ import annotations
 
@@ -34,15 +38,18 @@ def _default_moves_during_checks(env, tmp_path, where, change_item: bool, monkey
     """Move main and optionally add worker work during close's check polling."""
     remote = env.repo.git("remote", "get-url", "origin")
     script = tmp_path / "move-default.py"
+    default_head = tmp_path / "default-head"
     script.write_text(
         "import pathlib, subprocess\n"
         f"remote = {json.dumps(remote)}\n"
         f"worktree = pathlib.Path({json.dumps(where.as_posix())})\n"
         f"writer = pathlib.Path({json.dumps((tmp_path / 'default-writer').as_posix())})\n"
+        f"default_head = pathlib.Path({json.dumps(default_head.as_posix())})\n"
         "subprocess.run(['git', 'clone', '-q', remote, str(writer)], check=True)\n"
         "(writer / 'NEWS.md').write_text('Default moved while checks ran\\n', encoding='utf-8')\n"
         "subprocess.run(['git', 'add', 'NEWS.md'], cwd=writer, check=True)\n"
         "subprocess.run(['git', 'commit', '-qm', 'Move the default branch'], cwd=writer, check=True)\n"
+        "default_head.write_text(subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=writer, text=True), encoding='utf-8')\n"
         "subprocess.run(['git', 'push', '-q', 'origin', 'main'], cwd=writer, check=True)\n"
         + ("(worktree / 'later.py').write_text('print(2)\\n', encoding='utf-8')\n"
            "subprocess.run(['git', 'add', 'later.py'], cwd=worktree, check=True)\n"
@@ -68,6 +75,11 @@ def _default_moves_during_checks(env, tmp_path, where, change_item: bool, monkey
         f"            rule['stdout'] = {json.dumps(green)}\n"
         "    response_file.write_text(json.dumps(rules), encoding='utf-8')\n"
         "    marker.write_text('green', encoding='utf-8')\n"
+        "elif args[:2] == ['pr', 'list'] and marker.exists() and marker.read_text(encoding='utf-8') == 'green':\n"
+        "    bodies = (here / 'gh-bodies.jsonl').read_text(encoding='utf-8').splitlines()\n"
+        "    body = json.loads(bodies[-1])\n"
+        "    sys.stdout.write(json.dumps([{'number': 7, 'state': 'OPEN', 'body': body, 'isDraft': False, 'mergeable': 'MERGEABLE', 'mergeStateStatus': 'BEHIND', 'baseRefName': 'main'}]))\n"
+        "    sys.exit(0)\n"
     )
     assert needle in gh
     _install(env.repo.bin, "gh", gh.replace(needle, inject + needle, 1))
@@ -192,6 +204,9 @@ def _retry_with_default_move(env, tmp_path, monkeypatch, change_item):
     closed = _skip(env, item)
     assert closed.returncode == 0, closed.stdout + closed.stderr
     assert (env.repo.bin / "default-move-during-close").is_file()
+    default_head = (tmp_path / "default-head").read_text("utf-8").strip()
+    assert default_head
+    assert env.repo.git("merge-base", default_head, "HEAD", cwd=where) == default_head
     if change_item:
         assert len(env.review_calls()) == 1
         _assert_full_review(env, where)
@@ -230,13 +245,16 @@ def _blocked_history(env, tmp_path, resolution, adopted=False):
     item, where = env.start_fix()
     branch = "fix/tidy-readme"
     stale = None
-    if resolution == "stale-clone":
+    local_tip = None
+    if resolution in ("stale-clone", "diverged-clone"):
         env.repo.git("push", "-q", "origin", branch, cwd=where)
         clone_path = tmp_path / "stale-clone"
         remote = env.repo.git("remote", "get-url", "origin")
         env.repo.git("clone", "-q", remote, str(clone_path))
         stale = Repo(clone_path, env.repo.bin)
         stale.git("checkout", "-q", "-b", branch, f"origin/{branch}")
+        if resolution == "diverged-clone":
+            local_tip = env.commit(clone_path, "local.py", "print('local work')\n")
     env.reviews(blocked(finding("P1", "Not done: The readme opens with a greeting")))
     first = env.close(item)
     assert first.returncode == 1
@@ -247,7 +265,7 @@ def _blocked_history(env, tmp_path, resolution, adopted=False):
     assert f"A review already blocked {item}, so the model review cannot be skipped." in direct.stderr
     assert env.repo.git("rev-parse", "HEAD", cwd=where) == head
     assert len(env.review_calls()) == 1
-    if resolution in ("worker-clean", "stale-clone"):
+    if resolution in ("worker-clean", "stale-clone", "diverged-clone"):
         # A fix has one review round. The owner records another round before the worker repairs it.
         more = env.close(item, "--resolve", "more", "--reason", "Repair the greeting")
         assert more.returncode == 0, more.stdout + more.stderr
@@ -271,12 +289,17 @@ def _blocked_history(env, tmp_path, resolution, adopted=False):
         stale.git("fetch", "-q", "origin")
         result = stale.forge("close", item, "--no-review", "--by", "A Person",
                              "--reason", "Docs only", cwd=stale.path)
+        if resolution == "diverged-clone":
+            merged = stale.git("log", "-1", "--merges", "--format=%H")
+            assert merged
+            assert stale.git("rev-parse", f"{merged}^1") == local_tip
+            assert stale.git("rev-parse", f"{merged}^2") == env.repo.git("rev-parse", "HEAD", cwd=where)
     else:
         result = _skip(env, item)
     assert result.returncode == 1
     assert f"A review already blocked {item}, so the model review cannot be skipped." in result.stderr
     assert f"forge work {item}, then forge close {item} the normal way" in result.stderr
-    assert len(env.review_calls()) == (2 if resolution in ("worker-clean", "stale-clone") else 1)
+    assert len(env.review_calls()) == (2 if resolution in ("worker-clean", "stale-clone", "diverged-clone") else 1)
 
 
 def _skip_does_not_bypass_checks(env, tmp_path, failure, monkeypatch):
@@ -417,15 +440,15 @@ def test_1_person_can_skip_model_review(env, tmp_path, monkeypatch, case):
 
 
 @pytest.mark.parametrize("case", [
-    "blocked-worker-clean", "blocked-dismiss", "blocked-accept", "stale-clone",
+    "blocked-worker-clean", "blocked-dismiss", "blocked-accept", "stale-clone", "diverged-clone",
     "blocked-adopted", "red-local-test", "red-ci", "red-design", "ready-board",
     "merge", "land-no-tool", "merge-adopted", "adopted-skip",
 ], ids=lambda case: case)
 def test_2_skip_refuses_after_prior_block(env, tmp_path, monkeypatch, request, case):
     if case.startswith("blocked-") and case != "blocked-adopted":
         _blocked_history(env, tmp_path, case.removeprefix("blocked-"))
-    elif case == "stale-clone":
-        _blocked_history(env, tmp_path, "stale-clone")
+    elif case in ("stale-clone", "diverged-clone"):
+        _blocked_history(env, tmp_path, case)
     elif case == "blocked-adopted":
         _blocked_history(env, tmp_path, "dismiss", adopted=True)
     elif case.startswith("red-"):
