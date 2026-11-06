@@ -1,0 +1,72 @@
+{
+  "base": "649508fbe90b0da81d4dd9433d5cd00a44b602f6",
+  "branch": "fix/review-findings-split-from-close-pushes",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1b16e-e993-74c2-9f95-a742d97b4082",
+    "head": null,
+    "start": "95204acda890f8c9d2e78297e79fb892dc51324a"
+  },
+  "done_when": "A review no longer finds: [P1] Defer the acceptance push until final review bookkeeping is saved (src/forge/close.py:423)",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "close() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 5,
+      "harm": 2,
+      "line": 423,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: A review no longer finds: [P1] Defer the acceptance push until final review bookkeeping is saved (src/forge/close.py:423)",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "58e1109f57fe2e6618745ba728ac6cb15d380a16f23df28712037414c8fb3c44",
+    "changed": "bd44f7eb5ea79fc197bda06f1795f72d7d684dc02d5b2790c64da9257f4ff1f8",
+    "commit": "9174b4dc6ccc67ef76a28deb8036162a3f4899d9",
+    "dismissals": [],
+    "findings": [],
+    "id": "ee03c131-6a1e-4704-af55-d9e831bfa0fd",
+    "status": "clean"
+  },
+  "round": 5,
+  "stacked_on": "close-pushes-once",
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-06T15:16:12.795925+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-06T15:20:37.137183+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-06T15:26:58.798451+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-06T16:47:24.991959+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-06T19:20:23.643595+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "89a2020d-7487-4135-923a-e80384468748",
+    "head": "9420068b88d2525c25f176fd39c5a556a0f55c0e",
+    "keys": {},
+    "round": 4
+  },
+  "why": "Review findings split from close-pushes-once: [P1] Defer the acceptance push until final review bookkeeping is saved (src/forge/close.py:423)",
+  "worker": "codex"
+}

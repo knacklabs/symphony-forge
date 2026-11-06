@@ -153,8 +153,9 @@ def close(args: argparse.Namespace) -> int:
             _save(top, item, state, f"Record the human's review loop choice: {choice}")
             if not defaulted:
                 repo.record_event(top, item, "owner wait end", wait_id=state["stop"].get("wait_id"))
-                _push(top, repo.current_branch(top))  # every machine's board sees the wait end
-                _refresh_record(top, item, state)
+                if choice != "accept":  # acceptance publishes after the final review records
+                    _push(top, repo.current_branch(top))  # every machine's board sees the wait end
+                    _refresh_record(top, item, state)
         if choice in ("switch", "same", "more"):
             print(f"Recorded the human's choice.\nNext: forge work {item}")
             return 0
