@@ -649,7 +649,7 @@ def test_place(cfg: dict[str, Any]) -> str:
 
 
 def sample_data(top: Path, cfg: dict[str, Any] | None = None, ref: str | None = None) -> bool:
-    """The explicit setting wins over the earlier sign-off record's sample-data line."""
+    """Only the current setting enables sample mode in a client prototype."""
     if cfg is None:
         text = read_blob(top, f"{ref}:forge.toml") if ref else (top / "forge.toml").read_text("utf-8")
         if text is None:
@@ -658,11 +658,7 @@ def sample_data(top: Path, cfg: dict[str, Any] | None = None, ref: str | None = 
         cfg = {**DEFAULTS, **tomllib.loads(text)} if ref else _config_text(text)
     if cfg.get("repo") != "client" or cfg.get("stage") != "prototype":
         return False
-    if "sample_data" in cfg:
-        return cfg["sample_data"] is True
-    return any(re.search(r"^sample_data:\s*[\"']?true[\"']?\s*$", text.split("---")[1], re.M)
-               for name, text in _signoff_texts(top, cfg, (ref or "",))
-               if (cfg["signoff"] or SIGNOFF.fullmatch(name)) and text.startswith("---"))
+    return cfg.get("sample_data") is True
 
 
 def _sample_settings(top: Path, cfg: dict[str, Any], ref: str | None = None) -> dict[str, Any]:

@@ -1,0 +1,49 @@
+{
+  "base": "899c9e1bfe3ad643b3a3a37d4edbf630d5e76efb",
+  "branch": "fix/sample-data-only-from-setting",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1b0b7-a953-7e43-95a5-9258d4a72dff",
+    "head": null,
+    "start": "54706e66cd5c138a0f38679b2719ca900c8e4250"
+  },
+  "done_when": "Sample-data mode is on only when forge.toml says sample_data = true; a client repo whose old sign-off record says sample data but whose forge.toml has no sample_data setting runs its tests at close and in forge test, and close no longer says Ready without tests",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "b2acee1b5f80fcf660572f2bea1a0251b3630e502c7fd60f4d3f9757a679a628",
+    "changed": "d18f2eaa0975fd8c0067d2c88367123ebb09eb0428a60d261838f74400c9054c",
+    "commit": "8f1564a4712d2314700e314477b5c6c6c4ba87dd",
+    "dismissals": [],
+    "findings": [],
+    "id": "2e74204b-4058-4ed2-bbe4-1ed448982006",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-06T11:56:09.174235+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-06T12:01:13.896376+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-06T13:10:14.772570+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "3436f57d-4d51-42a1-87f5-20b678f759d5",
+    "head": "b42f9e3e362d28cf7ca4611df1e93ca666681314",
+    "keys": {},
+    "round": 1
+  },
+  "why": "After an upgrade, close skips tests and CI and says Ready in a real client app, and forge test says no test command is set, because repo.sample_data falls back to an old sign-off record that says sample_data: true while forge.toml has stage = prototype and no sample_data setting (issues 1401 and 1400)",
+  "worker": "codex"
+}
