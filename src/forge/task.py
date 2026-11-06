@@ -589,7 +589,7 @@ def start_base(main: str, key: str, row: dict[str, str], history: dict[str, Any]
 
 def _merged(main: str, item: str, top: Path | None = None) -> bool:
     """An item's state reaches the default branch only with its merged pull request."""
-    return show(main, repo.state_path(item), top) is not None
+    return repo.read_blob(top or repo.root(), f"{main}:{repo.state_path(item)}") is not None
 
 
 def _started(main: str, top: Path | None = None,
