@@ -1,0 +1,15 @@
+{
+  "base": "65d5a032d9fefbe59ba8e0cbacfd9463060167aa",
+  "branch": "fix/merge-refreshes-guide-copies",
+  "done_when": "When close or land merges the default branch into an item's branch in Forge's own repo, it refreshes the synced guide copies in the same merge, so a merged guide change never fails the synced-copies test on another branch",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-06T15:10:52.001791+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "When main changes Forge's guide templates, every open branch that merges main fails tests/test_tools_guide.py test_9 in CI because its synced guide copies (.claude and .codex skills) are now stale, costing a repair round and a full CI wait; this happened four times on 6 Nov 2026"
+}
