@@ -1,12 +1,20 @@
 {
   "base": "e152560a602ae40bcb1169c58d328f3b7dc8cd68",
   "branch": "task/FORGE-REVIEWCHOICE-1-ROUNDS",
+  "round": 1,
   "stacked_on": "FORGE-FULLCAP-1/RULE",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-06T11:41:46.181800+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "0288cd445ae119925f1dd21bf5c7757dbdd0580e",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
