@@ -1,6 +1,8 @@
 """Forge's live starter checks have a nightly home outside generated CI."""
 from pathlib import Path
 import re
+import subprocess
+import sys
 
 STORY = "FIX-WINDOWS-AND-LIVE-TESTS-NIGHTLY"
 ROOT = Path(__file__).resolve().parents[1]
@@ -14,8 +16,17 @@ def test_1_live_starter_checks_run_nightly_outside_the_full_suite():
     job = re.search(r"^  organisation-invites-smoke:\n(.*?)(?=^  \S|\Z)",
                     smoke, re.M | re.S)[1]
     assert "FORGE_STARTER_LIVE: '1'" in job
+    # Selection now supplies the arguments. Keep the same invite test contract
+    # through the script's real --all entry point, and check the workflow uses it.
+    assert "needs.select.outputs.organisation_invites_smoke_args" in job
+    selected = subprocess.run([sys.executable, str(ROOT / "scripts/smoke_select.py"), "--all"],
+                              check=True, capture_output=True, text=True, encoding="utf-8",
+                              timeout=30)
+    outputs = dict(line.split("=", 1) for line in selected.stdout.splitlines())
+    assert outputs["organisation_invites_smoke"] == "true"
     assert ("tests/test_defaults_organisations.py::"
-            "test_2_admins_invite_by_email_and_members_cannot_change_roles_or_invite") in job
+            "test_2_admins_invite_by_email_and_members_cannot_change_roles_or_invite") in outputs[
+                "organisation_invites_smoke_args"]
     full = (ROOT / ".github/workflows/forge.yml").read_text("utf-8")
     assert "FORGE_STARTER_LIVE" not in full
     assert "timeout-minutes: 60" in full
