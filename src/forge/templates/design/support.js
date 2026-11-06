@@ -3,7 +3,6 @@
 // local assets in the same folder. Run: node docs/design/<KEY>/support.js
 // Check every screen, then publish PNGs at 1440 and 375 pixels wide together.
 // Use an installed Chrome or Chromium; CHROME_BIN can select its executable.
-/* global process */
 
 async function render() {
   const fs = await import('node:fs');
