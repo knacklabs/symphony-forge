@@ -1,0 +1,45 @@
+{
+  "base": "ee34e8ee3873339b1c6c4e3e865ad8a2c8e9c64f",
+  "branch": "fix/noscreens-guide-current-look",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1b090-c843-7df2-aee6-3b4c4ef184fd",
+    "head": null,
+    "start": "962309e743a73b761fdf594b608315f27bd9ff5d"
+  },
+  "done_when": "tests/test_noscreens_guide.py::test_6_the_guide_says_who_builds_the_screens passes on both cases and checks the current look rule",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "625d03d1f7ad24054277f5817fb5c37e37b33911b104d0bd9079eccf25b086fc",
+    "changed": "7e42b8903f5226eab9022fbda0351db2515027189db0726319f5d549ebbb0de3",
+    "commit": "103c4834c3d64cb33b5a451c7ce365eaed457ba6",
+    "dismissals": [],
+    "findings": [],
+    "id": "993a5ca1-baeb-40ed-9972-6d993c0c3fd5",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-06T11:13:43.851662+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-06T11:17:57.680798+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "b863e4926128a44e1be7a0539bf65d50aa2729c6",
+    "keys": {},
+    "round": null
+  },
+  "why": "An older guide test still expects the app-baseline sentence 'a neutral design when there is no brand', which the design rules story replaced with the look picked from five facts in the client notes, so test_noscreens_guide test_6 fails on main",
+  "worker": "codex"
+}
