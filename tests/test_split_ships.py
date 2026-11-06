@@ -33,6 +33,7 @@ SOURCES = {
     ".claude/skills/remote-approval/SKILL.md": ".claude/skills/remote-approval/SKILL.md",
     ".forge/records-only/action.yml": "src/forge/templates/records-only-action.yml",
     ".forge/design/support.js": "src/forge/templates/design/support.js",
+    ".forge/design/ui-checks.js": "src/forge/templates/design/ui-checks.js",
 }
 # The new contract includes every support file in the pinned design skills, for both hosts.
 SOURCES.update({f"{host}/skills/{path.relative_to(ROOT / 'src/forge/templates/skills').as_posix()}":
