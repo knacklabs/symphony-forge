@@ -205,6 +205,15 @@ jobs:
           key: npm-jest-30.2.0-vitest-3.2.4
       - run: uv tool install .
       - run: forge test --full
+        env:
+          PYTEST_ADDOPTS: ${{ github.event_name == 'schedule' && '--durations=0 --store-durations --clean-durations' || '--durations=0' }}
+      - uses: actions/upload-artifact@v4
+        if: always() && github.event_name == 'schedule'
+        with:
+          name: linux-test-durations-${{ matrix.group }}
+          path: .test_durations
+          include-hidden-files: true
+          retention-days: 7
 
   full-suite-result:
     needs: full-suite
