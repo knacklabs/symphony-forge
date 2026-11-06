@@ -1,10 +1,22 @@
 {
   "doc": "plans/FORGE-REVIEWCHOICE-1.md",
-  "status": "planning",
+  "status": "read",
   "steps": [
     {
       "at": "2026-11-06T11:10:26.105017+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-06T11:24:44.675717+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-11-06T11:29:22.395950+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-11-06T11:32:09.935944+00:00",
+      "step": "read"
     }
   ],
   "title": "A person can skip the model review, and forge.toml sets the review rounds",
