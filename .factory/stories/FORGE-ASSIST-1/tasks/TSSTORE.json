@@ -1,10 +1,18 @@
 {
   "branch": "task/FORGE-ASSIST-1-TSSTORE",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-06T02:46:58.585349+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "da54479e852bc10bdc6d202510f949b5472b402e",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
