@@ -598,6 +598,34 @@ def write(top: Path, cfg: dict[str, Any], keep: frozenset[str] = frozenset()) ->
     return changed + [rel for rel in links if rel not in changed]
 
 
+def refresh_merged_guides(top: Path, before: str) -> None:
+    """Keep committed skill copies current when a default merge changes their templates."""
+    incoming = repo.git("diff", "--name-only", before, "HEAD", "--",
+                        "src/forge/templates", "src/forge/standards.md", cwd=top)
+    if not incoming:
+        return
+    # The merge can change the renderers as well as their templates. Import the merged
+    # checkout in a fresh process, rather than use modules loaded before the merge.
+    package = top / "src" if repo.config(top)["repo"] == "forge-source" else Path(__file__).resolve().parent.parent
+    script = f"""import sys
+sys.path.insert(0, {json.dumps(package.as_posix())})
+from forge import repo, sync
+top = repo.root()
+tracked = set(repo.git('ls-files', '-z', '--', '.claude/skills', '.codex/skills', cwd=top).split('\\0'))
+wanted = {{rel: text for rel, text in sync.files(top, repo.config(top)).items() if rel in tracked}}
+changed = sync.differing(top, wanted)
+for rel in changed:
+    if wanted[rel]:
+        sync.write_file(top, rel, wanted[rel])
+    else:
+        (top / rel).unlink()
+if changed:
+    repo.git('add', '--', *changed, cwd=top)
+    repo.git('commit', '-q', '--amend', '--no-edit', cwd=top)
+"""
+    repo.run(sys.executable, "-B", "-c", script, cwd=top).check_returncode()
+
+
 def install_shims(top: Path, cfg: dict[str, Any]) -> bool:
     """Install local shims or retire earlier Husky shims; returns whether any changed.
 

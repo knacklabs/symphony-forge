@@ -121,6 +121,9 @@ def merge(args: argparse.Namespace, *, refreshed: bool = False) -> int:
                 print(f"{default} moved; Forge will merge it into this branch and run the related tests.", flush=True)
                 close._merge_default(worktree, item, branch, default,
                                      {**pr, "mergeStateStatus": "BEHIND"}, repo.config(worktree))
+                # Keep guide repairs even when the original source-file sets did not overlap.
+                overlap = overlap or bool(repo.git("diff", "--name-only", checked_default, "HEAD", "--",
+                                                   ".claude/skills", ".codex/skills", cwd=worktree))
                 base = repo.git("merge-base", "HEAD", f"origin/{default}", cwd=worktree)
                 checked_default = base
                 cfg = repo.config(worktree)

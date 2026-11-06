@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "edge\tsrc/forge/merge.py\tFollow-up: Distinguish new guide repairs from existing branch edits",
+      "kind": "edge",
+      "path": "src/forge/merge.py",
+      "line": 125,
+      "text": "Follow-up: Distinguish new guide repairs from existing branch edits",
+      "from": "review",
+      "item": "merge-refreshes-guide-copies",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
