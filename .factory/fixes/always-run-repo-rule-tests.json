@@ -31,7 +31,7 @@
       "gain": 4,
       "harm": 2,
       "line": 49,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -41,38 +41,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "04c9cd17359992e720245fd67599aad7bcb105bad2a992cc8ff53768b652e2bd",
-    "changed": "b327b383b53d4d8de9f88c5541d362033364ec2ebfc7c1fa4dfcd017ead5ef27",
-    "commit": "c6f4ce97695fa6bf6910a890333aa1ef20103431",
+    "branch_diff": "0fd27c82ce6790144b44126d665d6065ff04d34f2bebbcaebb3878a883f7e45a",
+    "changed": "7627e437f0b06e31bb1682900a02493cb790bc6c1cb6cdaa41a2b817efc87778",
+    "commit": "49c96af851b37b82e09c9aafc5b1e76492fce2a2",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 2, Harm 2\nRaise: Not done\nCase: normal use - a documentation-only pull request.\nThe unmet item is: \u201cEvery Forge pull request check runs the cheap whole-repo rule tests (tests/test_platform_sensitive_selection.py, tests/test_tools_guide.py synced-guides test, tests/test_rules.py rule and size checks) on top of the selected tests, adding under a minute\u201d. The required tests are added only after pytest_tests starts. However, .github/workflows/forge.yml:43 skips the test jobs for documentation-only changes, and lines 97\u201399 explicitly accept that skip. The command also retains its earlier bypass at src/forge/review.py:403\u2013405. Consequently, these pull requests run none of the required checks. Run the required checks on this path while retaining the skip for unrelated tests.",
-        "file": "src/forge/fasttest.py",
-        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
-        "gain": 4,
-        "harm": 2,
-        "line": 681,
-        "priority": "P1",
-        "title": "Not done: Every Forge pull request check runs the cheap whole-repo rule tests",
-        "work": 2
-      },
-      {
-        "body": "Gain 4, Work 1, Harm 2\nRaise: Test\nCase: normal use - running the new proof test in pull request CI.\nBoth --change cases leave the product change uncommitted after setting origin/main to HEAD. CI supplies FORGE_GROUPS (.github/workflows/forge.yml:53), which the fixture does not clear. With that variable present, fasttest.py:330\u2013332 calls test_run with always=False. Its documentation classifier compares committed base...HEAD (docskip.py:88), sees an empty diff, and skips execution at review.py:403\u2013405. The command returns zero but creates no receipts, so line 53 fails. Commit the product change before invoking --change so this proof exercises the actual CI path.",
-        "file": "tests/test_required_repo_rules.py",
-        "gain": 4,
-        "harm": 2,
-        "line": 49,
-        "priority": "P1",
-        "title": "Gate: test_1_repo_required_rules_join_unrelated_selection",
-        "work": 1
-      }
-    ],
-    "id": "57ed36c7-5aab-4177-8a6d-8b588edbc460",
-    "status": "blocked"
+    "findings": [],
+    "id": "bde9d376-fcbd-4709-be9f-811357f453c8",
+    "status": "clean"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-06T16:29:53.284666+00:00",
@@ -80,6 +58,10 @@
     },
     {
       "at": "2026-11-06T16:38:55.820798+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-06T17:52:05.612607+00:00",
       "step": "review"
     }
   ],
