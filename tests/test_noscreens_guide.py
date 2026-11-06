@@ -34,7 +34,7 @@ GUIDE_SENTENCES = (
     "builds the API, with no need to ask.",
     "Webhooks, endpoints only agents or other systems call, and background jobs get no screen.",
     "The design comes first.",
-    "a neutral design when there is no brand",
+    "Before the first canvas, write a short brief from five facts in the client's notes:",
     "Build the basic screens first, then the business screens.",
     "The demo opens on the client's business task, and the basic screens are shown last.",
 )
