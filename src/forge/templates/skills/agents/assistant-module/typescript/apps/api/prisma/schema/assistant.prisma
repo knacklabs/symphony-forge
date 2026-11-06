@@ -1,0 +1,19 @@
+// Chats are temporary private data and are hard-deleted at the promised expiry.
+model AssistantChat {
+  id                  String   @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  organisationId      String   @db.Uuid
+  createdByAccountId  String   @db.Uuid
+  modifiedByAccountId String   @db.Uuid
+  lastMessageAtUtc    DateTime @default(now()) @db.Timestamptz(3)
+  createdAtUtc        DateTime @default(now()) @db.Timestamptz(3)
+  updatedAtUtc        DateTime @updatedAt @db.Timestamptz(3)
+  organisation       Organisation @relation(fields: [organisationId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  createdByAccount   Account @relation("ChatCreatedBy", fields: [createdByAccountId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  modifiedByAccount  Account @relation("ChatModifiedBy", fields: [modifiedByAccountId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([organisationId, createdByAccountId, lastMessageAtUtc(sort: Desc), id(sort: Desc)], map: "idx_AssistantChat_list")
+  @@index([createdByAccountId], map: "idx_AssistantChat_createdByAccountId")
+  @@index([modifiedByAccountId], map: "idx_AssistantChat_modifiedByAccountId")
+  @@index([lastMessageAtUtc], map: "idx_AssistantChat_lastMessageAtUtc")
+  @@schema("assistant")
+}

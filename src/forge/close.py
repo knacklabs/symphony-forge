@@ -272,7 +272,11 @@ def close(args: argparse.Namespace) -> int:
             return 1
     spotted.check(top, item)
     design.require_working_build(top, review_ref)
-    app_baseline.check(top, cfg, baseline := repo.git("merge-base", "HEAD", review_ref, cwd=top))
+    head = repo.resolve_commit(top, "HEAD")
+    base = repo.resolve_commit(top, review_ref)
+    baseline = repo.git("merge-base", base, head, cwd=top)
+    changed_files = repo.git("diff", "--name-only", "-z", "--no-renames", baseline, head, cwd=top).split("\0")
+    app_baseline.check(top, cfg, baseline, changed_files)
     app_baseline.services(top, cfg)
     app_baseline.migrations(top, cfg, baseline)
     if not migrating:
@@ -284,11 +288,11 @@ def close(args: argparse.Namespace) -> int:
     result = previous
     classified = review.bound_review(top, item, state, result)
     head = repo.resolve_commit(top, "HEAD")
-    base = repo.resolve_commit(top, review_ref)
     changed = review.fingerprint(head, item, top, state, base)
     branch_diff = review.fingerprint(head, item, top, state, base,
                                      branch_diff=True)
     ancestor = repo.git("merge-base", base, head, cwd=top)
+    # The immutable read above is reused unless pushing merged remote work into HEAD.
     files = repo.git("diff", "--name-only", "-z", "--no-renames", ancestor, head, cwd=top).split("\0")
     task.require_fix_changes(item, state, top, files)
     records_only = all(path.startswith(review.BOOKKEEPING) or repo.SIGNOFF.fullmatch(path) for path in files if path)
