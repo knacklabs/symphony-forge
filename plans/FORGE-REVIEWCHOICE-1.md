@@ -4,39 +4,23 @@
 
 ## What changes for you
 
-<What the people who use this will notice, in plain English. No IDs, codes or jargon. End each
-item with its source in plain words, such as (Source: the client's note on late orders, 12 Oct),
-or with the sourced item that needs it, such as (Needed by: the Customers screen). A source is a
-client note, a brief answer, a decision, a screen marked Build now at sign-off, a fixed rule of
-the app, or the owner's own request with its date. Name each screen, field, endpoint, tool and
-setting that the plan adds in one of these items.>
-
-<!-- For user-facing parts: run impeccable init if PRODUCT.md is absent. Design the screens
-in a Claude Design artifact; on a Codex-only host without artifact tools, use HTML artboards.
-Save each screen and its images in docs/design/<KEY>/. Copy .forge/design/support.js beside
-the HTML screens and run it for a 1440 by 900 PNG per screen. Commit the folder. Use its git tree
-id (git rev-parse HEAD:docs/design/<KEY>) in the last line below. For small changes to existing
-screens that add no screen and change no flow, use Design: none (<why>) instead.
-Remove this comment and omit
-the Design line for a backend-only story. Cold read follows the design; one plan approval binds
-these exact files. A folder edit needs its new tree id and a new plan approval.
-The rule starts with the next plan read and approval. Plans approved without a Design line
-before this rule keep their existing approval. -->
-Design: docs/design/<KEY>/ (<tree id>)
+- A named person can close an item without the model review. Their name and reason show on the pull request. Tests, CI, the design checks and the merge step still run.
+- Close refuses the skip when a review has already blocked the item. Agents use the skip only when a person asks for it.
+- Two forge.toml settings set the rounds before Forge asks the person: one for a plan's cold read and one for a task's review, each one or two, both two by default. Fixes keep one review round. At the limit Forge still asks for one more round, split or accept.
+- This replaces the rule that every item gets a model review (decision 0092); the owner chose this on 6 Nov 2026.
+- New client repos get the skip and the settings at init. Existing client repos get them on upgrade.
 
 ## Why
 
-A person can skip the model review, and forge.toml sets the review rounds
-
-
+Small changes such as version bumps, docs and generated files wait for a model review that adds little, and no close option skips it. The round limits are fixed in code, so a team cannot choose one round for its cold reads or its task reviews.
 
 ## Done when
 
-<!-- One bold plain sentence per result, which the owner approves: no code names, file paths or
-test names. Its evidence, edge cases and proving tests go under the same number in Done-when
-details. -->
-
-1. **Something anyone can observe once this is done.**
+1. **Close with a named person and a reason skips only the model review, and the name and reason show on the pull request.**
+2. **Close refuses the skip after a blocking review, and tests, CI, the design checks and the merge step still run on a skipped item.**
+3. **forge.toml sets one or two rounds for the cold read and for task reviews; at the limit Forge asks for one more round, split or accept; fixes keep one round.**
+4. **skill.md and brief.md describe the skip and the settings, and tell agents to use the skip only when a person asks.**
+5. **Tests cover a new client repo and an existing repo adopted on an earlier release.**
 
 ## Risks
 
