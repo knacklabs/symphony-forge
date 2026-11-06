@@ -415,10 +415,17 @@ def broad_ci_selection(top: Path, base: str) -> bool:
             "from forge.fasttest import related; "
             "picked, tests, _, _ = related(sys.argv[1]); "
             "print(len(set(picked) | set(sys.argv[2:])) * 4 > len(tests))")
-    always = [name.split("::", 1)[0] for name in cfg["always_test"]]
+    always = [name.split("::", 1)[0] for name in always_tests(top, cfg)]
     selected = repo.run(sys.executable, "-c", code, base, *always, cwd=top)
     selected.check_returncode()
     return selected.stdout.strip() == "True"
+
+
+def always_tests(top: Path, cfg: dict) -> list[str]:
+    """Include the repo-owned list without putting repo-specific paths in Forge."""
+    listing = top / ".forge" / "always-tests.txt"
+    local = listing.read_text("utf-8").splitlines() if listing.is_file() else []
+    return list(dict.fromkeys(cfg.get("always_test", []) + [line.strip() for line in local if line.strip()]))
 
 
 # The temporary pytest plugin: skip unpicked files, keep picked tests and each always_test entry,
@@ -671,7 +678,7 @@ def pytest_tests(base: str, command: str, entry: dict | None = None) -> int:
         environment["FORGE_TEST_LANE"] = entry["id"]
     excluded = []
     # Read as forge test --pytest reads test: close has already checked forge.toml.
-    always = tomllib.loads(Path("forge.toml").read_text("utf-8")).get("always_test", [])
+    always = always_tests(Path.cwd(), tomllib.loads(Path("forge.toml").read_text("utf-8")))
     required = always[:]
     named = []
     picked, tests, shared_changed, missed = related(base)

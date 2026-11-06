@@ -357,6 +357,9 @@ When the pytest picker selects more than a third of the test files, bare `forge 
 only the part's Tests column or the fix's touched test files, plus `always_test`, and says
 "The nightly full run covers the rest." This includes shared-fixture changes. With no named
 tests it runs only `always_test`. An explicit `forge test --pytest <base>` keeps the full selection.
+The repo can also list required pytest files or node IDs, one per line, in
+`.forge/always-tests.txt`. These join `always_test` for related-test selection,
+including broad worker selections. Repos without this file keep their current selection.
 
 You may update tests when Done-when deliberately changes behaviour: explain the old and new contract in
 the test and handoff, and never weaken a test to hide a defect. Call a test failure
