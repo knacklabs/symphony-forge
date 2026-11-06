@@ -8,9 +8,12 @@ import tomllib
 from pathlib import Path, PurePosixPath
 from typing import Any
 
-from forge import repo
+from forge import repo, ui_checks
 
 REFUSALS = {
+    "design": ("This change fails the design checks: {problems}.",
+               "fix them, or add the waiver comment shown under a problem with the reason, "
+               "then forge close {item}"),
     "contract": ("These new migrations can break the previous release: {problems}.",
                  "add a Contract: comment in each migration explaining why the live release "
                  "no longer reads the table or column, then forge close {item}"),
@@ -30,13 +33,12 @@ LIBRARIES = frozenset({
 })
 
 
-def check(top: Path, cfg: dict[str, Any], base: str) -> None:
-    """Refuse a second UI component library added by this change."""
+def check(top: Path, cfg: dict[str, Any], base: str, files: list[str]) -> None:
+    """Refuse added UI libraries and design problems in changed client files."""
     if cfg.get("repo") != "client":
         return
     paths = repo.git("ls-tree", "-r", "--name-only", "-z", "HEAD", cwd=top).split("\0")
-    if not any(PurePosixPath(path).name == "components.json" for path in paths):
-        return
+    shadcn = any(PurePosixPath(path).name == "components.json" for path in paths)
 
     def libraries(ref: str) -> set[str]:
         found = set()
@@ -47,9 +49,13 @@ def check(top: Path, cfg: dict[str, Any], base: str) -> None:
                     found.update(LIBRARIES.intersection(package.get(group, {})))
         return found
 
-    problems = sorted(libraries("HEAD") - libraries(base))
+    problems = sorted(libraries("HEAD") - libraries(base)) if shadcn else []
     if problems:
         repo.refuse(REFUSALS["shadcn"], problems="; ".join(problems),
+                    item=repo.current_branch(top).partition("/")[2])
+    problems = ui_checks.problems(top, files)
+    if problems:
+        repo.refuse(REFUSALS["design"], problems="\n" + "\n".join(problems),
                     item=repo.current_branch(top).partition("/")[2])
 
 

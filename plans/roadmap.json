@@ -470,12 +470,6 @@
       "order": 106
     },
     {
-      "key": "FORGE-ASSIST-1",
-      "title": "Client apps get an optional in-app assistant",
-      "status": "pending",
-      "order": 107
-    },
-    {
       "key": "FORGE-AGENTREADY-1",
       "title": "Client apps are ready for agents from day one",
       "status": "pending",
@@ -552,6 +546,18 @@
       "title": "Security audit skill for client apps",
       "status": "pending",
       "order": 114
+    },
+    {
+      "key": "FORGE-UISTANDARDS-1",
+      "title": "Client app designs stop looking machine-made",
+      "status": "pending",
+      "order": 115
+    },
+    {
+      "key": "FORGE-ASSIST-1",
+      "title": "Client apps get an optional in-app assistant",
+      "status": "pending",
+      "order": 107
     }
   ],
   "epics": [
