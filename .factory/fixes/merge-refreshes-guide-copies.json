@@ -1,6 +1,13 @@
 {
   "base": "65d5a032d9fefbe59ba8e0cbacfd9463060167aa",
   "branch": "fix/merge-refreshes-guide-copies",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1b169-e62a-7143-9342-62d2afd90f9f",
+    "head": null,
+    "start": "eb8b6bb664ab072fa671d2d5b1d715e26ad9abfd"
+  },
   "done_when": "When close or land merges the default branch into an item's branch in Forge's own repo, it refreshes the synced guide copies in the same merge, so a merged guide change never fails the synced-copies test on another branch",
   "fix_kind": "mechanical",
   "kind": "fix",
