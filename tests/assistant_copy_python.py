@@ -21,8 +21,21 @@ def copy_assistant_python(app: Path) -> None:
         api / "migrations" / "versions" / "20261106_assistant.py",
     )
     shutil.copyfile(
+        skill
+        / "apps"
+        / "api"
+        / "migrations"
+        / "versions"
+        / "20261106_assistant_usage.py",
+        api / "migrations" / "versions" / "20261106_assistant_usage.py",
+    )
+    shutil.copyfile(
         skill / "apps" / "api" / "tests" / "test_assistant_chats.py",
         api / "tests" / "test_assistant_chats.py",
+    )
+    shutil.copyfile(
+        skill / "apps" / "api" / "tests" / "test_assistant_model.py",
+        api / "tests" / "test_assistant_model.py",
     )
     _replace_once(
         api / "tests" / "test_module_schemas.py",
@@ -32,14 +45,33 @@ def copy_assistant_python(app: Path) -> None:
         '    "assistant.checkpoint_blobs",\n'
         '    "assistant.checkpoint_migrations",\n'
         '    "assistant.checkpoint_writes",\n'
-        '    "assistant.checkpoints",\n',
+        '    "assistant.checkpoints",\n'
+        '    "assistant.usage",\n',
     )
 
     pyproject = api / "pyproject.toml"
     _replace_once(
         pyproject,
         '    "mcp==2.3.0",',
-        '    "mcp==2.3.0",\n    "langgraph-checkpoint-postgres==3.2.0",',
+        '    "mcp==2.3.0",\n    "langchain-openai==1.7.4",\n    "langgraph-checkpoint-postgres==3.2.0",',
+    )
+
+    compose = app / "compose.test.yml"
+    compose_text = compose.read_text(encoding="utf-8")
+    port_setting = '      PORT: "3000"\n'
+    if compose_text.count(port_setting) != 3:
+        raise AssertionError(f"copy step did not match all API services in {compose}")
+    compose.write_text(
+        compose_text.replace(
+            port_setting,
+            port_setting
+            + "      ASSISTANT_AI_KEY: test-model-key\n"
+            + "      ASSISTANT_MODEL: test-model\n"
+            + '      ASSISTANT_SPEND_CAP_USD: "10"\n'
+            + '      ASSISTANT_PRICE_INPUT_USD_PER_MTOK: "0.15"\n'
+            + '      ASSISTANT_PRICE_OUTPUT_USD_PER_MTOK: "0.60"\n',
+        ),
+        encoding="utf-8",
     )
     _replace_once(
         pyproject,

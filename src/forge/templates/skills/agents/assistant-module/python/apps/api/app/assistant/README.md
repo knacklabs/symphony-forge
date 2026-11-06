@@ -13,16 +13,19 @@ From the app root, copy these paths from
 - `apps/api/app/assistant/` to `apps/api/app/assistant/`.
 - `apps/api/migrations/versions/20261106_assistant.py` to the same app path.
 - `apps/api/tests/test_assistant_chats.py` to the same app path.
+- `apps/api/tests/test_assistant_model.py` to the same app path.
+- `apps/api/migrations/versions/20261106_assistant_usage.py` to the same app path.
 
 In the copied app's `apps/api/tests/test_module_schemas.py`, add these entries at
 the start of `EXPECTED_TABLE_SCHEMAS`, before the existing `core.*` entries:
 
 ```python
-    "assistant.chat",
-    "assistant.checkpoint_blobs",
-    "assistant.checkpoint_migrations",
-    "assistant.checkpoint_writes",
-    "assistant.checkpoints",
+("assistant.chat",)
+("assistant.checkpoint_blobs",)
+("assistant.checkpoint_migrations",)
+("assistant.checkpoint_writes",)
+("assistant.checkpoints",)
+("assistant.usage",)
 ```
 
 Keep every existing entry and the exact inventory assertion. The check still
@@ -32,7 +35,8 @@ the copied app's test; the starter has no assistant tables.
 The migration follows `20261105_notifications`. For an app with a different
 Alembic head, set the copied revision's `down_revision` to that head. Keep one
 Alembic history. Add `langgraph-checkpoint-postgres==3.2.0` to the dependencies in
-`apps/api/pyproject.toml`, then run `uv --directory apps/api lock` and
+`apps/api/pyproject.toml`. Also add `langchain-openai==1.7.4` for the model client.
+Then run `uv --directory apps/api lock` and
 `uv --directory apps/api sync --frozen`. Commit the updated lock file.
 
 Import `app.assistant` in `apps/api/migrations/env.py` to register the model.
@@ -110,19 +114,61 @@ and returns the number of chats removed. It removes checkpoints before committin
 the chat deletion; a failed checkpoint deletion keeps the chat available for a
 later clean-up attempt. The approved hourly timer replaces a separate job runner.
 
-## Settings and remaining assistant parts
+## Model settings and spend cap
 
-Storage uses the existing `DATABASE_URL` and no model key. The model part adds
-validation in `app/core/config.py` for `ASSISTANT_AI_KEY`, `ASSISTANT_MODEL`,
-`ASSISTANT_SPEND_CAP_USD`, `ASSISTANT_PRICE_INPUT_USD_PER_MTOK` and
-`ASSISTANT_PRICE_OUTPUT_USD_PER_MTOK`. `ASSISTANT_AI_URL` is optional for an
-OpenAI-compatible service with a custom address. Keep secrets in host settings
-or an uncommitted `.env`; list dummy values in `.env.example`. An app that does
-not import the module needs none of these settings.
+The optional module reads its provider settings only in `app/assistant/model.py`.
+Its lifespan checks them before it opens the checkpointer connection. An app
+without this module needs none of these settings. Keep the core settings loader
+unchanged. The approved app-owned provider replaces the agents skill's
+Mainline-only model rule until Mainline supplies that service.
 
-Chat routes, the model and turn handling arrive in later parts. Build the
-Assistant page in the client's design by the agents skill's assistant page rules.
-The storage test copies this package into a new Python app and calls the public
-clean-up service against real Postgres. The chat API part owns the full copy-in
-and API proof. New starter apps have no assistant code or tables; upgrading an
-existing app changes no app code. Copying this template is an explicit app change.
+Set these values in host settings or an uncommitted `.env`. Add dummy entries to
+the copied app's `.env.example`:
+
+```dotenv
+ASSISTANT_AI_KEY=replace-with-provider-key
+ASSISTANT_MODEL=replace-with-model-name
+ASSISTANT_SPEND_CAP_USD=10
+ASSISTANT_PRICE_INPUT_USD_PER_MTOK=1
+ASSISTANT_PRICE_OUTPUT_USD_PER_MTOK=3
+# Optional OpenAI-compatible endpoint:
+ASSISTANT_AI_URL=https://provider.example/v1
+```
+
+The prices are USD per million tokens for the chosen model. Set the actual
+provider prices. There is no price guess or secret default. The cap accepts at
+most six decimal places. Zero disables new answers. A missing or invalid required
+value stops module startup with a plain message. The usage migration follows the
+storage migration. Import `app.assistant` to register both models for Alembic.
+
+Use `load_settings()` and `create_model(settings)` from `app.assistant.model`.
+The client uses the configured model, key and optional URL, a 20-second timeout
+and one retry. It requests token usage in streams. Do not make a second client or
+read the key elsewhere. The turn part supplies the prebuilt agent.
+
+Before an answer, call `UsageService(db).can_start(settings, datetime.now(UTC))`.
+It sums `assistant.usage.cost_micros` for the whole app in the current UTC calendar
+month. It returns false at the cap. Last month's rows stay available for cost
+reports but do not count. A turn that starts below the cap can finish above it.
+Use `LIMIT_MESSAGE` from `app.assistant.usage` for the stop line.
+
+After the turn, calculate its cost with
+`settings.cost_micros(input_tokens, output_tokens)`. Then call
+`UsageService(db).record(principal, cost_micros)`. The service stores integer
+micro-dollars, rounded up, with the person's account, organisation and UTC time.
+These append-only cost rows contain no chat text and do not expire with chats.
+The turn part owns the one-row-per-turn rule and the streamed limit line.
+
+Use `SYSTEM_PROMPT` and `PROMPT_VERSION` from `app.assistant.prompt`. Keep the
+static prompt under 12 KB. It treats tool output as data, leaves display parts to
+code and requires confirmation before changes. Before accepting a message or
+saving a checkpoint, call `contains_secret(text)` from `app.assistant.guard`.
+If true, return `SECRET_MESSAGE` without saving or sending the text to the model.
+The check finds labelled passwords, keys and one-time codes, and card numbers
+with a valid checksum. It cannot identify a bare password without a label.
+
+The model test copies this package into a new Python app and checks the monthly
+sum against real Postgres. New starter apps have no assistant code or tables.
+An upgrade changes no existing app code. Both receive the optional module through
+the agents skill. Copying the template is an explicit app change. The turn and
+page remain outside this part.
