@@ -11,13 +11,54 @@
   "done_when": "A review no longer finds: [P1] Defer the acceptance push until final review bookkeeping is saved (src/forge/close.py:423)",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [
+    {
+      "area": "close() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 5,
+      "harm": 2,
+      "line": 423,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: A review no longer finds: [P1] Defer the acceptance push until final review bookkeeping is saved (src/forge/close.py:423)",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "ce46dcd6fd3869ab8c13e48dd2afdf41feb0ccb6a104310ed73417ae14eb5d0c",
+    "changed": "b587bf081335319f9ab4e95e07798d676143efe829cd8133603d2d78dc608143",
+    "commit": "a09af1173a300dd7832db7575c39166f93c913f0",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 5, Work 2, Harm 2\nRaise: Not done\nCase: normal use - accepting remaining findings with `forge close <item> --resolve accept --reason ...`.\nThe acceptance path still pushes at src/forge/close.py:156 for an owner-resolved stop, then continues to this final push. Between them, spotted.record() closes accepted findings' open entries (src/forge/spotted.py:261\u2013268), and close.py:421\u2013422 commits that bookkeeping. The command therefore successfully updates the branch twice and restarts CI, leaving the requested fix unmet. Defer the acceptance path's first push until this final publication. The publication-count test covers ordinary and replay closes but never invokes `--resolve accept`, so it misses this defect.",
+        "file": "src/forge/close.py",
+        "gain": 5,
+        "harm": 2,
+        "line": 423,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: A review no longer finds: [P1] Defer the acceptance push until final review bookkeeping is saved (src/forge/close.py:423)",
+        "work": 2
+      }
+    ],
+    "id": "bac4f488-c877-4a1a-8633-49a0411c0c45",
+    "status": "blocked"
+  },
   "round": 2,
   "stacked_on": "close-pushes-once",
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-06T15:16:12.795925+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-06T15:20:37.137183+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
