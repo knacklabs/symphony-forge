@@ -1,6 +1,13 @@
 {
   "base": "649508fbe90b0da81d4dd9433d5cd00a44b602f6",
   "branch": "fix/review-findings-split-from-close-pushes",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1b16e-e993-74c2-9f95-a742d97b4082",
+    "head": null,
+    "start": "95204acda890f8c9d2e78297e79fb892dc51324a"
+  },
   "done_when": "A review no longer finds: [P1] Defer the acceptance push until final review bookkeeping is saved (src/forge/close.py:423)",
   "fix_kind": "mechanical",
   "kind": "fix",
