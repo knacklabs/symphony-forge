@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/templates/skills/agents/assistant-module/python/apps/api/app/assistant/README.md\tPreserve required nullable detail values during event serialization\tFORGE-ASSIST-1/PYCHAT",
+      "kind": "bug",
+      "path": "src/forge/templates/skills/agents/assistant-module/python/apps/api/app/assistant/README.md",
+      "line": 153,
+      "text": "Preserve required nullable detail values during event serialization",
+      "from": "blocking",
+      "item": "FORGE-ASSIST-1/PYCHAT",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/assistant_copy_python.py\tUpdate the existing retention harness for the new workspace package\tFORGE-ASSIST-1/PYCHAT",
+      "kind": "bug",
+      "path": "tests/assistant_copy_python.py",
+      "line": 25,
+      "text": "Update the existing retention harness for the new workspace package",
+      "from": "blocking",
+      "item": "FORGE-ASSIST-1/PYCHAT",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
