@@ -10,9 +10,9 @@ import pytest
 
 STORY = "FIX-APP-BASELINE"
 ROOT = Path(__file__).resolve().parents[1]
-# The approved guide adds screen ownership, order and the basic screen rules.
+# The approved guide adds the fixed baseline, look method and guard rules.
 # This package-byte contract remains distinct from the init/sync guidance test.
-BASELINE_SHA256 = "ca3e2056481a8fab29393ef06a89395ad6d9e84068b2306d5ff8535844f47dbe"
+BASELINE_SHA256 = "624fa1434eef1d7e7b00539633bb1922b532529bf5b4f55d5bd2b403f3b4f650"
 
 
 @pytest.mark.platform
