@@ -4,7 +4,7 @@ SECRET_MESSAGE = "Please remove passwords, card numbers and one-time codes befor
 
 _LABELLED_SECRET = re.compile(
     r"\b(?:password|passwd|pwd|api[_ -]?key|secret|one[ -]?time[ -]?(?:code|password)|otp)"
-    r"[\"']?\s*(?:[:=]|\bis\b)\s*[\"']?\S+",
+    r"[\"']?\s*(?:[:=]|\bis\b|\s)\s*[\"']?\S+",
     re.IGNORECASE,
 )
 _CARD = re.compile(r"(?<!\d)(?:\d[ -]?){12,18}\d(?!\d)")

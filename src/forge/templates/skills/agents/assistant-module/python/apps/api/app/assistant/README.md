@@ -19,13 +19,13 @@ From the app root, copy these paths from
 In the copied app's `apps/api/tests/test_module_schemas.py`, add these entries at
 the start of `EXPECTED_TABLE_SCHEMAS`, before the existing `core.*` entries:
 
-```python
-("assistant.chat",)
-("assistant.checkpoint_blobs",)
-("assistant.checkpoint_migrations",)
-("assistant.checkpoint_writes",)
-("assistant.checkpoints",)
-("assistant.usage",)
+```text
+    "assistant.chat",
+    "assistant.checkpoint_blobs",
+    "assistant.checkpoint_migrations",
+    "assistant.checkpoint_writes",
+    "assistant.checkpoints",
+    "assistant.usage",
 ```
 
 Keep every existing entry and the exact inventory assertion. The check still
@@ -134,6 +134,21 @@ ASSISTANT_PRICE_OUTPUT_USD_PER_MTOK=3
 # Optional OpenAI-compatible endpoint:
 ASSISTANT_AI_URL=https://provider.example/v1
 ```
+
+For tests, edit `compose.test.yml`. Add these dummy settings under `environment`
+in each service: `api`, `one-company-api` and `production-api`:
+
+```yaml
+ASSISTANT_AI_KEY: test-model-key
+ASSISTANT_MODEL: test-model
+ASSISTANT_SPEND_CAP_USD: "10"
+ASSISTANT_PRICE_INPUT_USD_PER_MTOK: "0.15"
+ASSISTANT_PRICE_OUTPUT_USD_PER_MTOK: "0.60"
+```
+
+Keep every existing setting. Host settings and `.env` values do not enter a
+container unless Compose passes them. Use these dummy values only in the test
+containers. The deployed app needs the real provider key, model and prices.
 
 The prices are USD per million tokens for the chosen model. Set the actual
 provider prices. There is no price guess or secret default. The cap accepts at

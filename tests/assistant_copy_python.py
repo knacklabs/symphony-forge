@@ -1,6 +1,8 @@
 """Copy the Python assistant storage template into a new client app."""
 
+import ast
 import shutil
+import textwrap
 from pathlib import Path
 
 
@@ -11,6 +13,13 @@ def copy_assistant_python(app: Path) -> None:
         skill = app / ".claude" / "skills" / "agents" / "assistant-module" / "python"
     if not skill.is_dir():
         raise AssertionError(f"the assistant template is missing from {skill}")
+
+    # Execute the documented excerpts so a helper cannot hide broken copy steps.
+    readme = (skill / "apps/api/app/assistant/README.md").read_text(encoding="utf-8")
+    schema_entries = textwrap.dedent(readme.split("```", 2)[1].split("\n", 1)[1])
+    schemas = ast.literal_eval("(\n" + schema_entries + "\n)")
+    assert all(isinstance(schema, str) for schema in schemas)
+    test_environment = readme.split("```yaml\n", 1)[1].split("```", 1)[0]
 
     api = app / "apps" / "api"
     shutil.copytree(
@@ -41,12 +50,8 @@ def copy_assistant_python(app: Path) -> None:
         api / "tests" / "test_module_schemas.py",
         "EXPECTED_TABLE_SCHEMAS = (\n",
         "EXPECTED_TABLE_SCHEMAS = (\n"
-        '    "assistant.chat",\n'
-        '    "assistant.checkpoint_blobs",\n'
-        '    "assistant.checkpoint_migrations",\n'
-        '    "assistant.checkpoint_writes",\n'
-        '    "assistant.checkpoints",\n'
-        '    "assistant.usage",\n',
+        + textwrap.indent(schema_entries.strip(), "    ")
+        + "\n",
     )
 
     pyproject = api / "pyproject.toml"
@@ -64,12 +69,7 @@ def copy_assistant_python(app: Path) -> None:
     compose.write_text(
         compose_text.replace(
             port_setting,
-            port_setting
-            + "      ASSISTANT_AI_KEY: test-model-key\n"
-            + "      ASSISTANT_MODEL: test-model\n"
-            + '      ASSISTANT_SPEND_CAP_USD: "10"\n'
-            + '      ASSISTANT_PRICE_INPUT_USD_PER_MTOK: "0.15"\n'
-            + '      ASSISTANT_PRICE_OUTPUT_USD_PER_MTOK: "0.60"\n',
+            port_setting + textwrap.indent(test_environment, "      "),
         ),
         encoding="utf-8",
     )

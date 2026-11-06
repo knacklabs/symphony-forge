@@ -1,5 +1,6 @@
 """The Python assistant model template keeps its key and monthly cap in settings."""
 
+import runpy
 from pathlib import Path
 
 import pytest
@@ -17,7 +18,9 @@ STORY = "FORGE-ASSIST-1/PYMODEL"
 
 @pytest.mark.platform
 @pytest.mark.timeout(1800)
-@pytest.mark.parametrize("target", ["python", "earlier adopted"])
+@pytest.mark.parametrize(
+    "target", ["python", "earlier adopted", "python labelled secrets"]
+)
 def test_5_python_key_and_cap_come_from_settings(
     repo, gh, tmp_path, tmp_path_factory, target
 ):
@@ -25,6 +28,15 @@ def test_5_python_key_and_cap_come_from_settings(
     # checks, and the copied API tests exercise the module's real Postgres boundary.
     # Existing chat/storage coverage does not own model settings or usage costs.
     # No test-only production seam is needed.
+    if target == "python labelled secrets":
+        # Pure guard cases: the app test owns existing separators and card checks.
+        # These cases catch whitespace labels before any persistence or model call.
+        guard = runpy.run_path(str(TEMPLATE / "apps/api/app/assistant/guard.py"))
+        contains_secret = guard["contains_secret"]
+        for message in ("OTP 123456", "password hunter2", "Password\thunter2"):
+            assert contains_secret(message), message
+        assert not contains_secret("hunter2")  # The approved unlabelled limit stays.
+        return
     if target == "earlier adopted":
         before, after = _adopted_files_after_sync(repo)
         assert before == after
