@@ -11,12 +11,27 @@
   "done_when": "Sample-data mode is on only when forge.toml says sample_data = true; a client repo whose old sign-off record says sample data but whose forge.toml has no sample_data setting runs its tests at close and in forge test, and close no longer says Ready without tests",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "b703afb4ac252cff50dd801a78e187beb1e12dbd2ac8a1353ae30981153e3387",
+    "changed": "c84218e79e192de2ec6ba3eb848c589162a6c3366472a10e22dbb7a21f52e489",
+    "commit": "0dd818d48d252783f6e4c7ab9090e1911da7a883",
+    "dismissals": [],
+    "findings": [],
+    "id": "8adaf355-c581-4204-8be9-aef7496f53d9",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-06T11:56:09.174235+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-06T12:01:13.896376+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
