@@ -31,7 +31,7 @@
       "gain": 4,
       "harm": 3,
       "line": 426,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -41,38 +41,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "e43e6efc31a66e5d722256d3f302901a4d32b418ea3b21d7b5623207f1326837",
-    "changed": "358a7c2689b69c758d6562fc201803d2808fdc4735621ed79cd3099465e6a1fe",
-    "commit": "e727c1028a3046d95cd0a6534c81d331dbfb2d3f",
+    "branch_diff": "c501b581bb460fee17fa7eb9e32e018a3b90204da7d8711ba689ed27ce5ec72f",
+    "changed": "fd15622a3afa4de84247bb320e760f1c14c64efe126f5c2ae5bc5ae9e4fef71d",
+    "commit": "ba34bc6a7cedc75eae036f9dc44f8de7f33f4158",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 2, Harm 2\nRaise: Not done\nCase: normal use - closing a stacked follow-up after its parent was squash-merged.\nThe Done-when requires: \"One close round publishes the item's branch once, after the review is saved, so the pull request's CI runs once per round on the final commit, and remote reconciliation and the review block still work\". Replacing this early push leaves another publication path: close.py:205 calls _merge_default(), which pushes the replayed branch with --force-with-lease at lines 739\u2013740 before review. Saving the review and pushing at lines 422\u2013425 then updates the branch again, restarting an existing pull request's CI. tests/test_close_replays_followup_after_squash_merge.py:39 demonstrates this supported lifecycle, but neither it nor the new publication-count test counts updates during replay. Defer the replay's leased publication until the review is saved and cover that path with the publication-count assertion.",
-        "file": "src/forge/close.py",
-        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
-        "gain": 4,
-        "harm": 2,
-        "line": 282,
-        "priority": "P1",
-        "title": "Not done: One close round publishes the item's branch once, after the review is saved",
-        "work": 2
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - another machine updates the item's remote branch while close runs its review and local tests.\n_push() can handle a non-fast-forward rejection by merging remote work and pushing the resulting merge (close.py:871\u2013874). Reading HEAD after that operation now treats the merged commit as the validated head, although the review and local tests covered the earlier tree. In local-test mode, close skips checks.wait() at lines 460\u2013464 and writes a clean Ready receipt for this new head at lines 497\u2013500. merge.py:72\u201399 accepts that receipt without comparing the review fingerprint, so a repository using local tests can merge the incoming changes without reviewing or testing them. Previously the receipt retained the earlier head and the merge head check refused this mismatch. Revalidate any product changes introduced by push reconciliation before issuing Ready.",
-        "file": "src/forge/close.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 426,
-        "priority": "P1",
-        "title": "Revalidate work merged during the final push before marking it Ready",
-        "work": 2
-      }
-    ],
-    "id": "f3d67fd7-dc9d-4a1c-92b7-f545ed029684",
-    "status": "blocked"
+    "findings": [],
+    "id": "c7d00a0e-15db-4470-969d-961438a4bc79",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-06T12:57:40.608819+00:00",
@@ -80,6 +58,10 @@
     },
     {
       "at": "2026-11-06T13:06:02.637297+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-06T13:14:44.674294+00:00",
       "step": "review"
     }
   ],
