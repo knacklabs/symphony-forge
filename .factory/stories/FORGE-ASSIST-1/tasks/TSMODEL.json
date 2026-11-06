@@ -1,10 +1,18 @@
 {
   "branch": "task/FORGE-ASSIST-1-TSMODEL",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-06T05:21:49.614273+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "b6b1f3b4f5084d30128ce1b89c3746556bab35cc",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
