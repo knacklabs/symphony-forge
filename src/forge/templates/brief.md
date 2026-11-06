@@ -18,6 +18,8 @@ current review, even if its number changes. Only the human chooses which finding
 
 After a merge of the default branch, close reviews only this change's own diff against the new
 merge base, keeping earlier findings and allowances from this item's records.
+When close, land or merge brings in changed guide templates, Forge refreshes the committed
+skill copies before tests and push. It leaves other generated files alone.
 If that diff contains only records under `.factory/` and `plans/`, close records a clean review without a model call,
 except for the unfinished fix below.
 For a fix whose branch changes only `.factory/` and spotted records against the default branch,

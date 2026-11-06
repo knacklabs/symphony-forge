@@ -685,7 +685,7 @@ def _merge_default(top: Path, item: str, branch: str, default: str,
     repo.command_fact(("fetch default", default), top, lambda: None)
     state = repo.read_state(item, top) or {}
     base, parent = str(state.get("base", "")), str(state.get("stacked_on", ""))
-    target = f"origin/{default}"
+    target, original = f"origin/{default}", repo.git("rev-parse", "HEAD", cwd=top)
     parent_branch = f"task/{parent.replace('/', '-')}" if parent else ""
     if "/" in item and parent and not task._merged(target, parent, top):
         return
@@ -703,7 +703,6 @@ def _merge_default(top: Path, item: str, branch: str, default: str,
             and state.get("kind") == "fix" and repo.ITEM.fullmatch(parent) and task._merged(target, parent, top))
             and repo.run("git", "merge-base", "--is-ancestor", base, "HEAD", cwd=top).returncode == 0):
         target = repo.git("rev-parse", target, cwd=top)
-        original = repo.git("rev-parse", "HEAD", cwd=top)
         remote_ref = f"refs/heads/{branch}"
         remote = repo.git("ls-remote", "--heads", "origin", remote_ref, cwd=top)
         lease = remote.split()[0] if remote else ""
@@ -738,6 +737,7 @@ def _merge_default(top: Path, item: str, branch: str, default: str,
         if task.show(original, ".factory/client-signoff.json", top) is not None:
             repo.git("checkout", original, "--", ".factory/client-signoff.json", cwd=top)
             repo.commit_state("Keep the sign-off rounds after replay", ".factory/client-signoff.json", top=top)
+        sync.refresh_merged_guides(top, original)
         published = repo.run("git", "push", "-q", "-u", f"--force-with-lease={remote_ref}:{lease}",
                              "origin", branch, cwd=top)
         if published.returncode:
@@ -749,6 +749,7 @@ def _merge_default(top: Path, item: str, branch: str, default: str,
         return
     done = repo.run("git", "merge", "-q", "--no-edit", f"origin/{default}", cwd=top)
     if done.returncode == 0:
+        sync.refresh_merged_guides(top, original)
         return
     files = repo.git("diff", "--name-only", "--diff-filter=U", cwd=top).splitlines()
     if not files:
