@@ -451,16 +451,10 @@ def start(args: argparse.Namespace) -> None:
     waiting = [dep if "/" in dep else f"{key}/{dep}" for dep in cell_list(tasks[task].get("After", ""))]
     waiting = [dep for dep in waiting if not _merged(main, dep)]
     scope = cell_list(tasks[task].get("Scope", ""))
+    stacked, refusal = can_start(item, waiting, scope, started, main, top)
+    if refusal:
+        raise refusal
     blockers = waits_for(item, waiting, scope, started)
-    stacked = stack_base(item, blockers, main, top)
-    if waiting and not stacked:
-        refuse(REFUSALS["waiting"], item=item, deps=", ".join(waiting))
-    for other, theirs in started.items():
-        if stacked and other == blockers[0]:
-            continue
-        shared = [path for path in scope if any(_overlap(path, their) for their in theirs)]
-        if shared:
-            refuse(REFUSALS["overlap"], item=item, paths=", ".join(shared), other=other)
 
     if (published != main and not git("branch", "--list", story_branch)
             and show(f"origin/{story_branch}", doc_rel) is not None):
@@ -512,6 +506,28 @@ def start(args: argparse.Namespace) -> None:
     print(f"Started {item}{on} on {branch} in {path}")
     print("Keep this part to about 400 changed lines outside tests and docs; close only warns when it is larger.")
     print(f"Next: forge work {item}")
+
+
+def can_start(item: str, waiting: list[str], scope: list[str], started: dict[str, list[str]],
+              main: str, top: Path) -> tuple[str | None, repo.Refused | None]:
+    """The shared waiting-part admission rule, returning its base or refusal."""
+    try:
+        key = item.split("/", 1)[0]
+        waiting = [dep if "/" in dep else f"{key}/{dep}" for dep in waiting]
+        waiting = [dep for dep in waiting if not _merged(main, dep, top)]
+        blockers = waits_for(item, waiting, scope, started)
+        stacked = stack_base(item, blockers, main, top)
+        if waiting and not stacked:
+            refuse(REFUSALS["waiting"], item=item, deps=", ".join(waiting))
+        for other, theirs in started.items():
+            if stacked and other == blockers[0]:
+                continue
+            shared = [path for path in scope if any(_overlap(path, their) for their in theirs)]
+            if shared:
+                refuse(REFUSALS["overlap"], item=item, paths=", ".join(shared), other=other)
+        return stacked, None
+    except repo.Refused as error:
+        return None, error
 
 
 def forge_merged(main: str, item: str, top: Path | None = None) -> str:
