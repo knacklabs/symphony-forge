@@ -1,6 +1,13 @@
 {
   "base": "58f5e6728ec761a67a467552ebb931158e23653c",
   "branch": "task/FORGE-ASSIST-1-TSTURN",
+  "chat": {
+    "approval": "c276549ec321871ed6b007a41985ed8ac0386fa2eb30ff0ce7b634bfea33d386",
+    "claude": null,
+    "conversation": "01a1afd0-50f6-73d3-82ae-8ee9f9bbe86d",
+    "head": null,
+    "start": "0427dce5b7e3bfc24639dce22e5618a3091751d8"
+  },
   "round": 1,
   "stacked_on": "FORGE-ASSIST-1/TSMODEL",
   "status": "working",
