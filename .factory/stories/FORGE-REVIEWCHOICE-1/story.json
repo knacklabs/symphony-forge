@@ -1,6 +1,16 @@
 {
+  "approval": {
+    "at": "2026-11-06T11:41:13.618631+00:00",
+    "by": "human-via-Claude",
+    "event": "toolu_01Fx989ea1M4ehGcT3pH162u",
+    "hash": "e698cc269ca139e014b35ef35cbd9d8e8e7bc54a410f93b0607aaec91e85ff35",
+    "part_line_limit": 400,
+    "round": 3,
+    "runtime": "claude",
+    "session": "c01a489d-c76f-41c1-8371-d6f0052b027c"
+  },
   "doc": "plans/FORGE-REVIEWCHOICE-1.md",
-  "status": "read",
+  "status": "approved",
   "steps": [
     {
       "at": "2026-11-06T11:10:26.105017+00:00",
@@ -17,8 +27,12 @@
     {
       "at": "2026-11-06T11:32:09.935944+00:00",
       "step": "read"
+    },
+    {
+      "at": "2026-11-06T11:41:13.619019+00:00",
+      "step": "approved"
     }
   ],
   "title": "A person can skip the model review, and forge.toml sets the review rounds",
-  "touches": 0
+  "touches": 1
 }
