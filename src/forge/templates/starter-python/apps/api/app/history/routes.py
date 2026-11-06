@@ -19,7 +19,14 @@ from app.history.service import HistoryService
 router = APIRouter(prefix="/api/v1/history", tags=["History"])
 HISTORY_CSV_COLUMNS: tuple[CsvColumn[HistoryEntry], ...] = (
     ("When (UTC)", lambda record: utc_date_time(record.created_at_utc)),
-    ("Who", lambda record: record.actor_email),
+    (
+        "Who",
+        lambda record: (
+            f"{record.actor_email}, via {record.via_agent}"
+            if record.via_agent
+            else record.actor_email
+        ),
+    ),
     ("What", lambda record: record.summary),
 )
 
