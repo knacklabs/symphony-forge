@@ -1,6 +1,13 @@
 {
   "base": "59cbc8ffe91cb2b8b987f5a098ba0ce325b9e53f",
   "branch": "fix/canvas-phone-check-on-windows",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1b311-48dc-7be2-ab4d-3c86cb05fb94",
+    "head": null,
+    "start": "e876b0c47a6ee529ade09c609f7e04561b520f0d"
+  },
   "done_when": "On Windows, Mac and Linux the canvas renderer passes a page that fits 375 pixels and still refuses a page that scrolls sideways at that width",
   "fix_kind": "backend",
   "kind": "fix",
