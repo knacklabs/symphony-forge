@@ -32,6 +32,17 @@
       "item": "FORGE-ASSIST-1/PYMODEL",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_assistant_modelpy.py\tThe init and sync checks do not receive the optional assistant template files.",
+      "kind": "bug",
+      "path": "tests/test_assistant_modelpy.py",
+      "line": 53,
+      "text": "The init and sync checks do not receive the optional assistant template files.",
+      "from": "worker",
+      "item": "FORGE-ASSIST-1/PYMODEL",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
