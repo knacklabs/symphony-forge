@@ -1733,7 +1733,7 @@ them as flaky and continues. A second failure still stops close. A failure witho
 test files still stops close.
 
 In local mode, close's tests and review run at the same time. In CI mode, close runs its review
-while the pull request's checks run, then waits for both. A red test or a P0/P1 finding still
+first, saves it, and pushes once. It then waits for the pull request checks. A red test or a P0/P1 finding still
 stops the round. When the
 local test command fails, its test report ends with all failed pytest files and test names,
 including setup, teardown and collection errors, and the full test log path.
@@ -1904,8 +1904,8 @@ its dismissals, including `--dismiss` given in that close command. A changed dif
 Before reusing serious findings, close also checks the reviewed files and contract against the
 current head. A repair brought in from the default branch needs a new review, even if the branch
 diff stayed the same. Land uses the same check through close.
-Close pushes and opens the pull request before a new review, so CI runs alongside it, then
-updates the pull request's review block when the review finishes. Ready still needs a clean
+Close reconciles remote branch work before a new review. It saves the review, pushes once,
+and opens or updates the pull request with the final review block. Ready still needs a clean
 review and green checks on the final pushed head. After `forge fix amend`, close also updates
 the pull request's Done when line. Use `--append "<text>"` to add text with a space between
 the old and new text. `--done "<done when>"` replaces the whole Done-when. Both options show

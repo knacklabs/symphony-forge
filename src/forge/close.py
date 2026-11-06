@@ -1,7 +1,7 @@
 """forge close: close a task or fix by the close rule.
 
-Bring the default branch in, push and open the pull request. Run tests alongside the review
-on a laptop repo; on a CI repo, wait for the checks on the pushed head after the review.
+Bring the default and remote branches in, save the review, then publish once. Run tests alongside
+the review on a laptop repo; on a CI repo, wait for the checks on the final pushed head.
 """
 from __future__ import annotations
 
@@ -20,6 +20,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any
 
+from forge.close_remote import reconcile
 from forge import __version__, app_baseline, checks, codex, design, githooks, init, migration_warnings, repo, review, score, spotted, story, sync, task, time_records
 
 REFUSALS = {
@@ -28,10 +29,6 @@ REFUSALS = {
                   'name the checks in forge.toml or set test_place = "local"'),
     "publish": ("GitHub refused to update this pull request, so this command stopped.\n{problem}",
                 "{action}, then retry this command"),
-    "remote_conflict": ("The merge of the remote branch conflicts in {files}.",
-                        "in {path}, resolve the conflicts and commit the merge, then forge close {item}"),
-    "remote_merge": ("The merge of the remote branch failed: {problem}",
-                     "in {path}, finish or abort the merge, then retry this command"),
     "conflict": ("Merging {default} into {branch} conflicts in {files}.",
                  "forge work {item} to merge the default branch and continue this work, then forge close {item}"),
     "merge_failed": ("Merging {default} into {branch} failed; the merge was aborted: {problem}",
@@ -282,7 +279,7 @@ def close(args: argparse.Namespace) -> int:
     if not migrating:
         _synced(top, item)
     # Reconcile remote work before choosing tests or reusing an earlier review.
-    _push(top, branch)
+    reconcile(top, branch)
     _warn_fix_kind(top, state, review_ref)
     light = review.blocking_level(top, item, state, review_ref) == "P0"
     result = previous
@@ -292,7 +289,7 @@ def close(args: argparse.Namespace) -> int:
     branch_diff = review.fingerprint(head, item, top, state, base,
                                      branch_diff=True)
     ancestor = repo.git("merge-base", base, head, cwd=top)
-    # The immutable read above is reused unless pushing merged remote work into HEAD.
+    # The immutable read above is reused unless reconciliation merged remote work into HEAD.
     files = repo.git("diff", "--name-only", "-z", "--no-renames", ancestor, head, cwd=top).split("\0")
     task.require_fix_changes(item, state, top, files)
     records_only = all(path.startswith(review.BOOKKEEPING) or repo.SIGNOFF.fullmatch(path) for path in files if path)
@@ -335,8 +332,9 @@ def close(args: argparse.Namespace) -> int:
             repo.record_event(top, item, "owner wait end", wait_id=pending["id"])
         # Read after the merge, which may change the command.
         command = review.close_test(top, base, head=head) if local_tests else ""
-        pr = _publish(top, item, state, branch, pr_target, pr,
-                      {"status": "reviewing", "findings": [], "dismissals": []}, evidence)
+        if pr:
+            pr = _publish(top, item, state, branch, pr_target, pr,
+                          {"status": "reviewing", "findings": [], "dismissals": []}, evidence)
         start, clock = repo.now(), time.monotonic()
         outcome = "failed"
         selected: dict[str, str] = {}
@@ -424,8 +422,8 @@ def close(args: argparse.Namespace) -> int:
         _save(top, item, state, message, *noted)
     elif noted:  # a reused clean review still records what the worker spotted
         _save(top, item, state, f"Review of {item}: {result['status']}", *noted)
-    head = repo.git("rev-parse", "HEAD", cwd=top)
     _push(top, branch)
+    head = repo.git("rev-parse", "HEAD", cwd=top)
     pr = _publish(top, item, state, branch, pr_target, pr, result, evidence)
     _attach(top, item, branch)
 
@@ -871,22 +869,9 @@ def _push(top: Path, branch: str) -> None:
             return
         except subprocess.CalledProcessError as error:
             if re.search(r"\[rejected\].*\((non-fast-forward|fetch first)\)", error.stderr or ""):
-                target = f"refs/remotes/origin/{branch}"
-                repo.git("fetch", "-q", "origin", f"refs/heads/{branch}:{target}", cwd=top)
-                if repo.run("git", "merge-base", "--is-ancestor", target, "HEAD", cwd=top).returncode:
-                    same = repo.git("rev-parse", "HEAD^{tree}", cwd=top) == repo.git(
-                        "rev-parse", f"{target}^{{tree}}", cwd=top)
-                    print("The local and remote branches diverged, as after an amended or rebased commit. "
-                          + ("Their trees are the same." if same else "Their trees differ."), flush=True)
-                    merged = repo.run("git", "merge", "--no-edit", target, cwd=top)
-                    if merged.returncode:
-                        files = repo.git("diff", "--name-only", "--diff-filter=U", cwd=top).splitlines()
-                        if files:
-                            item = (review.branch_item(branch, top) or (branch, {}))[0]
-                            repo.refuse(REFUSALS["remote_conflict"], files=", ".join(files), path=top, item=item)
-                        repo.refuse(REFUSALS["remote_merge"], problem=merged.stderr.strip(), path=top)
-                    repo.git("push", "-q", "--atomic", "-u", "origin", branch, *tags, cwd=top)
-                    return
+                reconcile(top, branch)
+                repo.git("push", "-q", "--atomic", "-u", "origin", branch, *tags, cwd=top)
+                return
             if wait is None:
                 raise
             time.sleep(wait)
