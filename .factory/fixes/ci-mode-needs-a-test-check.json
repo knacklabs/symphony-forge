@@ -11,12 +11,27 @@
   "done_when": "Close runs its tests locally unless a required check runs the repo's tests; a repo whose checks hold no test job gets local tests at close, and doctor warns when the test command looks like a change selector rather than the full suite",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "d0d691f8829f64c40fb5f126d6d133e1a4e92d1de6a505260d235f1202cda678",
+    "changed": "74248eae3e45b5197fae0dee6c0f99d15cc942e3e98ed89fb000d372ff51850c",
+    "commit": "4b571d9bbcb190f4a8fb9773546c7ad14d248a83",
+    "dismissals": [],
+    "findings": [],
+    "id": "4eb4bc0c-23ef-4208-8c1a-0b9ded61c818",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-06T14:59:30.766082+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-06T15:09:34.367221+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
