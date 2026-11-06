@@ -72,7 +72,7 @@
     "status": "blocked"
   },
   "round": 2,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-06T16:29:53.284666+00:00",
@@ -85,8 +85,12 @@
   ],
   "stop": {
     "at": "2026-11-06T16:38:55.833105+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "tests/test_required_repo_rules.py",
-    "wait_id": "d6d2b7f4-a7f1-4681-b41c-f305dddaeff6"
+    "reason": "The owner chose one more round: fix the docs-only case and the test setup.",
+    "wait_id": "d6d2b7f4-a7f1-4681-b41c-f305dddaeff6",
+    "worker_round": 2
   },
   "stuck": {
     "close": null,
