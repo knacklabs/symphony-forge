@@ -1,0 +1,15 @@
+{
+  "base": "899c9e1bfe3ad643b3a3a37d4edbf630d5e76efb",
+  "branch": "fix/close-pushes-once",
+  "done_when": "One close round publishes the item's branch once, after the review is saved, so the pull request's CI runs once per round on the final commit, and remote reconciliation and the review block still work",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-06T12:57:40.608819+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Close pushes twice in each round: once before the review (src/forge/close.py:285) and again after it saves the review (close.py:424), so the second push replaces the commit CI is already testing and every round starts CI twice; the median task launched its test workflow 8 times with 6 cancelled"
+}
