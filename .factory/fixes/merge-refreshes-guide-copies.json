@@ -41,12 +41,12 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "3032dc4a26bec60da7231c10f1af497b89288684454041a859243bc038a9e71a",
-    "changed": "a9473cf2013554d8eb29d8b93b6e0d4dfddb0700530a2311094ee2aa3542301b",
-    "commit": "12e0590a96837749e69a7d5eabcb6671d2793f5c",
+    "branch_diff": "9abb96e729e24c02acecb5b7dd615f5f0dd632d85fdc0800d4d33610e4b7937d",
+    "changed": "9b1bce37f7f505ef124f2fc408e4ae2ade78cff11967d39db9e7ce7f3c9262a2",
+    "commit": "2b59b1d05c11d1c9f6f6ad30476d943b0946a722",
     "dismissals": [],
     "findings": [],
-    "id": "245f2689-d20d-4bba-9a40-7ee27ddf6070",
+    "id": "5f199340-4263-44ee-a9fe-ad92061d01df",
     "status": "clean"
   },
   "round": 2,
@@ -62,6 +62,10 @@
     },
     {
       "at": "2026-11-06T16:29:05.853936+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-06T17:47:07.568643+00:00",
       "step": "review"
     }
   ],
