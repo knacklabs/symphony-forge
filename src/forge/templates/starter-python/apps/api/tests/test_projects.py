@@ -345,9 +345,12 @@ def test_records_each_project_change_in_the_change_history(
     assert set(changes.json()["data"][0]) == {
         "id",
         "actorEmail",
+        "viaAgent",
         "summary",
         "createdAtUtc",
     }
+    # The shared history response now carries attribution; direct changes have no agent.
+    assert all(entry["viaAgent"] is None for entry in changes.json()["data"])
 
     # The detail screen lists the newest 5 changes only.
     for name in ("Second", "Third", "Fourth", "Fifth"):
