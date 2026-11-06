@@ -347,7 +347,8 @@ def _report(top: Path, history: dict[str, Any] | None = None,
                 record, findings = story._record(text)  # pyright: ignore[reportPrivateUsage]
                 spec_text = spec.read_text(encoding="utf-8")
                 fields, body = story._record(spec_text)  # pyright: ignore[reportPrivateUsage]
-                if story.stopped(record, findings, repo.config(path)["cold_read_rounds"]):
+                config = repo.config(path) if (path / "forge.toml").is_file() else repo.DEFAULTS
+                if story.stopped(record, findings, config["cold_read_rounds"]):
                     lines += _read_loop(spec.stem, spec_text, text, path)
                 elif (fields.get("status") == "draft" and story.passed(record, findings)
                       and record.get("read_hash") == repo.git("hash-object", "--", str(spec), cwd=path)):
@@ -782,7 +783,8 @@ def _next_round(key: str, text: str, doc_hash: str, title: str, required: bool, 
         return []
     if not record.get("round"):
         return [f"Planning {title}: {notes} has no round of cold read.", f"Next: forge read {key}"]
-    limit = repo.config(top)["cold_read_rounds"]
+    config = repo.config(top) if (top / "forge.toml").is_file() else repo.DEFAULTS
+    limit = config["cold_read_rounds"]
     if story.stopped(record, findings, limit):
         return _read_loop(key, doc, text)
     if not story.passed(record, findings):
