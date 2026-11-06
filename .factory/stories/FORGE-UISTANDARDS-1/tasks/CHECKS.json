@@ -1,0 +1,62 @@
+{
+  "branch": "task/FORGE-UISTANDARDS-1-CHECKS",
+  "chat": {
+    "approval": "90ab5b372e60739c93194d142be47fe7ab2cfd5e697497654d7ebb7d7859b30b",
+    "claude": null,
+    "conversation": "01a1aec0-ee3c-7621-9812-bdc8350dbadf",
+    "head": null,
+    "start": "c640b5db7fc0df7771c1f79871292ef70c4c90eb"
+  },
+  "known": [
+    {
+      "area": "test_3_close_checks_only_changed_client_ui_and_reports_design_problems() in tests/test_uistandards_close.py",
+      "file": "tests/test_uistandards_close.py",
+      "gain": 2,
+      "harm": 1,
+      "line": 239,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Follow-up: Exercise close when Node is unavailable",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "9b96546fdc9a1583b45d46afd1a78707816d3604b875ff147e391d375cc3ec2a",
+    "changed": "c1f4be1a021ded6688f382a6022bbc53e6e5013524e2752eac207c1ddf4a8c1b",
+    "commit": "ae44ef7b87ffb4c0289e5415a461aba0f43ea085",
+    "dismissals": [],
+    "findings": [],
+    "id": "d75d163b-0d63-499a-b005-f1113dde7d7f",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-06T02:46:48.987743+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-06T03:11:47.138120+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-06T04:07:38.820344+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-06T04:55:17.295972+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "ee4ee9ae-421d-4bd5-a16d-6f20ce4a2cdf",
+    "head": "f1eb88bbb7d039c9f52e9f1e4a40bf14f2a143a9",
+    "keys": {},
+    "round": 2
+  },
+  "worker": "codex"
+}
