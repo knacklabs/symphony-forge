@@ -79,7 +79,10 @@ def test_2_land_uses_completed_native_round_without_a_commit(land, monkeypatch, 
         resumed = host.forge("land", ITEM)
         assert f"Closing {ITEM}." in resumed.stdout, resumed.stdout + resumed.stderr
         assert f"Building {ITEM}." not in resumed.stdout
-        assert resumed.returncode == 0, resumed.stdout + resumed.stderr
-        assert len(land.gh_calls("pr", "merge")) == 1
+        # Completion without a product diff no longer permits an empty merge.
+        assert resumed.returncode != 0, resumed.stdout + resumed.stderr
+        assert "The build round did not finish." in resumed.stderr
+        assert f"forge work {ITEM}" in resumed.stderr
+        assert not land.gh_calls("pr", "merge")
     finally:
         host.close()

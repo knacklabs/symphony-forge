@@ -1,0 +1,105 @@
+{
+  "base": "9d620e670b072e95a2cbf6c073cb8d3fab4a71c5",
+  "branch": "fix/refuse-fix-with-only-records",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1ad56-393a-7a62-9e60-5b448cd52021",
+    "head": null,
+    "start": "edc0f466304ecbe2f7a79b1de697d786c4d80089"
+  },
+  "done_when": "When a fix's branch changes only Forge's own records against the default branch, close and land refuse it with a plain line saying the build round did not finish and the next step, and a fix with code still merges",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "require_fix_changes() in src/forge/task.py",
+      "file": "src/forge/task.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 701,
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: Owner accepted both as follow-ups: the already-merged case is rare, and plan or roadmap changes are real work for a fix",
+      "round": 1,
+      "security": false,
+      "title": "Refuse records-only results when main already contains the code",
+      "work": 2
+    },
+    {
+      "area": "require_fix_changes() in src/forge/task.py",
+      "file": "src/forge/task.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 703,
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: Owner accepted both as follow-ups: the already-merged case is rare, and plan or roadmap changes are real work for a fix",
+      "round": 1,
+      "security": false,
+      "title": "Exclude roadmap and story records from the work check",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "b023baa7561562398f3eec725a997f9fbfd9f49d883d80b09f2875dcc359271d",
+    "changed": "5ee72df7af7034e920eca568afb4d4cb3dfd1eb044508273355da6359264a13e",
+    "commit": "ff48bdb90cf28c2d9ef2450ea1f70918ca5f6f3f",
+    "dismissals": [],
+    "findings": [],
+    "id": "7780fd44-507d-4173-8c73-52629e7d912d",
+    "status": "clean"
+  },
+  "round": 6,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-05T20:10:36.303594+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-05T20:27:27.949656+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-05T21:07:00.317372+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-06T02:48:19.306486+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-06T03:19:35.350533+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-06T04:30:46.022339+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-06T05:17:15.613782+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-06T05:44:44.111969+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-05T20:27:27.960708+00:00",
+    "by": "owner",
+    "choice": "accept",
+    "file": "src/forge/task.py",
+    "reason": "Owner accepted both as follow-ups: the already-merged case is rare, and plan or roadmap changes are real work for a fix",
+    "wait_id": "fcd798d0-e6f1-4f44-a5f8-091706c1bafa",
+    "worker_round": 1
+  },
+  "stuck": {
+    "close": "583a6d9b-50d8-4df6-a251-0141659b449b",
+    "head": "27d594b75ee41b45bfb6996d33278d2e3117c8cb",
+    "keys": {},
+    "round": 5
+  },
+  "why": "forge land merged a fix whose build round was killed partway: the branch held only Forge's thread record, the review said nothing to review and then clean, and the merge carried no code (issue 1387)",
+  "worker": "codex"
+}
