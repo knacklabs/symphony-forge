@@ -1,18 +1,18 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-11-06T11:24:44.644483+00:00
-seconds: 233.796
-read_hash: 5a24845f942d79764efd67a6f8a59b6dcf0f9f5a
-round: 1
+read_at: 2026-11-06T11:29:22.374995+00:00
+seconds: 145.368
+read_hash: 0a1cd86d4f10dc671a9e704975cd2bac7fd23ff6
+round: 2
 passed: no
-doc_seen: 5a24845f942d79764efd67a6f8a59b6dcf0f9f5a
+doc_seen: 0a1cd86d4f10dc671a9e704975cd2bac7fd23ff6
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+notes_seen: 3f5dc5b083eabd5e566792b3660e314af756f0c4
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a1b097-0bb0-7e72-87f8-79189b13965c
 session:
-loop_choice:
-loop_reason:
+loop_choice: more
+loop_reason: The owner chose: once any review has blocked the item, the skip stays refused, even after a person accepted or dismissed those findings. Fix the plan to say that, then one more round.
 ---
 # Cold read notes
 
@@ -59,3 +59,11 @@ Only a genuine trade-off goes to the human, as a question with options.
    The SKIP row covers four Done-when items, exceeding the stated maximum of three (`plans/FORGE-REVIEWCHOICE-1.md:111,126`). Its dependency on ROUNDS is justified solely by the guidance text checked by `test_4` (`:128`); the runtime changes use separate existing locations (`src/forge/close.py:352-360,410`). A final guidance task owning that text and its tests would remove this text-only ordering between the behavior tasks.
    Gain 2, Work 2, Harm 1
    Disposition: cut - the part was split: SKIP covers Done-when 1 and 2, and a tests-only part, WORDS, covers 4 and 5; each part keeps the guide text for its own behaviour, so the text is not split from its code.
+
+## Round 2
+
+5. Advisory: Accepting findings now removes the permanent skip refusal promised to the owner.
+   Raise: Plan gap.
+   Case: normal use - a person accepts a blocked review, then changes the item and requests a skip.
+   The new exception at `plans/FORGE-REVIEWCHOICE-1.md:71,137` says accepted or dismissed rounds no longer count as blocks, while `:33` still promises refusal “for good”. This exception changes behavior: acceptance marks the saved result clean (`src/forge/close.py:143-150`), and `_history` replaces the original blocked result with that later version (`src/forge/review.py:593-607`). The prescribed history check therefore permits skipping subsequent changes after acceptance. This is new evidence from the replacement-history approach, separate from finding 1’s missing history in another clone.
+   Gain 3, Work 2, Harm 3
