@@ -18,7 +18,11 @@ current review, even if its number changes. Only the human chooses which finding
 
 After a merge of the default branch, close reviews only this change's own diff against the new
 merge base, keeping earlier findings and allowances from this item's records.
-If that diff contains only records under `.factory/` and `plans/`, close records a clean review without a model call.
+If that diff contains only records under `.factory/` and `plans/`, close records a clean review without a model call,
+except for the unfinished fix below.
+For a fix whose branch changes only `.factory/` and spotted records against the default branch,
+close and land refuse it because the build round did not finish. Run `forge work <fix>`.
+The refusal lists untracked files. Code and documentation changes still qualify as work.
 If unreadable Autoreview output stops close, the refusal shows the saved output path, even if the retry writes no report.
 From the second review round, close checks the previous round's findings and new P0s that
 happen in normal use. A round-one fix that breaks the main path counts as a P0. At the round

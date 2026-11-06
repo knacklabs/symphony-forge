@@ -13,6 +13,9 @@ STORY = "merge-before-replay"
 def test_1_close_merges_clean_default_without_replaying_intermediate_commits(env, previous):
     repo, parent, _, fix, where, _ = stacked(env, previous)
     final = "FINAL = True\n" + "# stable\n" * 20
+    # Keep real follow-up work after main acquires the shared-file change.
+    # Otherwise the records-only refusal ends this merge-history test early.
+    env.commit(where, "src/repair.py", "REPAIRED = True\n")
     original = env.commit(where, "src/shared.py", final)
     repo.git("push", "-q", "origin", f"fix/{fix}", cwd=where)
     land_on_default(repo, parent)
@@ -33,6 +36,7 @@ def test_1_close_merges_clean_default_without_replaying_intermediate_commits(env
     repo.git("merge-base", "--is-ancestor", original, "HEAD", cwd=where)
     repo.git("merge-base", "--is-ancestor", default, "HEAD", cwd=where)
     assert (where / "src/shared.py").read_text("utf-8") == final
+    assert (where / "src/repair.py").read_text("utf-8") == "REPAIRED = True\n"
     assert remote_head(repo, fix) == repo.git("rev-parse", "HEAD", cwd=where)
     assert repo.git("status", "--porcelain", cwd=where) == ""
     assert "rebase" not in closed.stderr and "--force" not in closed.stderr
