@@ -149,7 +149,9 @@ def test_3_close_checks_only_changed_client_ui_and_reports_design_problems(
     assert ignored_component not in output
     lines = output.splitlines()
     checker = next(index for index, line in enumerate(lines) if f"{css}:1 gradient-text:" in line)
-    assert lines[checker + 1].strip() == "/* impeccable-disable gradient-text -- <reason> */"
+    # The refusal sentence adds its final full stop after the last problem.
+    assert lines[checker + 1].strip().removesuffix(".") == (
+        "/* impeccable-disable gradient-text -- <reason> */")
 
     # A waiver without a reason must leave all four Forge problems in place.
     env.commit(where, shell, (
