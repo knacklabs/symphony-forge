@@ -22,9 +22,9 @@
     "id": "b49a9e99-8a9e-4d20-b508-3f34dd887349",
     "status": "clean"
   },
-  "round": 1,
+  "round": 2,
   "stacked_on": "support-js-passes-app-lint",
-  "status": "waiting for checks",
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-06T10:27:55.450240+00:00",
@@ -40,10 +40,10 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "17726cb3d7c4166efdc8c552aa5280e5f355f88d",
+    "close": "18e9d491-cd89-4e5d-b73c-79fe2adbf413",
+    "head": "c45fb36f2c25f9cccda9ea7d8423db0de58a8565",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "Review findings split from support-js-passes-app-lint: Gate: run the starter lint proofs on this pull request (tests/test_uistandards_canvas.py:71)",
   "worker": "codex"
