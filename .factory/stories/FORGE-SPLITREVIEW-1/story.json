@@ -1,6 +1,16 @@
 {
+  "approval": {
+    "at": "2026-11-06T11:58:06.220353+00:00",
+    "by": "human-via-Claude",
+    "event": "toolu_016JDHPJUYny93bcKMs2o1eK",
+    "hash": "1298cc87910be7fd4281ad240a59b068fc1d0703afd9a78834b5a675cac84f12",
+    "part_line_limit": 400,
+    "round": 3,
+    "runtime": "claude",
+    "session": "c01a489d-c76f-41c1-8371-d6f0052b027c"
+  },
   "doc": "plans/FORGE-SPLITREVIEW-1.md",
-  "status": "read",
+  "status": "approved",
   "steps": [
     {
       "at": "2026-11-06T11:17:06.540966+00:00",
@@ -17,8 +27,12 @@
     {
       "at": "2026-11-06T11:48:48.658148+00:00",
       "step": "read"
+    },
+    {
+      "at": "2026-11-06T11:58:06.220611+00:00",
+      "step": "approved"
     }
   ],
   "title": "After a conflict, close reviews only the conflict fix, and plans keep task files apart",
-  "touches": 0
+  "touches": 1
 }
