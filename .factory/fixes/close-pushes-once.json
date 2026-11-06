@@ -1,4 +1,11 @@
 {
+  "amendments": [
+    {
+      "at": "2026-11-06T15:16:32.189021+00:00",
+      "because": "The owner split the accept path into its own fix",
+      "done_when": "One close round publishes the item's branch once, after the review is saved, so the pull request's CI runs once per round on the final commit, and remote reconciliation and the review block still work"
+    }
+  ],
   "base": "899c9e1bfe3ad643b3a3a37d4edbf630d5e76efb",
   "branch": "fix/close-pushes-once",
   "chat": {
@@ -8,7 +15,7 @@
     "head": null,
     "start": "77480a4d49314d1dfefe7a213deb67782de00490"
   },
-  "done_when": "One close round publishes the item's branch once, after the review is saved, so the pull request's CI runs once per round on the final commit, and remote reconciliation and the review block still work",
+  "done_when": "A normal close round publishes the item's branch once, after the review is saved, so the pull request's CI runs once per round on the final commit; remote reconciliation and the review block still work; the accept path is handled by its own fix",
   "fix_kind": "mechanical",
   "kind": "fix",
   "known": [
