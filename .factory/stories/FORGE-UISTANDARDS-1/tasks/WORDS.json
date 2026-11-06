@@ -1,10 +1,18 @@
 {
   "branch": "task/FORGE-UISTANDARDS-1-WORDS",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-06T09:47:18.151688+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "2a616e41e81050922495ddf71832b9bc4b7a031d",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
