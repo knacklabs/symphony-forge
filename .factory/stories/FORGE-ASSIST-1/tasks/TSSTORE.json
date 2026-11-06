@@ -1,5 +1,12 @@
 {
   "branch": "task/FORGE-ASSIST-1-TSSTORE",
+  "chat": {
+    "approval": "c276549ec321871ed6b007a41985ed8ac0386fa2eb30ff0ce7b634bfea33d386",
+    "claude": null,
+    "conversation": "01a1aec1-0c28-7b22-ba82-35f1a22e16ca",
+    "head": null,
+    "start": "cd4b4f15d47bc189d30356fe17c6e3deccdb206d"
+  },
   "round": 1,
   "status": "working",
   "steps": [
