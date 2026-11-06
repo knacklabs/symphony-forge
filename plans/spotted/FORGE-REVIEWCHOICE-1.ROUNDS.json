@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tLoad cold-read limits from the reviewed checkout\tFORGE-REVIEWCHOICE-1/ROUNDS",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 785,
+      "text": "Load cold-read limits from the reviewed checkout",
+      "from": "blocking",
+      "item": "FORGE-REVIEWCHOICE-1/ROUNDS",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
