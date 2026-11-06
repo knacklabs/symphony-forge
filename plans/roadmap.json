@@ -558,6 +558,12 @@
       "title": "Client apps get an optional in-app assistant",
       "status": "pending",
       "order": 107
+    },
+    {
+      "key": "FORGE-REVIEWCHOICE-1",
+      "title": "A person can skip the model review, and forge.toml sets the review rounds",
+      "status": "pending",
+      "order": 116
     }
   ],
   "epics": [
