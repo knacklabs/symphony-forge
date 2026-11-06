@@ -15,6 +15,7 @@ Forge ignores settled repeats, so they cannot block or start another round.
 When docs/product/CONSTITUTION.md is approved, follow it. A review holds work that goes against it.
 After a merge of main, close applies a requested dismissal to the same title and file in the
 current review, even if its number changes. Only the human chooses which findings to dismiss.
+Only use the model-review skip when a person asks and no earlier review blocked the item.
 
 After a merge of the default branch, close reviews only this change's own diff against the new
 merge base, keeping earlier findings and allowances from this item's records.
