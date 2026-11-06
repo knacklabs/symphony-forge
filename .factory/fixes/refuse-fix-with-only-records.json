@@ -49,8 +49,8 @@
     "id": "0b124a81-15f5-4934-ad92-d40d20138880",
     "status": "clean"
   },
-  "round": 2,
-  "status": "waiting for checks",
+  "round": 3,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-05T20:10:36.303594+00:00",
@@ -79,10 +79,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": "82455d4d-f710-48b6-b4f8-86d851d24e5a",
-    "head": "3555fdfbfa0b9f1c81380a0e12537676b157d6d0",
+    "close": "76a9101e-6f37-4dcd-a295-46e251e1415d",
+    "head": "8b9e971d464246ee0fc69b7cffde0d51c8857011",
     "keys": {},
-    "round": 1
+    "round": 2
   },
   "why": "forge land merged a fix whose build round was killed partway: the branch held only Forge's thread record, the review said nothing to review and then clean, and the merge carried no code (issue 1387)",
   "worker": "codex"
