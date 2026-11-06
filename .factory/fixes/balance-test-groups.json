@@ -1,4 +1,11 @@
 {
+  "amendments": [
+    {
+      "at": "2026-11-06T13:02:16.988304+00:00",
+      "because": "The CI logs have no per-test times, so the data cannot be refreshed until a nightly run records them",
+      "done_when": "The test duration data is refreshed from current Linux CI timings and the six groups of a full pull request run finish within a few minutes of each other"
+    }
+  ],
   "base": "899c9e1bfe3ad643b3a3a37d4edbf630d5e76efb",
   "branch": "fix/balance-test-groups",
   "chat": {
@@ -8,7 +15,7 @@
     "head": null,
     "start": "178afe9206586c6cf4035872f134b43e8e6aebd4"
   },
-  "done_when": "The test duration data is refreshed from current Linux CI timings and the six groups of a full pull request run finish within a few minutes of each other",
+  "done_when": "The nightly full run records each test's duration and uploads it as a timing artifact, so the next refresh of the duration data can balance the six pull request groups",
   "fix_kind": "mechanical",
   "kind": "fix",
   "round": 2,
