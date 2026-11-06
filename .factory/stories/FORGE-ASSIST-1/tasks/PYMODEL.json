@@ -59,9 +59,9 @@
     "id": "c78551ce-2a34-42b9-ad81-49834ae53fbc",
     "status": "clean"
   },
-  "round": 3,
+  "round": 4,
   "stacked_on": "FORGE-ASSIST-1/PYSTORE",
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-06T07:43:24.763386+00:00",
@@ -81,10 +81,10 @@
     }
   ],
   "stuck": {
-    "close": "b1c7bf8c-f86e-44d6-8ae3-8431afbde8d7",
-    "head": "adb0be85b6654735819a24fb6b9c9684487a086c",
+    "close": "e585905c-6499-4925-a792-91d8d5e76ece",
+    "head": "0b2884925351dc4dc327a383befdd7b8e2402fa5",
     "keys": {},
-    "round": 2
+    "round": 3
   },
   "worker": "codex"
 }
