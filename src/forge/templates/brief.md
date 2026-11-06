@@ -399,6 +399,8 @@ and constitution, and explain any explicit exception:
 
 These checks belong to the production story, not canvas sign-off.
 
+Use the app-baseline skill's fixed baseline list, five-fact look method, DESIGN.md and
+fixed guard rules for every UI change. Client brand files win but must pass contrast.
 impeccable and emil-design-eng are required for every UI, prototypes included. impeccable owns
 visual design (layout, type, colour, states and copy): shape before building, then audit and polish
 before a demo. Run emil-design-eng's review checklist inside impeccable's one batched inspection,
@@ -408,7 +410,7 @@ animate). Follow the frontend convention's motion rules: stagger only when a lis
 list; keep routine app-screen motion under 300 ms; reserve longer timing for one authored landing
 page moment; keep content visible by default and enter with `@starting-style` or transitions;
 share the ease-out token `cubic-bezier(0.23, 1, 0.32, 1)`; use CSS or the Web Animations API first
-and Motion only when a Done-when item needs springs or drag. Prototypes use impeccable's Operate
+and Motion only when a Done-when item needs springs or drag. App screens and prototypes use impeccable's Operate
 mode and Emil's restraint. Scale popovers from their trigger with shadcn/Radix's transform-origin
 variable. Do not animate keyboard-driven or very frequent actions.
 

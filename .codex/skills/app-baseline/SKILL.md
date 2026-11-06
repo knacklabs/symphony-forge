@@ -10,11 +10,63 @@ gets this baseline, whether or not the story names it. The stack and its rules l
 conventions (`stack.md`, `frontend.md`) and the standards page; the design craft lives in the
 impeccable and emil-design-eng skills. This page lists what must be there and points to them.
 
+## Fixed baseline list
+
+1. Use shadcn's Sidebar with `collapsible="icon"`, grouped sections and an active item.
+   Folded icons have tooltips and an `aria-label`. Cmd or Ctrl B folds it, and the app
+   remembers its state. At phone width the sidebar becomes a sheet.
+2. The top bar holds search (Cmd or Ctrl K), the user menu and breadcrumbs from depth 3.
+   It never repeats the title. Show one h1 per page, in the page header.
+3. Use the 4-pixel Tailwind spacing scale only, no arbitrary spacing values, and one
+   page padding. Use a 24 pixel section gap and a 16 pixel card gap and field gap.
+   Data apps use table rows of 32 to 40 pixels.
+4. Use the type scale 12, 14, 16, 20, 24 and 30 pixels, at most two font families,
+   and hierarchy by weight and colour. Numbers are tabular and right-aligned.
+5. Use one accent and semantic tokens only. Status colour needs an icon and a word.
+6. Use one primary button per view and a verb on every button. Use one name for one
+   action. Give fields visible labels: a placeholder is not a label. Use single-column
+   forms and text errors beside each field. An error says the problem and the way out,
+   with no apology.
+7. Use a select for fewer than 7 options, a search box (combobox) for 7 or more,
+   and a radio group for 2 to 4 options when choices need to stay visible.
+8. Handle loading, empty (first use, no result, cleared), error, no permission and
+   partial data, with a clear next action.
+9. At 375 pixels, allow no sideways page scroll. Tables scroll inside their own box.
+   The sidebar becomes a sheet.
+10. Use plain words and realistic sample data with units. No lorem ipsum or "John Doe".
+
+## Pick the app's look
+
+Before the first canvas, write a short brief from five facts in the client's notes:
+
+1. The industry.
+2. Who uses the app and how often.
+3. The screen's job: work, read or persuade.
+4. Two or three brand words.
+5. Existing brand files.
+
+Map these facts to tokens: font pairing, one accent, radius, density and tone. Explain
+each choice from the facts, rather than a stock industry theme. Use impeccable's
+`document` step to record the choices in DESIGN.md before the first canvas.
+Ask: "Would a different client of this type get the same pick?" If yes, change one choice.
+Avoid three common machine looks: cream with a serif font and terracotta; near-black
+with a neon accent; thin editorial lines everywhere.
+Client brand files win, but must pass contrast.
+
+## Fixed guard rules
+
+- Text contrast is at least 4.5 to 1, or 3 to 1 for large text, including brand colours.
+- Body text is 16 pixels, or 14 pixels in dense tables.
+- Every control has keyboard access and a visible focus mark. Respect reduced motion.
+- Buttons and links are at least 24 pixels, or 44 pixels on touch screens.
+- Keep empty, loading and error states, one spacing scale and tabular numbers.
+- Use one icon library, Lucide, and no emoji icons or decoration.
+- App screens and prototypes use impeccable's Operate mode, with restrained effects.
+
 ## Screens for the API
 
 A new starter has no screens. The design comes first. Before any screen, use the app's existing
-design. If it has none, draft one on a design canvas from the client's brand; use a neutral design
-when there is no brand. Every API a person
+design. If it has none, use the look method above before a design canvas. Every API a person
 uses gets its screen in the client's design, built by the agent when it builds the API, with no
 need to ask. Webhooks, endpoints only agents or other systems call, and background jobs get no
 screen. Build the basic screens first, then the business screens. The demo opens on the client's
@@ -62,7 +114,7 @@ reset password, accept invite, members and settings.
 
 - shadcn's Sidebar block: collapsible, grouped sections, icon plus label, a clear active item, and
   a sheet on mobile. People always know where they are and can get anywhere.
-- Top bar with breadcrumbs, so a deep record shows its path back.
+- Top bar with breadcrumbs from depth 3, search and the user menu, never the page title.
 - ⌘K / Ctrl+K command palette (shadcn Command) for search and navigation. Power users skip the
   menu.
 - User menu with profile and sign out, and a theme switch (light, dark, system). Every app is
@@ -126,7 +178,7 @@ disagree, the frontend conventions settle it:
 - One ease-out token: `cubic-bezier(0.23, 1, 0.32, 1)`.
 - CSS and the Web Animations API first; Motion only for springs or drag.
 - impeccable's bounded checking: one batched inspection, at most one more round.
-- Prototypes are app UI in impeccable's Operate mode: Emil's restraint wins over bold effects.
+- App screens and prototypes use impeccable's Operate mode: Emil's restraint wins over bold effects.
 - Popovers scale from their trigger via Radix's transform-origin variable.
 - No animation on keyboard-driven or very frequent actions.
 
