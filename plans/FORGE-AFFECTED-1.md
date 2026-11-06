@@ -4,39 +4,24 @@
 
 ## What changes for you
 
-<What the people who use this will notice, in plain English. No IDs, codes or jargon. End each
-item with its source in plain words, such as (Source: the client's note on late orders, 12 Oct),
-or with the sourced item that needs it, such as (Needed by: the Customers screen). A source is a
-client note, a brief answer, a decision, a screen marked Build now at sign-off, a fixed rule of
-the app, or the owner's own request with its date. Name each screen, field, endpoint, tool and
-setting that the plan adds in one of these items.>
-
-<!-- For user-facing parts: run impeccable init if PRODUCT.md is absent. Design the screens
-in a Claude Design artifact; on a Codex-only host without artifact tools, use HTML artboards.
-Save each screen and its images in docs/design/<KEY>/. Copy .forge/design/support.js beside
-the HTML screens and run it for a 1440 by 900 PNG per screen. Commit the folder. Use its git tree
-id (git rev-parse HEAD:docs/design/<KEY>) in the last line below. For small changes to existing
-screens that add no screen and change no flow, use Design: none (<why>) instead.
-Remove this comment and omit
-the Design line for a backend-only story. Cold read follows the design; one plan approval binds
-these exact files. A folder edit needs its new tree id and a new plan approval.
-The rule starts with the next plan read and approval. Plans approved without a Design line
-before this rule keep their existing approval. -->
-Design: docs/design/<KEY>/ (<tree id>)
+- The pull request check of a client app runs lint, typecheck and tests only for the parts a change touches, compared with the merge base, and its log names them. Close does not run them again on the laptop; it waits for that one check.
+- Forge picks the touched parts in this order: Nx affected projects where the workspace defines its targets; else each runner's own selection (Forge's related pytest picker, vitest changed, jest changed since, Playwright only-changed); a chained command is split and each step gets its own selection; only a step with no selection runs whole.
+- A Python app without Nx gets its related pytest tests, plus ruff and mypy on the changed files.
+- The full suite runs nightly and before sign-off, as it already does when tests run in CI.
+- Forge's own repo works the same way first: its related tests run once in the pull request check, not in close as well, and the starter app smoke runs are chosen by the area a change touches.
+- New client repos get it at init. Existing client repos get the CI file on sync; the agent asks before it changes forge.toml.
 
 ## Why
 
-Tests run once, and only for the parts a change touches
-
-
+Client developers wait about 40 minutes at close. With the default setup close does not run tests on the laptop; it waits for the pull request check, and that check runs the starter's whole test script (lint, typecheck, API, hooks and Docker browser tests) for every change, because the script is one chained command that Forge cannot select from. The starters' Nx setup cannot select yet: only the two app projects define targets, and the Python starter has no Nx. In Forge's own repo the same related tests run in the builder, in close and in CI, and any template change starts every app smoke run.
 
 ## Done when
 
-<!-- One bold plain sentence per result, which the owner approves: no code names, file paths or
-test names. Its evidence, edge cases and proving tests go under the same number in Done-when
-details. -->
-
-1. **Something anyone can observe once this is done.**
+1. **A change to a client app runs lint, typecheck and tests only for the parts it touches, once, in the pull request check, and the log names those parts.**
+2. **A Python app without Nx runs only its related pytest tests and checks the changed files.**
+3. **The full suite runs nightly and before sign-off.**
+4. **Forge's own repo runs a change's related tests once and picks app smoke runs by the changed area.**
+5. **New client repos get it at init; existing client repos get the CI file on sync, and the agent asks before forge.toml changes.**
 
 ## Risks
 
