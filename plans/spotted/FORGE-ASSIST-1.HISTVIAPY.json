@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/templates/starter-python/apps/api/app/history/schema.py\tUpdate the project-history contract test for viaAgent\tFORGE-ASSIST-1/HISTVIAPY",
+      "kind": "bug",
+      "path": "src/forge/templates/starter-python/apps/api/app/history/schema.py",
+      "line": 18,
+      "text": "Update the project-history contract test for viaAgent",
+      "from": "blocking",
+      "item": "FORGE-ASSIST-1/HISTVIAPY",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

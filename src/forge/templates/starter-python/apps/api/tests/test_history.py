@@ -8,6 +8,7 @@ from typing import cast
 from uuid import uuid4
 
 import httpx
+from conftest import call_notifications
 from sqlalchemy.orm import Session
 from test_api import credentials, sign_up
 from test_invites import invite
@@ -95,9 +96,10 @@ def test_an_invite_and_a_role_change_write_change_history(
         f"Invited {invited['email']}",
     ]
     for entry in entries:
-        assert set(entry) == {"id", "actorEmail", "summary", "createdAtUtc"}
+        assert set(entry) == {"id", "actorEmail", "viaAgent", "summary", "createdAtUtc"}
         assert isinstance(entry["id"], str) and entry["id"]
         assert entry["actorEmail"] == admin["email"]
+        assert entry["viaAgent"] is None
         timestamp = datetime.fromisoformat(entry["createdAtUtc"])
         assert timestamp.tzinfo is not None
         assert timestamp.utcoffset() == timedelta(0)
@@ -157,3 +159,48 @@ def test_change_history_exports_as_csv(client: httpx.Client) -> None:
     assert [(row[1], row[2]) for row in rows[1:]] == [
         (admin["email"], f"Invited {email}") for email in reversed(emails)
     ]
+
+
+def test_history_list_and_csv_show_the_agent_that_acts_for_a_person(
+    client: httpx.Client,
+) -> None:
+    # Audit: real HTTP/Postgres guards DTO attribution and CSV quoting, including
+    # plain-person changes. Dropping the DTO field or suffix breaks this; the
+    # storage-only case cannot detect either. Reuse the service-call harness.
+    admin, _ = sign_up(client)
+    me = client.get("/api/v1/auth/me")
+    assert me.status_code == 200, me.text
+    account_id = me.json()["data"]["id"]
+    call_notifications(
+        f"""
+from app.core import AccountPrincipal
+membership = OrganisationsService(db, HistoryService(db)).membership_for(
+    UUID({account_id!r})
+)
+if membership is None:
+    raise RuntimeError("The test admin has no organisation membership.")
+account = AccountPrincipal(
+    membership.id, membership.email,
+    membership.organisation_id, "admin", "the assistant",
+)
+HistoryService(db).record(account, "project.created", "Assistant change")
+person = AccountPrincipal(account.id, account.email, account.organisation_id, "admin")
+HistoryService(db).record(person, "project.created", "Person change")
+db.commit()
+result = None
+"""
+    )
+    response = client.get("/api/v1/history")
+    assert response.status_code == 200, response.text
+    entries = {entry["summary"]: entry for entry in response.json()["data"]}
+    assert entries["Assistant change"]["actorEmail"] == admin["email"]
+    assert entries["Assistant change"]["viaAgent"] == "the assistant"
+    assert entries["Person change"]["actorEmail"] == admin["email"]
+    assert entries["Person change"]["viaAgent"] is None
+    exported = client.get("/api/v1/history/export")
+    assert exported.status_code == 200, exported.text
+    rows = list(csv.DictReader(io.StringIO(exported.text)))
+    assert {row["What"]: row["Who"] for row in rows} == {
+        "Assistant change": f"{admin['email']}, via the assistant",
+        "Person change": admin["email"],
+    }

@@ -746,6 +746,12 @@ export interface components {
              */
             actorEmail: string;
             /**
+             * Viaagent
+             * @description The agent that acted for the person, if any.
+             * @example the assistant
+             */
+            viaAgent?: string | null;
+            /**
              * Summary
              * @description What changed.
              * @example Invited grace@example.com
