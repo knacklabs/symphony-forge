@@ -66,7 +66,7 @@
     "id": "a6864b57-5612-4ef2-9852-76e8b9193255",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -79,10 +79,12 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "860e8aa42a5d35b91f6aaa5387eab8f04cee807b",
-    "keys": {},
-    "round": null
+    "close": "47e4d720-1cc0-4a82-b641-970a20ea5075",
+    "head": "b542ca3543cbfd2a826030910597683b8d627d88",
+    "keys": {
+      "the open P0 gate: python copy-in smoke test conflicts with the starter's table inventory in tests/test_assistant_storepy.py": 1
+    },
+    "round": 1
   },
   "worker": "codex"
 }
