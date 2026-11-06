@@ -20,9 +20,13 @@ def copy_assistant_python(app: Path) -> None:
         skill / "apps" / "api" / "migrations" / "versions" / "20261106_assistant.py",
         api / "migrations" / "versions" / "20261106_assistant.py",
     )
-    shutil.copyfile(
-        skill / "apps" / "api" / "tests" / "test_assistant_chats.py",
-        api / "tests" / "test_assistant_chats.py",
+    for test in (skill / "apps/api/tests").glob("test_assistant_*.py"):
+        shutil.copyfile(test, api / "tests" / test.name)
+    shutil.copytree(skill / "libs/assistant/contracts", app / "libs/assistant/contracts")
+    _replace_once(
+        app / "package.json",
+        "tsc --build libs/shared/util/tsconfig.json",
+        "tsc --build libs/assistant/contracts/tsconfig.json libs/shared/util/tsconfig.json",
     )
     _replace_once(
         api / "tests" / "test_module_schemas.py",
@@ -39,7 +43,7 @@ def copy_assistant_python(app: Path) -> None:
     _replace_once(
         pyproject,
         '    "mcp==2.3.0",',
-        '    "mcp==2.3.0",\n    "langgraph-checkpoint-postgres==3.2.0",',
+        '    "mcp==2.3.0",\n    "langgraph-checkpoint-postgres==3.2.0",\n    "langgraph==1.2.20",',
     )
     _replace_once(
         pyproject,
@@ -101,8 +105,13 @@ def copy_assistant_python(app: Path) -> None:
     _replace_once(
         main,
         "from app.auth import router as auth_router\n",
-        "from app.assistant import assistant_lifespan\n"
+        "from app.assistant import assistant_lifespan, router as assistant_router\n"
         "from app.auth import router as auth_router\n",
+    )
+    _replace_once(
+        main,
+        "app.include_router(auth_router)",
+        "app.include_router(auth_router)\napp.include_router(assistant_router)",
     )
     _replace_once(
         main,
