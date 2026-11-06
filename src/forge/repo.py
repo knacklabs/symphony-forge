@@ -24,7 +24,7 @@ from pathlib import Path
 from threading import RLock
 from typing import Any, NoReturn
 
-from forge import __version__, round_limits
+from forge import __version__
 
 # Every Forge command loads this shared runtime; child processes consume the recorded lock.
 os.environ["UV_FROZEN"] = "1"
@@ -590,12 +590,12 @@ KEYS = {"version": str, "repo": str, "stage": str, "workers": str, "tools": str,
         "signoff": str, "sample_data": bool, "runner": str, "codex_fast": str, "stop_default": str,
         "merge": str, "stack": str, "test_place": str, "checks": list, "interfaces": list,
         "always_test": list, "groups": int, "models": dict,
-        "added_work_min_gain": int, "always_block": list, **round_limits.KEYS}
+        "added_work_min_gain": int, "always_block": list, "cold_read_rounds": int, "task_review_rounds": int}
 # A client repo without a stage counts as live: prototype rules never reach an app by default.
 DEFAULTS = {"repo": "client", "stage": "live", "workers": "codex", "tools": "both", "test": "", "fast_test": "",
             "signoff": "", "runner": "ubuntu-latest", "codex_fast": "needed",
             "stop_default": "narrow", "merge": "human", "stack": "on", "checks": [], "interfaces": [], "always_test": [],
-            "models": {}, **round_limits.DEFAULTS}
+            "models": {}, "cold_read_rounds": 2, "task_review_rounds": 2}
 # ponytail: retain stop_default's old values so existing forge.toml files still load.
 CHOICES = {"repo": ("client", "forge-source"), "stage": ("live", "prototype"),
            "workers": ("claude", "codex", "split"), "tools": ("both", "claude", "codex"), "merge": ("agent", "human"),
@@ -936,8 +936,11 @@ def _config_problem(data: dict[str, Any]) -> str:
             return f"{key} must be a string"
         if kind is bool and type(value) is not bool:
             return f"{key} must be true or false"
-        if kind is int and (round_limits.problem(key, value) or not (type(value) is int and value >= 1)):
-            return round_limits.problem(key, value) or f"{key} must be a whole number of 1 or more"
+        if key in ("cold_read_rounds", "task_review_rounds"):
+            from forge import round_limits
+            if issue := round_limits.problem(key, value): return issue
+        if kind is int and not (type(value) is int and value >= 1):
+            return f"{key} must be a whole number of 1 or more"
         if kind is list and not (isinstance(value, list) and all(isinstance(v, str) for v in value)):
             return f"{key} must be a list of strings"
         if key in CHOICES and value not in CHOICES[key]:
