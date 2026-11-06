@@ -296,6 +296,7 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
                   "      - uses: astral-sh/setup-uv@v6\n"
                   "<full-npm-cache><full-node>      - run: <full-install>\n"
                   "      - run: forge test --full\n"
+                  "<full-timings>"
                   "\n  full-suite-result:\n"
                   "    needs: full-suite\n"
                   "    if: always() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)\n"
@@ -329,6 +330,16 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
                 # Forge's own Node client tests download jest and vitest into npm's cache.
                 .replace("<npm-cache>", npm_cache)
                 .replace("<full-npm-cache>", full_npm_cache)
+                .replace("<full-timings>", (
+                    "        env:\n"
+                    "          PYTEST_ADDOPTS: ${{ github.event_name == 'schedule' && '--durations=0 --store-durations --clean-durations' || '--durations=0' }}\n"
+                    "      - uses: actions/upload-artifact@v4\n"
+                    "        if: always() && github.event_name == 'schedule'\n"
+                    "        with:\n"
+                    "          name: linux-test-durations-${{ matrix.group }}\n"
+                    "          path: .test_durations\n"
+                    "          include-hidden-files: true\n"
+                    "          retention-days: 7\n") if source else "")
                 .replace("<node>", node)
                 .replace("<full-node>", full_node)
                 .replace("<full-install>", "uv tool install ." if source
