@@ -20,7 +20,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any
 
-from forge.close_remote import reconcile
+from forge.close_remote import push_replay, reconcile, save_replay
 from forge import __version__, app_baseline, checks, codex, design, githooks, init, migration_warnings, repo, review, score, spotted, story, sync, task, time_records
 
 REFUSALS = {
@@ -40,8 +40,6 @@ REFUSALS = {
                         "origin {branch}, then forge close {item}"),
     "replay_remote": ("The remote branch has commits this checkout does not have, so Forge left it alone.",
                       "fetch and reconcile {branch}, then forge close {item}"),
-    "replay_push": ("Git refused the replayed push, so Forge restored the original commits in this checkout.",
-                    "check the remote branch and reconcile {branch}, then forge close {item}"),
     "base_merged_by_hand": ("{item} builds on {base}, which was merged on GitHub outside Forge, so its pull request still targets {base}'s branch.",
                             "gh pr edit {number} --base {default}, then forge close {item}"),
     "bad_dismiss": ("Each --dismiss needs a finding number from the latest review and its own "
@@ -202,7 +200,7 @@ def close(args: argparse.Namespace) -> int:
         legacy_diff = review.fingerprint(previous["commit"], item, top, state,
                                          f"origin/{default}", branch_diff=True)
     try:
-        _merge_default(top, item, branch, default, pr, cfg, refreshed=refreshed)
+        _merge_default(top, item, branch, default, pr, cfg, refreshed=refreshed, publish=False)
     except repo.Refused as error:
         if error.entry in (REFUSALS["conflict"], REFUSALS["replay_conflict"]):
             if not time_records.pending_merge_wait(top, item, (pr or {}).get("body") or "", reason="merge conflict"):
@@ -422,7 +420,7 @@ def close(args: argparse.Namespace) -> int:
         _save(top, item, state, message, *noted)
     elif noted:  # a reused clean review still records what the worker spotted
         _save(top, item, state, f"Review of {item}: {result['status']}", *noted)
-    _push(top, branch)
+    _push(top, branch, reviewed=True)
     head = repo.git("rev-parse", "HEAD", cwd=top)
     pr = _publish(top, item, state, branch, pr_target, pr, result, evidence)
     _attach(top, item, branch)
@@ -470,7 +468,7 @@ def close(args: argparse.Namespace) -> int:
         _gh(top, "pr", "ready", str(pr["number"]))
     # Main can move during checks; DRAFT also hides an up-to-date requirement until ready.
     pr = _pull_request(top, branch) or pr
-    _merge_default(top, item, branch, default, pr, cfg)
+    _merge_default(top, item, branch, default, pr, cfg, publish=False)
     if repo.git("rev-parse", "HEAD", cwd=top) != head:
         _publish(top, item, state, branch, default, pr, result, evidence)
         repo.resume_pin(top, cfg["version"], getattr(args, "land_rounds", None),
@@ -678,7 +676,8 @@ def _check_line(top: Path, item: str, commit: str, base: str, where: str) -> boo
 
 
 def _merge_default(top: Path, item: str, branch: str, default: str,
-                   pr: dict[str, Any] | None, cfg: dict[str, Any], refreshed: bool = False) -> None:
+                   pr: dict[str, Any] | None, cfg: dict[str, Any], refreshed: bool = False,
+                   *, publish: bool = True) -> None:
     migration_warnings.fetch_default(top, default, refreshed=refreshed)
     repo.command_fact(("fetch default", default), top, lambda: None)
     state = repo.read_state(item, top) or {}
@@ -736,11 +735,9 @@ def _merge_default(top: Path, item: str, branch: str, default: str,
         if task.show(original, ".factory/client-signoff.json", top) is not None:
             repo.git("checkout", original, "--", ".factory/client-signoff.json", cwd=top)
             repo.commit_state("Keep the sign-off rounds after replay", ".factory/client-signoff.json", top=top)
-        published = repo.run("git", "push", "-q", "-u", f"--force-with-lease={remote_ref}:{lease}",
-                             "origin", branch, cwd=top)
-        if published.returncode:
-            repo.git("reset", "--keep", original, cwd=top)
-            repo.refuse(REFUSALS["replay_push"], branch=branch, item=item)
+        save_replay(top, branch, original, lease)
+        if publish:
+            _push(top, branch)
         return
     if (trial.returncode == 0 and (pr or {}).get("mergeable") != "CONFLICTING"
             and (pr or {}).get("mergeStateStatus") != "BEHIND"):
@@ -854,7 +851,7 @@ def synced_changes(top: Path) -> list[str]:
     return [entry[3:] for entry in status.split("\0") if entry and not entry.startswith(f"?? {hooks}")]
 
 
-def _push(top: Path, branch: str) -> None:
+def _push(top: Path, branch: str, *, reviewed: bool = False) -> None:
     """Merge rejected remote history; retry other push failures after 1, 2 and 4 seconds."""
     tags = repo.git("for-each-ref", "--format=%(refname)", "--merged", branch,
                     "refs/tags/forge-start/", cwd=top).splitlines()
@@ -863,12 +860,17 @@ def _push(top: Path, branch: str) -> None:
                         f"refs/tags/forge-start/{branch}", f"refs/tags/forge-plan/{branch}",
                         cwd=top).splitlines()
     tags = list(dict.fromkeys(tags + retained))
+    if push_replay(top, branch, tags):
+        return
     for wait in (1, 2, 4, None):
         try:
             repo.git("push", "-q", "--atomic", "-u", "origin", branch, *tags, cwd=top)
             return
         except subprocess.CalledProcessError as error:
             if re.search(r"\[rejected\].*\((non-fast-forward|fetch first)\)", error.stderr or ""):
+                if reviewed:
+                    item = (review.branch_item(branch, top) or (branch, {}))[0]
+                    repo.refuse(("Remote work arrived after the review.", "forge close {item}"), item=item)
                 reconcile(top, branch)
                 repo.git("push", "-q", "--atomic", "-u", "origin", branch, *tags, cwd=top)
                 return

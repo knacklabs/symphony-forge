@@ -1910,6 +1910,10 @@ review and green checks on the final pushed head. After `forge fix amend`, close
 the pull request's Done when line. Use `--append "<text>"` to add text with a space between
 the old and new text. `--done "<done when>"` replaces the whole Done-when. Both options show
 the old and new text before writing, and need `--because "<why>"`.
+If another machine moves the remote branch during review, close stops before publication.
+Run close again to reconcile that work, review and test it before Ready.
+A follow-up replay also waits until the saved review for its one leased push. An interrupted
+review keeps the replay locally for the next close; a refused lease restores the original commits.
 Land runs work first for a fix with only its start and state records, including after amend.
 A fix that changes only `.factory/` and spotted records against the default branch cannot merge.
 Close and land say the build round did not finish and give `forge work <fix>` as the next step.
