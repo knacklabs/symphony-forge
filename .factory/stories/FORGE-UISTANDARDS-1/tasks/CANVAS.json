@@ -37,39 +37,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "b599e33e36471b0d25c36fcf610c1fc74eaf0b068b2fb7cb43f2efb12884ab54",
-    "changed": "6d242f442f0672a2213a869e3a6f294d0466a28222f1d5ef5afb37084ef7cf1d",
-    "commit": "64cd6ac4126f1787e0345085530f60d1885d75a5",
+    "branch_diff": "05b407deac2c487a99059e358ae66fd92a519fcb7099ae7f909a261a608b7445",
+    "changed": "cf833fc11b97574d0fc952d3b920b9033670adc0cc8976feb101c8464cb05be9",
+    "commit": "ca34958643a743af25b0f98a83976139cf070993",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 5, Work 3, Harm 3\nRaise: Not done. Case: normal use - rendering a clean canvas with installed Chrome. `--window-size=375,900` sets the browser window, whose minimum width Chrome clamps to 500 pixels, rather than establishing a 375-pixel viewport. Consequently, the load-time `innerWidth!==375` check marks a clean page as overflowing and prevents publication. Chromium's [maintainers confirm the minimum](https://groups.google.com/a/chromium.org/g/devtools-reviews/c/yl-2bhnESck), and its [command handler](https://raw.githubusercontent.com/chromium/chromium/main/components/headless/command_handler/headless_command.js) performs screenshot sizing after loading and dumping the DOM. Establish the actual viewport before loading and measuring the canvas; the stand-in browser currently assumes the requested window width is honored.",
-        "file": "src/forge/templates/design/support.js",
-        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
-        "gain": 5,
-        "harm": 3,
-        "line": 61,
-        "priority": "P1",
-        "title": "Not done: screenshots at 1440 and 375 width",
-        "work": 3
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Not done. Case: normal use - a canvas populates a chart or table asynchronously after load. The overflow marker is calculated only in the `load` handler, while Chrome subsequently runs the requested 2,000 milliseconds of virtual time before capture. For example, a load handler scheduling a 500-pixel-wide element after 100 milliseconds leaves the marker `ok`, although the captured phone layout overflows. The renderer then publishes every image. Chrome's [command handler](https://raw.githubusercontent.com/chromium/chromium/main/components/headless/command_handler/headless_command.js) explicitly waits for the virtual-time budget after load. Measure the settled layout used for capture, and cover this delayed-content case.",
-        "file": "src/forge/templates/design/support.js",
-        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
-        "gain": 3,
-        "harm": 3,
-        "line": 54,
-        "priority": "P1",
-        "title": "Not done: A canvas that fails writes no images",
-        "work": 2
-      }
-    ],
-    "id": "9bdcb850-560d-4e6e-9a5d-ecb4eeedbfe0",
+    "findings": [],
+    "id": "56f1b1fd-1c46-4bcb-ac0c-4c97b988fa7c",
     "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-06T05:39:01.424313+00:00",
@@ -77,6 +54,10 @@
     },
     {
       "at": "2026-11-06T05:54:05.599313+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-06T06:52:50.991029+00:00",
       "step": "review"
     }
   ],
