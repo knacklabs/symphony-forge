@@ -38,17 +38,17 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "f238687798798be004bd62f662a98854374032ef42a53248b5cbe235366cd093",
-    "changed": "cc868e3ca30f3c8b17a46d8d81901899cfbde7b4faaac2d86d09b2a7c56f8204",
-    "commit": "cc98176c773be8c784da420fb47bbae3acd7a1f2",
+    "branch_diff": "693de4cd9298be4e5deea1ffc5b886ac8d12dc0a61e904e03ea9be7ff608112f",
+    "changed": "c182e1ced0486ff08dcd11828a5e36c4f614c34e80306550bfa2b51c08967b2b",
+    "commit": "dff5c14cae7641bcfd9278e9c8f0d25d67505b3c",
     "dismissals": [],
     "findings": [],
-    "id": "8e90fca6-7df1-4d3e-b1a0-549f5b080c15",
+    "id": "71bec9e2-8bc6-461e-ac33-4de7ed1d69af",
     "status": "clean"
   },
   "round": 3,
   "stacked_on": "FORGE-ASSIST-1/PYSTORE",
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-06T07:43:19.390515+00:00",
@@ -60,6 +60,10 @@
     },
     {
       "at": "2026-11-06T08:17:31.078942+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-06T11:34:12.277635+00:00",
       "step": "review"
     }
   ],
