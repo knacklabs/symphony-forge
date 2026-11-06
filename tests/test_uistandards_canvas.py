@@ -66,6 +66,9 @@ def test_2_canvases_check_before_publishing(repo, tmp_path, claude_payload, env)
     node = shutil.which("node")
     assert node, "Node is required to run the design canvas renderer."
     template = ROOT / "src/forge/templates/design"
+    # Starter lint already defines process. Node alone cannot detect its redeclaration.
+    for script in template.rglob("*.js"):
+        assert "/* global process */" not in script.read_text(encoding="utf-8"), script
     (tmp_path / ".forge/design").mkdir(parents=True)
     (tmp_path / ".forge/design/ui-checks.js").write_text(
         (template / "ui-checks.js").read_text(encoding="utf-8"), encoding="utf-8")
