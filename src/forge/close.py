@@ -293,8 +293,9 @@ def close(args: argparse.Namespace) -> int:
                                      branch_diff=True)
     ancestor = repo.git("merge-base", base, head, cwd=top)
     # The immutable read above is reused unless pushing merged remote work into HEAD.
-    records_only = all(path.startswith(review.BOOKKEEPING) or repo.SIGNOFF.fullmatch(path) for path in repo.git(
-        "diff", "--name-only", "-z", "--no-renames", ancestor, head, cwd=top).split("\0") if path)
+    files = repo.git("diff", "--name-only", "-z", "--no-renames", ancestor, head, cwd=top).split("\0")
+    task.require_fix_changes(item, state, top, files)
+    records_only = all(path.startswith(review.BOOKKEEPING) or repo.SIGNOFF.fullmatch(path) for path in files if path)
     if records_only:
         print("nothing to review: only Forge's records changed", flush=True)
     replayed = bool(stacked_on and previous.get("commit") and repo.run(
