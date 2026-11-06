@@ -4,6 +4,7 @@ Audit: init/sync own this prompt and app-preservation contract. A missing rule
 or sync entry fails it; package-byte tests do not cover these rules. No new
 production seam is needed. Static prompt checks retain the public wording.
 """
+import re
 import shutil
 
 import pytest
@@ -77,4 +78,7 @@ def test_4_sync_preserves_old_ui_and_adds_no_doctor_warning(repo):
     warnings_before = {line for line in doctor_before.stdout.splitlines() if line.startswith("- ")}
     warnings_after = {line for line in doctor_after.stdout.splitlines() if line.startswith("- ")}
     assert warnings_after <= warnings_before
-    assert doctor_after.stderr == doctor_before.stderr
+    # Repairs reduce the summary count too. Keep every other stderr word checked.
+    summary_count = r"(?<=forge doctor found )\d+(?= problem\(s\))"
+    assert re.sub(summary_count, "<count>", doctor_after.stderr) == re.sub(
+        summary_count, "<count>", doctor_before.stderr)
