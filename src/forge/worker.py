@@ -24,12 +24,14 @@ HERE = Path(__file__).parent
 CONVENTIONS = (HERE / "templates" / "conventions").resolve()
 TEST_PATHS = repo.TEST_PATHS
 REVIEW_LOOP = (
-    "At the round limit (review round two for a story part, round one for a fix), close stops when "
-    "findings below P0 are still open. Wait for the owner's recorded choice of one more round, "
+    "At the round limit (the repo's setting, two by default) for a task review, or after "
+    "one round for a fix, close stops when findings below P0 are still open. "
+    "Wait for the owner's recorded choice of one more round, "
     "split or accept. An open P0 never stops for the owner: fix it in this round. "
     "When the same P0 stays open two rounds in a row, Forge stops and asks the owner. "
-    "A cold read stops after round two when notes below P0 are still open, or when P0 notes are "
-    "open in two rounds in a row. The coordinator records the owner's choice with "
+    "A cold read stops at the round limit (the repo's setting, two by default) when notes below "
+    "P0 are still open, or when P0 notes are open in two rounds in a row. "
+    "The coordinator records the owner's choice with "
     "forge read <target> --resolve <accept|more|split> --reason \"<human's choice>\".")
 LIVE_RUN = ("Before review round two, run the real flow once (not tests or stubs). "
             "Add `Live run: <what you ran> - <what you saw>` to your `Functional check:` paragraph.")

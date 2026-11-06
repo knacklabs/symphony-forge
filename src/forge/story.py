@@ -173,7 +173,7 @@ def read(args: Any) -> int:
     record, findings = _record(old)
     choice, reason = getattr(args, "resolve", None), getattr(args, "reason", None)
     if choice or reason is not None:
-        if not choice or not reason or not reason.strip() or not stopped(record, findings):
+        if not choice or not reason or not reason.strip() or not stopped(record, findings, config["cold_read_rounds"]):
             repo.refuse(REFUSALS["bad_choice"], target=target)
         folder = design.check(top, _text(doc)) if choice == "accept" and is_story else None
         reason = " ".join(reason.split())
@@ -193,7 +193,7 @@ def read(args: Any) -> int:
             f"Next: forge read {target}" if choice == "more" else
             f"{choice.capitalize()} the part as agreed, then forge read {target}."))
         return 0
-    if stopped(record, findings):
+    if stopped(record, findings, config["cold_read_rounds"]):
         repo.refuse(REFUSALS["read_loop"], target=target, round=record["round"],
                     question=read_question(_text(doc), old))
     later = bool(record.get("read_hash"))
@@ -423,7 +423,7 @@ def read_result(top: Path, target: str, result: dict[str, Any], said: str,
         outcome = "found nothing" if said == "No findings." else "had no blocking notes"
         repo.commit_state(f"Round {round_number} of the cold read of {rel} {outcome}", *changed,
                           top=top)
-    if stopped(record, f"{kept}\n\n## Round {round_number}\n\n{said}\n"):
+    if stopped(record, f"{kept}\n\n## Round {round_number}\n\n{said}\n", repo.config(top)["cold_read_rounds"]):
         repo.refuse(REFUSALS["read_loop"], target=target, round=round_number,
                     question=read_question(text.decode("utf-8"), _text(notes)))
     print(f"Round {round_number} of the cold read of {rel} {outcome}.\nNext: forge next" if clean else
@@ -724,14 +724,14 @@ def passed(record: dict[str, str], findings: str) -> bool:
             and not any(score.note_holds(body) for body in parts[2::2]))
 
 
-def stopped(record: dict[str, str], findings: str) -> bool:
+def stopped(record: dict[str, str], findings: str, limit: int = 2) -> bool:
     """At the limit, P0s get a round before a repeated P0 stop; other open notes stop."""
     latest = _latest(record, findings)
     previous = {n: b for n, b in _latest(
         {"round": str(int(record.get("round") or 0) - 1)}, findings).items() if n not in latest}
     p0 = lambda notes: any(score.note_holds(FINDING.sub("", block, count=1))
                            and score.bar(score.parse(block)) == "block" for block in notes.values())
-    return (int(record.get("round") or 0) >= 2 and not passed(record, findings)
+    return (int(record.get("round") or 0) >= limit and not passed(record, findings)
             and not record.get("loop_choice") and (not p0(latest) or p0(previous)))
 
 
@@ -1194,7 +1194,7 @@ COMMANDS = [
               (('--resolve',), {"choices": ["accept", "more", "split"]}),
               (('--reason',), {})],
      "position": 90,
-     "listing": '| `forge read <KEY or spec or decision>` | Reads a story doc, spec or decision. After round two, open notes below P0, or P0 notes in two rounds in a row, wait for `--resolve more`, `split` or `accept` with `--reason "<human\'s choice>"` |'},
+     "listing": '| `forge read <KEY or spec or decision>` | Reads a story doc, spec or decision. At the round limit, open notes below P0, or P0 notes in two rounds in a row, wait for `--resolve more`, `split` or `accept` with `--reason "<human\'s choice>"` |'},
 ]
 
 GROUP_HELP = {"story": "Start a story, or record its outcome"}

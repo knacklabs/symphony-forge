@@ -347,7 +347,8 @@ def _report(top: Path, history: dict[str, Any] | None = None,
                 record, findings = story._record(text)  # pyright: ignore[reportPrivateUsage]
                 spec_text = spec.read_text(encoding="utf-8")
                 fields, body = story._record(spec_text)  # pyright: ignore[reportPrivateUsage]
-                if story.stopped(record, findings):
+                config = repo.config(path) if (path / "forge.toml").is_file() else repo.DEFAULTS
+                if story.stopped(record, findings, config["cold_read_rounds"]):
                     lines += _read_loop(spec.stem, spec_text, text, path)
                 elif (fields.get("status") == "draft" and story.passed(record, findings)
                       and record.get("read_hash") == repo.git("hash-object", "--", str(spec), cwd=path)):
@@ -700,7 +701,7 @@ def _story(top: Path, key: str, path: Path | None, text: str,
         ready = [name for name in ready
                  if not assignments[name] or assignments[name].casefold() == login.casefold()]
         ready.sort(key=lambda name: not assignments[name])
-    reread = _next_round(key, notes, doc_hash, title, required, text)
+    reread = _next_round(key, notes, doc_hash, title, required, text, path or top)
     if readiness is not None:
         readiness["waits"] = waits
     if reread:  # a doc changed after approval gets a round before its next task starts
@@ -747,7 +748,7 @@ def _approval(top: Path, key: str, path: Path, title: str, digest: str,
     """Planning, read or waiting for approval: what's missing, or how to ask for approval."""
     notes = story._text(path / "plans" / f"{key}.read.md")  # pyright: ignore[reportPrivateUsage]
     reread = _next_round(key, notes, repo.git("hash-object", "--", f"plans/{key}.md", cwd=path), title,
-                         story.rounds(notes), text)
+                         story.rounds(notes), text, path)
     if reread:
         return reread
     try:
@@ -771,7 +772,7 @@ def _approval(top: Path, key: str, path: Path, title: str, digest: str,
             '"Request changes", "Stop"']
 
 
-def _next_round(key: str, text: str, doc_hash: str, title: str, required: bool, doc: str) -> list[str]:
+def _next_round(key: str, text: str, doc_hash: str, title: str, required: bool, doc: str, top: Path) -> list[str]:
     """The next round of a read in rounds (`required`) whose latest round had findings or whose doc
     changed above `## For the builders`: `text` is the notes, `doc_hash` and `doc` the doc's git
     hash and text."""
@@ -782,11 +783,13 @@ def _next_round(key: str, text: str, doc_hash: str, title: str, required: bool, 
         return []
     if not record.get("round"):
         return [f"Planning {title}: {notes} has no round of cold read.", f"Next: forge read {key}"]
-    if story.stopped(record, findings):
+    config = repo.config(top) if (top / "forge.toml").is_file() else repo.DEFAULTS
+    limit = config["cold_read_rounds"]
+    if story.stopped(record, findings, limit):
         return _read_loop(key, doc, text)
     if not story.passed(record, findings):
         why = f"round {done} of its cold read had findings"
-        wait = [f"Cold read round {done} of 2: {len(story._latest(record, findings))} notes to answer."]
+        wait = [f"Cold read round {done} of {limit}: {len(story._latest(record, findings))} notes to answer."]
     elif story.changed_since_read(record.get("read_hash"), doc_hash, doc):
         why = f"plans/{key}.md changed after round {done} of its cold read"
         wait = []

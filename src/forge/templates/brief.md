@@ -27,8 +27,8 @@ close and land refuse it because the build round did not finish. Run `forge work
 The refusal lists untracked files. Code and documentation changes still qualify as work.
 If unreadable Autoreview output stops close, the refusal shows the saved output path, even if the retry writes no report.
 From the second review round, close checks the previous round's findings and new P0s that
-happen in normal use. A round-one fix that breaks the main path counts as a P0. At the round
-limit, open findings below P0 need the owner's choice before they become follow-ups. `Not done` blocks
+happen in normal use. A round-one fix that breaks the main path counts as a P0.
+`task_review_rounds` sets the task review limit. At that limit (the repo's setting, two by default), open findings below P0 need the owner's choice before they become follow-ups. `Not done` blocks
 only against an owner-approved Done-when item (the fix's whole Done-when line or any sentence in it),
 including a title that starts with that item and adds words after it; builder details
 are guidance and never block as `Not done`.

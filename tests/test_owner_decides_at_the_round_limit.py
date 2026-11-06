@@ -181,7 +181,7 @@ def test_3_from_round_two_a_cold_read_with_an_open_note_below_p0_stops_for_the_o
     second = repo.forge("read", target, cwd=where)
     calls_log = repo.bin / "claude-calls.jsonl"
     prompt = json.loads(calls_log.read_text("utf-8").splitlines()[-1])["prompt"]
-    assert "Forge asks the owner about every other open note after round two." in " ".join(prompt.split())
+    assert "Forge asks the owner about every other open note at the round limit." in " ".join(prompt.split())
     if case == "p0 once":
         assert second.returncode == 0, second.stdout + second.stderr
         assert "Wrote round 2" in second.stdout
@@ -252,11 +252,11 @@ def test_4_clients_get_the_owner_decides_at_the_round_limit_guide(unsynced_up, a
         client = up.folder
 
     sentences = (
-        "At the round limit, open findings below P0 stop the item and ask the owner: one more round, split or accept.",
+        "At the round limit (the repo's setting, two by default), open findings below P0 stop the item and ask the owner: one more round, split or accept.",
         "An open P0 never stops for the owner; the worker keeps fixing it.",
         "When two rounds in a row leave close's tests failing or the same P0 open, `forge work` stops the item.",
         "Accept makes the open findings follow-ups in Known issues with the owner's reason.",
-        "A cold read stops after round two when notes below P0 are still open, or when P0 notes are open in two rounds in a row.",
+        "A cold read stops at the round limit (the repo's setting, two by default) when notes below P0 are still open, or when P0 notes are open in two rounds in a row.",
     )
     for host in (".claude", ".codex"):
         guide = " ".join((client / host / "skills/forge/SKILL.md").read_text("utf-8").split())
