@@ -90,7 +90,7 @@
     "id": "a316af88-cf55-431b-a905-d31b4abb8e2a",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "stacked_on": "FORGE-ASSIST-1/PYSTORE",
   "status": "fixing",
   "steps": [
@@ -104,10 +104,12 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "ba6dc4d237b4539ad6f50eacf31007c0be84d56e",
-    "keys": {},
-    "round": null
+    "close": "a20fc07c-b92d-4ec3-9eed-1d550ba06d26",
+    "head": "0fc191cf84cfcb563b884146ead4c903e46a62d4",
+    "keys": {
+      "the open P0 agents: never take secrets by speech or chat in src/forge/templates/skills/agents/assistant-module/python/apps/api/app/assistant/guard.py": 1
+    },
+    "round": 1
   },
   "worker": "codex"
 }
