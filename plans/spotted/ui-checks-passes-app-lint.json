@@ -1,0 +1,59 @@
+{
+  "items": [
+    {
+      "key": "bug\ttests/test_feature_command.py\tGate: generated Python API and browser proofs never run in CI\tFORGE-FEATURE-1/PY",
+      "kind": "bug",
+      "path": "tests/test_feature_command.py",
+      "line": 406,
+      "text": "Gate: generated Python API and browser proofs never run in CI",
+      "from": "blocking",
+      "item": "FORGE-FEATURE-1/PY",
+      "status": "done",
+      "closed_by": "ui-checks-passes-app-lint"
+    },
+    {
+      "key": "bug\ttests/test_feature_command.py\tGate: test_1_a_plan_line_builds_the_feature_in_one_step\tFORGE-FEATURE-1/GUIDE",
+      "kind": "bug",
+      "path": "tests/test_feature_command.py",
+      "line": 359,
+      "text": "Gate: test_1_a_plan_line_builds_the_feature_in_one_step",
+      "from": "blocking",
+      "item": "FORGE-FEATURE-1/GUIDE",
+      "status": "done",
+      "closed_by": "ui-checks-passes-app-lint"
+    },
+    {
+      "key": "bug\ttests/test_feature_command.py\tGate: test_4_the_feature_keeps_history_and_its_tests_pass_at_once[python]\tFORGE-FEATURE-1/PY",
+      "kind": "bug",
+      "path": "tests/test_feature_command.py",
+      "line": 545,
+      "text": "Gate: test_4_the_feature_keeps_history_and_its_tests_pass_at_once[python]",
+      "from": "blocking",
+      "item": "FORGE-FEATURE-1/PY",
+      "status": "done",
+      "closed_by": "ui-checks-passes-app-lint"
+    },
+    {
+      "key": "bug\ttests/test_feature_command.py\t[P1] Fetch the pinned historical commit in starter-smoke CI\ttests-fixtures-adopted-noscreens-before",
+      "kind": "bug",
+      "path": "tests/test_feature_command.py",
+      "line": 218,
+      "text": "[P1] Fetch the pinned historical commit in starter-smoke CI",
+      "from": "blocking",
+      "item": "tests-fixtures-adopted-noscreens-before",
+      "status": "done",
+      "closed_by": "ui-checks-passes-app-lint"
+    },
+    {
+      "key": "bug\ttests/test_feature_command.py\t[P1] Fetch the pinned starter commit in smoke CI\ttests-fixtures-adopted-noscreens-before",
+      "kind": "bug",
+      "path": "tests/test_feature_command.py",
+      "line": 218,
+      "text": "[P1] Fetch the pinned starter commit in smoke CI",
+      "from": "blocking",
+      "item": "tests-fixtures-adopted-noscreens-before",
+      "status": "done",
+      "closed_by": "ui-checks-passes-app-lint"
+    }
+  ]
+}
