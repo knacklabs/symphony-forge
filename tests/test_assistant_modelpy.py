@@ -73,7 +73,10 @@ def test_5_python_key_and_cap_come_from_settings(
         script.write_text(
             text.replace(
                 sync,
-                "  run('uv', ['--directory', 'apps/api', 'lock']);\n" + sync,
+                "  const frozen = environment.UV_FROZEN;\n"
+                "  environment.UV_FROZEN = '0';\n"
+                "  run('uv', ['--directory', 'apps/api', 'lock']);\n"
+                "  environment.UV_FROZEN = frozen;\n" + sync,
             ),
             encoding="utf-8",
         )
