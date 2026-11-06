@@ -1,0 +1,10 @@
+{
+  "name": "@app/assistant-contracts",
+  "version": "1.0.0",
+  "private": true,
+  "exports": { ".": { "@app/source": "./src/index.ts", "types": "./dist/index.d.ts", "default": "./dist/index.js" } },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "nx": { "tags": ["type:contracts", "scope:assistant"] },
+  "dependencies": { "zod": "4.3.6" }
+}
