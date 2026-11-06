@@ -558,6 +558,12 @@
       "title": "Client apps get an optional in-app assistant",
       "status": "pending",
       "order": 107
+    },
+    {
+      "key": "FORGE-SPLITREVIEW-1",
+      "title": "After a conflict, close reviews only the conflict fix, and plans keep task files apart",
+      "status": "pending",
+      "order": 116
     }
   ],
   "epics": [
