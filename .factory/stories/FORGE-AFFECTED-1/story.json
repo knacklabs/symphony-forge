@@ -1,6 +1,16 @@
 {
+  "approval": {
+    "at": "2026-11-06T12:45:42.705326+00:00",
+    "by": "human-via-Claude",
+    "event": "toolu_01XyqT6JdHyJb5xZSDzQgJjA",
+    "hash": "fe8031d672104d75bca741bd7fd70c958fa3c39d5b61dfd99040dabe6aa23863",
+    "part_line_limit": 400,
+    "round": 3,
+    "runtime": "claude",
+    "session": "c01a489d-c76f-41c1-8371-d6f0052b027c"
+  },
   "doc": "plans/FORGE-AFFECTED-1.md",
-  "status": "read",
+  "status": "approved",
   "steps": [
     {
       "at": "2026-11-06T12:18:34.580340+00:00",
@@ -17,8 +27,12 @@
     {
       "at": "2026-11-06T12:44:59.827064+00:00",
       "step": "read"
+    },
+    {
+      "at": "2026-11-06T12:45:42.705716+00:00",
+      "step": "approved"
     }
   ],
   "title": "Tests run once, and only for the parts a change touches",
-  "touches": 0
+  "touches": 1
 }
