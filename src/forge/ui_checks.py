@@ -13,7 +13,7 @@ def problems(top: Path, files: list[str]) -> list[str]:
     from forge import sync
 
     files = [file for file in files if Path(file).suffix.lower() in
-             {".tsx", ".jsx", ".html", ".css", ".vue", ".svelte"}]
+             {".tsx", ".jsx", ".html", ".css", ".vue", ".svelte"} and (top / file).is_file()]
     if not files:
         return []
     node = shutil.which("node")

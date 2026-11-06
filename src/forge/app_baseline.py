@@ -33,7 +33,7 @@ LIBRARIES = frozenset({
 })
 
 
-def check(top: Path, cfg: dict[str, Any], base: str) -> None:
+def check(top: Path, cfg: dict[str, Any], base: str, files: list[str]) -> None:
     """Refuse added UI libraries and design problems in changed client files."""
     if cfg.get("repo") != "client":
         return
@@ -53,7 +53,6 @@ def check(top: Path, cfg: dict[str, Any], base: str) -> None:
     if problems:
         repo.refuse(REFUSALS["shadcn"], problems="; ".join(problems),
                     item=repo.current_branch(top).partition("/")[2])
-    files = repo.git("diff", "--name-only", "-z", "--diff-filter=ACMR", base, "HEAD", cwd=top).split("\0")
     problems = ui_checks.problems(top, files)
     if problems:
         repo.refuse(REFUSALS["design"], problems="\n" + "\n".join(problems),
