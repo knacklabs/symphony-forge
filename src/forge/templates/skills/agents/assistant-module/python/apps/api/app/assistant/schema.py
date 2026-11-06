@@ -20,7 +20,9 @@ class Column(Schema):
 class TableProps(Schema):
     columns: list[Column]
     rows: list[dict[str, str | int | float | None]]
-    total: int | None = Field(default=None, ge=0)
+    total: int | None = Field(
+        default=None, ge=0, exclude_if=lambda value: value is None
+    )
 
 
 class ChartProps(Schema):
@@ -28,13 +30,13 @@ class ChartProps(Schema):
     x_key: str
     series: list[Column]
     rows: list[dict[str, str | int | float]]
-    unit: str | None = None
+    unit: str | None = Field(default=None, exclude_if=lambda value: value is None)
 
 
 class Tile(Schema):
     label: str
     value: str | int | float
-    unit: str | None = None
+    unit: str | None = Field(default=None, exclude_if=lambda value: value is None)
 
 
 class StatsProps(Schema):

@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from assistant_copy_python import copy_assistant_python
+from assistant_copy_python import copy_assistant_python, prepare_assistant_python_run
 from test_agent_ready import _new_client
 from test_starter_tree import LIVE, _require_cases, _run_live_starter
 
@@ -35,24 +35,7 @@ def _assistant_client(repo, gh, tmp_path: Path) -> Path:
 
 
 def _prepare_assistant_app(client: Path, monkeypatch) -> None:
-    script = client / "scripts/test.mjs"
-    script_text = script.read_text(encoding="utf-8")
-    install = "  run(corepack, ['pnpm', 'install', '--frozen-lockfile']);"
-    if script_text.count(install) != 1:
-        raise AssertionError(f"copy step did not match one package install in {script}")
-    script_text = script_text.replace(
-        install, "  run(corepack, ['pnpm', 'install', '--no-frozen-lockfile']);"
-    )
-    sync = "  run('uv', ['--directory', 'apps/api', 'sync', '--frozen']);"
-    if script_text.count(sync) != 1:
-        raise AssertionError(f"copy step did not match one lock command in {script}")
-    script.write_text(
-        script_text.replace(
-            sync,
-            "  run('uv', ['--directory', 'apps/api', 'lock']);\n" + sync,
-        ),
-        encoding="utf-8",
-    )
+    prepare_assistant_python_run(client)
     for name, value in ASSISTANT_SETTINGS.items():
         monkeypatch.setenv(name, value)
     compose = client / "compose.test.yml"

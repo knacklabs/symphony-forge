@@ -125,6 +125,25 @@ def copy_assistant_python(app: Path) -> None:
     )
 
 
+def prepare_assistant_python_run(app: Path) -> None:
+    """Refresh both copied manifests before the real starter checks run."""
+    script = app / "scripts/test.mjs"
+    _replace_once(
+        script,
+        "  run(corepack, ['pnpm', 'install', '--frozen-lockfile']);",
+        "  run(corepack, ['pnpm', 'install', '--no-frozen-lockfile']);",
+    )
+    sync = "  run('uv', ['--directory', 'apps/api', 'sync', '--frozen']);"
+    _replace_once(
+        script,
+        sync,
+        "  const previousFrozen = environment.UV_FROZEN;\n"
+        "  environment.UV_FROZEN = '0';\n"
+        "  run('uv', ['--directory', 'apps/api', 'lock']);\n"
+        "  environment.UV_FROZEN = previousFrozen;\n" + sync,
+    )
+
+
 def _replace_once(path: Path, old: str, new: str) -> None:
     text = path.read_text(encoding="utf-8")
     if text.count(old) != 1:

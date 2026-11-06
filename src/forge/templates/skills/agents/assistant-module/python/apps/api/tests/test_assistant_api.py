@@ -277,6 +277,9 @@ def test_python_stream_events_match_the_typescript_contracts() -> None:
     column = Column(key="count", label="Count")
     blocks: list[Block] = [
         TableBlock(props=TableProps(columns=[column], rows=[{"count": 2}], total=2)),
+        TableBlock(
+            props=TableProps(columns=[column], rows=[{"count": None}], total=None)
+        ),
         ChartBlock(
             props=ChartProps(
                 type="bar",
@@ -289,7 +292,10 @@ def test_python_stream_events_match_the_typescript_contracts() -> None:
         DetailBlock(
             props=DetailProps(
                 title="Project",
-                fields=[DetailField(label="Name", value="Renovation")],
+                fields=[
+                    DetailField(label="Name", value="Renovation"),
+                    DetailField(label="Due date", value=None),
+                ],
             )
         ),
         ConfirmBlock(props=confirm),
@@ -304,9 +310,7 @@ def test_python_stream_events_match_the_typescript_contracts() -> None:
     ]
     payload = [
         json.loads(
-            TypeAdapter(StreamEvent)
-            .dump_json(event, by_alias=True, exclude_none=True)
-            .decode("utf-8")
+            TypeAdapter(StreamEvent).dump_json(event, by_alias=True).decode("utf-8")
         )
         for event in events
     ]

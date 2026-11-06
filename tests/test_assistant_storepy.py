@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from assistant_copy_python import copy_assistant_python
+from assistant_copy_python import copy_assistant_python, prepare_assistant_python_run
 from test_agent_ready import _new_client
 from test_starter_tree import LIVE, _require_cases, _run_live_starter
 
@@ -61,18 +61,8 @@ def test_4_python_expired_chats_are_deleted(repo, gh, tmp_path, tmp_path_factory
 
     if not LIVE:
         return
-    script = client / "scripts/test.mjs"
-    text = script.read_text(encoding="utf-8")
-    sync = "  run('uv', ['--directory', 'apps/api', 'sync', '--frozen']);"
-    if text.count(sync) != 1:
-        raise AssertionError(f"copy step did not match one lock command in {script}")
-    script.write_text(
-        text.replace(
-            sync,
-            "  run('uv', ['--directory', 'apps/api', 'lock']);\n" + sync,
-        ),
-        encoding="utf-8",
-    )
+    # The optional contracts add a workspace manifest as well as Python dependencies.
+    prepare_assistant_python_run(client)
 
     result = _run_live_starter(tmp_path_factory, [(client, Path("."))])
     _require_cases(

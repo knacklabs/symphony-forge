@@ -150,6 +150,8 @@ confirm card. Another person's chat returns 404, even for an admin.
 
 `schema.py` defines the five block types and the six stream event types. The
 browser contracts in `libs/assistant/contracts` use the same camelCase names.
-Serialize events with `model_dump_json(by_alias=True, exclude_none=True)` so
-optional block properties are absent when unset. The chat read response keeps
+Serialize events with `model_dump_json(by_alias=True)`. The optional total and
+unit fields omit their unset values. Keep required nullable values, such as an
+unset detail field, as `value: null`. Do not use `exclude_none=True`: it removes
+these required values too. The chat read response keeps
 `confirm: null` when there is no pending card. These routes make no model call.
