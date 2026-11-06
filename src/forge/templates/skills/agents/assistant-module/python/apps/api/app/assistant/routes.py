@@ -5,14 +5,6 @@ from fastapi import APIRouter, Depends, Header, Path, Query, Request
 from langgraph.checkpoint.postgres import PostgresSaver
 from sqlalchemy.orm import Session
 
-from app.auth import current_account, require_csrf
-from app.core import (
-    AccountPrincipal,
-    ErrorEnvelope,
-    SuccessEnvelope,
-    create_once,
-    get_db,
-)
 from app.assistant.chats import ChatService
 from app.assistant.schema import (
     ChatId,
@@ -20,6 +12,14 @@ from app.assistant.schema import (
     ChatListResponse,
     ChatResponse,
     CreateChat,
+)
+from app.auth import current_account, require_csrf
+from app.core import (
+    AccountPrincipal,
+    ErrorEnvelope,
+    SuccessEnvelope,
+    create_once,
+    get_db,
 )
 
 router = APIRouter(prefix="/api/v1/assistant/chats", tags=["Assistant"])

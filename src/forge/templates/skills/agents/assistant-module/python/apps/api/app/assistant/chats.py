@@ -40,12 +40,12 @@ def _cursor_values(value: str, field: str) -> tuple[datetime, UUID]:
             raise ValueError
         raw_timestamp, raw_chat_id = parsed
         if not isinstance(raw_timestamp, str) or not isinstance(raw_chat_id, str):
-            raise ValueError
-        timestamp = datetime.fromisoformat(raw_timestamp.replace("Z", "+00:00"))
+            raise TypeError
+        timestamp = datetime.fromisoformat(raw_timestamp)
         if timestamp.tzinfo is None:
             raise ValueError
         chat_id = UUID(raw_chat_id)
-    except (binascii.Error, ValueError):
+    except binascii.Error, TypeError, ValueError:
         raise ApiError(
             400,
             "VALIDATION_ERROR",

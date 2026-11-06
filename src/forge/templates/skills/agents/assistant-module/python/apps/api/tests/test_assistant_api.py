@@ -6,8 +6,10 @@ from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
 import httpx
+from pydantic import TypeAdapter
 from test_api import credentials, sign_up
 from test_invites import invite
+
 from app.assistant.schema import (
     Block,
     BlockEvent,
@@ -27,14 +29,13 @@ from app.assistant.schema import (
     Schema,
     StatsBlock,
     StatsProps,
+    StreamEvent,
     TableBlock,
     TableProps,
     TextDelta,
     TextEvent,
     Tile,
-    StreamEvent,
 )
-from pydantic import TypeAdapter
 
 
 def _create_chat(client: httpx.Client, csrf: str, key: str) -> str:
@@ -241,9 +242,9 @@ def test_a_person_reads_messages_and_a_pending_confirmation(
     assert data["confirm"]["confirmId"] == confirm_id
     assert data["confirm"]["title"] == "Change project status"
     assert data["confirm"]["lines"] == ["Set project status to archived"]
-    assert datetime.fromisoformat(
-        data["confirm"]["expiresAt"].replace("Z", "+00:00")
-    ) == (datetime.fromisoformat(expires_at))
+    assert datetime.fromisoformat(data["confirm"]["expiresAt"]) == (
+        datetime.fromisoformat(expires_at)
+    )
     assert "system-only instruction" not in response.text
     assert "private tool result" not in response.text
 

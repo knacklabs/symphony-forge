@@ -105,7 +105,8 @@ def copy_assistant_python(app: Path) -> None:
     _replace_once(
         main,
         "from app.auth import router as auth_router\n",
-        "from app.assistant import assistant_lifespan, router as assistant_router\n"
+        "from app.assistant import assistant_lifespan\n"
+        "from app.assistant import router as assistant_router\n"
         "from app.auth import router as auth_router\n",
     )
     _replace_once(
