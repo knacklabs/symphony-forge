@@ -1,5 +1,4 @@
 """Canvas checks and screenshots at both approved widths."""
-import json
 import os
 import re
 import shutil
@@ -18,32 +17,17 @@ ROOT = Path(__file__).resolve().parents[1]
 pytestmark = pytest.mark.platform
 
 
-def _browser_stub(path: Path) -> None:
-    """Stand in for Chrome's screenshot and --dump-dom protocol on non-Windows hosts."""
-    path.write_text("#!" + sys.executable + "\n" + '''
-import json, os, re, sys
-from pathlib import Path
-from urllib.parse import unquote, urlparse
-
-args = sys.argv[1:]
-width = int(next(value.split("=", 1)[1].split(",", 1)[0]
-                 for value in args if value.startswith("--window-size=")))
-shot = Path(next(value.split("=", 1)[1]
-                 for value in args if value.startswith("--screenshot=")))
-probe = Path(unquote(urlparse(args[-1]).path))
-page = probe.read_text("utf-8")
-base = re.search(r'<base\\s+href=["\\']([^"\\']+)', page, re.I)
-source = Path(unquote(urlparse(base[1]).path)) / probe.name if base else probe
-screen = source.read_text("utf-8")
-wide = max((int(value) for value in re.findall(
-    r"(?:min-width|width)\\s*:\\s*(\\d+)px", screen, re.I)), default=0)
-log = Path(os.environ["FORGE_TEST_BROWSER_LOG"])
-with log.open("a", encoding="utf-8") as file:
-    file.write(json.dumps({"screen": source.name, "width": width}) + "\\n")
-shot.write_bytes(b"stand-in screenshot")
-print('<html data-forge-width="' + ("overflow" if wide > width else "ok") + '"></html>')
-''', encoding="utf-8")
-    path.chmod(0o755)
+def _browser() -> str:
+    candidates = [os.environ.get("CHROME_BIN"),
+                  "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+                  shutil.which("google-chrome"), shutil.which("chromium"),
+                  shutil.which("chromium-browser")]
+    candidates += [str(Path(os.environ[key]) / "Google/Chrome/Application/chrome.exe")
+                   for key in ("PROGRAMFILES", "PROGRAMFILES(X86)", "LOCALAPPDATA")
+                   if key in os.environ]
+    browser = next((value for value in candidates if value and Path(value).is_file()), None)
+    assert browser, "Chrome is required for canvas rendering tests."
+    return browser
 
 
 def _checker_stub(path: Path) -> None:
@@ -62,7 +46,7 @@ def test_2_canvases_check_before_publishing(repo, tmp_path, claude_payload, env)
     # Test audit: protects check-before-show, two-width output, atomic publication, and read admission.
     # Credible regressions: old desktop-only rendering; failed checks still leave PNGs; reads ignore
     # bad HTML or missing DESIGN.md. Existing design tests cover folder hashes and approval binding.
-    # Only Chrome and impeccable are stood in at their external process boundaries; no production seam.
+    # Real Chrome owns layout and screenshots; only impeccable is stood in at its process boundary.
     node = shutil.which("node")
     assert node, "Node is required to run the design canvas renderer."
     template = ROOT / "src/forge/templates/design"
@@ -76,17 +60,7 @@ def test_2_canvases_check_before_publishing(repo, tmp_path, claude_payload, env)
     checker.parent.mkdir(parents=True)
     _checker_stub(checker)
 
-    if os.name == "nt":
-        candidates = [Path(os.environ.get(key, "")) / "Google/Chrome/Application/chrome.exe"
-                      for key in ("PROGRAMFILES", "PROGRAMFILES(X86)", "LOCALAPPDATA")]
-        browser = next((path for path in candidates if path.is_file()), None)
-        if browser is None:
-            pytest.skip("Chrome is required by the Windows platform job.")
-    else:
-        browser = tmp_path / "chrome"
-        _browser_stub(browser)
-
-    browser_log = tmp_path / "browser.jsonl"
+    browser = _browser()
 
     def render(name, files, checker_fails=False):
         folder = tmp_path / name
@@ -95,8 +69,7 @@ def test_2_canvases_check_before_publishing(repo, tmp_path, claude_payload, env)
             (template / "support.js").read_text(encoding="utf-8"), encoding="utf-8")
         for screen, content in files.items():
             (folder / screen).write_text(content, encoding="utf-8")
-        env = {**os.environ, "CHROME_BIN": str(browser),
-               "FORGE_TEST_BROWSER_LOG": str(browser_log)}
+        env = {**os.environ, "CHROME_BIN": str(browser)}
         if checker_fails:
             env["FORGE_TEST_CHECKER_FAIL"] = "1"
         else:
@@ -108,9 +81,6 @@ def test_2_canvases_check_before_publishing(repo, tmp_path, claude_payload, env)
     folder, passed = render("clean", {"screen.html": "<main><h1>Orders</h1></main>"})
     assert passed.returncode == 0, passed.stdout + passed.stderr
     assert (folder / "screen.png").is_file() and (folder / "screen-375.png").is_file()
-    if os.name != "nt":
-        widths = [json.loads(line)["width"] for line in browser_log.read_text("utf-8").splitlines()]
-        assert sorted(widths) == [375, 1440]
 
     failures = [
         ("spacing", "<main class='p-[13px]'>Orders</main>", False, "spacing-scale"),
