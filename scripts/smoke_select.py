@@ -26,7 +26,7 @@ TEXT = {
     "cold-read.md", "handover.md", "delegation.md", "start.md", "run-reference.md",
     "records-only-action.yml", "review-tests.py",
 }
-# First matching row wins. Unknown paths keep the full coverage.
+# First matching row wins. Unknown smoke inputs keep the full coverage.
 AREAS = [
     ("src/forge/templates/skills/agents/assistant-module/**", STARTERS, True),
     *(("src/forge/templates/" + name, set(), False) for name in sorted(TEXT)),
@@ -52,6 +52,12 @@ def main():
             ["git", "diff", "--no-renames", "--name-only", "-z", f"{args.base}...HEAD"],
         ).decode("utf-8").split("\0")
         for path in filter(None, paths):
+            # Only smoke inputs affect the area choice. Forge records, plans,
+            # docs and regression tests often accompany the template change.
+            if not (path.startswith("src/forge/templates/")
+                    or fnmatchcase(path, "src/forge/feature*.py")
+                    or path in {".github/workflows/starter-smoke.yml", "scripts/smoke_select.py"}):
+                continue
             jobs, assistant_only = next(
                 ((jobs, assistant) for pattern, jobs, assistant in AREAS
                  if fnmatchcase(path, pattern)), (set(FULL), False))

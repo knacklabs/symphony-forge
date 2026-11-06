@@ -57,12 +57,25 @@ def test_4_own_repo_selects_smoke_areas_and_runs_related_tests_once(env, monkeyp
             "python_database_kinds_smoke",
             "python_feature_api_smoke", "python_feature_history_smoke",
             "python_feature_permissions_smoke"}),
+        (".factory/fixes/record-only.json", set()),
+        ("tests/test_only.py", set()),
+        ("scripts/smoke_select.py", JOBS),
+        (".github/workflows/starter-smoke.yml", JOBS),
     ]
     for name, expected in cases:
         base = repo.git("rev-parse", "HEAD", cwd=areas)
         file = areas / name
         file.parent.mkdir(parents=True, exist_ok=True)
         file.write_text("changed\n", encoding="utf-8")
+        # Real Forge changes include records, a plan and regression tests. Those
+        # files must neither add jobs nor widen assistant-only pytest arguments.
+        for accompanying in (".factory/fixes/probe.json",
+                             ".factory/stories/PROBE/tasks/ONE.json",
+                             "plans/PROBE.md", "tests/test_probe.py", "docs/proof.md",
+                             "README.md"):
+            record = areas / accompanying
+            record.parent.mkdir(parents=True, exist_ok=True)
+            record.write_text(json.dumps({"changed": name}) + "\n", encoding="utf-8")
         repo.git("add", "-A", cwd=areas)
         repo.git("commit", "-q", "-m", "Change one area", cwd=areas)
         output = select(base)
