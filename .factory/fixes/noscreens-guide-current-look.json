@@ -4,12 +4,20 @@
   "done_when": "tests/test_noscreens_guide.py::test_6_the_guide_says_who_builds_the_screens passes on both cases and checks the current look rule",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-06T11:13:43.851662+00:00",
       "step": "start"
     }
   ],
-  "why": "An older guide test still expects the app-baseline sentence 'a neutral design when there is no brand', which the design rules story replaced with the look picked from five facts in the client notes, so test_noscreens_guide test_6 fails on main"
+  "stuck": {
+    "close": null,
+    "head": "b863e4926128a44e1be7a0539bf65d50aa2729c6",
+    "keys": {},
+    "round": null
+  },
+  "why": "An older guide test still expects the app-baseline sentence 'a neutral design when there is no brand', which the design rules story replaced with the look picked from five facts in the client notes, so test_noscreens_guide test_6 fails on main",
+  "worker": "codex"
 }
