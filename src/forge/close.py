@@ -1,7 +1,7 @@
 """forge close: close a task or fix by the close rule.
 
-Bring the default branch in, push and open the pull request. Run tests alongside the review
-on a laptop repo; on a CI repo, wait for the checks on the pushed head after the review.
+Bring the default and remote branches in, save the review, then publish once. Run tests alongside
+the review on a laptop repo; on a CI repo, wait for the checks on the final pushed head.
 """
 from __future__ import annotations
 
@@ -20,6 +20,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any
 
+from forge.close_remote import push_replay, reconcile, save_replay
 from forge import __version__, app_baseline, checks, codex, design, githooks, init, migration_warnings, repo, review, score, spotted, story, sync, task, time_records
 
 REFUSALS = {
@@ -28,10 +29,6 @@ REFUSALS = {
                   'name the checks in forge.toml or set test_place = "local"'),
     "publish": ("GitHub refused to update this pull request, so this command stopped.\n{problem}",
                 "{action}, then retry this command"),
-    "remote_conflict": ("The merge of the remote branch conflicts in {files}.",
-                        "in {path}, resolve the conflicts and commit the merge, then forge close {item}"),
-    "remote_merge": ("The merge of the remote branch failed: {problem}",
-                     "in {path}, finish or abort the merge, then retry this command"),
     "conflict": ("Merging {default} into {branch} conflicts in {files}.",
                  "forge work {item} to merge the default branch and continue this work, then forge close {item}"),
     "merge_failed": ("Merging {default} into {branch} failed; the merge was aborted: {problem}",
@@ -43,8 +40,6 @@ REFUSALS = {
                         "origin {branch}, then forge close {item}"),
     "replay_remote": ("The remote branch has commits this checkout does not have, so Forge left it alone.",
                       "fetch and reconcile {branch}, then forge close {item}"),
-    "replay_push": ("Git refused the replayed push, so Forge restored the original commits in this checkout.",
-                    "check the remote branch and reconcile {branch}, then forge close {item}"),
     "base_merged_by_hand": ("{item} builds on {base}, which was merged on GitHub outside Forge, so its pull request still targets {base}'s branch.",
                             "gh pr edit {number} --base {default}, then forge close {item}"),
     "bad_dismiss": ("Each --dismiss needs a finding number from the latest review and its own "
@@ -205,7 +200,7 @@ def close(args: argparse.Namespace) -> int:
         legacy_diff = review.fingerprint(previous["commit"], item, top, state,
                                          f"origin/{default}", branch_diff=True)
     try:
-        _merge_default(top, item, branch, default, pr, cfg, refreshed=refreshed)
+        _merge_default(top, item, branch, default, pr, cfg, refreshed=refreshed, publish=False)
     except repo.Refused as error:
         if error.entry in (REFUSALS["conflict"], REFUSALS["replay_conflict"]):
             if not time_records.pending_merge_wait(top, item, (pr or {}).get("body") or "", reason="merge conflict"):
@@ -282,7 +277,7 @@ def close(args: argparse.Namespace) -> int:
     if not migrating:
         _synced(top, item)
     # Reconcile remote work before choosing tests or reusing an earlier review.
-    _push(top, branch)
+    reconcile(top, branch)
     _warn_fix_kind(top, state, review_ref)
     light = review.blocking_level(top, item, state, review_ref) == "P0"
     result = previous
@@ -292,7 +287,7 @@ def close(args: argparse.Namespace) -> int:
     branch_diff = review.fingerprint(head, item, top, state, base,
                                      branch_diff=True)
     ancestor = repo.git("merge-base", base, head, cwd=top)
-    # The immutable read above is reused unless pushing merged remote work into HEAD.
+    # The immutable read above is reused unless reconciliation merged remote work into HEAD.
     files = repo.git("diff", "--name-only", "-z", "--no-renames", ancestor, head, cwd=top).split("\0")
     task.require_fix_changes(item, state, top, files)
     records_only = all(path.startswith(review.BOOKKEEPING) or repo.SIGNOFF.fullmatch(path) for path in files if path)
@@ -335,8 +330,9 @@ def close(args: argparse.Namespace) -> int:
             repo.record_event(top, item, "owner wait end", wait_id=pending["id"])
         # Read after the merge, which may change the command.
         command = review.close_test(top, base, head=head) if local_tests else ""
-        pr = _publish(top, item, state, branch, pr_target, pr,
-                      {"status": "reviewing", "findings": [], "dismissals": []}, evidence)
+        if pr:
+            pr = _publish(top, item, state, branch, pr_target, pr,
+                          {"status": "reviewing", "findings": [], "dismissals": []}, evidence)
         start, clock = repo.now(), time.monotonic()
         outcome = "failed"
         selected: dict[str, str] = {}
@@ -424,8 +420,8 @@ def close(args: argparse.Namespace) -> int:
         _save(top, item, state, message, *noted)
     elif noted:  # a reused clean review still records what the worker spotted
         _save(top, item, state, f"Review of {item}: {result['status']}", *noted)
+    _push(top, branch, reviewed=True)
     head = repo.git("rev-parse", "HEAD", cwd=top)
-    _push(top, branch)
     pr = _publish(top, item, state, branch, pr_target, pr, result, evidence)
     _attach(top, item, branch)
 
@@ -472,7 +468,7 @@ def close(args: argparse.Namespace) -> int:
         _gh(top, "pr", "ready", str(pr["number"]))
     # Main can move during checks; DRAFT also hides an up-to-date requirement until ready.
     pr = _pull_request(top, branch) or pr
-    _merge_default(top, item, branch, default, pr, cfg)
+    _merge_default(top, item, branch, default, pr, cfg, publish=False)
     if repo.git("rev-parse", "HEAD", cwd=top) != head:
         _publish(top, item, state, branch, default, pr, result, evidence)
         repo.resume_pin(top, cfg["version"], getattr(args, "land_rounds", None),
@@ -680,7 +676,8 @@ def _check_line(top: Path, item: str, commit: str, base: str, where: str) -> boo
 
 
 def _merge_default(top: Path, item: str, branch: str, default: str,
-                   pr: dict[str, Any] | None, cfg: dict[str, Any], refreshed: bool = False) -> None:
+                   pr: dict[str, Any] | None, cfg: dict[str, Any], refreshed: bool = False,
+                   *, publish: bool = True) -> None:
     migration_warnings.fetch_default(top, default, refreshed=refreshed)
     repo.command_fact(("fetch default", default), top, lambda: None)
     state = repo.read_state(item, top) or {}
@@ -738,11 +735,9 @@ def _merge_default(top: Path, item: str, branch: str, default: str,
         if task.show(original, ".factory/client-signoff.json", top) is not None:
             repo.git("checkout", original, "--", ".factory/client-signoff.json", cwd=top)
             repo.commit_state("Keep the sign-off rounds after replay", ".factory/client-signoff.json", top=top)
-        published = repo.run("git", "push", "-q", "-u", f"--force-with-lease={remote_ref}:{lease}",
-                             "origin", branch, cwd=top)
-        if published.returncode:
-            repo.git("reset", "--keep", original, cwd=top)
-            repo.refuse(REFUSALS["replay_push"], branch=branch, item=item)
+        save_replay(top, branch, original, lease)
+        if publish:
+            _push(top, branch)
         return
     if (trial.returncode == 0 and (pr or {}).get("mergeable") != "CONFLICTING"
             and (pr or {}).get("mergeStateStatus") != "BEHIND"):
@@ -856,7 +851,7 @@ def synced_changes(top: Path) -> list[str]:
     return [entry[3:] for entry in status.split("\0") if entry and not entry.startswith(f"?? {hooks}")]
 
 
-def _push(top: Path, branch: str) -> None:
+def _push(top: Path, branch: str, *, reviewed: bool = False) -> None:
     """Merge rejected remote history; retry other push failures after 1, 2 and 4 seconds."""
     tags = repo.git("for-each-ref", "--format=%(refname)", "--merged", branch,
                     "refs/tags/forge-start/", cwd=top).splitlines()
@@ -865,28 +860,20 @@ def _push(top: Path, branch: str) -> None:
                         f"refs/tags/forge-start/{branch}", f"refs/tags/forge-plan/{branch}",
                         cwd=top).splitlines()
     tags = list(dict.fromkeys(tags + retained))
+    if push_replay(top, branch, tags):
+        return
     for wait in (1, 2, 4, None):
         try:
             repo.git("push", "-q", "--atomic", "-u", "origin", branch, *tags, cwd=top)
             return
         except subprocess.CalledProcessError as error:
             if re.search(r"\[rejected\].*\((non-fast-forward|fetch first)\)", error.stderr or ""):
-                target = f"refs/remotes/origin/{branch}"
-                repo.git("fetch", "-q", "origin", f"refs/heads/{branch}:{target}", cwd=top)
-                if repo.run("git", "merge-base", "--is-ancestor", target, "HEAD", cwd=top).returncode:
-                    same = repo.git("rev-parse", "HEAD^{tree}", cwd=top) == repo.git(
-                        "rev-parse", f"{target}^{{tree}}", cwd=top)
-                    print("The local and remote branches diverged, as after an amended or rebased commit. "
-                          + ("Their trees are the same." if same else "Their trees differ."), flush=True)
-                    merged = repo.run("git", "merge", "--no-edit", target, cwd=top)
-                    if merged.returncode:
-                        files = repo.git("diff", "--name-only", "--diff-filter=U", cwd=top).splitlines()
-                        if files:
-                            item = (review.branch_item(branch, top) or (branch, {}))[0]
-                            repo.refuse(REFUSALS["remote_conflict"], files=", ".join(files), path=top, item=item)
-                        repo.refuse(REFUSALS["remote_merge"], problem=merged.stderr.strip(), path=top)
-                    repo.git("push", "-q", "--atomic", "-u", "origin", branch, *tags, cwd=top)
-                    return
+                if reviewed:
+                    item = (review.branch_item(branch, top) or (branch, {}))[0]
+                    repo.refuse(("Remote work arrived after the review.", "forge close {item}"), item=item)
+                reconcile(top, branch)
+                repo.git("push", "-q", "--atomic", "-u", "origin", branch, *tags, cwd=top)
+                return
             if wait is None:
                 raise
             time.sleep(wait)
@@ -975,8 +962,7 @@ def _publish(top: Path, item: str, state: dict[str, Any], branch: str, default: 
         # Keep rendered local observations, but no record that would retire the missing-history retry.
         history = re.sub(r"\n<!-- forge:time-record \{.*?\} -->", "", history, flags=re.S)
     block = _block(result, "\n\n".join(part for part in (history, proof, check) if part))
-    draft = (result["status"] == "blocked" or bool(state.get("tests")) or
-             (pr is None and result["status"] == "reviewing"))
+    draft = pr is None or result["status"] == "blocked" or bool(state.get("tests"))
     # The body goes through a file under .git/forge/: in argv it meets length limits, and a
     # multi-line argument can't pass through a Windows .cmd shim.
     body_file = repo.forge_dir(top) / f"pr-body-{item.replace('/', '-')}.md"
@@ -992,8 +978,10 @@ def _publish(top: Path, item: str, state: dict[str, Any], branch: str, default: 
         print(f"Opened the pull request: {url.strip()}")
         number = int(url.strip().rsplit("/", 1)[1])
         repo.record_event(top, item, "pull request published", number=number)
-        return {"number": number, "state": "OPEN",
-                "body": body_file.read_text(encoding="utf-8"), "isDraft": is_draft}
+        # Share the publication event, which did not exist when the initial body was rendered.
+        return _publish(top, item, state, branch, default,
+                        {"number": number, "state": "OPEN",
+                         "body": body_file.read_text(encoding="utf-8"), "isDraft": is_draft}, result, evidence)
     if not any(event.get("item") == item and event.get("event") == "pull request published"
                and event.get("number") == pr["number"] for event in time_records.read(top, "events")):
         repo.record_event(top, item, "pull request published", number=pr["number"])
