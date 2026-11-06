@@ -106,7 +106,9 @@ def test_3_close_checks_only_changed_client_ui_and_reports_design_problems(
         "ui-guard",
         "fix/ui-guard",
         ".factory/fixes/ui-guard.json",
+        # This fixture covers batching and several UI rules, rather than the small-fix limit.
         {"kind": "fix", "why": "Keep client screens on the design rules",
+         "allow_large": "The test owner allows the batching, shell and waiver fixtures in one change",
          "done_when": "Changed screens pass the design checks"},
         {
             **{f"apps/web/src/a-{index}.css": ".title { color: inherit; }\n"
