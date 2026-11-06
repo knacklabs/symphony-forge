@@ -11,7 +11,7 @@
   "done_when": "The test duration data is refreshed from current Linux CI timings and the six groups of a full pull request run finish within a few minutes of each other",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "round": 1,
+  "round": 2,
   "status": "working",
   "steps": [
     {
