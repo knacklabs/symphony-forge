@@ -1,0 +1,58 @@
+{
+  "branch": "task/FORGE-AFFECTED-1-OWN",
+  "chat": {
+    "approval": "fe8031d672104d75bca741bd7fd70c958fa3c39d5b61dfd99040dabe6aa23863",
+    "claude": null,
+    "conversation": "01a1b10f-c581-7813-be82-be3e48b606ae",
+    "head": null,
+    "start": "7b2614af8a7f6f306ce3584f1268065fd3babb1d"
+  },
+  "known": [
+    {
+      "area": "main() in scripts/smoke_select.py",
+      "file": "scripts/smoke_select.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 57,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Forge's own repo runs a change's related tests once and picks app smoke runs by the changed area.",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "cbe114ea982bacfd8423f8570d56616787c6f16485e691f276812d28bc032e08",
+    "changed": "dff4087d3d34e395fb6cd9ca989d0e01dd3ce8f9d8fa4947e9978ed10ff786c5",
+    "commit": "f766db984710f066d1fe462b305bc55662678e00",
+    "dismissals": [],
+    "findings": [],
+    "id": "bbd1d95d-9b50-4117-a0e4-5807fafc54ea",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-06T13:32:21.366144+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-06T13:42:09.146454+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-06T13:45:35.747809+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "a752a223-f106-4c5a-b592-3b9e29c10431",
+    "head": "e0120680aa521d087bd9bd240b0691541562d089",
+    "keys": {},
+    "round": 1
+  },
+  "worker": "codex"
+}
