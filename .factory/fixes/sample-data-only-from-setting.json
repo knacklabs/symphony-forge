@@ -22,8 +22,8 @@
     "id": "8adaf355-c581-4204-8be9-aef7496f53d9",
     "status": "clean"
   },
-  "round": 1,
-  "status": "waiting for checks",
+  "round": 2,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-06T11:56:09.174235+00:00",
@@ -35,10 +35,10 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "09aa772d6f11966273d929ea3c659ca778d3adeb",
+    "close": "3436f57d-4d51-42a1-87f5-20b678f759d5",
+    "head": "b42f9e3e362d28cf7ca4611df1e93ca666681314",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "After an upgrade, close skips tests and CI and says Ready in a real client app, and forge test says no test command is set, because repo.sample_data falls back to an old sign-off record that says sample_data: true while forge.toml has stage = prototype and no sample_data setting (issues 1401 and 1400)",
   "worker": "codex"
