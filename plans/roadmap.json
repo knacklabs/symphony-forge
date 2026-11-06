@@ -558,6 +558,12 @@
       "title": "Client apps get an optional in-app assistant",
       "status": "pending",
       "order": 107
+    },
+    {
+      "key": "FORGE-AFFECTED-1",
+      "title": "Tests run once, and only for the parts a change touches",
+      "status": "pending",
+      "order": 116
     }
   ],
   "epics": [
