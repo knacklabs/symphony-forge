@@ -5,6 +5,7 @@ work. Existing admission tests do not compare both commands for these inputs.
 Only external services are faked; no production test seam is needed.
 """
 import json
+import re
 import sys
 
 import pytest
@@ -19,7 +20,7 @@ STORY = "FORGE-FULLCAP-1"
 
 
 @pytest.mark.parametrize("case,previous", [
-    (case, previous) for case in ("behind", "one-base", "two-bases", "overlap", "github-only")
+    (case, previous) for case in ("behind", "one-base", "two-bases", "overlap", "github-only", "unreviewed-chain")
     for previous in (False, True) if not previous or case == "behind"
 ])
 def test_2_next_lists_only_parts_task_start_accepts(env, case, previous):
@@ -29,9 +30,14 @@ def test_2_next_lists_only_parts_task_start_accepts(env, case, previous):
         doc = doc.replace("| E, B |", "| A, E |")
     story(repo, doc, doc, "STACK")
     repo.git("push", "-q", "origin", "story/STACK")
-    reviewed(env, "A")
+    if case == "unreviewed-chain":
+        start(repo, "A")
+    else:
+        reviewed(env, "A")
     part, problem = "B", None
-    if case in ("two-bases", "github-only"):
+    if case == "unreviewed-chain":
+        problem = "STACK/B builds on STACK/A, whose latest changes haven't passed review."
+    elif case in ("two-bases", "github-only"):
         if case == "two-bases":
             reviewed(env, "B")
         reviewed(env, "E")
@@ -59,16 +65,17 @@ def test_2_next_lists_only_parts_task_start_accepts(env, case, previous):
         problem = "STACK/W waits for STACK/B to include the merge of STACK/A from main."
     shown = repo.forge("next")
     assert shown.returncode == 0, shown.stdout + shown.stderr
-    offered = f"Next: forge task start STACK/{part} "
-    if problem is None:
-        assert offered in shown.stdout
-        start(repo, part)
-        return
-    refused = repo.forge("task", "start", f"STACK/{part}")
-    assert refused.returncode == 1, refused.stdout + refused.stderr
-    assert refused.stderr.splitlines()[0] == problem
-    assert offered not in shown.stdout, shown.stdout
-    assert problem in shown.stdout, shown.stdout
+    # Every task start line is an offer, with or without a comment after its item.
+    offered = set(re.findall(r"^Next: forge task start (\S+)(?:\s|$)", shown.stdout, re.M))
+    if problem is not None:
+        refused = repo.forge("task", "start", f"STACK/{part}")
+        assert refused.returncode == 1, refused.stdout + refused.stderr
+        assert refused.stderr.splitlines()[0] == problem
+        assert f"STACK/{part}" not in offered, shown.stdout
+        assert problem in shown.stdout, shown.stdout
+        for item in sorted(offered):
+            accepted = repo.forge("task", "start", item)
+            assert accepted.returncode == 0, accepted.stdout + accepted.stderr
     if case == "behind":
         _install(repo.bin, "gh", GH_STUB.format(python=sys.executable))
         env.gh.respond("pr", "list", "--head", "task/STACK-B", "--state", "all",
@@ -77,12 +84,15 @@ def test_2_next_lists_only_parts_task_start_accepts(env, case, previous):
         closed = env.close("STACK/B")
         assert closed.returncode == 0, closed.stdout + closed.stderr
         shown = repo.forge("next")
-        assert offered in shown.stdout, shown.stdout + shown.stderr
-        start(repo, part)
     elif case == "github-only":
         github_merge(env, "task/STACK-E")
         merged = repo.forge("merge", "STACK/E")
         assert merged.returncode == 0, merged.stdout + merged.stderr
         shown = repo.forge("next")
-        assert offered in shown.stdout, shown.stdout + shown.stderr
-        start(repo, part)
+    elif problem is not None:
+        return
+    offered = set(re.findall(r"^Next: forge task start (\S+)(?:\s|$)", shown.stdout, re.M))
+    assert f"STACK/{part}" in offered, shown.stdout + shown.stderr
+    for item in sorted(offered):
+        accepted = repo.forge("task", "start", item)
+        assert accepted.returncode == 0, accepted.stdout + accepted.stderr

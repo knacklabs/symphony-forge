@@ -693,7 +693,8 @@ def _story(top: Path, key: str, path: Path | None, text: str,
         for row in doc["tasks"] if row["id"] in waits}
     stacked = {name: base for name, (base, error) in admission.items() if base and not error}
     ready = [name for name, (_, error) in admission.items() if not error]
-    waiting = [line for _, error in admission.values() if error for line in str(error).splitlines()]
+    waiting = [line for _, error in admission.values() if error for line in str(error).splitlines()
+               if not line.startswith("Next: forge task start ")]
     assignments = {row["id"]: developer(row) or owner(text) for row in doc["tasks"]}
     if any(assignments[name] for name in ready) and (login := github_login(top)):
         ready = [name for name in ready
