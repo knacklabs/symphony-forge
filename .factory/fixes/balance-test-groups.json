@@ -4,12 +4,20 @@
   "done_when": "The test duration data is refreshed from current Linux CI timings and the six groups of a full pull request run finish within a few minutes of each other",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-06T12:57:45.602260+00:00",
       "step": "start"
     }
   ],
-  "why": "Forge's six pull request test groups are uneven (24.5 to 38.1 minutes in one run) because the duration data that splits them is stale; repo.py's duration-based split already exists"
+  "stuck": {
+    "close": null,
+    "head": "5083dc71dfe7c00a8bca1a78d5b95e873de538d3",
+    "keys": {},
+    "round": null
+  },
+  "why": "Forge's six pull request test groups are uneven (24.5 to 38.1 minutes in one run) because the duration data that splits them is stale; repo.py's duration-based split already exists",
+  "worker": "codex"
 }
