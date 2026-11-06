@@ -678,5 +678,5 @@ from `[models.light_review]`, or the review model at medium effort when that set
 
 <!-- sample-data-proof -->
 ## Sample-data proof
-While `sample_data = true`, walk each demo step in a browser and record its result in the `Proof list:`.
+While `forge.toml` has `sample_data = true`, walk each demo step in a browser and record its result in the `Proof list:`.
 Do not add or run automated tests or CI. This replaces the test and proof instructions above.
