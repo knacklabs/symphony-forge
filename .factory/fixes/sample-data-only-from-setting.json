@@ -1,6 +1,13 @@
 {
   "base": "899c9e1bfe3ad643b3a3a37d4edbf630d5e76efb",
   "branch": "fix/sample-data-only-from-setting",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1b0b7-a953-7e43-95a5-9258d4a72dff",
+    "head": null,
+    "start": "54706e66cd5c138a0f38679b2719ca900c8e4250"
+  },
   "done_when": "Sample-data mode is on only when forge.toml says sample_data = true; a client repo whose old sign-off record says sample data but whose forge.toml has no sample_data setting runs its tests at close and in forge test, and close no longer says Ready without tests",
   "fix_kind": "mechanical",
   "kind": "fix",
