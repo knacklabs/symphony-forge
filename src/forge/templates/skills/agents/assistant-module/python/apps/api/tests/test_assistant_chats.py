@@ -64,8 +64,8 @@ try:
                 "v": 1,
                 "id": str(UUID("{uuid4()}")),
                 "ts": last_message.isoformat(),
-                "channel_values": {{"text": "private conversation"}},
-                "channel_versions": {{"text": "1"}},
+                "channel_values": {{"messages": [{{"role": "user", "content": "private conversation"}}]}},
+                "channel_versions": {{"messages": "1"}},
                 "versions_seen": {{}},
                 "pending_sends": [],
             }}
@@ -73,10 +73,18 @@ try:
                 config,
                 checkpoint,
                 {{"source": "input", "step": -1, "parents": {{}}}},
-                {{"text": "1"}},
+                {{"messages": "1"}},
             )
             saver.put_writes(saved, [("pending", "private write")], "task")
             assert saver.get_tuple(config) is not None
+            # Primitive channels live inline in checkpoints. A message list must
+            # create a blob, or the zero-row check after expiry proves nothing.
+            with session_factory() as db:
+                blobs = db.execute(
+                    text("SELECT count(*) FROM assistant.checkpoint_blobs WHERE thread_id = :id"),
+                    {{"id": thread_id}},
+                ).scalar_one()
+                assert blobs > 0
             if {touch!r}:
                 with session_factory() as db:
                     ChatService(db).touch(principal, chat_id, now)

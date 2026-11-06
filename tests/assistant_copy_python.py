@@ -24,6 +24,16 @@ def copy_assistant_python(app: Path) -> None:
         skill / "apps" / "api" / "tests" / "test_assistant_chats.py",
         api / "tests" / "test_assistant_chats.py",
     )
+    _replace_once(
+        api / "tests" / "test_module_schemas.py",
+        "EXPECTED_TABLE_SCHEMAS = (\n",
+        "EXPECTED_TABLE_SCHEMAS = (\n"
+        '    "assistant.chat",\n'
+        '    "assistant.checkpoint_blobs",\n'
+        '    "assistant.checkpoint_migrations",\n'
+        '    "assistant.checkpoint_writes",\n'
+        '    "assistant.checkpoints",\n',
+    )
 
     pyproject = api / "pyproject.toml"
     _replace_once(

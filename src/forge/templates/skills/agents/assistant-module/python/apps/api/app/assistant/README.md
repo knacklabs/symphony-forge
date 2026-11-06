@@ -14,6 +14,21 @@ From the app root, copy these paths from
 - `apps/api/migrations/versions/20261106_assistant.py` to the same app path.
 - `apps/api/tests/test_assistant_chats.py` to the same app path.
 
+In the copied app's `apps/api/tests/test_module_schemas.py`, add these entries at
+the start of `EXPECTED_TABLE_SCHEMAS`, before the existing `core.*` entries:
+
+```python
+    "assistant.chat",
+    "assistant.checkpoint_blobs",
+    "assistant.checkpoint_migrations",
+    "assistant.checkpoint_writes",
+    "assistant.checkpoints",
+```
+
+Keep every existing entry and the exact inventory assertion. The check still
+rejects missing tables, extra tables and tables in the wrong schema. Change only
+the copied app's test; the starter has no assistant tables.
+
 The migration follows `20261105_notifications`. For an app with a different
 Alembic head, set the copied revision's `down_revision` to that head. Keep one
 Alembic history. Add `langgraph-checkpoint-postgres==3.2.0` to the dependencies in
