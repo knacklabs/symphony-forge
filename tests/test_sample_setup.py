@@ -262,9 +262,7 @@ def test_7_turning_sample_data_off_needs_a_settled_personal_data_answer(
                   "---\nstatus: accepted\n---\n")
     signoff.write_text(frontmatter + "\n# Client sign-off\n", encoding="utf-8")
     _settings(config, repo="client", stage="prototype", test_place="local")
-    if legacy:
-        config.write_text(re.sub(r"(?m)^sample_data = true\n", "",
-                                 config.read_text(encoding="utf-8")), encoding="utf-8")
+    # Earlier sign-off text is historical; both clients now need the explicit setting.
     repo.git("add", "-A", cwd=top)
     _fixture_git(repo, tmp_path, "commit", "-q", "-m", "Prepare a sample-data prototype", cwd=top)
     _fixture_git(repo, tmp_path, "push", "-q", "origin", "main", cwd=top)
