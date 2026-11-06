@@ -49,8 +49,8 @@
     "id": "5f199340-4263-44ee-a9fe-ad92061d01df",
     "status": "clean"
   },
-  "round": 2,
-  "status": "waiting for checks",
+  "round": 3,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-06T15:10:52.001791+00:00",
@@ -70,10 +70,10 @@
     }
   ],
   "stuck": {
-    "close": "e0d5dc3c-61cc-4078-880b-931852829371",
-    "head": "192cba89186d5488969c53ac3ed14c5f4f0b47b0",
+    "close": "222c8afd-4005-469d-806a-2d0d363877c3",
+    "head": "f396d98cd21f1f0a4d71ab53f0d7f14a6a01aafd",
     "keys": {},
-    "round": 1
+    "round": 2
   },
   "why": "When main changes Forge's guide templates, every open branch that merges main fails tests/test_tools_guide.py test_9 in CI because its synced guide copies (.claude and .codex skills) are now stale, costing a repair round and a full CI wait; this happened four times on 6 Nov 2026",
   "worker": "codex"
