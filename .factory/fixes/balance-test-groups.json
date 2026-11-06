@@ -18,7 +18,7 @@
   "done_when": "The nightly full run records each test's duration and uploads it as a timing artifact, so the next refresh of the duration data can balance the six pull request groups",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "round": 2,
+  "round": 3,
   "status": "working",
   "steps": [
     {
