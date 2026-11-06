@@ -8,13 +8,122 @@
     "head": null,
     "start": "0427dce5b7e3bfc24639dce22e5618a3091751d8"
   },
+  "known": [
+    {
+      "area": "src/forge/templates/skills/agents/assistant-module/typescript/libs/assistant/server/src/assistant-turn.repository.ts",
+      "file": "src/forge/templates/skills/agents/assistant-module/typescript/libs/assistant/server/src/assistant-turn.repository.ts",
+      "gain": 4,
+      "harm": 3,
+      "line": 17,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Keep turn locks from exhausting the application database pool",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/skills/agents/assistant-module/typescript/libs/assistant/server/src/assistant.turn.ts",
+      "file": "src/forge/templates/skills/agents/assistant-module/typescript/libs/assistant/server/src/assistant.turn.ts",
+      "gain": 3,
+      "harm": 3,
+      "line": 101,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Replay the saved answer when a confirmation is repeated",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/skills/agents/assistant-module/typescript/libs/assistant/server/src/assistant.agent.ts",
+      "file": "src/forge/templates/skills/agents/assistant-module/typescript/libs/assistant/server/src/assistant.agent.ts",
+      "gain": 4,
+      "harm": 3,
+      "line": 67,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Agents: Cap retries in code",
+      "work": 2
+    },
+    {
+      "area": "tests/test_assistant_turn.py",
+      "file": "tests/test_assistant_turn.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 64,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: Match the spend-cap proof to its actual test name",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "834e92272a49cf6043dc8cf62ed2424f231ec45608690effcb74641a81a4275f",
+    "changed": "0bd1dac59c2008c906f0aae9a536119d3ee41a3495fe03474cb47b4e6e0af2e6",
+    "commit": "08425357c8047bac63a7faec1ab21830edfff924",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Scale.\nCase: normal use - ten people ask questions in different chats concurrently.\nEach turn reserves a Prisma connection for the entire model run, while its callback uses the same Prisma pool for canStart, touch, tools and usage recording (assistant.turn.ts:121,133,175). The starter's libs/core/server/src/prisma/prisma.service.ts:9 supplies no pool override; [node-postgres defaults to ten connections](https://node-postgres.com/apis/pool). Ten running turns therefore occupy every connection while waiting for additional connections themselves. Answers and unrelated database-backed routes stall until transactions time out. Keep lock coordination from consuming the connections its callback requires.\nAdds work: prevent pool starvation during turn locking; F 2 x H 2 = 4; 2 x C = 4",
+        "file": "src/forge/templates/skills/agents/assistant-module/typescript/libs/assistant/server/src/assistant-turn.repository.ts",
+        "gain": 4,
+        "harm": 3,
+        "line": 17,
+        "priority": "P1",
+        "title": "Keep turn locks from exhausting the application database pool",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional.\nCase: normal use - a client resends a confirmation after losing its response.\nFor confirmations, start is set to saved.length, so saved.slice(start + 1, ...) is always empty. A repeated confirmation consequently returns only done, losing the original text and data blocks even though the change succeeded. This breaks the API standard that a repeated action gives back its first result. Locate the saved confirmation receipt and replay its associated response without executing another change. The repeated-confirm test currently checks only write and model-call counts.\nAdds work: replay the saved confirmation response; F 2 x H 2 = 4; 2 x C = 2",
+        "file": "src/forge/templates/skills/agents/assistant-module/typescript/libs/assistant/server/src/assistant.turn.ts",
+        "gain": 3,
+        "harm": 3,
+        "line": 101,
+        "priority": "P1",
+        "title": "Replay the saved answer when a confirmation is repeated",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3 (floor: agents)\nRaise: Functional.\nCase: normal use - a tool repeatedly returns an unavailable or invalid-input result.\nThrowing here does not stop the agent: the prebuilt [ToolNode catches ordinary tool exceptions and returns error ToolMessages](https://raw.githubusercontent.com/langchain-ai/langgraphjs/main/libs/langgraph-core/src/prebuilt/tool_node.ts). The model can request the tool again, and callTool executes before this counter is checked again. Attempts therefore continue beyond the intended two-failure limit until the separate recursion limit intervenes. Enforce the stop at a boundary the tool error handler cannot swallow, as the agents skill's \u201cCap retries in code\u201d Must rule requires.\nAdds work: enforce the existing two-failure stop; F 2 x H 2 = 4; 2 x C = 2",
+        "file": "src/forge/templates/skills/agents/assistant-module/typescript/libs/assistant/server/src/assistant.agent.ts",
+        "gain": 4,
+        "harm": 3,
+        "line": 67,
+        "priority": "P1",
+        "title": "Agents: Cap retries in code",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 1, Harm 2\nRaise: Test.\nCase: normal use - CI runs test_5_a_used_up_cap_shows_one_line with FORGE_STARTER_LIVE=1.\nThis expected name ends with \u201cother routes work\u201d, but assistant-turn.e2e-spec.ts:546 names the case \u201cother routes still work\u201d. tests/test_starter_tree.py:326 checks for a contiguous substring, so the proof fails even when every API test passes. Make the expected name match the actual case.",
+        "file": "tests/test_assistant_turn.py",
+        "gain": 3,
+        "harm": 2,
+        "line": 64,
+        "priority": "P1",
+        "title": "Gate: Match the spend-cap proof to its actual test name",
+        "work": 1
+      }
+    ],
+    "id": "920c9abf-06cb-435f-83cd-ecb951923e1b",
+    "status": "blocked"
+  },
   "round": 1,
   "stacked_on": "FORGE-ASSIST-1/TSMODEL",
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-06T07:43:14.207846+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-06T08:28:30.803804+00:00",
+      "step": "review"
     }
   ],
   "stuck": {

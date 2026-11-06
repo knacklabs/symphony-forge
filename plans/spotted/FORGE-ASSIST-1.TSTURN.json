@@ -1,0 +1,37 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/templates/skills/agents/assistant-module/typescript/libs/assistant/server/src/assistant-turn.repository.ts\tKeep turn locks from exhausting the application database pool\tFORGE-ASSIST-1/TSTURN",
+      "kind": "bug",
+      "path": "src/forge/templates/skills/agents/assistant-module/typescript/libs/assistant/server/src/assistant-turn.repository.ts",
+      "line": 17,
+      "text": "Keep turn locks from exhausting the application database pool",
+      "from": "blocking",
+      "item": "FORGE-ASSIST-1/TSTURN",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/skills/agents/assistant-module/typescript/libs/assistant/server/src/assistant.agent.ts\tAgents: Cap retries in code\tFORGE-ASSIST-1/TSTURN",
+      "kind": "bug",
+      "path": "src/forge/templates/skills/agents/assistant-module/typescript/libs/assistant/server/src/assistant.agent.ts",
+      "line": 67,
+      "text": "Agents: Cap retries in code",
+      "from": "blocking",
+      "item": "FORGE-ASSIST-1/TSTURN",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/skills/agents/assistant-module/typescript/libs/assistant/server/src/assistant.turn.ts\tReplay the saved answer when a confirmation is repeated\tFORGE-ASSIST-1/TSTURN",
+      "kind": "bug",
+      "path": "src/forge/templates/skills/agents/assistant-module/typescript/libs/assistant/server/src/assistant.turn.ts",
+      "line": 101,
+      "text": "Replay the saved answer when a confirmation is repeated",
+      "from": "blocking",
+      "item": "FORGE-ASSIST-1/TSTURN",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
