@@ -1,6 +1,17 @@
 {
   "items": [
     {
+      "key": "bug\tsrc/forge/templates/design/ui-checks.js\tThe generated process declaration makes starter lint fail before assistant runtime tests run.",
+      "kind": "bug",
+      "path": "src/forge/templates/design/ui-checks.js",
+      "line": 1,
+      "text": "The generated process declaration makes starter lint fail before assistant runtime tests run.",
+      "from": "worker",
+      "item": "FORGE-ASSIST-1/TSMODEL",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/templates/skills/agents/assistant-module/typescript/libs/assistant/server/src/assistant.guard.ts\tAgents: Never take secrets by speech or chat\tFORGE-ASSIST-1/TSMODEL",
       "kind": "bug",
       "path": "src/forge/templates/skills/agents/assistant-module/typescript/libs/assistant/server/src/assistant.guard.ts",

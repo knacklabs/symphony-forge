@@ -14,7 +14,7 @@
       "gain": 4,
       "harm": 4,
       "line": 2,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": true,
@@ -27,7 +27,7 @@
       "gain": 4,
       "harm": 3,
       "line": 10,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -37,37 +37,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "ff42bde1ba589f90f2328a797b97b63d2ca811cadccf716bbc587b7552609fd7",
-    "changed": "4b081f5763ec7c2e22de7e51c4fe2164217ee03425c977d0bb1b0cb7eeed9dc1",
-    "commit": "fd1f2e0196a861fcff5edceca262a648347da585",
+    "branch_diff": "c8f89f26c2f7d1c488374c9f301818f3129c10f90bc02ad2344f715164b8a3de",
+    "changed": "4b5a8c25efa6e171a13fba557539799fdaca50baea04d89d37ec324c661ce4e1",
+    "commit": "e193b5302e26ee3954825fd5a14f240d90ae0482",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 2, Harm 4 (floor: agents)\nRaise: Security. Case: normal use - a person pastes JSON containing a labelled password or OTP. Inputs such as `{\"password\":\"example-value\"}` and `{\"otp\":\"123456\"}` return false because the closing quote prevents the label expression from matching. These ordinary labelled secrets therefore pass the documented pre-storage guard. The card check also misses two space-separated valid card numbers: line 3 consumes both as one match, then line 5 discards it for exceeding 19 digits. Handle quoted labels and adjacent card candidates, and extend the existing secret cases to cover both bypasses.\nAdds work: recognize ordinary pasted secret formats; F 2 x H 3 = 6; 2 x C = 2",
-        "file": "src/forge/templates/skills/agents/assistant-module/typescript/libs/assistant/server/src/assistant.guard.ts",
-        "gain": 4,
-        "harm": 4,
-        "line": 2,
-        "priority": "P1",
-        "title": "Agents: Never take secrets by speech or chat",
-        "work": 2
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional. Case: normal use - copy the module, register its providers, and put the documented assistant settings in `.env`. The starter installs `validateEnvironment` in `src/forge/templates/starter/apps/api/src/app.module.ts:16`, but that validator returns only core settings at `src/forge/templates/starter/libs/core/server/src/config/environment.ts:90\u201394`. [Nest ConfigModule 4.0.2](https://github.com/nestjs/config/blob/4.0.2/lib/config.module.ts#L69-L72) retains and exports the validator's returned values, so dotenv-only `ASSISTANT_*` settings disappear. This key read consequently returns undefined and the app refuses startup despite valid settings. Cap, prices and custom URL have the same integration gap. Preserve these settings through the real configuration pipeline and exercise dotenv startup; the new tests replace ConfigService with a hand-written lookup and cannot detect this failure.",
-        "file": "src/forge/templates/skills/agents/assistant-module/typescript/libs/assistant/server/src/assistant.model.ts",
-        "gain": 4,
-        "harm": 3,
-        "line": 10,
-        "priority": "P1",
-        "title": "Preserve dotenv settings through the starter's configuration validation",
-        "work": 2
-      }
-    ],
-    "id": "4a86d8e0-869c-4a75-bf67-791763b56072",
-    "status": "blocked"
+    "findings": [],
+    "id": "470008d1-ea1f-43c0-97cb-0b570b6ab933",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-06T05:21:49.614273+00:00",
@@ -75,6 +54,10 @@
     },
     {
       "at": "2026-11-06T05:39:01.152564+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-06T05:53:02.599080+00:00",
       "step": "review"
     }
   ],
