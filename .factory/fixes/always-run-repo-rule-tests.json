@@ -1,0 +1,89 @@
+{
+  "base": "ed075c0ff52872549d181a7024ed85d79cebc45d",
+  "branch": "fix/always-run-repo-rule-tests",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1b1b2-45f0-7c30-b9d4-1d3aa10ba9bb",
+    "head": null,
+    "start": "ac3adcda8dfb2084d46700fe0f50a6df5bf0cd9f"
+  },
+  "done_when": "Every Forge pull request check runs the cheap whole-repo rule tests (tests/test_platform_sensitive_selection.py, tests/test_tools_guide.py synced-guides test, tests/test_rules.py rule and size checks) on top of the selected tests, adding under a minute",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "pytest_tests() in src/forge/fasttest.py",
+      "file": "src/forge/fasttest.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 681,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Every Forge pull request check runs the cheap whole-repo rule tests",
+      "work": 2
+    },
+    {
+      "area": "test_1_repo_required_rules_join_unrelated_selection() in tests/test_required_repo_rules.py",
+      "file": "tests/test_required_repo_rules.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 49,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_repo_required_rules_join_unrelated_selection",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "d84c21441bafe464f05aea70d4ef5a4b79434239d73eab05d51c87ca0febc907",
+    "changed": "19dd132db6246b0f611caaeef3fc76c7680d20e52b2653f54635cb499c84ce7f",
+    "commit": "fe81c2f9bc7cb8cffa04b8c8b01f0215f8388759",
+    "dismissals": [],
+    "findings": [],
+    "id": "23be2dac-ad7b-447f-8588-6dbc25f176ed",
+    "status": "clean"
+  },
+  "round": 4,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-06T16:29:53.284666+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-06T16:38:55.820798+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-06T17:52:05.612607+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-06T17:56:28.727184+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-06T16:38:55.833105+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "tests/test_required_repo_rules.py",
+    "reason": "The owner chose one more round: fix the docs-only case and the test setup.",
+    "wait_id": "d6d2b7f4-a7f1-4681-b41c-f305dddaeff6",
+    "worker_round": 2
+  },
+  "stuck": {
+    "close": "55f4dd1a-e17a-42df-85b4-179494e9fc31",
+    "head": "42c3291aaf1a506e45a13a917ebf46570a7ddbe6",
+    "keys": {},
+    "round": 3
+  },
+  "why": "Main broke six times on 6 Nov 2026 because pull request test selection skipped Forge's cheap whole-repo rule tests (platform markers, synced guide copies, one test per rule, size ceiling), so a change passed its own checks and broke every later pull request",
+  "worker": "codex"
+}

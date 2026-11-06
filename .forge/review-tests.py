@@ -21,6 +21,12 @@ from pathlib import Path
 PATH_LITERALS = r'''(["'`])((?:\\.|(?!\1)[^\\\r\n])*)\1'''
 
 
+def required_tests(top: Path) -> list[str]:
+    """The repository-owned pytest list is shared by selection and CI's docs rule."""
+    listing = top / ".forge" / "always-tests.txt"
+    return [line.strip() for line in listing.read_text("utf-8").splitlines() if line.strip()] if listing.is_file() else []
+
+
 def reads_file_relative(source: str, paths: set[str]) -> bool:
     """Match literals in file-relative paths, not unrelated content assertions."""
     if not paths or not re.search(r"\b__file__\b", source):
@@ -90,8 +96,10 @@ def test_readers(files: list[Path], picked: set[Path]) -> set[Path]:
 
 
 def only_docs(top: Path, base: str, excludes: list[str], *, allow_settings: bool = False,
-              head: str = "HEAD") -> bool:
+              head: str = "HEAD", allow_required: bool = False) -> bool:
     """Generated files and inputs read by code always need the full checks."""
+    if not allow_required and required_tests(top):
+        return False
     def git(*args: str, input: str | None = None) -> str:
         return subprocess.run([shutil.which("git") or "git", *args], cwd=top, input=input,
                               check=True, capture_output=True, text=True,
@@ -233,7 +241,9 @@ try:
         tests_only, platform_files = test_files(Path.cwd(), os.environ["BASE_SHA"],
                                                 json.loads(os.environ["DOCS_ONLY_EXCLUDES"]))
         docs_only = only_docs(Path.cwd(), os.environ["BASE_SHA"],
-                              json.loads(os.environ["DOCS_ONLY_EXCLUDES"]))
+                              json.loads(os.environ["DOCS_ONLY_EXCLUDES"]), allow_required=True)
+        if docs_only and required_tests(Path.cwd()):
+            docs_only, tests_only = False, True
     if records_only:
         passed = os.environ.get("GITHUB_EVENT_NAME") in {"push", "pull_request"} and reuse()
     else:
