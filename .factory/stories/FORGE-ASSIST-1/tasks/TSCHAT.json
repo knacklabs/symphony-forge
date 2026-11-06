@@ -1,0 +1,58 @@
+{
+  "branch": "task/FORGE-ASSIST-1-TSCHAT",
+  "chat": {
+    "approval": "c276549ec321871ed6b007a41985ed8ac0386fa2eb30ff0ce7b634bfea33d386",
+    "claude": null,
+    "conversation": "01a1af4e-ca94-7043-af12-783261212cdf",
+    "head": null,
+    "start": "b7f9b0c7c11c4470ca987f919f9c618ea2d9bb21"
+  },
+  "known": [
+    {
+      "area": "test_6_the_template_copies_in_and_runs() in tests/test_assistant_chats.py",
+      "file": "tests/test_assistant_chats.py",
+      "gain": 4,
+      "harm": 4,
+      "line": 114,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: A test copies the template into a new app, in each language, and runs it.",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "2a7a3b094544c1674da95d54c1f0b0c94ead79b3ff09db467eee47b79377c00b",
+    "changed": "026e4527c1c5154de93352840521d8681d65cc587db1e548d80ef6bcd785b37e",
+    "commit": "a7e91593b95ef4abb0efd54bc0b5b903be809e15",
+    "dismissals": [],
+    "findings": [],
+    "id": "0a4d28a8-418a-4d45-b322-499bfd8f8357",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-06T05:21:44.524021+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-06T05:38:08.432576+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-06T06:22:11.617816+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "a5ed246b-a6fd-4282-a29c-a587a4ab6640",
+    "head": "6506efc707e720f86be1ff869e722c4cb317fb85",
+    "keys": {},
+    "round": 1
+  },
+  "worker": "codex"
+}
