@@ -10,11 +10,54 @@ on:
       - src/forge/templates/**
       - src/forge/feature*.py
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 permissions:
   contents: read
 
 jobs:
+  select:
+    runs-on: ubuntu-latest
+    outputs:
+      starter_smoke: ${{ steps.areas.outputs.starter_smoke }}
+      starter_smoke_args: ${{ steps.areas.outputs.starter_smoke_args }}
+      organisation_invites_smoke: ${{ steps.areas.outputs.organisation_invites_smoke }}
+      organisation_invites_smoke_args: ${{ steps.areas.outputs.organisation_invites_smoke_args }}
+      member_removal_smoke: ${{ steps.areas.outputs.member_removal_smoke }}
+      member_removal_smoke_args: ${{ steps.areas.outputs.member_removal_smoke_args }}
+      python_starter_smoke: ${{ steps.areas.outputs.python_starter_smoke }}
+      python_starter_smoke_args: ${{ steps.areas.outputs.python_starter_smoke_args }}
+      python_database_kinds_smoke: ${{ steps.areas.outputs.python_database_kinds_smoke }}
+      python_database_kinds_smoke_args: ${{ steps.areas.outputs.python_database_kinds_smoke_args }}
+      python_feature_api_smoke: ${{ steps.areas.outputs.python_feature_api_smoke }}
+      python_feature_api_smoke_args: ${{ steps.areas.outputs.python_feature_api_smoke_args }}
+      python_feature_history_smoke: ${{ steps.areas.outputs.python_feature_history_smoke }}
+      python_feature_history_smoke_args: ${{ steps.areas.outputs.python_feature_history_smoke_args }}
+      python_feature_permissions_smoke: ${{ steps.areas.outputs.python_feature_permissions_smoke }}
+      python_feature_permissions_smoke_args: ${{ steps.areas.outputs.python_feature_permissions_smoke_args }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - id: areas
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = pull_request ]; then
+            python scripts/smoke_select.py "$BASE_SHA" >> "$GITHUB_OUTPUT"
+          else
+            python scripts/smoke_select.py --all >> "$GITHUB_OUTPUT"
+          fi
+
   starter-smoke:
+    needs: select
+    if: needs.select.outputs.starter_smoke == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
@@ -28,9 +71,11 @@ jobs:
       - name: Run the real starter stack and browser flows
         env:
           FORGE_STARTER_LIVE: '1'
-        run: uv run --frozen --python 3.11 pytest tests/test_starter_tree.py tests/test_libs_layout.py tests/test_one_company.py tests/test_defaults_*.py tests/test_database_*.py tests/test_module_schemas.py tests/test_feature_projects.py tests/test_feature_command.py tests/test_feature_access.py tests/test_mcp.py tests/test_agent_ready.py tests/test_request_log.py tests/test_mcp_resources.py tests/test_proxy_error_pages.py tests/test_noscreens_rules.py tests/test_notifications.py tests/test_assistant_*.py -k "not python and not test_2_admins_invite_by_email_and_members_cannot_change_roles_or_invite" -q -x -n 0 --timeout=1800
+        run: uv run --frozen --python 3.11 pytest ${{ needs.select.outputs.starter_smoke_args }}
 
   organisation-invites-smoke:
+    needs: select
+    if: needs.select.outputs.organisation_invites_smoke == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -42,9 +87,11 @@ jobs:
       - name: Run organisation invites against both starter stacks
         env:
           FORGE_STARTER_LIVE: '1'
-        run: uv run --frozen --python 3.11 pytest tests/test_defaults_organisations.py::test_2_admins_invite_by_email_and_members_cannot_change_roles_or_invite -q -x -n 0 --timeout=3300
+        run: uv run --frozen --python 3.11 pytest ${{ needs.select.outputs.organisation_invites_smoke_args }}
 
   member-removal-smoke:
+    needs: select
+    if: needs.select.outputs.member_removal_smoke == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -56,9 +103,11 @@ jobs:
       - name: Run the TypeScript and Python member removal flows
         env:
           FORGE_STARTER_LIVE: '1'
-        run: uv run --frozen --python 3.11 pytest tests/test_member_removal.py -q -x -n 0 --timeout=1800
+        run: uv run --frozen --python 3.11 pytest ${{ needs.select.outputs.member_removal_smoke_args }}
 
   python-starter-smoke:
+    needs: select
+    if: needs.select.outputs.python_starter_smoke == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
@@ -70,9 +119,11 @@ jobs:
       - name: Run the Python starter stack and browser flows
         env:
           FORGE_STARTER_LIVE: '1'
-        run: uv run --frozen --python 3.11 pytest tests/test_python_starter.py tests/test_libs_layout.py tests/test_database_*.py tests/test_feature_projects.py tests/test_mcp.py tests/test_mcp_resources.py tests/test_noscreens_rules.py tests/test_assistant_*.py -k "python and not test_5_feature_columns_come_from_the_kind_table" -q -n 0 --timeout=1800
+        run: uv run --frozen --python 3.11 pytest ${{ needs.select.outputs.python_starter_smoke_args }}
 
   python-database-kinds-smoke:
+    needs: select
+    if: needs.select.outputs.python_database_kinds_smoke == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
@@ -84,9 +135,11 @@ jobs:
       - name: Run the Python field-kind stack and browser flows
         env:
           FORGE_STARTER_LIVE: '1'
-        run: uv run --frozen --python 3.11 pytest 'tests/test_database_kinds.py::test_5_feature_columns_come_from_the_kind_table[python]' -q -n 0 --timeout=1800
+        run: uv run --frozen --python 3.11 pytest ${{ needs.select.outputs.python_database_kinds_smoke_args }}
 
   python-feature-api-smoke:
+    needs: select
+    if: needs.select.outputs.python_feature_api_smoke == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
@@ -98,9 +151,11 @@ jobs:
       - name: Run the Python feature API stack
         env:
           FORGE_STARTER_LIVE: '1'
-        run: uv run --frozen --python 3.11 pytest tests/test_feature_command.py -k "python and test_2_the_new_feature_works_like_projects" -q -n 0 --timeout=1800
+        run: uv run --frozen --python 3.11 pytest ${{ needs.select.outputs.python_feature_api_smoke_args }}
 
   python-feature-history-smoke:
+    needs: select
+    if: needs.select.outputs.python_feature_history_smoke == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
@@ -112,9 +167,11 @@ jobs:
       - name: Run the Python feature history and generated tests
         env:
           FORGE_STARTER_LIVE: '1'
-        run: uv run --frozen --python 3.11 pytest tests/test_feature_command.py -k "python and test_4_the_feature_keeps_history_and_its_tests_pass_at_once" -q -n 0 --timeout=1800
+        run: uv run --frozen --python 3.11 pytest ${{ needs.select.outputs.python_feature_history_smoke_args }}
 
   python-feature-permissions-smoke:
+    needs: select
+    if: needs.select.outputs.python_feature_permissions_smoke == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
@@ -126,4 +183,4 @@ jobs:
       - name: Run the Python feature permission checks
         env:
           FORGE_STARTER_LIVE: '1'
-        run: uv run --frozen --python 3.11 pytest tests/test_feature_access.py -k "feature-python and test_3_each_feature_checks_its_permissions" -q -n 0 --timeout=1800
+        run: uv run --frozen --python 3.11 pytest ${{ needs.select.outputs.python_feature_permissions_smoke_args }}

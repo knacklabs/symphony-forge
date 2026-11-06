@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\tscripts/smoke_select.py\tNot done: Forge's own repo runs a change's related tests once and picks app smoke runs by the changed area.\tFORGE-AFFECTED-1/OWN",
+      "kind": "bug",
+      "path": "scripts/smoke_select.py",
+      "line": 57,
+      "text": "Not done: Forge's own repo runs a change's related tests once and picks app smoke runs by the changed area.",
+      "from": "blocking",
+      "item": "FORGE-AFFECTED-1/OWN",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
