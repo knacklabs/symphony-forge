@@ -1,6 +1,13 @@
 {
   "base": "65d5a032d9fefbe59ba8e0cbacfd9463060167aa",
   "branch": "fix/ci-mode-needs-a-test-check",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1b15f-8408-70d0-bad3-ff585106f3d6",
+    "head": null,
+    "start": "efdcebb2e057d1e1f3a57949cd607112ef7d6e41"
+  },
   "done_when": "Close runs its tests locally unless a required check runs the repo's tests; a repo whose checks hold no test job gets local tests at close, and doctor warns when the test command looks like a change selector rather than the full suite",
   "fix_kind": "mechanical",
   "kind": "fix",
