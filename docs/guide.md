@@ -92,6 +92,14 @@ that never declared sample data keeps today's refusal for an open `Personal data
 approving the app's rules page. A sample-data repo can approve its rules page and start stories with
 that answer open, but close waits for a settled answer on a fix that turns off sample data.
 
+Before the first canvas, write a short brief from the industry, who uses the app and how
+often, the screen's job (work, read or persuade), two or three brand words and existing
+brand files; map them to font pairing, one accent, radius, density and tone, then record
+DESIGN.md through impeccable's document step using the app-baseline list and fixed guard
+rules, and use impeccable's Operate mode for app screens and prototypes. `support.js`
+checks each canvas and renders it at 1440 and 375 pixels before it is shown; the plan's
+read refuses a failing design folder or one with no DESIGN.md.
+
 Client repos get pinned copies of impeccable and emil-design-eng with their licences at init and sync, with or without a web app; both laptop installers install them too.
 Make each app's design from the whole brief: its purpose, users, records, fields, choice-list
 options and key flows. Run impeccable's init when PRODUCT.md is missing. Use impeccable and
