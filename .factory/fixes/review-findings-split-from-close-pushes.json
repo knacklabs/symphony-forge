@@ -11,7 +11,7 @@
   "done_when": "A review no longer finds: [P1] Defer the acceptance push until final review bookkeeping is saved (src/forge/close.py:423)",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "round": 1,
+  "round": 2,
   "stacked_on": "close-pushes-once",
   "status": "working",
   "steps": [
