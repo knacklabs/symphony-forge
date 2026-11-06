@@ -4,12 +4,20 @@
   "done_when": "tests/test_platform_sensitive_selection.py passes on main with test_affected_own test_4 marked",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-06T16:29:33.844348+00:00",
       "step": "start"
     }
   ],
-  "why": "tests/test_affected_own.py::test_4_own_repo_selects_smoke_areas_and_runs_related_tests_once lacks @pytest.mark.platform, so tests/test_platform_sensitive_selection.py test_2 fails on main and on every pull request"
+  "stuck": {
+    "close": null,
+    "head": "c445b8169e7f0cfee16fb7816b021c4a9eee6445",
+    "keys": {},
+    "round": null
+  },
+  "why": "tests/test_affected_own.py::test_4_own_repo_selects_smoke_areas_and_runs_related_tests_once lacks @pytest.mark.platform, so tests/test_platform_sensitive_selection.py test_2 fails on main and on every pull request",
+  "worker": "codex"
 }
