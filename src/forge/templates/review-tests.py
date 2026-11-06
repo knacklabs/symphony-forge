@@ -100,7 +100,7 @@ try:
         tests_only, platform_files = test_files(Path.cwd(), os.environ["BASE_SHA"],
                                                 json.loads(os.environ["DOCS_ONLY_EXCLUDES"]))
         docs_only = only_docs(Path.cwd(), os.environ["BASE_SHA"],
-                              json.loads(os.environ["DOCS_ONLY_EXCLUDES"]))
+                              json.loads(os.environ["DOCS_ONLY_EXCLUDES"]), allow_required=True)
         if docs_only and required_tests(Path.cwd()):
             docs_only, tests_only = False, True
     if records_only:

@@ -515,8 +515,8 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False,
 
 def docs_only(top: Path, base: str) -> bool:
     """Docs skip tests; settings alone retain the always_test contract."""
-    return not docskip.required_tests(top) and docskip.only_docs(
-        top, base, DOC_EXCLUDES, allow_settings=not repo.config(top)["always_test"])
+    return docskip.only_docs(top, base, DOC_EXCLUDES,
+                             allow_settings=not repo.config(top)["always_test"])
 
 
 DOCS_ONLY = ("This change touches only forge.toml, docs, assets, plans, Markdown or Forge's records, so close "
