@@ -7,6 +7,8 @@ import sys
 import tomllib
 from pathlib import Path
 
+import pytest
+
 from conftest import machine_runners
 from test_close import env, run  # noqa: F401 (pytest fixture)
 
@@ -20,6 +22,7 @@ JOBS = {
 STARTERS = {"starter_smoke", "python_starter_smoke"}
 
 
+@pytest.mark.platform
 def test_4_own_repo_selects_smoke_areas_and_runs_related_tests_once(env, monkeypatch):
     # Boundary contracts: wrong area rows waste CI or miss smoke coverage, skipped
     # dependencies lose nightly proof, and local close tests duplicate CI. Existing
