@@ -4,12 +4,20 @@
   "done_when": "Every Forge pull request check runs the cheap whole-repo rule tests (tests/test_platform_sensitive_selection.py, tests/test_tools_guide.py synced-guides test, tests/test_rules.py rule and size checks) on top of the selected tests, adding under a minute",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-06T16:29:53.284666+00:00",
       "step": "start"
     }
   ],
-  "why": "Main broke six times on 6 Nov 2026 because pull request test selection skipped Forge's cheap whole-repo rule tests (platform markers, synced guide copies, one test per rule, size ceiling), so a change passed its own checks and broke every later pull request"
+  "stuck": {
+    "close": null,
+    "head": "7275ba938f74cbd4068d3ce71ed378eefc2eb4e8",
+    "keys": {},
+    "round": null
+  },
+  "why": "Main broke six times on 6 Nov 2026 because pull request test selection skipped Forge's cheap whole-repo rule tests (platform markers, synced guide copies, one test per rule, size ceiling), so a change passed its own checks and broke every later pull request",
+  "worker": "codex"
 }
