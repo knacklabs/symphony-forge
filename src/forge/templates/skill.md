@@ -1739,7 +1739,7 @@ them as flaky and continues. A second failure still stops close. A failure witho
 test files still stops close.
 
 In local mode, close's tests and review run at the same time. In CI mode, close runs its review
-while the pull request's checks run, then waits for both. A red test or a P0/P1 finding still
+first, saves it, and pushes once. It then waits for the pull request checks. A red test or a P0/P1 finding still
 stops the round. When the
 local test command fails, its test report ends with all failed pytest files and test names,
 including setup, teardown and collection errors, and the full test log path.
@@ -1910,12 +1910,16 @@ its dismissals, including `--dismiss` given in that close command. A changed dif
 Before reusing serious findings, close also checks the reviewed files and contract against the
 current head. A repair brought in from the default branch needs a new review, even if the branch
 diff stayed the same. Land uses the same check through close.
-Close pushes and opens the pull request before a new review, so CI runs alongside it, then
-updates the pull request's review block when the review finishes. Ready still needs a clean
+Close reconciles remote branch work before a new review. It saves the review, pushes once,
+and opens or updates the pull request with the final review block. Ready still needs a clean
 review and green checks on the final pushed head. After `forge fix amend`, close also updates
 the pull request's Done when line. Use `--append "<text>"` to add text with a space between
 the old and new text. `--done "<done when>"` replaces the whole Done-when. Both options show
 the old and new text before writing, and need `--because "<why>"`.
+If another machine moves the remote branch during review, close stops before publication.
+Run close again to reconcile that work, review and test it before Ready.
+A follow-up replay also waits until the saved review for its one leased push. An interrupted
+review keeps the replay locally for the next close; a refused lease restores the original commits.
 Land runs work first for a fix with only its start and state records, including after amend.
 A fix that changes only `.factory/` and spotted records against the default branch cannot merge.
 Close and land say the build round did not finish and give `forge work <fix>` as the next step.
