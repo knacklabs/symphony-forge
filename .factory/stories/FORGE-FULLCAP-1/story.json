@@ -1,6 +1,16 @@
 {
+  "approval": {
+    "at": "2026-11-06T10:17:47.365025+00:00",
+    "by": "human-via-Claude",
+    "event": "toolu_01NfjvuFWF8dshZqE41xafUp",
+    "hash": "72de746d5d5b42c0118e1cfe03a8f8e837468d4a8f7ae775a269167a8294180a",
+    "part_line_limit": 400,
+    "round": 2,
+    "runtime": "claude",
+    "session": "c01a489d-c76f-41c1-8371-d6f0052b027c"
+  },
   "doc": "plans/FORGE-FULLCAP-1.md",
-  "status": "read",
+  "status": "approved",
   "steps": [
     {
       "at": "2026-11-06T09:56:06.660042+00:00",
@@ -13,8 +23,12 @@
     {
       "at": "2026-11-06T10:16:32.584548+00:00",
       "step": "read"
+    },
+    {
+      "at": "2026-11-06T10:17:47.365413+00:00",
+      "step": "approved"
     }
   ],
   "title": "Waiting parts start and merge on their own once the part before them is done",
-  "touches": 0
+  "touches": 1
 }
