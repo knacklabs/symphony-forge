@@ -7,12 +7,52 @@
     "head": null,
     "start": "1d14612ab6f94b681260779c6566469fc36f1e72"
   },
+  "known": [
+    {
+      "area": "src/forge/templates/starter-python/apps/api/app/history/schema.py",
+      "file": "src/forge/templates/starter-python/apps/api/app/history/schema.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 18,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Update the project-history contract test for viaAgent",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "bcb9f0c7bcd78c6737d007f257328737c63cc04199f3c282f3ed43ccbd9c463c",
+    "changed": "398db184a442918f3e32ee50b75fc206d20e07f469f4796ce6c0cf6687017875",
+    "commit": "10541fcb99ce299465c9eaa5f02e466681884fae",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional.\nCase: normal use - running the Python starter API suite.\nAdding this field also adds `viaAgent: null` to `/api/v1/projects/{project_id}/changes`, which uses `HistoryEntry` in `app/projects/routes.py:162`. However, `src/forge/templates/starter-python/apps/api/tests/test_projects.py:345\u2013350` still asserts that each response contains exactly the previous four fields. Consequently, `test_records_each_project_change_in_the_change_history` fails, breaking the starter's test command and Python smoke check. Update that sibling assertion to include the new nullable attribution field.",
+        "file": "src/forge/templates/starter-python/apps/api/app/history/schema.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 18,
+        "priority": "P1",
+        "title": "Update the project-history contract test for viaAgent",
+        "work": 2
+      }
+    ],
+    "id": "4b0aeb5e-ae9e-422d-a6fa-cd7abc47f961",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-06T02:46:53.514670+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-06T02:52:26.449150+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
