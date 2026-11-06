@@ -2805,6 +2805,21 @@
               "ada@example.com"
             ]
           },
+          "viaAgent": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Viaagent",
+            "description": "The agent that acted for the person, if any.",
+            "examples": [
+              "the assistant"
+            ]
+          },
           "summary": {
             "type": "string",
             "title": "Summary",

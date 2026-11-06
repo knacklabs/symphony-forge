@@ -15,6 +15,11 @@ class HistoryEntry(BaseModel):
         description="The email of the person who made the change.",
         examples=["ada@example.com"],
     )
+    via_agent: str | None = Field(
+        default=None,
+        description="The agent that acted for the person, if any.",
+        examples=["the assistant"],
+    )
     summary: str = Field(
         description="What changed.", examples=["Invited grace@example.com"]
     )
