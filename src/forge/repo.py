@@ -644,8 +644,9 @@ def config(top: Path | None = None) -> dict[str, Any]:
 
 
 def test_place(cfg: dict[str, Any]) -> str:
-    """The explicit place, or the old config's place based on whether it names checks."""
-    return cfg.get("test_place", "ci" if cfg.get("checks") else "local")
+    """Use CI by default only when a required check can run app tests."""
+    return cfg.get("test_place", "ci" if any(
+        check != "forge-pr-check" for check in cfg.get("checks", [])) else "local")
 
 
 def sample_data(top: Path, cfg: dict[str, Any] | None = None, ref: str | None = None) -> bool:
