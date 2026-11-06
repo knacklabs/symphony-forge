@@ -693,12 +693,10 @@ def allow_large(args: argparse.Namespace) -> None:
     print(f"{kind.capitalize()} {name} may now go over the {limit}.")
 
 
-def require_fix_changes(item: str, state: dict, top: Path) -> None:
+def require_fix_changes(item: str, state: dict, top: Path, files: list[str]) -> None:
     """Close and land cannot publish an interrupted fix's bookkeeping as its result."""
     if state.get("kind") != "fix":
         return
-    files = repo.git("diff", "--name-only", "--no-renames",
-                     f"origin/{repo.default_branch(top)}...HEAD", cwd=top).splitlines()
     if any(path and not path.startswith((".factory/", "plans/spotted/"))
            and path != "plans/spotted.json" for path in files):
         return
