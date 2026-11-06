@@ -1,0 +1,12 @@
+{
+  "base": "e152560a602ae40bcb1169c58d328f3b7dc8cd68",
+  "branch": "task/FORGE-REVIEWCHOICE-1-ROUNDS",
+  "stacked_on": "FORGE-FULLCAP-1/RULE",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-06T11:41:46.181800+00:00",
+      "step": "start"
+    }
+  ]
+}
