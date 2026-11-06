@@ -18,12 +18,27 @@
   "done_when": "The nightly full run records each test's duration and uploads it as a timing artifact, so the next refresh of the duration data can balance the six pull request groups",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "f3324d0e3ce5dfd6dc3ad720cd10deb145fecba8ab457ff4388641ee291e1d06",
+    "changed": "e23ec02e12c4e326a702aa04032c34a98f72f9f3a4122daf7edb4c444046ff93",
+    "commit": "641d6b30fdc5e1328555f36ed8db3c6078c3ad40",
+    "dismissals": [],
+    "findings": [],
+    "id": "9530bfae-47da-40ec-bbcb-54954a105fff",
+    "status": "clean"
+  },
   "round": 3,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-06T12:57:45.602260+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-06T13:07:13.658504+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
