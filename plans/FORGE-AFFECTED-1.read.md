@@ -1,13 +1,13 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-11-06T12:35:21.445498+00:00
-seconds: 324.951
-read_hash: b7c0a633b8b25e5fe54d4e09d4e9f9449944f1d7
-round: 1
+read_at: 2026-11-06T12:42:20.798075+00:00
+seconds: 183.198
+read_hash: 58ee19a5aec6282f71d1a2c8397030a06ce8fe11
+round: 2
 passed: no
-doc_seen: b7c0a633b8b25e5fe54d4e09d4e9f9449944f1d7
+doc_seen: 58ee19a5aec6282f71d1a2c8397030a06ce8fe11
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+notes_seen: 8533b4daf7c4617b487f5bfed6f1a4219c3466e5
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a1b0d6-4f00-7690-80bf-f7883b7fb782
 session:
@@ -92,3 +92,18 @@ Only a genuine trade-off goes to the human, as a question with options.
    `plans/FORGE-AFFECTED-1.md:114` already estimates 450 changed lines outside tests, exceeding the requested roughly 400-line task boundary. Its split waits until 500 lines, although the task already combines two selection implementations and their test-script changes.
    Gain 3, Work 2, Harm 2
    Disposition: cut - the starters are now two parts, STARTERS-TS and STARTERS-PY, each under about 350 lines.
+
+## Round 2
+
+10. Blocking: Plan gap: the web-only command list forbids the server its browser tests need.
+    Raise: Plan gap.
+    Case: normal use - CI checks a web-only change in a new starter.
+    `plans/FORGE-AFFECTED-1.md:89` requires no `docker compose up`, while line 70 requires Docker and browser tests when `web` is affected. The browser configuration at `src/forge/templates/starter/apps/web/playwright.config.ts:17` points to an existing server and starts none. `apps/web/e2e/served-app.spec.ts:6-16` requests both pages and the API. Following the new command-list assertion leaves those tests without a server and breaks the normal web-change check.
+    Gain 5, Work 1, Harm 3
+    Disposition: cut - the web-only list now keeps `docker compose up` and the browser suite (they need the served app) and drops only the API test suite; an API-only change lists Docker and the API suite but not the browser suite (Done-when 5).
+
+11. Advisory: Plan gap: the Python starter’s init proof depends on another task’s unmerged code.
+    Raise: Plan gap.
+    Case: normal use - STARTERS-PY builds and reaches its checks before STARTERS-TS merges.
+    `plans/FORGE-AFFECTED-1.md:89` requires `test_6` to assert the generated `fast_test`, but line 118 postpones that assertion until both tasks have merged. STARTERS-PY has no prerequisite in its task row at line 116. Current `src/forge/init.py:172-190` emits no `fast_test`; STARTERS-TS supplies that behavior. The Python task therefore cannot complete its specified proof before merging unless it waits for the actual code dependency or omits the assertion.
+    Gain 3, Work 1, Harm 3
