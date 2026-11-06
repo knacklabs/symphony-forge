@@ -4,12 +4,20 @@
   "done_when": "On Windows, Mac and Linux the canvas renderer passes a page that fits 375 pixels and still refuses a page that scrolls sideways at that width",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-06T22:53:16.866056+00:00",
       "step": "start"
     }
   ],
-  "why": "On Windows the canvas renderer refuses every page with 'The page scrolls sideways at 375 pixels, or Chrome could not measure it', even a page with no sideways scroll (tests/test_uistandards_canvas.py::test_2 fails on windows-latest in forge-next.yml run 42302807199). Likely cause: headless Chrome on Windows does not give a 375-pixel-wide window, so innerWidth is not 375 and the check in src/forge/templates/design/support.js treats that as a failure."
+  "stuck": {
+    "close": null,
+    "head": "310a1fa75c123fac4a4fc9974d49a1164f140134",
+    "keys": {},
+    "round": null
+  },
+  "why": "On Windows the canvas renderer refuses every page with 'The page scrolls sideways at 375 pixels, or Chrome could not measure it', even a page with no sideways scroll (tests/test_uistandards_canvas.py::test_2 fails on windows-latest in forge-next.yml run 42302807199). Likely cause: headless Chrome on Windows does not give a 375-pixel-wide window, so innerWidth is not 375 and the check in src/forge/templates/design/support.js treats that as a failure.",
+  "worker": "codex"
 }
