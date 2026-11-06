@@ -12,6 +12,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/close.py\t[P1] Defer the acceptance push until final review bookkeeping is saved\tclose-pushes-once",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 423,
+      "text": "[P1] Defer the acceptance push until final review bookkeeping is saved",
+      "from": "blocking",
+      "item": "close-pushes-once",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/close.py\tNot done: One close round publishes the item's branch once, after the review is saved",
       "kind": "edge",
       "path": "src/forge/close.py",
