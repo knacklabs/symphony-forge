@@ -1,6 +1,13 @@
 {
   "base": "ed075c0ff52872549d181a7024ed85d79cebc45d",
   "branch": "fix/always-run-repo-rule-tests",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1b1b2-45f0-7c30-b9d4-1d3aa10ba9bb",
+    "head": null,
+    "start": "ac3adcda8dfb2084d46700fe0f50a6df5bf0cd9f"
+  },
   "done_when": "Every Forge pull request check runs the cheap whole-repo rule tests (tests/test_platform_sensitive_selection.py, tests/test_tools_guide.py synced-guides test, tests/test_rules.py rule and size checks) on top of the selected tests, adding under a minute",
   "fix_kind": "mechanical",
   "kind": "fix",
