@@ -1,10 +1,18 @@
 {
   "branch": "task/FORGE-AFFECTED-1-OWN",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-06T13:32:21.366144+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "501bdf89434413530f8b4139423a86de8703b44a",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
