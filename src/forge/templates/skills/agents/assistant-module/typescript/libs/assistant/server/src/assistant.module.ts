@@ -4,10 +4,17 @@ import { PostgresSaver } from '@langchain/langgraph-checkpoint-postgres';
 import { AssistantChatsController } from './assistant.chats.controller';
 import { AssistantChatsService } from './assistant.chats.service';
 import { AssistantCleanup } from './assistant.cleanup';
+import { AssistantAgent } from './assistant.agent';
+import { AssistantModel } from './assistant.model';
+import { AssistantUsage } from './assistant.usage';
+import { AssistantTurn } from './assistant.turn';
+import { AssistantTurnRepository } from './assistant-turn.repository';
+import { AssistantTurnController } from './assistant.turn.controller';
 
 @Module({
-  controllers: [AssistantChatsController],
-  providers: [AssistantChatsService, AssistantCleanup, {
+  controllers: [AssistantChatsController, AssistantTurnController],
+  providers: [AssistantChatsService, AssistantCleanup, AssistantAgent, AssistantModel,
+    AssistantUsage, AssistantTurn, AssistantTurnRepository, {
     provide: PostgresSaver,
     inject: [ConfigService],
     useFactory: (config: ConfigService) => {

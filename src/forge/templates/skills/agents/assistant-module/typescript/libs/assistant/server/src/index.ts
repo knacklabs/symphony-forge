@@ -5,3 +5,4 @@ export { AssistantUsage } from './assistant.usage';
 export { ASSISTANT_PROMPT, PROMPT_VERSION } from './assistant.prompt';
 export { containsSecret } from './assistant.guard';
 export { AssistantModule } from './assistant.module';
+export { DISPLAY } from './assistant.display';

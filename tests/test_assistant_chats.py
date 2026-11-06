@@ -34,7 +34,7 @@ ASSISTANT_SETTINGS = {
 }
 
 
-def _run_assistant_app(client, tmp_path_factory, monkeypatch):
+def _run_assistant_app(client, tmp_path_factory, monkeypatch, *, settings=None):
     script = client / "scripts/test.mjs"
     script.write_text(
         script.read_text(encoding="utf-8").replace(
@@ -43,15 +43,16 @@ def _run_assistant_app(client, tmp_path_factory, monkeypatch):
         ),
         encoding="utf-8",
     )
-    for name, value in ASSISTANT_SETTINGS.items():
+    assistant_settings = ASSISTANT_SETTINGS | (settings or {})
+    for name, value in assistant_settings.items():
         monkeypatch.setenv(name, value)
     compose = client / "compose.test.yml"
     compose_text = compose.read_text(encoding="utf-8")
-    settings = "".join(f"      {name}: ${{{name}}}\n" for name in ASSISTANT_SETTINGS)
+    setting_lines = "".join(f"      {name}: ${{{name}}}\n" for name in assistant_settings)
     marker = '      PORT: "3000"\n'
     if compose_text.count(marker) != 3:
         raise AssertionError(f"copy step did not match all API services in {compose}")
-    compose.write_text(compose_text.replace(marker, marker + settings), encoding="utf-8")
+    compose.write_text(compose_text.replace(marker, marker + setting_lines), encoding="utf-8")
     monkeypatch.setenv("CI", "true")
     return _run_live_starter(tmp_path_factory, [(client, Path("."))])
 

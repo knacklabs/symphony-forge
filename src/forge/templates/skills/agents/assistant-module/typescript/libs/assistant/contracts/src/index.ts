@@ -64,3 +64,12 @@ export const chatListSchema = z.object({
 }).strict();
 export type Chat = z.infer<typeof chatSchema>;
 export type ChatSummary = z.infer<typeof chatSummarySchema>;
+
+export const assistantMessageSchema = z.object({
+  text: z.string().min(1).max(4000).meta({ description: 'Your message, up to 4000 characters.', example: 'Show my projects.' }),
+}).strict();
+export const confirmDecisionSchema = z.object({
+  confirmId: z.string().min(1).max(200).meta({ description: 'The open card identifier returned by the stream.', example: 'open-change' }),
+  decision: z.enum(['confirm', 'cancel']).meta({ description: 'Confirm saves the change; cancel leaves it unchanged.', example: 'confirm' }),
+}).strict();
+export type ConfirmDecision = z.infer<typeof confirmDecisionSchema>;

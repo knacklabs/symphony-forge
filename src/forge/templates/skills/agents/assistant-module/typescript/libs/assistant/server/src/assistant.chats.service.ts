@@ -88,13 +88,11 @@ export class AssistantChatsService {
     }
     let confirm: Chat['confirm'] = null;
     for (const [, channel, value] of saved?.pendingWrites ?? []) {
-      if (channel !== '__interrupt__' || !Array.isArray(value)) continue;
-      for (const interrupt of value) {
-        const parsed = z.object({ id: z.string(), value: z.object(
-          confirmPropsSchema.omit({ confirmId: true }).shape,
-        ) }).parse(interrupt);
-        confirm = { ...parsed.value, confirmId: parsed.id };
-      }
+      if (channel !== '__interrupt__') continue;
+      const parsed = z.object({ id: z.string(), value: z.object(
+        confirmPropsSchema.omit({ confirmId: true }).shape,
+      ) }).parse(value);
+      confirm = { ...parsed.value, confirmId: parsed.id };
     }
     return { ...summary(chat), messages, confirm };
   }

@@ -82,6 +82,7 @@ In `apps/api/test/database.e2e-spec.ts`, extend the expected catalog in `each mo
 
 ```ts
 AssistantChat: 'assistant',
+AssistantUsage: 'assistant',
 checkpoints: 'assistant', checkpoint_blobs: 'assistant',
 checkpoint_writes: 'assistant', checkpoint_migrations: 'assistant',
 ```
@@ -100,15 +101,15 @@ values => ({ ...values, ...validateEnvironment(values) })
 
 This keeps the assistant settings in `ConfigService` after the starter checks its settings.
 
-Add `AssistantModel` and `AssistantUsage` from `@app/assistant-server` to the API module's providers. They check the settings at start-up. Dollar amounts must be non-negative decimal strings with at most six decimal places. Zero sets a used-up cap or a free token price. Prices use US dollars per million tokens. `AssistantUsage.cost` rounds the total cost up to one micro-dollar per turn.
+`AssistantModule` provides `AssistantModel` and `AssistantUsage`. They check the settings at start-up. Dollar amounts must be non-negative decimal strings with at most six decimal places. Zero sets a used-up cap or a free token price. Prices use US dollars per million tokens. `AssistantUsage.cost` rounds the total cost up to one micro-dollar per turn.
 
-Before a turn, call `AssistantUsage.canStart`. After the turn, call `record(accountId, chatId, inputTokens, outputTokens)`. These billing rows contain no message text. They remain after the chat expires, with an empty chat link. The cap counts the current UTC calendar month across the whole app.
+The turn checks `AssistantUsage.canStart` before running the model and records its token counts and cost afterwards. These billing rows contain no message text. They remain after the chat expires, with an empty chat link. The cap counts the current UTC calendar month across the whole app.
 
 Build the Assistant page in the app's design by the `The assistant page` section in the agents skill. The template contains no page or route.
 
 ## Storage calls
 
-Use the chat's `id` as LangGraph's `thread_id`. Call `ownChat` before any checkpoint read or model call. Call `touch` when the turn accepts a new message. The turn must refuse secrets before this call. Model calls and the page belong to later assistant parts.
+The turn uses the chat's `id` as LangGraph's `thread_id`. It checks ownership before any checkpoint read or model call and refuses secrets before saving a message. An advisory lock in Postgres permits one running turn per chat. It is released when the answer ends or pauses for a decision. The client builds the page; this template contains none.
 
 ## Chat API
 
@@ -119,4 +120,14 @@ The app's session and CSRF guards protect the routes under `/api/v1/assistant/ch
 
 The contracts package defines the five blocks and the stream events. Each stream event uses `{ event, data }`; `done` has an empty data object. A pending interrupt carries `title`, `lines` and `expiresAt` in its value. The read endpoint uses the interrupt's own id as `confirmId`.
 
-Run the app's normal test command after the copy. The starter's API test pattern includes both copied test files. To leave the module off, omit `AssistantModule` from the app's imports. The ordinary API needs no assistant settings in that state.
+`POST /:id/messages` accepts `{ text }` with at most 4000 characters and requires an `Idempotency-Key`. A repeated key replays the saved answer without another model turn. `POST /:id/confirm` accepts `{ confirmId, decision }`, where the decision is `confirm` or `cancel`. The card expires after 15 minutes. A different card identifier returns 409. A repeated decision makes no second change.
+
+Both endpoints return `text/event-stream`. A `text` event holds `{ delta }`, a `block` holds `{ kind, props }`, a `confirm` holds the card, and `limit` and `error` hold `{ message }`. `done` ends the answer. Text is plain text, even when it contains markup. The stream schema in the contracts package is the shared format for the chat hooks.
+
+The prebuilt LangGraph agent calls the same `listTools` and `callTool` boundary as MCP, with the signed-in person's principal marked `viaAgent: 'the assistant'`. It offers at most 15 tools and disables parallel tool calls. If a provider still asks for more than one action, it runs the first and tells the model to request the remaining actions separately. Every write pauses at an interrupt first. A create's retry key comes from the chat and tool call identifiers, rather than the model.
+
+`assistant.display.ts` maps validated tool results to blocks. Extend its `DISPLAY` entries when an app adds reports or other features. A tool without an entry streams its summary only. No block comes from model text. The model has a bounded wait and step count; a failed stream returns one plain error line. A chat that grows too long asks the person to start a new chat instead of removing earlier messages.
+
+Run the app's normal test command after the copy. The starter's API test pattern includes the copied test files. To leave the module off, omit `AssistantModule` from the app's imports. The ordinary API needs no assistant settings in that state.
+
+Forge runs `assistant-turn.e2e-spec.ts` through its copy-test fixture. That fixture supplies a fake model service and a stand-in report in the test app only. To use those cases in a client app, supply that app's test provider and report fixture first. Keep both outside its production build.

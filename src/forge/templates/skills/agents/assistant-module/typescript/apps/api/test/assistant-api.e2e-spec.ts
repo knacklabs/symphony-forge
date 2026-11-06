@@ -76,14 +76,14 @@ try {
     versions_seen: {},
   };
   const saved = await saver.put(config, checkpoint, { source: 'input', step: -1, parents: {} }, { messages: '1' });
-  await saver.putWrites(saved, [['__interrupt__', [{
+  await saver.putWrites(saved, [['__interrupt__', {
     id: ${JSON.stringify(interruptId)},
     value: {
       title: ${JSON.stringify(CONFIRM_TITLE)},
       lines: [${JSON.stringify(CONFIRM_LINE)}],
       expiresAt: ${JSON.stringify(expiresAt)},
     },
-  }]]], ${JSON.stringify(randomUUID())});
+  }]], ${JSON.stringify(randomUUID())});
 } finally {
   await app.close();
 }

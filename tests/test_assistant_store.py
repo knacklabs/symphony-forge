@@ -6,8 +6,9 @@ from pathlib import Path
 import pytest
 
 from assistant_copy import copy_assistant
+from test_assistant_chats import _run_assistant_app
 from test_agent_ready import _new_client
-from test_starter_tree import LIVE, _require_cases, _run_live_starter
+from test_starter_tree import LIVE, _require_cases
 
 STORY = "FORGE-ASSIST-1"
 
@@ -39,15 +40,7 @@ def test_4_expired_chats_are_deleted(repo, gh, tmp_path, tmp_path_factory, monke
     data = json.loads(package.read_text(encoding="utf-8"))
     data["scripts"]["test:api"] += " apps/api/test/assistant-chats.e2e-spec.ts"
     package.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
-    script = client / "scripts/test.mjs"
-    script.write_text(script.read_text(encoding="utf-8").replace(
-        "['pnpm', 'install', '--frozen-lockfile']",
-        "['pnpm', 'install', '--no-frozen-lockfile']",
-    ), encoding="utf-8")
-    # The copied app must update its lockfile even when CI makes installs frozen
-    # by default. The outer fixture clears CI, so set it at this boundary.
-    monkeypatch.setenv("CI", "true")
-    result = _run_live_starter(tmp_path_factory, [(client, Path('.'))])
+    result = _run_assistant_app(client, tmp_path_factory, monkeypatch)
     _require_cases(result["api"], (
         "a chat 31 days after its last message is deleted with its checkpoints",
         "a chat 29 days after its last message stays",
