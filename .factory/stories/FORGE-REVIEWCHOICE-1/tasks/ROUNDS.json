@@ -51,28 +51,17 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "a6d00d9b37d39161b2230e2c259858f789ca7c2b5a8c2b8d41900b7a23423974",
-    "changed": "04d87d883e85a02d1e336ed385e77d5bab86c51fb0a75cf5fcc653d47cc81e20",
-    "commit": "1b551382678465c6128653e5cb7387b6b69b0b88",
+    "branch_diff": "a1ea0b208631fe6ec2a8b8869df0d711b83c9c95831be6c842d24360124ef0de",
+    "changed": "5b59a1368c98ba58616893317f1f9f51c32d0f89ded8c9ce627585c04b12f669",
+    "commit": "a474abc74a65274647a027e34035c36917ea57c7",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 3, Work 1, Harm 2\nRaise: Test.\nCase: normal use - running the repository test suite for new and upgraded clients.\nThis changes the Closing sentence, but tests/test_owner_decides_at_the_round_limit.py:255 still expects the exact text \u201cAt the round limit, open findings below P0 stop the item and ask the owner: one more round, split or accept.\u201d That text no longer appears in the shipped guide, so the assertion at line 264 fails for both adoption cases. Update that remaining expected sentence alongside the cold-read sentence already updated in this patch.",
-        "file": "src/forge/templates/skill.md",
-        "gain": 3,
-        "harm": 2,
-        "line": 1640,
-        "priority": "P1",
-        "title": "Gate: test_4_clients_get_the_owner_decides_at_the_round_limit_guide",
-        "work": 1
-      }
-    ],
-    "id": "ec75f7c1-2ac4-4fdf-a93b-0a62452de948",
+    "findings": [],
+    "id": "0f8f9116-dc7f-4f8d-b213-edc97da55913",
     "status": "clean"
   },
   "round": 4,
   "stacked_on": "FORGE-FULLCAP-1/RULE",
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-06T11:41:46.181800+00:00",
@@ -88,6 +77,10 @@
     },
     {
       "at": "2026-11-06T17:54:46.349183+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-06T18:39:43.830263+00:00",
       "step": "review"
     }
   ],
