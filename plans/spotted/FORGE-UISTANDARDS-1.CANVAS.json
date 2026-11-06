@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "edge\tsrc/forge/templates/design/support.js\tNot done: A canvas that fails writes no images",
+      "kind": "edge",
+      "path": "src/forge/templates/design/support.js",
+      "line": 54,
+      "text": "Not done: A canvas that fails writes no images",
+      "from": "review",
+      "item": "FORGE-UISTANDARDS-1/CANVAS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/templates/design/support.js\tNot done: screenshots at 1440 and 375 width",
+      "kind": "edge",
+      "path": "src/forge/templates/design/support.js",
+      "line": 61,
+      "text": "Not done: screenshots at 1440 and 375 width",
+      "from": "review",
+      "item": "FORGE-UISTANDARDS-1/CANVAS",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

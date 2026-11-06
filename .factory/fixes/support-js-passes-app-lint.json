@@ -1,0 +1,82 @@
+{
+  "amendments": [
+    {
+      "at": "2026-11-06T10:28:14.626859+00:00",
+      "because": "The owner split the pull request check gap for design template changes into its own fix",
+      "done_when": "A new app from each starter with .forge/design/support.js and ui-checks.js passes its own lint, and tests/test_database_kinds.py::test_5_feature_columns_come_from_the_kind_table[python] passes"
+    }
+  ],
+  "base": "bd23f190a195adbd147e89ef38b610a53a98a2eb",
+  "branch": "fix/support-js-passes-app-lint",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1b059-07ed-7493-8311-85abca446665",
+    "head": null,
+    "start": "13a9ab8d4abc300e7be7ec90c6b03395f0d12e8a"
+  },
+  "done_when": "The shipped design scripts support.js and ui-checks.js no longer declare process as a global, so a new app from each starter passes its own lint",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "test_2_canvases_check_before_publishing() in tests/test_uistandards_canvas.py",
+      "file": "tests/test_uistandards_canvas.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 71,
+      "outcome": "follow-up",
+      "reason": "Split into follow-up fix review-findings-split-from-support-js-pa",
+      "round": 1,
+      "security": false,
+      "title": "Gate: run the starter lint proofs on this pull request",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "fb935d6ad315f357ab6c25b412059cd95b4c290121d5dea24b0c641eb6c841cd",
+    "changed": "7b650a739a27dd4f1fc2270527aa5822c63e0f87a099e00060f1cc0196ec406a",
+    "commit": "fdf22cf1027244ae60416f5f79d7a5d5d217e172",
+    "dismissals": [],
+    "findings": [],
+    "id": "b837f4f4-a37c-4b32-b86b-0c67c691882b",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-06T10:12:49.461044+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-06T10:26:45.836093+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-06T10:28:48.333406+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-06T10:26:45.847266+00:00",
+    "by": "owner",
+    "choice": "split",
+    "file": "tests/test_uistandards_canvas.py",
+    "fixes": [
+      "review-findings-split-from-support-js-pa"
+    ],
+    "reason": "The owner chose split: merge this lint fix now so main works again, and fix the pull request check gap for design template changes as its own fix right after.",
+    "wait_id": "f88d6425-2fb6-4ac7-b202-8b73f03fec49",
+    "worker_round": 1
+  },
+  "stuck": {
+    "close": null,
+    "head": "7c4d4e32703e89283e135ff0686b59f555cbeeb8",
+    "keys": {},
+    "round": null
+  },
+  "why": "The design render script that Forge copies into a client app, support.js, fails the Python starter's lint again: the canvas design part added a line that declares process as a global, which the starter's lint already treats as built-in, so python-database-kinds-smoke fails on main",
+  "worker": "codex"
+}

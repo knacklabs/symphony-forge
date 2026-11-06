@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\ttests/test_assistant_storepy.py\tGate: Python copy-in smoke test conflicts with the starter's table inventory\tFORGE-ASSIST-1/PYSTORE",
+      "kind": "bug",
+      "path": "tests/test_assistant_storepy.py",
+      "line": 47,
+      "text": "Gate: Python copy-in smoke test conflicts with the starter's table inventory",
+      "from": "blocking",
+      "item": "FORGE-ASSIST-1/PYSTORE",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

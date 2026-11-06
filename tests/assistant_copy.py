@@ -30,8 +30,13 @@ def copy_assistant(app: Path) -> None:
         app / "apps" / "api" / "test" / "assistant-chats.e2e-spec.ts",
     )
     shutil.copyfile(
+<<<<<<< 58f5e6728ec761a67a467552ebb931158e23653c
         skill / "apps" / "api" / "test" / "assistant-model.e2e-spec.ts",
         app / "apps" / "api" / "test" / "assistant-model.e2e-spec.ts",
+=======
+        skill / "apps" / "api" / "test" / "assistant-api.e2e-spec.ts",
+        app / "apps" / "api" / "test" / "assistant-api.e2e-spec.ts",
+>>>>>>> 899c9e1bfe3ad643b3a3a37d4edbf630d5e76efb
     )
 
     base_schema = app / "apps" / "api" / "prisma" / "schema" / "base.prisma"
@@ -98,6 +103,7 @@ def copy_assistant(app: Path) -> None:
         "; corepack pnpm run assistant:setup || { echo 'Assistant storage setup failed. Check DATABASE_URL and the assistant package.' >&2; exit 1; }; exec corepack pnpm run start:prod\"]",
     )
     app_module = app / "apps" / "api" / "src" / "app.module.ts"
+<<<<<<< 58f5e6728ec761a67a467552ebb931158e23653c
     _replace_once(
         app_module,
         "import { ConfigModule } from '@nestjs/config';\n",
@@ -108,26 +114,24 @@ def copy_assistant(app: Path) -> None:
         "    ConfigModule.forRoot({ isGlobal: true, validate: validateEnvironment }),\n",
         "    ConfigModule.forRoot({ isGlobal: true, validate: values => ({ ...values, ...validateEnvironment(values) }) }),\n",
     )
+=======
+>>>>>>> 899c9e1bfe3ad643b3a3a37d4edbf630d5e76efb
     _replace_once(app_module, "import { Module } from '@nestjs/common';\n", (
         "import { Module } from '@nestjs/common';\n"
-        "import { PostgresSaver } from '@langchain/langgraph-checkpoint-postgres';\n"
-        "import { AssistantChatsService, AssistantCleanup } from '@app/assistant-server';\n"
+        "import { AssistantModule } from '@app/assistant-server';\n"
     ))
-    _replace_once(app_module, "    { provide: APP_INTERCEPTOR, useClass: EnvelopeInterceptor },\n", (
-        "    { provide: APP_INTERCEPTOR, useClass: EnvelopeInterceptor },\n"
-        "    AssistantChatsService,\n"
-        "    AssistantCleanup,\n"
-        "    {\n"
-        "      provide: PostgresSaver,\n"
-        "      inject: [ConfigService],\n"
-        "      useFactory: (config: ConfigService) => {\n"
-        "        const saver = PostgresSaver.fromConnString(\n"
-        "          config.getOrThrow<string>('DATABASE_URL'),\n"
-        "          { schema: 'assistant' },\n"
-        "        );\n"
-        "        return Object.assign(saver, { onModuleDestroy: () => saver.end() });\n"
-        "      },\n"
-        "    },\n"
+    _replace_once(app_module, "    HealthModule,\n", (
+        "    HealthModule,\n"
+        "    AssistantModule,\n"
+    ))
+    # The copied app has five additional tables even when the module is not
+    # imported. Keep the exact catalog check and include their owning schema.
+    _replace_once(app / "apps/api/test/database.e2e-spec.ts",
+                  "      Notification: 'notifications',\n", (
+        "      Notification: 'notifications',\n"
+        "      AssistantChat: 'assistant',\n"
+        "      checkpoints: 'assistant', checkpoint_blobs: 'assistant',\n"
+        "      checkpoint_writes: 'assistant', checkpoint_migrations: 'assistant',\n"
     ))
 
 
