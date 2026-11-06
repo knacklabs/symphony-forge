@@ -13,21 +13,15 @@ STORY = "FIX-TEST-COMMAND-FOUND-ON-WINDOWS"
 
 
 @pytest.mark.platform
-@pytest.mark.parametrize("case,source", [
-    ("new client", "setting"),
-    ("new client", "sign-off"),
-    ("earlier adopted", "sign-off"),
-])
-def test_1_test_explains_sample_data_and_runs_configured_commands(repo, gh, tmp_path, case, source):
+@pytest.mark.parametrize("case", ["new client", "earlier adopted"])
+def test_1_test_explains_sample_data_and_runs_configured_commands(repo, gh, tmp_path, case):
     marker = tmp_path / "configured-test-ran"
     top, config = _prepared_client(repo, gh, tmp_path, case, marker)
     # Exercise test itself, rather than an identical fast_test hiding its absence.
     _settings(config, fast_test="")
-    if source == "sign-off":
-        config.write_text("\n".join(line for line in config.read_text("utf-8").splitlines()
-                                    if not line.startswith("sample_data = ")) + "\n", "utf-8")
-        repo.write("docs/decisions/0001-client-signoff.md",
-                   "---\nstatus: draft\nsample_data: true\n---\n# Client sign-off\n")
+    # Historical records do not enable sample mode; the setting above does.
+    repo.write("docs/decisions/0001-client-signoff.md",
+               "---\nstatus: draft\nsample_data: true\n---\n# Client sign-off\n")
     # CRLF is what Windows tools normally write. A BOM instead causes a separate
     # parse refusal, not the misleading message this regression protects.
     config.write_bytes(config.read_text("utf-8").replace("\n", "\r\n").encode("utf-8"))
