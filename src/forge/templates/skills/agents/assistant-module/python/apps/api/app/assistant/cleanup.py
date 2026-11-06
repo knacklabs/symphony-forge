@@ -4,8 +4,10 @@ from contextlib import asynccontextmanager
 from datetime import UTC, datetime, timedelta
 
 from langgraph.checkpoint.postgres import PostgresSaver
+from psycopg import Error as PostgresError
 from psycopg.conninfo import make_conninfo
 from sqlalchemy import select
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.assistant.models import Chat
@@ -54,7 +56,7 @@ class Cleanup:
             except TimeoutError:
                 try:
                     await asyncio.to_thread(self.delete_expired, datetime.now(UTC))
-                except Exception:
+                except (SQLAlchemyError, PostgresError):
                     # Keep the timer alive and report failure without chat content.
                     log_event(
                         None,
