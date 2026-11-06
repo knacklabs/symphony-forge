@@ -11,14 +11,83 @@
   "done_when": "Every Forge pull request check runs the cheap whole-repo rule tests (tests/test_platform_sensitive_selection.py, tests/test_tools_guide.py synced-guides test, tests/test_rules.py rule and size checks) on top of the selected tests, adding under a minute",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [
+    {
+      "area": "pytest_tests() in src/forge/fasttest.py",
+      "file": "src/forge/fasttest.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 681,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Every Forge pull request check runs the cheap whole-repo rule tests",
+      "work": 2
+    },
+    {
+      "area": "test_1_repo_required_rules_join_unrelated_selection() in tests/test_required_repo_rules.py",
+      "file": "tests/test_required_repo_rules.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 49,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_repo_required_rules_join_unrelated_selection",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "04c9cd17359992e720245fd67599aad7bcb105bad2a992cc8ff53768b652e2bd",
+    "changed": "b327b383b53d4d8de9f88c5541d362033364ec2ebfc7c1fa4dfcd017ead5ef27",
+    "commit": "c6f4ce97695fa6bf6910a890333aa1ef20103431",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 2\nRaise: Not done\nCase: normal use - a documentation-only pull request.\nThe unmet item is: \u201cEvery Forge pull request check runs the cheap whole-repo rule tests (tests/test_platform_sensitive_selection.py, tests/test_tools_guide.py synced-guides test, tests/test_rules.py rule and size checks) on top of the selected tests, adding under a minute\u201d. The required tests are added only after pytest_tests starts. However, .github/workflows/forge.yml:43 skips the test jobs for documentation-only changes, and lines 97\u201399 explicitly accept that skip. The command also retains its earlier bypass at src/forge/review.py:403\u2013405. Consequently, these pull requests run none of the required checks. Run the required checks on this path while retaining the skip for unrelated tests.",
+        "file": "src/forge/fasttest.py",
+        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
+        "gain": 4,
+        "harm": 2,
+        "line": 681,
+        "priority": "P1",
+        "title": "Not done: Every Forge pull request check runs the cheap whole-repo rule tests",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 1, Harm 2\nRaise: Test\nCase: normal use - running the new proof test in pull request CI.\nBoth --change cases leave the product change uncommitted after setting origin/main to HEAD. CI supplies FORGE_GROUPS (.github/workflows/forge.yml:53), which the fixture does not clear. With that variable present, fasttest.py:330\u2013332 calls test_run with always=False. Its documentation classifier compares committed base...HEAD (docskip.py:88), sees an empty diff, and skips execution at review.py:403\u2013405. The command returns zero but creates no receipts, so line 53 fails. Commit the product change before invoking --change so this proof exercises the actual CI path.",
+        "file": "tests/test_required_repo_rules.py",
+        "gain": 4,
+        "harm": 2,
+        "line": 49,
+        "priority": "P1",
+        "title": "Gate: test_1_repo_required_rules_join_unrelated_selection",
+        "work": 1
+      }
+    ],
+    "id": "57ed36c7-5aab-4177-8a6d-8b588edbc460",
+    "status": "blocked"
+  },
   "round": 2,
-  "status": "working",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-06T16:29:53.284666+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-06T16:38:55.820798+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-11-06T16:38:55.833105+00:00",
+    "file": "tests/test_required_repo_rules.py",
+    "wait_id": "d6d2b7f4-a7f1-4681-b41c-f305dddaeff6"
+  },
   "stuck": {
     "close": null,
     "head": "7275ba938f74cbd4068d3ce71ed378eefc2eb4e8",
