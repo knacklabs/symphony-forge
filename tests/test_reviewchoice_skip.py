@@ -189,7 +189,7 @@ def _later_change_gets_full_review(env):
     env.commit(where, "later.py", "print('later work')\n")
     stale = env.repo.forge("next")
     assert stale.returncode == 0, stale.stderr
-    assert "Readme greets new readers is ready to merge." not in stale.stdout
+    assert f"The fix {item} is ready to merge." not in stale.stdout
     env.reviews(CLEAN)
     reviewed = env.close(item)
     assert reviewed.returncode == 0, reviewed.stdout + reviewed.stderr
@@ -317,7 +317,6 @@ def _skip_does_not_bypass_checks(env, tmp_path, failure, monkeypatch):
         assert "Ready:" not in refused.stdout
         assert env.review_calls() == []
         return
-    item, _ = env.start_fix()
     if failure == "local-test":
         config = env.repo.path / "forge.toml"
         text = config.read_text("utf-8").replace('checks = ["tests", "forge-pr-check"]',
@@ -332,6 +331,7 @@ def _skip_does_not_bypass_checks(env, tmp_path, failure, monkeypatch):
         env.checks([run("forge-pr-check")])
     elif failure == "ci":
         env.checks([run("tests", "failure"), run("forge-pr-check")])
+    item, _ = env.start_fix()
     refused = _skip(env, item)
     assert refused.returncode == 1
     assert "Ready:" not in refused.stdout
@@ -365,9 +365,9 @@ def _ready_and_board(env):
     next_step = env.repo.forge("next")
     board = env.repo.forge("board", "--json")
     assert next_step.returncode == 0, next_step.stderr
-    assert "Readme greets new readers is ready to merge" in next_step.stdout
+    assert f"The fix {item} is ready to merge." in next_step.stdout
     assert f"Next: forge merge {item}" in next_step.stdout
-    assert "Check clean readiness is ready to merge" in next_step.stdout
+    assert f"The fix {clean_item} is ready to merge." in next_step.stdout
     assert board.returncode == 0, board.stderr
     data = json.loads(board.stdout)
     view = json.dumps(data)
@@ -382,9 +382,11 @@ def _ready_and_board(env):
 def _merge_skip(env, command, monkeypatch, adopted=False):
     if adopted:
         setup_adopted_client(env, True)
-    _agent(env)
     config = env.repo.path / "forge.toml"
-    env.commit(env.repo.path, "forge.toml", config.read_text("utf-8") + 'tools = "codex"\n')
+    settings = config.read_text("utf-8")
+    settings = (settings.replace('merge = "human"', 'merge = "agent"') if adopted
+                else 'merge = "agent"\n' + settings)
+    env.commit(env.repo.path, "forge.toml", 'tools = "codex"\n' + settings)
     env.repo.git("push", "-q", "origin", "main")
     if command == "land":
         for name in ("codex", "codex.cmd"):
