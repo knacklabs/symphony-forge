@@ -1,0 +1,54 @@
+{
+  "base": "b6fa4e01292ab0e510161c4155c59d5083609e60",
+  "branch": "fix/review-findings-split-from-support-js-pa",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1b067-4604-7fc3-9f1c-2b37a6b934f4",
+    "head": null,
+    "start": "5a5ca87ff6c31b6d9b26366696067478d089983e"
+  },
+  "done_when": "A review no longer finds: Gate: run the starter lint proofs on this pull request (tests/test_uistandards_canvas.py:71)",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "6601fa8ee6a41f8ee4eb47a5a6832292f5806378b968e7382668a9c8991f3a44",
+    "changed": "5ddffe9738064c62e6e21eea0d4150d4a5d45e1306debf2492e888858a288f11",
+    "commit": "3570694b9881fa5566b28e35a3d8b4763fd91a43",
+    "dismissals": [],
+    "findings": [],
+    "id": "93f4d494-dd7b-4cc6-9409-fbb63fb03ace",
+    "status": "clean"
+  },
+  "round": 2,
+  "stacked_on": "support-js-passes-app-lint",
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-06T10:27:55.450240+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-06T10:32:15.521889+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-06T10:58:16.746730+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-06T12:04:20.797121+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "18e9d491-cd89-4e5d-b73c-79fe2adbf413",
+    "head": "c45fb36f2c25f9cccda9ea7d8423db0de58a8565",
+    "keys": {},
+    "round": 1
+  },
+  "why": "Review findings split from support-js-passes-app-lint: Gate: run the starter lint proofs on this pull request (tests/test_uistandards_canvas.py:71)",
+  "worker": "codex"
+}
