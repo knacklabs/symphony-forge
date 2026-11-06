@@ -10,6 +10,17 @@
       "item": "FORGE-REVIEWCHOICE-1/ROUNDS",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "improve\t.forge/design/support.js\tThe checked-in design helper differs from the current template, and sync also generates its missing checker.",
+      "kind": "improve",
+      "path": ".forge/design/support.js",
+      "line": 1,
+      "text": "The checked-in design helper differs from the current template, and sync also generates its missing checker.",
+      "from": "worker",
+      "item": "FORGE-REVIEWCHOICE-1/ROUNDS",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
