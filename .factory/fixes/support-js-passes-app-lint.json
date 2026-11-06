@@ -1,6 +1,13 @@
 {
   "base": "bd23f190a195adbd147e89ef38b610a53a98a2eb",
   "branch": "fix/support-js-passes-app-lint",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1b059-07ed-7493-8311-85abca446665",
+    "head": null,
+    "start": "13a9ab8d4abc300e7be7ec90c6b03395f0d12e8a"
+  },
   "done_when": "A new app from each starter with .forge/design/support.js and ui-checks.js passes its own lint, and tests/test_database_kinds.py::test_5_feature_columns_come_from_the_kind_table[python] passes",
   "fix_kind": "mechanical",
   "kind": "fix",
