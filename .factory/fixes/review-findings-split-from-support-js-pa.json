@@ -14,17 +14,17 @@
   "known": [],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "651c358e9e6058ddc9e7faede8ce81941094d1da3e6dfe9e2efd632c94fd7292",
-    "changed": "d9e5008344c555dbd732077567a5365992541077322f61fc5cac0de4aec5550d",
-    "commit": "19b5042a8153cf348735c49666a7b07558b6ed01",
+    "branch_diff": "6601fa8ee6a41f8ee4eb47a5a6832292f5806378b968e7382668a9c8991f3a44",
+    "changed": "5ddffe9738064c62e6e21eea0d4150d4a5d45e1306debf2492e888858a288f11",
+    "commit": "3570694b9881fa5566b28e35a3d8b4763fd91a43",
     "dismissals": [],
     "findings": [],
-    "id": "b49a9e99-8a9e-4d20-b508-3f34dd887349",
+    "id": "93f4d494-dd7b-4cc6-9409-fbb63fb03ace",
     "status": "clean"
   },
   "round": 2,
   "stacked_on": "support-js-passes-app-lint",
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-06T10:27:55.450240+00:00",
@@ -36,6 +36,10 @@
     },
     {
       "at": "2026-11-06T10:58:16.746730+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-06T12:04:20.797121+00:00",
       "step": "review"
     }
   ],
