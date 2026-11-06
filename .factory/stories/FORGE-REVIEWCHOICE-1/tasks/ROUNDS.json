@@ -67,7 +67,7 @@
     "id": "bd5b2430-6e60-4788-8b5c-0be0f5938e5e",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "stacked_on": "FORGE-FULLCAP-1/RULE",
   "status": "fixing",
   "steps": [
@@ -81,10 +81,10 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "0288cd445ae119925f1dd21bf5c7757dbdd0580e",
+    "close": "5d5064a6-eb60-40ce-8d3e-0ecca351383b",
+    "head": "93da9b8f316c124b064676e9384f83563c31a0e7",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "worker": "codex"
 }
