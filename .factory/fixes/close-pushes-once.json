@@ -49,8 +49,8 @@
     "id": "c7d00a0e-15db-4470-969d-961438a4bc79",
     "status": "clean"
   },
-  "round": 2,
-  "status": "waiting for checks",
+  "round": 3,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-06T12:57:40.608819+00:00",
@@ -75,10 +75,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": "47eb512b-92d3-47b4-bac3-f0d58fc028c3",
-    "head": "958f83d1450f0597d55e6e82d767afc7cb36f7ed",
+    "close": "ab3e1a69-316c-49d9-8a3d-ef759d381e27",
+    "head": "be4c59b17cdea03a9359c17f5cf92d664968547b",
     "keys": {},
-    "round": 1
+    "round": 2
   },
   "why": "Close pushes twice in each round: once before the review (src/forge/close.py:285) and again after it saves the review (close.py:424), so the second push replaces the commit CI is already testing and every round starts CI twice; the median task launched its test workflow 8 times with 6 cancelled",
   "worker": "codex"
