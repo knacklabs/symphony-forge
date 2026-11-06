@@ -1,6 +1,13 @@
 {
   "base": "9da63076e04477ccf254d4a14998eac15754db47",
   "branch": "fix/ui-checks-passes-app-lint",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1af66-676b-7d82-9b6d-c4fe3bb5dbb8",
+    "head": null,
+    "start": "f54054ef400bbedc9bd6832ad9ece8079235703e"
+  },
   "done_when": "A new app from each starter with .forge/design/ui-checks.js passes its own lint, and tests/test_feature_command.py::test_4_the_feature_keeps_history_and_its_tests_pass_at_once[python] passes",
   "fix_kind": "mechanical",
   "kind": "fix",
