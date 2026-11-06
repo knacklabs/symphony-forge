@@ -7,12 +7,53 @@
     "head": null,
     "start": "b7f9b0c7c11c4470ca987f919f9c618ea2d9bb21"
   },
+  "known": [
+    {
+      "area": "test_6_the_template_copies_in_and_runs() in tests/test_assistant_chats.py",
+      "file": "tests/test_assistant_chats.py",
+      "gain": 4,
+      "harm": 4,
+      "line": 114,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: A test copies the template into a new app, in each language, and runs it.",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "26552759bc4c692c6ba01150e61ee1b773a7db5d3fb619580686ff2dd8059e07",
+    "changed": "ab6ed5bb72cb52f3a4e4e7a5c373425fe07dabdeb7b48253ee6870d7d94b0772",
+    "commit": "5719136241eecd0c4650e622a2922b40128e66ea",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 4 (floor: migration)\nRaise: Functional.\nCase: normal use - copy the TypeScript template and run its complete test suite.\nThe new full-suite run necessarily fails the existing database catalog assertion. `src/forge/templates/starter/apps/api/test/database.e2e-spec.ts:108\u2013123` queries every application table and requires an exact catalog containing only starter tables. The copy adds `AssistantChat` and four checkpointer tables, but neither `copy_assistant` nor the README updates that expectation. Both new tests invoke this incompatible suite, and disabling the module leaves the migration and setup command installed. Update the documented copy steps and helper to extend the catalog expectation while preserving its existing checks.",
+        "file": "tests/test_assistant_chats.py",
+        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
+        "gain": 4,
+        "harm": 4,
+        "line": 114,
+        "priority": "P1",
+        "title": "Not done: A test copies the template into a new app, in each language, and runs it.",
+        "work": 2
+      }
+    ],
+    "id": "7d78d5d6-eeea-464f-93e2-218a3b2ab550",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-06T05:21:44.524021+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-06T05:38:08.432576+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
