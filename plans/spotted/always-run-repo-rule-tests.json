@@ -1,0 +1,70 @@
+{
+  "items": [
+    {
+      "key": "bug\ttests/test_affected_own.py\tThe platform guard reports a missing platform marker on test_4_own_repo_selects_smoke_areas_and_runs_related_tests_once.",
+      "kind": "bug",
+      "path": "tests/test_affected_own.py",
+      "line": 1,
+      "text": "The platform guard reports a missing platform marker on test_4_own_repo_selects_smoke_areas_and_runs_related_tests_once.",
+      "from": "worker",
+      "item": "always-run-repo-rule-tests",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_affected_own.py\tThe platform guard still reports a missing platform marker on the own-repo selection test.",
+      "kind": "bug",
+      "path": "tests/test_affected_own.py",
+      "line": 1,
+      "text": "The platform guard still reports a missing platform marker on the own-repo selection test.",
+      "from": "worker",
+      "item": "always-run-repo-rule-tests",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_required_repo_rules.py\tGate: test_1_repo_required_rules_join_unrelated_selection\talways-run-repo-rule-tests",
+      "kind": "bug",
+      "path": "tests/test_required_repo_rules.py",
+      "line": 49,
+      "text": "Gate: test_1_repo_required_rules_join_unrelated_selection",
+      "from": "blocking",
+      "item": "always-run-repo-rule-tests",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_tools_guide.py\tCI reports that the checked-in host guides differ from their template.",
+      "kind": "bug",
+      "path": "tests/test_tools_guide.py",
+      "line": 16,
+      "text": "CI reports that the checked-in host guides differ from their template.",
+      "from": "worker",
+      "item": "lane-test-current-wording",
+      "status": "done",
+      "closed_by": "always-run-repo-rule-tests"
+    },
+    {
+      "key": "bug\ttests/test_tools_guide.py\tThe checked-in host guides omit the merged-parts qualification that another fix added to the source template.",
+      "kind": "bug",
+      "path": "tests/test_tools_guide.py",
+      "line": 16,
+      "text": "The checked-in host guides omit the merged-parts qualification that another fix added to the source template.",
+      "from": "worker",
+      "item": "waiting-part-names-a-merged-part",
+      "status": "done",
+      "closed_by": "always-run-repo-rule-tests"
+    },
+    {
+      "key": "edge\tsrc/forge/fasttest.py\tNot done: Every Forge pull request check runs the cheap whole-repo rule tests",
+      "kind": "edge",
+      "path": "src/forge/fasttest.py",
+      "line": 681,
+      "text": "Not done: Every Forge pull request check runs the cheap whole-repo rule tests",
+      "from": "review",
+      "item": "always-run-repo-rule-tests",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
