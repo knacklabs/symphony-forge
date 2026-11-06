@@ -1,10 +1,18 @@
 {
   "branch": "task/FORGE-REVIEWCHOICE-1-SKIP",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-06T22:11:02.348690+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "2e68d815f4299ed922bb1106224bb4dbcfc989b9",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
