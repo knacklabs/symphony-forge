@@ -105,6 +105,11 @@ def approve_story(repo: conftest.Repo, key_doc: str, key: str = "SHOP", cwd: Pat
     branch (with a stub reader and the client's accepted sign-off), then send the hook a completed
     ExitPlanMode showing that doc."""
     top = cwd or repo.path
+    # New reads require the app look as well as screens. Older approved fixtures
+    # stay unchanged; this helper creates a new approval through the real read.
+    design = top / "DESIGN.md"
+    if not design.exists():
+        design.write_text("# App look\n\nUse a clear, quiet design for the basket shop.\n", encoding="utf-8")
     if f"Design: docs/design/baskets/ ({DESIGN_TREE})" in key_doc:
         image = top / "docs/design/baskets/screen.svg"
         image.parent.mkdir(parents=True, exist_ok=True)

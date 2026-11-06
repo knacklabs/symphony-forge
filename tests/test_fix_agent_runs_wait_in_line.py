@@ -47,6 +47,8 @@ def _other_repo(tmp_path: Path, bin_dir: Path) -> Repo:
     version = other.forge("--version").stdout.split()[-1]
     other.write("forge.toml", f'version = "{version}"\nrepo = "forge-source"\n{GRILL}')
     other.write("plans/roadmap.json", '{"items": [{"key": "SHOP"}]}')
+    # The lane tests read a valid plan; design admission is covered elsewhere.
+    other.write("DESIGN.md", "# App look\n\nUse a clear, quiet design for the basket shop.\n")
     other.write("docs/design/baskets/screen.svg", DESIGN_IMAGE)
     other.git("add", "-A")
     other.git("commit", "-q", "-m", "Set up Forge")

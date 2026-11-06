@@ -328,6 +328,10 @@ one batched inspection, with at most one more round. Invoke emil-design-eng with
 never bare. It owns interaction feel (press feedback, easing, durations, popovers, tooltips, drag
 and when not to animate). Report a missing impeccable pass on a UI change or a failed
 emil-design-eng checklist item on the changed screens as P1 `Gate: UI check`.
+Use the app-baseline skill's fixed baseline list, five-fact look method, DESIGN.md and
+fixed guard rules on changed screens. Report a changed screen that breaks the baseline
+where code checks cannot see it as P1 `Gate: UI standards`: a select for a long list,
+a title repeated through a variable, or several primary buttons.
 
 In an app with shadcn/ui set up (a `components.json`), report a new UI component that hand-builds what a shadcn/ui component or block already does as a P1 finding titled `shadcn: <the component>`, unless a `Not shadcn: <why>` comment at the component says why shadcn/ui cannot do it. A composite built from shadcn/ui components is not a finding, and neither is a library or component the default branch already has.
 
@@ -383,8 +387,8 @@ Apply the frontend convention's motion rules: stagger only when a list appears a
 routine app-screen motion under 300 ms; reserve longer timing for one authored landing page moment;
 keep content visible by default and enter with `@starting-style` or transitions, never wait for a
 script to reveal it; share `cubic-bezier(0.23, 1, 0.32, 1)` as the one ease-out token; use CSS or
-the Web Animations API first and Motion only when a Done-when item needs springs or drag. Prototypes
-use impeccable's Operate mode and Emil's restraint. Popovers scale from their trigger with
+the Web Animations API first and Motion only when a Done-when item needs springs or drag.
+App screens and prototypes use impeccable's Operate mode and Emil's restraint. Popovers scale from their trigger with
 shadcn/Radix's transform-origin variable. Do not animate keyboard-driven or very frequent actions.
 Motion that follows these rules is not a `Simpler:` finding.
 
