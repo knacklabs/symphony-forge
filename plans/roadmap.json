@@ -570,6 +570,12 @@
       "title": "Tests run once, and only for the parts a change touches",
       "status": "pending",
       "order": 116
+    },
+    {
+      "key": "FORGE-REVIEWCHOICE-1",
+      "title": "A person can skip the model review, and forge.toml sets the review rounds",
+      "status": "pending",
+      "order": 117
     }
   ],
   "epics": [
