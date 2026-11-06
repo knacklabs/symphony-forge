@@ -21,6 +21,17 @@
       "item": "FORGE-ASSIST-1/PYCHAT",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "edge\ttests/test_starter_tree.py\tRoot PYTEST_ADDOPTS filters also reach copied-app tests whose names differ.",
+      "kind": "edge",
+      "path": "tests/test_starter_tree.py",
+      "line": 199,
+      "text": "Root PYTEST_ADDOPTS filters also reach copied-app tests whose names differ.",
+      "from": "worker",
+      "item": "FORGE-ASSIST-1/PYCHAT",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }

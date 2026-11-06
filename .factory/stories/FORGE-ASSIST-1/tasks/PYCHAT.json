@@ -15,7 +15,7 @@
       "gain": 4,
       "harm": 3,
       "line": 25,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -28,7 +28,7 @@
       "gain": 4,
       "harm": 3,
       "line": 153,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -38,38 +38,17 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "77b4eb655d9b4fbddbf782e49c5cdb74e97cd2090af77d79806ea9c904d0d67e",
-    "changed": "f893926d0dcbd640134bb97f007d1c2885fafca6e89dfe65ded73e9f3615c783",
-    "commit": "260e708d232b33e14970223d6917cb8648dd1839",
+    "branch_diff": "f238687798798be004bd62f662a98854374032ef42a53248b5cbe235366cd093",
+    "changed": "cc868e3ca30f3c8b17a46d8d81901899cfbde7b4faaac2d86d09b2a7c56f8204",
+    "commit": "cc98176c773be8c784da420fb47bbae3acd7a1f2",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional.\nCase: normal use - CI runs the existing Python retention smoke test. This copy adds a workspace package absent from the starter's pnpm lockfile. However, tests/test_assistant_storepy.py:64\u201377 refreshes only the Python lockfile and retains scripts/test.mjs:36's frozen pnpm install. That install now fails before any retention cases execute. The new chat tests refresh the workspace lockfile, but the existing caller needs the same preparation. [pnpm's frozen-install contract](https://pnpm.io/10.x/cli/install#--frozen-lockfile) confirms that an out-of-sync manifest fails installation.",
-        "file": "tests/assistant_copy_python.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 25,
-        "priority": "P1",
-        "title": "Update the existing retention harness for the new workspace package",
-        "work": 2
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional.\nCase: normal use - a detail card contains an unset field, such as a project without a due date. schema.py:44\u201346 explicitly permits DetailField.value=None, but the documented exclude_none=True serialization removes its required value property. The resulting field contains only label and fails the browser's detailPropsSchema, which requires value even when null. The contract test uses this same serialization but exercises only a non-null detail value. Omit optional properties without removing required nullable values; [Pydantic documents](https://docs.pydantic.dev/latest/concepts/serialization/#excluding-and-including-fields-based-on-their-value) that exclude_none removes every None-valued model field.",
-        "file": "src/forge/templates/skills/agents/assistant-module/python/apps/api/app/assistant/README.md",
-        "gain": 4,
-        "harm": 3,
-        "line": 153,
-        "priority": "P1",
-        "title": "Preserve required nullable detail values during event serialization",
-        "work": 2
-      }
-    ],
-    "id": "3e91a836-bf57-4664-8ac5-75071101f94b",
-    "status": "blocked"
+    "findings": [],
+    "id": "8e90fca6-7df1-4d3e-b1a0-549f5b080c15",
+    "status": "clean"
   },
   "round": 2,
   "stacked_on": "FORGE-ASSIST-1/PYSTORE",
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-06T07:43:19.390515+00:00",
@@ -77,6 +56,10 @@
     },
     {
       "at": "2026-11-06T08:06:10.851210+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-06T08:17:31.078942+00:00",
       "step": "review"
     }
   ],
