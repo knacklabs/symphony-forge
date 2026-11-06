@@ -1,0 +1,45 @@
+{
+  "base": "9da63076e04477ccf254d4a14998eac15754db47",
+  "branch": "fix/ui-checks-passes-app-lint",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1af66-676b-7d82-9b6d-c4fe3bb5dbb8",
+    "head": null,
+    "start": "f54054ef400bbedc9bd6832ad9ece8079235703e"
+  },
+  "done_when": "A new app from each starter with .forge/design/ui-checks.js passes its own lint, and tests/test_feature_command.py::test_4_the_feature_keeps_history_and_its_tests_pass_at_once[python] passes",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "15cf4a683cd02d9c99ea6e8e95f5dc6ac1cd6e7122d9e2f36e0c153c78927228",
+    "changed": "aa257ba93d9224256b68ee1efa38e72ef3709ecc460b3f400254b62dab0558e5",
+    "commit": "d410ceb1d7caded1c878167aa2cb2081df1418db",
+    "dismissals": [],
+    "findings": [],
+    "id": "ffd10190-a055-45bd-984f-779285481c4c",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-06T05:47:49.449060+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-06T06:07:52.347602+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "d26b3b15024967af533600a9bcdd5d4953572ac3",
+    "keys": {},
+    "round": null
+  },
+  "why": "The design checker script that Forge copies into a client app fails the Python starter's lint: its first line declares process as a global, and the starter's lint already treats process as built-in, so python-feature-history-smoke fails on main",
+  "worker": "codex"
+}

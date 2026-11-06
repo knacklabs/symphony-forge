@@ -1,4 +1,3 @@
-/* global process */
 // Shared by close and the canvas renderer. No package or model is needed.
 async function check(files) {
   const fs = await import('node:fs');
