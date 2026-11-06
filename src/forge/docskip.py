@@ -9,6 +9,12 @@ from pathlib import Path
 PATH_LITERALS = r'''(["'`])((?:\\.|(?!\1)[^\\\r\n])*)\1'''
 
 
+def required_tests(top: Path) -> list[str]:
+    """The repository-owned pytest list is shared by selection and CI's docs rule."""
+    listing = top / ".forge" / "always-tests.txt"
+    return [line.strip() for line in listing.read_text("utf-8").splitlines() if line.strip()] if listing.is_file() else []
+
+
 def reads_file_relative(source: str, paths: set[str]) -> bool:
     """Match literals in file-relative paths, not unrelated content assertions."""
     if not paths or not re.search(r"\b__file__\b", source):

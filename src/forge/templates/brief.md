@@ -359,7 +359,8 @@ only the part's Tests column or the fix's touched test files, plus `always_test`
 tests it runs only `always_test`. An explicit `forge test --pytest <base>` keeps the full selection.
 The repo can also list required pytest files or node IDs, one per line, in
 `.forge/always-tests.txt`. These join `always_test` for related-test selection,
-including broad worker selections. Repos without this file keep their current selection.
+including broad worker selections. Documentation-only changes run this list through
+the single CI test group and the local picker. Repos without this file keep their current selection.
 
 You may update tests when Done-when deliberately changes behaviour: explain the old and new contract in
 the test and handoff, and never weaken a test to hide a defect. Call a test failure

@@ -423,9 +423,7 @@ def broad_ci_selection(top: Path, base: str) -> bool:
 
 def always_tests(top: Path, cfg: dict) -> list[str]:
     """Include the repo-owned list without putting repo-specific paths in Forge."""
-    listing = top / ".forge" / "always-tests.txt"
-    local = listing.read_text("utf-8").splitlines() if listing.is_file() else []
-    return list(dict.fromkeys(cfg.get("always_test", []) + [line.strip() for line in local if line.strip()]))
+    return list(dict.fromkeys(cfg.get("always_test", []) + docskip.required_tests(top)))
 
 
 # The temporary pytest plugin: skip unpicked files, keep picked tests and each always_test entry,
