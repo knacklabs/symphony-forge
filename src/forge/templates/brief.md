@@ -343,6 +343,12 @@ passes. In a CI-test repo, run only a new or changed regression once to watch it
 let pull request CI run the related tests. Never edit or delete a test to make it pass; if a test
 is wrong, say so. A test whose result a stub or fake decides proves nothing. Use the test-audit
 skill whenever you write or change a test. Before you stop, commit your work first, then $test_step
+Without an explicit `test_place`, Forge uses CI only if `checks` names a check other than
+`forge-pr-check`. That review-only check runs no app tests. Otherwise close runs tests locally.
+An explicit `test_place` keeps its value. Keep `test` as the full suite for the nightly run;
+put change selection in `fast_test`. Doctor warns about a `test` that looks like change selection.
+This applies to new and earlier-adopted repos on upgrade.
+
 For a pytest repo, the shipped picker is `forge test --pytest <base>`; it runs the repo's own
 test command without installing Forge in the project. This picker belongs in `fast_test`;
 workers run bare `forge test` to enter the lane.

@@ -718,7 +718,8 @@ def sync(args: argparse.Namespace) -> None:
             print('Forge runs change tests in CI because forge.toml names checks. To run them on this '
                   'machine, write test_place = "local".')
         else:
-            print('Forge runs change tests on this machine because forge.toml names no checks. To '
+            missing = 'app test check' if cfg['checks'] else 'checks'
+            print(f'Forge runs change tests on this machine because forge.toml names no {missing}. To '
                   'run them in CI, write test_place = "ci".')
     codex.preserve_chats(top)  # after every file is written, so a chat problem only warns
 
