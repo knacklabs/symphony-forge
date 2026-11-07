@@ -1,5 +1,12 @@
 {
   "branch": "task/FORGE-SPLITREVIEW-1-PLANCHECK",
+  "chat": {
+    "approval": "1298cc87910be7fd4281ad240a59b068fc1d0703afd9a78834b5a675cac84f12",
+    "claude": null,
+    "conversation": "01a1b4c8-2a70-7100-a9ff-864f3ee9522c",
+    "head": null,
+    "start": "7b15471e0a0a59fe039b4948c6e18325ff05f3e3"
+  },
   "round": 1,
   "status": "working",
   "steps": [
