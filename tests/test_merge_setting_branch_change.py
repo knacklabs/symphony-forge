@@ -1,4 +1,10 @@
-"""src/forge/merge.py guards the item's change, and tidies completed merges."""
+"""src/forge/merge.py guards the item's change, and tidies completed merges.
+
+Test audit: this command owner keeps generated-hook cleanup and preservation of
+user files after an external merge. Ignored non-cache hook folders now stay;
+the old fixture mixed one into every generated-only case. Separate those cases
+without a new production seam or removal of any user-file assertion.
+"""
 import json
 import shutil
 import subprocess
@@ -75,8 +81,10 @@ def test_2_item_changing_merge_value_is_refused_even_when_default_matches(env):
 
 
 @pytest.mark.parametrize("changes_setting", [False, True], ids=["older-branch", "changed-setting"])
-@pytest.mark.parametrize("local_work", ["", "unsaved.txt", ".hooks/keep.txt", ".hooks/pre-commit"],
-                         ids=["generated-hooks", "unsaved-file", "user-hook-file", "edited-shim"])
+@pytest.mark.parametrize("local_work", ["", "unsaved.txt", ".hooks/keep.txt", ".hooks/pre-commit",
+                                      ".husky/_/pre-commit"],
+                         ids=["generated-hooks", "unsaved-file", "user-hook-file", "edited-shim",
+                              "ignored-hook-folder"])
 @pytest.mark.platform
 def test_3_already_merged_item_tidies_without_setting_guard(env, local_work, changes_setting):
     item, where, head = _ready_before_switch(env, changes_setting=changes_setting)
@@ -84,11 +92,11 @@ def test_3_already_merged_item_tidies_without_setting_guard(env, local_work, cha
     subprocess.run([sys.executable, str(env.repo.bin / "gh"), "pr", "merge", "7", "--squash",
                     "--subject", "Tidy readme", "--match-head-commit", head],
                    cwd=env.repo.path, check=True, capture_output=True)
-    # Husky's rebuilt hook folder is disposable and ignored, as its real installer creates it.
-    hooks = where / ".husky" / "_"
-    hooks.mkdir(parents=True)
-    (hooks / ".gitignore").write_text("*", encoding="utf-8")
-    (hooks / "pre-commit").write_text('#!/usr/bin/env sh\n. "$(dirname "$0")/h"', encoding="utf-8")
+    if local_work.startswith(".husky/"):
+        # An ignored folder outside repo.CACHES now keeps the worktree.
+        hooks = where / ".husky" / "_"
+        hooks.mkdir(parents=True)
+        (hooks / ".gitignore").write_text("*", encoding="utf-8")
     env.repo.git("config", "core.hooksPath", ".hooks", cwd=where)
     synced = env.repo.forge("sync", cwd=where)
     assert synced.returncode == 0, synced.stdout + synced.stderr
@@ -104,6 +112,8 @@ def test_3_already_merged_item_tidies_without_setting_guard(env, local_work, cha
     assert where.exists() == bool(local_work)
     if local_work:
         assert (where / local_work).read_text("utf-8") == "Keep this work\n"
+        if local_work.startswith(".husky/"):
+            assert ".husky" in tidied.stdout
     else:
         assert not env.repo.git("branch", "--list", "fix/tidy-readme")
         assert not (env.repo.path / ".git/forge/ready" / f"{item}.json").exists()

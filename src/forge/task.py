@@ -773,6 +773,21 @@ def require_active(item: str, top: Path | None = None) -> None:
                 raise repo.Refused(f"Fix {item} is dropped.", f"forge fix drop {item} --undo")
 
 
+def worktree_files(path: Path) -> list[str]:
+    """Local files that finished-work cleanup must preserve, including ignored data."""
+    from forge import githooks
+
+    status = run("git", "status", "--porcelain", "-z", "--no-renames", "--ignored=matching",
+                 "--untracked-files=all", cwd=path)
+    status.check_returncode()
+    generated = {file for file, text in githooks.shims(path, repo.config(path)).items()
+                 if not file.is_symlink() and file.is_file() and file.read_text(encoding="utf-8") == text}
+    return [entry[3:] for entry in status.stdout.split("\0") if entry and not (
+        entry[3:] == "uv.lock" and entry[:2] not in ("??", "!!") or
+        entry[:2] == "??" and path / entry[3:] in generated or
+        entry[:2] == "!!" and entry.endswith("/") and Path(entry[3:]).name in repo.CACHES)]
+
+
 def fix_drop(args: argparse.Namespace) -> None:
     from forge import close, codex, machine, story
 
@@ -864,15 +879,10 @@ def fix_drop(args: argparse.Namespace) -> None:
             git("push", "-q", "origin", branch, cwd=path)
         if pr:
             close._gh(path, "pr", "close", str(pr["number"]), "--comment", state["drop"]["because"])
-        ignored = git("ls-files", "--others", "--ignored", "--exclude-standard", "--directory", "-z", cwd=path)
-        rebuildable = {".venv", "node_modules", ".pytest_cache", "__pycache__", "dist", "build"}
-        kept = [name for name in ignored.split("\0") if name and not any(
-            part in rebuildable and path.joinpath(*Path(name).parts[:index + 1]).is_dir()
-            and not path.joinpath(*Path(name).parts[:index + 1]).is_symlink()
-            for index, part in enumerate(Path(name).parts))]
+        kept = worktree_files(path)
         print(f"Dropped fix {item}. Its remote branch keeps the work.")
         if kept:
-            print(f"Kept the worktree for ignored paths: {', '.join(kept)}")
+            print(f"Kept the worktree at {path} with local files: {', '.join(kept[:3])}")
         elif path.resolve() == root:
             print("Kept the main checkout. Its fix is still dropped.")
         else:

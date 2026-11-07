@@ -292,12 +292,14 @@ def merge(args: argparse.Namespace, *, refreshed: bool = False) -> int:
     untracked = {worktree / entry[3:] for entry in status if entry.startswith("?? ")}
     generated = {path for path, text in githooks.shims(worktree, repo.config(worktree)).items()
                  if path in untracked and not path.is_symlink() and path.read_text(encoding="utf-8") == text}
-    dirty = any(entry and worktree / entry[3:] not in generated for entry in status)
+    kept = [name for name in task.worktree_files(worktree) if worktree / name not in generated]
+    dirty = bool(kept)
     advanced = repo.git("rev-parse", branch, cwd=worktree) != head
     if advanced:
         print(f"Merged {item}. Its worktree at {worktree} has local commits outside the merged pull request, so Forge left it and its local branch in place.")
     elif dirty:
-        print(f"Merged {item}. Its worktree at {worktree} has uncommitted changes, so Forge left it and its local branch in place.")
+        print(f"Merged {item}. Its worktree at {worktree} has uncommitted local files, so Forge left it "
+              f"and its local branch in place: {', '.join(kept[:3])}")
     else:
         if top == worktree:
             os.chdir(main_checkout)

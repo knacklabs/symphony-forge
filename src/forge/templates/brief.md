@@ -208,6 +208,8 @@ $delegation
   to the coordinator after a clear yes. `forge fix drop <fix> --undo` restores it; a restored
   fix needs `forge close` again before it is ready.
   Restore a dropped fix before you start another fix from its checkout.
+  Merge and drop keep ignored non-cache files and untracked files, except unchanged Forge hook files.
+  The output names the kept folder and up to three paths. Keep those files until the owner decides what to do with them.
 - Forge workers, readers and reviewers never act on mod events; those turns belong to the
   interactive coordinator session. Work only on this brief.
 - Commit your own work on this branch, with short plain-English messages. Never commit to the
