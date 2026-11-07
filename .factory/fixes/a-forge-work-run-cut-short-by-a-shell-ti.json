@@ -42,33 +42,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "31e3e5f38a39268a557006e5f4a411fbaf1c20300b0c2b0767ecf00e07a367e4",
-    "changed": "2e254bd660a21de0fc765280affab7b9970dee41f2f1bc08d3612bd61e33df2b",
-    "commit": "9bcb723efa4488be8fc5ad6a0df94c12ae324a45",
-    "dismissals": [
-      {
-        "accepted": true,
-        "because": "Human accepted the remaining finding: Owner accepted: needs an interrupted answering round whose answer starts with two dashes; very rare, kept as a known issue",
-        "finding": 1
-      }
-    ],
-    "findings": [
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional\nCase: normal use - a worker asks which command-line flag to use, and the answering round with `--strict` is interrupted.\nA valid invocation using `--note=--strict` produces the retry `forge work <item> --note --strict`. `repo.quote` in src/forge/repo.py:397-400 leaves that token unchanged, and argparse treats it as an option rather than the note's value. The retry therefore refuses because `--note` has no argument, so the required answer still cannot be replayed for flag-valued answers.",
-        "file": "src/forge/worker.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 119,
-        "priority": "P1",
-        "title": "Functional: Include the required answer in the retry instruction",
-        "work": 2
-      }
-    ],
-    "id": "bc85402b-3803-4318-81d4-2e1140742c24",
+    "branch_diff": "3021d18ee5fdc6f750e3a46b6760ca426580daef0c708838acdbd4c937bdff6b",
+    "changed": "a6858f946a45c3dccc6cc8e9863908e5dd347f1511f008e787d0eee9f2dda465",
+    "commit": "57abc96dbfd8bf58bc0378a967941a4cac73039f",
+    "dismissals": [],
+    "findings": [],
+    "id": "65467f7e-141a-461f-a77e-bede943149d9",
     "status": "clean"
   },
   "round": 4,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-07T17:50:03.010281+00:00",
@@ -80,6 +63,10 @@
     },
     {
       "at": "2026-11-07T18:19:05.105854+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-07T19:08:07.255484+00:00",
       "step": "review"
     }
   ],
