@@ -316,6 +316,9 @@ def _run_live_starter(tmp_path_factory, sources, required_output=()):
             ).stdout.splitlines()
             assert changed_files == [Path("apps/web/src/index.css").as_posix()], changed_files
 
+            # Shared smoke consumers need the full library report, even when web has no tests.
+            formats = copy / "test-results/formats.xml"
+            formats.rename(formats.with_name("full-formats.xml"))
             process = subprocess.Popen(
                 ["node", Path("scripts") / "test.mjs", base], cwd=copy, env=env,
                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, start_new_session=True,
@@ -330,6 +333,8 @@ def _run_live_starter(tmp_path_factory, sources, required_output=()):
             assert "playwright test --config apps/web/playwright.config.ts" in selected, selected
             assert "apps/api/vitest.config.ts" not in selected, selected
             assert "test:api" not in selected, selected
+            formats.rename(formats.with_name("affected-formats.xml"))
+            formats.with_name("full-formats.xml").rename(formats)
         return {
             "folder": copy,
             "api": _junit_cases(copy / "test-results" / "api.xml"),
