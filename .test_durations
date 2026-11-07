@@ -1,4 +1,11 @@
 {
+    "tests/test_scope_overlap_explains_waits.py::test_1_shared_test_paths_do_not_delay_parts[pkg/__tests__-False]": 1.4219864150509238,
+    "tests/test_scope_overlap_explains_waits.py::test_1_shared_test_paths_do_not_delay_parts[pkg/spec-False]": 1.4022772079333663,
+    "tests/test_scope_overlap_explains_waits.py::test_1_shared_test_paths_do_not_delay_parts[pkg/test-False]": 1.3655407489277422,
+    "tests/test_scope_overlap_explains_waits.py::test_1_shared_test_paths_do_not_delay_parts[tests-False]": 1.658897583023645,
+    "tests/test_scope_overlap_explains_waits.py::test_1_shared_test_paths_do_not_delay_parts[tests-True]": 1.4734738758997992,
+    "tests/test_scope_overlap_explains_waits.py::test_2_real_scope_overlap_refusal_names_the_path[**/*.py-**/*.py]": 1.2916495411191136,
+    "tests/test_scope_overlap_explains_waits.py::test_2_real_scope_overlap_refusal_names_the_path[src/**/routes/*-src/api/]": 1.2181719579966739,
     "tests/test_affected_py_starter.py::test_6_python_starter_selects_its_affected_parts": 3.48,
     "tests/test_close.py::test_2_gates_check_outcomes[unnamed_check_run]": 1.0,
     "tests/test_close.py::test_2_gates_check_outcomes[unnamed_commit_status]": 1.0,

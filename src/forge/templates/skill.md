@@ -1310,6 +1310,8 @@ recording succeeds; if the repo pins a newer release, install that pinned releas
 - Tasks: before writing each task's Scope, search the code for the files it needs. The plan check
   refuses two tasks whose Scope paths share a prefix up to the first wildcard, unless one waits
   for the other through After, directly or through another task; the refusal names both tasks.
+  Paths with a segment named `tests`, `test`, `__tests__` or `spec` do not cause Scope overlaps.
+  A refusal caused by a Scope overlap names the shared path, or the glob when its literal prefix is empty.
   Put a shared file with its names and stubs in the first task that needs it. Tasks that need it
   wait for that task through After, then own only their files. Each row names the Done-when items
   it Covers, its Scope (the paths it may change) and its Tests. A task that covers nothing is cut;
