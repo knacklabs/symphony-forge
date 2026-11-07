@@ -1,6 +1,13 @@
 {
   "base": "3168eb540a14d7dd62ac62dd03842363b6e52afb",
   "branch": "fix/merge-test-timings-union",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1b769-4120-7c03-8e95-4edd10fb6f03",
+    "head": null,
+    "start": "4d699c59ef87deaa6fcecb8a5c9409c609afc93e"
+  },
   "done_when": "Merging the default branch into an item resolves a conflict in .test_durations alone by keeping both sides' entries, with no builder round, and any other conflict still stops as before",
   "fix_kind": "backend",
   "kind": "fix",
