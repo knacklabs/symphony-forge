@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "bug\ttests/test_full_run_starts_before_notes.py\tGate: test_1_full_run_starts_after_last_product_merge_before_notes\tstart-full-run-early",
+      "kind": "bug",
+      "path": "tests/test_full_run_starts_before_notes.py",
+      "line": 15,
+      "text": "Gate: test_1_full_run_starts_after_last_product_merge_before_notes",
+      "from": "blocking",
+      "item": "start-full-run-early",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/templates/skill.md\tNot done: Start local full runs after the last product merge",
+      "kind": "edge",
+      "path": "src/forge/templates/skill.md",
+      "line": 1812,
+      "text": "Not done: Start local full runs after the last product merge",
+      "from": "review",
+      "item": "start-full-run-early",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
