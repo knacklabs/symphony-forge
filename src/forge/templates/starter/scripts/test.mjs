@@ -1,18 +1,27 @@
 import { spawnSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
+import { globSync } from 'node:fs';
 import { createServer } from 'node:net';
 import { fileURLToPath } from 'node:url';
+import { affected } from './affected.mjs';
 
 process.chdir(fileURLToPath(new URL('..', import.meta.url)));
 const environment = { ...process.env, COMPOSE_PROJECT_NAME: process.env.COMPOSE_PROJECT_NAME || `starter-test-${randomUUID().slice(0, 8)}`,
   COREPACK_ENABLE_DOWNLOAD_PROMPT: '0', NX_DAEMON: 'false', NX_NO_CLOUD: 'true' };
 const corepack = process.platform === 'win32' ? 'corepack.cmd' : 'corepack';
+const list = process.argv.includes('--list');
+const base = process.argv.slice(2).find(argument => argument !== '--list');
 function run(command, args) {
+  if (list) {
+    process.stdout.write(`${command} ${args.join(' ')}\n`);
+    return;
+  }
   const result = spawnSync(command, args, { env: environment, stdio: 'inherit', shell: process.platform === 'win32' });
   if (result.error) throw result.error;
   if (result.status !== 0) throw new Error(`${command} failed with status ${result.status}`);
 }
 async function freePort() {
+  if (list) return 0;
   const server = createServer();
   await new Promise((resolve, reject) => { server.once('error', reject); server.listen(0, '127.0.0.1', resolve); });
   const port = server.address().port;
@@ -32,30 +41,67 @@ environment.ONE_COMPANY_ADMIN_PASSWORD = 'correct-horse-battery-staple';
 // Prisma generation/type checks need a URL, but only the containers access the database.
 environment.DATABASE_URL = 'postgresql://postgres:test-password@127.0.0.1:5432/starter_test';
 const compose = ['compose', '-f', 'compose.test.yml'];
+let stack = false;
 try {
   run(corepack, ['pnpm', 'install', '--frozen-lockfile']);
-  run(process.execPath, ['scripts/test-build.mjs']);
-  run(corepack, ['pnpm', 'exec', 'playwright', 'install', '--with-deps', 'chromium']);
-  run('docker', [...compose, 'up', '-d', '--build', '--wait', '--wait-timeout', '180']);
-  run('docker', [...compose, 'exec', '-T',
-    '-e', `ADMIN_EMAIL=${environment.ONE_COMPANY_ADMIN_EMAIL}`,
-    '-e', `ADMIN_PASSWORD=${environment.ONE_COMPANY_ADMIN_PASSWORD}`,
-    'one-company-api', 'corepack', 'pnpm', 'run', 'setup:company']);
-  for (const suite of ['lint', 'typecheck', 'test:api', 'test:hooks']) {
-    run(corepack, ['pnpm', 'run', suite]);
+  const projects = affected(base, corepack, environment);
+  const api = projects === null || projects.some(project => project.name === 'api');
+  const web = projects === null || projects.some(project => project.name === 'web');
+  stack = api || web;
+  process.stdout.write(`Affected parts: ${projects === null ? 'all' : projects.map(project => project.name).join(', ') || 'none'}\n`);
+  if (projects === null) run(process.execPath, ['scripts/test-build.mjs']);
+  else if (api) run(corepack, ['pnpm', 'exec', 'prisma', 'generate']);
+  if (web) run(corepack, ['pnpm', 'exec', 'playwright', 'install', '--with-deps', 'chromium']);
+  if (stack) {
+    run('docker', [...compose, 'up', '-d', '--build', '--wait', '--wait-timeout', '180']);
+    run('docker', [...compose, 'exec', '-T',
+      '-e', `ADMIN_EMAIL=${environment.ONE_COMPANY_ADMIN_EMAIL}`,
+      '-e', `ADMIN_PASSWORD=${environment.ONE_COMPANY_ADMIN_PASSWORD}`,
+      'one-company-api', 'corepack', 'pnpm', 'run', 'setup:company']);
   }
-  // API fixtures must not consume the browser suite's real sign-up rate limit.
-  run('docker', [...compose, 'up', '-d', '--no-deps', '--force-recreate', '--wait', '--wait-timeout', '180', 'api']);
-  run(corepack, ['pnpm', 'run', 'test:browser']);
-  const response = await fetch(`${environment.API_TEST_URL}/health`);
-  if (response.status !== 200) throw new Error('The built image did not answer GET /health with 200');
-  process.stdout.write('GET /health returned 200\n');
+  if (projects === null) {
+    for (const suite of ['lint', 'typecheck', 'test:api', 'test:hooks']) run(corepack, ['pnpm', 'run', suite]);
+  } else {
+    for (const target of ['lint', 'typecheck', 'test']) {
+      for (const project of projects) {
+        if (project.targets?.[target]) {
+          run(corepack, ['pnpm', 'exec', 'nx', 'run', `${project.name}:${target}`]);
+          if (list) process.stdout.write(`  ${project.targets[target].options.command}\n`);
+        } else if (project.root.startsWith('libs/')) {
+          if (target === 'lint') run(corepack, ['pnpm', 'exec', 'eslint', project.root]);
+          if (target === 'test') {
+            const files = globSync(`${project.root}/src/**/*.test.{ts,tsx}`).map(file => file.replaceAll('\\', '/'));
+            if (files.length) run(corepack, ['pnpm', 'exec', 'vitest', 'run', '--config', 'apps/web/vitest.config.ts', ...files]);
+          }
+        }
+      }
+    }
+  }
+  if (web) {
+    // API fixtures must not consume the browser suite's real sign-up rate limit.
+    if (api) run('docker', [...compose, 'up', '-d', '--no-deps', '--force-recreate', '--wait', '--wait-timeout', '180', 'api']);
+    if (projects === null) run(corepack, ['pnpm', 'run', 'test:browser']);
+    else {
+      run(corepack, ['pnpm', 'exec', 'nx', 'run', 'web:e2e']);
+      if (list) process.stdout.write(`  ${projects.find(project => project.name === 'web').targets.e2e.options.command}\n`);
+    }
+  }
+  if (stack && !list) {
+    const response = await fetch(`${environment.API_TEST_URL}/health`);
+    if (response.status !== 200) throw new Error('The built image did not answer GET /health with 200');
+    process.stdout.write('GET /health returned 200\n');
+  }
 } catch (error) {
-  spawnSync('docker', [...compose, 'logs', '--no-color'], { env: environment, stdio: 'inherit' });
+  if (stack && !list) spawnSync('docker', [...compose, 'logs', '--no-color'], { env: environment, stdio: 'inherit' });
   process.stderr.write(`${error.message}\n`);
   process.exitCode = 1;
 } finally {
-  const cleanup = spawnSync('docker', [...compose, 'down', '--volumes', '--remove-orphans', '--rmi', 'local'],
-    { env: environment, stdio: 'inherit' });
-  if (cleanup.status !== 0) process.exitCode = 1;
+  if (stack) {
+    try {
+      run('docker', [...compose, 'down', '--volumes', '--remove-orphans', '--rmi', 'local']);
+    } catch (error) {
+      process.stderr.write(`${error.message}\n`);
+      process.exitCode = 1;
+    }
+  }
 }

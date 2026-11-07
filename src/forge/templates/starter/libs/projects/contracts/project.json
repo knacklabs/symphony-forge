@@ -1,6 +1,12 @@
 {
   "name": "@app/projects-contracts",
   "projectType": "library",
+  "targets": {
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": { "command": "eslint libs/projects/contracts" }
+    }
+  },
   "sourceRoot": "libs/projects/contracts/src",
   "tags": [
     "type:contracts",

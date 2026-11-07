@@ -1,6 +1,12 @@
 {
   "name": "@app/core-web",
   "projectType": "library",
+  "targets": {
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": { "command": "eslint libs/core/web" }
+    }
+  },
   "sourceRoot": "libs/core/web/src",
   "tags": [
     "type:web",

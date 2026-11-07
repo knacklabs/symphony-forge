@@ -1121,6 +1121,16 @@ if the settings do not answer it. Pass
    repo's Python runner for `test`; keep Forge outside the project, and keep lint and other
    checks in `test`.
    Forge writes no `fast_test` by itself.
+   New repos leave `fast_test` unset, except a new starter, whose init writes one for its own script
+   when it ships `scripts/affected.mjs`.
+   Its init keeps `test = "node scripts/test.mjs"` for full runs and writes
+   `fast_test = "node scripts/test.mjs {base}"`. The TypeScript starter uses Nx to name affected
+   parts and run their lint, typecheck and tests; `--list <base>` prints the commands.
+   New test files in an affected library also run when it has no Nx test target.
+   If close cannot read a check name from GitHub, it reports the missing name.
+   Retry `forge close <item>` after GitHub returns check data.
+   Existing apps keep their scripts and settings on upgrade and sync. Ask before adding these
+   targets and scripts to an existing app or changing its `forge.toml`.
    When `fast_test` is missing, `forge doctor` and `forge upgrade` print one suggested
    `fast_test` line: a single plain pytest call gets `forge test --pytest {base}`; vitest and jest keep the
    repo's own install and runner, adding `--changed {base}` or `--changedSince {base}`

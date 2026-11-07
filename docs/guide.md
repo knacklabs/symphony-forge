@@ -485,7 +485,8 @@ In a local-test repo, set `fast_test` in `forge.toml` when close needs a narrowe
 runs instead of `test`, with `{base}` replaced by the merge base with the default branch (for
 example `npx vitest run --changed {base} && npm run lint`). In a CI-test repo, the pull request's
 `tests` check runs the related tests and close waits for it. The nightly full run covers the rest.
-New repos leave `fast_test` unset. `forge doctor` says when it is set.
+New repos leave `fast_test` unset, except a new starter, whose init writes one for its own script.
+`forge doctor` says when it is set.
 The generated `forge.yml` runs one `tests` job with `forge test --change`. Set `groups = 4` in
 `forge.toml` to run four parallel jobs with any test runner. Each job runs the tests related to the
 pull request. Put `{group}` and `{groups}` in the `test` or `fast_test` command where the runner
