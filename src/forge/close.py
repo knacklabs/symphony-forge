@@ -299,7 +299,8 @@ def close(args: argparse.Namespace) -> int:
         print("nothing to review: only Forge's records changed", flush=True)
     replayed = bool(stacked_on and previous.get("commit") and repo.run(
         "git", "merge-base", "--is-ancestor", previous["commit"], "HEAD", cwd=top).returncode)
-    fresh = not replayed and (choice == "accept" or result.get("branch_diff", legacy_diff) == branch_diff or merge_review.covers(top, item, state, review_ref, result))
+    fresh = (not replayed and (choice == "accept" or merge_review.covers(top, item, state, review_ref, result)) or
+             (not replayed or not review.blocking(result)) and result.get("branch_diff", legacy_diff) == branch_diff)
     if records_only and review.blocking(result):
         fresh = False
     if switch:
