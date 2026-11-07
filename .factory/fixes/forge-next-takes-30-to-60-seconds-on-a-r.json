@@ -1,4 +1,11 @@
 {
+  "amendments": [
+    {
+      "at": "2026-11-07T18:13:34.314978+00:00",
+      "because": "The slowdown did not reproduce on current code (6.5 s, 143 git calls before the change), so the read cache adds code with no proven gain",
+      "done_when": "forge next on a repo with about fifteen parts prints a line such as Builds running: 1 of 4 and finishes in under 10 seconds."
+    }
+  ],
   "base": "e923c49135fd7176cc159f4d27d247ab5d3ef56a",
   "branch": "fix/forge-next-takes-30-to-60-seconds-on-a-r",
   "chat": {
@@ -8,7 +15,7 @@
     "head": null,
     "start": "e5c55428500412df446af3882d2697ef8914cae0"
   },
-  "done_when": "forge next on a repo with about fifteen parts prints a line such as Builds running: 1 of 4 and finishes in under 10 seconds.",
+  "done_when": "forge next prints a line such as Builds running: 1 of 4 that counts only this release's running builder rounds",
   "fix_kind": "backend",
   "kind": "fix",
   "known": [
