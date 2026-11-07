@@ -1,0 +1,48 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/merge.py\tKeep the generated-hook exception when Git reports a directory\tkeep-worktree-files-on-cleanup",
+      "kind": "bug",
+      "path": "src/forge/merge.py",
+      "line": 295,
+      "text": "Keep the generated-hook exception when Git reports a directory",
+      "from": "blocking",
+      "item": "keep-worktree-files-on-cleanup",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/task.py\tData loss: Preserve ignored lockfiles during worktree cleanup\tkeep-worktree-files-on-cleanup",
+      "kind": "bug",
+      "path": "src/forge/task.py",
+      "line": 782,
+      "text": "Data loss: Preserve ignored lockfiles during worktree cleanup",
+      "from": "blocking",
+      "item": "keep-worktree-files-on-cleanup",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/task.py\tData loss: Reports created after the final status check can still be deleted\tkeep-worktree-files-on-cleanup",
+      "kind": "bug",
+      "path": "src/forge/task.py",
+      "line": 877,
+      "text": "Data loss: Reports created after the final status check can still be deleted",
+      "from": "blocking",
+      "item": "keep-worktree-files-on-cleanup",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/task.py\tNot done: After merge or fix drop, Forge keeps a worktree that holds ignored files outside known caches or untracked files, and names them",
+      "kind": "edge",
+      "path": "src/forge/task.py",
+      "line": 779,
+      "text": "Not done: After merge or fix drop, Forge keeps a worktree that holds ignored files outside known caches or untracked files, and names them",
+      "from": "review",
+      "item": "keep-worktree-files-on-cleanup",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
