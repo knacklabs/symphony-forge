@@ -70,7 +70,7 @@
     "id": "7cf62d85-7816-4f56-9486-d58f10666340",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "stacked_on": "release-1-2-31",
   "status": "fixing",
   "steps": [
@@ -93,10 +93,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": null,
-    "head": "f03517150717666248d4a10f57ac3ef8c2f443e5",
+    "close": "8975e5db-ed42-48d1-afc8-170e236587b9",
+    "head": "3b592dbab0230ccbca1ef93d8fdc67c86dffbda5",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "Review findings split from release-1-2-31: Preserve settled design screenshots (.forge/design/support.js:101); Gate: generated files in the release checkout (tests/test_release_version.py:31); Gate: proof list (.factory/fixes/release-1-2-31.json:5)",
   "worker": "codex"
