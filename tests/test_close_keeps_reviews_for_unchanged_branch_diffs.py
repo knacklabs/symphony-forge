@@ -99,7 +99,7 @@ def test_1_close_keeps_review_and_dismissals_when_main_moves(env, previous, dism
     assert len(env.review_calls()) == reviews
 
 
-def test_2_close_reviews_again_when_main_changes_the_branch_diff(env):
+def test_2_close_keeps_review_when_main_absorbs_a_reviewed_change(env):
     base = "old\n" + "pass\n" * 20 + "tail\n"
     env.commit(env.repo.path, "app.py", base)
     env.repo.git("push", "-q", "origin", "main")
@@ -108,8 +108,8 @@ def test_2_close_reviews_again_when_main_changes_the_branch_diff(env):
     env.reviews(CLEAN)
     assert env.close(item).returncode == 0
     before = env.repo.git("diff", "origin/main...HEAD", "--", "app.py", cwd=where)
-    # Main absorbs one of the branch's changes. The final file is identical, but the reviewed
-    # diff is smaller: the old contents-only contract reused a review that no longer covered it.
+    # Main absorbs a reviewed change. The old contract reviewed the smaller diff again;
+    # the new contract keeps the review after every clean merge.
     env.commit(env.repo.path, "app.py", base.replace("old", "new"))
     env.repo.git("push", "-q", "origin", "main")
     env.gh.respond("pr", "list", "--head", stdout='[{"number":7,"state":"OPEN",'
@@ -118,7 +118,7 @@ def test_2_close_reviews_again_when_main_changes_the_branch_diff(env):
     assert closed.returncode == 0, closed.stdout + closed.stderr
     assert (where / "app.py").read_text() == changed
     assert env.repo.git("diff", "origin/main...HEAD", "--", "app.py", cwd=where) != before
-    assert len(env.review_calls()) == 2
+    assert len(env.review_calls()) == 1
 
 
 @pytest.mark.parametrize("review_before_fix", [False, True], ids=["new-review", "existing-review"])

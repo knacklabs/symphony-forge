@@ -17,8 +17,9 @@ After a merge of main, close applies a requested dismissal to the same title and
 current review, even if its number changes. Only the human chooses which findings to dismiss.
 Only use the model-review skip when a person asks and no earlier review blocked the item.
 
-After a merge of the default branch, close reviews only this change's own diff against the new
-merge base, keeping earlier findings and allowances from this item's records.
+After a merge of the default branch, close keeps an earlier clean review and reviews only
+conflict repairs and later worker edits; a clean merge needs no new review. The usual close
+tests still run on the merged code, keeping earlier findings and allowances from this item's records.
 When close, land or merge brings in changed guide templates, Forge refreshes the committed
 skill copies before tests and push. It leaves other generated files alone.
 If that diff contains only records under `.factory/` and `plans/`, close records a clean review without a model call,
@@ -150,6 +151,7 @@ and review it before you start a part on top of it.
 You can continue, close and merge published work on another machine with `forge work`, `forge close` and `forge merge`.
 Before every work round, Forge fetches and merges the default branch before it reads settings or writes the brief.
 If that merge conflicts, the worker gets its normal full brief with one added line to finish and commit the merge first.
+Close then reviews only conflict repairs and later edits when an earlier clean review still covers the task.
 `forge work` refuses a fix or task whose pull request is already merged. Start a new fix with `forge fix start` for follow-up work.
 
 If the default branch moved after close, `forge merge` compares its new changed files with the item's changed files.
