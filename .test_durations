@@ -1,4 +1,6 @@
 {
+    "tests/test_adoption_shared_input_checks.py::test_1_adoption_review_keeps_shared_input_checks[new-client]": 6.694,
+    "tests/test_adoption_shared_input_checks.py::test_1_adoption_review_keeps_shared_input_checks[previous-adoption]": 3.072,
     "tests/test_affected_py_starter.py::test_6_python_starter_selects_its_affected_parts": 3.48,
     "tests/test_close.py::test_2_gates_check_outcomes[unnamed_check_run]": 1.0,
     "tests/test_close.py::test_2_gates_check_outcomes[unnamed_commit_status]": 1.0,
