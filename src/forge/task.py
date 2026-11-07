@@ -783,6 +783,7 @@ def worktree_files(path: Path) -> list[str]:
     generated = {file for file, text in githooks.shims(path, repo.config(path)).items()
                  if not file.is_symlink() and file.is_file() and file.read_text(encoding="utf-8") == text}
     return [entry[3:] for entry in status.stdout.split("\0") if entry and not (
+        entry[3:] == "uv.lock" and entry[:2] not in ("??", "!!") or
         entry[:2] == "??" and path / entry[3:] in generated or
         entry[:2] == "!!" and entry.endswith("/") and Path(entry[3:]).name in repo.CACHES)]
 
