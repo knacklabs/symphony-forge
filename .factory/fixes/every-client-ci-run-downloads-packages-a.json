@@ -1,6 +1,13 @@
 {
   "base": "5393cf3ed78f0bae68f7bf2762dbcc9675a03710",
   "branch": "fix/every-client-ci-run-downloads-packages-a",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1b762-7983-79b1-b035-f3a6f3f61119",
+    "head": null,
+    "start": "279dcb8a2f37d1e474bb0a7a67007131d8e35bf3"
+  },
   "done_when": "On a second run with an unchanged lockfile, the client check reuses downloaded packages and image layers, and a source-only edit no longer reinstalls the packages in the image build.",
   "fix_kind": "mechanical",
   "kind": "fix",
