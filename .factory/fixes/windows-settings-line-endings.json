@@ -1,0 +1,84 @@
+{
+  "base": "ad7dd5c402b43015ff56f1110263d30e3ef38cf4",
+  "branch": "fix/windows-settings-line-endings",
+  "done_when": "The settings comparison in the review-rounds words test ignores line endings and the Windows full run is green",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "test_5_init_and_upgrade_keep_settings_and_two_round_defaults() in tests/test_reviewchoice_words.py",
+      "file": "tests/test_reviewchoice_words.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 56,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: The settings comparison in the review-rounds words test ignores line endings and the Windows full run is green",
+      "work": 1
+    },
+    {
+      "area": "test_5_init_and_upgrade_keep_settings_and_two_round_defaults() in tests/test_reviewchoice_words.py",
+      "file": "tests/test_reviewchoice_words.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 56,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: proof list",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "e74cbdc561c4d96bdbbdecfc2de6138970e1ef1dbe122ac5099a0f8bc11eb120",
+    "changed": "e1bc76661da49b68657fa09ad5c4416bc26a385c126dc26a8d10f754caee8d33",
+    "commit": "a78b18b2efe1a95a6d7e456bafee5a03380d772a",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 1, Harm 2\nRaise: Not done\nCase: normal use - closing the fix before merge.\nThe comparison now normalizes CRLF, but no successful Windows full-run result is supplied. The Windows tests job in .github/workflows/forge-next.yml:70 runs only on a schedule or manual dispatch, so a pull request check will not establish that the run is green. Run the Windows workflow on this branch and provide its result.",
+        "file": "tests/test_reviewchoice_words.py",
+        "gain": 3,
+        "harm": 2,
+        "line": 56,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: The settings comparison in the review-rounds words test ignores line endings and the Windows full run is green",
+        "work": 1
+      },
+      {
+        "body": "Gain 3, Work 1, Harm 2\nRaise: Gate\nCase: normal use - reviewing the fix's evidence before merge.\nThe supplied proof list is explicitly missing. Although test_5_init_and_upgrade_keep_settings_and_two_round_defaults exists, there is no mapping identifying it and the Windows full-run proof for the Done-when item. Supply the proof list so both parts of the item can be checked.",
+        "file": "tests/test_reviewchoice_words.py",
+        "gain": 3,
+        "harm": 2,
+        "line": 56,
+        "priority": "P1",
+        "title": "Gate: proof list",
+        "work": 1
+      }
+    ],
+    "id": "b73362cc-e519-40ef-b939-f34e67f8db88",
+    "status": "blocked"
+  },
+  "status": "hotspot",
+  "steps": [
+    {
+      "at": "2026-11-07T16:51:16.517790+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-07T16:55:18.333438+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-07T16:55:18.343338+00:00",
+    "file": "tests/test_reviewchoice_words.py",
+    "wait_id": "d6a6e266-3912-40cc-b836-04a57ae0b93e"
+  },
+  "why": "On Windows the earlier-adoption settings test fails because the test helper writes forge.toml with Windows line endings and the test compares bytes"
+}
