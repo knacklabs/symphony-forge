@@ -53,6 +53,27 @@ def test_1_waiters_share_one_status_read_per_minute(client, monkeypatch):
         "    for _ in range(650):\n"
         "        if (here / 'status-read-release').exists(): break\n"
         "        threading.Event().wait(0.1)\n", 1), encoding="utf-8")
+    # Advance the real subprocess deadline after the second command proves
+    # contention. Popen still owns timeout detection, child termination and pipes.
+    with clock.open("a", encoding="utf-8") as startup:
+        startup.write(f'''
+communicate = subprocess.Popen.communicate
+def controlled_communicate(self, *args, **kwargs):
+    if '.check_runs[]' in self.args and kwargs.get('timeout') is not None:
+        self.stdin.close()
+        self.stdin = None
+        while float(Path({json.dumps(offset.as_posix())}).read_text('utf-8')) < 181:
+            subprocess.time.sleep(0.01)
+        previous = subprocess._time
+        ticks = iter((120, 181))
+        subprocess._time = lambda: next(ticks, 181)
+        try:
+            return communicate(self, *args, **kwargs)
+        finally:
+            subprocess._time = previous
+    return communicate(self, *args, **kwargs)
+subprocess.Popen.communicate = controlled_communicate
+''')
     offset.write_text("120", encoding="utf-8")
     started = env.repo.bin / "status-read-starts"
     output, error = env.tmp / "status-reader.out", env.tmp / "status-reader.err"
@@ -69,8 +90,10 @@ def test_1_waiters_share_one_status_read_per_minute(client, monkeypatch):
             assert done.returncode == 1, done.stdout + done.stderr
             assert "Could not get access to the shared check status" in done.stderr
             assert started.read_text("utf-8") == "read\n"
-            first.wait(timeout=90)
+            offset.write_text("181", encoding="utf-8")
+            first.wait(timeout=10)
         finally:
+            offset.write_text("181", encoding="utf-8")
             (env.repo.bin / "status-read-release").touch()
             if first.poll() is None:
                 try:
