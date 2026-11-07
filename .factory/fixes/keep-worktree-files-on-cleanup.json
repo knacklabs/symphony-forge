@@ -4,12 +4,20 @@
   "done_when": "After merge or fix drop, Forge keeps a worktree that holds ignored files outside known caches or untracked files, and names them, as doctor's finished-work cleanup does",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-07T06:47:30.373312+00:00",
       "step": "start"
     }
   ],
-  "why": "Removing a worktree after merge deletes gitignored files silently (merge.py checks untracked files only, then runs git worktree remove), and forge fix drop deletes untracked non-ignored files with --force (task.py). A client lost a 3-hour test report. Forge issue 1428."
+  "stuck": {
+    "close": null,
+    "head": "bcc31a44d80a6fe2fd5a08913f648b74fba0cb1f",
+    "keys": {},
+    "round": null
+  },
+  "why": "Removing a worktree after merge deletes gitignored files silently (merge.py checks untracked files only, then runs git worktree remove), and forge fix drop deletes untracked non-ignored files with --force (task.py). A client lost a 3-hour test report. Forge issue 1428.",
+  "worker": "codex"
 }
