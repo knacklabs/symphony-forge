@@ -64,6 +64,7 @@
     "id": "b73362cc-e519-40ef-b939-f34e67f8db88",
     "status": "blocked"
   },
+  "round": 1,
   "status": "fixing",
   "steps": [
     {
@@ -84,5 +85,12 @@
     "wait_id": "d6a6e266-3912-40cc-b836-04a57ae0b93e",
     "worker_round": null
   },
-  "why": "On Windows the earlier-adoption settings test fails because the test helper writes forge.toml with Windows line endings and the test compares bytes"
+  "stuck": {
+    "close": "979ed468-9e83-4f94-9abb-0bc628cf12f4",
+    "head": "8e46bd18cae01590a93415e5a3e35bc8a620e0e8",
+    "keys": {},
+    "round": null
+  },
+  "why": "On Windows the earlier-adoption settings test fails because the test helper writes forge.toml with Windows line endings and the test compares bytes",
+  "worker": "codex"
 }
