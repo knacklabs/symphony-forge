@@ -1,6 +1,13 @@
 {
   "base": "5393cf3ed78f0bae68f7bf2762dbcc9675a03710",
   "branch": "fix/tests-skip-real-timeouts",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1b74e-3328-7c73-b710-e4a2ca290c5e",
+    "head": null,
+    "start": "82959ccb544bd5ee86a1e50f3fbeaa2c7a5311bf"
+  },
   "done_when": "The two tests advance a controlled clock instead of waiting, keep their real command and refusal assertions, and each runs in under 10 seconds",
   "fix_kind": "mechanical",
   "kind": "fix",
