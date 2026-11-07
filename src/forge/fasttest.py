@@ -129,7 +129,6 @@ def narrow_command(command: str, excluded: list[str], workers: str, always: list
         caps = [int(cap) for cap in re.findall(r'''(?:^|[\s"'=])--maxprocesses(?:=|\s+)["']?(\d+)''', configured)
                 if int(cap) > 0]
         options.append("--maxprocesses=" + str(min([int(workers), *caps])))
-    options += always  # forge.toml's always_test, whatever roots the command names
     # CLI options win over ini and PYTEST_ADDOPTS, including fixed xdist counts.
     additions = (subprocess.list2cmdline(options) if os.name == "nt" else shlex.join(options))
     for index in pytest_tokens:
@@ -489,18 +488,35 @@ RAN, ROOT = set(), []
 def pytest_configure(config):
     config.option.ignore = (config.option.ignore or []) + IGNORE
     ROOT.append(pathlib.Path(str(config.rootdir)))
-def name(nodeid):  # relative to the repo, as forge.toml names it, whatever pytest's rootdir
+    if hasattr(config, "_forge_prior_passed"):
+        return  # Close's retry has already replaced the roots with its failed files.
+    # Use pytest's resolved defaults, and never add a file below a collected directory.
+    # Overlapping directory/file arguments omit tests on pytest 8 and repeat them on 7.
+    args = list(config.args)
+    for entry in ALWAYS + [task.split("::", 1)[0] for task in TASKS]:
+        if not any(covers(arg, entry) for arg in args):
+            args = [arg for arg in args if not covers(entry, arg)] + [entry]
+    config.args = config.option.file_or_dir = args
+def covers(argument, entry):
+    source, _, node = argument.partition("::")
+    target, _, target_node = entry.partition("::")
+    source, target = pathlib.Path(source).resolve(), pathlib.Path(target).resolve()
+    return ((source.is_dir() and (source == target or source in target.parents))
+            or source == target and (not node or runs(target_node, node)))
+def name(nodeid, path=None):  # relative to the repo, whatever pytest's rootdir
     file, _, rest = nodeid.partition("::")
-    return pathlib.Path(os.path.relpath(ROOT[0] / file)).as_posix() + ("::" + rest if rest else "")
+    return pathlib.Path(os.path.relpath(path or ROOT[0] / file)).as_posix() + ("::" + rest if rest else "")
 def runs(nodeid, entry):
     return nodeid == entry or nodeid.startswith((entry + "::", entry + "["))
 def task_runs(nodeid, entry):
     return re.match(re.escape(entry) + r"(?=$|_|::|\\[)", nodeid) is not None
 def pytest_collection_modifyitems(config, items):
+    for item in items:
+        item.user_properties.append(("_forge_test_file", str(item.path)))
     if PICKED is None or not (ALWAYS or TASKS):
         return
     def kept(item):
-        nodeid = name(item.nodeid)
+        nodeid = name(item.nodeid, item.path)
         return (nodeid.split("::")[0] in PICKED
                 or any(runs(nodeid, entry) for entry in ALWAYS)
                 or any(task_runs(nodeid, entry) for entry in TASKS))
@@ -510,7 +526,7 @@ def pytest_collection_modifyitems(config, items):
         items[:] = [item for item in items if kept(item)]
 def pytest_runtest_logreport(report):
     if report.when == "call":
-        RAN.add(name(report.nodeid))
+        RAN.add(name(report.nodeid, dict(report.user_properties).get("_forge_test_file")))
 def pytest_sessionfinish(session):
     if hasattr(session.config, "workerinput"):
         return  # the controller sees every worker's reports
@@ -591,15 +607,16 @@ def pytest_runtest_logreport(report):
                    else report.outcome)
     else:
         outcome = "skipped" if report.skipped else "error"
-    _write_result(outcome, report.nodeid)
+    _write_result(outcome, report.nodeid, dict(report.user_properties).get("_forge_test_file"))
 def pytest_collectreport(report):
     if FILE and report.failed:
         _write_result("error", report.nodeid)
-def _write_result(outcome, nodeid):
+def _write_result(outcome, nodeid, path=None):
     file, _, rest = nodeid.partition("::")
+    path = pathlib.Path(path) if path else ROOT[0] / file
     if outcome in ("failed", "error"):
-        FAILED.add((ROOT[0] / file).resolve().as_posix())
-    nodeid = pathlib.Path(os.path.relpath(ROOT[0] / file)).as_posix() + ("::" + rest if rest else "")
+        FAILED.add(path.resolve().as_posix())
+    nodeid = pathlib.Path(os.path.relpath(path)).as_posix() + ("::" + rest if rest else "")
     if outcome == "passed":
         PASSED.add(nodeid)
     with FILE[0].open("a", encoding="utf-8") as results:

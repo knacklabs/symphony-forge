@@ -3,12 +3,13 @@ from __future__ import annotations
 
 import json
 import shutil
+import subprocess
 import sys
 from pathlib import Path
 
 import pytest
 
-from conftest import ROOT, _install, patient
+from conftest import REAL_UV, ROOT, _install, patient
 from test_fix_new_repos_get_claude_as_their_worker_by import _new_repo
 from test_upgrade_command import RELEASE, env, unsynced_up  # noqa: F401
 
@@ -448,25 +449,49 @@ def test_2_a_python_chain_selects_only_plain_pytest_steps(
         patient(lambda: (client / ".forge/always-tests.txt").unlink())
         patient(lambda: (client / "required-ran.txt").unlink())
 
-    # A changed required file inside the integration step must not also run in
-    # the earlier unit step. The previous outside-both-roots case cannot catch this.
+    # Real pytest 7 and 8 expose duplicate and missing collection when a required
+    # file is appended below an existing directory. Both changed files must run once.
     required_api = client / "tests/integration/test_order.py"
-    required_api.write_text(
-        "from pathlib import Path\nfrom order import VALUE\ndef test_order():\n"
-        "    assert VALUE == 1\n"
-        "    with Path('required-ran.txt').open('a', encoding='utf-8') as out:\n"
-        "        out.write('ran')\n", "utf-8")
-    (client / ".forge/always-tests.txt").write_text("tests/integration/test_order.py\n", "utf-8")
-    _configure(repo, client, f"{python} -m pytest tests/unit && {python} -m pytest tests/integration")
-    required_api.write_text(required_api.read_text("utf-8") + "# Changed required test\n", "utf-8")
-    owned = repo.forge("test", "--change", cwd=client)
-    assert owned.returncode == 0, owned.stdout + owned.stderr
-    assert (client / "required-ran.txt").read_text("utf-8") == "ran"
-    selected = [line for line in owned.stdout.splitlines() if line.startswith("Test selection: pytest:")]
-    assert "none (no related tests)" in selected[0], selected
-    assert "tests/integration/test_order.py" in selected[1], selected
+    other_api = client / "tests/integration/test_other.py"
+    observed = []
+    for version, default_paths in (("7.4.4", False), ("8.4.0", False),
+                                   (pytest.__version__, False), (pytest.__version__, True)):
+        runtime = subprocess.run(
+            [REAL_UV, "run", "--isolated", "--no-project", "--python", "3.11",
+             "--with", f"pytest=={version}", "python", "-c", "import sys; print(sys.executable)"],
+            capture_output=True, text=True, timeout=120)
+        assert runtime.returncode == 0, runtime.stdout + runtime.stderr
+        launcher = json.dumps(Path(runtime.stdout.strip()).as_posix())
+        required_api.write_text(
+            "from pathlib import Path\nimport pytest\nfrom order import VALUE\ndef test_order():\n"
+            f"    assert pytest.__version__ == {version!r}\n    assert VALUE == 1\n"
+            "    with Path('required-ran.txt').open('a', encoding='utf-8') as out:\n"
+            "        out.write('ran')\n", "utf-8")
+        other_api.write_text("from pathlib import Path\ndef test_other():\n"
+                             "    with Path('other-ran.txt').open('a', encoding='utf-8') as out:\n"
+                             "        out.write('ran')\n", "utf-8")
+        (client / ".forge/always-tests.txt").write_text("tests/integration/test_order.py\n", "utf-8")
+        command = (f"{launcher} -m pytest" if default_paths else
+                   f"{launcher} -m pytest tests/unit && {launcher} -m pytest tests/integration")
+        _configure(repo, client, command)
+        for path in (required_api, other_api):
+            path.write_text(path.read_text("utf-8") + "# Changed integration test\n", "utf-8")
+        owned = repo.forge("test", "--change", cwd=client)
+        selected = [line for line in owned.stdout.splitlines()
+                    if line.startswith("Test selection: pytest:")]
+        assert len(selected) == (1 if default_paths else 2), owned.stdout
+        if not default_paths:
+            assert "none (no related tests)" in selected[0], selected
+        assert "tests/integration/test_order.py" in selected[-1], selected
+        assert "tests/integration/test_other.py" in selected[-1], selected
+        runs = [(client / name).read_text("utf-8") if (client / name).exists() else "missing"
+                for name in ("required-ran.txt", "other-ran.txt")]
+        observed.append(((version, default_paths), owned.returncode, runs, owned.stdout + owned.stderr))
+        for name in ("required-ran.txt", "other-ran.txt"):
+            patient(lambda name=name: (client / name).unlink(missing_ok=True))
+    assert all(status == 0 and runs == ["ran", "ran"] for _, status, runs, _ in observed), [
+        (version, status, runs, output if status else "") for version, status, runs, output in observed]
     patient(lambda: (client / ".forge/always-tests.txt").unlink())
-    patient(lambda: (client / "required-ran.txt").unlink())
 
     # An earlier-adopted Python client keeps its command through upgrade and
     # sync, and Forge still selects the related pytest module.
