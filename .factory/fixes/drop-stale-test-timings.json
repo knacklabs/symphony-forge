@@ -1,0 +1,15 @@
+{
+  "base": "7dbbf428c3268c8445d3498d413c7afe9cd8fe4b",
+  "branch": "fix/drop-stale-test-timings",
+  "done_when": "tests/test_ci_timing_inventory.py passes on main",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-07T06:55:03.578124+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Main fails tests/test_ci_timing_inventory.py: .test_durations names three tests the Terra review switch renamed or removed"
+}
