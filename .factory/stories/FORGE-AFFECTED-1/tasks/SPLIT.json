@@ -1,10 +1,18 @@
 {
   "branch": "task/FORGE-AFFECTED-1-SPLIT",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-07T10:19:17.650942+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "f723563f09a0313dcfcad570f40d091200bfcd66",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
