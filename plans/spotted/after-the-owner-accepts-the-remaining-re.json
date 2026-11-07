@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "bug\ttests/test_acceptance_publishes_final_review_once.py\tGate: acceptance names a failing CI check\tafter-the-owner-accepts-the-remaining-re",
+      "kind": "bug",
+      "path": "tests/test_acceptance_publishes_final_review_once.py",
+      "line": 56,
+      "text": "Gate: acceptance names a failing CI check",
+      "from": "blocking",
+      "item": "after-the-owner-accepts-the-remaining-re",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_acceptance_publishes_final_review_once.py\tGate: verify the accepted item is actually ready\tafter-the-owner-accepts-the-remaining-re",
+      "kind": "bug",
+      "path": "tests/test_acceptance_publishes_final_review_once.py",
+      "line": 72,
+      "text": "Gate: verify the accepted item is actually ready",
+      "from": "blocking",
+      "item": "after-the-owner-accepts-the-remaining-re",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

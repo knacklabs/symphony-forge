@@ -11,14 +11,105 @@
   "done_when": "One close after accepting findings runs the checks and reports Ready, or stops and names the failing check.",
   "fix_kind": "backend",
   "kind": "fix",
+  "known": [
+    {
+      "area": "test_1_acceptance_publishes_once_after_final_review_records() in tests/test_acceptance_publishes_final_review_once.py",
+      "file": "tests/test_acceptance_publishes_final_review_once.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 56,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: acceptance names a failing CI check",
+      "work": 1
+    },
+    {
+      "area": "test_1_acceptance_publishes_once_after_final_review_records() in tests/test_acceptance_publishes_final_review_once.py",
+      "file": "tests/test_acceptance_publishes_final_review_once.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 72,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: verify the accepted item is actually ready",
+      "work": 1
+    },
+    {
+      "area": "test_1_acceptance_publishes_once_after_final_review_records() in tests/test_acceptance_publishes_final_review_once.py",
+      "file": "tests/test_acceptance_publishes_final_review_once.py",
+      "gain": 3,
+      "harm": 1,
+      "line": 42,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Standard: Tests never sleep",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "5c2abde5e1f40de3f097e35dfb5dca4d1af01fd63f8c4bbdc2a4665e7e7a57cd",
+    "changed": "7c25a62d83eee91e8b89874bed9c0b53f03fd9f888a954149046b3cb427b591c",
+    "commit": "d9484fb1a48282dfb9376891a0ca82a683be5dab",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 1, Harm 3\nRaise: Test\nCase: normal use - CI fails after the owner accepts the remaining findings.\nThe acceptance cases always report the `tests` check as successful and never assert that a red CI check stops close and names the check. `tests/test_close_runs_tests_and_review_together.py:210` covers failed local tests after acceptance, while `tests/test_close.py:321` covers red CI on an ordinary close. A regression that ignores a red CI result only during acceptance would pass both. Extend the acceptance command test with a failing CI check and assert the failure name and absence of Ready.",
+        "file": "tests/test_acceptance_publishes_final_review_once.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 56,
+        "priority": "P1",
+        "title": "Gate: acceptance names a failing CI check",
+        "work": 1
+      },
+      {
+        "body": "Gain 3, Work 1, Harm 3\nRaise: Test\nCase: normal use - CI passes after acceptance and the agent proceeds to merge the item.\nThe new assertion reads a private receipt and checks only its commit. A CI acceptance that wrote the current commit with a missing or blocked review value would still pass this test, but `src/forge/merge.py:72` requires a clean review before merging. The assertion also breaks if readiness is stored differently without changing behavior. Verify readiness through a Forge command or board boundary instead.",
+        "file": "tests/test_acceptance_publishes_final_review_once.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 72,
+        "priority": "P1",
+        "title": "Gate: verify the accepted item is actually ready",
+        "work": 1
+      },
+      {
+        "body": "Gain 3, Work 1, Harm 1\nRaise: Gate\nCase: normal use - CI runs the new default-moves case.\nThe standard says: \"Tests build their own data with factories, own that data, don't depend on order, and never sleep.\" This call uses `tests/test_reviewchoice_skip.py:86` to leave a check in progress with a ten-second wait; `src/forge/checks.py:148` then sleeps before polling again. The added case therefore incurs a fixed wait on each run. Use the existing fake clock to advance the poll without waiting.",
+        "file": "tests/test_acceptance_publishes_final_review_once.py",
+        "gain": 3,
+        "harm": 1,
+        "line": 42,
+        "priority": "P1",
+        "title": "Standard: Tests never sleep",
+        "work": 1
+      }
+    ],
+    "id": "615e8d2a-1701-4393-9470-a51e703d4522",
+    "status": "blocked"
+  },
   "round": 2,
-  "status": "working",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-07T17:49:38.109975+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-07T18:05:58.246441+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-11-07T18:05:58.259673+00:00",
+    "file": "tests/test_acceptance_publishes_final_review_once.py",
+    "wait_id": "1374fa31-bf27-4c61-ad81-a22e9c6b105b"
+  },
   "stuck": {
     "close": null,
     "head": "f8f4fd18efddfab2c3fff0241ec89959eb5bcc11",
