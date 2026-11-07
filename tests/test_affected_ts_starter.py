@@ -10,7 +10,7 @@ from pathlib import Path
 import pytest
 
 from conftest import _install
-from test_close import env  # noqa: F401
+from test_close import GREEN, env  # noqa: F401
 from test_setup import _fresh_client
 from test_upgrade_command import RELEASE, unsynced_up  # noqa: F401
 
@@ -196,6 +196,15 @@ def test_5_typescript_starter_selects_its_affected_parts(repo, gh, tmp_path, uns
     repo.git("switch", "-q", "main")
     repo.git("merge", "-q", "--ff-only", "fix/agent-accounts-upgrade")
     repo.git(*hook_setup, "push", "-q", "origin", "main")
+    # New-app init installs a broad API response. Restore the upgrade fixture's
+    # check/status streams before the real release's close reads them.
+    # The earlier-adopted app also exercises the missing-name refusal and retry.
+    unsynced_up.env.checks(GREEN, [{}])
+    unnamed = unsynced_up.run(RELEASE)
+    assert unnamed.returncode == 1, unnamed.stdout + unnamed.stderr
+    assert "GitHub reported no check name." in unnamed.stderr, unnamed.stderr
+    assert "Next: forge close upgrade-forge-to-v9-9-9" in unnamed.stderr, unnamed.stderr
+    unsynced_up.env.checks(GREEN)
     upgraded = unsynced_up.run(RELEASE)
     assert upgraded.returncode == 0, upgraded.stdout + upgraded.stderr
     upgraded_root = unsynced_up.folder

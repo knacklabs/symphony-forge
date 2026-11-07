@@ -416,6 +416,9 @@ def _seen(top: Path, item: str, sha: str) -> tuple[list[tuple[str, str]], list[s
     statuses = _ask(top, item, ".statuses", f"{endpoint}/status?per_page=100")
     # Ignore earlier pushes for both readiness and progress; GitHub's ordering is not progress.
     runs = [run for run in runs if run.get("head_sha", sha) == sha]
+    if any(not entry.get(field) for entries, field in ((runs, "name"), (statuses, "context"))
+           for entry in entries):
+        repo.refuse(REFUSALS["not_green"], item=item, reason="GitHub reported no check name")
     snapshot = sorted(json.dumps([entry.get(field) for field in fields])
                       for entries, fields in (
                           (runs, ("id", "name", "status", "conclusion", "started_at", "completed_at")),

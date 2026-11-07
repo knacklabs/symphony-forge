@@ -1127,6 +1127,8 @@ if the settings do not answer it. Pass
    `fast_test = "node scripts/test.mjs {base}"`. The TypeScript starter uses Nx to name affected
    parts and run their lint, typecheck and tests; `--list <base>` prints the commands.
    New test files in an affected library also run when it has no Nx test target.
+   If close cannot read a check name from GitHub, it reports the missing name.
+   Retry `forge close <item>` after GitHub returns check data.
    Existing apps keep their scripts and settings on upgrade and sync. Ask before adding these
    targets and scripts to an existing app or changing its `forge.toml`.
    When `fast_test` is missing, `forge doctor` and `forge upgrade` print one suggested
