@@ -18,7 +18,7 @@
       "gain": 3,
       "harm": 2,
       "line": 56,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -41,38 +41,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "e74cbdc561c4d96bdbbdecfc2de6138970e1ef1dbe122ac5099a0f8bc11eb120",
+    "branch_diff": "68d57ecb955a63515fc9b867704b9093499efa6399385c56961625a00b7b64f2",
     "changed": "e1bc76661da49b68657fa09ad5c4416bc26a385c126dc26a8d10f754caee8d33",
-    "commit": "a78b18b2efe1a95a6d7e456bafee5a03380d772a",
+    "commit": "653b85f5e93ced5eff57049790c2d5868d2d7994",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 3, Work 1, Harm 2\nRaise: Not done\nCase: normal use - closing the fix before merge.\nThe comparison now normalizes CRLF, but no successful Windows full-run result is supplied. The Windows tests job in .github/workflows/forge-next.yml:70 runs only on a schedule or manual dispatch, so a pull request check will not establish that the run is green. Run the Windows workflow on this branch and provide its result.",
-        "file": "tests/test_reviewchoice_words.py",
-        "gain": 3,
-        "harm": 2,
-        "line": 56,
-        "priority": "P1",
-        "required_done_when": true,
-        "title": "Not done: The settings comparison in the review-rounds words test ignores line endings and the Windows full run is green",
-        "work": 1
-      },
-      {
-        "body": "Gain 3, Work 1, Harm 2\nRaise: Gate\nCase: normal use - reviewing the fix's evidence before merge.\nThe supplied proof list is explicitly missing. Although test_5_init_and_upgrade_keep_settings_and_two_round_defaults exists, there is no mapping identifying it and the Windows full-run proof for the Done-when item. Supply the proof list so both parts of the item can be checked.",
-        "file": "tests/test_reviewchoice_words.py",
-        "gain": 3,
-        "harm": 2,
-        "line": 56,
-        "priority": "P1",
-        "title": "Gate: proof list",
-        "work": 1
-      }
-    ],
-    "id": "b73362cc-e519-40ef-b939-f34e67f8db88",
-    "status": "blocked"
+    "findings": [],
+    "id": "3a178484-d9a9-4e92-8059-72976c497e24",
+    "status": "clean"
   },
   "round": 1,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-07T16:51:16.517790+00:00",
@@ -80,6 +58,10 @@
     },
     {
       "at": "2026-11-07T16:55:18.333438+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-07T17:28:17.558484+00:00",
       "step": "review"
     }
   ],
