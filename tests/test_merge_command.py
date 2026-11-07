@@ -74,7 +74,7 @@ if sys.argv[1:3] == ["pr", "merge"]:
     subprocess.run(["git", "push", "-q", "origin", "main"], cwd=checkout, check=True)
     (here / "github-merged").write_text("merged", encoding="utf-8")
     sys.exit(0)
-'''.replace("REMOTE", repr(str(env.tmp / "remote.git"))).replace("MERGED_OID", repr(head)).replace(
+'''.replace("REMOTE", repr(env.repo.git("remote", "get-url", "origin"))).replace("MERGED_OID", repr(head)).replace(
     "LOCAL_COMMIT", repr(str(local_commit)) if local_commit else "None")
     _install(env.repo.bin, "gh", "#!" + sys.executable + "\n" + code + stub.split("\n", 1)[1])
 

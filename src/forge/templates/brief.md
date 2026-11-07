@@ -194,7 +194,9 @@ $delegation
   restore uses the incoming side while a merge is open. Workers can commit those incoming settings
   unchanged. Initial migration and adoption keep their new settings until their first pull request merges.
 - A subagent never runs `forge handback`, `forge work` or `forge stop` itself.
-- A successful hand-back frees the item's lock. If the worker process and lock are no longer live,
+- A recorded builder result or item merge frees its builder place, even if the coordinator
+  session stays open. Waiting work can then start. This applies to new and upgraded repos.
+  A successful hand-back frees the item's lock. If the worker process and lock are no longer live,
   the board and `forge next` show the worker as stopped and give `forge work <item>` for an unfinished round.
 - Never run `forge stop`: only a person can stop a run, after confirmation in the host.
 - When your test run waits in line, keep waiting in the same round until it finishes.
