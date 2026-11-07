@@ -59,7 +59,7 @@ def _policy(repo, folder, mode):
 
 @pytest.mark.parametrize("item, mode, tiers, expected", [
     ("HELP", None, [{"id": "priority", "name": "Fast"}], "default"),
-    ("PAGE", None, [{"id": "vendor-fast", "name": "Fast"}], "vendor-fast"),
+    ("PAGE", "needed", [{"id": "vendor-fast", "name": "Fast"}], "vendor-fast"),
     ("PAGE", "off", [{"id": "priority", "name": "Fast"}], "default"),
     ("HELP", "always", [{"id": "priority", "name": "Speed"}], "priority"),
     ("PAGE", "always", [], "default"),
@@ -88,6 +88,7 @@ def test_1_codex_uses_fast_for_fixes_and_waited_on_work_and_honors_the_setting(
 def test_2_repair_rounds_use_fast_and_off_clears_it_on_the_same_conversation(
         repo, monkeypatch, sdk_data):
     folder, calls, _ = _resuming(repo, monkeypatch, sdk_data)
+    _policy(repo, folder, "needed")
     # The next plan has no waiting work, so only the repair round can enable Fast.
     from test_task import DOC, story
     doc = DOC.replace("| `tests/test_words.py` | PAGE |", "| `tests/test_words.py` | none |")
@@ -116,7 +117,8 @@ def test_6_first_work_selects_fast_without_querying_pull_request_inventory(
         repo, gh, monkeypatch, sdk_data, waiter, item, expected):
     # Starting Codex must not pay for the board's unrelated completed-item/PR inventory.
     from test_task import DOC, story
-    _, calls = _codex_repo(repo, monkeypatch, sdk_data)
+    folder, calls = _codex_repo(repo, monkeypatch, sdk_data)
+    _policy(repo, folder, "needed")
     _tiers(repo, [{"id": "priority", "name": "Fast"}])
     doc = DOC
     if waiter != "shared scope":
@@ -170,7 +172,7 @@ def test_4_init_and_previous_release_upgrade_deliver_the_default_and_guidance(
     client, made = _fresh_client(repo, up.env.gh, tmp_path)
     assert made.returncode == 0, made.stdout + made.stderr
     checked = repo.forge("doctor", cwd=client)
-    assert "on for every fix, after the first repair round, or when other planned work waits" in checked.stdout
+    assert "Codex Fast: off" in checked.stdout
     for host in (".codex", ".claude"):
         skill = (client / host / "skills/forge/SKILL.md").read_text("utf-8")
         assert "codex_fast" in skill and '"off"' in skill and '"always"' in skill
@@ -188,11 +190,11 @@ def test_4_init_and_previous_release_upgrade_deliver_the_default_and_guidance(
     up.env.checks(GREEN)
     upgraded = up.run(RELEASE)
     assert upgraded.returncode == 0, upgraded.stdout + upgraded.stderr
-    assert upgraded.stdout.splitlines().count(NOTICE) == 1
+    assert NOTICE not in upgraded.stdout
     for host in (".codex", ".claude"):
         skill = up.show(f"{host}/skills/forge/SKILL.md")
         assert "codex_fast" in skill and "every fix" in " ".join(skill.split())
     installed = tmp_path / "uvbin" / ("forge.cmd" if os.name == "nt" else "forge")
     checked = subprocess.run([str(installed), "doctor"], cwd=up.folder,
                              capture_output=True, text=True, timeout=60)
-    assert "on for every fix, after the first repair round, or when other planned work waits" in checked.stdout
+    assert "Codex Fast: off" in checked.stdout

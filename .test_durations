@@ -766,7 +766,7 @@
     "tests/test_close_waits_for_review_loop_choice.py::test_6_live_story_changes_allow_owner_accept_and_keep_earlier_acceptance[`tests/test_app.py`-`tests/test_basket.py`-land]": 7.442373046000284,
     "tests/test_codex_fast_when_work_waits.py::test_1_codex_uses_fast_for_fixes_and_waited_on_work_and_honors_the_setting[HELP-None-tiers0-default]": 2.8707416680003917,
     "tests/test_codex_fast_when_work_waits.py::test_1_codex_uses_fast_for_fixes_and_waited_on_work_and_honors_the_setting[HELP-always-tiers3-priority]": 3.1114366680003513,
-    "tests/test_codex_fast_when_work_waits.py::test_1_codex_uses_fast_for_fixes_and_waited_on_work_and_honors_the_setting[PAGE-None-tiers1-vendor-fast]": 2.7837119599998914,
+    "tests/test_codex_fast_when_work_waits.py::test_1_codex_uses_fast_for_fixes_and_waited_on_work_and_honors_the_setting[PAGE-needed-tiers1-vendor-fast]": 2.7837119599998914,
     "tests/test_codex_fast_when_work_waits.py::test_1_codex_uses_fast_for_fixes_and_waited_on_work_and_honors_the_setting[PAGE-always-None-default]": 2.6526410430001306,
     "tests/test_codex_fast_when_work_waits.py::test_1_codex_uses_fast_for_fixes_and_waited_on_work_and_honors_the_setting[PAGE-always-missing-default]": 2.6107161270001598,
     "tests/test_codex_fast_when_work_waits.py::test_1_codex_uses_fast_for_fixes_and_waited_on_work_and_honors_the_setting[PAGE-always-tiers4-default]": 2.7220565429997805,
