@@ -8,6 +8,13 @@
   ],
   "base": "8fd1de2831fdefa7f9c89dc0c1266b3539b0e34b",
   "branch": "fix/review-on-terra-max",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1b44f-3b47-78e2-9447-30982f54d39e",
+    "head": null,
+    "start": "001d5d04f158d1c4b47a5dc2da2c65e345e0ac5a"
+  },
   "done_when": "Forge's own repo and new client repos run the Codex code review and the Codex cold read on gpt-6.1-terra at max effort; existing client repos keep their forge.toml",
   "fix_kind": "mechanical",
   "kind": "fix",
