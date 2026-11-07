@@ -1,0 +1,15 @@
+{
+  "base": "5393cf3ed78f0bae68f7bf2762dbcc9675a03710",
+  "branch": "fix/tests-skip-real-timeouts",
+  "done_when": "The two tests advance a controlled clock instead of waiting, keep their real command and refusal assertions, and each runs in under 10 seconds",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-07T18:12:51.556448+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Two Forge command tests wait for a real 60-second timeout, so each takes about a minute in CI"
+}
