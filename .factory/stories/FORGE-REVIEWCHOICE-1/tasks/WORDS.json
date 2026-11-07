@@ -1,10 +1,18 @@
 {
   "branch": "task/FORGE-REVIEWCHOICE-1-WORDS",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-07T02:02:37.484753+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "18af2b6ddaf9235a8bb2bb38a58b038fe52f78eb",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
