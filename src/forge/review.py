@@ -492,15 +492,12 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False,
             preload_folder.cleanup()
             machine.leave(entry)
         out = [line.rstrip() for line in done.stdout.splitlines()]
-        selections = [line for line in out if line.startswith("Test selection:")]
-        out = [line for line in out if not line.startswith("Test selection:")]
         picked = sorted({i for n, line in enumerate(out) if "skip" in line.lower()
                          for i in (n - 1, n) if i >= 0} | set(range(max(0, len(out) - 30), len(out)))
                         | {n for n, line in enumerate(out) if line.startswith(GAP)})
         lines = [out[i] for i in picked]
         if len(lines) > 80:  # the tail is the last 30 picked; the earliest skip lines fill the rest
             lines = [*lines[:50], f"({len(lines) - 80} skip lines cut here)", *lines[-30:]]
-        lines = selections + lines
         if done.returncode:
             if done.returncode == 5:
                 lines.append("No tests ran. Check the task's Tests column and the test command or filters.")

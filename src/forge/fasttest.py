@@ -129,6 +129,7 @@ def narrow_command(command: str, excluded: list[str], workers: str, always: list
         caps = [int(cap) for cap in re.findall(r'''(?:^|[\s"'=])--maxprocesses(?:=|\s+)["']?(\d+)''', configured)
                 if int(cap) > 0]
         options.append("--maxprocesses=" + str(min([int(workers), *caps])))
+    options += always  # forge.toml's always_test, whatever roots the command names
     # CLI options win over ini and PYTEST_ADDOPTS, including fixed xdist counts.
     additions = (subprocess.list2cmdline(options) if os.name == "nt" else shlex.join(options))
     for index in pytest_tokens:
@@ -266,27 +267,9 @@ def own_version_only(path: Path, base: str) -> bool:
     return snapshots[0] == snapshots[1]
 
 
-def pytest_roots(top: Path, command: str) -> list[Path]:
-    """The paths a plain pytest call collects, or the repo root with no paths."""
-    words, _ = quicktest.runner_words(top, shlex.split(command))
-    roots, skip = [], False
-    values = {"-c", "-o", "--override-ini", "--rootdir", "--basetemp",
-              "--confcutdir", "--ignore", "--ignore-glob", "--deselect", "--import-mode",
-              "-p", "-n", "--numprocesses", "--dist", "--maxprocesses", "--splits", "--group"}
-    for word in words[1:]:
-        if skip:
-            skip = False
-        elif word in values:
-            skip = True
-        elif not word.startswith("-") and Path(word.split("::", 1)[0]).exists():
-            roots.append(Path(word.split("::", 1)[0]).resolve())
-    return roots or [top]
-
-
-def close_tests(base: str, command: str | None = None) -> int:
+def close_tests(base: str) -> int:
     """Use supported runners' selection; leave other commands unchanged."""
-    command = command if command is not None else repo.grouped(
-        Path.cwd(), repo.config(Path.cwd())["test"])
+    command = repo.grouped(Path.cwd(), repo.config(Path.cwd())["test"])
     parts = quicktest.test_parts(Path.cwd(), command)
     package = Path("package.json")
     if command == init.NODE_TEST:
@@ -295,69 +278,33 @@ def close_tests(base: str, command: str | None = None) -> int:
         command = " && ".join(part for _, part, _ in parts)
     command = node_worker_budget(command, machine.test_cpus())
     parts = quicktest.test_parts(Path.cwd(), command)
-    if not parts:
-        print("Test selection: whole command (unsupported shell flow).", flush=True)
+    scripts = json.loads(package.read_text("utf-8")).get("scripts", {}) if package.is_file() else {}
+    # Compound scripts forward npm arguments to the last command, not every runner.
+    if not parts or re.search(r"[;|]", command) or any(re.search(r"&&|[;|]", scripts[script])
+            for kind, part, _ in parts if kind in ("vitest", "jest")
+            for script in scripts if re.search(r"\b" + re.escape(script) + r"\b", part)):
         return subprocess.run(command, shell=True).returncode
-    quote = lambda words: subprocess.list2cmdline(words) if os.name == "nt" else shlex.join(words)
-    top = Path.cwd()
-    scopes = {index: pytest_roots(top, part) for index, (kind, part, _) in enumerate(parts)
-              if kind == "python"}
-    assigned = {index: [] for index in scopes}
-    if scopes:
-        for name in always_tests(top, tomllib.loads((top / "forge.toml").read_text("utf-8"))):
-            path = (top / name.split("::", 1)[0]).resolve()
-            owner = next((index for index, roots in scopes.items()
-                          if any(path == root or path.is_relative_to(root) for root in roots)),
-                         next(iter(scopes)))
-            assigned[owner].append(name)
-    selected = []
-    for index, (kind, part, passthrough) in enumerate(parts):
-        label = part
-        words = shlex.split(part)
-        selection = "whole command"
+    if not any(kind in ("vitest", "jest") for kind, _, _ in parts):
+        if any(kind == "python" for kind, _, _ in parts):
+            return pytest_tests(base, command)
+        return subprocess.run(command, shell=True).returncode
+    for kind, part, passthrough in parts:
         if kind == "python":
-            # Only plain pytest steps reach the picker, always from the repository root.
-            code = (f"import sys; sys.path.insert(0, {str(Path(__file__).parents[1])!r}); "
-                    f"from forge.fasttest import pytest_tests; "
-                    f"sys.exit(pytest_tests({base!r}, {(part + passthrough)!r}, "
-                    f"selection=True, always={assigned[index]!r}))")
-            selected.append(quote([sys.executable, "-c", code]))
-            continue
-        if kind == "nx" and Path("nx.json").is_file():
-            tokens = list(re.finditer(r'''(?:\\.|[^\s"'\\]+|"(?:\\.|[^"\\])*"|'[^']*')+''', part))
-            index = words.index("run-many")
-            separator = next((i for i in range(index + 1, len(words)) if words[i] == "--"), len(words))
-            options = words[index + 1:separator]
-            # affected has no run-many project filter; preserve that step's original scope.
-            supported = not any(word.split("=", 1)[0] in {"--all", "--projects", "-p"}
-                                for word in options)
-            target = next((word.split("=", 1)[1] for word in options
-                           if word.startswith(("--target=", "--targets=", "-t="))), None)
-            target = target or next((options[i + 1] for i, word in enumerate(options[:-1])
-                                    if word in {"-t", "--target", "--targets"}), None)
-            if target and re.fullmatch(r"[\w:-]+", target) and supported:
-                query = part[:tokens[index].start()] + quote(["show", "projects", "--with-target", target])
-                projects = subprocess.run(query, shell=True, capture_output=True, text=True)
-                if projects.returncode == 0 and projects.stdout.strip() not in {"", "[]"}:
-                    end = tokens[separator].start() if separator < len(tokens) else len(part)
-                    part = (part[:tokens[index].start()] + "affected" + part[tokens[index].end():end]
-                            + " --base=" + quote([base]) + " " + part[end:])
-                    selection = part
+            status = pytest_tests(base, part)
         else:
-            if kind in ("vitest", "jest", "playwright"):
+            if kind in ("vitest", "jest"):
+                words = shlex.split(part)
                 if words[:2] == ["npm", "exec"] and "--" not in words:
                     tokens = list(re.finditer(r'''(?:[^\s"']+|"[^"]*"|'[^']*')+''', part))
                     start = tokens[quicktest._npm_runner_index(words)].start()
                     part = part[:start] + "-- " + part[start:]
-                if kind == "playwright":
-                    part += f"{passthrough} --only-changed={quote([base])}"
-                else:
-                    flag = "--changed" if kind == "vitest" else "--changedSince"
-                    part += f"{passthrough} {flag} {quote([base])} --passWithNoTests"
-                selection = part
-        print(f"Test selection: {label}: {selection}.", flush=True)
-        selected.append(part)
-    return subprocess.run(" && ".join(selected), shell=True).returncode
+                changed = "--changed" if kind == "vitest" else "--changedSince"
+                argument = subprocess.list2cmdline([base]) if os.name == "nt" else shlex.quote(base)
+                part += f"{passthrough} {changed} {argument} --passWithNoTests"
+            status = subprocess.run(part, shell=True).returncode
+        if status:
+            return status
+    return 0
 
 
 def test(args) -> int:
@@ -387,9 +334,8 @@ def test(args) -> int:
         return status
     from forge import review
 
-    top = repo.root()
-    os.chdir(top)
-    command = repo.grouped(top, tomllib.loads((top / "forge.toml").read_text("utf-8"))["test"])
+    top = Path.cwd().resolve()
+    command = repo.grouped(top, tomllib.loads(Path("forge.toml").read_text("utf-8"))["test"])
     # A picker launched by close or bare forge test keeps that command's one place.
     parent = os.environ.get("FORGE_TEST_LANE")
     if parent and any(run["id"] == parent and run["kind"] == "test" and run.get("started_at")
@@ -488,35 +434,18 @@ RAN, ROOT = set(), []
 def pytest_configure(config):
     config.option.ignore = (config.option.ignore or []) + IGNORE
     ROOT.append(pathlib.Path(str(config.rootdir)))
-    if hasattr(config, "_forge_prior_passed"):
-        return  # Close's retry has already replaced the roots with its failed files.
-    # Use pytest's resolved defaults, and never add a file below a collected directory.
-    # Overlapping directory/file arguments omit tests on pytest 8 and repeat them on 7.
-    args = list(config.args)
-    for entry in ALWAYS + [task.split("::", 1)[0] for task in TASKS]:
-        if not any(covers(arg, entry) for arg in args):
-            args = [arg for arg in args if not covers(entry, arg)] + [entry]
-    config.args = config.option.file_or_dir = args
-def covers(argument, entry):
-    source, _, node = argument.partition("::")
-    target, _, target_node = entry.partition("::")
-    source, target = pathlib.Path(source).resolve(), pathlib.Path(target).resolve()
-    return ((source.is_dir() and (source == target or source in target.parents))
-            or source == target and (not node or runs(target_node, node)))
-def name(nodeid, path=None):  # relative to the repo, whatever pytest's rootdir
+def name(nodeid):  # relative to the repo, as forge.toml names it, whatever pytest's rootdir
     file, _, rest = nodeid.partition("::")
-    return pathlib.Path(os.path.relpath(path or ROOT[0] / file)).as_posix() + ("::" + rest if rest else "")
+    return pathlib.Path(os.path.relpath(ROOT[0] / file)).as_posix() + ("::" + rest if rest else "")
 def runs(nodeid, entry):
     return nodeid == entry or nodeid.startswith((entry + "::", entry + "["))
 def task_runs(nodeid, entry):
     return re.match(re.escape(entry) + r"(?=$|_|::|\\[)", nodeid) is not None
 def pytest_collection_modifyitems(config, items):
-    for item in items:
-        item.user_properties.append(("_forge_test_file", str(item.path)))
     if PICKED is None or not (ALWAYS or TASKS):
         return
     def kept(item):
-        nodeid = name(item.nodeid, item.path)
+        nodeid = name(item.nodeid)
         return (nodeid.split("::")[0] in PICKED
                 or any(runs(nodeid, entry) for entry in ALWAYS)
                 or any(task_runs(nodeid, entry) for entry in TASKS))
@@ -526,7 +455,7 @@ def pytest_collection_modifyitems(config, items):
         items[:] = [item for item in items if kept(item)]
 def pytest_runtest_logreport(report):
     if report.when == "call":
-        RAN.add(name(report.nodeid, dict(report.user_properties).get("_forge_test_file")))
+        RAN.add(name(report.nodeid))
 def pytest_sessionfinish(session):
     if hasattr(session.config, "workerinput"):
         return  # the controller sees every worker's reports
@@ -607,16 +536,15 @@ def pytest_runtest_logreport(report):
                    else report.outcome)
     else:
         outcome = "skipped" if report.skipped else "error"
-    _write_result(outcome, report.nodeid, dict(report.user_properties).get("_forge_test_file"))
+    _write_result(outcome, report.nodeid)
 def pytest_collectreport(report):
     if FILE and report.failed:
         _write_result("error", report.nodeid)
-def _write_result(outcome, nodeid, path=None):
+def _write_result(outcome, nodeid):
     file, _, rest = nodeid.partition("::")
-    path = pathlib.Path(path) if path else ROOT[0] / file
     if outcome in ("failed", "error"):
-        FAILED.add(path.resolve().as_posix())
-    nodeid = pathlib.Path(os.path.relpath(path)).as_posix() + ("::" + rest if rest else "")
+        FAILED.add((ROOT[0] / file).resolve().as_posix())
+    nodeid = pathlib.Path(os.path.relpath(ROOT[0] / file)).as_posix() + ("::" + rest if rest else "")
     if outcome == "passed":
         PASSED.add(nodeid)
     with FILE[0].open("a", encoding="utf-8") as results:
@@ -728,30 +656,15 @@ def test_process(top, item, command, env, entry, ran, log):
     return done
 
 
-def pytest_process(command: str, environment: dict, entry: dict | None) -> int:
-    if entry is None:
-        return subprocess.run(command, shell=True, env=environment).returncode
-    from forge import codex
-
-    with subprocess.Popen(command, shell=True, env=environment, stdout=subprocess.PIPE,
-                          stderr=subprocess.STDOUT, text=True, encoding="utf-8", errors="replace",
-                          **codex.GROUP) as process:
-        try:
-            machine.started(entry, process.pid)
-            for chunk in test_output(process, lines=False):
-                print(chunk, end="", flush=True)
-            return process.wait()
-        except BaseException:
-            codex._stop(codex.identity(process.pid) or {"pid": process.pid}, True)
-            process.wait()
-            raise
-
-
-def pytest_tests(base: str, command: str, entry: dict | None = None, *, selection: bool = False,
-                 always: list[str] | None = None) -> int:
+def pytest_tests(base: str, command: str, entry: dict | None = None) -> int:
     parts = quicktest.test_parts(Path.cwd(), command)
+    mixed = any(kind in ("vitest", "jest") for kind, _, _ in parts)
+    if mixed:
+        command = " && ".join(part for kind, part, _ in parts
+                              if kind not in ("vitest", "jest", "node-install", "node-check"))
+        parts = quicktest.test_parts(Path.cwd(), command)
     environment = dict(os.environ)
-    worker = environment.get("FORGE_WORKER_TESTS") == "1"
+    worker = environment.pop("FORGE_WORKER_TESTS", None) == "1"
     allocation = entry
     if allocation is None and (parent := environment.get("FORGE_TEST_LANE")):
         allocation = next((run for run in machine.entries() if run["id"] == parent
@@ -761,23 +674,9 @@ def pytest_tests(base: str, command: str, entry: dict | None = None, *, selectio
     environment["FORGE_TEST_CPUS"] = workers
     if entry is not None:
         environment["FORGE_TEST_LANE"] = entry["id"]
-    if not selection and (len(parts) != 1 or parts[0][0] != "python"):
-        # The explicit picker must preserve every step, just as change runs do.
-        code = (f"import sys; sys.path.insert(0, {str(Path(__file__).parents[1])!r}); "
-                f"from forge.fasttest import close_tests; sys.exit(close_tests({base!r}, {command!r}))")
-        words = [sys.executable, "-c", code]
-        shell = subprocess.list2cmdline(words) if os.name == "nt" else shlex.join(words)
-        return pytest_process(shell, environment, entry)
-    environment.pop("FORGE_WORKER_TESTS", None)
-    if not selection:
-        command += parts[0][2]  # npm forwards picker arguments only after --.
+    excluded = []
     # Read as forge test --pytest reads test: close has already checked forge.toml.
-    top = repo.root()
-    configured = always_tests(top, tomllib.loads((top / "forge.toml").read_text("utf-8")))
-    always = configured if always is None else always
-    other_files = {(top / name.split("::", 1)[0]).resolve() for name in configured} - {
-        (top / name.split("::", 1)[0]).resolve() for name in always}
-    excluded = [path.as_posix() for path in other_files]
+    always = always_tests(Path.cwd(), tomllib.loads(Path("forge.toml").read_text("utf-8")))
     required = always[:]
     named = []
     picked, tests, shared_changed, missed = related(base)
@@ -788,9 +687,9 @@ def pytest_tests(base: str, command: str, entry: dict | None = None, *, selectio
     if worker and len(picked) * 3 > len(tests):
         print("Broad selection: only the item's tests run locally. Other tests are skipped. "
               "The nightly full run covers the rest.", flush=True)
-        item = review.branch_item(repo.current_branch(top), top)
+        item = review.branch_item(repo.current_branch(Path.cwd()), Path.cwd())
         if item and "/" in item[0]:
-            notes = review.task(top, item[0])[2].get("tests", "")
+            notes = review.task(Path.cwd(), item[0])[2].get("tests", "")
             named, file = [], ""
             # Task cells contain Markdown and prose, not a comma-separated path list.
             for match in re.finditer(
@@ -809,26 +708,17 @@ def pytest_tests(base: str, command: str, entry: dict | None = None, *, selectio
             changed += git_files("ls-files", "--others", "--exclude-standard")
             picked = [path for path in tests if path in changed]
         shared_changed = False
-    # Each plain invocation owns its explicit test paths, or the repo root by default.
-    roots = pytest_roots(top, command)
-    def in_scope(name):
-        path = Path(name.split("::", 1)[0]).resolve()
-        return path not in other_files and any(path == root or path.is_relative_to(root) for root in roots)
-
-    picked = [name for name in picked if in_scope(name)]
-    named = [name for name in named if in_scope(name)]
-    if selection:
-        print("Test selection: pytest: " + ("whole suite (shared inputs)" if shared_changed else
-              ", ".join(picked + always + named) or "none (no related tests)") + ".", flush=True)
-    if not shared_changed or other_files:
+    if not shared_changed:
         if not picked and not always and not named:
             print("No tests ran: no changed or module-related test files were selected.")
-            return 0
+            checks = " && ".join(part for kind, part, _ in parts if kind != "python")
+            return subprocess.run(checks, shell=True, env=environment).returncode if checks else 0
         # Keep shell setup, test roots and pytest settings in the repo's full command.
         listed = {entry.split("::")[0] for entry in always + named}
-        excluded += [path for path in tests if path not in picked and path not in listed]
+        excluded = [path for path in tests if path not in picked and path not in listed]
     if shared_changed:
-        print("Shared test inputs changed; running the full test command.", flush=True)
+        print("Shared test inputs changed; running " +
+              ("all Python tests." if mixed else "the full test command."), flush=True)
     else:
         print("Related tests: " + ", ".join(picked + always + named), flush=True)
     # A temporary pytest hook supports pre-8.2 clients without filling cmd.exe's command line.
@@ -841,4 +731,20 @@ def pytest_tests(base: str, command: str, entry: dict | None = None, *, selectio
             environment["PYTHONPATH"] = os.pathsep.join(
                 [folder, environment.get("PYTHONPATH", "")])
         arguments = always + list(dict.fromkeys(name.split("::", 1)[0] for name in named))
-        return pytest_process(narrow_command(command, excluded, workers, arguments), environment, entry)
+        if entry is None:
+            return subprocess.run(narrow_command(command, excluded, workers, arguments), shell=True,
+                                  env=environment).returncode
+        from forge import codex
+
+        with subprocess.Popen(narrow_command(command, excluded, workers, arguments), shell=True,
+                              env=environment, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                              text=True, encoding="utf-8", errors="replace", **codex.GROUP) as process:
+            try:
+                machine.started(entry, process.pid)
+                for chunk in test_output(process, lines=False):
+                    print(chunk, end="", flush=True)
+                return process.wait()
+            except BaseException:
+                codex._stop(codex.identity(process.pid) or {"pid": process.pid}, True)
+                process.wait()
+                raise

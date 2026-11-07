@@ -22,7 +22,7 @@ pytestmark = pytest.mark.usefixtures("isolated_codex_home")
 # Command-boundary cases protect runner selection, setup preservation and advice-only
 # behavior. Existing setup coverage only checks the skill, not command output.
 CASES = [
-    ("python", "uv run --frozen --python 3.11 pytest", {}, "forge test --pytest {base}"),
+    ("python", "uv run pytest", {}, "forge test --pytest {base}"),
     ("vitest", "npm ci && npm test", {"scripts": {"test": "vitest run"},
         "devDependencies": {"vitest": "1"}},
         "npm ci && npm test -- --changed {base} --passWithNoTests"),
@@ -43,22 +43,7 @@ CASES = [
     ("yarn-vitest", "yarn install --immutable && yarn unit", {"scripts": {"unit": "vitest run"}},
         "yarn install --immutable && yarn unit --changed {base} --passWithNoTests"),
     ("mixed", "uv run pytest && npm ci && npx --no-install vitest run", {"devDependencies": {"vitest": "1"}},
-        "uv run pytest && npm ci && npx --no-install vitest run --changed {base} --passWithNoTests"),
-    ("mixed-compound-playwright", "uv run pytest && npm test", {"scripts": {"test":
-        "playwright test --project=chromium && playwright test --project=firefox"}},
-        "uv run pytest && npm test"),
-    ("mixed-pipe", "uv run pytest && npm test | tee tests.log", {"scripts": {"test": "vitest run"}},
-        "uv run pytest && npm test | tee tests.log"),
-    ("python-cd", "cd backend && uv run pytest", {}, "cd backend && uv run pytest"),
-    ("playwright-projects", "playwright test --project=chromium && playwright test --project=firefox", {},
-        "playwright test --project=chromium --only-changed={base} && "
-        "playwright test --project=firefox --only-changed={base}"),
-    ("vitest-projects", "vitest run unit && vitest run integration", {},
-        "vitest run unit --changed {base} --passWithNoTests && "
-        "vitest run integration --changed {base} --passWithNoTests"),
-    ("playwright-compound", "npm test && playwright test --project=chromium",
-        {"scripts": {"test": "vitest run && node check.js"}},
-        "npm test && playwright test --project=chromium --only-changed={base}"),
+        "forge test --pytest {base} && npm ci && npx --no-install vitest run --changed {base} --passWithNoTests"),
     ("local-runner", "npm ci && ./node_modules/.bin/jest", {"devDependencies": {"jest": "1"}},
         "npm ci && ./node_modules/.bin/jest --changedSince {base} --passWithNoTests"),
     *[(kind, command, {}, None) for kind, command in (
@@ -69,7 +54,7 @@ CASES = [
 
 
 def _inputs(folder, kind, command, package):
-    if kind.startswith(("python", "mixed")) or kind == "configured":
+    if kind in ("python", "mixed", "configured"):
         (folder / "pyproject.toml").write_text('[project]\nname = "client"\nversion = "1.0"\n', "utf-8")
     if package:
         (folder / "package.json").write_text(json.dumps(package), "utf-8")
@@ -104,75 +89,8 @@ def test_1_doctor_suggests_the_new_clients_test_kind(repo, gh, tmp_path, cases):
     for host in (".claude", ".codex"):
         skill = " ".join((client / host / "skills/forge/SKILL.md").read_text("utf-8").split())
         assert "`forge doctor` and `forge upgrade` print one suggested" in skill
-        assert "Mixed repos keep each test step." in skill
+        assert "Mixed repos get one part per kind." in skill
         assert "Go, Rust, Java, .NET and Ruby get no suggestion." in skill
-
-
-@pytest.mark.platform
-def test_6_doctor_keeps_a_package_script_after_cd_whole(repo, gh, tmp_path):
-    client = _new_repo(repo, gh, tmp_path)
-    assert repo.forge("init", "--actions", "yes", cwd=client).returncode == 0
-    _inputs(client, "web", "cd web && npm test", {"scripts": {"test": "vitest run"}})
-    (client / "web").mkdir()
-    (client / "web/package.json").write_text(
-        json.dumps({"scripts": {"test": "playwright test"}}), "utf-8")
-
-    done = repo.forge("doctor", cwd=client)
-
-    _advice(done, "cd web && npm test")
-
-
-@pytest.mark.platform
-@pytest.mark.parametrize("flow", ["pipe", "compound-script"])
-def test_7_unsupported_mixed_command_keeps_javascript_tests_in_advice_and_picker(unsynced_up, flow):
-    up = unsynced_up
-    repo = up.repo
-    _install(repo.bin, "npm", f'''#!{sys.executable}
-import json, pathlib, sys
-with pathlib.Path("node-calls.jsonl").open("a", encoding="utf-8") as out:
-    out.write(json.dumps(sys.argv[1:]) + "\\n")
-''')
-    _install(repo.bin, "tee", f'''#!{sys.executable}
-from pathlib import Path
-import sys
-data = sys.stdin.buffer.read()
-Path(sys.argv[1]).write_bytes(data)
-sys.stdout.buffer.write(data)
-''')
-    suffix = " | tee tests.log" if flow == "pipe" else ""
-    script = ("vitest run" if flow == "pipe" else
-              "playwright test --project=chromium && playwright test --project=firefox")
-    command = f'"{Path(sys.executable).as_posix()}" -m pytest tests -q && npm test{suffix}'
-    _inputs(repo.path, "mixed-" + flow, command, {"scripts": {"test": script}})
-    repo.write(".gitignore", "node-calls.jsonl\ntests.log\npython-ran.txt\n__pycache__/\n.pytest_cache/\n")
-    repo.write("tests/test_related.py", 'from pathlib import Path\ndef test_related():\n'
-               '    Path("python-ran.txt").write_text("ran", encoding="utf-8")\n')
-    repo.write("src/client.js", "export const client = true;\n")
-    repo.git("add", "-A")
-    repo.git("commit", "-qm", "Set up mixed tests")
-    repo.git("push", "-q", "origin", "main")
-    base = repo.git("rev-parse", "HEAD")
-    repo.write("src/client.js", "export const client = false;\n")
-    repo.git("add", "-A")
-    repo.git("commit", "-qm", "Change JavaScript source")
-    repo.git("push", "-q", "origin", "main")
-
-    advised = repo.forge("doctor")
-    _advice(advised, command)
-    advice = next(line for line in advised.stdout.splitlines() if line.startswith("fast_test ="))
-    quick = tomllib.loads(advice)["fast_test"].replace("{base}", base)
-    environment = {**os.environ, "PYTHONPATH": str(ROOT / "src")}
-    run = subprocess.run(quick, cwd=repo.path, shell=True, capture_output=True, text=True,
-                         env=environment, timeout=60)
-    assert run.returncode == 0, run.stdout + run.stderr
-    assert (repo.path / "python-ran.txt").read_text("utf-8") == "ran"
-    calls_path = repo.path / "node-calls.jsonl"
-    assert [json.loads(line) for line in calls_path.read_text("utf-8").splitlines()] == [["test"]]
-
-    picked = repo.forge("test", "--pytest", base)
-    assert picked.returncode == 0, picked.stdout + picked.stderr
-    assert [json.loads(line) for line in calls_path.read_text("utf-8").splitlines()] == [
-        ["test"], ["test"]]
 
 
 @pytest.mark.parametrize("entry,runner,flag,invocation", [
@@ -182,10 +100,11 @@ sys.stdout.buffer.write(data)
     for invocation in ("exec", "script")
     if entry == "doctor" or (runner, invocation) in (("vitest", "exec"), ("jest", "script"))
 ])
-def test_4_mixed_suggestion_keeps_python_and_javascript_steps(unsynced_up, entry, runner, flag, invocation):
+@pytest.mark.parametrize("shared", [False, True], ids=["related-python", "shared-python-input"])
+def test_4_running_the_mixed_suggestion_runs_each_test_kind_once(unsynced_up, entry, runner, flag, shared, invocation):
     up = unsynced_up
     repo = up.repo
-    # Real pytest proves the narrowed advice keeps this step whole. npm is a boundary stub;
+    # Real pytest proves selection and execution. npm is a third-party boundary stub;
     # it records arguments without deciding whether Forge picked the right runners.
     _install(repo.bin, "npm", f'''#!{sys.executable}
 import json, pathlib, sys
@@ -199,13 +118,17 @@ with path.open("a", encoding="utf-8") as out:
     repo.write("tests/test_related.py", 'from pathlib import Path\ndef test_related():\n'
                '    with Path("python-ran.txt").open("a", encoding="utf-8") as out:\n'
                '        out.write("ran")\n')
-    repo.write("tests/test_unrelated.py", 'from pathlib import Path\ndef test_other_python():\n'
-               '    Path("other-python-ran.txt").write_text("ran", encoding="utf-8")\n')
+    if not shared:
+        repo.write("tests/test_unrelated.py", "raise AssertionError('unrelated collected')\n")
+    else:
+        repo.write("tests/test_unrelated.py", 'from pathlib import Path\ndef test_other_python():\n'
+                   '    Path("other-python-ran.txt").write_text("ran", encoding="utf-8")\n')
     repo.git("add", "-A")
     repo.git("commit", "-qm", "Set up mixed tests")
     repo.git("push", "-q", "origin", "main")
     base = repo.git("rev-parse", "HEAD")
-    repo.write("tests/test_related.py",
+    repo.write("conftest.py" if shared else "tests/test_related.py",
+               "# Shared input\n" if shared else
                (repo.path / "tests/test_related.py").read_text("utf-8") + "# Changed test\n")
     repo.git("add", "-A")
     repo.git("commit", "-qm", "Change Python tests")
@@ -222,7 +145,8 @@ with path.open("a", encoding="utf-8") as out:
                           env={**os.environ, "PYTHONPATH": str(ROOT / "src")}, timeout=60)
     assert done.returncode == 0, done.stdout + done.stderr
     assert (repo.path / "python-ran.txt").read_text("utf-8") == "ran"
-    assert (repo.path / "other-python-ran.txt").read_text("utf-8") == "ran"
+    if shared:
+        assert (repo.path / "other-python-ran.txt").read_text("utf-8") == "ran"
     calls = [json.loads(line) for line in (repo.path / "node-calls.jsonl").read_text("utf-8").splitlines()]
     launch = ["exec", "--", runner] if invocation == "exec" else ["test", "--"]
     assert calls == [["ci"], ["run", "lint"], [*launch, flag, base, "--passWithNoTests"]]
@@ -298,7 +222,7 @@ def test_3_successful_upgrade_keeps_the_suggestion_and_ships_the_guidance(unsync
     up.repo.git("push", "-q", "origin", "main")
     done = up.run(RELEASE)
     assert done.returncode == 0, done.stdout + done.stderr
-    _advice(done, 'python -c "print(123)"')
+    _advice(done, "forge test --pytest {base}")
     assert "Ready:" in done.stdout
     upgraded = tomllib.loads(up.show("forge.toml"))
     assert upgraded["test"] == 'python -c "print(123)"'
