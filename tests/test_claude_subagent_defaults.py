@@ -81,10 +81,9 @@ def test_5_init_and_sync_write_claude_role_defaults_and_preserve_codex_settings(
         assert _settings(top, name)[1] == ("claude-opus-5-5", "high"), name
 
     if models is None:
-        # Init now writes a Claude-only review entry. Codex diagnostic roles inherit
-        # the session settings when that family has no entry in a per-tool table.
+        # Init pins both tools' reviews. Codex diagnostic roles use its review entry.
         for name in ("debugger", "security", "performance"):
-            assert _settings(top, name)[0] == (None, None), name
+            assert _settings(top, name)[0] == ("gpt-6.1-terra", "max"), name
 
     if models is not None:
         for name in ("worker", "coder", "tester", "refactorer"):

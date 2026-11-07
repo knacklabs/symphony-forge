@@ -249,8 +249,9 @@ def test_2_plan_reader_keeps_its_chat_across_rounds(repo, monkeypatch, tmp_path,
         reader.dispose(FIRST, "cut")
     if change == "model-and-effort":
         config = reader.shop / "forge.toml"
-        config.write_text(config.read_text("utf-8").replace("gpt-6-sol", "gpt-6-nova")
-                          .replace('"opus"', '"sonnet"').replace('"high"', '"low"'),
+        config.write_text(config.read_text("utf-8").replace("gpt-6.1-terra", "gpt-6-nova")
+                          .replace('"opus"', '"sonnet"').replace('"high"', '"low"')
+                          .replace('"max"', '"low"'),
                           encoding="utf-8")
     elif change == "machine-restart":
         shutil.rmtree(repo.path / ".git/forge")
@@ -276,6 +277,13 @@ def test_2_plan_reader_keeps_its_chat_across_rounds(repo, monkeypatch, tmp_path,
     resumed = (_sent(reader.log, "thread/resume")[-1]["threadId"] if app == "codex" else
                _session(calls(reader.log)[-1], "--resume"))
     assert resumed == first
+    if change == "model-and-effort":
+        if app == "codex":
+            settings = _sent(reader.log, "thread/resume")[-1]["config"]
+            assert (settings["model"], settings["model_reasoning_effort"]) == ("gpt-6-nova", "low")
+        else:
+            options = calls(reader.log)[-1]["options"]
+            assert (options["model"], options["effort"]) == ("sonnet", "low")
     assert "Starting a new" not in said
     if change == "seen-blobs-missing":
         assert reader.doc.read_text("utf-8") in reader.prompt()

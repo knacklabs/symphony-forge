@@ -30,9 +30,9 @@ def native_host(repo, monkeypatch, tmp_path, tool):
 
 
 @pytest.mark.platform
-@pytest.mark.parametrize("tool,model", [("codex", "gpt-6-sol"), ("claude", "opus")])
+@pytest.mark.parametrize("tool,model,effort", [("codex", "gpt-6.1-terra", "max"), ("claude", "opus", "high")])
 def test_5_plan_reads_belong_to_the_coordinating_session(repo, gh, monkeypatch, tmp_path,
-                                                       tool, model, native_host):
+                                                       tool, model, effort, native_host):
     setup(repo, keys=("SHOP", "WISH"))
     # This home has no Codex SDK, so native Codex reads need no driver SDK.
     data = tmp_path / "data"
@@ -75,7 +75,7 @@ def test_5_plan_reads_belong_to_the_coordinating_session(repo, gh, monkeypatch, 
         pending_round = handed["round"]
         assert handed["role"] == "reader"
         assert Path(handed["checkout"]).resolve() == shop.resolve()
-        assert (handed["tool"], handed["model"], handed["effort"]) == (tool, model, "high")
+        assert (handed["tool"], handed["model"], handed["effort"]) == (tool, model, effort)
         assert DOC in handed["fresh_prompt"].replace("\r\n", "\n")
         [entry] = lane()
         assert entry["native"] is True and entry["kind"] == "read"

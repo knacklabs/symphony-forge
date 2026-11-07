@@ -23,7 +23,7 @@ from test_worker import calls as claude_calls
 import pytest
 
 STORY = "FORGE-WARM-1"
-GRILL = {"grill.codex": {"model": "gpt-6-sol", "effort": "high"},
+GRILL = {"grill.codex": {"model": "gpt-6.1-terra", "effort": "max"},
          "grill.claude": {"model": "opus", "effort": "high"}}
 COORDINATOR = ("Forge can't tell which app is coordinating, so it can't pick the other one to "
                "read.\nNext: run forge read SHOP from Claude Code or Codex\n")
@@ -112,7 +112,7 @@ def test_10_the_cold_read_runs_on_the_other_family(repo, gh, monkeypatch, sdk_da
     assert len(starts) == 1 and len(turns) == 3
     assert all(resume["threadId"] == "thr-stub-1" for resume in _sent(stub, "thread/resume"))
     assert all((start["sandbox"], start["approvalPolicy"]) == ("read-only", "never")
-               and start["config"] == {**QUIET, "model": "gpt-6-sol", "model_reasoning_effort": "high"}
+               and start["config"] == {**QUIET, "model": "gpt-6.1-terra", "model_reasoning_effort": "max"}
                and Path(start["cwd"]).resolve() == shop.resolve() for start in starts)
     assert all((turn["sandboxPolicy"]["type"], turn["approvalPolicy"]) == ("readOnly", "never")
                for turn in turns)
@@ -122,9 +122,9 @@ def test_10_the_cold_read_runs_on_the_other_family(repo, gh, monkeypatch, sdk_da
     data = doc.read_bytes()
     blob = hashlib.sha1(b"blob %d\0" % len(data) + data).hexdigest()
     assert data.decode("utf-8") in turns[-1]["input"][0]["text"]
-    for fact in (f"read_hash: {blob}", "reader: codex (gpt-6-sol)", f"read_at: {NOW}",
+    for fact in (f"read_hash: {blob}", "reader: codex (gpt-6.1-terra)", f"read_at: {NOW}",
                  '1. stub codex: built it with ' + json.dumps(
-                     {**QUIET, "model": "gpt-6-sol", "model_reasoning_effort": "high"}, sort_keys=True)):
+                     {**QUIET, "model": "gpt-6.1-terra", "model_reasoning_effort": "max"}, sort_keys=True)):
         assert fact in written, written
     assert json.loads(state.read_text("utf-8"))["status"] == "read"
     turn_log = repo.path / ".git" / "forge" / "threads" / "read" / "SHOP.log"
@@ -169,7 +169,7 @@ def test_10_the_cold_read_runs_on_the_other_family(repo, gh, monkeypatch, sdk_da
 
     # forge init writes the models table, grill and design with an entry per family, and no single model key;
     # an old one gets the ordinary unknown-key refusal. Codex work uses GPT-6.1 Sol;
-    # new Claude read and review entries use Sonnet high.
+    # Codex read and review entries use Terra max; Claude uses Sonnet high.
     client, init = _fresh_client(repo, gh, tmp_path)
     assert init.returncode == 0, init.stderr
     written = tomllib.loads((client / "forge.toml").read_text(encoding="utf-8"))
@@ -189,9 +189,11 @@ def test_10_the_cold_read_runs_on_the_other_family(repo, gh, monkeypatch, sdk_da
         "explore": {"codex": {"model": "gpt-6.1-sol", "effort": "medium",
                               "subagents": "gpt-6-luna", "subagent_effort": "max"},
                     "claude": {"model": "claude-haiku-5-5", "effort": "high"}},
-        "grill": {"codex": {"model": "gpt-6.1-sol", "effort": "high"},
+        "grill": {"codex": {"model": "gpt-6.1-terra", "effort": "max"},
                   "claude": {"model": "claude-sonnet-5-5", "effort": "high"}},
-        "review": {"claude": {"model": "claude-sonnet-5-5", "effort": "high"}},
+        "review": {"codex": {"model": "gpt-6.1-terra", "effort": "max"},
+                   "claude": {"model": "claude-sonnet-5-5", "effort": "high"}},
+        "light_review": {"codex": {"model": "gpt-6.1-terra", "effort": "max"}},
         "design": {"claude": {"model": "claude-sonnet-5-5", "effort": "xhigh"},
                    "codex": {"model": "gpt-6.1-sol", "effort": "high"}},
     }

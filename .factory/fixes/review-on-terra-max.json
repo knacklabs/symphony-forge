@@ -1,0 +1,118 @@
+{
+  "amendments": [
+    {
+      "at": "2026-11-07T04:40:49.242202+00:00",
+      "because": "The owner asked for the same change for cold read and for clients",
+      "done_when": "forge.toml's [models.review] is gpt-6.1-terra with effort max"
+    }
+  ],
+  "base": "8fd1de2831fdefa7f9c89dc0c1266b3539b0e34b",
+  "branch": "fix/review-on-terra-max",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1b44f-3b47-78e2-9447-30982f54d39e",
+    "head": null,
+    "start": "001d5d04f158d1c4b47a5dc2da2c65e345e0ac5a"
+  },
+  "done_when": "Forge's own repo and new client repos run the Codex code review and the Codex cold read on gpt-6.1-terra at max effort; existing client repos keep their forge.toml",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "src/forge/init.py",
+      "file": "src/forge/init.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 130,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Forge's own repo and new client repos run the Codex code review and the Codex cold read on gpt-6.1-terra at max effort",
+      "work": 2
+    },
+    {
+      "area": "tests/test_codex_reader.py",
+      "file": "tests/test_codex_reader.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 26,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: Update reader and role tests that still expect old defaults",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/skill.md",
+      "file": "src/forge/templates/skill.md",
+      "gain": 4,
+      "harm": 3,
+      "line": 356,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: tests/test_tools_guide.py::test_9_synced_guides_explain_tools_and_the_session_handoff",
+      "work": 1
+    },
+    {
+      "area": "test_10_the_cold_read_runs_on_the_other_family() in tests/test_codex_reader.py",
+      "file": "tests/test_codex_reader.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 115,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: End-to-end tests for shipped read and review settings",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "1b5846d35fc260af250475cb15d075741c5c05530b8e900ef0c29709fa669dc4",
+    "changed": "6214d4cffbf6b2ebabc9a59c3a0252c0ebc5a66000a0de60dfcf21bc2a00965a",
+    "commit": "e0f50a304ec5164f48dfb4d111ee6ecc24e81033",
+    "dismissals": [],
+    "findings": [],
+    "id": "f603ade5-59d0-43c2-a810-bd5d2d5143a5",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-07T04:38:34.539128+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-07T04:59:54.973344+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-07T05:19:02.873637+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-07T04:59:54.985794+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "tests/test_codex_reader.py",
+    "reason": "Findings are Harm 3, so fixing continues: repair the prototype-stage review path, the old-default tests and the end-to-end proof",
+    "wait_id": "1b34406d-8563-4fef-b2b1-6b4cef30c993",
+    "worker_round": 1
+  },
+  "stuck": {
+    "close": "b8540044-89ef-49a6-8ab8-66bc351f2ed4",
+    "head": "d59c4a9ca23f070d2176b50767407f6c81ece5a4",
+    "keys": {},
+    "round": 1
+  },
+  "why": "The owner wants code review on gpt-6.1-terra at max effort instead of gpt-6.1-sol high in Forge's own repo",
+  "worker": "codex"
+}

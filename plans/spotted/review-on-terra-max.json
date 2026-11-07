@@ -1,0 +1,59 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/templates/skill.md\tGate: tests/test_tools_guide.py::test_9_synced_guides_explain_tools_and_the_session_handoff\treview-on-terra-max",
+      "kind": "bug",
+      "path": "src/forge/templates/skill.md",
+      "line": 356,
+      "text": "Gate: tests/test_tools_guide.py::test_9_synced_guides_explain_tools_and_the_session_handoff",
+      "from": "blocking",
+      "item": "review-on-terra-max",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_codex_reader.py\tGate: End-to-end tests for shipped read and review settings\treview-on-terra-max",
+      "kind": "bug",
+      "path": "tests/test_codex_reader.py",
+      "line": 115,
+      "text": "Gate: End-to-end tests for shipped read and review settings",
+      "from": "blocking",
+      "item": "review-on-terra-max",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_codex_reader.py\tGate: Update reader and role tests that still expect old defaults\treview-on-terra-max",
+      "kind": "bug",
+      "path": "tests/test_codex_reader.py",
+      "line": 26,
+      "text": "Gate: Update reader and role tests that still expect old defaults",
+      "from": "blocking",
+      "item": "review-on-terra-max",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/init.py\tNot done: Forge's own repo and new client repos run the Codex code review and the Codex cold read on gpt-6.1-terra at max effort",
+      "kind": "edge",
+      "path": "src/forge/init.py",
+      "line": 130,
+      "text": "Not done: Forge's own repo and new client repos run the Codex code review and the Codex cold read on gpt-6.1-terra at max effort",
+      "from": "review",
+      "item": "review-on-terra-max",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "improve\t.forge/design/support.js\tThe checked-in design helper differs from its current template.",
+      "kind": "improve",
+      "path": ".forge/design/support.js",
+      "line": 1,
+      "text": "The checked-in design helper differs from its current template.",
+      "from": "worker",
+      "item": "review-on-terra-max",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

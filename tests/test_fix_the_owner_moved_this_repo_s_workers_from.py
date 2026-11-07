@@ -1,6 +1,6 @@
-"""This repo's Claude work uses Sonnet, with Codex Sol for other work and reviews.
+"""This repo's Claude work uses Sonnet, with Codex Sol work and Terra reviews.
 
-Owner, 2026-10-28: build, fix and lite use low effort; grill and design keep high.
+Build, fix and lite use low effort; design keeps high. Cold reads and reviews use Terra max.
 """
 from __future__ import annotations
 
@@ -54,9 +54,10 @@ def test_1_this_repo_works_on_codex_low_and_reviews_on_codex(repo, monkeypatch, 
         "claude": CLAUDE_BUILD}
     for kind in ("design", "grill"):
         assert config["models"][kind] == {
-            "codex": {"model": "gpt-6.1-sol", "effort": "high"},
+            "codex": ({"model": "gpt-6.1-terra", "effort": "max"} if kind == "grill" else
+                      {"model": "gpt-6.1-sol", "effort": "high"}),
             "claude": {**SONNET, "effort": "high"}}
-    assert config["models"]["review"] == {"model": "gpt-6.1-sol", "effort": "high"}
+    assert config["models"]["review"] == {"model": "gpt-6.1-terra", "effort": "max"}
     assert "stage" not in config and "signoff" not in config
 
     log = _codex(repo, monkeypatch, sdk_data)

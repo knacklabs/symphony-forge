@@ -399,11 +399,11 @@ def _continues(repo, monkeypatch, tmp_path, sdk_data, app):  # noqa: F811
 
     if app == "codex":
         # The same tool can take over its external reader as a session subagent.
-        assert "reader: codex (gpt-6-sol)\n" in reader.text()
+        assert "reader: codex (gpt-6.1-terra)\n" in reader.text()
         reader.coordinate("codex")
         native = _native_round(reader)
         assert "Round 4 of your cold read" in native["fresh_prompt"]
-        assert "reader: codex (gpt-6-sol), a subagent of this Codex session" in reader.text()
+        assert "reader: codex (gpt-6.1-terra), a subagent of this Codex session" in reader.text()
 
 
 def _starts_fresh(repo, monkeypatch, tmp_path, sdk_data, app):  # noqa: F811
@@ -517,13 +517,13 @@ def _stays_pinned(repo, monkeypatch, tmp_path, sdk_data, app):  # noqa: F811
     assert moved.returncode == 0, moved.stdout + moved.stderr
     native = json.loads(moved.stdout)
     assert native["reason"] == "its reader, Claude Code, is no longer installed"
-    assert native["tool"] == "codex" and native["model"] == "gpt-6-sol"
+    assert native["tool"] == "codex" and native["model"] == "gpt-6.1-terra"
     assert "Round 3 of your cold read" in native["fresh_prompt"]
     assert "You are doing the one cold read" in native["fresh_prompt"]
     finished = reader.native("handback", "SHOP", "--round", str(native["round"]),
                              "--subagent", "replacement-reader", "--text", "No findings.")
     assert finished.returncode == 0, finished.stdout + finished.stderr
-    assert "reader: codex (gpt-6-sol), a subagent of this Codex session" in reader.text()
+    assert "reader: codex (gpt-6.1-terra), a subagent of this Codex session" in reader.text()
 
 
 def _native_round(reader, text="No findings.", resolve=None):
@@ -562,7 +562,7 @@ def _one_app(repo, monkeypatch, tmp_path, sdk_data, app):  # noqa: F811
     codex.coordinate("codex")
     codex.notes.unlink()
     _native_round(codex, f"1. {FIRST}\n", ("more", "the owner wants one more read"))
-    assert "reader: codex (gpt-6-sol), a subagent of this Codex session" in codex.text()
+    assert "reader: codex (gpt-6.1-terra), a subagent of this Codex session" in codex.text()
     codex.dispose(FIRST, "cut")
     native = _native_round(codex)
     assert native["subagent"] == "readloop-reader"
