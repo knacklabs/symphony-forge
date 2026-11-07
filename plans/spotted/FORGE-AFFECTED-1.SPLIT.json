@@ -1,0 +1,125 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tBind npm script detection to the invoked script and directory\tFORGE-AFFECTED-1/SPLIT",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 298,
+      "text": "Bind npm script detection to the invoked script and directory",
+      "from": "blocking",
+      "item": "FORGE-AFFECTED-1/SPLIT",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tKeep selection lines visible in the pull request log\tFORGE-AFFECTED-1/SPLIT",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 344,
+      "text": "Keep selection lines visible in the pull request log",
+      "from": "blocking",
+      "item": "FORGE-AFFECTED-1/SPLIT",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tKeep the repository settings available to pytest after cd\tFORGE-AFFECTED-1/SPLIT",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 307,
+      "text": "Keep the repository settings available to pytest after cd",
+      "from": "blocking",
+      "item": "FORGE-AFFECTED-1/SPLIT",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tNot done: A Python app without Nx runs only its related pytest tests and checks the changed files.\tFORGE-AFFECTED-1/SPLIT",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 328,
+      "text": "Not done: A Python app without Nx runs only its related pytest tests and checks the changed files.",
+      "from": "blocking",
+      "item": "FORGE-AFFECTED-1/SPLIT",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tPreserve Nx argument semantics when rewriting run-many\tFORGE-AFFECTED-1/SPLIT",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 322,
+      "text": "Preserve Nx argument semantics when rewriting run-many",
+      "from": "blocking",
+      "item": "FORGE-AFFECTED-1/SPLIT",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tSelect pytest files separately for each pytest step\tFORGE-AFFECTED-1/SPLIT",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 307,
+      "text": "Select pytest files separately for each pytest step",
+      "from": "blocking",
+      "item": "FORGE-AFFECTED-1/SPLIT",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/quicktest.py\tKeep distinct Playwright steps in the suggested fast command\tFORGE-AFFECTED-1/SPLIT",
+      "kind": "bug",
+      "path": "src/forge/quicktest.py",
+      "line": 88,
+      "text": "Keep distinct Playwright steps in the suggested fast command",
+      "from": "blocking",
+      "item": "FORGE-AFFECTED-1/SPLIT",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/quicktest.py\tKeep quoted pytest expressions out of shell-flow detection\tFORGE-AFFECTED-1/SPLIT",
+      "kind": "bug",
+      "path": "src/forge/quicktest.py",
+      "line": 34,
+      "text": "Keep quoted pytest expressions out of shell-flow detection",
+      "from": "blocking",
+      "item": "FORGE-AFFECTED-1/SPLIT",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/quicktest.py\tPreserve JavaScript tests in advice for a piped mixed command\tFORGE-AFFECTED-1/SPLIT",
+      "kind": "bug",
+      "path": "src/forge/quicktest.py",
+      "line": 34,
+      "text": "Preserve JavaScript tests in advice for a piped mixed command",
+      "from": "blocking",
+      "item": "FORGE-AFFECTED-1/SPLIT",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/sync.py\tSync writes the requested guides, then fails on another story's temporary chat worktree; reported in issue 1433.",
+      "kind": "bug",
+      "path": "src/forge/sync.py",
+      "line": 724,
+      "text": "Sync writes the requested guides, then fails on another story's temporary chat worktree; reported in issue 1433.",
+      "from": "worker",
+      "item": "FORGE-AFFECTED-1/SPLIT",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/fasttest.py\tNot done: A change to a client app runs lint, typecheck and tests only for the parts it touches in the pull request check",
+      "kind": "edge",
+      "path": "src/forge/fasttest.py",
+      "line": 319,
+      "text": "Not done: A change to a client app runs lint, typecheck and tests only for the parts it touches in the pull request check",
+      "from": "review",
+      "item": "FORGE-AFFECTED-1/SPLIT",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
