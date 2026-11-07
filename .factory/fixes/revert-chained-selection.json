@@ -1,0 +1,15 @@
+{
+  "base": "43d9a385ed1f9ba8dea28244a4c4c63c242214dd",
+  "branch": "fix/revert-chained-selection",
+  "done_when": "The chained-command part's change is reverted on main, the other test-selection parts stay, and main's full run on Linux and Windows is green",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-07T15:46:34.802703+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The chained-command part broke pytest selection that worked before and main's full run is red; the owner chose to revert that part for this release"
+}
