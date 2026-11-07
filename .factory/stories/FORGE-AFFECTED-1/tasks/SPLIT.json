@@ -79,7 +79,7 @@
       "gain": 4,
       "harm": 3,
       "line": 307,
-      "outcome": "open",
+      "outcome": "fixed in round 5",
       "reason": "",
       "round": 1,
       "security": false,
@@ -141,27 +141,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "5cc0218e8130467e3efc448d88b4a63f5090ac75be29bb1ff28032a96c762a49",
-    "changed": "a3dbdef967a35983fb521ee209e57a90f07268e0404679033f1745c3c1e752b0",
-    "commit": "b553c8681b0bad1a303504ed1a900dd8fba21f1c",
+    "branch_diff": "a1083fec5447db3086f9524d2cc21bc0cf238658f6f6ad7ebe5f1d16d6c6feb6",
+    "changed": "72550e844d92ad9e887c966ef01f35c76a0813cc0ba386f7bf82e72e940a708e",
+    "commit": "b8a630a3ebc6f4a4940502ffd2e20adf3bf55c4a",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 5, Work 2, Harm 4\nRaise: Functional\nCase: normal use - A client pinned to pytest 8 runs `pytest tests/unit && pytest tests/integration`, requires `tests/integration/test_api.py`, and changes that file and another integration test.\nThe repair assigns the required file to the integration step, but `pytest_tests` still appends it to that step's existing directory argument (`fasttest.py:826` and `fasttest.py:132`). The resulting `pytest tests/integration ... tests/integration/test_api.py` can collect only the explicitly named file on pytest 8, silently omitting the other selected test while the check passes, as shown in the [pytest issue](https://github.com/pytest-dev/pytest/issues/13494). The prior duplicate-execution finding also remains on pytest 7: its [collector](https://docs.pytest.org/en/7.1.x/_modules/_pytest/main.html) collects the explicitly passed file again after the directory. The new test uses the repository's pytest 9 environment and has no second selected integration file.",
-        "file": "src/forge/fasttest.py",
-        "gain": 5,
-        "harm": 4,
-        "line": 313,
-        "priority": "P0",
-        "title": "Select pytest files separately for each pytest step",
-        "work": 2
-      }
-    ],
-    "id": "23612066-7242-4dcc-867a-9ef743fbe9f6",
-    "status": "blocked"
+    "findings": [],
+    "id": "fbfd39d4-6e26-4f8e-ba60-4574a59caac4",
+    "status": "clean"
   },
   "round": 5,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-07T10:19:17.650942+00:00",
@@ -181,6 +170,10 @@
     },
     {
       "at": "2026-11-07T12:33:12.404573+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-07T12:56:28.382104+00:00",
       "step": "review"
     }
   ],
