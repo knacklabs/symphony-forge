@@ -14,7 +14,7 @@
       "gain": 4,
       "harm": 3,
       "line": 10,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -27,7 +27,7 @@
       "gain": 4,
       "harm": 3,
       "line": 65,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -40,7 +40,7 @@
       "gain": 4,
       "harm": 3,
       "line": 149,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -66,7 +66,7 @@
       "gain": 3,
       "harm": 3,
       "line": 83,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -76,68 +76,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "d3f0fe0628ff717cfdf092c1f8fbe2e9aa35f62da1cf48636133b9e417dde0fc",
-    "changed": "900431b5cb16ffcd626bcd8b5de315fece00d334951f1fa7dff6b7c337f6d769",
-    "commit": "f1a3a03725e7fe01efb6e1c043bccf560f20ed40",
+    "branch_diff": "1c4486db7b8d9990eeb291a86b788d6ac1b62c9c7d7d1cf066074b530edfe1f4",
+    "changed": "59277520940bf0df926ba9db00bbbf98300bc004dee6e93d19d2f745b36f3ee6",
+    "commit": "3bf3830db53c919cad73f44b71fda22ffc8503f7",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional. The selector reads `project.json` from every second-level library directory before it checks whether a full run is needed. The shipped assistant module is an Nx workspace package with `package.json` files but no `project.json` files: its copy instructions are in `src/forge/templates/skills/agents/assistant-module/typescript/libs/assistant/README.md:10`.\nCase: normal use - after a client adds that module, every base-selected check fails with ENOENT while reading `libs/assistant/contracts/project.json`, including checks for unrelated web changes.",
-        "file": "src/forge/templates/starter/scripts/affected.mjs",
-        "gain": 4,
-        "harm": 3,
-        "line": 10,
-        "priority": "P1",
-        "title": "Functional: Accept Nx packages without project.json",
-        "work": 2
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional. The selected run silently skips a project's tests whenever its `project.json` has no `test` target. Twelve shipped libraries, including `libs/auth/server`, have only a lint target, although `apps/web/vitest.config.ts:17` includes tests under every library and the full `test:hooks` command runs them.\nCase: normal use - a client adds a failing `*.test.ts` beside auth server code. The affected check runs the API suite but never runs the new library test, so the pull request can pass while the full suite would fail.",
-        "file": "src/forge/templates/starter/scripts/test.mjs",
-        "gain": 4,
-        "harm": 3,
-        "line": 65,
-        "priority": "P1",
-        "title": "Functional: Run newly added tests in affected libraries",
-        "work": 2
-      },
-      {
-        "body": "Gain 4, Work 1, Harm 3\nRaise: Test. `_adopted_files_after_sync` runs `forge sync` on a manually created `fix/agent-accounts-upgrade` branch (`tests/test_mcp.py:65-67`), which installs the pre-commit hook. The new commit has no Forge item state, so `src/forge/githooks.py:122-129` refuses it; the later push to main at line 152 is also refused by the pre-push hook. The same issue affects `tests/test_starter_tree.py:253`: its shared smoke helper copies initialized clients including `.git` and then commits on main, so feature and assistant smoke tests fail through the copied hook.\nCase: normal use - the required starter proof runs in CI, and the live starter smoke runs on pull requests or nightly.",
-        "file": "tests/test_affected_ts_starter.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 149,
-        "priority": "P1",
-        "title": "Gate: The upgrade and live smoke proofs cannot commit through Forge hooks",
-        "work": 1
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done. The full owner-approved item also requires that the log name those parts. `apps/web/vitest.config.ts:6,17` sets the Vitest root to `apps/web` and includes all library tests. Vitest 3.2.4 resolves this target's filter to `src` and matches it as a substring, so every included `libs/*/*/src` test also matches ([Vitest filter implementation](https://github.com/vitest-dev/vitest/blob/v3.2.4/packages/vitest/src/node/project.ts#L467-L487)).\nCase: normal use - a web-only change runs all four unrelated library test files; a shared-util change runs its test both through `@app/shared-util:test` and again through `web:test`.",
-        "file": "src/forge/templates/starter/apps/web/project.json",
-        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
-        "gain": 4,
-        "harm": 3,
-        "line": 12,
-        "priority": "P1",
-        "title": "Not done: A change to a client app runs lint, typecheck and tests only for the parts it touches, once, in the pull request check",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Test. The named proof checks web targets, the API test target, and the shared-util test command, but asserts no library lint target and does not check the core-server or history-server test targets. Its count of two printed `vitest run` commands also cannot establish that their test files are disjoint. The live selected case exercises only a web change; its full run uses the global lint and hooks commands.\nCase: normal use - removing `@app/auth-server`'s lint target would leave the named proofs green while an affected auth change stopped receiving its library lint check.",
-        "file": "tests/test_affected_ts_starter.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 83,
-        "priority": "P1",
-        "title": "Gate: The starter proof does not check the library targets",
-        "work": 2
-      }
-    ],
-    "id": "9c9fd555-f132-45d9-8ac0-773555765804",
-    "status": "blocked"
+    "findings": [],
+    "id": "299c0ca2-0111-47c4-9706-02c887eee081",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-07T10:19:25.650857+00:00",
@@ -145,6 +93,10 @@
     },
     {
       "at": "2026-11-07T10:46:09.528978+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-07T11:01:06.656216+00:00",
       "step": "review"
     }
   ],
