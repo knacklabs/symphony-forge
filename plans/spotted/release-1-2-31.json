@@ -1,0 +1,37 @@
+{
+  "items": [
+    {
+      "key": "bug\t.factory/fixes/release-1-2-31.json\tGate: proof list\trelease-1-2-31",
+      "kind": "bug",
+      "path": ".factory/fixes/release-1-2-31.json",
+      "line": 5,
+      "text": "Gate: proof list",
+      "from": "blocking",
+      "item": "release-1-2-31",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\t.forge/design/support.js\tPreserve settled design screenshots\trelease-1-2-31",
+      "kind": "bug",
+      "path": ".forge/design/support.js",
+      "line": 101,
+      "text": "Preserve settled design screenshots",
+      "from": "blocking",
+      "item": "release-1-2-31",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_release_version.py\tGate: generated files in the release checkout\trelease-1-2-31",
+      "kind": "bug",
+      "path": "tests/test_release_version.py",
+      "line": 31,
+      "text": "Gate: generated files in the release checkout",
+      "from": "blocking",
+      "item": "release-1-2-31",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
