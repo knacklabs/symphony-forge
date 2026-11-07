@@ -94,7 +94,7 @@
     "status": "blocked"
   },
   "round": 2,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-07T17:49:38.109975+00:00",
@@ -107,8 +107,12 @@
   ],
   "stop": {
     "at": "2026-11-07T18:05:58.259673+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "tests/test_acceptance_publishes_final_review_once.py",
-    "wait_id": "1374fa31-bf27-4c61-ad81-a22e9c6b105b"
+    "reason": "Findings 1 and 2 are Harm 3 test gaps, cheap to close: one more round by the standing rule",
+    "wait_id": "1374fa31-bf27-4c61-ad81-a22e9c6b105b",
+    "worker_round": 2
   },
   "stuck": {
     "close": null,
