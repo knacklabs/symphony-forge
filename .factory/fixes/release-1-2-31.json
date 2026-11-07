@@ -5,12 +5,103 @@
   "done_when": "The version is 1.2.31, generated files are synced, this repo is pinned to v1.2.31, and the tests pass",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "known": [
+    {
+      "area": ".forge/design/support.js",
+      "file": ".forge/design/support.js",
+      "gain": 4,
+      "harm": 3,
+      "line": 101,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Preserve settled design screenshots",
+      "work": 2
+    },
+    {
+      "area": "test_1_forge_version_is_1_2_27_everywhere_it_is_recorded() in tests/test_release_version.py",
+      "file": "tests/test_release_version.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 31,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: generated files in the release checkout",
+      "work": 2
+    },
+    {
+      "area": ".factory/fixes/release-1-2-31.json",
+      "file": ".factory/fixes/release-1-2-31.json",
+      "gain": 4,
+      "harm": 1,
+      "line": 5,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: proof list",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "6e4bcea883a052847be5f52a609fc50c5f3cfb9e6dd1ff17e682deab015e0fc3",
+    "changed": "54fcd7751681eae7bb7039dfbb21af523d96d7e13c0578bfa361265c6a8e033b",
+    "commit": "d943609ab91719934e2633a2e8d04c2987d189d0",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - a design artboard uses a 200 ms entry fade with `@starting-style`.\nThe renderer captures as soon as page load and `document.fonts.ready` finish, but [font readiness](https://developer.mozilla.org/en-US/docs/Web/API/FontFaceSet/ready) does not wait for the transition. The published PNG can therefore show faded or invisible content. The previous renderer supplied a 2000 ms virtual-time budget, and the current screenshot tests check dimensions rather than the rendered content.\nAdds work: settle entry transitions before capture; F 2 x H 2 = 4; 2 x C = 4",
+        "file": ".forge/design/support.js",
+        "gain": 4,
+        "harm": 3,
+        "line": 101,
+        "priority": "P1",
+        "title": "Preserve settled design screenshots",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Test\nCase: normal use - preparing a release after a merged change updates a generated template.\nThe release test checks version text in the checkout's hooks and workflow, then runs `forge sync` in a separate fixture repo. `tests/test_split_ships.py:62` likewise checks a fixture. Neither verifies that this checkout's generated files match their sources: for example, leaving `.forge/design/support.js` stale would pass these checks, even though `src/forge/story.py:91` identifies it as generated output. Add a check of the release checkout's synced files.",
+        "file": "tests/test_release_version.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 31,
+        "priority": "P1",
+        "title": "Gate: generated files in the release checkout",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 1, Harm 1\nRaise: Gate\nCase: normal use - close reviews the release before merging it.\nThe supplied proof list is `missing`, and the release commit records no mapping from the Done-when details to their checks. Provide the mapping for the version, generated files, repo pin, and passing tests so close can verify each detail in the repository's chosen test place.",
+        "file": ".factory/fixes/release-1-2-31.json",
+        "gain": 4,
+        "harm": 1,
+        "line": 5,
+        "priority": "P1",
+        "title": "Gate: proof list",
+        "work": 1
+      }
+    ],
+    "id": "6b68f7cd-e63b-48cf-8e2d-3e61b1d3f029",
+    "status": "blocked"
+  },
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-07T17:31:23.889158+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-07T17:40:51.864213+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-11-07T17:40:51.874677+00:00",
+    "file": ".forge/design/support.js",
+    "wait_id": "62949d08-ce55-4899-8aa9-67b4a11af1d5"
+  },
   "why": "Release v1.2.31: publish what merged since v1.2.30"
 }
