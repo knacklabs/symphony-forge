@@ -1,0 +1,15 @@
+{
+  "base": "5393cf3ed78f0bae68f7bf2762dbcc9675a03710",
+  "branch": "fix/adoption-sets-whole-repo-checks",
+  "done_when": "Adoption guidance names the cheap whole-repo checks to add to always_test for Python or to fast_test for TypeScript, and an adopted app gets them through the normal settings fix",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-07T18:12:46.537294+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Adopted apps break main when selected tests miss shared inputs (issue 1430), and the adoption steps only describe the required-check list"
+}
