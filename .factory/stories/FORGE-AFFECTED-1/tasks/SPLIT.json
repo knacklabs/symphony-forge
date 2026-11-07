@@ -27,7 +27,7 @@
       "gain": 5,
       "harm": 3,
       "line": 88,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 1,
       "security": false,
@@ -53,7 +53,7 @@
       "gain": 4,
       "harm": 3,
       "line": 322,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 1,
       "security": false,
@@ -141,47 +141,27 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "fb45ba31ecb48d44042330677aaf186ef697c7ca38742f5677d120a0d4cf385d",
-    "changed": "2b8fbbbc535ef0d2b7bdfb658fc3864060221db146aaf584e8e1267c8d37dada",
-    "commit": "02280c0860f1b2838558537439f5f18f8d422e6f",
+    "branch_diff": "ed5e208c1ed839131a969c9b0d0ac8db560b71e4090b65e1f1355765373029f9",
+    "changed": "3533d596e2f0bfb4e21333282e693c04db626e4357bc025fc6ed085f0fb70b1e",
+    "commit": "983813424ffd9ede87c83aa81ebd2a76d1a6f43b",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 5, Work 2, Harm 3\nRaise: Functional\nCase: normal use - A mixed Python and JavaScript app has `test = \"uv run pytest && npm test\"`, and its npm test script runs two Playwright projects joined by `&&`.\nThe compound npm script is classified as `node-check`, leaving `kinds` as only `python`. This branch then suggests only `forge test --pytest {base}`, discarding `npm test`. The picker also removes that node-check step at `fasttest.py:737-742`, so an adopted suggestion can pass the pull request check without running either Playwright project. A piped npm script has the same problem.",
-        "file": "src/forge/quicktest.py",
-        "gain": 5,
-        "harm": 3,
-        "line": 139,
-        "priority": "P1",
-        "title": "Keep distinct Playwright steps in the suggested fast command",
-        "work": 2
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - An app runs `pytest tests -m unit && pytest tests -m integration` and changes a unit-only test.\nBoth steps have the same path root, so this filter keeps the unit file for both. The integration invocation deselects it by mark and exits with no tests collected, failing the check. The original cross-step problem also remains with separate directories when `always_test` is set: every required test is appended to every invocation at `fasttest.py:858`, so it can run repeatedly or fail a step whose mark excludes it.",
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - An app runs `pytest tests/unit && pytest tests/integration`, requires `tests/integration/test_api.py` through `always_test`, and changes that test.\nThe first step appends and runs the required integration test. Setting `include_always` to false prevents appending it to the second step, but the second step still selects the changed file from its own root at lines 784\u2013785 and runs it again. The previous duplicate-execution problem therefore remains. The added test places its required file outside both step roots, so it does not cover this overlap.",
         "file": "src/forge/fasttest.py",
         "gain": 4,
         "harm": 3,
-        "line": 831,
+        "line": 299,
         "priority": "P1",
         "title": "Select pytest files separately for each pytest step",
         "work": 2
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - CI sets `TARGET=test` and runs `nx run-many -t \"$TARGET\"`.\nThe discovery query shell-quotes the parsed target, passing the literal `$TARGET` to `nx show projects` instead of expanding it. Discovery therefore finds no projects for the real target and Forge keeps `nx run-many`, running every project instead of the affected projects. The repair preserves expansion in the eventual command, but not in the probe that decides whether to rewrite it.",
-        "file": "src/forge/fasttest.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 318,
-        "priority": "P1",
-        "title": "Preserve Nx argument semantics when rewriting run-many",
-        "work": 2
       }
     ],
-    "id": "732949ba-3063-446d-9e93-d6bffe53ca24",
+    "id": "713881b6-6633-447c-b5c1-bf0b9795952e",
     "status": "blocked"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-07T10:19:17.650942+00:00",
@@ -194,8 +174,17 @@
     {
       "at": "2026-11-07T11:18:24.831402+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-11-07T12:18:13.569624+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-11-07T12:18:13.569967+00:00",
+    "file": "src/forge/fasttest.py",
+    "wait_id": "8e618df0-f433-483b-918e-19df12e85d69"
+  },
   "stuck": {
     "close": "a8c89b2e-70a2-4716-9b75-22e8d5e56db5",
     "head": "813ebb444b433dd6c53042d1b4fca571f89418c3",
