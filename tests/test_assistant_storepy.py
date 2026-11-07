@@ -32,7 +32,7 @@ def test_4_python_expired_chats_are_deleted(repo, gh, tmp_path, tmp_path_factory
 
     # The copied app still checks every table's schema. Extending that inventory
     # is a copy contract: without it the existing full-suite case rejects the
-    # optional module's five tables. Keep every original starter entry too.
+    # optional module's six tables. Keep every original starter entry too.
     inventories = []
     for path in (
         Path(__file__).resolve().parents[1]
@@ -56,6 +56,7 @@ def test_4_python_expired_chats_are_deleted(repo, gh, tmp_path, tmp_path_factory
         "assistant.checkpoint_migrations",
         "assistant.checkpoint_writes",
         "assistant.checkpoints",
+        "assistant.usage",
         *inventories[0],
     )
 

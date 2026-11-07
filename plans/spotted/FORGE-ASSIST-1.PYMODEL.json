@@ -1,0 +1,48 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/templates/skills/agents/assistant-module/python/apps/api/app/assistant/README.md\tDocument settings for all three test API containers\tFORGE-ASSIST-1/PYMODEL",
+      "kind": "bug",
+      "path": "src/forge/templates/skills/agents/assistant-module/python/apps/api/app/assistant/README.md",
+      "line": 125,
+      "text": "Document settings for all three test API containers",
+      "from": "blocking",
+      "item": "FORGE-ASSIST-1/PYMODEL",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/skills/agents/assistant-module/python/apps/api/app/assistant/README.md\tKeep the documented schema inventory entries as strings\tFORGE-ASSIST-1/PYMODEL",
+      "kind": "bug",
+      "path": "src/forge/templates/skills/agents/assistant-module/python/apps/api/app/assistant/README.md",
+      "line": 23,
+      "text": "Keep the documented schema inventory entries as strings",
+      "from": "blocking",
+      "item": "FORGE-ASSIST-1/PYMODEL",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/skills/agents/assistant-module/python/apps/api/app/assistant/guard.py\tAgents: Never take secrets by speech or chat\tFORGE-ASSIST-1/PYMODEL",
+      "kind": "bug",
+      "path": "src/forge/templates/skills/agents/assistant-module/python/apps/api/app/assistant/guard.py",
+      "line": 7,
+      "text": "Agents: Never take secrets by speech or chat",
+      "from": "blocking",
+      "item": "FORGE-ASSIST-1/PYMODEL",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_assistant_modelpy.py\tThe init and sync checks do not receive the optional assistant template files.",
+      "kind": "bug",
+      "path": "tests/test_assistant_modelpy.py",
+      "line": 53,
+      "text": "The init and sync checks do not receive the optional assistant template files.",
+      "from": "worker",
+      "item": "FORGE-ASSIST-1/PYMODEL",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

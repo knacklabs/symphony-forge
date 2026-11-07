@@ -1,6 +1,8 @@
 """Copy the Python assistant storage template into a new client app."""
 
+import ast
 import shutil
+import textwrap
 from pathlib import Path
 
 
@@ -12,6 +14,13 @@ def copy_assistant_python(app: Path) -> None:
     if not skill.is_dir():
         raise AssertionError(f"the assistant template is missing from {skill}")
 
+    # Execute the documented excerpts so a helper cannot hide broken copy steps.
+    readme = (skill / "apps/api/app/assistant/README.md").read_text(encoding="utf-8")
+    schema_entries = textwrap.dedent(readme.split("```", 2)[1].split("\n", 1)[1])
+    schemas = ast.literal_eval("(\n" + schema_entries + "\n)")
+    assert all(isinstance(schema, str) for schema in schemas)
+    test_environment = readme.split("```yaml\n", 1)[1].split("```", 1)[0]
+
     api = app / "apps" / "api"
     shutil.copytree(
         skill / "apps" / "api" / "app" / "assistant", api / "app" / "assistant"
@@ -21,25 +30,48 @@ def copy_assistant_python(app: Path) -> None:
         api / "migrations" / "versions" / "20261106_assistant.py",
     )
     shutil.copyfile(
+        skill
+        / "apps"
+        / "api"
+        / "migrations"
+        / "versions"
+        / "20261106_assistant_usage.py",
+        api / "migrations" / "versions" / "20261106_assistant_usage.py",
+    )
+    shutil.copyfile(
         skill / "apps" / "api" / "tests" / "test_assistant_chats.py",
         api / "tests" / "test_assistant_chats.py",
+    )
+    shutil.copyfile(
+        skill / "apps" / "api" / "tests" / "test_assistant_model.py",
+        api / "tests" / "test_assistant_model.py",
     )
     _replace_once(
         api / "tests" / "test_module_schemas.py",
         "EXPECTED_TABLE_SCHEMAS = (\n",
         "EXPECTED_TABLE_SCHEMAS = (\n"
-        '    "assistant.chat",\n'
-        '    "assistant.checkpoint_blobs",\n'
-        '    "assistant.checkpoint_migrations",\n'
-        '    "assistant.checkpoint_writes",\n'
-        '    "assistant.checkpoints",\n',
+        + textwrap.indent(schema_entries.strip(), "    ")
+        + "\n",
     )
 
     pyproject = api / "pyproject.toml"
     _replace_once(
         pyproject,
         '    "mcp==2.3.0",',
-        '    "mcp==2.3.0",\n    "langgraph-checkpoint-postgres==3.2.0",',
+        '    "mcp==2.3.0",\n    "langchain-openai==1.7.4",\n    "langgraph-checkpoint-postgres==3.2.0",',
+    )
+
+    compose = app / "compose.test.yml"
+    compose_text = compose.read_text(encoding="utf-8")
+    port_setting = '      PORT: "3000"\n'
+    if compose_text.count(port_setting) != 3:
+        raise AssertionError(f"copy step did not match all API services in {compose}")
+    compose.write_text(
+        compose_text.replace(
+            port_setting,
+            port_setting + textwrap.indent(test_environment, "      "),
+        ),
+        encoding="utf-8",
     )
     _replace_once(
         pyproject,
