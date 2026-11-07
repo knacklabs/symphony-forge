@@ -20,7 +20,7 @@ from typing import Any
 from forge import (__version__, approval, board, board_facts, close, codex, githooks, machine, migration_warnings,
                    journey, native, records, repo, review, spotted, story, score, task, time_records, upgrade)
 from forge.board_facts import machine_next
-from forge.task import _started, developer, github_login, owner, sections, stack_base, start_base, unbuilt_fix, waits_for
+from forge.task import _merged, _started, can_start, developer, github_login, owner, sections, start_base, unbuilt_fix, waits_for
 from forge.task import rows as task_rows
 
 COMMANDS = [
@@ -183,6 +183,12 @@ def next_step(args: Any) -> int:
     return 0
 
 
+def startable(top: Path) -> list[str]:
+    """Parts offered by the same report as the context hook."""
+    return [line.split()[4] for line in _report(top)[0]
+            if line.startswith("Next: forge task start ")]
+
+
 def context_hook(args: Any) -> int:
     top = repo.root()
     lines, states = _report(top)
@@ -341,7 +347,8 @@ def _report(top: Path, history: dict[str, Any] | None = None,
                 record, findings = story._record(text)  # pyright: ignore[reportPrivateUsage]
                 spec_text = spec.read_text(encoding="utf-8")
                 fields, body = story._record(spec_text)  # pyright: ignore[reportPrivateUsage]
-                if story.stopped(record, findings):
+                config = repo.config(path) if (path / "forge.toml").is_file() else repo.DEFAULTS
+                if story.stopped(record, findings, config["cold_read_rounds"]):
                     lines += _read_loop(spec.stem, spec_text, text, path)
                 elif (fields.get("status") == "draft" and story.passed(record, findings)
                       and record.get("read_hash") == repo.git("hash-object", "--", str(spec), cwd=path)):
@@ -676,44 +683,25 @@ def _story(top: Path, key: str, path: Path | None, text: str,
         if readiness is not None:
             readiness["stage"] = "planning"
         return lines + [behind], list(states.values())
-    merged |= {after for task in doc["tasks"] for after in task["after"] if "/" in after
-               and _task(top, *after.split("/"), trees, merged_prs, history).get("status") == "merged"}
-    waits = {task["id"]: waits_for(f"{key}/{task['id']}", [after for after in task["after"] if after not in merged])
-             for task in doc["tasks"] if not states[task["id"]]}
-    busy = _started(story.landed_ref(top), top, history)
-    overlapping: set[str] = set()
-    for task in doc["tasks"]:
-        if task["id"] in waits:
-            blockers = waits_for(f"{key}/{task['id']}", [], task["scope"], busy)
-            if blockers:
-                overlapping.add(task["id"])
-            waits[task["id"]] += [item for item in blockers if item not in waits[task["id"]]]
-    stacked: dict[str, str] = {}
-    stack_waits: list[str] = []
-    for name, deps in waits.items():
-        if deps and _report_config(top, refusals)["stack"] == "on":
-            item, main = f"{key}/{name}", story.landed_ref(top)
-            def read_base():
-                try:
-                    return stack_base(item, deps, main, top), []
-                except repo.Refused as error:
-                    return None, str(error).splitlines()
-            base, problems = repo.command_fact(("stack base", item, tuple(deps), main), top, read_base)
-            if base:
-                stacked[name] = base
-            stack_waits += problems
-    ready = [task["id"] for task in doc["tasks"] if waits.get(task["id"]) == [] or task["id"] in stacked]
+    main = story.landed_ref(top)
+    busy = _started(main, top, history)
+    waits = {row["id"]: waits_for(f"{key}/{row['id']}", [dep for dep in row["after"]
+             if not _merged(main, dep if "/" in dep else f"{key}/{dep}", top)], row["scope"], busy)
+             for row in doc["tasks"] if not states[row["id"]]}
+    admission = {row["id"]: repo.command_fact(
+        ("can start", f"{key}/{row['id']}", tuple(row["after"]), tuple(row["scope"]), main), top,
+        lambda: can_start(f"{key}/{row['id']}", row["after"], row["scope"], busy, main, top))
+        for row in doc["tasks"] if row["id"] in waits}
+    stacked = {name: base for name, (base, error) in admission.items() if base and not error}
+    ready = [name for name, (_, error) in admission.items() if not error]
+    waiting = [line for _, error in admission.values() if error for line in str(error).splitlines()
+               if not line.startswith("Next: forge task start ")]
     assignments = {row["id"]: developer(row) or owner(text) for row in doc["tasks"]}
-    if any(assignments[name] for name in ready):
-        login = github_login(top)
-        if login:
-            ready = [name for name in ready
-                     if not assignments[name] or assignments[name].casefold() == login.casefold()]
-            ready.sort(key=lambda name: not assignments[name])
-    waiting = (stack_waits if _report_config(top, refusals)["stack"] == "on" else
-               [f"{key}/{task} waits for {', '.join(deps)} to merge first." for task, deps in waits.items()
-                if task in overlapping or any(not dep.startswith(f"{key}/") for dep in deps)])
-    reread = _next_round(key, notes, doc_hash, title, required, text)
+    if any(assignments[name] for name in ready) and (login := github_login(top)):
+        ready = [name for name in ready
+                 if not assignments[name] or assignments[name].casefold() == login.casefold()]
+        ready.sort(key=lambda name: not assignments[name])
+    reread = _next_round(key, notes, doc_hash, title, required, text, path or top)
     if readiness is not None:
         readiness["waits"] = waits
     if reread:  # a doc changed after approval gets a round before its next task starts
@@ -721,18 +709,17 @@ def _story(top: Path, key: str, path: Path | None, text: str,
             readiness["stage"] = "planning"
         return lines + reread, list(states.values())
     if readiness is not None:
-        readiness["parts"].update({name: "Waiting" if deps and name not in stacked else "Can start now"
+        readiness["parts"].update({name: "Can start now" if not admission[name][1] else "Waiting"
                                    for name, deps in waits.items()})
         remaining = [f"{key}/{name}" for name in states if name not in merged]
         if remaining and all(part_statuses.get(item) == "ready" for item in remaining):
             readiness["stage"] = "ready to merge"
     if ready:
         rows = {task["id"]: task for task in doc["tasks"]}
-        landed = story.landed_ref(top)
         builds = {}
         for name in ready:
             # A task takes forge.toml from the branch forge task start branches it from.
-            base = stacked.get(name) or start_base(landed, key, rows[name], history, top)
+            base = stacked.get(name) or start_base(main, key, rows[name], history, top)
             settings = (story.show(top, base, "forge.toml") if history is None
                         else history["docs"].get(f"{base}:forge.toml"))
             try:
@@ -751,8 +738,7 @@ def _story(top: Path, key: str, path: Path | None, text: str,
                   f"{'; start them together.' if len(ready) > 1 else '.'}",
                   *(f"Next: forge task start {key}/{task}  # {builds[task]}"
                     for task in ready)]
-    if waiting:
-        lines += waiting + ([] if ready or stack_waits else ["Next: git fetch origin, then forge next"])
+    lines += waiting
     return lines or [f"{title} is approved; its other parts wait for earlier parts to merge.",
                      "Next: git fetch origin, then forge next"], list(states.values())
 
@@ -762,7 +748,7 @@ def _approval(top: Path, key: str, path: Path, title: str, digest: str,
     """Planning, read or waiting for approval: what's missing, or how to ask for approval."""
     notes = story._text(path / "plans" / f"{key}.read.md")  # pyright: ignore[reportPrivateUsage]
     reread = _next_round(key, notes, repo.git("hash-object", "--", f"plans/{key}.md", cwd=path), title,
-                         story.rounds(notes), text)
+                         story.rounds(notes), text, path)
     if reread:
         return reread
     try:
@@ -786,7 +772,7 @@ def _approval(top: Path, key: str, path: Path, title: str, digest: str,
             '"Request changes", "Stop"']
 
 
-def _next_round(key: str, text: str, doc_hash: str, title: str, required: bool, doc: str) -> list[str]:
+def _next_round(key: str, text: str, doc_hash: str, title: str, required: bool, doc: str, top: Path) -> list[str]:
     """The next round of a read in rounds (`required`) whose latest round had findings or whose doc
     changed above `## For the builders`: `text` is the notes, `doc_hash` and `doc` the doc's git
     hash and text."""
@@ -797,11 +783,13 @@ def _next_round(key: str, text: str, doc_hash: str, title: str, required: bool, 
         return []
     if not record.get("round"):
         return [f"Planning {title}: {notes} has no round of cold read.", f"Next: forge read {key}"]
-    if story.stopped(record, findings):
+    config = repo.config(top) if (top / "forge.toml").is_file() else repo.DEFAULTS
+    limit = config["cold_read_rounds"]
+    if story.stopped(record, findings, limit):
         return _read_loop(key, doc, text)
     if not story.passed(record, findings):
         why = f"round {done} of its cold read had findings"
-        wait = [f"Cold read round {done} of 2: {len(story._latest(record, findings))} notes to answer."]
+        wait = [f"Cold read round {done} of {limit}: {len(story._latest(record, findings))} notes to answer."]
     elif story.changed_since_read(record.get("read_hash"), doc_hash, doc):
         why = f"plans/{key}.md changed after round {done} of its cold read"
         wait = []

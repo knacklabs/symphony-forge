@@ -1,0 +1,45 @@
+{
+  "base": "59cbc8ffe91cb2b8b987f5a098ba0ce325b9e53f",
+  "branch": "fix/canvas-phone-check-on-windows",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1b311-48dc-7be2-ab4d-3c86cb05fb94",
+    "head": null,
+    "start": "e876b0c47a6ee529ade09c609f7e04561b520f0d"
+  },
+  "done_when": "On Windows, Mac and Linux the canvas renderer passes a page that fits 375 pixels and still refuses a page that scrolls sideways at that width",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "fdff7458b95db04afd93c4e7901600b790667020d82552e9c79375c486c19de2",
+    "changed": "8a960a37df5857f9bec722d7d2044dede228ba8ca4a7a81754e44b4aee1795d2",
+    "commit": "6b18e63e539e4572eef604284e1f45baef6311af",
+    "dismissals": [],
+    "findings": [],
+    "id": "4675d2be-2d30-4cbb-a9b8-a01056ad0614",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-06T22:53:16.866056+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-06T23:29:20.218936+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "310a1fa75c123fac4a4fc9974d49a1164f140134",
+    "keys": {},
+    "round": null
+  },
+  "why": "On Windows the canvas renderer refuses every page with 'The page scrolls sideways at 375 pixels, or Chrome could not measure it', even a page with no sideways scroll (tests/test_uistandards_canvas.py::test_2 fails on windows-latest in forge-next.yml run 42302807199). Likely cause: headless Chrome on Windows does not give a 375-pixel-wide window, so innerWidth is not 375 and the check in src/forge/templates/design/support.js treats that as a failure.",
+  "worker": "codex"
+}

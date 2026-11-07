@@ -1,0 +1,4 @@
+tests/test_platform_sensitive_selection.py
+tests/test_tools_guide.py::test_9_synced_guides_explain_tools_and_the_session_handoff
+tests/test_rules.py::test_4_one_test_per_rule
+tests/test_rules.py::test_5_forge_stays_small

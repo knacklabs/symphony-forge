@@ -167,8 +167,9 @@ def test_3_signoff_questions_and_split_include_only_held_findings(repo, tmp_path
 
 # Test audit: a declared sample-data prototype gets an owner choice on a P0 at its
 # first gap check; a prototype without the declaration keeps the P0 repair path.
-# Existing tests cover P0 blocking but not the sample declaration or its adopted-repo
-# fallback. Exercise the decision command and Known issues; fake only the reviewer.
+# Existing tests cover P0 blocking but not the sample declaration on both client histories.
+# Historical sign-off fields no longer enable sample mode, so both need the setting.
+# Exercise the decision command and Known issues; fake only the reviewer, with no new seam.
 @pytest.mark.parametrize("setup,sample_data", [
     (_client, "true"), (_client, None), (_client, "false"),
     (_adopted_client, "true"), (_adopted_client, None),
@@ -183,7 +184,7 @@ def test_4_only_declared_sample_prototypes_allow_the_owner_to_accept_p0(
     tables = text[first_table.start():] if first_table else ""
     root = re.sub(r"(?m)^(?:stage|sample_data)\s*=.*\n", "", root)
     root += 'stage = "prototype"\n'
-    if setup is _client and sample_data is not None:
+    if sample_data is not None:
         root += f"sample_data = {sample_data}\n"
     config.write_text(root + tables, encoding="utf-8")
     repo.git("add", "forge.toml", cwd=fix)

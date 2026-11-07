@@ -1,4 +1,4 @@
-"""Close starts remote tests before review and requires both outcomes before Ready."""
+"""Close publishes after review and requires both review and CI before Ready."""
 import json
 import os
 from pathlib import Path
@@ -11,12 +11,12 @@ STORY = "FIX-FORGE-CLOSE-REVIEWS-FIRST-AND-ONLY-THEN"
 
 
 @pytest.mark.parametrize("review_clean", [True, False], ids=["clean", "blocked"])
-def test_1_close_pushes_and_opens_ci_before_review_and_ready_needs_both(env, review_clean):
+def test_1_close_publishes_after_review_and_ready_needs_both(env, review_clean):
     item, where = env.start_task()
     env.reviews(CLEAN if review_clean else blocked(finding("P1", "Greeting is missing")))
     helper = Path(os.environ["AUTOREVIEW"])
     # Observe real Git and the GitHub edge at review launch; the observer does not decide
-    # either outcome. Previously the remote branch and pull request did not exist here.
+    # either outcome. The branch and pull request must wait until the review finishes.
     observer = '''
 remote = subprocess.run(["git", "ls-remote", {origin!r}, "task/SHOP-T1"],
                         capture_output=True, text=True).stdout.strip()
@@ -49,8 +49,7 @@ Path({observed!r}).write_text(json.dumps({{"remote": remote,
         env.open_pr(body, draft=closed.returncode != 0)
 
     seen = json.loads((env.tmp / "observed.json").read_text())
-    assert seen["remote"], "The branch was not pushed before review"
-    assert seen["remote"].split()[0] == env.review_calls()[0]["head"]
+    assert not seen["remote"], "Close published the branch before saving its review"
     calls = [json.loads(line) for line in seen["github"].splitlines()]
-    assert any(call[:2] == ["pr", "create"] for call in calls)
+    assert not any(call[:2] == ["pr", "create"] for call in calls)
     assert len(env.review_calls()) == 1

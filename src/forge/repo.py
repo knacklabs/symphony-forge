@@ -590,12 +590,12 @@ KEYS = {"version": str, "repo": str, "stage": str, "workers": str, "tools": str,
         "signoff": str, "sample_data": bool, "runner": str, "codex_fast": str, "stop_default": str,
         "merge": str, "stack": str, "test_place": str, "checks": list, "interfaces": list,
         "always_test": list, "groups": int, "models": dict,
-        "added_work_min_gain": int, "always_block": list}
+        "added_work_min_gain": int, "always_block": list, "cold_read_rounds": int, "task_review_rounds": int}
 # A client repo without a stage counts as live: prototype rules never reach an app by default.
 DEFAULTS = {"repo": "client", "stage": "live", "workers": "codex", "tools": "both", "test": "", "fast_test": "",
             "signoff": "", "runner": "ubuntu-latest", "codex_fast": "needed",
             "stop_default": "narrow", "merge": "human", "stack": "on", "checks": [], "interfaces": [], "always_test": [],
-            "models": {}}
+            "models": {}, "cold_read_rounds": 2, "task_review_rounds": 2}
 # ponytail: retain stop_default's old values so existing forge.toml files still load.
 CHOICES = {"repo": ("client", "forge-source"), "stage": ("live", "prototype"),
            "workers": ("claude", "codex", "split"), "tools": ("both", "claude", "codex"), "merge": ("agent", "human"),
@@ -644,12 +644,13 @@ def config(top: Path | None = None) -> dict[str, Any]:
 
 
 def test_place(cfg: dict[str, Any]) -> str:
-    """The explicit place, or the old config's place based on whether it names checks."""
-    return cfg.get("test_place", "ci" if cfg.get("checks") else "local")
+    """Use CI by default only when a required check can run app tests."""
+    return cfg.get("test_place", "ci" if any(
+        check != "forge-pr-check" for check in cfg.get("checks", [])) else "local")
 
 
 def sample_data(top: Path, cfg: dict[str, Any] | None = None, ref: str | None = None) -> bool:
-    """The explicit setting wins over the earlier sign-off record's sample-data line."""
+    """Only the current setting enables sample mode in a client prototype."""
     if cfg is None:
         text = read_blob(top, f"{ref}:forge.toml") if ref else (top / "forge.toml").read_text("utf-8")
         if text is None:
@@ -658,11 +659,7 @@ def sample_data(top: Path, cfg: dict[str, Any] | None = None, ref: str | None = 
         cfg = {**DEFAULTS, **tomllib.loads(text)} if ref else _config_text(text)
     if cfg.get("repo") != "client" or cfg.get("stage") != "prototype":
         return False
-    if "sample_data" in cfg:
-        return cfg["sample_data"] is True
-    return any(re.search(r"^sample_data:\s*[\"']?true[\"']?\s*$", text.split("---")[1], re.M)
-               for name, text in _signoff_texts(top, cfg, (ref or "",))
-               if (cfg["signoff"] or SIGNOFF.fullmatch(name)) and text.startswith("---"))
+    return cfg.get("sample_data") is True
 
 
 def _sample_settings(top: Path, cfg: dict[str, Any], ref: str | None = None) -> dict[str, Any]:
@@ -939,6 +936,9 @@ def _config_problem(data: dict[str, Any]) -> str:
             return f"{key} must be a string"
         if kind is bool and type(value) is not bool:
             return f"{key} must be true or false"
+        if key in ("cold_read_rounds", "task_review_rounds"):
+            from forge import round_limits
+            if issue := round_limits.problem(key, value): return issue
         if kind is int and not (type(value) is int and value >= 1):
             return f"{key} must be a whole number of 1 or more"
         if kind is list and not (isinstance(value, list) and all(isinstance(v, str) for v in value)):

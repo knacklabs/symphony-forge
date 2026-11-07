@@ -17,7 +17,7 @@
 | `forge story new <KEY> "<title>"` | Starts a story's branch, worktree and doc (`--from-fix <fix>` promotes a fix) |
 | `forge story drop <KEY> --because "<reason>"` | Drops a plan and keeps its remote branch |
 | `forge story done <KEY> "<outcome>"` | Corrects a finished story's outcome on an existing work branch; opens no separate pull request |
-| `forge read <KEY or spec or decision>` | Reads a story doc, spec or decision. After round two, open notes below P0, or P0 notes in two rounds in a row, wait for `--resolve more`, `split` or `accept` with `--reason "<human's choice>"` |
+| `forge read <KEY or spec or decision>` | Reads a story doc, spec or decision. At the round limit, open notes below P0, or P0 notes in two rounds in a row, wait for `--resolve more`, `split` or `accept` with `--reason "<human's choice>"` |
 | `forge assign <KEY or KEY/TASK> <login>` | Gives a story or part to a developer and publishes the plan |
 | `forge task start <KEY>/<TASK>` | Starts a task in its own branch and worktree |
 | `forge task feature <plural> --one <singular> --field '<name>:<kind>'` | Builds a feature from the starter |
@@ -26,7 +26,7 @@
 | `forge fix allow-large "<reason>"` | Records the human's permission for a fix to go over the fix limit |
 | `forge fix amend <fix> --done "<done when>" --because "<why>"` | Shows the old and new Done-when before it writes. Use --append "<text>" instead of --done to add text. The old text and reason stay in its record |
 | `forge work <item>` | Runs the worker on a task or fix: the first build, or a fix round (`--note "<text>"` guides that round) |
-| `forge close <item>` | Closes a task or fix; a fix gets one review round and a part two; open findings below P0 at the limit wait for `--resolve more`, `split` or `accept` with `--reason "<human's choice>"`; an open P0 returns to the worker, and the same P0 after two worker rounds stops for the owner; docs-only changes skip local and generated CI tests, and the required tests check passes with a docs-only note |
+| `forge close <item>` | Closes a task or fix; `--no-review --by "<name>" --reason "<why>"` skips only the model review when a person asks, unless an earlier review blocked the item; a fix gets one review round and a part two; open findings below P0 at the limit wait for `--resolve more`, `split` or `accept` with `--reason "<human's choice>"`; an open P0 returns to the worker, and the same P0 after two worker rounds stops for the owner; docs-only changes skip local and generated CI tests, and the required tests check passes with a docs-only note |
 | `forge merge <item>` | Merges a ready item when the default branch allows agent merges; the story's last task records it done (`--outcome <sentence>` overrides its title) |
 | `forge merge enable` | Run by the repo owner in their own terminal: opens the change that lets the agent merge ready pull requests, for the owner to merge |
 | `forge land <item>` / `forge land --all` | Builds, closes, runs at most one fix round and merges a task or fix where the repo allows agent merges; `--all` closes and merges every change in close, oldest first, several at a time; `--note "<text>"` guides one item's first round; run it in the background |

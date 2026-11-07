@@ -109,6 +109,7 @@ the next merge.
 | "Tell the worker this round" | `forge work <item> --note "<text>"` |
 | "Ask about this code" | Hand the question to the session's `explorer` subagent role |
 | "Close it" or "Is it ready?" | `forge close <item>` |
+| "A person asks to skip the model review" | For a task or fix, run `forge close <item> --no-review --by "<name>" --reason "<why>"` only when a person asks |
 | "Land it" | `forge land <item>`, run in the background and watched like `forge work` |
 | "Land everything that's ready" | `forge land --all`, run in the background; never a hand-made merge lane |
 | "Merge this ready item" | `forge merge <item>` when the default branch allows agent merges |
@@ -129,6 +130,7 @@ the next merge.
 | "Set up a new repo" | Before `forge init`, answer "Does this repo run GitHub Actions?" from the repo's settings: `gh api repos/{owner}/{repo}/actions/permissions` gives `enabled`. Ask the human only if the settings do not answer it. Pass `--actions yes` or `--actions no`; yes uses CI checks, while no selects laptop tests with `checks = []`. Then use `forge init --starter` for a new React app, `forge init --starter python` for a new app whose owner asks for a Python backend, or `forge init` for another stack. Propose a `fast_test` as in step 9 of Adopt a live app, below |
 | "Bring our live app into Forge" | Adopt a live app, below |
 | "Change the test command" | Ask, then in a fix: edit `forge.toml` (never its `merge` setting), `forge close <fix>` |
+| "Use fewer cold-read or task-review rounds" | Ask the owner which limit to change; then in a fix set `cold_read_rounds` or `task_review_rounds` to `1` in `forge.toml`, then run `forge close <fix>` |
 | "Run everything in Claude" | Ask, then in a fix: set `tools = "claude"`, `workers = "claude"` in `forge.toml`, then `forge sync`, `forge close <fix>` |
 | "Run everything in Codex" | Ask, then in a fix: set `tools = "codex"`, `workers = "codex"` in `forge.toml`, then `forge sync`, `forge close <fix>` |
 | "Use both" | Ask, then in a fix: set `tools = "both"` in `forge.toml`, `forge close <fix>` |
@@ -168,9 +170,9 @@ Every client repo moves through seven steps. `forge next` names the current step
    When a release adds a migration file, Mainline takes a backup at Promote. Mainline runs one test restore before the first launch. Mainline checks the release for the added file itself and does both; the agent does neither and writes no mark. The migration rule belongs to FORGE-EXPAND-1.
 7. **Run and improve.** People use the app, and each new request or problem goes back to step 5. Follow [After a demo](#after-a-demo) for demo notes. You can say: "Users asked for <request>" or "This is broken: <problem>".
 
-**The cold read loop.** A reader who did not write the plan reads it cold and lists its gaps. You fix the plan, and the reader reads it again. After two rounds that still have open notes, Forge stops and the owner chooses: accept, read again, or split. It exists because a gap found in the plan costs minutes, but the same gap found in the code costs a build round.
+**The cold read loop.** A reader who did not write the plan reads it cold and lists its gaps. You fix the plan, and the reader reads it again. At the round limit (the repo's setting, two by default), Forge stops and the owner chooses: accept, read again, or split. It exists because a gap found in the plan costs minutes, but the same gap found in the code costs a build round.
 
-**The build and review loop.** A worker builds the part and its tests, then a separate review checks the change. A serious problem goes back to the worker for another round. A task gets two review rounds and a fix gets one. At the limit Forge stops and asks the owner, but a P0 problem keeps the loop going. It exists because a reviewer sees problems that the worker cannot see in its own work.
+**The build and review loop.** A worker builds the part and its tests, then a separate review checks the change. A serious problem goes back to the worker for another round. A task gets review rounds up to the repo's setting, two by default, and a fix gets one. At the round limit (the repo's setting, two by default), Forge stops and asks the owner, but a P0 problem keeps the loop going. It exists because a reviewer sees problems that the worker cannot see in its own work.
 
 **The CI checks.** GitHub runs the repo's checks on the pull request. Close waits while they are queued or running, and a red check goes back to the worker. They exist because the checks run the tests on a clean machine, the same way for every change.
 
@@ -648,9 +650,9 @@ Push back when a requested feature does not serve the problem card: explain why 
 offer to note it for after sign-off. Keep the same app as it grows into production.
 
 If the prototype holds only made-up data and has no back end, ask the person, then have the
-coordinator set `sample_data = true` in `forge.toml`. An existing sign-off record's
-`sample_data: true` still works until this setting is present. Forge skips tests and CI while the
-setting is on; walk the demo steps in a browser. Real data or a back end keeps tests from day one.
+coordinator set `sample_data = true` in `forge.toml`. A sign-off record does not turn sample mode
+on. Forge skips tests and CI while the setting is on; walk the demo steps in a browser.
+Real data or a back end keeps tests from day one.
 After sign-off, `forge next` shows setting up tests as the first step. In a coordinator-owned fix,
 set the test command and CI checks as needed, then turn off the setting. Close blocks that fix until
 the `Personal data` answer is settled.
@@ -778,7 +780,15 @@ progress, they show open questions as a checklist, with the phrase that fixes ea
 client replies, update the matching line in the brief. A `not known yet` answer is accepted and is
 not listed as open, except Personal data, which needs a settled answer before real data.
 
-**Canvas and app design.** Make each app's design from the whole `docs/product/BRIEF.md`: its
+**Canvas and app design.** Before the first canvas, write a short brief from the industry,
+who uses the app and how often, the screen's job (work, read or persuade), two or three
+brand words and existing brand files; map them to font pairing, one accent, radius,
+density and tone, then record DESIGN.md through impeccable's document step using the
+app-baseline list and fixed guard rules, and use impeccable's Operate mode for app screens
+and prototypes. `support.js` checks each canvas and renders it at 1440 and 375 pixels
+before it is shown; the plan's read refuses a failing design folder or one with no DESIGN.md.
+
+Make each app's design from the whole `docs/product/BRIEF.md`: its
 purpose, users, records, fields, choice-list options and key flows. Use impeccable and
 emil-design-eng when making it through Forge. Any way of making the design works, through Forge
 or separately. Keep one link to it in `## Design` in the brief; it need not be saved in the repo.
@@ -830,8 +840,8 @@ in `forge.toml` gets one gap check before the demo, with no full test run or who
 The check reads the brief, answers, design and app routes. Findings below Gain 5 and Harm 4 go to
 Known issues without a repair request. A P0, Gain 5 or Harm 4 or higher stops for the owner's
 choice at once. The owner can accept a held finding with a reason or ask for a repair. A prototype
-without the setting keeps the current full-run and whole-source review rules. An existing sign-off
-record with `sample_data: true` keeps working for an earlier-adopted repo.
+without the setting keeps the current full-run and whole-source review rules, including an
+earlier-adopted repo whose sign-off record says `sample_data: true`.
 
 Only the coordinator writes `sample_data = true` in `forge.toml`, after asking the person. A worker
 cannot change this setting. Existing clients get the new sign-off behaviour after the setting is
@@ -855,7 +865,7 @@ codes or data in a prototype with no back end, belong to build stories and Known
 not P0 findings.
 Only Harm 4 or higher, Gain 5, or a P0 holds the product review; every other finding goes straight
 to Known issues without a repair round or an owner question. For an unmarked prototype, a held
-finding below P0 still needs the owner's choice after two rounds.
+finding below P0 still needs the owner's choice at the review's round limit.
 If the review engine fails, fix the engine problem and run the accept command again.
 A canvas-only sign-off needs no working build. An unmarked working prototype gets a full first
 product review. Each later attempt reviews only product files changed since the previous review and
@@ -867,8 +877,8 @@ prototype uses its one gap check and has no review rounds. If that check finds a
 4 or higher, Forge asks the owner at once. The owner can run
 `forge decision accept client-signoff --by "<name>" --resolve accept --reason "<reason>"` to keep
 the finding in Known issues, or ask for a repair. Without the sample-data
-setting, a P0 keeps the current hard block. A repo that already wrote `sample_data: true` in its
-sign-off record keeps working. New and earlier-adopted clients get the brief rules after upgrade
+setting, a P0 keeps the current hard block. Only `sample_data = true` in `forge.toml` turns sample
+mode on. New and earlier-adopted clients get the brief rules after upgrade
 and sync.
 Forge reuses passed results while what they checked stays unchanged.
 A version-only change to forge.toml keeps the last green full run. Any other settings change needs a new full run.
@@ -1197,7 +1207,12 @@ fix's folder:
    declared ranges; recursive `yarn up -R` starts in Yarn 3.
 2. Pull each Dockerfile's base image at its current tag, or move it to the newest patch of the
    same tag, and rebuild the image.
-3. Follow the repo's `test_place`: in local mode, run the related tests through
+3. Without an explicit `test_place`, use CI only if `checks` names a check other than
+   `forge-pr-check`, which runs no app tests. Otherwise close runs tests locally.
+   An explicit choice keeps its value. New and earlier-adopted repos get this default on upgrade.
+   Keep `test` as the full suite for the nightly run and change selection in `fast_test`.
+   Doctor warns about a `test` that looks like change selection, without failing the check.
+   Follow the repo's `test_place`: in local mode, run the related tests through
    `forge test`; in CI mode, do not run them here. Commit, then `forge close <fix>`.
 
 ## Planning a story
@@ -1207,7 +1222,7 @@ Follow the agents skill (.codex/skills/agents/SKILL.md) for any agent, chat, voi
 A cold read passes when no note is at the bar (blocking): the plan is wrong, contradicts itself,
 or a builder could not act on it. Readers prefix numbered findings with `Blocking:` or
 `Advisory:`. Advisory and below-bar notes need no disposition from you or another round; unmarked
-findings block in round one. A cold read stops after round two when notes below P0 are still
+findings block in round one. A cold read stops at the round limit (the repo's setting, two by default) when notes below P0 are still
 open, or when P0 notes are open in two rounds in a row.
 New repos get this rule on init; existing repos get it on upgrade plus sync.
 
@@ -1384,6 +1399,7 @@ This also works from an older story checkout or a stale default checkout: task s
 the upgrade before Forge can forward the command to the checkout's older release.
 `forge next` names the unmerged item a part waits on for overlapping files, including another
 story's work, using the same overlap rule as `forge task start`.
+`forge next` lists a part only when `forge task start` would accept it, and names the reason when it would not.
 
 ## Cold read findings
 
@@ -1625,7 +1641,11 @@ restore after they fetch.
 
 ## Closing
 
-A fix gets one review round; a story part gets two. At the round limit, open findings below P0
+In `forge.toml`, `cold_read_rounds` sets the cold-read limit and `task_review_rounds` sets the task-review limit. Each accepts 1 or 2 and defaults to 2. Fixes keep one review round.
+
+A person can ask you to skip the model review for a task or fix. Run `forge close <item> --no-review --by "<name>" --reason "<why>"` only when a person asks. Close adds the name and reason to the pull request. Close refuses if an earlier review blocked the item. Tests, CI, design checks and merge still run.
+
+At the round limit (the repo's setting, two by default), open findings below P0
 stop the item and ask the owner: one more round, split or accept.
 Accept makes the open findings follow-ups in Known issues with the owner's reason.
 An open P0 never stops for the owner; the worker keeps fixing it. When the same P0 stays open
@@ -1725,7 +1745,7 @@ them as flaky and continues. A second failure still stops close. A failure witho
 test files still stops close.
 
 In local mode, close's tests and review run at the same time. In CI mode, close runs its review
-while the pull request's checks run, then waits for both. A red test or a P0/P1 finding still
+first, saves it, and pushes once. It then waits for the pull request checks. A red test or a P0/P1 finding still
 stops the round. When the
 local test command fails, its test report ends with all failed pytest files and test names,
 including setup, teardown and collection errors, and the full test log path.
@@ -1850,8 +1870,8 @@ It prints the report close keeps and always runs, including docs-only and
 uncommitted changes. If the remote default branch is missing it says to fetch it; if forge.toml
 names no test command it says so and exits successfully. In a sample-data prototype, it says
 tests are off until client sign-off. After sign-off, ask the coordinator to set
-`sample_data = false` in `forge.toml` to turn tests on. This also overrides an earlier sign-off's
-`sample_data: true`. Forge sets `PYTEST_XDIST_AUTO_NUM_WORKERS`
+`sample_data = false` in `forge.toml` to turn tests on. A missing setting also leaves tests on,
+regardless of an earlier sign-off's `sample_data: true`. Forge sets `PYTEST_XDIST_AUTO_NUM_WORKERS`
 and `FORGE_TEST_CPUS` to the run's allocation from the shared process budget. A worker's session
 requests at most two processes, so its own `pytest -n auto` also stays at two. A fixed `-n` in
 its test command is capped with `--maxprocesses`, also outside a worker session.
@@ -1896,12 +1916,16 @@ its dismissals, including `--dismiss` given in that close command. A changed dif
 Before reusing serious findings, close also checks the reviewed files and contract against the
 current head. A repair brought in from the default branch needs a new review, even if the branch
 diff stayed the same. Land uses the same check through close.
-Close pushes and opens the pull request before a new review, so CI runs alongside it, then
-updates the pull request's review block when the review finishes. Ready still needs a clean
+Close reconciles remote branch work before a new review. It saves the review, pushes once,
+and opens or updates the pull request with the final review block. Ready still needs a clean
 review and green checks on the final pushed head. After `forge fix amend`, close also updates
 the pull request's Done when line. Use `--append "<text>"` to add text with a space between
 the old and new text. `--done "<done when>"` replaces the whole Done-when. Both options show
 the old and new text before writing, and need `--because "<why>"`.
+If another machine moves the remote branch during review, close stops before publication.
+Run close again to reconcile that work, review and test it before Ready.
+A follow-up replay also waits until the saved review for its one leased push. An interrupted
+review keeps the replay locally for the next close; a refused lease restores the original commits.
 Land runs work first for a fix with only its start and state records, including after amend.
 A fix that changes only `.factory/` and spotted records against the default branch cannot merge.
 Close and land say the build round did not finish and give `forge work <fix>` as the next step.
@@ -2074,7 +2098,7 @@ When `forge next` says the latest scheduled run of the default branch failed, it
 failed jobs and tests; start its fix command the same way, or follow the step it gives for the
 fix already started.
 
-Close stops at review round two for a story part or round one for a fix when findings below P0
+Close stops at the round limit (the repo's setting, two by default) for a story part or after one round for a fix when findings below P0
 remain open. It asks the owner: "One more round, split or accept?" Close, land and work show
 the same question until the owner records a choice. An open P0 returns to the worker.
 An older release's unanswered stop also waits for the owner.
@@ -2122,7 +2146,7 @@ choices. Ask the owner exactly that question. Record the choice with
 `forge work <item>`. Switch runs this item's next rounds on the other tool, as `forge next` shows;
 every choice buys one more round before Forge asks again.
 
-A cold read stops after round two when notes below P0 are still open, or when P0 notes are open
+A cold read stops at the round limit (the repo's setting, two by default) when notes below P0 are still open, or when P0 notes are open
 in two rounds in a row. This applies to stories, specs and decisions alike.
 Ask the owner: "One more round, split or accept?" Do not read again
 until the choice is recorded with

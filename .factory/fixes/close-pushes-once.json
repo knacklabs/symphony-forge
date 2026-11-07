@@ -1,0 +1,124 @@
+{
+  "amendments": [
+    {
+      "at": "2026-11-06T15:16:32.189021+00:00",
+      "because": "The owner split the accept path into its own fix",
+      "done_when": "One close round publishes the item's branch once, after the review is saved, so the pull request's CI runs once per round on the final commit, and remote reconciliation and the review block still work"
+    }
+  ],
+  "base": "899c9e1bfe3ad643b3a3a37d4edbf630d5e76efb",
+  "branch": "fix/close-pushes-once",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1b0f0-1ab5-72f0-87cb-dd64463a1000",
+    "head": null,
+    "start": "77480a4d49314d1dfefe7a213deb67782de00490"
+  },
+  "done_when": "A normal close round publishes the item's branch once, after the review is saved, so the pull request's CI runs once per round on the final commit; remote reconciliation and the review block still work; the accept path is handled by its own fix",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "close() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 282,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: One close round publishes the item's branch once, after the review is saved",
+      "work": 2
+    },
+    {
+      "area": "close() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 426,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Revalidate work merged during the final push before marking it Ready",
+      "work": 2
+    },
+    {
+      "area": "close() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 423,
+      "outcome": "follow-up",
+      "reason": "Split into follow-up fix review-findings-split-from-close-pushes",
+      "round": 4,
+      "security": false,
+      "title": "[P1] Defer the acceptance push until final review bookkeeping is saved",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "d06070d562f9037c795376a24a100d5cc1ecade401a0cd165f31727afaf124cd",
+    "changed": "dd0d4cf6e505972aae6aa9d21e48d87b1d236a5fe9c1925a4e1602064087dee4",
+    "commit": "60f6d4657e4f16e4be39071efd1270223b21d5c6",
+    "dismissals": [],
+    "findings": [],
+    "id": "a4b70dd9-e8aa-4c0f-bfa5-9be632bf57ff",
+    "status": "clean"
+  },
+  "round": 4,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-06T12:57:40.608819+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-06T13:06:02.637297+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-06T13:14:44.674294+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-06T14:02:32.191825+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-06T15:15:28.338027+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-06T15:17:57.168904+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-06T16:04:01.362884+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-06T15:15:28.338294+00:00",
+    "by": "owner",
+    "choice": "split",
+    "file": "src/forge/close.py",
+    "fixes": [
+      "review-findings-split-from-close-pushes"
+    ],
+    "reason": "The owner chose split: merge the push-once fix now so normal closes push once; the accept path gets its own small fix right after.",
+    "wait_id": "9a8193df-fef3-43d1-8f67-f4bc3617de8e",
+    "worker_round": 3
+  },
+  "stuck": {
+    "close": "3f6ea9ce-a95f-45ea-9a0a-d44315a85788",
+    "head": "0cab24af1ad0f1db047b4c81d0412985082c0c2d",
+    "keys": {},
+    "round": 3
+  },
+  "why": "Close pushes twice in each round: once before the review (src/forge/close.py:285) and again after it saves the review (close.py:424), so the second push replaces the commit CI is already testing and every round starts CI twice; the median task launched its test workflow 8 times with 6 cancelled",
+  "worker": "codex"
+}

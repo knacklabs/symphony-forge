@@ -1,0 +1,87 @@
+{
+  "branch": "task/FORGE-REVIEWCHOICE-1-SKIP",
+  "chat": {
+    "approval": "e698cc269ca139e014b35ef35cbd9d8e8e7bc54a410f93b0607aaec91e85ff35",
+    "claude": null,
+    "conversation": "01a1b2ea-acb1-77f1-9f18-ec8f2336c839",
+    "head": null,
+    "start": "067d432982e027a5f4979c4092f022232e305e07"
+  },
+  "known": [
+    {
+      "area": "requested() in src/forge/review_skip.py",
+      "file": "src/forge/review_skip.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 36,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Close refuses the skip after a blocking review, and tests, CI, the design checks and the merge step still run on a skipped item.",
+      "work": 2
+    },
+    {
+      "area": "_retry_with_default_move() in tests/test_reviewchoice_skip.py",
+      "file": "tests/test_reviewchoice_skip.py",
+      "gain": 3,
+      "harm": 1,
+      "line": 199,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_person_can_skip_model_review[retry-same]",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "ba511fc7c02e0c2ecf91ab07a8ec3efcd0b671cf32019f805102d719c4bac957",
+    "changed": "e714655ea588bd014bb70afab1ad9efa9c3e8f2bc7a76aa63d82ca51f183b6dc",
+    "commit": "21d793981d46a6fdc35395a76a8d4f5c81523098",
+    "dismissals": [],
+    "findings": [],
+    "id": "607ef7f3-4e36-4b18-8f4b-09d829694330",
+    "status": "clean"
+  },
+  "round": 6,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-06T22:11:02.348690+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-06T22:37:38.179531+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-06T22:43:04.159596+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-06T23:15:57.458148+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-06T23:54:26.208956+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-07T00:35:52.447212+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-07T01:23:25.675383+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "9e1cb709-8d96-4f1f-b5f2-64e1ea467bbd",
+    "head": "8c0978307ebc7a19a10f059cdb34c8d287a155a3",
+    "keys": {},
+    "round": 5
+  },
+  "worker": "codex"
+}

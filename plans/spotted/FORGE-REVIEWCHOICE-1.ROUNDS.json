@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tLoad cold-read limits from the reviewed checkout\tFORGE-REVIEWCHOICE-1/ROUNDS",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 785,
+      "text": "Load cold-read limits from the reviewed checkout",
+      "from": "blocking",
+      "item": "FORGE-REVIEWCHOICE-1/ROUNDS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "improve\t.forge/design/support.js\tThe checked-in design helper differs from the current template, and sync also generates its missing checker.",
+      "kind": "improve",
+      "path": ".forge/design/support.js",
+      "line": 1,
+      "text": "The checked-in design helper differs from the current template, and sync also generates its missing checker.",
+      "from": "worker",
+      "item": "FORGE-REVIEWCHOICE-1/ROUNDS",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

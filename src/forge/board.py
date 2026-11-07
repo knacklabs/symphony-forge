@@ -24,7 +24,7 @@ from pathlib import Path
 from textwrap import shorten
 from typing import Any
 
-from forge import __version__, approval, board_facts, board_graph, codex, machine, native, repo, story, task
+from forge import __version__, approval, board_facts, board_graph, codex, machine, native, repo, review_skip, story, task
 
 COMMANDS = [{
     "words": "board", "run": "board", "changes_state": False,
@@ -809,7 +809,7 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
     event_lines = {"run start": "started", "run end": "finished", "review result": "Review "}
     recent = [{"time": e.get("at"), "item": e.get("item"), "line":
                " ".join((e.get("question") or "Worker asked a question").split()) if e.get("event") == "worker question" else
-               "Review " + e.get("outcome", "finished") if e.get("event") == "review result" else
+               "Review " + review_skip.label(e) if e.get("event") == "review result" else
                {"work": "Worker", "worker": "Worker", "ci": "Checks", "read": "Plan read",
                 "test": "Tests", "review": "Review"}.get(e.get("kind"), "Run") + " " + event_lines[e["event"]]}
               for e in recorded if e.get("event") in (*event_lines, "worker question")][-20:]

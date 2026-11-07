@@ -15,9 +15,12 @@ Forge ignores settled repeats, so they cannot block or start another round.
 When docs/product/CONSTITUTION.md is approved, follow it. A review holds work that goes against it.
 After a merge of main, close applies a requested dismissal to the same title and file in the
 current review, even if its number changes. Only the human chooses which findings to dismiss.
+Only use the model-review skip when a person asks and no earlier review blocked the item.
 
 After a merge of the default branch, close reviews only this change's own diff against the new
 merge base, keeping earlier findings and allowances from this item's records.
+When close, land or merge brings in changed guide templates, Forge refreshes the committed
+skill copies before tests and push. It leaves other generated files alone.
 If that diff contains only records under `.factory/` and `plans/`, close records a clean review without a model call,
 except for the unfinished fix below.
 For a fix whose branch changes only `.factory/` and spotted records against the default branch,
@@ -25,8 +28,8 @@ close and land refuse it because the build round did not finish. Run `forge work
 The refusal lists untracked files. Code and documentation changes still qualify as work.
 If unreadable Autoreview output stops close, the refusal shows the saved output path, even if the retry writes no report.
 From the second review round, close checks the previous round's findings and new P0s that
-happen in normal use. A round-one fix that breaks the main path counts as a P0. At the round
-limit, open findings below P0 need the owner's choice before they become follow-ups. `Not done` blocks
+happen in normal use. A round-one fix that breaks the main path counts as a P0.
+`task_review_rounds` sets the task review limit. At that limit (the repo's setting, two by default), open findings below P0 need the owner's choice before they become follow-ups. `Not done` blocks
 only against an owner-approved Done-when item (the fix's whole Done-when line or any sentence in it),
 including a title that starts with that item and adds words after it; builder details
 are guidance and never block as `Not done`.
@@ -341,6 +344,12 @@ passes. In a CI-test repo, run only a new or changed regression once to watch it
 let pull request CI run the related tests. Never edit or delete a test to make it pass; if a test
 is wrong, say so. A test whose result a stub or fake decides proves nothing. Use the test-audit
 skill whenever you write or change a test. Before you stop, commit your work first, then $test_step
+Without an explicit `test_place`, Forge uses CI only if `checks` names a check other than
+`forge-pr-check`. That review-only check runs no app tests. Otherwise close runs tests locally.
+An explicit `test_place` keeps its value. Keep `test` as the full suite for the nightly run;
+put change selection in `fast_test`. Doctor warns about a `test` that looks like change selection.
+This applies to new and earlier-adopted repos on upgrade.
+
 For a pytest repo, the shipped picker is `forge test --pytest <base>`; it runs the repo's own
 test command without installing Forge in the project. This picker belongs in `fast_test`;
 workers run bare `forge test` to enter the lane.
@@ -357,6 +366,10 @@ When the pytest picker selects more than a third of the test files, bare `forge 
 only the part's Tests column or the fix's touched test files, plus `always_test`, and says
 "The nightly full run covers the rest." This includes shared-fixture changes. With no named
 tests it runs only `always_test`. An explicit `forge test --pytest <base>` keeps the full selection.
+The repo can also list required pytest files or node IDs, one per line, in
+`.forge/always-tests.txt`. These join `always_test` for related-test selection,
+including broad worker selections. Documentation-only changes run this list through
+the single CI test group and the local picker. Repos without this file keep their current selection.
 
 You may update tests when Done-when deliberately changes behaviour: explain the old and new contract in
 the test and handoff, and never weaken a test to hide a defect. Call a test failure
@@ -678,5 +691,5 @@ from `[models.light_review]`, or the review model at medium effort when that set
 
 <!-- sample-data-proof -->
 ## Sample-data proof
-While `sample_data = true`, walk each demo step in a browser and record its result in the `Proof list:`.
+While `forge.toml` has `sample_data = true`, walk each demo step in a browser and record its result in the `Proof list:`.
 Do not add or run automated tests or CI. This replaces the test and proof instructions above.

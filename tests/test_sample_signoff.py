@@ -36,7 +36,8 @@ def _sample_setup(repo, tmp_path, monkeypatch, *, adopted, sample_data=True, gre
     tables = text[first_table.start():] if first_table else ""
     root = re.sub(r"(?m)^interfaces\s*=.*\n", "", root)
     root = root.rstrip() + '\nstage = "prototype"\n'
-    if not adopted and sample_data:
+    # Sample sign-off now needs the setting on both new and earlier-adopted clients.
+    if sample_data:
         root += "sample_data = true\n"
     root += 'interfaces = ["interfaces/**"]\n'
     config.write_text(root + tables, encoding="utf-8")
