@@ -87,8 +87,13 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
     from forge import sync
 
     skill = (TEMPLATES / "skill.md").read_text(encoding="utf-8")
+    renderer = (TEMPLATES / "design/support.js").read_text(encoding="utf-8")
+    header = renderer.splitlines()[0] + "\n"
     return {
-        ".forge/design/support.js": (TEMPLATES / "design/support.js").read_text(encoding="utf-8"),
+        ".forge/design/support.js": renderer,
+        **{path.relative_to(top).as_posix(): renderer
+           for path in (top / "docs/design").rglob("support.js")
+           if path.is_file() and path.read_text(encoding="utf-8").startswith(header)},
         ".claude/skills/forge/SKILL.md": skill,
         ".codex/skills/forge/SKILL.md": skill,
         **{f"{host}/skills/forge/standards.md":

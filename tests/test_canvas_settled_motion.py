@@ -13,23 +13,28 @@ STORY = "FIX-SETTLED-CANVAS"
 
 @pytest.mark.platform
 @pytest.mark.parametrize("adopted", [False, True], ids=["new", "earlier-adopted"])
-def test_1_capture_settled_entry_motion(repo, tmp_path, adopted):
-    # Protect real screenshot pixels against entry fades. Viewport tests cannot
-    # detect half-faded content. Only the external design checker is replaced;
-    # real Chrome and the shipped command need no production test seam.
+def test_1_capture_settled_entry_motion(repo, adopted):
+    # Protect saved canvases after upgrade, including custom copies without the
+    # Forge header. The old test always copied the newly installed renderer, so
+    # missed stale saved copies. Real Chrome and sync need no production seam.
     if adopted:
         shutil.copytree(ROOT / "tests/fixtures/adopted-v1.2.2/client", repo.path,
                         dirs_exist_ok=True)
     setup(repo, kind="client")
     repo.git("checkout", "-qb", "fix/canvas")
+    folder = repo.path / "docs/design/SAVED"
+    folder.mkdir(parents=True)
+    old_renderer = (ROOT / "tests/fixtures/canvas-before-settling/support.js").read_text(encoding="utf-8")
+    (folder / "support.js").write_text(old_renderer, encoding="utf-8")
+    custom = repo.path / "docs/design/CUSTOM/support.js"
+    custom.parent.mkdir(parents=True)
+    custom_text = old_renderer.split("\n", 1)[1]
+    custom.write_text(custom_text, encoding="utf-8")
     synced = repo.forge("sync")
     assert synced.returncode == 0, synced.stdout + synced.stderr
-    folder = tmp_path / "canvas"
-    folder.mkdir()
-    for name in ("support.js", "ui-checks.js"):
-        shutil.copyfile(repo.path / ".forge/design" / name, folder / name)
-    checker = tmp_path / ".codex/skills/impeccable/scripts/impeccable"
-    checker.parent.mkdir(parents=True)
+    assert custom.read_text(encoding="utf-8") == custom_text
+    assert "Wrote docs/design/CUSTOM/support.js" not in synced.stdout
+    checker = repo.path / ".codex/skills/impeccable/scripts/impeccable"
     _checker_stub(checker)
     # Equal settled pages produce equal PNGs without a PNG decoding dependency.
     styles = {
@@ -43,7 +48,7 @@ def test_1_capture_settled_entry_motion(repo, tmp_path, adopted):
             "main{height:900px;background:black}" + motion + "</style><main></main>",
             encoding="utf-8")
     rendered = subprocess.run(
-        [shutil.which("node"), str(folder / "support.js"), str(folder)], cwd=tmp_path,
+        [shutil.which("node"), str(folder / "support.js"), str(folder)], cwd=repo.path,
         env={**os.environ, "CHROME_BIN": _browser()}, capture_output=True, text=True, timeout=90)
     assert rendered.returncode == 0, rendered.stdout + rendered.stderr
     for suffix in ("", "-375"):

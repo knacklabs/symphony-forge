@@ -54,6 +54,10 @@ $start_here
 
 $design_context
 
+`forge sync` also refreshes saved `docs/design/**/support.js` renderers that keep Forge's
+first header line (`// Copy this file beside the approved artboards in docs/design/<KEY>/ (or`).
+Remove that line from a custom renderer to keep sync from replacing it.
+
 <!-- if user-facing -->
 If the app has a DESIGN.md, apply its theme tokens, type and colours to the app's theme file$theme_file.
 <!-- end -->
