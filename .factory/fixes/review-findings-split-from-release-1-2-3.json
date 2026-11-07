@@ -1,6 +1,13 @@
 {
   "base": "e946efd6e006d7f1b768fff682accf93989402ae",
   "branch": "fix/review-findings-split-from-release-1-2-3",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1b74d-c7d5-7fa2-a041-5afab3db3bc1",
+    "head": null,
+    "start": "7d61bb4c4154440bd878ca1051a5d8481070d52c"
+  },
   "done_when": "A review no longer finds: Preserve settled design screenshots (.forge/design/support.js:101); Gate: generated files in the release checkout (tests/test_release_version.py:31); Gate: proof list (.factory/fixes/release-1-2-31.json:5)",
   "fix_kind": "mechanical",
   "kind": "fix",
