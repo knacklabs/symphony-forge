@@ -55,7 +55,7 @@ def _npm_stub(repo):
 import subprocess, sys
 args = sys.argv[1:]
 forward = args[args.index("--") + 1:] if "--" in args else []
-raise SystemExit(subprocess.run(["playwright", "test", *forward]).returncode)
+raise SystemExit(subprocess.run([sys.executable, {json.dumps((repo.bin / 'playwright').as_posix())}, "test", *forward]).returncode)
 ''')
 
 
@@ -370,15 +370,17 @@ def test_2_a_python_chain_selects_only_plain_pytest_steps(
     patient(lambda: (client / ".forge/always-tests.txt").unlink())
     patient(lambda: (client / "required-ran.txt").unlink())
 
-    # After cd pytest runs whole, keeping its original directory and arguments.
+    # A setup-only cd keeps the legacy picker and the original shell directory.
     (client / "backend" / "tests").mkdir(parents=True)
     backend_test = client / "backend" / "tests" / "test_backend.py"
     backend_test.write_text("def test_backend():\n    assert True\n", "utf-8")
+    (backend_test.parent / "test_unrelated.py").write_text(
+        "def test_unrelated():\n    assert False\n", "utf-8")
     _configure(repo, client, "cd backend && pytest tests")
     backend_test.write_text("def test_backend():\n    assert 1 == 1\n", "utf-8")
     backend = repo.forge("test", "--change", cwd=client)
     assert backend.returncode == 0, backend.stdout + backend.stderr
-    assert "Test selection: pytest tests: whole command." in backend.stdout, backend.stdout
+    assert "Test selection: pytest: backend/tests/test_backend.py." in backend.stdout, backend.stdout
     assert "1 passed" in backend.stdout, backend.stdout
 
     _configure(repo, client, f"ruff check src && mypy src && {python} -m pytest tests -q")
@@ -407,7 +409,7 @@ def test_2_a_python_chain_selects_only_plain_pytest_steps(
         ("ruff", ["check", "src"]), ("mypy", ["src"]),
     ]
 
-    # A quoted expression is shell-safe but pytest keeps its own filtering whole.
+    # One pytest run keeps the legacy selection and its quoted expression.
     _recorders(repo, tmp_path, monkeypatch, ("node",))
     (client / "src" / "cart.py").write_text("VALUE = 1\n", "utf-8")
     _configure(repo, client,
@@ -417,7 +419,7 @@ def test_2_a_python_chain_selects_only_plain_pytest_steps(
     quoted = repo.forge("test", "--change", cwd=client)
     assert quoted.returncode == 0, quoted.stdout + quoted.stderr
     assert "whole command" in quoted.stdout, quoted.stdout
-    assert "Test selection: pytest:" not in quoted.stdout, quoted.stdout
+    assert "Test selection: pytest: tests/test_cart.py." in quoted.stdout, quoted.stdout
     assert "unsupported shell flow" not in quoted.stdout.lower(), quoted.stdout
     assert "1 passed" in quoted.stdout, quoted.stdout
     assert [(call["name"], call["args"]) for call in _calls(calls)] == [

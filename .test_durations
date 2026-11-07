@@ -2706,6 +2706,7 @@
     "tests/test_pytest_picker_uses_two_selection_rules.py::test_4_earlier_adopted_clients_get_two_rule_selection_after_upgrade": 4.795559253000192,
     "tests/test_pytest_picker_uses_two_selection_rules.py::test_6_module_to_package_conversion_keeps_both_changed_file_references[]": 0.4934673749999092,
     "tests/test_pytest_picker_uses_two_selection_rules.py::test_6_module_to_package_conversion_keeps_both_changed_file_references[src/]": 0.6253687089997584,
+    "tests/test_pytest_setup_keeps_related_selection.py::test_1_setup_and_launcher_keep_related_selection": 0.37,
     "tests/test_python_changed_test_picker.py::test_1_python_client_runs_related_tests_and_falls_back_for_shared_inputs[machine-cores]": 5.626015919999645,
     "tests/test_python_changed_test_picker.py::test_1_python_client_runs_related_tests_and_falls_back_for_shared_inputs[two-cores]": 4.210902128000271,
     "tests/test_python_changed_test_picker.py::test_2_previously_adopted_clients_get_the_picker_guidance_after_upgrade": 4.682687211999564,

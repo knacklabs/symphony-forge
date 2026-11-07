@@ -73,8 +73,8 @@ def runner_words(top: Path, words: list[str]) -> tuple[list[str], str]:
     return words, passthrough
 
 
-def test_parts(top: Path, command: str) -> list[tuple[str, str, str]]:
-    """Select only known plain calls; preserve all other steps for whole execution."""
+def test_parts(top: Path, command: str, *, plain: bool = True) -> list[tuple[str, str, str]]:
+    """Plain calls own chain steps; broad recognition preserves the legacy pytest picker."""
     parts = []
     if command == init.NODE_TEST:
         command = command.partition("(")[2][:-1]
@@ -83,13 +83,16 @@ def test_parts(top: Path, command: str) -> list[tuple[str, str, str]]:
         try:
             words = shlex.split(part)
             directory_changed |= words[:1] == ["cd"]
-            runner, passthrough = runner_words(top, words) if not directory_changed else ([], "")
+            runner, passthrough = runner_words(top, words) if not (plain and directory_changed) else ([], "")
         except ValueError:
             return []
         name = runner[0].replace("\\", "/").rsplit("/", 1)[-1] if runner else ""
         name = name.removesuffix(".cmd").removesuffix(".exe")
         kind = "python" if name == "pytest" else name if name in {"vitest", "jest", "playwright"} else ""
-        if any(arg.startswith(("-k", "-m", "--keyword", "--markexpr")) for arg in runner[1:]):
+        if not plain and any(word.replace("\\", "/").rsplit("/", 1)[-1] in {"pytest", "pytest.exe"}
+                             for word in words):
+            kind = "python"
+        if plain and any(arg.startswith(("-k", "-m", "--keyword", "--markexpr")) for arg in runner[1:]):
             kind = ""
         if name == "playwright" and runner[1:2] != ["test"]:
             kind = ""

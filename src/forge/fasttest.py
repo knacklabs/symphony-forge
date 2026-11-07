@@ -288,6 +288,12 @@ def close_tests(base: str, command: str | None = None) -> int:
     command = command if command is not None else repo.grouped(
         Path.cwd(), repo.config(Path.cwd())["test"])
     parts = quicktest.test_parts(Path.cwd(), command)
+    legacy_parts = quicktest.test_parts(Path.cwd(), command, plain=False)
+    if [kind for kind, _, _ in legacy_parts if kind] == ["python"]:
+        for kind, part, _ in legacy_parts:
+            if kind != "python":
+                print(f"Test selection: {part}: whole command.", flush=True)
+        return pytest_tests(base, command)
     package = Path("package.json")
     if command == init.NODE_TEST:
         if not package.is_file():
@@ -750,6 +756,7 @@ def pytest_process(command: str, environment: dict, entry: dict | None) -> int:
 def pytest_tests(base: str, command: str, entry: dict | None = None, *, selection: bool = False,
                  always: list[str] | None = None) -> int:
     parts = quicktest.test_parts(Path.cwd(), command)
+    legacy_parts = quicktest.test_parts(Path.cwd(), command, plain=False)
     environment = dict(os.environ)
     worker = environment.get("FORGE_WORKER_TESTS") == "1"
     allocation = entry
@@ -761,7 +768,8 @@ def pytest_tests(base: str, command: str, entry: dict | None = None, *, selectio
     environment["FORGE_TEST_CPUS"] = workers
     if entry is not None:
         environment["FORGE_TEST_LANE"] = entry["id"]
-    if not selection and (len(parts) != 1 or parts[0][0] != "python"):
+    if not selection and (sum(bool(kind) for kind, _, _ in legacy_parts) > 1 or any(
+            kind in {"vitest", "jest", "playwright", "nx"} for kind, _, _ in legacy_parts)):
         # The explicit picker must preserve every step, just as change runs do.
         code = (f"import sys; sys.path.insert(0, {str(Path(__file__).parents[1])!r}); "
                 f"from forge.fasttest import close_tests; sys.exit(close_tests({base!r}, {command!r}))")
@@ -769,7 +777,7 @@ def pytest_tests(base: str, command: str, entry: dict | None = None, *, selectio
         shell = subprocess.list2cmdline(words) if os.name == "nt" else shlex.join(words)
         return pytest_process(shell, environment, entry)
     environment.pop("FORGE_WORKER_TESTS", None)
-    if not selection:
+    if not selection and len(parts) == 1:
         command += parts[0][2]  # npm forwards picker arguments only after --.
     # Read as forge test --pytest reads test: close has already checked forge.toml.
     top = repo.root()
@@ -810,20 +818,20 @@ def pytest_tests(base: str, command: str, entry: dict | None = None, *, selectio
             picked = [path for path in tests if path in changed]
         shared_changed = False
     # Each plain invocation owns its explicit test paths, or the repo root by default.
-    roots = pytest_roots(top, command)
+    roots = pytest_roots(top, command) if selection else [top]
     def in_scope(name):
         path = Path(name.split("::", 1)[0]).resolve()
         return path not in other_files and any(path == root or path.is_relative_to(root) for root in roots)
 
     picked = [name for name in picked if in_scope(name)]
     named = [name for name in named if in_scope(name)]
-    if selection:
-        print("Test selection: pytest: " + ("whole suite (shared inputs)" if shared_changed else
-              ", ".join(picked + always + named) or "none (no related tests)") + ".", flush=True)
+    print("Test selection: pytest: " + ("whole suite (shared inputs)" if shared_changed else
+          ", ".join(picked + always + named) or "none (no related tests)") + ".", flush=True)
     if not shared_changed or other_files:
         if not picked and not always and not named:
             print("No tests ran: no changed or module-related test files were selected.")
-            return 0
+            checks = " && ".join(part for kind, part, _ in legacy_parts if kind != "python")
+            return pytest_process(checks, environment, entry) if checks and not selection else 0
         # Keep shell setup, test roots and pytest settings in the repo's full command.
         listed = {entry.split("::")[0] for entry in always + named}
         excluded += [path for path in tests if path not in picked and path not in listed]
