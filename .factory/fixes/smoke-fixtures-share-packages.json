@@ -1,6 +1,13 @@
 {
   "base": "5393cf3ed78f0bae68f7bf2762dbcc9675a03710",
   "branch": "fix/smoke-fixtures-share-packages",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1b757-2faf-77d2-995b-09992ba11341",
+    "head": null,
+    "start": "c81739c5e0bbdffeb2285cedef83cde3f1b7ce74"
+  },
   "done_when": "The smoke fixtures share downloaded packages while keeping separate app copies, and the starter smoke job is measurably faster",
   "fix_kind": "mechanical",
   "kind": "fix",
