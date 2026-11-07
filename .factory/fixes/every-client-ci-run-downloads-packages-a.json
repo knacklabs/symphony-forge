@@ -4,12 +4,20 @@
   "done_when": "On a second run with an unchanged lockfile, the client check reuses downloaded packages and image layers, and a source-only edit no longer reinstalls the packages in the image build.",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-07T18:40:22.976540+00:00",
       "step": "start"
     }
   ],
-  "why": "Every client CI run downloads packages again because the generated workflow caches packages only for Forge itself, and both starter web builds copy all source before installing packages, so a source edit reinstalls every package."
+  "stuck": {
+    "close": null,
+    "head": "98d645508cb01e7df6526fd3566987c35630819e",
+    "keys": {},
+    "round": null
+  },
+  "why": "Every client CI run downloads packages again because the generated workflow caches packages only for Forge itself, and both starter web builds copy all source before installing packages, so a source edit reinstalls every package.",
+  "worker": "codex"
 }
