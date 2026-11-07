@@ -124,7 +124,7 @@
     "id": "33eaeb90-2aba-4caa-8bea-a23df65857a9",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -146,10 +146,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": null,
-    "head": "6e189ee984e458fbd9de74bebc31c29d94347127",
+    "close": "b8540044-89ef-49a6-8ab8-66bc351f2ed4",
+    "head": "d59c4a9ca23f070d2176b50767407f6c81ece5a4",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "The owner wants code review on gpt-6.1-terra at max effort instead of gpt-6.1-sol high in Forge's own repo",
   "worker": "codex"
