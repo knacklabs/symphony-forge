@@ -4,12 +4,20 @@
   "done_when": "A screen file with two h1 elements in separate branches of a condition passes the one-main-heading check, and a screen that renders two h1 at once still fails it",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-07T18:50:33.763381+00:00",
       "step": "start"
     }
   ],
-  "why": "The generated UI checker counts every h1 in a screen file, so a screen whose headings are shown one at a time fails the one-main-heading check (issue 1451)"
+  "stuck": {
+    "close": null,
+    "head": "808ce268b12f246a32428a000155d4446632f346",
+    "keys": {},
+    "round": null
+  },
+  "why": "The generated UI checker counts every h1 in a screen file, so a screen whose headings are shown one at a time fails the one-main-heading check (issue 1451)",
+  "worker": "codex"
 }
