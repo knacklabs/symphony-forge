@@ -160,7 +160,7 @@
     "id": "23612066-7242-4dcc-867a-9ef743fbe9f6",
     "status": "blocked"
   },
-  "round": 4,
+  "round": 5,
   "status": "fixing",
   "steps": [
     {
@@ -194,10 +194,12 @@
     "worker_round": 3
   },
   "stuck": {
-    "close": "cb07b7f8-cab2-4a41-92f1-18489f7309a8",
-    "head": "5a3b854b419328e139607d28b8b3bdefc61d9d49",
-    "keys": {},
-    "round": 3
+    "close": "344acefd-c285-4702-aad2-f80e952f0f96",
+    "head": "5d9e5aa6e3f438a4db744fc681b379b56652e309",
+    "keys": {
+      "the open P0 select pytest files separately for each pytest step in src/forge/fasttest.py": 1
+    },
+    "round": 4
   },
   "worker": "codex"
 }
