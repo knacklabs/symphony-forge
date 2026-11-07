@@ -16,7 +16,7 @@ from pathlib import Path
 from string import Template
 from typing import Any
 
-from forge import claude_sdk, codex, doctor, machine, native, repo, roles, story, task
+from forge import claude_sdk, codex, doctor, machine, merge_timings, native, repo, roles, story, task
 from forge.repo import git, refuse
 
 HERE = Path(__file__).parent
@@ -126,7 +126,7 @@ def prepare(item: str) -> tuple[re.Match[str], Path, str]:
         first = ""
         with codex.hold(top, item, "Build"):
             merged = repo.run("git", "merge", "-q", "--no-edit", f"origin/{default}", cwd=top)
-            if merged.returncode:
+            if merged.returncode and not merge_timings.resolve(top):
                 if not git("diff", "--name-only", "--diff-filter=U", cwd=top):
                     merged.check_returncode()
                 # Round records cannot commit during an unfinished merge. The full brief retries it.

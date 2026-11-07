@@ -21,7 +21,7 @@ from pathlib import Path
 from typing import Any
 
 from forge.close_remote import push_replay, reconcile, save_replay
-from forge import __version__, app_baseline, checks, codex, design, githooks, init, merge_review, migration_warnings, repo, review, review_skip, score, spotted, story, sync, task, time_records
+from forge import __version__, app_baseline, checks, codex, design, githooks, init, merge_review, merge_timings, migration_warnings, repo, review, review_skip, score, spotted, story, sync, task, time_records
 
 REFUSALS = {
     "not_started": ("Forge has not started {item} in any worktree of this repo.", "forge next"),
@@ -758,6 +758,8 @@ def _merge_default(top: Path, item: str, branch: str, default: str,
         raise subprocess.CalledProcessError(done.returncode, ["git", "merge"], done.stdout,
                                             done.stderr)
     try:
+        if merge_timings.resolve(top):
+            return sync.refresh_merged_guides(top, original)
         # Read sync's inventory from a clean tree: conflicted adapters may not even parse.
         with tempfile.TemporaryDirectory() as folder:
             base = Path(folder) / "default"
