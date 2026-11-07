@@ -81,10 +81,9 @@ def _finished(top: Path, main: Path) -> list[tuple[Path, str, str]]:
         states = {pr.get("state") for pr in prs if pr.get("headRefOid") == head}
         state = "merged" if "MERGED" in states else "closed" if "CLOSED" in states else ""
         if not state or any(pr.get("state") == "OPEN" for pr in prs): continue
-        status = repo.run("git", "status", "--porcelain", "--ignored", "--untracked-files=normal", cwd=path)
-        if status.returncode == 0 and all(line[3:] == "uv.lock" or (
-                line[:2] == "!!" and line.endswith("/") and Path(line[3:]).name in repo.CACHES)
-                for line in status.stdout.splitlines()): found.append((path, branch, state))
+        try: kept = task.worktree_files(path)
+        except subprocess.CalledProcessError: continue
+        if not kept: found.append((path, branch, state))
     return found
 def _unbuilt(top: Path) -> list[tuple[str, str]]:
     rows = []
