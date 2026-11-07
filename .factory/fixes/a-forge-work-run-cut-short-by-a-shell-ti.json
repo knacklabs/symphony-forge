@@ -4,12 +4,20 @@
   "done_when": "A forge work run stopped partway prints one line saying the round did not finish and the command to run again.",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-07T17:50:03.010281+00:00",
       "step": "start"
     }
   ],
-  "why": "A forge work run cut short by a shell time limit leaves its lock and its builder turn unfinished and says nothing, so the lost round shows only later."
+  "stuck": {
+    "close": null,
+    "head": "5e9f365acee959bedc56f93976d3ba81aef4bb82",
+    "keys": {},
+    "round": null
+  },
+  "why": "A forge work run cut short by a shell time limit leaves its lock and its builder turn unfinished and says nothing, so the lost round shows only later.",
+  "worker": "codex"
 }
