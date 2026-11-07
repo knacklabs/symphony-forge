@@ -1,0 +1,48 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/event_log.py\tKeep a pending handback usable after a merge frees its place\tfree-place-after-round",
+      "kind": "bug",
+      "path": "src/forge/event_log.py",
+      "line": 63,
+      "text": "Keep a pending handback usable after a merge frees its place",
+      "from": "blocking",
+      "item": "free-place-after-round",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/merge.py\tNot done: A builder place is freed when Forge records the round's completion or the item's merge, and a waiting part starts at once\tfree-place-after-round",
+      "kind": "bug",
+      "path": "src/forge/merge.py",
+      "line": 227,
+      "text": "Not done: A builder place is freed when Forge records the round's completion or the item's merge, and a waiting part starts at once",
+      "from": "blocking",
+      "item": "free-place-after-round",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_finished_builds_free_places.py\tGate: a waiting story part starts when capacity is released\tfree-place-after-round",
+      "kind": "bug",
+      "path": "tests/test_finished_builds_free_places.py",
+      "line": 62,
+      "text": "Gate: a waiting story part starts when capacity is released",
+      "from": "blocking",
+      "item": "free-place-after-round",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_finished_builds_free_places.py\tGate: round completion releases capacity before handback returns\tfree-place-after-round",
+      "kind": "bug",
+      "path": "tests/test_finished_builds_free_places.py",
+      "line": 76,
+      "text": "Gate: round completion releases capacity before handback returns",
+      "from": "blocking",
+      "item": "free-place-after-round",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
