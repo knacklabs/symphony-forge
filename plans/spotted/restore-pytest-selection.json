@@ -1,0 +1,92 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tForward picker options to the actual pytest launcher\trestore-pytest-selection",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 780,
+      "text": "Forward picker options to the actual pytest launcher",
+      "from": "blocking",
+      "item": "restore-pytest-selection",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tGate: Update the shipped pytest-selection guidance\trestore-pytest-selection",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 292,
+      "text": "Gate: Update the shipped pytest-selection guidance",
+      "from": "blocking",
+      "item": "restore-pytest-selection",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tHonor pytest's working directory when excluding files\trestore-pytest-selection",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 296,
+      "text": "Honor pytest's working directory when excluding files",
+      "from": "blocking",
+      "item": "restore-pytest-selection",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tKeep a single pytest command within its configured paths\trestore-pytest-selection",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 821,
+      "text": "Keep a single pytest command within its configured paths",
+      "from": "blocking",
+      "item": "restore-pytest-selection",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tPreserve unsupported shell commands when no tests match\trestore-pytest-selection",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 771,
+      "text": "Preserve unsupported shell commands when no tests match",
+      "from": "blocking",
+      "item": "restore-pytest-selection",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/quicktest.py\tRestore legacy selection for bare worker test runs\trestore-pytest-selection",
+      "kind": "bug",
+      "path": "src/forge/quicktest.py",
+      "line": 86,
+      "text": "Restore legacy selection for bare worker test runs",
+      "from": "blocking",
+      "item": "restore-pytest-selection",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_pytest_setup_keeps_related_selection.py\tGate: Bare forge test with setup or filtered pytest\trestore-pytest-selection",
+      "kind": "bug",
+      "path": "tests/test_pytest_setup_keeps_related_selection.py",
+      "line": 17,
+      "text": "Gate: Bare forge test with setup or filtered pytest",
+      "from": "blocking",
+      "item": "restore-pytest-selection",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\ttests/test_pytest_setup_keeps_related_selection.py\tNot done: Previously narrowed pytest commands are narrowed again, and main's full run on Linux and Windows is green",
+      "kind": "edge",
+      "path": "tests/test_pytest_setup_keeps_related_selection.py",
+      "line": 11,
+      "text": "Not done: Previously narrowed pytest commands are narrowed again, and main's full run on Linux and Windows is green",
+      "from": "review",
+      "item": "restore-pytest-selection",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
