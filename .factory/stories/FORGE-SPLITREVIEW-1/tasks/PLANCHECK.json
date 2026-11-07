@@ -161,7 +161,7 @@
     "id": "02d10618-fc30-49b3-b937-0404e6eacf70",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -174,10 +174,10 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "8a9ebb30a77aab9843636694c59db6606fafbe7a",
+    "close": "50b1696d-29f2-4f5d-9d9d-d06ed785b0ba",
+    "head": "51d11560631eac0a241a10baa59cf9e8dafa2bad",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "worker": "codex"
 }
