@@ -1,0 +1,109 @@
+{
+  "allow_large": "A release bump records the version in every file that names it; the owner approved the v1.2.31 release",
+  "amendments": [
+    {
+      "at": "2026-11-07T17:42:40.657242+00:00",
+      "because": "The screenshot timing and the release test's generated-file check moved to their own fix; this release keeps only the version bump and its proof",
+      "done_when": "The version is 1.2.31, generated files are synced, this repo is pinned to v1.2.31, and the tests pass"
+    }
+  ],
+  "base": "e923c49135fd7176cc159f4d27d247ab5d3ef56a",
+  "branch": "fix/release-1-2-31",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1b71b-1619-72f1-88b0-c53570300755",
+    "head": null,
+    "start": "852b74dd116b4873531599b12df8b5b818444991"
+  },
+  "done_when": "The version is 1.2.31, generated files are synced, this repo is pinned to v1.2.31, and the tests pass",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": ".forge/design/support.js",
+      "file": ".forge/design/support.js",
+      "gain": 4,
+      "harm": 3,
+      "line": 101,
+      "outcome": "follow-up",
+      "reason": "Split into follow-up fix review-findings-split-from-release-1-2-3",
+      "round": 1,
+      "security": false,
+      "title": "Preserve settled design screenshots",
+      "work": 2
+    },
+    {
+      "area": "test_1_forge_version_is_1_2_27_everywhere_it_is_recorded() in tests/test_release_version.py",
+      "file": "tests/test_release_version.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 31,
+      "outcome": "follow-up",
+      "reason": "Split into follow-up fix review-findings-split-from-release-1-2-3",
+      "round": 1,
+      "security": false,
+      "title": "Gate: generated files in the release checkout",
+      "work": 2
+    },
+    {
+      "area": ".factory/fixes/release-1-2-31.json",
+      "file": ".factory/fixes/release-1-2-31.json",
+      "gain": 4,
+      "harm": 1,
+      "line": 5,
+      "outcome": "follow-up",
+      "reason": "Split into follow-up fix review-findings-split-from-release-1-2-3",
+      "round": 1,
+      "security": false,
+      "title": "Gate: proof list",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "23e3645a7fda4fb47dbd343ded5bb317269f561516bb523d49824ebe33037ad4",
+    "changed": "125510261a9227bb5618f8f919a277a0437cd1939471126943db0830aae77288",
+    "commit": "54a334312f5bfa59fc958eec5b5b1a4144937e15",
+    "dismissals": [],
+    "findings": [],
+    "id": "179c9b67-c9b1-4385-99b2-902eec3f7def",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-07T17:31:23.889158+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-07T17:40:51.864213+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-07T17:47:55.739501+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-07T17:40:51.874677+00:00",
+    "by": "owner",
+    "choice": "split",
+    "file": ".forge/design/support.js",
+    "fixes": [
+      "review-findings-split-from-release-1-2-3"
+    ],
+    "reason": "Owner chose split: the screenshot timing and the release test's generated-file check move to their own fix after the release; the proof list is added in this release",
+    "wait_id": "62949d08-ce55-4899-8aa9-67b4a11af1d5",
+    "worker_round": null
+  },
+  "stuck": {
+    "close": "a20b1e44-a2a7-46c8-88af-89af4ac441e1",
+    "head": "62c3c1e72056788fea6fbb2a5fdab20c63ecf572",
+    "keys": {},
+    "round": null
+  },
+  "why": "Release v1.2.31: publish what merged since v1.2.30",
+  "worker": "codex"
+}
