@@ -20,9 +20,13 @@ def copy_assistant_python(app: Path) -> None:
         skill / "apps" / "api" / "migrations" / "versions" / "20261106_assistant.py",
         api / "migrations" / "versions" / "20261106_assistant.py",
     )
-    shutil.copyfile(
-        skill / "apps" / "api" / "tests" / "test_assistant_chats.py",
-        api / "tests" / "test_assistant_chats.py",
+    for test in (skill / "apps/api/tests").glob("test_assistant_*.py"):
+        shutil.copyfile(test, api / "tests" / test.name)
+    shutil.copytree(skill / "libs/assistant/contracts", app / "libs/assistant/contracts")
+    _replace_once(
+        app / "package.json",
+        "tsc --build libs/shared/util/tsconfig.json",
+        "tsc --build libs/assistant/contracts/tsconfig.json libs/shared/util/tsconfig.json",
     )
     _replace_once(
         api / "tests" / "test_module_schemas.py",
@@ -39,7 +43,7 @@ def copy_assistant_python(app: Path) -> None:
     _replace_once(
         pyproject,
         '    "mcp==2.3.0",',
-        '    "mcp==2.3.0",\n    "langgraph-checkpoint-postgres==3.2.0",',
+        '    "mcp==2.3.0",\n    "langgraph-checkpoint-postgres==3.2.0",\n    "langgraph==1.2.20",',
     )
     _replace_once(
         pyproject,
@@ -102,7 +106,13 @@ def copy_assistant_python(app: Path) -> None:
         main,
         "from app.auth import router as auth_router\n",
         "from app.assistant import assistant_lifespan\n"
+        "from app.assistant import router as assistant_router\n"
         "from app.auth import router as auth_router\n",
+    )
+    _replace_once(
+        main,
+        "app.include_router(auth_router)",
+        "app.include_router(auth_router)\napp.include_router(assistant_router)",
     )
     _replace_once(
         main,
@@ -113,6 +123,25 @@ def copy_assistant_python(app: Path) -> None:
         "            application.state.assistant_checkpoints = checkpoints\n"
         "            async with manager.run():\n"
         "                yield\n",
+    )
+
+
+def prepare_assistant_python_run(app: Path) -> None:
+    """Refresh both copied manifests before the real starter checks run."""
+    script = app / "scripts/test.mjs"
+    _replace_once(
+        script,
+        "  run(corepack, ['pnpm', 'install', '--frozen-lockfile']);",
+        "  run(corepack, ['pnpm', 'install', '--no-frozen-lockfile']);",
+    )
+    sync = "  run('uv', ['--directory', 'apps/api', 'sync', '--frozen']);"
+    _replace_once(
+        script,
+        sync,
+        "  const previousFrozen = environment.UV_FROZEN;\n"
+        "  environment.UV_FROZEN = '0';\n"
+        "  run('uv', ['--directory', 'apps/api', 'lock']);\n"
+        "  environment.UV_FROZEN = previousFrozen;\n" + sync,
     )
 
 

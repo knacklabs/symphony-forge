@@ -3,7 +3,7 @@
 This optional package stores private chats in Postgres. A chat expires 30 days
 after its last accepted message. Clean-up runs at API start and once each hour.
 It deletes the chat and all its LangGraph checkpoints, blobs and pending writes.
-The package ships no page, route or agent tool.
+The package ships private chat API routes, but no page or agent tool.
 
 ## Copy into an app
 
@@ -13,6 +13,13 @@ From the app root, copy these paths from
 - `apps/api/app/assistant/` to `apps/api/app/assistant/`.
 - `apps/api/migrations/versions/20261106_assistant.py` to the same app path.
 - `apps/api/tests/test_assistant_chats.py` to the same app path.
+- `apps/api/tests/test_assistant_api.py` to the same app path.
+- `libs/assistant/contracts/` to the same app path.
+
+Run `pnpm install --no-frozen-lockfile` after the copy. Commit the workspace lock
+file. The contracts use the app's existing Zod library.
+Add `libs/assistant/contracts/tsconfig.json` to the `tsc --build` arguments in
+the root `package.json` typecheck script.
 
 In the copied app's `apps/api/tests/test_module_schemas.py`, add these entries at
 the start of `EXPECTED_TABLE_SCHEMAS`, before the existing `core.*` entries:
@@ -31,7 +38,8 @@ the copied app's test; the starter has no assistant tables.
 
 The migration follows `20261105_notifications`. For an app with a different
 Alembic head, set the copied revision's `down_revision` to that head. Keep one
-Alembic history. Add `langgraph-checkpoint-postgres==3.2.0` to the dependencies in
+Alembic history. Add `langgraph-checkpoint-postgres==3.2.0` and
+`langgraph==1.2.20` to the dependencies in
 `apps/api/pyproject.toml`, then run `uv --directory apps/api lock` and
 `uv --directory apps/api sync --frozen`. Commit the updated lock file.
 If the host sets `UV_FROZEN=1`, set it to `0` for the lock command only. That
@@ -76,6 +84,8 @@ broken_contract_guidance = "Use the assistant public service."
 ## Start and stop with the API
 
 In `apps/api/app/main.py`, import `assistant_lifespan` from `app.assistant`.
+Also import `router as assistant_router` and call
+`app.include_router(assistant_router)` beside the other router registrations.
 Inside the existing lifespan's `try`, wrap the MCP manager's context as follows:
 
 ```python
@@ -123,9 +133,28 @@ OpenAI-compatible service with a custom address. Keep secrets in host settings
 or an uncommitted `.env`; list dummy values in `.env.example`. An app that does
 not import the module needs none of these settings.
 
-Chat routes, the model and turn handling arrive in later parts. Build the
+The model and turn handling arrive in later parts. Build the
 Assistant page in the client's design by the agents skill's assistant page rules.
 The storage test copies this package into a new Python app and calls the public
 clean-up service against real Postgres. The chat API part owns the full copy-in
 and API proof. New starter apps have no assistant code or tables; upgrading an
 existing app changes no app code. Copying this template is an explicit app change.
+
+## Chat API and contracts
+
+`POST /api/v1/assistant/chats` takes an empty object and returns the new chat id.
+It requires the session's CSRF token. Supply `Idempotency-Key` to reuse the same
+chat after a retry. The chat and retry record commit in one transaction.
+`GET /api/v1/assistant/chats` lists only the signed-in person's chats, newest
+message first. Use `limit` (20 by default, at most 100), and either `after` or
+`before` from the returned paging object. Totals stop at 10,000.
+`GET /api/v1/assistant/chats/{id}` returns the chat's text messages and pending
+confirm card. Another person's chat returns 404, even for an admin.
+
+`schema.py` defines the five block types and the six stream event types. The
+browser contracts in `libs/assistant/contracts` use the same camelCase names.
+Serialize events with `model_dump_json(by_alias=True)`. The optional total and
+unit fields omit their unset values. Keep required nullable values, such as an
+unset detail field, as `value: null`. Do not use `exclude_none=True`: it removes
+these required values too. The chat read response keeps
+`confirm: null` when there is no pending card. These routes make no model call.
