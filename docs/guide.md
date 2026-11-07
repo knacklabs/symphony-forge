@@ -494,6 +494,18 @@ these values for each job and uses `1` for both outside CI. Without a shard flag
 the same related tests; this is correct but slower. For a direct pytest command with pytest-split,
 Forge adds the split options automatically.
 
+Forge selects each step of a straight `&&` chain and prints one `Test selection:` line per
+step. The chain runs once and keeps shell setup such as `cd sub &&`. Vitest uses `--changed`,
+Jest uses `--changedSince`, and Playwright uses `--only-changed=<base>`. Ruff and mypy check
+changed Python files; pytest uses its related-test picker. A step with no selection runs
+whole. Chains with `;` or `|` and compound npm scripts run whole.
+For an existing app, add targets to its Nx projects with the owner's agreement. An
+`nx run-many -t <target>` step uses `nx affected -t <target> --base=<base>` when Nx defines
+that target. An Nx step with `--all` or no projects for the target runs whole. Without Nx
+targets, use the runner's changed options in `fast_test`, with lint and type checks as needed.
+Ask the owner before a fix changes `forge.toml`. New repos get the selection at init.
+Existing repos get it after upgrade and sync; their scripts and test settings stay theirs.
+
 Init writes `groups = 1` for new and adopted repos. An upgrade adds no `groups` setting, so an
 existing repo with a direct pytest command and pytest-split keeps its six groups. Each group then
 runs its share of the related tests through `forge test --change`.

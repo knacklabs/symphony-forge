@@ -135,7 +135,7 @@ the next merge.
 | "Run everything in Codex" | Ask, then in a fix: set `tools = "codex"`, `workers = "codex"` in `forge.toml`, then `forge sync`, `forge close <fix>` |
 | "Use both" | Ask, then in a fix: set `tools = "both"` in `forge.toml`, `forge close <fix>` |
 | "Change who builds just for me" | Edit `forge.local.toml` beside `forge.toml` in the main checkout (not a worktree): only `tools`, `workers` and `[models.<kind>]` tables. Git ignores it, so no fix; every worktree of that clone uses it. `forge next` and `forge doctor` name what it sets |
-| "Close takes too long running every test" | In a local-test repo, ask, then in a fix: set `fast_test` in `forge.toml`, a command close runs instead of `test`, with `{base}` replaced by the merge base with the default branch (for example `npx vitest run --changed {base}` plus lint). In a CI-test repo, its pull request check runs related tests; the nightly full run covers the rest. Then `forge close <fix>` |
+| "Close takes too long running every test" | In a local-test repo, ask, then in a fix: set `fast_test` in `forge.toml`, a command close runs instead of `test`, with `{base}` replaced by the merge base with the default branch (for example `npx vitest run --changed {base}` plus lint). In a CI-test repo, its pull request check selects each step in an `&&` chain and names the selection; close waits for it. The nightly full run covers the rest. Then `forge close <fix>` |
 | "Upgrade Forge" | Ask which release, then `forge upgrade <release>`; Upgrade Forge, below |
 
 `forge doctor` lists started fixes with no work commits after more than seven days.
@@ -1124,7 +1124,8 @@ if the settings do not answer it. Pass
    When `fast_test` is missing, `forge doctor` and `forge upgrade` print one suggested
    `fast_test` line: Python gets `forge test --pytest {base}`; vitest and jest keep the
    repo's own install and runner, adding `--changed {base}` or `--changedSince {base}`
-   and `--passWithNoTests`. Mixed repos get one part per kind. The Python picker skips
+   and `--passWithNoTests`. Playwright gets `--only-changed={base}`.
+   Mixed repos get one part per kind. The Python picker skips
    the JavaScript test runners, checks and installation steps, including when shared Python
    inputs require all Python tests; the suggested Node part installs first and runs its checks
    once. Forge's generated optional-package wrapper is kept around the Node suggestion.
@@ -1759,8 +1760,10 @@ Close keeps the output for the worker: run
 `forge work <item>`, whose brief carries it; `forge land` runs that fix round itself.
 In CI mode, close leaves test execution to the pull request's `tests` check. In local mode, close
 runs `fast_test` when set. Otherwise it uses the shipped pytest picker for changed tests
-and tests importing changed Python modules, Vitest's `--changed <base>`, or Jest's
-`--changedSince <base>` (including `__tests__` files). The pull request's CI runs the related
+and tests importing changed Python modules, Vitest's `--changed <base>`, Jest's
+`--changedSince <base>` (including `__tests__` files), or Playwright's `--only-changed=<base>`.
+Each step in an `&&` chain gets its own selection and a `Test selection:` line. The chain
+runs once, keeping shell setup such as `cd`. The pull request's CI runs the related
 tests; the nightly full run covers the rest.
 Docs and brand-asset changes get the light review, which blocks only on P0 findings.
 Close and the generated `forge.yml` skip the test command when every changed path is Markdown
@@ -1820,7 +1823,13 @@ New repos get this bound at init; existing repos get it after upgrade and sync.
 Setup steps such as `uv sync` and `npm ci` keep their arguments; no filenames are appended.
 Forge's initial optional-package Node command uses the same selection once an app adds
 `package.json`; with no package it still runs nothing.
-Go and other runners run the full test command. Compound npm scripts also keep their full
+With `nx.json`, an `nx run-many -t <target>` step uses `nx affected -t <target> --base=<base>`
+only when Nx lists projects for that target. Other steps keep their own runner selection.
+An Nx step with no target projects or with `--all` runs whole. Ruff and mypy check only
+changed Python files that still exist; with none, those steps run none. Pytest keeps its
+related-test picker, including in an Nx workspace.
+A step with no selection runs whole and says so. Go and other runners run the full test command.
+Chains with `;` or `|` and compound npm scripts also keep their full
 command because arguments cannot select each runner inside them. Set `fast_test` for a different
 selection. Supported runners with no related tests run none locally. A red CI still sends
 the item back to the worker.

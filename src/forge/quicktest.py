@@ -27,8 +27,15 @@ def test_parts(top: Path, command: str) -> list[tuple[str, str, str]]:
     parts = []
     if command == init.NODE_TEST:
         command = command.partition("(")[2][:-1]
-    # ponytail: recognize straight && pipelines and Forge's Node wrapper; adapt other shell flows in the agent.
-    for part in command.split("&&"):
+    # Only straight chains can be rewritten without changing shell control flow.
+    try:
+        lexer = shlex.shlex(command, posix=True, punctuation_chars=";&|<>()")
+        lexer.whitespace_split = True
+        if any(token and token[0] in ";&|<>()" and token != "&&" for token in lexer):
+            return []
+    except ValueError:
+        return []
+    for part in re.findall(r'''(?:[^&"']|"[^"]*"|'[^']*')+''', command):
         part = part.strip()
         try:
             words = shlex.split(part)
@@ -48,12 +55,18 @@ def test_parts(top: Path, command: str) -> list[tuple[str, str, str]]:
             runner_words = words[index:index + 1]
         runner_names = [word.replace("\\", "/").rsplit("/", 1)[-1] for word in runner_words]
         node = bool(words and words[0] in ("npm", "pnpm", "yarn", "bun", "npx"))
-        kind = next((name for name in ("vitest", "jest") if name in runner_names),
+        kind = next((name for name in ("vitest", "jest", "playwright") if name in runner_names),
                     "node-check" if node else "")
-        if "pytest" in names:
+        if "nx" in runner_names and "run-many" in words:
+            kind = "nx"
+        elif "pytest" in names:
             kind = "python"
+        elif ("ruff" in names and "check" in words) or "mypy" in names:
+            kind = "ruff" if "ruff" in names else "mypy"
         elif words and words[0] in ("npm", "pnpm", "yarn", "bun") and len(words) > 1 and words[1] in ("ci", "install"):
             kind = "node-install"
+        if kind == "playwright" and "test" not in runner_words + words:
+            kind = "node-check"
         parts.append((kind, part, passthrough))
     return parts
 
@@ -72,7 +85,7 @@ def suggest(top: Path, cfg: dict[str, Any]) -> None:
             kinds.add("python")
             part = "forge test --pytest {base}"
         else:
-            if kind in ("vitest", "jest"):
+            if kind in ("vitest", "jest", "playwright"):
                 if kind in kinds:
                     continue
                 kinds.add(kind)
@@ -83,8 +96,11 @@ def suggest(top: Path, cfg: dict[str, Any]) -> None:
                         tokens = list(re.finditer(r'''(?:[^\s"']+|"[^"]*"|'[^']*')+''', part))
                         start = tokens[index].start()
                         part = part[:start] + "-- " + part[start:]
-                changed = "--changed" if kind == "vitest" else "--changedSince"
-                part += f"{passthrough} {changed} {{base}} --passWithNoTests"
+                if kind == "playwright":
+                    part += f"{passthrough} --only-changed={{base}}"
+                else:
+                    changed = "--changed" if kind == "vitest" else "--changedSince"
+                    part += f"{passthrough} {changed} {{base}} --passWithNoTests"
         parts.append(part)
     if not kinds and not python:
         return

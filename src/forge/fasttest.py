@@ -279,32 +279,71 @@ def close_tests(base: str) -> int:
     command = node_worker_budget(command, machine.test_cpus())
     parts = quicktest.test_parts(Path.cwd(), command)
     scripts = json.loads(package.read_text("utf-8")).get("scripts", {}) if package.is_file() else {}
-    # Compound scripts forward npm arguments to the last command, not every runner.
-    if not parts or re.search(r"[;|]", command) or any(re.search(r"&&|[;|]", scripts[script])
-            for kind, part, _ in parts if kind in ("vitest", "jest")
-            for script in scripts if re.search(r"\b" + re.escape(script) + r"\b", part)):
+    if not parts:
+        print("Test selection: whole command (unsupported shell flow).", flush=True)
         return subprocess.run(command, shell=True).returncode
-    if not any(kind in ("vitest", "jest") for kind, _, _ in parts):
-        if any(kind == "python" for kind, _, _ in parts):
-            return pytest_tests(base, command)
-        return subprocess.run(command, shell=True).returncode
+    quote = lambda words: subprocess.list2cmdline(words) if os.name == "nt" else shlex.join(words)
+    changed = git_files("diff", "--no-renames", "--name-only", base)
+    changed += git_files("ls-files", "--others", "--exclude-standard")
+    folder = Path.cwd()
+    selected = []
     for kind, part, passthrough in parts:
+        label = part
+        words = shlex.split(part)
+        if words[:1] == ["cd"] and len(words) == 2:
+            folder = (folder / words[1]).resolve()
+            selected.append(part)
+            continue
+        # Compound scripts forward arguments to their last command, so this step stays whole.
+        if kind in ("vitest", "jest", "playwright") and any(
+                re.search(r"&&|[;|]", script) for name, script in scripts.items()
+                if re.search(r"\b" + re.escape(name) + r"\b", part)):
+            kind = ""
+        selection = "whole command"
         if kind == "python":
-            status = pytest_tests(base, part)
+            # Let the existing picker run after shell setup, in that step's directory.
+            code = (f"import sys; sys.path.insert(0, {str(Path(__file__).parents[1])!r}); "
+                    f"from forge.fasttest import pytest_tests; "
+                    f"sys.exit(pytest_tests({base!r}, {part!r}, selection=True))")
+            selected.append(quote([sys.executable, "-c", code]))
+            continue
+        if kind == "nx" and (folder / "nx.json").is_file() and not any(
+                word.split("=", 1)[0] == "--all" for word in words):
+            target = next((word.split("=", 1)[1] for word in words
+                           if word.startswith(("--target=", "--targets=", "-t="))), None)
+            target = target or next((words[index + 1] for index, word in enumerate(words[:-1])
+                                     if word in {"-t", "--target", "--targets"}), None)
+            if target:
+                index = words.index("run-many")
+                query = quote(words[:index] + ["show", "projects", "--with-target", target])
+                projects = subprocess.run(query, shell=True, cwd=folder, capture_output=True, text=True)
+                if projects.returncode == 0 and projects.stdout.strip() not in {"", "[]"}:
+                    words[index] = "affected"
+                    part = quote(words + ["--base=" + base])
+                    selection = part
+        elif kind in ("ruff", "mypy"):
+            paths = [os.path.relpath(path, folder).replace(os.sep, "/")
+                     for name in dict.fromkeys(changed)
+                     if (path := Path(name)).suffix == ".py" and path.is_file()]
+            part = (re.sub(r'''(?<!\S)(?:\.|"\."|'\.')(?!\S)''', "", part).rstrip()
+                    + " " + quote(paths)) if paths else (
+                quote([sys.executable, "-c", "pass"]) if os.name == "nt" else ":")
+            selection = ", ".join(paths) if paths else "none (no changed Python files)"
         else:
-            if kind in ("vitest", "jest"):
-                words = shlex.split(part)
+            if kind in ("vitest", "jest", "playwright"):
                 if words[:2] == ["npm", "exec"] and "--" not in words:
                     tokens = list(re.finditer(r'''(?:[^\s"']+|"[^"]*"|'[^']*')+''', part))
                     start = tokens[quicktest._npm_runner_index(words)].start()
                     part = part[:start] + "-- " + part[start:]
-                changed = "--changed" if kind == "vitest" else "--changedSince"
-                argument = subprocess.list2cmdline([base]) if os.name == "nt" else shlex.quote(base)
-                part += f"{passthrough} {changed} {argument} --passWithNoTests"
-            status = subprocess.run(part, shell=True).returncode
-        if status:
-            return status
-    return 0
+                if kind == "playwright":
+                    part += f"{passthrough} --only-changed={quote([base])}"
+                else:
+                    flag = "--changed" if kind == "vitest" else "--changedSince"
+                    part += f"{passthrough} {flag} {quote([base])} --passWithNoTests"
+                selection = part
+        print(f"Test selection: {label}: {selection}.", flush=True)
+        selected.append(part)
+    return subprocess.run(" && ".join(selected), shell=True).returncode
 
 
 def test(args) -> int:
@@ -656,12 +695,12 @@ def test_process(top, item, command, env, entry, ran, log):
     return done
 
 
-def pytest_tests(base: str, command: str, entry: dict | None = None) -> int:
+def pytest_tests(base: str, command: str, entry: dict | None = None, *, selection: bool = False) -> int:
     parts = quicktest.test_parts(Path.cwd(), command)
-    mixed = any(kind in ("vitest", "jest") for kind, _, _ in parts)
+    mixed = any(kind in ("vitest", "jest", "playwright") for kind, _, _ in parts)
     if mixed:
         command = " && ".join(part for kind, part, _ in parts
-                              if kind not in ("vitest", "jest", "node-install", "node-check"))
+                              if kind not in ("vitest", "jest", "playwright", "node-install", "node-check"))
         parts = quicktest.test_parts(Path.cwd(), command)
     environment = dict(os.environ)
     worker = environment.pop("FORGE_WORKER_TESTS", None) == "1"
@@ -708,6 +747,9 @@ def pytest_tests(base: str, command: str, entry: dict | None = None) -> int:
             changed += git_files("ls-files", "--others", "--exclude-standard")
             picked = [path for path in tests if path in changed]
         shared_changed = False
+    if selection:
+        print("Test selection: pytest: " + ("whole suite (shared inputs)" if shared_changed else
+              ", ".join(picked + always + named) or "none (no related tests)") + ".", flush=True)
     if not shared_changed:
         if not picked and not always and not named:
             print("No tests ran: no changed or module-related test files were selected.")

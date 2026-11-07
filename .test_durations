@@ -19,6 +19,8 @@
     "tests/test_accepted_review_passes_first_pr_check.py::test_1_first_accepted_close_passes_pr_check_on_pushed_head[new]": 8.154432083945721,
     "tests/test_after_another_story_task.py::test_1_a_task_waits_for_another_story_s_task_then_starts_once_it_merges": 3.0501691259999006,
     "tests/test_after_another_story_task.py::test_2_an_after_naming_a_task_the_other_story_lacks_is_malformed": 2.061457960000098,
+    "tests/test_affected_split.py::test_1_a_client_chain_selects_each_runner_and_keeps_the_shell_directory": 20.0,
+    "tests/test_affected_split.py::test_2_a_python_chain_selects_related_tests_and_changed_file_checks": 20.0,
     "tests/test_agent_admission_priorities.py::test_2_failed_test_repair_gets_the_place_before_an_earlier_new_build[earlier-adoption]": 8.305021498003043,
     "tests/test_agent_admission_priorities.py::test_2_failed_test_repair_gets_the_place_before_an_earlier_new_build[new]": 8.380541999998968,
     "tests/test_agent_admission_priorities.py::test_3_build_waits_above_twice_test_places_and_resumes_at_test_places[earlier-adoption]": 14.511344001002726,
