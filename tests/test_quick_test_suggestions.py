@@ -44,6 +44,18 @@ CASES = [
         "yarn install --immutable && yarn unit --changed {base} --passWithNoTests"),
     ("mixed", "uv run pytest && npm ci && npx --no-install vitest run", {"devDependencies": {"vitest": "1"}},
         "forge test --pytest {base} && npm ci && npx --no-install vitest run --changed {base} --passWithNoTests"),
+    ("mixed-pipe", "uv run pytest && npm test | tee tests.log", {"scripts": {"test": "vitest run"}},
+        "uv run pytest && npm test | tee tests.log"),
+    ("python-cd", "cd backend && uv run pytest", {}, "cd backend && uv run pytest"),
+    ("playwright-projects", "playwright test --project=chromium && playwright test --project=firefox", {},
+        "playwright test --project=chromium --only-changed={base} && "
+        "playwright test --project=firefox --only-changed={base}"),
+    ("vitest-projects", "vitest run unit && vitest run integration", {},
+        "vitest run unit --changed {base} --passWithNoTests && "
+        "vitest run integration --changed {base} --passWithNoTests"),
+    ("playwright-compound", "npm test && playwright test --project=chromium",
+        {"scripts": {"test": "vitest run && node check.js"}},
+        "npm test && playwright test --project=chromium --only-changed={base}"),
     ("local-runner", "npm ci && ./node_modules/.bin/jest", {"devDependencies": {"jest": "1"}},
         "npm ci && ./node_modules/.bin/jest --changedSince {base} --passWithNoTests"),
     *[(kind, command, {}, None) for kind, command in (
@@ -54,7 +66,7 @@ CASES = [
 
 
 def _inputs(folder, kind, command, package):
-    if kind in ("python", "mixed", "configured"):
+    if kind.startswith(("python", "mixed")) or kind == "configured":
         (folder / "pyproject.toml").write_text('[project]\nname = "client"\nversion = "1.0"\n', "utf-8")
     if package:
         (folder / "package.json").write_text(json.dumps(package), "utf-8")
@@ -89,8 +101,72 @@ def test_1_doctor_suggests_the_new_clients_test_kind(repo, gh, tmp_path, cases):
     for host in (".claude", ".codex"):
         skill = " ".join((client / host / "skills/forge/SKILL.md").read_text("utf-8").split())
         assert "`forge doctor` and `forge upgrade` print one suggested" in skill
-        assert "Mixed repos get one part per kind." in skill
+        assert "Mixed repos keep each test step." in skill
         assert "Go, Rust, Java, .NET and Ruby get no suggestion." in skill
+
+
+@pytest.mark.platform
+def test_6_doctor_classifies_package_scripts_from_their_working_directory(repo, gh, tmp_path):
+    client = _new_repo(repo, gh, tmp_path)
+    assert repo.forge("init", "--actions", "yes", cwd=client).returncode == 0
+    _inputs(client, "web", "cd web && npm test", {"scripts": {"test": "vitest run"}})
+    (client / "web").mkdir()
+    (client / "web/package.json").write_text(
+        json.dumps({"scripts": {"test": "playwright test"}}), "utf-8")
+
+    done = repo.forge("doctor", cwd=client)
+
+    _advice(done, "cd web && npm test -- --only-changed={base}")
+
+
+@pytest.mark.platform
+def test_7_unsupported_mixed_command_keeps_javascript_tests_in_advice_and_picker(unsynced_up):
+    up = unsynced_up
+    repo = up.repo
+    _install(repo.bin, "npm", f'''#!{sys.executable}
+import json, pathlib, sys
+with pathlib.Path("node-calls.jsonl").open("a", encoding="utf-8") as out:
+    out.write(json.dumps(sys.argv[1:]) + "\\n")
+''')
+    _install(repo.bin, "tee", f'''#!{sys.executable}
+from pathlib import Path
+import sys
+data = sys.stdin.buffer.read()
+Path(sys.argv[1]).write_bytes(data)
+sys.stdout.buffer.write(data)
+''')
+    command = (f'"{Path(sys.executable).as_posix()}" -m pytest tests -q && '
+               "npm test | tee tests.log")
+    _inputs(repo.path, "mixed-pipe", command, {"scripts": {"test": "vitest run"}})
+    repo.write(".gitignore", "node-calls.jsonl\ntests.log\npython-ran.txt\n__pycache__/\n.pytest_cache/\n")
+    repo.write("tests/test_related.py", 'from pathlib import Path\ndef test_related():\n'
+               '    Path("python-ran.txt").write_text("ran", encoding="utf-8")\n')
+    repo.write("src/client.js", "export const client = true;\n")
+    repo.git("add", "-A")
+    repo.git("commit", "-qm", "Set up mixed tests")
+    repo.git("push", "-q", "origin", "main")
+    base = repo.git("rev-parse", "HEAD")
+    repo.write("src/client.js", "export const client = false;\n")
+    repo.git("add", "-A")
+    repo.git("commit", "-qm", "Change JavaScript source")
+    repo.git("push", "-q", "origin", "main")
+
+    advised = repo.forge("doctor")
+    _advice(advised, command)
+    advice = next(line for line in advised.stdout.splitlines() if line.startswith("fast_test ="))
+    quick = tomllib.loads(advice)["fast_test"].replace("{base}", base)
+    environment = {**os.environ, "PYTHONPATH": str(ROOT / "src")}
+    run = subprocess.run(quick, cwd=repo.path, shell=True, capture_output=True, text=True,
+                         env=environment, timeout=60)
+    assert run.returncode == 0, run.stdout + run.stderr
+    assert (repo.path / "python-ran.txt").read_text("utf-8") == "ran"
+    calls_path = repo.path / "node-calls.jsonl"
+    assert [json.loads(line) for line in calls_path.read_text("utf-8").splitlines()] == [["test"]]
+
+    picked = repo.forge("test", "--pytest", base)
+    assert picked.returncode == 0, picked.stdout + picked.stderr
+    assert [json.loads(line) for line in calls_path.read_text("utf-8").splitlines()] == [
+        ["test"], ["test"]]
 
 
 @pytest.mark.parametrize("entry,runner,flag,invocation", [

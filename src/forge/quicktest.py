@@ -20,23 +20,32 @@ def _npm_runner_index(words: list[str]) -> int:
     return index
 
 
+def shell_steps(command: str) -> list[str]:
+    """Return raw && steps, or no steps when shell control flow cannot be selected safely."""
+    steps = []
+    start = 0
+    operators = re.compile(r'''\\.|"(?:\\.|[^"\\])*"|'[^']*'|&&|[;&|<>()]''')
+    for match in operators.finditer(command):
+        token = match.group()
+        if token == "&&":
+            step = command[start:match.start()].strip()
+            if not step:
+                return []
+            steps.append(step)
+            start = match.end()
+        elif token[0] in ";&|<>()":
+            return []
+    step = command[start:].strip()
+    return steps + [step] if step else []
+
+
 def test_parts(top: Path, command: str) -> list[tuple[str, str, str]]:
     """Classify the same runner and setup parts for advice and Python-only execution."""
-    package = top / "package.json"
-    scripts = json.loads(package.read_text("utf-8")).get("scripts", {}) if package.is_file() else {}
     parts = []
     if command == init.NODE_TEST:
         command = command.partition("(")[2][:-1]
-    # Only straight chains can be rewritten without changing shell control flow.
-    try:
-        lexer = shlex.shlex(command, posix=True, punctuation_chars=";&|<>()")
-        lexer.whitespace_split = True
-        if any(token and token[0] in ";&|<>()" and token != "&&" for token in lexer):
-            return []
-    except ValueError:
-        return []
-    for part in re.findall(r'''(?:[^&"']|"[^"]*"|'[^']*')+''', command):
-        part = part.strip()
+    folder = top
+    for part in shell_steps(command):
         try:
             words = shlex.split(part)
         except ValueError:
@@ -44,11 +53,25 @@ def test_parts(top: Path, command: str) -> list[tuple[str, str, str]]:
         names = [word.replace("\\", "/").rsplit("/", 1)[-1] for word in words]
         runner_words = words
         passthrough = ""
+        if words[:1] == ["cd"] and len(words) == 2:
+            parts.append(("", part, ""))
+            folder = (folder / words[1]).resolve()
+            continue
+        package = folder / "package.json"
+        scripts = json.loads(package.read_text("utf-8")).get("scripts", {}) if package.is_file() else {}
         if words and words[0] in ("npm", "pnpm", "yarn", "bun"):
-            script = words[2] if len(words) > 2 and words[1] in ("run", "run-script") else (
-                words[1] if len(words) > 1 else "")
+            script = (words[2] if len(words) > 2 and words[1] in ("run", "run-script") else
+                      words[1] if len(words) > 1 and words[1] not in
+                      ("exec", "ci", "install", "add", "remove", "uninstall", "update", "init") else "")
             if script in scripts:
-                runner_words = shlex.split(scripts[script])
+                script_steps = shell_steps(scripts[script])
+                if len(script_steps) != 1:
+                    runner_words = []
+                else:
+                    try:
+                        runner_words = shlex.split(script_steps[0])
+                    except ValueError:
+                        runner_words = []
                 passthrough = " --" if words[0] == "npm" and "--" not in words else ""
         if words[:2] == ["npm", "exec"]:
             index = _npm_runner_index(words)
@@ -74,10 +97,21 @@ def test_parts(top: Path, command: str) -> list[tuple[str, str, str]]:
 def suggest(top: Path, cfg: dict[str, Any]) -> None:
     if cfg["fast_test"]:
         return
+    if not cfg["test"].strip():
+        return
     python = any((top / marker).is_file() for marker in
                  ("pyproject.toml", "pytest.ini", "setup.py", "requirements.txt"))
+    test_parts_found = test_parts(top, cfg["test"])
+    has_cd = any(not kind and shlex.split(part)[:1] == ["cd"]
+                 for kind, part, _ in test_parts_found)
+    has_python_step = any(kind == "python" for kind, _, _ in test_parts_found)
+    if not test_parts_found or (has_cd and has_python_step):
+        command = cfg["test"]
+        print("Suggested quick tests in forge.toml (keep the full test command for CI):", flush=True)
+        print(f"fast_test = {json.dumps(command)}", flush=True)
+        return
     parts, kinds = [], set()
-    for kind, part, passthrough in test_parts(top, cfg["test"]):
+    for kind, part, passthrough in test_parts_found:
         if kind == "python":
             python = True
             if "python" in kinds:
@@ -86,8 +120,6 @@ def suggest(top: Path, cfg: dict[str, Any]) -> None:
             part = "forge test --pytest {base}"
         else:
             if kind in ("vitest", "jest", "playwright"):
-                if kind in kinds:
-                    continue
                 kinds.add(kind)
                 words = shlex.split(part)
                 if words[:2] == ["npm", "exec"] and "--" not in words:
@@ -104,7 +136,7 @@ def suggest(top: Path, cfg: dict[str, Any]) -> None:
         parts.append(part)
     if not kinds and not python:
         return
-    if kinds <= {"python"}:
+    if kinds == {"python"}:
         command = "forge test --pytest {base}"
     else:
         if python and "python" not in kinds:

@@ -1125,7 +1125,7 @@ if the settings do not answer it. Pass
    `fast_test` line: Python gets `forge test --pytest {base}`; vitest and jest keep the
    repo's own install and runner, adding `--changed {base}` or `--changedSince {base}`
    and `--passWithNoTests`. Playwright gets `--only-changed={base}`.
-   Mixed repos get one part per kind. The Python picker skips
+   Mixed repos keep each test step. The Python picker skips
    the JavaScript test runners, checks and installation steps, including when shared Python
    inputs require all Python tests; the suggested Node part installs first and runs its checks
    once. Forge's generated optional-package wrapper is kept around the Node suggestion.
@@ -1133,6 +1133,8 @@ if the settings do not answer it. Pass
    the changed-file flags. Go, Rust, Java, .NET
    and Ruby get no suggestion. Check the suggestion against the repo's setup before
    agreeing to it; other shell flows need the agent to adapt the command.
+   Advice keeps unsupported shell flows whole. It also keeps a full command that combines
+   `cd` with pytest, so the picker does not repeat directory setup from inside that directory.
 
 10. When the repo has a Dockerfile, write `services.toml` as the deploy paragraph at the top
     of this guide says, get the human's confirmation, and add it to the adoption fix.
@@ -1825,9 +1827,12 @@ Forge's initial optional-package Node command uses the same selection once an ap
 `package.json`; with no package it still runs nothing.
 With `nx.json`, an `nx run-many -t <target>` step uses `nx affected -t <target> --base=<base>`
 only when Nx lists projects for that target. Other steps keep their own runner selection.
-An Nx step with no target projects or with `--all` runs whole. Ruff and mypy check only
+An Nx step with no target projects, with `--all` or with `--projects` runs whole. Arguments
+after `--` remain task arguments, and other shell arguments keep their expansion.
+Ruff and mypy check only
 changed Python files that still exist; with none, those steps run none. Pytest keeps its
-related-test picker, including in an Nx workspace.
+related-test picker, including in an Nx workspace. Each pytest step keeps its own test paths
+and reads the repository's settings even after `cd`.
 A step with no selection runs whole and says so. Go and other runners run the full test command.
 Chains with `;` or `|` and compound npm scripts also keep their full
 command because arguments cannot select each runner inside them. Set `fast_test` for a different

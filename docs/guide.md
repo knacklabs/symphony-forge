@@ -501,10 +501,16 @@ changed Python files; pytest uses its related-test picker. A step with no select
 whole. Chains with `;` or `|` and compound npm scripts run whole.
 For an existing app, add targets to its Nx projects with the owner's agreement. An
 `nx run-many -t <target>` step uses `nx affected -t <target> --base=<base>` when Nx defines
-that target. An Nx step with `--all` or no projects for the target runs whole. Without Nx
+that target. An Nx step with `--all`, `--projects` or no projects for the target runs whole.
+Other Nx arguments keep their shell expansion, and `--base` precedes task arguments after `--`.
+Each pytest step keeps its own test paths and reads the root settings after `cd`.
+The pull request log keeps every `Test selection:` line even when test output is long.
+Without Nx
 targets, use the runner's changed options in `fast_test`, with lint and type checks as needed.
 Ask the owner before a fix changes `forge.toml`. New repos get the selection at init.
 Existing repos get it after upgrade and sync; their scripts and test settings stay theirs.
+Doctor advice preserves distinct runner steps and leaves compound package scripts whole.
+For a pipe or a chain that combines `cd` with pytest, it suggests the original full command.
 
 Init writes `groups = 1` for new and adopted repos. An upgrade adds no `groups` setting, so an
 existing repo with a direct pytest command and pytest-split keeps its six groups. Each group then
