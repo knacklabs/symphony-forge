@@ -8,8 +8,8 @@
       "text": "Functional: Include the required answer in the retry instruction",
       "from": "blocking",
       "item": "a-forge-work-run-cut-short-by-a-shell-ti",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/worker.py\tNot done: A forge work run stopped partway prints one line saying the round did not finish and the command to run again.\ta-forge-work-run-cut-short-by-a-shell-ti",
