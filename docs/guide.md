@@ -500,6 +500,30 @@ these values for each job and uses `1` for both outside CI. Without a shard flag
 the same related tests; this is correct but slower. For a direct pytest command with pytest-split,
 Forge adds the split options automatically.
 
+Forge prints one `Test selection:` line per step of a straight `&&` chain. The chain runs
+once and keeps shell setup. Only plain pytest, Vitest, Jest and Playwright calls get their
+runner's selection. Vitest uses `--changed`, Jest uses `--changedSince`, and Playwright uses
+`--only-changed=<base>`. Plain pytest calls use the related-test picker, each with its own
+test paths. Each `always_test` file goes to the first plain pytest step whose paths contain it.
+A step without path arguments takes every required file. Files outside all step paths go to
+the first plain pytest step. Each required file runs only in its assigned step.
+Calls with `-m` or `-k`, steps after `cd`, and checks such as Ruff or mypy run whole and say so.
+Chains with `;` or `|` also run whole. An npm script gets a selection only when its body is
+exactly one plain test call. Compound scripts stay whole.
+For an existing app, add targets to its Nx projects with the owner's agreement. An
+`nx run-many -t <target>` step uses `nx affected -t <target> --base=<base>` when the target
+is a literal name and Nx defines it. An Nx step with a variable target, `--all`, `--projects`
+or no projects for the target runs whole.
+Other Nx arguments keep their shell expansion, and `--base` precedes task arguments after `--`.
+The pull request log keeps every `Test selection:` line even when test output is long.
+Without Nx
+targets, use the runner's changed options in `fast_test`, with lint and type checks as needed.
+Ask the owner before a fix changes `forge.toml`. New repos get the selection at init.
+Existing repos get it after upgrade and sync; their scripts and test settings stay theirs.
+Doctor advice keeps every original step in order, including repeated runners and compound
+scripts. A single plain pytest call gets `forge test --pytest {base}`. Advice keeps pytest
+calls whole in a chain because the standalone picker owns the repo's full command.
+
 Init writes `groups = 1` for new and adopted repos. An upgrade adds no `groups` setting, so an
 existing repo with a direct pytest command and pytest-split keeps its six groups. Each group then
 runs its share of the related tests through `forge test --change`.

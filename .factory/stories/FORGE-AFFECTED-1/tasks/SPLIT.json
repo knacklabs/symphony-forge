@@ -1,0 +1,200 @@
+{
+  "branch": "task/FORGE-AFFECTED-1-SPLIT",
+  "chat": {
+    "approval": "fe8031d672104d75bca741bd7fd70c958fa3c39d5b61dfd99040dabe6aa23863",
+    "claude": null,
+    "conversation": "01a1b585-7e4a-7c23-8390-133c306b0c9b",
+    "head": null,
+    "start": "f87c40169663670fddab5487736fc4e72f3383d7"
+  },
+  "known": [
+    {
+      "area": "test_parts() in src/forge/quicktest.py",
+      "file": "src/forge/quicktest.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 34,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Preserve JavaScript tests in advice for a piped mixed command",
+      "work": 2
+    },
+    {
+      "area": "suggest() in src/forge/quicktest.py",
+      "file": "src/forge/quicktest.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 88,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Keep distinct Playwright steps in the suggested fast command",
+      "work": 2
+    },
+    {
+      "area": "close_tests() in src/forge/fasttest.py",
+      "file": "src/forge/fasttest.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 307,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Keep the repository settings available to pytest after cd",
+      "work": 2
+    },
+    {
+      "area": "close_tests() in src/forge/fasttest.py",
+      "file": "src/forge/fasttest.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 322,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Preserve Nx argument semantics when rewriting run-many",
+      "work": 2
+    },
+    {
+      "area": "close_tests() in src/forge/fasttest.py",
+      "file": "src/forge/fasttest.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 298,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Bind npm script detection to the invoked script and directory",
+      "work": 2
+    },
+    {
+      "area": "close_tests() in src/forge/fasttest.py",
+      "file": "src/forge/fasttest.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 307,
+      "outcome": "fixed in round 5",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Select pytest files separately for each pytest step",
+      "work": 2
+    },
+    {
+      "area": "test_parts() in src/forge/quicktest.py",
+      "file": "src/forge/quicktest.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 34,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Keep quoted pytest expressions out of shell-flow detection",
+      "work": 1
+    },
+    {
+      "area": "close_tests() in src/forge/fasttest.py",
+      "file": "src/forge/fasttest.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 328,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: A Python app without Nx runs only its related pytest tests and checks the changed files.",
+      "work": 2
+    },
+    {
+      "area": "close_tests() in src/forge/fasttest.py",
+      "file": "src/forge/fasttest.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 319,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: A change to a client app runs lint, typecheck and tests only for the parts it touches in the pull request check",
+      "work": 2
+    },
+    {
+      "area": "close_tests() in src/forge/fasttest.py",
+      "file": "src/forge/fasttest.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 344,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Keep selection lines visible in the pull request log",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "87e52fe7cf1504bcee6f52118a1504a473452f508727c1c17352920507d65e22",
+    "changed": "42d9ce9afe075e4542bf9114b730cdcfb6b3b9a97e72ac5d4efc11b4f5b9daa8",
+    "commit": "30a18cdac3f2d7cbb26d57a7a4e25ce00cba797b",
+    "dismissals": [],
+    "findings": [],
+    "id": "2174cfa1-5f75-4c4e-8644-7fd9f4286862",
+    "status": "clean"
+  },
+  "round": 6,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-07T10:19:17.650942+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-07T10:50:38.375987+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-07T11:18:24.831402+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-07T12:18:13.569624+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-07T12:33:12.404573+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-07T12:56:28.382104+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-07T13:09:44.326774+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-07T12:18:13.569967+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "src/forge/fasttest.py",
+    "reason": "Harm 3 finding: one more round by the standing rule. Give each always_test file only to the plain pytest step whose path arguments contain it (a step with no path arguments takes every one); a file no step contains goes to the first plain pytest step.",
+    "wait_id": "8e618df0-f433-483b-918e-19df12e85d69",
+    "worker_round": 3
+  },
+  "stuck": {
+    "close": "b7a76992-beb2-4dc2-a239-55ab016b00b3",
+    "head": "b234ce700736eaafaa70ac1bada73fcac7a1ea33",
+    "keys": {},
+    "round": 5
+  },
+  "worker": "codex"
+}
