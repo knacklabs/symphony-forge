@@ -1,0 +1,15 @@
+{
+  "base": "e923c49135fd7176cc159f4d27d247ab5d3ef56a",
+  "branch": "fix/a-forge-work-run-cut-short-by-a-shell-ti",
+  "done_when": "A forge work run stopped partway prints one line saying the round did not finish and the command to run again.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-07T17:50:03.010281+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "A forge work run cut short by a shell time limit leaves its lock and its builder turn unfinished and says nothing, so the lost round shows only later."
+}
