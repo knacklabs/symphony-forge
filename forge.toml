@@ -51,8 +51,8 @@ model = "claude-haiku-5-5"
 effort = "high"
 
 [models.grill.codex]
-model = "gpt-6.1-sol"
-effort = "high"
+model = "gpt-6.1-terra"
+effort = "max"
 
 [models.grill.claude]
 model = "claude-sonnet-5-5"
