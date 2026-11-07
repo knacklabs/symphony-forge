@@ -2,6 +2,7 @@
 
 import ast
 import shutil
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -63,19 +64,34 @@ def test_4_python_expired_chats_are_deleted(repo, gh, tmp_path, tmp_path_factory
         return
     script = client / "scripts/test.mjs"
     text = script.read_text(encoding="utf-8")
-    sync = "  run('uv', ['--directory', 'apps/api', 'sync', '--frozen']);"
+    # The copy must refresh its lock before frozen sync. Match the call rather
+    # than indentation: selection can condition it on the chosen app parts.
+    # The live copied-app run owns this contract; no extra production seam is needed.
+    sync = "run('uv', ['--directory', 'apps/api', 'sync', '--frozen']);"
     if text.count(sync) != 1:
         raise AssertionError(f"copy step did not match one lock command in {script}")
     script.write_text(
         text.replace(
             sync,
-            "  const frozen = environment.UV_FROZEN;\n"
+            "{\n  const frozen = environment.UV_FROZEN;\n"
             "  environment.UV_FROZEN = '0';\n"
             "  run('uv', ['--directory', 'apps/api', 'lock']);\n"
-            "  environment.UV_FROZEN = frozen;\n" + sync,
+            "  environment.UV_FROZEN = frozen;\n  " + sync + "\n  }",
         ),
         encoding="utf-8",
     )
+
+    node = shutil.which("node")
+    if not node:
+        pytest.skip("Node.js is required to list the copied app commands")
+    listed = subprocess.run([node, "scripts/test.mjs", "--list"], cwd=client,
+                            capture_output=True, text=True, timeout=30)
+    assert listed.returncode == 0, listed.stdout + listed.stderr
+    commands = listed.stdout.splitlines()
+    lock = "uv --directory apps/api lock"
+    frozen_sync = "uv --directory apps/api sync --frozen"
+    assert commands.count(lock) == 1, listed.stdout
+    assert commands.index(lock) < commands.index(frozen_sync), listed.stdout
 
     result = _run_live_starter(tmp_path_factory, [(client, Path("."))])
     _require_cases(
