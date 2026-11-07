@@ -118,7 +118,7 @@ def check(top: Path, text: str, ref: str | None = None, *, required: bool = True
                                      lambda: snapshot(top, folder, ref))
     if not any(PurePosixPath(name).suffix.lower() in IMAGES for name in files):
         repo.refuse(("The design folder has no screen images.", next_step))
-    if actual != expected:
+    if not matches(top, expected, actual):
         repo.refuse(("The design folder changed; its tree id no longer matches the plan.", next_step))
     if required:
         from forge import ui_checks
@@ -132,6 +132,26 @@ def check(top: Path, text: str, ref: str | None = None, *, required: bool = True
             repo.refuse(("The design folder fails the design checks:\n" + "\n".join(problems),
                          "fix the named files, or add the shown waiver with a reason, then run forge read <KEY>"))
     return folder
+
+
+def matches(top: Path, expected: str, actual: str) -> bool:
+    """Keep an approval when only Forge-owned renderers changed to the current output."""
+    from forge import story
+
+    if expected == actual:
+        return True
+    if not expected or not actual:
+        return False
+    changed = repo.run("git", "diff", "--no-ext-diff", "--no-renames", "--name-only", "-z",
+                       expected, actual, cwd=top)
+    if changed.returncode:
+        return False
+    renderer = (story.TEMPLATES / "design/support.js").read_text(encoding="utf-8")
+    header = renderer.splitlines()[0] + "\n"
+    return all(PurePosixPath(path).name == "support.js"
+               and (story.show(top, expected, path) or "").startswith(header)
+               and story.show(top, actual, path) == renderer
+               for path in changed.stdout.strip("\0").split("\0"))
 
 
 def snapshot(top: Path, folder: str, ref: str | None = None) -> tuple[str, list[str]]:
@@ -183,7 +203,7 @@ def require_prototype(top: Path, base: str) -> None:
         if front and re.search(r"^status:\s*[\"']?accepted[\"']?\s*$", front[1], re.M):
             expected = re.search(r"^design_tree: ([0-9a-f]+)\s*$", front[1], re.M)
             actual, files = snapshot(top, "docs/design/prototype/", base)
-            if expected and actual == expected[1] and any(PurePosixPath(file).suffix.lower() in IMAGES for file in files):
+            if expected and matches(top, expected[1], actual) and any(PurePosixPath(file).suffix.lower() in IMAGES for file in files):
                 if not (story.show(top, base, "PRODUCT.md") or "").strip():
                     repo.refuse(("This prototype needs PRODUCT.md from the design skill's init before a UI fix can start.",
                                  "run impeccable init, commit PRODUCT.md in a mechanical fix, then retry this UI fix"))
@@ -195,7 +215,7 @@ def prototype_tree(top: Path) -> str:
     """Only committed screens can be the subject of the design decision."""
     actual, files = snapshot(top, "docs/design/prototype/", "HEAD")
     current, _ = snapshot(top, "docs/design/prototype/")
-    if actual != current or not any(PurePosixPath(file).suffix.lower() in IMAGES for file in files):
+    if not matches(top, actual, current) or not any(PurePosixPath(file).suffix.lower() in IMAGES for file in files):
         repo.refuse(("The prototype design needs committed screen images before approval.",
                      "save and commit docs/design/prototype/, then forge decision accept prototype-design --by \"<name>\""))
     return actual

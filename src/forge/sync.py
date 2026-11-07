@@ -476,6 +476,8 @@ def synced(top: Path, cfg: dict[str, Any], base: str, head: str, paths: list[str
     inputs = {"AGENTS.md", "CLAUDE.md", ".claude/settings.json", ".codex/hooks.json",
               ".codex/config.toml", ".gitattributes", ".gitignore", "package.json", ".nvmrc",
               ".node-version", "pyproject.toml"}
+    inputs.update(path for path in paths
+                  if path.startswith("docs/design/") and path.endswith("/support.js"))
     hooks = githooks.husky_folder(top)
     if hooks:
         inputs.update((hooks.relative_to(top) / name).as_posix()
