@@ -164,7 +164,7 @@
     "status": "blocked"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-07T17:49:50.709879+00:00",
@@ -177,8 +177,12 @@
   ],
   "stop": {
     "at": "2026-11-07T18:04:55.160706+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "src/forge/task.py",
-    "wait_id": "079247e3-3cc1-4204-8d03-1e4c012f641d"
+    "reason": "Finding 5 is Harm 3: one more round by the standing rule; finding 2 is a broken existing test",
+    "wait_id": "079247e3-3cc1-4204-8d03-1e4c012f641d",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
