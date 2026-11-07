@@ -4,12 +4,20 @@
   "done_when": "When close keeps the default branch's forge.toml, its line says the change is kept out because the item's Done-when does not name forge.toml and gives the forge fix amend step to allow it",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-07T18:53:13.722341+00:00",
       "step": "start"
     }
   ],
-  "why": "Close silently puts back the default branch's forge.toml when a fix changes it, and the line it prints does not say how to allow the change, so a client agent lost its settings change in an upgrade fix"
+  "stuck": {
+    "close": null,
+    "head": "771ac235c0f46b4258f13271ba279bdc66674b55",
+    "keys": {},
+    "round": null
+  },
+  "why": "Close silently puts back the default branch's forge.toml when a fix changes it, and the line it prints does not say how to allow the change, so a client agent lost its settings change in an upgrade fix",
+  "worker": "codex"
 }
