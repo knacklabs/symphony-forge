@@ -34,10 +34,7 @@ REFUSALS = {
     "merge_failed": ("Merging {default} into {branch} failed; the merge was aborted: {problem}",
                      "forge close {item}"),
     "replay_conflict": ("Replaying this fix's own commits onto {default} conflicts in {files}.",
-                        "in {path}, run git rebase --rebase-merges=rebase-cousins --onto origin/{default} {base}, "
-                        "resolve the conflicts and run git rebase --continue, preserve any earlier "
-                        "merge edits, publish with git push --force-with-lease=refs/heads/{branch}:{lease} "
-                        "origin {branch}, then forge close {item}"),
+                        "forge work {item} to merge the default branch and continue this work, then forge close {item}"),
     "replay_remote": ("The remote branch has commits this checkout does not have, so Forge left it alone.",
                       "fetch and reconcile {branch}, then forge close {item}"),
     "base_merged_by_hand": ("{item} builds on {base}, which was merged on GitHub outside Forge, so its pull request still targets {base}'s branch.",
@@ -728,7 +725,7 @@ def _merge_default(top: Path, item: str, branch: str, default: str,
         tree, *files = merged.stdout.rstrip("\0").split("\0")
         if merged.returncode:
             repo.refuse(REFUSALS["replay_conflict"], default=default, files=", ".join(files),
-                        path=top, base=baseline, branch=branch, lease=lease, item=item)
+                        item=item)
         done = repo.run("git", "rebase", "--rebase-merges=rebase-cousins", "--onto", target,
                         baseline, cwd=top)
         if done.returncode:
@@ -737,7 +734,7 @@ def _merge_default(top: Path, item: str, branch: str, default: str,
             if not files:
                 done.check_returncode()
             repo.refuse(REFUSALS["replay_conflict"], default=default, files=", ".join(files),
-                        path=top, base=baseline, branch=branch, lease=lease, item=item)
+                        item=item)
         if repo.git("rev-parse", "HEAD^{tree}", cwd=top) != tree:
             proof = review.commit_paragraph(top, baseline, "Proof list:", original)
             repo.git("read-tree", "-u", "-m", tree, cwd=top)
