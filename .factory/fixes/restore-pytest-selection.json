@@ -1,6 +1,13 @@
 {
   "base": "43d9a385ed1f9ba8dea28244a4c4c63c242214dd",
   "branch": "fix/restore-pytest-selection",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1b69f-aea2-7512-a3d7-f73ccdfb99ee",
+    "head": null,
+    "start": "1220002b32e2fcdbf7b2043db25ae50c6c384417"
+  },
   "done_when": "Every pytest command Forge narrowed before the chained-command change is narrowed again, and main's full run on Linux and Windows is green",
   "fix_kind": "mechanical",
   "kind": "fix",
