@@ -4,12 +4,20 @@
   "done_when": "One close after accepting findings runs the checks and reports Ready, or stops and names the failing check.",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-07T17:49:38.109975+00:00",
       "step": "start"
     }
   ],
-  "why": "After the owner accepts the remaining review findings, the first close prints a clean review but the item is not Ready, so the owner has to run close a second time."
+  "stuck": {
+    "close": null,
+    "head": "f8f4fd18efddfab2c3fff0241ec89959eb5bcc11",
+    "keys": {},
+    "round": null
+  },
+  "why": "After the owner accepts the remaining review findings, the first close prints a clean review but the item is not Ready, so the owner has to run close a second time.",
+  "worker": "codex"
 }
