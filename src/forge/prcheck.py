@@ -240,16 +240,10 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
             version = package.get("engines", {}).get("node")
             version = version if isinstance(version, str) and version.strip() else "22"
             node += f"        with:\n          node-version: {json.dumps(version)}\n"
-        if cfg.get("repo") != "forge-source":
-            lock = next((name for name in ("pnpm-lock.yaml", "package-lock.json")
-                         if (top / name).is_file()), None)
-            if lock:
-                manager = "pnpm" if lock == "pnpm-lock.yaml" else "npm"
-                if manager == "pnpm":
-                    node = ("      - uses: pnpm/action-setup@v4\n"
-                            "        if: steps.parent-tests.outputs.reuse != 'true'\n" + node)
-                node += (f"          cache: {manager}\n"
-                         f"          cache-dependency-path: {lock}\n")
+        if (cfg.get("repo") != "forge-source" and not (top / "pnpm-lock.yaml").is_file()
+                and (top / "package-lock.json").is_file()):
+            node += ("          cache: npm\n"
+                     "          cache-dependency-path: package-lock.json\n")
     source = cfg.get("repo") == "forge-source"
     configured_groups = cfg.get("groups")
     warning = repo.group_warning(top, cfg)
@@ -274,6 +268,15 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
                  "        if: steps.parent-tests.outputs.reuse != 'true'\n"
                  "        with:\n          path: ~/.npm\n"
                  "          key: npm-jest-30.2.0-vitest-3.2.4\n" if source else "")
+    if not source and (top / "pnpm-lock.yaml").is_file():
+        # Cache the store without choosing or installing the client's pnpm version.
+        npm_cache = ("      - uses: actions/cache@v4\n"
+                     "        if: steps.parent-tests.outputs.reuse != 'true'\n"
+                     "        with:\n          path: |\n"
+                     "            ~/.local/share/pnpm/store\n"
+                     "            ~/Library/pnpm/store\n"
+                     "            ~/AppData/Local/pnpm/store\n"
+                     "          key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}\n")
     full_npm_cache = npm_cache.replace("        if: steps.parent-tests.outputs.reuse != 'true'\n", "")
     full_triggers = ("  schedule:\n    - cron: '0 3 * * *'\n"
                      "  workflow_dispatch:\n" if full_run else "")

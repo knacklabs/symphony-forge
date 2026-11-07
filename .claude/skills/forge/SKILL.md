@@ -1121,9 +1121,12 @@ if the settings do not answer it. Pass
    repo's Python runner for `test`; keep Forge outside the project, and keep lint and other
    checks in `test`.
    Forge writes no `fast_test` by itself.
-   Client CI caches npm or pnpm downloads by the root lockfile and enables uv's package cache.
-   New starter Dockerfiles install from manifests and frozen lockfiles before copying source,
-   so source edits reuse the dependency layer. Sync updates existing repos' workflows, but
+   Client CI caches npm downloads and the default pnpm stores by the root lockfile and enables
+   uv's package cache. It keeps the app's own pnpm setup and version.
+   New starter Dockerfiles collect all package manifests in a separate stage, then install from
+   those manifests and frozen lockfiles before the build stage copies source. The dependency
+   layer supports added or removed workspace packages and keeps `.npmrc` outside the image.
+   Sync updates existing repos' workflows, but
    keeps app Dockerfiles unchanged. Update an existing app's Dockerfile through its own fix.
    Cache packages and image layers only, never a test database. The generated workflow has
    no image-build job; image-layer reuse needs the app's existing image builder and its cache.

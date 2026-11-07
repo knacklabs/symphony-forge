@@ -1,18 +1,16 @@
+FROM node:24-bookworm-slim AS manifests
+
+WORKDIR /source
+COPY . .
+RUN node -e 'const fs = require("node:fs"), path = require("node:path"); for (const file of fs.globSync("**/package.json")) { const target = path.join("../manifests", file); fs.mkdirSync(path.dirname(target), { recursive: true }); fs.copyFileSync(file, target); }'
+
 FROM node:24-bookworm-slim AS web-build
 
 ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 RUN corepack enable
 WORKDIR /app
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
-COPY apps/web/package.json ./apps/web/package.json
-COPY libs/auth/contracts/package.json ./libs/auth/contracts/package.json
-COPY libs/core/web/package.json ./libs/core/web/package.json
-COPY libs/history/contracts/package.json ./libs/history/contracts/package.json
-COPY libs/organisations/contracts/package.json ./libs/organisations/contracts/package.json
-COPY libs/projects/contracts/package.json ./libs/projects/contracts/package.json
-COPY libs/shared/api-types/package.json ./libs/shared/api-types/package.json
-COPY libs/shared/ui/package.json ./libs/shared/ui/package.json
-COPY libs/shared/util/package.json ./libs/shared/util/package.json
+COPY pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY --from=manifests /manifests/ ./
 RUN corepack pnpm install --frozen-lockfile
 COPY . .
 RUN corepack pnpm run build
