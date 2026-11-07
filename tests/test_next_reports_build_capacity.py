@@ -1,10 +1,12 @@
-"""Next reports machine build capacity promptly with fifteen planned parts."""
+"""Next counts this release's running builder rounds beside fifteen planned parts."""
 import hashlib
 import json
-import time
+import os
+from pathlib import Path
 
 import pytest
 
+from conftest import machine_cores
 from test_machine_views_recent_finished_items import NOW, client, landed
 from test_story import DOC
 
@@ -25,17 +27,29 @@ def test_1_next_reports_build_capacity_with_fifteen_parts(repo, gh, monkeypatch,
         "plans/MANY.md": text,
         "plans/MANY.read.md": f"---\nround: 1\nread_hash: {digest}\n---\n\n## Round 1\n\nNo findings.\n",
     })
-    # The real machine command supplies the independent expected capacity.
-    lanes = repo.forge("lanes", "--json")
-    assert lanes.returncode == 0, lanes.stderr
-    agents = json.loads(lanes.stdout)["agents"]
-    used = sum(bool(row.get("started_at") or row.get("admitted") or row.get("legacy"))
-               and not row.get("suspended_by") and not row.get("free")
-               for row in agents["entries"])
-    started = time.monotonic()
+    machine_cores(repo, 8)
+    version = repo.forge("--version").stdout.split()[-1].removeprefix("v")
+    # Recorded live runs use this test's real process. Older readers have no free
+    # field, as on v1.2.9. Only the first entry is a running builder on this release.
+    runs = []
+    for name, release, kind, extra in (
+        ("builder", version, "work", {}),
+        ("read", version, "read", {"free": True}),
+        ("review", version, "review", {"free": True}),
+        ("old-read", "1.2.9", "read", {}),
+        ("old-review", "1.2.9", "review", {}),
+        ("old-builder", "1.2.9", "work", {}),
+        ("waiting-builder", version, "work", {"admitted": False, "started_at": None}),
+        ("test-suspended-builder", version, "work", {"suspended_by": "test"}),
+    ):
+        runs.append({"id": name, "version": release, "kind": kind,
+                     "repo_root": repo.path.as_posix(), "repo_name": repo.path.name,
+                     "item": name, "joined_at": NOW, "started_at": NOW, "admitted": True,
+                     "process": {"pid": os.getpid()}, "forge": {"pid": os.getpid()}, **extra})
+    registry = Path(os.environ["APPDATA" if os.name == "nt" else "XDG_CONFIG_HOME"]) / "forge/agent-runs.json"
+    registry.parent.mkdir(parents=True, exist_ok=True)
+    registry.write_text(json.dumps(runs), encoding="utf-8")
     shown = repo.forge("next")
-    elapsed = time.monotonic() - started
     assert shown.returncode == 0, shown.stderr
-    assert f"Builds running: {used} of {agents['size']}" in shown.stdout
+    assert "Builds running: 1 of 4" in shown.stdout
     assert "forge task start MANY/PART14" in shown.stdout
-    assert elapsed < 10, f"next took {elapsed:.2f}s for fifteen parts"

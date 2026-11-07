@@ -230,8 +230,9 @@ def _report(top: Path, history: dict[str, Any] | None = None,
             facts: dict[str, Any] | None = None) -> tuple[list[str], list[str]]:
     """The lines `forge next` prints, and one state line per story and fix with its human touches."""
     agents = machine.view()["agents"]
-    running = sum(not run.get("free") and not run.get("suspended_by") and bool(
-        run.get("admitted") or run.get("started_at") or run.get("legacy")) for run in agents["entries"])
+    running = sum(run.get("version") == __version__ and run.get("kind") == "work"
+        and not run.get("free") and not run.get("suspended_by") and bool(
+            run.get("admitted") or run.get("started_at")) for run in agents["entries"])
     lines: list[str] = []
     states: list[str] = []
     fixes: list[tuple[dict[str, Any], list[str]]] = []
