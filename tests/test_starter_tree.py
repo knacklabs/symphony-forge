@@ -316,25 +316,23 @@ def _run_live_starter(tmp_path_factory, sources, required_output=()):
             ).stdout.splitlines()
             assert changed_files == [Path("apps/web/src/index.css").as_posix()], changed_files
 
-            # Shared smoke consumers need the full library report, even when web has no tests.
-            formats = copy / "test-results/formats.xml"
-            formats.rename(formats.with_name("full-formats.xml"))
             process = subprocess.Popen(
-                ["node", Path("scripts") / "test.mjs", base], cwd=copy, env=env,
+                ["node", Path("scripts") / "test.mjs", "--list", base], cwd=copy, env=env,
                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, start_new_session=True,
             )
             try:
-                selected, _ = process.communicate(timeout=1800)
+                selected, _ = process.communicate(timeout=120)
             except subprocess.TimeoutExpired:
                 selected, _ = _stop_process_group(process)
-                pytest.fail(f"affected starter smoke command timed out after 1800 seconds\n{selected}")
+                pytest.fail(f"affected starter command listing timed out after 120 seconds\n{selected}")
             assert process.returncode == 0, selected
             assert "Affected parts: web" in selected, selected
+            for target in ("lint", "typecheck", "test", "e2e"):
+                assert f"nx run web:{target}\n" in selected, selected
+            assert "docker compose -f compose.test.yml up" in selected, selected
             assert "playwright test --config apps/web/playwright.config.ts" in selected, selected
             assert "apps/api/vitest.config.ts" not in selected, selected
             assert "test:api" not in selected, selected
-            formats.rename(formats.with_name("affected-formats.xml"))
-            formats.with_name("full-formats.xml").rename(formats)
         return {
             "folder": copy,
             "api": _junit_cases(copy / "test-results" / "api.xml"),
