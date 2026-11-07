@@ -489,6 +489,12 @@ $kinds
 Title a finding of a listed kind `Must: <kind>: <gap>`. It holds the work even for a rare case
 or in a light review. The worker cannot decline it. Only the owner can accept it.
 
+<!-- conflict-review -->
+This merge brought in the default branch. Earlier lines were reviewed clean at $reviewed.
+Review only the conflict repairs and later worker edits in this diff; read other code as context.
+A P1 or worse problem in these lines is a finding. Keep earlier findings and their answers:
+$findings
+
 <!-- repair-review -->
 ## Repair review
 The previous review checked commit $reviewed. From this second or later round, check each

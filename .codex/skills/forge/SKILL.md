@@ -1913,8 +1913,9 @@ Close fetches the default branch but merges it in only for a trial-merge clash, 
 reports the pull request conflicting or behind under its up-to-date rule. Unrelated main changes
 add no merge. Close checks GitHub's clash state at every look, even with green checks; a clash
 stops a hand-run close and says to run close again. An UNKNOWN answer keeps it waiting.
-When close merges the latest default branch, an unchanged branch diff keeps the last review and
-its dismissals, including `--dismiss` given in that close command. A changed diff needs a new review.
+When close merges the latest default branch, an earlier clean review covers a clean merge;
+only conflict repairs and later worker edits need review. The usual tests run on the merged code.
+An unchanged branch diff keeps the last review and its dismissals, including `--dismiss` given in that close command.
 Before reusing serious findings, close also checks the reviewed files and contract against the
 current head. A repair brought in from the default branch needs a new review, even if the branch
 diff stayed the same. Land uses the same check through close.
