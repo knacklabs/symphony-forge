@@ -1,6 +1,13 @@
 {
   "base": "5393cf3ed78f0bae68f7bf2762dbcc9675a03710",
   "branch": "fix/start-full-run-early",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1b74e-3325-7b12-b09a-b17785d2ab8b",
+    "head": null,
+    "start": "4afff25651373e4cc7a618ed27bc945701be7326"
+  },
   "done_when": "The guide tells the agent to start the full run right after the last product merge of a release or sign-off and to prepare notes while it runs, following that same run",
   "fix_kind": "mechanical",
   "kind": "fix",
