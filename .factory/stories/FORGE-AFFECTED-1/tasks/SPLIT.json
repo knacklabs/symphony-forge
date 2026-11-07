@@ -252,7 +252,7 @@
     "id": "18497b4f-355b-48ab-b6f5-3bb360940ac8",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -265,10 +265,13 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "f723563f09a0313dcfcad570f40d091200bfcd66",
-    "keys": {},
-    "round": null
+    "close": "dfec3f38-8d4d-4549-a010-923f358f5fe7",
+    "head": "5a5b119c2b142ba6e7ede2012e9594af4c38d488",
+    "keys": {
+      "the open P0 keep distinct playwright steps in the suggested fast command in src/forge/quicktest.py": 1,
+      "the open P0 preserve javascript tests in advice for a piped mixed command in src/forge/quicktest.py": 1
+    },
+    "round": 1
   },
   "worker": "codex"
 }
