@@ -4,12 +4,20 @@
   "done_when": "Merging the default branch into an item resolves a conflict in .test_durations alone by keeping both sides' entries, with no builder round, and any other conflict still stops as before",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-07T19:06:06.194586+00:00",
       "step": "start"
     }
   ],
-  "why": "When several items run in parallel, each one that adds tests refreshes .test_durations, so every later merge of main stops on a conflict in that file and a builder round or a person has to resolve it"
+  "stuck": {
+    "close": null,
+    "head": "ed305f54949965406e0bac610e387305e168f1ad",
+    "keys": {},
+    "round": null
+  },
+  "why": "When several items run in parallel, each one that adds tests refreshes .test_durations, so every later merge of main stops on a conflict in that file and a builder round or a person has to resolve it",
+  "worker": "codex"
 }
