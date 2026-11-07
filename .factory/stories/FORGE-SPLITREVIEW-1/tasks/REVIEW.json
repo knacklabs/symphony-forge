@@ -1,5 +1,12 @@
 {
   "branch": "task/FORGE-SPLITREVIEW-1-REVIEW",
+  "chat": {
+    "approval": "1298cc87910be7fd4281ad240a59b068fc1d0703afd9a78834b5a675cac84f12",
+    "claude": null,
+    "conversation": "01a1b3be-c802-7383-ad19-12b4233a5cab",
+    "head": null,
+    "start": "58c70b2ee0852be25aad6d9001da91bdef2e3c52"
+  },
   "round": 1,
   "status": "working",
   "steps": [
