@@ -4,12 +4,20 @@
   "done_when": "The worker brief and test-audit guidance let a builder run the exact new, changed or previously failing tests red then green locally before committing, while wider tests stay in CI",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-07T18:12:33.443417+00:00",
       "step": "start"
     }
   ],
-  "why": "In CI mode the worker brief tells builders to commit a repair without checking that its own failing test now passes, so a repair that still fails costs a full review and CI cycle"
+  "stuck": {
+    "close": null,
+    "head": "2957a415429350b38eca81cc6fcd4c8ba39a0c46",
+    "keys": {},
+    "round": null
+  },
+  "why": "In CI mode the worker brief tells builders to commit a repair without checking that its own failing test now passes, so a repair that still fails costs a full review and CI cycle",
+  "worker": "codex"
 }
