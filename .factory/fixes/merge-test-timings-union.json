@@ -1,0 +1,15 @@
+{
+  "base": "3168eb540a14d7dd62ac62dd03842363b6e52afb",
+  "branch": "fix/merge-test-timings-union",
+  "done_when": "Merging the default branch into an item resolves a conflict in .test_durations alone by keeping both sides' entries, with no builder round, and any other conflict still stops as before",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-07T19:06:06.194586+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "When several items run in parallel, each one that adds tests refreshes .test_durations, so every later merge of main stops on a conflict in that file and a builder round or a person has to resolve it"
+}
