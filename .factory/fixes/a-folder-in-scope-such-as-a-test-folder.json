@@ -1,0 +1,15 @@
+{
+  "base": "e923c49135fd7176cc159f4d27d247ab5d3ef56a",
+  "branch": "fix/a-folder-in-scope-such-as-a-test-folder",
+  "done_when": "A part whose Scope shares only a test folder with another open part starts without waiting, and a refusal caused by a real scope overlap names the shared path and says it is a scope overlap.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-07T17:49:50.709879+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "A folder in Scope, such as a test folder, overlaps every part that touches any file under it, so parts across stories wait on each other, and the refusal says only that the part builds on another part without naming the shared path or saying it is a scope overlap."
+}
