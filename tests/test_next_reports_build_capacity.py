@@ -13,6 +13,7 @@ from test_story import DOC
 STORY = "next-build-capacity"
 
 
+@pytest.mark.platform
 @pytest.mark.parametrize("history", ["new", "adopted-v1.2.2"])
 def test_1_next_reports_build_capacity_with_fifteen_parts(repo, gh, monkeypatch, history):
     client(repo, gh, history)
