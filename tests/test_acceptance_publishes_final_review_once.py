@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 
+from conftest import _install
 from test_close import blocked, body, env, finding  # noqa: F401
 from test_two_round_limit import client
 from test_reviewchoice_skip import _default_moves_during_checks
@@ -17,6 +18,11 @@ STORY = "review-findings-split-from-close-pushes"
                          ids=["new", "earlier-adopted", "default-moves"])
 def test_1_acceptance_publishes_once_after_final_review_records(env, previous, moved, tmp_path, monkeypatch):
     client(env, previous)
+    config = (env.repo.path / "forge.toml").read_text("utf-8")
+    config = "\n".join(line for line in config.splitlines()
+                       if not line.startswith(("merge =", "test_place =")))
+    env.commit(env.repo.path, "forge.toml", 'merge = "agent"\ntest_place = "ci"\n' + config + "\n")
+    env.repo.git("push", "-q", "origin", "main")
     item, where = env.start_fix()
     defect = finding("P1", "Greeting needs more detail")
     defect["body"] = "Gain 4, Work 1, Harm 2\nCase: normal use - Readers miss the detail."
@@ -34,6 +40,26 @@ def test_1_acceptance_publishes_once_after_final_review_records(env, previous, m
     reason = "Keep this greeting for now"
     if moved:
         _default_moves_during_checks(env, tmp_path, where, False, monkeypatch)
+    else:
+        # The CI review check must run the real command on the published head,
+        # rather than report a canned success before close writes its ready record.
+        gh = (env.repo.bin / "gh").read_text("utf-8")
+        needle = 'responses = here / "gh-responses.json"\n'
+        inject = (
+            "if args[:4] == ['api', '--paginate', '--jq', '.check_runs[]']:\n"
+            "    head = args[-1].split('/commits/')[1].split('/')[0]\n"
+            f"    checked = subprocess.run([sys.executable, str(here / 'forge'), 'hook', 'pr-check', "
+            f"'--base', 'origin/main', '--head', head, '--branch', {json.dumps('fix/' + item)}], "
+            f"cwd={json.dumps(where.as_posix())}, capture_output=True, text=True, encoding='utf-8', timeout=60)\n"
+            "    append_json(here / 'acceptance-pr-checks.jsonl', "
+            "{'head': head, 'exit': checked.returncode, 'output': checked.stdout + checked.stderr})\n"
+            "    sys.stdout.write(json.dumps({'name': 'tests', 'status': 'completed', 'conclusion': 'success'}) + '\\n')\n"
+            "    sys.stdout.write(json.dumps({'name': 'forge-pr-check', 'status': 'completed', "
+            "'conclusion': 'failure' if checked.returncode else 'success'}) + '\\n')\n"
+            "    sys.exit(0)\n"
+        )
+        assert needle in gh
+        _install(env.repo.bin, "gh", gh.replace(needle, inject + needle, 1))
 
     accepted = env.close(item, "--resolve", "accept", "--reason", reason)
 
@@ -48,6 +74,10 @@ def test_1_acceptance_publishes_once_after_final_review_records(env, previous, m
              if line.split()[2] == f"refs/heads/fix/{item}"]
     assert len(heads) == (2 if moved else 1), heads
     assert heads[-1] == env.repo.git("rev-parse", "HEAD", cwd=where)
+    if not moved:
+        checked = [json.loads(line) for line in
+                   (env.repo.bin / "acceptance-pr-checks.jsonl").read_text("utf-8").splitlines()]
+        assert checked and all(row["head"] == heads[-1] and row["exit"] == 0 for row in checked), checked
     published = body(env.gh_calls("pr", "edit")[-1])
     assert "Review: clean, 1 dismissed" in published
     assert f"Human accepted the remaining finding: {reason}" in published
