@@ -130,6 +130,12 @@ def test_2_close_commits_main_settings_with_head_pin_unless_settings_are_allowed
     assert client.git("show", "HEAD:forge.toml", cwd=folder) == expected.strip()
     repaired = case in ("stale", "checks")
     assert closed.stdout.count(MESSAGE) == int(repaired)
+    advice = "The change was kept out because this item's Done-when does not name forge.toml."
+    assert closed.stdout.count(advice) == int(repaired)
+    if repaired:
+        assert ('forge fix amend correct-spelling --done "<done when naming forge.toml>" '
+                '--because "<why>"') in closed.stdout
+        assert "forge work correct-spelling" in closed.stdout
     commits = client.git("log", "--format=%H", f"{before}..HEAD", "--", "forge.toml", cwd=folder).splitlines()
     assert len(commits) == int(repaired)
     assert client.git("status", "--porcelain", cwd=folder) == ""
