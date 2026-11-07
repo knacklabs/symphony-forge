@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/repo.py\tGate: Existing Codex lifecycle tests still expect Fast by default\tcodex-fast-off-by-default",
+      "kind": "bug",
+      "path": "src/forge/repo.py",
+      "line": 596,
+      "text": "Gate: Existing Codex lifecycle tests still expect Fast by default",
+      "from": "blocking",
+      "item": "codex-fast-off-by-default",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/repo.py\tNot done: Native Codex workers can run with Fast when the repo has no codex_fast setting",
+      "kind": "edge",
+      "path": "src/forge/repo.py",
+      "line": 596,
+      "text": "Not done: Native Codex workers can run with Fast when the repo has no codex_fast setting",
+      "from": "review",
+      "item": "codex-fast-off-by-default",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
