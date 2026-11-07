@@ -1,6 +1,13 @@
 {
   "base": "e923c49135fd7176cc159f4d27d247ab5d3ef56a",
   "branch": "fix/after-the-owner-accepts-the-remaining-re",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1b722-3b43-72f2-9cb5-45aecbccfcea",
+    "head": null,
+    "start": "436f690b6fd35763ba6fb3b72f15425f2d24f02f"
+  },
   "done_when": "One close after accepting findings runs the checks and reports Ready, or stops and names the failing check.",
   "fix_kind": "backend",
   "kind": "fix",
