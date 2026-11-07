@@ -10,7 +10,9 @@ from pathlib import Path
 import pytest
 
 from conftest import _install
+from test_close import env  # noqa: F401
 from test_setup import _fresh_client
+from test_upgrade_command import RELEASE, unsynced_up  # noqa: F401
 
 STORY = "FORGE-AFFECTED-1"
 ROOT = Path(__file__).resolve().parents[1]
@@ -44,7 +46,7 @@ def _run_list(node: str, client: Path, tools: Path, affected, base: str | None):
 
 
 @pytest.mark.platform
-def test_5_typescript_starter_selects_its_affected_parts(repo, gh, tmp_path):
+def test_5_typescript_starter_selects_its_affected_parts(repo, gh, tmp_path, unsynced_up):
     # Contract: init keeps the full nightly command and adds a selectable command, and the
     # generated app lists only the suites for the selected projects. A missing fast_test,
     # stale script, or wrong project target would break a new app's pull request check.
@@ -135,3 +137,27 @@ def test_5_typescript_starter_selects_its_affected_parts(repo, gh, tmp_path):
     assert adopted_settings["test"] == 'python -c "print(123)"'
     assert "fast_test" not in adopted_settings
     assert not (repo.path / "scripts/affected.mjs").exists()
+
+    # The historical fixture has no workflow. The first sync above supplies the current
+    # workflow; an actual installer upgrade must then change only its release pin.
+    configuration = (repo.path / "forge.toml").read_text(encoding="utf-8")
+    workflow = (repo.path / ".github/workflows/forge.yml").read_text(encoding="utf-8")
+    owned = {path.relative_to(repo.path).as_posix(): path.read_bytes()
+             for folder in ("apps", "libs", "scripts")
+             for path in (repo.path / folder).rglob("*") if path.is_file()}
+    repo.git("add", "-A")
+    repo.git("commit", "-q", "-m", "Sync the earlier adopted app")
+    repo.git("switch", "-q", "main")
+    repo.git("merge", "-q", "--ff-only", "fix/agent-accounts-upgrade")
+    repo.git("push", "-q", "origin", "main")
+    upgraded = unsynced_up.run(RELEASE)
+    assert upgraded.returncode == 0, upgraded.stdout + upgraded.stderr
+    upgraded_root = unsynced_up.folder
+    assert (upgraded_root / "forge.toml").read_text(encoding="utf-8") == configuration.replace(
+        json.dumps(version), json.dumps(RELEASE))
+    assert (upgraded_root / ".github/workflows/forge.yml").read_text(
+        encoding="utf-8") == workflow.replace(version, RELEASE)
+    after_upgrade = {path.relative_to(upgraded_root).as_posix(): path.read_bytes()
+                     for folder in ("apps", "libs", "scripts")
+                     for path in (upgraded_root / folder).rglob("*") if path.is_file()}
+    assert after_upgrade == owned
