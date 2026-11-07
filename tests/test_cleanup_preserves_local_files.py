@@ -33,7 +33,7 @@ pytestmark = pytest.mark.platform
 def test_1_cleanup_keeps_and_names_local_files(env, tmp_path, previous, command, local):
     _client(env, tmp_path, previous)
     item, where = env.start_fix({"app.py": "print('hello')\n",
-                                 ".gitignore": "report.txt\nuv.lock\nnode_modules/\n"})
+                                 ".gitignore": "report.txt\nuv.lock\nnode_modules/\nforge.local.toml\n"})
     env.open_pr("")
     closed = env.close(item)
     assert closed.returncode == 0, closed.stdout + closed.stderr
