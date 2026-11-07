@@ -53,7 +53,7 @@
       "gain": 4,
       "harm": 3,
       "line": 190,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -66,7 +66,7 @@
       "gain": 3,
       "harm": 3,
       "line": 44,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -89,80 +89,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "0e9495d07adc7f40f9d4a30744f2bfb97406ed41f2c43688833df36239592a6a",
-    "changed": "87e39757ce0f0b446a8cc0c44cb71ffa4c3c25ce7186b3102a22fbb710be581d",
-    "commit": "11595d0d62bfa0007ffbebd4c4d2167660bca827",
+    "branch_diff": "0cbedb8c4e35b4e3653f8138a1967f21581a17b070563c17d854898279da8a8e",
+    "changed": "9ce64d30403370521daf7cbbf7874f9c222fea85b99ca825ee9da3bd780d3fb5",
+    "commit": "e50d2140855f54ca6e7f8efc582f91cf54664922",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 5, Work 1, Harm 3\nRaise: Not done\nCase: normal use - Two independent tasks list the same file and the planner runs a plan check. `repo.refuse` expects a `(problem, next_step)` tuple (`src/forge/repo.py:79-86`), but this call passes one string. It raises `ValueError` instead of producing a refusal, so neither `forge read` nor the approval check names the tasks or gives the next step. This misses the owner item: \u201cA plan with two tasks whose Scopes can touch the same file, and no After link between them, is refused before approval, and the refusal names both tasks.\u201d",
-        "file": "src/forge/plan_scope.py",
-        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
-        "gain": 5,
-        "harm": 3,
-        "line": 23,
-        "priority": "P1",
-        "title": "Not done: A plan with overlapping task Scopes ... the refusal names both tasks",
-        "work": 1
-      },
-      {
-        "body": "Gain 4, Work 3, Harm 3\nRaise: Not done\nCase: normal use - Two tasks name different edits to the same file in their Scope cells. `story._cell_paths` retains annotations after backticked paths and splits only on commas (`src/forge/story.py:1149-1151`), so strings such as `file.py` followed by `(API changes)` and the same path followed by `(UI changes)` do not start with each other. Paths joined with `and` can also leave the second path undiscovered. This format occurs in existing plans: `plans/FORGE-AFFECTED-1.md:114-115` lists the same guide files in two unordered tasks with different annotations. The check lets such a plan reach approval even after the refusal call is fixed.",
-        "file": "src/forge/plan_scope.py",
-        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
-        "gain": 4,
-        "harm": 3,
-        "line": 21,
-        "priority": "P1",
-        "title": "Not done: A plan with overlapping task Scopes ... is refused before approval",
-        "work": 3
-      },
-      {
-        "body": "Gain 4, Work 3, Harm 3\nRaise: Not done\nCase: normal use - A client upgrades Forge while a story worktree is still open, then runs `forge read` from that worktree. The upgrade changes the default branch's pin, but the existing story keeps its old pin; `repo.check_pin` runs that older release before reaching this new check (`src/forge/repo.py:962-1020` and `src/forge/cli.py:143-145`). The old release can complete the read without the overlap refusal until someone manually merges the upgrade into the story. The new test creates its story only after the upgrade (`tests/test_splitreview_plan.py:65-77`), so it does not exercise this lifecycle. The owner item also requires new and existing client repos to get both changes.",
-        "file": "src/forge/story.py",
-        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
-        "gain": 4,
-        "harm": 3,
-        "line": 202,
-        "priority": "P1",
-        "title": "Not done: Stories already in flight get that refusal at their next plan check with a plain next step",
-        "work": 3
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - A task started before the upgrade resumes its existing worker conversation after a clean merge of the upgraded default branch. The new rule is only in the full template, while `src/forge/worker.py:272-277` sends a continued conversation the shortened brief from `worker.py:617-637`. Its earlier brief predates this rule and explicitly allowed needed changes outside Scope, so the resumed worker is never told to leave files owned by another open task and name them in its handback.\nAdds work: repeat the ownership rule on resumed rounds; F 3 x H 2 = 6; 2 x C = 2",
-        "file": "src/forge/templates/brief.md",
-        "gain": 4,
-        "harm": 3,
-        "line": 190,
-        "priority": "P1",
-        "title": "Deliver the ownership rule to workers resumed after an upgrade",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Gate\nCase: normal use - The test suite runs its overlap case with stacking disabled. Changing C's `After` from `none` to `A` also changes the shared fixture imported by `tests/test_fullcap_start.py:16-27`. That test still expects the scope-overlap refusal at line 53, but `src/forge/task.py:518-527` now takes the earlier explicit-dependency refusal and says C waits for A to merge. The assertion therefore fails, and the changed fixture no longer exercises stacking caused solely by an overlapping Scope.",
-        "file": "tests/test_stack_start.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 44,
-        "priority": "P1",
-        "title": "Gate: test_2_next_lists_only_parts_task_start_accepts",
-        "work": 2
-      },
-      {
-        "body": "Gain 2, Work 3, Harm 2\nCase: normal use - A task waits for a task in another story, which itself waits for the first task owning the shared file. `waits` follows only IDs in the current story's `by_id`, so it treats that valid sequence as unordered. For example, the dependency chain in `plans/FORGE-DATABASE-1.md:483-485` and `plans/FORGE-LIBS-1.md:317` would be rejected if the redundant direct IDS link were omitted. Fixing the refusal call alone would still incorrectly reject the plan.\nAdds work: follow After paths through other story plans; F 2 x H 2 = 4; 2 x C = 4",
-        "file": "src/forge/plan_scope.py",
-        "gain": 2,
-        "harm": 2,
-        "line": 12,
-        "priority": "P2",
-        "title": "Follow-up: Recognize transitive After links through another story",
-        "work": 3
-      }
-    ],
-    "id": "02d10618-fc30-49b3-b937-0404e6eacf70",
-    "status": "blocked"
+    "findings": [],
+    "id": "f905cf42-c1a7-4fd1-b8b4-584968323d8b",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-07T06:52:39.902138+00:00",
@@ -170,6 +106,10 @@
     },
     {
       "at": "2026-11-07T07:07:21.704337+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-07T07:25:52.060999+00:00",
       "step": "review"
     }
   ],
