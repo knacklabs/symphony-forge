@@ -1,0 +1,15 @@
+{
+  "base": "5393cf3ed78f0bae68f7bf2762dbcc9675a03710",
+  "branch": "fix/codex-fast-off-by-default",
+  "done_when": "A new repo and an upgraded repo with no codex_fast setting run Codex without Fast, and Fast runs only when forge.toml sets codex_fast to needed or always",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-07T18:49:17.793888+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Codex Fast is on by default: a repo that leaves codex_fast out gets Fast for every fix and every repair round, and the owner wants it off unless a repo opts in"
+}
