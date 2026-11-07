@@ -11,14 +11,83 @@
   "done_when": "The smoke fixtures share downloaded packages while keeping separate app copies, and the starter smoke job is measurably faster",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [
+    {
+      "area": "_run_live_starter() in tests/test_starter_tree.py",
+      "file": "tests/test_starter_tree.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 189,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: The smoke fixtures share downloaded packages while keeping separate app copies, and the starter smoke job is measurably faster",
+      "work": 2
+    },
+    {
+      "area": "lint_starter() in tests/test_libs_layout.py",
+      "file": "tests/test_libs_layout.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 103,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: smoke-fixture download reuse",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "b221671d7e7f65620cfbdf58e13dbe62647aa8746d1db38e36ec43f9a3494ef4",
+    "changed": "9a5c62069243be1950b81ea8f63d7c11b5a90dd74fac5b8188dfb98cdc494ac6",
+    "commit": "4cad8b8a9873693ce02e4841ea2397cca4bcca92",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 2\nRaise: Not done\nCase: normal use - running the scheduled Linux starter-smoke job.\nThe proof compares isolated installs at 17.01 and 5.57 seconds, but explicitly reports no before-and-after timing for the starter-smoke job. It therefore does not establish the requested job-level improvement. The pull-request workflow also excludes these changed test files from its trigger (.github/workflows/starter-smoke.yml:7-11), so a pending PR check will not supply that measurement.",
+        "file": "tests/test_starter_tree.py",
+        "gain": 4,
+        "harm": 2,
+        "line": 189,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: The smoke fixtures share downloaded packages while keeping separate app copies, and the starter smoke job is measurably faster",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 2\nRaise: Test\nCase: normal use - a smoke run uses separate stores after a fixture configuration regression.\nNo suite test checks that the two actual fixtures reuse downloads while retaining separate app copies. The named lint test requests only lint_starter (tests/test_libs_layout.py:209-220), and the live starter test checks application results, not reuse (tests/test_starter_tree.py:519-522). Restoring either fixture's private store would therefore pass those checks. The three-copy measurement is a one-off check, and the reported 103-test run had live smoke disabled. An executable regression check needs to exercise the fixture behavior and fail when reuse or app separation breaks.",
+        "file": "tests/test_libs_layout.py",
+        "gain": 3,
+        "harm": 2,
+        "line": 103,
+        "priority": "P1",
+        "title": "Gate: smoke-fixture download reuse",
+        "work": 2
+      }
+    ],
+    "id": "98de47e1-d779-47d7-b352-ac3627eb8589",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-07T18:12:56.375315+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-07T19:06:49.305287+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-11-07T19:06:49.319011+00:00",
+    "file": "tests/test_starter_tree.py",
+    "wait_id": "aea985f8-8919-47c7-b5bd-84d1f5045ca8"
+  },
   "stuck": {
     "close": null,
     "head": "e125aa11891fcb28bb03787cef603bbbdc338f6a",

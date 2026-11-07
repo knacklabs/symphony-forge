@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\ttests/test_starter_tree.py\tNot done: The smoke fixtures share downloaded packages while keeping separate app copies, and the starter smoke job is measurably faster\tsmoke-fixtures-share-packages",
+      "kind": "bug",
+      "path": "tests/test_starter_tree.py",
+      "line": 189,
+      "text": "Not done: The smoke fixtures share downloaded packages while keeping separate app copies, and the starter smoke job is measurably faster",
+      "from": "blocking",
+      "item": "smoke-fixtures-share-packages",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
