@@ -199,14 +199,15 @@ def read(args: Any) -> int:
     later = bool(record.get("read_hash"))
     if is_story:
         parsed = _parsed(_text(doc), rel)
-        plan_scope.check(parsed["tasks"])
+        approval = (repo.read_state(target, top) or {}).get("approval") or {}
+        if approval.get("hash") != approval_hash(_text(doc)):
+            plan_scope.check(parsed["tasks"])
     doc_hash = repo.git("hash-object", "--", str(doc), cwd=top)
     if (later and is_story and doc_hash != record["read_hash"] and passed(record, findings)
             and not changed_since_read(record["read_hash"], doc_hash, _text(doc), top)):
         repo.refuse(REFUSALS["builders_only"], doc=rel)  # an edit that needs no new approval
     if is_story:
         text = _text(doc)
-        approval = (repo.read_state(target, top) or {}).get("approval") or {}
         if len(parsed["done"]) > 6 and approval.get("hash") != approval_hash(text):
             repo.refuse(REFUSALS["too_many_results"])
         design.check(top, text)

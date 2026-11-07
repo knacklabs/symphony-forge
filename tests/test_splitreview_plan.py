@@ -1,5 +1,6 @@
 """src/forge/plan_scope.py keeps task files apart before readers or approval."""
 import shutil
+from pathlib import Path
 
 import pytest
 
@@ -8,7 +9,7 @@ from test_setup import _fresh_client
 from test_worker_brief_answers_common_questions import brief  # noqa: F401
 from test_workers_leave_settings_to_coordinator import client  # noqa: F401
 
-from test_story import DOC, claude_plan, hook, new_story, setup
+from test_story import DOC, claude_plan, hook, new_story, setup, worktree
 
 STORY = "FORGE-SPLITREVIEW-1"
 pytestmark = pytest.mark.platform
@@ -65,14 +66,20 @@ def test_3_in_flight_plans_are_checked_again_before_approval(
     repo.git("config", "core.hooksPath", str(tmp_path / "fixture-no-hooks"))
     setup(repo, kind="client")
     if previous:
-        repo.git("switch", "-qc", "fix/upgrade-guides")
-        synced = repo.forge("sync")
+        upgrade = repo.forge("fix", "start", "Upgrade the client guides", "--done",
+                             "The client uses current Forge guidance", "--slug", "upgrade-guides",
+                             "--kind", "mechanical")
+        assert upgrade.returncode == 0, upgrade.stdout + upgrade.stderr
+        upgrade_top = worktree(repo, "fix/upgrade-guides")
+        synced = repo.forge("sync", cwd=upgrade_top)
         assert synced.returncode == 0, synced.stdout + synced.stderr
-        repo.git("add", "-A")
-        repo.git("commit", "-qm", "Upgrade the client guides")
-        repo.git("switch", "-q", "main")
+        repo.git("add", "-A", cwd=upgrade_top)
+        repo.git("commit", "-qm", "Upgrade the client guides", cwd=upgrade_top)
         repo.git("merge", "-q", "--ff-only", "fix/upgrade-guides")
-        repo.git("push", "-q", "origin", "main")
+        # Seed the third-party merge without asking a client hook to push main.
+        remote = Path(repo.git("remote", "get-url", "origin"))
+        repo.git("fetch", "-q", str(repo.path), "main:main", cwd=remote)
+        repo.git("fetch", "-q", "origin")
     for host in (".codex", ".claude"):
         guide = (repo.path / host / "skills/forge/SKILL.md").read_text("utf-8")
         assert "before writing each task's Scope, search the code" in " ".join(guide.split())
@@ -92,8 +99,10 @@ def test_3_in_flight_plans_are_checked_again_before_approval(
     doc.write_text(initial, encoding="utf-8")
     accepted = hook(repo, claude_plan(claude_payload, initial))
     assert accepted.returncode == 0, accepted.stdout + accepted.stderr
-    # Approved stories keep their contract at task start, even after builder edits.
+    # Approved stories keep their contract at read and task start after builder edits.
     doc.write_text(text, encoding="utf-8")
+    read = repo.forge("read", "SHOP")
+    assert read.returncode == 1 and "so it needs no new round" in read.stderr, read.stdout + read.stderr
     repo.git("add", "plans/SHOP.md", cwd=top)
     repo.git("commit", "-qm", "Adjust the approved builder scopes", cwd=top)
     started = repo.forge("task", "start", "SHOP/SAVE")

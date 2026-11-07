@@ -93,9 +93,19 @@ def test_1_dependency_map_and_stage_timelines_use_the_command_data(
                       "\n| EXTRA | Print a basket | Paper copy | 1 | `print.py` | "
                       "`tests/test_print.py` | none | no |\n"
                       "| BUSY | Change the basket page | Page improvement | 2 | `src/page.py` | "
-                      "`tests/test_busy.py` | none | no |\n\nNew moving parts:")
+                      "`tests/test_busy.py` | SHOW | no |\n\nNew moving parts:")
     story_tree = ready(repo, "SHOP", doc)
     assert hook(repo, claude_plan(claude_payload, doc, cwd=story_tree)).returncode == 0
+
+    # This approved plan predates the overlap check; keep BUSY independent so the board
+    # still proves that an active overlapping Scope blocks a legacy part at runtime.
+    approved_legacy_doc = doc.replace("`tests/test_busy.py` | SHOW | no |",
+                                     "`tests/test_busy.py` | none | no |")
+    (story_tree / "plans/SHOP.md").write_text(approved_legacy_doc, encoding="utf-8")
+    repo.git("add", "plans/SHOP.md", cwd=story_tree)
+    repo.git("commit", "-qm", "Keep the approved part independent", cwd=story_tree)
+    legacy_read = repo.forge("read", "SHOP")
+    assert legacy_read.returncode == 0, legacy_read.stdout + legacy_read.stderr
 
     def task_state(tid, status):
         branch = f"task/SHOP-{tid}"
