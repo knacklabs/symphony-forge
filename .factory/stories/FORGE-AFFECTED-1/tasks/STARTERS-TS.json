@@ -1,0 +1,122 @@
+{
+  "branch": "task/FORGE-AFFECTED-1-STARTERS-TS",
+  "chat": {
+    "approval": "fe8031d672104d75bca741bd7fd70c958fa3c39d5b61dfd99040dabe6aa23863",
+    "claude": null,
+    "conversation": "01a1b585-7e4a-71d3-b4a8-7b2c1c7cdf4f",
+    "head": null,
+    "start": "7452f5f29f312309b63eac941f1df26cd0894174"
+  },
+  "known": [
+    {
+      "area": "src/forge/templates/starter/scripts/affected.mjs",
+      "file": "src/forge/templates/starter/scripts/affected.mjs",
+      "gain": 4,
+      "harm": 3,
+      "line": 10,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Accept Nx packages without project.json",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/starter/scripts/test.mjs",
+      "file": "src/forge/templates/starter/scripts/test.mjs",
+      "gain": 4,
+      "harm": 3,
+      "line": 65,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Run newly added tests in affected libraries",
+      "work": 2
+    },
+    {
+      "area": "test_5_typescript_starter_selects_its_affected_parts() in tests/test_affected_ts_starter.py",
+      "file": "tests/test_affected_ts_starter.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 149,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: The upgrade and live smoke proofs cannot commit through Forge hooks",
+      "work": 1
+    },
+    {
+      "area": "src/forge/templates/starter/apps/web/project.json",
+      "file": "src/forge/templates/starter/apps/web/project.json",
+      "gain": 4,
+      "harm": 3,
+      "line": 12,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: A change to a client app runs lint, typecheck and tests only for the parts it touches, once, in the pull request check",
+      "work": 2
+    },
+    {
+      "area": "test_5_typescript_starter_selects_its_affected_parts() in tests/test_affected_ts_starter.py",
+      "file": "tests/test_affected_ts_starter.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 83,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: The starter proof does not check the library targets",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "65cfbac7caa5c686cfd9049069fbbc552f3190007d3f3c42b33b1b947c2a4c63",
+    "changed": "efab98e321354a5477fa46047b0a4b434b45d546647e095e0fc4926e0dbebce9",
+    "commit": "126bf2df1cd2a2c98224c44b2ef3fbfba4aa7878",
+    "dismissals": [],
+    "findings": [],
+    "id": "97d1badb-4eba-438f-9b34-194aaf474f78",
+    "status": "clean"
+  },
+  "round": 5,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-07T10:19:25.650857+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-07T10:46:09.528978+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-07T11:01:06.656216+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-07T11:15:56.581663+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-07T11:42:07.465465+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-07T12:33:49.717339+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "e0ca2746-3b05-4b7e-a0a1-e1ca3eb6d046",
+    "head": "eca0ab6c6912edbb1942636bd84759a6db4feb5f",
+    "keys": {},
+    "round": 4
+  },
+  "worker": "codex"
+}

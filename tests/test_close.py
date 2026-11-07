@@ -374,6 +374,22 @@ def _github_api_error(env):
             "next": "forge close tidy-readme"}
 
 
+def _unnamed_check_run(env):
+    # Valid named failures have their own cases. A malformed API row must not
+    # become a failed check called None or invite an unnecessary worker round.
+    env.checks([{}])
+    return {"draft": True, "item": env.start_fix()[0],
+            "problem": "The checks are not green yet: GitHub reported no check name.",
+            "next": "forge close tidy-readme"}
+
+
+def _unnamed_commit_status(env):
+    env.checks(GREEN, [{}])
+    return {"draft": True, "item": env.start_fix()[0],
+            "problem": "The checks are not green yet: GitHub reported no check name.",
+            "next": "forge close tidy-readme"}
+
+
 def _no_checks_named(env):
     env.commit(env.repo.path, "forge.toml",
                env.repo.path.joinpath("forge.toml").read_text("utf-8").replace(
@@ -465,7 +481,9 @@ def _task_row_missing(env):
 
 GATES = [_review_fails_twice, _review_incomplete_twice, _open_serious_finding, _red_check,
          _red_check_not_named, _skipped_named_check, _pending_check_not_named, _pending_check,
-         _missing_required_check, _github_api_error, _no_checks_named,
+         _missing_required_check, _github_api_error,
+         pytest.param(_unnamed_check_run, marks=pytest.mark.platform),
+         pytest.param(_unnamed_commit_status, marks=pytest.mark.platform), _no_checks_named,
          _not_started, _merge_conflict, _bad_dismissal, _dismissal_of_replaced_finding,
          _dismissal_cites_no_such_line, _dismissal_cites_no_such_file, _helper_not_pinned,
          _task_row_missing]

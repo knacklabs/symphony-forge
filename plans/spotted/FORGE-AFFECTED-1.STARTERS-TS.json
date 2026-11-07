@@ -1,0 +1,59 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/templates/starter/scripts/affected.mjs\tFunctional: Accept Nx packages without project.json\tFORGE-AFFECTED-1/STARTERS-TS",
+      "kind": "bug",
+      "path": "src/forge/templates/starter/scripts/affected.mjs",
+      "line": 10,
+      "text": "Functional: Accept Nx packages without project.json",
+      "from": "blocking",
+      "item": "FORGE-AFFECTED-1/STARTERS-TS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/starter/scripts/test.mjs\tFunctional: Run newly added tests in affected libraries\tFORGE-AFFECTED-1/STARTERS-TS",
+      "kind": "bug",
+      "path": "src/forge/templates/starter/scripts/test.mjs",
+      "line": 65,
+      "text": "Functional: Run newly added tests in affected libraries",
+      "from": "blocking",
+      "item": "FORGE-AFFECTED-1/STARTERS-TS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_affected_ts_starter.py\tGate: The starter proof does not check the library targets\tFORGE-AFFECTED-1/STARTERS-TS",
+      "kind": "bug",
+      "path": "tests/test_affected_ts_starter.py",
+      "line": 83,
+      "text": "Gate: The starter proof does not check the library targets",
+      "from": "blocking",
+      "item": "FORGE-AFFECTED-1/STARTERS-TS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_affected_ts_starter.py\tGate: The upgrade and live smoke proofs cannot commit through Forge hooks\tFORGE-AFFECTED-1/STARTERS-TS",
+      "kind": "bug",
+      "path": "tests/test_affected_ts_starter.py",
+      "line": 149,
+      "text": "Gate: The upgrade and live smoke proofs cannot commit through Forge hooks",
+      "from": "blocking",
+      "item": "FORGE-AFFECTED-1/STARTERS-TS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/templates/starter/apps/web/project.json\tNot done: A change to a client app runs lint, typecheck and tests only for the parts it touches, once, in the pull request check",
+      "kind": "edge",
+      "path": "src/forge/templates/starter/apps/web/project.json",
+      "line": 12,
+      "text": "Not done: A change to a client app runs lint, typecheck and tests only for the parts it touches, once, in the pull request check",
+      "from": "review",
+      "item": "FORGE-AFFECTED-1/STARTERS-TS",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

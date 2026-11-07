@@ -1,6 +1,12 @@
 {
   "name": "@app/auth-server",
   "projectType": "library",
+  "targets": {
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": { "command": "eslint libs/auth/server" }
+    }
+  },
   "sourceRoot": "libs/auth/server/src",
   "tags": [
     "type:server",

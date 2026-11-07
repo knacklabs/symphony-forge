@@ -3,6 +3,14 @@
   "projectType": "application",
   "sourceRoot": "apps/api/src",
   "targets": {
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": { "command": "eslint apps/api" }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": { "command": "vitest run --config apps/api/vitest.config.ts" }
+    },
     "build": {
       "executor": "nx:run-commands",
       "options": {

@@ -1,6 +1,16 @@
 {
   "name": "@app/shared-util",
   "projectType": "library",
+  "targets": {
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": { "command": "eslint libs/shared/util" }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": { "command": "vitest run --config apps/web/vitest.config.ts libs/shared/util/src" }
+    }
+  },
   "sourceRoot": "libs/shared/util/src",
   "tags": [
     "type:util",

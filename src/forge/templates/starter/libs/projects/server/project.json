@@ -1,6 +1,12 @@
 {
   "name": "@app/projects-server",
   "projectType": "library",
+  "targets": {
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": { "command": "eslint libs/projects/server" }
+    }
+  },
   "sourceRoot": "libs/projects/server/src",
   "tags": [
     "type:server",

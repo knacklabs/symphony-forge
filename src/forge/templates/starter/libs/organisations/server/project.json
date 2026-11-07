@@ -1,6 +1,12 @@
 {
   "name": "@app/organisations-server",
   "projectType": "library",
+  "targets": {
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": { "command": "eslint libs/organisations/server" }
+    }
+  },
   "sourceRoot": "libs/organisations/server/src",
   "tags": [
     "type:server",

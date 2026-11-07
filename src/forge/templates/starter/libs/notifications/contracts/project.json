@@ -1,6 +1,12 @@
 {
   "name": "@app/notifications-contracts",
   "projectType": "library",
+  "targets": {
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": { "command": "eslint libs/notifications/contracts" }
+    }
+  },
   "sourceRoot": "libs/notifications/contracts/src",
   "tags": ["type:contracts", "scope:notifications"]
 }
