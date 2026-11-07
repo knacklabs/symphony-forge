@@ -44,7 +44,7 @@
       "gain": 5,
       "harm": 4,
       "line": 94,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 2,
       "security": false,
@@ -57,43 +57,46 @@
       "gain": 5,
       "harm": 4,
       "line": 95,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 2,
       "security": false,
       "title": "Upgrading fails when a repo has several saved canvases",
       "work": 2
+    },
+    {
+      "area": "check() in src/forge/design.py",
+      "file": "src/forge/design.py",
+      "gain": 5,
+      "harm": 4,
+      "line": 121,
+      "outcome": "open",
+      "reason": "",
+      "round": 3,
+      "security": false,
+      "title": "Refreshing renderers invalidates approved design trees",
+      "work": 2
     }
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "7c2954b4fd7c13dc2d71a7bcdb1ed86b6eb7790c95eb4e53ea4835cde3777d4c",
-    "changed": "cf0d2e5b140c0acde517c80f83212b12ee3d7058c7e05cab4e421d72b832e550",
-    "commit": "057053911515a45d5e81d892f95334bea8e35fac",
+    "branch_diff": "8c897b1336d00c0934d25f852882b250c4d4e1310fac0e57c8a08210d3edea08",
+    "changed": "af9fbae45019d28199009c411b0b02ef72e64d2ee56f6767e4b8937b89257845",
+    "commit": "1c8b402f343efe70bbd111975e30b8c7e5c35a26",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 5, Work 2, Harm 4\nRaise: Functional\nCase: normal use - a client upgrades Forge, then starts a user-facing story from a signed prototype containing the copied renderer.\nSync rewrites the renderer inside the approved design folder, changing its Git tree ID. The signed decision still contains the old ID: `src/forge/design.py:35-38` copies it into new plans, and `src/forge/design.py:117-122` rejects it when `forge read` checks the folder. Existing approved stories can similarly fail task start or close after taking the upgrade. The ruling to refresh header-marked copies did not account for these approval hashes.\nAdds work: keep design approvals valid when refreshing renderers; F 2 x H 2 = 4; 2 x C = 4",
-        "file": "src/forge/story.py",
+        "body": "Gain 5, Work 2, Harm 4\nRaise: Functional\nCase: normal use - an approved task is closed from its worktree after an upgrade, and its pull request must be brought up to date with the default branch.\nThe worktree still pins the earlier Forge release, so `forge close` is forwarded to that release (`src/forge/repo.py:985-1020`). In v1.2.30, close merges the upgraded default branch and checks the design tree before handing off to the new pin; that release still requires an exact tree match. The refreshed `support.js` therefore causes the first close to refuse an unchanged approval before this new matcher runs. A retry uses the new pin, but the refusal tells the user to change and reread the approved design. The new test starts a task with the current release and does not exercise this close path.\nAdds work: keep design approvals valid when refreshing renderers; F 2 x H 2 = 4; 2 x C = 4",
+        "file": "src/forge/design.py",
         "gain": 5,
         "harm": 4,
-        "line": 94,
+        "line": 121,
         "priority": "P0",
         "title": "Refreshing renderers invalidates approved design trees",
         "work": 2
-      },
-      {
-        "body": "Gain 5, Work 2, Harm 4\nRaise: Functional\nCase: normal use - a client with five saved, header-marked renderers upgrades Forge without custom generated-file attributes.\nThe upgrade rewrites those five files, but the generated-output check reconstructs sync inputs without `docs/design` (`src/forge/sync.py:474-478` and `src/forge/sync.py:502-525`). The pre-commit hook therefore counts the renderers plus `forge.toml` as six code files and refuses the upgrade commit under the five-file limit (`src/forge/githooks.py:230-241`). The upgrade path stages these changes together at `src/forge/upgrade.py:177-190`, so it cannot reach close.\nAdds work: recognize refreshed renderers in the existing sync-output check; F 2 x H 2 = 4; 2 x C = 4",
-        "file": "src/forge/story.py",
-        "gain": 5,
-        "harm": 4,
-        "line": 95,
-        "priority": "P0",
-        "title": "Upgrading fails when a repo has several saved canvases",
-        "work": 2
       }
     ],
-    "id": "55a68395-f6da-4bb1-a721-6d02dacd8fdc",
+    "id": "0588dabb-6dbf-4e2e-9946-461dbf7732b7",
     "status": "blocked"
   },
   "round": 3,
@@ -110,6 +113,10 @@
     },
     {
       "at": "2026-11-07T19:12:57.170733+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-07T19:28:23.701485+00:00",
       "step": "review"
     }
   ],
