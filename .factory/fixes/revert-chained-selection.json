@@ -18,7 +18,7 @@
       "gain": 5,
       "harm": 3,
       "line": 132,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -31,7 +31,7 @@
       "gain": 5,
       "harm": 3,
       "line": 663,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -44,7 +44,7 @@
       "gain": 5,
       "harm": 3,
       "line": 76,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -57,7 +57,7 @@
       "gain": 5,
       "harm": 3,
       "line": 91,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -83,7 +83,7 @@
       "gain": 3,
       "harm": 3,
       "line": 304,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -96,7 +96,7 @@
       "gain": 3,
       "harm": 3,
       "line": 337,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -109,7 +109,7 @@
       "gain": 4,
       "harm": 3,
       "line": 4,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -119,98 +119,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "dd4da0aa73b8e3ecfe45ffd9590f44365e74a78e042022bbb99f900870706697",
-    "changed": "2c153c0d37f310f0e6b31c6c5d39d4394684d957c8d17919d9dd4248eee8ee35",
-    "commit": "e0b3803835cccac8f25ef7b5f6a06e61ef32a91f",
+    "branch_diff": "a625881472af6a549b3cacb6a04034200303693c48facd3f930c842ff66027c5",
+    "changed": "75c26ff1496c57045cb96afe2638cddbc200d14ec8c7708f6a309478cd57359d",
+    "commit": "5b99ec55d389e06ae020db8ceff659b883913f7c",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 5, Work 2, Harm 3\nRaise: Functional\nCase: normal use - A pytest repo configures an always-test entry and uses `pytest` or `pytest tests` as its test command.\nAppending the entry as a positional argument makes pytest collect only that entry when the command otherwise relies on `testpaths`. With pytest 8, an entry under an explicitly named directory can also suppress other files in that directory. The run can therefore pass while skipping changed tests or the shared-input full fallback. See the [pytest collection issue](https://github.com/pytest-dev/pytest/issues/13494).",
-        "file": "src/forge/fasttest.py",
-        "gain": 5,
-        "harm": 3,
-        "line": 132,
-        "priority": "P1",
-        "title": "Functional: Preserve selected pytest files when always-test entries are present",
-        "work": 2
-      },
-      {
-        "body": "Gain 5, Work 2, Harm 3\nRaise: Functional\nCase: normal use - An existing mixed Python and JavaScript repo has `fast_test = \"forge test --pytest {base}\"` and a full test command containing pytest and Vitest or Jest.\nThe picker now removes the JavaScript runner, installation, and Node checks. `review.close_test` uses an existing `fast_test` unchanged, so close can pass without running any JavaScript tests even when they fail. The new mixed-repo suggestion adds separate Node steps, but it does not repair existing settings.",
-        "file": "src/forge/fasttest.py",
-        "gain": 5,
-        "harm": 3,
-        "line": 663,
-        "priority": "P1",
-        "title": "Functional: Keep JavaScript checks in existing mixed-repo fast tests",
-        "work": 2
-      },
-      {
-        "body": "Gain 5, Work 2, Harm 3\nRaise: Functional\nCase: normal use - A repo runs separate unit and integration Vitest or Jest commands, or its npm test script also runs a type check.\nThe repeated-kind check drops the second runner, so the suggested `fast_test` can pass without running integration tests. Separately, `test_parts` classifies a compound npm script by any runner in its body, and line 87 appends runner flags to the whole script; for `vitest run && tsc --noEmit`, those flags reach `tsc` and make the suggested command fail.",
-        "file": "src/forge/quicktest.py",
-        "gain": 5,
-        "harm": 3,
-        "line": 76,
-        "priority": "P1",
-        "title": "Functional: Preserve JavaScript test commands in quick-test advice",
-        "work": 2
-      },
-      {
-        "body": "Gain 5, Work 2, Harm 3\nRaise: Functional\nCase: normal use - A Python repo has `pyproject.toml` and runs `python -m unittest discover`.\nThe Python manifest alone causes doctor and upgrade to suggest `forge test --pytest`, although the configured command does not invoke pytest. When one test file is related and another is excluded, `narrow_command` appends `-p _forge_pytest_selection`; unittest treats `-p` as its [file-discovery pattern](https://docs.python.org/3/library/unittest.html#test-discovery), runs zero matching tests, and can return success.",
-        "file": "src/forge/quicktest.py",
-        "gain": 5,
-        "harm": 3,
-        "line": 91,
-        "priority": "P1",
-        "title": "Functional: Do not suggest the pytest picker for other Python runners",
-        "work": 2
-      },
-      {
-        "body": "Gain 5, Work 2, Harm 3\nRaise: Not done\nCase: normal use - The release is checked before merging this fix.\nThe required item is: \"The chained-command part's change is reverted on main, the other test-selection parts stay, and main's full run on Linux and Windows is green\". The pull-request workflow runs related Linux tests, not the full suite. The Windows job in `.github/workflows/forge-next.yml:68-70,135` runs only on schedule or dispatch and filters to `-m platform`; this changed test is unmarked and is excluded. No completed full Linux and Windows results were supplied.",
-        "file": "tests/test_quick_test_suggestions.py",
-        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
-        "gain": 5,
-        "harm": 3,
-        "line": 104,
-        "priority": "P1",
-        "title": "Not done: The chained-command revert lacks full Linux and Windows runs",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 1, Harm 3\nRaise: Functional\nCase: normal use - A repo configures `test = \"cd web && npx vitest run\"` and relies on `forge test --change` or close.\nEach part now runs in a separate shell. The `cd` succeeds in one process, but Vitest starts from the repository root in another, so it can run the wrong project's tests or fail to find the web project.",
-        "file": "src/forge/fasttest.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 304,
-        "priority": "P1",
-        "title": "Functional: Preserve the shell directory for JavaScript test steps",
-        "work": 1
-      },
-      {
-        "body": "Gain 3, Work 1, Harm 3\nRaise: Functional\nCase: normal use - A developer runs `forge test --pytest origin/main` from a source or test subdirectory.\nThe command now reads `forge.toml` from the current directory rather than resolving and entering the checkout root. It raises a file-not-found error instead of running the selected tests; the CLI does not change directories before invoking this handler.",
-        "file": "src/forge/fasttest.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 337,
-        "priority": "P1",
-        "title": "Functional: Find the repository root for explicit pytest selection",
-        "work": 1
-      },
-      {
-        "body": "Gain 4, Work 1, Harm 3\nRaise: Gate\nCase: normal use - A reviewer or close checks whether the fix satisfies its acceptance item.\nThe supplied proof list is missing. It does not map the chained-command revert, the retained test-selection parts, or the Linux and Windows full-run results to checks, so those details cannot be audited from the required proof.",
-        "file": ".factory/fixes/revert-chained-selection.json",
-        "gain": 4,
-        "harm": 3,
-        "line": 4,
-        "priority": "P1",
-        "title": "Gate: proof list",
-        "work": 1
-      }
-    ],
-    "id": "7e18133f-267d-40e9-b2af-cfe7d703f649",
-    "status": "blocked"
+    "findings": [],
+    "id": "96471761-8747-4669-9df7-83dddc3205e3",
+    "status": "clean"
   },
   "round": 1,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-07T15:46:34.802703+00:00",
@@ -218,6 +136,10 @@
     },
     {
       "at": "2026-11-07T15:56:49.271867+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-07T16:05:01.555922+00:00",
       "step": "review"
     }
   ],
