@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "bug\t.forge/design/support.js\tThe checked-in design renderer differs from the current sync output.",
+      "kind": "bug",
+      "path": ".forge/design/support.js",
+      "line": 12,
+      "text": "The checked-in design renderer differs from the current sync output.",
+      "from": "worker",
+      "item": "replay-conflict-names-merge",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tGate: Update the shipped replay-conflict recovery guidance\treplay-conflict-names-merge",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 37,
+      "text": "Gate: Update the shipped replay-conflict recovery guidance",
+      "from": "blocking",
+      "item": "replay-conflict-names-merge",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
