@@ -73,6 +73,31 @@ def test_5_typescript_starter_selects_its_affected_parts(repo, gh, tmp_path, uns
     calls = tmp_path / "nx-calls.jsonl"
     _selection_tools(tools, calls)
     base = repo.git("rev-parse", "HEAD", cwd=client)
+    # Package-only Nx projects are shipped by the optional assistant module. Their
+    # presence must not break selection for another project. No dependency is installed.
+    assistant = client / "libs/assistant"
+    shutil.copytree(ROOT / "src/forge/templates/skills/agents/assistant-module/typescript/libs/assistant",
+                    assistant)
+    package_case = _run_list(node, client, tools, ["web"], base)
+    shutil.rmtree(assistant)
+    # Newly written library tests must enter the selected check even if the library
+    # had no tests, and thus no Nx test target, when the app was first created.
+    added_test = client / "libs/auth/server/src/affected-added.test.ts"
+    added_test.write_text("import { it } from 'vitest'; it('new failure', () => { throw Error('failed'); });\n",
+                          encoding="utf-8")
+    repo.git("add", added_test.relative_to(client).as_posix(), cwd=client)
+    added_case = _run_list(node, client, tools, ["@app/auth-server"], base)
+    repo.git("reset", "-q", "HEAD", "--", added_test.relative_to(client).as_posix(), cwd=client)
+    added_test.unlink()
+    regressions = []
+    if package_case.returncode or "Affected parts: web" not in package_case.stdout:
+        regressions.append(package_case.stdout + package_case.stderr)
+    selected_tests = [line for line in added_case.stdout.splitlines() if "vitest run" in line]
+    if added_case.returncode or not any(
+            "affected-added.test.ts" in line or "libs/auth/server/src" in line
+            for line in selected_tests):
+        regressions.append("New library test was not selected:\n" + added_case.stdout + added_case.stderr)
+    assert not regressions, "\n".join(regressions)
     changes = (
         ("apps/web/src/index.css", "\n/* affected selection check */\n", ["web"],
          ("Affected parts: web", "run web:lint", "run web:typecheck", "run web:test",
@@ -112,6 +137,23 @@ def test_5_typescript_starter_selects_its_affected_parts(repo, gh, tmp_path, uns
     for item in ("Affected parts: all", "test:api", "test:hooks", "test:browser"):
         assert item in full.stdout
 
+    # Every library owns its lint target. The three initial test owners also keep
+    # their own source filters; the real Vitest file partition is checked live.
+    for library in sorted((client / "libs").glob("*/*")):
+        package = json.loads((library / "package.json").read_text(encoding="utf-8"))
+        relative = library.relative_to(client).as_posix()
+        source = next((library / "src").rglob("*.ts"))
+        original = source.read_bytes()
+        source.write_bytes(original + b"\n// selected library lint\n")
+        listed = _run_list(node, client, tools, [package["name"]], base)
+        source.write_bytes(original)
+        assert listed.returncode == 0, listed.stdout + listed.stderr
+        assert f"run {package['name']}:lint" in listed.stdout, listed.stdout
+        assert f"eslint {relative}" in listed.stdout, listed.stdout
+        if relative in ("libs/core/server", "libs/history/server", "libs/shared/util"):
+            assert f"run {package['name']}:test" in listed.stdout, listed.stdout
+            assert f"{relative}/src" in listed.stdout, listed.stdout
+
     logged = [json.loads(line) for line in calls.read_text(encoding="utf-8").splitlines()]
     assert logged and all(
         call[:5] == ["pnpm", "exec", "nx", "show", "projects"]
@@ -146,10 +188,14 @@ def test_5_typescript_starter_selects_its_affected_parts(repo, gh, tmp_path, uns
              for folder in ("apps", "libs", "scripts")
              for path in (repo.path / folder).rglob("*") if path.is_file()}
     repo.git("add", "-A")
-    repo.git("commit", "-q", "-m", "Sync the earlier adopted app")
+    # This fixture builds an already-adopted history, not a new Forge work item.
+    # Reuse the upgrade fixture's hook-free setup commands; the upgrade itself
+    # still runs the installed release's real hooks and close.
+    hook_setup = ["-c", f"core.hooksPath={unsynced_up.tmp / 'no-hooks'}"]
+    repo.git(*hook_setup, "commit", "-q", "-m", "Sync the earlier adopted app")
     repo.git("switch", "-q", "main")
     repo.git("merge", "-q", "--ff-only", "fix/agent-accounts-upgrade")
-    repo.git("push", "-q", "origin", "main")
+    repo.git(*hook_setup, "push", "-q", "origin", "main")
     upgraded = unsynced_up.run(RELEASE)
     assert upgraded.returncode == 0, upgraded.stdout + upgraded.stderr
     upgraded_root = unsynced_up.folder

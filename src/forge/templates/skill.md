@@ -1125,7 +1125,8 @@ if the settings do not answer it. Pass
    when it ships `scripts/affected.mjs`.
    Its init keeps `test = "node scripts/test.mjs"` for full runs and writes
    `fast_test = "node scripts/test.mjs {base}"`. The TypeScript starter uses Nx to name affected
-   parts and run their lint, typecheck and disjoint test targets; `--list <base>` prints the commands.
+   parts and run their lint, typecheck and tests; `--list <base>` prints the commands.
+   New test files in an affected library also run when it has no Nx test target.
    Existing apps keep their scripts and settings on upgrade and sync. Ask before adding these
    targets and scripts to an existing app or changing its `forge.toml`.
    When `fast_test` is missing, `forge doctor` and `forge upgrade` print one suggested

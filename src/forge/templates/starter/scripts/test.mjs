@@ -1,5 +1,6 @@
 import { spawnSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
+import { globSync } from 'node:fs';
 import { createServer } from 'node:net';
 import { fileURLToPath } from 'node:url';
 import { affected } from './affected.mjs';
@@ -62,9 +63,17 @@ try {
     for (const suite of ['lint', 'typecheck', 'test:api', 'test:hooks']) run(corepack, ['pnpm', 'run', suite]);
   } else {
     for (const target of ['lint', 'typecheck', 'test']) {
-      for (const project of projects.filter(project => project.targets?.[target])) {
-        run(corepack, ['pnpm', 'exec', 'nx', 'run', `${project.name}:${target}`]);
-        if (list) process.stdout.write(`  ${project.targets[target].options.command}\n`);
+      for (const project of projects) {
+        if (project.targets?.[target]) {
+          run(corepack, ['pnpm', 'exec', 'nx', 'run', `${project.name}:${target}`]);
+          if (list) process.stdout.write(`  ${project.targets[target].options.command}\n`);
+        } else if (project.root.startsWith('libs/')) {
+          if (target === 'lint') run(corepack, ['pnpm', 'exec', 'eslint', project.root]);
+          if (target === 'test') {
+            const files = globSync(`${project.root}/src/**/*.test.{ts,tsx}`).map(file => file.replaceAll('\\', '/'));
+            if (files.length) run(corepack, ['pnpm', 'exec', 'vitest', 'run', '--config', 'apps/web/vitest.config.ts', ...files]);
+          }
+        }
       }
     }
   }

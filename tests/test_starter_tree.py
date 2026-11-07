@@ -2,6 +2,7 @@
 import json
 import os
 import re
+import shlex
 import shutil
 import signal
 import subprocess
@@ -216,7 +217,7 @@ def _run_live_starter(tmp_path_factory, sources, required_output=()):
         pytest.skip("A Docker daemon is required for the starter smoke run")
 
     copy = tmp_path_factory.mktemp("starter-smoke")
-    ignore = shutil.ignore_patterns("node_modules", "dist", ".nx", "reports", "test-results",
+    ignore = shutil.ignore_patterns(".git", "node_modules", "dist", ".nx", "reports", "test-results",
                                     "playwright-report", "coverage")
     for source, target in sources:
         destination = copy / target
@@ -242,6 +243,54 @@ def _run_live_starter(tmp_path_factory, sources, required_output=()):
             assert message in output, output
 
         if (copy / "nx.json").is_file():
+            projects = (
+                ("web", copy / "apps/web/project.json", copy / "apps/web/src"),
+                ("core-server", copy / "libs/core/server/project.json",
+                 copy / "libs/core/server/src"),
+                ("history-server", copy / "libs/history/server/project.json",
+                 copy / "libs/history/server/src"),
+                ("shared-util", copy / "libs/shared/util/project.json",
+                 copy / "libs/shared/util/src"),
+            )
+            web_tests = {path for path in projects[0][2].rglob("*")
+                         if path.is_file() and path.name.endswith((".test.ts", ".test.tsx"))}
+            web_sentinel = None
+            if not web_tests:
+                web_sentinel = projects[0][2] / "affected-selection.test.ts"
+                web_sentinel.write_text(
+                    "import { test } from 'vitest';\n"
+                    "test('listing sentinel', () => { throw Error('list files only'); });\n",
+                    encoding="utf-8",
+                )
+            try:
+                for name, project_file, source in projects:
+                    target = _json(project_file)["targets"]["test"]["options"]["command"]
+                    command = shlex.split(target)
+                    assert command[:2] == ["vitest", "run"], target
+                    command[1:2] = ["list", "--filesOnly", "--json"]
+                    listed = subprocess.run(
+                        ["corepack", "pnpm", "exec", *command], cwd=copy, env=env,
+                        capture_output=True, text=True, encoding="utf-8", timeout=120,
+                    )
+                    assert listed.returncode == 0, listed.stdout + listed.stderr
+                    files = json.loads(listed.stdout)
+                    assert isinstance(files, list) and all(isinstance(item["file"], str) for item in files), files
+                    actual = {
+                        (Path(item["file"]) if Path(item["file"]).is_absolute() else copy / item["file"])
+                        .resolve().relative_to(copy.resolve()).as_posix()
+                        for item in files
+                    }
+                    expected = {
+                        path.relative_to(copy).as_posix() for path in source.rglob("*")
+                        if path.is_file() and path.name.endswith((".test.ts", ".test.tsx"))
+                    }
+                    assert actual == expected, (name, actual, expected)
+                    if name != "web":
+                        assert actual, f"{name} has no test files"
+            finally:
+                if web_sentinel is not None:
+                    web_sentinel.unlink()
+
             subprocess.run(["git", "init", "-q"], cwd=copy, env=env, check=True,
                            capture_output=True, text=True, timeout=30)
             subprocess.run(["git", "config", "user.name", "Forge starter test"], cwd=copy, env=env,
