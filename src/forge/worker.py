@@ -127,7 +127,7 @@ def prepare(item: str) -> tuple[re.Match[str], Path, str]:
         with codex.hold(top, item, "Build"):
             merged = repo.run("git", "merge", "-q", "--no-edit", f"origin/{default}", cwd=top)
             if merged.returncode and not merge_timings.resolve(top):
-                if not git("diff", "--name-only", "--diff-filter=U", cwd=top):
+                if repo.run("git", "rev-parse", "-q", "--verify", "MERGE_HEAD", cwd=top).returncode:
                     merged.check_returncode()
                 # Round records cannot commit during an unfinished merge. The full brief retries it.
                 git("merge", "--abort", cwd=top)

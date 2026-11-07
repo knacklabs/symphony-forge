@@ -723,13 +723,15 @@ def _merge_default(top: Path, item: str, branch: str, default: str,
         if merged.returncode not in (0, 1):
             merged.check_returncode()
         tree, *files = merged.stdout.rstrip("\0").split("\0")
-        if merged.returncode:
+        if merged.returncode and not (tree := merge_timings.resolve(
+                top, tree=tree, files=files, ours=original, incoming=target)):
             repo.refuse(REFUSALS["replay_conflict"], default=default, files=", ".join(files),
                         item=item)
         done = repo.run("git", "rebase", "--rebase-merges=rebase-cousins", "--onto", target,
                         baseline, cwd=top)
-        if done.returncode:
-            files = repo.git("diff", "--name-only", "--diff-filter=U", cwd=top).splitlines()
+        if done.returncode and not merge_timings.resolve(
+                top, replay=True, ours=":3", incoming=":2"):
+            files = repo.git("diff", "--name-only", "--diff-filter=U", cwd=top).splitlines() or files
             repo.run("git", "rebase", "--abort", cwd=top)
             if not files:
                 done.check_returncode()

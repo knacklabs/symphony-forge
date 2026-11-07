@@ -150,7 +150,7 @@ and review it before you start a part on top of it.
 
 You can continue, close and merge published work on another machine with `forge work`, `forge close` and `forge merge`.
 Before every work round, Forge fetches and merges the default branch before it reads settings or writes the brief.
-When .test_durations is the only conflict, work and close keep both JSON objects' entries, use the default branch's values for shared keys, and commit the merge. Any other conflict keeps the usual stop.
+When .test_durations is the only conflict, work and close keep both JSON objects' entries, use the default branch's values for shared keys, and commit the merge. This also applies when close replays a stacked item after its parent merges. A rejected automatic commit aborts the merge and keeps the usual conflict stop. Any other conflict keeps the usual stop.
 If that merge conflicts, the worker gets its normal full brief with one added line to finish and commit the merge first.
 Close then reviews only conflict repairs and later edits when an earlier clean review still covers the task.
 `forge work` refuses a fix or task whose pull request is already merged. Start a new fix with `forge fix start` for follow-up work.
