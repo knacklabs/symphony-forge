@@ -1,6 +1,13 @@
 {
   "base": "e923c49135fd7176cc159f4d27d247ab5d3ef56a",
   "branch": "fix/a-forge-work-run-cut-short-by-a-shell-ti",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1b722-3b5c-7b00-896b-5d09180bdbdc",
+    "head": null,
+    "start": "1ac785f8670be6aa2679fc62129fa5f783d58a09"
+  },
   "done_when": "A forge work run stopped partway prints one line saying the round did not finish and the command to run again.",
   "fix_kind": "backend",
   "kind": "fix",
