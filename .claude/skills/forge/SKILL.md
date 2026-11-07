@@ -353,8 +353,6 @@ Without a coordinating session, a one-tool repo waits for it.
 Reviews run externally through Autoreview on the named tool; with both, Codex when installed,
 otherwise Claude. Normal, light and sign-off reviews use `[models.review]` or its per-tool entries.
 Unset entries use Autoreview's default model and effort; unset effort uses its default effort.
-New repos pin Codex reviews and cold reads to `gpt-6.1-terra` at max effort.
-Upgrade and sync keep existing repos' `forge.toml` model settings unchanged.
 
 **Running a handed-out round.** When Forge prints a subagent instruction, run that instruction
 as a background subagent of the named role. Keep the item's chat while the session is open;
@@ -1496,6 +1494,8 @@ Each kind in `forge.toml`'s `[models]` table may have a codex and a claude entry
 tool (a gpt model is Codex's, any other Claude's). Workers use their selected tool's entry,
 and explorers use their host's entry. Workers and Claude plan readers with no entry use Forge's defaults.
 Codex build, fix and lite default to `gpt-6.1-sol` at low effort; design uses its design default.
+New repos pin Codex reviews, including working-prototype reviews, and cold reads to
+`gpt-6.1-terra` at max effort. Upgrade and sync keep existing model settings unchanged.
 Claude build, fix and lite accept a `subagents` and `subagent_effort` pair, or use
 `claude-haiku-5-5` at high when neither is set. The SDK's `general-purpose` helper
 gets the same pair. These options affect only the Claude builder's turn, not other

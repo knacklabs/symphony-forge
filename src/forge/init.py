@@ -129,6 +129,10 @@ effort = "high"
 model = "gpt-6.1-terra"
 effort = "max"
 
+[models.light_review.codex]
+model = "gpt-6.1-terra"
+effort = "max"
+
 [models.review.claude]
 model = "claude-sonnet-5-5"
 effort = "high"

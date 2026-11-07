@@ -193,6 +193,7 @@ def test_10_the_cold_read_runs_on_the_other_family(repo, gh, monkeypatch, sdk_da
                   "claude": {"model": "claude-sonnet-5-5", "effort": "high"}},
         "review": {"codex": {"model": "gpt-6.1-terra", "effort": "max"},
                    "claude": {"model": "claude-sonnet-5-5", "effort": "high"}},
+        "light_review": {"codex": {"model": "gpt-6.1-terra", "effort": "max"}},
         "design": {"claude": {"model": "claude-sonnet-5-5", "effort": "xhigh"},
                    "codex": {"model": "gpt-6.1-sol", "effort": "high"}},
     }
