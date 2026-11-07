@@ -7,6 +7,7 @@ import json
 import os
 import re
 import shutil
+import signal
 import subprocess
 import tempfile
 import time
@@ -111,8 +112,17 @@ def checkout(item: str) -> tuple[re.Match[str], Path]:
 
 
 def work(args: argparse.Namespace) -> None:
-    if _work(args):  # Claude failed its split design round; the coordinating Codex session builds
-        _work(argparse.Namespace(**{**vars(args), "fallback": "codex"}))
+    def interrupted(signum: int, _frame: Any) -> None:
+        print(f"The round did not finish. Run forge work {args.item} again.", flush=True)
+        raise SystemExit(128 + signum)
+
+    previous = {sig: signal.signal(sig, interrupted) for sig in (signal.SIGTERM, signal.SIGINT)}
+    try:
+        if _work(args):  # Claude failed its split design round; the coordinating Codex session builds
+            _work(argparse.Namespace(**{**vars(args), "fallback": "codex"}))
+    finally:
+        for sig, handler in previous.items():
+            signal.signal(sig, handler)
 
 
 def prepare(item: str) -> tuple[re.Match[str], Path, str]:
