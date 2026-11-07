@@ -1,6 +1,13 @@
 {
   "base": "e923c49135fd7176cc159f4d27d247ab5d3ef56a",
   "branch": "fix/forge-next-takes-30-to-60-seconds-on-a-r",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1b723-fadf-7810-89b7-c0731375798c",
+    "head": null,
+    "start": "e5c55428500412df446af3882d2697ef8914cae0"
+  },
   "done_when": "forge next on a repo with about fifteen parts prints a line such as Builds running: 1 of 4 and finishes in under 10 seconds.",
   "fix_kind": "backend",
   "kind": "fix",
