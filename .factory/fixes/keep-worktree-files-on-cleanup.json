@@ -117,7 +117,7 @@
     "id": "70f8345f-eeb2-45d8-bc8d-af394b1ddb9e",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -130,10 +130,13 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "bcc31a44d80a6fe2fd5a08913f648b74fba0cb1f",
-    "keys": {},
-    "round": null
+    "close": "78921521-577b-4bad-9fe5-c865a4c7a20e",
+    "head": "a2d8b0a46a2d0b31e2f7f309c66938dddf5204c8",
+    "keys": {
+      "the open P0 data loss: preserve ignored lockfiles during worktree cleanup in src/forge/task.py": 1,
+      "the open P0 data loss: reports created after the final status check can still be deleted in src/forge/task.py": 1
+    },
+    "round": 1
   },
   "why": "Removing a worktree after merge deletes gitignored files silently (merge.py checks untracked files only, then runs git worktree remove), and forge fix drop deletes untracked non-ignored files with --force (task.py). A client lost a 3-hour test report. Forge issue 1428.",
   "worker": "codex"
