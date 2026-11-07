@@ -1,0 +1,92 @@
+{
+  "items": [
+    {
+      "key": "bug\t.factory/fixes/revert-chained-selection.json\tGate: proof list\trevert-chained-selection",
+      "kind": "bug",
+      "path": ".factory/fixes/revert-chained-selection.json",
+      "line": 4,
+      "text": "Gate: proof list",
+      "from": "blocking",
+      "item": "revert-chained-selection",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tFunctional: Find the repository root for explicit pytest selection\trevert-chained-selection",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 337,
+      "text": "Functional: Find the repository root for explicit pytest selection",
+      "from": "blocking",
+      "item": "revert-chained-selection",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tFunctional: Keep JavaScript checks in existing mixed-repo fast tests\trevert-chained-selection",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 663,
+      "text": "Functional: Keep JavaScript checks in existing mixed-repo fast tests",
+      "from": "blocking",
+      "item": "revert-chained-selection",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tFunctional: Preserve selected pytest files when always-test entries are present\trevert-chained-selection",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 132,
+      "text": "Functional: Preserve selected pytest files when always-test entries are present",
+      "from": "blocking",
+      "item": "revert-chained-selection",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tFunctional: Preserve the shell directory for JavaScript test steps\trevert-chained-selection",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 304,
+      "text": "Functional: Preserve the shell directory for JavaScript test steps",
+      "from": "blocking",
+      "item": "revert-chained-selection",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/quicktest.py\tFunctional: Do not suggest the pytest picker for other Python runners\trevert-chained-selection",
+      "kind": "bug",
+      "path": "src/forge/quicktest.py",
+      "line": 91,
+      "text": "Functional: Do not suggest the pytest picker for other Python runners",
+      "from": "blocking",
+      "item": "revert-chained-selection",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/quicktest.py\tFunctional: Preserve JavaScript test commands in quick-test advice\trevert-chained-selection",
+      "kind": "bug",
+      "path": "src/forge/quicktest.py",
+      "line": 76,
+      "text": "Functional: Preserve JavaScript test commands in quick-test advice",
+      "from": "blocking",
+      "item": "revert-chained-selection",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\ttests/test_quick_test_suggestions.py\tNot done: The chained-command revert lacks full Linux and Windows runs",
+      "kind": "edge",
+      "path": "tests/test_quick_test_suggestions.py",
+      "line": 104,
+      "text": "Not done: The chained-command revert lacks full Linux and Windows runs",
+      "from": "review",
+      "item": "revert-chained-selection",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
