@@ -1,0 +1,15 @@
+{
+  "base": "5393cf3ed78f0bae68f7bf2762dbcc9675a03710",
+  "branch": "fix/start-full-run-early",
+  "done_when": "The guide tells the agent to start the full run right after the last product merge of a release or sign-off and to prepare notes while it runs, following that same run",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-07T18:12:42.111488+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Release and sign-off wait for a full run that starts only nightly or by hand, and the tag push finds the missing proof late"
+}
