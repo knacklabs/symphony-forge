@@ -4,11 +4,26 @@
   "done_when": "The skip-model-review-and-review-rounds decision is accepted by Ravi",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "4cf43e522182fe819cfe50a681a659cd43b7a0f6fe1653ef3f107f4bf4e7828e",
+    "changed": "e83429011ccc7d636ae1dd5078079814bbc863701742edd3b3feaacb3f72aa16",
+    "commit": "ed895b9a27b3734dc2fb1db52a31d05c02a3bc5b",
+    "dismissals": [],
+    "findings": [],
+    "id": "66d8fb83-eb64-460a-b4fc-5364cbf01643",
+    "status": "clean"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-07T04:07:33.467048+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-07T04:08:42.939349+00:00",
+      "step": "review"
     }
   ],
   "why": "Record the owner's acceptance of the skip-review decision"
