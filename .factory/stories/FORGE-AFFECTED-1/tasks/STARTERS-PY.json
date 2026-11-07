@@ -27,7 +27,7 @@
       "gain": 4,
       "harm": 3,
       "line": 6,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -37,38 +37,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "303c6096d6bf00fb59dae2f8553928ecac9377bf1793efc78b2c5cb976bc9bbd",
-    "changed": "91b0c1830711eed30e2b4aefff71a64554561da2295c05ad3ec1e6bfa030e63c",
-    "commit": "bdcf1668e9cb363aa1f1b84409bc8e1dda1ed7cc",
+    "branch_diff": "d3c155e96205d65e03921bce2e3afd2b373bd4652cea52077f6a55889a8ba695",
+    "changed": "9577bf9c4e8473136fbcde3cb46143c260dd958162fbeea416b4c314c9a3abb9",
+    "commit": "a19a12400a10804bd7ef8a71c2f2ee3dd865bafc",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 5, Work 2, Harm 3\nRaise: Not done\nCase: normal use - a Forge task or fix changes only the Python API or only the web app. Forge commits an item record under `.factory/` when it creates the branch (`src/forge/task.py:264-283` and `src/forge/repo.py:1117-1127`). That record is included in the diff, so this condition returns `null` and `scripts/test.mjs:59` runs the full `pnpm test`, including both API and web checks. The log also reports `Affected parts: all`. The new proof test edits files immediately after init without starting a task or fix, so it passes without exercising the normal pull request. This misses the owner-approved item: \u201cA change to a client app runs lint, typecheck and tests only for the parts it touches, once, in the pull request check, and the log names those parts.\u201d",
-        "file": "src/forge/templates/starter-python/scripts/affected.mjs",
-        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
-        "gain": 5,
-        "harm": 3,
-        "line": 10,
-        "priority": "P1",
-        "title": "Not done: A change to a client app runs lint, typecheck and tests only for the parts it touches",
-        "work": 2
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - a developer writes a new API or web test and runs the documented `node scripts/test.mjs HEAD` before staging it. `git diff` omits untracked files, so the selector returns an empty list; `scripts/test.mjs:11-15` reports `Affected parts: none` and runs no checks, even if the new test fails. A new untracked file in a second part is likewise omitted when tracked changes select only the first part.\nAdds work: include untracked paths in selection; F 3 x H 2 = 6; 2 x C = 4.",
-        "file": "src/forge/templates/starter-python/scripts/affected.mjs",
-        "gain": 4,
-        "harm": 3,
-        "line": 6,
-        "priority": "P1",
-        "title": "Functional: Include new untracked files in local selection",
-        "work": 2
-      }
-    ],
-    "id": "20477f72-73e9-4cc1-a6f2-0f9cb05c967e",
-    "status": "blocked"
+    "findings": [],
+    "id": "dffc7068-e35f-4fbc-a8f7-13518317f5eb",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-07T13:11:58.490569+00:00",
@@ -76,6 +54,10 @@
     },
     {
       "at": "2026-11-07T13:24:48.779203+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-07T13:32:02.339190+00:00",
       "step": "review"
     }
   ],
