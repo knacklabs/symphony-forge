@@ -93,7 +93,7 @@
     "id": "615e8d2a-1701-4393-9470-a51e703d4522",
     "status": "blocked"
   },
-  "round": 2,
+  "round": 3,
   "status": "fixing",
   "steps": [
     {
@@ -115,10 +115,10 @@
     "worker_round": 2
   },
   "stuck": {
-    "close": null,
-    "head": "f8f4fd18efddfab2c3fff0241ec89959eb5bcc11",
+    "close": "c4ea923a-c766-4b05-94ce-cd998623b6ee",
+    "head": "9b058c5f3bf249e14436647e7bef2088e02f8071",
     "keys": {},
-    "round": null
+    "round": 2
   },
   "why": "After the owner accepts the remaining review findings, the first close prints a clean review but the item is not Ready, so the owner has to run close a second time.",
   "worker": "codex"
