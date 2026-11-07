@@ -287,6 +287,12 @@ A prototype without the sample-data mark also needs its strict whole-product rev
    Small changes to existing screens that add no screen and change no flow use `Design: none (<why>)`.
    Backend-only stories need no canvas. Earlier approved stories keep working.
    The build applies any app theme already in place and follows the approved story design, including its components and fields.
+   Before writing each task's Scope, search the code for the files it needs. The plan check
+   refuses two tasks whose Scope paths share a prefix up to the first wildcard unless one waits
+   for the other through After, directly or through another task. It names both tasks and says to
+   put shared files, names and stubs in the first task, then make tasks that need them wait through
+   After and own only their files. An in-flight story gets the same check at its next plan check;
+   follow the refusal's step to amend the plan.
 3. `forge read <KEY>` runs an independent cold read. Answer every finding (cut, defer or keep),
    amend the doc, then run `forge read <KEY>` again; the same reader reads the whole doc again,
    and this repeats until a round finds nothing.

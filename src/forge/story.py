@@ -26,7 +26,7 @@ from pathlib import Path
 from string import Template
 from typing import Any
 
-from forge import claude_sdk, codex, design, machine, native, repo, review, score, task, worker
+from forge import claude_sdk, codex, design, machine, native, plan_scope, repo, review, score, task, worker
 
 REFUSALS = {
     "bad_key": ("{key!r} is not a story key; a key is capital letters, digits and hyphens.",
@@ -199,6 +199,7 @@ def read(args: Any) -> int:
     later = bool(record.get("read_hash"))
     if is_story:
         parsed = _parsed(_text(doc), rel)
+        plan_scope.check(parsed["tasks"])
     doc_hash = repo.git("hash-object", "--", str(doc), cwd=top)
     if (later and is_story and doc_hash != record["read_hash"] and passed(record, findings)
             and not changed_since_read(record["read_hash"], doc_hash, _text(doc), top)):
@@ -523,7 +524,7 @@ def parse(text: str, top: Path | None = None, ref: str | None = None,
             key, _, name = other.partition("/")
             if name not in _task_ids(_plan(top, key, ref, history)):
                 raise ValueError(f"Tasks row {task['id']}: After {other} is not a task in the plan of {key}")
-    _no_cycle(tasks)
+    plan_scope.no_cycle(tasks)
     return {"done": done, "details": notes, "tasks": list(tasks.values())}
 
 
@@ -671,7 +672,10 @@ def check_read(target: str, top: Path | None = None) -> None:
     top, doc, notes, is_story = _paths(target, top)
     rel = _rel(top, doc)
     if is_story:
-        _parsed(_text(doc), rel)
+        parsed = _parsed(_text(doc), rel)
+        approval = (repo.read_state(target, top) or {}).get("approval") or {}
+        if approval.get("hash") != approval_hash(_text(doc)):
+            plan_scope.check(parsed["tasks"])
         design.check(top, _text(doc), required=False)
     gate(target, rel, _text(notes), repo.git("hash-object", "--", str(doc), cwd=top), _text(doc), top)
 
@@ -1140,24 +1144,6 @@ def _promote(fix_top: Path, fix: str, key: str, fix_state: dict[str, Any]) -> st
                       top=fix_top)
     task.publish_start(fix_top, branch)
     return f"The fix {fix} is now the story's first task, {item}, in {fix_top}."
-
-
-def _no_cycle(tasks: dict[str, dict[str, Any]]) -> None:
-    checked: set[str] = set()
-
-    def visit(task: str, path: list[str]) -> None:
-        if task in path:
-            loop = " -> ".join(path[path.index(task):] + [task])
-            raise ValueError(f"Tasks row {task}: its After list makes a cycle ({loop})")
-        if task not in checked:
-            for after in tasks[task]["after"]:
-                # ponytail: a cycle across stories isn't caught; its tasks just wait in forge next
-                if "/" not in after:
-                    visit(after, path + [task])
-            checked.add(task)
-
-    for task in tasks:
-        visit(task, [])
 
 
 def _cell_paths(cell: str) -> list[str]:

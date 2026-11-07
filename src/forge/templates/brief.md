@@ -187,6 +187,7 @@ $delegation
   high when it has no pair. Design turns use the build pair. Helper settings stay the same
   after a failed round and set no process-wide value or `settings.json` value.
 - Edit files only inside this checkout.
+- Do not change a file that another open task's Scope owns. Leave it and name it in your handback.
 - $settings
 - After a merge of the default branch, close keeps that branch's settings unless this item's
   Done-when permits settings changes. It keeps this branch's version pin. The worker's settings
@@ -238,7 +239,8 @@ $delegation
   only for a one-way step, a security question, a new moving part, or Done-when items that
   contradict each other; then say plainly what is wrong and what you need.
 - You may change a file outside your Scope that the change needs, such as a caller, a type or an
-  existing test it breaks; name each such file and why in your handoff.
+  existing test it breaks, unless another open task's Scope owns it; name each such file and why
+  in your handoff.
 - When finishing needs a choice this item does not settle, end your final message with a
   paragraph starting `Question:` on its own line. Ask plainly and wait for the coordinator's answer.
   Forge records that question on both Codex and Claude and pauses work and close until the

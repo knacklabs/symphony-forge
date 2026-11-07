@@ -1290,9 +1290,13 @@ recording succeeds; if the repo pins a newer release, install that pinned releas
   inputs needs an amendment to the story doc before the review can close.
 - Put Risks right after Done when, then the `## For the builders` heading, so the owner's
   sections come first and everything for the agents sits below.
-- Tasks: each row names the Done-when items it Covers, its Scope (the paths it may change) and
-  its Tests. A task that covers nothing is cut; work wanted later goes to Notes, or the linked
-  spec's Out of scope.
+- Tasks: before writing each task's Scope, search the code for the files it needs. The plan check
+  refuses two tasks whose Scope paths share a prefix up to the first wildcard, unless one waits
+  for the other through After, directly or through another task; the refusal names both tasks.
+  Put a shared file with its names and stubs in the first task that needs it. Tasks that need it
+  wait for that task through After, then own only their files. Each row names the Done-when items
+  it Covers, its Scope (the paths it may change) and its Tests. A task that covers nothing is cut;
+  work wanted later goes to Notes, or the linked spec's Out of scope.
 - The Tests column names one end-to-end case per Done-when item that changes runtime behaviour,
   and none for settings, docs, deletions or test-only items: the check the item names proves those.
 - Keep tasks small: at most three Done-when items and about 400 changed lines each, counting

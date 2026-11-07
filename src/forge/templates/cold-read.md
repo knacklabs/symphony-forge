@@ -153,6 +153,12 @@ Check:
 1. Can every part be built without asking? Name each gap and contradiction. Name every function,
    field, file format or command that two tasks both use and that no earlier task pins: the first
    task that needs it must pin it.
+   Check that the planner searches the code before writing each Scope, and that the plan check
+   refuses tasks with Scope paths that share a prefix up to the first wildcard unless one waits
+   for the other through After, directly or through another task. The refusal names both tasks
+   and gives the next step. A shared file belongs to the first task with its shared names and
+   stubs; tasks that need it wait through After and then own only their files. For a story already
+   in flight, the next plan check applies this rule and gives a plain step to amend the plan.
    Flag every After link or shared Scope entry that exists only because of a shared line (a
    command-table row, a guide list, a registry), and name the split: the shared line to one task
    or a small last wiring task.
