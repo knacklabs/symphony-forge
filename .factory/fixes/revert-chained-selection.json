@@ -1,0 +1,159 @@
+{
+  "base": "43d9a385ed1f9ba8dea28244a4c4c63c242214dd",
+  "branch": "fix/revert-chained-selection",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1b6ba-56a2-7122-9ba6-04274f9c6933",
+    "head": null,
+    "start": "15154a26f101e897c93fdf6d87e23977dd505d24"
+  },
+  "done_when": "The chained-command part's change is reverted on main, the other test-selection parts stay, and main's full run on Linux and Windows is green",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "narrow_command() in src/forge/fasttest.py",
+      "file": "src/forge/fasttest.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 132,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Preserve selected pytest files when always-test entries are present",
+      "work": 2
+    },
+    {
+      "area": "pytest_tests() in src/forge/fasttest.py",
+      "file": "src/forge/fasttest.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 663,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Keep JavaScript checks in existing mixed-repo fast tests",
+      "work": 2
+    },
+    {
+      "area": "suggest() in src/forge/quicktest.py",
+      "file": "src/forge/quicktest.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 76,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Preserve JavaScript test commands in quick-test advice",
+      "work": 2
+    },
+    {
+      "area": "suggest() in src/forge/quicktest.py",
+      "file": "src/forge/quicktest.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 91,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Do not suggest the pytest picker for other Python runners",
+      "work": 2
+    },
+    {
+      "area": "test_4_running_the_mixed_suggestion_runs_each_test_kind_once() in tests/test_quick_test_suggestions.py",
+      "file": "tests/test_quick_test_suggestions.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 104,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: The chained-command revert lacks full Linux and Windows runs",
+      "work": 2
+    },
+    {
+      "area": "close_tests() in src/forge/fasttest.py",
+      "file": "src/forge/fasttest.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 304,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Preserve the shell directory for JavaScript test steps",
+      "work": 1
+    },
+    {
+      "area": "test() in src/forge/fasttest.py",
+      "file": "src/forge/fasttest.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 337,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Find the repository root for explicit pytest selection",
+      "work": 1
+    },
+    {
+      "area": ".factory/fixes/revert-chained-selection.json",
+      "file": ".factory/fixes/revert-chained-selection.json",
+      "gain": 4,
+      "harm": 3,
+      "line": 4,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: proof list",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "a625881472af6a549b3cacb6a04034200303693c48facd3f930c842ff66027c5",
+    "changed": "75c26ff1496c57045cb96afe2638cddbc200d14ec8c7708f6a309478cd57359d",
+    "commit": "5b99ec55d389e06ae020db8ceff659b883913f7c",
+    "dismissals": [],
+    "findings": [],
+    "id": "96471761-8747-4669-9df7-83dddc3205e3",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-07T15:46:34.802703+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-07T15:56:49.271867+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-07T16:05:01.555922+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "8b3963b9-7767-48a1-aa5c-12440ba2cbd3",
+    "head": "83f76af593b90646e97775ac0caf1cf654df991f",
+    "keys": {
+      "the open P0 functional: do not suggest the pytest picker for other python runners in src/forge/quicktest.py": 1,
+      "the open P0 functional: keep javascript checks in existing mixed-repo fast tests in src/forge/fasttest.py": 1,
+      "the open P0 functional: preserve javascript test commands in quick-test advice in src/forge/quicktest.py": 1,
+      "the open P0 functional: preserve selected pytest files when always-test entries are present in src/forge/fasttest.py": 1
+    },
+    "round": null
+  },
+  "why": "The chained-command part broke pytest selection that worked before and main's full run is red; the owner chose to revert that part for this release",
+  "worker": "codex"
+}
