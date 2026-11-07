@@ -18,7 +18,7 @@
       "gain": 4,
       "harm": 2,
       "line": 37,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -28,27 +28,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "301aee30ae86dc0720038168de8e8000386cbab70d86315c8b062a2d9543402f",
-    "changed": "69b4f144c28af205a1f50ac3d329a5a2d8a999d22004ab412538623e66bff534",
-    "commit": "63cd141fc868965801792c7be7274b30ce462be6",
+    "branch_diff": "078f292e95b2bf070cd7b65b869e6605de4ab2708428c39273aa9b793b9cb6b0",
+    "changed": "e9a575841b52669b7accc4df9dcd6f8d120f21e7452bf64205b0808a6814d0fe",
+    "commit": "2b8dafa46f844ebd86546ad1b1cc7f5b39e1f6ca",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 1, Harm 2\nRaise: Gate\nCase: normal use - a coordinator follows the shipped skill after a follow-up replay conflict.\nThe refusal now prescribes merge recovery, but src/forge/templates/skill.md:1694-1695 still says close \u201cstops with a replay command\u201d and instructs agents to follow \u201creplay and leased publication commands\u201d before closing again. Those are the recovery steps this patch removes. The coordinator's conditional requirement to update guides describing the old recovery therefore applies. Update this paragraph to prescribe forge work followed by forge close so client repositories receive consistent recovery instructions.",
-        "file": "src/forge/close.py",
-        "gain": 4,
-        "harm": 2,
-        "line": 37,
-        "priority": "P1",
-        "title": "Gate: Update the shipped replay-conflict recovery guidance",
-        "work": 1
-      }
-    ],
-    "id": "55ac78ec-ac2f-42f5-a81c-9e4bedc513f5",
-    "status": "blocked"
+    "findings": [],
+    "id": "ceca42dd-d3d3-46c6-935d-9022791280ae",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-07T04:13:26.969134+00:00",
@@ -56,6 +45,10 @@
     },
     {
       "at": "2026-11-07T04:20:37.576548+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-07T04:28:39.599748+00:00",
       "step": "review"
     }
   ],
