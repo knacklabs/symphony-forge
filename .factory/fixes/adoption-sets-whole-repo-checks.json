@@ -1,6 +1,13 @@
 {
   "base": "5393cf3ed78f0bae68f7bf2762dbcc9675a03710",
   "branch": "fix/adoption-sets-whole-repo-checks",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1b754-962b-7440-8651-0f334d42d134",
+    "head": null,
+    "start": "32997c760043d9c4a0cbe4ebeb213acdf379dfed"
+  },
   "done_when": "Adoption guidance names the cheap whole-repo checks to add to always_test for Python or to fast_test for TypeScript, and an adopted app gets them through the normal settings fix",
   "fix_kind": "mechanical",
   "kind": "fix",
