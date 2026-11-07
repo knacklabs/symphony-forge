@@ -353,6 +353,8 @@ Without a coordinating session, a one-tool repo waits for it.
 Reviews run externally through Autoreview on the named tool; with both, Codex when installed,
 otherwise Claude. Normal, light and sign-off reviews use `[models.review]` or its per-tool entries.
 Unset entries use Autoreview's default model and effort; unset effort uses its default effort.
+New repos pin Codex reviews and cold reads to `gpt-6.1-terra` at max effort.
+Upgrade and sync keep existing repos' `forge.toml` model settings unchanged.
 
 **Running a handed-out round.** When Forge prints a subagent instruction, run that instruction
 as a background subagent of the named role. Keep the item's chat while the session is open;

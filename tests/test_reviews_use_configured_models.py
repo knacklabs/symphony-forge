@@ -46,8 +46,9 @@ def test_1_reviews_use_configured_model_and_effort_or_tool_defaults(
     where = Path(started.stdout.splitlines()[0].rsplit(" in ", 1)[1])
     config = where / "forge.toml"
     text = config.read_text("utf-8")
-    # The earlier release included a review pin. Removing it must restore tool defaults.
-    text = re.sub(r'\n\[models\.review(?:\.[^\]]+)?\][^\[]*', '', text)
+    # Remove every review entry, including adjacent per-tool tables from init.
+    # Missing entries must still restore Autoreview's defaults.
+    text = re.sub(r'^\[models\.review(?:\.[^\]]+)?\][^\[]*', '', text, flags=re.M)
     text = f'tools = "{family}"\n' + text
     if entry:
         text += f'\n[models.{entry}]\nmodel = "{model}"\n'
