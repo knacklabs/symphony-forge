@@ -72,7 +72,7 @@
   },
   "round": 1,
   "stacked_on": "release-1-2-31",
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-07T17:42:22.892825+00:00",
@@ -85,8 +85,12 @@
   ],
   "stop": {
     "at": "2026-11-07T18:52:59.786933+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "tests/test_canvas_settled_motion.py",
-    "wait_id": "5dd01eeb-2b26-4bff-977c-2da25ca20eec"
+    "reason": "Finding 1 is Harm 3: one more round by the standing rule; finding 2 is live-with",
+    "wait_id": "5dd01eeb-2b26-4bff-977c-2da25ca20eec",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
