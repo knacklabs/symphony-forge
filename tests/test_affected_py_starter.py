@@ -53,3 +53,35 @@ def test_6_python_starter_selects_its_affected_parts(repo, gh, tmp_path):
                                 capture_output=True, text=True, timeout=30)
         assert result.returncode == 0, result.stdout + result.stderr
         assert expected in result.stdout
+
+    # New unstaged tests must select their part, alone or alongside tracked
+    # changes in the other part. The old cases above only changed tracked files,
+    # so they could not catch Git diff omitting untracked files. This extends the
+    # same real command boundary without adding a fake or production test seam.
+    for new_file, tracked_file, expected, absent in (
+        ("apps/api/tests/test_new.py", None, ("Affected parts: api", "test:api"), ("test:browser",)),
+        ("apps/web/src/new.test.ts", None, ("Affected parts: web", "vitest run", "test:browser"), ("test:api",)),
+        ("apps/api/tests/test_new.py", "apps/web/src/index.css",
+         ("Affected parts: api, web", "test:api", "test:browser"), ()),
+        ("apps/web/src/new.test.ts", "apps/api/app/projects/service.py",
+         ("Affected parts: api, web", "test:api", "test:browser"), ()),
+    ):
+        new = client / new_file
+        new.write_text("def test_new():\n    assert False\n" if new.suffix == ".py" else
+                       "throw new Error('new failing test');\n", encoding="utf-8")
+        tracked = client / tracked_file if tracked_file else None
+        original = tracked.read_bytes() if tracked else None
+        if tracked:
+            tracked.write_bytes(original + b"\n")
+        try:
+            result = subprocess.run([node, "scripts/test.mjs", "--list", base], cwd=client,
+                                    capture_output=True, text=True, timeout=30)
+            assert result.returncode == 0, result.stdout + result.stderr
+            for command in expected:
+                assert command in result.stdout, result.stdout
+            for command in absent:
+                assert command not in result.stdout, result.stdout
+        finally:
+            new.unlink()
+            if tracked:
+                tracked.write_bytes(original)
