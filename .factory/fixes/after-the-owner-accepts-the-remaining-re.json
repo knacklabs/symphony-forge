@@ -1,0 +1,15 @@
+{
+  "base": "e923c49135fd7176cc159f4d27d247ab5d3ef56a",
+  "branch": "fix/after-the-owner-accepts-the-remaining-re",
+  "done_when": "One close after accepting findings runs the checks and reports Ready, or stops and names the failing check.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-07T17:49:38.109975+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "After the owner accepts the remaining review findings, the first close prints a clean review but the item is not Ready, so the owner has to run close a second time."
+}
