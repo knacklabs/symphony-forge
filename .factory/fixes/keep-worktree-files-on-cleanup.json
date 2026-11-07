@@ -1,0 +1,15 @@
+{
+  "base": "5a1cea9016b296ef812360e28ccb81547748c7b9",
+  "branch": "fix/keep-worktree-files-on-cleanup",
+  "done_when": "After merge or fix drop, Forge keeps a worktree that holds ignored files outside known caches or untracked files, and names them, as doctor's finished-work cleanup does",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-07T06:47:30.373312+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Removing a worktree after merge deletes gitignored files silently (merge.py checks untracked files only, then runs git worktree remove), and forge fix drop deletes untracked non-ignored files with --force (task.py). A client lost a 3-hour test report. Forge issue 1428."
+}
