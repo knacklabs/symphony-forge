@@ -47,7 +47,7 @@
     "id": "55ac78ec-ac2f-42f5-a81c-9e4bedc513f5",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -69,10 +69,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": null,
-    "head": "193f5831d0e4ec1fa3c27922694481359dec69c1",
+    "close": "9c7e4025-aa2b-4fd4-886a-aebea5eabac8",
+    "head": "e4751888c7664649874ef284a02a8a5ae862294b",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "Close's replay-conflict refusal tells the agent to rebase and force-push, but Forge's own hook blocks that push, so a person must use a terminal (Forge issue 1292). Merging the default branch into the branch already works: close skips the replay when origin/<default> is an ancestor of HEAD.",
   "worker": "codex"
