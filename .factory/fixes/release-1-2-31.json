@@ -97,6 +97,7 @@
     "id": "6b68f7cd-e63b-48cf-8e2d-3e61b1d3f029",
     "status": "clean"
   },
+  "round": 1,
   "status": "fixing",
   "steps": [
     {
@@ -120,5 +121,12 @@
     "wait_id": "62949d08-ce55-4899-8aa9-67b4a11af1d5",
     "worker_round": null
   },
-  "why": "Release v1.2.31: publish what merged since v1.2.30"
+  "stuck": {
+    "close": "a20b1e44-a2a7-46c8-88af-89af4ac441e1",
+    "head": "62c3c1e72056788fea6fbb2a5fdab20c63ecf572",
+    "keys": {},
+    "round": null
+  },
+  "why": "Release v1.2.31: publish what merged since v1.2.30",
+  "worker": "codex"
 }
