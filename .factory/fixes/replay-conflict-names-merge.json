@@ -1,0 +1,15 @@
+{
+  "base": "8fd1de2831fdefa7f9c89dc0c1266b3539b0e34b",
+  "branch": "fix/replay-conflict-names-merge",
+  "done_when": "When replaying a stacked part or follow-up fix onto the default branch conflicts, close names forge work <item> to merge the default branch, then forge close <item>, and names no rebase or force push",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-07T04:13:26.969134+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Close's replay-conflict refusal tells the agent to rebase and force-push, but Forge's own hook blocks that push, so a person must use a terminal (Forge issue 1292). Merging the default branch into the branch already works: close skips the replay when origin/<default> is an ancestor of HEAD."
+}
