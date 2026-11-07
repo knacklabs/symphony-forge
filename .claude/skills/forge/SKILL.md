@@ -1832,8 +1832,10 @@ after `--` remain task arguments, and other shell arguments keep their expansion
 Only a plain pytest, Vitest, Jest or Playwright call gets its runner's selection.
 Pytest calls with `-m` or `-k` and all steps after `cd` run whole. Ruff, mypy and other checks
 also run whole. An npm script gets a selection only when its body is exactly one plain test call.
-Plain pytest steps keep their own paths, including in an Nx workspace. Only the first plain
-pytest step gets `always_test` files.
+Plain pytest steps keep their own paths, including in an Nx workspace. Each `always_test` file
+goes to the first plain pytest step whose paths contain it. A step without path arguments takes
+every required file. Files outside all step paths go to the first plain pytest step.
+Each required file runs only in its assigned step.
 A step with no selection runs whole and says so. Go and other runners run the full test command.
 Chains with `;` or `|` and compound npm scripts also keep their full
 command because arguments cannot select each runner inside them. Set `fast_test` for a different

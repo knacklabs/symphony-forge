@@ -267,6 +267,23 @@ def own_version_only(path: Path, base: str) -> bool:
     return snapshots[0] == snapshots[1]
 
 
+def pytest_roots(top: Path, command: str) -> list[Path]:
+    """The paths a plain pytest call collects, or the repo root with no paths."""
+    words, _ = quicktest.runner_words(top, shlex.split(command))
+    roots, skip = [], False
+    values = {"-c", "-o", "--override-ini", "--rootdir", "--basetemp",
+              "--confcutdir", "--ignore", "--ignore-glob", "--deselect", "--import-mode",
+              "-p", "-n", "--numprocesses", "--dist", "--maxprocesses", "--splits", "--group"}
+    for word in words[1:]:
+        if skip:
+            skip = False
+        elif word in values:
+            skip = True
+        elif not word.startswith("-") and Path(word.split("::", 1)[0]).exists():
+            roots.append(Path(word.split("::", 1)[0]).resolve())
+    return roots or [top]
+
+
 def close_tests(base: str, command: str | None = None) -> int:
     """Use supported runners' selection; leave other commands unchanged."""
     command = command if command is not None else repo.grouped(
@@ -283,9 +300,19 @@ def close_tests(base: str, command: str | None = None) -> int:
         print("Test selection: whole command (unsupported shell flow).", flush=True)
         return subprocess.run(command, shell=True).returncode
     quote = lambda words: subprocess.list2cmdline(words) if os.name == "nt" else shlex.join(words)
+    top = Path.cwd()
+    scopes = {index: pytest_roots(top, part) for index, (kind, part, _) in enumerate(parts)
+              if kind == "python"}
+    assigned = {index: [] for index in scopes}
+    if scopes:
+        for name in always_tests(top, tomllib.loads((top / "forge.toml").read_text("utf-8"))):
+            path = (top / name.split("::", 1)[0]).resolve()
+            owner = next((index for index, roots in scopes.items()
+                          if any(path == root or path.is_relative_to(root) for root in roots)),
+                         next(iter(scopes)))
+            assigned[owner].append(name)
     selected = []
-    include_always = True
-    for kind, part, passthrough in parts:
+    for index, (kind, part, passthrough) in enumerate(parts):
         label = part
         words = shlex.split(part)
         selection = "whole command"
@@ -294,9 +321,8 @@ def close_tests(base: str, command: str | None = None) -> int:
             code = (f"import sys; sys.path.insert(0, {str(Path(__file__).parents[1])!r}); "
                     f"from forge.fasttest import pytest_tests; "
                     f"sys.exit(pytest_tests({base!r}, {(part + passthrough)!r}, "
-                    f"selection=True, include_always={include_always!r}))")
+                    f"selection=True, always={assigned[index]!r}))")
             selected.append(quote([sys.executable, "-c", code]))
-            include_always = False
             continue
         if kind == "nx" and Path("nx.json").is_file():
             tokens = list(re.finditer(r'''(?:\\.|[^\s"'\\]+|"(?:\\.|[^"\\])*"|'[^']*')+''', part))
@@ -705,7 +731,7 @@ def pytest_process(command: str, environment: dict, entry: dict | None) -> int:
 
 
 def pytest_tests(base: str, command: str, entry: dict | None = None, *, selection: bool = False,
-                 include_always: bool = True) -> int:
+                 always: list[str] | None = None) -> int:
     parts = quicktest.test_parts(Path.cwd(), command)
     environment = dict(os.environ)
     worker = environment.get("FORGE_WORKER_TESTS") == "1"
@@ -728,10 +754,13 @@ def pytest_tests(base: str, command: str, entry: dict | None = None, *, selectio
     environment.pop("FORGE_WORKER_TESTS", None)
     if not selection:
         command += parts[0][2]  # npm forwards picker arguments only after --.
-    excluded = []
     # Read as forge test --pytest reads test: close has already checked forge.toml.
     top = repo.root()
-    always = always_tests(top, tomllib.loads((top / "forge.toml").read_text("utf-8"))) if include_always else []
+    configured = always_tests(top, tomllib.loads((top / "forge.toml").read_text("utf-8")))
+    always = configured if always is None else always
+    other_files = {(top / name.split("::", 1)[0]).resolve() for name in configured} - {
+        (top / name.split("::", 1)[0]).resolve() for name in always}
+    excluded = [path.as_posix() for path in other_files]
     required = always[:]
     named = []
     picked, tests, shared_changed, missed = related(base)
@@ -764,35 +793,23 @@ def pytest_tests(base: str, command: str, entry: dict | None = None, *, selectio
             picked = [path for path in tests if path in changed]
         shared_changed = False
     # Each plain invocation owns its explicit test paths, or the repo root by default.
-    words, _ = quicktest.runner_words(top, shlex.split(command))
-    roots, skip = [], False
-    values = {"-c", "-o", "--override-ini", "--rootdir", "--basetemp",
-              "--confcutdir", "--ignore", "--ignore-glob", "--deselect", "--import-mode",
-              "-p", "-n", "--numprocesses", "--dist", "--maxprocesses", "--splits", "--group"}
-    for word in words[1:]:
-        if skip:
-            skip = False
-        elif word in values:
-            skip = True
-        elif not word.startswith("-") and Path(word.split("::", 1)[0]).exists():
-            roots.append(Path(word.split("::", 1)[0]).resolve())
-    roots = roots or [top]
+    roots = pytest_roots(top, command)
     def in_scope(name):
         path = Path(name.split("::", 1)[0]).resolve()
-        return any(path == root or path.is_relative_to(root) for root in roots)
+        return path not in other_files and any(path == root or path.is_relative_to(root) for root in roots)
 
     picked = [name for name in picked if in_scope(name)]
     named = [name for name in named if in_scope(name)]
     if selection:
         print("Test selection: pytest: " + ("whole suite (shared inputs)" if shared_changed else
               ", ".join(picked + always + named) or "none (no related tests)") + ".", flush=True)
-    if not shared_changed:
+    if not shared_changed or other_files:
         if not picked and not always and not named:
             print("No tests ran: no changed or module-related test files were selected.")
             return 0
         # Keep shell setup, test roots and pytest settings in the repo's full command.
         listed = {entry.split("::")[0] for entry in always + named}
-        excluded = [path for path in tests if path not in picked and path not in listed]
+        excluded += [path for path in tests if path not in picked and path not in listed]
     if shared_changed:
         print("Shared test inputs changed; running the full test command.", flush=True)
     else:

@@ -414,8 +414,8 @@ def test_2_a_python_chain_selects_only_plain_pytest_steps(
         ("node", ["check.js"]),
     ]
 
-    # Plain pytest calls keep their own paths. Only the first plain call gets
-    # always_test files, so a required test does not run again in each step.
+    # Plain pytest calls keep their own paths. A required file outside every
+    # step's roots goes to the first plain call, and runs once.
     (client / "src" / "basket.py").write_text("VALUE = 1\n", "utf-8")
     (client / "src" / "order.py").write_text("VALUE = 1\n", "utf-8")
     (client / "tests" / "unit").mkdir(exist_ok=True)
@@ -447,6 +447,26 @@ def test_2_a_python_chain_selects_only_plain_pytest_steps(
         assert "none (no related tests)" in selected[1], selected
         patient(lambda: (client / ".forge/always-tests.txt").unlink())
         patient(lambda: (client / "required-ran.txt").unlink())
+
+    # A changed required file inside the integration step must not also run in
+    # the earlier unit step. The previous outside-both-roots case cannot catch this.
+    required_api = client / "tests/integration/test_order.py"
+    required_api.write_text(
+        "from pathlib import Path\nfrom order import VALUE\ndef test_order():\n"
+        "    assert VALUE == 1\n"
+        "    with Path('required-ran.txt').open('a', encoding='utf-8') as out:\n"
+        "        out.write('ran')\n", "utf-8")
+    (client / ".forge/always-tests.txt").write_text("tests/integration/test_order.py\n", "utf-8")
+    _configure(repo, client, f"{python} -m pytest tests/unit && {python} -m pytest tests/integration")
+    required_api.write_text(required_api.read_text("utf-8") + "# Changed required test\n", "utf-8")
+    owned = repo.forge("test", "--change", cwd=client)
+    assert owned.returncode == 0, owned.stdout + owned.stderr
+    assert (client / "required-ran.txt").read_text("utf-8") == "ran"
+    selected = [line for line in owned.stdout.splitlines() if line.startswith("Test selection: pytest:")]
+    assert "none (no related tests)" in selected[0], selected
+    assert "tests/integration/test_order.py" in selected[1], selected
+    patient(lambda: (client / ".forge/always-tests.txt").unlink())
+    patient(lambda: (client / "required-ran.txt").unlink())
 
     # An earlier-adopted Python client keeps its command through upgrade and
     # sync, and Forge still selects the related pytest module.

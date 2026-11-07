@@ -498,7 +498,9 @@ Forge prints one `Test selection:` line per step of a straight `&&` chain. The c
 once and keeps shell setup. Only plain pytest, Vitest, Jest and Playwright calls get their
 runner's selection. Vitest uses `--changed`, Jest uses `--changedSince`, and Playwright uses
 `--only-changed=<base>`. Plain pytest calls use the related-test picker, each with its own
-test paths. Only the first plain pytest call gets `always_test` files.
+test paths. Each `always_test` file goes to the first plain pytest step whose paths contain it.
+A step without path arguments takes every required file. Files outside all step paths go to
+the first plain pytest step. Each required file runs only in its assigned step.
 Calls with `-m` or `-k`, steps after `cd`, and checks such as Ruff or mypy run whole and say so.
 Chains with `;` or `|` also run whole. An npm script gets a selection only when its body is
 exactly one plain test call. Compound scripts stay whole.
