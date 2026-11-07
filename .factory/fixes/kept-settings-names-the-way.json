@@ -11,12 +11,121 @@
   "done_when": "When close keeps the default branch's forge.toml, its line says the change is kept out because the item's Done-when does not name forge.toml and gives the forge fix amend step to allow it",
   "fix_kind": "backend",
   "kind": "fix",
+  "known": [
+    {
+      "area": "restore_default_settings() in src/forge/task.py",
+      "file": "src/forge/task.py",
+      "gain": 2,
+      "harm": 4,
+      "line": 202,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Data loss: Expose the recovery step before land merges",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/skill.md",
+      "file": "src/forge/templates/skill.md",
+      "gain": 4,
+      "harm": 3,
+      "line": 308,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Reapply the setting before handing recovery to a worker",
+      "work": 2
+    },
+    {
+      "area": "restore_default_settings() in src/forge/task.py",
+      "file": "src/forge/task.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 199,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Put the task allowance in the checkout that work reads",
+      "work": 2
+    },
+    {
+      "area": "test_2_close_commits_main_settings_with_head_pin_unless_settings_are_allowed() in tests/test_close_preserves_default_settings.py",
+      "file": "tests/test_close_preserves_default_settings.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 133,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: Task-part settings advice",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "c61d6ad5b67034bda564453f105af393f8b9904bca4b6ba31529aaf1baab37e0",
+    "changed": "5bfa84555455efad7c1eeed46ca993180f5e62d6cf4ec6b2cf9cd61321a7b03a",
+    "commit": "8b9a40300f32488a3c21932aeea925acf5bdea16",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 2, Work 2, Harm 4\nRaise: Data loss (floor: data loss)\nCase: normal use - an agent runs `forge land` on an upgrade fix that also contains an unlisted settings change.\nThe new recovery instruction is printed inside close, but `src/forge/land.py:91-93` calls close synchronously and `src/forge/land.py:146-152` then merges when agent merging is enabled. `src/forge/merge.py:283-316` removes the clean fix branch and worktree afterward. The caller can therefore regain control only after the excluded setting has been omitted from the merge and the item needed by the suggested amend step has been cleaned up. The coordinator's ruling did not address this land-and-cleanup path.\nAdds work: signal the settings restore to land and pause before merging; F 1 x H 1 = 1; 2 x C = 4",
+        "file": "src/forge/task.py",
+        "gain": 2,
+        "harm": 4,
+        "line": 202,
+        "priority": "P1",
+        "title": "Data loss: Expose the recovery step before land merges",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - close excludes a coordinator's settings edit from a fix, and the coordinator follows the new guide's amend-and-work steps.\nThe guide says `forge work` will make the change again, but every worker brief unconditionally says never to edit `forge.toml`, even temporarily (`src/forge/worker.py:41-44`, `:549` and `:642`). Amending the Done-when permits the edit; it does not restore the removed values, and the instructed worker is told not to restore them. The close output at `src/forge/task.py:202-203` has the same omission. This worker restriction is evidence beyond the coordinator's ruling; the recovery needs the coordinator to reapply the setting before work continues.\nAdds work: include the coordinator's reapplication in the recovery step; F 2 x H 2 = 4; 2 x C = 4",
+        "file": "src/forge/templates/skill.md",
+        "gain": 4,
+        "harm": 3,
+        "line": 308,
+        "priority": "P1",
+        "title": "Functional: Reapply the setting before handing recovery to a worker",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional\nCase: normal use - a coordinator adds the allowance to a task's still-open story plan, then runs the suggested `forge work` command.\nThe instruction does not say to propagate the plan update to the task checkout. `src/forge/worker.py:124-128` merges only the default branch, while `src/forge/task.py:212-220` reads the plan from the task checkout, so an update on `story/<key>` alone leaves the setting unauthorized there. Editing the numbered approved Done-when instead also needs a new approval: `src/forge/worker.py:474-481` rejects the changed approval or checkout. These checks are evidence beyond the coordinator's ruling. Direct the coordinator to the covered Done-when details in the task checkout, or include the approval and propagation steps for a numbered-result change.\nAdds work: identify and propagate the task's plan allowance; F 2 x H 2 = 4; 2 x C = 4",
+        "file": "src/forge/task.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 199,
+        "priority": "P1",
+        "title": "Functional: Put the task allowance in the checkout that work reads",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - close restores the default settings while closing a story part.\nEvery case in the named proof starts a fix (`tests/test_close_preserves_default_settings.py:32`), so none exercises the new task-specific output at `src/forge/task.py:198-200`. That branch could omit its recovery instruction or give a fix-only command and all three named proof cases would still pass. Extend the command-level owner test to close a task part and check its explanation and applicable next step.",
+        "file": "tests/test_close_preserves_default_settings.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 133,
+        "priority": "P1",
+        "title": "Gate: Task-part settings advice",
+        "work": 2
+      }
+    ],
+    "id": "4729f054-eca7-4ae3-b5b6-d309bf119bef",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-07T18:53:13.722341+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-07T19:19:37.116058+00:00",
+      "step": "review"
     }
   ],
   "stuck": {

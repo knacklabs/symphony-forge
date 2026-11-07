@@ -1,0 +1,48 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/task.py\tData loss: Expose the recovery step before land merges\tkept-settings-names-the-way",
+      "kind": "bug",
+      "path": "src/forge/task.py",
+      "line": 202,
+      "text": "Data loss: Expose the recovery step before land merges",
+      "from": "blocking",
+      "item": "kept-settings-names-the-way",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/task.py\tFunctional: Put the task allowance in the checkout that work reads\tkept-settings-names-the-way",
+      "kind": "bug",
+      "path": "src/forge/task.py",
+      "line": 199,
+      "text": "Functional: Put the task allowance in the checkout that work reads",
+      "from": "blocking",
+      "item": "kept-settings-names-the-way",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/skill.md\tFunctional: Reapply the setting before handing recovery to a worker\tkept-settings-names-the-way",
+      "kind": "bug",
+      "path": "src/forge/templates/skill.md",
+      "line": 308,
+      "text": "Functional: Reapply the setting before handing recovery to a worker",
+      "from": "blocking",
+      "item": "kept-settings-names-the-way",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_close_preserves_default_settings.py\tGate: Task-part settings advice\tkept-settings-names-the-way",
+      "kind": "bug",
+      "path": "tests/test_close_preserves_default_settings.py",
+      "line": 133,
+      "text": "Gate: Task-part settings advice",
+      "from": "blocking",
+      "item": "kept-settings-names-the-way",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
