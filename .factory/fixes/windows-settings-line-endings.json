@@ -64,7 +64,7 @@
     "id": "b73362cc-e519-40ef-b939-f34e67f8db88",
     "status": "blocked"
   },
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-07T16:51:16.517790+00:00",
@@ -77,8 +77,12 @@
   ],
   "stop": {
     "at": "2026-11-07T16:55:18.343338+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "tests/test_reviewchoice_words.py",
-    "wait_id": "d6a6e266-3912-40cc-b836-04a57ae0b93e"
+    "reason": "Both findings asked for proof; the full Windows run on this branch is green: https://github.com/knacklabs/symphony-forge/actions/runs/42393744228",
+    "wait_id": "d6a6e266-3912-40cc-b836-04a57ae0b93e",
+    "worker_round": null
   },
   "why": "On Windows the earlier-adoption settings test fails because the test helper writes forge.toml with Windows line endings and the test compares bytes"
 }
