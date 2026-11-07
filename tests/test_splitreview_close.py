@@ -4,6 +4,9 @@ Test-audit: this command contract protects reuse, the patch sent to the reviewer
 and tests on merged code. A full-base fallback or a skipped test run regresses it.
 Existing reuse tests create no conflicts. Only external services are faked; no
 production seam is added. Cases share setup at the owning command boundary.
+Incoming commits carry real worker evidence: confusing that evidence with this
+task's paragraphs used to discard its clean review. The own-evidence case keeps
+the opposite contract: a change to this task's proof still needs a full review.
 """
 import json
 import re
@@ -21,7 +24,7 @@ STORY = "FORGE-SPLITREVIEW-1"
 @pytest.mark.parametrize("previous,case", [
     (False, "clean"), (False, "conflict"), (False, "multiple"),
     (False, "extra-file"), (False, "blocked-conflict"), (False, "open-finding"),
-    (False, "task-contract"), (False, "fix-contract"), (False, "skipped"),
+    (False, "task-contract"), (False, "fix-contract"), (False, "skipped"), (False, "own-evidence"),
     (True, "conflict"),
 ], ids=lambda value: str(value))
 def test_1_close_reviews_only_conflict_repairs_and_unreviewed_edits(env, previous, case):
@@ -50,6 +53,11 @@ def test_1_close_reviews_only_conflict_repairs_and_unreviewed_edits(env, previou
     env.repo.git("push", "-q", "origin", "main")
     item, where = (env.start_fix(changes={"app.py": own}) if case == "fix-contract"
                    else env.start_task(changes={"app.py": own}))
+    evidence = ("Before coding:\nNeed: Preserve this task's greeting\n"
+                "Simplest option: Keep the existing greeting\nExisting code reused: app.py\n\n"
+                "Functional check: This task keeps its greeting.\n\n"
+                "Proof list:\n- This task's greeting: tests/test_app.py\n")
+    env.commit(where, "worker-proof.py", "proof_version = 1\n", "Record task evidence\n\n" + evidence)
     env.reviews(blocked(finding("P1", "Greeting is missing")) if case == "open-finding" else CLEAN)
     first = (env.close(item, "--no-review", "--by", "A Person", "--reason", "Owner chose to skip")
              if case == "skipped" else env.close(item))
@@ -62,15 +70,20 @@ def test_1_close_reviews_only_conflict_repairs_and_unreviewed_edits(env, previou
         amended = env.repo.forge("fix", "amend", item, "--done", "The greeting names the shop",
                                  "--because", "The owner clarified the greeting")
         assert amended.returncode == 0, amended.stdout + amended.stderr
+    elif case == "own-evidence":
+        env.commit(where, "worker-proof.py", "proof_version = 2\n",
+                   "Update task evidence\n\n" + evidence.replace("This task's greeting", "Updated task proof"))
     incoming = original.replace("line_25 = 25\n", "incoming_line = 25\n")
-    env.commit(env.repo.path, "app.py", incoming)
+    incoming_message = ("Other task merged\n\n" + evidence.replace("this task", "the other task")
+                        .replace("This task", "The other task"))
+    env.commit(env.repo.path, "app.py", incoming, incoming_message)
     env.repo.git("push", "-q", "origin", "main")
     if case == "multiple":
         env.repo.git("fetch", "origin", cwd=where)
         env.repo.git("merge", "--no-edit", "origin/main", cwd=where)
     if conflict:
         incoming = incoming.replace("line_10 = 10\n", "main_value = 10\n")
-        env.commit(env.repo.path, "app.py", incoming)
+        env.commit(env.repo.path, "app.py", incoming, incoming_message)
         env.repo.git("push", "-q", "origin", "main")
     env.gh.respond("pr", "list", "--head", stdout='[{"number":7,"state":"OPEN",'
                    '"body":"","isDraft":false,"mergeStateStatus":"BEHIND"}]')
@@ -88,7 +101,8 @@ def test_1_close_reviews_only_conflict_repairs_and_unreviewed_edits(env, previou
             "line_25 = 25\n", "incoming_line = 25\n")
         env.commit(where, "app.py", resolved)
         if case == "extra-file":
-            env.commit(where, "worker-only.py", "unreviewed_edit = True\n")
+            env.commit(where, "worker-only.py", "unreviewed_edit = True\n",
+                       "Add worker file\n\n" + evidence)
         if case == "blocked-conflict":
             env.reviews(blocked(finding("P1", "Conflict repair loses the greeting", line=10)))
     before = len(marker.read_text("utf-8").splitlines())

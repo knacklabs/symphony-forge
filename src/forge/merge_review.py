@@ -26,7 +26,6 @@ def base(top: Path, item: str, state: dict[str, Any], target: str,
     incoming = repo.git("merge-base", target, "HEAD", cwd=top)
     if repo.run("git", "merge-base", "--is-ancestor", incoming, reviewed, cwd=top).returncode == 0:
         return ""
-    old_base = repo.git("merge-base", target, reviewed, cwd=top)
     if "/" in item:
         key = item.split("/", 1)[0]
         if repo.run("git", "show", f"{reviewed}:plans/{key}.md", cwd=top).stdout != review.task(top, item)[0]:
@@ -44,9 +43,10 @@ def base(top: Path, item: str, state: dict[str, Any], target: str,
         saved = json.loads(shown.stdout)
         if any(saved.get(key, "") != state.get(key, "") for key in ("why", "done_when")):
             return ""
-    if (review.before_coding(top, old_base, reviewed) != review.before_coding(top, old_base)
-            or any(review.commit_paragraph(top, old_base, label, reviewed) !=
-                   review.commit_paragraph(top, old_base, label)
+    # Exclude incoming main on both reads so its worker evidence cannot replace this item's.
+    if (review.before_coding(top, incoming, reviewed) != review.before_coding(top, incoming)
+            or any(review.commit_paragraph(top, incoming, label, reviewed) !=
+                   review.commit_paragraph(top, incoming, label)
                    for label in ("Functional check:", "Proof list:"))):
         return ""
     merged = repo.run("git", "merge-tree", "--write-tree", "--no-messages", reviewed, incoming, cwd=top)
