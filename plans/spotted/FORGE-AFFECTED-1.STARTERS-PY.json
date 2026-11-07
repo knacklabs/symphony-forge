@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/templates/starter-python/scripts/affected.mjs\tFunctional: Include new untracked files in local selection\tFORGE-AFFECTED-1/STARTERS-PY",
+      "kind": "bug",
+      "path": "src/forge/templates/starter-python/scripts/affected.mjs",
+      "line": 6,
+      "text": "Functional: Include new untracked files in local selection",
+      "from": "blocking",
+      "item": "FORGE-AFFECTED-1/STARTERS-PY",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/templates/starter-python/scripts/affected.mjs\tNot done: A change to a client app runs lint, typecheck and tests only for the parts it touches",
+      "kind": "edge",
+      "path": "src/forge/templates/starter-python/scripts/affected.mjs",
+      "line": 10,
+      "text": "Not done: A change to a client app runs lint, typecheck and tests only for the parts it touches",
+      "from": "review",
+      "item": "FORGE-AFFECTED-1/STARTERS-PY",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
