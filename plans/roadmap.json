@@ -560,6 +560,12 @@
       "order": 107
     },
     {
+      "key": "FORGE-SPLITREVIEW-1",
+      "title": "After a conflict, close reviews only the conflict fix, and plans keep task files apart",
+      "status": "pending",
+      "order": 116
+    },
+    {
       "key": "FORGE-FULLCAP-1",
       "title": "Waiting parts start and merge on their own once the part before them is done",
       "status": "pending",

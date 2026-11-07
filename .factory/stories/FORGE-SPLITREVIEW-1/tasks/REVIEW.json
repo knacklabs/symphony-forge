@@ -1,0 +1,70 @@
+{
+  "branch": "task/FORGE-SPLITREVIEW-1-REVIEW",
+  "chat": {
+    "approval": "1298cc87910be7fd4281ad240a59b068fc1d0703afd9a78834b5a675cac84f12",
+    "claude": null,
+    "conversation": "01a1b3be-c802-7383-ad19-12b4233a5cab",
+    "head": null,
+    "start": "58c70b2ee0852be25aad6d9001da91bdef2e3c52"
+  },
+  "known": [
+    {
+      "area": "base() in src/forge/merge_review.py",
+      "file": "src/forge/merge_review.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 47,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: A task that merges main with a conflict is reviewed only on its conflict fix, and its tests still run on the merged code.",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "675efcf13fa0b47ec72687d641fd3e830a3a9f20dda589daede8bcd6deffc3ae",
+    "changed": "942b00a681180ce46ce2bfa49f129e522140d7ddac538355b55108b1bb5e47da",
+    "commit": "74bf54c9c65019eeba6344078fabf584ff4c662c",
+    "dismissals": [],
+    "findings": [],
+    "id": "2b6b9042-1b88-4ce4-9956-10bf9c8db3c5",
+    "status": "clean"
+  },
+  "round": 6,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-07T02:02:42.549396+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-07T02:18:21.264607+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-07T02:22:35.462518+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-07T04:18:54.170485+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-07T04:53:02.920490+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-07T06:15:33.264503+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "fb460aa5-6d66-47cd-8084-68ac45c0d879",
+    "head": "8439f524736baae5ad865aa2b4930e8034779978",
+    "keys": {},
+    "round": 5
+  },
+  "worker": "codex"
+}
