@@ -9,6 +9,13 @@
     "start": "436f690b6fd35763ba6fb3b72f15425f2d24f02f"
   },
   "done_when": "One close after accepting findings runs the checks and reports Ready, or stops and names the failing check.",
+  "drop": {
+    "at": "2026-11-07T18:14:02.198362+00:00",
+    "because": "The bug does not reproduce on current main in any mode tried; three review rounds went into tests only. Kept on its branch; the issue stays open for the reporter's output on v1.2.31",
+    "by": "vrknetha <vrknetha@gmail.com> 1794075242 +0530",
+    "pull_request": 1448,
+    "status": "hotspot"
+  },
   "fix_kind": "backend",
   "kind": "fix",
   "known": [
@@ -74,7 +81,7 @@
     "status": "blocked"
   },
   "round": 3,
-  "status": "hotspot",
+  "status": "dropped",
   "steps": [
     {
       "at": "2026-11-07T17:49:38.109975+00:00",
@@ -87,6 +94,10 @@
     {
       "at": "2026-11-07T18:13:26.703808+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-11-07T18:14:02.198555+00:00",
+      "step": "drop"
     }
   ],
   "stop": {
