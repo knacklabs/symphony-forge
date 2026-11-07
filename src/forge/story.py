@@ -869,8 +869,10 @@ def show(top: Path, ref: str, path: str) -> str | None:
 
 def merged_at(top: Path, ref: str, path: str) -> str:
     """When a file first reached the default branch (a task's merge date) in UTC, or ""."""
-    date = repo.git("log", "--first-parent", "--diff-filter=A", "-1", "--format=%cI", ref, "--", path,
-                    cwd=top)
+    commit = repo.resolve_commit(top, ref)
+    date = repo.command_fact(("merge date", commit, path), top, lambda: repo.git(
+        "log", "--first-parent", "--diff-filter=A", "-1", "--format=%cI", commit or ref, "--", path,
+        cwd=top)) if commit else ""
     return datetime.fromisoformat(date).astimezone(timezone.utc).isoformat(timespec="seconds") if date else ""
 
 
