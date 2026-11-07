@@ -45,6 +45,8 @@ def test_2_worker_test_guidance_follows_the_repo_test_place(repo, monkeypatch, t
     monkeypatch.setenv("STUB_CLAUDE_COMMIT_FROM", "2")
     built = repo.forge("work", "check-worker-test-guidance")
     assert built.returncode == 0, built.stdout + built.stderr
+    assert ("The worker left changes uncommitted, so Forge asks it once to follow its test "
+            "instructions and commit.") in built.stdout
     first, nudge = [" ".join(call["brief"].split()).lower() for call in calls(log)]
 
     monkeypatch.delenv("STUB_CLAUDE_LEAVE")
@@ -54,9 +56,9 @@ def test_2_worker_test_guidance_follows_the_repo_test_place(repo, monkeypatch, t
     continued = " ".join(calls(log)[-1]["brief"].split()).lower()
 
     if test_place == "ci":
-        guidance = ("the pull request's ci runs the change's related tests, lint and type checks, "
-                    "so do not run them here; run `forge test` only for a test you are writing, "
-                    "to watch it fail.")
+        guidance = ("run only the exact new, changed or previously failing tests through `forge test`, "
+                    "using the test runner's name filter. watch a regression fail before the repair, "
+                    "then rerun those tests until they pass before committing.")
         for brief in (first, nudge, continued):
             assert guidance in brief
             assert "run the change's related tests through `forge test` in the foreground" not in brief

@@ -37,24 +37,28 @@ LIVE_RUN = ("Before review round two, run the real flow once (not tests or stubs
             "Add `Live run: <what you ran> - <what you saw>` to your `Functional check:` paragraph.")
 # The bytes of change a continued conversation is shown in full; a larger one is listed by file.
 LARGE = 200 * 1024
-NUDGING = "The worker left changes uncommitted, so Forge asks it once to commit, test and commit any fixes."
+NUDGING = "The worker left changes uncommitted, so Forge asks it once to follow its test instructions and commit."
 SETTINGS = ("Workers never edit `forge.toml`. Never edit it even temporarily. It belongs to the "
             "coordinator, through a settings fix the owner asked for. Report a needed settings "
             "change in your last message instead. To run an extra suite, run its command directly "
             "alongside `forge test`.")
 TEST_STEPS = {
-    "sample": ("walk each demo step in a browser and record its result in the `Proof list:`; "
+    "sample": ("commit your work on this branch first, then walk each demo step in a browser and "
+               "record its result in the `Proof list:`; "
                "do not add or run automated tests or CI while `sample_data = true`."),
-    "local": ("run the change's related tests through `forge test` in the foreground once, at the "
-              "end of your turn. Wait for it to finish; rerun only what failed. Run tests only "
+    "local": ("commit your work on this branch first, then run the change's related tests through "
+              "`forge test` in the foreground once, at the end of your turn. Wait for it to finish; "
+              "rerun only what failed. Run tests only "
               "through `forge test`: it runs forge.toml's `fast_test`, "
               "or `test` when none is set, in the machine's one test lane with `{base}` as the "
               "merge base with `origin/<default branch>`, on at most two test processes; a picker "
               "run of five or fewer related test files skips the lane's wait unless the test "
               "command or pytest config has a doctest option. It always runs, including uncommitted "
               "changes. Then commit any fixes. The nightly full run covers the rest."),
-    "ci": ("the pull request's CI runs the change's related tests, lint and type checks, so do not "
-           "run them here; run `forge test` only for a test you are writing, to watch it fail. "
+    "ci": ("run only the exact new, changed or previously failing tests through `forge test`, "
+           "using the test runner's name filter. Watch a regression fail before the repair, "
+           "then rerun those tests until they pass before committing. "
+           "Wider related tests, lint and type checks stay in pull request CI. "
            "The nightly full run covers the rest."),
 }
 START_HERE = ("Do not read the coordinator guide (the forge skill's `SKILL.md`): this brief has "
@@ -64,7 +68,7 @@ FILE_OWNERSHIP = ("Do not change a file that another open task's Scope owns. "
                   "Leave it and name it in your handback.")
 # Sent once, in the same conversation, when a round ends with changes left uncommitted.
 COMMIT_NUDGE = ("Your turn ended with changes left uncommitted, so the review can't see them. "
-                "Commit your work on this branch first, then $test_step "
+                "Before you stop, $test_step "
                 "End your turn only once nothing is left uncommitted.\n")
 
 REFUSALS = {
@@ -642,7 +646,7 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
         brief += "\n" + REVIEW_LOOP + "\n"
         if user_facing:
             brief += "\n" + LIVE_RUN + "\n"
-        brief += ("\nBefore you stop, commit your work first, then " + values["test_step"] + "\n")
+        brief += ("\nBefore you stop, " + values["test_step"] + "\n")
         if sample_data:
             brief += ("\nWhile `sample_data = true`, `forge close` does not run tests or CI. "
                       "Commit your browser-walk results in the `Proof list:`.\n")
