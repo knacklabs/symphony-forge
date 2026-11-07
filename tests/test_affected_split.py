@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -10,6 +11,7 @@ from pathlib import Path
 import pytest
 
 from conftest import REAL_UV, ROOT, _install, patient
+from test_close import GREEN
 from test_fix_new_repos_get_claude_as_their_worker_by import _new_repo
 from test_upgrade_command import RELEASE, env, unsynced_up  # noqa: F401
 
@@ -173,8 +175,13 @@ def test_1_a_client_chain_selects_each_runner_and_keeps_the_shell_directory(
     _configure(repo, client, "vitest run && playwright test && node check.js")
     (client / "docs").mkdir(exist_ok=True)
     (client / "docs" / "guide.md").write_text("A docs-only change.\n", "utf-8")
+    repo.git("add", "docs/guide.md", cwd=client)
+    repo.git("-c", f"core.hooksPath={repo.bin.parent / 'no-hooks'}", "commit", "-qm",
+             "Change only documentation", cwd=client)
     patient(lambda: calls.unlink(missing_ok=True))
-    docs = repo.forge("test", "--change", cwd=client)
+    with monkeypatch.context() as ci:
+        ci.setenv("FORGE_GROUPS", "1")
+        docs = repo.forge("test", "--change", cwd=client)
     assert docs.returncode == 0, docs.stdout + docs.stderr
     assert "docs only" in (docs.stdout + docs.stderr).lower()
     assert _calls(calls) == []
@@ -272,7 +279,8 @@ def test_1_a_client_chain_selects_each_runner_and_keeps_the_shell_directory(
     patient(lambda: calls.unlink(missing_ok=True))
     noisy = repo.forge("test", "--change", cwd=client)
     assert noisy.returncode == 0, noisy.stdout + noisy.stderr
-    assert "Test selection: vitest run:" in noisy.stdout, noisy.stdout
+    assert any(line.startswith("Test selection: vitest run") and ": vitest run" in line
+               and "--changed " in line for line in noisy.stdout.splitlines()), noisy.stdout
     assert "Test selection: node check.js: whole command." in noisy.stdout, noisy.stdout
     monkeypatch.delenv("RUNNER_NOISE", raising=False)
 
@@ -295,6 +303,7 @@ def test_1_a_client_chain_selects_each_runner_and_keeps_the_shell_directory(
 
     # An earlier-adopted client keeps its test command through upgrade and sync.
     up = unsynced_up
+    up.env.checks(GREEN)  # _new_repo's general API response replaced the named checks.
     patient(lambda: shutil.copytree(ROOT / "tests/fixtures/adopted-v1.2.2/client", up.repo.path,
                                     dirs_exist_ok=True))
     adopted_calls = _recorders(up.repo, tmp_path, monkeypatch, ("vitest", "playwright", "node"))
@@ -456,12 +465,17 @@ def test_2_a_python_chain_selects_only_plain_pytest_steps(
     observed = []
     for version, default_paths in (("7.4.4", False), ("8.4.0", False),
                                    (pytest.__version__, False), (pytest.__version__, True)):
+        runtime_dir = tmp_path / f"pytest-{version}-{default_paths}"
         runtime = subprocess.run(
-            [REAL_UV, "run", "--isolated", "--no-project", "--python", "3.11",
-             "--with", f"pytest=={version}", "python", "-c", "import sys; print(sys.executable)"],
+            [REAL_UV, "venv", "--python", "3.11", str(runtime_dir)],
             capture_output=True, text=True, timeout=120)
         assert runtime.returncode == 0, runtime.stdout + runtime.stderr
-        launcher = json.dumps(Path(runtime.stdout.strip()).as_posix())
+        runtime_python = runtime_dir / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
+        installed = subprocess.run(
+            [REAL_UV, "pip", "install", "--python", str(runtime_python), f"pytest=={version}"],
+            capture_output=True, text=True, timeout=120)
+        assert installed.returncode == 0, installed.stdout + installed.stderr
+        launcher = json.dumps(runtime_python.as_posix())
         required_api.write_text(
             "from pathlib import Path\nimport pytest\nfrom order import VALUE\ndef test_order():\n"
             f"    assert pytest.__version__ == {version!r}\n    assert VALUE == 1\n"
@@ -496,6 +510,7 @@ def test_2_a_python_chain_selects_only_plain_pytest_steps(
     # An earlier-adopted Python client keeps its command through upgrade and
     # sync, and Forge still selects the related pytest module.
     up = unsynced_up
+    up.env.checks(GREEN)  # _new_repo's general API response replaced the named checks.
     patient(lambda: shutil.copytree(ROOT / "tests/fixtures/adopted-v1.2.2/client", up.repo.path,
                                     dirs_exist_ok=True))
     _python_files(up.repo.path)
