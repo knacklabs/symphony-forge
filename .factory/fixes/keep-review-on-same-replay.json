@@ -4,12 +4,20 @@
   "done_when": "Close keeps a clean review when the replay leaves the reviewed product content identical, and still reviews any changed content or conflict repair",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-07T18:13:00.992192+00:00",
       "step": "start"
     }
   ],
-  "why": "After the part before it merges, a stacked part whose replay leaves its content unchanged gets a full new review"
+  "stuck": {
+    "close": null,
+    "head": "bd842e8a43f23bbc597149d39364c64ef0529a7c",
+    "keys": {},
+    "round": null
+  },
+  "why": "After the part before it merges, a stacked part whose replay leaves its content unchanged gets a full new review",
+  "worker": "codex"
 }
