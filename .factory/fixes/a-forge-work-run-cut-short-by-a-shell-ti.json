@@ -32,8 +32,8 @@
       "gain": 3,
       "harm": 3,
       "line": 116,
-      "outcome": "open",
-      "reason": "",
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: Owner accepted: needs an interrupted answering round whose answer starts with two dashes; very rare, kept as a known issue",
       "round": 1,
       "security": false,
       "title": "Functional: Include the required answer in the retry instruction",
@@ -45,7 +45,13 @@
     "branch_diff": "31e3e5f38a39268a557006e5f4a411fbaf1c20300b0c2b0767ecf00e07a367e4",
     "changed": "2e254bd660a21de0fc765280affab7b9970dee41f2f1bc08d3612bd61e33df2b",
     "commit": "9bcb723efa4488be8fc5ad6a0df94c12ae324a45",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner accepted: needs an interrupted answering round whose answer starts with two dashes; very rare, kept as a known issue",
+        "finding": 1
+      }
+    ],
     "findings": [
       {
         "body": "Gain 3, Work 2, Harm 3\nRaise: Functional\nCase: normal use - a worker asks which command-line flag to use, and the answering round with `--strict` is interrupted.\nA valid invocation using `--note=--strict` produces the retry `forge work <item> --note --strict`. `repo.quote` in src/forge/repo.py:397-400 leaves that token unchanged, and argparse treats it as an option rather than the note's value. The retry therefore refuses because `--note` has no argument, so the required answer still cannot be replayed for flag-valued answers.",
@@ -59,10 +65,10 @@
       }
     ],
     "id": "bc85402b-3803-4318-81d4-2e1140742c24",
-    "status": "blocked"
+    "status": "clean"
   },
   "round": 3,
-  "status": "hotspot",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-07T17:50:03.010281+00:00",
@@ -79,8 +85,12 @@
   ],
   "stop": {
     "at": "2026-11-07T18:19:05.106106+00:00",
+    "by": "owner",
+    "choice": "accept",
     "file": "src/forge/worker.py",
-    "wait_id": "29e58ca7-a1d2-49f6-b3bd-0d4de7b11606"
+    "reason": "Owner accepted: needs an interrupted answering round whose answer starts with two dashes; very rare, kept as a known issue",
+    "wait_id": "29e58ca7-a1d2-49f6-b3bd-0d4de7b11606",
+    "worker_round": 3
   },
   "stuck": {
     "close": "c8052258-f8aa-4272-aa87-6487c48f91f6",
