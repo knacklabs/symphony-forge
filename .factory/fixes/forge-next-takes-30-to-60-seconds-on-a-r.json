@@ -25,7 +25,7 @@
       "gain": 3,
       "harm": 3,
       "line": 233,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -38,7 +38,7 @@
       "gain": 3,
       "harm": 3,
       "line": 39,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -48,37 +48,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "d06c4c660c1460588187b408785f521cacaf646572cd1bdfd2bdacf5d292e828",
-    "changed": "64790cbae63c8670c23f07580dc980a358d0b1f97c4dc20f0d64b2462a2b6c92",
-    "commit": "559954440752e82c46ef5290c1ef333cccdd4421",
+    "branch_diff": "f1226061b1b95c9670f5ecf1cb373973a6c420b3221aab11b433a8435c7266eb",
+    "changed": "d5a7981c38416e424692be076d604d009a8b4a2b85466a9afc517e85f330d557",
+    "commit": "592637eb0e745e9a3463bd25b3019da0d15899bd",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional\nCase: normal use - A developer runs `forge next` in an upgraded repo while another repo on the same machine runs a plan read or review using Forge v1.2.9.\n`machine.view()` includes runs from other releases (`src/forge/machine.py:412`), but v1.2.9 records these runs with `started_at` and no `free` field (`v1.2.9:src/forge/machine.py:95`). This predicate consequently counts the read or review as a build, so a machine with no builds can report `Builds running: 1 of 4`.",
-        "file": "src/forge/nextstep.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 233,
-        "priority": "P1",
-        "title": "Exclude older plan reads and reviews from the build count",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - `forge next` is run while a worker is building.\nBoth client-history cases use an isolated machine registry and start no worker before calculating `used`, so the expected running count is always zero. An implementation that always prints zero would pass the only test of the new line. Exercise a live build and check the nonzero count through `forge next`.",
-        "file": "tests/test_next_reports_build_capacity.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 39,
-        "priority": "P1",
-        "title": "Gate: tests/test_next_reports_build_capacity.py::test_1_next_reports_build_capacity_with_fifteen_parts",
-        "work": 2
-      }
-    ],
-    "id": "5a15edd6-aea8-408c-ac94-569d3eafc917",
-    "status": "blocked"
+    "findings": [],
+    "id": "8b98b62b-2523-499a-a219-402304f7448c",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-07T17:52:10.621093+00:00",
@@ -86,6 +65,10 @@
     },
     {
       "at": "2026-11-07T18:12:29.194316+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-07T18:21:58.997455+00:00",
       "step": "review"
     }
   ],
