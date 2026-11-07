@@ -1,4 +1,10 @@
-"""Numbered dismissals follow the finding when merging main requires another review."""
+"""Dismissals survive clean merges and follow renumbered findings when review is needed.
+
+Test-audit: these existing command cases own saved and pending dismissals. The old
+contract reviewed every changed branch diff again. The approved contract retains a
+clean review after a clean merge, while a pending dismissal still follows the same
+finding in a new review. Keep both histories and repeat-close checks, with no seam.
+"""
 
 import pytest
 
@@ -31,14 +37,19 @@ def test_1_dismissal_follows_the_same_finding_after_main_merge(env, previous, sa
     env.repo.git("fetch", "-q", "origin", cwd=where)
     env.repo.git("merge", "-q", "--no-edit", "origin/main", cwd=where)
     env.repo.git("merge-base", "--is-ancestor", moved, "HEAD", cwd=where)
-    # A different finding takes the old number. Only the matching title and file may be dismissed.
+    # A saved dismissal keeps its clean review. Otherwise a different finding takes the old
+    # number, and only the matching title and file may be dismissed in the new review.
     env.reviews(blocked(finding("P2", "Optional cleanup"), safe))
     result = env.close(item, *(() if saved else dismissal))
     assert result.returncode == 0, result.stdout + result.stderr
-    assert len(env.review_calls()) == 2
+    reviews = 1 if saved else 2
+    assert len(env.review_calls()) == reviews
     shown = body(env.gh_calls("pr", "edit")[-1])
-    assert "Finding 2 (P1): Already safe (app.py:22): dismissed because app.py:22" in shown
+    number = 1 if saved else 2
+    assert f"Finding {number} (P1): Already safe (app.py:22): dismissed because app.py:22" in shown
     assert "Finding 1 (P2): Optional cleanup (app.py:1): dismissed" not in shown
+    if saved:
+        assert "Optional cleanup" not in shown
     again = env.close(item)
     assert again.returncode == 0, again.stdout + again.stderr
-    assert len(env.review_calls()) == 2
+    assert len(env.review_calls()) == reviews
