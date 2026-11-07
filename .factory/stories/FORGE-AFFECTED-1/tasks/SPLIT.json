@@ -141,23 +141,23 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "ed5e208c1ed839131a969c9b0d0ac8db560b71e4090b65e1f1355765373029f9",
-    "changed": "3533d596e2f0bfb4e21333282e693c04db626e4357bc025fc6ed085f0fb70b1e",
-    "commit": "983813424ffd9ede87c83aa81ebd2a76d1a6f43b",
+    "branch_diff": "5cc0218e8130467e3efc448d88b4a63f5090ac75be29bb1ff28032a96c762a49",
+    "changed": "a3dbdef967a35983fb521ee209e57a90f07268e0404679033f1745c3c1e752b0",
+    "commit": "b553c8681b0bad1a303504ed1a900dd8fba21f1c",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - An app runs `pytest tests/unit && pytest tests/integration`, requires `tests/integration/test_api.py` through `always_test`, and changes that test.\nThe first step appends and runs the required integration test. Setting `include_always` to false prevents appending it to the second step, but the second step still selects the changed file from its own root at lines 784\u2013785 and runs it again. The previous duplicate-execution problem therefore remains. The added test places its required file outside both step roots, so it does not cover this overlap.",
+        "body": "Gain 5, Work 2, Harm 4\nRaise: Functional\nCase: normal use - A client pinned to pytest 8 runs `pytest tests/unit && pytest tests/integration`, requires `tests/integration/test_api.py`, and changes that file and another integration test.\nThe repair assigns the required file to the integration step, but `pytest_tests` still appends it to that step's existing directory argument (`fasttest.py:826` and `fasttest.py:132`). The resulting `pytest tests/integration ... tests/integration/test_api.py` can collect only the explicitly named file on pytest 8, silently omitting the other selected test while the check passes, as shown in the [pytest issue](https://github.com/pytest-dev/pytest/issues/13494). The prior duplicate-execution finding also remains on pytest 7: its [collector](https://docs.pytest.org/en/7.1.x/_modules/_pytest/main.html) collects the explicitly passed file again after the directory. The new test uses the repository's pytest 9 environment and has no second selected integration file.",
         "file": "src/forge/fasttest.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 299,
-        "priority": "P1",
+        "gain": 5,
+        "harm": 4,
+        "line": 313,
+        "priority": "P0",
         "title": "Select pytest files separately for each pytest step",
         "work": 2
       }
     ],
-    "id": "713881b6-6633-447c-b5c1-bf0b9795952e",
+    "id": "23612066-7242-4dcc-867a-9ef743fbe9f6",
     "status": "blocked"
   },
   "round": 4,
@@ -177,6 +177,10 @@
     },
     {
       "at": "2026-11-07T12:18:13.569624+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-07T12:33:12.404573+00:00",
       "step": "review"
     }
   ],
