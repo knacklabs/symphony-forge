@@ -305,8 +305,11 @@ options, then make the change yourself in a fix: `forge fix start`, the edit, th
 After a merge of the default branch, close keeps that branch's settings unless this item's
 Done-when names `forge.toml`. It keeps this branch's version pin. When close excludes a settings
 change, it explains why. For a fix, run `forge fix amend <item> --done "<done when naming forge.toml>" --because "<why>"`,
-then `forge work <item>` to make the change again. For a task part, the plan's Done-when that
-the part covers must name `forge.toml`. New and earlier-adopted repos get this advice on upgrade.
+then reapply and commit the excluded `forge.toml` change yourself before `forge work <item>`.
+Workers never edit settings. For a task part, name `forge.toml` in the plan's covered
+Done-when details in the task checkout and commit the plan there. These details do not
+change the approved numbered result. Then reapply and commit the settings yourself before
+`forge work <item>`. New and earlier-adopted repos get this advice on upgrade.
 A developer's own `tools`, `workers` and `[models.<kind>]` choices go in the git-ignored
 `forge.local.toml` instead, which you edit directly when they ask; Forge refuses any other key there.
 `runner` selects the GitHub Actions runner label for every job in the generated `forge.yml`;

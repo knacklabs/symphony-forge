@@ -15,13 +15,14 @@ from test_close import GREEN, env, run  # noqa: F401
 from test_codex_worker import MODELS, _toml, sdk_data  # noqa: F401
 from test_migrate import _copied_client, _review_and_checks
 from test_upgrade_command import Upgrade
+from test_task import story
 from test_workers_leave_settings_to_coordinator import client  # noqa: F401
 
 STORY = "close-keeps-main-settings"
 MESSAGE = "Kept main's settings in forge.toml and this branch's version pin."
 
 
-def _setup(env, client, tmp_path, named=False, renamed_check=False):
+def _setup(env, client, tmp_path, named=False, renamed_check=False, part=False):
     env.checks(GREEN)
     setup = Upgrade(env, tmp_path)
     version = client.forge("--version").stdout.split()[-1]
@@ -29,10 +30,14 @@ def _setup(env, client, tmp_path, named=False, renamed_check=False):
     settings = settings.replace(f'version = "{version}"', f'version = "{version}" # branch pin')
     settings = 'test = "echo ok"\nfast_test = "echo ok"\nchecks = ["tests", "forge-pr-check"]\n' + settings
     setup.on_main("forge.toml", settings)
-    started = client.forge("fix", "start", "Correct spelling", "--done",
-                           "Update forge.toml" if named else "Correct the spelling", "--kind", "mechanical")
+    if part:
+        story(client)
+        started = client.forge("task", "start", "BOARD/API")
+    else:
+        started = client.forge("fix", "start", "Correct spelling", "--done",
+                               "Update forge.toml" if named else "Correct the spelling", "--kind", "mechanical")
     assert started.returncode == 0, started.stdout + started.stderr
-    folder = client.path.parent / f"{client.path.name}-fix-correct-spelling"
+    folder = client.path.parent / f"{client.path.name}-{'BOARD-API' if part else 'fix-correct-spelling'}"
     env.commit(folder, "product.txt", "Correct spelling\n")
     incoming = settings.replace('# branch pin', '# main pin').replace('echo ok', 'echo main')
     if renamed_check:
@@ -107,12 +112,12 @@ def test_1_codex_open_merge_keeps_incoming_settings_through_close(
 
 @pytest.mark.parametrize("client, case", [
     pytest.param(False, case, id=f"new-{case}")
-    for case in ("stale", "pin-only", "allowed", "clean", "checks")
+    for case in ("stale", "pin-only", "allowed", "clean", "checks", "part")
 ] + [pytest.param(True, "checks", id="adopted-stale-and-renamed-checks")], indirect=["client"])
 def test_2_close_commits_main_settings_with_head_pin_unless_settings_are_allowed(
         env, client, tmp_path, case):
     folder, original, incoming = _setup(env, client, tmp_path, named=case == "allowed",
-                                        renamed_check=case == "checks")
+                                        renamed_check=case == "checks", part=case == "part")
     client.git("merge", "-q", "--no-commit", "origin/main", cwd=folder)
     # Reproduce the old Codex restore, including the stale copy committed by its nudge.
     if case != "clean":
@@ -121,21 +126,28 @@ def test_2_close_commits_main_settings_with_head_pin_unless_settings_are_allowed
         client.git("add", "forge.toml", cwd=folder)
     client.git("commit", "-qm", "Finish the worker merge", cwd=folder)
     before = client.git("rev-parse", "HEAD", cwd=folder)
-    closed = client.forge("close", "correct-spelling")
+    item = "BOARD/API" if case == "part" else "correct-spelling"
+    closed = client.forge("close", item)
     assert closed.returncode == 0, closed.stdout + closed.stderr
     assert "Ready:" in closed.stdout
     expected = (original if case == "allowed" else incoming if case == "clean"
                 else incoming.replace('# main pin', '# branch pin'))
     assert (folder / "forge.toml").read_text("utf-8") == expected
     assert client.git("show", "HEAD:forge.toml", cwd=folder) == expected.strip()
-    repaired = case in ("stale", "checks")
+    repaired = case in ("stale", "checks", "part")
     assert closed.stdout.count(MESSAGE) == int(repaired)
     advice = "The change was kept out because this item's Done-when does not name forge.toml."
     assert closed.stdout.count(advice) == int(repaired)
     if repaired:
-        assert ('forge fix amend correct-spelling --done "<done when naming forge.toml>" '
-                '--because "<why>"') in closed.stdout
-        assert "forge work correct-spelling" in closed.stdout
+        if case == "part":
+            assert ("In this task checkout, name forge.toml in the plan's covered Done-when details "
+                    "and commit the plan.") in closed.stdout
+            assert "forge fix amend" not in closed.stdout
+        else:
+            assert ('forge fix amend correct-spelling --done "<done when naming forge.toml>" '
+                    '--because "<why>"') in closed.stdout
+        assert ("The coordinator must reapply and commit the excluded forge.toml change "
+                f"before forge work {item}.") in closed.stdout
     commits = client.git("log", "--format=%H", f"{before}..HEAD", "--", "forge.toml", cwd=folder).splitlines()
     assert len(commits) == int(repaired)
     assert client.git("status", "--porcelain", cwd=folder) == ""

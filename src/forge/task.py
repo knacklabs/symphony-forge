@@ -196,11 +196,13 @@ def restore_default_settings(item: str, top: Path, state: dict[str, Any], defaul
         print(f"Kept {default}'s settings in forge.toml and this branch's version pin.", flush=True)
         print("The change was kept out because this item's Done-when does not name forge.toml.", flush=True)
         if repo.ITEM.fullmatch(item)["task"]:
-            print("Name forge.toml in the plan's Done-when that this part covers, "
-                  f"then run forge work {item}.", flush=True)
+            print("In this task checkout, name forge.toml in the plan's covered Done-when details "
+                  "and commit the plan.", flush=True)
         else:
             print(f'Next: forge fix amend {item} --done "<done when naming forge.toml>" '
-                  f'--because "<why>" then forge work {item}', flush=True)
+                  '--because "<why>"', flush=True)
+        print("The coordinator must reapply and commit the excluded forge.toml change "
+              f"before forge work {item}.", flush=True)
 
 
 def settings_allowed(item: str, top: Path, state: dict[str, Any]) -> bool:
