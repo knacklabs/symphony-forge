@@ -1,0 +1,40 @@
+{
+  "branch": "task/FORGE-REVIEWCHOICE-1-WORDS",
+  "chat": {
+    "approval": "e698cc269ca139e014b35ef35cbd9d8e8e7bc54a410f93b0607aaec91e85ff35",
+    "claude": null,
+    "conversation": "01a1b3be-cca0-7e82-8375-ec5a6bf2f180",
+    "head": null,
+    "start": "7074d910456c91e0d895e5aa4e52b55aaad5b6bb"
+  },
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "1364b23a91d2564c1e22d44fdcf82c288d9069e6c1f0bb0508e4d45587d28252",
+    "changed": "efdcf5afbc895a1017156cbab08acfcf56b03634a199bf6d9e376495ec24d6d9",
+    "commit": "6cbb03525eb1ccd8da3c62dba307c66989390fb7",
+    "dismissals": [],
+    "findings": [],
+    "id": "77c59e02-1f75-445b-a523-b067ba0e113a",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-07T02:02:37.484753+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-07T02:08:06.968358+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "18af2b6ddaf9235a8bb2bb38a58b038fe52f78eb",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
+}
