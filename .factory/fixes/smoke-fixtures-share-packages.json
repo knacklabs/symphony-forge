@@ -4,12 +4,20 @@
   "done_when": "The smoke fixtures share downloaded packages while keeping separate app copies, and the starter smoke job is measurably faster",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-07T18:12:56.375315+00:00",
       "step": "start"
     }
   ],
-  "why": "Forge's starter smoke lint fixture installs every package again in its own store, adding minutes to a 35-minute job"
+  "stuck": {
+    "close": null,
+    "head": "e125aa11891fcb28bb03787cef603bbbdc338f6a",
+    "keys": {},
+    "round": null
+  },
+  "why": "Forge's starter smoke lint fixture installs every package again in its own store, adding minutes to a 35-minute job",
+  "worker": "codex"
 }
