@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tExclude older plan reads and reviews from the build count\tforge-next-takes-30-to-60-seconds-on-a-r",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 233,
+      "text": "Exclude older plan reads and reviews from the build count",
+      "from": "blocking",
+      "item": "forge-next-takes-30-to-60-seconds-on-a-r",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_next_reports_build_capacity.py\tGate: tests/test_next_reports_build_capacity.py::test_1_next_reports_build_capacity_with_fifteen_parts\tforge-next-takes-30-to-60-seconds-on-a-r",
+      "kind": "bug",
+      "path": "tests/test_next_reports_build_capacity.py",
+      "line": 39,
+      "text": "Gate: tests/test_next_reports_build_capacity.py::test_1_next_reports_build_capacity_with_fifteen_parts",
+      "from": "blocking",
+      "item": "forge-next-takes-30-to-60-seconds-on-a-r",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
