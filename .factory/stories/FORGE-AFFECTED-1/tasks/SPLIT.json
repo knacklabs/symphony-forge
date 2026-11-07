@@ -161,7 +161,7 @@
     "status": "blocked"
   },
   "round": 3,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-07T10:19:17.650942+00:00",
@@ -182,8 +182,12 @@
   ],
   "stop": {
     "at": "2026-11-07T12:18:13.569967+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "src/forge/fasttest.py",
-    "wait_id": "8e618df0-f433-483b-918e-19df12e85d69"
+    "reason": "Harm 3 finding: one more round by the standing rule. Give each always_test file only to the plain pytest step whose path arguments contain it (a step with no path arguments takes every one); a file no step contains goes to the first plain pytest step.",
+    "wait_id": "8e618df0-f433-483b-918e-19df12e85d69",
+    "worker_round": 3
   },
   "stuck": {
     "close": "a8c89b2e-70a2-4716-9b75-22e8d5e56db5",
