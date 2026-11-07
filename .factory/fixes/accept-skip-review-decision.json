@@ -1,0 +1,15 @@
+{
+  "base": "aaa633bff336d1e0e21c44459f56b78086e473c8",
+  "branch": "fix/accept-skip-review-decision",
+  "done_when": "The skip-model-review-and-review-rounds decision is accepted by Ravi",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-07T04:07:33.467048+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Record the owner's acceptance of the skip-review decision"
+}
