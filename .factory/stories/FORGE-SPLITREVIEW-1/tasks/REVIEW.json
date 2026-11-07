@@ -7,12 +7,53 @@
     "head": null,
     "start": "58c70b2ee0852be25aad6d9001da91bdef2e3c52"
   },
+  "known": [
+    {
+      "area": "base() in src/forge/merge_review.py",
+      "file": "src/forge/merge_review.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 47,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: A task that merges main with a conflict is reviewed only on its conflict fix, and its tests still run on the merged code.",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "5a9e704824b1e0587f79f457b25c1feae08da64cdedc850e9f47552f26380fd4",
+    "changed": "baac836777d6b4e6ac80c3710bfad605370f5c38c60feeaa4123a7555298b59d",
+    "commit": "e29e49d95144cfc89e87f297b2c7e70b17d8c747",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done. The comparison against `old_base` includes incoming main commits, rather than only this task's evidence. `repo.commit_log` (`src/forge/repo.py:438`) reads every non-merge commit in `base..head`; `before_coding` and `commit_paragraph` (`src/forge/review.py:679-703`) then select the newest matching paragraphs. When another task lands with its own `Before coding:` or `Proof list:`, merging main changes these selected paragraphs even though this task's evidence is unchanged. This returns an empty base, so both review hooks select the existing full-diff repair path\u2014including its restriction on new findings to P0\u2014instead of reviewing conflict repairs for P1 defects. Compare task evidence while excluding commits inherited from incoming main, and cover that scenario in the command test; its current incoming commits contain no evidence paragraphs.\nCase: normal use - a reviewed task resolves a conflict with another Forge task whose squash commit includes its proof list.",
+        "file": "src/forge/merge_review.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 47,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: A task that merges main with a conflict is reviewed only on its conflict fix, and its tests still run on the merged code.",
+        "work": 2
+      }
+    ],
+    "id": "4b9d30a1-b18c-4061-ad1a-c41de7b6258f",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-07T02:02:42.549396+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-07T02:18:21.264607+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
