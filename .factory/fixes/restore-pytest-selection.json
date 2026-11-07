@@ -9,6 +9,13 @@
     "start": "1220002b32e2fcdbf7b2043db25ae50c6c384417"
   },
   "done_when": "Every pytest command Forge narrowed before the chained-command change is narrowed again, and main's full run on Linux and Windows is green",
+  "drop": {
+    "at": "2026-11-07T15:46:27.238964+00:00",
+    "because": "The owner chose to revert the chained-command part instead; this fix's rewrite opened new cases",
+    "by": "vrknetha <vrknetha@gmail.com> 1794066387 +0530",
+    "pull_request": 1438,
+    "status": "hotspot"
+  },
   "fix_kind": "mechanical",
   "kind": "fix",
   "known": [
@@ -210,7 +217,7 @@
     "status": "blocked"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "dropped",
   "steps": [
     {
       "at": "2026-11-07T15:27:40.528091+00:00",
@@ -219,6 +226,10 @@
     {
       "at": "2026-11-07T15:44:25.144082+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-11-07T15:46:27.239134+00:00",
+      "step": "drop"
     }
   ],
   "stop": {
