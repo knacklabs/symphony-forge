@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\ttests/test_reviewchoice_words.py\tNot done: The settings comparison in the review-rounds words test ignores line endings and the Windows full run is green\twindows-settings-line-endings",
+      "kind": "bug",
+      "path": "tests/test_reviewchoice_words.py",
+      "line": 56,
+      "text": "Not done: The settings comparison in the review-rounds words test ignores line endings and the Windows full run is green",
+      "from": "blocking",
+      "item": "windows-settings-line-endings",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
