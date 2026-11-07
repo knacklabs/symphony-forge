@@ -66,8 +66,9 @@ def test_1_close_replays_only_followup_commits_after_parent_squash_merges(env, p
     assert repo.git("status", "--porcelain", cwd=where) == ""
 
 
-def test_2_close_aborts_replay_when_followups_own_commit_conflicts(env):
-    repo, parent, _, fix, where, own = stacked(env)
+@pytest.mark.parametrize("previous", [False, True], ids=["new", "previously-adopted"])
+def test_2_close_aborts_replay_when_followups_own_commit_conflicts(env, previous):
+    repo, parent, _, fix, where, own = stacked(env, previous)
     repo.git("push", "-q", "origin", f"fix/{fix}", cwd=where)
     original_head = repo.git("rev-parse", "HEAD", cwd=where)
     land_on_default(repo, parent)
@@ -78,9 +79,10 @@ def test_2_close_aborts_replay_when_followups_own_commit_conflicts(env):
     closed = env.close(fix)
     assert closed.returncode == 1, closed.stdout + closed.stderr
     assert "Replaying this fix's own commits onto main conflicts in src/shared.py." in closed.stderr
-    assert "Next:" in closed.stderr and "rebase --rebase-merges=rebase-cousins --onto origin/main" in closed.stderr
-    assert "rebase --continue" in closed.stderr and f"forge close {fix}" in closed.stderr
-    assert f"git push --force-with-lease=refs/heads/fix/{fix}:{original_head} origin fix/{fix}" in closed.stderr
+    # Recovery uses a normal merge that the agent can publish without a force push.
+    assert (f"Next: forge work {fix} to merge the default branch and continue this work, "
+            f"then forge close {fix}") in closed.stderr
+    assert "rebase" not in closed.stderr and "force" not in closed.stderr
     assert repo.git("rev-parse", "HEAD", cwd=where) == original_head
     assert remote_head(repo, fix) == original_head
     assert (where / "src/shared.py").read_text("utf-8") == own

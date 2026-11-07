@@ -11,7 +11,7 @@ from test_close import CLEAN, blocked, env, finding  # noqa: F401
 from conftest import _install
 from test_last_task_records_story_outcome import github_merge
 from test_stack_start import configured, start
-from test_worker import install_claude
+from test_worker import calls, install_claude
 
 STORY = "FORGE-STACK-1/CLOSE"
 
@@ -257,6 +257,26 @@ def _manual_merge_replay_stops_on_a_clash_in_the_stacked_part(env, previous):
     conflict = env.close("STACK/B")
     assert conflict.returncode == 1
     assert "Replaying this fix's own commits onto main conflicts in use.py." in conflict.stderr
-    assert "git rebase --rebase-merges=rebase-cousins --onto origin/main" in conflict.stderr
+    assert ("Next: forge work STACK/B to merge the default branch and continue this work, "
+            "then forge close STACK/B") in conflict.stderr
+    assert "rebase" not in conflict.stderr and "force" not in conflict.stderr
     assert repo.git("rev-parse", "origin/task/STACK-B") == original
     assert repo.git("rev-parse", "task/STACK-B") == original
+
+    # Work must merge the default, even though this part originally stacked on A.
+    log = install_claude(repo)
+    worked = repo.forge("work", "STACK/B")
+    assert worked.returncode == 0, worked.stdout + worked.stderr
+    assert calls(log)[-1]["brief"].startswith(
+        "First, finish the merge of origin/main: run git merge origin/main, resolve conflicts, "
+        "and commit it before other work.")
+    where = repo.path.parent / f"{repo.path.name}-STACK-B"
+    merged = subprocess.run(["git", "merge", "--no-edit", "origin/main"], cwd=where,
+                            capture_output=True, text=True)
+    assert merged.returncode == 1, merged.stdout + merged.stderr
+    assert repo.git("diff", "--name-only", "--diff-filter=U", cwd=where) == "use.py"
+    env.commit(where, "use.py", "B_VALUE = 1\nDEFAULT_VALUE = 1\n", "Resolve the default merge")
+    repo.git("merge-base", "--is-ancestor", "origin/main", "HEAD", cwd=where)
+    recovered = env.close("STACK/B")
+    assert recovered.returncode == 0, recovered.stdout + recovered.stderr
+    assert repo.git("show", "origin/task/STACK-B:use.py") == "B_VALUE = 1\nDEFAULT_VALUE = 1"
