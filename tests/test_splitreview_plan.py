@@ -120,3 +120,5 @@ def test_4_workers_keep_other_open_tasks_files_untouched(brief):
     # Existing resume coverage checks other instructions; no new seam is needed.
     assert ("Do not change a file that another open task's Scope owns. "
             "Leave it and name it in your handback.") in " ".join(brief.split())
+    assert ("This restriction excludes paths with a segment named tests, test, __tests__ or spec. "
+            "These test paths can be shared.") in " ".join(brief.split())
