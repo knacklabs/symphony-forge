@@ -486,6 +486,11 @@ runs instead of `test`, with `{base}` replaced by the merge base with the defaul
 example `npx vitest run --changed {base} && npm run lint`). In a CI-test repo, the pull request's
 `tests` check runs the related tests and close waits for it. The nightly full run covers the rest.
 New repos leave `fast_test` unset, except a new starter, whose init writes one for its own script.
+The Python starter's `node scripts/test.mjs --list <base>` prints its selected commands without
+running them. API changes select API types, ruff, mypy, import checks and the full API tests;
+web and shared-library changes select ESLint, the TypeScript build, changed Vitest tests and
+the browser suite. Shared configuration changes, or no base, run the full suite. Existing apps
+keep their scripts on upgrade and sync; add this selection only with the owner's agreement.
 `forge doctor` says when it is set.
 The generated `forge.yml` runs one `tests` job with `forge test --change`. Set `groups = 4` in
 `forge.toml` to run four parallel jobs with any test runner. Each job runs the tests related to the

@@ -1124,7 +1124,14 @@ if the settings do not answer it. Pass
    New repos leave `fast_test` unset, except a new starter, whose init writes one for its own script
    when it ships `scripts/affected.mjs`.
    Its init keeps `test = "node scripts/test.mjs"` for full runs and writes
-   `fast_test = "node scripts/test.mjs {base}"`. The TypeScript starter uses Nx to name affected
+   `fast_test = "node scripts/test.mjs {base}"`.
+   The Python starter accepts a base in `node scripts/test.mjs <base>`; `--list` prints commands
+   without running them. API changes select API types, ruff, mypy, import checks and all API
+   tests, since HTTP tests have no import graph. Web and library changes select ESLint, the
+   TypeScript build, changed Vitest tests and the browser suite. Shared configuration or no
+   base runs everything. Existing apps keep their scripts on upgrade and sync; ask before
+   adding this selection to them.
+   The TypeScript starter uses Nx to name affected
    parts and run their lint, typecheck and tests; `--list <base>` prints the commands.
    New test files in an affected library also run when it has no Nx test target.
    If close cannot read a check name from GitHub, it reports the missing name.
