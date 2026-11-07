@@ -1,10 +1,18 @@
 {
   "branch": "task/FORGE-SPLITREVIEW-1-PLANCHECK",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-07T06:52:39.902138+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "8a9ebb30a77aab9843636694c59db6606fafbe7a",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
