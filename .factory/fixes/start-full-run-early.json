@@ -4,12 +4,20 @@
   "done_when": "The guide tells the agent to start the full run right after the last product merge of a release or sign-off and to prepare notes while it runs, following that same run",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-07T18:12:42.111488+00:00",
       "step": "start"
     }
   ],
-  "why": "Release and sign-off wait for a full run that starts only nightly or by hand, and the tag push finds the missing proof late"
+  "stuck": {
+    "close": null,
+    "head": "b458578d22f58fb3b4b0112fad0ce7d5b9114d45",
+    "keys": {},
+    "round": null
+  },
+  "why": "Release and sign-off wait for a full run that starts only nightly or by hand, and the tag push finds the missing proof late",
+  "worker": "codex"
 }
