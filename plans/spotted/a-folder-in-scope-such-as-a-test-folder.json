@@ -1,0 +1,70 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/plan_scope.py\tGate: Exercise shared test folders through the plan check\ta-folder-in-scope-such-as-a-test-folder",
+      "kind": "bug",
+      "path": "src/forge/plan_scope.py",
+      "line": 22,
+      "text": "Gate: Exercise shared test folders through the plan check",
+      "from": "blocking",
+      "item": "a-folder-in-scope-such-as-a-test-folder",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/task.py\tGate: Existing task-start tests reject the new refusal text\ta-folder-in-scope-such-as-a-test-folder",
+      "kind": "bug",
+      "path": "src/forge/task.py",
+      "line": 541,
+      "text": "Gate: Existing task-start tests reject the new refusal text",
+      "from": "blocking",
+      "item": "a-folder-in-scope-such-as-a-test-folder",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/skill.md\tFunctional: Align planning and worker guidance with shared test folders\ta-folder-in-scope-such-as-a-test-folder",
+      "kind": "bug",
+      "path": "src/forge/templates/skill.md",
+      "line": 1313,
+      "text": "Functional: Align planning and worker guidance with shared test folders",
+      "from": "blocking",
+      "item": "a-folder-in-scope-such-as-a-test-folder",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_scope_overlap_explains_waits.py\tGate: Prove both overlap rules for an upgraded client\ta-folder-in-scope-such-as-a-test-folder",
+      "kind": "bug",
+      "path": "tests/test_scope_overlap_explains_waits.py",
+      "line": 21,
+      "text": "Gate: Prove both overlap rules for an upgraded client",
+      "from": "blocking",
+      "item": "a-folder-in-scope-such-as-a-test-folder",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/plan_scope.py\tNot done: Planning overlap refusals do not identify the scope overlap",
+      "kind": "edge",
+      "path": "src/forge/plan_scope.py",
+      "line": 22,
+      "text": "Not done: Planning overlap refusals do not identify the scope overlap",
+      "from": "review",
+      "item": "a-folder-in-scope-such-as-a-test-folder",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\ttests/test_scope_overlap_explains_waits.py\tFollow-up: Cover exact test-file scopes and explicit After links",
+      "kind": "edge",
+      "path": "tests/test_scope_overlap_explains_waits.py",
+      "line": 32,
+      "text": "Follow-up: Cover exact test-file scopes and explicit After links",
+      "from": "review",
+      "item": "a-folder-in-scope-such-as-a-test-folder",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
