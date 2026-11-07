@@ -240,6 +240,47 @@ def _run_live_starter(tmp_path_factory, sources, required_output=()):
         assert process.returncode == 0, output
         for message in required_output:
             assert message in output, output
+
+        if (copy / "nx.json").is_file():
+            subprocess.run(["git", "init", "-q"], cwd=copy, env=env, check=True,
+                           capture_output=True, text=True, timeout=30)
+            subprocess.run(["git", "config", "user.name", "Forge starter test"], cwd=copy, env=env,
+                           check=True, capture_output=True, text=True, timeout=30)
+            subprocess.run(["git", "config", "user.email", "forge-starter@example.test"], cwd=copy, env=env,
+                           check=True, capture_output=True, text=True, timeout=30)
+            subprocess.run(["git", "add", "-A"], cwd=copy, env=env, check=True,
+                           capture_output=True, text=True, timeout=120)
+            subprocess.run(["git", "commit", "-q", "-m", "Starter smoke baseline"], cwd=copy, env=env,
+                           check=True, capture_output=True, text=True, timeout=120)
+            base = subprocess.run(["git", "rev-parse", "HEAD"], cwd=copy, env=env, check=True,
+                                  capture_output=True, text=True, timeout=30).stdout.strip()
+            changed = copy / "apps/web/src/index.css"
+            changed.write_text(changed.read_text(encoding="utf-8")
+                               + "\n/* affected selection live check */\n", encoding="utf-8")
+            subprocess.run(["git", "add", Path("apps/web/src/index.css").as_posix()], cwd=copy, env=env,
+                           check=True, capture_output=True, text=True, timeout=30)
+            subprocess.run(["git", "commit", "-q", "-m", "Change one web file"], cwd=copy, env=env,
+                           check=True, capture_output=True, text=True, timeout=120)
+            changed_files = subprocess.run(
+                ["git", "diff-tree", "--no-commit-id", "--name-only", "-r", "HEAD"], cwd=copy, env=env,
+                check=True, capture_output=True, text=True, timeout=30,
+            ).stdout.splitlines()
+            assert changed_files == [Path("apps/web/src/index.css").as_posix()], changed_files
+
+            process = subprocess.Popen(
+                ["node", Path("scripts") / "test.mjs", base], cwd=copy, env=env,
+                stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, start_new_session=True,
+            )
+            try:
+                selected, _ = process.communicate(timeout=1800)
+            except subprocess.TimeoutExpired:
+                selected, _ = _stop_process_group(process)
+                pytest.fail(f"affected starter smoke command timed out after 1800 seconds\n{selected}")
+            assert process.returncode == 0, selected
+            assert "Affected parts: web" in selected, selected
+            assert "playwright test --config apps/web/playwright.config.ts" in selected, selected
+            assert "apps/api/vitest.config.ts" not in selected, selected
+            assert "test:api" not in selected, selected
         return {
             "folder": copy,
             "api": _junit_cases(copy / "test-results" / "api.xml"),

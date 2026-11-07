@@ -178,7 +178,7 @@ def signed_in(tool: str, top: Path | None = None) -> bool | None:
 
 
 def _settings(stage: str, test_place: str, test: str, checks: list[str], interfaces: list[str],
-              merge: str = "", runner: str = "ubuntu-latest") -> str:
+              merge: str = "", runner: str = "ubuntu-latest", fast_test: str = "") -> str:
     claude, codex = signed_in("claude"), signed_in("codex")
     workers = 'workers = "split"\n'
     if claude is True and codex is False:
@@ -193,6 +193,7 @@ def _settings(stage: str, test_place: str, test: str, checks: list[str], interfa
             f'test_place = "{test_place}"\n'
             'groups = 1\n'
             f"test = {json.dumps(test)}\n"
+            + (f"fast_test = {json.dumps(fast_test)}\n" if fast_test else "") +
             f"checks = {json.dumps(checks)}\n"
             f"runner = {json.dumps(runner)}\n"
             f"interfaces = {json.dumps(interfaces)}\n{MODELS}")
@@ -227,11 +228,13 @@ def _scaffold(top: Path, actions: str, runner: str = "ubuntu-latest",
     skeleton = sync.TEMPLATES / "skeleton"
     test = ("node scripts/test.mjs" if starter else
             next((command for marker, command in STACKS if (top / marker).is_file()), NODE_TEST))
+    fast_test = ("node scripts/test.mjs {base}"
+                 if starter and "scripts/affected.mjs" in _starter_files(starter) else "")
     return {
         "forge.toml": (sync.read(top / "forge.toml") if (top / "forge.toml").exists() else
                        _settings("prototype", "ci" if actions == "yes" else "local", test,
                                 ["tests", "forge-pr-check"] if actions == "yes" else [],
-                                INTERFACES, runner=runner)),
+                                INTERFACES, runner=runner, fast_test=fast_test)),
         **{path.relative_to(skeleton).as_posix(): path.read_text(encoding="utf-8")
            for path in sorted(skeleton.rglob("*")) if path.is_file()
            and (starter or test == NODE_TEST or path.name not in ("Dockerfile", ".dockerignore", "services.toml"))},
