@@ -1,0 +1,15 @@
+{
+  "base": "8fd1de2831fdefa7f9c89dc0c1266b3539b0e34b",
+  "branch": "fix/review-on-terra-max",
+  "done_when": "forge.toml's [models.review] is gpt-6.1-terra with effort max",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-07T04:38:34.539128+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The owner wants code review on gpt-6.1-terra at max effort instead of gpt-6.1-sol high in Forge's own repo"
+}
