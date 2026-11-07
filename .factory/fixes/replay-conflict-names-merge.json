@@ -1,6 +1,13 @@
 {
   "base": "8fd1de2831fdefa7f9c89dc0c1266b3539b0e34b",
   "branch": "fix/replay-conflict-names-merge",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1b436-5829-7512-9b21-b325fef93d78",
+    "head": null,
+    "start": "4bd0afcd020f583c3ed325a6543379227d2b1d3f"
+  },
   "done_when": "When replaying a stacked part or follow-up fix onto the default branch conflicts, close names forge work <item> to merge the default branch, then forge close <item>, and names no rebase or force push",
   "fix_kind": "backend",
   "kind": "fix",
