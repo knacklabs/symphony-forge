@@ -181,7 +181,7 @@
     "status": "blocked"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-07T10:19:17.650942+00:00",
@@ -196,6 +196,11 @@
       "step": "review"
     }
   ],
+  "stop": {
+    "question": "Tests run once, and only for the parts a change touches: A chained test command is split, and each step selects its own tests is stuck. It should deliver: `close_tests` rewrites an `&&` chain in place and runs it once with one `Test selection:` line per step; Playwright `--only-changed`; ruff and mypy on the changed files; a step with no selection runs whole; a new `nx` step kind that uses `nx affected` when the repo's Nx defines the step's target; `quicktest.suggest` knows Playwright; the new text in the close and `fast_test` paragraphs of the guide and in `docs/guide.md`, with the recipe for an existing app (Nx targets, `nx affected`, changed options).\nTwo rounds in a row left the open P0 keep distinct playwright steps in the suggested fast command in src/forge/quicktest.py.\nThe worker tried: Repair selection for valid chained commands.\nChoose one: switch this item to Claude; keep Codex for one more round; or narrow or split it.",
+    "tool": "codex",
+    "wait_id": "da1f18f3-48ab-47f3-a037-37b304dbd50c"
+  },
   "stuck": {
     "close": "dfec3f38-8d4d-4549-a010-923f358f5fe7",
     "head": "5a5b119c2b142ba6e7ede2012e9594af4c38d488",
