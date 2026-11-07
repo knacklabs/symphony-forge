@@ -163,7 +163,7 @@
     "id": "6b0e41e3-79cc-414c-a996-706ae1137792",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -185,10 +185,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": null,
-    "head": "d180090b923f9e6f1c566bd6c5baedf42b082e02",
+    "close": "80d002e5-9dfd-4c51-a176-f92eee9619da",
+    "head": "79a1f9d63fab2f89f196759665e7b6d636523592",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "A folder in Scope, such as a test folder, overlaps every part that touches any file under it, so parts across stories wait on each other, and the refusal says only that the part builds on another part without naming the shared path or saying it is a scope overlap.",
   "worker": "codex"
