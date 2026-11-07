@@ -52,12 +52,45 @@ async function check(files) {
         else if (!closing) heading = { name, text: '', top: header > 0 && main === 0, index: tag.index };
       }
     }
+    // Close checks source, without a running app. Keep the sides of each JSX
+    // ternary so headings in mutually exclusive branches do not count together.
+    const branches = new Map();
+    if (/\.[jt]sx$/i.test(file)) {
+      const scopes = [], conditions = [];
+      let jsx = 0;
+      const tokens = /<\/?[a-z][\w:-]*\b[^>]*>|<\/?>|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|`(?:\\.|[^`\\])*`|\?\?|\?\.|[?():{}\[\];,]/gi;
+      for (const token of text.matchAll(tokens)) {
+        const value = token[0];
+        if (value.startsWith('<')) {
+          branches.set(token.index, new Map(conditions.map(c => [c.index, c.side])));
+          if (value.startsWith('</')) jsx = Math.max(0, jsx - 1);
+          else if (!value.endsWith('/>')) jsx++;
+        } else if (value === '{' || (!jsx && /^(?:\(|\[)$/.test(value))) {
+          scopes.push(jsx);
+          jsx = 0;
+        } else if (value === '}' || (!jsx && /^(?:\)|\])$/.test(value))) {
+          while (conditions.length && conditions.at(-1).depth >= scopes.length) conditions.pop();
+          jsx = scopes.pop() || 0;
+        } else if (!jsx && value === '?') {
+          conditions.push({ index: token.index, depth: scopes.length, side: 0 });
+        } else if (!jsx && value === ':') {
+          while (conditions.at(-1)?.depth === scopes.length && conditions.at(-1).side === 1)
+            conditions.pop();
+          if (conditions.at(-1)?.depth === scopes.length) conditions.at(-1).side = 1;
+        } else if (!jsx && (value === ';' || value === ',')) {
+          while (conditions.at(-1)?.depth === scopes.length) conditions.pop();
+        }
+      }
+    }
+    const exclusive = (a, b) => [...(branches.get(a.index) || [])].some(([id, side]) =>
+      branches.get(b.index)?.has(id) && branches.get(b.index).get(id) !== side);
     const titles = headings.filter(h => h.name === 'h1');
     const h1Tags = [...text.matchAll(/<h1\b/gi)];
     const literal = h => h.text.replace(/\s+/g, ' ').trim();
-    const duplicate = h1Tags.length > 1 ? h1Tags[1] : titles.find(title =>
+    const duplicate = h1Tags.find((tag, index) => h1Tags.slice(0, index).some(other =>
+      !exclusive(tag, other))) || titles.find(title =>
       !/[{}]/.test(title.text) && literal(title) && headings.some(other =>
-        other !== title && other.top && literal(title) === literal(other)));
+        other !== title && other.top && !exclusive(title, other) && literal(title) === literal(other)));
     if (duplicate && !/\.css$/i.test(file)) report('title-twice', duplicate.index, 'Show the page title once.');
 
     const html = /\.html$/i.test(file);
