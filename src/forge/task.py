@@ -538,7 +538,7 @@ def can_start(item: str, waiting: list[str], scope: list[str], started: dict[str
                         shared.append(a if not left else b if not right else max((left, right), key=len))
         if shared:
             problem, _, next_step = str(error).partition("\nNext: ")
-            error = repo.Refused(f"{problem} Scope overlap: {', '.join(dict.fromkeys(shared))}.",
+            error = repo.Refused(f"{problem}\nScope overlap: {', '.join(dict.fromkeys(shared))}.",
                                  next_step, error.code, error.entry)
         return None, error
 

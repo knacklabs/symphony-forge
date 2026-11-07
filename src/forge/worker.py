@@ -61,7 +61,9 @@ START_HERE = ("Do not read the coordinator guide (the forge skill's `SKILL.md`):
               "everything a worker needs. Start from the files and tests this brief names, and "
               "search the rest of the repo only for what they call or what calls them.")
 FILE_OWNERSHIP = ("Do not change a file that another open task's Scope owns. "
-                  "Leave it and name it in your handback.")
+                  "Leave it and name it in your handback. "
+                  "This restriction excludes paths with a segment named tests, test, __tests__ or spec. "
+                  "These test paths can be shared.")
 # Sent once, in the same conversation, when a round ends with changes left uncommitted.
 COMMIT_NUDGE = ("Your turn ended with changes left uncommitted, so the review can't see them. "
                 "Commit your work on this branch first, then $test_step "
