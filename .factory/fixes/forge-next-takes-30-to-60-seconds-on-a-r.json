@@ -4,12 +4,20 @@
   "done_when": "forge next on a repo with about fifteen parts prints a line such as Builds running: 1 of 4 and finishes in under 10 seconds.",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-07T17:52:10.621093+00:00",
       "step": "start"
     }
   ],
-  "why": "forge next takes 30 to 60 seconds on a repo with many parts because it makes about 1,500 git calls, many of them repeated reads of the same history and plan files, and it does not say how many builds run against the machine builder places."
+  "stuck": {
+    "close": null,
+    "head": "a8d5cc58068f4ff77fd64f066ef522366ea9ca3b",
+    "keys": {},
+    "round": null
+  },
+  "why": "forge next takes 30 to 60 seconds on a repo with many parts because it makes about 1,500 git calls, many of them repeated reads of the same history and plan files, and it does not say how many builds run against the machine builder places.",
+  "worker": "codex"
 }
