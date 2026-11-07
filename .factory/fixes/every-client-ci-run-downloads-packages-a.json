@@ -163,7 +163,7 @@
     "id": "4d9ced49-0eb9-4ac6-a1d6-4566f806928d",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -176,10 +176,12 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "98d645508cb01e7df6526fd3566987c35630819e",
-    "keys": {},
-    "round": null
+    "close": "272cde14-30fa-4471-9216-dd5356b16054",
+    "head": "2b45246f5f94c5a5a143744950ef5ddb5f79e7ce",
+    "keys": {
+      "the open P0 starter image builds try to copy an ignored .npmrc in src/forge/templates/starter/dockerfile": 1
+    },
+    "round": 1
   },
   "why": "Every client CI run downloads packages again because the generated workflow caches packages only for Forge itself, and both starter web builds copy all source before installing packages, so a source edit reinstalls every package.",
   "worker": "codex"
