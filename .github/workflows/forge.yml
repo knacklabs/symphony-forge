@@ -63,6 +63,8 @@ jobs:
         with:
           python-version: '3.11'
       - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
       - id: parent-tests
         env:
           GH_TOKEN: ${{ github.token }}
@@ -116,6 +118,8 @@ jobs:
         with:
           python-version: '3.11'
       - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
       - env:
           PR: ${{ github.event.pull_request.number }}
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
@@ -199,6 +203,8 @@ jobs:
         with:
           python-version: '3.11'
       - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
       - uses: actions/cache@v4
         with:
           path: ~/.npm

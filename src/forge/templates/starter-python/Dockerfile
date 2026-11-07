@@ -3,8 +3,19 @@ FROM node:24-bookworm-slim AS web-build
 ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 RUN corepack enable
 WORKDIR /app
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
+COPY apps/web/package.json ./apps/web/package.json
+COPY libs/auth/contracts/package.json ./libs/auth/contracts/package.json
+COPY libs/core/web/package.json ./libs/core/web/package.json
+COPY libs/history/contracts/package.json ./libs/history/contracts/package.json
+COPY libs/organisations/contracts/package.json ./libs/organisations/contracts/package.json
+COPY libs/projects/contracts/package.json ./libs/projects/contracts/package.json
+COPY libs/shared/api-types/package.json ./libs/shared/api-types/package.json
+COPY libs/shared/ui/package.json ./libs/shared/ui/package.json
+COPY libs/shared/util/package.json ./libs/shared/util/package.json
+RUN corepack pnpm install --frozen-lockfile
 COPY . .
-RUN corepack pnpm install --frozen-lockfile && corepack pnpm run build
+RUN corepack pnpm run build
 
 FROM python:3.14-slim-bookworm
 COPY --from=ghcr.io/astral-sh/uv:0.13.0 /uv /uvx /bin/

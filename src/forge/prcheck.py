@@ -240,6 +240,16 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
             version = package.get("engines", {}).get("node")
             version = version if isinstance(version, str) and version.strip() else "22"
             node += f"        with:\n          node-version: {json.dumps(version)}\n"
+        if cfg.get("repo") != "forge-source":
+            lock = next((name for name in ("pnpm-lock.yaml", "package-lock.json")
+                         if (top / name).is_file()), None)
+            if lock:
+                manager = "pnpm" if lock == "pnpm-lock.yaml" else "npm"
+                if manager == "pnpm":
+                    node = ("      - uses: pnpm/action-setup@v4\n"
+                            "        if: steps.parent-tests.outputs.reuse != 'true'\n" + node)
+                node += (f"          cache: {manager}\n"
+                         f"          cache-dependency-path: {lock}\n")
     source = cfg.get("repo") == "forge-source"
     configured_groups = cfg.get("groups")
     warning = repo.group_warning(top, cfg)
@@ -318,6 +328,9 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
                   "          test \"$state\" = success\n" if full_run else "")
     workflow = (WORKFLOW.replace("<full-triggers>", full_triggers)
                 .replace("<full-suite-job>", full_suite)
+                .replace("      - uses: astral-sh/setup-uv@v6\n",
+                         "      - uses: astral-sh/setup-uv@v6\n"
+                         "        with:\n          enable-cache: true\n")
                 .replace("<choose>", "" if source else CHOOSE)
                 .replace("<version>", cfg["version"])
                 .replace("<docs-excludes>", json.dumps(review.DOC_EXCLUDES))
