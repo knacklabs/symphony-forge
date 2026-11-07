@@ -64,7 +64,8 @@ def _without_version(text):
 def _python_files(client):
     (client / "pyproject.toml").write_text(
         '[project]\nname = "client"\nversion = "1.0"\n'
-        '[tool.pytest.ini_options]\npythonpath = ["src"]\n', "utf-8")
+        '[tool.pytest.ini_options]\npythonpath = ["src"]\n'
+        'markers = ["unit: unit tests", "integration: integration tests"]\n', "utf-8")
     (client / "src").mkdir(exist_ok=True)
     (client / "src" / "cart.py").write_text("VALUE = 1\n", "utf-8")
     (client / "tests").mkdir(exist_ok=True)
@@ -96,30 +97,38 @@ def test_1_a_client_chain_selects_each_runner_and_keeps_the_shell_directory(
     calls = _recorders(repo, tmp_path, monkeypatch, ("vitest", "playwright", "node"))
     (client / "sub").mkdir()
     (client / "sub" / "app.ts").write_text("export const value = 1;\n", "utf-8")
-    _configure(repo, client, "cd sub && vitest run && playwright test && node check.js")
-    base = repo.git("rev-parse", "HEAD", cwd=client)
-    (client / "sub" / "app.ts").write_text("export const value = 2;\n", "utf-8")
+    for prefix in ("", "cd sub && "):
+        (client / "sub/app.ts").write_text("export const value = 1;\n", "utf-8")
+        _configure(repo, client, prefix + "vitest run && playwright test && node check.js")
+        base = repo.git("rev-parse", "HEAD", cwd=client)
+        (client / "sub/app.ts").write_text("export const value = 2;\n", "utf-8")
+        patient(lambda: calls.unlink(missing_ok=True))
 
-    result = repo.forge("test", "--change", cwd=client)
+        result = repo.forge("test", "--change", cwd=client)
 
-    assert result.returncode == 0, result.stdout + result.stderr
-    actual = _calls(calls)
-    assert [call["name"] for call in actual] == ["vitest", "playwright", "node"], actual
-    assert actual[0]["args"][0] == "run" and "--changed" in actual[0]["args"], actual[0]
-    assert actual[0]["args"][actual[0]["args"].index("--changed") + 1] == base, actual[0]
-    assert actual[0]["args"][-1] == "--passWithNoTests", actual[0]
-    assert any(arg.startswith("--maxWorkers=") for arg in actual[0]["args"]), actual[0]
-    assert actual[1]["args"] == ["test", "--only-changed=" + base]
-    assert actual[2]["args"] == ["check.js"]
-    assert all(Path(call["cwd"]).name == "sub" for call in actual), actual
-    selected = [line for line in result.stdout.splitlines() if line.startswith("Test selection:")]
-    assert len(selected) == 3, result.stdout
-    assert any("vitest" in line and "--changed" in line for line in selected), selected
-    assert any("playwright" in line and "--only-changed" in line for line in selected), selected
-    assert any("node check.js" in line and "whole" in line for line in selected), selected
+        assert result.returncode == 0, result.stdout + result.stderr
+        actual = _calls(calls)
+        assert [call["name"] for call in actual] == ["vitest", "playwright", "node"], actual
+        assert actual[0]["args"][0] == "run", actual[0]
+        assert any(arg.startswith("--maxWorkers=") for arg in actual[0]["args"]), actual[0]
+        assert actual[2]["args"] == ["check.js"]
+        assert all(Path(call["cwd"]) == (client / "sub" if prefix else client)
+                   for call in actual), actual
+        selected = [line for line in result.stdout.splitlines() if line.startswith("Test selection:")]
+        assert len(selected) == (4 if prefix else 3), result.stdout
+        if prefix:
+            # The owner's narrow rule preserves cd but selects nothing after it.
+            assert "--changed" not in actual[0]["args"], actual[0]
+            assert actual[1]["args"] == ["test"], actual[1]
+            assert all("whole command" in line for line in selected), selected
+        else:
+            assert actual[0]["args"][actual[0]["args"].index("--changed") + 1] == base, actual[0]
+            assert actual[0]["args"][-1] == "--passWithNoTests", actual[0]
+            assert actual[1]["args"] == ["test", "--only-changed=" + base], actual[1]
+        assert any("node check.js" in line and "whole" in line for line in selected), selected
 
     # A direct Playwright command is independent of the root package's
-    # compound test script, and npm test uses the package after cd.
+    # compound test script. An npm step after cd now stays whole.
     (client / "package.json").write_text(json.dumps(
         {"scripts": {"test": "vitest run && node check.js"}}), "utf-8")
     (client / "web").mkdir()
@@ -143,7 +152,7 @@ def test_1_a_client_chain_selects_each_runner_and_keeps_the_shell_directory(
     web_npm = repo.forge("test", "--change", cwd=client)
     assert web_npm.returncode == 0, web_npm.stdout + web_npm.stderr
     playwright = next(call for call in _calls(calls) if call["name"] == "playwright")
-    assert playwright["args"] == ["test", "--only-changed=" + base], playwright
+    assert playwright["args"] == ["test"], playwright
     assert Path(playwright["cwd"]).name == "web", playwright
 
     # Unsupported shell flow keeps the full command. A docs-only edit runs no test step.
@@ -240,6 +249,19 @@ def test_1_a_client_chain_selects_each_runner_and_keeps_the_shell_directory(
     assert not any(call[:1] == ["affected"] for call in nx_args), nx_args
     assert "whole" in projects.stdout
 
+    # A variable target is outside the narrow rule, so there is no target probe
+    # and the shell still expands the original run-many invocation.
+    repo.git("checkout", "--", "src/api.ts", cwd=client)
+    target = "%TARGET%" if sys.platform == "win32" else "$TARGET"
+    _configure(repo, client, f'nx run-many -t "{target}"')
+    (client / "src/api.ts").write_text("export const value = 8;\n", "utf-8")
+    monkeypatch.setenv("TARGET", "test")
+    patient(lambda: nx_calls.unlink(missing_ok=True))
+    variable = repo.forge("test", "--change", cwd=client)
+    assert variable.returncode == 0, variable.stdout + variable.stderr
+    assert _calls(nx_calls) == [["run-many", "-t", "test"]], _calls(nx_calls)
+    assert "whole command" in variable.stdout, variable.stdout
+
     # The pull request report keeps selection lines when the runner output is
     # longer than the normal displayed tail.
     repo.git("checkout", "--", "src/api.ts", cwd=client)
@@ -253,7 +275,7 @@ def test_1_a_client_chain_selects_each_runner_and_keeps_the_shell_directory(
     assert "Test selection: node check.js: whole command." in noisy.stdout, noisy.stdout
     monkeypatch.delenv("RUNNER_NOISE", raising=False)
 
-    # An Nx workspace still leaves Python steps to their own selectors.
+    # An Nx workspace leaves plain pytest to its own picker. Checkers run whole.
     _python_files(client)
     calls = _recorders(repo, tmp_path, monkeypatch, ("ruff", "mypy"))
     python = json.dumps(Path(sys.executable).as_posix())
@@ -264,7 +286,7 @@ def test_1_a_client_chain_selects_each_runner_and_keeps_the_shell_directory(
     nx_python = repo.forge("test", "--change", cwd=client)
     assert nx_python.returncode == 0, nx_python.stdout + nx_python.stderr
     assert [(call["name"], call["args"]) for call in _calls(calls)] == [
-        ("ruff", ["check", "src/cart.py"]), ("mypy", ["src/cart.py"]),
+        ("ruff", ["check", "."]), ("mypy", ["."]),
     ]
     assert _calls(nx_calls) == []
     assert "1 passed" in nx_python.stdout, nx_python.stdout
@@ -302,7 +324,7 @@ def test_1_a_client_chain_selects_each_runner_and_keeps_the_shell_directory(
 
 
 @pytest.mark.timeout(360)
-def test_2_a_python_chain_selects_related_tests_and_changed_file_checks(
+def test_2_a_python_chain_selects_only_plain_pytest_steps(
         repo, gh, tmp_path, monkeypatch, unsynced_up):
     client = _new_repo(repo, gh, tmp_path)
     _python_files(client)
@@ -313,7 +335,32 @@ def test_2_a_python_chain_selects_related_tests_and_changed_file_checks(
     calls = _recorders(repo, tmp_path, monkeypatch, ("ruff", "mypy"))
     python = json.dumps(Path(sys.executable).as_posix())
 
-    # A chained pytest step after cd still reads Forge settings from the repo root.
+    # Marks are now whole steps. Inserting required tests into marked steps can
+    # deselect them and fail; only the following plain pytest step owns them.
+    (client / "marked").mkdir()
+    marked = client / "marked/test_marks.py"
+    marked.write_text("import pytest\n@pytest.mark.unit\ndef test_unit():\n    assert True\n"
+                      "@pytest.mark.integration\ndef test_integration():\n    assert True\n", "utf-8")
+    (client / "checks").mkdir()
+    (client / "checks/test_required.py").write_text(
+        "from pathlib import Path\ndef test_required():\n"
+        "    with Path('required-ran.txt').open('a', encoding='utf-8') as out:\n"
+        "        out.write('ran')\n", "utf-8")
+    (client / ".forge/always-tests.txt").write_text("checks/test_required.py\n", "utf-8")
+    _configure(repo, client, f"{python} -m pytest marked -q -m unit && "
+               f"{python} -m pytest marked -q -m integration && {python} -m pytest tests -q")
+    marked.write_text(marked.read_text("utf-8") + "# Changed marked tests\n", "utf-8")
+    marks = repo.forge("test", "--change", cwd=client)
+    assert marks.returncode == 0, marks.stdout + marks.stderr
+    assert marks.stdout.count("1 passed") == 3, marks.stdout
+    assert (client / "required-ran.txt").read_text("utf-8") == "ran"
+    selections = [line for line in marks.stdout.splitlines() if line.startswith("Test selection:")]
+    assert len(selections) == 3 and all("whole command" in line for line in selections[:2]), selections
+    assert "checks/test_required.py" in selections[2], selections
+    patient(lambda: (client / ".forge/always-tests.txt").unlink())
+    patient(lambda: (client / "required-ran.txt").unlink())
+
+    # After cd pytest runs whole, keeping its original directory and arguments.
     (client / "backend" / "tests").mkdir(parents=True)
     backend_test = client / "backend" / "tests" / "test_backend.py"
     backend_test.write_text("def test_backend():\n    assert True\n", "utf-8")
@@ -321,22 +368,22 @@ def test_2_a_python_chain_selects_related_tests_and_changed_file_checks(
     backend_test.write_text("def test_backend():\n    assert 1 == 1\n", "utf-8")
     backend = repo.forge("test", "--change", cwd=client)
     assert backend.returncode == 0, backend.stdout + backend.stderr
-    assert "Test selection: pytest: tests/test_backend.py." in backend.stdout, backend.stdout
+    assert "Test selection: pytest tests: whole command." in backend.stdout, backend.stdout
     assert "1 passed" in backend.stdout, backend.stdout
 
-    _configure(repo, client, f"ruff check . && mypy . && {python} -m pytest tests -q")
+    _configure(repo, client, f"ruff check src && mypy src && {python} -m pytest tests -q")
     (client / "src" / "cart.py").write_text("VALUE = 2\n", "utf-8")
 
     result = repo.forge("test", "--change", cwd=client)
 
     assert result.returncode == 0, result.stdout + result.stderr
     assert [(call["name"], call["args"]) for call in _calls(calls)] == [
-        ("ruff", ["check", "src/cart.py"]), ("mypy", ["src/cart.py"]),
+        ("ruff", ["check", "src"]), ("mypy", ["src"]),
     ]
     selected = [line for line in result.stdout.splitlines() if line.startswith("Test selection:")]
     assert len(selected) == 3, result.stdout
-    assert any("ruff" in line and "src/cart.py" in line for line in selected), selected
-    assert any("mypy" in line and "src/cart.py" in line for line in selected), selected
+    assert any("ruff" in line and "whole command" in line for line in selected), selected
+    assert any("mypy" in line and "whole command" in line for line in selected), selected
     assert any("pytest" in line and "tests/test_cart.py" in line for line in selected), selected
     assert "tests/test_unrelated.py" not in result.stdout, result.stdout
     assert "1 passed" in result.stdout, result.stdout
@@ -346,39 +393,29 @@ def test_2_a_python_chain_selects_related_tests_and_changed_file_checks(
     patient(lambda: calls.unlink(missing_ok=True))
     no_python = repo.forge("test", "--change", cwd=client)
     assert no_python.returncode == 0, no_python.stdout + no_python.stderr
-    assert _calls(calls) == []
-
-    # Changed-file checkers replace directory operands instead of checking both
-    # the whole source tree and the selected files.
-    _configure(repo, client, f"ruff check src && mypy src && {python} -m pytest tests -q")
-    (client / "src" / "cart.py").write_text("VALUE = 2\n", "utf-8")
-    patient(lambda: calls.unlink(missing_ok=True))
-    checked_src = repo.forge("test", "--change", cwd=client)
-    assert checked_src.returncode == 0, checked_src.stdout + checked_src.stderr
     assert [(call["name"], call["args"]) for call in _calls(calls)] == [
-        ("ruff", ["check", "src/cart.py"]), ("mypy", ["src/cart.py"]),
+        ("ruff", ["check", "src"]), ("mypy", ["src"]),
     ]
-    assert "1 passed" in checked_src.stdout, checked_src.stdout
 
-    # Quoting the pytest -k expression keeps the command eligible for step
-    # selection, so unrelated Python tests do not make the mixed chain fail.
+    # A quoted expression is shell-safe but pytest keeps its own filtering whole.
     _recorders(repo, tmp_path, monkeypatch, ("node",))
     (client / "src" / "cart.py").write_text("VALUE = 1\n", "utf-8")
     _configure(repo, client,
-               f"{python} -m pytest tests -q -k '(cart or order)' && node check.js")
+               f'{python} -m pytest tests -q -k "(cart or order)" && node check.js')
     (client / "src" / "cart.py").write_text("VALUE = 2\n", "utf-8")
     patient(lambda: calls.unlink(missing_ok=True))
     quoted = repo.forge("test", "--change", cwd=client)
     assert quoted.returncode == 0, quoted.stdout + quoted.stderr
-    assert "Test selection: pytest:" in quoted.stdout, quoted.stdout
+    assert "whole command" in quoted.stdout, quoted.stdout
+    assert "Test selection: pytest:" not in quoted.stdout, quoted.stdout
     assert "unsupported shell flow" not in quoted.stdout.lower(), quoted.stdout
     assert "1 passed" in quoted.stdout, quoted.stdout
     assert [(call["name"], call["args"]) for call in _calls(calls)] == [
         ("node", ["check.js"]),
     ]
 
-    # Each pytest step uses only tests related to the changed module, for both
-    # directory and explicit-file test arguments.
+    # Plain pytest calls keep their own paths. Only the first plain call gets
+    # always_test files, so a required test does not run again in each step.
     (client / "src" / "basket.py").write_text("VALUE = 1\n", "utf-8")
     (client / "src" / "order.py").write_text("VALUE = 1\n", "utf-8")
     (client / "tests" / "unit").mkdir(exist_ok=True)
@@ -394,18 +431,22 @@ def test_2_a_python_chain_selects_related_tests_and_changed_file_checks(
     )
     for command in step_commands:
         (client / "src" / "basket.py").write_text("VALUE = 1\n", "utf-8")
+        (client / ".forge/always-tests.txt").write_text("checks/test_required.py\n", "utf-8")
         _configure(repo, client, command)
         (client / "src" / "basket.py").write_text("VALUE = 2\n", "utf-8")
         steps = repo.forge("test", "--change", cwd=client)
         assert steps.returncode == 0, steps.stdout + steps.stderr
-        assert steps.stdout.count("1 passed") == 1, steps.stdout
-        assert "2 passed" not in steps.stdout, steps.stdout
+        assert steps.stdout.count("2 passed") == 1, steps.stdout
+        assert (client / "required-ran.txt").read_text("utf-8") == "ran"
         assert "tests/integration/test_order.py" not in steps.stdout, steps.stdout
         selected = [line for line in steps.stdout.splitlines()
                     if line.startswith("Test selection: pytest:")]
         assert len(selected) == 2, steps.stdout
         assert "tests/unit/test_basket.py" in selected[0], selected
+        assert "checks/test_required.py" in selected[0], selected
         assert "none (no related tests)" in selected[1], selected
+        patient(lambda: (client / ".forge/always-tests.txt").unlink())
+        patient(lambda: (client / "required-ran.txt").unlink())
 
     # An earlier-adopted Python client keeps its command through upgrade and
     # sync, and Forge still selects the related pytest module.
@@ -436,7 +477,7 @@ def test_2_a_python_chain_selects_related_tests_and_changed_file_checks(
     assert "Test selection: pytest:" in adopted.stdout, adopted.stdout
     assert "tests/test_cart.py" in adopted.stdout, adopted.stdout
     assert "1 passed" in adopted.stdout, adopted.stdout
-    # The app owner can add changed-file checkers later without giving Nx ownership.
+    # Later checker steps run whole; adding them does not change the pytest picker.
     settings = up.folder / "forge.toml"
     settings.write_text(settings.read_text("utf-8").replace(
         'test = "uv run pytest"', 'test = "ruff check . && mypy . && uv run pytest"'), "utf-8")
@@ -444,6 +485,6 @@ def test_2_a_python_chain_selects_related_tests_and_changed_file_checks(
     checked = up.repo.forge("test", "--change", cwd=up.folder)
     assert checked.returncode == 0, checked.stdout + checked.stderr
     assert [(call["name"], call["args"]) for call in _calls(calls)] == [
-        ("ruff", ["check", "src/cart.py"]), ("mypy", ["src/cart.py"]),
+        ("ruff", ["check", "."]), ("mypy", ["."]),
     ]
     assert "1 passed" in checked.stdout, checked.stdout

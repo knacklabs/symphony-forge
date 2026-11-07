@@ -22,7 +22,7 @@ pytestmark = pytest.mark.usefixtures("isolated_codex_home")
 # Command-boundary cases protect runner selection, setup preservation and advice-only
 # behavior. Existing setup coverage only checks the skill, not command output.
 CASES = [
-    ("python", "uv run pytest", {}, "forge test --pytest {base}"),
+    ("python", "uv run --frozen --python 3.11 pytest", {}, "forge test --pytest {base}"),
     ("vitest", "npm ci && npm test", {"scripts": {"test": "vitest run"},
         "devDependencies": {"vitest": "1"}},
         "npm ci && npm test -- --changed {base} --passWithNoTests"),
@@ -43,7 +43,10 @@ CASES = [
     ("yarn-vitest", "yarn install --immutable && yarn unit", {"scripts": {"unit": "vitest run"}},
         "yarn install --immutable && yarn unit --changed {base} --passWithNoTests"),
     ("mixed", "uv run pytest && npm ci && npx --no-install vitest run", {"devDependencies": {"vitest": "1"}},
-        "forge test --pytest {base} && npm ci && npx --no-install vitest run --changed {base} --passWithNoTests"),
+        "uv run pytest && npm ci && npx --no-install vitest run --changed {base} --passWithNoTests"),
+    ("mixed-compound-playwright", "uv run pytest && npm test", {"scripts": {"test":
+        "playwright test --project=chromium && playwright test --project=firefox"}},
+        "uv run pytest && npm test"),
     ("mixed-pipe", "uv run pytest && npm test | tee tests.log", {"scripts": {"test": "vitest run"}},
         "uv run pytest && npm test | tee tests.log"),
     ("python-cd", "cd backend && uv run pytest", {}, "cd backend && uv run pytest"),
@@ -106,7 +109,7 @@ def test_1_doctor_suggests_the_new_clients_test_kind(repo, gh, tmp_path, cases):
 
 
 @pytest.mark.platform
-def test_6_doctor_classifies_package_scripts_from_their_working_directory(repo, gh, tmp_path):
+def test_6_doctor_keeps_a_package_script_after_cd_whole(repo, gh, tmp_path):
     client = _new_repo(repo, gh, tmp_path)
     assert repo.forge("init", "--actions", "yes", cwd=client).returncode == 0
     _inputs(client, "web", "cd web && npm test", {"scripts": {"test": "vitest run"}})
@@ -116,11 +119,12 @@ def test_6_doctor_classifies_package_scripts_from_their_working_directory(repo, 
 
     done = repo.forge("doctor", cwd=client)
 
-    _advice(done, "cd web && npm test -- --only-changed={base}")
+    _advice(done, "cd web && npm test")
 
 
 @pytest.mark.platform
-def test_7_unsupported_mixed_command_keeps_javascript_tests_in_advice_and_picker(unsynced_up):
+@pytest.mark.parametrize("flow", ["pipe", "compound-script"])
+def test_7_unsupported_mixed_command_keeps_javascript_tests_in_advice_and_picker(unsynced_up, flow):
     up = unsynced_up
     repo = up.repo
     _install(repo.bin, "npm", f'''#!{sys.executable}
@@ -135,9 +139,11 @@ data = sys.stdin.buffer.read()
 Path(sys.argv[1]).write_bytes(data)
 sys.stdout.buffer.write(data)
 ''')
-    command = (f'"{Path(sys.executable).as_posix()}" -m pytest tests -q && '
-               "npm test | tee tests.log")
-    _inputs(repo.path, "mixed-pipe", command, {"scripts": {"test": "vitest run"}})
+    suffix = " | tee tests.log" if flow == "pipe" else ""
+    script = ("vitest run" if flow == "pipe" else
+              "playwright test --project=chromium && playwright test --project=firefox")
+    command = f'"{Path(sys.executable).as_posix()}" -m pytest tests -q && npm test{suffix}'
+    _inputs(repo.path, "mixed-" + flow, command, {"scripts": {"test": script}})
     repo.write(".gitignore", "node-calls.jsonl\ntests.log\npython-ran.txt\n__pycache__/\n.pytest_cache/\n")
     repo.write("tests/test_related.py", 'from pathlib import Path\ndef test_related():\n'
                '    Path("python-ran.txt").write_text("ran", encoding="utf-8")\n')
@@ -176,11 +182,10 @@ sys.stdout.buffer.write(data)
     for invocation in ("exec", "script")
     if entry == "doctor" or (runner, invocation) in (("vitest", "exec"), ("jest", "script"))
 ])
-@pytest.mark.parametrize("shared", [False, True], ids=["related-python", "shared-python-input"])
-def test_4_running_the_mixed_suggestion_runs_each_test_kind_once(unsynced_up, entry, runner, flag, shared, invocation):
+def test_4_mixed_suggestion_keeps_python_and_javascript_steps(unsynced_up, entry, runner, flag, invocation):
     up = unsynced_up
     repo = up.repo
-    # Real pytest proves selection and execution. npm is a third-party boundary stub;
+    # Real pytest proves the narrowed advice keeps this step whole. npm is a boundary stub;
     # it records arguments without deciding whether Forge picked the right runners.
     _install(repo.bin, "npm", f'''#!{sys.executable}
 import json, pathlib, sys
@@ -194,17 +199,13 @@ with path.open("a", encoding="utf-8") as out:
     repo.write("tests/test_related.py", 'from pathlib import Path\ndef test_related():\n'
                '    with Path("python-ran.txt").open("a", encoding="utf-8") as out:\n'
                '        out.write("ran")\n')
-    if not shared:
-        repo.write("tests/test_unrelated.py", "raise AssertionError('unrelated collected')\n")
-    else:
-        repo.write("tests/test_unrelated.py", 'from pathlib import Path\ndef test_other_python():\n'
-                   '    Path("other-python-ran.txt").write_text("ran", encoding="utf-8")\n')
+    repo.write("tests/test_unrelated.py", 'from pathlib import Path\ndef test_other_python():\n'
+               '    Path("other-python-ran.txt").write_text("ran", encoding="utf-8")\n')
     repo.git("add", "-A")
     repo.git("commit", "-qm", "Set up mixed tests")
     repo.git("push", "-q", "origin", "main")
     base = repo.git("rev-parse", "HEAD")
-    repo.write("conftest.py" if shared else "tests/test_related.py",
-               "# Shared input\n" if shared else
+    repo.write("tests/test_related.py",
                (repo.path / "tests/test_related.py").read_text("utf-8") + "# Changed test\n")
     repo.git("add", "-A")
     repo.git("commit", "-qm", "Change Python tests")
@@ -221,8 +222,7 @@ with path.open("a", encoding="utf-8") as out:
                           env={**os.environ, "PYTHONPATH": str(ROOT / "src")}, timeout=60)
     assert done.returncode == 0, done.stdout + done.stderr
     assert (repo.path / "python-ran.txt").read_text("utf-8") == "ran"
-    if shared:
-        assert (repo.path / "other-python-ran.txt").read_text("utf-8") == "ran"
+    assert (repo.path / "other-python-ran.txt").read_text("utf-8") == "ran"
     calls = [json.loads(line) for line in (repo.path / "node-calls.jsonl").read_text("utf-8").splitlines()]
     launch = ["exec", "--", runner] if invocation == "exec" else ["test", "--"]
     assert calls == [["ci"], ["run", "lint"], [*launch, flag, base, "--passWithNoTests"]]
@@ -298,7 +298,7 @@ def test_3_successful_upgrade_keeps_the_suggestion_and_ships_the_guidance(unsync
     up.repo.git("push", "-q", "origin", "main")
     done = up.run(RELEASE)
     assert done.returncode == 0, done.stdout + done.stderr
-    _advice(done, "forge test --pytest {base}")
+    _advice(done, 'python -c "print(123)"')
     assert "Ready:" in done.stdout
     upgraded = tomllib.loads(up.show("forge.toml"))
     assert upgraded["test"] == 'python -c "print(123)"'
