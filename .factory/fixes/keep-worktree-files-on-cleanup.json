@@ -1,0 +1,110 @@
+{
+  "base": "5a1cea9016b296ef812360e28ccb81547748c7b9",
+  "branch": "fix/keep-worktree-files-on-cleanup",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1b4c3-6fb8-7a20-9544-2450aec87fb3",
+    "head": null,
+    "start": "0494af94934a42506f61b12367f5959eb49b5dc2"
+  },
+  "done_when": "After merge or fix drop, Forge keeps a worktree that holds ignored files outside known caches or untracked files, and names them, as doctor's finished-work cleanup does",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "worktree_files() in src/forge/task.py",
+      "file": "src/forge/task.py",
+      "gain": 5,
+      "harm": 5,
+      "line": 782,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Data loss: Preserve ignored lockfiles during worktree cleanup",
+      "work": 1
+    },
+    {
+      "area": "fix_drop() in src/forge/task.py",
+      "file": "src/forge/task.py",
+      "gain": 2,
+      "harm": 5,
+      "line": 877,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Data loss: Reports created after the final status check can still be deleted",
+      "work": 3
+    },
+    {
+      "area": "worktree_files() in src/forge/task.py",
+      "file": "src/forge/task.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 779,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: After merge or fix drop, Forge keeps a worktree that holds ignored files outside known caches or untracked files, and names them",
+      "work": 2
+    },
+    {
+      "area": "merge() in src/forge/merge.py",
+      "file": "src/forge/merge.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 295,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Keep the generated-hook exception when Git reports a directory",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "640d42c9f8694862db597b88386a982b562e7937e6ea76469d1697b09f751219",
+    "changed": "d62eb51b3223576f078060a899dfbef36fbf9bde8ecafaa8caa06edb8e6fc8a2",
+    "commit": "13b9cf95d090b5bb66e0a561af203c47f5717f58",
+    "dismissals": [],
+    "findings": [],
+    "id": "ef42bb20-e2b6-4617-9984-02b6b398daba",
+    "status": "clean"
+  },
+  "round": 5,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-07T06:47:30.373312+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-07T07:04:29.758909+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-07T07:23:41.221052+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-07T08:01:13.540619+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-07T08:47:45.843224+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "8d2cbc0d-b2e4-4cfc-a4b7-816e10748f6c",
+    "head": "9c91b1859914bd201860da77669f3e194cafa299",
+    "keys": {},
+    "round": 4
+  },
+  "why": "Removing a worktree after merge deletes gitignored files silently (merge.py checks untracked files only, then runs git worktree remove), and forge fix drop deletes untracked non-ignored files with --force (task.py). A client lost a 3-hour test report. Forge issue 1428.",
+  "worker": "codex"
+}

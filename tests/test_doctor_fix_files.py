@@ -253,11 +253,14 @@ def _codex_workers_under_claude_code_repair_both_hosts(repo, gh, tmp_path, monke
 
 def _doctor_fix_cleanup_follows_its_pull_request(repo, gh, tmp_path, monkeypatch, state):
     client = _client(repo, gh, tmp_path, monkeypatch)
+    # This lifecycle needs removable work; untracked lockfiles now keep the folder.
+    _land(repo, client, "Track the dependency lockfile",
+          lambda folder: _set(folder, "uv.lock", "version = 1\n"))
     _old_hosts(repo, client)
     started = repo.forge("doctor", "--fix", cwd=client)
     assert "- Fixed: wrote 2 of Forge's files in fix forge-files-20261004-0900.\n" in started.stdout
     folder = _folder_of(repo, client, "fix/forge-files-20261004-0900")
-    # A lockfile alone would qualify other finished worktrees for cleanup.
+    # A tracked lockfile change alone qualifies finished worktrees for cleanup.
     _set(folder, "uv.lock", "version = 2\n")
     before = _status(repo, folder)
     contents = {path.relative_to(folder): path.read_bytes()
