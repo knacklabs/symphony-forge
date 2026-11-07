@@ -1,6 +1,13 @@
 {
   "base": "ad7dd5c402b43015ff56f1110263d30e3ef38cf4",
   "branch": "fix/windows-settings-line-endings",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1b70a-5e54-7141-8c7c-edaa35caa66d",
+    "head": null,
+    "start": "a59865db0fe445a35efb1592893ecb8b7b00fe60"
+  },
   "done_when": "The settings comparison in the review-rounds words test ignores line endings and the Windows full run is green",
   "fix_kind": "mechanical",
   "kind": "fix",
