@@ -53,9 +53,9 @@ def test_4_synced_guide_and_worker_brief_describe_person_requested_skip(env, ado
 def test_5_init_and_upgrade_keep_settings_and_two_round_defaults(env, adopted):
     client(env, adopted)
     config = env.repo.path / "forge.toml"
-    content = config.read_bytes()
+    content = config.read_bytes().replace(b"\r\n", b"\n")
     if adopted:
-        previous = (ROOT / "tests/fixtures/adopted-v1.2.2/client/forge.toml").read_bytes()
+        previous = (ROOT / "tests/fixtures/adopted-v1.2.2/client/forge.toml").read_bytes().replace(b"\r\n", b"\n")
         version = env.repo.forge("--version").stdout.split()[-1].encode()
         assert content == previous.replace(b'"v1.2.2"', b'"' + version + b'"')
     for key in (b"cold_read_rounds", b"task_review_rounds"):
