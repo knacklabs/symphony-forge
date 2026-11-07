@@ -4,12 +4,20 @@
   "done_when": "The two tests advance a controlled clock instead of waiting, keep their real command and refusal assertions, and each runs in under 10 seconds",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-07T18:12:51.556448+00:00",
       "step": "start"
     }
   ],
-  "why": "Two Forge command tests wait for a real 60-second timeout, so each takes about a minute in CI"
+  "stuck": {
+    "close": null,
+    "head": "f27dc7f4d0df024013d4aa233692e2bea116c81f",
+    "keys": {},
+    "round": null
+  },
+  "why": "Two Forge command tests wait for a real 60-second timeout, so each takes about a minute in CI",
+  "worker": "codex"
 }
