@@ -5,6 +5,8 @@ import pytest
 
 from conftest import ROOT
 from test_setup import _fresh_client
+from test_worker_brief_answers_common_questions import brief  # noqa: F401
+from test_workers_leave_settings_to_coordinator import client  # noqa: F401
 
 from test_story import DOC, claude_plan, hook, new_story, setup
 
@@ -96,3 +98,16 @@ def test_3_in_flight_plans_are_checked_again_before_approval(
     repo.git("commit", "-qm", "Adjust the approved builder scopes", cwd=top)
     started = repo.forge("task", "start", "SHOP/SAVE")
     assert started.returncode == 0, started.stdout + started.stderr
+
+
+@pytest.mark.parametrize("client,brief", [
+    pytest.param(False, False, id="new-client-fresh"),
+    pytest.param(False, True, id="new-client-resumed"),
+    pytest.param(True, True, id="earlier-adoption-resumed"),
+], indirect=True)
+def test_4_workers_keep_other_open_tasks_files_untouched(brief):
+    # Prompt delivery is the contract: a resumed session can retain the older
+    # outside-Scope permission. The real work command must send the new rule.
+    # Existing resume coverage checks other instructions; no new seam is needed.
+    assert ("Do not change a file that another open task's Scope owns. "
+            "Leave it and name it in your handback.") in " ".join(brief.split())

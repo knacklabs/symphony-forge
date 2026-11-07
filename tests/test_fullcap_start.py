@@ -28,6 +28,10 @@ def test_2_next_lists_only_parts_task_start_accepts(env, case, previous):
     doc = DOC.replace("| D |", "| P3 |").replace("| F |", "| W |").replace("| A, E |", "| E, B |")
     if case == "github-only":
         doc = doc.replace("| E, B |", "| A, E |")
+    elif case == "overlap":
+        # Earlier approvals can still have independent parts with overlapping Scope.
+        doc = doc.replace("| C | Extend work | Extend the first value | 1 | `app.py` | `tests/test_work.py` | A | no |",
+                          "| C | Extend work | Extend the first value | 1 | `app.py` | `tests/test_work.py` | none | no |")
     story(repo, doc, doc, "STACK")
     repo.git("push", "-q", "origin", "story/STACK")
     if case == "unreviewed-chain":

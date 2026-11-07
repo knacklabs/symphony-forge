@@ -20,10 +20,11 @@ def check(tasks: list[dict[str, Any]]) -> None:
                 for right in second["scope"]:
                     a, b = (re.split(r"[*?\[]", path, maxsplit=1)[0] for path in (left, right))
                     if a.startswith(b) or b.startswith(a):
-                        repo.refuse(
+                        repo.refuse((
                             f"Tasks {first['id']} and {second['id']} can change the same file "
-                            f"({left}, {right}).\nNext: name separate files in Scope, add an After link, "
-                            "or put the shared file in a first task that both wait for.")
+                            f"({left}, {right}).",
+                            "name separate files in Scope, add an After link, "
+                            "or put the shared file in a first task that both wait for."))
 
 
 def no_cycle(tasks: dict[str, dict[str, Any]]) -> None:

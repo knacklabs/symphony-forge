@@ -187,7 +187,7 @@ $delegation
   high when it has no pair. Design turns use the build pair. Helper settings stay the same
   after a failed round and set no process-wide value or `settings.json` value.
 - Edit files only inside this checkout.
-- Do not change a file that another open task's Scope owns. Leave it and name it in your handback.
+- $file_ownership
 - $settings
 - After a merge of the default branch, close keeps that branch's settings unless this item's
   Done-when permits settings changes. It keeps this branch's version pin. The worker's settings
