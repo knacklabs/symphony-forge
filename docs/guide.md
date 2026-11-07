@@ -352,6 +352,7 @@ no entry use Forge's `gpt-6.1-sol` at low effort; Codex design uses its design d
 Ask your agent to change these settings in a fix.
 
 `forge init` writes low effort for Codex and Claude build, fix and lite.
+It pins Codex cold reads and reviews, including working-prototype reviews, to `gpt-6.1-terra` at max effort.
 Claude design keeps Sonnet at xhigh. Claude grill and review use Sonnet at high in new repos.
 Existing model and effort entries stay unchanged after upgrade and sync.
 After a red close test, a blocking review finding or a failed required check named
