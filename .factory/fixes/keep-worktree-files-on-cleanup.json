@@ -18,7 +18,7 @@
       "gain": 5,
       "harm": 5,
       "line": 782,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -31,7 +31,7 @@
       "gain": 2,
       "harm": 5,
       "line": 877,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -57,7 +57,7 @@
       "gain": 3,
       "harm": 3,
       "line": 295,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -67,58 +67,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "64f73df6cb01ff2abdd794101a1054750dd50b75bbc4499c8e40b14ff3d2c3c3",
-    "changed": "b4003d40eb722aa2ee6718c28e97707170d10eda3c58b32bc46745fb00f8243c",
-    "commit": "bce2bd777deb22cc6bca97b2ec160f65f7d01596",
+    "branch_diff": "9fb678c1cab8826f499e0378e6a09906637daf7ce5865a0a82419a2cc2d7807e",
+    "changed": "33661a60eee70fe015f661962dbadebbb8150c39f63c71ff5076d31ec8f32845",
+    "commit": "3ae3080561bdd32e0bd6b261630f971dd144327e",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 5, Work 1, Harm 5\nRaise: Data loss\nCase: normal use - A Python repository ignores its local uv.lock.\nThe helper excludes every root uv.lock entry, although uv.lock is not in repo.CACHES. An ignored lockfile passes drop's initial status check, then this filter makes cleanup remove the worktree and lockfile without naming it; merge can delete it the same way. The previous drop guard preserved ignored uv.lock files. The coordinator note adopts doctor's exception, but did not account for this newly lost drop protection.",
-        "file": "src/forge/task.py",
-        "gain": 5,
-        "harm": 5,
-        "line": 782,
-        "priority": "P1",
-        "title": "Data loss: Preserve ignored lockfiles during worktree cleanup",
-        "work": 1
-      },
-      {
-        "body": "Gain 2, Work 3, Harm 5\nRaise: Data loss\nCase: normal use - A background test finishes while Forge is removing its worktree.\nA report created after worktree_files returns but before drop's git worktree remove --force at task.py:884 is deleted without being named. Merge has the same window for ignored reports between merge.py:295 and :310. This is after the initial drop refusal addressed by the coordinator's ruling. The new drop test creates its report before the final check, so it cannot catch this loss.\nAdds work: protect reports created after the final status check; F 1 x H 3 = 3; 2 x C = 4",
-        "file": "src/forge/task.py",
-        "gain": 2,
-        "harm": 5,
-        "line": 877,
-        "priority": "P1",
-        "title": "Data loss: Reports created after the final status check can still be deleted",
-        "work": 3
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Not done\nNot done: After merge or fix drop, Forge keeps a worktree that holds ignored files outside known caches or untracked files, and names them, as doctor's finished-work cleanup does\nCase: normal use - A test writes its report under an ignored test-results/ directory.\nWith --untracked-files=normal, Git reports the directory rather than its individual files, so both commands name test-results/ but never name test-results/report.xml. See the [Git status documentation](https://git-scm.com/docs/git-status). Merge also omits every kept filename when its local branch has advanced: the branch at merge.py:298-299 prints only the local-commit message. The new tests use root-level files and no advanced branch, so they miss both naming gaps.",
-        "file": "src/forge/task.py",
-        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
-        "gain": 3,
-        "harm": 3,
-        "line": 779,
-        "priority": "P1",
-        "title": "Not done: After merge or fix drop, Forge keeps a worktree that holds ignored files outside known caches or untracked files, and names them",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional\nCase: normal use - A repository uses core.hooksPath=.githooks and runs forge sync in a worktree.\nWhen the untracked directory contains only Forge's generated hooks, Git's normal status reports .githooks/ as one entry. That directory cannot equal either generated hook file in the filter, so merge retains an otherwise removable worktree and branch. Doctor uses the same helper and also leaves it behind; repeated worktrees and their caches accumulate.\nAdds work: retain the existing generated-hook exception for collapsed directories; F 2 x H 2 = 4; 2 x C = 2",
-        "file": "src/forge/merge.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 295,
-        "priority": "P1",
-        "title": "Keep the generated-hook exception when Git reports a directory",
-        "work": 2
-      }
-    ],
-    "id": "70f8345f-eeb2-45d8-bc8d-af394b1ddb9e",
-    "status": "blocked"
+    "findings": [],
+    "id": "b0bdf549-e99f-4686-9879-0cdbfaf8bab8",
+    "status": "clean"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-07T06:47:30.373312+00:00",
@@ -126,6 +84,10 @@
     },
     {
       "at": "2026-11-07T07:04:29.758909+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-07T07:23:41.221052+00:00",
       "step": "review"
     }
   ],
