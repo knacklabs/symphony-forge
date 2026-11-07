@@ -1,10 +1,18 @@
 {
   "branch": "task/FORGE-SPLITREVIEW-1-REVIEW",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-07T02:02:42.549396+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "e0ac19080eaa01120c7d48062cd54c5f0b9cbaaa",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
