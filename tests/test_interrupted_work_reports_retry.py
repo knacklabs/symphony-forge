@@ -25,6 +25,7 @@ from test_tools_session_hold import Session
 from test_worker import install_claude
 
 STORY = "FIX-INTERRUPTED-WORK"
+pytestmark = pytest.mark.platform
 
 
 @pytest.mark.skipif(os.name == "nt", reason="POSIX shell signals; Windows terminate is uncatchable")
