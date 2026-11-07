@@ -1310,7 +1310,10 @@ recording succeeds; if the repo pins a newer release, install that pinned releas
 - Tasks: before writing each task's Scope, search the code for the files it needs. The plan check
   refuses two tasks whose Scope paths share a prefix up to the first wildcard, unless one waits
   for the other through After, directly or through another task; the refusal names both tasks.
-  Put a shared file with its names and stubs in the first task that needs it. Tasks that need it
+  Paths with a segment named `tests`, `test`, `__tests__` or `spec` do not cause Scope overlaps.
+  Parts can share these test paths without an After link. Explicit After links still apply.
+  A refusal caused by a Scope overlap names the shared path, or the glob when its literal prefix is empty.
+  Put a shared production file with its names and stubs in the first task that needs it. Tasks that need it
   wait for that task through After, then own only their files. Each row names the Done-when items
   it Covers, its Scope (the paths it may change) and its Tests. A task that covers nothing is cut;
   work wanted later goes to Notes, or the linked spec's Out of scope.
@@ -1489,14 +1492,15 @@ the handoff, so answer a Scope question only when the change isn't needed. If th
 choice the item does not settle, get that choice made before sending the note.
 
 When a round ends with changes left uncommitted, `forge work` continues the same conversation
-once, telling the worker to commit first. In a local-test repo, the worker runs related tests
-through `forge test` once at the end of the turn, reruns only failures and commits any fixes. In a
-CI-test repo, the worker commits first and leaves the change's related tests, lint and type checks
-to pull request CI; it runs `forge test` only for a test it is writing, to watch it fail. Only
+once, repeating its test instructions and asking it to commit. In a local-test repo, the worker
+runs related tests through `forge test` once at the end of the turn, reruns only failures and commits any fixes. In a
+CI-test repo, the worker runs only the exact new, changed or previously failing tests through
+`forge test` with the test runner's name filter, red then green before committing. Wider related
+tests, lint and type checks stay in pull request CI. Only
 if changes are still uncommitted after that does it warn, naming them: `forge close` reviews only
 what is committed, so look at them before closing.
 
-Continued worker rounds repeat the selected test-place instruction and the commit-first order,
+Continued worker rounds repeat the selected test-place instruction and its commit order,
 replacing any earlier full-suite instruction. Follow the repo's `test_place` choice when applying
 the test-audit skill. The nightly full run covers the rest.
 

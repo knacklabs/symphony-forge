@@ -527,6 +527,19 @@ def can_start(item: str, waiting: list[str], scope: list[str], started: dict[str
                 refuse(REFUSALS["overlap"], item=item, paths=", ".join(shared), other=other)
         return stacked, None
     except repo.Refused as error:
+        shared = []
+        for other, theirs in started.items():
+            if other == item:
+                continue
+            for a in scope:
+                for b in theirs:
+                    if _overlap(a, b):
+                        left, right = (re.split(r"[*?[]", path, maxsplit=1)[0] for path in (a, b))
+                        shared.append(a if not left else b if not right else max((left, right), key=len))
+        if shared:
+            problem, _, next_step = str(error).partition("\nNext: ")
+            error = repo.Refused(f"{problem}\nScope overlap: {', '.join(dict.fromkeys(shared))}.",
+                                 next_step, error.code, error.entry)
         return None, error
 
 
@@ -619,6 +632,9 @@ def _overlap(a: str, b: str) -> bool:
     """Two Scope entries (files, folders or globs) that may touch the same file: their literal
     prefixes, up to the first wildcard, are disjoint only when neither contains the other."""
     # ponytail: prefix rule, may refuse some disjoint globs; widen only with a real need
+    if any(segment in {"tests", "test", "__tests__", "spec"}
+           for entry in (a, b) for segment in entry.split("/")):
+        return False
     a, b = (re.split(r"[*?[]", entry, maxsplit=1)[0] for entry in (a, b))
     return a.startswith(b) or b.startswith(a)
 
