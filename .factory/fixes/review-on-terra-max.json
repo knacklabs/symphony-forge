@@ -11,12 +11,20 @@
   "done_when": "Forge's own repo and new client repos run the Codex code review and the Codex cold read on gpt-6.1-terra at max effort; existing client repos keep their forge.toml",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-07T04:38:34.539128+00:00",
       "step": "start"
     }
   ],
-  "why": "The owner wants code review on gpt-6.1-terra at max effort instead of gpt-6.1-sol high in Forge's own repo"
+  "stuck": {
+    "close": null,
+    "head": "6e189ee984e458fbd9de74bebc31c29d94347127",
+    "keys": {},
+    "round": null
+  },
+  "why": "The owner wants code review on gpt-6.1-terra at max effort instead of gpt-6.1-sol high in Forge's own repo",
+  "worker": "codex"
 }
