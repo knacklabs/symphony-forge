@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/merge_review.py\tNot done: A task that merges main with a conflict is reviewed only on its conflict fix, and its tests still run on the merged code.\tFORGE-SPLITREVIEW-1/REVIEW",
+      "kind": "bug",
+      "path": "src/forge/merge_review.py",
+      "line": 47,
+      "text": "Not done: A task that merges main with a conflict is reviewed only on its conflict fix, and its tests still run on the merged code.",
+      "from": "blocking",
+      "item": "FORGE-SPLITREVIEW-1/REVIEW",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

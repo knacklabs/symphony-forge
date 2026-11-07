@@ -22,7 +22,9 @@ head = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=Tr
 with open(queue_file.with_suffix(".calls.jsonl"), "a", encoding="utf-8") as calls:
     files = {path: Path(path).read_text("utf-8")
              for flag, path in zip(args, args[1:]) if flag == "--prompt-file"}
-    calls.write(json.dumps({"args": args, "head": head, "prompt_files": files}) + "\n")
+    diff = subprocess.run(["git", "diff", args[args.index("--base") + 1] + "...HEAD"],
+                          capture_output=True, text=True).stdout if "--base" in args else ""
+    calls.write(json.dumps({"args": args, "head": head, "prompt_files": files, "diff": diff}) + "\n")
 if "--codex-bin" in args:
     subprocess.run([args[args.index("--codex-bin") + 1], "exec", "-C", tempfile.mkdtemp(), "-"],
                    check=True)

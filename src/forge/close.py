@@ -21,7 +21,7 @@ from pathlib import Path
 from typing import Any
 
 from forge.close_remote import push_replay, reconcile, save_replay
-from forge import __version__, app_baseline, checks, codex, design, githooks, init, migration_warnings, repo, review, review_skip, score, spotted, story, sync, task, time_records
+from forge import __version__, app_baseline, checks, codex, design, githooks, init, merge_review, migration_warnings, repo, review, review_skip, score, spotted, story, sync, task, time_records
 
 REFUSALS = {
     "not_started": ("Forge has not started {item} in any worktree of this repo.", "forge next"),
@@ -302,7 +302,7 @@ def close(args: argparse.Namespace) -> int:
         print("nothing to review: only Forge's records changed", flush=True)
     replayed = bool(stacked_on and previous.get("commit") and repo.run(
         "git", "merge-base", "--is-ancestor", previous["commit"], "HEAD", cwd=top).returncode)
-    fresh = not replayed and (choice == "accept" or result.get("branch_diff", legacy_diff) == branch_diff)
+    fresh = not replayed and (choice == "accept" or result.get("branch_diff", legacy_diff) == branch_diff or merge_review.covers(top, item, state, review_ref, result))
     if records_only and review.blocking(result):
         fresh = False
     if switch:

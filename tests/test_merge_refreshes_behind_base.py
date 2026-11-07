@@ -1,4 +1,10 @@
-"""Merge and land recover when the default branch advances after close."""
+"""Merge and land recover when the default branch advances after close.
+
+Test-audit: the existing command cases own recovery, merged-head tests and status.
+The old contract required a new review after a clean merge; the approved contract
+reuses the earlier review. Keep its head as an ancestor of the combined head, and
+retain all test-run, merge and conflict checks. No production test seam is needed.
+"""
 import json
 import re
 import shutil
@@ -151,6 +157,7 @@ def test_1_merge_and_land_refresh_behind_base_or_preserve_conflict(
     assert closed.returncode == 0, closed.stdout + closed.stderr
     first_head = env.repo.git("rev-parse", "HEAD", cwd=where)
     before_reviews = len(env.review_calls())
+    reviewed_head = env.review_calls()[-1]["head"]
     _github_moves_default(env, conflict, merge_state)
 
     result = env.repo.forge(command, item)
@@ -175,8 +182,9 @@ def test_1_merge_and_land_refresh_behind_base_or_preserve_conflict(
         assert heads[0] == first_head and heads[1] != first_head
         advanced = (env.repo.bin / "default-moved").read_text("utf-8")
         env.repo.git("merge-base", "--is-ancestor", advanced, heads[1])
-        assert len(env.review_calls()) == before_reviews + 1
-        env.repo.git("merge-base", "--is-ancestor", advanced, env.review_calls()[-1]["head"])
+        assert len(env.review_calls()) == before_reviews
+        assert env.review_calls()[-1]["head"] == reviewed_head
+        env.repo.git("merge-base", "--is-ancestor", reviewed_head, heads[1])
         # CI owns the tests for this repo, so close does not run verify.py locally after refresh.
         assert not test_log.exists()
         # The check query below must use the refreshed head after main advances.
@@ -220,6 +228,7 @@ def test_2_behind_recovery_finishes_close_under_the_upgraded_pin_before_retrying
     assert closed.returncode == 0, closed.stdout + closed.stderr
     first_head = env.repo.git("rev-parse", "HEAD", cwd=where)
     before_reviews = len(env.review_calls())
+    reviewed_head = env.review_calls()[-1]["head"]
     upgraded = config.replace('version = "v1.2.2"',
                               f'version = "{current}"\nfast_test = "python verify.py"')
     _github_moves_default(env, False, "BEHIND", upgraded, failing_test)
@@ -242,7 +251,8 @@ def test_2_behind_recovery_finishes_close_under_the_upgraded_pin_before_retrying
         assert any("The upgraded client test fails" in log.read_text("utf-8")
                    for log in logs.glob("test-*.log"))
         assert len(attempts) == 1
-        assert len(env.review_calls()) == before_reviews + 1
+        assert len(env.review_calls()) == before_reviews
+        assert env.review_calls()[-1]["head"] == reviewed_head
         assert where.is_dir()
         assert not (env.repo.bin / "github-merged").exists()
         return
@@ -254,8 +264,9 @@ def test_2_behind_recovery_finishes_close_under_the_upgraded_pin_before_retrying
     assert heads[0] == first_head and heads[1] != first_head
     advanced = (env.repo.bin / "default-moved").read_text("utf-8")
     env.repo.git("merge-base", "--is-ancestor", advanced, heads[1])
-    assert len(env.review_calls()) == before_reviews + 1
-    env.repo.git("merge-base", "--is-ancestor", advanced, env.review_calls()[-1]["head"])
+    assert len(env.review_calls()) == before_reviews
+    assert env.review_calls()[-1]["head"] == reviewed_head
+    env.repo.git("merge-base", "--is-ancestor", reviewed_head, heads[1])
     tested = [json.loads(line) for line in test_log.read_text("utf-8").splitlines()]
     assert len(tested) == 2
     env.repo.git("merge-base", "--is-ancestor", advanced, tested[-1])

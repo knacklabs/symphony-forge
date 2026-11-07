@@ -353,7 +353,9 @@ def instructions(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any
     if "always_block" in settings:
         prompt += "\n\n" + blocks["always-block"].substitute(kinds=_bullets(settings["always_block"]))
     if previous.get("commit"):
-        prompt += "\n\n" + blocks["repair-review"].substitute(
+        from forge import merge_review
+        mode = "conflict-review" if merge_review.base(top, item, state, base, previous) else "repair-review"
+        prompt += "\n\n" + blocks[mode].substitute(
             reviewed=previous["commit"], findings=_previous(previous))
     return prompt
 
@@ -928,8 +930,15 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
             repo.git("fetch", "-q", str(top),
                      f"+refs/remotes/{base}:refs/remotes/{base}",
                      *([previous["commit"]] if previous.get("commit") else []), cwd=tree)
-            review_base = previous.get("commit") or repo.git("rev-parse", base, cwd=tree)
-            if previous.get("commit"):
+            from forge import merge_review
+            conflict_base = merge_review.base(top, item, state, base, previous)
+            review_base = conflict_base or previous.get("commit") or repo.git("rev-parse", base, cwd=tree)
+            if conflict_base:
+                repo.git("fetch", "-q", str(top), conflict_base, cwd=tree)
+                snapshot = repo.git("commit-tree", repo.git("rev-parse", "HEAD^{tree}", cwd=tree),
+                                    "-p", conflict_base, "-m", "Conflict repairs to review", cwd=tree)
+                repo.git("checkout", "-q", "--detach", snapshot, cwd=tree)
+            elif previous.get("commit"):
                 merged_base = repo.git("merge-base", base, "HEAD", cwd=tree)
                 if repo.git("merge-base", base, review_base, cwd=tree) != merged_base:
                     review_base = merged_base
