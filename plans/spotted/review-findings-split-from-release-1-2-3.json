@@ -34,6 +34,28 @@
       "closed_by": "review-findings-split-from-release-1-2-3"
     },
     {
+      "key": "bug\tsrc/forge/story.py\tRefreshing renderers invalidates approved design trees\treview-findings-split-from-release-1-2-3",
+      "kind": "bug",
+      "path": "src/forge/story.py",
+      "line": 94,
+      "text": "Refreshing renderers invalidates approved design trees",
+      "from": "blocking",
+      "item": "review-findings-split-from-release-1-2-3",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/story.py\tUpgrading fails when a repo has several saved canvases\treview-findings-split-from-release-1-2-3",
+      "kind": "bug",
+      "path": "src/forge/story.py",
+      "line": 95,
+      "text": "Upgrading fails when a repo has several saved canvases",
+      "from": "blocking",
+      "item": "review-findings-split-from-release-1-2-3",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_canvas_settled_motion.py\tKeep saved canvas renderers current after upgrade\treview-findings-split-from-release-1-2-3",
       "kind": "bug",
       "path": "tests/test_canvas_settled_motion.py",
