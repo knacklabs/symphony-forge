@@ -4,12 +4,20 @@
   "done_when": "Every pytest command Forge narrowed before the chained-command change is narrowed again, and main's full run on Linux and Windows is green",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-07T15:27:40.528091+00:00",
       "step": "start"
     }
   ],
-  "why": "The chained-command change made Forge run whole pytest commands it used to narrow (uv sync before pytest, python -m pytest with -n, launcher scripts, pytest paths with spaces), so main's full run is red"
+  "stuck": {
+    "close": null,
+    "head": "4f0efe78f2db567fd51c410981e611cc0af71c9c",
+    "keys": {},
+    "round": null
+  },
+  "why": "The chained-command change made Forge run whole pytest commands it used to narrow (uv sync before pytest, python -m pytest with -n, launcher scripts, pytest paths with spaces), so main's full run is red",
+  "worker": "codex"
 }
