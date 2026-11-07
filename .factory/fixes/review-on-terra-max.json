@@ -1,7 +1,14 @@
 {
+  "amendments": [
+    {
+      "at": "2026-11-07T04:40:49.242202+00:00",
+      "because": "The owner asked for the same change for cold read and for clients",
+      "done_when": "forge.toml's [models.review] is gpt-6.1-terra with effort max"
+    }
+  ],
   "base": "8fd1de2831fdefa7f9c89dc0c1266b3539b0e34b",
   "branch": "fix/review-on-terra-max",
-  "done_when": "forge.toml's [models.review] is gpt-6.1-terra with effort max",
+  "done_when": "Forge's own repo and new client repos run the Codex code review and the Codex cold read on gpt-6.1-terra at max effort; existing client repos keep their forge.toml",
   "fix_kind": "mechanical",
   "kind": "fix",
   "status": "started",
