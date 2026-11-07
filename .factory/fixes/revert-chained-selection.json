@@ -1,6 +1,13 @@
 {
   "base": "43d9a385ed1f9ba8dea28244a4c4c63c242214dd",
   "branch": "fix/revert-chained-selection",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1b6ba-56a2-7122-9ba6-04274f9c6933",
+    "head": null,
+    "start": "15154a26f101e897c93fdf6d87e23977dd505d24"
+  },
   "done_when": "The chained-command part's change is reverted on main, the other test-selection parts stay, and main's full run on Linux and Windows is green",
   "fix_kind": "mechanical",
   "kind": "fix",
