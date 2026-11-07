@@ -1,7 +1,8 @@
 {
-    "tests/test_acceptance_publishes_final_review_once.py::test_1_acceptance_publishes_once_after_final_review_records[new]": 7.00,
-    "tests/test_acceptance_publishes_final_review_once.py::test_1_acceptance_publishes_once_after_final_review_records[earlier-adopted]": 7.82,
-    "tests/test_acceptance_publishes_final_review_once.py::test_1_acceptance_publishes_once_after_final_review_records[default-moves]": 18.00,
+    "tests/test_acceptance_publishes_final_review_once.py::test_1_acceptance_publishes_once_after_final_review_records[new]": 7.38,
+    "tests/test_acceptance_publishes_final_review_once.py::test_1_acceptance_publishes_once_after_final_review_records[earlier-adopted]": 6.42,
+    "tests/test_acceptance_publishes_final_review_once.py::test_1_acceptance_publishes_once_after_final_review_records[default-moves]": 6.77,
+    "tests/test_acceptance_publishes_final_review_once.py::test_1_acceptance_publishes_once_after_final_review_records[red-tests]": 5.40,
     "tests/test_affected_py_starter.py::test_6_python_starter_selects_its_affected_parts": 3.48,
     "tests/test_close.py::test_2_gates_check_outcomes[unnamed_check_run]": 1.0,
     "tests/test_close.py::test_2_gates_check_outcomes[unnamed_commit_status]": 1.0,

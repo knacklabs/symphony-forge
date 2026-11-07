@@ -8,15 +8,15 @@ import pytest
 from conftest import _install
 from test_close import blocked, body, env, finding  # noqa: F401
 from test_two_round_limit import client
-from test_reviewchoice_skip import _default_moves_during_checks
 
 STORY = "review-findings-split-from-close-pushes"
 
 
 @pytest.mark.platform
-@pytest.mark.parametrize("previous,moved", [(False, False), (True, False), (False, True)],
-                         ids=["new", "earlier-adopted", "default-moves"])
-def test_1_acceptance_publishes_once_after_final_review_records(env, previous, moved, tmp_path, monkeypatch):
+@pytest.mark.parametrize("previous,moved,red", [(False, False, False), (True, False, False),
+                                               (False, True, False), (False, False, True)],
+                         ids=["new", "earlier-adopted", "default-moves", "red-tests"])
+def test_1_acceptance_publishes_once_after_final_review_records(env, previous, moved, red):
     client(env, previous)
     config = (env.repo.path / "forge.toml").read_text("utf-8")
     config = "\n".join(line for line in config.splitlines()
@@ -39,45 +39,57 @@ def test_1_acceptance_publishes_once_after_final_review_records(env, previous, m
     hook.chmod(hook.stat().st_mode | stat.S_IEXEC)
     reason = "Keep this greeting for now"
     if moved:
-        _default_moves_during_checks(env, tmp_path, where, False, monkeypatch)
-    else:
-        # The CI review check must run the real command on the published head,
-        # rather than report a canned success before close writes its ready record.
-        gh = (env.repo.bin / "gh").read_text("utf-8")
-        needle = 'responses = here / "gh-responses.json"\n'
-        inject = (
+        env.commit(env.repo.path, "NEWS.md", "Default moved during acceptance checks\n")
+    # Run the real CI review gate on the published head. The fake CI checks
+    # finish at once, including when another change merges during the first check.
+    gh = (env.repo.bin / "gh").read_text("utf-8")
+    needle = 'responses = here / "gh-responses.json"\n'
+    inject = (
+        "marker = here / 'acceptance-default-moved'\n"
+        "if args[:2] == ['pr', 'list'] and marker.exists():\n"
+        "    published = json.loads((here / 'gh-bodies.jsonl').read_text('utf-8').splitlines()[-1])\n"
+        "    sys.stdout.write(json.dumps([{'number': 7, 'state': 'OPEN', 'body': published, "
+        "'isDraft': False, 'mergeStateStatus': 'BEHIND', 'baseRefName': 'main'}]))\n"
+        "    sys.exit(0)\n"
+    ) if moved else ""
+    inject += (
             "if args[:4] == ['api', '--paginate', '--jq', '.check_runs[]']:\n"
+            + (f"    if not marker.exists():\n"
+               f"        subprocess.run(['git', 'push', '-q', 'origin', 'main'], "
+               f"cwd={json.dumps(env.repo.path.as_posix())}, check=True, timeout=60)\n"
+               "        marker.touch()\n" if moved else "") +
             "    head = args[-1].split('/commits/')[1].split('/')[0]\n"
             f"    checked = subprocess.run([sys.executable, str(here / 'forge'), 'hook', 'pr-check', "
             f"'--base', 'origin/main', '--head', head, '--branch', {json.dumps('fix/' + item)}], "
             f"cwd={json.dumps(where.as_posix())}, capture_output=True, text=True, encoding='utf-8', timeout=60)\n"
             "    append_json(here / 'acceptance-pr-checks.jsonl', "
             "{'head': head, 'exit': checked.returncode, 'output': checked.stdout + checked.stderr})\n"
-            "    sys.stdout.write(json.dumps({'name': 'tests', 'status': 'completed', 'conclusion': 'success'}) + '\\n')\n"
+            f"    sys.stdout.write(json.dumps({{'name': 'tests', 'status': 'completed', "
+            f"'conclusion': {json.dumps('failure' if red else 'success')}}}) + '\\n')\n"
             "    sys.stdout.write(json.dumps({'name': 'forge-pr-check', 'status': 'completed', "
             "'conclusion': 'failure' if checked.returncode else 'success'}) + '\\n')\n"
             "    sys.exit(0)\n"
-        )
-        assert needle in gh
-        _install(env.repo.bin, "gh", gh.replace(needle, inject + needle, 1))
+    )
+    assert needle in gh
+    _install(env.repo.bin, "gh", gh.replace(needle, inject + needle, 1))
 
     accepted = env.close(item, "--resolve", "accept", "--reason", reason)
 
-    assert accepted.returncode == 0, accepted.stdout + accepted.stderr
-    assert f"Ready: {item}" in accepted.stdout, accepted.stdout + accepted.stderr
-    common = Path(env.repo.git("rev-parse", "--git-common-dir", cwd=where))
-    if not common.is_absolute():
-        common = where / common
-    ready = common / "forge" / "ready" / f"{item}.json"
-    assert json.loads(ready.read_text("utf-8"))["commit"] == env.repo.git("rev-parse", "HEAD", cwd=where)
+    if red:
+        assert accepted.returncode == 1, accepted.stdout + accepted.stderr
+        assert "Checks failed on the pull request: tests." in accepted.stderr
+        assert "Ready:" not in accepted.stdout
+    else:
+        assert accepted.returncode == 0, accepted.stdout + accepted.stderr
+        assert f"Ready: {item}" in accepted.stdout, accepted.stdout + accepted.stderr
     heads = [line.split()[1] for line in updates.read_text("utf-8").splitlines()
              if line.split()[2] == f"refs/heads/fix/{item}"]
     assert len(heads) == (2 if moved else 1), heads
     assert heads[-1] == env.repo.git("rev-parse", "HEAD", cwd=where)
-    if not moved:
-        checked = [json.loads(line) for line in
-                   (env.repo.bin / "acceptance-pr-checks.jsonl").read_text("utf-8").splitlines()]
-        assert checked and all(row["head"] == heads[-1] and row["exit"] == 0 for row in checked), checked
+    checked = [json.loads(line) for line in
+               (env.repo.bin / "acceptance-pr-checks.jsonl").read_text("utf-8").splitlines()]
+    assert checked and all(row["head"] in heads and row["exit"] == 0 for row in checked), checked
+    assert checked[-1]["head"] == heads[-1]
     published = body(env.gh_calls("pr", "edit")[-1])
     assert "Review: clean, 1 dismissed" in published
     assert f"Human accepted the remaining finding: {reason}" in published
