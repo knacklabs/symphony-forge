@@ -60,6 +60,8 @@ TEST_STEPS = {
 START_HERE = ("Do not read the coordinator guide (the forge skill's `SKILL.md`): this brief has "
               "everything a worker needs. Start from the files and tests this brief names, and "
               "search the rest of the repo only for what they call or what calls them.")
+FILE_OWNERSHIP = ("Do not change a file that another open task's Scope owns. "
+                  "Leave it and name it in your handback.")
 # Sent once, in the same conversation, when a round ends with changes left uncommitted.
 COMMIT_NUDGE = ("Your turn ended with changes left uncommitted, so the review can't see them. "
                 "Commit your work on this branch first, then $test_step "
@@ -546,6 +548,7 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
         "test_step": TEST_STEPS[repo.config(top)["test_place"]],
         "checkout": top.resolve().as_posix(),
         "start_here": START_HERE,
+        "file_ownership": FILE_OWNERSHIP,
         "review_loop": REVIEW_LOOP,
         "live_run": LIVE_RUN,
         "handover": (HERE / "templates" / "handover.md").read_text(encoding="utf-8").strip(),
@@ -633,6 +636,7 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
                       f"Existing related tests: {values['existing_tests']}.\n"
                       f"\n## Current Done when\n\n{values['done']}\n")
         brief += "\n" + values["delegation"] + "\n"
+        brief += "\n" + FILE_OWNERSHIP + "\n"
         brief += "\n" + SETTINGS + "\n"
         brief += "\nNever run `forge stop`: only a person can stop a run, after confirmation in the host.\n"
         brief += "\n" + REVIEW_LOOP + "\n"

@@ -17,7 +17,7 @@ from pathlib import Path
 import pytest
 
 from test_story import setup, worktree
-from test_task import story
+from test_task import DOC, story
 from conftest import ROOT
 from test_close import GREEN, STORY_DOC, env  # noqa: F401
 from test_last_task_records_story_outcome import github_merge
@@ -490,7 +490,14 @@ def test_2_next_and_board_share_the_mod_contract(repo, gh, request, status, merg
     # and owner-specific merge steps are exercised by the client lifecycle contract.
     assert row["stage"] == ("waiting for checks" if status == "ready" else status or "unknown")
     assert row["next"]["command"] == command
-    story(repo, key="WAIT", approved=None)
+    wait_doc = DOC.replace(
+        "`web/templates/board.html` | `tests/test_style.py` | none | no |",
+        "`web/templates/board.html` | `tests/test_style.py` | PAGE | no |",
+    ).replace(
+        "`src/**/routes/*` | `tests/test_routes.py` | none | no |",
+        "`src/**/routes/*` | `tests/test_routes.py` | API | no |",
+    )
+    story(repo, doc=wait_doc, approved=None, key="WAIT")
     repo.git("worktree", "add", str(repo.path.parent / "repo-WAIT"), "story/WAIT")
     waiting = worktree(repo, "story/WAIT")
     # The session checkout has no copy: the consumer must read the story's own worktree.

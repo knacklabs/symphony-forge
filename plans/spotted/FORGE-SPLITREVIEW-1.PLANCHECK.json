@@ -1,0 +1,70 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/templates/brief.md\tDeliver the ownership rule to workers resumed after an upgrade\tFORGE-SPLITREVIEW-1/PLANCHECK",
+      "kind": "bug",
+      "path": "src/forge/templates/brief.md",
+      "line": 190,
+      "text": "Deliver the ownership rule to workers resumed after an upgrade",
+      "from": "blocking",
+      "item": "FORGE-SPLITREVIEW-1/PLANCHECK",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_stack_start.py\tGate: test_2_next_lists_only_parts_task_start_accepts\tFORGE-SPLITREVIEW-1/PLANCHECK",
+      "kind": "bug",
+      "path": "tests/test_stack_start.py",
+      "line": 44,
+      "text": "Gate: test_2_next_lists_only_parts_task_start_accepts",
+      "from": "blocking",
+      "item": "FORGE-SPLITREVIEW-1/PLANCHECK",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/plan_scope.py\tFollow-up: Recognize transitive After links through another story",
+      "kind": "edge",
+      "path": "src/forge/plan_scope.py",
+      "line": 12,
+      "text": "Follow-up: Recognize transitive After links through another story",
+      "from": "review",
+      "item": "FORGE-SPLITREVIEW-1/PLANCHECK",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/plan_scope.py\tNot done: A plan with overlapping task Scopes ... is refused before approval",
+      "kind": "edge",
+      "path": "src/forge/plan_scope.py",
+      "line": 21,
+      "text": "Not done: A plan with overlapping task Scopes ... is refused before approval",
+      "from": "review",
+      "item": "FORGE-SPLITREVIEW-1/PLANCHECK",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/plan_scope.py\tNot done: A plan with overlapping task Scopes ... the refusal names both tasks",
+      "kind": "edge",
+      "path": "src/forge/plan_scope.py",
+      "line": 23,
+      "text": "Not done: A plan with overlapping task Scopes ... the refusal names both tasks",
+      "from": "review",
+      "item": "FORGE-SPLITREVIEW-1/PLANCHECK",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/story.py\tNot done: Stories already in flight get that refusal at their next plan check with a plain next step",
+      "kind": "edge",
+      "path": "src/forge/story.py",
+      "line": 202,
+      "text": "Not done: Stories already in flight get that refusal at their next plan check with a plain next step",
+      "from": "review",
+      "item": "FORGE-SPLITREVIEW-1/PLANCHECK",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

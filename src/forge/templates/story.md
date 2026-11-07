@@ -60,11 +60,16 @@ no entry. -->
 ## Tasks
 
 <!-- One row per task. Covers: the Done-when numbers it delivers, at most three. Scope: the paths
-it may change. Tests: the tests it adds or changes. After: the tasks it waits for. When two tasks
-share a function, field, file format or command, the first task pins it: it commits the shared
-names and stubs plus one test that crosses both sides, and the tasks that use it list it under
-After. Split tasks so each owns its files; shared lines (command table, guide list, registry) go
-to one task or a small last wiring task; After only when a task needs another task's code. The
+it may change. Before writing each Scope, search the code for the files the task needs. The plan
+check refuses two tasks whose Scope paths have the same prefix up to the first wildcard, unless
+one waits for the other through After, directly or through another task; it names both tasks.
+When tasks need the same file, put it in the first task's Scope with the shared names and stubs;
+tasks that need them wait for that task through After and then own only their files. Tests: the
+tests it adds or changes. After: the tasks it waits for. When two tasks share a function, field,
+file format or command, the first task pins it: it commits the shared names and stubs plus one
+test that crosses both sides, and the tasks that use it list it under After. Split tasks so each
+owns its files; shared lines (command table, guide list, registry) go to one task or a small last
+wiring task; After only when a task needs another task's code. The
 Developer column is optional: the lead fills or changes a GitHub username here, below For the
 builders, without another approval. Leave it blank for an unassigned part. Forge next uses
 the caller's GitHub login; another developer may start it with a warning. Existing tables

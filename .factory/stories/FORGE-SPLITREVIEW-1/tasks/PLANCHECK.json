@@ -1,0 +1,131 @@
+{
+  "branch": "task/FORGE-SPLITREVIEW-1-PLANCHECK",
+  "chat": {
+    "approval": "1298cc87910be7fd4281ad240a59b068fc1d0703afd9a78834b5a675cac84f12",
+    "claude": null,
+    "conversation": "01a1b4c8-2a70-7100-a9ff-864f3ee9522c",
+    "head": null,
+    "start": "7b15471e0a0a59fe039b4948c6e18325ff05f3e3"
+  },
+  "known": [
+    {
+      "area": "check() in src/forge/plan_scope.py",
+      "file": "src/forge/plan_scope.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 23,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: A plan with overlapping task Scopes ... the refusal names both tasks",
+      "work": 1
+    },
+    {
+      "area": "check() in src/forge/plan_scope.py",
+      "file": "src/forge/plan_scope.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 21,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: A plan with overlapping task Scopes ... is refused before approval",
+      "work": 3
+    },
+    {
+      "area": "read() in src/forge/story.py",
+      "file": "src/forge/story.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 202,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Stories already in flight get that refusal at their next plan check with a plain next step",
+      "work": 3
+    },
+    {
+      "area": "src/forge/templates/brief.md",
+      "file": "src/forge/templates/brief.md",
+      "gain": 4,
+      "harm": 3,
+      "line": 190,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Deliver the ownership rule to workers resumed after an upgrade",
+      "work": 2
+    },
+    {
+      "area": "tests/test_stack_start.py",
+      "file": "tests/test_stack_start.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 44,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_2_next_lists_only_parts_task_start_accepts",
+      "work": 2
+    },
+    {
+      "area": "check.waits() in src/forge/plan_scope.py",
+      "file": "src/forge/plan_scope.py",
+      "gain": 2,
+      "harm": 2,
+      "line": 12,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Follow-up: Recognize transitive After links through another story",
+      "work": 3
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "ad365ddb19a22f5627f3a8a46404af94046626929e06955ed017408acc5195ef",
+    "changed": "f5605135ffb270bc2ff24201a6c912be60892c6f1701fa8285dc9dfb06e5eb57",
+    "commit": "bb3d6c3fe62997ceddbe715868bc3549bd3c3195",
+    "dismissals": [],
+    "findings": [],
+    "id": "074ab5bf-e33f-4ae9-8f7f-0384686656a7",
+    "status": "clean"
+  },
+  "round": 4,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-07T06:52:39.902138+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-07T07:07:21.704337+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-07T07:25:52.060999+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-07T08:15:34.624528+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-07T09:00:34.614384+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "af678489-8382-4580-b6a4-f51508b9edeb",
+    "head": "4a351cd0cd7c042e5235420cba7515a25d3a82de",
+    "keys": {},
+    "round": 3
+  },
+  "worker": "codex"
+}

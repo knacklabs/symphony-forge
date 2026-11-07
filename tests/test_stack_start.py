@@ -41,7 +41,7 @@ Waiting for every merge delays the next part.
 |---|---|---|---|---|---|---|---|
 | A | Save work | Save the first value | 1 | `app.py` | `tests/test_work.py` | none | no |
 | B | Use work | Read the saved value | 1 | `use.py` | `tests/test_work.py` | A | no |
-| C | Extend work | Extend the first value | 1 | `app.py` | `tests/test_work.py` | none | no |
+| C | Extend work | Extend the first value | 1 | `app.py` | `tests/test_work.py` | A | no |
 | D | Finish work | Finish the value | 2 | `finish.py` | `tests/test_work.py` | B | no |
 | E | Other work | Save another value | 2 | `other.py` | `tests/test_work.py` | none | no |
 | F | Join work | Join the values | 2 | `join.py` | `tests/test_work.py` | A, E | no |
