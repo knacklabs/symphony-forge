@@ -48,7 +48,7 @@
     "status": "blocked"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-07T04:13:26.969134+00:00",
@@ -61,8 +61,12 @@
   ],
   "stop": {
     "at": "2026-11-07T04:20:37.586642+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "src/forge/close.py",
-    "wait_id": "830e8757-2206-4f51-847e-73990b883368"
+    "reason": "Owner chose one more round: fix the shipped guide lines so they match the merge step",
+    "wait_id": "830e8757-2206-4f51-847e-73990b883368",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
