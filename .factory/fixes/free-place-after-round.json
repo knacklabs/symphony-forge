@@ -1,0 +1,15 @@
+{
+  "base": "5393cf3ed78f0bae68f7bf2762dbcc9675a03710",
+  "branch": "fix/free-place-after-round",
+  "done_when": "A builder place is freed when Forge records the round's completion or the item's merge, and a waiting part starts at once",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-07T18:12:38.010383+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "A finished builder round can keep its builder place when the coordinator session stays alive, so other parts wait (issue 1429)"
+}
