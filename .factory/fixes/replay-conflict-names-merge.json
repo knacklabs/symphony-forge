@@ -1,0 +1,80 @@
+{
+  "base": "8fd1de2831fdefa7f9c89dc0c1266b3539b0e34b",
+  "branch": "fix/replay-conflict-names-merge",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1b436-5829-7512-9b21-b325fef93d78",
+    "head": null,
+    "start": "4bd0afcd020f583c3ed325a6543379227d2b1d3f"
+  },
+  "done_when": "When replaying a stacked part or follow-up fix onto the default branch conflicts, close names forge work <item> to merge the default branch, then forge close <item>, and names no rebase or force push",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 37,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: Update the shipped replay-conflict recovery guidance",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "c40c94227add61227f9f121c9b02dd7ab2febe8469cc0e1495c91d357d646399",
+    "changed": "8e32bf372f316446970a05be15c185091731de76e7dfe9440224380ed195a242",
+    "commit": "e1d3dd2798308f4b2801029c4ed69991d4c24b46",
+    "dismissals": [],
+    "findings": [],
+    "id": "adf57310-4897-42e8-9c75-e5eb02b8796e",
+    "status": "clean"
+  },
+  "round": 4,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-07T04:13:26.969134+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-07T04:20:37.576548+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-07T04:28:39.599748+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-07T05:13:51.768672+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-07T07:02:20.222061+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-07T04:20:37.586642+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "src/forge/close.py",
+    "reason": "Owner chose one more round: fix the shipped guide lines so they match the merge step",
+    "wait_id": "830e8757-2206-4f51-847e-73990b883368",
+    "worker_round": 1
+  },
+  "stuck": {
+    "close": "4f1bc34c-06d6-45af-949a-d623ffd6c5ff",
+    "head": "3de11611a95bfe941f6de99155436ec5e1dc3eae",
+    "keys": {},
+    "round": 3
+  },
+  "why": "Close's replay-conflict refusal tells the agent to rebase and force-push, but Forge's own hook blocks that push, so a person must use a terminal (Forge issue 1292). Merging the default branch into the branch already works: close skips the replay when origin/<default> is an ancestor of HEAD.",
+  "worker": "codex"
+}

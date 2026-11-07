@@ -670,7 +670,7 @@
     "tests/test_close_removes_review_null_characters.py::test_1_close_removes_null_characters_before_saving_review_text": 1.6218211269997482,
     "tests/test_close_replays_followup_after_squash_merge.py::test_1_close_replays_only_followup_commits_after_parent_squash_merges[new]": 2.874637625000105,
     "tests/test_close_replays_followup_after_squash_merge.py::test_1_close_replays_only_followup_commits_after_parent_squash_merges[previously-adopted]": 2.8611702509997485,
-    "tests/test_close_replays_followup_after_squash_merge.py::test_2_close_aborts_replay_when_followups_own_commit_conflicts": 2.067898083999353,
+    "tests/test_close_replays_followup_after_squash_merge.py::test_2_close_aborts_replay_when_followups_own_commit_conflicts[new]": 2.067898083999353,
     "tests/test_close_replays_followup_after_squash_merge.py::test_3_close_preserves_unknown_remote_commits_before_replaying": 1.9156868750001195,
     "tests/test_close_replays_followup_after_squash_merge.py::test_4_leased_replay_push_preserves_work_arriving_after_lease_is_captured": 3.3361399179998443,
     "tests/test_close_replays_followup_after_squash_merge.py::test_5_fix_started_on_default_keeps_its_commits_without_merging_unrelated_default_changes[new]": 2.04974595900012,
