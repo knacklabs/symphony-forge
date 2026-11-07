@@ -1,0 +1,137 @@
+{
+  "base": "e923c49135fd7176cc159f4d27d247ab5d3ef56a",
+  "branch": "fix/a-folder-in-scope-such-as-a-test-folder",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1b722-3b43-7d31-b859-ee3c49cf1372",
+    "head": null,
+    "start": "c5d36c53c16686e13df1305e232a4116069cf9a1"
+  },
+  "done_when": "A part whose Scope shares only a test folder with another open part starts without waiting, and a refusal caused by a real scope overlap names the shared path and says it is a scope overlap.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "check() in src/forge/plan_scope.py",
+      "file": "src/forge/plan_scope.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 22,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Planning overlap refusals do not identify the scope overlap",
+      "work": 2
+    },
+    {
+      "area": "can_start() in src/forge/task.py",
+      "file": "src/forge/task.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 541,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: Existing task-start tests reject the new refusal text",
+      "work": 1
+    },
+    {
+      "area": "src/forge/templates/skill.md",
+      "file": "src/forge/templates/skill.md",
+      "gain": 4,
+      "harm": 3,
+      "line": 1313,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Align planning and worker guidance with shared test folders",
+      "work": 2
+    },
+    {
+      "area": "_prepare() in tests/test_scope_overlap_explains_waits.py",
+      "file": "tests/test_scope_overlap_explains_waits.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 21,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: Prove both overlap rules for an upgraded client",
+      "work": 2
+    },
+    {
+      "area": "check() in src/forge/plan_scope.py",
+      "file": "src/forge/plan_scope.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 22,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: Exercise shared test folders through the plan check",
+      "work": 2
+    },
+    {
+      "area": "test_1_shared_test_paths_do_not_delay_parts() in tests/test_scope_overlap_explains_waits.py",
+      "file": "tests/test_scope_overlap_explains_waits.py",
+      "gain": 2,
+      "harm": 2,
+      "line": 32,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Follow-up: Cover exact test-file scopes and explicit After links",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "0382f2a884ff0ba593accb96e34037a4c1fa92bc7726be40d7ab9e596da29bbd",
+    "changed": "c28485c42aededbebb7a850f83d5076f30d08df61e9637b48bae97151babeb84",
+    "commit": "bfd8a68637db0c13efd46d34618aa9fd00973f4d",
+    "dismissals": [],
+    "findings": [],
+    "id": "c2ef1dec-6765-446d-a467-1091eaba79b3",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-07T17:49:50.709879+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-07T18:04:55.149477+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-07T18:16:40.001966+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-07T18:04:55.160706+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "src/forge/task.py",
+    "reason": "Finding 5 is Harm 3: one more round by the standing rule; finding 2 is a broken existing test",
+    "wait_id": "079247e3-3cc1-4204-8d03-1e4c012f641d",
+    "worker_round": 1
+  },
+  "stuck": {
+    "close": "80d002e5-9dfd-4c51-a176-f92eee9619da",
+    "head": "79a1f9d63fab2f89f196759665e7b6d636523592",
+    "keys": {},
+    "round": 1
+  },
+  "why": "A folder in Scope, such as a test folder, overlaps every part that touches any file under it, so parts across stories wait on each other, and the refusal says only that the part builds on another part without naming the shared path or saying it is a scope overlap.",
+  "worker": "codex"
+}
