@@ -1,0 +1,15 @@
+{
+  "base": "5393cf3ed78f0bae68f7bf2762dbcc9675a03710",
+  "branch": "fix/builder-checks-own-repair-test",
+  "done_when": "The worker brief and test-audit guidance let a builder run the exact new, changed or previously failing tests red then green locally before committing, while wider tests stay in CI",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-07T18:12:33.443417+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "In CI mode the worker brief tells builders to commit a repair without checking that its own failing test now passes, so a repair that still fails costs a full review and CI cycle"
+}
