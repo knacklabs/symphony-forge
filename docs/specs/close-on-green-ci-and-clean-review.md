@@ -19,25 +19,27 @@ stamps over four days. Eleven of the last 25 merged pull requests fixed Forge's 
 grill or Lite bookkeeping rather than the product. Meanwhile the pull request's CI already runs the
 full suite on six runners in about five minutes, and that is the check that actually guards trunk.
 
-The owner wants this cut first, before other stories, with one firm limit: "Lets not skip the
-review the chances of regressions are higher, we fix one but regress more." So review stays
-mandatory and looped; the bookkeeping around it goes. Decision 0092 records it.
+The owner wanted this cut first, before other stories, with one firm limit: "Lets not skip the
+review the chances of regressions are higher, we fix one but regress more." Decision 0092
+records that choice. On 6 November 2026, the owner chose a named skip for a task or fix at close.
+Decision 0108 records that exception and leaves the other rules in 0092 in force.
 
 ## Behaviour
 
 **When a task is done.** A task, and every Lite fix, is done when its pull request is open, the
-full CI suite on the branch's latest commit is green, and the latest review round over the branch
-has no P0 or P1 finding. `forge task close <id>` drives exactly that: push and open or update the
-PR, run the review loop, wait for CI, then mark the task done.
+full CI suite on the branch's latest commit is green, and its latest review result has no P0 or P1
+finding or records a skip under R-1. `forge task close <id>` drives exactly that: push and open or
+update the PR, run the review loop or apply R-1, wait for CI, then mark the task done.
 
-**Review.** Every task and every Lite fix is reviewed by Autoreview, run once per round in the
-task's worktree. Forge hands it plain review instructions: the task's declared scope and any files
-changed outside it, the plan's "Done when" and acceptance criteria for this task, and the
-test-audit rule. Autoreview's findings are the review. A P0 or P1 finding blocks: the coordinator
-triages it (real or not, with the line that proves it), the worker fixes it, and close runs the
-review again over the whole branch. P2 and P3 findings do not block; they are listed in the PR
-body as advisory. Forge records one small result per round: the commit reviewed, the findings and
-the status (clean or blocked). A review result for an older commit never counts for a newer one.
+**Review.** When close runs a model review, Autoreview runs once per round in the task's worktree.
+R-1 defines the named skip. Forge hands Autoreview plain instructions: the task's declared scope
+and any files changed outside it, the plan's "Done when" and acceptance criteria for this task,
+and the test-audit rule. Autoreview's findings are the review. A P0 or P1 finding blocks: the
+coordinator triages it (real or not, with the line that proves it), the worker fixes it, and close
+runs the review again over the whole branch. P2 and P3 findings do not block; they are listed in
+the PR body as advisory. Forge records one small result per round: the commit reviewed, the
+findings and the status (clean or blocked). A review result for an older commit never counts for a
+newer one.
 The exact rules are in "Rules in detail" below.
 
 **CI is the proof.** Close does not run the test suite locally and records no proof files. It waits
@@ -74,6 +76,7 @@ sign-off gate, the ticket check, the roadmap, specs and decisions.
 
 ## Rules in detail
 
+- R-1: A person can skip a task or fix's model review with `forge close <item> --no-review --by "<name>" --reason "<why>"` only when a person asks. The name and reason must be non-empty after trimming. Close collapses inner whitespace and cuts each value at 200 characters. Close refuses missing values, `--dismiss`, `--because`, `--resolve`, a worker process, and any item with an earlier review that blocked it. It records the name and reason on the pull request. Tests, CI, design checks and merge still run.
 - **Unmet "Done when".** The review instructions tell the reviewer to report every "Done when" item
   or acceptance criterion the branch does not meet as a P1 finding titled `Not done: <item>`. An
   unmet item is a defect, so it blocks like any P1. There are no verdict records.
@@ -111,8 +114,9 @@ sign-off gate, the ticket check, the roadmap, specs and decisions.
 
 ## Acceptance criteria
 
-- Every task and every Lite fix is reviewed: `task close` and Lite close cannot finish without a
-  completed review result whose reviewed product files equal the PR head's.
+- AC-1 checks R-1: `tests/test_reviewchoice_skip.py::test_1_person_can_skip_model_review` and `tests/test_reviewchoice_skip.py::test_2_skip_refuses_after_prior_block` cover task and fix close, pull request text, and refusal after a blocked review.
+- Every task and every Lite fix without an R-1 skip has a completed review result whose reviewed
+  product files equal the PR head's.
 - An unmet "Done when" item or acceptance criterion is reported as a P1 `Not done` finding and
   blocks; a failed or incomplete review run is retried once and then stops close.
 - A user-facing task still needs its functional check before it is done.
@@ -136,7 +140,7 @@ sign-off gate, the ticket check, the roadmap, specs and decisions.
   in a repository that names none.
 - The roadmap PR gate accepts a task marker with a clean committed review result and no longer
   requires `verify.json`, `tests.json` or a review generation.
-- Lite fixes carry one ticket line and close with a PR, green CI and a clean review; no window
+- Lite fixes carry one ticket line and close with a PR, green CI and a clean review result; no window
   manifest or budget base is written, and the five-file limit counts the window's own commits.
 - Deleted, not disabled: local proof at close and its receipts, environment identity and reuse;
   `verify.json`/`tests.json` as close or PR authority; three-lens markers, lens tags, verdict records,

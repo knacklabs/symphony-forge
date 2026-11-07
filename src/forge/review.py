@@ -589,11 +589,12 @@ def _rulings(top: Path, base: str, history: list[dict[str, Any]]) -> str:
 
 def _history(top: Path, item: str, base: str, previous: dict[str, Any],
              ref: str = "HEAD", *, state: dict[str, Any] | None = None,
-             path: str = "", section: str = "") -> list[dict[str, Any]]:
+             path: str = "", section: str = "", include_merged: bool = False) -> list[dict[str, Any]]:
     """Git owns earlier reviews; later dismissals replace that round's original result."""
     path = path or repo.state_path(item)
     rounds = {}
-    for sha in repo.git("rev-list", "--reverse", "--first-parent", f"{base}..{ref}" if base else ref, "--", path,
+    traversal = "--full-history" if include_merged else "--first-parent"
+    for sha in repo.git("rev-list", "--reverse", traversal, f"{base}..{ref}" if base else ref, "--", path,
                         cwd=top).split():
         saved = json.loads(repo.git("show", f"{sha}:{path}", cwd=top))
         result = (saved.get(section, {}) if section else saved).get("review") or {}

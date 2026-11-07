@@ -109,6 +109,7 @@ the next merge.
 | "Tell the worker this round" | `forge work <item> --note "<text>"` |
 | "Ask about this code" | Hand the question to the session's `explorer` subagent role |
 | "Close it" or "Is it ready?" | `forge close <item>` |
+| "A person asks to skip the model review" | For a task or fix, run `forge close <item> --no-review --by "<name>" --reason "<why>"` only when a person asks |
 | "Land it" | `forge land <item>`, run in the background and watched like `forge work` |
 | "Land everything that's ready" | `forge land --all`, run in the background; never a hand-made merge lane |
 | "Merge this ready item" | `forge merge <item>` when the default branch allows agent merges |
@@ -1641,6 +1642,8 @@ restore after they fetch.
 ## Closing
 
 In `forge.toml`, `cold_read_rounds` sets the cold-read limit and `task_review_rounds` sets the task-review limit. Each accepts 1 or 2 and defaults to 2. Fixes keep one review round.
+
+A person can ask you to skip the model review for a task or fix. Run `forge close <item> --no-review --by "<name>" --reason "<why>"` only when a person asks. Close adds the name and reason to the pull request. Close refuses if an earlier review blocked the item. Tests, CI, design checks and merge still run.
 
 At the round limit (the repo's setting, two by default), open findings below P0
 stop the item and ask the owner: one more round, split or accept.

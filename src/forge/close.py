@@ -21,7 +21,7 @@ from pathlib import Path
 from typing import Any
 
 from forge.close_remote import push_replay, reconcile, save_replay
-from forge import __version__, app_baseline, checks, codex, design, githooks, init, migration_warnings, repo, review, score, spotted, story, sync, task, time_records
+from forge import __version__, app_baseline, checks, codex, design, githooks, init, migration_warnings, repo, review, review_skip, score, spotted, story, sync, task, time_records
 
 REFUSALS = {
     "not_started": ("Forge has not started {item} in any worktree of this repo.", "forge next"),
@@ -75,6 +75,7 @@ REFUSALS = {
                      "it contains another change.",
                      "the repo owner removes the extra change, then forge close {item}"),
 }
+REFUSALS.update(review_skip.REFUSALS)
 BEGIN, END = "<!-- forge:begin -->", "<!-- forge:end -->"
 # forge merge enable's fix is known by these; only the repo owner merges it.
 WHY, DONE = "Let the agent merge this repo's ready pull requests.", 'The default branch\'s forge.toml sets merge = "agent".'
@@ -86,10 +87,12 @@ def close(args: argparse.Namespace) -> int:
 
     item = args.item
     top = _worktree(item)
+    state, cfg = repo.read_state(item, top) or {}, repo.config(top)
+    skip = review_skip.requested(args, top, item, state)
     retried_history = (repo.forge_dir(top) / "backfill-pending").exists()
     if retried_history:
         backfill.run(top)
-    state, cfg = repo.read_state(item, top) or {}, repo.config(top)
+        state, cfg = repo.read_state(item, top) or {}, repo.config(top)
     refreshed = migration_warnings.before_close(top)
     switch = (item == ENABLE and state.get("kind") == "fix" and
               (state.get("why"), state.get("done_when")) == (WHY, DONE))
@@ -97,7 +100,7 @@ def close(args: argparse.Namespace) -> int:
     continued = (os.environ.pop("FORGE_CLOSE_ACCEPTED", "") == "1" and choice == "accept"
                  and reason and (state.get("stop") or {}).get("choice") == choice
                  and state["stop"].get("reason") == reason.strip())
-    if choice or reason is not None:
+    if choice or reason is not None and not skip:
         stuck = "question" in (state.get("stop") or {})
         if (not choice or not reason or not reason.strip() or
                 not state.get("stop") or (state["stop"].get("choice") and not continued
@@ -194,7 +197,8 @@ def close(args: argparse.Namespace) -> int:
         return done
 
     previous = state.get("review") or {}
-    review.require_engine(cfg)  # before merging the default branch or committing any state
+    if not (skip or previous.get("skipped")):
+        review.require_engine(cfg)  # before merging or committing state
     legacy_diff = None
     if (previous and "branch_diff" not in previous and previous.get("changed") ==
             review.fingerprint("HEAD", item, top, state, f"origin/{default}")):
@@ -279,6 +283,8 @@ def close(args: argparse.Namespace) -> int:
         _synced(top, item)
     # Reconcile remote work before choosing tests or reusing an earlier review.
     reconcile(top, branch)
+    if skip:
+        review_skip.requested(args, top, item, state)
     _warn_fix_kind(top, state, review_ref)
     light = review.blocking_level(top, item, state, review_ref) == "P0"
     result = previous
@@ -346,15 +352,17 @@ def close(args: argparse.Namespace) -> int:
             testing = (pool.submit(review.test_run, top, command, review_ref, always=switch)
                        if local_tests else None)
             try:
-                if switch or records_only:
+                if switch or records_only or skip:
                     head = repo.git("rev-parse", "HEAD", cwd=top)
                     identity = repo.record_event(top, item, "review result", commit=head, outcome="clean", findings=[],
-                                                 review_round=review.round_number(top, item, state))
+                                                 review_round=review.round_number(top, item, state),
+                                                 **({"skipped": skip} if skip else {}))
                     result = {"id": identity, "commit": head, "findings": [], "dismissals": [],
-                              "changed": changed, "branch_diff": branch_diff, "mechanical": True}
+                              "changed": changed, "branch_diff": branch_diff, "mechanical": True,
+                              **({"skipped": skip} if skip else {})}
                 else:
                     # Git retains earlier rounds; replay needs a full review of the integrated change.
-                    result = review.run(top, item, state, cfg, review_ref, selected, {} if replayed else previous,
+                    result = review.run(top, item, state, cfg, review_ref, selected, {} if replayed or previous.get("skipped") else previous,
                                         light=light, tested=test_note)
                 areas = _areas(top, result)
                 outcome = "blocked" if review.blocking(result) else "clean"
@@ -426,7 +434,7 @@ def close(args: argparse.Namespace) -> int:
     pr = _publish(top, item, state, branch, pr_target, pr, result, evidence)
     _attach(top, item, branch)
 
-    print(f"Review: {result['status']}.", flush=True)
+    print(f"Review: {review_skip.label(result)}.", flush=True)
     for number, finding in serious:
         print(f"{number}. {finding['priority']} {finding['title']} "
               f"({finding['file']}:{finding['line']})\n{finding['body']}\n")
@@ -475,7 +483,8 @@ def close(args: argparse.Namespace) -> int:
         repo.resume_pin(top, cfg["version"], getattr(args, "land_rounds", None),
                         accepted=choice == "accept", before=getattr(args, "pin_before", None))
         again = argparse.Namespace(**vars(args))
-        again.dismiss = again.because = again.resolve = again.reason = None
+        again.dismiss = again.because = again.resolve = again.reason = again.by = None
+        again.no_review = False
         return close(again)
     if stacked_waiting:
         if not task._merged(f"origin/{default}", stacked_on, top):
@@ -483,7 +492,8 @@ def close(args: argparse.Namespace) -> int:
             print("Next: forge next")
             return 0
         again = argparse.Namespace(**vars(args))
-        again.dismiss = again.because = again.resolve = again.reason = None
+        again.dismiss = again.because = again.resolve = again.reason = again.by = None
+        again.no_review = False
         return close(again)
     merge = merger(top, state)
     path = repo.ready_path(item, top)
@@ -493,7 +503,7 @@ def close(args: argparse.Namespace) -> int:
         if not pending:
             repo.record_event(top, item, "owner wait start", reason="merge", commit=head)
     tmp = path.with_suffix(".tmp")
-    ready = {"commit": head, "review": "clean"}
+    ready = {"commit": head, "review": "clean", **({"skipped": result["skipped"]} if result.get("skipped") else {})}
     if "/" in item and state.get("stacked_on"):
         ready["base"] = base
     tmp.write_text(json.dumps(ready) + "\n", encoding="utf-8")
@@ -501,10 +511,10 @@ def close(args: argparse.Namespace) -> int:
     _publish(top, item, state, branch, default, pr, result, evidence)
     proof = "no tests or CI in sample-data mode" if repo.sample_data(top, cfg) else "its tests passed on this machine" if local_tests else "green checks"
     if merge == "agent":
-        print(f"Ready: {item} has a clean review and {proof}.")
+        print(f"Ready: {item} has {review_skip.readiness(result)} and {proof}.")
         print(f"Next: forge merge {item}")
     else:
-        print(f"Ready: {item} has a clean review and {proof}. A human merges its pull request.")
+        print(f"Ready: {item} has {review_skip.readiness(result)} and {proof}. A human merges its pull request.")
     if not retried_history and backfill.upgrade_fix(top, item, state):
         backfill.run(top)
     return 0
@@ -1111,7 +1121,9 @@ def _block(result: dict[str, Any], check: str) -> str:
         (blocking if is_blocking else below[outcome] if n not in because and outcome in below
          else rest).append(f"- Finding {n} ({finding['priority']}): {finding['title']} "
                            f"({finding['file']}:{finding['line']}): {note}")
-    if result["status"] == "reviewing":
+    if result.get("skipped"):
+        lines = [BEGIN, f"Review: {review_skip.label(result, reason=True)}."]
+    elif result["status"] == "reviewing":
         lines = [BEGIN, "Review: running; CI is running alongside it."]
     elif result["status"] == "blocked":
         lines = [BEGIN, "The review found serious problems.", "", *blocking]
@@ -1177,10 +1189,11 @@ def _merged(top: Path, item: str) -> int:
 COMMANDS = [{
     "words": "close", "run": "close", "changes_state": True,
     "help": "Close a task or fix by the close rule",
-    "args": [(('item',), {}), (('--dismiss',), {"type": int, "action": "append", "metavar": "N"}),
+    "args": [(('--no-review',), {"action": "store_true"}), (('--by',), {"metavar": "NAME"}),
+             (('item',), {}), (('--dismiss',), {"type": int, "action": "append", "metavar": "N"}),
              (('--because',), {"action": "append", "metavar": "FILE:LINE_REASON"}),
              (('--resolve',), {"choices": ["more", "narrow", "split", "accept", "switch", "same"]}),
-             (('--reason',), {"help": "The human's choice after a review loop stop"})],
+             (('--reason',), {"help": "The person's reason for a skip or choice after a review loop stop"})],
     "position": 150,
-    "listing": "| `forge close <item>` | Closes a task or fix; a fix gets one review round and a part two; open findings below P0 at the limit wait for `--resolve more`, `split` or `accept` with `--reason \"<human's choice>\"`; an open P0 returns to the worker, and the same P0 after two worker rounds stops for the owner; docs-only changes skip local and generated CI tests, and the required tests check passes with a docs-only note |",
+    "listing": "| `forge close <item>` | Closes a task or fix; `--no-review --by \"<name>\" --reason \"<why>\"` skips only the model review when a person asks, unless an earlier review blocked the item; a fix gets one review round and a part two; open findings below P0 at the limit wait for `--resolve more`, `split` or `accept` with `--reason \"<human's choice>\"`; an open P0 returns to the worker, and the same P0 after two worker rounds stops for the owner; docs-only changes skip local and generated CI tests, and the required tests check passes with a docs-only note |",
 }]

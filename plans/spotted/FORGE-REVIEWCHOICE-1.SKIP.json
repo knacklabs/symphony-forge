@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/review_skip.py\tNot done: Close refuses the skip after a blocking review, and tests, CI, the design checks and the merge step still run on a skipped item.\tFORGE-REVIEWCHOICE-1/SKIP",
+      "kind": "bug",
+      "path": "src/forge/review_skip.py",
+      "line": 36,
+      "text": "Not done: Close refuses the skip after a blocking review, and tests, CI, the design checks and the merge step still run on a skipped item.",
+      "from": "blocking",
+      "item": "FORGE-REVIEWCHOICE-1/SKIP",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
