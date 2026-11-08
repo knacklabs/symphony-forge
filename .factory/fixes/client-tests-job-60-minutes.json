@@ -1,6 +1,13 @@
 {
   "base": "94d64425110459083b26fb925066f6b2c69b10a1",
   "branch": "fix/client-tests-job-60-minutes",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1bc16-73c6-7e12-a3a1-95f257c52f40",
+    "head": null,
+    "start": "46a739ab61fa2b26642a4dd13ff46fd910491f70"
+  },
   "done_when": "The generated client tests job allows 60 minutes like the full run, new repos get it at init and existing repos after sync",
   "fix_kind": "mechanical",
   "kind": "fix",
