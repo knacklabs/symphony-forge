@@ -73,7 +73,7 @@
     "id": "5a803631-4fd6-42cd-975f-96bd79764b80",
     "status": "blocked"
   },
-  "round": 2,
+  "round": 3,
   "status": "fixing",
   "steps": [
     {
@@ -99,10 +99,10 @@
     "worker_round": 2
   },
   "stuck": {
-    "close": "0e4d4c2e-fd42-4d3c-8c19-c27360c14694",
-    "head": "9278a1d64771034d1c2f74d3b1129337eca9c6a0",
+    "close": "438af46e-7fa0-42a4-84a4-212584b73a77",
+    "head": "391726b359950e7efdec0cafb199aa4d6d24a1d9",
     "keys": {},
-    "round": 1
+    "round": 2
   },
   "why": "A client pull request with one test group starts three small gate jobs around its test job, and a hand-set group count without a shard flag repeats the same tests in every group",
   "worker": "codex"
