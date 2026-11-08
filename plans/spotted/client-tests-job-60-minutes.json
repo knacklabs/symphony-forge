@@ -1,6 +1,17 @@
 {
   "items": [
     {
+      "key": "bug\t.github/workflows/starter-smoke.yml\tSmoke checks use Ubuntu 26.04, which Playwright 1.56.1 does not support.",
+      "kind": "bug",
+      "path": ".github/workflows/starter-smoke.yml",
+      "line": 63,
+      "text": "Smoke checks use Ubuntu 26.04, which Playwright 1.56.1 does not support.",
+      "from": "worker",
+      "item": "client-tests-job-60-minutes",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/templates/brief.md\tFollow-up: Correct the Forge-source timeout in the worker brief",
       "kind": "edge",
       "path": "src/forge/templates/brief.md",
