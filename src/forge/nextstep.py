@@ -401,22 +401,24 @@ def _report(top: Path, history: dict[str, Any] | None = None,
     return (build + _due(top, history) + pinned + [line for alert in alerts.values() for line in alert]
             + _hotspots(top, trees) + _overlaps(top, parts + [
                 (f"The fix {state['branch'].partition('/')[2]}", state)
-                for state, _ in fixes if state.get("branch")], prs)
+                for state, _ in fixes if state.get("branch")], prs, (history or {}).get("states", {}))
             + lines + [f"Builds running: {running} of {agents['size']}"]), states
 
 
 def _overlaps(top: Path, items: list[tuple[str, dict[str, Any]]],
-              prs: dict[str, dict[str, Any]]) -> list[str]:
+              prs: dict[str, dict[str, Any]], landed: dict[str, Any]) -> list[str]:
     changed, lines = [], []
     for label, state in items:
-        if state.get("status") in ("merged", "done", "dropped"):
+        if (state.get("status") in ("merged", "done", "dropped")
+                or repo.state_path(label.removeprefix("The fix ")) in landed):
             continue
         branch = state["branch"]
         ref = review_ref(top, branch, prs.get(branch))
-        if not ref:
+        if not ref or repo.command_fact(("commits", "overlap ancestor", ref), top, lambda: repo.run(
+                "git", "merge-base", "--is-ancestor", ref, story.landed_ref(top), cwd=top).returncode == 0):
             continue
         paths = repo.command_fact(("commits", "overlap files", ref), top, lambda: repo.run(
-            "git", "diff", "--name-only", "-z", f"{story.landed_ref(top)}...{ref}", cwd=top).stdout)
+            "git", "diff", "--name-only", "--no-renames", "-z", f"{story.landed_ref(top)}...{ref}", cwd=top).stdout)
         files = {path for path in paths.split("\0") if path and path != ".test_durations"
                  and not path.startswith((".factory/", "plans/"))}
         for other, prior in changed:

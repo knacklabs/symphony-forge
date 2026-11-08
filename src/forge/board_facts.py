@@ -25,6 +25,8 @@ Item = dict[str, Any]
 
 def machine_next(lines: list[str]) -> dict[str, str | None]:
     """Only the first Next line can be offered as a runnable step."""
+    warnings = [line for line in lines if line.endswith(". Please merge one first.")]
+    lines = [line for line in lines if line not in warnings]
     line = next((line for line in lines if line.startswith("Next: ")), None)
     command = line.removeprefix("Next: ") if line else ""
     try:
@@ -52,8 +54,8 @@ def machine_next(lines: list[str]) -> dict[str, str | None]:
     if runnable:
         command = shlex.join(words) if "#" in command else command
     return {"command": command if runnable else None,
-            "line": next((text for text in lines if not text.startswith("Next: ")),
-                         "Nothing in progress."),
+            "line": "\n".join([next((text for text in lines if not text.startswith("Next: ")),
+                                     "Nothing in progress."), *warnings]),
             "step": line.removeprefix("Next: ") if line else None}
 
 

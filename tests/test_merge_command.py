@@ -34,10 +34,10 @@ def _ready(env):
     return item, where
 
 
-def _merge_at_github(env, local_commit=None):
+def _merge_at_github(env, local_commit=None, item="tidy-readme"):
     """The gh edge performs a squash in the fixture's bare remote, as GitHub would."""
     stub = GH_STUB.format(python=sys.executable)
-    head = env.repo.git("rev-parse", "fix/tidy-readme")
+    head = env.repo.git("rev-parse", f"fix/{item}")
     code = '''import json, pathlib, subprocess, sys
 here = pathlib.Path(__file__).resolve().parent
 if sys.argv[1:3] == ["pr", "view"] and (here / "github-merged").exists():
@@ -76,6 +76,8 @@ if sys.argv[1:3] == ["pr", "merge"]:
     sys.exit(0)
 '''.replace("REMOTE", repr(str(env.tmp / "remote.git"))).replace("MERGED_OID", repr(head)).replace(
     "LOCAL_COMMIT", repr(str(local_commit)) if local_commit else "None")
+    if item != "tidy-readme":
+        code = code.replace("fix/tidy-readme", f"fix/{item}").replace("github-merge", f"github-{item}-merge")
     _install(env.repo.bin, "gh", "#!" + sys.executable + "\n" + code + stub.split("\n", 1)[1])
 
 

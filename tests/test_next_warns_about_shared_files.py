@@ -5,11 +5,15 @@ changes. Existing next tests cover readiness and Scope, not changed-file advice.
 No production seam is needed. Only GitHub is faked.
 """
 import json
+import sys
 
 import pytest
 
 from test_machine_views_recent_finished_items import client
-from test_story import DOC, worktree
+from test_story import DOC, setup, worktree
+from test_close import env  # noqa: F401
+from conftest import GH_STUB, _install
+from test_merge_command import _merge_at_github
 
 STORY = "warn-overlapping-fixes"
 
@@ -50,16 +54,16 @@ def test_1_next_names_shared_changed_files_and_suggests_merge_order(repo, gh, hi
     repo.git("add", "-A")
     repo.git("commit", "-qm", "Plan the part")
     repo.git("push", "-q", "origin", "main")
-    folder = repo.path.parent / "part"
-    repo.git("worktree", "add", "-qb", "task/SHOP-SAVE", str(folder), "main")
-    state = folder / ".factory/stories/SHOP/tasks/SAVE.json"
-    state.parent.mkdir(parents=True, exist_ok=True)
-    state.write_text(json.dumps({"branch": "task/SHOP-SAVE", "status": "started"}), encoding="utf-8")
-    (folder / "plans/SHOP.md").write_text(DOC, encoding="utf-8")
-    (folder / "src").mkdir(exist_ok=True)
-    (folder / "src/a.py").write_text("part", encoding="utf-8")
-    repo.git("add", "-A", cwd=folder)
-    repo.git("commit", "-qm", "Start the part", cwd=folder)
+    for name in ("SAVE", "SHOW"):
+        folder = repo.path.parent / f"part-{name}"
+        repo.git("worktree", "add", "-qb", f"task/SHOP-{name}", str(folder), "main")
+        state = folder / f".factory/stories/SHOP/tasks/{name}.json"
+        state.parent.mkdir(parents=True, exist_ok=True)
+        state.write_text(json.dumps({"branch": f"task/SHOP-{name}", "status": "started"}), encoding="utf-8")
+        (folder / "src").mkdir(exist_ok=True)
+        (folder / "src/a.py").write_text("part", encoding="utf-8")
+        repo.git("add", "-A", cwd=folder)
+        repo.git("commit", "-qm", "Start the part", cwd=folder)
     repo.write("src/main-only.py", "main")
     repo.git("add", "-A")
     repo.git("commit", "-qm", "Advance the default branch")
@@ -70,20 +74,27 @@ def test_1_next_names_shared_changed_files_and_suggests_merge_order(repo, gh, hi
         shown = repo.forge("next")
     assert shown.returncode == 0, shown.stderr
     warnings = [line for line in shown.stdout.splitlines() if "merge one first" in line]
-    assert len(warnings) == 3, shown.stdout
+    assert len(warnings) == 6, shown.stdout
+    assert any("SHOP/SAVE" in line and "SHOP/SHOW" in line for line in warnings)
     assert any("The fix first" in line and "SHOP/SAVE" in line and "src/a.py" in line for line in warnings)
     assert any("The fix second" in line and "SHOP/SAVE" in line for line in warnings)
     assert all("main-only" not in line and ".factory" not in line and "plans/" not in line
                and ".test_durations" not in line and "src/d.py" not in line for line in warnings)
     calls = [json.loads(line) for line in trace.read_text("utf-8").splitlines()]
-    diffs = [call["argv"] for call in calls if call.get("event") == "start"
-             and call.get("argv", [])[1:4] == ["diff", "--name-only", "-z"]
-             and "..." in call["argv"][-1]]
-    assert len(diffs) == 4, diffs
+    starts = [call["argv"] for call in calls if call.get("event") == "start"]
+    # Count every git process, regardless of its command or argument order.
+    assert len(starts) <= 100, starts
+    machine = repo.forge("next", "--json")
+    assert machine.returncode == 0, machine.stderr
+    following = json.loads(machine.stdout)["next"]
+    state, *machine_warnings = following["line"].splitlines()
+    assert state == next(line for line in shown.stdout.splitlines()[1:]
+                         if line not in warnings and not line.startswith("Next: "))
+    assert machine_warnings == warnings
     # The same warning remains when the part exists only on the remote.
-    repo.git("push", "-q", "origin", "task/SHOP-SAVE")
+    repo.git("push", "-q", "origin", "task/SHOP-SHOW")
     repo.git("worktree", "remove", str(folder))
-    repo.git("branch", "-D", "task/SHOP-SAVE")
+    repo.git("branch", "-D", "task/SHOP-SHOW")
     repo.git("fetch", "-q", "origin")
     remote = repo.forge("next")
     assert remote.returncode == 0, remote.stderr
@@ -93,4 +104,97 @@ def test_1_next_names_shared_changed_files_and_suggests_merge_order(repo, gh, hi
     merged = repo.forge("next")
     assert merged.returncode == 0, merged.stderr
     remaining = [line for line in merged.stdout.splitlines() if "merge one first" in line]
-    assert len(remaining) == 1 and "The fix first" not in remaining[0], merged.stdout
+    assert len(remaining) == 3 and all("The fix first" not in line for line in remaining), merged.stdout
+
+
+@pytest.mark.parametrize("other_change", ["delete", "rename"])
+def test_2_next_warns_when_renames_share_the_original_path(repo, gh, other_change):
+    # Audit: Git rename detection hides the original path from --name-only.
+    # This is a real merge conflict that the additions in test_1 cannot reach.
+    setup(repo, keys=())
+    repo.write("src/original.py", "print('original')\n")
+    repo.git("add", "-A")
+    repo.git("commit", "-qm", "Add the original source")
+    repo.git("push", "-q", "origin", "main")
+    for name in ("first", "second"):
+        made = repo.forge("fix", "start", f"Repair {name}", "--done", "The repair works",
+                          "--slug", name, "--kind", "mechanical")
+        assert made.returncode == 0, made.stderr
+        folder = worktree(repo, f"fix/{name}")
+        if name == "first" or other_change == "rename":
+            repo.git("mv", "src/original.py", f"src/{name}.py", cwd=folder)
+        else:
+            repo.git("rm", "src/original.py", cwd=folder)
+        repo.git("commit", "-qm", "Change the source path", cwd=folder)
+        if name == "first":
+            record = repo.path / ".git/forge/threads/fix/first.json"
+            record.parent.mkdir(parents=True, exist_ok=True)
+            record.write_text(json.dumps({"question": "Which name do you want?"}), encoding="utf-8")
+            before = repo.forge("next", "--json")
+            assert before.returncode == 0, before.stderr
+    shown = repo.forge("next")
+    assert shown.returncode == 0, shown.stderr
+    assert ("The fix first and The fix second change the same files: "
+            "src/original.py. Please merge one first.") in shown.stdout
+    machine = repo.forge("next", "--json")
+    assert machine.returncode == 0, machine.stderr
+    following = json.loads(machine.stdout)["next"]
+    previous = json.loads(before.stdout)["next"]
+    state, *warnings = following["line"].splitlines()
+    assert state == previous["line"]
+    assert following["step"] == previous["step"]
+    assert "asked a question" in following["line"]
+    assert len(warnings) == 1 and "merge one first" in warnings[0]
+
+
+def test_3_overlapping_fixes_can_close_and_merge(env):
+    # Audit: printed commands do not prove the absence of a close/merge gate.
+    # Both fixes edit distant lines of one tracked file so git can combine them.
+    original = "\n".join(f"value_{n} = 0" for n in range(20)) + "\n"
+    env.commit(env.repo.path, "app.py", original)
+    env.commit(env.repo.path, "forge.toml", (env.repo.path / "forge.toml").read_text("utf-8")
+               + 'merge = "agent"\n')
+    env.repo.git("push", "-q", "origin", "main")
+    first, _ = env.start_fix({"app.py": original.replace("value_0 = 0", "value_0 = 1")})
+    second, _ = env.start("second", "fix/second", ".factory/fixes/second.json",
+                         {"kind": "fix", "why": "Repair the last value",
+                          "done_when": "The last value is correct"},
+                         {"app.py": original.replace("value_19 = 0", "value_19 = 1")})
+    advice = env.repo.forge("next")
+    assert advice.returncode == 0, advice.stderr
+    assert "merge one first" in advice.stdout
+    for item in (first, second):
+        _install(env.repo.bin, "gh", GH_STUB.format(python=sys.executable))
+        env.open_pr("")
+        closed = env.close(item)
+        assert closed.returncode == 0, closed.stdout + closed.stderr
+        env.gh.respond("pr", "view", stdout=json.dumps({
+            "number": 7, "state": "OPEN", "baseRefName": "main",
+            "headRefOid": env.repo.git("rev-parse", f"fix/{item}"),
+            "headRefName": f"fix/{item}", "title": "Repair the values", "isDraft": False}))
+        _merge_at_github(env, item=item)
+        merged = env.repo.forge("merge", item)
+        assert merged.returncode == 0, merged.stdout + merged.stderr
+    combined = env.repo.git("show", "origin/main:app.py")
+    assert "value_0 = 1" in combined and "value_19 = 1" in combined
+
+
+def test_4_squash_merged_leftovers_give_no_advice_without_github(repo, gh):
+    # Audit: squash commits do not contain the old branch in their ancestry.
+    # The earlier non-squash case cannot detect stale landed fix records.
+    setup(repo, keys=())
+    for name in ("first", "second"):
+        made = repo.forge("fix", "start", f"Repair {name}", "--done", "The repair works", "--slug", name)
+        assert made.returncode == 0, made.stderr
+        folder = worktree(repo, f"fix/{name}")
+        (folder / "app.py").write_text(name, encoding="utf-8")
+        repo.git("add", "-A", cwd=folder)
+        repo.git("commit", "-qm", "Repair the source", cwd=folder)
+    assert "merge one first" in repo.forge("next").stdout
+    repo.git("merge", "--squash", "fix/first")
+    repo.git("commit", "-qm", "Merge the first repair")
+    repo.git("push", "-q", "origin", "main")
+    gh.respond("pr", "list", exit=1, stderr="GitHub is unavailable")
+    shown = repo.forge("next")
+    assert shown.returncode == 0, shown.stderr
+    assert "merge one first" not in shown.stdout
