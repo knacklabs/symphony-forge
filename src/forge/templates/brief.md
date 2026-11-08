@@ -101,6 +101,8 @@ This plan update keeps the code review when no other reviewed input changed.
 For a fix, follow the printed `forge fix amend` step to update its Done when before more work.
 Narrow stays a choice at a stuck-worker stop. Review-loop stops use more, split or accept.
 
+An unchanged stacked replay keeps its clean review when the reviewed product diff matches.
+Changed content and conflict repairs still get reviewed, and the usual tests still run.
 Close records a reused review against the current branch after a replay. Land retries close once
 when only Forge's review check reports a stale or missing review. If that check still fails,
 land stops without a worker round.
