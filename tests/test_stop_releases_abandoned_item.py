@@ -33,8 +33,10 @@ def test_1_stop_releases_an_item_whose_run_ended(repo, gh, monkeypatch, tmp_path
         shutil.copytree(ROOT / "tests/fixtures/adopted-v1.2.2/client", repo.path, dirs_exist_ok=True)
     version = repo.forge("--version").stdout.split()[-1]
     repo.git("switch", "-qc", "fix/settings")
+    # This contract needs a native session lock; normal-speed workers use the SDK.
     repo.write("forge.toml", f'version = "{version}"\nrepo = "client"\n'
-                             'tools = "codex"\nworkers = "codex"\ntest = "pytest -q"\n')
+                             'tools = "codex"\nworkers = "codex"\ncodex_fast = "needed"\n'
+                             'test = "pytest -q"\n')
     repo.write(".factory/fixes/settings.json", json.dumps({
         "kind": "fix", "branch": "fix/settings", "status": "working",
         "why": "Choose the tools", "done_when": "The client uses Codex"}))
