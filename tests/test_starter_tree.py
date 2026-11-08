@@ -33,7 +33,7 @@ BROWSER_FLOWS = (
 PINNED_PACKAGES = {
     "@nestjs/core": "11.2.7",
     "@nx/eslint-plugin": "22.0.1",
-    "@playwright/test": "1.56.1",
+    "@playwright/test": "1.64.0",
     "@prisma/client": "7.10.1",
     "@tanstack/react-query": "5.90.5",
     "nx": "22.0.1",
