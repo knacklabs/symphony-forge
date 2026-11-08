@@ -71,7 +71,7 @@
     "status": "blocked"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-08T12:14:05.451382+00:00",
@@ -84,8 +84,12 @@
   ],
   "stop": {
     "at": "2026-11-08T12:24:36.467789+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": ".github/workflows/forge-next.yml",
-    "wait_id": "62aa6e48-7c37-420a-ab80-c5744d830b0e"
+    "reason": "Harm 3 findings: one more round by the standing rule",
+    "wait_id": "62aa6e48-7c37-420a-ab80-c5744d830b0e",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
