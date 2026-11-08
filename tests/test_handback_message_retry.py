@@ -40,7 +40,10 @@ def test_1_empty_handback_preserves_round_for_message_retry(repo, gh, monkeypatc
     monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / "without-sdk"))
     version = repo.forge("--version").stdout.split()[-1]
     repo.git("switch", "-qc", "fix/settings")
+    # This test needs a native handoff; normal-speed workers use the app server.
+    native = 'codex_fast = "needed"\n' if tool == "codex" else ""
     repo.write("forge.toml", f'version = "{version}"\ntools = "{tool}"\nworkers = "{tool}"\n'
+                             f'{native}'
                              'test = "pytest -q"\ntest_place = "ci"\nchecks = ["tests"]\n')
     repo.write(".factory/fixes/settings.json", json.dumps({
         "kind": "fix", "branch": "fix/settings", "status": "working",
