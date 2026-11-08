@@ -313,6 +313,12 @@ def _files(top: Path, cfg: dict[str, Any], wanted: dict[str, str], fix: bool) ->
 def doctor(args: argparse.Namespace) -> int:
     top = repo.root()
     cfg = repo.config(top)
+    if (cfg["test_place"] == "local" and set(cfg["checks"]) == {"forge-pr-check"}
+            and "test_place" not in tomllib.loads(sync.read(top / "forge.toml"))):
+        print('- Warning: Close runs tests on this machine because checks names only '
+              'forge-pr-check, which runs no app tests. Ask the agent to set '
+              'checks = ["forge-pr-check", "tests"] in a fix whose Done-when names '
+              'forge.toml, then run forge sync.')
     if warning := repo.group_warning(top, cfg):
         print(f"- Warning: {warning}")
     test, fast = cfg["test"], cfg["fast_test"]

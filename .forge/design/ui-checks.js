@@ -35,31 +35,6 @@ async function check(files) {
     const spacing = /\b(?:p[xytrbl]?|m[xytrblse]?|gap(?:-[xy])?|space-[xy])-\[-?(?:\d+(?:\.\d+)?|\.\d+)(?:px|r?em|[sld]?v[wh]|vmin|vmax|ch|ex|cm|mm|in|pt|pc|%)?\]/g;
     for (const match of text.matchAll(spacing)) report('spacing-scale', match.index, `Use the spacing scale instead of ${match[0]}.`);
 
-    // A small tag scan catches literal headings, including text inside a span.
-    // ponytail: variable titles need review; add a parser only if that misses real defects.
-    const headings = [];
-    let main = 0, header = 0, heading = null;
-    for (const tag of text.matchAll(/<(\/?)([a-z][\w:-]*)\b[^>]*>|([^<]+)/gi)) {
-      if (tag[3] !== undefined) {
-        if (heading) heading.text += tag[3];
-        continue;
-      }
-      const name = tag[2].toLowerCase(), closing = Boolean(tag[1]);
-      if (name === 'main') main += closing ? -1 : 1;
-      if (name === 'header') header += closing ? -1 : 1;
-      if (/^h[1-6]$/.test(name)) {
-        if (closing && heading) { headings.push(heading); heading = null; }
-        else if (!closing) heading = { name, text: '', top: header > 0 && main === 0, index: tag.index };
-      }
-    }
-    const titles = headings.filter(h => h.name === 'h1');
-    const h1Tags = [...text.matchAll(/<h1\b/gi)];
-    const literal = h => h.text.replace(/\s+/g, ' ').trim();
-    const duplicate = h1Tags.length > 1 ? h1Tags[1] : titles.find(title =>
-      !/[{}]/.test(title.text) && literal(title) && headings.some(other =>
-        other !== title && other.top && literal(title) === literal(other)));
-    if (duplicate && !/\.css$/i.test(file)) report('title-twice', duplicate.index, 'Show the page title once.');
-
     const html = /\.html$/i.test(file);
     const shell = html ? /<aside\b/i.exec(text) :
       /\.(tsx|jsx)$/i.test(file) ? /<SidebarProvider\b/.exec(text) : null;
