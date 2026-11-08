@@ -95,7 +95,7 @@
     "status": "blocked"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-08T08:57:37.026970+00:00",
@@ -108,8 +108,12 @@
   ],
   "stop": {
     "at": "2026-11-08T09:12:48.249569+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": ".codex/skills/test-audit/SKILL.md",
-    "wait_id": "d2c9bcc3-386d-408f-850e-c011c53fc3a2"
+    "reason": "Harm 3 findings: one more round by the standing rule",
+    "wait_id": "d2c9bcc3-386d-408f-850e-c011c53fc3a2",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
