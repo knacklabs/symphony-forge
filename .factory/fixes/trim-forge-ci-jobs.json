@@ -4,12 +4,20 @@
   "done_when": "Forge's own pull requests no longer run the unused selection job, and the plugin check runs only when plugin files change",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-08T12:14:05.451382+00:00",
       "step": "start"
     }
   ],
-  "why": "Forge's own CI runs a selection job on pull requests that nothing reads and runs the plugin check on every pull request, adding three jobs and queue waits to each push"
+  "stuck": {
+    "close": null,
+    "head": "7c484d146cc69a5f3b4a4e3c20a38295d10c5ed0",
+    "keys": {},
+    "round": null
+  },
+  "why": "Forge's own CI runs a selection job on pull requests that nothing reads and runs the plugin check on every pull request, adding three jobs and queue waits to each push",
+  "worker": "codex"
 }
