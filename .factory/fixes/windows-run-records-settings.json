@@ -1,0 +1,78 @@
+{
+  "base": "c4bc3920737c2e2f9001281ed6012b3e5ba908a4",
+  "branch": "fix/windows-run-records-settings",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1bbf0-de77-7882-bce2-0f6606110d25",
+    "head": null,
+    "start": "c563b2581c814ede9d213301672f5c3dd9536ddb"
+  },
+  "done_when": "tests/test_run_records.py::test_3_run_and_question_occurrences passes on Windows and Linux",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "_control_requests_do_not_start_agent_runs() in tests/test_run_records.py",
+      "file": "tests/test_run_records.py",
+      "gain": 5,
+      "harm": 2,
+      "line": 288,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: tests/test_run_records.py::test_3_run_and_question_occurrences passes on Windows and Linux",
+      "work": 1
+    },
+    {
+      "area": "_control_requests_do_not_start_agent_runs() in tests/test_run_records.py",
+      "file": "tests/test_run_records.py",
+      "gain": 2,
+      "harm": 1,
+      "line": 288,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Follow-up: complete the named repository-rules run",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "1e6ac025b89acc288a263036447bf4dc7ccc3048015ac58cd33e90ff97bbfb93",
+    "changed": "0d14823a7262ff9840d305d21328189fac8ce973b5afc5ac87fda88fef3e510d",
+    "commit": "4633a017fb3569d170c2f5fd2e3ec653d5967be5",
+    "dismissals": [],
+    "findings": [],
+    "id": "81a3f9de-7b56-4828-8219-09f311751e57",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-08T16:14:37.244976+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-08T16:26:22.798790+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-08T16:31:25.738143+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "00dfea89-8581-47b2-be12-b9be9afa8fc7",
+    "head": "2456bba6d11363c6a17ccc0dff997bdd10639f67",
+    "keys": {
+      "the open P0 not done: tests/test_run_records.py::test_3_run_and_question_occurrences passes on windows and linux in tests/test_run_records.py": 1
+    },
+    "round": 1
+  },
+  "why": "On Windows the run-records control test fails: merging main into its task conflicts in forge.toml since the settings fix moved fixture settings onto main",
+  "worker": "codex"
+}
