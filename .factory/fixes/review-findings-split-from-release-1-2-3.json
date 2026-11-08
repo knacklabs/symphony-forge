@@ -70,7 +70,7 @@
       "gain": 5,
       "harm": 4,
       "line": 121,
-      "outcome": "open",
+      "outcome": "fixed in round 4",
       "reason": "",
       "round": 3,
       "security": false,
@@ -80,28 +80,17 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "8c897b1336d00c0934d25f852882b250c4d4e1310fac0e57c8a08210d3edea08",
-    "changed": "af9fbae45019d28199009c411b0b02ef72e64d2ee56f6767e4b8937b89257845",
-    "commit": "1c8b402f343efe70bbd111975e30b8c7e5c35a26",
+    "branch_diff": "f0445e4608a1810c2ff1a07fc38dbb7a8f4932cd98513f43b4d489e069c9aea7",
+    "changed": "b9fb882247b48fb8941feaa56a176dc4e2b6505a8571f91518b1787e1401dc94",
+    "commit": "452c0f8f0675c81095916668f57a232d7a4816a7",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 5, Work 2, Harm 4\nRaise: Functional\nCase: normal use - an approved task is closed from its worktree after an upgrade, and its pull request must be brought up to date with the default branch.\nThe worktree still pins the earlier Forge release, so `forge close` is forwarded to that release (`src/forge/repo.py:985-1020`). In v1.2.30, close merges the upgraded default branch and checks the design tree before handing off to the new pin; that release still requires an exact tree match. The refreshed `support.js` therefore causes the first close to refuse an unchanged approval before this new matcher runs. A retry uses the new pin, but the refusal tells the user to change and reread the approved design. The new test starts a task with the current release and does not exercise this close path.\nAdds work: keep design approvals valid when refreshing renderers; F 2 x H 2 = 4; 2 x C = 4",
-        "file": "src/forge/design.py",
-        "gain": 5,
-        "harm": 4,
-        "line": 121,
-        "priority": "P0",
-        "title": "Refreshing renderers invalidates approved design trees",
-        "work": 2
-      }
-    ],
-    "id": "0588dabb-6dbf-4e2e-9946-461dbf7732b7",
-    "status": "blocked"
+    "findings": [],
+    "id": "852e943f-ec51-4be4-9511-e9a4f4beaf38",
+    "status": "clean"
   },
   "round": 4,
   "stacked_on": "release-1-2-31",
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-07T17:42:22.892825+00:00",
@@ -117,6 +106,10 @@
     },
     {
       "at": "2026-11-07T19:28:23.701485+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-08T03:03:43.712198+00:00",
       "step": "review"
     }
   ],
