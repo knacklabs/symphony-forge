@@ -4,12 +4,20 @@
   "done_when": "The generated client tests job allows 60 minutes like the full run, new repos get it at init and existing repos after sync",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-08T16:55:23.489052+00:00",
       "step": "start"
     }
   ],
-  "why": "A client's generated CI test job stops at 30 minutes, so a change that touches shared files and runs a large related set is cancelled with no output, while the nightly full run already allows 60"
+  "stuck": {
+    "close": null,
+    "head": "ef70d3160c646e4883240cea0f5e3ab542c20c54",
+    "keys": {},
+    "round": null
+  },
+  "why": "A client's generated CI test job stops at 30 minutes, so a change that touches shared files and runs a large related set is cancelled with no output, while the nightly full run already allows 60",
+  "worker": "codex"
 }
