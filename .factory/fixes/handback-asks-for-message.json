@@ -1,0 +1,15 @@
+{
+  "base": "ed552b5fc9fc2be9c010a2bf3a1f006b7a607b5a",
+  "branch": "fix/handback-asks-for-message",
+  "done_when": "forge handback with no message refuses without recording the round as failed and tells the agent to run the same handback again with --text or the message on stdin",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-08T07:05:14.997161+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "When forge handback gets no message, it records the round as failed and its next step says forge work, which restarts a round whose work is already committed, instead of saying to hand back again with the message"
+}
