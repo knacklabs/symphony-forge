@@ -1,0 +1,105 @@
+{
+  "base": "dd2e493966a4c650d82000a113ba8083774ca1e3",
+  "branch": "fix/adoption-adds-tests-check",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1b966-d91a-72f0-a682-b14fc7c09eee",
+    "head": null,
+    "start": "8d715f2f36e850a60dd1c83c03eb9c0cd63f84fa"
+  },
+  "done_when": "Adopting an app with GitHub Actions writes checks with tests and forge-pr-check like a new repo, and forge doctor tells an existing repo whose checks name only forge-pr-check the exact checks line that moves its tests to CI",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "doctor() in src/forge/doctor.py",
+      "file": "src/forge/doctor.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 316,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Doctor misses earlier adoptions already configured for CI",
+      "work": 2
+    },
+    {
+      "area": "_adopt() in src/forge/init.py",
+      "file": "src/forge/init.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 448,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Preserve existing CI service setup when requiring the new tests check",
+      "work": 3
+    },
+    {
+      "area": "doctor() in src/forge/doctor.py",
+      "file": "src/forge/doctor.py",
+      "gain": 4,
+      "harm": 4,
+      "line": 320,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Reconcile branch protection when applying the doctor's checks repair",
+      "work": 2
+    },
+    {
+      "area": "test_2_doctor_explains_how_an_earlier_adoption_moves_tests_to_ci() in tests/test_adoption_runs_tests_in_ci.py",
+      "file": "tests/test_adoption_runs_tests_in_ci.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 42,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_2_doctor_explains_how_an_earlier_adoption_moves_tests_to_ci",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "3f6149054d5dd8e4d327e5dd665371f8d476112a7383c60ecd08ff70ecc7720c",
+    "changed": "f795fbd493573adf223789d8345bb348671267ba7e6ae122559af718d9d4ef22",
+    "commit": "d7008a373935d1a13e83d0af1311a4c27be4dfa5",
+    "dismissals": [],
+    "findings": [],
+    "id": "738f9119-99c5-40b3-815b-ebfeb629d9c0",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-08T04:24:38.728044+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-08T04:36:35.434470+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-08T04:40:33.324264+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "c67b6f3a-4769-4d3f-9808-dae66b0334d1",
+    "head": "374f459ffa99725aa8fcabe7e03f7a0fd58bc162",
+    "keys": {
+      "the open P0 preserve existing ci service setup when requiring the new tests check in src/forge/init.py": 1,
+      "the open P0 reconcile branch protection when applying the doctor's checks repair in src/forge/doctor.py": 1
+    },
+    "round": 1
+  },
+  "why": "An app adopted into Forge with GitHub Actions gets checks = forge-pr-check only, so Forge's tests job never runs the changed tests in CI and an earlier-adopted repo without test_place falls back to running every close's tests on the laptop",
+  "worker": "codex"
+}
