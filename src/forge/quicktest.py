@@ -7,7 +7,23 @@ import shlex
 from pathlib import Path
 from typing import Any
 
-from forge import init
+from forge import init, repo
+
+
+def group_command(cfg: dict[str, Any]) -> str:
+    """The PR command, or the full command that Forge's pytest picker splits."""
+    command = cfg.get("fast_test") or cfg["test"]
+    return cfg["test"] if re.search(r"\bforge test --pytest(?:\s|$)", command) else command
+
+
+def group_warning(top: Path, cfg: dict[str, Any]) -> str:
+    """Explain why CI uses one group for an unsplittable test command."""
+    command = group_command(cfg)
+    if (cfg.get("groups", 1) > 1 and "{group}" not in command
+            and not repo.pytest_split(top, command)):
+        return ("CI uses one group because the test command has no {group} placeholder. "
+                "Add the runner's shard options with {group} and {groups} to use more groups.")
+    return ""
 
 
 def _npm_runner_index(words: list[str]) -> int:

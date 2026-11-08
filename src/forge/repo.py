@@ -686,15 +686,6 @@ def grouped(top: Path, command: str) -> str:
         "{groups}", os.environ.get("FORGE_GROUPS", "1"))
 
 
-def group_warning(top: Path, cfg: dict[str, Any]) -> str:
-    """Explain why CI uses one group for an unsplittable test command."""
-    if (cfg.get("groups", 1) > 1 and "{group}" not in cfg["test"]
-            and not pytest_split(top, cfg["test"])):
-        return ("CI uses one group because the test command has no {group} placeholder. "
-                "Add the runner's shard options with {group} and {groups} to use more groups.")
-    return ""
-
-
 LOCAL = "forge.local.toml"
 
 

@@ -142,7 +142,9 @@ def test_3_pytest_repos_keep_six_groups_and_new_repos_start_with_one(
     fresh_settings = tomllib.loads((new / "forge.toml").read_text(encoding="utf-8"))
     assert fresh_settings.get("groups") == 1
     fresh_tests = _jobs((new / ".github/workflows/forge.yml").read_text(encoding="utf-8"))["tests"]
-    assert "&& '[1]' || '[1]')" in fresh_tests
+    # One group now owns the docs check and the required tests result directly.
+    assert "strategy:" not in fresh_tests and "FORGE_GROUPS: '1'" in fresh_tests
+    assert "run: python .forge/review-tests.py" in fresh_tests
 
     client = _adopted_client(repo, tmp_path, "earlier-pytest-client")
     settings = tomllib.loads((client / "forge.toml").read_text(encoding="utf-8"))
@@ -153,6 +155,10 @@ def test_3_pytest_repos_keep_six_groups_and_new_repos_start_with_one(
     assert 'run: "forge test --change"' in tests_job
     assert "--splits" not in workflow
     _settings(client, test=PYTEST, fast_test="forge test --pytest {base}")
+    synced = repo.forge("sync", cwd=client)
+    assert synced.returncode == 0, synced.stdout + synced.stderr
+    picker_job = _jobs((client / ".github/workflows/forge.yml").read_text(encoding="utf-8"))["tests"]
+    assert "|| '[1, 2, 3, 4, 5, 6]')" in picker_job
     doctor = repo.forge("doctor", cwd=client)
     assert "does not run forge test --change" not in doctor.stdout + doctor.stderr
     assert ("The pull request's tests check runs related tests. The nightly full run covers the rest"

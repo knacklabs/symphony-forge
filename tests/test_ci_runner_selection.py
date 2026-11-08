@@ -28,7 +28,7 @@ def test_4_copied_client_migration_keeps_default_ci_runner(repo, gh, tmp_path, m
     workflow = repo.git("show", "forge/migrate-v1:.github/workflows/forge.yml")
     labels = re.findall(r"^    runs-on: (.+)$", workflow, re.M)
     assert [json.loads(label) if label.startswith('"') else label for label in labels] == [
-        "ubuntu-latest"] * 6
+        "ubuntu-latest"] * 4  # Single-group PR, trusted review and the two nightly jobs.
 
 
 def _jobs(client: Path) -> tuple[str, str]:
