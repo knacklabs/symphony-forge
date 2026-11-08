@@ -1,0 +1,111 @@
+{
+  "base": "ed552b5fc9fc2be9c010a2bf3a1f006b7a607b5a",
+  "branch": "fix/handback-asks-for-message",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1b9f9-e226-7e61-80f8-cd73a4fe867b",
+    "head": null,
+    "start": "8e1ed176f5ac3fa6c82cafd1b0dd66b5dcb064b4"
+  },
+  "done_when": "forge handback with no message refuses without recording the round as failed and tells the agent to run the same handback again with --text or the message on stdin",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "handback() in src/forge/native.py",
+      "file": "src/forge/native.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 228,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: read and intake tests still expect the old empty-message behavior",
+      "work": 2
+    },
+    {
+      "area": "handback() in src/forge/native.py",
+      "file": "src/forge/native.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 229,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Request a new reply when the explorer produced no message",
+      "work": 2
+    },
+    {
+      "area": "test_1_empty_handback_preserves_round_for_message_retry() in tests/test_handback_message_retry.py",
+      "file": "tests/test_handback_message_retry.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 29,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_empty_handback_preserves_round_for_message_retry on Codex",
+      "work": 2
+    },
+    {
+      "area": "test_1_empty_handback_preserves_round_for_message_retry() in tests/test_handback_message_retry.py",
+      "file": "tests/test_handback_message_retry.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 69,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_empty_handback_preserves_round_for_message_retry uses private records",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "abb500613f8cdd046941b998fa8136e51a2953471f106c4fba2893caaec781f0",
+    "changed": "2c00aa2a94923c8b29ca9d647253f4b42ad31eed33875ec2e4a4eaf659d04102",
+    "commit": "0987d9086bb107fab2384639bb9be7dd2e7f3b38",
+    "dismissals": [],
+    "findings": [],
+    "id": "41aae253-04c4-4e13-a7c2-c545a8710598",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-08T07:05:14.997161+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-08T07:20:46.221663+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-08T07:28:31.872838+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-08T07:20:46.232992+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "src/forge/native.py",
+    "reason": "Harm 3 findings: one more round by the standing rule",
+    "wait_id": "c482afe5-70c8-431c-bc33-d09b837cf10a",
+    "worker_round": 1
+  },
+  "stuck": {
+    "close": "267cdcbc-95ff-4c8d-8890-35a5671fa34e",
+    "head": "5499a34d3646bab25431f5cddbe0f92c3441aa43",
+    "keys": {},
+    "round": 1
+  },
+  "why": "When forge handback gets no message, it records the round as failed and its next step says forge work, which restarts a round whose work is already committed, instead of saying to hand back again with the message",
+  "worker": "codex"
+}

@@ -199,24 +199,13 @@ def test_3_build_rounds_run_as_session_subagents(repo, gh, monkeypatch, tmp_path
         waiting = host.forge("work", "BOARD/HELP")
         assert waiting.returncode == 1 and "Which colour?" in waiting.stderr
 
-        # A subagent that ends with no message fails its round and frees the place.
-        _, _, number = handout("BOARD/HELP", "worker", "--note", "Blue.")
-        empty = handback("BOARD/HELP", number, "")
-        assert empty.returncode == 1
-        assert "ended with no message, so Forge recorded the round as failed" in empty.stderr
-        assert lane("BOARD/HELP") == []
-        ends = [json.loads(line) for line in
-                (repo.path / ".git/forge/events.jsonl").read_text("utf-8").splitlines()]
-        assert [e["outcome"] for e in ends if e["event"] == "run end"
-                and e["item"] == "BOARD/HELP"][-1] == "failed"
-
         # A round that commits its work and a forge.toml change, pin included, hands back from
         # the item's checkout: no nudge, and the settings change is reversed in a new commit.
         # forge.local.toml's model reaches the hand-out, which the role files can't carry.
         local = "gpt-6-local" if tool == "codex" else "claude-local"
         (repo.path / "forge.local.toml").write_text(
             f'[models.build]\nmodel = "{local}"\neffort = "low"\n', "utf-8")
-        given, _, number = handout("BOARD/HELP", "worker")
+        given, _, number = handout("BOARD/HELP", "worker", "--note", "Blue.")
         (repo.path / "forge.local.toml").unlink()
         assert f"Start it on {local} at low effort, over the role's own model." in given.stdout
         handed = repo.git("rev-parse", "HEAD", cwd=folder)
