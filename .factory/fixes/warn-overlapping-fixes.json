@@ -44,7 +44,7 @@
       "gain": 4,
       "harm": 3,
       "line": 54,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 1,
       "security": false,
@@ -80,27 +80,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "0a45940871989150cdcc4f088014ba42c6c0320ef771e68d00de0fe9ec978e18",
-    "changed": "1f1b894bb264205b7ef24013c9ad15435ad8494c4257bf5136c9a42bb92e339c",
-    "commit": "54944c41d86810ac9cf5cea99f096f88f6228d9f",
+    "branch_diff": "e12ccd3c77387609c2f204f68abf605dcfe9d088353281dad35070090d37fd6b",
+    "changed": "2cbee01608453d4d480dd29d056b5cf98e77cb01efe3fb3c2314f301e59cb329",
+    "commit": "c8186496ff2d1a5a5c9d017118b2552f958f8811",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Test\nCase: normal use - Two overlapping fixes are both ready to close.\nThe new merge test closes and merges the first fix before attempting to close the second. A gate that lets the first-started fix proceed but refuses the second while its peer remains open would still pass, leaving the promised \u201cwithout blocking either\u201d behavior untested. Close both while they overlap and exercise either merge order. The process assertion at line 86 also uses a ceiling of 100 for only five items; it cannot distinguish the accepted two Git calls per item from one call per pair, which is also ten calls for this fixture but grows quadratically.",
-        "file": "tests/test_next_warns_about_shared_files.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 166,
-        "priority": "P1",
-        "title": "Gate: test_1_next_names_shared_changed_files_and_suggests_merge_order",
-        "work": 2
-      }
-    ],
-    "id": "bd2d4478-9ca7-4a7c-91a5-15b5bfd76a20",
-    "status": "blocked"
+    "findings": [],
+    "id": "7f251168-e2fa-4269-bb34-6f53a6aedbac",
+    "status": "clean"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-08T12:38:53.076803+00:00",
@@ -112,6 +101,10 @@
     },
     {
       "at": "2026-11-08T13:12:16.370133+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-08T13:18:35.040183+00:00",
       "step": "review"
     }
   ],
