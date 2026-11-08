@@ -75,8 +75,8 @@
     "id": "48b04b9a-fbfa-4cbf-8d59-0fd72d5e344b",
     "status": "clean"
   },
-  "round": 4,
-  "status": "waiting for checks",
+  "round": 5,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-07T18:12:38.010383+00:00",
@@ -113,10 +113,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": "3d3f19bc-23ec-46c8-80cb-a9a3811c8529",
-    "head": "eeb0345a3f72dd639fcc30d5e2daa34e7f86df4a",
+    "close": "5ecd17a7-bc1f-4124-922f-b41f5577621f",
+    "head": "5408eb48137f002253eb9ebdfa742d40c1945d02",
     "keys": {},
-    "round": 3
+    "round": 4
   },
   "why": "A finished builder round can keep its builder place when the coordinator session stays alive, so other parts wait (issue 1429)",
   "worker": "codex"
