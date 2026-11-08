@@ -44,6 +44,12 @@ def test_1_close_publishes_once_after_saving_review(env, previous, replay):
              if line.split()[2] == f"refs/heads/fix/{item}"]
     assert len(heads) == 1, heads
     assert heads == [env.repo.git("rev-parse", "HEAD", cwd=where)]
+    checked = env.repo.forge("hook", "pr-check", "--base", "origin/main", "--head", heads[0],
+                             "--branch", f"fix/{item}", cwd=where)
+    assert checked.returncode == 0, checked.stdout + checked.stderr
+    product = "src/shared.py" if replay else "app.py"
+    assert env.repo.git("show", f"{heads[0]}:{product}", cwd=where) == (
+        "FOLLOWUP = True\n" + "# stable\n" * 20 if replay else "print('hello')\n").rstrip("\n")
     assert "Review: clean" in body(env.gh_calls("pr", "create")[-1])
     for field in (".check_runs[]", ".statuses[]"):
         calls = env.gh_calls("api", "--paginate", "--jq", field)
