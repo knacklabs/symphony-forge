@@ -1,6 +1,13 @@
 {
   "base": "4c4ecf8e15da8fd006165f3e25de257ba68b5e4a",
   "branch": "fix/trim-ci-builder-test-steps",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1ba60-c1fb-7dd2-9a6d-f7d2c50a5354",
+    "head": null,
+    "start": "1761d1930a536221971877a57c833eb8d1181acd"
+  },
   "done_when": "The CI-mode worker brief says only that wider related tests, lint and type checks stay in pull request CI and leaves which repair tests to run before committing to the builder",
   "fix_kind": "mechanical",
   "kind": "fix",
