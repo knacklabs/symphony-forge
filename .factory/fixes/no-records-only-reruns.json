@@ -1,6 +1,13 @@
 {
   "base": "55eb438b74206e1afd7dcefafcdf00ea1224c257",
   "branch": "fix/no-records-only-reruns",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1bb15-1d5e-71b1-869a-201b20e67e19",
+    "head": null,
+    "start": "159781b100e51084a8c0bd15f143ba44e2ade571"
+  },
   "done_when": "A close or land round pushes its code and its review record together, so a records-only push no longer cancels a CI run of the same code, and a later records-only head reuses that run's green result",
   "fix_kind": "backend",
   "kind": "fix",
