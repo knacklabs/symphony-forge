@@ -48,8 +48,8 @@ def test_cpus(entry: dict[str, Any] | None = None) -> str:
 
 
 def worker_env() -> dict[str, str]:
-    """A worker's test runs, through forge test or pytest -n auto, use at most two processes."""
-    cpus = str(min(2, half_cores()))
+    """Workers keep the laptop cap; GitHub tests can use the whole runner."""
+    cpus = str(test_slots() if os.environ.get("GITHUB_ACTIONS") == "true" else min(2, half_cores()))
     return {**os.environ, "FORGE_WORKER": "1", "FORGE_TEST_CPUS": cpus, "PYTEST_XDIST_AUTO_NUM_WORKERS": cpus}
 
 
@@ -87,8 +87,10 @@ def _load_per_core() -> float | None:
 
 
 def test_slots(runners: int | None = None) -> int:
-    """Test processes share the cores left after the agent share and local CI jobs."""
+    """GitHub tests use the runner; laptop tests leave cores for agents and local CI."""
     cores = getattr(os, "process_cpu_count", os.cpu_count)() or 2
+    if os.environ.get("GITHUB_ACTIONS") == "true":
+        return cores
     return max(1, cores - half_cores(0) - (busy_runners() if runners is None else runners))
 
 
