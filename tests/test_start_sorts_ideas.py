@@ -133,6 +133,8 @@ def test_1_start_answers_in_one_plain_line_with_its_choice_and_reason(intake):
         done = _back(intake, offer, f"Lane: {lane}\nReason: The owner gave no problem.\n{fields}")
         assert done.returncode == 0, done.stdout + done.stderr
         assert done.stdout.splitlines()[0] == f"Forge chose {chosen}: The owner gave no problem."
+    # An empty explorer reply needs a new reply from the explorer, just like
+    # malformed text. Keep its retry nudge separate from a build-message retry.
     for number, first in enumerate(("not a reply", "")):
         idea = f"A refused idea {number}"
         offer = _offer(intake, idea)
