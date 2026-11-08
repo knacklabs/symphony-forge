@@ -8,8 +8,8 @@
       "text": "Not done: The smoke fixtures share downloaded packages while keeping separate app copies, and the starter smoke job is measurably faster",
       "from": "blocking",
       "item": "smoke-fixtures-share-packages",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     }
   ]
 }
