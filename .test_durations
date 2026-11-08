@@ -1,6 +1,6 @@
 {
-    "tests/test_adoption_shared_input_checks.py::test_1_adoption_review_keeps_shared_input_checks[new-client]": 6.694,
-    "tests/test_adoption_shared_input_checks.py::test_1_adoption_review_keeps_shared_input_checks[previous-adoption]": 3.072,
+    "tests/test_adoption_shared_input_checks.py::test_1_adoption_review_keeps_shared_input_checks[new-client]": 8.406,
+    "tests/test_adoption_shared_input_checks.py::test_1_adoption_review_keeps_shared_input_checks[previous-adoption]": 8.131,
     "tests/test_abandoned_fix_names_stay_taken.py::test_4_abandoned_fix_name_is_taken_before_a_new_checkout_is_created[adopted-v1.2.2-fetched-tag]": 1.5889193350001278,
     "tests/test_abandoned_fix_names_stay_taken.py::test_4_abandoned_fix_name_is_taken_before_a_new_checkout_is_created[adopted-v1.2.2-local-tag]": 1.9448859579999862,
     "tests/test_abandoned_fix_names_stay_taken.py::test_4_abandoned_fix_name_is_taken_before_a_new_checkout_is_created[new-client-fetched-tag]": 2.553777627000045,
