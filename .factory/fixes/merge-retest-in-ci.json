@@ -11,12 +11,98 @@
   "done_when": "In a repo whose tests run in CI, forge merge after main moved pushes the merged branch and waits for the pull request checks instead of running tests on the laptop, and a repo whose tests run on the laptop keeps today's local retest",
   "fix_kind": "backend",
   "kind": "fix",
+  "known": [
+    {
+      "area": "merge() in src/forge/merge.py",
+      "file": "src/forge/merge.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 132,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Wait for the CI configuration used to skip the local retest",
+      "work": 2
+    },
+    {
+      "area": "merge() in src/forge/merge.py",
+      "file": "src/forge/merge.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 134,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Combined-head CI can omit tests added by main",
+      "work": 2
+    },
+    {
+      "area": "merge() in src/forge/merge.py",
+      "file": "src/forge/merge.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 132,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: existing merge regression tests fail under the new routing",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "d0901a34dd185de86e81690afbc69fc7bc82919bc72fd613849a4581ebd834bf",
+    "changed": "6ce08020a73cbef849a09884f1a3822583bd52a2f963b1d2dec56e3aa376033a",
+    "commit": "d9e9d07ea4af5555c81b6bf957e6045b491e4b2a",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 5, Work 2, Harm 3\nRaise: Functional\nCase: normal use - a repo switches from laptop tests to CI while another change lands on main.\nThe new routing decision uses the merged worktree's settings, but the wait at src/forge/merge.py:159 uses the default-branch settings loaded at line 48. If main still has test_place = \"local\" and the pull request enables CI, merge skips the laptop retest, pushes the combined head, and skips the check wait. When branch protection has not yet been updated to require the new tests check, GitHub can merge while that check is pending or failing. Likewise, a change to the required CI check names can make the wait require the old names.",
+        "file": "src/forge/merge.py",
+        "gain": 5,
+        "harm": 3,
+        "line": 132,
+        "priority": "P1",
+        "title": "Wait for the CI configuration used to skip the local retest",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - main adds an integration test while a Python change waits to merge.\nThe removed laptop retest selected incoming changes relative to the previously checked head. The reused CI path instead runs forge test --change (src/forge/prcheck.py:252), which selects against origin/main (src/forge/fasttest.py:325). After main is merged into the branch, a test added by main is already in that base and is omitted unless it directly names a changed PR module. For example, a new checkout test that exercises the changed pricing code indirectly can fail on the combined tree while the selected CI tests pass. The CI selector's base is new evidence not addressed by the ruling to reuse the existing CI path.",
+        "file": "src/forge/merge.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 134,
+        "priority": "P1",
+        "title": "Combined-head CI can omit tests added by main",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Test\nCase: normal use - running the full test suite before a release.\nThe shared client fixture sets test_place to CI and includes the tests check (tests/test_merge_refreshes_behind_base.py:43 and tests/fixtures/adopted-v1.2.2/client/forge.toml:8). The new branch therefore does not run the local commands that create the logs required by tests/test_merge_selects_incoming_tests.py:64 and tests/test_merge_rechecks_new_default_commits.py:96. Those existing cases will fail rather than exercise incoming selection and repeated main moves. The proof list does not include either affected test.",
+        "file": "src/forge/merge.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 132,
+        "priority": "P1",
+        "title": "Gate: existing merge regression tests fail under the new routing",
+        "work": 2
+      }
+    ],
+    "id": "6b240295-b202-4c87-af88-e23b80da9b16",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-08T11:37:21.271568+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-08T11:52:53.985003+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
