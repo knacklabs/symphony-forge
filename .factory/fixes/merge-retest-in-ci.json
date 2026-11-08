@@ -1,0 +1,15 @@
+{
+  "base": "2b4f193299cb1986b54136274fc8725f5cfb952f",
+  "branch": "fix/merge-retest-in-ci",
+  "done_when": "In a repo whose tests run in CI, forge merge after main moved pushes the merged branch and waits for the pull request checks instead of running tests on the laptop, and a repo whose tests run on the laptop keeps today's local retest",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-08T11:37:21.271568+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "When tests run in CI and main moved before a merge, forge merge retests the merged branch on the laptop test lane for every repo except Python apps with broad pytest selection, so client merges wait in the laptop queue"
+}
