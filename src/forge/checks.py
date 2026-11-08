@@ -39,9 +39,12 @@ def required(top: Path, default: str, head: str = "HEAD") -> list[str] | None:
     """A check removal travels alone, apart from its records and synced workflow."""
     from forge import prcheck, review, story
 
+    after = story.show(top, head, "forge.toml")
+    landed = story.show(top, f"origin/{default}", "forge.toml")
+    if after == landed:
+        return None
     base = repo.git("merge-base", f"origin/{default}", head, cwd=top)
     before = story.show(top, base, "forge.toml")
-    after = story.show(top, head, "forge.toml")
     old, new = (tomllib.loads(text or "") for text in (before, after))
     previous, current = old.get("checks", []), new.get("checks", [])
     removed = sorted(set(previous) - set(current))
@@ -60,7 +63,7 @@ def required(top: Path, default: str, head: str = "HEAD") -> list[str] | None:
             config.pop(key, None)
     if others or old != new or set(current) - set(previous):
         repo.refuse(REFUSALS["mixed_removal"], names=", ".join(removed))
-    landed = tomllib.loads(story.show(top, f"origin/{default}", "forge.toml") or "")
+    landed = tomllib.loads(landed or "")
     return [name for name in landed.get("checks", []) if name in current]
 
 
