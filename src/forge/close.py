@@ -193,6 +193,7 @@ def close(args: argparse.Namespace) -> int:
             backfill.run(top)
         return _merged(top, item)
 
+    checks.required(top, default)
     previous = state.get("review") or {}
     if not (skip or previous.get("skipped")):
         review.require_engine(cfg)  # before merging or committing state
@@ -230,7 +231,6 @@ def close(args: argparse.Namespace) -> int:
     if "/" in item:
         key = item.split("/")[0]
         design.check(top, story.show(top, story.plan_ref(top, key), f"plans/{key}.md") or "", "HEAD", required=False)
-    if "/" in item:
         excluded = list(review.DOC_EXCLUDES)
         excluded += [path.replace(":(glob)", ":(exclude,glob)") for path in repo.TEST_PATHS]
         stats = repo.git("diff", "--numstat", "-z", "--no-renames", f"{review_ref}...HEAD",
@@ -464,7 +464,7 @@ def close(args: argparse.Namespace) -> int:
             f"finding {n} ({f['title'].rstrip('.')})" for n, f in serious))
     # forge-pr-check runs from the base branch, which has no Forge until migrate's or adopt's PR merges.
     try:
-        if not local_tests and not stacked_waiting:
+        if (not local_tests or checks.required(top, default, head) is not None) and not stacked_waiting:
             checks.wait(top, item, head, [name for name in cfg["checks"]
                                          if not (migrating and name == "forge-pr-check")],
                         branch=branch, progress=getattr(args, "wait_for_progress", False),

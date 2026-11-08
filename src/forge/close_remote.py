@@ -3,7 +3,7 @@ import json
 import subprocess
 from pathlib import Path
 
-from forge import repo, review
+from forge import checks, repo, review
 
 
 def replay_file(top: Path, branch: str) -> Path:
@@ -64,3 +64,4 @@ def reconcile(top: Path, branch: str) -> None:
         repo.refuse(("The merge of the remote branch failed: {problem}",
                      "in {path}, finish or abort the merge, then retry this command"),
                     problem=merged.stderr.strip(), path=top)
+    checks.required(top, repo.default_branch(top))
