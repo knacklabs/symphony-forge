@@ -70,8 +70,8 @@
     "id": "07349aa5-4b19-47f2-a153-0e6ab3005371",
     "status": "clean"
   },
-  "round": 1,
-  "status": "waiting for checks",
+  "round": 2,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-08T16:55:23.489052+00:00",
@@ -83,10 +83,10 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "ef70d3160c646e4883240cea0f5e3ab542c20c54",
+    "close": "cbed12df-e056-4e90-9c5d-a10e7ad282d4",
+    "head": "8664051a984cd7cfa82598c97cc73247c630badc",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "A client's generated CI test job stops at 30 minutes, so a change that touches shared files and runs a large related set is cancelled with no output, while the nightly full run already allows 60",
   "worker": "codex"
