@@ -11,12 +11,15 @@ import shlex
 from fnmatch import fnmatchcase
 from pathlib import Path
 
+import pytest
+
 from test_ci_limits_pull_requests_to_linux import expression
 
 STORY = "FIX-TRIM-FORGE-CI-JOBS"
 ROOT = Path(__file__).resolve().parents[1]
 
 
+@pytest.mark.platform
 def test_1_pull_requests_skip_selection_and_filter_plugin_changes():
     workflow = (ROOT / ".github/workflows/forge-next.yml").read_text(encoding="utf-8")
     selection = workflow.split("\n  selection:\n", 1)[1].split("\n  plugin:\n", 1)[0]
