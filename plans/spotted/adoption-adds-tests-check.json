@@ -12,6 +12,28 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/doctor.py\tThe checks repair does not update GitHub branch protection.",
+      "kind": "bug",
+      "path": "src/forge/doctor.py",
+      "line": 320,
+      "text": "The checks repair does not update GitHub branch protection.",
+      "from": "worker",
+      "item": "adoption-adds-tests-check",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/init.py\tGenerated tests jobs do not copy existing CI service setup.",
+      "kind": "bug",
+      "path": "src/forge/init.py",
+      "line": 448,
+      "text": "Generated tests jobs do not copy existing CI service setup.",
+      "from": "worker",
+      "item": "adoption-adds-tests-check",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/init.py\tPreserve existing CI service setup when requiring the new tests check\tadoption-adds-tests-check",
       "kind": "bug",
       "path": "src/forge/init.py",
