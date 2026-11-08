@@ -9,6 +9,13 @@
     "start": "bbac1b37297ab84f88c8043561aa22fefb5bb459"
   },
   "done_when": "Pushing a release tag accepts a green full run on an earlier main commit when every later commit changes only Forge's own files, as sign-off already does, and still refuses after a product change",
+  "drop": {
+    "at": "2026-11-08T12:10:50.516016+00:00",
+    "because": "The owner dropped it: Forge's own version change edits product files, so reuse does not apply to Forge releases and the client case is rare",
+    "by": "vrknetha <vrknetha@gmail.com> 1794139850 +0530",
+    "pull_request": 1468,
+    "status": "hotspot"
+  },
   "fix_kind": "backend",
   "kind": "fix",
   "known": [
@@ -95,7 +102,7 @@
     "status": "blocked"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "dropped",
   "steps": [
     {
       "at": "2026-11-08T11:37:16.731207+00:00",
@@ -104,6 +111,10 @@
     {
       "at": "2026-11-08T11:47:07.257850+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-11-08T12:10:50.516148+00:00",
+      "step": "drop"
     }
   ],
   "stop": {
