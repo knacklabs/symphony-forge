@@ -322,7 +322,9 @@ New and earlier-adopted repos get this check on upgrade. Workers never edit sett
 A developer's own `tools`, `workers` and `[models.<kind>]` choices go in the git-ignored
 `forge.local.toml` instead, which you edit directly when they ask; Forge refuses any other key there.
 `runner` selects the GitHub Actions runner label for every job in the generated `forge.yml`;
-it defaults to `"ubuntu-latest"`. For self-hosted Linux runners, initialise with
+it defaults to `"ubuntu-24.04"` because the starters' Playwright 1.56 browser installer
+does not support Ubuntu 26.04. Sync preserves explicit runner settings.
+For self-hosted Linux runners, initialise with
 `forge init --runner self-hosted`, or set `runner = "self-hosted"` (or a custom label) in an
 existing repo's fix, then run `forge sync`. New repos get it at init; earlier adopted repos get
 it after upgrading Forge and syncing. The jobs set up uv and Python, and install

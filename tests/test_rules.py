@@ -121,8 +121,13 @@ def test_10_version_pin(repo, tmp_path, monkeypatch):
 
 def test_31_speed():
     workflow = WORKFLOW.read_text(encoding="utf-8")
+    # Check every Ubuntu label, including matrix entries and container routing.
+    # A single pinned job must not hide another job that follows ubuntu-latest.
+    for path in sorted(WORKFLOW.parent.glob("*.y*ml")):
+        labels = re.findall(r"\bubuntu-[\w.-]+\b", path.read_text(encoding="utf-8"))
+        assert all(label == "ubuntu-24.04" for label in labels), (path.name, labels)
     # macOS left the full run on 18 October: Linux and Windows catch the platform bugs.
-    for runner in ("ubuntu-latest", "windows-latest"):
+    for runner in ("ubuntu-24.04", "windows-latest"):
         assert runner in workflow, f"the suite doesn't run on {runner}"
     assert "pytest tests" in workflow
     timeouts = [int(n) for n in re.findall(r"timeout-minutes: (\d+)", workflow)]

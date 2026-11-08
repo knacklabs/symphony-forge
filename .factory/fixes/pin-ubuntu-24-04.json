@@ -1,0 +1,129 @@
+{
+  "allow_large": "The owner chose the ubuntu-24.04 pin; it is the same one-line runner change in each of Forge's workflow files plus the default and guide copies",
+  "base": "c4bc3920737c2e2f9001281ed6012b3e5ba908a4",
+  "branch": "fix/pin-ubuntu-24-04",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1bbf2-12a3-7350-beaa-c140768f0573",
+    "head": null,
+    "start": "7aea815c34a47df609530a4e9b80b7de7bafd783"
+  },
+  "done_when": "Forge's default CI runner and Forge's own workflows use ubuntu-24.04, a repo without its own runner setting gets it on sync, and a repo that sets its own runner keeps it",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": ".github/workflows/forge-next.yml",
+      "file": ".github/workflows/forge-next.yml",
+      "gain": 4,
+      "harm": 3,
+      "line": 79,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "CI: Update tests that still expect ubuntu-latest",
+      "work": 2
+    },
+    {
+      "area": "test_31_speed() in tests/test_rules.py",
+      "file": "tests/test_rules.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 125,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: tests/test_rules.py::test_31_speed",
+      "work": 2
+    },
+    {
+      "area": "test_1_default_runner_is_pinned_and_explicit_runner_is_preserved() in tests/test_default_ci_runner.py",
+      "file": "tests/test_default_ci_runner.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 20,
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: Owner accepted: one-line default change; the explicit-runner case does not prove every generated job keeps the repo's runner; Playwright 1.64 makes both Ubuntu versions work",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_default_runner_is_pinned_and_explicit_runner_is_preserved",
+      "work": 2
+    },
+    {
+      "area": "test_1_default_runner_is_pinned_and_explicit_runner_is_preserved() in tests/test_default_ci_runner.py",
+      "file": "tests/test_default_ci_runner.py",
+      "gain": 1,
+      "harm": 1,
+      "line": 15,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Simpler: duplicate new-repository runner case \u2192 reuse the existing test",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "af59f9ef9dbbbd97e96e2d4b0929a9edc635991d93c1651ec3f807f922d7f664",
+    "changed": "7f1c6629ab23e56850a633a191b2ebf0fe90e87f93b5142f7fd3237e9d53e911",
+    "commit": "737437148c1ca45add2a8bcd26ae83379a92a1e5",
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner accepted: one-line default change; the explicit-runner case does not prove every generated job keeps the repo's runner; Playwright 1.64 makes both Ubuntu versions work",
+        "finding": 1
+      }
+    ],
+    "findings": [
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - an earlier-adopted repo with an explicit runner upgrades Forge and syncs its existing workflow.\nIn the explicit case, the first sync creates the workflow with the current Forge version and the same configuration used for the second sync. The second sync therefore has no workflow change to write; `src/forge/sync.py:588` writes only files whose generated content differs. A regression that resets an explicit runner to the default when rewriting an older workflow would pass: the preparation creates the explicit runner correctly, while the no-setting case expects the default. The test still does not prove preservation during an existing workflow update.",
+        "file": "tests/test_default_ci_runner.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 29,
+        "priority": "P1",
+        "title": "Gate: test_1_default_runner_is_pinned_and_explicit_runner_is_preserved",
+        "work": 2
+      }
+    ],
+    "id": "3c02aa60-e6bb-4f4e-b37e-79c22a8842ed",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-08T16:15:56.952828+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-08T16:27:45.305393+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-08T16:41:34.194405+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-08T16:41:34.194638+00:00",
+    "by": "owner",
+    "choice": "accept",
+    "file": "tests/test_default_ci_runner.py",
+    "reason": "Owner accepted: one-line default change; the explicit-runner case does not prove every generated job keeps the repo's runner; Playwright 1.64 makes both Ubuntu versions work",
+    "wait_id": "2eb56ac4-ffa7-4a35-90e9-c116279da07a",
+    "worker_round": 3
+  },
+  "stuck": {
+    "close": "0e7173ef-7527-4cab-b2f8-6f5ff1232b0d",
+    "head": "2748d30deb39832e08963131d66f3a10048f7eed",
+    "keys": {},
+    "round": 1
+  },
+  "why": "GitHub's ubuntu-latest runner moved to Ubuntu 26.04, where the starters' Playwright 1.56 cannot install browsers, so client CI and Forge's starter checks fail",
+  "worker": "codex"
+}
