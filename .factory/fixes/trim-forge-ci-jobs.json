@@ -49,8 +49,8 @@
     "id": "66de8f9e-6fbb-4e61-ae9f-e838f1d59958",
     "status": "clean"
   },
-  "round": 2,
-  "status": "waiting for checks",
+  "round": 3,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-08T12:14:05.451382+00:00",
@@ -79,10 +79,10 @@
     "worker_round": 2
   },
   "stuck": {
-    "close": "7728597d-3ce2-4b4c-8a9a-cc018b68ca5b",
-    "head": "9d0f75369ddae599ebd13c015c3805419f9211c8",
+    "close": "2f307178-7c4f-47be-b6ca-730a11e8946b",
+    "head": "9a4c2f2d1e103468280c6b644dccbf9d9a659878",
     "keys": {},
-    "round": 1
+    "round": 2
   },
   "why": "Forge's own CI runs a selection job on pull requests that nothing reads and runs the plugin check on every pull request, adding three jobs and queue waits to each push",
   "worker": "codex"
