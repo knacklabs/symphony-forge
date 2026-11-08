@@ -1,6 +1,13 @@
 {
   "base": "2b4f193299cb1986b54136274fc8725f5cfb952f",
   "branch": "fix/merge-retest-in-ci",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1baf3-3eda-7142-a0a1-9d5148330764",
+    "head": null,
+    "start": "74c4fce125198ad8df6c2c37dd950ad926cc23fa"
+  },
   "done_when": "In a repo whose tests run in CI, forge merge after main moved pushes the merged branch and waits for the pull request checks instead of running tests on the laptop, and a repo whose tests run on the laptop keeps today's local retest",
   "fix_kind": "backend",
   "kind": "fix",
