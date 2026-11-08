@@ -88,8 +88,8 @@
     "id": "7f251168-e2fa-4269-bb34-6f53a6aedbac",
     "status": "clean"
   },
-  "round": 3,
-  "status": "waiting for checks",
+  "round": 4,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-08T12:38:53.076803+00:00",
@@ -118,10 +118,10 @@
     "worker_round": 2
   },
   "stuck": {
-    "close": "00f3c669-713e-4de9-994d-71fabae7bdaf",
-    "head": "5750eb8254a026507a970de785a68d3b7dfbcbe9",
+    "close": "f9d3e586-ca21-476c-b91b-3c68796d22a1",
+    "head": "a2657197437028794a63180ea9c503143fef9549",
     "keys": {},
-    "round": 2
+    "round": 3
   },
   "why": "Fixes have no Scope, so two open fixes can edit the same files with no warning and then conflict at merge",
   "worker": "codex"
