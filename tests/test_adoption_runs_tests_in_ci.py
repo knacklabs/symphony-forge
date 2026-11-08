@@ -38,7 +38,9 @@ def test_2_doctor_explains_how_an_earlier_adoption_moves_tests_to_ci(env):
     checked = env.repo.forge("doctor")
     assert checked.stdout.count(warning) == 1, checked.stdout + checked.stderr
     assert path.read_bytes() == before
-    # An explicit local choice must not prompt a move to CI.
-    env.repo.write("forge.toml", before.decode("utf-8") + '\ntest_place = "local"\n')
+    # An explicit local choice must not prompt a move to CI. Put it before the
+    # model tables and require doctor to reach its checks, not reject the fixture.
+    env.repo.write("forge.toml", 'test_place = "local"\n' + before.decode("utf-8"))
     checked = env.repo.forge("doctor")
+    assert "doctor compared the synced files" in checked.stdout, checked.stdout + checked.stderr
     assert warning not in checked.stdout
