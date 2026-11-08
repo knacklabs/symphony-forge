@@ -1,0 +1,131 @@
+{
+  "base": "5393cf3ed78f0bae68f7bf2762dbcc9675a03710",
+  "branch": "fix/free-place-after-round",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1b751-b137-7d93-8175-accd0a5c2a77",
+    "head": null,
+    "start": "b158b487a1b494047fc04bd747076e3d8f5103a5"
+  },
+  "done_when": "A builder place is freed when Forge records the round's completion or the item's merge, and a waiting part starts at once",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "merge() in src/forge/merge.py",
+      "file": "src/forge/merge.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 227,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: A builder place is freed when Forge records the round's completion or the item's merge, and a waiting part starts at once",
+      "work": 2
+    },
+    {
+      "area": "append() in src/forge/event_log.py",
+      "file": "src/forge/event_log.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 63,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Keep a pending handback usable after a merge frees its place",
+      "work": 2
+    },
+    {
+      "area": "test_1_finished_builder_frees_its_place_for_waiting_work() in tests/test_finished_builds_free_places.py",
+      "file": "tests/test_finished_builds_free_places.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 76,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: round completion releases capacity before handback returns",
+      "work": 2
+    },
+    {
+      "area": "test_1_finished_builder_frees_its_place_for_waiting_work() in tests/test_finished_builds_free_places.py",
+      "file": "tests/test_finished_builds_free_places.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 62,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: a waiting story part starts when capacity is released",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "b08452ff8f633dd1344549dff9de96b4c9bf1b5aca9303a6d30cb87439733fbf",
+    "changed": "597dab773d1cbad8f0c1d800e08fb814f0c3d1b04f809028a023c633eecf5bb2",
+    "commit": "de1fd7a6a7f4620a1594f55e4d145697d6a64b4d",
+    "dismissals": [],
+    "findings": [],
+    "id": "a44c330e-2de5-4ec9-b21c-6dfb78323ef1",
+    "status": "clean"
+  },
+  "round": 5,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-07T18:12:38.010383+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-07T19:09:03.894699+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-08T03:13:02.726658+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-08T04:11:40.613817+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-08T07:54:38.380991+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-08T09:16:37.055936+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-08T09:21:29.842780+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-08T11:03:35.128040+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-07T19:09:03.913831+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "src/forge/merge.py",
+    "reason": "Harm 3 or higher findings: one more round by the standing rule",
+    "wait_id": "d4b8cb74-091f-45c8-8a46-d7ea8c6cc9c9",
+    "worker_round": 1
+  },
+  "stuck": {
+    "close": "5ecd17a7-bc1f-4124-922f-b41f5577621f",
+    "head": "5408eb48137f002253eb9ebdfa742d40c1945d02",
+    "keys": {},
+    "round": 4
+  },
+  "why": "A finished builder round can keep its builder place when the coordinator session stays alive, so other parts wait (issue 1429)",
+  "worker": "codex"
+}
