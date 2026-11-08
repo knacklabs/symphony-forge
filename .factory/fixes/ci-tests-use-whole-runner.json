@@ -1,0 +1,15 @@
+{
+  "base": "55eb438b74206e1afd7dcefafcdf00ea1224c257",
+  "branch": "fix/ci-tests-use-whole-runner",
+  "done_when": "When forge test runs on GitHub Actions, the test worker count uses all the runner's cores, and a laptop run keeps today's agent share",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-08T12:13:55.760404+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "In CI, Forge applies the laptop rule that keeps half the cores for agents, so each CI test group runs one test worker on a 4-core runner and Forge's groups take 34 to 41 minutes"
+}
