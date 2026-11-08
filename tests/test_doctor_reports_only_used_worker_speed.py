@@ -26,7 +26,7 @@ def test_1_doctor_shows_codex_fast_only_when_repo_uses_codex(repo, gh, tmp_path,
     settings = client / "forge.toml"
     text = settings.read_text("utf-8")
     text = re.sub(r'^workers = ".*"$', f'workers = "{workers}"', text, flags=re.M)
-    settings.write_text(text, encoding="utf-8")
+    settings.write_text('codex_fast = "needed"\n' + text, encoding="utf-8")
 
     checked = repo.forge("doctor", cwd=client)
 

@@ -33,7 +33,8 @@ pytestmark = pytest.mark.platform
 
 
 def _round_client(repo, gh, tmp_path, monkeypatch, mode, effort="low", task="HELP",
-                  history="new", sdk_data=None, fixed=False, test_place="local", helper_budgets=None):
+                  history="new", sdk_data=None, fixed=False, test_place="local", helper_budgets=None,
+                  codex_fast=None):
     """A new or earlier-adopted client with one started task and a configured worker."""
     env = close_env.__wrapped__(repo, gh, tmp_path, monkeypatch)
     version = repo.forge("--version").stdout.split()[-1]
@@ -46,6 +47,7 @@ def _round_client(repo, gh, tmp_path, monkeypatch, mode, effort="low", task="HEL
     settings = (f'version = "{version}"\nrepo = "client"\nworkers = "{mode}"\n'
                 f'test_place = "{test_place}"\nchecks = ["tests", "forge-pr-check"]\n'
                 'test = "python fail_test.py"\nfast_test = "python fail_test.py"\n' +
+                (f'codex_fast = "{codex_fast}"\n' if codex_fast else "") +
                 "".join(f'models.{kind} = {{ model = "{model}", effort = "{effort}"{pairs[kind]} }}\n'
                         for kind in ("build", "fix", "lite")))
     if fixed:
@@ -368,8 +370,9 @@ def test_7_claude_rounds_use_the_sdk_in_a_claude_session(
 @pytest.mark.parametrize("family", ["codex", "claude"])
 def test_8_native_round_names_the_requested_effort(
         repo, gh, tmp_path, monkeypatch, sdk_data, family):
+    # Native labels require an opt-in on main so close retains it for the repair round.
     env, folder, log = _round_client(repo, gh, tmp_path, monkeypatch, family,
-                                     sdk_data=sdk_data)
+                                     sdk_data=sdk_data, codex_fast="needed" if family == "codex" else None)
     if family == "claude":
         monkeypatch.delenv("CODEX_THREAD_ID", raising=False)
         monkeypatch.setenv("CLAUDECODE", "1")
