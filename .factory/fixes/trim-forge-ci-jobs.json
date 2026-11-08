@@ -18,7 +18,7 @@
       "gain": 4,
       "harm": 3,
       "line": 10,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -41,37 +41,27 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "958270e327ae0119c7019ca2518ac4e5993e036e19e7b6666498acf61e16fdf0",
-    "changed": "4b28b45c024ce62e6579a2d597b9a67bf91ce7fe19ddf86b3adc1dd0f08b4f6e",
-    "commit": "4de4d7b8dca3280311183d1a93b70e27e0e1d0b1",
+    "branch_diff": "5494eb7feb83156b5aa89bcc1f9477b7b2f9b8f579f1180ebfda18f4be7c598f",
+    "changed": "e708b857be1cbaeeb37638a99321f75747bcac80b4783e79fa1e9dd845ec329b",
+    "commit": "32a55184aee38aad12e3012ad4e9952a571d1628",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - A pull request changes only the plugin marketplace manifest.\nThe filter omits `.claude-plugin/marketplace.json`, so that pull request starts no plugin workflow. [GitHub path filters](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/trigger-a-workflow#using-filters-to-target-specific-paths-for-pull-request-or-push-events). This is a shipped plugin distribution file: `tests/test_mod_native.py:24` validates it, and `tests/test_mod_install.py:74` uses it for the real Claude installation test. A bad marketplace source can therefore reach a release without those pull request checks. The ruling named the `src/forge/mod` subtree but did not account for this separately located manifest.",
-        "file": ".github/workflows/forge-next.yml",
-        "gain": 4,
-        "harm": 3,
-        "line": 10,
-        "priority": "P1",
-        "title": "Plugin marketplace changes bypass the install check",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - A workflow edit makes the plugin job depend on the selection job.\nThe named proof checks the selection guard and trigger text but never checks whether the plugin job can run. Adding `needs: selection` to that job would make it skip on every matching pull request while this test still passes. The exact `splitlines()` comparison also fails for equivalent YAML, such as changing quote style or reordering the two positive paths. The proof needs to check the effective plugin job outcome for matching and nonmatching paths.",
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - A workflow edit changes the plugin path filter.\nThe proof still does not check effective admission for matching and nonmatching paths. It extracts list entries without checking whether the key is `paths` or `paths-ignore`, so changing that key reverses GitHub's behavior while the assertions still pass; plugin-only pull requests would skip the job. Also, line 48 uses [Python's `fnmatchcase`](https://docs.python.org/3.11/library/fnmatch.html), where `*` matches `/`, unlike [GitHub's path filters](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#filter-pattern-cheat-sheet). Changing `src/forge/mod/**` to `src/forge/mod/*` would pass the test but skip nested plugin files. The previously requested admission proof remains incomplete.",
         "file": "tests/test_ci_skips_unneeded_pull_request_jobs.py",
         "gain": 3,
         "harm": 3,
-        "line": 28,
+        "line": 32,
         "priority": "P1",
         "title": "Gate: test_1_pull_requests_skip_selection_and_filter_plugin_changes",
         "work": 2
       }
     ],
-    "id": "6e8df671-f04f-4a4c-b63f-5ea52a7fb8d8",
+    "id": "04b724f0-bfdc-492c-9dd8-4fcc9aad995d",
     "status": "blocked"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-08T12:14:05.451382+00:00",
@@ -80,16 +70,16 @@
     {
       "at": "2026-11-08T12:24:36.455749+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-11-08T12:38:29.079543+00:00",
+      "step": "review"
     }
   ],
   "stop": {
-    "at": "2026-11-08T12:24:36.467789+00:00",
-    "by": "owner",
-    "choice": "more",
-    "file": ".github/workflows/forge-next.yml",
-    "reason": "Harm 3 findings: one more round by the standing rule",
-    "wait_id": "62aa6e48-7c37-420a-ab80-c5744d830b0e",
-    "worker_round": 1
+    "at": "2026-11-08T12:38:29.079794+00:00",
+    "file": "tests/test_ci_skips_unneeded_pull_request_jobs.py",
+    "wait_id": "91bfa11b-d26b-4314-9d00-711fe04a1f84"
   },
   "stuck": {
     "close": "7728597d-3ce2-4b4c-8a9a-cc018b68ca5b",
