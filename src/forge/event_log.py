@@ -53,6 +53,14 @@ def append(top: Path, event: dict[str, Any]) -> None:
             codex._record(_live(folder, event["id"]), round=event.get("round"))
         elif event["event"] == "run end":
             live.unlink(missing_ok=True)
+    if event["event"] == "item finished" or event["event"] == "run end" and event.get("kind") == "work":
+        from forge import machine
+        root = machine.main_checkout(top).as_posix()
+        for entry in machine.entries():
+            if (entry.get("native") and entry["kind"] == "work"
+                    and entry["repo_root"] == root and entry["item"] == event["item"]
+                    and (event["event"] == "item finished" or entry.get("round") == event.get("round"))):
+                machine.leave(entry)
 
 
 def progress(top: Path, item: str, run_id: str, fields: dict[str, Any]) -> None:
