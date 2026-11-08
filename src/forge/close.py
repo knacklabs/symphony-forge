@@ -716,8 +716,6 @@ def _merge_default(top: Path, item: str, branch: str, default: str,
         lease = remote.split()[0] if remote else ""
         if lease and repo.run("git", "merge-base", "--is-ancestor", lease, original, cwd=top).returncode:
             repo.refuse(REFUSALS["replay_remote"], branch=branch, item=item)
-        # Rebase recreates merges but drops their hand edits; retain the fix's complete own diff.
-        # Both parents exclude inherited commits and default updates already merged into the fix.
         baseline = repo.git("-c", "user.name=Forge", "-c", "user.email=forge@localhost",
                             "commit-tree", f"{target}^{{tree}}", "-p", base, "-p", target,
                             "-m", "Follow-up replay baseline", cwd=top)
@@ -771,8 +769,6 @@ def _merge_default(top: Path, item: str, branch: str, default: str,
             base = Path(folder) / "default"
             repo.git("worktree", "add", "-q", "--detach", str(base), f"origin/{default}", cwd=top)
             try:
-                # Forge's own code is never generated, and sync would parse its conflicted copy
-                # when Forge runs from this checkout.
                 ours = Path(__file__).resolve().parent
                 generated = set() if any((top / path).resolve().is_relative_to(ours) for path in files) \
                     else {Path(path).as_posix() for path in sync.files(base, cfg)}
