@@ -1,0 +1,48 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tGate: pytest picker selection tests\tci-tests-use-whole-runner",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 673,
+      "text": "Gate: pytest picker selection tests",
+      "from": "blocking",
+      "item": "ci-tests-use-whole-runner",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tReport the actual worker count in test output\tci-tests-use-whole-runner",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 449,
+      "text": "Report the actual worker count in test output",
+      "from": "blocking",
+      "item": "ci-tests-use-whole-runner",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_ci_test_worker_count.py\tGate: actual runner core-count proof\tci-tests-use-whole-runner",
+      "kind": "bug",
+      "path": "tests/test_ci_test_worker_count.py",
+      "line": 44,
+      "text": "Gate: actual runner core-count proof",
+      "from": "blocking",
+      "item": "ci-tests-use-whole-runner",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/machine.py\tNot done: When forge test runs on GitHub Actions, test worker count uses all the runner's cores, and a laptop run keeps today's agent share",
+      "kind": "edge",
+      "path": "src/forge/machine.py",
+      "line": 92,
+      "text": "Not done: When forge test runs on GitHub Actions, test worker count uses all the runner's cores, and a laptop run keeps today's agent share",
+      "from": "review",
+      "item": "ci-tests-use-whole-runner",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
