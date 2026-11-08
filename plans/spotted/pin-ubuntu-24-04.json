@@ -19,8 +19,8 @@
       "text": "Gate: test_1_default_runner_is_pinned_and_explicit_runner_is_preserved",
       "from": "blocking",
       "item": "pin-ubuntu-24-04",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\ttests/test_rules.py\tGate: tests/test_rules.py::test_31_speed\tpin-ubuntu-24-04",
