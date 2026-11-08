@@ -1,6 +1,13 @@
 {
   "base": "55eb438b74206e1afd7dcefafcdf00ea1224c257",
   "branch": "fix/trim-forge-ci-jobs",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1bb15-1d54-7cc3-88a0-acf9e068986e",
+    "head": null,
+    "start": "585f2ffd2f9e114a829a73f92480dda7a2579316"
+  },
   "done_when": "Forge's own pull requests no longer run the unused selection job, and the plugin check runs only when plugin files change",
   "fix_kind": "mechanical",
   "kind": "fix",
