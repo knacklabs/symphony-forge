@@ -670,6 +670,7 @@ def pytest_tests(base: str, command: str, entry: dict | None = None) -> int:
         allocation = next((run for run in machine.entries() if run["id"] == parent
                            and run["kind"] == "test"), None)
     workers = machine.test_cpus(allocation)
+    print(f"Test selection: {workers} workers.", flush=True)
     environment["PYTEST_XDIST_AUTO_NUM_WORKERS"] = workers
     environment["FORGE_TEST_CPUS"] = workers
     if entry is not None:

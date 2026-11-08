@@ -446,6 +446,7 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False,
                                           (command, repo.config(top)["test"])))
                 for attempt in range(2):
                     workers = machine.test_cpus(entry)
+                    print(f"Test selection: {workers} workers.", flush=True)
                     cap = f" --maxprocesses={workers}" if fasttest.XDIST.search(command) else ""
                     env.update(FORGE_TEST_LANE=entry["id"], FORGE_TEST_CPUS=workers,
                                PYTEST_XDIST_AUTO_NUM_WORKERS=workers,
