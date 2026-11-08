@@ -188,10 +188,10 @@ def close(args: argparse.Namespace) -> int:
         if migrating:  # forge-pr-check can run now that the default branch has Forge, so require it
             init.protect(top, default, cfg["checks"])
         _attach(top, item, branch)
-        done = _merged(top, item)
+        repo.record_event(top, item, "item finished")
         if not retried_history and backfill.upgrade_fix(top, item, state):
             backfill.run(top)
-        return done
+        return _merged(top, item)
 
     previous = state.get("review") or {}
     if not (skip or previous.get("skipped")):
@@ -1172,7 +1172,6 @@ def _attach(top: Path, item: str, branch: str) -> None:
 
 def _merged(top: Path, item: str) -> int:
     """A merged task needs no outcome step when its merge already recorded completion."""
-    repo.record_event(top, item, "item finished")
     print(f"The pull request for {item} is merged.")
     key, _, name = item.partition("/")
     if name:
