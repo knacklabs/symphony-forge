@@ -6,7 +6,7 @@ import os
 import re
 import tomllib
 from pathlib import Path
-from forge import checks, close, codex, fasttest, githooks, prcheck, repo, review, story, task, time_records
+from forge import checks, close, codex, githooks, prcheck, repo, review, story, task, time_records
 
 COMMANDS = [{
     "words": "merge", "run": "merge", "changes_state": False,
@@ -129,9 +129,10 @@ def merge(args: argparse.Namespace, *, refreshed: bool = False) -> int:
                 cfg = repo.config(worktree)
                 # CI covered this head; only the incoming default-branch diff needs tests.
                 command = (cfg["fast_test"] or cfg["test"]).replace("{base}", head)
-                ci_retest = fasttest.broad_ci_selection(worktree, head)
+                ci_retest = repo.test_place(cfg) == "ci" and any(
+                    check != "forge-pr-check" for check in cfg["checks"])
                 if ci_retest:
-                    print("Related tests exceed one quarter of the suite. Pull request CI runs them.",
+                    print("Pull request CI runs the combined change's tests.",
                           flush=True)
                 else:
                     failed, tested = review.test_run(worktree, command, head, always=True)
