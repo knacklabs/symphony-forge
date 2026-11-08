@@ -62,8 +62,8 @@
     "id": "5b70e186-b80d-4964-a1fd-d7d11ed4b368",
     "status": "clean"
   },
-  "round": 4,
-  "status": "waiting for checks",
+  "round": 5,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-07T18:49:17.793888+00:00",
@@ -100,10 +100,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": "5c59a018-fd48-4ba3-9913-d2071a09a3eb",
-    "head": "a23d4feee9b866051f16e1d0cc63781b606656cf",
+    "close": "ad32454e-a5e6-405a-b860-511c85795609",
+    "head": "abd7e00d2f320fca34ba6b9628af6b5fb6129289",
     "keys": {},
-    "round": 3
+    "round": 4
   },
   "why": "Codex Fast is on by default: a repo that leaves codex_fast out gets Fast for every fix and every repair round, and the owner wants it off unless a repo opts in",
   "worker": "codex"
