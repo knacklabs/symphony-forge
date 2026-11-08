@@ -1,4 +1,4 @@
-"""The main-heading check counts headings that can appear together."""
+"""Source-file checks do not refuse conditional main headings."""
 import pytest
 
 from test_close import CLEAN, GREEN, env  # noqa: F401
@@ -9,38 +9,21 @@ pytestmark = pytest.mark.platform
 
 
 @pytest.mark.parametrize("adopted", [False, True], ids=["new-client", "earlier-adopted-client"])
-def test_1_exclusive_main_headings_pass_and_simultaneous_headings_fail(env, tmp_path, adopted):
-    # Audit: real close protects exclusive versus simultaneous headings. Raw tag counting
-    # rejects the exclusive case; existing close coverage has only unconditional headings.
-    # Init and earlier-adoption sync deliver the checker. No test-only production seam.
+def test_1_conditional_main_headings_do_not_block_close(env, tmp_path, adopted):
+    # Audit: real close must accept conditional headings after init and upgrade sync.
+    # The source scanner rejects if/else branches; the old test covered only ternaries.
+    # The owner removed source heading counts. No production test seam is needed.
     _client_repo(env, tmp_path, adopted)
     screen = "apps/web/src/screen.tsx"
-    item, where = env.start(
+    item, _ = env.start(
         "heading-branches", "fix/heading-branches", ".factory/fixes/heading-branches.json",
-        {"kind": "fix", "why": "Check headings that appear together",
-         "done_when": "Exclusive headings pass and simultaneous headings fail"},
-        {screen: 'export function Screen({ready}) { return <main>{ready ? '
-                 '(<h1>Orders</h1>) : (<h1>Loading</h1>)}</main>; }\n'},
+        {"kind": "fix", "why": "Keep conditional headings",
+         "done_when": "Source heading counts do not block close"},
+        {screen: 'export function Screen({ready}) {\n'
+                 '  if (ready) return <main><h1>Orders</h1></main>;\n'
+                 '  else return <main><h1>Loading</h1></main>;\n}\n'},
     )
-
-    def close():
-        env.checks(GREEN)
-        env.reviews(CLEAN)
-        return env.close(item)
-
-    passed = close()
+    env.checks(GREEN)
+    env.reviews(CLEAN)
+    passed = env.close(item)
     assert passed.returncode == 0, passed.stdout + passed.stderr
-    cases = [
-        ('<main>{ready ? <><h1>Orders</h1><h1>Extra</h1></> : <h1>Loading</h1>}</main>', False),
-        ('<main><h1>Always</h1>{ready ? <h1>Orders</h1> : <h1>Loading</h1>}</main>', False),
-        ('<main>{ready ? <h1>Orders</h1> : other ? <h1>Empty</h1> : <h1>Loading</h1>}</main>', True),
-        ('<main>{ready ? <h1>Orders</h1> : null}{other ? <h1>Extra</h1> : null}</main>', False),
-    ]
-    # One upgraded-client witness is enough; the full case table belongs to new clients.
-    for markup, allowed in (cases[:1] if adopted else cases):
-        env.commit(where, screen, f'export function Screen({{ready, other}}) {{ return {markup}; }}\n')
-        result = close()
-        output = result.stdout + result.stderr
-        assert result.returncode == (0 if allowed else 1), output
-        if not allowed:
-            assert f"{screen}:1 title-twice: Show the page title once." in output

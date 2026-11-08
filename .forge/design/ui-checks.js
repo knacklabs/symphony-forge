@@ -35,64 +35,6 @@ async function check(files) {
     const spacing = /\b(?:p[xytrbl]?|m[xytrblse]?|gap(?:-[xy])?|space-[xy])-\[-?(?:\d+(?:\.\d+)?|\.\d+)(?:px|r?em|[sld]?v[wh]|vmin|vmax|ch|ex|cm|mm|in|pt|pc|%)?\]/g;
     for (const match of text.matchAll(spacing)) report('spacing-scale', match.index, `Use the spacing scale instead of ${match[0]}.`);
 
-    // A small tag scan catches literal headings, including text inside a span.
-    // ponytail: variable titles need review; add a parser only if that misses real defects.
-    const headings = [];
-    let main = 0, header = 0, heading = null;
-    for (const tag of text.matchAll(/<(\/?)([a-z][\w:-]*)\b[^>]*>|([^<]+)/gi)) {
-      if (tag[3] !== undefined) {
-        if (heading) heading.text += tag[3];
-        continue;
-      }
-      const name = tag[2].toLowerCase(), closing = Boolean(tag[1]);
-      if (name === 'main') main += closing ? -1 : 1;
-      if (name === 'header') header += closing ? -1 : 1;
-      if (/^h[1-6]$/.test(name)) {
-        if (closing && heading) { headings.push(heading); heading = null; }
-        else if (!closing) heading = { name, text: '', top: header > 0 && main === 0, index: tag.index };
-      }
-    }
-    // Close checks source, without a running app. Keep the sides of each JSX
-    // ternary so headings in mutually exclusive branches do not count together.
-    const branches = new Map();
-    if (/\.[jt]sx$/i.test(file)) {
-      const scopes = [], conditions = [];
-      let jsx = 0;
-      const tokens = /<\/?[a-z][\w:-]*\b[^>]*>|<\/?>|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|`(?:\\.|[^`\\])*`|\?\?|\?\.|[?():{}\[\];,]/gi;
-      for (const token of text.matchAll(tokens)) {
-        const value = token[0];
-        if (value.startsWith('<')) {
-          branches.set(token.index, new Map(conditions.map(c => [c.index, c.side])));
-          if (value.startsWith('</')) jsx = Math.max(0, jsx - 1);
-          else if (!value.endsWith('/>')) jsx++;
-        } else if (value === '{' || (!jsx && /^(?:\(|\[)$/.test(value))) {
-          scopes.push(jsx);
-          jsx = 0;
-        } else if (value === '}' || (!jsx && /^(?:\)|\])$/.test(value))) {
-          while (conditions.length && conditions.at(-1).depth >= scopes.length) conditions.pop();
-          jsx = scopes.pop() || 0;
-        } else if (!jsx && value === '?') {
-          conditions.push({ index: token.index, depth: scopes.length, side: 0 });
-        } else if (!jsx && value === ':') {
-          while (conditions.at(-1)?.depth === scopes.length && conditions.at(-1).side === 1)
-            conditions.pop();
-          if (conditions.at(-1)?.depth === scopes.length) conditions.at(-1).side = 1;
-        } else if (!jsx && (value === ';' || value === ',')) {
-          while (conditions.at(-1)?.depth === scopes.length) conditions.pop();
-        }
-      }
-    }
-    const exclusive = (a, b) => [...(branches.get(a.index) || [])].some(([id, side]) =>
-      branches.get(b.index)?.has(id) && branches.get(b.index).get(id) !== side);
-    const titles = headings.filter(h => h.name === 'h1');
-    const h1Tags = [...text.matchAll(/<h1\b/gi)];
-    const literal = h => h.text.replace(/\s+/g, ' ').trim();
-    const duplicate = h1Tags.find((tag, index) => h1Tags.slice(0, index).some(other =>
-      !exclusive(tag, other))) || titles.find(title =>
-      !/[{}]/.test(title.text) && literal(title) && headings.some(other =>
-        other !== title && other.top && !exclusive(title, other) && literal(title) === literal(other)));
-    if (duplicate && !/\.css$/i.test(file)) report('title-twice', duplicate.index, 'Show the page title once.');
-
     const html = /\.html$/i.test(file);
     const shell = html ? /<aside\b/i.exec(text) :
       /\.(tsx|jsx)$/i.test(file) ? /<SidebarProvider\b/.exec(text) : null;
