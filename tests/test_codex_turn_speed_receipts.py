@@ -73,9 +73,8 @@ def test_1_each_turn_says_and_records_whether_fast_ran(
     monkeypatch.setenv("FORGE_CODEX_RETRY_WAIT", "0")
     started = repo.forge("fix", "start", "Fix the login typo", "--done", "It says Log in")
     assert started.returncode == 0, started.stdout + started.stderr
-    if mode == "off":
-        folder = repo.path.parent / f"{repo.path.name}-fix-fix-the-login-typo"
-        _policy(repo, folder, mode)
+    folder = repo.path.parent / f"{repo.path.name}-fix-fix-the-login-typo"
+    _policy(repo, folder, mode)
     worked = repo.forge("work", "fix-the-login-typo")
     assert worked.returncode == 0, worked.stdout + worked.stderr
     events = [json.loads(line) for line in
