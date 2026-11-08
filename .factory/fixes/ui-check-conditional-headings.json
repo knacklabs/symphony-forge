@@ -147,7 +147,7 @@
     "id": "50c9ec2a-34d4-485c-93fb-39c8d74313f7",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -169,10 +169,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": null,
-    "head": "808ce268b12f246a32428a000155d4446632f346",
+    "close": "bdd22226-41c7-42a8-8a49-aa431fbec815",
+    "head": "7758798802e10a0f24e4c8afd6d832fa9d19057b",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "The generated UI checker counts every h1 in a screen file, so a screen whose headings are shown one at a time fails the one-main-heading check (issue 1451)",
   "worker": "codex"
