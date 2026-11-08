@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "edge\tsrc/forge/close.py\tNot done: Retain the review when replay restores already-reviewed merge edits",
+      "kind": "edge",
+      "path": "src/forge/close.py",
+      "line": 303,
+      "text": "Not done: Retain the review when replay restores already-reviewed merge edits",
+      "from": "review",
+      "item": "keep-review-on-same-replay",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/close.py\tNot done: Review conflict repairs when the resulting diff is unchanged",
+      "kind": "edge",
+      "path": "src/forge/close.py",
+      "line": 303,
+      "text": "Not done: Review conflict repairs when the resulting diff is unchanged",
+      "from": "review",
+      "item": "keep-review-on-same-replay",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

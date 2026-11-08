@@ -175,10 +175,9 @@ def _forge_merge_retargets_and_replays_the_stacked_part(env, previous):
     env.reviews(CLEAN)
     replayed = env.close("STACK/B")
     assert replayed.returncode == 0, replayed.stdout + replayed.stderr
-    assert len(env.review_calls()) == review_count + 1
-    # A replay needs a full review, with earlier findings retained as context.
-    assert "## Repair review" not in env.prompt()
-    assert earlier_note in env.prompt()
+    # The unchanged replay keeps the clean review, including its non-blocking note.
+    assert len(env.review_calls()) == review_count
+    assert earlier_note in replayed.stdout
     assert len(env.gh_calls("api", "--paginate", "--jq", ".check_runs[]")) > checks_count
     child_head = repo.git("rev-parse", "origin/task/STACK-B")
     assert subprocess.run(["git", "merge-base", "--is-ancestor", base_head, child_head],
@@ -209,7 +208,7 @@ def _close_guides_a_manually_merged_base_before_replaying_the_child(env, previou
     checks_count = len(env.gh_calls("api", "--paginate", "--jq", ".check_runs[]"))
     replayed = env.close("STACK/B")
     assert replayed.returncode == 0, replayed.stdout + replayed.stderr
-    assert len(env.review_calls()) == review_count + 1
+    assert len(env.review_calls()) == review_count
     assert len(env.gh_calls("api", "--paginate", "--jq", ".check_runs[]")) > checks_count
     child_head = repo.git("rev-parse", "origin/task/STACK-B")
     base = repo.git("rev-parse", "origin/main")
@@ -277,6 +276,8 @@ def _manual_merge_replay_stops_on_a_clash_in_the_stacked_part(env, previous):
     assert repo.git("diff", "--name-only", "--diff-filter=U", cwd=where) == "use.py"
     env.commit(where, "use.py", "B_VALUE = 1\nDEFAULT_VALUE = 1\n", "Resolve the default merge")
     repo.git("merge-base", "--is-ancestor", "origin/main", "HEAD", cwd=where)
+    review_count = len(env.review_calls())
     recovered = env.close("STACK/B")
     assert recovered.returncode == 0, recovered.stdout + recovered.stderr
+    assert len(env.review_calls()) == review_count + 1
     assert repo.git("show", "origin/task/STACK-B:use.py") == "B_VALUE = 1\nDEFAULT_VALUE = 1"
