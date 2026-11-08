@@ -1,4 +1,4 @@
-"""Workers receive the CI handoff instruction on new and upgraded clients."""
+"""Builders check exact repair tests before the CI handoff on new and upgraded clients."""
 import shutil
 
 import pytest
@@ -7,11 +7,11 @@ from conftest import ROOT
 from test_setup import _fresh_client
 from test_worker import calls, install_claude
 
-STORY = "brief-close-pushes"
+STORY = "builder-checks-own-repair-test"
 
 
 @pytest.mark.parametrize("previous", [False, True], ids=["new-client", "previous-adoption"])
-def test_1_workers_commit_and_stop_when_they_need_ci_evidence(repo, gh, tmp_path, previous):
+def test_1_builders_check_exact_repair_tests_before_committing(repo, gh, tmp_path, previous):
     # Prompt delivery is the contract; the Claude stub only records Forge's actual input.
     # The earlier adoption is release output from a text fixture, not today's sync output.
     if previous:
@@ -47,8 +47,14 @@ def test_1_workers_commit_and_stop_when_they_need_ci_evidence(repo, gh, tmp_path
         call = calls(log)[-1]
         assert (bool(call["options"].get("resume"))) == (round_number == 2)
         brief = " ".join(call["brief"].split())
-        assert ("the pull request's CI runs the change's related tests, lint and type checks, so do not "
-                "run them here; run `forge test` only for a test you are writing, to watch it fail.") in brief
+        assert ("run only the exact new, changed or previously failing tests through `forge test`, "
+                "using the test runner's name filter. Watch a regression fail before the repair, "
+                "then rerun those tests until they pass before committing.") in brief
+        assert "Wider related tests, lint and type checks stay in pull request CI." in brief
+        assert "commit your work first, then run only the exact" not in brief.lower()
+        for host in (".codex", ".claude"):
+            audit = " ".join((repo.path / host / "skills/test-audit/SKILL.md").read_text("utf-8").split())
+            assert "rerun those tests until they pass before committing" in audit
         assert "`forge close` pushes the committed branch and runs CI on every platform." in brief
         assert "CI output reaches you in your next round." in brief
         assert ("If you need CI evidence, commit and stop instead of asking the coordinator "
