@@ -117,7 +117,7 @@
     "id": "2ddb6479-0b64-4f29-b0cd-6d4e8056d120",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -139,10 +139,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": null,
-    "head": "7161b31cb76c4785652f5c2fde86609849740d30",
+    "close": "8e2b79bc-6ef5-4231-97a3-1c278fd6de4f",
+    "head": "f59e536db5fd8d6526beeb4fa517dd0b5275499c",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "Half of Forge's pull request CI runs are cancelled, and half of that waste comes from a push that changes only review records and cancels a run of the same code",
   "worker": "codex"
