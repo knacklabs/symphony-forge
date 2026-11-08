@@ -44,7 +44,7 @@
       "gain": 3,
       "harm": 3,
       "line": 23,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -54,48 +54,27 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "02cb11fb1dde187edd223c66c212705d935e0d8106893126280cc290828c9981",
-    "changed": "05d0e7530f0a9bdef89ee9b08352e7e7c191a8b39d70a2e0ed0b12004a1ea729",
-    "commit": "aa20d8f7c8daad41f3ec6cadd85d78cea6daca30",
+    "branch_diff": "074706179ad9e7cf752247920cdfe8f74718c5a182e0a47239529190592f0018",
+    "changed": "8de9a0384f3db77e409d629881565ef19ab406f94381b4a580286dc9a8c3b15e",
+    "commit": "37f1657078876765ec4946e92a460b9221fc2a3a",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done\nCase: normal use - a client configures separate full and pull-request test commands.\nThe Done-when item is: \u201cA client with one test group gets one tests job that also does the docs-only check, and a test command that cannot be split runs in one group instead of repeating.\u201d Group selection examines only `test` (`src/forge/repo.py:691`), but the PR command uses `fast_test` when set (`src/forge/review.py:369`). With three groups, a sharded `test` and unsharded `fast_test` therefore still run the same PR tests three times. Conversely, an unsharded `test` and sharded `fast_test` reduce the PR to one group, losing its configured parallelism.",
-        "file": "src/forge/prcheck.py",
-        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
-        "gain": 4,
-        "harm": 3,
-        "line": 250,
-        "priority": "P1",
-        "title": "Not done: a test command that cannot be split runs in one group instead of repeating",
-        "work": 2
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Gate\nCase: normal use - running the nightly or release full suite.\nThe new single-group workflow removes the matrix and two jobs, but existing tests still require the old shape. `tests/test_groups_pytest.py:145` expects the removed one-group matrix expression, and `tests/test_ci_runner_selection.py:31` expects six runner entries where the migrated workflow now has four. Those assertions will fail and prevent a green full-suite result; the first failure also prevents the rest of its multi-group coverage from running.",
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Gate\nCase: normal use - the nightly or release full suite runs the new-client CI-selection test.\nThe two previously named expectations were updated, but the same obsolete-matrix failure remains in `tests/test_test_only_pull_requests_select_changed_files.py:80-84`. It reads the first `group:` line and passes it to `expression()`, which requires a GitHub expression (`tests/test_ci_limits_pull_requests_to_linux.py:14-17`). The single-group PR job has no matrix, so the first matching line is the full-suite job's literal `[1]`; the test fails and keeps the full-suite check red.",
         "file": "src/forge/prcheck.py",
         "gain": 4,
         "harm": 3,
-        "line": 333,
+        "line": 351,
         "priority": "P1",
         "title": "Gate: existing full-suite workflow tests",
         "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - a client uses `fast_test` for pull-request checks.\nThe named single-group proof removes `fast_test` before configuring the client, and `tests/test_unsplit_groups_warning.py:39` does the same. The existing `tests/test_groups_any_runner.py:101` case supplies group variables manually without checking the generated workflow after setting `fast_test`. The proofs therefore pass when the actual PR command is repeated across groups or its valid sharding is collapsed.",
-        "file": "tests/test_single_group_client_tests.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 23,
-        "priority": "P1",
-        "title": "Gate: fast_test group-selection proof",
-        "work": 2
       }
     ],
-    "id": "c552bb16-9711-4759-bf4c-0db78502cf0d",
+    "id": "5a803631-4fd6-42cd-975f-96bd79764b80",
     "status": "blocked"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-08T12:14:10.272802+00:00",
@@ -104,16 +83,16 @@
     {
       "at": "2026-11-08T12:31:17.927148+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-11-08T12:48:00.256020+00:00",
+      "step": "review"
     }
   ],
   "stop": {
-    "at": "2026-11-08T12:31:17.937931+00:00",
-    "by": "owner",
-    "choice": "more",
+    "at": "2026-11-08T12:48:00.256241+00:00",
     "file": "src/forge/prcheck.py",
-    "reason": "Harm 3 findings: one more round by the standing rule",
-    "wait_id": "a65132a2-1ddd-4ff1-814b-381e007fa59b",
-    "worker_round": 1
+    "wait_id": "fc77b3f7-c043-4587-9169-45d91df735ff"
   },
   "stuck": {
     "close": "0e4d4c2e-fd42-4d3c-8c19-c27360c14694",
