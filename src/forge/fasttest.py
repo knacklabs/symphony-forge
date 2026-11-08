@@ -325,6 +325,13 @@ def test(args) -> int:
         base = f"origin/{repo.default_branch(top)}"
         if repo.run("git", "rev-parse", "--verify", base, cwd=top).returncode:
             raise repo.Refused(f"Fetch {base} first: run git fetch origin, then forge test.", "")
+        if args.change:
+            # Include incoming changes merged into this PR, even under Actions'
+            # synthetic merge. Main's current tip alone hides their test files.
+            merges = repo.git("rev-list", "--merges", f"{base}..HEAD", cwd=top).splitlines()
+            if merges:
+                base = repo.git("merge-base", "--octopus", base,
+                                *(f"{commit}^1" for commit in merges), cwd=top)
         # CI groups reuse their own passes; explicit ungrouped commands always execute.
         status, report = review.test_run(top, review.close_test(top, base, closing=args.change), base,
                                         always=not (args.change and "FORGE_GROUPS" in os.environ),

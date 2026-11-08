@@ -27,6 +27,7 @@ STORY = "FIX-MERGE-RETRIES-WHEN-MAIN-MOVES"
         "new-disabled", "adopted-disabled"])
 def test_1_merge_rechecks_new_commits_until_clear_or_five_moves(env, tmp_path, previous, case, moves):
     log = _client(env, tmp_path, previous)
+    env.repo.git("fetch", "-q", "origin", "main")
     other = tmp_path / "other-change"
     _, setup = env.start("test-setup", "fix/test-setup", ".factory/fixes/test-setup.json",
                          {"kind": "fix", "why": "Check the combined client",
@@ -34,6 +35,10 @@ def test_1_merge_rechecks_new_commits_until_clear_or_five_moves(env, tmp_path, p
     command = f'"{sys.executable}" verify.py'
     config = (setup / "forge.toml").read_text("utf-8").replace(
         '"python verify.py"', json.dumps(command))
+    # Keep the local retest and its real main-advance side effects. A review-only
+    # check cannot take over app tests; app-test CI routing is covered separately.
+    config = config.replace('checks = ["tests", "forge-pr-check"]',
+                            'checks = ["forge-pr-check"]')
     if case == "disabled":
         # New repos omit merge and permit agent merges only as prototypes.
         # A live client's late revocation must start with explicit permission.
@@ -68,6 +73,7 @@ def test_1_merge_rechecks_new_commits_until_clear_or_five_moves(env, tmp_path, p
     env.repo.git("merge", "-q", "--ff-only", "fix/test-setup")
     remote = env.repo.git("remote", "get-url", "origin")
     env.repo.git("fetch", "-q", str(env.repo.path), "main:main", cwd=remote)
+    env.repo.git("fetch", "-q", "origin", "main")
     item, where = env.start_fix({"app.py": "print('hello')\n",
                                  "README.md": "Branch greeting\n\nKeep this paragraph.\n\nOld closing\n"})
     env.open_pr("")

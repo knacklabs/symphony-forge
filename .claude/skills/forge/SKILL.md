@@ -268,6 +268,9 @@ In repos whose tests run in pull request CI, close already leaves the laptop tes
 When `test_place` is `ci` and a required check runs app tests, merge also leaves the tests to CI.
 It publishes the combined change and waits for that commit's checks, even when the changed
 files do not overlap. This applies to every test runner and custom fast command.
+The wait uses the combined branch's test setting and required check names.
+`forge test --change` includes incoming changes from merges into the pull request,
+so CI also selects tests that the default branch added before the merge.
 Repos whose tests run only on the laptop keep their local runs. The `forge-pr-check`
 check reviews the change and runs no app tests, so that check alone does not replace the local retest.
 The nightly full run on the default branch covers the rest. With no retest, the usual CI wait applies.

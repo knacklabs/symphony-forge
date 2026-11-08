@@ -126,11 +126,11 @@ def merge(args: argparse.Namespace, *, refreshed: bool = False) -> int:
                                                    ".claude/skills", ".codex/skills", cwd=worktree))
                 base = repo.git("merge-base", "HEAD", f"origin/{default}", cwd=worktree)
                 checked_default = base
-                cfg = repo.config(worktree)
+                config = repo.config(worktree)
                 # CI covered this head; only the incoming default-branch diff needs tests.
-                command = (cfg["fast_test"] or cfg["test"]).replace("{base}", head)
-                ci_retest = repo.test_place(cfg) == "ci" and any(
-                    check != "forge-pr-check" for check in cfg["checks"])
+                command = (config["fast_test"] or config["test"]).replace("{base}", head)
+                ci_retest = repo.test_place(config) == "ci" and any(
+                    check != "forge-pr-check" for check in config["checks"])
                 if ci_retest:
                     print("Pull request CI runs the combined change's tests.",
                           flush=True)
