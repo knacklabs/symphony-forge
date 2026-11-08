@@ -56,8 +56,8 @@
     "id": "c3f2d810-f28a-47ac-86fd-d77521cf64d5",
     "status": "clean"
   },
-  "round": 4,
-  "status": "waiting for checks",
+  "round": 5,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-07T17:52:10.621093+00:00",
@@ -90,10 +90,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": "7f4c996f-efe5-4c56-ad48-e56ae6338675",
-    "head": "4ca3937efd03461413ff10e59062830dae89e229",
+    "close": "884b1baf-048b-493f-a482-945dfc8485ef",
+    "head": "64551f2704b2c214eb6658377631c3ec9450bf7b",
     "keys": {},
-    "round": 3
+    "round": 4
   },
   "why": "forge next takes 30 to 60 seconds on a repo with many parts because it makes about 1,500 git calls, many of them repeated reads of the same history and plan files, and it does not say how many builds run against the machine builder places.",
   "worker": "codex"
