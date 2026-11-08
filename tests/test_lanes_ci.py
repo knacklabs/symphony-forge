@@ -41,7 +41,7 @@ def test_3_slow_tests_run_only_when_ci_opts_in():
     # These settings are the independent CI routing contract, not Forge source internals.
     workflow = (ROOT / ".github/workflows/forge-next.yml").read_text(encoding="utf-8")
     tests_job = workflow.split("  tests:\n", 1)[1].split("  net-lines:\n", 1)[0]
-    assert re.search(r"^    env:\n      FORGE_CONTAINERS: \$\{\{ matrix.os == 'ubuntu-latest' && '1' \|\| '0' \}\}$",
+    assert re.search(r"^    env:\n      FORGE_CONTAINERS: \$\{\{ matrix.os == 'ubuntu-24.04' && '1' \|\| '0' \}\}$",
                      tests_job, re.M), "Only the Ubuntu suite must opt in to Linux containers"
     smoke = (ROOT / ".github/workflows/codex-smoke.yml").read_text(encoding="utf-8")
     assert re.search(r'^      FORGE_LIVE_CODEX: "1"$', smoke, re.M)

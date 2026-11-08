@@ -593,7 +593,7 @@ KEYS = {"version": str, "repo": str, "stage": str, "workers": str, "tools": str,
         "added_work_min_gain": int, "always_block": list, "cold_read_rounds": int, "task_review_rounds": int}
 # A client repo without a stage counts as live: prototype rules never reach an app by default.
 DEFAULTS = {"repo": "client", "stage": "live", "workers": "codex", "tools": "both", "test": "", "fast_test": "",
-            "signoff": "", "runner": "ubuntu-latest", "codex_fast": "off",
+            "signoff": "", "runner": "ubuntu-24.04", "codex_fast": "off",
             "stop_default": "narrow", "merge": "human", "stack": "on", "checks": [], "interfaces": [], "always_test": [],
             "models": {}, "cold_read_rounds": 2, "task_review_rounds": 2}
 # ponytail: retain stop_default's old values so existing forge.toml files still load.

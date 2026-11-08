@@ -21,8 +21,8 @@ COMMANDS = [{
              (("--actions",), {"choices": ["yes", "no"],
                                "help": "whether this repo runs GitHub Actions"}),
              (("--test",), {"help": "a repo with history: its test command"}),
-             (("--runner",), {"default": "ubuntu-latest",
-                              "help": "GitHub Actions runner label (default: ubuntu-latest)"}),
+             (("--runner",), {"default": "ubuntu-24.04",
+                              "help": "GitHub Actions runner label (default: ubuntu-24.04)"}),
              (("--checks",), {"action": "append", "metavar": "CHECK",
                               "help": "a repo with history: a check branch protection requires"}),
              (("--interfaces",), {"action": "append", "metavar": "GLOB",
@@ -178,7 +178,7 @@ def signed_in(tool: str, top: Path | None = None) -> bool | None:
 
 
 def _settings(stage: str, test_place: str, test: str, checks: list[str], interfaces: list[str],
-              merge: str = "", runner: str = "ubuntu-latest", fast_test: str = "") -> str:
+              merge: str = "", runner: str = "ubuntu-24.04", fast_test: str = "") -> str:
     claude, codex = signed_in("claude"), signed_in("codex")
     workers = 'workers = "split"\n'
     if claude is True and codex is False:
@@ -222,7 +222,7 @@ def _starter_files(starter: str) -> dict[str, Path]:
             if path.suffix not in {".pyc", ".pyo"} and not caches.intersection(Path(rel).parts)}
 
 
-def _scaffold(top: Path, actions: str, runner: str = "ubuntu-latest",
+def _scaffold(top: Path, actions: str, runner: str = "ubuntu-24.04",
               starter: str | None = None) -> dict[str, str]:
     """forge.toml, the docs skeleton and an empty roadmap: repo-relative path -> text."""
     skeleton = sync.TEMPLATES / "skeleton"

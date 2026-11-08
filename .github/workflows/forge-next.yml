@@ -29,7 +29,7 @@ permissions:
 jobs:
   selection:
     if: github.event_name != 'pull_request'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       test-only: ${{ steps.select.outputs.test-only }}
       platform-files: ${{ steps.select.outputs.platform-files }}
@@ -46,7 +46,7 @@ jobs:
         run: python .forge/review-tests.py
 
   plugin:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v7
@@ -76,7 +76,7 @@ jobs:
     # Keep these matrix checks separate from the required Linux tests check in forge.yml.
     name: ${{ matrix.os == 'windows-latest' && 'platform-sensitive tests' || 'full suite' }} on ${{ matrix.os }}, group ${{ matrix.group }} of ${{ matrix.groups }}
     env:
-      FORGE_CONTAINERS: ${{ matrix.os == 'ubuntu-latest' && '1' || '0' }}
+      FORGE_CONTAINERS: ${{ matrix.os == 'ubuntu-24.04' && '1' || '0' }}
       TEST_ONLY: ${{ needs.selection.outputs.test-only }}
       PLATFORM_FILES: ${{ needs.selection.outputs.platform-files }}
     strategy:

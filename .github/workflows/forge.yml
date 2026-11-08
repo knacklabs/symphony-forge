@@ -19,7 +19,7 @@ permissions:
 jobs:
   docs-check:
     if: github.event_name == 'pull_request'
-    runs-on: "ubuntu-latest"
+    runs-on: "ubuntu-24.04"
     outputs:
       docs-only: ${{ steps.docs.outputs.docs-only }}
       test-only: ${{ steps.docs.outputs.test-only }}
@@ -46,7 +46,7 @@ jobs:
       fail-fast: false
       matrix:
         group: ${{ fromJSON(needs.docs-check.outputs.test-only == 'true' && '[1]' || '[1, 2, 3, 4, 5, 6]') }}
-    runs-on: "ubuntu-latest"
+    runs-on: "ubuntu-24.04"
     env:
       UV_FROZEN: '1'
       FORGE_GROUP: ${{ matrix.group }}
@@ -90,7 +90,7 @@ jobs:
     needs: [docs-check, tests]
     if: always() && github.event_name == 'pull_request'
     name: ${{ github.event_name == 'pull_request' && 'tests' || 'tests (other event)' }}
-    runs-on: "ubuntu-latest"
+    runs-on: "ubuntu-24.04"
     steps:
       - env:
           TEST_GROUP_RESULT: ${{ needs.tests.result }}
@@ -107,7 +107,7 @@ jobs:
       contents: read
       actions: read
       statuses: write
-    runs-on: "ubuntu-latest"
+    runs-on: "ubuntu-24.04"
     steps:
       # The base branch's code and forge.toml; the pull request's commits are only data.
       - uses: actions/checkout@v7
@@ -184,7 +184,7 @@ jobs:
       contents: read
       actions: read
       statuses: write
-    runs-on: "ubuntu-latest"
+    runs-on: "ubuntu-24.04"
     env:
       UV_FROZEN: '1'
       FORGE_GROUP: ${{ matrix.group }}
@@ -224,7 +224,7 @@ jobs:
   full-suite-result:
     needs: full-suite
     if: always() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
-    runs-on: "ubuntu-latest"
+    runs-on: "ubuntu-24.04"
     timeout-minutes: 5
     permissions:
       statuses: write
