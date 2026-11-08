@@ -148,7 +148,8 @@ def _assert_python_tree(client: Path):
     assert dockerfile.index("USER app") < dockerfile.index("uv sync --frozen --no-dev")
     for line in (
         "FROM node:24",
-        "corepack pnpm install --frozen-lockfile && corepack pnpm run build",
+        "RUN corepack pnpm install --frozen-lockfile",
+        "RUN corepack pnpm run build",
         "python:3.14-slim-bookworm",
         "ghcr.io/astral-sh/uv:0.13.0",
         "uv sync --frozen --no-dev",

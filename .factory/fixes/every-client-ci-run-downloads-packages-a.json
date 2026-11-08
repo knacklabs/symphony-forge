@@ -1,0 +1,130 @@
+{
+  "base": "5393cf3ed78f0bae68f7bf2762dbcc9675a03710",
+  "branch": "fix/every-client-ci-run-downloads-packages-a",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1b762-7983-79b1-b035-f3a6f3f61119",
+    "head": null,
+    "start": "279dcb8a2f37d1e474bb0a7a67007131d8e35bf3"
+  },
+  "done_when": "On a second run with an unchanged lockfile, the client check reuses downloaded packages and image layers, and a source-only edit no longer reinstalls the packages in the image build.",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "src/forge/templates/starter/Dockerfile",
+      "file": "src/forge/templates/starter/Dockerfile",
+      "gain": 5,
+      "harm": 3,
+      "line": 9,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Starter image builds try to copy an ignored .npmrc",
+      "work": 1
+    },
+    {
+      "area": "ships() in src/forge/prcheck.py",
+      "file": "src/forge/prcheck.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 331,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: The second client run still downloads packages and rebuilds image layers",
+      "work": 3
+    },
+    {
+      "area": "src/forge/templates/starter/Dockerfile",
+      "file": "src/forge/templates/starter/Dockerfile",
+      "gain": 4,
+      "harm": 3,
+      "line": 27,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Install all workspace manifests when an app adds a feature",
+      "work": 2
+    },
+    {
+      "area": "ships() in src/forge/prcheck.py",
+      "file": "src/forge/prcheck.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 249,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Do not require a pnpm packageManager field in adopted clients",
+      "work": 1
+    },
+    {
+      "area": "ships() in src/forge/prcheck.py",
+      "file": "src/forge/prcheck.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 249,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Moving part: pnpm/action-setup",
+      "work": 2
+    },
+    {
+      "area": "test_1_new_client_reuses_packages_and_dependency_layers() in tests/test_client_package_cache.py",
+      "file": "tests/test_client_package_cache.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 34,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_new_client_reuses_packages_and_dependency_layers",
+      "work": 3
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "c9739ab728c9fe8f607425f22ee5deda76223699245b5638a142f28b1d0634a4",
+    "changed": "6f1a1939364496384e22ad097693ca102e67120291cb61679f0abbe8f4070d35",
+    "commit": "d973c44ce04dbdf02f7f15e44ca1e52ae3fc9723",
+    "dismissals": [],
+    "findings": [],
+    "id": "7504501a-595d-4923-8597-911b74d871d0",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-07T18:40:22.976540+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-07T19:29:05.710502+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-07T19:40:33.954921+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "272cde14-30fa-4471-9216-dd5356b16054",
+    "head": "2b45246f5f94c5a5a143744950ef5ddb5f79e7ce",
+    "keys": {
+      "the open P0 starter image builds try to copy an ignored .npmrc in src/forge/templates/starter/dockerfile": 1
+    },
+    "round": 1
+  },
+  "why": "Every client CI run downloads packages again because the generated workflow caches packages only for Forge itself, and both starter web builds copy all source before installing packages, so a source edit reinstalls every package.",
+  "worker": "codex"
+}

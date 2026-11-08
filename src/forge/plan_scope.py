@@ -1,11 +1,12 @@
 """Task dependencies and file ownership in story plans."""
-import re
 from typing import Any
 
 from forge import repo
 
 
 def check(tasks: list[dict[str, Any]]) -> None:
+    from forge.task import _overlap
+
     by_id = {task["id"]: task for task in tasks}
 
     def waits(task: str, other: str) -> bool:
@@ -18,8 +19,7 @@ def check(tasks: list[dict[str, Any]]) -> None:
                 continue
             for left in first["scope"]:
                 for right in second["scope"]:
-                    a, b = (re.split(r"[*?\[]", path, maxsplit=1)[0] for path in (left, right))
-                    if a.startswith(b) or b.startswith(a):
+                    if _overlap(left, right):
                         repo.refuse((
                             f"Tasks {first['id']} and {second['id']} can change the same file "
                             f"({left}, {right}).",
