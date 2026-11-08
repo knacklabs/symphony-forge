@@ -1827,8 +1827,11 @@ In CI mode, `forge.yml` also runs `forge test --full` once a day on the default 
 at once with `gh workflow run forge.yml --ref <default>` when full-run proof is required.
 Prepare the release or sign-off notes while it runs, then follow that same run with
 `gh run watch <run-id> --exit-status`; do not wait for the nightly run or the tag push.
-Local mode has no scheduled job; when `forge next` says the daily run is due, run `forge test --full`
-in the main checkout when the machine is quiet. A green full run on the latest default-branch
+Local mode has no scheduled job; after the last product merge for a release or sign-off,
+start `forge test --full` at once in the main checkout when full-run proof is required.
+Prepare notes while it runs and wait for that same command to finish. For the daily run outside
+a release or sign-off, run it when `forge next` says it is due and the machine is quiet.
+A green full run on the latest default-branch
 commit is required before pushing a release tag. Client sign-off can reuse a green full run
 within the latest ten default-branch commits when only exact `forge sync` output or records
 under `.factory/`, `plans/` or `docs/decisions/` changed on the default branch.
