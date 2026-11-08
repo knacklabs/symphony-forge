@@ -70,7 +70,7 @@
     "id": "44ebb578-935f-4171-b54a-a8b6bfbe9a52",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -92,10 +92,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": null,
-    "head": "b72a1df5a721e0912edea4709d1e5bdafe3a27cc",
+    "close": "28f35808-130c-4eba-8cf2-d5f9a86fcd5f",
+    "head": "086bc6705794f9b7f695589cb9994be272bbc799",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "Adopted apps break main when selected tests miss shared inputs (issue 1430), and the adoption steps only describe the required-check list",
   "worker": "codex"
