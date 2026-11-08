@@ -11,14 +11,152 @@
   "done_when": "forge next names two open fixes or parts whose changed files overlap and suggests merging one first, without blocking either",
   "fix_kind": "backend",
   "kind": "fix",
+  "known": [
+    {
+      "area": "_overlaps() in src/forge/nextstep.py",
+      "file": "src/forge/nextstep.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 419,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: forge next names two open fixes or parts whose changed files overlap and suggests merging one first, without blocking either",
+      "work": 2
+    },
+    {
+      "area": "_report() in src/forge/nextstep.py",
+      "file": "src/forge/nextstep.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 402,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Preserve the next state and overlap warnings in the machine view",
+      "work": 2
+    },
+    {
+      "area": "test_1_next_names_shared_changed_files_and_suggests_merge_order() in tests/test_next_warns_about_shared_files.py",
+      "file": "tests/test_next_warns_about_shared_files.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 54,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_next_names_shared_changed_files_and_suggests_merge_order",
+      "work": 2
+    },
+    {
+      "area": "test_1_next_names_shared_changed_files_and_suggests_merge_order() in tests/test_next_warns_about_shared_files.py",
+      "file": "tests/test_next_warns_about_shared_files.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 18,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: tests/test_ci_timing_inventory.py and tests/test_rules.py",
+      "work": 1
+    },
+    {
+      "area": "_overlaps() in src/forge/nextstep.py",
+      "file": "src/forge/nextstep.py",
+      "gain": 2,
+      "harm": 2,
+      "line": 412,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Follow-up: Exclude squash-merged local fixes from overlap advice",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "6fd9b50289d9a07dfd62ffc4423deae91b397e7ec6173e68e9c2829f32d9f129",
+    "changed": "3d261a855d1745ca0337c9eca2272472acaab09bcde1f607fc62071803d9ddf2",
+    "commit": "befde31f01d523056c663387485016b12428a4dc",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done\nCase: normal use - One fix renames a tracked source file while another deletes or independently renames that file.\nWith Git's default rename detection, `git diff --name-only` reports the destination of a rename but omits its old path. The two sets therefore have no shared path, even though merging them produces a rename/delete or rename/rename conflict. The coordinator's specified diff did not account for this behavior; `src/forge/merge.py:100` already uses `--no-renames` to include both paths.",
+        "file": "src/forge/nextstep.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 419,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: forge next names two open fixes or parts whose changed files overlap and suggests merging one first, without blocking either",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - Two fixes overlap while another item needs a coordinator to answer a worker's question.\nThe warning is inserted before the item status, but `board_facts.py:54-57` keeps only the first non-`Next:` line and the first command for `forge next --json`. The global state line consequently becomes the overlap warning while the step can belong to another item, hiding the reason that item stopped. Conversely, when a due reminder or hotspot precedes the warning, the JSON contains no overlap advice; with several pairs it retains at most one. The Claude Code summary consumes this machine view (`src/forge/mod/hooks/summary.ts:86`).",
+        "file": "src/forge/nextstep.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 402,
+        "priority": "P1",
+        "title": "Preserve the next state and overlap warnings in the machine view",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Test\nCase: normal use - Two started parts touch the same file, or two overlapping fixes proceed through close and merge.\nThe sole proof creates only one part, so it would pass if part-to-part comparisons were omitted. It checks printed close commands but never actually closes or Forge-merges either overlapping fix, so an overlap gate would also go undetected. The claimed process-budget proof at lines 79-82 counts only one exact Git argument order: an extra Git call can escape the count, while an equivalent reordering fails the test. Exercise the missing behavior and measure the call budget without requiring that private argument order.",
+        "file": "tests/test_next_warns_about_shared_files.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 54,
+        "priority": "P1",
+        "title": "Gate: test_1_next_names_shared_changed_files_and_suggests_merge_order",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 1, Harm 3\nRaise: Gate\nCase: normal use - The pull request relies on its configured checks for the listed proof.\nThe proof list names both complete test files, but the recorded local result covers only the two cheap rule tests. The PR workflow runs `forge test --change` (`.github/workflows/forge.yml:82`); the selector at `src/forge/fasttest.py:388-400` does not select the timing inventory or the remaining rule tests for these changed files, and `.forge/always-tests.txt` names only the two cheap nodes. The full-suite job runs on scheduled or manual events, so a green PR check does not provide the other listed results.",
+        "file": "tests/test_next_warns_about_shared_files.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 18,
+        "priority": "P1",
+        "title": "Gate: tests/test_ci_timing_inventory.py and tests/test_rules.py",
+        "work": 1
+      },
+      {
+        "body": "Gain 2, Work 2, Harm 2\nCase: normal use - A fix is squash-merged, its local worktree remains for cleanup, and GitHub is temporarily unavailable after the default branch has been fetched.\nFor local fixes, `nextstep.py:319-320` marks a fix merged only from GitHub's merged-PR list; that list is empty on a failed read at lines 255-257, even though the landed state is available. A squash merge leaves the old branch outside default-branch ancestry, so this diff still attributes its files to an open fix and advises merging it again. The test's non-squash merge at line 91 makes the diff empty and does not expose this case.\nAdds work: check landed fix records before producing overlap advice; F 2 x H 2 = 4; 2 x C = 4.",
+        "file": "src/forge/nextstep.py",
+        "gain": 2,
+        "harm": 2,
+        "line": 412,
+        "priority": "P2",
+        "title": "Follow-up: Exclude squash-merged local fixes from overlap advice",
+        "work": 2
+      }
+    ],
+    "id": "d74d68ef-772c-4a5b-9ba1-7ddb53ce3977",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-08T12:38:53.076803+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-08T12:56:12.901526+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-11-08T12:56:12.912931+00:00",
+    "file": "src/forge/nextstep.py",
+    "wait_id": "dbfed84d-1a10-4b8d-848b-f0825569384d"
+  },
   "stuck": {
     "close": null,
     "head": "a1b0cbc7b5a7c2eb1262847b4c52397aca0c2138",
