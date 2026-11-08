@@ -122,7 +122,7 @@ def narrow_command(command: str, excluded: list[str], workers: str, always: list
         value = token.group().strip("\"'")
         if Path(value.split("::", 1)[0]).resolve() in paths:
             replacements.append((token.start(), token.end(), ""))
-    options = ["-p", "_forge_pytest_selection"] if excluded or always else []
+    options = ["-p", "_forge_pytest_selection"] if launchers or excluded or always else []
     configured = command + " " + pytest_options([token.group().strip("\"'") for token in tokens])
     if XDIST.search(configured):
         caps = [int(cap) for cap in re.findall(r'''(?:^|[\s"'=])--maxprocesses(?:=|\s+)["']?(\d+)''', configured)
@@ -411,11 +411,27 @@ def always_tests(top: Path, cfg: dict) -> list[str]:
     return list(dict.fromkeys(cfg.get("always_test", []) + docskip.required_tests(top)))
 
 
+WORKER_REPORT = """
+def report_workers(config):
+    import subprocess, sys
+    if hasattr(config, "workerinput"):
+        return
+    # xdist has resolved auto, fixed counts and maxprocesses into its worker list.
+    workers = len(getattr(config.option, "tx", []) or []) if getattr(config.option, "dist", "no") != "no" else 1
+    print("Test selection: %s workers." % (workers or 1), flush=True)
+    if os.environ.get("GITHUB_ACTIONS") == "true" and sys.platform == "linux":
+        print("Runner cores (nproc): " + subprocess.check_output(["nproc"], text=True).strip(), flush=True)
+"""
+
 # The temporary pytest plugin: skip unpicked files, keep picked tests and each always_test entry,
 # and fail the run when an entry ran no test. xdist forwards each test's report to the controller.
 SELECTION = """import os, pathlib, pytest, re
+""" + WORKER_REPORT + """
 IGNORE, PICKED, ALWAYS, REQUIRED, TASKS = {}, {}, {}, {}, {}
 RAN, ROOT = set(), []
+def pytest_sessionstart(session):
+    if not session.config.pluginmanager.hasplugin("_forge_test_results"):
+        report_workers(session.config)
 def pytest_configure(config):
     config.option.ignore = (config.option.ignore or []) + IGNORE
     ROOT.append(pathlib.Path(str(config.rootdir)))
@@ -465,6 +481,7 @@ INVOCATION_HEADER = "# forge pytest invocation "
 RETRY_HEADER = "# forge pytest retry\n"
 RETRY_STEP = "# forge pytest retry invocation\n"
 RESULTS = """import json, os, pathlib, pytest
+""" + WORKER_REPORT + """
 FILE, ROOT = [], []
 COLLECTED = []
 FAILED, PASSED = set(), set()
@@ -501,6 +518,7 @@ def pytest_configure(config):
     ROOT.append(pathlib.Path(str(config.rootdir)))
 @pytest.hookimpl(hookwrapper=True, tryfirst=True)
 def pytest_sessionstart(session):
+    report_workers(session.config)
     yield  # xdist starts workers with this plugin before we clear it for child tests.
     plugins = ",".join(name for name in os.environ.pop("PYTEST_PLUGINS", "").split(",")
                        if name.strip() not in ("", "_forge_test_results"))
@@ -597,6 +615,8 @@ def test_process(top, item, command, env, entry, ran, log):
             machine.started(entry, process.pid)
             output, total, completed, finished = [], None, 0, set()
             for line in test_output(process):
+                if line.startswith(("Test selection:", "Runner cores (nproc):")):
+                    print(line, end="", flush=True)
                 sink.write(line)
                 sink.flush()
                 output.append(line)
@@ -709,12 +729,11 @@ def pytest_tests(base: str, command: str, entry: dict | None = None) -> int:
     # A temporary pytest hook supports pre-8.2 clients without filling cmd.exe's command line.
     with tempfile.TemporaryDirectory(prefix="forge-pytest-") as folder:
         node_worker_environment(environment, folder)
-        if excluded or always or named:
-            selection = Path(folder) / "_forge_pytest_selection.py"
-            selection.write_text(SELECTION.format(repr(excluded), repr(None if shared_changed else picked),
-                                                  repr(always), repr(required), repr(named)), "utf-8")
-            environment["PYTHONPATH"] = os.pathsep.join(
-                [folder, environment.get("PYTHONPATH", "")])
+        selection = Path(folder) / "_forge_pytest_selection.py"
+        selection.write_text(SELECTION.format(repr(excluded), repr(None if shared_changed else picked),
+                                              repr(always), repr(required), repr(named)), "utf-8")
+        environment["PYTHONPATH"] = os.pathsep.join(
+            [folder, environment.get("PYTHONPATH", "")])
         arguments = always + list(dict.fromkeys(name.split("::", 1)[0] for name in named))
         if entry is None:
             return subprocess.run(narrow_command(command, excluded, workers, arguments), shell=True,
