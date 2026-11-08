@@ -16,6 +16,7 @@ FULL = {
     "python_feature_permissions_smoke": 'tests/test_feature_access.py -k "feature-python and test_3_each_feature_checks_its_permissions" -q -n 0 --timeout=1800',
 }
 STARTERS = {"starter_smoke", "python_starter_smoke"}
+FIXTURES = {"tests/test_starter_tree.py", "tests/test_libs_layout.py"}
 FEATURES = STARTERS | {
     "python_database_kinds_smoke",
     "python_feature_api_smoke", "python_feature_history_smoke",
@@ -28,6 +29,7 @@ TEXT = {
 }
 # First matching row wins. Unknown smoke inputs keep the full coverage.
 AREAS = [
+    *((path, STARTERS, False) for path in sorted(FIXTURES)),
     ("src/forge/templates/skills/agents/assistant-module/**", STARTERS, True),
     *(("src/forge/templates/" + name, set(), False) for name in sorted(TEXT)),
     ("src/forge/templates/design/**", STARTERS, False),
@@ -56,6 +58,7 @@ def main():
             # docs and regression tests often accompany the template change.
             if not (path.startswith("src/forge/templates/")
                     or fnmatchcase(path, "src/forge/feature*.py")
+                    or path in FIXTURES
                     or path in {".github/workflows/starter-smoke.yml", "scripts/smoke_select.py"}):
                 continue
             jobs, assistant_only = next(

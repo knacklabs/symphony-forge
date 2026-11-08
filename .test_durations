@@ -1,4 +1,5 @@
 {
+    "tests/test_smoke_fixture_checks_run_on_pull_requests.py::test_1_smoke_fixture_changes_run_the_real_starter_jobs": 1.0,
     "tests/test_adoption_shared_input_checks.py::test_1_adoption_review_keeps_shared_input_checks[new-client]": 8.406,
     "tests/test_adoption_shared_input_checks.py::test_1_adoption_review_keeps_shared_input_checks[previous-adoption]": 8.131,
     "tests/test_abandoned_fix_names_stay_taken.py::test_4_abandoned_fix_name_is_taken_before_a_new_checkout_is_created[adopted-v1.2.2-fetched-tag]": 1.5889193350001278,
