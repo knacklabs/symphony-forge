@@ -54,8 +54,8 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "43075b69fd894be60bb3ebbffa92db9b6635e7ceb1fc7091311f83dd571dda7f",
-    "changed": "9da2a59b7cb9443ae10d2f2d11edcb04c9fa06392698460c00b74ac10745c244",
+    "branch_diff": "e770f53766fa6102ee9b79230c9f3df124e673c53379198719f309707b4d84d7",
+    "changed": "e92ef395bfea7d635f4722ba771efe08578a0e8731e0e41d1c579558fd84b5c3",
     "commit": "0163021f69d324d77819c559c9551914c7af1e3c",
     "dismissals": [],
     "findings": [],
