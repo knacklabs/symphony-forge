@@ -1,0 +1,73 @@
+{
+  "allow_large": "A release bump records the version in every file that names it; the owner approved publishing v1.2.32",
+  "base": "b8a55a4aef8956e9598acbb93e36ca90d7600604",
+  "branch": "fix/release-1-2-32",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1bcd8-c57e-7832-9aaf-2f73a0d68813",
+    "head": null,
+    "start": "5a0bbc9f05554cc1f31d9c108c8831d3f283f319"
+  },
+  "done_when": "The version is 1.2.32, generated files are synced, this repo is pinned to v1.2.32, and the tests pass",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": ".factory/fixes/release-1-2-32.json",
+      "file": ".factory/fixes/release-1-2-32.json",
+      "gain": 4,
+      "harm": 2,
+      "line": 5,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: proof list",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "9fffd0c26557ee6c979cfb8b9490a7b93ee2380e020bc542e4d4878fa303a06b",
+    "changed": "9b7590d8876fd86f29cced6d4c978fc85900ae687005bf931f81143c115a8aa2",
+    "commit": "72d277d2957dc40ecdcdff36df47d539ab6900a3",
+    "dismissals": [],
+    "findings": [],
+    "id": "ba51c63a-61bc-40e1-a4f4-dc9f5e4cd1b6",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-08T20:22:30.082310+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-08T20:27:17.674408+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-08T20:31:41.370667+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-08T20:27:17.683821+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": ".factory/fixes/release-1-2-32.json",
+    "reason": "Add the proof list",
+    "wait_id": "6f43eba6-cc23-4c3e-a0eb-0bca3af6810e",
+    "worker_round": null
+  },
+  "stuck": {
+    "close": "ae405150-f2d9-41e6-93b0-0cdccc53de90",
+    "head": "8644f2f4dc22b7b8105a096fb479aaff3cb382db",
+    "keys": {},
+    "round": null
+  },
+  "why": "Release v1.2.32: publish what merged since v1.2.31",
+  "worker": "codex"
+}

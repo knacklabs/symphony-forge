@@ -1,7 +1,7 @@
 param([switch]$Check)
 
 $ErrorActionPreference = 'Stop'
-$ForgeVersion = '1.2.31'
+$ForgeVersion = '1.2.32'
 $ImpeccableUrl = 'https://github.com/pbakaus/impeccable/tree/414603bf14c7a344edb466bb1f85690c77ce8b7d/plugin/skills/impeccable'
 $EmilDesignEngUrl = 'https://github.com/emilkowalski/skills/tree/a81dbca07f2217b7103e510c0f13f8d5b017afc9/skills/emil-design-eng'
 
