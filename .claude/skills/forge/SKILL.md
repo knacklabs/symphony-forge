@@ -1096,6 +1096,11 @@ When initializing an existing repo, answer "Does this repo run GitHub Actions?" 
 settings: `gh api repos/{owner}/{repo}/actions/permissions` gives `enabled`. Ask the human only
 if the settings do not answer it. Pass
 `--actions yes` or `--actions no`; omit `--checks` when the answer is no.
+With Actions, adoption adds `tests` and `forge-pr-check` to the named checks.
+For an earlier-adopted repo with only `forge-pr-check` and no explicit `test_place`,
+doctor warns that close runs tests on this machine. Set `checks = ["forge-pr-check", "tests"]`
+in a fix whose Done-when names `forge.toml`, then run `forge sync`. Doctor and sync
+keep existing settings until that fix changes them. An explicit `test_place` keeps its value.
 
 1. Follow [App constitution](#app-constitution) for both interview halves together. Ask only what
    the code cannot answer, and record the stack the code already uses.
