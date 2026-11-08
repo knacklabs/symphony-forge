@@ -2,6 +2,13 @@
   "allow_large": "A release bump records the version in every file that names it; the owner approved publishing v1.2.32",
   "base": "b8a55a4aef8956e9598acbb93e36ca90d7600604",
   "branch": "fix/release-1-2-32",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1bcd8-c57e-7832-9aaf-2f73a0d68813",
+    "head": null,
+    "start": "5a0bbc9f05554cc1f31d9c108c8831d3f283f319"
+  },
   "done_when": "The version is 1.2.32, generated files are synced, this repo is pinned to v1.2.32, and the tests pass",
   "fix_kind": "mechanical",
   "kind": "fix",
