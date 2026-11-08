@@ -34,6 +34,17 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/machine.py\tNot done: GitHub Actions oversubscribes CPU-restricted Python 3.11 runners",
+      "kind": "edge",
+      "path": "src/forge/machine.py",
+      "line": 93,
+      "text": "Not done: GitHub Actions oversubscribes CPU-restricted Python 3.11 runners",
+      "from": "review",
+      "item": "ci-tests-use-whole-runner",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/machine.py\tNot done: When forge test runs on GitHub Actions, test worker count uses all the runner's cores, and a laptop run keeps today's agent share",
       "kind": "edge",
       "path": "src/forge/machine.py",
