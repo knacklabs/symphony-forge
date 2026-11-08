@@ -41,39 +41,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "a5de6a19e7a78c73db50f3a3a51524b0d371c1a967bcfba6347d8d0b85d1e6b7",
-    "changed": "204df037fbb28777158d880debd3c8d27782a3b93d0ac3a9dd3fbb4aa264cefd",
-    "commit": "c111560b557d5c1ead92cd13c4a8d100c06f23de",
+    "branch_diff": "ae9c16cfaa7c4c357cfbcfa20d2b7cdffbea832aa7dda68825bd243e2ea11fc1",
+    "changed": "d6e7de2b0b5610510103dbc49a95eb3454e214cc7b4e3ddf0f10b29aa56d51f6",
+    "commit": "0f629cadbdaf7c47c914ff2fc37e6e819f97e7ae",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done - Close keeps a clean review when the replay leaves the reviewed product content identical, and still reviews any changed content or conflict repair\nCase: normal use - a stacked part has a clean review after incorporating its own edits in a merge, and its parent then lands.\nIf replay drops those already-reviewed merge edits, src/forge/close.py:739 restores them in a new commit containing the proof list but not the prior Functional check. That check is part of the fingerprint at src/forge/review.py:162, and src/forge/repo.py:438 makes the restoration commit the latest non-merge commit used to read it. When the original Functional check precedes the proof list, the fingerprint therefore changes even though the reviewed product diff is identical, and close starts another full review.",
-        "file": "src/forge/close.py",
-        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
-        "gain": 4,
-        "harm": 3,
-        "line": 303,
-        "priority": "P1",
-        "title": "Not done: Retain the review when replay restores already-reviewed merge edits",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Not done - Close keeps a clean review when the replay leaves the reviewed product content identical, and still reviews any changed content or conflict repair\nCase: normal use - a stacked parent and child edit the same file, the parent is squash-merged, and a later work round resolves the resulting merge conflict by keeping the reviewed child version.\nForge merges the default branch before work at src/forge/worker.py:126. Because the squash removed the parent's ancestry, that merge can conflict even when the default file has the same bytes as the original parent. After resolution, the reviewed commit remains an ancestor and the product diff still matches, so this condition reuses the old review without reviewing the conflict repair. The conflict case at tests/test_stack_close.py:277 changes the diff as well, so its new assertion does not catch this case.",
-        "file": "src/forge/close.py",
-        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
-        "gain": 3,
-        "harm": 3,
-        "line": 303,
-        "priority": "P1",
-        "title": "Not done: Review conflict repairs when the resulting diff is unchanged",
-        "work": 2
-      }
-    ],
-    "id": "b8fdd519-00e0-4d07-8203-658ce28266ff",
+    "findings": [],
+    "id": "707db6df-0bd0-4003-854d-dc967db90f3f",
     "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-07T18:13:00.992192+00:00",
@@ -81,6 +58,10 @@
     },
     {
       "at": "2026-11-07T18:58:16.954270+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-08T03:13:06.015776+00:00",
       "step": "review"
     }
   ],
