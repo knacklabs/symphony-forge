@@ -94,7 +94,7 @@
     "status": "blocked"
   },
   "round": 2,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-07T18:53:13.722341+00:00",
@@ -110,9 +110,13 @@
     }
   ],
   "stop": {
+    "by": "owner",
+    "choice": "narrow",
     "question": "Close silently puts back the default branch's forge.toml when a fix is stuck. It should deliver: When close keeps the default branch's forge.toml, its line says the change is kept out because the item's Done-when does not name forge.toml and gives the forge fix amend step to allow it\nTwo rounds in a row left the open P0 data loss: expose the recovery step before land merges in src/forge/task.py.\nThe worker tried: Review of kept-settings-names-the-way: blocked; Tell the coordinator how to restore the settings.\nChoose one: switch this item to Claude; keep Codex for one more round; or narrow or split it.",
+    "reason": "Owner chose: close stops and asks instead of quietly restoring main's forge.toml",
     "tool": "codex",
-    "wait_id": "15f95e5c-c461-4ba6-90ad-6d1bdd29fece"
+    "wait_id": "15f95e5c-c461-4ba6-90ad-6d1bdd29fece",
+    "worker_round": 2
   },
   "stuck": {
     "close": "22cb6b1e-7c2f-45c7-aefc-bc24930a4b68",
