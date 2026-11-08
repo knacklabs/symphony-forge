@@ -444,8 +444,10 @@ def _adopt(top: Path, args: argparse.Namespace) -> None:
         repo.refuse(REFUSALS["adopting"])
     # Forge's own check gates each pull request once Forge is on the default branch.
     checks = [] if args.actions == "no" else [*(args.checks or [])]
-    if args.actions != "no" and "forge-pr-check" not in checks:
-        checks.append("forge-pr-check")
+    if args.actions != "no":
+        for check in ("tests", "forge-pr-check"):
+            if check not in checks:
+                checks.append(check)
     toml = _settings("live", "ci" if args.actions == "yes" else "local", args.test,
                      checks, args.interfaces, merge="human", runner=args.runner)
     cfg = repo._config_text(toml)  # pyright: ignore[reportPrivateUsage]

@@ -91,6 +91,12 @@ async function render() {
         expression: `new Promise(resolve => {
           const measure = async () => {
             await document.fonts.ready;
+            // Flush initial styles so @starting-style transitions have started.
+            document.body?.getBoundingClientRect();
+            await Promise.race([
+              Promise.allSettled(document.getAnimations().map(animation => animation.finished)),
+              new Promise(done => setTimeout(done, 1000)),
+            ]);
             resolve(innerWidth === ${width} && Math.max(document.documentElement.scrollWidth,
               document.body?.scrollWidth || 0) <= innerWidth);
           };

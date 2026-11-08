@@ -52,7 +52,8 @@ def _adopts(repo, gh, tmp_path, monkeypatch) -> None:
     cfg = tomllib.loads(repo.git("show", f"{BRANCH}:forge.toml"))
     assert (cfg["repo"], cfg["stage"], cfg["merge"], cfg["test"]) == (
         "client", "live", "human", "npm ci && npm test")
-    assert cfg["checks"] == ["build", "lint", "forge-pr-check"]
+    # Adoption now requires Forge's app-test job beside the client's checks.
+    assert cfg["checks"] == ["build", "lint", "tests", "forge-pr-check"]
     assert cfg["interfaces"] == ["api/routes/**", "db/migrations/**"]
     # The team's lines stay; the house rules sit outside Forge's block.
     agents = repo.git("show", f"{BRANCH}:AGENTS.md")
@@ -76,7 +77,7 @@ def _adopts(repo, gh, tmp_path, monkeypatch) -> None:
     # and a human merges.
     _review_and_checks(repo, gh, tmp_path, monkeypatch)
     gh.respond("api", "--paginate", "--jq", ".check_runs[]",
-               stdout="".join(json.dumps(run(name)) + "\n" for name in ("build", "lint")))
+               stdout="".join(json.dumps(run(name)) + "\n" for name in ("build", "lint", "tests")))
     closed = repo.forge("close", ITEM, cwd=where)
     assert closed.returncode == 0, closed.stdout + closed.stderr
     assert closed.stdout.splitlines()[-1] == (
@@ -95,7 +96,7 @@ def _adopts(repo, gh, tmp_path, monkeypatch) -> None:
     [put] = [call for call in gh.calls() if call[:3] == ["api", "--method", "PUT"]]
     body = json.loads(Path(put[put.index("--input") + 1]).read_text("utf-8"))
     assert body["required_status_checks"] == {"strict": True, "checks": [
-        {"context": "build"}, {"context": "lint"}, {"context": "forge-pr-check"}]}
+        {"context": "build"}, {"context": "lint"}, {"context": "tests"}, {"context": "forge-pr-check"}]}
     assert body["required_pull_request_reviews"] == {"required_approving_review_count": 2}
 
 
