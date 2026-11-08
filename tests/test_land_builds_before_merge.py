@@ -50,8 +50,10 @@ def test_1_land_builds_unbuilt_fixes_and_accepts_record_only_work(land, previous
 def test_2_land_uses_completed_native_round_without_a_commit(land, monkeypatch, tmp_path, tool):
     _agent(land)
     config = land.repo.path / "forge.toml"
-    land.commit(land.repo.path, "forge.toml", config.read_text("utf-8").replace(
-        'workers = "claude"', f'workers = "{tool}"\ntools = "{tool}"'))
+    # Preserve the native handback contract with an explicit Fast opt-in.
+    land.commit(land.repo.path, "forge.toml", ('codex_fast = "needed"\n' if tool == "codex" else "")
+        + config.read_text("utf-8").replace(
+            'workers = "claude"', f'workers = "{tool}"\ntools = "{tool}"'))
     land.repo.git("push", "-q", "origin", "main")
     where = _fix(land)
     home = tmp_path / "native-home"

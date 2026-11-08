@@ -302,6 +302,14 @@ human, and board and `forge next` lines. Briefs, guides and code stay as they ar
 
 The human never edits `forge.toml`; you keep it. When a setting must change, ask first with
 options, then make the change yourself in a fix: `forge fix start`, the edit, then `forge close`.
+Close refuses a settings change in `forge.toml` unless this item's Done-when names the file.
+It leaves the settings and branch change intact, so `forge land` also stops before merging.
+For a fix, run `forge fix amend <item> --done "<done when naming forge.toml>" --because "<why>"`.
+For a task part, name `forge.toml` in the plan's covered Done-when details in the task checkout
+and commit the plan there. These details do not change the approved numbered result.
+Then run `forge close <item>` again. A version-pin-only difference still passes.
+Initial migration and adoption keep their new settings until their first pull request merges.
+New and earlier-adopted repos get this check on upgrade. Workers never edit settings.
 A developer's own `tools`, `workers` and `[models.<kind>]` choices go in the git-ignored
 `forge.local.toml` instead, which you edit directly when they ask; Forge refuses any other key there.
 `runner` selects the GitHub Actions runner label for every job in the generated `forge.yml`;
@@ -348,7 +356,7 @@ Forge's planning, approval, build, review, CI and merge process stays the same.
 Doctor's SDK, project trust and UI skill checks follow the selected tool too.
 
 Claude workers use the Claude Agent SDK kit when installed; otherwise their coordinator uses a background subagent.
-Codex in a Codex coordinator stays native; on the other tool it uses the Codex app server. Plan reads stay native on their coordinator.
+Codex workers use the Codex app server when `codex_fast` is off or absent, or under the other tool; otherwise they stay native. Plan reads stay native on their coordinator.
 Without a coordinating session, a one-tool repo waits for it.
 Reviews run externally through Autoreview on the named tool; with both, Codex when installed,
 otherwise Claude. Normal, light and sign-off reviews use `[models.review]` or its per-tool entries.
@@ -1621,16 +1629,18 @@ the reason and the next step. It leaves that chat on this machine only, so run `
 or `forge work <item>` on its own branch before you remove `.git/forge`.
 Keep `.git/forge` until the upgrade finishes.
 
-Codex app-server turns use the selected model's Fast tier for every fix, from the second worker
+Codex app-server turns run at normal speed by default. Set `codex_fast = "needed"` in
+`forge.toml` to use the selected model's Fast tier for every fix, from the second worker
 round onward, or when other planned work waits on the item (the board's `waits_for` dependencies).
 Other turns run at normal speed; models without Fast also run normally. Fast uses more of your Codex allowance.
-The optional `codex_fast` setting in `forge.toml` defaults to `"needed"`; choose `"off"` to disable
+The optional `codex_fast` setting in `forge.toml` defaults to `"off"`; choose `"needed"` to enable
 Fast or `"always"` to request it on every Codex turn. `forge doctor` shows the policy and whether the last Codex turn ran
 with Fast. When Fast is wanted but the model does not offer it, the run's first line says so.
 Every turn, including capacity retries, records the
 requested tier and the tier Codex reports; an unreported tier stays unknown. New repos
 get the default at init; existing repos get it on upgrade without adding a setting, and sync
-refreshes both host guides. The upgrade's sync announces the default in one line.
+refreshes both host guides.
+The app-server route needs the Codex SDK. `forge doctor --fix` installs it in Codex-only repos without Claude.
 
 For a side job inside your own session, hand it to one of Forge's subagent roles, which
 `forge sync` writes for both hosts from `forge.toml`'s models: `explorer` to read and trace code;

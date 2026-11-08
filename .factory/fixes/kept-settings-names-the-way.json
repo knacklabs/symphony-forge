@@ -1,0 +1,133 @@
+{
+  "amendments": [
+    {
+      "at": "2026-11-08T03:33:30.186962+00:00",
+      "because": "The owner chose stop-and-ask over the quiet restore, which loses the change",
+      "done_when": "When close keeps the default branch's forge.toml, its line says the change is kept out because the item's Done-when does not name forge.toml and gives the forge fix amend step to allow it"
+    }
+  ],
+  "base": "5393cf3ed78f0bae68f7bf2762dbcc9675a03710",
+  "branch": "fix/kept-settings-names-the-way",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1b766-d176-71e0-8bca-86db311d2a14",
+    "head": null,
+    "start": "8762a312a57925703f674d585d58af6bf23d6839"
+  },
+  "done_when": "When a fix or part changes forge.toml and its Done-when does not name forge.toml, close stops before changing the file, says the change needs a Done-when that names forge.toml, and gives the exact forge fix amend step; the branch keeps its change",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "restore_default_settings() in src/forge/task.py",
+      "file": "src/forge/task.py",
+      "gain": 2,
+      "harm": 4,
+      "line": 202,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Data loss: Expose the recovery step before land merges",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/skill.md",
+      "file": "src/forge/templates/skill.md",
+      "gain": 4,
+      "harm": 3,
+      "line": 308,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Reapply the setting before handing recovery to a worker",
+      "work": 2
+    },
+    {
+      "area": "restore_default_settings() in src/forge/task.py",
+      "file": "src/forge/task.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 199,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Put the task allowance in the checkout that work reads",
+      "work": 2
+    },
+    {
+      "area": "test_2_close_commits_main_settings_with_head_pin_unless_settings_are_allowed() in tests/test_close_preserves_default_settings.py",
+      "file": "tests/test_close_preserves_default_settings.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 133,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: Task-part settings advice",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "2670999e6ffc96178136a3faed80b5c4156ccf298c1311fc499ffb418589a5eb",
+    "changed": "62311b0fc5f94a4f302aaeb9fe7a092f43111c5f7525c9cdb8a1001e3db6fb8b",
+    "commit": "fda79d13bf612ba30742f4bde63df8c23e73672a",
+    "dismissals": [],
+    "findings": [],
+    "id": "9e9fd776-fffc-4954-9f83-8a39ab22e10b",
+    "status": "clean"
+  },
+  "round": 8,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-07T18:53:13.722341+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-07T19:19:37.116058+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-07T19:25:11.036990+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-08T03:44:03.327959+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-08T05:14:52.734168+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-08T06:03:13.720769+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-08T06:38:00.903630+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-08T07:15:15.903483+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-08T08:17:26.669591+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "af2f4b29-1935-4b77-ae56-847bd73a12ae",
+    "head": "9cb019ab19f3e38299545628e735f277068228c8",
+    "keys": {},
+    "round": 7
+  },
+  "why": "Close silently puts back the default branch's forge.toml when a fix changes it, and the line it prints does not say how to allow the change, so a client agent lost its settings change in an upgrade fix",
+  "worker": "codex"
+}
