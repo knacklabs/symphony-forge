@@ -11,14 +11,128 @@
   "done_when": "Forge's default CI runner and Forge's own workflows use ubuntu-24.04, a repo without its own runner setting gets it on sync, and a repo that sets its own runner keeps it",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [
+    {
+      "area": ".github/workflows/forge-next.yml",
+      "file": ".github/workflows/forge-next.yml",
+      "gain": 4,
+      "harm": 3,
+      "line": 79,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "CI: Update tests that still expect ubuntu-latest",
+      "work": 2
+    },
+    {
+      "area": "test_31_speed() in tests/test_rules.py",
+      "file": "tests/test_rules.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 125,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: tests/test_rules.py::test_31_speed",
+      "work": 2
+    },
+    {
+      "area": "test_1_default_runner_is_pinned_and_explicit_runner_is_preserved() in tests/test_default_ci_runner.py",
+      "file": "tests/test_default_ci_runner.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 20,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_default_runner_is_pinned_and_explicit_runner_is_preserved",
+      "work": 2
+    },
+    {
+      "area": "test_1_default_runner_is_pinned_and_explicit_runner_is_preserved() in tests/test_default_ci_runner.py",
+      "file": "tests/test_default_ci_runner.py",
+      "gain": 1,
+      "harm": 1,
+      "line": 15,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Simpler: duplicate new-repository runner case \u2192 reuse the existing test",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "725bb0cf3cda7a98e2feb7d0c2b58c79e0ca87cd394e339244602df791fe4f52",
+    "changed": "3df809aa170f56bcee8388c945337202f217d150f3a547c4fed41c545be84a52",
+    "commit": "96d42ca25833516cb45ad127c4ae368eb92508bc",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - Forge runs its pull-request checks and scheduled full suite.\nThe changed container setting conflicts with `tests/test_lanes_ci.py:44`, which still requires `ubuntu-latest`. The pinned jobs in `.github/workflows/forge.yml:49` also conflict with `tests/test_ci_limits_pull_requests_to_linux.py:82`. Finally, `src/forge/init.py:25` changes the help text, but the golden at `tests/test_split_commands.py:191`, used by `tests/test_split_commands_rest.py:48` and `tests/test_commands_load_only_their_owner.py:105`, still expects the old text. These assertions make the related CI and full-suite runs fail. Updating the help golden also changes a parametrized test ID recorded in `.test_durations:915`, which the named timing-inventory check requires to remain current.",
+        "file": ".github/workflows/forge-next.yml",
+        "gain": 4,
+        "harm": 3,
+        "line": 79,
+        "priority": "P1",
+        "title": "CI: Update tests that still expect ubuntu-latest",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - checking Forge's workflow runner pins on a pull request.\nThe named proof reads only `forge-next.yml` (`tests/test_rules.py:18`) and checks that the string `ubuntu-24.04` occurs somewhere, not that each Ubuntu job uses it. For example, changing the selector in `.github/workflows/starter-smoke.yml:24` back to `ubuntu-latest` leaves this proof green, and the starter test jobs can still pass on 24.04. The proof therefore does not enforce the requested pin across Forge's workflows.",
+        "file": "tests/test_rules.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 125,
+        "priority": "P1",
+        "title": "Gate: tests/test_rules.py::test_31_speed",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - an earlier-adopted repository syncs its existing workflow or uses a custom runner for scheduled jobs.\nThe copied adopted fixture has no `.github/workflows/forge.yml`, and `tests/conftest.py:479` seeds only a README, so both adopted cases create a workflow rather than update the old `ubuntu-latest` workflow. A sync that rewrites other fields but retains the old runner would pass this proof. Also, `_jobs` and `_runner` in `tests/test_ci_runner_selection.py:34` inspect only the first runner in each slice, leaving the scheduled `full-suite` and `full-suite-result` jobs unchecked; an explicit runner applied only to pull-request jobs would pass.",
+        "file": "tests/test_default_ci_runner.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 20,
+        "priority": "P1",
+        "title": "Gate: test_1_default_runner_is_pinned_and_explicit_runner_is_preserved",
+        "work": 2
+      },
+      {
+        "body": "Gain 1, Work 1, Harm 1\nThe `new` case repeats the same initialization and generated-job assertions already owned by `tests/test_ci_runner_selection.py:62`, using the same helpers. Retaining one boundary check avoids running the same contract twice.",
+        "file": "tests/test_default_ci_runner.py",
+        "gain": 1,
+        "harm": 1,
+        "line": 15,
+        "priority": "P2",
+        "title": "Simpler: duplicate new-repository runner case \u2192 reuse the existing test",
+        "work": 1
+      }
+    ],
+    "id": "55525f17-b4e4-4675-8b9d-926f6269f8b6",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-08T16:15:56.952828+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-08T16:27:45.305393+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-11-08T16:27:45.316833+00:00",
+    "file": ".github/workflows/forge-next.yml",
+    "wait_id": "67e68f3f-0d0e-4cd9-b4bf-c4fa594069a4"
+  },
   "stuck": {
     "close": null,
     "head": "45951b751b8fd4103b67bc0ab70f958e62005671",

@@ -1,0 +1,48 @@
+{
+  "items": [
+    {
+      "key": "bug\t.github/workflows/forge-next.yml\tCI: Update tests that still expect ubuntu-latest\tpin-ubuntu-24-04",
+      "kind": "bug",
+      "path": ".github/workflows/forge-next.yml",
+      "line": 79,
+      "text": "CI: Update tests that still expect ubuntu-latest",
+      "from": "blocking",
+      "item": "pin-ubuntu-24-04",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_default_ci_runner.py\tGate: test_1_default_runner_is_pinned_and_explicit_runner_is_preserved\tpin-ubuntu-24-04",
+      "kind": "bug",
+      "path": "tests/test_default_ci_runner.py",
+      "line": 20,
+      "text": "Gate: test_1_default_runner_is_pinned_and_explicit_runner_is_preserved",
+      "from": "blocking",
+      "item": "pin-ubuntu-24-04",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_rules.py\tGate: tests/test_rules.py::test_31_speed\tpin-ubuntu-24-04",
+      "kind": "bug",
+      "path": "tests/test_rules.py",
+      "line": 125,
+      "text": "Gate: tests/test_rules.py::test_31_speed",
+      "from": "blocking",
+      "item": "pin-ubuntu-24-04",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "simplify\ttests/test_default_ci_runner.py\tSimpler: duplicate new-repository runner case \u2192 reuse the existing test",
+      "kind": "simplify",
+      "path": "tests/test_default_ci_runner.py",
+      "line": 15,
+      "text": "Simpler: duplicate new-repository runner case \u2192 reuse the existing test",
+      "from": "review",
+      "item": "pin-ubuntu-24-04",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
