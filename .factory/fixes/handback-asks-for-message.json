@@ -117,7 +117,7 @@
     "status": "blocked"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-08T07:05:14.997161+00:00",
@@ -130,8 +130,12 @@
   ],
   "stop": {
     "at": "2026-11-08T07:20:46.232992+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "src/forge/native.py",
-    "wait_id": "c482afe5-70c8-431c-bc33-d09b837cf10a"
+    "reason": "Harm 3 findings: one more round by the standing rule",
+    "wait_id": "c482afe5-70c8-431c-bc33-d09b837cf10a",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
