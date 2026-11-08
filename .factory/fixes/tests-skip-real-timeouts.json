@@ -11,7 +11,7 @@
   "done_when": "The two tests advance a controlled clock instead of waiting, keep their real command and refusal assertions, and each runs in under 10 seconds",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "round": 1,
+  "round": 2,
   "status": "working",
   "steps": [
     {
