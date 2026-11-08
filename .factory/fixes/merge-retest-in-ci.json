@@ -73,7 +73,7 @@
     "id": "10de1dd4-236e-4fa0-81e3-a148b5bc9e66",
     "status": "blocked"
   },
-  "round": 2,
+  "round": 3,
   "status": "fixing",
   "steps": [
     {
@@ -99,12 +99,10 @@
     "worker_round": 2
   },
   "stuck": {
-    "close": "151971ef-37cb-4a02-a048-8dabb152704c",
-    "head": "1e0e27a1bc7ca27f69071f7ce84e68cc23986107",
-    "keys": {
-      "the open P0 wait for the ci configuration used to skip the local retest in src/forge/merge.py": 1
-    },
-    "round": 1
+    "close": "52ec73d1-660d-4866-a932-2107daeacbb3",
+    "head": "5a03cad64b7e058f26a83d3031d864e1d8aeaff2",
+    "keys": {},
+    "round": 2
   },
   "why": "When tests run in CI and main moved before a merge, forge merge retests the merged branch on the laptop test lane for every repo except Python apps with broad pytest selection, so client merges wait in the laptop queue",
   "worker": "codex"
