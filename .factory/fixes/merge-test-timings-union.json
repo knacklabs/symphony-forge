@@ -75,8 +75,8 @@
     "id": "d4da6b8a-f57e-405b-a110-af6ce6a58ef0",
     "status": "clean"
   },
-  "round": 4,
-  "status": "waiting for checks",
+  "round": 5,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-07T19:06:06.194586+00:00",
@@ -113,10 +113,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": "bfbd62b8-5152-4ea4-98db-6c5f58e6b679",
-    "head": "82dc7c2a7eedda280de76576249e9348c4eab8c0",
+    "close": "0459e255-8b9b-4a86-a96d-d688c36516b6",
+    "head": "abfa4f79dd39bd459919eb3bcffe9db60f1876e4",
     "keys": {},
-    "round": 3
+    "round": 4
   },
   "why": "When several items run in parallel, each one that adds tests refreshes .test_durations, so every later merge of main stops on a conflict in that file and a builder round or a person has to resolve it",
   "worker": "codex"
