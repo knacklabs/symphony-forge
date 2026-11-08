@@ -1,6 +1,13 @@
 {
   "base": "c4bc3920737c2e2f9001281ed6012b3e5ba908a4",
   "branch": "fix/pin-ubuntu-24-04",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1bbf2-12a3-7350-beaa-c140768f0573",
+    "head": null,
+    "start": "7aea815c34a47df609530a4e9b80b7de7bafd783"
+  },
   "done_when": "Forge's default CI runner and Forge's own workflows use ubuntu-24.04, a repo without its own runner setting gets it on sync, and a repo that sets its own runner keeps it",
   "fix_kind": "mechanical",
   "kind": "fix",
