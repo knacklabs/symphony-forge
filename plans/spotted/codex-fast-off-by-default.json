@@ -12,6 +12,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/worker.py\tFunctional: Restore work in Codex-only installations\tcodex-fast-off-by-default",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 179,
+      "text": "Functional: Restore work in Codex-only installations",
+      "from": "blocking",
+      "item": "codex-fast-off-by-default",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/repo.py\tNot done: Native Codex workers can run with Fast when the repo has no codex_fast setting",
       "kind": "edge",
       "path": "src/forge/repo.py",

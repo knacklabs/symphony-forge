@@ -31,44 +31,46 @@
       "gain": 4,
       "harm": 3,
       "line": 596,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
       "title": "Gate: Existing Codex lifecycle tests still expect Fast by default",
       "work": 2
+    },
+    {
+      "area": "_work() in src/forge/worker.py",
+      "file": "src/forge/worker.py",
+      "gain": 5,
+      "harm": 4,
+      "line": 179,
+      "outcome": "open",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Functional: Restore work in Codex-only installations",
+      "work": 2
     }
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "8b9e142316c2eef06ce45d3ae3438e055bef0e5f0788c685e5b77e67eafbf753",
-    "changed": "a9c1292b316b8038b06c5d4d4eadf4b087b9297db234e900f428f3b4278d2f9e",
-    "commit": "2cb851f3a377cd4d71f620d8be43990bc9750a45",
+    "branch_diff": "81f3d0a1deaf59e4a9ea6b0203fb873c7ba9b00f8410ba4797b4958fb109cd12",
+    "changed": "87b8e680ebef54e782e6a2affac3bffe9b6f2b0f6d896d0881ac4daf48f86549",
+    "commit": "7012c2614d8feb14ef990915cd692c611999016e",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 3, Work 3, Harm 3\nRaise: Not done. Case: normal use - a developer runs `forge work` from a Codex coordinator with Fast enabled in a repo that has no `codex_fast` setting. The owner-approved item is: \u201cA new repo and an upgraded repo with no codex_fast setting run Codex without Fast, and Fast runs only when forge.toml sets codex_fast to needed or always\u201d. `src/forge/worker.py:173,298-301` hands native work to the session before `codex.fast_needed` is called, and `src/forge/native.py:151-160` requests no speed. [Codex 0.159.2](https://github.com/openai/codex/blob/rust-v0.159.2/codex-rs/core/src/agent/child_config.rs) applies the coordinator\u2019s tier to its child, so that worker runs with Fast despite the new default. The new test forces `claude_session` at `tests/test_codex_runs_without_fast_by_default.py:12` and exercises only the app-server route. This native route and its tier inheritance are evidence not addressed by the ruling to change the shared default.",
-        "file": "src/forge/repo.py",
-        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
-        "gain": 3,
-        "harm": 3,
-        "line": 596,
-        "priority": "P1",
-        "title": "Not done: Native Codex workers can run with Fast when the repo has no codex_fast setting",
-        "work": 3
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Gate. Case: normal use - the pull request\u2019s required test check runs the related suite. The fixtures omit `codex_fast` (`tests/test_codex_worker.py:104-110` and `tests/test_codex_resume.py:168-173`), but `tests/test_codex_worker.py:370-381` expects `fast_wanted` to be true and `tests/test_codex_resume.py:270-277` expects both true and a `priority` request. With the new default, `src/forge/codex.py:483-485` returns false and the requests use the default tier, so both assertions fail. The CI picker includes these tests, leaving the required check red until their expectations or settings are updated.",
-        "file": "src/forge/repo.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 596,
-        "priority": "P1",
-        "title": "Gate: Existing Codex lifecycle tests still expect Fast by default",
+        "body": "Gain 5, Work 2, Harm 4\nRaise: Functional. Case: normal use - a repo uses `tools = \"codex\"` on a machine with Codex but no Claude or Codex SDK, then upgrades with `codex_fast` absent. The new routing sends every build and repair through the SDK, and `worker.py:456-459` refuses to start without it. These installations previously ran workers natively. The suggested `forge doctor --fix` cannot repair them: `doctor.py:352-355,364` checks and installs the Codex SDK for a Codex-only repo only when Claude is also on PATH. Consequently, the repo cannot run its main work flow.",
+        "file": "src/forge/worker.py",
+        "gain": 5,
+        "harm": 4,
+        "line": 179,
+        "priority": "P0",
+        "title": "Functional: Restore work in Codex-only installations",
         "work": 2
       }
     ],
-    "id": "ce771bdb-ddea-482d-ad4d-40a7b52e1af8",
+    "id": "cfaac8e0-a0db-4fd2-9a09-009cfd4e36f9",
     "status": "blocked"
   },
   "round": 2,
@@ -80,6 +82,10 @@
     },
     {
       "at": "2026-11-07T19:32:03.374805+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-08T03:15:34.593708+00:00",
       "step": "review"
     }
   ],
