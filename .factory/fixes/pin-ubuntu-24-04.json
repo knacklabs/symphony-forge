@@ -4,12 +4,20 @@
   "done_when": "Forge's default CI runner and Forge's own workflows use ubuntu-24.04, a repo without its own runner setting gets it on sync, and a repo that sets its own runner keeps it",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-08T16:15:56.952828+00:00",
       "step": "start"
     }
   ],
-  "why": "GitHub's ubuntu-latest runner moved to Ubuntu 26.04, where the starters' Playwright 1.56 cannot install browsers, so client CI and Forge's starter checks fail"
+  "stuck": {
+    "close": null,
+    "head": "45951b751b8fd4103b67bc0ab70f958e62005671",
+    "keys": {},
+    "round": null
+  },
+  "why": "GitHub's ubuntu-latest runner moved to Ubuntu 26.04, where the starters' Playwright 1.56 cannot install browsers, so client CI and Forge's starter checks fail",
+  "worker": "codex"
 }
