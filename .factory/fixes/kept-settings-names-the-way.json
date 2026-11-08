@@ -25,7 +25,7 @@
       "gain": 2,
       "harm": 4,
       "line": 202,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 1,
       "security": false,
@@ -74,27 +74,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "1e048967d76deb65a271ced1bb04e9d843bcd507652b207ac0e1db45c0a1f987",
-    "changed": "6a4f4a49e854df165667cd551fc0141ac9b34a3869b58154c3bf072f61131bf1",
-    "commit": "be09030ef283ec4f28e3aa74cef08a06b75602ab",
+    "branch_diff": "d1153d28a04bfe0e62e59e23f05709f33d01bc565857010d03bf2f9d646cd1e0",
+    "changed": "31aad83eebf7d872b79bc5b43fd003f82d12da93fcb81c64176c64c33527c9eb",
+    "commit": "d3de0dba03b7e8057004585fffca49ba274b50e1",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 2, Work 2, Harm 4\nRaise: Data loss (floor: data loss)\nCase: normal use - an agent runs `forge land` on a fix that includes an unlisted settings change.\nClose prints the recovery advice, but `src/forge/land.py:91-93` calls close synchronously and `src/forge/land.py:146-152` then merges when agent merging is enabled. `src/forge/merge.py:198` squash-merges the restored settings, and lines 283-316 remove the remote branch, clean worktree, and local branch. The caller cannot act on the advice before the intended settings change is omitted from the merge and the item is cleaned up.\nAdds work: signal the settings restore to land and pause before merging; F 1 x H 1 = 1; 2 x C = 4",
-        "file": "src/forge/task.py",
-        "gain": 2,
-        "harm": 4,
-        "line": 204,
-        "priority": "P1",
-        "title": "Data loss: Expose the recovery step before land merges",
-        "work": 2
-      }
-    ],
-    "id": "56d38a47-2077-4f23-9822-eba595afebd0",
-    "status": "blocked"
+    "findings": [],
+    "id": "faf63130-5ebf-445a-b8a9-e58d7bf32042",
+    "status": "clean"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-07T18:53:13.722341+00:00",
@@ -106,6 +95,10 @@
     },
     {
       "at": "2026-11-07T19:25:11.036990+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-08T03:44:03.327959+00:00",
       "step": "review"
     }
   ],
