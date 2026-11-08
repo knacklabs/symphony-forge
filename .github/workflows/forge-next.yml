@@ -1,11 +1,15 @@
 name: forge-next
 
 # Reuse passed proof on identical release tags.
-# Pull requests run related Linux tests in forge.yml and the plugin check here.
+# Pull requests run related Linux tests in forge.yml; plugin changes also run here.
 # Windows runs nightly and in the manual full run before a release.
 
 on:
   pull_request:
+    paths:
+      - 'src/forge/mod/**'
+      - '.claude-plugin/marketplace.json'
+      - '.github/workflows/forge-next.yml'
   push:
     tags: ['v*']
   schedule:
@@ -24,6 +28,7 @@ permissions:
 
 jobs:
   selection:
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     outputs:
       test-only: ${{ steps.select.outputs.test-only }}
