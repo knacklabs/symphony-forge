@@ -3474,7 +3474,7 @@
     "tests/test_testplace_settings.py::test_7_a_ci_repo_can_switch_to_laptop_tests": 5.563418792095035,
     "tests/test_testplace_settings.py::test_8_a_new_no_actions_repo_closes_on_local_tests": 7.042832457693294,
     "tests/test_testplace_settings.py::test_9_new_init_requires_an_actions_answer_before_writing": 0.25337300123646855,
-    "tests/test_testplace_upgrade.py::test_10_previous_adoption_uses_the_place_selected_by_its_checks[checks0-ci-Forge runs change tests in CI because forge.toml names checks. To run them on this machine, write test_place = \"local\".]": 8.416848834138364,
+    "tests/test_testplace_upgrade.py::test_10_previous_adoption_uses_the_place_selected_by_its_checks[checks0-ci-Forge runs change tests in CI because forge.toml names checks. To run them on this machine, write test_place = \"local\".]": 6.534754749038257,
     "tests/test_testplace_upgrade.py::test_10_previous_adoption_uses_the_place_selected_by_its_checks[checks1-local-Forge runs change tests on this machine because forge.toml names no checks. To run them in CI, write test_place = \"ci\".]": 6.185622791061178,
     "tests/test_testplace_upgrade.py::test_11_previous_adoption_keeps_the_six_group_ci_job_after_sync": 4.709053041180596,
     "tests/test_testplace_workflow.py::test_1_ci_workflow_installs_the_pin_and_runs_change_tests": 5.335586541099474,
