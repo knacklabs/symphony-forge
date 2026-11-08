@@ -1429,6 +1429,7 @@ to end and usable by the client; it brings only the setup, sign-in and data it n
 setup-only, platform or "foundation" stories. Cut a story that answers no problem in its Why;
 when linked to a spec, it must also serve that spec's behaviour.
 
+`forge next` shows this release's running builder rounds against this machine's builder places as `Builds running: N of M`.
 Start every task and fix `forge next` lists as ready at once, and close each as its worker
 finishes. One machine runs work rounds on half its available cores (at least one place),
 across all its repos; the rest wait in line. Reads and reviews take no agent place.

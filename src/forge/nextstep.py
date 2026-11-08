@@ -229,6 +229,10 @@ def _report(top: Path, history: dict[str, Any] | None = None,
             schedules: bool = False, numbers: bool = False,
             facts: dict[str, Any] | None = None) -> tuple[list[str], list[str]]:
     """The lines `forge next` prints, and one state line per story and fix with its human touches."""
+    agents = machine.view()["agents"]
+    running = sum(run.get("version") == __version__ and run.get("kind") == "work"
+        and not run.get("free") and not run.get("suspended_by") and bool(
+            run.get("admitted") or run.get("started_at")) for run in agents["entries"])
     lines: list[str] = []
     states: list[str] = []
     fixes: list[tuple[dict[str, Any], list[str]]] = []
@@ -392,7 +396,7 @@ def _report(top: Path, history: dict[str, Any] | None = None,
             lines += build
             build = []
     return (build + _due(top, history) + pinned + [line for alert in alerts.values() for line in alert]
-            + _hotspots(top, trees) + lines), states
+            + _hotspots(top, trees) + lines + [f"Builds running: {running} of {agents['size']}"]), states
 
 
 def _failed_schedules(top: Path) -> dict[str, list[str]]:
