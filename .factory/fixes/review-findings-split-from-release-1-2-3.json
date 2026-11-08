@@ -99,7 +99,7 @@
     "id": "0588dabb-6dbf-4e2e-9946-461dbf7732b7",
     "status": "blocked"
   },
-  "round": 3,
+  "round": 4,
   "stacked_on": "release-1-2-31",
   "status": "fixing",
   "steps": [
@@ -130,13 +130,12 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": "43fc60de-26ba-4816-bfe6-79c28a9b01cc",
-    "head": "803054558f0278923d18e795fb0a8620fef09a72",
+    "close": "41058be5-0076-496a-be2d-3bb70dc2fc2b",
+    "head": "9da8b712f3bf1ebfd80984ed93e2a147352b669a",
     "keys": {
-      "the open P0 refreshing renderers invalidates approved design trees in src/forge/story.py": 1,
-      "the open P0 upgrading fails when a repo has several saved canvases in src/forge/story.py": 1
+      "the open P0 refreshing renderers invalidates approved design trees in src/forge/design.py": 1
     },
-    "round": 2
+    "round": 3
   },
   "why": "Review findings split from release-1-2-31: Preserve settled design screenshots (.forge/design/support.js:101); Gate: generated files in the release checkout (tests/test_release_version.py:31); Gate: proof list (.factory/fixes/release-1-2-31.json:5)",
   "worker": "codex"
