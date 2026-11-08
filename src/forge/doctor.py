@@ -355,7 +355,8 @@ def doctor(args: argparse.Namespace) -> int:
     if cfg["tools"] != "both" and not programs[cfg["tools"]]:
         add(f"{cfg['tools']} is not installed or not on PATH.", INSTALL[cfg["tools"]])
     # Kits supply their own executables; their repair needs no standalone program.
-    needs_sdk = bool(cfg["tools"] == "both" or cfg["tools"] == "codex" and programs["claude"])
+    needs_sdk = bool(cfg["tools"] == "both" or cfg["tools"] == "codex"
+                     and (cfg["codex_fast"] == "off" or programs["claude"]))
     sdk_failed = ""
     if args.fix and needs_sdk and shutil.which("uv") and codex.sdk_problem():
         try: codex.install()
