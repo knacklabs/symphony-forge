@@ -16,6 +16,7 @@ import pytest
 from conftest import ROOT
 from test_groups_pytest import _adopted_client, _branch, _new_client, _settings
 from test_ci_limits_pull_requests_to_linux import expression
+from test_testplace_workflow import _jobs
 
 STORY = "FIX-TEST-ONLY-PR-RUNS-EVERY-GROUP"
 
@@ -78,9 +79,17 @@ def test_1_test_only_pull_requests_select_changed_files(repo, gh, tmp_path, adop
         assert json.loads(values["platform-files"]) == expected
         assert values["run-windows"] == str(shared or bool(expected)).lower()
         workflow = (client / ".github/workflows/forge.yml").read_text("utf-8")
-        groups = re.search(r"^        group: (.+)$", workflow, re.M)[1]
-        groups = groups.replace("needs.docs-check.outputs.test-only", "github.test_only")
-        selected_groups = expression(groups, test_only=values["test-only"])
+        pr_job = _jobs(workflow)["tests"]
+        if adopted:
+            groups = re.search(r"^        group: (.+)$", pr_job, re.M)[1]
+            groups = groups.replace("needs.docs-check.outputs.test-only", "github.test_only")
+            selected_groups = expression(groups, test_only=values["test-only"])
+        else:
+            # New clients now run one PR job without a matrix. Never read the
+            # nightly matrix as a substitute for the PR's group selection.
+            assert "strategy:" not in pr_job
+            assert "FORGE_GROUP: '1'" in pr_job and "FORGE_GROUPS: '1'" in pr_job
+            selected_groups = [1]
         assert selected_groups == (list(range(1, 7)) if adopted and shared else [1])
         windows = (ROOT / ".github/workflows/forge-next.yml").read_text("utf-8")
         matrix = re.search(r"include: >-\n(.+?)\n    runs-on:", windows, re.S)[1]

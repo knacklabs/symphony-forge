@@ -16,6 +16,8 @@ def test_1_forge_pr_groups_get_forty_five_minutes(repo):
     version = repo.forge("--version").stdout.split()[-1]
     repo.write("forge.toml", f'version = "{version}"\nrepo = "forge-source"\n'
                'test = "python -m pytest tests -q"\nchecks = ["tests"]\ngroups = 2\n')
+    # Groups now require a splittable command, as in Forge's real dependency list.
+    repo.write("requirements.txt", "pytest-split\n")
 
     synced = repo.forge("sync")
 
