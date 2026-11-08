@@ -504,7 +504,9 @@ def test_1_the_starter_is_a_runnable_stack(request):
     assert dockerfile.index("USER node") < dockerfile.index("RUN corepack pnpm install")
     assert "COPY --chown=node:node . ." in dockerfile
     assert "RUN corepack enable" in dockerfile
-    assert "corepack pnpm install --frozen-lockfile && corepack pnpm run build" in dockerfile
+    assert "RUN corepack pnpm install --frozen-lockfile" in dockerfile
+    assert dockerfile.index("RUN corepack pnpm install") < dockerfile.index("COPY --chown=node:node . .")
+    assert "RUN corepack pnpm run build" in dockerfile
     assert "WORKDIR /app" in dockerfile
     assert "corepack pnpm exec prisma migrate deploy" in dockerfile
     assert "exec corepack pnpm run start:prod" in dockerfile
