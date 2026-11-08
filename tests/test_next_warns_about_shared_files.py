@@ -149,6 +149,7 @@ def test_2_next_warns_when_renames_share_the_original_path(repo, gh, other_chang
 
 def test_3_overlapping_fixes_can_close_and_merge(env):
     # Audit: printed commands do not prove the absence of a close/merge gate.
+    # Close both before either merge so a gate on the second fix cannot hide.
     # Both fixes edit distant lines of one tracked file so git can combine them.
     original = "\n".join(f"value_{n} = 0" for n in range(20)) + "\n"
     env.commit(env.repo.path, "app.py", original)
@@ -164,10 +165,17 @@ def test_3_overlapping_fixes_can_close_and_merge(env):
     assert advice.returncode == 0, advice.stderr
     assert "merge one first" in advice.stdout
     for item in (first, second):
-        _install(env.repo.bin, "gh", GH_STUB.format(python=sys.executable))
         env.open_pr("")
         closed = env.close(item)
         assert closed.returncode == 0, closed.stdout + closed.stderr
+        assert f"Next: forge merge {item}" in closed.stdout
+    advice = env.repo.forge("next")
+    assert advice.returncode == 0, advice.stderr
+    assert "merge one first" in advice.stdout
+    for item in (first, second):
+        assert f"The fix {item} is ready to merge" in advice.stdout
+    for item in (first, second):
+        _install(env.repo.bin, "gh", GH_STUB.format(python=sys.executable))
         env.gh.respond("pr", "view", stdout=json.dumps({
             "number": 7, "state": "OPEN", "baseRefName": "main",
             "headRefOid": env.repo.git("rev-parse", f"fix/{item}"),
