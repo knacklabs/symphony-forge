@@ -283,8 +283,9 @@ def _control_requests_do_not_start_agent_runs(env, monkeypatch, request):
     request.getfixturevalue("claude_session")  # its Codex worker runs through the kit
     where, calls = _ready(repo, monkeypatch, request.getfixturevalue('sdk_data'))
     config = where / 'forge.toml'
-    env.commit(where, 'forge.toml', 'checks = ["tests", "forge-pr-check"]\n'
-               + config.read_text('utf-8'))
+    # Work merges the fixture checks from main before the task reaches close.
+    Upgrade(env, env.tmp).on_main('forge.toml', 'checks = ["tests", "forge-pr-check"]\n'
+                                + config.read_text('utf-8'))
     worked = repo.forge('work', 'BOARD/PAGE')
     assert worked.returncode == 0, worked.stderr
     env.gh.respond('pr', 'view', stdout=json.dumps({
