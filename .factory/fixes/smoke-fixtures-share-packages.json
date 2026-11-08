@@ -41,13 +41,13 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "b221671d7e7f65620cfbdf58e13dbe62647aa8746d1db38e36ec43f9a3494ef4",
-    "changed": "9a5c62069243be1950b81ea8f63d7c11b5a90dd74fac5b8188dfb98cdc494ac6",
-    "commit": "4cad8b8a9873693ce02e4841ea2397cca4bcca92",
+    "branch_diff": "1dffa7b8402728a3ed3df296b7ad9af1e4e81f3e0fcad189aaa719f8da26da1d",
+    "changed": "c8f4f70e6c4700ce4834858117a9690fa730ad9a223df880d2fcf02b27ff0b0d",
+    "commit": "d7071b6f527c2f3d636534c00d83f5d3598bfb50",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 4, Work 2, Harm 2\nRaise: Not done\nCase: normal use - running the scheduled Linux starter-smoke job.\nThe proof compares isolated installs at 17.01 and 5.57 seconds, but explicitly reports no before-and-after timing for the starter-smoke job. It therefore does not establish the requested job-level improvement. The pull-request workflow also excludes these changed test files from its trigger (.github/workflows/starter-smoke.yml:7-11), so a pending PR check will not supply that measurement.",
+        "body": "Gain 4, Work 2, Harm 2\nRaise: Not done\nCase: normal use - running the Linux starter-smoke job.\nThe proof still has no before-and-after timing for the full job; the 16.07- and 5.57-second measurements cover isolated installs. The repaired PR trigger runs the current smoke suite, but the job at .github/workflows/starter-smoke.yml:73-76 does not compare its duration with a baseline. A passing check can supply the post-change duration but cannot establish the requested job-level speedup on its own.",
         "file": "tests/test_starter_tree.py",
         "gain": 4,
         "harm": 2,
@@ -56,23 +56,13 @@
         "required_done_when": true,
         "title": "Not done: The smoke fixtures share downloaded packages while keeping separate app copies, and the starter smoke job is measurably faster",
         "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 2\nRaise: Test\nCase: normal use - a smoke run uses separate stores after a fixture configuration regression.\nNo suite test checks that the two actual fixtures reuse downloads while retaining separate app copies. The named lint test requests only lint_starter (tests/test_libs_layout.py:209-220), and the live starter test checks application results, not reuse (tests/test_starter_tree.py:519-522). Restoring either fixture's private store would therefore pass those checks. The three-copy measurement is a one-off check, and the reported 103-test run had live smoke disabled. An executable regression check needs to exercise the fixture behavior and fail when reuse or app separation breaks.",
-        "file": "tests/test_libs_layout.py",
-        "gain": 3,
-        "harm": 2,
-        "line": 103,
-        "priority": "P1",
-        "title": "Gate: smoke-fixture download reuse",
-        "work": 2
       }
     ],
-    "id": "98de47e1-d779-47d7-b352-ac3627eb8589",
+    "id": "2709a8c8-d933-4a16-8eda-60ecc9a7c2d7",
     "status": "blocked"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-07T18:12:56.375315+00:00",
@@ -81,16 +71,16 @@
     {
       "at": "2026-11-07T19:06:49.305287+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-11-08T03:40:50.418305+00:00",
+      "step": "review"
     }
   ],
   "stop": {
-    "at": "2026-11-07T19:06:49.319011+00:00",
-    "by": "owner",
-    "choice": "more",
+    "at": "2026-11-08T03:40:50.418535+00:00",
     "file": "tests/test_starter_tree.py",
-    "reason": "Harm 3 or higher findings: one more round by the standing rule",
-    "wait_id": "aea985f8-8919-47c7-b5bd-84d1f5045ca8",
-    "worker_round": 1
+    "wait_id": "efe8b7b1-bcde-4055-bb67-1662c222fb63"
   },
   "stuck": {
     "close": "113fae81-1ee4-48f6-a45b-3bcc46f56c43",
