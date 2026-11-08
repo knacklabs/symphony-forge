@@ -114,8 +114,8 @@
     "id": "b0f9fb75-26c7-49fe-be52-810f9061cb1a",
     "status": "clean"
   },
-  "round": 3,
-  "status": "waiting for checks",
+  "round": 4,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-08T16:55:19.124397+00:00",
@@ -144,10 +144,10 @@
     "worker_round": 2
   },
   "stuck": {
-    "close": "6f1a05ab-d028-494d-b5fe-24a1bb692c2c",
-    "head": "ecf524cf188eb0aefddd9f478acc6e6160d30e96",
+    "close": "6c5b4bae-f5f5-449e-b6a9-a7fa28f39f26",
+    "head": "482ed4efbd75c06d23f831f2560c648b2d55d54b",
     "keys": {},
-    "round": 2
+    "round": 3
   },
   "why": "A fix that removes a check from forge.toml's checks list waits forever at merge, because merge waits for main's list and the branch no longer runs that check (issue 1479)",
   "worker": "codex"
