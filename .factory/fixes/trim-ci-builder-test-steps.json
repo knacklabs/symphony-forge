@@ -1,0 +1,15 @@
+{
+  "base": "4c4ecf8e15da8fd006165f3e25de257ba68b5e4a",
+  "branch": "fix/trim-ci-builder-test-steps",
+  "done_when": "The CI-mode worker brief says only that wider related tests, lint and type checks stay in pull request CI and leaves which repair tests to run before committing to the builder",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-08T08:57:37.026970+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The worker brief spells out red-then-green steps for CI-mode builders, which agents do anyway; the only rule needed is that wider related tests, lint and type checks stay in pull request CI"
+}
