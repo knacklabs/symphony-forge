@@ -1,6 +1,7 @@
 """The v1.2.31 release replaces v1.2.30 in current install and sync contracts."""
 
 import json
+import shutil
 import tomllib
 from pathlib import Path
 
@@ -41,3 +42,25 @@ def test_1_forge_version_is_1_2_27_everywhere_it_is_recorded(repo):
     synced = repo.forge("sync")
     assert synced.returncode == 0, synced.stdout + synced.stderr
     assert "already match Forge v1.2.31" in synced.stdout
+
+
+@pytest.mark.platform
+def test_2_release_checkout_generated_files_match_sync(repo):
+    # Version text misses stale guidance and renderer code. Compare real sync output
+    # in an isolated copy; no production seam or developer checkout mutation is needed.
+    paths = repo.git("ls-files", cwd=ROOT).splitlines()
+    before = {}
+    for name in paths:
+        source = ROOT / name
+        if source.is_file():
+            target = repo.path / name
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(source, target)
+            before[name] = source.read_bytes()
+    repo.git("checkout", "-qb", "fix/release-sync")
+    synced = repo.forge("sync")
+    assert synced.returncode == 0, synced.stdout + synced.stderr
+    written = [line.removeprefix("Wrote ") for line in synced.stdout.splitlines()
+               if line.startswith("Wrote ")]
+    stale = [name for name in written if before.get(name) != (repo.path / name).read_bytes()]
+    assert not stale, f"Run forge sync and commit its generated files: {stale}"
