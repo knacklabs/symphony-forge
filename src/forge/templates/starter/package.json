@@ -57,7 +57,7 @@
     "@vitejs/plugin-react": "5.0.4",
     "babel-plugin-react-compiler": "1.0.0",
     "vitest": "3.2.4",
-    "@playwright/test": "1.56.1",
+    "@playwright/test": "1.64.0",
     "@axe-core/playwright": "4.10.2",
     "@testing-library/react": "16.3.0",
     "@testing-library/jest-dom": "6.9.1",
@@ -84,7 +84,7 @@
   "packageManager": "pnpm@10.20.0",
   "pnpm": {
     "overrides": {
-      "playwright-core": "1.56.1"
+      "playwright-core": "1.64.0"
     },
     "onlyBuiltDependencies": [
       "@prisma/engines",
