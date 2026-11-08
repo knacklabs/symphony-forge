@@ -72,7 +72,7 @@
     "status": "blocked"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-07T18:12:42.111488+00:00",
@@ -85,8 +85,12 @@
   ],
   "stop": {
     "at": "2026-11-07T18:50:45.294661+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "tests/test_full_run_starts_before_notes.py",
-    "wait_id": "446c3911-5afd-4e42-8ed5-b29ab16acd8b"
+    "reason": "Harm 3 or higher findings: one more round by the standing rule",
+    "wait_id": "446c3911-5afd-4e42-8ed5-b29ab16acd8b",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
