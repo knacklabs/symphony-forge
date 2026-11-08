@@ -10,6 +10,7 @@ def test_1_every_required_check_name_matches_its_run_independently(env):
     env.commit(env.repo.path, "forge.toml", toml.read_text("utf-8").replace(
         'checks = ["tests", "forge-pr-check"]',
         'checks = ["tests", "tests (ubuntu-latest)", "forge-pr-check"]'))
+    env.repo.git("push", "-q", "origin", "main")
     item, _ = env.start_fix()
     env.reviews(CLEAN)
     env.checks([run("tests"), run("tests (ubuntu-latest)"), run("forge-pr-check")])

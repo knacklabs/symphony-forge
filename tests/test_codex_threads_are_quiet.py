@@ -94,6 +94,7 @@ pathlib.Path(__file__).with_name("review-config.json").write_text(json.dumps(sys
     monkeypatch.delenv("CODEX_BIN")
     env.commit(repo.path, "forge.toml", 'checks = ["tests", "forge-pr-check"]\n'
                + (repo.path / "forge.toml").read_text(encoding="utf-8"))
+    repo.git("push", "-q", "origin", "main")
     item, _ = env.start_fix()
     env.checks(GREEN)
     closed = env.close(item)
