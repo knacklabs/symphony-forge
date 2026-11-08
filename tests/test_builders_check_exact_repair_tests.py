@@ -1,4 +1,4 @@
-"""Builders check exact repair tests before the CI handoff on new and upgraded clients."""
+"""Builders leave wider checks to CI on new and upgraded clients."""
 import shutil
 
 import pytest
@@ -47,14 +47,10 @@ def test_1_builders_check_exact_repair_tests_before_committing(repo, gh, tmp_pat
         call = calls(log)[-1]
         assert (bool(call["options"].get("resume"))) == (round_number == 2)
         brief = " ".join(call["brief"].split())
-        assert ("run only the exact new, changed or previously failing tests through `forge test`, "
-                "using the test runner's name filter. Watch a regression fail before the repair, "
-                "then rerun those tests until they pass before committing.") in brief
-        assert "Wider related tests, lint and type checks stay in pull request CI." in brief
-        assert "commit your work first, then run only the exact" not in brief.lower()
+        assert "wider related tests, lint and type checks stay in pull request ci." in brief.lower()
         for host in (".codex", ".claude"):
             audit = " ".join((repo.path / host / "skills/test-audit/SKILL.md").read_text("utf-8").split())
-            assert "rerun those tests until they pass before committing" in audit
+            assert "wider related tests, lint and type checks stay in pull request CI." in audit
         assert "`forge close` pushes the committed branch and runs CI on every platform." in brief
         assert "CI output reaches you in your next round." in brief
         assert ("If you need CI evidence, commit and stop instead of asking the coordinator "
@@ -63,4 +59,3 @@ def test_1_builders_check_exact_repair_tests_before_committing(repo, gh, tmp_pat
         assert "CI is the merge gate." in brief
         assert ("Commit your local proof in the `Proof list:` without waiting for CI results "
                 "or timings.") in brief
-        assert "The nightly full run covers the rest." in brief

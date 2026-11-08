@@ -1,0 +1,106 @@
+{
+  "base": "4c4ecf8e15da8fd006165f3e25de257ba68b5e4a",
+  "branch": "fix/trim-ci-builder-test-steps",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1ba60-c1fb-7dd2-9a6d-f7d2c50a5354",
+    "head": null,
+    "start": "1761d1930a536221971877a57c833eb8d1181acd"
+  },
+  "done_when": "The CI-mode worker brief says only that wider related tests, lint and type checks stay in pull request CI and leaves which repair tests to run before committing to the builder",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "src/forge/templates/brief.md",
+      "file": "src/forge/templates/brief.md",
+      "gain": 4,
+      "harm": 3,
+      "line": 349,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: The CI-mode worker brief says only that wider related tests, lint and type checks stay in pull request CI and leaves which repair",
+      "work": 2
+    },
+    {
+      "area": ".codex/skills/test-audit/SKILL.md",
+      "file": ".codex/skills/test-audit/SKILL.md",
+      "gain": 4,
+      "harm": 3,
+      "line": 146,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Keep the full-suite skill packaging test passing",
+      "work": 1
+    },
+    {
+      "area": "_related_test_skills() in tests/test_worker_nudge_names_related_tests.py",
+      "file": "tests/test_worker_nudge_names_related_tests.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 31,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: Check the removed instructions in synced test-audit skills",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "c78319a6b0f0c20060517f376a24ab33fbbdb884a016828bb11e2d978bec0ac2",
+    "changed": "e92ef395bfea7d635f4722ba771efe08578a0e8731e0e41d1c579558fd84b5c3",
+    "commit": "d10cddae9d9aeecfba3b0943f18f80221f3d3f48",
+    "dismissals": [],
+    "findings": [],
+    "id": "abdc34e0-69b5-4779-9356-6a0c7d05aeca",
+    "status": "clean"
+  },
+  "round": 4,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-08T08:57:37.026970+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-08T09:12:48.237702+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-08T09:19:14.779399+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-08T09:27:04.854237+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-08T10:15:03.289271+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-08T09:12:48.249569+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": ".codex/skills/test-audit/SKILL.md",
+    "reason": "Harm 3 findings: one more round by the standing rule",
+    "wait_id": "d2c9bcc3-386d-408f-850e-c011c53fc3a2",
+    "worker_round": 1
+  },
+  "stuck": {
+    "close": "d66bcc3a-b451-48e8-b26c-e4e4e577a241",
+    "head": "579d7c470c4cd759674166137ec44a38351566fc",
+    "keys": {},
+    "round": 3
+  },
+  "why": "The worker brief spells out red-then-green steps for CI-mode builders, which agents do anyway; the only rule needed is that wider related tests, lint and type checks stay in pull request CI",
+  "worker": "codex"
+}

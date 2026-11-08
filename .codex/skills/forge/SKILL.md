@@ -1526,9 +1526,7 @@ choice the item does not settle, get that choice made before sending the note.
 When a round ends with changes left uncommitted, `forge work` continues the same conversation
 once, repeating its test instructions and asking it to commit. In a local-test repo, the worker
 runs related tests through `forge test` once at the end of the turn, reruns only failures and commits any fixes. In a
-CI-test repo, the worker runs only the exact new, changed or previously failing tests through
-`forge test` with the test runner's name filter, red then green before committing. Wider related
-tests, lint and type checks stay in pull request CI. Only
+CI-test repo, wider related tests, lint and type checks stay in pull request CI. Only
 if changes are still uncommitted after that does it warn, naming them: `forge close` reviews only
 what is committed, so look at them before closing.
 

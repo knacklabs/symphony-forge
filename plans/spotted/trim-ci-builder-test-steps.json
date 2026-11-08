@@ -1,0 +1,37 @@
+{
+  "items": [
+    {
+      "key": "bug\t.codex/skills/test-audit/SKILL.md\tFunctional: Keep the full-suite skill packaging test passing\ttrim-ci-builder-test-steps",
+      "kind": "bug",
+      "path": ".codex/skills/test-audit/SKILL.md",
+      "line": 146,
+      "text": "Functional: Keep the full-suite skill packaging test passing",
+      "from": "blocking",
+      "item": "trim-ci-builder-test-steps",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_worker_nudge_names_related_tests.py\tGate: Check the removed instructions in synced test-audit skills\ttrim-ci-builder-test-steps",
+      "kind": "bug",
+      "path": "tests/test_worker_nudge_names_related_tests.py",
+      "line": 31,
+      "text": "Gate: Check the removed instructions in synced test-audit skills",
+      "from": "blocking",
+      "item": "trim-ci-builder-test-steps",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/templates/brief.md\tNot done: The CI-mode worker brief says only that wider related tests, lint and type checks stay in pull request CI and leaves which repair",
+      "kind": "edge",
+      "path": "src/forge/templates/brief.md",
+      "line": 349,
+      "text": "Not done: The CI-mode worker brief says only that wider related tests, lint and type checks stay in pull request CI and leaves which repair",
+      "from": "review",
+      "item": "trim-ci-builder-test-steps",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

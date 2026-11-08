@@ -22,7 +22,7 @@ SOURCES = {
     ".codex/skills/forge/SKILL.md": "src/forge/templates/skill.md",
 }
 # SHA-256 of the four package copies before the trim, with LF endings as sync writes.
-# The test-audit pin includes exact repair tests red then green before a CI-mode commit.
+# The test-audit pin leaves CI-mode repair tests to the builder and wider checks to CI.
 # The FDE pin includes the app constitution's date, time zone, currency and number defaults.
 # It also includes the approved built-in labels for organisations, invites, formats, deletion and CSV.
 # The FDE labels recognize both the TypeScript and Python starter organisation folders.
@@ -30,7 +30,7 @@ SOURCES = {
 # Current-source equality alone would miss a shared change across all three installs.
 PRE_TRIM_SHA256 = {
     ".codex/skills/forge/fde.md": "b47159d2bf5109482de58fdfdcbc8167f5df53413bcce2d6ea3e8b5fc02371ba",
-    ".codex/skills/test-audit/SKILL.md": "93532b1ed6a81eb3dba0e5e535786a0a12137cce441d18deba20958f3624e2af",
+    ".codex/skills/test-audit/SKILL.md": "7684c6c1d5e43fd06365feb5d50d69c9591f03163de457b8dd811a334b2590bc",
     ".codex/skills/test-audit/NOTICE.md": "05713febd8aeaca480afdc78074c66544635517e1868d3a59d7fe1cb54d70149",
     ".claude/skills/remote-approval/SKILL.md": "f3d334b989b73b65f6255d874592c052db96089df476dd1f0c9efa1d95ce8e01",
 }

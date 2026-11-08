@@ -141,9 +141,8 @@ def test_3_build_rounds_run_as_session_subagents(repo, gh, monkeypatch, tmp_path
         nudged = handback("BOARD/HELP", number, "Built it.")
         assert nudged.returncode == 0, nudged.stdout + nudged.stderr
         assert "Send this to subagent w1, then hand back again:" in nudged.stdout
-        assert ("run only the exact new, changed or previously failing tests through `forge test`, "
-                "using the test runner's name filter. watch a regression fail before the repair, "
-                "then rerun those tests until they pass before committing.") in nudged.stdout.lower()
+        assert ("wider related tests, lint and type checks stay in pull request ci."
+                in nudged.stdout.lower())
         assert ("run the change's related tests through `forge test` in the foreground"
                 not in nudged.stdout.lower())
         assert lane("BOARD/HELP")
