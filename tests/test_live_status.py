@@ -139,6 +139,8 @@ def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
                              'models.review.claude = { model = "opus", effort = "high" }\n')
             if settings != config.read_text("utf-8"):
                 env.commit(repo.path, "forge.toml", settings)
+                # Review setup belongs on main, not in the product fix under review.
+                repo.git("push", "-q", "origin", "main")
         item, folder = env.start_fix()
         model, effort = "sonnet", "medium"
     number = 1

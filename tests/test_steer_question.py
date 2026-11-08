@@ -14,6 +14,7 @@ from conftest import _install, patient
 from test_codex_resume import _resuming
 from test_codex_worker import _codex_repo, _lines, _sent, sdk_data  # noqa: F401
 from test_close import env  # noqa: F401
+from test_upgrade_command import Upgrade
 
 pytestmark = pytest.mark.platform
 
@@ -56,8 +57,9 @@ def test_2_question_blocks_work_and_close_until_answered(repo, monkeypatch, sdk_
     folder, calls = _codex_repo(repo, monkeypatch, sdk_data)
     if forge:
         config = folder / "forge.toml"
-        forge.commit(folder, "forge.toml", 'checks = ["tests", "forge-pr-check"]\n'
-                     'test = "echo passed"\n' + config.read_text("utf-8"))
+        Upgrade(forge, forge.tmp).on_main("forge.toml", 'checks = ["tests", "forge-pr-check"]\n'
+                                        'test = "echo passed"\n' + config.read_text("utf-8"))
+        repo.git("merge", "-q", "--no-edit", "main", cwd=folder)
         forge.commit(folder, "web/board.py", "print('built')\n")
         gh.respond("pr", "create", exit=1, stderr="GitHub refused the first publication\n")
         failed_publish = forge.close("BOARD/PAGE")

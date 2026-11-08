@@ -122,6 +122,7 @@ def test_3_only_doctor_names_a_likely_missing_runner_after_a_five_minute_queue(
         return
     config = (env.repo.path / "forge.toml").read_text("utf-8") + 'runner = "self-hosted"\n'
     env.commit(env.repo.path, "forge.toml", config, "Select the organisation runner")
+    env.repo.git("push", "-q", "origin", "main")
     item, where = env.start_fix()
     head = env.repo.git("rev-parse", "HEAD", cwd=where)
     env.gh.respond("pr", "list", stdout=json.dumps([

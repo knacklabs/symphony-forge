@@ -1,8 +1,8 @@
-"""Codex merges and close preserve the default branch's coordinator settings.
+"""Codex merges preserve incoming settings; close refuses unlisted settings edits.
 
 Audit: work restores HEAD during an open merge, and close trusts that stale
-commit. Existing settings tests cover worker edits, not incoming main settings.
-Real Forge commands and installed hooks own both repairs; only Codex and GitHub
+commit. Close now refuses stale settings without changing the branch.
+Real Forge commands and installed hooks own both contracts; only Codex and GitHub
 are faked at their external boundaries. No production test seam is needed.
 """
 import json
@@ -15,24 +15,31 @@ from test_close import GREEN, env, run  # noqa: F401
 from test_codex_worker import MODELS, _toml, sdk_data  # noqa: F401
 from test_migrate import _copied_client, _review_and_checks
 from test_upgrade_command import Upgrade
+from test_task import story
 from test_workers_leave_settings_to_coordinator import client  # noqa: F401
 
 STORY = "close-keeps-main-settings"
 MESSAGE = "Kept main's settings in forge.toml and this branch's version pin."
 
 
-def _setup(env, client, tmp_path, named=False, renamed_check=False):
+def _setup(env, client, tmp_path, named=False, renamed_check=False, part=False, agent=False):
     env.checks(GREEN)
     setup = Upgrade(env, tmp_path)
     version = client.forge("--version").stdout.split()[-1]
     settings = _toml(version, "codex", MODELS, "client")
     settings = settings.replace(f'version = "{version}"', f'version = "{version}" # branch pin')
     settings = 'test = "echo ok"\nfast_test = "echo ok"\nchecks = ["tests", "forge-pr-check"]\n' + settings
+    if agent:
+        settings = 'merge = "agent"\n' + settings
     setup.on_main("forge.toml", settings)
-    started = client.forge("fix", "start", "Correct spelling", "--done",
-                           "Update forge.toml" if named else "Correct the spelling", "--kind", "mechanical")
+    if part:
+        story(client)
+        started = client.forge("task", "start", "BOARD/API")
+    else:
+        started = client.forge("fix", "start", "Correct spelling", "--done",
+                               "Update forge.toml" if named else "Correct the spelling", "--kind", "mechanical")
     assert started.returncode == 0, started.stdout + started.stderr
-    folder = client.path.parent / f"{client.path.name}-fix-correct-spelling"
+    folder = client.path.parent / f"{client.path.name}-{'BOARD-API' if part else 'fix-correct-spelling'}"
     env.commit(folder, "product.txt", "Correct spelling\n")
     incoming = settings.replace('# branch pin', '# main pin').replace('echo ok', 'echo main')
     if renamed_check:
@@ -107,12 +114,12 @@ def test_1_codex_open_merge_keeps_incoming_settings_through_close(
 
 @pytest.mark.parametrize("client, case", [
     pytest.param(False, case, id=f"new-{case}")
-    for case in ("stale", "pin-only", "allowed", "clean", "checks")
+    for case in ("stale", "pin-only", "allowed", "clean", "checks", "part", "land")
 ] + [pytest.param(True, "checks", id="adopted-stale-and-renamed-checks")], indirect=["client"])
-def test_2_close_commits_main_settings_with_head_pin_unless_settings_are_allowed(
+def test_2_close_refuses_unlisted_settings_and_keeps_the_branch_change(
         env, client, tmp_path, case):
     folder, original, incoming = _setup(env, client, tmp_path, named=case == "allowed",
-                                        renamed_check=case == "checks")
+                                        renamed_check=case == "checks", part=case == "part", agent=case == "land")
     client.git("merge", "-q", "--no-commit", "origin/main", cwd=folder)
     # Reproduce the old Codex restore, including the stale copy committed by its nudge.
     if case != "clean":
@@ -121,17 +128,29 @@ def test_2_close_commits_main_settings_with_head_pin_unless_settings_are_allowed
         client.git("add", "forge.toml", cwd=folder)
     client.git("commit", "-qm", "Finish the worker merge", cwd=folder)
     before = client.git("rev-parse", "HEAD", cwd=folder)
-    closed = client.forge("close", "correct-spelling")
-    assert closed.returncode == 0, closed.stdout + closed.stderr
-    assert "Ready:" in closed.stdout
-    expected = (original if case == "allowed" else incoming if case == "clean"
-                else incoming.replace('# main pin', '# branch pin'))
-    assert (folder / "forge.toml").read_text("utf-8") == expected
-    assert client.git("show", "HEAD:forge.toml", cwd=folder) == expected.strip()
-    repaired = case in ("stale", "checks")
-    assert closed.stdout.count(MESSAGE) == int(repaired)
-    commits = client.git("log", "--format=%H", f"{before}..HEAD", "--", "forge.toml", cwd=folder).splitlines()
-    assert len(commits) == int(repaired)
+    item = "BOARD/API" if case == "part" else "correct-spelling"
+    # The owner replaced restoration with refusal, including land before cleanup.
+    expected = (folder / "forge.toml").read_bytes()
+    closed = client.forge("land" if case == "land" else "close", item)
+    refused = case in ("stale", "checks", "part", "land")
+    assert closed.returncode == int(refused), closed.stdout + closed.stderr
+    if refused:
+        assert ("forge.toml changes settings. This item's Done-when must name forge.toml. "
+                "The branch keeps its change.") in closed.stderr
+        if case == "part":
+            assert ("In this task checkout, name forge.toml in the plan's covered Done-when details "
+                    "and commit the plan, then forge close BOARD/API") in closed.stderr
+            assert "forge fix amend" not in closed.stderr
+        else:
+            assert ('Next: forge fix amend correct-spelling --done "<done when naming forge.toml>" '
+                    '--because "<why>"') in closed.stderr
+        assert client.git("rev-parse", "HEAD", cwd=folder) == before
+    else:
+        assert "Ready:" in closed.stdout
+    assert MESSAGE not in closed.stdout
+    assert (folder / "forge.toml").read_bytes() == expected
+    assert client.git("show", "HEAD:forge.toml", cwd=folder) == expected.decode("utf-8").strip()
+    assert not client.git("log", "--format=%H", f"{before}..HEAD", "--", "forge.toml", cwd=folder)
     assert client.git("status", "--porcelain", cwd=folder) == ""
 
 

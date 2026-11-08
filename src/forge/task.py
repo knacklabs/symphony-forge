@@ -47,6 +47,13 @@ REFUSALS = {
                     'forge fix amend {fix} --done "<done when>" --because "<why>"'),
     "amend_choice": ("Use either --done to replace the Done-when or --append to add to it.",
                      'forge fix amend {fix} --append "<text>" --because "<why>"'),
+    "settings": ("forge.toml changes settings. This item's Done-when must name forge.toml. "
+                 "The branch keeps its change.",
+                 'forge fix amend {item} --done "<done when naming forge.toml>" --because "<why>"'),
+    "task_settings": ("forge.toml changes settings. This item's Done-when must name forge.toml. "
+                      "The branch keeps its change.",
+                      "In this task checkout, name forge.toml in the plan's covered Done-when details "
+                      "and commit the plan, then forge close {item}"),
 }
 
 
@@ -174,8 +181,8 @@ def branch_item(branch: str, top: Path) -> tuple[str, dict[str, Any]] | None:
     return None
 
 
-def restore_default_settings(item: str, top: Path, state: dict[str, Any], default: str) -> None:
-    """Close keeps the default branch's settings unless this item's Done-when permits edits."""
+def check_settings_change(item: str, top: Path, state: dict[str, Any], default: str) -> None:
+    """Refuse unlisted settings changes without editing the branch."""
     if state.get("kind") in ("migrate", "adopt") or settings_allowed(item, top, state) or not git(
             "diff", f"origin/{default}...HEAD", "--", "forge.toml", cwd=top):
         return
@@ -186,14 +193,7 @@ def restore_default_settings(item: str, top: Path, state: dict[str, Any], defaul
     incoming.pop("version", None)
     if current == incoming:
         return
-    pin = re.search(r"^version[ \t]*=.*$", head, re.M)[0]
-    git("restore", f"--source=origin/{default}", "--staged", "--worktree", "--", "forge.toml", cwd=top)
-    path = top / "forge.toml"
-    text = re.sub(r"^version[ \t]*=[^\r\n]*", lambda _: pin, path.read_bytes().decode("utf-8"),
-                  count=1, flags=re.M)
-    path.write_bytes(text.encode("utf-8"))
-    if repo.commit_state(f"Keep {default}'s settings", "forge.toml", top=top):
-        print(f"Kept {default}'s settings in forge.toml and this branch's version pin.", flush=True)
+    refuse(REFUSALS["task_settings" if repo.ITEM.fullmatch(item)["task"] else "settings"], item=item)
 
 
 def settings_allowed(item: str, top: Path, state: dict[str, Any]) -> bool:

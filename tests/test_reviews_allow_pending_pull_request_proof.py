@@ -7,6 +7,7 @@ import pytest
 from conftest import Repo
 from test_close import GREEN, env, run  # noqa: F401
 from test_setup import _fresh_client
+from test_upgrade_command import Upgrade
 
 STORY = "FIX-PENDING-CI-PROOF"
 
@@ -26,15 +27,12 @@ def test_1_review_defers_pending_pr_check_proof_but_keeps_failed_or_absent_proof
         client, initialized = _fresh_client(repo, env.gh, tmp_path)
         assert initialized.returncode == 0, initialized.stdout + initialized.stderr
     env.repo = Repo(client, repo.bin)
-    if adopted:
-        env.commit(client, "forge.toml", config, "Use the installed Forge")
-    env.repo.git("push", "-q", "origin", "main")
+    # Configure checks before the product fix, whose Done-when permits no settings edit.
+    Upgrade(env, tmp_path).on_main("forge.toml", config, "Configure the client's checks")
     started = env.repo.forge("fix", "start", "Scan the client image", "--done",
                              "The image scan pull request check proves the image is safe", "--kind", "mechanical")
     assert started.returncode == 0, started.stdout + started.stderr
     where = Path(started.stdout.splitlines()[0].rsplit(" in ", 1)[1])
-    if not adopted:
-        env.commit(where, "forge.toml", config, "Configure the client's checks")
     if adopted:
         synced = env.repo.forge("sync", cwd=where)
         assert synced.returncode == 0, synced.stdout + synced.stderr
