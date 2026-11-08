@@ -4,12 +4,20 @@
   "done_when": "A close or land round pushes its code and its review record together, so a records-only push no longer cancels a CI run of the same code, and a later records-only head reuses that run's green result",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-08T12:14:00.294248+00:00",
       "step": "start"
     }
   ],
-  "why": "Half of Forge's pull request CI runs are cancelled, and half of that waste comes from a push that changes only review records and cancels a run of the same code"
+  "stuck": {
+    "close": null,
+    "head": "7161b31cb76c4785652f5c2fde86609849740d30",
+    "keys": {},
+    "round": null
+  },
+  "why": "Half of Forge's pull request CI runs are cancelled, and half of that waste comes from a push that changes only review records and cancels a run of the same code",
+  "worker": "codex"
 }
