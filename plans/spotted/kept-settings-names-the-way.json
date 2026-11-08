@@ -54,6 +54,17 @@
       "item": "kept-settings-names-the-way",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_testplace_upgrade.py\tThe adopted CI-mode worker test still expects the old instruction that forbids local repair tests.",
+      "kind": "bug",
+      "path": "tests/test_testplace_upgrade.py",
+      "line": 109,
+      "text": "The adopted CI-mode worker test still expects the old instruction that forbids local repair tests.",
+      "from": "worker",
+      "item": "kept-settings-names-the-way",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
