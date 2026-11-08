@@ -1,0 +1,158 @@
+{
+  "base": "94d64425110459083b26fb925066f6b2c69b10a1",
+  "branch": "fix/removing-check-refuses-early",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1bc16-73c7-7b63-94e0-74d68a7beedb",
+    "head": null,
+    "start": "acdaa093ed89ea0b3fa8923b92770c85c2b623f4"
+  },
+  "done_when": "Close refuses a change that removes a check from checks together with other changes, naming the removed check and the step: land the removal in a fix that changes only the checks list; such a fix merges after waiting for the checks both lists share",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "wait() in src/forge/checks.py",
+      "file": "src/forge/checks.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 68,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Isolated removals cannot merge while GitHub still requires the removed check",
+      "work": 3
+    },
+    {
+      "area": "wait() in src/forge/checks.py",
+      "file": "src/forge/checks.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 68,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Wait for shared checks when the removal switches tests to local",
+      "work": 2
+    },
+    {
+      "area": "required() in src/forge/checks.py",
+      "file": "src/forge/checks.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 49,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Compare branch changes without treating newer default-branch work as branch edits",
+      "work": 2
+    },
+    {
+      "area": "required() in src/forge/checks.py",
+      "file": "src/forge/checks.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 54,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Recognize synced workflows in repositories with Node lockfiles",
+      "work": 2
+    },
+    {
+      "area": "required() in src/forge/checks.py",
+      "file": "src/forge/checks.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 51,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Exclude Forge\u2019s spotted records from the isolation check",
+      "work": 1
+    },
+    {
+      "area": "close() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 243,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Check isolation before conflict publication and after remote reconciliation",
+      "work": 2
+    },
+    {
+      "area": "test_1_close_isolates_removal_and_merge_waits_for_shared_checks() in tests/test_check_removal_isolated.py",
+      "file": "tests/test_check_removal_isolated.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 67,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: tests/test_check_removal_isolated.py::test_1_close_isolates_removal_and_merge_waits_for_shared_checks",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "52b48e88f51bc2bc18598b1547e31798a914278be11fa967c8682741f7f0b359",
+    "changed": "6b4f99ac4e9c899e60ec2ddf88edd0b5417bc6737c798ccb61d2e3e17d66a47d",
+    "commit": "f1f885499adaeb3091f62b0ff57aef513588c8ae",
+    "dismissals": [],
+    "findings": [],
+    "id": "1aeb512b-7df4-49c7-8efc-aeaacf344d7b",
+    "status": "clean"
+  },
+  "round": 4,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-08T16:55:19.124397+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-08T17:14:40.556365+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-08T17:46:27.337309+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-08T17:56:26.818680+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-08T18:20:51.561275+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-08T17:46:27.337576+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "src/forge/checks.py",
+    "reason": "Harm 3 findings: one more round by the standing rule",
+    "wait_id": "d1c6c0f7-775f-4a9d-84d7-7d086a7543dd",
+    "worker_round": 2
+  },
+  "stuck": {
+    "close": "6c5b4bae-f5f5-449e-b6a9-a7fa28f39f26",
+    "head": "482ed4efbd75c06d23f831f2560c648b2d55d54b",
+    "keys": {},
+    "round": 3
+  },
+  "why": "A fix that removes a check from forge.toml's checks list waits forever at merge, because merge waits for main's list and the branch no longer runs that check (issue 1479)",
+  "worker": "codex"
+}

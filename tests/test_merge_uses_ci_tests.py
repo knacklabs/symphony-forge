@@ -48,6 +48,14 @@ def test_1_merge_waits_for_combined_ci_without_laptop_tests(env, tmp_path, previ
         env.commit(where, "forge.toml", config)
     env.open_pr("")
     closed = env.close(item)
+    if configuration == "rename":
+        # Renaming a check removes the previous name. Product edits must now
+        # wait until a separate check-removal fix merges.
+        assert closed.returncode != 0
+        assert "Removed checks: tests." in closed.stderr
+        assert "land the removal in its own fix" in closed.stderr
+        assert not env.review_calls()
+        return
     assert closed.returncode == 0, closed.stdout + closed.stderr
     original = env.repo.git("rev-parse", "HEAD", cwd=where)
     remote = env.repo.git("remote", "get-url", "origin")

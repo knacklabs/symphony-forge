@@ -157,7 +157,8 @@ def merge(args: argparse.Namespace, *, refreshed: bool = False) -> int:
                     # Only the local test needs this merge. Keep GitHub's already checked head.
                     repo.git("reset", "--keep", head, cwd=worktree)
             try:
-                if config["test_place"] == "ci" and (not retested or overlap or ci_retest):
+                if (checks.required(worktree, default, head) is not None or
+                        config["test_place"] == "ci" and (not retested or overlap or ci_retest)):
                     checks.wait(worktree, item, head, config["checks"],
                                 branch=branch, progress=getattr(args, "wait_for_progress", False),
                                 slot=getattr(args, "check_slot", None))
