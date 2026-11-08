@@ -12,14 +12,15 @@ import pytest
 from conftest import ROOT
 from test_close import env, run  # noqa: F401
 from test_merge_command import _merge_at_github
+from test_spotted import entry
 
 STORY = "FIX-CHECK-REMOVAL"
 
 
 @pytest.mark.parametrize("adopted,case", [(False, case) for case in
     ("product", "setting", "addition", "workflow", "only", "test-place", "add-only",
-     "npm-workflow", "pnpm-workflow", "behind", "main-check", "spotted", "conflict", "remote")]
-    + [(True, "only"), (True, "product")])
+     "npm-workflow", "pnpm-workflow", "behind", "main-check", "spotted", "planning-record", "conflict", "remote")]
+    + [(True, "only"), (True, "product"), (True, "legacy-spotted")])
 def test_1_close_isolates_removal_and_merge_waits_for_shared_checks(env, adopted, case):
     repo = env.repo
     if adopted:
@@ -55,8 +56,6 @@ def test_1_close_isolates_removal_and_merge_waits_for_shared_checks(env, adopted
         changed = changed.replace('test_place = "ci"', 'test_place = "local"')
     item, where = env.start_fix({"app.py": "print('hello')\n"} if case == "main-check" else {"forge.toml": changed},
                                done_when="forge.toml removes a required check")
-    if case in ("product", "conflict"):
-        env.commit(where, "product.txt", "Other work\n")
     synced = repo.forge("sync", cwd=where)
     assert synced.returncode == 0, synced.stdout + synced.stderr
     repo.git("add", "-A", cwd=where)
@@ -74,10 +73,19 @@ def test_1_close_isolates_removal_and_merge_waits_for_shared_checks(env, adopted
         repo.git("push", "-q", "origin", "main", cwd=owner)
     if case == "spotted":
         repo.git("commit", "--allow-empty", "-qm", "Note a separate issue\n\nSpotted: bug README.md:1 A separate issue.", cwd=where)
+    if case == "legacy-spotted":
+        # A prior release saved its review observation in the shared list.
+        env.commit(where, "plans/spotted.json", json.dumps({"items": [
+            entry("bug", "README.md", 1, "A separate issue.", "review")]}))
+    if case == "planning-record":
+        env.commit(where, "plans/notes.md", "A planning note.\n")
     if case in ("product", "conflict", "remote"):
         branch = repo.git("branch", "--show-current", cwd=where)
         repo.git("push", "-q", "origin", branch, cwd=where)
         remote_head = repo.git("ls-remote", "--heads", "origin", f"refs/heads/{branch}").split()[0]
+        if case in ("product", "conflict"):
+            env.commit(where, "product.txt", "Other work\n")
+            assert repo.git("rev-parse", "HEAD", cwd=where) != remote_head
         if case == "remote":
             collaborator = env.tmp / "collaborator"
             repo.git("clone", "-q", "--branch", branch, repo.git("remote", "get-url", "origin"), str(collaborator))
@@ -97,10 +105,10 @@ def test_1_close_isolates_removal_and_merge_waits_for_shared_checks(env, adopted
         assert closed.returncode != 0
         assert "Removed checks: tests." in closed.stderr
         assert "land the removal in its own fix" in closed.stderr
-        assert not env.review_calls()
-        assert not env.gh_calls("pr", "create")
         if case in ("product", "conflict", "remote"):
             assert repo.git("ls-remote", "--heads", "origin", f"refs/heads/{branch}").split()[0] == remote_head
+        assert not env.review_calls()
+        assert not env.gh_calls("pr", "create")
         return
     if case == "add-only":
         assert closed.returncode != 0
@@ -111,7 +119,7 @@ def test_1_close_isolates_removal_and_merge_waits_for_shared_checks(env, adopted
         closed = env.close(item)
         assert closed.returncode == 0, closed.stdout + closed.stderr
         return
-    if case in ("npm-workflow", "pnpm-workflow", "behind", "main-check", "spotted"):
+    if case in ("npm-workflow", "pnpm-workflow", "behind", "main-check", "spotted", "legacy-spotted", "planning-record"):
         assert closed.returncode == 0, closed.stdout + closed.stderr
         assert "Ready:" in closed.stdout
         return
@@ -129,6 +137,13 @@ def test_1_close_isolates_removal_and_merge_waits_for_shared_checks(env, adopted
         "number": 7, "state": "OPEN", "baseRefName": "main", "headRefOid": head,
         "headRefName": "fix/tidy-readme", "title": "Remove a check", "isDraft": False}))
     _merge_at_github(env)
+    if case == "only" and not adopted:
+        # No reported checks: an empty required list would incorrectly merge.
+        env.checks([])
+        missing = repo.forge("merge", item)
+        assert missing.returncode != 0
+        assert "forge-pr-check has not reported" in missing.stderr
+        assert not env.gh_calls("pr", "merge")
     if case in ("only", "test-place"):
         env.checks([run("forge-pr-check", None, "queued")])
         waiting = repo.forge("merge", item)

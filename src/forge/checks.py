@@ -37,7 +37,7 @@ PASS, PENDING, RED, SKIPPED, QUEUED = "pass", "pending", "red", "skipped", "queu
 
 def required(top: Path, default: str, head: str = "HEAD") -> list[str] | None:
     """A check removal travels alone, apart from its records and synced workflow."""
-    from forge import prcheck, story
+    from forge import prcheck, review, story
 
     base = repo.git("merge-base", f"origin/{default}", head, cwd=top)
     before = story.show(top, base, "forge.toml")
@@ -50,7 +50,7 @@ def required(top: Path, default: str, head: str = "HEAD") -> list[str] | None:
     files = repo.git("diff", "--name-only", "--no-renames", "-z",
                      base, head, cwd=top).split("\0")
     others = [path for path in files if path and path not in
-              ("forge.toml", ".github/workflows/forge.yml") and not path.startswith((".factory/", "plans/spotted/"))]
+              ("forge.toml", ".github/workflows/forge.yml") and not path.startswith(review.BOOKKEEPING)]
     workflow = ".github/workflows/forge.yml"
     if workflow in files and story.show(top, head, workflow) != prcheck.ships(
             top, repo._config_text(after or "")).get(workflow):
