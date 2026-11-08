@@ -292,6 +292,18 @@ def test_6_previously_adopted_client_preserves_legacy_setting_until_owner_replac
     env.commit(up.folder, "prices.py", "PRICE = 2\n")
     closed = subprocess.run([str(installed), "close", NAME], cwd=up.folder,
                             capture_output=True, text=True, timeout=60)
+    # Close now refuses the stale merge settings instead of restoring main's copy.
+    assert closed.returncode == 1, closed.stdout + closed.stderr
+    assert "This item's Done-when must name forge.toml" in closed.stderr
+    assert f'forge fix amend {NAME} --done "<done when naming forge.toml>"' in closed.stderr
+    assert tomllib.loads(upgraded_config.read_text("utf-8"))["fast_test"] == legacy
+    assert not receipt.exists()
+    # The coordinator reconciles the incoming picker with this branch's version pin.
+    upgraded_config.write_bytes(replacement.replace('"v1.2.2"', f'"{RELEASE}"').encode("utf-8"))
+    repo.git("add", "forge.toml", cwd=up.folder)
+    repo.git("commit", "-qm", "Keep the owner picker and upgraded version", cwd=up.folder)
+    closed = subprocess.run([str(installed), "close", NAME], cwd=up.folder,
+                            capture_output=True, text=True, timeout=60)
     assert closed.returncode == 0, closed.stdout + closed.stderr
     assert "Ready:" in closed.stdout
     assert sorted(receipt.read_text("utf-8").splitlines()) == ["import", "prices"]
