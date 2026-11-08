@@ -8,6 +8,7 @@ on:
   pull_request:
     paths:
       - 'src/forge/mod/**'
+      - '.claude-plugin/marketplace.json'
       - '.github/workflows/forge-next.yml'
   push:
     tags: ['v*']
