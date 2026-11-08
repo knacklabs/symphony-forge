@@ -1,0 +1,116 @@
+{
+  "amendments": [
+    {
+      "at": "2026-11-07T18:13:34.314978+00:00",
+      "because": "The slowdown did not reproduce on current code (6.5 s, 143 git calls before the change), so the read cache adds code with no proven gain",
+      "done_when": "forge next on a repo with about fifteen parts prints a line such as Builds running: 1 of 4 and finishes in under 10 seconds."
+    }
+  ],
+  "base": "e923c49135fd7176cc159f4d27d247ab5d3ef56a",
+  "branch": "fix/forge-next-takes-30-to-60-seconds-on-a-r",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1b723-fadf-7810-89b7-c0731375798c",
+    "head": null,
+    "start": "e5c55428500412df446af3882d2697ef8914cae0"
+  },
+  "done_when": "forge next prints a line such as Builds running: 1 of 4 that counts only this release's running builder rounds",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "_report() in src/forge/nextstep.py",
+      "file": "src/forge/nextstep.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 233,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Exclude older plan reads and reviews from the build count",
+      "work": 2
+    },
+    {
+      "area": "test_1_next_reports_build_capacity_with_fifteen_parts() in tests/test_next_reports_build_capacity.py",
+      "file": "tests/test_next_reports_build_capacity.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 39,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: tests/test_next_reports_build_capacity.py::test_1_next_reports_build_capacity_with_fifteen_parts",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "db95c1d42ab21bfb5443ae0d2edad029ffcd0cfa60801e1d94f8b44df504c977",
+    "changed": "3b21b9d6e7b8943b5ff5f340b4e5605c07803fb0a2acf58f694ba6df3a46738f",
+    "commit": "6b009b918104eea5f91033b04871c2ddb23d489d",
+    "dismissals": [],
+    "findings": [],
+    "id": "a7db9f67-183e-4e10-9d21-2b0ef56af362",
+    "status": "clean"
+  },
+  "round": 7,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-07T17:52:10.621093+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-07T18:12:29.194316+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-07T18:21:58.997455+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-07T19:07:12.353429+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-08T03:04:16.126126+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-08T04:16:36.380989+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-08T07:18:41.659688+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-08T07:54:31.794731+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-08T09:14:03.170274+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-07T18:12:29.206726+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "src/forge/nextstep.py",
+    "reason": "Harm 3 findings; narrowed to the build-count line",
+    "wait_id": "a2a68c5b-663d-4cfa-a7ce-c30ea72035ee",
+    "worker_round": 1
+  },
+  "stuck": {
+    "close": "17af9465-2cbd-4933-9a2d-6f5a8e117c37",
+    "head": "293c52d064f8459efa86a286ec72a3387d3f2670",
+    "keys": {},
+    "round": 6
+  },
+  "why": "forge next takes 30 to 60 seconds on a repo with many parts because it makes about 1,500 git calls, many of them repeated reads of the same history and plan files, and it does not say how many builds run against the machine builder places.",
+  "worker": "codex"
+}
