@@ -11,14 +11,82 @@
   "done_when": "Forge's own pull requests no longer run the unused selection job, and the plugin check runs only when plugin files change",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [
+    {
+      "area": ".github/workflows/forge-next.yml",
+      "file": ".github/workflows/forge-next.yml",
+      "gain": 4,
+      "harm": 3,
+      "line": 10,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Plugin marketplace changes bypass the install check",
+      "work": 2
+    },
+    {
+      "area": "test_1_pull_requests_skip_selection_and_filter_plugin_changes() in tests/test_ci_skips_unneeded_pull_request_jobs.py",
+      "file": "tests/test_ci_skips_unneeded_pull_request_jobs.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 28,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_pull_requests_skip_selection_and_filter_plugin_changes",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "958270e327ae0119c7019ca2518ac4e5993e036e19e7b6666498acf61e16fdf0",
+    "changed": "4b28b45c024ce62e6579a2d597b9a67bf91ce7fe19ddf86b3adc1dd0f08b4f6e",
+    "commit": "4de4d7b8dca3280311183d1a93b70e27e0e1d0b1",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - A pull request changes only the plugin marketplace manifest.\nThe filter omits `.claude-plugin/marketplace.json`, so that pull request starts no plugin workflow. [GitHub path filters](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/trigger-a-workflow#using-filters-to-target-specific-paths-for-pull-request-or-push-events). This is a shipped plugin distribution file: `tests/test_mod_native.py:24` validates it, and `tests/test_mod_install.py:74` uses it for the real Claude installation test. A bad marketplace source can therefore reach a release without those pull request checks. The ruling named the `src/forge/mod` subtree but did not account for this separately located manifest.",
+        "file": ".github/workflows/forge-next.yml",
+        "gain": 4,
+        "harm": 3,
+        "line": 10,
+        "priority": "P1",
+        "title": "Plugin marketplace changes bypass the install check",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - A workflow edit makes the plugin job depend on the selection job.\nThe named proof checks the selection guard and trigger text but never checks whether the plugin job can run. Adding `needs: selection` to that job would make it skip on every matching pull request while this test still passes. The exact `splitlines()` comparison also fails for equivalent YAML, such as changing quote style or reordering the two positive paths. The proof needs to check the effective plugin job outcome for matching and nonmatching paths.",
+        "file": "tests/test_ci_skips_unneeded_pull_request_jobs.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 28,
+        "priority": "P1",
+        "title": "Gate: test_1_pull_requests_skip_selection_and_filter_plugin_changes",
+        "work": 2
+      }
+    ],
+    "id": "6e8df671-f04f-4a4c-b63f-5ea52a7fb8d8",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-08T12:14:05.451382+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-08T12:24:36.455749+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-11-08T12:24:36.467789+00:00",
+    "file": ".github/workflows/forge-next.yml",
+    "wait_id": "62aa6e48-7c37-420a-ab80-c5744d830b0e"
+  },
   "stuck": {
     "close": null,
     "head": "7c484d146cc69a5f3b4a4e3c20a38295d10c5ed0",
