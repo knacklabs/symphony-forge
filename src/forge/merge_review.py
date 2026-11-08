@@ -10,6 +10,15 @@ from typing import Any
 from forge import repo
 
 
+def repairs(top: Path, reviewed: str) -> bool:
+    """Read worker merge repairs before replay can remove their history."""
+    from forge import review
+
+    files = repo.git("log", "--ancestry-path", "--merges", "--remerge-diff", "--format=",
+                     "--name-only", "-z", f"{reviewed}..HEAD", cwd=top).split("\0")
+    return any(path and not path.startswith(review.BOOKKEEPING) for path in files)
+
+
 def base(top: Path, item: str, state: dict[str, Any], target: str,
          previous: dict[str, Any]) -> str:
     """Return a synthetic base only when the earlier review still covers its inputs."""

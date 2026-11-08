@@ -1,0 +1,80 @@
+{
+  "base": "5393cf3ed78f0bae68f7bf2762dbcc9675a03710",
+  "branch": "fix/keep-review-on-same-replay",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1b74e-3941-75b3-8c90-401a44822e72",
+    "head": null,
+    "start": "8ac46c8ac093ba89327d543544a6bf73999f4d1a"
+  },
+  "done_when": "Close keeps a clean review when the replay leaves the reviewed product content identical, and still reviews any changed content or conflict repair",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "close() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 303,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Retain the review when replay restores already-reviewed merge edits",
+      "work": 2
+    },
+    {
+      "area": "close() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 303,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Review conflict repairs when the resulting diff is unchanged",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "b11c12e3306b7341f5189dedad06c86174c5570c9fc8c3c8ac9146bea99861c5",
+    "changed": "b728ab2e109ee65370af06c900742154670f6abc3e76f50494be9221dd7f7ac5",
+    "commit": "e326948cb9fdc9762e5107fcddf27366e0f7604e",
+    "dismissals": [],
+    "findings": [],
+    "id": "cee56543-3503-422c-8509-9591b65fad84",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-07T18:13:00.992192+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-07T18:58:16.954270+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-08T03:13:06.015776+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-08T07:55:33.800019+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "07c5d66e-984b-491c-8e1e-f2300bb5dd7f",
+    "head": "369d60bd18b753a6b4ad30cae087ba7a8cbcffa2",
+    "keys": {},
+    "round": 1
+  },
+  "why": "After the part before it merges, a stacked part whose replay leaves its content unchanged gets a full new review",
+  "worker": "codex"
+}
