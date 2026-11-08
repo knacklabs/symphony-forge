@@ -57,7 +57,7 @@
       "gain": 4,
       "harm": 3,
       "line": 787,
-      "outcome": "open",
+      "outcome": "fixed in round 9",
       "reason": "",
       "round": 8,
       "security": false,
@@ -67,27 +67,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "7cf84b783316ea981bc488221065ed9c9c4d298854a991c92954bbdedd5b5185",
-    "changed": "4b6a8030e28fe763f19e758fb5116bc1dd20da82511cff42df27e974a9fdbe29",
-    "commit": "d693475718d1a24d7ce93b973f5a290e8fa1644e",
+    "branch_diff": "40e5d6ce7b2b9b217695bf8a4d6861e9645d3fe3a88e44e8594f2ea05ca9cdbd",
+    "changed": "908ef6c3a46e065a7fd4c172f70332be5957ebc0c42a6b9d4bd4edf7735eaca9",
+    "commit": "b311e2befc72df7f542a782dbcfadc16c571ad74",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 1, Harm 3\nRaise: Gate. Case: normal use - the pull request runs the timing inventory check. This new entry names a `PAGE-None-tiers1-vendor-fast` case, but `tests/test_codex_fast_when_work_waits.py:60-67` defines that case with `needed`, not `None`. The correct `PAGE-needed-tiers1-vendor-fast` entry is already present. The inventory test at `tests/test_ci_timing_inventory.py:22-27` rejects the obsolete entry, so the check fails.",
-        "file": ".test_durations",
-        "gain": 4,
-        "harm": 3,
-        "line": 787,
-        "priority": "P1",
-        "title": "Gate: test_1_recorded_timings_name_existing_tests",
-        "work": 1
-      }
-    ],
-    "id": "b7d028e9-8a11-49e1-911c-74c611229ff6",
-    "status": "blocked"
+    "findings": [],
+    "id": "da2eaf28-6b56-4f54-9137-265ac7e7250e",
+    "status": "clean"
   },
   "round": 6,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-07T18:49:17.793888+00:00",
@@ -123,6 +112,10 @@
     },
     {
       "at": "2026-11-08T10:04:35.434000+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-08T11:03:19.083065+00:00",
       "step": "review"
     }
   ],
