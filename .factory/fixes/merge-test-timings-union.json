@@ -1,0 +1,139 @@
+{
+  "base": "3168eb540a14d7dd62ac62dd03842363b6e52afb",
+  "branch": "fix/merge-test-timings-union",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1b769-4120-7c03-8e95-4edd10fb6f03",
+    "head": null,
+    "start": "4d699c59ef87deaa6fcecb8a5c9409c609afc93e"
+  },
+  "done_when": "Merging the default branch into an item resolves a conflict in .test_durations alone by keeping both sides' entries, with no builder round, and any other conflict still stops as before",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "_merge_default() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 761,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Merging the default branch into an item resolves a conflict in .test_durations alone by keeping both sides' entries",
+      "work": 3
+    },
+    {
+      "area": "resolve() in src/forge/merge_timings.py",
+      "file": "src/forge/merge_timings.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 19,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Disputed keep the timing union: obsolete test entries make CI fail",
+      "work": 2
+    },
+    {
+      "area": "prepare() in src/forge/worker.py",
+      "file": "src/forge/worker.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 129,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Handle a rejected automatic merge commit in forge work",
+      "work": 2
+    },
+    {
+      "area": "test_1_default_merge_resolves_only_test_timings() in tests/test_default_merge_keeps_test_timings.py",
+      "file": "tests/test_default_merge_keeps_test_timings.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 28,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: timing-conflict resolution for stacked items",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "85a922a9791757a4d6bece40636069b2ac3e69eb7bdd9d0f8016d1ccfcdbe322",
+    "changed": "25104eb76aa95cb61d04e0066381cfa30490b156edaab664164590867e5893ae",
+    "commit": "b13c6c7648fa4c3cae56d7fecaf3039c447b45b7",
+    "dismissals": [],
+    "findings": [],
+    "id": "3d882607-f1b6-4563-998e-7c15bbda6c09",
+    "status": "clean"
+  },
+  "round": 6,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-07T19:06:06.194586+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-07T19:23:25.735606+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-07T19:35:55.043043+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-08T03:01:51.502731+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-08T05:21:01.327673+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-08T07:56:46.966783+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-08T09:07:09.383234+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-08T10:44:07.564762+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-08T11:31:26.117903+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-08T13:20:35.791835+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-07T19:23:25.752527+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "src/forge/merge_timings.py",
+    "reason": "Harm 3 findings: one more round by the standing rule",
+    "wait_id": "7bde0ffb-ea00-4ff7-95cd-91515695a5e2",
+    "worker_round": 1
+  },
+  "stuck": {
+    "close": "f40992db-5436-4b3a-a6be-c5a1a54e7297",
+    "head": "1d17572784fc65a53d3898b82534012728d49ba7",
+    "keys": {},
+    "round": 5
+  },
+  "why": "When several items run in parallel, each one that adds tests refreshes .test_durations, so every later merge of main stops on a conflict in that file and a builder round or a person has to resolve it",
+  "worker": "codex"
+}

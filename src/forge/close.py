@@ -21,7 +21,7 @@ from pathlib import Path
 from typing import Any
 
 from forge.close_remote import push_replay, reconcile, save_replay
-from forge import __version__, app_baseline, checks, codex, design, githooks, init, merge_review, migration_warnings, repo, review, review_skip, score, spotted, story, sync, task, time_records
+from forge import __version__, app_baseline, checks, codex, design, githooks, init, merge_review, merge_timings, migration_warnings, repo, review, review_skip, score, spotted, story, sync, task, time_records
 
 REFUSALS = {
     "not_started": ("Forge has not started {item} in any worktree of this repo.", "forge next"),
@@ -716,8 +716,6 @@ def _merge_default(top: Path, item: str, branch: str, default: str,
         lease = remote.split()[0] if remote else ""
         if lease and repo.run("git", "merge-base", "--is-ancestor", lease, original, cwd=top).returncode:
             repo.refuse(REFUSALS["replay_remote"], branch=branch, item=item)
-        # Rebase recreates merges but drops their hand edits; retain the fix's complete own diff.
-        # Both parents exclude inherited commits and default updates already merged into the fix.
         baseline = repo.git("-c", "user.name=Forge", "-c", "user.email=forge@localhost",
                             "commit-tree", f"{target}^{{tree}}", "-p", base, "-p", target,
                             "-m", "Follow-up replay baseline", cwd=top)
@@ -726,13 +724,15 @@ def _merge_default(top: Path, item: str, branch: str, default: str,
         if merged.returncode not in (0, 1):
             merged.check_returncode()
         tree, *files = merged.stdout.rstrip("\0").split("\0")
-        if merged.returncode:
+        if merged.returncode and not (tree := merge_timings.resolve(
+                top, tree=tree, files=files, ours=original, incoming=target)):
             repo.refuse(REFUSALS["replay_conflict"], default=default, files=", ".join(files),
                         item=item)
         done = repo.run("git", "rebase", "--rebase-merges=rebase-cousins", "--onto", target,
                         baseline, cwd=top)
-        if done.returncode:
-            files = repo.git("diff", "--name-only", "--diff-filter=U", cwd=top).splitlines()
+        if done.returncode and not merge_timings.resolve(
+                top, replay=True, ours=":3", incoming=":2"):
+            files = repo.git("diff", "--name-only", "--diff-filter=U", cwd=top).splitlines() or files
             repo.run("git", "rebase", "--abort", cwd=top)
             if not files:
                 done.check_returncode()
@@ -762,13 +762,13 @@ def _merge_default(top: Path, item: str, branch: str, default: str,
         raise subprocess.CalledProcessError(done.returncode, ["git", "merge"], done.stdout,
                                             done.stderr)
     try:
+        if merge_timings.resolve(top):
+            return sync.refresh_merged_guides(top, original)
         # Read sync's inventory from a clean tree: conflicted adapters may not even parse.
         with tempfile.TemporaryDirectory() as folder:
             base = Path(folder) / "default"
             repo.git("worktree", "add", "-q", "--detach", str(base), f"origin/{default}", cwd=top)
             try:
-                # Forge's own code is never generated, and sync would parse its conflicted copy
-                # when Forge runs from this checkout.
                 ours = Path(__file__).resolve().parent
                 generated = set() if any((top / path).resolve().is_relative_to(ours) for path in files) \
                     else {Path(path).as_posix() for path in sync.files(base, cfg)}

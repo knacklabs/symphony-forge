@@ -467,6 +467,7 @@ def isolated_environment(monkeypatch: pytest.MonkeyPatch) -> None:
     # cmd.exe expands %CI% in a .cmd stub's arguments, case-insensitively: git's
     # --format=%x00%cI%x00 would reach git as %x00truex00 on CI runners.
     monkeypatch.delenv("CI", raising=False)
+    monkeypatch.delenv("GITHUB_ACTIONS", raising=False)
     monkeypatch.setenv("CODEX_THREAD_ID", "thr-test-coordinator")
 
 

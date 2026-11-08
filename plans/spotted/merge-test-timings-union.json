@@ -1,0 +1,70 @@
+{
+  "items": [
+    {
+      "key": "bug\t.test_durations\tGate: test_1_recorded_timings_name_existing_tests\tcodex-fast-off-by-default",
+      "kind": "bug",
+      "path": ".test_durations",
+      "line": 787,
+      "text": "Gate: test_1_recorded_timings_name_existing_tests",
+      "from": "blocking",
+      "item": "codex-fast-off-by-default",
+      "status": "done",
+      "closed_by": "merge-test-timings-union"
+    },
+    {
+      "key": "bug\t.test_durations\tRefresh timing entries against the current test suite\tpull-request-test-groups-take-20-to-32-m",
+      "kind": "bug",
+      "path": ".test_durations",
+      "line": 1040,
+      "text": "Refresh timing entries against the current test suite",
+      "from": "blocking",
+      "item": "pull-request-test-groups-take-20-to-32-m",
+      "status": "done",
+      "closed_by": "merge-test-timings-union"
+    },
+    {
+      "key": "bug\tsrc/forge/merge_timings.py\tDisputed keep the timing union: obsolete test entries make CI fail\tmerge-test-timings-union",
+      "kind": "bug",
+      "path": "src/forge/merge_timings.py",
+      "line": 19,
+      "text": "Disputed keep the timing union: obsolete test entries make CI fail",
+      "from": "blocking",
+      "item": "merge-test-timings-union",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/worker.py\tHandle a rejected automatic merge commit in forge work\tmerge-test-timings-union",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 129,
+      "text": "Handle a rejected automatic merge commit in forge work",
+      "from": "blocking",
+      "item": "merge-test-timings-union",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_default_merge_keeps_test_timings.py\tGate: timing-conflict resolution for stacked items\tmerge-test-timings-union",
+      "kind": "bug",
+      "path": "tests/test_default_merge_keeps_test_timings.py",
+      "line": 28,
+      "text": "Gate: timing-conflict resolution for stacked items",
+      "from": "blocking",
+      "item": "merge-test-timings-union",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/close.py\tNot done: Merging the default branch into an item resolves a conflict in .test_durations alone by keeping both sides' entries",
+      "kind": "edge",
+      "path": "src/forge/close.py",
+      "line": 761,
+      "text": "Not done: Merging the default branch into an item resolves a conflict in .test_durations alone by keeping both sides' entries",
+      "from": "review",
+      "item": "merge-test-timings-union",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
