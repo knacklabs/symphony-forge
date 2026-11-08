@@ -48,7 +48,8 @@ def test_2_a_top_part_edit_after_a_pass_needs_a_round_on_the_diff(repo, claude_p
     doc.write_text(BUILT.replace("come back to it later.", "come back to it within a week."),
                    encoding="utf-8")
     edited = TOP.replace("come back to it later.", "come back to it within a week.")
-    assert repo.forge("next").stdout.splitlines()[-2:] == [
+    # The plan's advice precedes next's final build-count summary.
+    assert repo.forge("next").stdout.splitlines()[-3:-1] == [
         "Planning Shoppers can save a basket: plans/SHOP.md changed after round 1 of its cold read, "
         "so round 2 is next.",
         "Next: forge read SHOP"]

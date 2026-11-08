@@ -320,8 +320,8 @@ def _continues(repo, monkeypatch, tmp_path, sdk_data, app):  # noqa: F811
         assert fact in notes, notes
     assert not _sent(reader.log, "thread/archive")  # a round with findings keeps its conversation
 
-    # forge next names the round, and a round waits for every disposition.
-    assert repo.forge("next").stdout.splitlines()[-3:] == [
+    # forge next names the round before its build summary; the round waits for every disposition.
+    assert repo.forge("next").stdout.splitlines()[-4:-1] == [
         "Planning Shoppers can save a basket: round 1 of its cold read had findings, so round 2 is "
         "next.",
         "Cold read round 1 of 2: 2 notes to answer.",

@@ -246,7 +246,8 @@ def _check_dirty_merge(
     (env.repo.path / ".git" / "forge" / "ready" / f"{item}.json").unlink()
     legacy = env.repo.forge("next")
     quoted = f'"{where}"' if os.name == "nt" else shlex.quote(str(where))
-    assert legacy.stdout.splitlines()[-1] == f"Next: git worktree remove {quoted}"
+    # Cleanup advice precedes next's final build-count summary.
+    assert legacy.stdout.splitlines()[-2] == f"Next: git worktree remove {quoted}"
 
 
 def _check_later_local_commit(env):

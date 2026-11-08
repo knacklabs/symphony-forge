@@ -159,8 +159,8 @@ def test_6_forge_next_lists_a_due_check_until_forge_spec_measure_records_it(repo
     assert not set(DUE) & set(_next(repo, monkeypatch, "2026-10-01"))
     _done(repo, "INV-2")
     assert not set(DUE) & set(_next(repo, monkeypatch, "2026-09-30"))
-    # A due check comes before the idle lines, where discovery and the next planning step go.
-    assert _next(repo, monkeypatch, "2026-10-01") == DUE + [
+    # A due check comes before the idle advice; next now ends with the build-count summary.
+    assert _next(repo, monkeypatch, "2026-10-01")[:-1] == DUE + [
         "No story or fix is in progress.",
         'Next: forge start "<idea>"']
 
