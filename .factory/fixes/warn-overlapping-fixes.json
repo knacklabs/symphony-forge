@@ -1,0 +1,132 @@
+{
+  "base": "a966fe35e6416da992e3c2a10008975ad35d5959",
+  "branch": "fix/warn-overlapping-fixes",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1bb2b-55ee-7950-ba05-60d1be193687",
+    "head": null,
+    "start": "4486d2cd66f9dcb87779d9aec6f597f1c142a51a"
+  },
+  "done_when": "forge next names two open fixes or parts whose changed files overlap and suggests merging one first, without blocking either",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "_overlaps() in src/forge/nextstep.py",
+      "file": "src/forge/nextstep.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 419,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: forge next names two open fixes or parts whose changed files overlap and suggests merging one first, without blocking either",
+      "work": 2
+    },
+    {
+      "area": "_report() in src/forge/nextstep.py",
+      "file": "src/forge/nextstep.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 402,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Preserve the next state and overlap warnings in the machine view",
+      "work": 2
+    },
+    {
+      "area": "test_1_next_names_shared_changed_files_and_suggests_merge_order() in tests/test_next_warns_about_shared_files.py",
+      "file": "tests/test_next_warns_about_shared_files.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 54,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_next_names_shared_changed_files_and_suggests_merge_order",
+      "work": 2
+    },
+    {
+      "area": "test_1_next_names_shared_changed_files_and_suggests_merge_order() in tests/test_next_warns_about_shared_files.py",
+      "file": "tests/test_next_warns_about_shared_files.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 18,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: tests/test_ci_timing_inventory.py and tests/test_rules.py",
+      "work": 1
+    },
+    {
+      "area": "_overlaps() in src/forge/nextstep.py",
+      "file": "src/forge/nextstep.py",
+      "gain": 2,
+      "harm": 2,
+      "line": 412,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Follow-up: Exclude squash-merged local fixes from overlap advice",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "ccabaa72008c89744ccb450a0e06e46aa900d784d7c9657644221e77bfc687c1",
+    "changed": "03475a53e0ac04a33874bd697abaa2e91bfcbe30d6f149ca5dd017ccd335f709",
+    "commit": "4b95d610cad660967887227a8ffd136302b19564",
+    "dismissals": [],
+    "findings": [],
+    "id": "724dd005-8d5d-46ac-b024-78d7abd3d06f",
+    "status": "clean"
+  },
+  "round": 4,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-08T12:38:53.076803+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-08T12:56:12.901526+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-08T13:12:16.370133+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-08T13:18:35.040183+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-08T13:53:42.181516+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-08T13:12:16.370362+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "tests/test_next_warns_about_shared_files.py",
+    "reason": "Harm 3 test finding: one more round by the standing rule",
+    "wait_id": "1f0173c3-4bb8-4671-9327-ef01ece3d96e",
+    "worker_round": 2
+  },
+  "stuck": {
+    "close": "f9d3e586-ca21-476c-b91b-3c68796d22a1",
+    "head": "a2657197437028794a63180ea9c503143fef9549",
+    "keys": {},
+    "round": 3
+  },
+  "why": "Fixes have no Scope, so two open fixes can edit the same files with no warning and then conflict at merge",
+  "worker": "codex"
+}
