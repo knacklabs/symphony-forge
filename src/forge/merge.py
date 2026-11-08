@@ -45,7 +45,6 @@ def merge(args: argparse.Namespace, *, refreshed: bool = False) -> int:
     top, item = repo.root(), args.item
     if item == "enable":
         return _enable(top)
-    config = repo.default_config(top)
     if repo.merge_setting(top) != "agent":
         repo.refuse(REFUSALS["owner_merges" if item == ENABLE else "disabled"], item=item)
     worktree = close._worktree(item)
@@ -97,6 +96,8 @@ def merge(args: argparse.Namespace, *, refreshed: bool = False) -> int:
             repo.refuse(REFUSALS["owner_merges"], item=item)
         if repo.git("rev-parse", branch, cwd=top) != head:
             repo.refuse(REFUSALS["changed"], item=item)
+        # A retry may already contain main. Its saved head still owns the CI wait.
+        config = repo._sample_settings(worktree, repo._config_text(after or ""), head)
         item_files = set(repo.git("diff", "--name-only", "--no-renames", "-z", base, head,
                                   cwd=worktree).split("\0")) - {""}
         moves = 0

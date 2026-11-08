@@ -4,6 +4,10 @@ Test audit: protect routing and admission through the real merge command.
 Custom fast commands previously entered the laptop lane in CI repos.
 Broad-pytest cases miss this failure. Reuse client setup, fake only external
 services, and add no production seam.
+
+Retry audit: preserve the saved combined head's check names after failed or
+timed-out waits. Earlier cases ended after one attempt and missed that lifecycle.
+Extend the same command cases with real retries, without another test seam.
 """
 import json
 import re
@@ -55,7 +59,8 @@ def test_1_merge_waits_for_combined_ci_without_laptop_tests(env, tmp_path, previ
     advanced = env.repo.git("rev-parse", "HEAD", cwd=other)
     _github_moves_default(env, False, "CLEAN")
     (env.repo.bin / "default-moved").write_text(advanced, encoding="utf-8")
-    env.checks([run(check, "success" if configuration == "rename" else "failure"), run("forge-pr-check")])
+    waiting = (run(check, None, "queued") if configuration == "rename" else run(check, "failure"))
+    env.checks([waiting, run("forge-pr-check")])
     env.gh.respond("api", "--paginate", "--jq", ".check_runs[]",
                    f"repos/{{owner}}/{{repo}}/commits/{original}/check-runs?per_page=100",
                    stdout="".join(json.dumps(check) + "\n" for check in
@@ -65,23 +70,38 @@ def test_1_merge_waits_for_combined_ci_without_laptop_tests(env, tmp_path, previ
 
     assert not log.exists(), merged.stdout + merged.stderr
     assert "Pull request CI runs the combined change's tests." in merged.stdout
-    if configuration == "rename":
-        assert merged.returncode == 0, merged.stdout + merged.stderr
-        attempt, = env.gh_calls("pr", "merge")
-        published = attempt[attempt.index("--match-head-commit") + 1]
-    else:
-        assert merged.returncode != 0
-        assert f"Checks failed on the pull request: {check}." in merged.stderr
-        assert not env.gh_calls("pr", "merge")
-        published = env.repo.git("rev-parse", "HEAD", cwd=where)
+    assert merged.returncode != 0, merged.stdout + merged.stderr
+    reason = (f"{check} is still queued" if configuration == "rename" else
+              f"Checks failed on the pull request: {check}.")
+    assert reason in merged.stderr
+    assert not env.gh_calls("pr", "merge")
+    published = env.repo.git("rev-parse", "HEAD", cwd=where)
     assert published != original
     remote_branch = env.repo.git("ls-remote", "origin", "refs/heads/fix/tidy-readme")
-    if configuration == "rename":
-        assert not remote_branch  # A completed merge removes its published branch.
-    else:
-        assert remote_branch.split()[0] == published
+    assert remote_branch.split()[0] == published
     env.repo.git("merge-base", "--is-ancestor", advanced, published, cwd=remote)
     assert any(f"/commits/{published}/" in call[-1] for call in env.gh_calls("api"))
+
+    retried = env.repo.forge("merge", item)
+
+    assert retried.returncode != 0, retried.stdout + retried.stderr
+    assert reason in retried.stderr
+    assert not env.gh_calls("pr", "merge")
+    assert not log.exists()
+    assert env.repo.git("rev-parse", "HEAD", cwd=where) == published
+    assert "main moved;" not in retried.stdout
+    before_checks = len(env.gh_calls("api"))
+    env.checks([run(check), run("forge-pr-check")])
+
+    finished = env.repo.forge("merge", item)
+
+    assert finished.returncode == 0, finished.stdout + finished.stderr
+    attempt, = env.gh_calls("pr", "merge")
+    assert attempt[attempt.index("--match-head-commit") + 1] == published
+    assert not log.exists()
+    assert "main moved;" not in finished.stdout
+    assert any(f"/commits/{published}/" in call[-1]
+               for call in env.gh_calls("api")[before_checks:])
 
 
 # Audit: CI's public change-test command must select both sides of a merge.
