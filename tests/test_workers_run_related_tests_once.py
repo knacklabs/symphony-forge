@@ -56,11 +56,10 @@ def test_2_worker_test_guidance_follows_the_repo_test_place(repo, monkeypatch, t
     continued = " ".join(calls(log)[-1]["brief"].split()).lower()
 
     if test_place == "ci":
-        guidance = ("run only the exact new, changed or previously failing tests through `forge test`, "
-                    "using the test runner's name filter. watch a regression fail before the repair, "
-                    "then rerun those tests until they pass before committing.")
+        guidance = "wider related tests, lint and type checks stay in pull request ci."
         for brief in (first, nudge, continued):
             assert guidance in brief
+            assert "previously failing tests" not in brief
             assert "run the change's related tests through `forge test` in the foreground" not in brief
     else:
         guidance = ("run the change's related tests through `forge test` in the foreground once, "

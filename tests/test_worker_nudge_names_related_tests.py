@@ -28,8 +28,7 @@ def _related_test_skills(client):
         assert "in local mode" in validation.lower()
         assert "run the change's related tests through `forge test`" in validation.lower()
         assert "in ci mode" in validation.lower()
-        assert "run only the exact new, changed or previously failing tests" in validation.lower()
-        assert "rerun those tests until they pass before committing" in validation.lower()
+        assert "wider related tests, lint and type checks stay in pull request ci." in validation.lower()
         assert "run the change's related tests" in validation
         assert "through `forge test`" in validation
         assert "`fast_test`, or `test` when none is set" in validation
@@ -114,9 +113,9 @@ def test_2_clients_receive_related_test_guidance_in_briefs_and_synced_skills(
     built = repo.forge("work", FIX)
     assert built.returncode == 0, built.stdout + built.stderr
     brief = " ".join(calls(log)[0]["brief"].split()).lower()
-    assert ("run only the exact new, changed or previously failing tests through `forge test`, "
-            "using the test runner's name filter. watch a regression fail before the repair, "
-            "then rerun those tests until they pass before committing.") in brief
+    assert "wider related tests, lint and type checks stay in pull request ci." in brief
+    assert "previously failing tests" not in brief
+    assert "Never edit or delete a test to make it pass".lower() in brief
     assert "run the change's related tests through `forge test` in the foreground" not in brief
 
 
