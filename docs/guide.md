@@ -291,7 +291,9 @@ A prototype without the sample-data mark also needs its strict whole-product rev
    refuses two tasks whose Scope paths share a prefix up to the first wildcard unless one waits
    for the other through After, directly or through another task. It names both tasks and says to
    put shared files, names and stubs in the first task, then make tasks that need them wait through
-   After and own only their files. An in-flight story gets the same check at its next plan check;
+   After and own only their files. Paths with a segment named `tests`, `test`, `__tests__` or `spec`
+   do not cause Scope overlaps. Parts can share these test paths without an After link. Explicit
+   After links still apply. An in-flight story gets the same check at its next plan check;
    follow the refusal's step to amend the plan.
 3. `forge read <KEY>` runs an independent cold read. Answer every finding (cut, defer or keep),
    amend the doc, then run `forge read <KEY>` again; the same reader reads the whole doc again,
