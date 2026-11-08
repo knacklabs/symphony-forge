@@ -1,8 +1,8 @@
-"""Codex merges and close preserve the default branch's coordinator settings.
+"""Codex merges preserve incoming settings; close refuses unlisted settings edits.
 
 Audit: work restores HEAD during an open merge, and close trusts that stale
-commit. Existing settings tests cover worker edits, not incoming main settings.
-Real Forge commands and installed hooks own both repairs; only Codex and GitHub
+commit. Close now refuses stale settings without changing the branch.
+Real Forge commands and installed hooks own both contracts; only Codex and GitHub
 are faked at their external boundaries. No production test seam is needed.
 """
 import json
@@ -22,13 +22,15 @@ STORY = "close-keeps-main-settings"
 MESSAGE = "Kept main's settings in forge.toml and this branch's version pin."
 
 
-def _setup(env, client, tmp_path, named=False, renamed_check=False, part=False):
+def _setup(env, client, tmp_path, named=False, renamed_check=False, part=False, agent=False):
     env.checks(GREEN)
     setup = Upgrade(env, tmp_path)
     version = client.forge("--version").stdout.split()[-1]
     settings = _toml(version, "codex", MODELS, "client")
     settings = settings.replace(f'version = "{version}"', f'version = "{version}" # branch pin')
     settings = 'test = "echo ok"\nfast_test = "echo ok"\nchecks = ["tests", "forge-pr-check"]\n' + settings
+    if agent:
+        settings = 'merge = "agent"\n' + settings
     setup.on_main("forge.toml", settings)
     if part:
         story(client)
@@ -112,12 +114,12 @@ def test_1_codex_open_merge_keeps_incoming_settings_through_close(
 
 @pytest.mark.parametrize("client, case", [
     pytest.param(False, case, id=f"new-{case}")
-    for case in ("stale", "pin-only", "allowed", "clean", "checks", "part")
+    for case in ("stale", "pin-only", "allowed", "clean", "checks", "part", "land")
 ] + [pytest.param(True, "checks", id="adopted-stale-and-renamed-checks")], indirect=["client"])
-def test_2_close_commits_main_settings_with_head_pin_unless_settings_are_allowed(
+def test_2_close_refuses_unlisted_settings_and_keeps_the_branch_change(
         env, client, tmp_path, case):
     folder, original, incoming = _setup(env, client, tmp_path, named=case == "allowed",
-                                        renamed_check=case == "checks", part=case == "part")
+                                        renamed_check=case == "checks", part=case == "part", agent=case == "land")
     client.git("merge", "-q", "--no-commit", "origin/main", cwd=folder)
     # Reproduce the old Codex restore, including the stale copy committed by its nudge.
     if case != "clean":
@@ -127,29 +129,28 @@ def test_2_close_commits_main_settings_with_head_pin_unless_settings_are_allowed
     client.git("commit", "-qm", "Finish the worker merge", cwd=folder)
     before = client.git("rev-parse", "HEAD", cwd=folder)
     item = "BOARD/API" if case == "part" else "correct-spelling"
-    closed = client.forge("close", item)
-    assert closed.returncode == 0, closed.stdout + closed.stderr
-    assert "Ready:" in closed.stdout
-    expected = (original if case == "allowed" else incoming if case == "clean"
-                else incoming.replace('# main pin', '# branch pin'))
-    assert (folder / "forge.toml").read_text("utf-8") == expected
-    assert client.git("show", "HEAD:forge.toml", cwd=folder) == expected.strip()
-    repaired = case in ("stale", "checks", "part")
-    assert closed.stdout.count(MESSAGE) == int(repaired)
-    advice = "The change was kept out because this item's Done-when does not name forge.toml."
-    assert closed.stdout.count(advice) == int(repaired)
-    if repaired:
+    # The owner replaced restoration with refusal, including land before cleanup.
+    expected = (folder / "forge.toml").read_bytes()
+    closed = client.forge("land" if case == "land" else "close", item)
+    refused = case in ("stale", "checks", "part", "land")
+    assert closed.returncode == int(refused), closed.stdout + closed.stderr
+    if refused:
+        assert ("forge.toml changes settings. This item's Done-when must name forge.toml. "
+                "The branch keeps its change.") in closed.stderr
         if case == "part":
             assert ("In this task checkout, name forge.toml in the plan's covered Done-when details "
-                    "and commit the plan.") in closed.stdout
-            assert "forge fix amend" not in closed.stdout
+                    "and commit the plan, then forge close BOARD/API") in closed.stderr
+            assert "forge fix amend" not in closed.stderr
         else:
-            assert ('forge fix amend correct-spelling --done "<done when naming forge.toml>" '
-                    '--because "<why>"') in closed.stdout
-        assert ("The coordinator must reapply and commit the excluded forge.toml change "
-                f"before forge work {item}.") in closed.stdout
-    commits = client.git("log", "--format=%H", f"{before}..HEAD", "--", "forge.toml", cwd=folder).splitlines()
-    assert len(commits) == int(repaired)
+            assert ('Next: forge fix amend correct-spelling --done "<done when naming forge.toml>" '
+                    '--because "<why>"') in closed.stderr
+        assert client.git("rev-parse", "HEAD", cwd=folder) == before
+    else:
+        assert "Ready:" in closed.stdout
+    assert MESSAGE not in closed.stdout
+    assert (folder / "forge.toml").read_bytes() == expected
+    assert client.git("show", "HEAD:forge.toml", cwd=folder) == expected.decode("utf-8").strip()
+    assert not client.git("log", "--format=%H", f"{before}..HEAD", "--", "forge.toml", cwd=folder)
     assert client.git("status", "--porcelain", cwd=folder) == ""
 
 

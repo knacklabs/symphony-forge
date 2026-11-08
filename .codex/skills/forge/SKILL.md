@@ -302,14 +302,14 @@ human, and board and `forge next` lines. Briefs, guides and code stay as they ar
 
 The human never edits `forge.toml`; you keep it. When a setting must change, ask first with
 options, then make the change yourself in a fix: `forge fix start`, the edit, then `forge close`.
-After a merge of the default branch, close keeps that branch's settings unless this item's
-Done-when names `forge.toml`. It keeps this branch's version pin. When close excludes a settings
-change, it explains why. For a fix, run `forge fix amend <item> --done "<done when naming forge.toml>" --because "<why>"`,
-then reapply and commit the excluded `forge.toml` change yourself before `forge work <item>`.
-Workers never edit settings. For a task part, name `forge.toml` in the plan's covered
-Done-when details in the task checkout and commit the plan there. These details do not
-change the approved numbered result. Then reapply and commit the settings yourself before
-`forge work <item>`. New and earlier-adopted repos get this advice on upgrade.
+Close refuses a settings change in `forge.toml` unless this item's Done-when names the file.
+It leaves the settings and branch change intact, so `forge land` also stops before merging.
+For a fix, run `forge fix amend <item> --done "<done when naming forge.toml>" --because "<why>"`.
+For a task part, name `forge.toml` in the plan's covered Done-when details in the task checkout
+and commit the plan there. These details do not change the approved numbered result.
+Then run `forge close <item>` again. A version-pin-only difference still passes.
+Initial migration and adoption keep their new settings until their first pull request merges.
+New and earlier-adopted repos get this check on upgrade. Workers never edit settings.
 A developer's own `tools`, `workers` and `[models.<kind>]` choices go in the git-ignored
 `forge.local.toml` instead, which you edit directly when they ask; Forge refuses any other key there.
 `runner` selects the GitHub Actions runner label for every job in the generated `forge.yml`;

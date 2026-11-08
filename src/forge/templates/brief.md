@@ -189,9 +189,10 @@ $delegation
 - Edit files only inside this checkout.
 - $file_ownership
 - $settings
-- After a merge of the default branch, close keeps that branch's settings unless this item's
-  Done-when permits settings changes. It keeps this branch's version pin. The worker's settings
-  restore uses the incoming side while a merge is open. Workers can commit those incoming settings
+- Close refuses settings changes in forge.toml unless this item's Done-when names forge.toml.
+  It leaves the settings change intact. A fix gets the forge fix amend step; a task part needs
+  forge.toml in its covered Done-when details in the task checkout. A version-pin-only difference
+  passes. The worker's settings restore uses the incoming side while a merge is open. Workers can commit those incoming settings
   unchanged. Initial migration and adoption keep their new settings until their first pull request merges.
 - A subagent never runs `forge handback`, `forge work` or `forge stop` itself.
 - A successful hand-back frees the item's lock. If the worker process and lock are no longer live,
