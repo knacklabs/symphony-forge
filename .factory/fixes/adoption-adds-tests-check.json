@@ -117,7 +117,7 @@
     "id": "49e0f78a-1d92-416e-bec7-d5f3b161f03f",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -130,10 +130,13 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "638efdb9e428451c7a53f96f369ed457c4e817a3",
-    "keys": {},
-    "round": null
+    "close": "c67b6f3a-4769-4d3f-9808-dae66b0334d1",
+    "head": "374f459ffa99725aa8fcabe7e03f7a0fd58bc162",
+    "keys": {
+      "the open P0 preserve existing ci service setup when requiring the new tests check in src/forge/init.py": 1,
+      "the open P0 reconcile branch protection when applying the doctor's checks repair in src/forge/doctor.py": 1
+    },
+    "round": 1
   },
   "why": "An app adopted into Forge with GitHub Actions gets checks = forge-pr-check only, so Forge's tests job never runs the changed tests in CI and an earlier-adopted repo without test_place falls back to running every close's tests on the laptop",
   "worker": "codex"
