@@ -4,8 +4,10 @@ from pathlib import Path
 
 import pytest
 
+from conftest import Repo
 from test_close import GREEN, env  # noqa: F401
 from test_setup import _fresh_client
+from test_upgrade_command import Upgrade
 from test_worker import calls, install_claude
 
 STORY = "ROOT-CAUSE-AND-NO-TEST-GAMING"
@@ -47,16 +49,14 @@ def test_1_workers_and_reviews_receive_real_repair_rules(
     config = (f'version = "{version}"\nworkers = "claude"\n'
               'test = "echo ok"\nchecks = ["tests", "forge-pr-check"]\n'
               'models.lite = { model = "sonnet", effort = "medium" }\n')
-    if adopted:
-        env.commit(client, "forge.toml", config, "Use the current release")
-        repo.git("push", "-q", "origin", "main", cwd=client)
+    # Configure the fixture on main; the greeting fix does not change settings.
+    env.repo = Repo(client, repo.bin)
+    Upgrade(env, tmp_path).on_main("forge.toml", config, "Configure the test client")
 
     started = repo.forge("fix", "start", "Repair the greeting", "--done",
                          "The greeting works", "--kind", "mechanical", cwd=client)
     assert started.returncode == 0, started.stdout + started.stderr
     where = client.parent / f"{client.name}-fix-repair-the-greeting"
-    if not adopted:
-        env.commit(where, "forge.toml", config, "Configure the test client")
     if adopted:
         synced = repo.forge("sync", cwd=where)
         assert synced.returncode == 0, synced.stdout + synced.stderr
