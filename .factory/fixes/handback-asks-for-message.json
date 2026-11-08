@@ -4,12 +4,20 @@
   "done_when": "forge handback with no message refuses without recording the round as failed and tells the agent to run the same handback again with --text or the message on stdin",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-08T07:05:14.997161+00:00",
       "step": "start"
     }
   ],
-  "why": "When forge handback gets no message, it records the round as failed and its next step says forge work, which restarts a round whose work is already committed, instead of saying to hand back again with the message"
+  "stuck": {
+    "close": null,
+    "head": "0ae1cab8e87065eabc8ab60f81747ed308a58f5c",
+    "keys": {},
+    "round": null
+  },
+  "why": "When forge handback gets no message, it records the round as failed and its next step says forge work, which restarts a round whose work is already committed, instead of saying to hand back again with the message",
+  "worker": "codex"
 }
