@@ -107,6 +107,7 @@ def test_1_next_names_shared_changed_files_and_suggests_merge_order(repo, gh, hi
     assert len(remaining) == 3 and all("The fix first" not in line for line in remaining), merged.stdout
 
 
+@pytest.mark.platform
 @pytest.mark.parametrize("other_change", ["delete", "rename"])
 def test_2_next_warns_when_renames_share_the_original_path(repo, gh, other_change):
     # Audit: Git rename detection hides the original path from --name-only.
