@@ -18,7 +18,7 @@
       "gain": 4,
       "harm": 3,
       "line": 227,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -31,7 +31,7 @@
       "gain": 4,
       "harm": 3,
       "line": 63,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -44,7 +44,7 @@
       "gain": 3,
       "harm": 3,
       "line": 76,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -57,7 +57,7 @@
       "gain": 3,
       "harm": 3,
       "line": 62,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -67,58 +67,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "d32fab77352373db4ce8b718b4144bc178829f4c490dcd19d62ed7764d519adc",
-    "changed": "7b59d890b07d9cbb2c64e815ff9d39ebf2b9adaf6df2e6148969071e792d2fb4",
-    "commit": "800ae8dd8606779064fba4ab71257c687b0449db",
+    "branch_diff": "8b5a5d7c8a9993c48e44f5853ec427302864f161f66b8a2daa7572e485473d2c",
+    "changed": "f3ea0e6c36a363b1030114a22f9abd7f4d954b6a0ea888854b1e43180cb9deff",
+    "commit": "509c82bec836793cc14b3743186fd4b0204a2445",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done\nCase: normal use - a person merges a ready pull request after sign-off while its native builder still has a pending handback.\nThe new release event is recorded by `forge merge`, which refuses when the repo uses the default human-merge setting (`src/forge/merge.py:49-50`). `forge close` recognizes the merged pull request and returns without recording that event (`src/forge/close.py:185-194`), so the surviving session keeps the builder place and waiting work remains blocked. The new merge tests force `merge = \"agent\"` for both clients (`tests/test_finished_builds_free_places.py:37`).",
-        "file": "src/forge/merge.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 227,
-        "priority": "P1",
-        "required_done_when": true,
-        "title": "Not done: A builder place is freed when Forge records the round's completion or the item's merge, and a waiting part starts at once",
-        "work": 2
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - a ready pull request merges while its builder result is awaiting handback, and local files cause Forge to retain the worktree.\nRemoving the entry makes `native.handback` treat that pending round as stopped or replaced (`src/forge/native.py:224-226`). It refuses before recording the builder's result or reaching the pending-record and lock cleanup at lines 239-243. The coordinator therefore cannot hand back the result or receive a commit nudge for the retained work, and the item lock remains held.",
-        "file": "src/forge/event_log.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 63,
-        "priority": "P1",
-        "title": "Keep a pending handback usable after a merge frees its place",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - a finished builder asks a question and handback publishes it to GitHub.\nThe test waits for `handback` to return before checking admission. The existing `finally` in `src/forge/native.py:239-243` already releases the entry, so this case still passes if the new release on `run end` is removed. That misses the promised timing: `src/forge/native.py:293-298` records the end before the GitHub publication, which can keep handback running. The proof needs to observe waiting work start after the end is recorded and before handback returns.",
-        "file": "tests/test_finished_builds_free_places.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 76,
-        "priority": "P1",
-        "title": "Gate: round completion releases capacity before handback returns",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - a story part such as `BOARD/HELP` finishes or merges while another part waits for a builder place.\nEvery new case starts fixes for both the holder and the waiter; none exercises a story-part identity or starts a waiting part. A release regression that mishandles the slash in `BOARD/HELP` would therefore pass these cases while leaving that part's place occupied. The existing task handback test checks cleanup after handback returns (`tests/test_tools_native_work.py:150-155`), rather than admission after a recorded completion or merge.",
-        "file": "tests/test_finished_builds_free_places.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 62,
-        "priority": "P1",
-        "title": "Gate: a waiting story part starts when capacity is released",
-        "work": 2
-      }
-    ],
-    "id": "5814d339-a7f3-40a7-b46b-f5e992cf6238",
-    "status": "blocked"
+    "findings": [],
+    "id": "39c40d5a-811c-4bfe-9f5a-867846a3ca9b",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-07T18:12:38.010383+00:00",
@@ -126,6 +84,10 @@
     },
     {
       "at": "2026-11-07T19:09:03.894699+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-08T03:13:02.726658+00:00",
       "step": "review"
     }
   ],
