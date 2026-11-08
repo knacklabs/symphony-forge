@@ -8,19 +8,22 @@ from pathlib import Path
 import pytest
 
 from conftest import ROOT, machine_cores
+from test_close import env  # noqa: F401
 
 STORY = "FIX-CI-TESTS-USE-WHOLE-RUNNER"
 
 
-@pytest.mark.parametrize("adopted,actions,expected", [
-    (False, "true", 4), (False, "false", 1), (True, "true", 4),
-], ids=["github-new", "laptop", "github-earlier-adopted"])
-def test_1_github_uses_all_cores_and_laptop_keeps_agent_share(repo, gh, monkeypatch, adopted, actions, expected):
+@pytest.mark.parametrize("adopted,actions,expected,options", [
+    (False, "true", 4, "-n auto"), (False, "false", 1, "-n auto"),
+    (True, "true", 4, "-n auto"), (False, "true", 1, ""),
+    (False, "true", 2, "-n 2"), (False, "true", 1, "-n auto --maxprocesses=1"),
+], ids=["github-new", "laptop", "github-earlier-adopted", "serial", "fixed", "capped"])
+def test_1_github_uses_all_cores_and_laptop_keeps_agent_share(repo, gh, monkeypatch, adopted, actions, expected, options):
     # Real pytest workers receive the budget. The old CI reserve starts one
     # worker instead of four. Existing cap tests cover only laptops. OS readings
     # use the existing launcher helper, with no production test seam.
     repo.write("tests/test_budget.py", "# app.py\ndef test_workers(request):\n"
-               f"    assert request.config.workerinput['workercount'] == {expected}\n")
+               f"    assert getattr(request.config, 'workerinput', {{'workercount': 1}})['workercount'] == {expected}\n")
     repo.write("app.py", "VALUE = 1\n")
     repo.git("add", "-A")
     repo.git("commit", "-qm", "Configure client tests")
@@ -47,7 +50,7 @@ def test_1_github_uses_all_cores_and_laptop_keeps_agent_share(repo, gh, monkeypa
                                                   "machine.busy_runners = lambda: 1"), "utf-8")
     monkeypatch.setenv("GITHUB_ACTIONS", actions)
     monkeypatch.setenv("PYTHONPATH", str(repo.bin))
-    command = f'"{Path(sys.executable).as_posix()}" -m pytest tests -q -n auto'
+    command = f'"{Path(sys.executable).as_posix()}" -m pytest tests -q {options}'
     settings = (repo.path / "forge.toml").read_text("utf-8")
     repo.write("forge.toml", re.sub(r"(?m)^test = .*", lambda _: "test = " + json.dumps(command), settings))
     base = repo.git("rev-parse", "HEAD").strip()
@@ -56,3 +59,30 @@ def test_1_github_uses_all_cores_and_laptop_keeps_agent_share(repo, gh, monkeypa
               else repo.forge("test", "--pytest", base))
     assert result.returncode == 0, result.stdout + result.stderr
     assert f"Test selection: {expected} workers." in result.stdout
+
+
+def test_2_github_worker_passes_all_cores_to_its_test_command(env, monkeypatch):
+    # A real work turn adds a child-process budget which direct picker cases
+    # cannot reach. Fake only the provider; its child runs Forge and real pytest.
+    repo = env.repo
+    machine_cores(repo, 4)
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
+    settings = (repo.path / "forge.toml").read_text("utf-8")
+    command = f'"{Path(sys.executable).as_posix()}" -m pytest tests -q -n auto'
+    env.commit(repo.path, "forge.toml", 'test = ' + json.dumps(command) + '\n' + settings)
+    repo.git("push", "-q", "origin", "main")
+    item, _ = env.start_fix({"tests/test_budget.py":
+        "def test_workers(request):\n    assert request.config.workerinput['workercount'] == 4\n"})
+    report = repo.bin / "worker-tests.txt"
+    sdk = repo.bin / "claude_agent_sdk/__init__.py"
+    action = ("    import subprocess\n"
+              f"    result = subprocess.run([{Path(sys.executable).as_posix()!r}, {(repo.bin / 'forge').as_posix()!r}, 'test'], "
+              "cwd=options.cwd, capture_output=True, text=True)\n"
+              f"    Path({report.as_posix()!r}).write_text(result.stdout + result.stderr, encoding='utf-8')\n"
+              "    assert result.returncode == 0, result.stdout + result.stderr\n")
+    sdk.write_text(sdk.read_text("utf-8").replace(
+        '    yield AssistantMessage([TextBlock("SDK worker output")], options.model)',
+        action + '    yield AssistantMessage([TextBlock("SDK worker output")], options.model)'), "utf-8")
+    worked = repo.forge("work", item)
+    assert worked.returncode == 0, worked.stdout + worked.stderr
+    assert "Test selection: 4 workers." in report.read_text("utf-8")

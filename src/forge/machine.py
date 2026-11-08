@@ -48,8 +48,8 @@ def test_cpus(entry: dict[str, Any] | None = None) -> str:
 
 
 def worker_env() -> dict[str, str]:
-    """A worker's test runs, through forge test or pytest -n auto, use at most two processes."""
-    cpus = str(min(2, half_cores()))
+    """Workers keep the laptop cap; GitHub tests can use the whole runner."""
+    cpus = str(test_slots() if os.environ.get("GITHUB_ACTIONS") == "true" else min(2, half_cores()))
     return {**os.environ, "FORGE_WORKER": "1", "FORGE_TEST_CPUS": cpus, "PYTEST_XDIST_AUTO_NUM_WORKERS": cpus}
 
 

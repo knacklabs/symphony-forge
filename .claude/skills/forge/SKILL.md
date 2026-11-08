@@ -1939,10 +1939,12 @@ names no test command it says so and exits successfully. In a sample-data protot
 tests are off until client sign-off. After sign-off, ask the coordinator to set
 `sample_data = false` in `forge.toml` to turn tests on. A missing setting also leaves tests on,
 regardless of an earlier sign-off's `sample_data: true`. Forge sets `PYTEST_XDIST_AUTO_NUM_WORKERS`
-and `FORGE_TEST_CPUS` to the run's allocation from the shared process budget. A worker's session
-requests at most two processes, so its own `pytest -n auto` also stays at two. A fixed `-n` in
+and `FORGE_TEST_CPUS` to the run's allocation from the shared process budget. On laptops, a worker's session
+requests at most two processes, so its own `pytest -n auto` also stays at two. GitHub Actions workers use
+all available runner cores. A fixed `-n` in
 its test command is capped with `--maxprocesses`, also outside a worker session.
-The Test selection line shows the worker count. GitHub Actions uses all available cores;
+The Test selection line shows pytest's actual worker count, including serial commands and lower
+configured counts. Linux GitHub Actions logs also show `nproc`. GitHub Actions uses all available cores;
 laptops keep the agent share and the reserve for local runner jobs.
 Direct Vitest and Jest commands use the same budget through `--maxWorkers`.
 This includes `npx` (with optional `--no-install`) and `npm exec`, `pnpm exec` or `yarn exec`.
