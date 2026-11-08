@@ -70,7 +70,7 @@
       "gain": 4,
       "harm": 3,
       "line": 51,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 1,
       "security": false,
@@ -96,7 +96,7 @@
       "gain": 4,
       "harm": 3,
       "line": 67,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 1,
       "security": false,
@@ -106,37 +106,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "87e218a7883899dd7c6727e104120c59ea0c495d7c1fbc7e8039f7c189fc048e",
-    "changed": "bd4874b0eb55622854d3d1389f9cb006f38c352a843fd6a93e5733e1af0570f4",
-    "commit": "5260f63393a4b16b573b71afa1b19d3017541e22",
+    "branch_diff": "4c0f55a4c52ce15a2c72a4136ff60539efbb29952b3491954064fcfc6241bf54",
+    "changed": "0da3ef995ee1ce3733e26eca665c5ea7490286915729712bc1c7d79f721ae078",
+    "commit": "1aadf907a0835ca8d36fa0a9d85efa86ddd10de9",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 1, Harm 3\nRaise: Functional\nCase: normal use - an earlier-adopted repo resumes an isolated check-removal fix whose previous review recorded a spotted item.\nThe filter excludes `plans/spotted/` but still counts the legacy `plans/spotted.json` as another change. Earlier Forge releases wrote that file, and `src/forge/spotted.py:85` still reads it as a Forge record. After upgrading, close therefore refuses an otherwise isolated removal whose earlier review changed that list, preventing it from reaching the shared-check wait.",
-        "file": "src/forge/checks.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 53,
-        "priority": "P1",
-        "title": "Functional: Exclude Forge\u2019s spotted records from the isolation check",
-        "work": 1
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Test\nCase: normal use - a retained check has not reported, or a mixed fix has unpushed commits on an existing pull request.\nEvery removal-only case supplies `forge-pr-check`. The queued cases would still pass if the shared required list were empty, because `src/forge/checks.py:289` also waits for queued checks that are not named. Separately, the product and conflict cases push the mixed HEAD before close at lines 77\u201380, so the remote-SHA assertion at line 103 cannot detect close pushing that same HEAD before refusing. Exercise a missing retained check and leave the existing PR's remote head behind the mixed commit.",
-        "file": "tests/test_check_removal_isolated.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 88,
-        "priority": "P1",
-        "title": "Gate: tests/test_check_removal_isolated.py::test_1_close_isolates_removal_and_merge_waits_for_shared_checks",
-        "work": 2
-      }
-    ],
-    "id": "b9681028-384b-4b28-a9d3-2055d22b566e",
-    "status": "blocked"
+    "findings": [],
+    "id": "b0f9fb75-26c7-49fe-be52-810f9061cb1a",
+    "status": "clean"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-08T16:55:19.124397+00:00",
@@ -148,6 +127,10 @@
     },
     {
       "at": "2026-11-08T17:46:27.337309+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-08T17:56:26.818680+00:00",
       "step": "review"
     }
   ],
