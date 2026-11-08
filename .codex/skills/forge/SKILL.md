@@ -1244,6 +1244,14 @@ use that release and its rules.
 
 ## Refresh dependencies
 
+New starter apps use Playwright 1.64.0, which supports Ubuntu 24.04 and 26.04.
+Existing apps keep their own `package.json` and lockfile on upgrade and sync.
+When the owner asks for the same upgrade in a pnpm app, set `@playwright/test` and
+any `pnpm.overrides.playwright-core` pin to `1.64.0`, then run
+`corepack pnpm install --lockfile-only` and `corepack pnpm install --frozen-lockfile`.
+Keep `@axe-core/playwright` unless it needs an update for compatibility. Check any
+Playwright Docker image tag matches the package version, then run the app's browser tests.
+
 Once in each new or existing repo, turn on GitHub's Dependabot security alerts with
 `gh api --method PUT repos/{owner}/{repo}/vulnerability-alerts`.
 Dependabot security updates stay off: add no Dependabot update pull requests and no
