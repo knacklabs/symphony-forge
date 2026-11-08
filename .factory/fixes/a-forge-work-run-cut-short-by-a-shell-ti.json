@@ -50,8 +50,8 @@
     "id": "dd84b64c-0145-46e7-918f-858eb48cd223",
     "status": "clean"
   },
-  "round": 5,
-  "status": "waiting for checks",
+  "round": 6,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-07T17:50:03.010281+00:00",
@@ -84,10 +84,10 @@
     "worker_round": 3
   },
   "stuck": {
-    "close": "8ac52b60-3e30-49e0-a32c-3a1d9bdbcae1",
-    "head": "c6562fd127bcb5bc6c899e4359700153b22bad37",
+    "close": "8154e1ed-69bf-41a2-9cff-cd7e4386af59",
+    "head": "53679ddfc836a686dc9a1438dd43b3b3b13d504b",
     "keys": {},
-    "round": 4
+    "round": 5
   },
   "why": "A forge work run cut short by a shell time limit leaves its lock and its builder turn unfinished and says nothing, so the lost round shows only later.",
   "worker": "codex"
