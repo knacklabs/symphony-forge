@@ -225,7 +225,7 @@ def handback(args: Any) -> int:
         if not live:
             raise repo.Refused("That round was stopped or replaced, so Forge recorded nothing.", "")
         said = (args.text if args.text is not None else sys.stdin.read()).strip()
-        if not said:
+        if not said and "role" in pending:
             raise repo.Refused("No message reached Forge. Give the subagent's last message with "
                                "--text or pipe it on stdin.",
                                f"forge handback {args.item} --round {args.round} "
