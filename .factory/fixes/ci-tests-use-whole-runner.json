@@ -117,7 +117,7 @@
     "id": "09212df1-7bb8-4152-8f2f-f4678f1143c3",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -139,10 +139,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": null,
-    "head": "932d9861cf31a23a15c866a800b0329e774946f2",
+    "close": "47b417d0-beb9-4ab2-8c1b-972497ce1f6b",
+    "head": "b2179ab51a766aa5d97d4446b58607892b2648be",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "In CI, Forge applies the laptop rule that keeps half the cores for agents, so each CI test group runs one test worker on a 4-core runner and Forge's groups take 34 to 41 minutes",
   "worker": "codex"
