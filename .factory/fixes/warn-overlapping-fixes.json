@@ -4,12 +4,20 @@
   "done_when": "forge next names two open fixes or parts whose changed files overlap and suggests merging one first, without blocking either",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-08T12:38:53.076803+00:00",
       "step": "start"
     }
   ],
-  "why": "Fixes have no Scope, so two open fixes can edit the same files with no warning and then conflict at merge"
+  "stuck": {
+    "close": null,
+    "head": "a1b0cbc7b5a7c2eb1262847b4c52397aca0c2138",
+    "keys": {},
+    "round": null
+  },
+  "why": "Fixes have no Scope, so two open fixes can edit the same files with no warning and then conflict at merge",
+  "worker": "codex"
 }
