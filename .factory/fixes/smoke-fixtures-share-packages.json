@@ -71,7 +71,7 @@
     "id": "98de47e1-d779-47d7-b352-ac3627eb8589",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -93,10 +93,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": null,
-    "head": "e125aa11891fcb28bb03787cef603bbbdc338f6a",
+    "close": "113fae81-1ee4-48f6-a45b-3bcc46f56c43",
+    "head": "8f7a5fa83510a66040ceb6ee621073a4e6b718d3",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "Forge's starter smoke lint fixture installs every package again in its own store, adding minutes to a 35-minute job",
   "worker": "codex"
