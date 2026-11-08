@@ -82,8 +82,8 @@
     "id": "faf63130-5ebf-445a-b8a9-e58d7bf32042",
     "status": "clean"
   },
-  "round": 3,
-  "status": "waiting for checks",
+  "round": 4,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-07T18:53:13.722341+00:00",
@@ -103,12 +103,10 @@
     }
   ],
   "stuck": {
-    "close": "35e96ad4-3a3d-43d0-8cc9-11774e21ec6f",
-    "head": "fb619076ecc6ffc59231a466a5fcd6987c518dc4",
-    "keys": {
-      "the open P0 data loss: expose the recovery step before land merges in src/forge/task.py": 2
-    },
-    "round": 2
+    "close": "0021f968-50a6-459e-a257-d7d2e409e445",
+    "head": "cd831eb988369c6a9882a76f002c97a4a15e5301",
+    "keys": {},
+    "round": 3
   },
   "why": "Close silently puts back the default branch's forge.toml when a fix changes it, and the line it prints does not say how to allow the change, so a client agent lost its settings change in an upgrade fix",
   "worker": "codex"
