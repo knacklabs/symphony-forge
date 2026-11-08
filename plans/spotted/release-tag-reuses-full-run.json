@@ -1,0 +1,37 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/templates/skill.md\tFunctional: Release guidance excludes version-only commits from reuse\trelease-tag-reuses-full-run",
+      "kind": "bug",
+      "path": "src/forge/templates/skill.md",
+      "line": 1844,
+      "text": "Functional: Release guidance excludes version-only commits from reuse",
+      "from": "blocking",
+      "item": "release-tag-reuses-full-run",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_release_full_run_reuse.py\tGate: tests/test_release_full_run_reuse.py::test_1_release_reuses_full_run_until_product_changes\trelease-tag-reuses-full-run",
+      "kind": "bug",
+      "path": "tests/test_release_full_run_reuse.py",
+      "line": 24,
+      "text": "Gate: tests/test_release_full_run_reuse.py::test_1_release_reuses_full_run_until_product_changes",
+      "from": "blocking",
+      "item": "release-tag-reuses-full-run",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/githooks.py\tNot done: Forge-only upgrades can still block release tags",
+      "kind": "edge",
+      "path": "src/forge/githooks.py",
+      "line": 163,
+      "text": "Not done: Forge-only upgrades can still block release tags",
+      "from": "review",
+      "item": "release-tag-reuses-full-run",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

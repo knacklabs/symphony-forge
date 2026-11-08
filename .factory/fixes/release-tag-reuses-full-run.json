@@ -11,14 +11,106 @@
   "done_when": "Pushing a release tag accepts a green full run on an earlier main commit when every later commit changes only Forge's own files, as sign-off already does, and still refuses after a product change",
   "fix_kind": "backend",
   "kind": "fix",
+  "known": [
+    {
+      "area": "pre_push() in src/forge/githooks.py",
+      "file": "src/forge/githooks.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 163,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Forge-only upgrades can still block release tags",
+      "work": 3
+    },
+    {
+      "area": "src/forge/templates/skill.md",
+      "file": "src/forge/templates/skill.md",
+      "gain": 4,
+      "harm": 2,
+      "line": 1844,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Release guidance excludes version-only commits from reuse",
+      "work": 1
+    },
+    {
+      "area": "test_1_release_reuses_full_run_until_product_changes() in tests/test_release_full_run_reuse.py",
+      "file": "tests/test_release_full_run_reuse.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 24,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: tests/test_release_full_run_reuse.py::test_1_release_reuses_full_run_until_product_changes",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "cf22cc3040062381929add387a69aa822ee95be5798c3aa5b477c9542f7a5273",
+    "changed": "aa9da6190484c862817a4520fe2eb731879548b033507831deb0d795b9bf7753",
+    "commit": "fe756ac0ce7ab4b8b73ed9008080e72576d04700",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 5, Work 3, Harm 3\nRaise: Not done\nCase: normal use - A CI-mode client upgrades Forge after a green full run and then tags main.\nDone when: Pushing a release tag accepts a green full run on an earlier main commit when every later commit changes only Forge's own files, as sign-off already does, and still refuses after a product change.\nThe new reuse path identifies generated files through `fullrun.py:39-49` and `sync.synced`. The snapshot in `sync.py:476-478` omits both `pnpm-lock.yaml` and `package-lock.json`, although the workflow renderer adds cache steps for them at `prcheck.py:243-246` and `271-279`. A normal upgrade changes the generated workflow, but its snapshot rendering lacks those steps, so the tag is refused despite no product change. This affects the pnpm starter and npm clients. The same refusal occurs when pushing the current main tag from a pre-upgrade worktree: `fullrun.py:49` uses that worktree's old configuration, rather than main's, to render the upgraded files.",
+        "file": "src/forge/githooks.py",
+        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
+        "gain": 5,
+        "harm": 3,
+        "line": 163,
+        "priority": "P1",
+        "title": "Not done: Forge-only upgrades can still block release tags",
+        "work": 3
+      },
+      {
+        "body": "Gain 4, Work 1, Harm 2\nRaise: Functional\nCase: normal use - A coordinator prepares a release after a version-only Forge change.\nThe updated guide permits reuse only when sync output or records changed; a version-only change to `forge.toml` is neither. `docs/guide.md:516-517` also still says the latest default-branch commit needs a green run. The guidance therefore directs another full run for the case this fix is intended to make reusable. The changed guide test at `tests/test_full_run_starts_before_notes.py:44` checks only the opening clause and misses the restriction.",
+        "file": "src/forge/templates/skill.md",
+        "gain": 4,
+        "harm": 2,
+        "line": 1844,
+        "priority": "P1",
+        "title": "Functional: Release guidance excludes version-only commits from reuse",
+        "work": 1
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Test\nCase: normal use - A new or earlier-adopted client upgrades Forge after a green run and pushes a release tag.\nBoth parameters mark the base green and then change only `forge.toml`. In the adopted case, the actual upgrade and sync occur before that green base is recorded (`tests/test_testplace_upgrade.py:42-67`); the new-repo case calls `hooked`, which fabricates a `forge-source` configuration and hooks instead of initializing a client (`tests/test_githooks.py:16-29`). Thus the test passes if release pushes reject real sync output or proof more than one commit back, and it does not exercise the new-client installation path. Cover those cases through the real tag-push boundary.",
+        "file": "tests/test_release_full_run_reuse.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 24,
+        "priority": "P1",
+        "title": "Gate: tests/test_release_full_run_reuse.py::test_1_release_reuses_full_run_until_product_changes",
+        "work": 2
+      }
+    ],
+    "id": "a23b0dd3-01d3-416b-be06-aa24c89e83cd",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-08T11:37:16.731207+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-08T11:47:07.257850+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-11-08T11:47:07.268095+00:00",
+    "file": "src/forge/templates/skill.md",
+    "wait_id": "5a20df8a-0082-4b2f-abfa-59a2b71b43d8"
+  },
   "stuck": {
     "close": null,
     "head": "a6055530c8cfd8318a0114549dbb8ea5e4ac029f",
