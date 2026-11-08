@@ -143,20 +143,21 @@ to increase deletion counts.
 Never edit source or tests while a test suite is running in the checkout.
 
 Follow `forge.toml`'s `test_place`. In local mode, use `forge test` for validation.
-In CI mode, do not run them here for a passing
-result; run `forge test` only for a test you are writing, to watch it fail.
-Pull request CI runs the change's related tests, lint and type checks.
+In CI mode, run only the exact new, changed or previously failing tests through
+`forge test`, using the test runner's name filter. Watch a regression fail before
+the repair, then rerun those tests until they pass before committing.
+Wider related tests, lint and type checks stay in pull request CI.
 
 1. Identify the smallest owner and sibling tests the task names in its Tests
    column; include the relevant `tests/` files when changing Forge itself.
 2. For source greps or plan assertions, name the executable contract owner;
    source inspection alone is not test evidence.
-3. Before you stop, commit your work first. In local mode, run the change's related
+3. In local mode, before you stop, commit your work first, then run the change's related
    tests through `forge test` in the foreground and wait for it to finish. Run tests
    only through `forge test`: it runs forge.toml's `fast_test`, or `test` when none
    is set, in the machine's one test lane, with `{base}` as the merge base with
    `origin/<default branch>`. It always runs, including uncommitted changes. In CI
-   mode, commit your work and leave the change's related tests to pull request CI.
+   mode, check the exact tests as above before committing and leave wider tests to pull request CI.
    Then commit any fixes from the local run. CI runs the full suite.
 4. `forge close <item>` owns the review and the checks. Do not reconstruct its
    review or check wait with ad hoc commands.

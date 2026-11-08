@@ -140,12 +140,14 @@ def test_16_task_start(repo):
                           "Next: forge work BOARD/PAGE\n")
     refused("BOARD/WORDS", "BOARD/WORDS waits for BOARD/PAGE to merge first.\nNext: forge next\n")
     refused("BOARD/STYLE", "BOARD/STYLE would change web/templates/board.html, which BOARD/PAGE is "
-                           "changing and hasn't merged yet.\nNext: forge close BOARD/PAGE\n")
+                           "changing and hasn't merged yet.\nScope overlap: web/templates/board.html.\n"
+                           "Next: forge close BOARD/PAGE\n")
     # Globs overlap unless their literal prefixes (before the first wildcard) are disjoint:
     # src/ contains src/api/, so the routes may touch the data's files.
     assert repo.forge("task", "start", "BOARD/API").returncode == 0
     refused("BOARD/ROUTES", "BOARD/ROUTES would change src/**/routes/*, which BOARD/API is "
-                            "changing and hasn't merged yet.\nNext: forge close BOARD/API\n")
+                            "changing and hasn't merged yet.\nScope overlap: src/api/.\n"
+                            "Next: forge close BOARD/API\n")
 
     # PAGE merges, bringing the story doc to the default branch: tasks now start from there.
     repo.git("merge", "-q", "--no-ff", "-m", "The board page", "task/BOARD-PAGE")
