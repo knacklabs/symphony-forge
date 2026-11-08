@@ -72,8 +72,8 @@
     "id": "b8fdd519-00e0-4d07-8203-658ce28266ff",
     "status": "clean"
   },
-  "round": 1,
-  "status": "waiting for checks",
+  "round": 2,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-07T18:13:00.992192+00:00",
@@ -85,10 +85,10 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "bd842e8a43f23bbc597149d39364c64ef0529a7c",
+    "close": "07c5d66e-984b-491c-8e1e-f2300bb5dd7f",
+    "head": "369d60bd18b753a6b4ad30cae087ba7a8cbcffa2",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "After the part before it merges, a stacked part whose replay leaves its content unchanged gets a full new review",
   "worker": "codex"
