@@ -126,7 +126,8 @@ def test_4_own_repo_selects_smoke_areas_and_runs_related_tests_once(env, monkeyp
             assert "timeout-minutes: 45" in body
     paths = re.search(r"  pull_request:\n    paths:\n(.*?)(?=\n\S)", workflow, re.S)[1]
     assert re.findall(r"^      - (.+)$", paths, re.M) == [
-        ".github/workflows/starter-smoke.yml", "src/forge/templates/**", "src/forge/feature*.py"]
+        ".github/workflows/starter-smoke.yml", "src/forge/templates/**", "src/forge/feature*.py",
+        "tests/test_starter_tree.py", "tests/test_libs_layout.py"]
     concurrency = workflow.split("concurrency:\n", 1)[1].split("\n\n", 1)[0]
     assert "github.workflow" in concurrency and "github.event.pull_request.number || github.run_id" in concurrency
     assert "cancel-in-progress: ${{ github.event_name == 'pull_request' }}" in concurrency

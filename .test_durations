@@ -3189,6 +3189,7 @@
     "tests/test_small_test_runs_skip_the_test_line.py::test_2_related_test_selections_share_the_test_budget[False-6-False-False-False]": 3.7083483340684325,
     "tests/test_small_test_runs_skip_the_test_line.py::test_2_related_test_selections_share_the_test_budget[True-5-False-False-False]": 3.5066693739499897,
     "tests/test_small_test_runs_skip_the_test_line.py::test_2_related_test_selections_share_the_test_budget[True-6-False-False-False]": 3.740474082995206,
+    "tests/test_smoke_fixture_checks_run_on_pull_requests.py::test_1_smoke_fixture_changes_run_the_real_starter_jobs": 1.0,
     "tests/test_source_pr_time_limits.py::test_1_forge_pr_groups_get_forty_five_minutes": 1.323053000960499,
     "tests/test_source_split_workers.py::test_1_user_facing_source_task_uses_sonnet_high_and_plain_task_uses_codex_low": 4.933040416799486,
     "tests/test_spec_chat_upgrade_amendment.py::test_22_upgrade_keeps_removed_spec_amendment_reader_on_its_branch[claude-changed-spec]": 1.833063334000144,
