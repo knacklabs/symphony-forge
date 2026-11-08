@@ -9,6 +9,8 @@ on:
       - .github/workflows/starter-smoke.yml
       - src/forge/templates/**
       - src/forge/feature*.py
+      - tests/test_starter_tree.py
+      - tests/test_libs_layout.py
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}

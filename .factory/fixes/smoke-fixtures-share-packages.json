@@ -1,0 +1,93 @@
+{
+  "base": "5393cf3ed78f0bae68f7bf2762dbcc9675a03710",
+  "branch": "fix/smoke-fixtures-share-packages",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1b757-2faf-77d2-995b-09992ba11341",
+    "head": null,
+    "start": "c81739c5e0bbdffeb2285cedef83cde3f1b7ce74"
+  },
+  "done_when": "The smoke fixtures share downloaded packages while keeping separate app copies, and the starter smoke job is measurably faster",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "_run_live_starter() in tests/test_starter_tree.py",
+      "file": "tests/test_starter_tree.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 189,
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: Owner accepted: install fell from 16.07 to 5.57 seconds locally; the starter-smoke job timing is compared with the 35-minute baseline after the next nightly run",
+      "round": 1,
+      "security": false,
+      "title": "Not done: The smoke fixtures share downloaded packages while keeping separate app copies, and the starter smoke job is measurably faster",
+      "work": 2
+    },
+    {
+      "area": "lint_starter() in tests/test_libs_layout.py",
+      "file": "tests/test_libs_layout.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 103,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: smoke-fixture download reuse",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "bd7e40089e1445687df7033f6a5d8592fc640891e489b4b53aad3d3eab06c94b",
+    "changed": "a13fad1171aafda68d17a750de09239a3621767d1409487b96c4a3cd52a7b631",
+    "commit": "cfa6c86f1e94e7c8c2e7fa79081608d2a9f5104e",
+    "dismissals": [],
+    "findings": [],
+    "id": "db63f888-7645-4d84-884e-2fd00273fda5",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-07T18:12:56.375315+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-07T19:06:49.305287+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-08T03:40:50.418305+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-08T04:24:56.923391+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-08T06:03:08.126138+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-08T03:40:50.418535+00:00",
+    "by": "owner",
+    "choice": "accept",
+    "file": "tests/test_starter_tree.py",
+    "reason": "Owner accepted: install fell from 16.07 to 5.57 seconds locally; the starter-smoke job timing is compared with the 35-minute baseline after the next nightly run",
+    "wait_id": "efe8b7b1-bcde-4055-bb67-1662c222fb63",
+    "worker_round": 3
+  },
+  "stuck": {
+    "close": "113fae81-1ee4-48f6-a45b-3bcc46f56c43",
+    "head": "8f7a5fa83510a66040ceb6ee621073a4e6b718d3",
+    "keys": {},
+    "round": 1
+  },
+  "why": "Forge's starter smoke lint fixture installs every package again in its own store, adding minutes to a 35-minute job",
+  "worker": "codex"
+}

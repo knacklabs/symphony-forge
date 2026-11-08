@@ -185,6 +185,8 @@ def _run_live_starter(tmp_path_factory, sources, required_output=()):
         pytest.skip("A Docker daemon is required for the starter smoke run")
 
     host_config = tmp_path_factory.mktemp("starter-host-config")
+    # Share downloads with the lint copy, but keep apps and host settings isolated.
+    downloads = tmp_path_factory.getbasetemp() / "starter-downloads"
     user_home = host_config / "home"
     user_home.mkdir()
     docker_config = host_config / "docker-config"
@@ -199,13 +201,13 @@ def _run_live_starter(tmp_path_factory, sources, required_output=()):
 
     env = os.environ.copy()
     for name in tuple(env):
-        if name.lower().startswith(("npm_config_", "docker_")):
+        if name.lower().startswith(("npm_config_", "pnpm_config_", "docker_")):
             env.pop(name)
     env.update({
         "HOME": str(user_home),
-        "COREPACK_HOME": str(host_config / "corepack"),
+        "COREPACK_HOME": str(downloads / "corepack"),
         "COREPACK_ENABLE_DOWNLOAD_PROMPT": "0",
-        "PNPM_CONFIG_STORE_DIR": str(host_config / "pnpm-store"),
+        "npm_config_store_dir": str(downloads / "pnpm-store"),
         "XDG_CONFIG_HOME": str(host_config / "xdg-config"),
         "PLAYWRIGHT_BROWSERS_PATH": str(host_config / "browsers"),
         "DOCKER_CONFIG": str(docker_config),
