@@ -11,14 +11,152 @@
   "done_when": "The two tests advance a controlled clock instead of waiting, keep their real command and refusal assertions, and each runs in under 10 seconds",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [
+    {
+      "area": ".test_durations",
+      "file": ".test_durations",
+      "gain": 5,
+      "harm": 3,
+      "line": 1889,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Both tests use a controlled clock instead of waiting, keep real command and refusal assertions, and each runs in under 10 seconds",
+      "work": 3
+    },
+    {
+      "area": "test_1_waiters_share_one_status_read_per_minute() in tests/test_waiters_share_check_status.py",
+      "file": "tests/test_waiters_share_check_status.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 94,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Windows shared-status tests time out before releasing the stub",
+      "work": 2
+    },
+    {
+      "area": "test_1_a_check_wait_admits_independent_close_but_keeps_order_and_backpressure() in tests/test_land_releases_check_wait_slots.py",
+      "file": "tests/test_land_releases_check_wait_slots.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 77,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: queued-check backpressure proof",
+      "work": 2
+    },
+    {
+      "area": "test_1_waiters_share_one_status_read_per_minute() in tests/test_waiters_share_check_status.py",
+      "file": "tests/test_waiters_share_check_status.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 63,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_waiters_share_one_status_read_per_minute assumes a subprocess pipe",
+      "work": 2
+    },
+    {
+      "area": "tests/test_land_releases_check_wait_slots.py",
+      "file": "tests/test_land_releases_check_wait_slots.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 53,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Standard: Tests build their own data with factories, own that data, don't depend on order, and never sleep",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "56ce480b3c66cc3235218af7e04cf113e955404aa3eda027b1cf3775f7eb1328",
+    "changed": "0d0979bc90c4867a551c6d3665c17afafd2a92dcc5c39737bf0f8222e48465a4",
+    "commit": "24ee3107300f94867a3261850425292cec0f34ee",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 5, Work 3, Harm 3\nRaise: Not done \u2014 The owner\u2019s item is \u201cThe two tests advance a controlled clock instead of waiting, keep their real command and refusal assertions, and each runs in under 10 seconds.\u201d The refreshed timings record 31.77 seconds and 35.70 seconds for the queue test\u2019s new and adopted cases, and 13.25 seconds for the new-client shared-status case. The timing inventory checks test names, while CI prints durations without enforcing the ten-second limit. Case: normal use - running the complete parametrized tests.",
+        "file": ".test_durations",
+        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
+        "gain": 5,
+        "harm": 3,
+        "line": 1889,
+        "priority": "P1",
+        "title": "Not done: Both tests use a controlled clock instead of waiting, keep real command and refusal assertions, and each runs in under 10 seconds",
+        "work": 3
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional \u2014 Case: normal use - the nightly Windows platform suite runs either shared-status variant and the second waiter finishes before the stub\u2019s 65-second fallback. On Windows, tests/conftest.py:138 installs `gh.cmd`, which starts the Python stub. The forced timeout kills the command shell, but the Python stub still holds the captured pipes. Python\u2019s [Windows timeout handler](https://github.com/python/cpython/blob/3.11/Lib/subprocess.py#L497-L508) waits for those pipes, and [terminating a Windows process does not terminate its children](https://learn.microsoft.com/en-us/windows/win32/procthread/terminating-a-process). This test creates `status-read-release` only in `finally`, after the new ten-second `first.wait` has already expired, so the test fails despite the expected refusal.",
+        "file": "tests/test_waiters_share_check_status.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 94,
+        "priority": "P1",
+        "title": "Windows shared-status tests time out before releasing the stub",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Gate \u2014 The new clock advances each check-poll sleep immediately, while the queue scheduler still sleeps for half a real second at src/forge/land.py:427. The queued snapshot can therefore become running before the scheduler can admit another item. The assertion at line 120 compares the running snapshot with the independent review start, not admission during the queued interval. A regression that calls `waiting(True)` for queued checks at src/forge/checks.py:147 can consequently pass this test without preserving backpressure. Case: normal use - an independent fix is ready while the first fix\u2019s CI checks are queued.",
+        "file": "tests/test_land_releases_check_wait_slots.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 77,
+        "priority": "P1",
+        "title": "Gate: queued-check backpressure proof",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Gate \u2014 The new wrapper unconditionally closes `self.stdin`. A behavior-preserving change to src/forge/repo.py:252 that supplies `stdin=subprocess.DEVNULL` for commands with no input would still give `gh` an empty stdin, but [Popen sets its `stdin` attribute to `None` when no pipe is requested](https://docs.python.org/3.11/library/subprocess.html#subprocess.Popen.stdin). This test would then raise `AttributeError` before checking the command\u2019s refusal. Case: normal use - maintaining the runner for a no-input GitHub command without changing its behavior.",
+        "file": "tests/test_waiters_share_check_status.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 63,
+        "priority": "P1",
+        "title": "Gate: test_1_waiters_share_one_status_read_per_minute assumes a subprocess pipe",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 2\nRaise: Standard \u2014 \u201cTests build their own data with factories, own that data, don't depend on order, and never sleep.\u201d The new queue stub polls with a real 0.01-second sleep up to 500 times, and tests/test_waiters_share_check_status.py:66 also sleeps on the real clock while waiting for the second command. Case: normal use - CI runs the two tests while their subprocesses coordinate, so these paths still depend on wall-clock scheduling.",
+        "file": "tests/test_land_releases_check_wait_slots.py",
+        "gain": 4,
+        "harm": 2,
+        "line": 53,
+        "priority": "P1",
+        "title": "Standard: Tests build their own data with factories, own that data, don't depend on order, and never sleep",
+        "work": 2
+      }
+    ],
+    "id": "41388f78-093c-44f2-bcd4-742218f3933e",
+    "status": "blocked"
+  },
   "round": 2,
-  "status": "working",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-07T18:12:51.556448+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-08T03:05:27.007349+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-11-08T03:05:27.019175+00:00",
+    "file": "tests/test_waiters_share_check_status.py",
+    "wait_id": "2fe7e573-0ac0-448c-9df2-7d9f112aafe7"
+  },
   "stuck": {
     "close": null,
     "head": "f27dc7f4d0df024013d4aa233692e2bea116c81f",

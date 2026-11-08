@@ -1,0 +1,59 @@
+{
+  "items": [
+    {
+      "key": "bug\ttests/test_land_releases_check_wait_slots.py\tGate: queued-check backpressure proof\ttests-skip-real-timeouts",
+      "kind": "bug",
+      "path": "tests/test_land_releases_check_wait_slots.py",
+      "line": 77,
+      "text": "Gate: queued-check backpressure proof",
+      "from": "blocking",
+      "item": "tests-skip-real-timeouts",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_land_releases_check_wait_slots.py\tStandard: Tests build their own data with factories, own that data, don't depend on order, and never sleep\ttests-skip-real-timeouts",
+      "kind": "bug",
+      "path": "tests/test_land_releases_check_wait_slots.py",
+      "line": 53,
+      "text": "Standard: Tests build their own data with factories, own that data, don't depend on order, and never sleep",
+      "from": "blocking",
+      "item": "tests-skip-real-timeouts",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_waiters_share_check_status.py\tGate: test_1_waiters_share_one_status_read_per_minute assumes a subprocess pipe\ttests-skip-real-timeouts",
+      "kind": "bug",
+      "path": "tests/test_waiters_share_check_status.py",
+      "line": 63,
+      "text": "Gate: test_1_waiters_share_one_status_read_per_minute assumes a subprocess pipe",
+      "from": "blocking",
+      "item": "tests-skip-real-timeouts",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_waiters_share_check_status.py\tWindows shared-status tests time out before releasing the stub\ttests-skip-real-timeouts",
+      "kind": "bug",
+      "path": "tests/test_waiters_share_check_status.py",
+      "line": 94,
+      "text": "Windows shared-status tests time out before releasing the stub",
+      "from": "blocking",
+      "item": "tests-skip-real-timeouts",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\t.test_durations\tNot done: Both tests use a controlled clock instead of waiting, keep real command and refusal assertions, and each runs in under 10 seconds",
+      "kind": "edge",
+      "path": ".test_durations",
+      "line": 1889,
+      "text": "Not done: Both tests use a controlled clock instead of waiting, keep real command and refusal assertions, and each runs in under 10 seconds",
+      "from": "review",
+      "item": "tests-skip-real-timeouts",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
