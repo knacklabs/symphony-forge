@@ -4,12 +4,20 @@
   "done_when": "Pushing a release tag accepts a green full run on an earlier main commit when every later commit changes only Forge's own files, as sign-off already does, and still refuses after a product change",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-08T11:37:16.731207+00:00",
       "step": "start"
     }
   ],
-  "why": "The release tag check needs a new full run on the version-change commit even when main's previous commit had a green full run and the version change touches only Forge's own files"
+  "stuck": {
+    "close": null,
+    "head": "a6055530c8cfd8318a0114549dbb8ea5e4ac029f",
+    "keys": {},
+    "round": null
+  },
+  "why": "The release tag check needs a new full run on the version-change commit even when main's previous commit had a green full run and the version change touches only Forge's own files",
+  "worker": "codex"
 }
