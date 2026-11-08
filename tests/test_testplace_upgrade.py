@@ -99,15 +99,14 @@ def test_10_previous_adoption_uses_the_place_selected_by_its_checks(
             or call[:2] == ["pr", "checks"]]
 
     if place == "ci":
-        # This upgrade boundary must deliver the current worker test instructions,
-        # including the exact local repair check before CI runs wider tests.
         log = install_claude(env.repo)
         started = env.repo.forge("fix", "start", "Check upgraded worker guidance", "--done",
-                                 "The worker checks exact repair tests before CI", "--kind", "mechanical")
+                                 "The worker leaves related tests to CI", "--kind", "mechanical")
         assert started.returncode == 0, started.stdout + started.stderr
         worked = env.repo.forge("work", "check-upgraded-worker-guidance")
         assert worked.returncode == 0, worked.stdout + worked.stderr
         brief = " ".join(calls(log)[-1]["brief"].split()).lower()
+        # CI builders now check exact repairs before committing; wider checks stay in CI.
         assert ("run only the exact new, changed or previously failing tests through `forge test`, "
                 "using the test runner's name filter. watch a regression fail before the repair, "
                 "then rerun those tests until they pass before committing.") in brief
