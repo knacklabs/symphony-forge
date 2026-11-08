@@ -1,3 +1,9 @@
+FROM node:24-bookworm-slim AS manifests
+
+WORKDIR /source
+COPY . .
+RUN node -e 'const fs = require("node:fs"), path = require("node:path"); for (const file of fs.globSync("**/package.json")) { const target = path.join("../manifests", file); fs.mkdirSync(path.dirname(target), { recursive: true }); fs.copyFileSync(file, target); }'
+
 FROM node:24-bookworm-slim
 
 RUN apt-get update && apt-get install -y --no-install-recommends openssl && rm -rf /var/lib/apt/lists/*
@@ -6,8 +12,11 @@ RUN corepack enable
 RUN mkdir -p /app && chown node:node /app
 WORKDIR /app
 USER node
+COPY --chown=node:node pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY --from=manifests --chown=node:node /manifests/ ./
+RUN corepack pnpm install --frozen-lockfile
 COPY --chown=node:node . .
-RUN corepack pnpm install --frozen-lockfile && corepack pnpm run build
+RUN corepack pnpm run build
 
 ENV NODE_ENV=production
 EXPOSE 3000
