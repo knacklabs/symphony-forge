@@ -357,6 +357,13 @@ Without an explicit `test_place`, Forge uses CI only if `checks` names a check o
 An explicit `test_place` keeps its value. Keep `test` as the full suite for the nightly run;
 put change selection in `fast_test`. Doctor warns about a `test` that looks like change selection.
 This applies to new and earlier-adopted repos on upgrade.
+During adoption review, name cheap whole-repo checks that read shared files without imports,
+such as rule checks, file inventories and configuration checks. Changed-only selection can miss
+them. Report their pytest files or node IDs for Python `always_test`, or their commands for
+TypeScript `fast_test` beside changed-test selection, through the normal settings fix with the
+owner's agreement. Workers never edit `forge.toml`; give the coordinator the list. New repos get
+this review at setup; earlier-adopted repos get this guidance on upgrade and sync, which keep
+their settings until that fix changes them. Keep `test` as the full suite.
 
 For a pytest repo, the shipped picker is `forge test --pytest <base>`; it runs the repo's own
 test command without installing Forge in the project. This picker belongs in `fast_test`;
