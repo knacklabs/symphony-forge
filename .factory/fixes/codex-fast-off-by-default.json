@@ -62,8 +62,8 @@
     "id": "d27eda0b-bcf0-4600-8bbe-89d142e38617",
     "status": "clean"
   },
-  "round": 3,
-  "status": "waiting for checks",
+  "round": 4,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-07T18:49:17.793888+00:00",
@@ -92,12 +92,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": "061c3e72-6209-4046-a1be-6daac600d0c5",
-    "head": "03b3404605a8f16db61f49c962409174d116148e",
-    "keys": {
-      "the open P0 functional: restore work in codex-only installations in src/forge/worker.py": 1
-    },
-    "round": 2
+    "close": "5c59a018-fd48-4ba3-9913-d2071a09a3eb",
+    "head": "a23d4feee9b866051f16e1d0cc63781b606656cf",
+    "keys": {},
+    "round": 3
   },
   "why": "Codex Fast is on by default: a repo that leaves codex_fast out gets Fast for every fix and every repair round, and the owner wants it off unless a repo opts in",
   "worker": "codex"
