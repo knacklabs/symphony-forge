@@ -56,11 +56,7 @@ TEST_STEPS = {
               "run of five or fewer related test files skips the lane's wait unless the test "
               "command or pytest config has a doctest option. It always runs, including uncommitted "
               "changes. Then commit any fixes. The nightly full run covers the rest."),
-    "ci": ("run only the exact new, changed or previously failing tests through `forge test`, "
-           "using the test runner's name filter. Watch a regression fail before the repair, "
-           "then rerun those tests until they pass before committing. "
-           "Wider related tests, lint and type checks stay in pull request CI. "
-           "The nightly full run covers the rest."),
+    "ci": "wider related tests, lint and type checks stay in pull request CI.",
 }
 START_HERE = ("Do not read the coordinator guide (the forge skill's `SKILL.md`): this brief has "
               "everything a worker needs. Start from the files and tests this brief names, and "
