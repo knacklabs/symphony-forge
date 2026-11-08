@@ -1,6 +1,13 @@
 {
   "base": "55eb438b74206e1afd7dcefafcdf00ea1224c257",
   "branch": "fix/ci-tests-use-whole-runner",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1bb15-1e02-78a3-94b9-8dc4c32abf9e",
+    "head": null,
+    "start": "69c5637d1ad22589ff6e2438b76c731e8054feb5"
+  },
   "done_when": "When forge test runs on GitHub Actions, the test worker count uses all the runner's cores, and a laptop run keeps today's agent share",
   "fix_kind": "backend",
   "kind": "fix",
