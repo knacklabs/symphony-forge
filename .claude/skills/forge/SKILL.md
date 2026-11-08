@@ -881,6 +881,8 @@ setting, a P0 keeps the current hard block. Only `sample_data = true` in `forge.
 mode on. New and earlier-adopted clients get the brief rules after upgrade
 and sync.
 Forge reuses passed results while what they checked stays unchanged.
+When sign-off needs a full run, start it after the last product merge as described under
+Closing below; prepare the sign-off notes while that run is in progress.
 A version-only change to forge.toml keeps the last green full run. Any other settings change needs a new full run.
 For an unmarked working prototype, the product review uses the green full run as test evidence. It
 needs no separate `forge test` run.
@@ -1828,9 +1830,15 @@ runs its share of the related tests through `forge test --change`. The required 
 only when every job passes; branch protection keeps the same `tests` check.
 A full run covers only `forge.toml`'s `test` command; if the repo's whole suite runs elsewhere, point that setting at it.
 In CI mode, `forge.yml` also runs `forge test --full` once a day on the default branch and supports
-`workflow_dispatch`. To start a full run now, run `gh workflow run forge.yml --ref <default>`.
-Local mode has no scheduled job; when `forge next` says the daily run is due, run `forge test --full`
-in the main checkout when the machine is quiet. A green full run on the latest default-branch
+`workflow_dispatch`. After the last product merge for a release or sign-off, start the full run
+at once with `gh workflow run forge.yml --ref <default>` when full-run proof is required.
+Prepare the release or sign-off notes while it runs, then follow that same run with
+`gh run watch <run-id> --exit-status`; do not wait for the nightly run or the tag push.
+Local mode has no scheduled job; after the last product merge for a release or sign-off,
+start `forge test --full` at once in the main checkout when full-run proof is required.
+Prepare notes while it runs and wait for that same command to finish. For the daily run outside
+a release or sign-off, run it when `forge next` says it is due and the machine is quiet.
+A green full run on the latest default-branch
 commit is required before pushing a release tag. Client sign-off can reuse a green full run
 within the latest ten default-branch commits when only exact `forge sync` output or records
 under `.factory/`, `plans/` or `docs/decisions/` changed on the default branch.
