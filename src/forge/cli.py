@@ -1,6 +1,7 @@
 """The forge command. Each command is declared by its owning module."""
 import argparse
 import ast
+import contextlib
 import functools
 import importlib
 import json
@@ -113,7 +114,7 @@ def _parser() -> _Parser:
     return parser
 
 
-def _run(argv: list[str] | None) -> int:
+def _run(argv: list[str] | None, holding: contextlib.ExitStack) -> int:
     # A forge installed from this repo runs its old code, so run this checkout's; never another repo's.
     top = repo.run("git", "rev-parse", "--show-toplevel").stdout.strip()
     if top and Path(top, "src", "forge").is_dir():
@@ -136,6 +137,9 @@ def _run(argv: list[str] | None) -> int:
                     problem=f"forge {args.words}: unrecognized arguments: {' '.join(extra)}",
                     prog=f"forge {args.words}")
     args.args = extra
+    if args.words == "work":
+        from forge import worker
+        holding.enter_context(worker.stop_signals(args))
     if args.words == "sync":
         # The user-scoped mod follows installed Forge; repo adapters follow its pin.
         from forge.sync import install_mod
@@ -168,8 +172,8 @@ def main(argv: list[str] | None = None) -> int:
     for stream in (sys.stdin, sys.stdout, sys.stderr):
         stream.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]
     try:
-        with repo.command_cache():
-            return _run(argv)
+        with repo.command_cache(), contextlib.ExitStack() as holding:
+            return _run(argv, holding)
     except repo.Refused as refusal:
         print(refusal, file=sys.stderr)
         return refusal.code

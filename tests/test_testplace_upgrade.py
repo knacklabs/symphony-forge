@@ -106,7 +106,7 @@ def test_10_previous_adoption_uses_the_place_selected_by_its_checks(
         worked = env.repo.forge("work", "check-upgraded-worker-guidance")
         assert worked.returncode == 0, worked.stdout + worked.stderr
         brief = " ".join(calls(log)[-1]["brief"].split()).lower()
-        # The current CI policy permits exact repair tests locally before a commit.
+        # CI builders now check exact repairs before committing; wider checks stay in CI.
         assert ("run only the exact new, changed or previously failing tests through `forge test`, "
                 "using the test runner's name filter. watch a regression fail before the repair, "
                 "then rerun those tests until they pass before committing.") in brief
