@@ -1,0 +1,15 @@
+{
+  "base": "c4bc3920737c2e2f9001281ed6012b3e5ba908a4",
+  "branch": "fix/windows-run-records-settings",
+  "done_when": "tests/test_run_records.py::test_3_run_and_question_occurrences passes on Windows and Linux",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-08T16:14:37.244976+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "On Windows the run-records control test fails: merging main into its task conflicts in forge.toml since the settings fix moved fixture settings onto main"
+}
