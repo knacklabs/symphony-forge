@@ -31,7 +31,7 @@
       "gain": 4,
       "harm": 3,
       "line": 146,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -44,7 +44,7 @@
       "gain": 3,
       "harm": 3,
       "line": 31,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -54,48 +54,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "7cbfba129a123bd4633c654a8606532a407e505ddd651b185b814994b8b75bd4",
-    "changed": "850009e3a4416fc646ee325e2863d9d02693fd8998a8183eaf0f7a60f1728586",
-    "commit": "de5b826be71993818f39a16b3be0ee72f82ce002",
+    "branch_diff": "2b89663eb66490fd83a65c8e5af35bbb4ff16ed3cfb25b0f8abc948ffaeeb977",
+    "changed": "9da2a59b7cb9443ae10d2f2d11edcb04c9fa06392698460c00b74ac10745c244",
+    "commit": "c8f9e63c68ca3e31f32a458f4cae2d30844524ad",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done\nCase: normal use - a CI-mode builder fixes a failing test after another repair test passed.\nThe new CI sentence leaves the unconditional instruction at src/forge/templates/brief.md:231 to \u201cRerun only what failed\u201d, so the builder cannot choose to rerun the passing repair test after changing the code. Also, src/forge/worker.py:626 and :739-740 insert the test-audit authoring gate into initial and resumed briefs; .codex/skills/test-audit/SKILL.md:43-45 still requires a regression test to demonstrably fail before the fix and pass afterwards. The brief therefore still dictates repair testing and its red-then-green order.",
-        "file": "src/forge/templates/brief.md",
-        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
-        "gain": 4,
-        "harm": 3,
-        "line": 349,
-        "priority": "P1",
-        "title": "Not done: The CI-mode worker brief says only that wider related tests, lint and type checks stay in pull request CI and leaves which repair",
-        "work": 2
-      },
-      {
-        "body": "Gain 4, Work 1, Harm 3\nRaise: Functional\nCase: normal use - a nightly or manually requested full test run.\nThe edited skill no longer matches the SHA-256 pinned in tests/test_trim_skills.py:31-33. Its test compares the current bytes with that pin at lines 59-60 and fails before checking wheel, source-distribution and editable-install sync. The nightly workflow runs the full suite, so its result will be red until the obsolete pin is updated for this deliberate change.",
-        "file": ".codex/skills/test-audit/SKILL.md",
-        "gain": 4,
-        "harm": 3,
-        "line": 146,
-        "priority": "P1",
-        "title": "Functional: Keep the full-suite skill packaging test passing",
-        "work": 1
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - a new or earlier-adopted client syncs its worker guidance.\nThis test checks that the skill's validation section contains the CI boundary sentence, but that sentence was also present alongside the old mandatory repair-test instructions. tests/test_builders_check_exact_repair_tests.py:50-53 makes the same positive-only check. Restoring the old skill validation text would leave these assertions passing; the brief's negative assertion does not cover it because src/forge/worker.py:739-740 embeds only the skill's authoring section. The named proof therefore cannot detect the old instructions reaching either host after sync.",
-        "file": "tests/test_worker_nudge_names_related_tests.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 31,
-        "priority": "P1",
-        "title": "Gate: Check the removed instructions in synced test-audit skills",
-        "work": 2
-      }
-    ],
-    "id": "a38b17fe-6607-4426-9d28-ac38ab5fe808",
-    "status": "blocked"
+    "findings": [],
+    "id": "a4f50075-5a3c-4f19-be37-c010735b3ffd",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-08T08:57:37.026970+00:00",
@@ -103,6 +71,10 @@
     },
     {
       "at": "2026-11-08T09:12:48.237702+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-08T09:19:14.779399+00:00",
       "step": "review"
     }
   ],
