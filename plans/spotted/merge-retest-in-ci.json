@@ -1,0 +1,37 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/merge.py\tCombined-head CI can omit tests added by main\tmerge-retest-in-ci",
+      "kind": "bug",
+      "path": "src/forge/merge.py",
+      "line": 134,
+      "text": "Combined-head CI can omit tests added by main",
+      "from": "blocking",
+      "item": "merge-retest-in-ci",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/merge.py\tGate: existing merge regression tests fail under the new routing\tmerge-retest-in-ci",
+      "kind": "bug",
+      "path": "src/forge/merge.py",
+      "line": 132,
+      "text": "Gate: existing merge regression tests fail under the new routing",
+      "from": "blocking",
+      "item": "merge-retest-in-ci",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/merge.py\tWait for the CI configuration used to skip the local retest\tmerge-retest-in-ci",
+      "kind": "bug",
+      "path": "src/forge/merge.py",
+      "line": 132,
+      "text": "Wait for the CI configuration used to skip the local retest",
+      "from": "blocking",
+      "item": "merge-retest-in-ci",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

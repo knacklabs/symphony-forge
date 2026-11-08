@@ -6,7 +6,7 @@ import os
 import re
 import tomllib
 from pathlib import Path
-from forge import checks, close, codex, fasttest, githooks, prcheck, repo, review, story, task, time_records
+from forge import checks, close, codex, githooks, prcheck, repo, review, story, task, time_records
 
 COMMANDS = [{
     "words": "merge", "run": "merge", "changes_state": False,
@@ -45,7 +45,6 @@ def merge(args: argparse.Namespace, *, refreshed: bool = False) -> int:
     top, item = repo.root(), args.item
     if item == "enable":
         return _enable(top)
-    config = repo.default_config(top)
     if repo.merge_setting(top) != "agent":
         repo.refuse(REFUSALS["owner_merges" if item == ENABLE else "disabled"], item=item)
     worktree = close._worktree(item)
@@ -97,6 +96,8 @@ def merge(args: argparse.Namespace, *, refreshed: bool = False) -> int:
             repo.refuse(REFUSALS["owner_merges"], item=item)
         if repo.git("rev-parse", branch, cwd=top) != head:
             repo.refuse(REFUSALS["changed"], item=item)
+        # A retry may already contain main. Its saved head still owns the CI wait.
+        config = repo._sample_settings(worktree, repo._config_text(after or ""), head)
         item_files = set(repo.git("diff", "--name-only", "--no-renames", "-z", base, head,
                                   cwd=worktree).split("\0")) - {""}
         moves = 0
@@ -126,12 +127,13 @@ def merge(args: argparse.Namespace, *, refreshed: bool = False) -> int:
                                                    ".claude/skills", ".codex/skills", cwd=worktree))
                 base = repo.git("merge-base", "HEAD", f"origin/{default}", cwd=worktree)
                 checked_default = base
-                cfg = repo.config(worktree)
+                config = repo.config(worktree)
                 # CI covered this head; only the incoming default-branch diff needs tests.
-                command = (cfg["fast_test"] or cfg["test"]).replace("{base}", head)
-                ci_retest = fasttest.broad_ci_selection(worktree, head)
+                command = (config["fast_test"] or config["test"]).replace("{base}", head)
+                ci_retest = repo.test_place(config) == "ci" and any(
+                    check != "forge-pr-check" for check in config["checks"])
                 if ci_retest:
-                    print("Related tests exceed one quarter of the suite. Pull request CI runs them.",
+                    print("Pull request CI runs the combined change's tests.",
                           flush=True)
                 else:
                     failed, tested = review.test_run(worktree, command, head, always=True)

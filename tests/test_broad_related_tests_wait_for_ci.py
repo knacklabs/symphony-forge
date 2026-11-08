@@ -114,10 +114,11 @@ def test_1_broad_related_tests_wait_for_ci(env, tmp_path, monkeypatch,
     merged = env.repo.forge("merge", item)
     attempts = env.gh_calls("pr", "merge")
 
-    broad = place == "ci" and selected > 1
+    # CI now owns every selection, including the former exact-quarter local case.
+    broad = place == "ci"
     if broad:
         assert not list(receipts.iterdir()), merged.stdout + merged.stderr
-        assert "Related tests exceed one quarter of the suite. Pull request CI runs them." in merged.stdout
+        assert "Pull request CI runs the combined change's tests." in merged.stdout
         if ci_red:
             # Failed CI keeps the worktree at the pushed commit.
             published = env.repo.git("rev-parse", "HEAD", cwd=where)

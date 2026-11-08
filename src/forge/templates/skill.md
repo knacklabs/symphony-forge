@@ -255,7 +255,7 @@ recommendation first. Save the answer before moving to the next question.
 
 If the default branch moved after close, `forge merge` compares its new changed files with the item's changed files.
 It merges the default branch locally to check the combined change.
-It runs `fast_test`, or `test` when none is set, in the one test lane with `{base}` as the
+For repos with laptop tests, it runs `fast_test`, or `test` when none is set, in the one test lane with `{base}` as the
 pull request's checked head. This selects tests for incoming default-branch changes instead of
 the pull request's own files, on the combined code. It merges only after those tests pass. A failure names the failed tests
 and gives `forge work <item>` as the next step. With no
@@ -265,11 +265,15 @@ If the file sets do not overlap, Forge restores the original head and merges wit
 If the file sets overlap, Forge keeps the local merge, reuses the existing review and commits its coverage of the combined change.
 It pushes that commit, waits for its required checks, then merges.
 In repos whose tests run in pull request CI, close already leaves the laptop tests to CI.
-When merge's pytest selection exceeds one quarter of the suite's test files, including
-`always_test`, merge also skips the laptop run. It publishes the combined change and waits
-for that commit's CI, even when the changed files do not overlap. This uses the existing
-pytest picker, with no new test collection. Other runners and custom fast commands keep
-their local retest. Repos whose tests run only on the laptop keep their local runs.
+When `test_place` is `ci` and a required check runs app tests, merge also leaves the tests to CI.
+It publishes the combined change and waits for that commit's checks, even when the changed
+files do not overlap. This applies to every test runner and custom fast command.
+The wait uses the combined branch's test setting and required check names.
+A retry waits for the same saved head's checks, with those same check names.
+`forge test --change` includes incoming changes from merges into the pull request,
+so CI also selects tests that the default branch added before the merge.
+Repos whose tests run only on the laptop keep their local runs. The `forge-pr-check`
+check reviews the change and runs no app tests, so that check alone does not replace the local retest.
 The nightly full run on the default branch covers the rest. With no retest, the usual CI wait applies.
 Before the retest, Forge refuses uncommitted changes and names their files. After tests and
 checks, Forge fetches the default branch again. If it moved again, Forge checks the new
