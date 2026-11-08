@@ -82,8 +82,8 @@
     "id": "abb77d15-cf5f-413e-b429-d5b7922600d5",
     "status": "clean"
   },
-  "round": 7,
-  "status": "waiting for checks",
+  "round": 8,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-07T18:53:13.722341+00:00",
@@ -119,10 +119,10 @@
     }
   ],
   "stuck": {
-    "close": "577f09f9-1956-4724-a7a1-9abf477cea88",
-    "head": "ab23475fa17e55aa1a550441e0f077cf675b1949",
+    "close": "af2f4b29-1935-4b77-ae56-847bd73a12ae",
+    "head": "9cb019ab19f3e38299545628e735f277068228c8",
     "keys": {},
-    "round": 6
+    "round": 7
   },
   "why": "Close silently puts back the default branch's forge.toml when a fix changes it, and the line it prints does not say how to allow the change, so a client agent lost its settings change in an upgrade fix",
   "worker": "codex"
