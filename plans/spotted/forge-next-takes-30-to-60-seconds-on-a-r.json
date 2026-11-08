@@ -21,6 +21,17 @@
       "item": "forge-next-takes-30-to-60-seconds-on-a-r",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_testplace_upgrade.py\tThe adopted-client test still expects the old worker instruction that forbids local repair checks in CI mode.",
+      "kind": "bug",
+      "path": "tests/test_testplace_upgrade.py",
+      "line": 109,
+      "text": "The adopted-client test still expects the old worker instruction that forbids local repair checks in CI mode.",
+      "from": "worker",
+      "item": "forge-next-takes-30-to-60-seconds-on-a-r",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
