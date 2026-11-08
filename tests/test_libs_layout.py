@@ -100,6 +100,7 @@ def lint_starter(tmp_path_factory):
         return None, "Corepack is required for the starter lint cases"
 
     host_config = tmp_path_factory.mktemp("libs-layout-host")
+    downloads = tmp_path_factory.getbasetemp() / "starter-downloads"
     user_home = host_config / "home"
     user_home.mkdir()
     env = os.environ.copy()
@@ -108,14 +109,16 @@ def lint_starter(tmp_path_factory):
             env.pop(name)
     env.update({
         "HOME": str(user_home),
-        "COREPACK_HOME": str(host_config / "corepack"),
+        "COREPACK_HOME": str(downloads / "corepack"),
         "COREPACK_ENABLE_DOWNLOAD_PROMPT": "0",
-        "PNPM_CONFIG_STORE_DIR": str(host_config / "pnpm-store"),
+        "npm_config_store_dir": str(downloads / "pnpm-store"),
         "XDG_CONFIG_HOME": str(host_config / "xdg-config"),
     })
     if sys.platform == "win32":
         env["USERPROFILE"] = str(user_home)
-    assert not any(name.lower().startswith("npm_config_") for name in env)
+    assert {name.lower() for name in env if name.lower().startswith("npm_config_")} == {
+        "npm_config_store_dir",
+    }
 
     copy = tmp_path_factory.mktemp("libs-layout-starter")
     shutil.copytree(
