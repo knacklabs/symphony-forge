@@ -1120,6 +1120,12 @@ if the settings do not answer it. Pass
    full `test` command and narrows pytest to changed and module-related test files. Use the
    repo's Python runner for `test`; keep Forge outside the project, and keep lint and other
    checks in `test`.
+   During adoption review, name the repo's cheap whole-repo checks that read shared files without
+   imports, such as rule checks, file inventories and configuration checks: changed-only selection
+   can miss them. Include their pytest files or node IDs in Python `always_test`, or their commands
+   beside changed-test selection in TypeScript `fast_test`, through the normal settings fix after
+   the human agrees. Keep `test` as the full suite. New repos get this review at setup; existing
+   adopted repos get this guidance on upgrade and sync, with settings changed only through that fix.
    Forge writes no `fast_test` by itself.
    Client CI caches npm downloads and the default pnpm stores by the root lockfile and enables
    uv's package cache. It keeps the app's own pnpm setup and version.
