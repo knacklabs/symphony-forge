@@ -16,6 +16,7 @@ def test_1_init_and_sync_keep_the_required_tests_result(repo, gh, tmp_path, kind
     if kind == "new":
         client, initialized = _fresh_client(repo, gh, tmp_path)
         assert initialized.returncode == 0, initialized.stderr
+        repo.git("switch", "-q", "-c", "fix/result-variable", cwd=client)
     else:
         client = tmp_path / "previous-client"
         shutil.copytree(ROOT / "tests/fixtures/adopted-v1.2.2/client", client)
@@ -30,6 +31,12 @@ def test_1_init_and_sync_keep_the_required_tests_result(repo, gh, tmp_path, kind
         synced = repo.forge("sync", cwd=client)
         assert synced.returncode == 0, synced.stderr
 
+    # The result aggregator belongs only to a genuinely split suite.
+    settings = client / "forge.toml"
+    text = re.sub(r"^groups = .*\n", "", settings.read_text("utf-8"), flags=re.M)
+    text = re.sub(r'^test = .*$', 'test = "vitest run --shard={group}/{groups}"', text, flags=re.M)
+    settings.write_text("groups = 3\n" + text, encoding="utf-8")
+    assert repo.forge("sync", cwd=client).returncode == 0
     gate = jobs((client / ".github/workflows/forge.yml").read_text("utf-8"))["tests-passed"]
     # Use the environment key GitHub supplies, rather than choosing one in the test.
     variable = re.search(r"^          (\w+): \$\{\{ needs.tests.result \}\}$", gate, re.M)[1]

@@ -687,11 +687,11 @@ def grouped(top: Path, command: str) -> str:
 
 
 def group_warning(top: Path, cfg: dict[str, Any]) -> str:
-    """Advice only: groups cannot divide this test command automatically."""
+    """Explain why CI uses one group for an unsplittable test command."""
     if (cfg.get("groups", 1) > 1 and "{group}" not in cfg["test"]
             and not pytest_split(top, cfg["test"])):
-        return ("Each CI group runs the same tests because the test command has no {group} placeholder. "
-                "Set groups to 1 or add the runner's shard options with {group} and {groups}.")
+        return ("CI uses one group because the test command has no {group} placeholder. "
+                "Add the runner's shard options with {group} and {groups} to use more groups.")
     return ""
 
 
