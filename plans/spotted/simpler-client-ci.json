@@ -1,0 +1,37 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/prcheck.py\tGate: existing full-suite workflow tests\tsimpler-client-ci",
+      "kind": "bug",
+      "path": "src/forge/prcheck.py",
+      "line": 333,
+      "text": "Gate: existing full-suite workflow tests",
+      "from": "blocking",
+      "item": "simpler-client-ci",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_single_group_client_tests.py\tGate: fast_test group-selection proof\tsimpler-client-ci",
+      "kind": "bug",
+      "path": "tests/test_single_group_client_tests.py",
+      "line": 23,
+      "text": "Gate: fast_test group-selection proof",
+      "from": "blocking",
+      "item": "simpler-client-ci",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/prcheck.py\tNot done: a test command that cannot be split runs in one group instead of repeating",
+      "kind": "edge",
+      "path": "src/forge/prcheck.py",
+      "line": 250,
+      "text": "Not done: a test command that cannot be split runs in one group instead of repeating",
+      "from": "review",
+      "item": "simpler-client-ci",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
