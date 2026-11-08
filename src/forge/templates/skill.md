@@ -348,7 +348,7 @@ Forge's planning, approval, build, review, CI and merge process stays the same.
 Doctor's SDK, project trust and UI skill checks follow the selected tool too.
 
 Claude workers use the Claude Agent SDK kit when installed; otherwise their coordinator uses a background subagent.
-Codex in a Codex coordinator stays native; on the other tool it uses the Codex app server. Plan reads stay native on their coordinator.
+Codex workers use the Codex app server when `codex_fast` is off or absent, or under the other tool; otherwise they stay native. Plan reads stay native on their coordinator.
 Without a coordinating session, a one-tool repo waits for it.
 Reviews run externally through Autoreview on the named tool; with both, Codex when installed,
 otherwise Claude. Normal, light and sign-off reviews use `[models.review]` or its per-tool entries.

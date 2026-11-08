@@ -46,7 +46,9 @@ def test_3_build_rounds_run_as_session_subagents(repo, gh, monkeypatch, tmp_path
         monkeypatch.delenv("CODEX_THREAD_ID", raising=False)
         monkeypatch.setenv("CLAUDECODE", "1")
     version = repo.forge("--version").stdout.split()[-1]
-    setting = 'workers = "claude"' if tool == "claude" else 'tools = "codex"\nworkers = "claude"'
+    # Native Codex work requires the owner's Fast opt-in; off uses the SDK's own tier.
+    setting = ('workers = "claude"' if tool == "claude" else
+               'tools = "codex"\nworkers = "claude"\ncodex_fast = "needed"')
     repo.git("switch", "-qc", "fix/settings")
     # An earlier-adopted repo may have no [models] table: built-in models apply.
     models = MODELS[tool] if history == "new" else ""

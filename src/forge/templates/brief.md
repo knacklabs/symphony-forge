@@ -180,6 +180,8 @@ Forge stops and gives `forge merge <item>` as the next step.
 
 If another program holds the earlier Codex conversation, Forge retries once. If it is still
 held, work starts a new conversation with the whole brief and says why in one line.
+When `codex_fast` is off or absent, Codex workers use the app server to request normal speed,
+including from a Codex coordinator that uses Fast. The coordinator keeps its own speed.
 
 $delegation
 - Claude SDK workers get their helper roles and `general-purpose` through turn options only.

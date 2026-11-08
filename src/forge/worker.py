@@ -173,8 +173,10 @@ def _work(args: argparse.Namespace) -> bool:
     tool = getattr(args, "fallback", None) or state.get("tool")
     family = repo.worker(config, "build", design, tool)[0]
     on_codex = family == "codex"
-    # Codex uses its coordinating session; Claude uses the SDK when it is available.
-    is_native = repo.route(config, family, command="work", item=item) == "native"
+    # Native Codex children inherit the coordinator's tier, even over role config.
+    # The SDK can request normal speed without changing the coordinator.
+    is_native = (repo.route(config, family, command="work", item=item) == "native"
+                 and (not on_codex or config["codex_fast"] != "off"))
     if is_native and not on_codex:
         is_native = bool(claude_sdk.sdk_problem())
     role = ("frontend" if design else "worker" if match["task"] else
@@ -340,7 +342,8 @@ def _work(args: argparse.Namespace) -> bool:
                     print(message, flush=True)
                     with repo.work_log(top, item).open("a", encoding="utf-8") as out:
                         out.write(message + "\n")
-                    if repo.route(config, "codex", command="work", item=item) == "native":
+                    if (repo.route(config, "codex", command="work", item=item) == "native"
+                            and config["codex_fast"] != "off"):
                         return True  # handed out as this Codex session's frontend subagent
                     ready(top, config, kind, True, design=True)
                     codex.recover(top, item)
