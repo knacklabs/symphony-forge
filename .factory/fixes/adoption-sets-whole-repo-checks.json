@@ -1,0 +1,85 @@
+{
+  "base": "5393cf3ed78f0bae68f7bf2762dbcc9675a03710",
+  "branch": "fix/adoption-sets-whole-repo-checks",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1b754-962b-7440-8651-0f334d42d134",
+    "head": null,
+    "start": "32997c760043d9c4a0cbe4ebeb213acdf379dfed"
+  },
+  "done_when": "Adoption guidance names the cheap whole-repo checks to add to always_test for Python or to fast_test for TypeScript, and an adopted app gets them through the normal settings fix",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "test_1_adoption_review_keeps_shared_input_checks() in tests/test_adoption_shared_input_checks.py",
+      "file": "tests/test_adoption_shared_input_checks.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 34,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_adoption_review_keeps_shared_input_checks",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/skill.md",
+      "file": "src/forge/templates/skill.md",
+      "gain": 2,
+      "harm": 2,
+      "line": 1125,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Follow-up: Run shared-input checks for documentation-only changes",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "401e498ccb792e529c47bbadff0ebfc23068863fd4612dad8e639fb1e627db14",
+    "changed": "003a94d304e57732d9b6510d6cb85c55e616baec9c265597aec1d971c585e560",
+    "commit": "2da4e3e6d7ccc0dc539d1c85cfdad475792ed0b4",
+    "dismissals": [],
+    "findings": [],
+    "id": "441f3779-2bfb-440b-a9e5-a74e2fb9517a",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-07T18:12:46.537294+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-07T19:08:51.686698+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-08T02:58:42.356605+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-07T19:08:51.699337+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "tests/test_adoption_shared_input_checks.py",
+    "reason": "Harm 3 or higher findings: one more round by the standing rule",
+    "wait_id": "132b9427-674d-4eb7-96c8-e6fda3a2caf3",
+    "worker_round": 1
+  },
+  "stuck": {
+    "close": "28f35808-130c-4eba-8cf2-d5f9a86fcd5f",
+    "head": "086bc6705794f9b7f695589cb9994be272bbc799",
+    "keys": {},
+    "round": 1
+  },
+  "why": "Adopted apps break main when selected tests miss shared inputs (issue 1430), and the adoption steps only describe the required-check list",
+  "worker": "codex"
+}

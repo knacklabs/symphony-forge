@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "bug\ttests/test_adoption_shared_input_checks.py\tGate: test_1_adoption_review_keeps_shared_input_checks\tadoption-sets-whole-repo-checks",
+      "kind": "bug",
+      "path": "tests/test_adoption_shared_input_checks.py",
+      "line": 34,
+      "text": "Gate: test_1_adoption_review_keeps_shared_input_checks",
+      "from": "blocking",
+      "item": "adoption-sets-whole-repo-checks",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/templates/skill.md\tFollow-up: Run shared-input checks for documentation-only changes",
+      "kind": "edge",
+      "path": "src/forge/templates/skill.md",
+      "line": 1125,
+      "text": "Follow-up: Run shared-input checks for documentation-only changes",
+      "from": "review",
+      "item": "adoption-sets-whole-repo-checks",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
