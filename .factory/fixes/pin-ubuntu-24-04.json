@@ -116,7 +116,7 @@
     "id": "55525f17-b4e4-4675-8b9d-926f6269f8b6",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -138,10 +138,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": null,
-    "head": "45951b751b8fd4103b67bc0ab70f958e62005671",
+    "close": "0e7173ef-7527-4cab-b2f8-6f5ff1232b0d",
+    "head": "2748d30deb39832e08963131d66f3a10048f7eed",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "GitHub's ubuntu-latest runner moved to Ubuntu 26.04, where the starters' Playwright 1.56 cannot install browsers, so client CI and Forge's starter checks fail",
   "worker": "codex"
