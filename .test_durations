@@ -1,7 +1,8 @@
 {
-    "tests/test_finished_builds_free_places.py::test_1_finished_builder_frees_its_place_for_waiting_work[handback-new]": 8.85,
-    "tests/test_finished_builds_free_places.py::test_1_finished_builder_frees_its_place_for_waiting_work[merge-new]": 13.68,
-    "tests/test_finished_builds_free_places.py::test_1_finished_builder_frees_its_place_for_waiting_work[merge-adopted-v1.2.2]": 11.41,
+    "tests/test_finished_builds_free_places.py::test_1_finished_builder_frees_its_place_for_waiting_work[handback-new]": 8.56,
+    "tests/test_finished_builds_free_places.py::test_1_finished_builder_frees_its_place_for_waiting_work[merge-new]": 22.29,
+    "tests/test_finished_builds_free_places.py::test_1_finished_builder_frees_its_place_for_waiting_work[human-merge-new]": 14.26,
+    "tests/test_finished_builds_free_places.py::test_1_finished_builder_frees_its_place_for_waiting_work[human-merge-adopted-v1.2.2]": 11.75,
     "tests/test_abandoned_fix_names_stay_taken.py::test_4_abandoned_fix_name_is_taken_before_a_new_checkout_is_created[adopted-v1.2.2-fetched-tag]": 1.5889193350001278,
     "tests/test_abandoned_fix_names_stay_taken.py::test_4_abandoned_fix_name_is_taken_before_a_new_checkout_is_created[adopted-v1.2.2-local-tag]": 1.9448859579999862,
     "tests/test_abandoned_fix_names_stay_taken.py::test_4_abandoned_fix_name_is_taken_before_a_new_checkout_is_created[new-client-fetched-tag]": 2.553777627000045,

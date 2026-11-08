@@ -196,6 +196,7 @@ $delegation
 - A subagent never runs `forge handback`, `forge work` or `forge stop` itself.
 - A recorded builder result or item merge frees its builder place, even if the coordinator
   session stays open. Waiting work can then start. This applies to new and upgraded repos.
+  A pending hand-back still works after its place is freed.
   A successful hand-back frees the item's lock. If the worker process and lock are no longer live,
   the board and `forge next` show the worker as stopped and give `forge work <item>` for an unfinished round.
 - Never run `forge stop`: only a person can stop a run, after confirmation in the host.

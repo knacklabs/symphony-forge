@@ -1168,6 +1168,7 @@ def _attach(top: Path, item: str, branch: str) -> None:
 
 def _merged(top: Path, item: str) -> int:
     """A merged task needs no outcome step when its merge already recorded completion."""
+    repo.record_event(top, item, "item finished")
     print(f"The pull request for {item} is merged.")
     key, _, name = item.partition("/")
     if name:
