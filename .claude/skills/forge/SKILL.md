@@ -1433,6 +1433,8 @@ when linked to a spec, it must also serve that spec's behaviour.
 Start every task and fix `forge next` lists as ready at once, and close each as its worker
 finishes. One machine runs work rounds on half its available cores (at least one place),
 across all its repos; the rest wait in line. Reads and reviews take no agent place.
+On GitHub Actions (`GITHUB_ACTIONS=true`), tests use all available runner cores,
+without reserving cores for agents or other runner jobs. Laptops keep their existing share.
 Builders lend their places during test commands and wait for admission again before continuing.
 Returning builders and failed-test repairs go before new builds. New builds pause above twice
 the test lane's place count of waiting test items and resume at that count or below.
@@ -1913,7 +1915,7 @@ do not select tests. After the run it names each changed Python file that no tes
 that run the program from outside miss it locally; the nightly full run covers it. It supports
 root packages and the `src/` layout, and pytest's
 `test_*.py` and `*_test.py` filenames. It excludes unrelated tests even when the full command names them explicitly. It keeps
-the full `test` command's setup and options, caps pytest-xdist at half the machine's cores even
+the full `test` command's setup and options, caps pytest-xdist at the machine's test budget even
 when pytest configuration supplies the worker count, and runs the
 full command when `conftest.py`, requirements or lock files change, except for bare `forge test`'s
 worker bound above.
@@ -1946,9 +1948,13 @@ names no test command it says so and exits successfully. In a sample-data protot
 tests are off until client sign-off. After sign-off, ask the coordinator to set
 `sample_data = false` in `forge.toml` to turn tests on. A missing setting also leaves tests on,
 regardless of an earlier sign-off's `sample_data: true`. Forge sets `PYTEST_XDIST_AUTO_NUM_WORKERS`
-and `FORGE_TEST_CPUS` to the run's allocation from the shared process budget. A worker's session
-requests at most two processes, so its own `pytest -n auto` also stays at two. A fixed `-n` in
+and `FORGE_TEST_CPUS` to the run's allocation from the shared process budget. On laptops, a worker's session
+requests at most two processes, so its own `pytest -n auto` also stays at two. GitHub Actions workers use
+all available runner cores. A fixed `-n` in
 its test command is capped with `--maxprocesses`, also outside a worker session.
+The Test selection line shows pytest's actual worker count, including serial commands and lower
+configured counts. Linux GitHub Actions logs also show `nproc`. GitHub Actions uses all available cores;
+laptops keep the agent share and the reserve for local runner jobs.
 Direct Vitest and Jest commands use the same budget through `--maxWorkers`.
 This includes `npx` (with optional `--no-install`) and `npm exec`, `pnpm exec` or `yarn exec`.
 Forge caps explicit `--maxWorkers` values to the run's allocation, including percentage values.

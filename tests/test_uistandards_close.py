@@ -2,11 +2,13 @@
 from __future__ import annotations
 
 import os
+import sys
 
 import pytest
 
 from test_close import CLEAN, GREEN, env
 from test_score_notes import _client_repo as setup_client
+from conftest import _install
 
 
 STORY = "FORGE-UISTANDARDS-1"
@@ -29,8 +31,8 @@ def test_3_close_checks_only_changed_client_ui_and_reports_design_problems(
     # 1. Protect close's changed-file design checks, waivers and unavailable-checker behavior.
     # 2. A future edit could skip a rule, check an untouched adopted file, or hide a bad waiver.
     # 3. Existing close tests use Forge-source settings; none exercise this client boundary.
-    # 4. This calls the real forge close command and the synced pinned launcher; no test seam
-    #    decides checker findings.
+    # 4. Real close, the synced launcher and Forge rules consume a third-party
+    #    checker process fixture. Download availability is not this contract.
     setup_client(env, tmp_path, adopted)
     repo = env.repo
     launcher = repo.path / ".codex/skills/impeccable/scripts" / (
@@ -97,6 +99,23 @@ def test_3_close_checks_only_changed_client_ui_and_reports_design_problems(
     monkeypatch.delenv("IMPECCABLE_LAUNCHER_PROBE", raising=False)
 
     css = "apps/web/src/brand.css"
+    # Model only the external checker's report and waiver response. Keep the
+    # launcher and Forge's checks real, without a live release download.
+    engine = tmp_path / "checker-engine"
+    _install(tmp_path, engine.name, f"#!{sys.executable}\n" + '''import json, sys
+from pathlib import Path
+findings = []
+for arg in sys.argv[1:]:
+    path = Path(arg)
+    if path.name == "brand.css" and path.is_file():
+        text = path.read_text(encoding="utf-8")
+        if "linear-gradient" in text and "impeccable-disable gradient-text -- Keep" not in text:
+            findings.append({"file": str(path), "line": 1, "antipattern": "gradient-text",
+                             "description": "The external checker reported gradient text."})
+print(json.dumps(findings))
+sys.exit(2 if findings else 0)
+''')
+    monkeypatch.setenv("IMPECCABLE_BIN", str(engine.with_suffix(".cmd") if os.name == "nt" else engine))
     shell = "apps/web/src/shell.tsx"
     sidebar = "apps/web/src/components/AppSidebar.tsx"
     ignored_test = "apps/web/src/dashboard.test.tsx"
@@ -236,6 +255,7 @@ def test_3_close_checks_only_changed_client_ui_and_reports_design_problems(
                'export function AppSidebar() { return <><Sidebar collapsible="icon" />'
                '<input type="search" aria-label="Search" /></>; }\n')
     monkeypatch.setenv("IMPECCABLE_LAUNCHER_PROBE", "1")
+    monkeypatch.delenv("IMPECCABLE_BIN")
     monkeypatch.setenv("IMPECCABLE_HOME", str(tmp_path / "offline-impeccable-home"))
     offline = "apps/web/src/offline.tsx"
     env.commit(where, offline,
