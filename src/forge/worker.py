@@ -7,11 +7,12 @@ import json
 import os
 import re
 import shutil
+import signal
 import subprocess
 import tempfile
 import time
 import uuid
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
 from pathlib import Path
 from string import Template
 from typing import Any
@@ -116,9 +117,29 @@ def checkout(item: str) -> tuple[re.Match[str], Path]:
     return match, top
 
 
+@contextlib.contextmanager
+def stop_signals(args: argparse.Namespace) -> Iterator[None]:
+    """Cover preparation as well as the builder, including work called by land."""
+    retry = f"forge work {repo.quote(args.item)}"
+    if getattr(args, "note", None) is not None:
+        retry += f" --note {repo.quote(args.note)}"
+
+    def interrupted(signum: int, _frame: Any) -> None:
+        print(f"The round did not finish. Run {retry} again.", flush=True)
+        raise SystemExit(128 + signum)
+
+    previous = {sig: signal.signal(sig, interrupted) for sig in (signal.SIGTERM, signal.SIGINT)}
+    try:
+        yield
+    finally:
+        for sig, handler in previous.items():
+            signal.signal(sig, handler)
+
+
 def work(args: argparse.Namespace) -> None:
-    if _work(args):  # Claude failed its split design round; the coordinating Codex session builds
-        _work(argparse.Namespace(**{**vars(args), "fallback": "codex"}))
+    with stop_signals(args):
+        if _work(args):  # Claude failed its split design round; the coordinating Codex session builds
+            _work(argparse.Namespace(**{**vars(args), "fallback": "codex"}))
 
 
 def prepare(item: str) -> tuple[re.Match[str], Path, str]:
