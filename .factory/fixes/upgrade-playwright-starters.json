@@ -4,12 +4,20 @@
   "done_when": "Both starters use Playwright 1.64.0, their lockfiles are updated, and their browser tests pass on Ubuntu 24.04 and 26.04 runners",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-08T16:16:37.839145+00:00",
       "step": "start"
     }
   ],
-  "why": "Both starters pin Playwright 1.56.1, which cannot install browsers on Ubuntu 26.04, the image GitHub's ubuntu-latest runner now uses"
+  "stuck": {
+    "close": null,
+    "head": "2c5b2913b73ebbd6c2427ab9aff9317632928400",
+    "keys": {},
+    "round": null
+  },
+  "why": "Both starters pin Playwright 1.56.1, which cannot install browsers on Ubuntu 26.04, the image GitHub's ubuntu-latest runner now uses",
+  "worker": "codex"
 }
