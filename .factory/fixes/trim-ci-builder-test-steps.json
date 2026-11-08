@@ -62,8 +62,8 @@
     "id": "a4f50075-5a3c-4f19-be37-c010735b3ffd",
     "status": "clean"
   },
-  "round": 2,
-  "status": "waiting for checks",
+  "round": 3,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-08T08:57:37.026970+00:00",
@@ -88,10 +88,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": "40aec3a8-25b6-427f-a107-9b9ba64f9b3c",
-    "head": "47e720fd4922b1a55987d12c1360010f11c5039e",
+    "close": "51a3f035-635c-4d76-957e-d62a7f566ef6",
+    "head": "1f6d7217ba3bd79d377f458a07167d1315f9613c",
     "keys": {},
-    "round": 1
+    "round": 2
   },
   "why": "The worker brief spells out red-then-green steps for CI-mode builders, which agents do anyway; the only rule needed is that wider related tests, lint and type checks stay in pull request CI",
   "worker": "codex"
