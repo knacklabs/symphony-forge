@@ -87,7 +87,7 @@
     "status": "blocked"
   },
   "round": 6,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-07T18:49:17.793888+00:00",
@@ -128,8 +128,12 @@
   ],
   "stop": {
     "at": "2026-11-08T10:04:35.434411+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": ".test_durations",
-    "wait_id": "cf9fce0f-7ace-4309-b0f8-cc352a4d0562"
+    "reason": "Harm 3 finding fixed: the obsolete timing entry is removed",
+    "wait_id": "cf9fce0f-7ace-4309-b0f8-cc352a4d0562",
+    "worker_round": 6
   },
   "stuck": {
     "close": "b3bd181a-7d0e-458c-865e-d8d9ae1cdadb",
