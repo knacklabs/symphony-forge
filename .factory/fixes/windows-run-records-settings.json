@@ -71,7 +71,7 @@
     "id": "f6ebbf85-2948-43f2-81f5-e235a1a72494",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -84,10 +84,12 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "965b594f4cceb6a98138cb07b5f117133d7c95e9",
-    "keys": {},
-    "round": null
+    "close": "00dfea89-8581-47b2-be12-b9be9afa8fc7",
+    "head": "2456bba6d11363c6a17ccc0dff997bdd10639f67",
+    "keys": {
+      "the open P0 not done: tests/test_run_records.py::test_3_run_and_question_occurrences passes on windows and linux in tests/test_run_records.py": 1
+    },
+    "round": 1
   },
   "why": "On Windows the run-records control test fails: merging main into its task conflicts in forge.toml since the settings fix moved fixture settings onto main",
   "worker": "codex"
