@@ -1,6 +1,13 @@
 {
   "base": "c4bc3920737c2e2f9001281ed6012b3e5ba908a4",
   "branch": "fix/upgrade-playwright-starters",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1bbf2-b5f8-79c1-9799-15572fa13340",
+    "head": null,
+    "start": "6c5d9ff20026017327a0d0b33af03a1782e69d8f"
+  },
   "done_when": "Both starters use Playwright 1.64.0, their lockfiles are updated, and their browser tests pass on Ubuntu 24.04 and 26.04 runners",
   "fix_kind": "mechanical",
   "kind": "fix",
