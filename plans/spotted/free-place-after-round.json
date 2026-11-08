@@ -12,6 +12,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/fasttest.py\tA focused name filter reports excluded mandatory checks as a settings error.",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 469,
+      "text": "A focused name filter reports excluded mandatory checks as a settings error.",
+      "from": "worker",
+      "item": "free-place-after-round",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/merge.py\tNot done: A builder place is freed when Forge records the round's completion or the item's merge, and a waiting part starts at once\tfree-place-after-round",
       "kind": "bug",
       "path": "src/forge/merge.py",
