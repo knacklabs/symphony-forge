@@ -63,7 +63,9 @@ no entry. -->
 it may change. Before writing each Scope, search the code for the files the task needs. The plan
 check refuses two tasks whose Scope paths have the same prefix up to the first wildcard, unless
 one waits for the other through After, directly or through another task; it names both tasks.
-When tasks need the same file, put it in the first task's Scope with the shared names and stubs;
+Paths with a segment named `tests`, `test`, `__tests__` or `spec` do not cause Scope overlaps
+and can be shared without an After link. Explicit After links still apply.
+When tasks need the same production file, put it in the first task's Scope with the shared names and stubs;
 tasks that need them wait for that task through After and then own only their files. Tests: the
 tests it adds or changes. After: the tasks it waits for. When two tasks share a function, field,
 file format or command, the first task pins it: it commits the shared names and stubs plus one

@@ -1,0 +1,68 @@
+{
+  "base": "5393cf3ed78f0bae68f7bf2762dbcc9675a03710",
+  "branch": "fix/builder-checks-own-repair-test",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1b751-8858-7d80-8d13-75faf17b36c9",
+    "head": null,
+    "start": "e0a61878c37af7479bc4e7e1c241e34427990f9e"
+  },
+  "done_when": "The worker brief and test-audit guidance let a builder run the exact new, changed or previously failing tests red then green locally before committing, while wider tests stay in CI",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "x",
+      "file": "x",
+      "gain": null,
+      "harm": null,
+      "line": 1,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: The worker brief and test-audit guidance let a builder run the exact new, changed or previously failing tests red then green LocA?",
+      "work": null
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "b62eba9c9e44f13d7f207da16d9949947e8c45b183923d7ee7e72827a01bfaf6",
+    "changed": "3ad2b9ab34d6b53ff2717e2ebe5ea6efee9cd00b6c1db0d41f3788a3ddd262b9",
+    "commit": "2ef5ed561fc110627b19b84e4904b9ceb4cd9e2b",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "x",
+        "file": "x",
+        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
+        "line": 1,
+        "priority": "P1",
+        "title": "Not done: The worker brief and test-audit guidance let a builder run the exact new, changed or previously failing tests red then green LocA?"
+      }
+    ],
+    "id": "899569da-066c-4969-9217-81658e57a805",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-07T18:12:33.443417+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-07T19:15:57.300428+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "2957a415429350b38eca81cc6fcd4c8ba39a0c46",
+    "keys": {},
+    "round": null
+  },
+  "why": "In CI mode the worker brief tells builders to commit a repair without checking that its own failing test now passes, so a repair that still fails costs a full review and CI cycle",
+  "worker": "codex"
+}
