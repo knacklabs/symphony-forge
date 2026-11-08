@@ -60,6 +60,7 @@ def test_2_worker_test_guidance_follows_the_repo_test_place(repo, monkeypatch, t
         for brief in (first, nudge, continued):
             assert guidance in brief
             assert "previously failing tests" not in brief
+            assert "rerun only what failed" not in brief
             assert "run the change's related tests through `forge test` in the foreground" not in brief
     else:
         guidance = ("run the change's related tests through `forge test` in the foreground once, "

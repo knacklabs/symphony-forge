@@ -29,6 +29,9 @@ def _related_test_skills(client):
         assert "run the change's related tests through `forge test`" in validation.lower()
         assert "in ci mode" in validation.lower()
         assert "wider related tests, lint and type checks stay in pull request ci." in validation.lower()
+        assert "previously failing tests" not in validation.lower()
+        assert "watch a regression fail before the repair" not in validation.lower()
+        assert "check the exact tests as above before committing" not in validation.lower()
         assert "run the change's related tests" in validation
         assert "through `forge test`" in validation
         assert "`fast_test`, or `test` when none is set" in validation

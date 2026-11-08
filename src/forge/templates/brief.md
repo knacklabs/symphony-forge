@@ -230,7 +230,7 @@ $delegation
 - Run any test command you start in the foreground and wait for it to finish. Never end your turn
   while a command you started still runs in the background. Commit your work before your turn ends:
   the review reads only what is committed.
-- Follow the test-place instructions below to decide which tests to run. Rerun only what failed.
+- Follow the test-place instructions below to decide which tests to run.
   Never poll `forge lanes --json` or `forge board --json` and never tail test logs while you wait.
 - Generated client CI on a `windows-*` runner wraps `forge test --change` in PowerShell and
   retries it once after a failure. The command runs the configured test command with the same
