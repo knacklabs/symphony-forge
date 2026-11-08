@@ -41,30 +41,12 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "1dffa7b8402728a3ed3df296b7ad9af1e4e81f3e0fcad189aaa719f8da26da1d",
-    "changed": "c8f4f70e6c4700ce4834858117a9690fa730ad9a223df880d2fcf02b27ff0b0d",
-    "commit": "d7071b6f527c2f3d636534c00d83f5d3598bfb50",
-    "dismissals": [
-      {
-        "accepted": true,
-        "because": "Human accepted the remaining finding: Owner accepted: install fell from 16.07 to 5.57 seconds locally; the starter-smoke job timing is compared with the 35-minute baseline after the next nightly run",
-        "finding": 1
-      }
-    ],
-    "findings": [
-      {
-        "body": "Gain 4, Work 2, Harm 2\nRaise: Not done\nCase: normal use - running the Linux starter-smoke job.\nThe proof still has no before-and-after timing for the full job; the 16.07- and 5.57-second measurements cover isolated installs. The repaired PR trigger runs the current smoke suite, but the job at .github/workflows/starter-smoke.yml:73-76 does not compare its duration with a baseline. A passing check can supply the post-change duration but cannot establish the requested job-level speedup on its own.",
-        "file": "tests/test_starter_tree.py",
-        "gain": 4,
-        "harm": 2,
-        "line": 189,
-        "priority": "P1",
-        "required_done_when": true,
-        "title": "Not done: The smoke fixtures share downloaded packages while keeping separate app copies, and the starter smoke job is measurably faster",
-        "work": 2
-      }
-    ],
-    "id": "2709a8c8-d933-4a16-8eda-60ecc9a7c2d7",
+    "branch_diff": "ab67491d3b3a38bed4e34b315b7439371ed4f6947eb5666cdf757b4f3b1f348c",
+    "changed": "b743ded295d7ba316e07660bb4e23353824bf829a07f58ac2cc14d9e12f8e56e",
+    "commit": "c8a67c0f956a45de62d3274f0fdef93c211d2888",
+    "dismissals": [],
+    "findings": [],
+    "id": "eb6c660d-91e7-4c43-89aa-e10cb5eeffff",
     "status": "clean"
   },
   "round": 3,
@@ -80,6 +62,10 @@
     },
     {
       "at": "2026-11-08T03:40:50.418305+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-08T04:24:56.923391+00:00",
       "step": "review"
     }
   ],
