@@ -1,0 +1,15 @@
+{
+  "base": "55eb438b74206e1afd7dcefafcdf00ea1224c257",
+  "branch": "fix/trim-forge-ci-jobs",
+  "done_when": "Forge's own pull requests no longer run the unused selection job, and the plugin check runs only when plugin files change",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-08T12:14:05.451382+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Forge's own CI runs a selection job on pull requests that nothing reads and runs the plugin check on every pull request, adding three jobs and queue waits to each push"
+}
