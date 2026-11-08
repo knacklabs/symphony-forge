@@ -42,6 +42,12 @@ def _runner(job: str) -> str:
     return json.loads(value) if value.startswith('"') else value
 
 
+def _runners(client: Path) -> list[str]:
+    workflow = (client / ".github/workflows/forge.yml").read_text("utf-8")
+    return [json.loads(label) if label.startswith('"') else label
+            for label in re.findall(r"^    runs-on: (.+)$", workflow, re.M)]
+
+
 def _tool_bootstrap(jobs: tuple[str, str]) -> None:
     # The generated workflow is a public execution contract, independent of renderer structure.
     # Setup actions supply Python >=3.11 for tomllib, uv and Node on a plain runner.
@@ -69,7 +75,8 @@ def test_1_new_client_init_selects_runner_and_bootstraps_tools(repo, gh, tmp_pat
     selected = runner or "ubuntu-24.04"
     assert settings.get("runner", "ubuntu-24.04") == selected
     jobs = _jobs(client)
-    assert [_runner(job) for job in jobs] == [selected, selected]
+    # Include the two nightly jobs as well as the pull-request jobs.
+    assert _runners(client) == [selected] * 4
     _tool_bootstrap(jobs)
 
 

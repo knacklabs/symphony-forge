@@ -79,7 +79,7 @@ def test_2_pull_requests_keep_closes_named_checks():
         else:
             assert "name: Review pull request\n" in job
             assert "-f context=forge-pr-check" in job
-        assert 'runs-on: "ubuntu-latest"' in job
+        assert 'runs-on: "ubuntu-24.04"' in job
 
 
 def test_3_only_a_pull_request_cancels_its_previous_run():
