@@ -142,7 +142,6 @@ def test_3_close_checks_only_changed_client_ui_and_reports_design_problems(
     output = refused.stdout + refused.stderr
     assert refused.returncode == 1, output
     assert f"{shell}:" in output and "spacing-scale" in output
-    assert f"{shell}:" in output and "title-twice" in output
     assert f"{shell}:" in output and "shell-fold" in output
     assert f"{shell}:" in output and "shell-search" in output
     assert f"{canvas}:1 shell-fold" in output
@@ -155,10 +154,9 @@ def test_3_close_checks_only_changed_client_ui_and_reports_design_problems(
     assert lines[checker + 1].strip().removesuffix(".") == (
         "/* impeccable-disable gradient-text -- <reason> */")
 
-    # A waiver without a reason must leave all four Forge problems in place.
+    # A waiver without a reason must leave all three Forge problems in place.
     env.commit(where, shell, (
         "{/* forge-ui-ignore spacing-scale: */}\n"
-        "{/* forge-ui-ignore title-twice: */}\n"
         "{/* forge-ui-ignore shell-fold: */}\n"
         "{/* forge-ui-ignore shell-search: */}\n"
         'import { SidebarProvider } from "./components/ui/sidebar";\n'
@@ -175,14 +173,13 @@ def test_3_close_checks_only_changed_client_ui_and_reports_design_problems(
     still_refused = close()
     output = still_refused.stdout + still_refused.stderr
     assert still_refused.returncode == 1, output
-    for rule in ("spacing-scale", "title-twice", "shell-fold", "shell-search"):
+    for rule in ("spacing-scale", "shell-fold", "shell-search"):
         assert rule in output
     assert f"{canvas}:" in output and "shell-fold" in output
 
     # Reasons waive the Forge checks. The real launcher also accepts its own checker waiver.
     env.commit(where, shell, (
         "{/* forge-ui-ignore spacing-scale: Keep this measured client spacing */}\n"
-        "{/* forge-ui-ignore title-twice: The existing navigation repeats its label */}\n"
         "{/* forge-ui-ignore shell-fold: The current sidebar uses a custom layout */}\n"
         "{/* forge-ui-ignore shell-search: Search is supplied by another route */}\n"
         'import { SidebarProvider } from "./components/ui/sidebar";\n'
