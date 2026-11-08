@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "bug\t.github/workflows/forge-next.yml\tPlugin marketplace changes bypass the install check\ttrim-forge-ci-jobs",
+      "kind": "bug",
+      "path": ".github/workflows/forge-next.yml",
+      "line": 10,
+      "text": "Plugin marketplace changes bypass the install check",
+      "from": "blocking",
+      "item": "trim-forge-ci-jobs",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_ci_skips_unneeded_pull_request_jobs.py\tGate: test_1_pull_requests_skip_selection_and_filter_plugin_changes\ttrim-forge-ci-jobs",
+      "kind": "bug",
+      "path": "tests/test_ci_skips_unneeded_pull_request_jobs.py",
+      "line": 28,
+      "text": "Gate: test_1_pull_requests_skip_selection_and_filter_plugin_changes",
+      "from": "blocking",
+      "item": "trim-forge-ci-jobs",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

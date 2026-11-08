@@ -1,0 +1,93 @@
+{
+  "base": "55eb438b74206e1afd7dcefafcdf00ea1224c257",
+  "branch": "fix/trim-forge-ci-jobs",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1bb15-1d54-7cc3-88a0-acf9e068986e",
+    "head": null,
+    "start": "585f2ffd2f9e114a829a73f92480dda7a2579316"
+  },
+  "done_when": "Forge's own pull requests no longer run the unused selection job, and the plugin check runs only when plugin files change",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": ".github/workflows/forge-next.yml",
+      "file": ".github/workflows/forge-next.yml",
+      "gain": 4,
+      "harm": 3,
+      "line": 10,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Plugin marketplace changes bypass the install check",
+      "work": 2
+    },
+    {
+      "area": "test_1_pull_requests_skip_selection_and_filter_plugin_changes() in tests/test_ci_skips_unneeded_pull_request_jobs.py",
+      "file": "tests/test_ci_skips_unneeded_pull_request_jobs.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 28,
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: Owner accepted: Forge-only CI; the test reads the workflow text but does not simulate path admission; the nightly run still runs the plugin check",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_pull_requests_skip_selection_and_filter_plugin_changes",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "97bb67b351712d8a46325ca73894b43c43b4b95351cbf1058572000a6db1604c",
+    "changed": "972ae7bdb388bbc8348ff454158fd8740ffea44d89c8133d6682b9cafd1ede43",
+    "commit": "256485337bfda3049aee991e1efd7ce06f6e18f5",
+    "dismissals": [],
+    "findings": [],
+    "id": "ac30fcc8-384b-4019-ac6b-c755daec686c",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-08T12:14:05.451382+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-08T12:24:36.455749+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-08T12:38:29.079543+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-08T13:41:54.506360+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-08T13:51:24.822958+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-08T12:38:29.079794+00:00",
+    "by": "owner",
+    "choice": "accept",
+    "file": "tests/test_ci_skips_unneeded_pull_request_jobs.py",
+    "reason": "Owner accepted: Forge-only CI; the test reads the workflow text but does not simulate path admission; the nightly run still runs the plugin check",
+    "wait_id": "91bfa11b-d26b-4314-9d00-711fe04a1f84",
+    "worker_round": 2
+  },
+  "stuck": {
+    "close": "2f307178-7c4f-47be-b6ca-730a11e8946b",
+    "head": "9a4c2f2d1e103468280c6b644dccbf9d9a659878",
+    "keys": {},
+    "round": 2
+  },
+  "why": "Forge's own CI runs a selection job on pull requests that nothing reads and runs the plugin check on every pull request, adding three jobs and queue waits to each push",
+  "worker": "codex"
+}
