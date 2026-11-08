@@ -363,7 +363,7 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
                 .replace("<docs-excludes>", json.dumps(review.DOC_EXCLUDES))
                 .replace("<install>", "uv tool install ." if source
                          else sync.install_line("${FORGE_RELEASE#v}"))
-                .replace("<tests-timeout>", f"    timeout-minutes: {45 if source else 30}\n")
+                .replace("<tests-timeout>", f"    timeout-minutes: {45 if source else 60}\n")
                 .replace("<containers>", ("      FORGE_CONTAINERS: '1'\n"
                                           "      # Measure every test on CI hardware before choosing a performance repair.\n"
                                           "      PYTEST_ADDOPTS: '--durations=0'\n") if source else "")

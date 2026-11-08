@@ -1,0 +1,106 @@
+{
+  "base": "94d64425110459083b26fb925066f6b2c69b10a1",
+  "branch": "fix/client-tests-job-60-minutes",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1bc16-73c6-7e12-a3a1-95f257c52f40",
+    "head": null,
+    "start": "46a739ab61fa2b26642a4dd13ff46fd910491f70"
+  },
+  "done_when": "The generated client tests job allows 60 minutes like the full run, new repos get it at init and existing repos after sync",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "test_1_client_tests_allow_sixty_minutes_on_init_and_sync() in tests/test_client_tests_allow_an_hour.py",
+      "file": "tests/test_client_tests_allow_an_hour.py",
+      "gain": 2,
+      "harm": 1,
+      "line": 15,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_client_tests_allow_sixty_minutes_on_init_and_sync[new]",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/brief.md",
+      "file": "src/forge/templates/brief.md",
+      "gain": 2,
+      "harm": 2,
+      "line": 237,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Follow-up: Correct the Forge-source timeout in the worker brief",
+      "work": 1
+    },
+    {
+      "area": ".test_durations",
+      "file": ".test_durations",
+      "gain": 4,
+      "harm": 2,
+      "line": 531,
+      "outcome": "fixed in round 4",
+      "reason": "",
+      "round": 3,
+      "security": false,
+      "title": "Remove obsolete 30-minute test IDs from the timing inventory",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "18c2e515de247846ac659cf8050e33bd397e95be4b0dbce262736ae093d2ee61",
+    "changed": "e63641f3d2bf5d5b2d89ba721d792573da3da34a29dd70955242f5e123a4aa88",
+    "commit": "dee10a2aaf728412fef9a2f922ee9c75765153a7",
+    "dismissals": [],
+    "findings": [],
+    "id": "dfb6c52c-702a-42dd-a110-4a633dc2a7ab",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-08T16:55:23.489052+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-08T17:09:39.432158+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-08T17:22:28.260024+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-08T19:04:07.995981+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-08T19:06:26.228712+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-08T19:04:07.996139+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": ".test_durations",
+    "reason": "The finding is fixed: obsolete timing entries removed",
+    "wait_id": "f585211b-ea42-4f60-a05e-6a1cce708bc6",
+    "worker_round": 2
+  },
+  "stuck": {
+    "close": "cbed12df-e056-4e90-9c5d-a10e7ad282d4",
+    "head": "8664051a984cd7cfa82598c97cc73247c630badc",
+    "keys": {},
+    "round": 1
+  },
+  "why": "A client's generated CI test job stops at 30 minutes, so a change that touches shared files and runs a large related set is cancelled with no output, while the nightly full run already allows 60",
+  "worker": "codex"
+}

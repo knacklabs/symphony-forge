@@ -1,4 +1,4 @@
-"""Node CI gets thirty minutes; time limits do not request another worker round.
+"""Node CI gets sixty minutes; time limits do not request another worker round.
 
 Audit: real init/sync and close commands own these contracts. GitHub and the
 reviewer alone are faked. Short cancellations and ordinary failures remain red.
@@ -17,7 +17,7 @@ STORY = "FIX-NODE-CI-TIMEOUT"
 
 
 @pytest.mark.parametrize("history", ["new", "upgraded"])
-def test_1_node_tests_get_thirty_minutes_on_adoption_and_sync(repo, gh, tmp_path, history):
+def test_1_node_tests_get_sixty_minutes_on_adoption_and_sync(repo, gh, tmp_path, history):
     if history == "new":
         # init needs an empty history, unlike the ordinary repo fixture.
         client, remote = tmp_path / "node-client", tmp_path / "node-client.git"
@@ -46,7 +46,7 @@ def test_1_node_tests_get_thirty_minutes_on_adoption_and_sync(repo, gh, tmp_path
     assert done.returncode == 0, done.stdout + done.stderr
     workflow = (repo.path / ".github/workflows/forge.yml").read_text(encoding="utf-8")
     tests_job = workflow.split("\n  tests:\n")[1].split("\n  forge-pr-check:\n")[0]
-    assert "    timeout-minutes: 30\n" in tests_job
+    assert "    timeout-minutes: 60\n" in tests_job
 
 
 @pytest.mark.parametrize("history,conclusion,seconds,name,timeout", [
