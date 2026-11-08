@@ -160,7 +160,7 @@ def pre_push(args: argparse.Namespace) -> None:
 
             if releases.VERSION.fullmatch(tag):
                 if release_main is None:
-                    reason = fullrun.green(top)
+                    reason = fullrun.green(top, reuse=True)
                     if reason:
                         refuse((reason, fullrun.next_run(top)))
                     release_main = git(

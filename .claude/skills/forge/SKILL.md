@@ -1841,8 +1841,7 @@ Local mode has no scheduled job; after the last product merge for a release or s
 start `forge test --full` at once in the main checkout when full-run proof is required.
 Prepare notes while it runs and wait for that same command to finish. For the daily run outside
 a release or sign-off, run it when `forge next` says it is due and the machine is quiet.
-A green full run on the latest default-branch
-commit is required before pushing a release tag. Client sign-off can reuse a green full run
+Release tags and client sign-off can reuse a green full run
 within the latest ten default-branch commits when only exact `forge sync` output or records
 under `.factory/`, `plans/` or `docs/decisions/` changed on the default branch.
 App, test or lock-file changes on the default branch need a fresh full run.
