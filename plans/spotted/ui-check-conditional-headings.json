@@ -1,0 +1,59 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/templates/design/ui-checks.js\tA ternary leaks into the next statement when semicolons are omitted\tui-check-conditional-headings",
+      "kind": "bug",
+      "path": "src/forge/templates/design/ui-checks.js",
+      "line": 80,
+      "text": "A ternary leaks into the next statement when semicolons are omitted",
+      "from": "blocking",
+      "item": "ui-check-conditional-headings",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/design/ui-checks.js\tTernaries in list rendering can produce simultaneous headings\tui-check-conditional-headings",
+      "kind": "bug",
+      "path": "src/forge/templates/design/ui-checks.js",
+      "line": 85,
+      "text": "Ternaries in list rendering can produce simultaneous headings",
+      "from": "blocking",
+      "item": "ui-check-conditional-headings",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_main_heading_branches.py\tGate: tests/test_uistandards_close.py\tui-check-conditional-headings",
+      "kind": "bug",
+      "path": "tests/test_main_heading_branches.py",
+      "line": 12,
+      "text": "Gate: tests/test_uistandards_close.py",
+      "from": "blocking",
+      "item": "ui-check-conditional-headings",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/templates/design/ui-checks.js\tFollow-up: Conditional headings in Vue and Svelte screens",
+      "kind": "edge",
+      "path": "src/forge/templates/design/ui-checks.js",
+      "line": 58,
+      "text": "Follow-up: Conditional headings in Vue and Svelte screens",
+      "from": "review",
+      "item": "ui-check-conditional-headings",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/templates/design/ui-checks.js\tNot done: A screen file with two h1 elements in separate branches passes the one-main-heading check",
+      "kind": "edge",
+      "path": "src/forge/templates/design/ui-checks.js",
+      "line": 74,
+      "text": "Not done: A screen file with two h1 elements in separate branches passes the one-main-heading check",
+      "from": "review",
+      "item": "ui-check-conditional-headings",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
