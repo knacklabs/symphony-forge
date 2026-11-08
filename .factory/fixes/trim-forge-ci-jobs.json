@@ -41,29 +41,12 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "5494eb7feb83156b5aa89bcc1f9477b7b2f9b8f579f1180ebfda18f4be7c598f",
-    "changed": "e708b857be1cbaeeb37638a99321f75747bcac80b4783e79fa1e9dd845ec329b",
-    "commit": "32a55184aee38aad12e3012ad4e9952a571d1628",
-    "dismissals": [
-      {
-        "accepted": true,
-        "because": "Human accepted the remaining finding: Owner accepted: Forge-only CI; the test reads the workflow text but does not simulate path admission; the nightly run still runs the plugin check",
-        "finding": 1
-      }
-    ],
-    "findings": [
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - A workflow edit changes the plugin path filter.\nThe proof still does not check effective admission for matching and nonmatching paths. It extracts list entries without checking whether the key is `paths` or `paths-ignore`, so changing that key reverses GitHub's behavior while the assertions still pass; plugin-only pull requests would skip the job. Also, line 48 uses [Python's `fnmatchcase`](https://docs.python.org/3.11/library/fnmatch.html), where `*` matches `/`, unlike [GitHub's path filters](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#filter-pattern-cheat-sheet). Changing `src/forge/mod/**` to `src/forge/mod/*` would pass the test but skip nested plugin files. The previously requested admission proof remains incomplete.",
-        "file": "tests/test_ci_skips_unneeded_pull_request_jobs.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 32,
-        "priority": "P1",
-        "title": "Gate: test_1_pull_requests_skip_selection_and_filter_plugin_changes",
-        "work": 2
-      }
-    ],
-    "id": "04b724f0-bfdc-492c-9dd8-4fcc9aad995d",
+    "branch_diff": "f1d02e407f75ab3d7c8d81b6272bab571185ed8888bb87af009f4c4b2050e732",
+    "changed": "35336b55ca153a4a486013c817e50564c3058a42cbccf0f53d1b4384f76b2efd",
+    "commit": "78626dbb60bb15ccfc5e9a7c8eb238ed5aa2b03e",
+    "dismissals": [],
+    "findings": [],
+    "id": "66de8f9e-6fbb-4e61-ae9f-e838f1d59958",
     "status": "clean"
   },
   "round": 2,
@@ -79,6 +62,10 @@
     },
     {
       "at": "2026-11-08T12:38:29.079543+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-08T13:41:54.506360+00:00",
       "step": "review"
     }
   ],
