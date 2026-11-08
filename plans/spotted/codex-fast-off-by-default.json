@@ -1,6 +1,17 @@
 {
   "items": [
     {
+      "key": "bug\t.test_durations\tGate: test_1_recorded_timings_name_existing_tests\tcodex-fast-off-by-default",
+      "kind": "bug",
+      "path": ".test_durations",
+      "line": 787,
+      "text": "Gate: test_1_recorded_timings_name_existing_tests",
+      "from": "blocking",
+      "item": "codex-fast-off-by-default",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/repo.py\tGate: Existing Codex lifecycle tests still expect Fast by default\tcodex-fast-off-by-default",
       "kind": "bug",
       "path": "src/forge/repo.py",
