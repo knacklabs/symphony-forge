@@ -1,0 +1,48 @@
+{
+  "items": [
+    {
+      "key": "bug\t.test_durations\tGate: one reviewed push through close and land\tno-records-only-reruns",
+      "kind": "bug",
+      "path": ".test_durations",
+      "line": 685,
+      "text": "Gate: one reviewed push through close and land",
+      "from": "blocking",
+      "item": "no-records-only-reruns",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\t.test_durations\tGate: proof list\tno-records-only-reruns",
+      "kind": "bug",
+      "path": ".test_durations",
+      "line": 685,
+      "text": "Gate: proof list",
+      "from": "blocking",
+      "item": "no-records-only-reruns",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\t.test_durations\tGate: tests/test_review_record_reuses_parent_tests.py\tno-records-only-reruns",
+      "kind": "bug",
+      "path": ".test_durations",
+      "line": 2953,
+      "text": "Gate: tests/test_review_record_reuses_parent_tests.py",
+      "from": "blocking",
+      "item": "no-records-only-reruns",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\t.test_durations\tNot done: a later records-only head reuses that run's green result",
+      "kind": "edge",
+      "path": ".test_durations",
+      "line": 2953,
+      "text": "Not done: a later records-only head reuses that run's green result",
+      "from": "review",
+      "item": "no-records-only-reruns",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
