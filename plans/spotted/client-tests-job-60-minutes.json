@@ -12,6 +12,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\t.test_durations\tRemove obsolete 30-minute test IDs from the timing inventory\tclient-tests-job-60-minutes",
+      "kind": "bug",
+      "path": ".test_durations",
+      "line": 531,
+      "text": "Remove obsolete 30-minute test IDs from the timing inventory",
+      "from": "blocking",
+      "item": "client-tests-job-60-minutes",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/templates/brief.md\tFollow-up: Correct the Forge-source timeout in the worker brief",
       "kind": "edge",
       "path": "src/forge/templates/brief.md",
