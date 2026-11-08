@@ -32,6 +32,17 @@
       "item": "upgrade-playwright-starters",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_starter_tree.py\tNot done: Both starters use Playwright 1.64.0, their lockfiles are updated, and their browser tests pass on Ubuntu 24.04 and 26.04 runners\tupgrade-playwright-starters",
+      "kind": "bug",
+      "path": "tests/test_starter_tree.py",
+      "line": 36,
+      "text": "Not done: Both starters use Playwright 1.64.0, their lockfiles are updated, and their browser tests pass on Ubuntu 24.04 and 26.04 runners",
+      "from": "blocking",
+      "item": "upgrade-playwright-starters",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
