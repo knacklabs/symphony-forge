@@ -1,0 +1,106 @@
+{
+  "base": "2b4f193299cb1986b54136274fc8725f5cfb952f",
+  "branch": "fix/merge-retest-in-ci",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1baf3-3eda-7142-a0a1-9d5148330764",
+    "head": null,
+    "start": "74c4fce125198ad8df6c2c37dd950ad926cc23fa"
+  },
+  "done_when": "In a repo whose tests run in CI, forge merge after main moved pushes the merged branch and waits for the pull request checks instead of running tests on the laptop, and a repo whose tests run on the laptop keeps today's local retest",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "merge() in src/forge/merge.py",
+      "file": "src/forge/merge.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 132,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Wait for the CI configuration used to skip the local retest",
+      "work": 2
+    },
+    {
+      "area": "merge() in src/forge/merge.py",
+      "file": "src/forge/merge.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 134,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Combined-head CI can omit tests added by main",
+      "work": 2
+    },
+    {
+      "area": "merge() in src/forge/merge.py",
+      "file": "src/forge/merge.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 132,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: existing merge regression tests fail under the new routing",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "810a001861a5d2310f14cbd7ac56af396756e27235bcb5608257d670debcb4b2",
+    "changed": "4148bc9e6e6890b29b6183e6f183347ed3846a13e08c00c2f15b9e24d052d293",
+    "commit": "84e448be9140605349019a66dcb266167140da4c",
+    "dismissals": [],
+    "findings": [],
+    "id": "9d65cffe-4cc8-403c-881a-6cd809f80f56",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-08T11:37:21.271568+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-08T11:52:53.985003+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-08T12:09:37.640495+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-08T12:17:16.394560+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-08T13:40:50.947085+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-08T12:09:37.640678+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "src/forge/merge.py",
+    "reason": "Harm 3 finding: one more round by the standing rule",
+    "wait_id": "a45c8823-08d6-490c-ad49-590433200c2a",
+    "worker_round": 2
+  },
+  "stuck": {
+    "close": "52ec73d1-660d-4866-a932-2107daeacbb3",
+    "head": "5a03cad64b7e058f26a83d3031d864e1d8aeaff2",
+    "keys": {},
+    "round": 2
+  },
+  "why": "When tests run in CI and main moved before a merge, forge merge retests the merged branch on the laptop test lane for every repo except Python apps with broad pytest selection, so client merges wait in the laptop queue",
+  "worker": "codex"
+}
