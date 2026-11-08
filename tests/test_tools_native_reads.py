@@ -106,6 +106,8 @@ def test_5_plan_reads_belong_to_the_coordinating_session(repo, gh, monkeypatch, 
     assert not notes.exists()
     scratch.unlink()
     handout()
+    # An empty read result still fails the read and frees its hold. The retry
+    # for a missing build message does not change the reader's result contract.
     empty = handback("")
     assert empty.returncode == 1 and "cold read" in empty.stderr and "failed" in empty.stderr
     assert not notes.exists()

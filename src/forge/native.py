@@ -222,6 +222,11 @@ def handback(args: Any) -> int:
         if not args.subagent.strip():
             raise repo.Refused("Give the subagent's id with its result.", "")
         said = (args.text if args.text is not None else sys.stdin.read()).strip()
+        if not said and "role" in pending:
+            raise repo.Refused("No message reached Forge. Give the subagent's last message with "
+                               "--text or pipe it on stdin.",
+                               f"forge handback {args.item} --round {args.round} "
+                               f'--subagent {args.subagent} --text "<its last message>"')
         try:
             if "intake" in pending["result"]:
                 from forge import intake
@@ -273,16 +278,16 @@ def _work_result(path: Path, item: str, pending: dict[str, Any], said: str, owne
             print("Restored forge.toml changes committed on this branch; settings change in their own fix.",
                   flush=True)
     left = repo.git("status", "--porcelain", "-uall", cwd=top).splitlines()
-    if said and left and not pending.get("nudged"):
+    if left and not pending.get("nudged"):
         codex._record(path, pending={**pending, "nudged": True, "said": said})
         print(f"Send this to subagent {subagent}, then hand back again:\n"
               f"{worker.commit_nudge(top)}")
         return True
-    outcome = "completed" if said else "failed"
+    outcome = "completed"
     asked = worker.questions(pending.get("said", ""), said)
     identity = repo.record_event(top, item, "worker question", question=asked) if asked else None
     codex._record(path, question=asked or None, question_id=identity,
-                  **({"native_round": None} if said else {}),  # finished: next offers close
+                  native_round=None,  # finished: next offers close
                   native={"session": owner["id"], "subagent": subagent,
                           "native_run": pending["entry"]["process"].get("native_run"),
                           "head": repo.git("rev-parse", "HEAD", cwd=top),
@@ -298,7 +303,4 @@ def _work_result(path: Path, item: str, pending: dict[str, Any], said: str, owne
     if left:
         print("Warning: the worker ended its round with changes left uncommitted, so the review "
               f"won't see them: {', '.join(line.split(maxsplit=1)[1] for line in left)}.")
-    if not said:
-        raise repo.Refused("The subagent ended with no message, so Forge recorded the round as failed.",
-                           f"forge work {item}")
     return False

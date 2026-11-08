@@ -1,0 +1,48 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/native.py\tGate: read and intake tests still expect the old empty-message behavior\thandback-asks-for-message",
+      "kind": "bug",
+      "path": "src/forge/native.py",
+      "line": 228,
+      "text": "Gate: read and intake tests still expect the old empty-message behavior",
+      "from": "blocking",
+      "item": "handback-asks-for-message",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/native.py\tRequest a new reply when the explorer produced no message\thandback-asks-for-message",
+      "kind": "bug",
+      "path": "src/forge/native.py",
+      "line": 229,
+      "text": "Request a new reply when the explorer produced no message",
+      "from": "blocking",
+      "item": "handback-asks-for-message",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_handback_message_retry.py\tGate: test_1_empty_handback_preserves_round_for_message_retry on Codex\thandback-asks-for-message",
+      "kind": "bug",
+      "path": "tests/test_handback_message_retry.py",
+      "line": 29,
+      "text": "Gate: test_1_empty_handback_preserves_round_for_message_retry on Codex",
+      "from": "blocking",
+      "item": "handback-asks-for-message",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_handback_message_retry.py\tGate: test_1_empty_handback_preserves_round_for_message_retry uses private records\thandback-asks-for-message",
+      "kind": "bug",
+      "path": "tests/test_handback_message_retry.py",
+      "line": 69,
+      "text": "Gate: test_1_empty_handback_preserves_round_for_message_retry uses private records",
+      "from": "blocking",
+      "item": "handback-asks-for-message",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
