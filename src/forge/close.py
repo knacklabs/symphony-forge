@@ -201,6 +201,8 @@ def close(args: argparse.Namespace) -> int:
             review.fingerprint("HEAD", item, top, state, f"origin/{default}")):
         legacy_diff = review.fingerprint(previous["commit"], item, top, state,
                                          f"origin/{default}", branch_diff=True)
+    repairs = bool(stacked_on and previous.get("commit") and
+                   merge_review.repairs(top, previous["commit"]))
     try:
         _merge_default(top, item, branch, default, pr, cfg, refreshed=refreshed, publish=False)
     except repo.Refused as error:
@@ -301,7 +303,7 @@ def close(args: argparse.Namespace) -> int:
         "git", "merge-base", "--is-ancestor", previous["commit"], "HEAD", cwd=top).returncode)
     fresh = (not replayed and (choice == "accept" or merge_review.covers(top, item, state, review_ref, result)) or
              (not replayed or not review.blocking(result)) and result.get("branch_diff", legacy_diff) == branch_diff)
-    if records_only and review.blocking(result):
+    if repairs or records_only and review.blocking(result):
         fresh = False
     if switch:
         fresh = fresh and result.get("mechanical") is True and not review.blocking(result)
@@ -737,9 +739,10 @@ def _merge_default(top: Path, item: str, branch: str, default: str,
             repo.refuse(REFUSALS["replay_conflict"], default=default, files=", ".join(files),
                         item=item)
         if repo.git("rev-parse", "HEAD^{tree}", cwd=top) != tree:
-            proof = review.commit_paragraph(top, baseline, "Proof list:", original)
+            evidence = (review.commit_paragraph(top, baseline, "Functional check:", original) or
+                        review.commit_paragraph(top, baseline, "Proof list:", original))
             repo.git("read-tree", "-u", "-m", tree, cwd=top)
-            repo.git("commit", "-q", "-m", "Keep the follow-up's merge edits", "-m", proof, cwd=top)
+            repo.git("commit", "-q", "-m", "Keep the follow-up's merge edits", "-m", evidence, cwd=top)
         if task.show(original, ".factory/client-signoff.json", top) is not None:
             repo.git("checkout", original, "--", ".factory/client-signoff.json", cwd=top)
             repo.commit_state("Keep the sign-off rounds after replay", ".factory/client-signoff.json", top=top)
