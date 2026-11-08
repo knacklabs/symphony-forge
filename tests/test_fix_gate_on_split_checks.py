@@ -53,8 +53,7 @@ def test_1_one_tests_check_passes_only_when_every_group_passes(repo, gh, tmp_pat
         assert initialized.returncode == 0, initialized.stderr
         # Init's own workflow already has the gate, with one configured group.
         workflow = (client / ".github/workflows/forge.yml").read_text(encoding="utf-8")
-        assert "|| '[1]')" in jobs(workflow)["tests"] and "--splits" not in workflow
-        check_gate(workflow)
+        assert "strategy:" not in jobs(workflow)["tests"] and "--splits" not in workflow
         repo.git("switch", "-q", "-c", "fix/split-tests", cwd=client)
         toml = client / "forge.toml"
         toml.write_text(re.sub(r'^test = .*$', 'test = "uv run pytest tests -q"',
@@ -88,6 +87,11 @@ def test_1_one_tests_check_passes_only_when_every_group_passes(repo, gh, tmp_pat
     found = jobs(workflow)
     groups = found["tests"]
     count = 1 if kind == "new" else 6
+    if count == 1:
+        assert "strategy:" not in groups
+        assert "docs-check" not in found and "tests-passed" not in found
+        assert '- run: "forge test --change"' in groups
+        return
     assert f"|| '[{', '.join(map(str, range(1, count + 1)))}]')" in groups
     assert "fail-fast: false" in groups
     assert f"&& 1 || {count}" in groups
@@ -168,7 +172,7 @@ def test_4_a_command_that_wraps_pytest_uses_change_tests_without_splitting(repo,
 
     assert synced.returncode == 0, synced.stderr
     groups = jobs((repo.path / ".github/workflows/forge.yml").read_text(encoding="utf-8"))["tests"]
-    assert "|| '[1]')" in groups and '- run: "forge test --change"\n' in groups
+    assert "strategy:" not in groups and '- run: "forge test --change"\n' in groups
     assert "--splits" not in groups
 
 
@@ -189,8 +193,8 @@ def test_3_init_starts_a_pytest_split_repo_with_one_group_and_doctor_accepts_it(
     assert initialized.returncode == 0, initialized.stderr
     assert 'groups = 1' in (client / "forge.toml").read_text(encoding="utf-8")
     groups = jobs((client / ".github/workflows/forge.yml").read_text(encoding="utf-8"))["tests"]
-    assert "|| '[1]')" in groups
+    assert "strategy:" not in groups
     assert '- run: "forge test --change"' in groups
     assert "--splits" not in groups
     doctor = repo.forge("doctor", cwd=client)
-    assert "doesn't run forge.toml's test" not in doctor.stdout, doctor.stdout
+    assert "does not run forge test --change" not in doctor.stdout, doctor.stdout

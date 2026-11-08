@@ -319,7 +319,7 @@ def doctor(args: argparse.Namespace) -> int:
               'forge-pr-check, which runs no app tests. Ask the agent to set '
               'checks = ["forge-pr-check", "tests"] in a fix whose Done-when names '
               'forge.toml, then run forge sync.')
-    if warning := repo.group_warning(top, cfg):
+    if warning := quicktest.group_warning(top, cfg):
         print(f"- Warning: {warning}")
     test, fast = cfg["test"], cfg["fast_test"]
     same_selection = (test != fast and bool(fast)

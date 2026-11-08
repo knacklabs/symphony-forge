@@ -1,7 +1,7 @@
-"""Unsplit CI groups warn without blocking doctor or workflow generation.
+"""Unsplit CI groups use one group without blocking doctor or workflow generation.
 
 Audit: init/sync and doctor own this public configuration contract. Existing
-group tests cover sharding, not advice for repeated suites. Removing either
+group tests cover sharding, not unsplittable commands. Removing either
 warning or treating it as a problem breaks this test. GitHub alone is faked;
 no production seam is added. The workflow is a shipped execution contract.
 """
@@ -14,8 +14,8 @@ from test_node_test_worker_budget import client
 from test_setup import _autoreview
 
 STORY = "FIX-UNSPLIT-GROUPS-WARNING"
-WARNING = ("Each CI group runs the same tests because the test command has no {group} placeholder. "
-           "Set groups to 1 or add the runner's shard options with {group} and {groups}.")
+WARNING = ("CI uses one group because the test command has no {group} placeholder. "
+           "Add the runner's shard options with {group} and {groups} to use more groups.")
 
 
 @pytest.mark.platform
@@ -45,8 +45,9 @@ def test_1_unsplit_groups_warn_without_refusal(repo, gh, monkeypatch, tmp_path,
     assert synced.returncode == 0, synced.stdout + synced.stderr
     workflow = (repo.path / ".github/workflows/forge.yml").read_text("utf-8")
     assert workflow.count("::warning::" + WARNING) == int(warns)
-    # The advice must not reduce the chosen groups or replace the test command.
-    assert f"group: {list(range(1, groups + 1))}" in workflow
+    # Unsplit commands now run once instead of repeating in every group.
+    effective = 1 if warns else groups
+    assert f"group: {list(range(1, effective + 1))}" in workflow
     repo.git("add", "-A")
     repo.git("commit", "-qm", "Configure client test groups")
     gh.respond("auth", "status")

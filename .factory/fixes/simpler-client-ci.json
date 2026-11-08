@@ -1,0 +1,106 @@
+{
+  "base": "55eb438b74206e1afd7dcefafcdf00ea1224c257",
+  "branch": "fix/simpler-client-ci",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1bb15-1d55-7711-be1f-d2040651d488",
+    "head": null,
+    "start": "28747f3157b7c506ae8b5f13c294cbe6bf9c1377"
+  },
+  "done_when": "A client with one test group gets one tests job that also does the docs-only check, and a test command that cannot be split runs in one group instead of repeating",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "ships() in src/forge/prcheck.py",
+      "file": "src/forge/prcheck.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 250,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: a test command that cannot be split runs in one group instead of repeating",
+      "work": 2
+    },
+    {
+      "area": "ships() in src/forge/prcheck.py",
+      "file": "src/forge/prcheck.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 333,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: existing full-suite workflow tests",
+      "work": 2
+    },
+    {
+      "area": "test_1_unsplittable_client_uses_one_tests_job() in tests/test_single_group_client_tests.py",
+      "file": "tests/test_single_group_client_tests.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 23,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: fast_test group-selection proof",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "a1cc40c02cbf9a047d6990b73803c61897625ce261a05f796ef5e8884fc56832",
+    "changed": "857405ff53adbc8a5c98ae859ff26dd4c33cfb0cd01b0496594171c0d31e4a5f",
+    "commit": "4ad905976ea21e41849c686cac7f4f09b3f65528",
+    "dismissals": [],
+    "findings": [],
+    "id": "b5178e2d-b02b-40ae-ab0a-9c3f4289d579",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-08T12:14:10.272802+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-08T12:31:17.927148+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-08T12:48:00.256020+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-08T13:25:57.881771+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-08T14:47:30.227808+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-08T12:48:00.256241+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "src/forge/prcheck.py",
+    "reason": "Harm 3 gate: the existing full-suite workflow test still fails",
+    "wait_id": "fc77b3f7-c043-4587-9169-45d91df735ff",
+    "worker_round": 2
+  },
+  "stuck": {
+    "close": "438af46e-7fa0-42a4-84a4-212584b73a77",
+    "head": "391726b359950e7efdec0cafb199aa4d6d24a1d9",
+    "keys": {},
+    "round": 2
+  },
+  "why": "A client pull request with one test group starts three small gate jobs around its test job, and a hand-set group count without a shard flag repeats the same tests in every group",
+  "worker": "codex"
+}

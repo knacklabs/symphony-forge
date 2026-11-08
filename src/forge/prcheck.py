@@ -223,7 +223,7 @@ CHOOSE = r"""          pin() {
 
 
 def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
-    from forge import sync
+    from forge import quicktest, sync
 
     if repo.sample_data(top, cfg):
         return {}
@@ -246,9 +246,13 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
                      "          cache-dependency-path: package-lock.json\n")
     source = cfg.get("repo") == "forge-source"
     configured_groups = cfg.get("groups")
-    warning = repo.group_warning(top, cfg)
-    groups = (configured_groups if configured_groups is not None
-              else 6 if repo.pytest_split(top, cfg["test"]) else 1)
+    change_command = quicktest.group_command(cfg)
+    warning = quicktest.group_warning(top, cfg)
+    groups = (1 if warning else configured_groups if configured_groups is not None
+              else 6 if repo.pytest_split(top, change_command) else 1)
+    full_warning = quicktest.group_warning(top, {**cfg, "fast_test": ""})
+    full_groups = (1 if full_warning else configured_groups if configured_groups is not None
+                   else 6 if repo.pytest_split(top, cfg["test"]) else 1)
     ci_tests = repo.test_place(cfg) == "ci" and "tests" in cfg.get("checks", [])
     test = "forge test --change" if ci_tests else cfg["test"]
     full_run = repo.test_place(cfg) == "ci"
@@ -329,7 +333,27 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
                   "          if [ \"$FULL_RESULT\" = success ]; then state=success; fi\n"
                   "          gh api --method POST \"repos/$GITHUB_REPOSITORY/statuses/$HEAD_SHA\" -f context=forge-full-suite -f \"state=$state\" -f \"target_url=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID\"\n"
                   "          test \"$state\" = success\n" if full_run else "")
-    workflow = (WORKFLOW.replace("<full-triggers>", full_triggers)
+    full_suite = full_suite.replace("<groups>", str(full_groups)).replace(
+        "<group-list>", str(list(range(1, full_groups + 1))))
+    if full_warning and not warning:
+        full_suite = full_suite.replace("    steps:\n", "    steps:\n      - run: " + json.dumps(
+            'echo "::warning::' + full_warning + '"') + "\n", 1)
+    template = WORKFLOW
+    if groups == 1:
+        start = template.index("  docs-check:\n")
+        tests = template.index("  tests:\n", start)
+        runner = template.index("    runs-on:", tests)
+        end = template.index("  tests-passed:\n", runner)
+        gate = template.index("  forge-pr-check:\n", end)
+        single = ("  tests:\n"
+                  "    if: github.event_name == 'pull_request'\n"
+                  "    name: ${{ github.event_name == 'pull_request' && 'tests' || 'tests (other event)' }}\n"
+                  + template[runner:end])
+        single = single.replace("${{ matrix.group }}", "'1'").replace(
+            "${{ needs.docs-check.outputs.test-only == 'true' && '1' || '<groups>' }}", "'1'")
+        single = single.replace("    steps:\n", "    steps:\n<group-warning>", 1)
+        template = template[:start] + single + template[gate:]
+    workflow = (template.replace("<full-triggers>", full_triggers)
                 .replace("<full-suite-job>", full_suite)
                 .replace("      - uses: astral-sh/setup-uv@v6\n",
                          "      - uses: astral-sh/setup-uv@v6\n"
@@ -368,7 +392,7 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
                 .replace("<group-list>", str(list(range(1, groups + 1))))
                 .replace("<runner>", json.dumps(cfg.get("runner", repo.DEFAULTS["runner"]))))
     if not ci_tests:
-        start = workflow.index("  docs-check:\n")
+        start = workflow.index("  docs-check:\n" if groups > 1 else "  tests:\n")
         end = workflow.index("  forge-pr-check:\n")
         workflow = workflow[:start] + workflow[end:]
     return {WORKFLOW_PATH: workflow,

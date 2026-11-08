@@ -10,7 +10,7 @@ import pytest
 
 from test_board_dependency_timelines import _client, _land_fixture
 from test_close import GREEN, STORY_DOC, blocked, env, finding  # noqa: F401
-from test_fix_gate_on_split_checks import bash, jobs
+from test_fix_gate_on_split_checks import jobs
 
 STORY = "FIX-DOCS-ASSETS-LIGHT"
 
@@ -119,8 +119,7 @@ def test_1_docs_and_assets_get_light_review_and_skip_ci_groups(
 
     workflow = (where / ".github/workflows/forge.yml").read_text("utf-8")
     grouped = jobs(workflow)
-    assert "docs-check" in grouped, "Classify docs before starting any test group"
-    preflight = grouped["docs-check"]
+    preflight = grouped["tests"]
     monkeypatch.setenv("BASE_SHA", base)
     monkeypatch.setenv("HEAD_SHA", env.repo.git("rev-parse", "HEAD", cwd=where))
     monkeypatch.setenv("DOCS_ONLY_EXCLUDES", re.search(
@@ -133,17 +132,5 @@ def test_1_docs_and_assets_get_light_review_and_skip_ci_groups(
     assert checked.returncode == 0, checked.stderr
     outputs = dict(line.split("=", 1) for line in output.read_text("utf-8").splitlines())
     assert (outputs.get("docs-only") == "true") == light
-    assert "needs: docs-check" in grouped["tests"]
-    assert "needs.docs-check.outputs.docs-only != 'true'" in grouped["tests"]
-    gate = grouped["tests-passed"]
-    assert "needs: [docs-check, tests]" in gate
-    gate_command = re.search(r"run: (.+)$", gate, re.M)[1]
-    for check, groups, docs, expected in [
-        ("success", "skipped" if light else "success", str(light).lower(), True),
-        ("failure", "skipped", "true", False),
-        ("success", "failure", "false", False),
-        ("success", "cancelled", "false", False),
-        ("success", "skipped", "false", False),
-    ]:
-        assert (bash("-c", gate_command, env={"DOCS_CHECK": check, "TEST_GROUP_RESULT": groups,
-                                             "DOCS_ONLY": docs}).returncode == 0) == expected
+    assert "docs-check" not in grouped and "tests-passed" not in grouped
+    assert "if: steps.parent-tests.outputs.reuse != 'true'" in preflight
