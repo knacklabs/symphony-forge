@@ -41,7 +41,7 @@
     "id": "a60ac357-415b-4345-9306-a008c0578356",
     "status": "blocked"
   },
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-08T20:22:30.082310+00:00",
@@ -54,8 +54,12 @@
   ],
   "stop": {
     "at": "2026-11-08T20:27:17.683821+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": ".factory/fixes/release-1-2-32.json",
-    "wait_id": "6f43eba6-cc23-4c3e-a0eb-0bca3af6810e"
+    "reason": "Add the proof list",
+    "wait_id": "6f43eba6-cc23-4c3e-a0eb-0bca3af6810e",
+    "worker_round": null
   },
   "why": "Release v1.2.32: publish what merged since v1.2.31"
 }
