@@ -140,7 +140,7 @@
     "id": "d74d68ef-772c-4a5b-9ba1-7ddb53ce3977",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -162,10 +162,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": null,
-    "head": "a1b0cbc7b5a7c2eb1262847b4c52397aca0c2138",
+    "close": "a249755d-958d-4048-b2df-d3ac65b131c8",
+    "head": "254350e2564bcf9724a14529267a73115285e083",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "Fixes have no Scope, so two open fixes can edit the same files with no warning and then conflict at merge",
   "worker": "codex"
