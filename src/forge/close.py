@@ -193,6 +193,7 @@ def close(args: argparse.Namespace) -> int:
             backfill.run(top)
         return _merged(top, item)
 
+    checks.required(top, default)
     previous = state.get("review") or {}
     if not (skip or previous.get("skipped")):
         review.require_engine(cfg)  # before merging or committing state
@@ -240,7 +241,6 @@ def close(args: argparse.Namespace) -> int:
                     for number in (added, deleted) if number.isdigit())
         if lines > 400:
             print(f"Warning: This part changes {lines} lines outside tests and docs; aim for about 400.")
-    checks.required(top, default)
     task.check_settings_change(item, top, state, default)
     repo.resume_pin(top, cfg["version"], getattr(args, "land_rounds", None), accepted=choice == "accept",
                     before=getattr(args, "pin_before", None))
@@ -464,7 +464,7 @@ def close(args: argparse.Namespace) -> int:
             f"finding {n} ({f['title'].rstrip('.')})" for n, f in serious))
     # forge-pr-check runs from the base branch, which has no Forge until migrate's or adopt's PR merges.
     try:
-        if not local_tests and not stacked_waiting:
+        if (not local_tests or checks.required(top, default, head) is not None) and not stacked_waiting:
             checks.wait(top, item, head, [name for name in cfg["checks"]
                                          if not (migrating and name == "forge-pr-check")],
                         branch=branch, progress=getattr(args, "wait_for_progress", False),

@@ -37,9 +37,10 @@ PASS, PENDING, RED, SKIPPED, QUEUED = "pass", "pending", "red", "skipped", "queu
 
 def required(top: Path, default: str, head: str = "HEAD") -> list[str] | None:
     """A check removal travels alone, apart from its records and synced workflow."""
-    from forge import story, sync
+    from forge import prcheck, story
 
-    before = story.show(top, f"origin/{default}", "forge.toml")
+    base = repo.git("merge-base", f"origin/{default}", head, cwd=top)
+    before = story.show(top, base, "forge.toml")
     after = story.show(top, head, "forge.toml")
     old, new = (tomllib.loads(text or "") for text in (before, after))
     previous, current = old.get("checks", []), new.get("checks", [])
@@ -47,19 +48,20 @@ def required(top: Path, default: str, head: str = "HEAD") -> list[str] | None:
     if not removed:
         return None
     files = repo.git("diff", "--name-only", "--no-renames", "-z",
-                     f"origin/{default}", head, cwd=top).split("\0")
+                     base, head, cwd=top).split("\0")
     others = [path for path in files if path and path not in
-              ("forge.toml", ".github/workflows/forge.yml") and not path.startswith(".factory/")]
+              ("forge.toml", ".github/workflows/forge.yml") and not path.startswith((".factory/", "plans/spotted/"))]
     workflow = ".github/workflows/forge.yml"
-    if workflow in files and workflow not in sync.synced(
-            top, repo._config_text(after or ""), f"origin/{default}", head, [workflow]):
+    if workflow in files and story.show(top, head, workflow) != prcheck.ships(
+            top, repo._config_text(after or "")).get(workflow):
         others.append(workflow)
     for config in (old, new):
         for key in ("checks", "test_place"):
             config.pop(key, None)
     if others or old != new or set(current) - set(previous):
         repo.refuse(REFUSALS["mixed_removal"], names=", ".join(removed))
-    return [name for name in previous if name in current]
+    landed = tomllib.loads(story.show(top, f"origin/{default}", "forge.toml") or "")
+    return [name for name in landed.get("checks", []) if name in current]
 
 
 def wait(top: Path, item: str, sha: str, names: list[str], *, branch: str,
