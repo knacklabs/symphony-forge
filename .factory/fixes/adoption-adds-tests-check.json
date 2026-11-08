@@ -11,12 +11,122 @@
   "done_when": "Adopting an app with GitHub Actions writes checks with tests and forge-pr-check like a new repo, and forge doctor tells an existing repo whose checks name only forge-pr-check the exact checks line that moves its tests to CI",
   "fix_kind": "backend",
   "kind": "fix",
+  "known": [
+    {
+      "area": "doctor() in src/forge/doctor.py",
+      "file": "src/forge/doctor.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 316,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Doctor misses earlier adoptions already configured for CI",
+      "work": 2
+    },
+    {
+      "area": "_adopt() in src/forge/init.py",
+      "file": "src/forge/init.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 448,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Preserve existing CI service setup when requiring the new tests check",
+      "work": 3
+    },
+    {
+      "area": "doctor() in src/forge/doctor.py",
+      "file": "src/forge/doctor.py",
+      "gain": 4,
+      "harm": 4,
+      "line": 320,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Reconcile branch protection when applying the doctor's checks repair",
+      "work": 2
+    },
+    {
+      "area": "test_2_doctor_explains_how_an_earlier_adoption_moves_tests_to_ci() in tests/test_adoption_runs_tests_in_ci.py",
+      "file": "tests/test_adoption_runs_tests_in_ci.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 42,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_2_doctor_explains_how_an_earlier_adoption_moves_tests_to_ci",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "abe9c7a0028a6ed1c1342484c424ba8be9c94b30cdec7ce054792a67aae339bb",
+    "changed": "84aa96934aa656949db1dd32e72b08d84f328e59c75bebd2ba3c68deba160e3a",
+    "commit": "99e37c7d9c50d3eeec72d8748d2803b7d120a80e",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 5, Work 2, Harm 3\nRaise: Not done\nCase: normal use - a repo adopted with Actions before this fix has `test_place = \"ci\"` and `checks = [\"forge-pr-check\"]`.\nThe owner-approved Done-when is: Adopting an app with GitHub Actions writes checks with tests and forge-pr-check like a new repo, and forge doctor tells an existing repo whose checks name only forge-pr-check the exact checks line that moves its tests to CI.\nNew evidence beyond the coordinator's local-fallback ruling: the raw-parent adoption code writes this explicit CI setting for `--actions yes --checks forge-pr-check`. `src/forge/prcheck.py:252` and `:370` omit the PR tests job without a `tests` check, while `src/forge/close.py:246` leaves tests to CI. This guard suppresses the repair advice, so subsequent PRs receive no app-test run even though the repo selected CI. Adding the `tests` check can preserve that explicit choice.",
+        "file": "src/forge/doctor.py",
+        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
+        "gain": 5,
+        "harm": 3,
+        "line": 316,
+        "priority": "P1",
+        "title": "Not done: Doctor misses earlier adoptions already configured for CI",
+        "work": 2
+      },
+      {
+        "body": "Gain 5, Work 3, Harm 3\nRaise: Functional\nCase: normal use - an existing Actions job runs app integration tests against a PostgreSQL service container and supplies its connection settings in that job.\nAdding `tests` makes Forge generate and wait for a separate required job. The job in `src/forge/prcheck.py:81` through `:110` does not carry over the existing job's service or environment; GitHub scopes service containers to their own job ([GitHub documentation](https://docs.github.com/en/actions/tutorials/use-containerized-services/use-docker-service-containers)). For an adopted app whose `npm ci && npm test` needs that database, the existing check passes but Forge's new check fails, blocking adoption and later changes.",
+        "file": "src/forge/init.py",
+        "gain": 5,
+        "harm": 3,
+        "line": 448,
+        "priority": "P1",
+        "title": "Preserve existing CI service setup when requiring the new tests check",
+        "work": 3
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 4 (floor: migration)\nRaise: Functional\nCase: normal use - an earlier-adopted repo follows the warning while its default branch has Forge's normal branch protection.\nAdds work: reconcile the required GitHub checks after the repair; F 2 x H 2 = 4; 2 x C = 4.\nNew evidence beyond the coordinator's warning-only ruling: `forge sync` writes generated files but does not update branch protection (`src/forge/sync.py:684`), and `src/forge/close.py:187` updates protection only for an adoption or migration. After the suggested fix merges, GitHub still requires only `forge-pr-check`; the new `tests` check is not enforced by branch protection, and doctor reports a checks mismatch at `src/forge/doctor.py:465`. Forge's close waits for tests, but GitHub's protection does not require them to pass ([GitHub documentation](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches)).",
+        "file": "src/forge/doctor.py",
+        "gain": 4,
+        "harm": 4,
+        "line": 320,
+        "priority": "P1",
+        "title": "Reconcile branch protection when applying the doctor's checks repair",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 1, Harm 3\nRaise: Test\nCase: normal use - an earlier adoption explicitly chooses to run tests locally.\nThe fixture ends inside `[models.review]` (`tests/fixtures/adopted-v1.2.2/client/forge.toml:41`), so appending `test_place = \"local\"` here puts it in that table, not at the TOML root. `src/forge/repo.py:913` rejects the resulting model setting before doctor reaches the new warning. The negative assertion still passes because it does not establish that doctor reached the valid explicit-local case, so this named proof cannot detect an incorrect warning for that choice.",
+        "file": "tests/test_adoption_runs_tests_in_ci.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 42,
+        "priority": "P1",
+        "title": "Gate: test_2_doctor_explains_how_an_earlier_adoption_moves_tests_to_ci",
+        "work": 1
+      }
+    ],
+    "id": "49e0f78a-1d92-416e-bec7-d5f3b161f03f",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-08T04:24:38.728044+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-08T04:36:35.434470+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
