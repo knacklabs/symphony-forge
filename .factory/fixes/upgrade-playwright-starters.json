@@ -11,14 +11,106 @@
   "done_when": "Both starters use Playwright 1.64.0, their lockfiles are updated, and their browser tests pass on Ubuntu 24.04 and 26.04 runners",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [
+    {
+      "area": "src/forge/templates/starter/package.json",
+      "file": "src/forge/templates/starter/package.json",
+      "gain": 4,
+      "harm": 3,
+      "line": 60,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Starter smoke still requires the old Playwright pin",
+      "work": 1
+    },
+    {
+      "area": "src/forge/templates/starter-python/package.json",
+      "file": "src/forge/templates/starter-python/package.json",
+      "gain": 4,
+      "harm": 3,
+      "line": 42,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Both starters use Playwright 1.64.0, their lockfiles are updated, and their browser tests pass on Ubuntu 24.04 and 26.04 runners",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/starter/package.json",
+      "file": "src/forge/templates/starter/package.json",
+      "gain": 3,
+      "harm": 3,
+      "line": 60,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Standard: Fix the root cause",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "0682f3706ed347ac8d53c15aac1b95634c95e8df3f84ed4dfe8cc83f8c6d51bf",
+    "changed": "be6df3d9369fe05f7be89c70d2847807d4a49c181bb05ad4b07a92383ccc800f",
+    "commit": "2be5dd3dac7cebd321aa8c553f7f00eea5928812",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 1, Harm 3\nRaise: Functional - The TypeScript starter now declares 1.64.0, but `tests/test_starter_tree.py:36` still expects 1.56.1 and asserts that value at line 469. The pull-request starter-smoke job selects this test, so it will fail before reaching the live browser run. Update the existing test's expected pin alongside the manifest.\nCase: normal use - Running the TypeScript starter smoke check on a pull request.",
+        "file": "src/forge/templates/starter/package.json",
+        "gain": 4,
+        "harm": 3,
+        "line": 60,
+        "priority": "P1",
+        "title": "Starter smoke still requires the old Playwright pin",
+        "work": 1
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done - The proof list records no Ubuntu 24.04 browser run. The two starter-smoke jobs in `.github/workflows/starter-smoke.yml:60` and `:110` run only on `ubuntu-latest`, which the supplied context identifies as Ubuntu 26.04. There is therefore no pending Ubuntu 24.04 pull-request check to establish the requested result for either starter. Run both browser smoke tests on an Ubuntu 24.04 runner and record the results.\nCase: normal use - Running either starter's browser tests on Ubuntu 24.04.",
+        "file": "src/forge/templates/starter-python/package.json",
+        "gain": 4,
+        "harm": 3,
+        "line": 42,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: Both starters use Playwright 1.64.0, their lockfiles are updated, and their browser tests pass on Ubuntu 24.04 and 26.04 runners",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Gate - The rule says, \"Reproduce the bug before you change the code.\" The proof list records the pre-fix Ubuntu 26.04 reproduction as missing because the image pull failed. The existing live smoke invokes the browser installer through `tests/test_starter_tree.py:235` and `src/forge/templates/starter/scripts/test.mjs:54`, but the supplied proof does not show that it fails with Playwright 1.56.1 for the reported reason. Run the old version on Ubuntu 26.04 and record that failure alongside the fixed run.\nCase: normal use - Running a starter's browser tests on Ubuntu 26.04.\nAdds work: one pre-fix Ubuntu 26.04 reproduction; F 3 x H 2 = 6; 2 x C = 4",
+        "file": "src/forge/templates/starter/package.json",
+        "gain": 3,
+        "harm": 3,
+        "line": 60,
+        "priority": "P1",
+        "title": "Standard: Fix the root cause",
+        "work": 2
+      }
+    ],
+    "id": "21585600-a236-4e2f-b9f4-bccd8c70b84e",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-08T16:16:37.839145+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-08T16:28:06.979210+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-11-08T16:28:06.990389+00:00",
+    "file": "src/forge/templates/starter/package.json",
+    "wait_id": "d915b118-2b36-40e7-aefe-6d436726ad24"
+  },
   "stuck": {
     "close": null,
     "head": "2c5b2913b73ebbd6c2427ab9aff9317632928400",

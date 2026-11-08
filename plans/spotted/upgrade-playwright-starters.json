@@ -1,0 +1,37 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/templates/starter-python/package.json\tNot done: Both starters use Playwright 1.64.0, their lockfiles are updated, and their browser tests pass on Ubuntu 24.04 and 26.04 runners\tupgrade-playwright-starters",
+      "kind": "bug",
+      "path": "src/forge/templates/starter-python/package.json",
+      "line": 42,
+      "text": "Not done: Both starters use Playwright 1.64.0, their lockfiles are updated, and their browser tests pass on Ubuntu 24.04 and 26.04 runners",
+      "from": "blocking",
+      "item": "upgrade-playwright-starters",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/starter/package.json\tStandard: Fix the root cause\tupgrade-playwright-starters",
+      "kind": "bug",
+      "path": "src/forge/templates/starter/package.json",
+      "line": 60,
+      "text": "Standard: Fix the root cause",
+      "from": "blocking",
+      "item": "upgrade-playwright-starters",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/starter/package.json\tStarter smoke still requires the old Playwright pin\tupgrade-playwright-starters",
+      "kind": "bug",
+      "path": "src/forge/templates/starter/package.json",
+      "line": 60,
+      "text": "Starter smoke still requires the old Playwright pin",
+      "from": "blocking",
+      "item": "upgrade-playwright-starters",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
