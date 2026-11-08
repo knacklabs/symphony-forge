@@ -97,8 +97,9 @@ sys.exit(subprocess.run([{json.dumps(real_git)}, *sys.argv[1:]]).returncode)
     assert not [args for args in calls if args[:2] == ["cat-file", "blob"]], calls
     roots = [args for args in calls if args == ["rev-parse", "--show-toplevel"]]
     assert len(roots) <= (2 if command == "close" else 1), calls
-    # Keep the original small-fixture ceilings. The read-history case adds two
-    # worktrees and an accepted sign-off, with its own measured process budget.
-    ceiling = (90 if command == "close" else 32) if history else (
+    # The read-history next case has two open branches. Overlap advice adds
+    # one ancestry check and one changed-file diff for each: 32 + 2 * 2.
+    # Other command ceilings stay unchanged.
+    ceiling = (90 if command == "close" else 36) if history else (
         100 if command == "close" else 24 if previous else 30)
     assert len(calls) <= ceiling, calls

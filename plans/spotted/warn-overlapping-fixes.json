@@ -1,0 +1,59 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: forge next names two open fixes or parts whose changed files overlap and suggests merging one first, without blocking either\twarn-overlapping-fixes",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 419,
+      "text": "Not done: forge next names two open fixes or parts whose changed files overlap and suggests merging one first, without blocking either",
+      "from": "blocking",
+      "item": "warn-overlapping-fixes",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tPreserve the next state and overlap warnings in the machine view\twarn-overlapping-fixes",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 402,
+      "text": "Preserve the next state and overlap warnings in the machine view",
+      "from": "blocking",
+      "item": "warn-overlapping-fixes",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_next_warns_about_shared_files.py\tGate: test_1_next_names_shared_changed_files_and_suggests_merge_order\twarn-overlapping-fixes",
+      "kind": "bug",
+      "path": "tests/test_next_warns_about_shared_files.py",
+      "line": 54,
+      "text": "Gate: test_1_next_names_shared_changed_files_and_suggests_merge_order",
+      "from": "blocking",
+      "item": "warn-overlapping-fixes",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_next_warns_about_shared_files.py\tGate: tests/test_ci_timing_inventory.py and tests/test_rules.py\twarn-overlapping-fixes",
+      "kind": "bug",
+      "path": "tests/test_next_warns_about_shared_files.py",
+      "line": 18,
+      "text": "Gate: tests/test_ci_timing_inventory.py and tests/test_rules.py",
+      "from": "blocking",
+      "item": "warn-overlapping-fixes",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/nextstep.py\tFollow-up: Exclude squash-merged local fixes from overlap advice",
+      "kind": "edge",
+      "path": "src/forge/nextstep.py",
+      "line": 412,
+      "text": "Follow-up: Exclude squash-merged local fixes from overlap advice",
+      "from": "review",
+      "item": "warn-overlapping-fixes",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

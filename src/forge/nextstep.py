@@ -236,6 +236,7 @@ def _report(top: Path, history: dict[str, Any] | None = None,
     lines: list[str] = []
     states: list[str] = []
     fixes: list[tuple[dict[str, Any], list[str]]] = []
+    parts: list[tuple[str, dict[str, Any]]] = []
     refusals: dict[Path, str] = {}
     # Only forge next asks GitHub for scheduled runs; hooks stay offline. An open fix for a
     # failed run shows its own lines under it.
@@ -284,6 +285,8 @@ def _report(top: Path, history: dict[str, Any] | None = None,
         title = state.get("title") or key
         readiness: dict[str, Any] = {}
         found, tasks = _story(top, key, path, text, title, trees, merged_prs, prs, refusals, history, readiness)
+        parts.extend((f"{key}/{state['branch'].removeprefix(f'task/{key}-')}", state)
+                     for state in tasks if state.get("branch"))
         if history is not None:
             history.setdefault("story advice", {})[key] = found, readiness
         promoted.update(state["from_fix"] for state in tasks if state.get("from_fix"))
@@ -396,7 +399,34 @@ def _report(top: Path, history: dict[str, Any] | None = None,
             lines += build
             build = []
     return (build + _due(top, history) + pinned + [line for alert in alerts.values() for line in alert]
-            + _hotspots(top, trees) + lines + [f"Builds running: {running} of {agents['size']}"]), states
+            + _hotspots(top, trees) + _overlaps(top, parts + [
+                (f"The fix {state['branch'].partition('/')[2]}", state)
+                for state, _ in fixes if state.get("branch")], prs, (history or {}).get("states", {}))
+            + lines + [f"Builds running: {running} of {agents['size']}"]), states
+
+
+def _overlaps(top: Path, items: list[tuple[str, dict[str, Any]]],
+              prs: dict[str, dict[str, Any]], landed: dict[str, Any]) -> list[str]:
+    changed, lines = [], []
+    for label, state in items:
+        if (state.get("status") in ("merged", "done", "dropped")
+                or repo.state_path(label.removeprefix("The fix ")) in landed):
+            continue
+        branch = state["branch"]
+        ref = review_ref(top, branch, prs.get(branch))
+        if not ref or repo.command_fact(("commits", "overlap ancestor", ref), top, lambda: repo.run(
+                "git", "merge-base", "--is-ancestor", ref, story.landed_ref(top), cwd=top).returncode == 0):
+            continue
+        paths = repo.command_fact(("commits", "overlap files", ref), top, lambda: repo.run(
+            "git", "diff", "--name-only", "--no-renames", "-z", f"{story.landed_ref(top)}...{ref}", cwd=top).stdout)
+        files = {path for path in paths.split("\0") if path and path != ".test_durations"
+                 and not path.startswith((".factory/", "plans/"))}
+        for other, prior in changed:
+            if shared := sorted(files & prior):
+                lines.append(f"{other} and {label} change the same files: "
+                             f"{', '.join(shared[:3])}. Please merge one first.")
+        changed.append((label, files))
+    return lines
 
 
 def _failed_schedules(top: Path) -> dict[str, list[str]]:

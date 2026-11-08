@@ -226,7 +226,9 @@ $delegation
   default branch, never skip the git hooks, never push and never merge: Forge and the human do that.
 - Never amend or rebase a commit that is already pushed.
 - `forge close` pushes the committed branch and runs CI on every platform. CI output reaches you
-  in your next round. If you need CI evidence, commit and stop instead of asking the coordinator
+  in your next round. Close saves the review before this push. Later review, acceptance and
+  spotted records reuse a green run of the same code and base, including across records saved
+  before one push. If you need CI evidence, commit and stop instead of asking the coordinator
   to push or run CI. CI is the merge gate. Commit your local proof in the `Proof list:` without
   waiting for CI results or timings.
 - Close and doctor cancel only this pull request's older forge.yml runs when they block its newest queued run. Client workflows stay untouched. If a run stays active after cancellation, Forge prints GitHub's force-cancel command for the operator. It never calls that command automatically. Close keeps waiting for the new run.

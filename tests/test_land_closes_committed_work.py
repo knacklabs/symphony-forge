@@ -2,6 +2,8 @@
 import json
 import shutil
 import sys
+import stat
+from pathlib import Path
 
 import pytest
 
@@ -13,6 +15,7 @@ STORY = "forge-land-starts-a-worker-round-even-wh"
 
 
 @pytest.mark.parametrize("history", ["new", "upgraded"])
+@pytest.mark.platform
 def test_1_land_closes_a_hand_committed_fix_without_a_worker(land, history):
     # Audit: the real command must reach Ready without a worker call. The old started-status
     # shortcut runs a worker despite a hand commit; existing tests cover worker-made commits.
@@ -60,11 +63,23 @@ def test_1_land_closes_a_hand_committed_fix_without_a_worker(land, history):
     where = repo.path.parent / f"{repo.path.name}-fix-bump-version"
     env.commit(where, "VERSION", "2.0.0\n", "Bump the package version")
     before = (where / "forge.toml").read_text()
+    base = repo.git("rev-parse", "origin/main", cwd=where)
+    updates = env.tmp / "published-heads"
+    hook = Path(repo.git("remote", "get-url", "origin")) / "hooks" / "post-receive"
+    hook.write_text(f'#!/bin/sh\ncat >> "{updates.as_posix()}"\n', encoding="utf-8", newline="\n")
+    hook.chmod(hook.stat().st_mode | stat.S_IEXEC)
     done = repo.forge("land", "bump-version")
     assert _steps(done)[0] == "Closing bump-version.", done.stdout + done.stderr
     assert not _workers(env), done.stdout + done.stderr
     assert done.returncode == 0, done.stdout + done.stderr
     assert "Ready: bump-version has a clean review" in done.stdout
+    heads = [line.split()[1] for line in updates.read_text("utf-8").splitlines()
+             if line.split()[2] == "refs/heads/fix/bump-version" and int(line.split()[1], 16)]
+    assert len(heads) == 1, heads
+    assert repo.git("show", f"{heads[0]}:VERSION") == "2.0.0"
+    checked = repo.forge("hook", "pr-check", "--base", base, "--head", heads[0],
+                         "--branch", "fix/bump-version")
+    assert checked.returncode == 0, checked.stdout + checked.stderr
     ref = "origin/fix/bump-version" if where.exists() else "origin/main"
     assert repo.git("show", f"{ref}:VERSION") == "2.0.0"
     assert repo.git("show", f"{ref}:forge.toml") == before.rstrip("\n")
