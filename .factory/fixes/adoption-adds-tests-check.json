@@ -4,12 +4,20 @@
   "done_when": "Adopting an app with GitHub Actions writes checks with tests and forge-pr-check like a new repo, and forge doctor tells an existing repo whose checks name only forge-pr-check the exact checks line that moves its tests to CI",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-08T04:24:38.728044+00:00",
       "step": "start"
     }
   ],
-  "why": "An app adopted into Forge with GitHub Actions gets checks = forge-pr-check only, so Forge's tests job never runs the changed tests in CI and an earlier-adopted repo without test_place falls back to running every close's tests on the laptop"
+  "stuck": {
+    "close": null,
+    "head": "638efdb9e428451c7a53f96f369ed457c4e817a3",
+    "keys": {},
+    "round": null
+  },
+  "why": "An app adopted into Forge with GitHub Actions gets checks = forge-pr-check only, so Forge's tests job never runs the changed tests in CI and an earlier-adopted repo without test_place falls back to running every close's tests on the laptop",
+  "worker": "codex"
 }
