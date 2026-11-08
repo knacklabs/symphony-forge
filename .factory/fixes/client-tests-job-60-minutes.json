@@ -1,0 +1,15 @@
+{
+  "base": "94d64425110459083b26fb925066f6b2c69b10a1",
+  "branch": "fix/client-tests-job-60-minutes",
+  "done_when": "The generated client tests job allows 60 minutes like the full run, new repos get it at init and existing repos after sync",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-08T16:55:23.489052+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "A client's generated CI test job stops at 30 minutes, so a change that touches shared files and runs a large related set is cancelled with no output, while the nightly full run already allows 60"
+}
