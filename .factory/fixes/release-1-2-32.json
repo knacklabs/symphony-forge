@@ -19,7 +19,7 @@
       "gain": 4,
       "harm": 2,
       "line": 5,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -29,27 +29,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "82c5acd66d0f09b4544a3ef43f932d628f624c14cde08efd2a34f67c67cac733",
-    "changed": "b760bb00289221d21b5aca80c197d296039a44e8dffd6a7a6724a607c857c24f",
-    "commit": "091bb590d6333a262934166964df5141f6807d57",
+    "branch_diff": "9fffd0c26557ee6c979cfb8b9490a7b93ee2380e020bc542e4d4878fa303a06b",
+    "changed": "9b7590d8876fd86f29cced6d4c978fc85900ae687005bf931f81143c115a8aa2",
+    "commit": "72d277d2957dc40ecdcdff36df47d539ab6900a3",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 1, Harm 2\nRaise: Gate - The proof list for the release is missing.\nCase: normal use - closing v1.2.32 for publication.\nThe Done-when covers the version, generated files, repository pin, and passing tests, but the supplied proof list is marked missing. The release test and configured CI checks provide relevant coverage, yet no list maps each acceptance detail to its check and result. Supply that mapping so close can account for every detail.",
-        "file": ".factory/fixes/release-1-2-32.json",
-        "gain": 4,
-        "harm": 2,
-        "line": 5,
-        "priority": "P1",
-        "title": "Gate: proof list",
-        "work": 1
-      }
-    ],
-    "id": "a60ac357-415b-4345-9306-a008c0578356",
-    "status": "blocked"
+    "findings": [],
+    "id": "ba51c63a-61bc-40e1-a4f4-dc9f5e4cd1b6",
+    "status": "clean"
   },
   "round": 1,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-08T20:22:30.082310+00:00",
@@ -57,6 +46,10 @@
     },
     {
       "at": "2026-11-08T20:27:17.674408+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-08T20:31:41.370667+00:00",
       "step": "review"
     }
   ],
