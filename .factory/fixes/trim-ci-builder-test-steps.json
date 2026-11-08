@@ -4,12 +4,20 @@
   "done_when": "The CI-mode worker brief says only that wider related tests, lint and type checks stay in pull request CI and leaves which repair tests to run before committing to the builder",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-08T08:57:37.026970+00:00",
       "step": "start"
     }
   ],
-  "why": "The worker brief spells out red-then-green steps for CI-mode builders, which agents do anyway; the only rule needed is that wider related tests, lint and type checks stay in pull request CI"
+  "stuck": {
+    "close": null,
+    "head": "8b61baf4fb9fea99835b8197e379145ba2296cdf",
+    "keys": {},
+    "round": null
+  },
+  "why": "The worker brief spells out red-then-green steps for CI-mode builders, which agents do anyway; the only rule needed is that wider related tests, lint and type checks stay in pull request CI",
+  "worker": "codex"
 }
