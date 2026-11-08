@@ -1626,6 +1626,7 @@ Every turn, including capacity retries, records the
 requested tier and the tier Codex reports; an unreported tier stays unknown. New repos
 get the default at init; existing repos get it on upgrade without adding a setting, and sync
 refreshes both host guides.
+The app-server route needs the Codex SDK. `forge doctor --fix` installs it in Codex-only repos without Claude.
 
 For a side job inside your own session, hand it to one of Forge's subagent roles, which
 `forge sync` writes for both hosts from `forge.toml`'s models: `explorer` to read and trace code;
