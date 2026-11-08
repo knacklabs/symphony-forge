@@ -1,0 +1,15 @@
+{
+  "base": "c4bc3920737c2e2f9001281ed6012b3e5ba908a4",
+  "branch": "fix/pin-ubuntu-24-04",
+  "done_when": "Forge's default CI runner and Forge's own workflows use ubuntu-24.04, a repo without its own runner setting gets it on sync, and a repo that sets its own runner keeps it",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-08T16:15:56.952828+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "GitHub's ubuntu-latest runner moved to Ubuntu 26.04, where the starters' Playwright 1.56 cannot install browsers, so client CI and Forge's starter checks fail"
+}
