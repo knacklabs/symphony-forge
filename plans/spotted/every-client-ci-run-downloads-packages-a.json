@@ -1,0 +1,59 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/prcheck.py\tDo not require a pnpm packageManager field in adopted clients\tevery-client-ci-run-downloads-packages-a",
+      "kind": "bug",
+      "path": "src/forge/prcheck.py",
+      "line": 249,
+      "text": "Do not require a pnpm packageManager field in adopted clients",
+      "from": "blocking",
+      "item": "every-client-ci-run-downloads-packages-a",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/prcheck.py\tMoving part: pnpm/action-setup\tevery-client-ci-run-downloads-packages-a",
+      "kind": "bug",
+      "path": "src/forge/prcheck.py",
+      "line": 249,
+      "text": "Moving part: pnpm/action-setup",
+      "from": "blocking",
+      "item": "every-client-ci-run-downloads-packages-a",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/starter/Dockerfile\tInstall all workspace manifests when an app adds a feature\tevery-client-ci-run-downloads-packages-a",
+      "kind": "bug",
+      "path": "src/forge/templates/starter/Dockerfile",
+      "line": 27,
+      "text": "Install all workspace manifests when an app adds a feature",
+      "from": "blocking",
+      "item": "every-client-ci-run-downloads-packages-a",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/starter/Dockerfile\tStarter image builds try to copy an ignored .npmrc\tevery-client-ci-run-downloads-packages-a",
+      "kind": "bug",
+      "path": "src/forge/templates/starter/Dockerfile",
+      "line": 9,
+      "text": "Starter image builds try to copy an ignored .npmrc",
+      "from": "blocking",
+      "item": "every-client-ci-run-downloads-packages-a",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/prcheck.py\tNot done: The second client run still downloads packages and rebuilds image layers",
+      "kind": "edge",
+      "path": "src/forge/prcheck.py",
+      "line": 331,
+      "text": "Not done: The second client run still downloads packages and rebuilds image layers",
+      "from": "review",
+      "item": "every-client-ci-run-downloads-packages-a",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

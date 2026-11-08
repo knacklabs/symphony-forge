@@ -1,10 +1,19 @@
+FROM node:24-bookworm-slim AS manifests
+
+WORKDIR /source
+COPY . .
+RUN node -e 'const fs = require("node:fs"), path = require("node:path"); for (const file of fs.globSync("**/package.json")) { const target = path.join("../manifests", file); fs.mkdirSync(path.dirname(target), { recursive: true }); fs.copyFileSync(file, target); }'
+
 FROM node:24-bookworm-slim AS web-build
 
 ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 RUN corepack enable
 WORKDIR /app
+COPY pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY --from=manifests /manifests/ ./
+RUN corepack pnpm install --frozen-lockfile
 COPY . .
-RUN corepack pnpm install --frozen-lockfile && corepack pnpm run build
+RUN corepack pnpm run build
 
 FROM python:3.14-slim-bookworm
 COPY --from=ghcr.io/astral-sh/uv:0.13.0 /uv /uvx /bin/
