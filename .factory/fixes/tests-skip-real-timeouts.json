@@ -9,6 +9,13 @@
     "start": "82959ccb544bd5ee86a1e50f3fbeaa2c7a5311bf"
   },
   "done_when": "The two tests advance a controlled clock instead of waiting, keep their real command and refusal assertions, and each runs in under 10 seconds",
+  "drop": {
+    "at": "2026-11-08T03:31:48.692021+00:00",
+    "because": "Saves about two minutes of Forge's own CI, but the clock changes made five review findings about tests that can pass for the wrong reason; not worth the risk now",
+    "by": "vrknetha <vrknetha@gmail.com> 1794108708 +0530",
+    "pull_request": 1464,
+    "status": "hotspot"
+  },
   "fix_kind": "mechanical",
   "kind": "fix",
   "known": [
@@ -141,7 +148,7 @@
     "status": "blocked"
   },
   "round": 2,
-  "status": "hotspot",
+  "status": "dropped",
   "steps": [
     {
       "at": "2026-11-07T18:12:51.556448+00:00",
@@ -150,6 +157,10 @@
     {
       "at": "2026-11-08T03:05:27.007349+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-11-08T03:31:48.692180+00:00",
+      "step": "drop"
     }
   ],
   "stop": {
