@@ -101,13 +101,17 @@ def test_10_previous_adoption_uses_the_place_selected_by_its_checks(
     if place == "ci":
         log = install_claude(env.repo)
         started = env.repo.forge("fix", "start", "Check upgraded worker guidance", "--done",
-                                 "The worker leaves related tests to CI", "--kind", "mechanical")
+                                 "The worker checks repair tests and leaves wider tests to CI", "--kind", "mechanical")
         assert started.returncode == 0, started.stdout + started.stderr
         worked = env.repo.forge("work", "check-upgraded-worker-guidance")
         assert worked.returncode == 0, worked.stdout + worked.stderr
         brief = " ".join(calls(log)[-1]["brief"].split()).lower()
-        assert ("The pull request's CI runs the change's related tests, lint and type checks, so do "
-                "not run them here").lower() in brief
+        # The current release replaces commit-before-CI guidance with exact
+        # repair tests red then green. An earlier adoption gets that policy too.
+        assert ("run only the exact new, changed or previously failing tests through `forge test`, "
+                "using the test runner's name filter. watch a regression fail before the repair, "
+                "then rerun those tests until they pass before committing.") in brief
+        assert "wider related tests, lint and type checks stay in pull request ci." in brief
 
 
 @pytest.mark.platform
