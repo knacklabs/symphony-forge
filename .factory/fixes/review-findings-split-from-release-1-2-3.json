@@ -1,0 +1,139 @@
+{
+  "base": "e946efd6e006d7f1b768fff682accf93989402ae",
+  "branch": "fix/review-findings-split-from-release-1-2-3",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1b74d-c7d5-7fa2-a041-5afab3db3bc1",
+    "head": null,
+    "start": "7d61bb4c4154440bd878ca1051a5d8481070d52c"
+  },
+  "done_when": "A review no longer finds: Preserve settled design screenshots (.forge/design/support.js:101); Gate: generated files in the release checkout (tests/test_release_version.py:31); Gate: proof list (.factory/fixes/release-1-2-31.json:5)",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "test_1_capture_settled_entry_motion() in tests/test_canvas_settled_motion.py",
+      "file": "tests/test_canvas_settled_motion.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 29,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Keep saved canvas renderers current after upgrade",
+      "work": 2
+    },
+    {
+      "area": "test_1_capture_settled_entry_motion() in tests/test_canvas_settled_motion.py",
+      "file": "tests/test_canvas_settled_motion.py",
+      "gain": 2,
+      "harm": 3,
+      "line": 38,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Follow-up: Cover the animation settling cap",
+      "work": 1
+    },
+    {
+      "area": "ships() in src/forge/story.py",
+      "file": "src/forge/story.py",
+      "gain": 5,
+      "harm": 4,
+      "line": 94,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Refreshing renderers invalidates approved design trees",
+      "work": 2
+    },
+    {
+      "area": "ships() in src/forge/story.py",
+      "file": "src/forge/story.py",
+      "gain": 5,
+      "harm": 4,
+      "line": 95,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Upgrading fails when a repo has several saved canvases",
+      "work": 2
+    },
+    {
+      "area": "check() in src/forge/design.py",
+      "file": "src/forge/design.py",
+      "gain": 5,
+      "harm": 4,
+      "line": 121,
+      "outcome": "fixed in round 4",
+      "reason": "",
+      "round": 3,
+      "security": false,
+      "title": "Refreshing renderers invalidates approved design trees",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "bdd634dca5213307ca169ec738ad9e392efd22cbb4b47791b9ade0513d1fb9d6",
+    "changed": "a1265d9d03caf6047aa98727284f50344e862c0d2947baeac31237e1e7bfecf3",
+    "commit": "24c09f143b2c77567c6f50919bd500af6e23182a",
+    "dismissals": [],
+    "findings": [],
+    "id": "0a90aed7-d922-4902-98c9-f6ac8b8e823d",
+    "status": "clean"
+  },
+  "round": 4,
+  "stacked_on": "release-1-2-31",
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-07T17:42:22.892825+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-07T18:52:59.769157+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-07T19:12:57.170733+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-07T19:28:23.701485+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-08T03:03:43.712198+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-08T05:20:26.396384+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-07T18:52:59.786933+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "tests/test_canvas_settled_motion.py",
+    "reason": "Finding 1 is Harm 3: one more round by the standing rule; finding 2 is live-with",
+    "wait_id": "5dd01eeb-2b26-4bff-977c-2da25ca20eec",
+    "worker_round": 1
+  },
+  "stuck": {
+    "close": "41058be5-0076-496a-be2d-3bb70dc2fc2b",
+    "head": "9da8b712f3bf1ebfd80984ed93e2a147352b669a",
+    "keys": {
+      "the open P0 refreshing renderers invalidates approved design trees in src/forge/design.py": 1
+    },
+    "round": 3
+  },
+  "why": "Review findings split from release-1-2-31: Preserve settled design screenshots (.forge/design/support.js:101); Gate: generated files in the release checkout (tests/test_release_version.py:31); Gate: proof list (.factory/fixes/release-1-2-31.json:5)",
+  "worker": "codex"
+}
