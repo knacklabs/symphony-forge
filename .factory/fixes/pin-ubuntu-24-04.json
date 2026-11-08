@@ -1,5 +1,5 @@
 {
-  "allow_large": "The owner asked to commit the runner pin and test repairs after the six-file limit stopped the commit. The extra file keeps the timing inventory consistent with the changed help text.",
+  "allow_large": "The owner chose the ubuntu-24.04 pin; it is the same one-line runner change in each of Forge's workflow files plus the default and guide copies",
   "base": "c4bc3920737c2e2f9001281ed6012b3e5ba908a4",
   "branch": "fix/pin-ubuntu-24-04",
   "chat": {
