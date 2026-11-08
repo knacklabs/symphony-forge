@@ -1,6 +1,13 @@
 {
   "base": "94d64425110459083b26fb925066f6b2c69b10a1",
   "branch": "fix/removing-check-refuses-early",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1bc16-73c7-7b63-94e0-74d68a7beedb",
+    "head": null,
+    "start": "acdaa093ed89ea0b3fa8923b92770c85c2b623f4"
+  },
   "done_when": "Close refuses a change that removes a check from checks together with other changes, naming the removed check and the step: land the removal in a fix that changes only the checks list; such a fix merges after waiting for the checks both lists share",
   "fix_kind": "backend",
   "kind": "fix",
