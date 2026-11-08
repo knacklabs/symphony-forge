@@ -1,0 +1,131 @@
+{
+  "amendments": [
+    {
+      "at": "2026-11-08T02:48:54.664126+00:00",
+      "because": "The owner chose to remove the source heading rule: source code cannot tell how many main headings a page shows",
+      "done_when": "A screen file with two h1 elements in separate branches of a condition passes the one-main-heading check, and a screen that renders two h1 at once still fails it"
+    }
+  ],
+  "base": "5393cf3ed78f0bae68f7bf2762dbcc9675a03710",
+  "branch": "fix/ui-check-conditional-headings",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1b766-d28f-79c2-84c6-c9d76cd4cabd",
+    "head": null,
+    "start": "94ffd69077c62e8b9ddfb4d38858b5a0b9c07ade"
+  },
+  "done_when": "The source-file UI checker no longer counts main headings, so a screen with headings shown one at a time is not refused; the canvas renderer and the design review still judge the rendered page",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "src/forge/templates/design/ui-checks.js",
+      "file": "src/forge/templates/design/ui-checks.js",
+      "gain": 4,
+      "harm": 3,
+      "line": 74,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: A screen file with two h1 elements in separate branches passes the one-main-heading check",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/design/ui-checks.js",
+      "file": "src/forge/templates/design/ui-checks.js",
+      "gain": 4,
+      "harm": 3,
+      "line": 80,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "A ternary leaks into the next statement when semicolons are omitted",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/design/ui-checks.js",
+      "file": "src/forge/templates/design/ui-checks.js",
+      "gain": 4,
+      "harm": 3,
+      "line": 85,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Ternaries in list rendering can produce simultaneous headings",
+      "work": 2
+    },
+    {
+      "area": "test_1_exclusive_main_headings_pass_and_simultaneous_headings_fail() in tests/test_main_heading_branches.py",
+      "file": "tests/test_main_heading_branches.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 12,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: tests/test_uistandards_close.py",
+      "work": 1
+    },
+    {
+      "area": "src/forge/templates/design/ui-checks.js",
+      "file": "src/forge/templates/design/ui-checks.js",
+      "gain": 2,
+      "harm": 2,
+      "line": 58,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Follow-up: Conditional headings in Vue and Svelte screens",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "aacf5e8acae621282a6939f7f11ffa39fb82dfe8c83d86594b450f9e099f04dd",
+    "changed": "b3804429464ab4777015af093abe4bab9774068cecffbf41ef02ae8d437e7301",
+    "commit": "ba63e6d480c7aba8642c18a934aec8aa263bb94c",
+    "dismissals": [],
+    "findings": [],
+    "id": "1b359ecb-ba2e-43dd-b782-c70bac0d9feb",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-07T18:50:33.763381+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-07T19:24:33.940219+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-08T03:10:19.800258+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-07T19:24:33.952635+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "src/forge/templates/design/ui-checks.js",
+    "reason": "Harm 3 or higher findings: one more round by the standing rule",
+    "wait_id": "15743f32-00d0-4d9b-9032-ab1e0fa202e2",
+    "worker_round": 1
+  },
+  "stuck": {
+    "close": "bdd22226-41c7-42a8-8a49-aa431fbec815",
+    "head": "7758798802e10a0f24e4c8afd6d832fa9d19057b",
+    "keys": {},
+    "round": 1
+  },
+  "why": "The generated UI checker counts every h1 in a screen file, so a screen whose headings are shown one at a time fails the one-main-heading check (issue 1451)",
+  "worker": "codex"
+}

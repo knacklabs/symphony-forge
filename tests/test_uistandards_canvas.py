@@ -84,7 +84,6 @@ def test_2_canvases_check_before_publishing(repo, tmp_path, claude_payload, env)
 
     failures = [
         ("spacing", "<main class='p-[13px]'>Orders</main>", False, "spacing-scale"),
-        ("duplicate", "<h1>Orders</h1><h1>Orders</h1>", False, "title-twice"),
         ("checker", "<main><h1>Orders</h1></main>", True, "stand-in-checker"),
         ("waiver-without-reason",
          "<!-- forge-ui-ignore spacing-scale --><main class='p-[13px]'>Orders</main>",
