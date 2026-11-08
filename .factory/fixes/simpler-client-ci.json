@@ -4,12 +4,20 @@
   "done_when": "A client with one test group gets one tests job that also does the docs-only check, and a test command that cannot be split runs in one group instead of repeating",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-08T12:14:10.272802+00:00",
       "step": "start"
     }
   ],
-  "why": "A client pull request with one test group starts three small gate jobs around its test job, and a hand-set group count without a shard flag repeats the same tests in every group"
+  "stuck": {
+    "close": null,
+    "head": "2ba0d70dfae3f4e31b4e601c4751f4132a6ba209",
+    "keys": {},
+    "round": null
+  },
+  "why": "A client pull request with one test group starts three small gate jobs around its test job, and a hand-set group count without a shard flag repeats the same tests in every group",
+  "worker": "codex"
 }
