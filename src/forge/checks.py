@@ -11,6 +11,7 @@ import json
 import os
 import re
 import time
+import tomllib
 from collections.abc import Callable
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -19,6 +20,9 @@ from typing import Any
 from forge import repo
 
 REFUSALS = {
+    "mixed_removal": ("Removed checks: {names}. Close refuses check removal with other changes.",
+                      "land the removal in its own fix that changes only the checks list, "
+                      "test_place and the generated workflow from forge sync, then close this change"),
     "red": ("Checks failed on the pull request: {names}.", "forge work {item}"),
     "timeout": ("On the pull request, the tests ran out of time{duration}.",
                 "rerun the tests job, or split the suite, then forge close {item}"),
@@ -31,9 +35,39 @@ REFUSALS = {
 PASS, PENDING, RED, SKIPPED, QUEUED = "pass", "pending", "red", "skipped", "queued"
 
 
+def required(top: Path, default: str, head: str = "HEAD") -> list[str] | None:
+    """A check removal travels alone, apart from its records and synced workflow."""
+    from forge import story, sync
+
+    before = story.show(top, f"origin/{default}", "forge.toml")
+    after = story.show(top, head, "forge.toml")
+    old, new = (tomllib.loads(text or "") for text in (before, after))
+    previous, current = old.get("checks", []), new.get("checks", [])
+    removed = sorted(set(previous) - set(current))
+    if not removed:
+        return None
+    files = repo.git("diff", "--name-only", "--no-renames", "-z",
+                     f"origin/{default}", head, cwd=top).split("\0")
+    others = [path for path in files if path and path not in
+              ("forge.toml", ".github/workflows/forge.yml") and not path.startswith(".factory/")]
+    workflow = ".github/workflows/forge.yml"
+    if workflow in files and workflow not in sync.synced(
+            top, repo._config_text(after or ""), f"origin/{default}", head, [workflow]):
+        others.append(workflow)
+    for config in (old, new):
+        for key in ("checks", "test_place"):
+            config.pop(key, None)
+    if others or old != new or set(current) - set(previous):
+        repo.refuse(REFUSALS["mixed_removal"], names=", ".join(removed))
+    return [name for name in previous if name in current]
+
+
 def wait(top: Path, item: str, sha: str, names: list[str], *, branch: str,
          progress: bool = False, slot: Callable[[bool], None] | None = None) -> None:
     """Wait for green checks on sha; land renews its deadline on observed check progress."""
+    shared = required(top, repo.default_branch(top), sha)
+    if shared is not None:
+        names = shared
     start, clock = repo.now(), time.monotonic()
     released = False
 

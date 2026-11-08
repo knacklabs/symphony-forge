@@ -6,6 +6,11 @@ description: Run Forge, which takes a story from approval to a merged pull reque
 
 # Forge
 
+Close refuses a removed check together with other changes. Land the removal in its
+own fix that changes only `checks`, `test_place` and the generated workflow from
+`forge sync`. The refusal names each removed check. Merge then waits for the checks
+that the branch and default branch share. Added checks keep their usual checks.
+
 Start with `forge next`. It says where things stand and gives the exact next command.
 
 ## Guide a person with little technical experience

@@ -230,7 +230,6 @@ def close(args: argparse.Namespace) -> int:
     if "/" in item:
         key = item.split("/")[0]
         design.check(top, story.show(top, story.plan_ref(top, key), f"plans/{key}.md") or "", "HEAD", required=False)
-    if "/" in item:
         excluded = list(review.DOC_EXCLUDES)
         excluded += [path.replace(":(glob)", ":(exclude,glob)") for path in repo.TEST_PATHS]
         stats = repo.git("diff", "--numstat", "-z", "--no-renames", f"{review_ref}...HEAD",
@@ -241,6 +240,7 @@ def close(args: argparse.Namespace) -> int:
                     for number in (added, deleted) if number.isdigit())
         if lines > 400:
             print(f"Warning: This part changes {lines} lines outside tests and docs; aim for about 400.")
+    checks.required(top, default)
     task.check_settings_change(item, top, state, default)
     repo.resume_pin(top, cfg["version"], getattr(args, "land_rounds", None), accepted=choice == "accept",
                     before=getattr(args, "pin_before", None))

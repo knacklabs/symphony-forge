@@ -135,6 +135,18 @@ def test_2_close_refuses_unlisted_settings_and_keeps_the_branch_change(
     refused = case in ("stale", "checks", "part", "land")
     assert closed.returncode == int(refused), closed.stdout + closed.stderr
     if refused:
+        if case == "checks":
+            # A stale check name removes main's current check as well as changing
+            # product files. The isolation refusal now comes before scope checks.
+            assert "Removed checks: current-tests." in closed.stderr
+            assert "land the removal in its own fix" in closed.stderr
+            assert client.git("rev-parse", "HEAD", cwd=folder) == before
+            assert (folder / "forge.toml").read_bytes() == expected
+            assert MESSAGE not in closed.stdout
+            assert client.git("show", "HEAD:forge.toml", cwd=folder) == expected.decode("utf-8").strip()
+            assert not client.git("log", "--format=%H", f"{before}..HEAD", "--", "forge.toml", cwd=folder)
+            assert client.git("status", "--porcelain", cwd=folder) == ""
+            return
         assert ("forge.toml changes settings. This item's Done-when must name forge.toml. "
                 "The branch keeps its change.") in closed.stderr
         if case == "part":
