@@ -74,7 +74,7 @@
     "status": "blocked"
   },
   "round": 2,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-08T11:37:21.271568+00:00",
@@ -91,8 +91,12 @@
   ],
   "stop": {
     "at": "2026-11-08T12:09:37.640678+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "src/forge/merge.py",
-    "wait_id": "a45c8823-08d6-490c-ad49-590433200c2a"
+    "reason": "Harm 3 finding: one more round by the standing rule",
+    "wait_id": "a45c8823-08d6-490c-ad49-590433200c2a",
+    "worker_round": 2
   },
   "stuck": {
     "close": "151971ef-37cb-4a02-a048-8dabb152704c",
