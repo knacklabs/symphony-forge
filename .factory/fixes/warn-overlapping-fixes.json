@@ -1,6 +1,13 @@
 {
   "base": "a966fe35e6416da992e3c2a10008975ad35d5959",
   "branch": "fix/warn-overlapping-fixes",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1bb2b-55ee-7950-ba05-60d1be193687",
+    "head": null,
+    "start": "4486d2cd66f9dcb87779d9aec6f597f1c142a51a"
+  },
   "done_when": "forge next names two open fixes or parts whose changed files overlap and suggests merging one first, without blocking either",
   "fix_kind": "backend",
   "kind": "fix",
