@@ -1,6 +1,13 @@
 {
   "base": "c4bc3920737c2e2f9001281ed6012b3e5ba908a4",
   "branch": "fix/windows-run-records-settings",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1bbf0-de77-7882-bce2-0f6606110d25",
+    "head": null,
+    "start": "c563b2581c814ede9d213301672f5c3dd9536ddb"
+  },
   "done_when": "tests/test_run_records.py::test_3_run_and_question_occurrences passes on Windows and Linux",
   "fix_kind": "mechanical",
   "kind": "fix",
