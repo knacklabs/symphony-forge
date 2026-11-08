@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\t.factory/fixes/release-1-2-32.json\tGate: proof list\trelease-1-2-32",
+      "kind": "bug",
+      "path": ".factory/fixes/release-1-2-32.json",
+      "line": 5,
+      "text": "Gate: proof list",
+      "from": "blocking",
+      "item": "release-1-2-32",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
