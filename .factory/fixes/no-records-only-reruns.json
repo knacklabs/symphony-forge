@@ -11,14 +11,129 @@
   "done_when": "A close or land round pushes its code and its review record together, so a records-only push no longer cancels a CI run of the same code, and a later records-only head reuses that run's green result",
   "fix_kind": "backend",
   "kind": "fix",
+  "known": [
+    {
+      "area": ".test_durations",
+      "file": ".test_durations",
+      "gain": 4,
+      "harm": 2,
+      "line": 2953,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: a later records-only head reuses that run's green result",
+      "work": 2
+    },
+    {
+      "area": ".test_durations",
+      "file": ".test_durations",
+      "gain": 4,
+      "harm": 2,
+      "line": 685,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: proof list",
+      "work": 2
+    },
+    {
+      "area": ".test_durations",
+      "file": ".test_durations",
+      "gain": 3,
+      "harm": 3,
+      "line": 2953,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: tests/test_review_record_reuses_parent_tests.py",
+      "work": 1
+    },
+    {
+      "area": ".test_durations",
+      "file": ".test_durations",
+      "gain": 4,
+      "harm": 2,
+      "line": 685,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: one reviewed push through close and land",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "c035ad47bb6c7b01224d32aaaba98322326f1048de2ef12a878d84158c7bc72b",
+    "changed": "2c5c6627b1b59b1ebe90d14834e7c986b63952b8b603ec0a39f3523a20da8cb2",
+    "commit": "fe3f103930e85fa23f35eca082a09b4b6f901722",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 2\nRaise: Not done\nCase: normal use - an owner accepts a review finding after the code's tests pass.\nThe Done-when is: \u201cA close or land round pushes its code and its review record together, so a records-only push no longer cancels a CI run of the same code, and a later records-only head reuses that run's green result\u201d. Acceptance changes both the review and its `known` findings (`src/forge/close.py:138` and `src/forge/score.py:168`), but `.forge/review-tests.py:203-218` rejects changes to `known`. It therefore reruns the suite despite the green parent. It also rejects status-only records and review commits that include `plans/spotted` records. If the previous run is still active, `.github/workflows/forge.yml:11-13` cancels it. The branch leaves these paths unchanged.",
+        "file": ".test_durations",
+        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
+        "gain": 4,
+        "harm": 2,
+        "line": 2953,
+        "priority": "P1",
+        "title": "Not done: a later records-only head reuses that run's green result",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 2\nRaise: Gate\nCase: normal use - this pull request reaches its required tests check.\nThe proof list relies on the close, parent-reuse, test-receipt, and acceptance tests, but the PR check runs `forge test --change` (`.github/workflows/forge.yml:82`). For this diff, the selector at `src/forge/fasttest.py:352-400` and `:711-718` selects tests related to the timing and fix-record files; none of those four proof files is selected or listed in `.forge/always-tests.txt`. The required check can therefore pass without running the claimed behavioral proofs.",
+        "file": ".test_durations",
+        "gain": 4,
+        "harm": 2,
+        "line": 685,
+        "priority": "P1",
+        "title": "Gate: proof list",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 1, Harm 3\nRaise: Test\nCase: normal use - a green run is followed by the owner's acceptance of a finding.\nThe named reuse proof hand-writes a simplified review record (`tests/test_review_record_reuses_parent_tests.py:77-101`); the receipt proof similarly constructs its state by hand. Neither produces the `known` change made by a real acceptance, so both pass while that records-only head reruns the suite. The acceptance proof checks the review gate, not test reuse. Cover the actual close-generated record through the CI entry point for a new and an earlier-adopted client.",
+        "file": ".test_durations",
+        "gain": 3,
+        "harm": 3,
+        "line": 2953,
+        "priority": "P1",
+        "title": "Gate: tests/test_review_record_reuses_parent_tests.py",
+        "work": 1
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 2\nRaise: Test\nCase: normal use - a new or earlier-adopted client closes or lands a code change.\nThe named close proof counts remote updates and checks the pull request body (`tests/test_close_publishes_final_review_once.py:40-50`), but does not check that the pushed head contains a valid review; a code-only push with a clean body would pass it. There is also no direct land proof of the single reviewed update: `tests/test_land_closes_committed_work.py:63-70` checks the final version and output, not the number or review contents of branch updates. Exercise both commands and check the review gate on the pushed head.",
+        "file": ".test_durations",
+        "gain": 4,
+        "harm": 2,
+        "line": 685,
+        "priority": "P1",
+        "title": "Gate: one reviewed push through close and land",
+        "work": 2
+      }
+    ],
+    "id": "2ddb6479-0b64-4f29-b0cd-6d4e8056d120",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-08T12:14:00.294248+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-08T12:30:32.151394+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-11-08T12:30:32.161444+00:00",
+    "file": ".test_durations",
+    "wait_id": "6147086e-acfc-4b29-8f02-1736a22391e3"
+  },
   "stuck": {
     "close": null,
     "head": "7161b31cb76c4785652f5c2fde86609849740d30",
