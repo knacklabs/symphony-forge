@@ -18,7 +18,7 @@
       "gain": 5,
       "harm": 3,
       "line": 132,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 1,
       "security": false,
@@ -54,27 +54,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "5885c7b813fa08f64e6a818624af283fff4112d87bb0bac3a00740d51692bc71",
-    "changed": "61d3735cc0654833bc3d9075450b449db5119d9ff62faf9c9e014284956956ae",
-    "commit": "acdef96a77bba3e6551b7a294f9ae42141315d47",
+    "branch_diff": "5187e1be1fef2e9a15a10188c80f9eb29f5f15a36db7cfcaa82bd35cc8e9e362",
+    "changed": "50b417cf7b731f9b535acffdc7edd487e91a9ff334342810741990f1136683a8",
+    "commit": "6d7a9ac52cfb45b98c293bf9a1424f6d823bd913",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - a CI-enabling pull request is combined after main moves, its check wait fails or times out, and merge is retried.\nThe first attempt saves the combined head before waiting (src/forge/merge.py:153\u2013154). On retry, that head already contains main, so the retest block does not run and line 129 does not load the branch's configuration. The wait at line 159 instead uses the default-branch configuration loaded at line 48. If main still says `test_place = \"local\"`, Forge skips the wait entirely; if required check names changed, it waits for the old names. When branch protection has not yet been updated to require the new tests check, GitHub can accept the merge while that check is pending or failing. [GitHub branch rules](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/available-rules-for-rulesets)",
-        "file": "src/forge/merge.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 129,
-        "priority": "P1",
-        "title": "Wait for the CI configuration used to skip the local retest",
-        "work": 2
-      }
-    ],
-    "id": "10de1dd4-236e-4fa0-81e3-a148b5bc9e66",
-    "status": "blocked"
+    "findings": [],
+    "id": "623178ae-dcfe-4d1a-844d-ca26bd6d5c68",
+    "status": "clean"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-08T11:37:21.271568+00:00",
@@ -86,6 +75,10 @@
     },
     {
       "at": "2026-11-08T12:09:37.640495+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-08T12:17:16.394560+00:00",
       "step": "review"
     }
   ],
