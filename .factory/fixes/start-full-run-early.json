@@ -71,7 +71,7 @@
     "id": "f3f45f6d-e240-4c24-92eb-5081a3f11e73",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -93,10 +93,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": null,
-    "head": "b458578d22f58fb3b4b0112fad0ce7d5b9114d45",
+    "close": "24bd832c-d390-4563-af6a-40496a40c228",
+    "head": "8906a3e884486486a0ef79bbefd1eb31ff3caaf8",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "Release and sign-off wait for a full run that starts only nightly or by hand, and the tag push finds the missing proof late",
   "worker": "codex"
