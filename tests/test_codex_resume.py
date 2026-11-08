@@ -211,7 +211,11 @@ def test_7_fix_rounds_continue_the_conversation(repo, monkeypatch, sdk_data, rea
 
 
 def _continued_context(repo, monkeypatch, sdk_data):
+    from test_codex_fast_when_work_waits import _policy
+
     folder, calls, turns = _resuming(repo, monkeypatch, sdk_data)
+    # Keep the Fast repair receipt contract after the default changes to off.
+    _policy(repo, folder, "needed")
     # The worker commits during the first turn, before Forge hears that the turn started.
     monkeypatch.setenv("STUB_CODEX_COMMIT", "built.py")
     assert repo.forge("work", "BOARD/PAGE").returncode == 0

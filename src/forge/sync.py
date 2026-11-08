@@ -705,10 +705,6 @@ def sync(args: argparse.Namespace) -> None:
             print("\n".join(lines))
             print('Next: forge fix start "Specs state each rule once" --done '
                   '"Each VAL, UAT and AC line in docs/specs names the R- rule it checks" --kind mechanical')
-    if (cfg["repo"] == "client" and cfg["codex_fast"] == "needed"
-            and ".codex/skills/forge/SKILL.md" in changed):
-        print("Codex Fast is now on for quick work: every fix, after the first repair round, "
-              "or when other planned work waits.")
     if install_shims(top, cfg):
         print("Installed the git hooks that check each commit and push.")
     elif not changed:

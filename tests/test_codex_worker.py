@@ -363,7 +363,11 @@ def test_3_models_per_kind(repo, monkeypatch, sdk_data, claude_session):
 
 
 def test_4_turn_log(repo, monkeypatch, sdk_data, claude_session):
+    from test_codex_fast_when_work_waits import _policy
+
     folder, calls = _codex_repo(repo, monkeypatch, sdk_data)
+    # This receipt contract requests Fast explicitly; omission now means normal speed.
+    _policy(repo, folder, "needed")
     turns = repo.path / ".git" / "forge" / "threads" / "task" / "BOARD" / "PAGE.log"
     work_log = repo.path / ".git" / "forge" / "work-BOARD-PAGE.log"
     # Each turn records the speed it asked for; this stub reports no tier back.
