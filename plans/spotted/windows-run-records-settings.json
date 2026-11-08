@@ -1,0 +1,48 @@
+{
+  "items": [
+    {
+      "key": "bug\ttests/test_run_records.py\tNot done: prove every worker, reader and reviewer gets FORGE_WORKER=1\tFORGE-MOD-1/RUNS",
+      "kind": "bug",
+      "path": "tests/test_run_records.py",
+      "line": 27,
+      "text": "Not done: prove every worker, reader and reviewer gets FORGE_WORKER=1",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/RUNS",
+      "status": "done",
+      "closed_by": "windows-run-records-settings"
+    },
+    {
+      "key": "bug\ttests/test_run_records.py\tNot done: run-record coverage for previously adopted client repos\tFORGE-MOD-1/RUNS",
+      "kind": "bug",
+      "path": "tests/test_run_records.py",
+      "line": 44,
+      "text": "Not done: run-record coverage for previously adopted client repos",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/RUNS",
+      "status": "done",
+      "closed_by": "windows-run-records-settings"
+    },
+    {
+      "key": "bug\ttests/test_run_records.py\tNot done: tests/test_run_records.py::test_3_run_and_question_occurrences passes on Windows and Linux\twindows-run-records-settings",
+      "kind": "bug",
+      "path": "tests/test_run_records.py",
+      "line": 288,
+      "text": "Not done: tests/test_run_records.py::test_3_run_and_question_occurrences passes on Windows and Linux",
+      "from": "blocking",
+      "item": "windows-run-records-settings",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\ttests/test_run_records.py\tFollow-up: complete the named repository-rules run",
+      "kind": "edge",
+      "path": "tests/test_run_records.py",
+      "line": 288,
+      "text": "Follow-up: complete the named repository-rules run",
+      "from": "review",
+      "item": "windows-run-records-settings",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
