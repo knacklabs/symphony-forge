@@ -346,10 +346,11 @@ For each Done-when item you cover that changes runtime behaviour, write one end-
 boundary the user touches, named for the item; a settings, docs, deletion or test-only item is
 proven by the check the item names. Name a new test file after the behaviour it proves, never
 after the fix's slug. In a local-test repo, run each test and watch it fail, then build until it
-passes. In a CI-test repo, run only a new or changed regression once to watch it fail; commit and
-let pull request CI run the related tests. Never edit or delete a test to make it pass; if a test
+passes. In a CI-test repo, run only the exact new, changed or previously failing tests red then
+green locally before committing; leave wider related tests, lint and types to pull request CI.
+Never edit or delete a test to make it pass; if a test
 is wrong, say so. A test whose result a stub or fake decides proves nothing. Use the test-audit
-skill whenever you write or change a test. Before you stop, commit your work first, then $test_step
+skill whenever you write or change a test. Before you stop, $test_step
 Without an explicit `test_place`, Forge uses CI only if `checks` names a check other than
 `forge-pr-check`. That review-only check runs no app tests. Otherwise close runs tests locally.
 An explicit `test_place` keeps its value. Keep `test` as the full suite for the nightly run;
