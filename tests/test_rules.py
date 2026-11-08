@@ -122,7 +122,7 @@ def test_10_version_pin(repo, tmp_path, monkeypatch):
 def test_31_speed():
     workflow = WORKFLOW.read_text(encoding="utf-8")
     # macOS left the full run on 18 October: Linux and Windows catch the platform bugs.
-    for runner in ("ubuntu-latest", "windows-latest"):
+    for runner in ("ubuntu-24.04", "windows-latest"):
         assert runner in workflow, f"the suite doesn't run on {runner}"
     assert "pytest tests" in workflow
     timeouts = [int(n) for n in re.findall(r"timeout-minutes: (\d+)", workflow)]

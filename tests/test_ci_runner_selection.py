@@ -28,7 +28,7 @@ def test_4_copied_client_migration_keeps_default_ci_runner(repo, gh, tmp_path, m
     workflow = repo.git("show", "forge/migrate-v1:.github/workflows/forge.yml")
     labels = re.findall(r"^    runs-on: (.+)$", workflow, re.M)
     assert [json.loads(label) if label.startswith('"') else label for label in labels] == [
-        "ubuntu-latest"] * 4  # Single-group PR, trusted review and the two nightly jobs.
+        "ubuntu-24.04"] * 4  # Single-group PR, trusted review and the two nightly jobs.
 
 
 def _jobs(client: Path) -> tuple[str, str]:
@@ -66,8 +66,8 @@ def test_1_new_client_init_selects_runner_and_bootstraps_tools(repo, gh, tmp_pat
     initialized = repo.forge("init", "--actions", "yes", *args, cwd=client)
     assert initialized.returncode == 0, initialized.stdout + initialized.stderr
     settings = tomllib.loads((client / "forge.toml").read_text("utf-8"))
-    selected = runner or "ubuntu-latest"
-    assert settings.get("runner", "ubuntu-latest") == selected
+    selected = runner or "ubuntu-24.04"
+    assert settings.get("runner", "ubuntu-24.04") == selected
     jobs = _jobs(client)
     assert [_runner(job) for job in jobs] == [selected, selected]
     _tool_bootstrap(jobs)
