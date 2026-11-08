@@ -1,6 +1,13 @@
 {
   "base": "2b4f193299cb1986b54136274fc8725f5cfb952f",
   "branch": "fix/release-tag-reuses-full-run",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1baf3-3eda-75f1-9cc5-bfa6abffcbab",
+    "head": null,
+    "start": "bbac1b37297ab84f88c8043561aa22fefb5bb459"
+  },
   "done_when": "Pushing a release tag accepts a green full run on an earlier main commit when every later commit changes only Forge's own files, as sign-off already does, and still refuses after a product change",
   "fix_kind": "backend",
   "kind": "fix",
