@@ -1,0 +1,37 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/worker.py\tFunctional: Include the required answer in the retry instruction\ta-forge-work-run-cut-short-by-a-shell-ti",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 116,
+      "text": "Functional: Include the required answer in the retry instruction",
+      "from": "blocking",
+      "item": "a-forge-work-run-cut-short-by-a-shell-ti",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/worker.py\tNot done: A forge work run stopped partway prints one line saying the round did not finish and the command to run again.\ta-forge-work-run-cut-short-by-a-shell-ti",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 119,
+      "text": "Not done: A forge work run stopped partway prints one line saying the round did not finish and the command to run again.",
+      "from": "blocking",
+      "item": "a-forge-work-run-cut-short-by-a-shell-ti",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "improve\t.forge/design/support.js\tThe checked-in renderer differs from the current sync output.",
+      "kind": "improve",
+      "path": ".forge/design/support.js",
+      "line": 10,
+      "text": "The checked-in renderer differs from the current sync output.",
+      "from": "worker",
+      "item": "a-forge-work-run-cut-short-by-a-shell-ti",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
