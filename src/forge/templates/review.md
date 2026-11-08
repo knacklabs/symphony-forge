@@ -331,7 +331,7 @@ emil-design-eng checklist item on the changed screens as P1 `Gate: UI check`.
 Use the app-baseline skill's fixed baseline list, five-fact look method, DESIGN.md and
 fixed guard rules on changed screens. Report a changed screen that breaks the baseline
 where code checks cannot see it as P1 `Gate: UI standards`: a select for a long list,
-a title repeated through a variable, or several primary buttons.
+a title repeated on the rendered page, or several primary buttons.
 
 In an app with shadcn/ui set up (a `components.json`), report a new UI component that hand-builds what a shadcn/ui component or block already does as a P1 finding titled `shadcn: <the component>`, unless a `Not shadcn: <why>` comment at the component says why shadcn/ui cannot do it. A composite built from shadcn/ui components is not a finding, and neither is a library or component the default branch already has.
 

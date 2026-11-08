@@ -99,6 +99,8 @@ DESIGN.md through impeccable's document step using the app-baseline list and fix
 rules, and use impeccable's Operate mode for app screens and prototypes. `support.js`
 checks each canvas and renders it at 1440 and 375 pixels before it is shown; the plan's
 read refuses a failing design folder or one with no DESIGN.md.
+The source checks do not count main headings. Judge headings on the rendered page during
+the canvas and design review.
 
 Client repos get pinned copies of impeccable and emil-design-eng with their licences at init and sync, with or without a web app; both laptop installers install them too.
 Make each app's design from the whole brief: its purpose, users, records, fields, choice-list
