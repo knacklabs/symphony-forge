@@ -1,0 +1,81 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/checks.py\tFunctional: Compare branch changes without treating newer default-branch work as branch edits\tremoving-check-refuses-early",
+      "kind": "bug",
+      "path": "src/forge/checks.py",
+      "line": 49,
+      "text": "Functional: Compare branch changes without treating newer default-branch work as branch edits",
+      "from": "blocking",
+      "item": "removing-check-refuses-early",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/checks.py\tFunctional: Exclude Forge\u2019s spotted records from the isolation check\tremoving-check-refuses-early",
+      "kind": "bug",
+      "path": "src/forge/checks.py",
+      "line": 51,
+      "text": "Functional: Exclude Forge\u2019s spotted records from the isolation check",
+      "from": "blocking",
+      "item": "removing-check-refuses-early",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/checks.py\tFunctional: Recognize synced workflows in repositories with Node lockfiles\tremoving-check-refuses-early",
+      "kind": "bug",
+      "path": "src/forge/checks.py",
+      "line": 54,
+      "text": "Functional: Recognize synced workflows in repositories with Node lockfiles",
+      "from": "blocking",
+      "item": "removing-check-refuses-early",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/checks.py\tFunctional: Wait for shared checks when the removal switches tests to local\tremoving-check-refuses-early",
+      "kind": "bug",
+      "path": "src/forge/checks.py",
+      "line": 68,
+      "text": "Functional: Wait for shared checks when the removal switches tests to local",
+      "from": "blocking",
+      "item": "removing-check-refuses-early",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tFunctional: Check isolation before conflict publication and after remote reconciliation\tremoving-check-refuses-early",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 243,
+      "text": "Functional: Check isolation before conflict publication and after remote reconciliation",
+      "from": "blocking",
+      "item": "removing-check-refuses-early",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_check_removal_isolated.py\tGate: tests/test_check_removal_isolated.py::test_1_close_isolates_removal_and_merge_waits_for_shared_checks\tremoving-check-refuses-early",
+      "kind": "bug",
+      "path": "tests/test_check_removal_isolated.py",
+      "line": 67,
+      "text": "Gate: tests/test_check_removal_isolated.py::test_1_close_isolates_removal_and_merge_waits_for_shared_checks",
+      "from": "blocking",
+      "item": "removing-check-refuses-early",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/checks.py\tNot done: Isolated removals cannot merge while GitHub still requires the removed check",
+      "kind": "edge",
+      "path": "src/forge/checks.py",
+      "line": 68,
+      "text": "Not done: Isolated removals cannot merge while GitHub still requires the removed check",
+      "from": "review",
+      "item": "removing-check-refuses-early",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

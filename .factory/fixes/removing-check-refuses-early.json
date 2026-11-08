@@ -11,14 +11,198 @@
   "done_when": "Close refuses a change that removes a check from checks together with other changes, naming the removed check and the step: land the removal in a fix that changes only the checks list; such a fix merges after waiting for the checks both lists share",
   "fix_kind": "backend",
   "kind": "fix",
+  "known": [
+    {
+      "area": "wait() in src/forge/checks.py",
+      "file": "src/forge/checks.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 68,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Isolated removals cannot merge while GitHub still requires the removed check",
+      "work": 3
+    },
+    {
+      "area": "wait() in src/forge/checks.py",
+      "file": "src/forge/checks.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 68,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Wait for shared checks when the removal switches tests to local",
+      "work": 2
+    },
+    {
+      "area": "required() in src/forge/checks.py",
+      "file": "src/forge/checks.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 49,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Compare branch changes without treating newer default-branch work as branch edits",
+      "work": 2
+    },
+    {
+      "area": "required() in src/forge/checks.py",
+      "file": "src/forge/checks.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 54,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Recognize synced workflows in repositories with Node lockfiles",
+      "work": 2
+    },
+    {
+      "area": "required() in src/forge/checks.py",
+      "file": "src/forge/checks.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 51,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Exclude Forge\u2019s spotted records from the isolation check",
+      "work": 1
+    },
+    {
+      "area": "close() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 243,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Check isolation before conflict publication and after remote reconciliation",
+      "work": 2
+    },
+    {
+      "area": "test_1_close_isolates_removal_and_merge_waits_for_shared_checks() in tests/test_check_removal_isolated.py",
+      "file": "tests/test_check_removal_isolated.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 67,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: tests/test_check_removal_isolated.py::test_1_close_isolates_removal_and_merge_waits_for_shared_checks",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "f43dcf99b5e493143bdbad558d8a48baabd480b42c55fd326a1a72dcd291f5da",
+    "changed": "66c3975b736f7a29b3faf891913d1e403e2f6e1e263c44efd797e04e1379c2f0",
+    "commit": "0b81c25d87935d82a9a35df40829858910ebb8f2",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 5, Work 3, Harm 3\nRaise: Not done\nCase: normal use - a repository initialized with GitHub branch protection removes a check that no longer reports.\nThe shared-list override changes only Forge\u2019s wait. `src/forge/init.py:417` installs every configured check in branch protection, while `src/forge/merge.py:200` asks GitHub to merge without changing that protection. GitHub therefore still requires the missing check and rejects the merge, even after the shared checks pass. The test\u2019s GitHub fake unconditionally accepts the squash and misses this failure. [GitHub\u2019s protected-branch rules](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches) require the configured checks before merging.\nThe unmet Done-when is: \u201cClose refuses a change that removes a check from checks together with other changes, naming the removed check and the step: land the removal in a fix that changes only the checks list; such a fix merges after waiting for the checks both lists share\u201d.",
+        "file": "src/forge/checks.py",
+        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
+        "gain": 5,
+        "harm": 3,
+        "line": 68,
+        "priority": "P1",
+        "title": "Not done: Isolated removals cannot merge while GitHub still requires the removed check",
+        "work": 3
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - a removal-only fix changes `test_place` from `ci` to `local` and retains `forge-pr-check`.\nThe intersection is applied only inside `checks.wait`, but `src/forge/close.py:467` and `src/forge/merge.py:160` skip that function in local mode. On a private GitHub Free repository without branch protection, Forge can mark the fix ready and merge it while the retained check is missing or failing. The new test\u2019s `test-place` case supplies a green check and never tests the pending state.",
+        "file": "src/forge/checks.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 68,
+        "priority": "P1",
+        "title": "Functional: Wait for shared checks when the removal switches tests to local",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - another change lands on the default branch while an isolated check-removal fix is open.\nThe two-tree diff includes files changed only on the default branch. `src/forge/close.py:754` can deliberately leave a clean, non-strict branch behind, so an unrelated default-branch product edit appears in `others` and the isolated fix is refused. Likewise, a check newly added on the default branch is reported as removed from an older feature branch even when that branch never edited `forge.toml`.",
+        "file": "src/forge/checks.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 49,
+        "priority": "P1",
+        "title": "Functional: Compare branch changes without treating newer default-branch work as branch edits",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - a client with `package-lock.json` or `pnpm-lock.yaml` removes `tests`, retains `forge-pr-check`, and runs `forge sync` with `test_place = \"ci\"`.\nThe generated workflow changes, so this call verifies it through `sync.synced`. Its snapshot omits both lockfiles (`src/forge/sync.py:476`), although the workflow renderer uses them to add cache configuration (`src/forge/prcheck.py:243` and `:275`). The reconstructed workflow differs from the actual sync output, so close refuses the permitted removal as a mixed change.",
+        "file": "src/forge/checks.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 54,
+        "priority": "P1",
+        "title": "Functional: Recognize synced workflows in repositories with Node lockfiles",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 1, Harm 3\nRaise: Functional\nCase: normal use - the worker records a `Spotted:` observation, or review records a nonblocking finding, during an otherwise isolated removal.\nOnly `.factory/` is excluded here. `src/forge/close.py:420` writes `plans/spotted/<item>.json` before invoking the check wait, so the second call to `required` treats Forge\u2019s own newly committed record as another change and refuses the fix after review and push. A retry encounters the same record and refuses again.",
+        "file": "src/forge/checks.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 51,
+        "priority": "P1",
+        "title": "Functional: Exclude Forge\u2019s spotted records from the isolation check",
+        "work": 1
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - the default branch conflicts with a mixed removal, or another collaborator has updated the same work branch.\nThis check runs after `_merge_default`, whose conflict handler at `src/forge/close.py:207` pushes the branch and can create a PR before the removal refusal. It also runs before `reconcile` at `src/forge/close.py:284`, which can bring a removal or product edit into the reviewed head afterward. In that second case review and push happen before the later check wait detects the mixed change; local test mode skips that later check altogether.",
+        "file": "src/forge/close.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 243,
+        "priority": "P1",
+        "title": "Functional: Check isolation before conflict publication and after remote reconciliation",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Test\nCase: normal use - a removal switches to local tests, an existing PR is closed, or a check is added.\nThe named proof can pass with these contracts broken: the local-mode case never makes the shared check pending; `gh pr create` is not the Git push performed by close, and the fixture already reports an open PR; and the add-only case makes the old `tests` check absent while supplying `new-check`, so it cannot show that the added check is required. The GitHub merge fake at `tests/test_merge_command.py:53` also accepts the merge without enforcing branch protection.",
+        "file": "tests/test_check_removal_isolated.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 67,
+        "priority": "P1",
+        "title": "Gate: tests/test_check_removal_isolated.py::test_1_close_isolates_removal_and_merge_waits_for_shared_checks",
+        "work": 2
+      }
+    ],
+    "id": "4a7ea2e9-24ef-4bfd-94cb-5b0497c21825",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-08T16:55:19.124397+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-08T17:14:40.556365+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-11-08T17:14:40.567509+00:00",
+    "file": "src/forge/checks.py",
+    "wait_id": "0aecb0e1-9666-43a4-b924-711665d0e921"
+  },
   "stuck": {
     "close": null,
     "head": "e030163e59c0d40ff5573df733b39cfffa60f694",
