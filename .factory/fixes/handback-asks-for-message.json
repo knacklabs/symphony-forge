@@ -116,7 +116,7 @@
     "id": "32deec84-f367-424b-a645-f6215b911431",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -138,10 +138,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": null,
-    "head": "0ae1cab8e87065eabc8ab60f81747ed308a58f5c",
+    "close": "267cdcbc-95ff-4c8d-8890-35a5671fa34e",
+    "head": "5499a34d3646bab25431f5cddbe0f92c3441aa43",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "When forge handback gets no message, it records the round as failed and its next step says forge work, which restarts a round whose work is already committed, instead of saying to hand back again with the message",
   "worker": "codex"
