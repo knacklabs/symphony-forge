@@ -372,8 +372,8 @@ The session holds the item's lock and machine place until handback or the sessio
 Forge checks for changed files, numbers and records findings. Init and upgrade deliver the reader role.
 
 **Native build rounds.** `forge work` and `forge land` print the role (`worker`, `fixer` for a fix,
-`frontend` for design work), the model to start it on (over the role's own), the checkout and the brief. Pipe its last message to
-`forge handback <item> --round <n> --subagent <id>`; send any printed nudge, then hand back again.
+`frontend` for design work), the model (over the role's own), checkout and brief. Use `forge handback <item> --round <n> --subagent <id> --text "<its last message>"` or stdin.
+With no message, repeat handback; the round stays open. Send any printed nudge, then hand back again.
 Hand-back restores `forge.toml` and records a `Question:`. Then run `forge land` or `forge close`.
 
 **Upgrade first.** Older Forge refuses the `tools` key. Follow Upgrade Forge before adding it.
