@@ -41,8 +41,8 @@
       "text": "Not done: Both starters use Playwright 1.64.0, their lockfiles are updated, and their browser tests pass on Ubuntu 24.04 and 26.04 runners",
       "from": "blocking",
       "item": "upgrade-playwright-starters",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     }
   ]
 }
