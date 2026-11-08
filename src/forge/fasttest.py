@@ -8,7 +8,6 @@ import os
 import re
 import shlex
 import subprocess
-import sys
 import tempfile
 import threading
 import time
@@ -326,6 +325,13 @@ def test(args) -> int:
         base = f"origin/{repo.default_branch(top)}"
         if repo.run("git", "rev-parse", "--verify", base, cwd=top).returncode:
             raise repo.Refused(f"Fetch {base} first: run git fetch origin, then forge test.", "")
+        if args.change:
+            # Include incoming changes merged into this PR, even under Actions'
+            # synthetic merge. Main's current tip alone hides their test files.
+            merges = repo.git("rev-list", "--merges", f"{base}..HEAD", cwd=top).splitlines()
+            if merges:
+                base = repo.git("merge-base", "--octopus", base,
+                                *(f"{commit}^1" for commit in merges), cwd=top)
         # CI groups reuse their own passes; explicit ungrouped commands always execute.
         status, report = review.test_run(top, review.close_test(top, base, closing=args.change), base,
                                         always=not (args.change and "FORGE_GROUPS" in os.environ),
@@ -398,27 +404,6 @@ def related(base: str) -> tuple[list[str], list[str], bool, list[str]]:
                if docskip.reads_file_relative(path.read_text("utf-8-sig"), inputs)}
     picked = docskip.test_readers(readers, picked)
     return sorted(path.as_posix() for path in picked if path in tests), everything, False, missed
-
-
-def broad_ci_selection(top: Path, base: str) -> bool:
-    """Use the existing pytest file inventory before taking the laptop test place."""
-    cfg = repo.config(top)
-    if cfg["test_place"] != "ci" or not cfg["checks"]:
-        return False
-    # Other fast commands can choose a different set; keep their current local proof.
-    if cfg["fast_test"] and not re.search(r"\bforge test --pytest\s", cfg["fast_test"]):
-        return False
-    if not any(kind == "python" for kind, _, _ in quicktest.test_parts(top, cfg["test"])):
-        return False
-    # Selection reads repo-relative paths. A child keeps the coordinator's cwd unchanged.
-    code = (f"import sys; sys.path.insert(0, {str(Path(__file__).parents[1])!r}); "
-            "from forge.fasttest import related; "
-            "picked, tests, _, _ = related(sys.argv[1]); "
-            "print(len(set(picked) | set(sys.argv[2:])) * 4 > len(tests))")
-    always = [name.split("::", 1)[0] for name in always_tests(top, cfg)]
-    selected = repo.run(sys.executable, "-c", code, base, *always, cwd=top)
-    selected.check_returncode()
-    return selected.stdout.strip() == "True"
 
 
 def always_tests(top: Path, cfg: dict) -> list[str]:

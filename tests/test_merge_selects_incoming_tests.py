@@ -17,6 +17,7 @@ STORY = "FIX-MERGE-RETEST-MAIN-ONLY"
 @pytest.mark.parametrize("previous", [False, True], ids=["new-repo", "earlier-adoption"])
 def test_1_merge_runs_only_tests_related_to_incoming_default_changes(env, tmp_path, previous):
     _client(env, tmp_path, previous, fast_test=False)
+    env.repo.git("fetch", "-q", "origin", "main")
     _, setup = env.start("test-setup", "fix/test-setup", ".factory/fixes/test-setup.json",
                          {"kind": "fix", "why": "Prepare related tests",
                           "done_when": "The client selects related tests"}, {})
@@ -25,6 +26,10 @@ def test_1_merge_runs_only_tests_related_to_incoming_default_changes(env, tmp_pa
     picker = f'"{sys.executable}" "{(env.repo.bin / "forge").as_posix()}" test --pytest {{base}}'
     config = (setup / "forge.toml").read_text("utf-8").replace(
         'test = "python verify.py"', "test = " + json.dumps(command))
+    # A review-only CI check leaves incoming-test selection on the laptop.
+    # App-test CI routing and its merged selection have their own command cases.
+    config = config.replace('checks = ["tests", "forge-pr-check"]',
+                            'checks = ["forge-pr-check"]')
     env.commit(setup, "forge.toml", "fast_test = " + json.dumps(picker) + "\n" + config)
     for name in ("incoming", "own", *[f"other{i}" for i in range(6)]):
         if name.startswith("other"):
@@ -41,6 +46,7 @@ def test_1_merge_runs_only_tests_related_to_incoming_default_changes(env, tmp_pa
     env.repo.git("merge", "-q", "--ff-only", "fix/test-setup")
     remote = env.repo.git("remote", "get-url", "origin")
     env.repo.git("fetch", "-q", str(env.repo.path), "main:main", cwd=remote)
+    env.repo.git("fetch", "-q", "origin", "main")
     item, where = env.start_fix({"own.py": "VALUE = 1\n"})
     env.open_pr("")
     closed = env.close(item)
