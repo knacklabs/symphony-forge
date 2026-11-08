@@ -39,6 +39,7 @@ STORY = "FIX-MERGE-RETESTS-COMBINED-CHANGE"
         "review-new", "review-adopted", "adopted-no-wait"])
 def test_1_merge_retests_combined_change_and_names_failures(env, tmp_path, previous, case, fast):
     _client(env, tmp_path, previous, fast_test=False)
+    env.repo.git("fetch", "-q", "origin", "main")
     _, setup = env.start("test-setup", "fix/test-setup", ".factory/fixes/test-setup.json",
                          {"kind": "fix", "why": "Add client tests",
                           "done_when": "The client checks its combined limits"}, {})
@@ -54,6 +55,10 @@ def test_1_merge_retests_combined_change_and_names_failures(env, tmp_path, previ
     command = f'"{sys.executable}" verify.py'
     config = (setup / "forge.toml").read_text("utf-8").replace(
         'test = "python verify.py"', 'test = ' + json.dumps(command))
+    # A review-only CI check cannot run app tests. This retains the local
+    # fallback contract; app-test CI routing is owned by test_merge_uses_ci_tests.
+    config = config.replace('checks = ["tests", "forge-pr-check"]',
+                            'checks = ["forge-pr-check"]')
     if fast:
         config = 'fast_test = ' + json.dumps(command + ' {base}') + '\n' + config
     env.commit(setup, "forge.toml", config)
@@ -77,6 +82,7 @@ def test_1_merge_retests_combined_change_and_names_failures(env, tmp_path, previ
     env.repo.git("merge", "-q", "--ff-only", "fix/test-setup")
     remote = env.repo.git("remote", "get-url", "origin")
     env.repo.git("fetch", "-q", str(env.repo.path), "main:main", cwd=remote)
+    env.repo.git("fetch", "-q", "origin", "main")
     app = "print('hello')\n" + ("\n\nLIMIT = 0\n" if case == "review" else "")
     item, where = env.start_fix({"left.txt": "1\n", "app.py": app})
     env.open_pr("")
