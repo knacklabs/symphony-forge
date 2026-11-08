@@ -44,7 +44,7 @@
       "gain": 5,
       "harm": 4,
       "line": 179,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 2,
       "security": false,
@@ -54,27 +54,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "81f3d0a1deaf59e4a9ea6b0203fb873c7ba9b00f8410ba4797b4958fb109cd12",
-    "changed": "87b8e680ebef54e782e6a2affac3bffe9b6f2b0f6d896d0881ac4daf48f86549",
-    "commit": "7012c2614d8feb14ef990915cd692c611999016e",
+    "branch_diff": "34e1d1e00984ef5c5caa3dc92ca43b3f35522c1597aebc272feefa34041d8d4e",
+    "changed": "3b259486d36d1babba1e0a06b2e862c4647fdc79fc8b57fa20045e2f15ffbeb5",
+    "commit": "6ed923dc22e09d8d572695681c82daa836900f3f",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 5, Work 2, Harm 4\nRaise: Functional. Case: normal use - a repo uses `tools = \"codex\"` on a machine with Codex but no Claude or Codex SDK, then upgrades with `codex_fast` absent. The new routing sends every build and repair through the SDK, and `worker.py:456-459` refuses to start without it. These installations previously ran workers natively. The suggested `forge doctor --fix` cannot repair them: `doctor.py:352-355,364` checks and installs the Codex SDK for a Codex-only repo only when Claude is also on PATH. Consequently, the repo cannot run its main work flow.",
-        "file": "src/forge/worker.py",
-        "gain": 5,
-        "harm": 4,
-        "line": 179,
-        "priority": "P0",
-        "title": "Functional: Restore work in Codex-only installations",
-        "work": 2
-      }
-    ],
-    "id": "cfaac8e0-a0db-4fd2-9a09-009cfd4e36f9",
-    "status": "blocked"
+    "findings": [],
+    "id": "d27eda0b-bcf0-4600-8bbe-89d142e38617",
+    "status": "clean"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-07T18:49:17.793888+00:00",
@@ -86,6 +75,10 @@
     },
     {
       "at": "2026-11-08T03:15:34.593708+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-08T03:24:56.461311+00:00",
       "step": "review"
     }
   ],
