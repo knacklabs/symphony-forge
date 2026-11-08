@@ -9,8 +9,8 @@ def guidance(path: str) -> str:
     return " ".join((GUIDANCE / path).read_text(encoding="utf-8").split())
 
 
-def test_1_sync_gives_package_client_tests_thirty_minutes(repo):
-    # The old ten-minute budget now allows thirty minutes for browser flows.
+def test_1_sync_gives_package_client_tests_sixty_minutes(repo):
+    # The old ten-minute budget now allows sixty minutes for browser flows.
     repo.git("checkout", "-q", "-b", "fix/client-browser-tests")
     version = repo.forge("--version").stdout.split()[-1]
     repo.write("forge.toml", f'version = "{version}"\nrepo = "client"\ntest = "npm test"\nchecks = ["tests", "forge-pr-check"]\n')
@@ -20,7 +20,7 @@ def test_1_sync_gives_package_client_tests_thirty_minutes(repo):
     assert result.returncode == 0, result.stderr
     workflow = (repo.path / ".github/workflows/forge.yml").read_text(encoding="utf-8")
     tests_job = workflow.split("\n  tests:\n")[1].split("\n  forge-pr-check:\n")[0]
-    assert "    timeout-minutes: 30\n" in tests_job
+    assert "    timeout-minutes: 60\n" in tests_job
     # The related-test entry point retains the package client's browser budget.
     assert '- run: "forge test --change"' in tests_job
 
@@ -66,7 +66,7 @@ def test_5_flaky_browser_tests_fail_without_retry():
 
 def test_6_browser_test_time_budget_and_groups():
     testing = guidance("templates/conventions/testing.md")
-    assert "30-minute cap" in testing
+    assert "60-minute cap" in testing
     assert "split a suite that outgrows it into groups within the same check" in testing
 
 
