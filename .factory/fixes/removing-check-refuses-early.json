@@ -4,12 +4,20 @@
   "done_when": "Close refuses a change that removes a check from checks together with other changes, naming the removed check and the step: land the removal in a fix that changes only the checks list; such a fix merges after waiting for the checks both lists share",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-08T16:55:19.124397+00:00",
       "step": "start"
     }
   ],
-  "why": "A fix that removes a check from forge.toml's checks list waits forever at merge, because merge waits for main's list and the branch no longer runs that check (issue 1479)"
+  "stuck": {
+    "close": null,
+    "head": "e030163e59c0d40ff5573df733b39cfffa60f694",
+    "keys": {},
+    "round": null
+  },
+  "why": "A fix that removes a check from forge.toml's checks list waits forever at merge, because merge waits for main's list and the branch no longer runs that check (issue 1479)",
+  "worker": "codex"
 }
