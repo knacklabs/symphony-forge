@@ -1,0 +1,137 @@
+{
+  "amendments": [
+    {
+      "at": "2026-11-09T07:55:55.770002+00:00",
+      "because": "Owner chose the simpler message: ready-to-run commands with paths and branch names broke on Windows and unusual branches",
+      "done_when": "forge upgrade run in a fix worktree says to drop that fix and run forge upgrade from the main checkout, with the exact commands, and forge next names forge upgrade <release> when a newer Forge release exists than the repo pins."
+    }
+  ],
+  "base": "9e496f963436afebeb83cccab88abb15b72b3131",
+  "branch": "fix/upgrade-from-fix-points-to-main",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1bf07-6ee6-7140-852d-0fb773e314af",
+    "head": null,
+    "start": "f0f45e6f6d79b9730e52efd76ceb002be901e6ab"
+  },
+  "done_when": "forge upgrade run outside the default branch says in plain words to drop the current fix (if it is a Forge fix) and run forge upgrade <release> from the main checkout on the default branch, with no branch names or paths pasted into commands; forge next names forge upgrade <release> when a newer release exists than the repo pins.",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "src/forge/upgrade.py",
+      "file": "src/forge/upgrade.py",
+      "gain": 5,
+      "harm": 4,
+      "line": 37,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": true,
+      "title": "Quote values before putting them into recovery commands",
+      "work": 1
+    },
+    {
+      "area": "src/forge/upgrade.py",
+      "file": "src/forge/upgrade.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 37,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Leave the fix worktree before running its drop command on Windows",
+      "work": 1
+    },
+    {
+      "area": "src/forge/upgrade.py",
+      "file": "src/forge/upgrade.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 38,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Account for the branch checked out in the main checkout",
+      "work": 1
+    },
+    {
+      "area": "upgrade() in src/forge/upgrade.py",
+      "file": "src/forge/upgrade.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 73,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Distinguish Forge fixes from ordinary fix-prefixed branches",
+      "work": 1
+    },
+    {
+      "area": "test_1_upgrade_in_fix_names_drop_and_main_checkout() in tests/test_upgrade_recovery_steps.py",
+      "file": "tests/test_upgrade_recovery_steps.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 42,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_upgrade_in_fix_names_drop_and_main_checkout",
+      "work": 1
+    },
+    {
+      "area": "test_1_upgrade_in_fix_names_drop_and_main_checkout() in tests/test_upgrade_recovery_steps.py",
+      "file": "tests/test_upgrade_recovery_steps.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 48,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Standard: A path compared as text goes through json.dumps or as_posix",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "581e61aac1b30c64e0944dad8328964b032e1a532e7016813e66ee34751783f9",
+    "changed": "4a03ae20a4f5eaf352627e88596a924591142c4bf5426c4f4228549bc493e17e",
+    "commit": "ffd4413470b7e7c6f069b85fe4cd25fda01f9bd8",
+    "dismissals": [],
+    "findings": [],
+    "id": "b7259202-b491-4b85-accd-5bbf9d0e3088",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-09T06:37:54.601501+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-09T06:59:42.057405+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-09T08:03:40.160294+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "644a8793-a1b3-47a5-92e2-e423e6e59099",
+    "head": "094065e3083410a6f2b9958a4d2da29ea5ee9a5d",
+    "keys": {
+      "the open P0 quote values before putting them into recovery commands in src/forge/upgrade.py": 1
+    },
+    "round": 1
+  },
+  "why": "In a client repo, an agent asked to upgrade Forge runs forge fix start, but forge upgrade refuses in that fix's worktree, so the agent drops the fix and starts again (issue #1483).",
+  "worker": "codex"
+}
