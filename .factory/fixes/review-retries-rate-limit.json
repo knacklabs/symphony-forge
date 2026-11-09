@@ -117,7 +117,7 @@
     "status": "blocked"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-09T17:20:27.575594+00:00",
@@ -130,8 +130,12 @@
   ],
   "stop": {
     "at": "2026-11-09T17:37:32.502097+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "src/forge/review.py",
-    "wait_id": "43cc520f-c354-4c62-a0a6-d3b3f553eb6b"
+    "reason": "The owner wants one more round for the usage-limit message and a test with closes started together; the sign-off parts case stays a follow-up",
+    "wait_id": "43cc520f-c354-4c62-a0a6-d3b3f553eb6b",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
