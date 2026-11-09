@@ -1,6 +1,13 @@
 {
   "base": "3e3edfb1079931edf1582b264629e447c73aeb03",
   "branch": "fix/feature-keeps-projecttype",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1c153-da28-7f72-b98c-681c8de9db81",
+    "head": null,
+    "start": "5d35010088729b51068119ad72dcc93a83003acf"
+  },
   "done_when": "A generated feature's Nx project files keep projectType unchanged, while the starter's project names are still renamed",
   "fix_kind": "mechanical",
   "kind": "fix",
