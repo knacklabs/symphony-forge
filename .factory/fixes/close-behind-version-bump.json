@@ -1,0 +1,15 @@
+{
+  "base": "3e3edfb1079931edf1582b264629e447c73aeb03",
+  "branch": "fix/close-behind-version-bump",
+  "done_when": "Close on a branch behind the default branch's version bump merges the default branch first, or names that merge as the next step, and never tells the person to install an older release",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-09T17:20:22.190382+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "When a branch is behind a version bump on the default branch, close skips merging main and then tells the person to install the older release (#1217)"
+}
