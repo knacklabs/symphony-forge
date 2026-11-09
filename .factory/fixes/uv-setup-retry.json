@@ -1,6 +1,13 @@
 {
   "base": "9608b31a568438a769be2a9e481fd769168d0df7",
   "branch": "fix/uv-setup-retry",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1c03e-7adf-7500-805b-a6fb8bbd950b",
+    "head": null,
+    "start": "4536076d2419deb509bf36a182e09e2c9bc95620"
+  },
   "done_when": "In the generated CI workflow, a failed uv install step tries once more by itself before the job fails",
   "fix_kind": "mechanical",
   "kind": "fix",
