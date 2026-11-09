@@ -1,0 +1,89 @@
+{
+  "base": "9608b31a568438a769be2a9e481fd769168d0df7",
+  "branch": "fix/uv-setup-retry",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1c03e-7adf-7500-805b-a6fb8bbd950b",
+    "head": null,
+    "start": "4536076d2419deb509bf36a182e09e2c9bc95620"
+  },
+  "done_when": "In the generated CI workflow, a failed uv install step tries once more by itself before the job fails",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "_assert_retry() in tests/test_ci_uv_install_retry.py",
+      "file": "tests/test_ci_uv_install_retry.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 29,
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: The owner accepts: the test is stricter than needed about how the condition is spelled; a failure is loud and safe, never hidden",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_new_repo_retries_uv_install_once and test_2_earlier_adopted_repo_gets_uv_retry_on_sync",
+      "work": 2
+    },
+    {
+      "area": "test_2_earlier_adopted_repo_gets_uv_retry_on_sync() in tests/test_ci_uv_install_retry.py",
+      "file": "tests/test_ci_uv_install_retry.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 44,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_2_earlier_adopted_repo_gets_uv_retry_on_sync",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "33252ec5a67210911b99f16e4a92acec928a419146074055ebb51bed99c0983a",
+    "changed": "dd92ac299f529240fdc652ad5f7381756178910f07878f6224ec0689f9e30035",
+    "commit": "dd83b55ee9af23a87d1a0521315f330dba30818e",
+    "dismissals": [],
+    "findings": [],
+    "id": "0b04761f-f631-41cf-85df-b06a598abb5b",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-09T12:17:17.730932+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-09T12:28:35.111156+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-09T13:01:12.329638+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-09T13:13:33.800146+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-09T13:01:12.329851+00:00",
+    "by": "owner",
+    "choice": "accept",
+    "file": "tests/test_ci_uv_install_retry.py",
+    "reason": "The owner accepts: the test is stricter than needed about how the condition is spelled; a failure is loud and safe, never hidden",
+    "wait_id": "5a58a998-d604-423b-a8ea-99cda6d2a83e",
+    "worker_round": 2
+  },
+  "stuck": {
+    "close": "c45904f4-cb66-42c5-9444-39c6e108014b",
+    "head": "0e5b448214b200b8355a2ce157036f5513311956",
+    "keys": {},
+    "round": 2
+  },
+  "why": "The CI step that installs uv fails often on a GitHub server error, and each failure needs a manual rerun",
+  "worker": "codex"
+}
