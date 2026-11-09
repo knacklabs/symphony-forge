@@ -117,7 +117,7 @@
     "status": "blocked"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-09T17:20:33.010327+00:00",
@@ -130,8 +130,12 @@
   ],
   "stop": {
     "at": "2026-11-09T17:37:38.310675+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "src/forge/close.py",
-    "wait_id": "35efb9b1-b06a-49a0-9e73-49d25240233a"
+    "reason": "The owner wants one more round for all four findings, done simply: check the numbers after loading the latest review and change nothing else in the review records",
+    "wait_id": "35efb9b1-b06a-49a0-9e73-49d25240233a",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
