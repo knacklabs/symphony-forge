@@ -50,7 +50,7 @@
     "status": "blocked"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-09T04:28:39.311387+00:00",
@@ -63,8 +63,12 @@
   ],
   "stop": {
     "at": "2026-11-09T05:12:21.231836+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": ".factory/fixes/release-1-2-33.json",
-    "wait_id": "21900365-1926-42ca-9cbb-de34f53ad4ce"
+    "reason": "Put the proof list in a commit message Forge reads",
+    "wait_id": "21900365-1926-42ca-9cbb-de34f53ad4ce",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
