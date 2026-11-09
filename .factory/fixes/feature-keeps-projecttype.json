@@ -11,12 +11,27 @@
   "done_when": "A generated feature's Nx project files keep projectType unchanged, while the starter's project names are still renamed",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "6f58f949f760ee24c94c541a07af4194a741ae989bb83c3f7abc7b64bffc4ead",
+    "changed": "5637fa7e1d4a160dbad715ed0e97a07d827af04c701f736c17cc7e366145e06d",
+    "commit": "526fadb07b6d803ac575b069c1c0cc546ec51462",
+    "dismissals": [],
+    "findings": [],
+    "id": "9b8eaf5c-1082-473b-8cfe-91e4df177eed",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-09T17:20:16.588661+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-09T17:27:35.760588+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
