@@ -72,8 +72,8 @@
     "id": "12284492-80f5-49b8-b808-142ab81e78de",
     "status": "clean"
   },
-  "round": 1,
-  "status": "waiting for checks",
+  "round": 2,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-09T16:57:28.867336+00:00",
@@ -85,10 +85,10 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "fc460ad784f4029702aac7a3aa85ff80693ec82b",
+    "close": "e3046b45-d292-4939-bb00-ace2240d2e39",
+    "head": "7f05135da229e4391fcb55d13ce5fcffab652f48",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "When many Vitest tests fail in CI, forge test's report keeps only the last lines, says test names are not available, and the worker brief gets no failure details",
   "worker": "codex"
