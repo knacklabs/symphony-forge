@@ -1,0 +1,15 @@
+{
+  "base": "e79cf8f55caeb756c17fb1e89fe726d0a7c63c60",
+  "branch": "fix/ci-stream-test-output",
+  "done_when": "On GitHub Actions (GITHUB_ACTIONS=true), forge test prints each line of the test command's output to the job log as it arrives, so a cancelled job still shows how far the tests got; outside GitHub Actions the output stays as it is now.",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-09T03:25:17.541116+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "In a client's GitHub Actions tests job, forge test writes the test command's output only to a log file inside .git and prints the last 30 lines when the command ends. A job that hits the 60-minute limit is cancelled and shows no test output at all, so nobody can see which test was slow or hung."
+}
