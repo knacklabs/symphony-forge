@@ -615,7 +615,7 @@ def test_process(top, item, command, env, entry, ran, log):
             machine.started(entry, process.pid)
             output, total, completed, finished = [], None, 0, set()
             for line in test_output(process):
-                if line.startswith(("Test selection:", "Runner cores (nproc):")):
+                if os.environ.get("GITHUB_ACTIONS") == "true" or line.startswith(("Test selection:", "Runner cores (nproc):")):
                     print(line, end="", flush=True)
                 sink.write(line)
                 sink.flush()
