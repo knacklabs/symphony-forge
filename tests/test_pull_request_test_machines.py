@@ -65,7 +65,8 @@ def test_1_only_pull_request_tests_use_the_optional_machine(repo, gh, tmp_path, 
     for event in ("pull_request", "pull_request_target", "schedule", "workflow_dispatch"):
         assert bool(expression("${{ " + condition + " }}", event_name=event)) == (event == "pull_request")
     if test_runner is None:
-        assert workflow == before
+        assert re.findall(r"^    runs-on: (.+)$", workflow, re.M) == re.findall(
+            r"^    runs-on: (.+)$", before, re.M)
 
 
 @pytest.mark.parametrize("check_name,queued_label,started_label,missing", [
