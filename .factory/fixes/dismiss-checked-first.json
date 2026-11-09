@@ -31,7 +31,7 @@
       "gain": 4,
       "harm": 3,
       "line": 400,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -44,7 +44,7 @@
       "gain": 4,
       "harm": 3,
       "line": 183,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -57,7 +57,7 @@
       "gain": 3,
       "harm": 3,
       "line": 48,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -67,13 +67,13 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "dadf4580a82ece06ecb66c412484bc802d083d20d2edc963688e8fee765487dc",
-    "changed": "6cd0b3c8a8f06bdca03e074ddf1f53d59db60a329501419e84a5828f8a602c9a",
-    "commit": "dd380615cb2ce1bccc2fa5efb450d2d7a8eadd67",
+    "branch_diff": "94781238ce996987afc0b5a608bf59abef4c9d41038bdacd8339b27680476665",
+    "changed": "aa2512b2c4156bd11d2749a6134fb9397f50e6985c1085514189115900b7b9b8",
+    "commit": "766a763a6791c782a6792f520321e6a625b513ce",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - The default branch adds an evidence line, and close merges it into a behind pull request while reusing the earlier review.\nThis validates the evidence against the new head, but a reused review retains its older commit at src/forge/close.py:317. The later dismissal check uses that older commit as its evidence baseline (src/forge/review.py:644). If the cited file or line did not exist then, subsequent edits to the evidence are treated as an addition, so the dismissal can continue to suppress the same serious finding after its proof changes.",
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - The default branch inserts a proof line into an existing file, and close reuses an earlier review after merging it.\nThe check at src/forge/close.py:682-683 verifies only that the cited line number exists in the reviewed commit, not that it is the line cited in the current checkout. If the new proof is inserted at line 20 and the older file already had a line 20, close accepts that unrelated old line and keeps the older commit as the dismissal baseline. A later edit to the inserted proof appears only as an addition in the diff from that baseline, so the check at src/forge/review.py:654-675 does not reopen the finding even though its evidence changed.",
         "file": "src/forge/close.py",
         "gain": 4,
         "harm": 3,
@@ -81,43 +81,13 @@
         "priority": "P1",
         "title": "Dismissal evidence can be tied to the wrong commit",
         "work": 2
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - A worker restores a previously reviewed file to its base version while retaining other changes, then dismisses its old finding when the repair review omits it.\nThe repair review computes its fingerprint before this line appends the old finding (src/forge/review.py:1050). Because that file is no longer in the branch diff, the required check recomputes a different fingerprint from the saved finding list and rejects the review as out of date (src/forge/prcheck.py:462). The dismissal is recorded, but close cannot complete until the record is refreshed.",
-        "file": "src/forge/close.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 400,
-        "priority": "P1",
-        "title": "Retaining an omitted finding can invalidate the required review check",
-        "work": 2
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - A teammate reviews the item on another machine while this machine retains an older worktree.\nThe number is checked against the locally loaded review before remote reconciliation at src/forge/close.py:284. Forge's next view can show the newer remote finding (tests/test_board_counts.py:356), yet close rejects its number if the local review has no findings. Conversely, it can accept a number that was already dismissed remotely. The command does not check the item's current open findings.",
-        "file": "src/forge/close.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 183,
-        "priority": "P1",
-        "title": "Check dismissal numbers after reconciling the item's remote review",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - A close command requests two dismissals, the first open and the second already dismissed.\nEvery invocation in this test supplies only one --dismiss, although the Done-when requires checking each one. An implementation that validates only the first number would pass these cases while accepting the second invalid request and running tests or review. The command-level proof needs to cover that mixed request.",
-        "file": "tests/test_close_dismiss_open_findings.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 48,
-        "priority": "P1",
-        "title": "Gate: test_1_unknown_dismissal_stops_before_tests_or_review",
-        "work": 2
       }
     ],
-    "id": "326f4dd8-f63a-43d6-abdd-2368e6efdb43",
+    "id": "7351bb2f-f1cc-466f-8f00-7c51da812064",
     "status": "blocked"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-09T17:20:33.010327+00:00",
@@ -126,16 +96,16 @@
     {
       "at": "2026-11-09T17:37:38.299652+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-11-09T18:03:00.580379+00:00",
+      "step": "review"
     }
   ],
   "stop": {
-    "at": "2026-11-09T17:37:38.310675+00:00",
-    "by": "owner",
-    "choice": "more",
+    "at": "2026-11-09T18:03:00.580616+00:00",
     "file": "src/forge/close.py",
-    "reason": "The owner wants one more round for all four findings, done simply: check the numbers after loading the latest review and change nothing else in the review records",
-    "wait_id": "35efb9b1-b06a-49a0-9e73-49d25240233a",
-    "worker_round": 1
+    "wait_id": "a917310e-cba0-412c-9993-e33c72a354cc"
   },
   "stuck": {
     "close": "1375f983-a42c-47f2-8ac3-c6293be9997b",
