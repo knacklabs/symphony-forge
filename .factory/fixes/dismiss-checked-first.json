@@ -92,8 +92,8 @@
     "id": "7351bb2f-f1cc-466f-8f00-7c51da812064",
     "status": "clean"
   },
-  "round": 2,
-  "status": "waiting for checks",
+  "round": 3,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-09T17:20:33.010327+00:00",
@@ -118,10 +118,10 @@
     "worker_round": 2
   },
   "stuck": {
-    "close": "1375f983-a42c-47f2-8ac3-c6293be9997b",
-    "head": "f43e86e1095b686f1913ee109c9f978ca11d2772",
+    "close": "c4ecbdd9-d6e5-4d66-8897-28af49bb4ef7",
+    "head": "83488d5359581c69b85e0edeca2295c406b83c1f",
     "keys": {},
-    "round": 1
+    "round": 2
   },
   "why": "A close with --dismiss runs the full tests and review, then refuses the dismissal because it checks only the new repair review's findings, so the whole run is wasted (#1253)",
   "worker": "codex"
