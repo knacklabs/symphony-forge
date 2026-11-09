@@ -1217,6 +1217,10 @@ shares its cache across worktrees, and stays silent when GitHub cannot be reache
 
 An upgrade is one fix. Its pull request carries the new version and every file Forge keeps in the
 repo, rewritten by that version. One command does all of it.
+Use `forge upgrade <release>` directly, not `forge fix start`: upgrade creates its own fix.
+`forge next` gives `Next: forge upgrade <release>` when its release check finds a newer release
+than the repo pins. If upgrade refuses in a fix checkout, ask the owner before dropping that
+fix, then follow the printed drop command and run upgrade in the named main checkout.
 
 Before starting another upgrade, it removes an earlier upgrade's leftover worktree and local
 branch when its pull request has merged and the checkout has no unpushed or uncommitted work.

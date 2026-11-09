@@ -33,6 +33,9 @@ REFUSALS = {
                  "forge next"),
     "not_default": ("forge upgrade runs on {default}, and this checkout is on {branch}.",
                     "git switch {default}, then {again}"),
+    "in_fix": ("forge upgrade runs on {default}, and this checkout is on {branch}.",
+               'forge fix drop {fix} --because "Use forge upgrade from the main checkout"\n'
+               'Then run in the main checkout:\ncd "{main}"\n{again}'),
     "dirty": ("This checkout has changes you haven't committed: {files}.",
               "commit or undo them, then {again}"),
     "running": ("Forge runs are still in progress on this machine:\n{runs}\n"
@@ -67,6 +70,10 @@ def upgrade(args: argparse.Namespace) -> int:
         repo.refuse(REFUSALS["own_repo"])
     default, branch = repo.default_branch(top), repo.current_branch(top)
     if branch != default:
+        if branch.startswith("fix/"):
+            main = repo.git("worktree", "list", "--porcelain", cwd=top).splitlines()[0]
+            repo.refuse(REFUSALS["in_fix"], default=default, branch=branch, fix=branch[4:],
+                        main=main.removeprefix("worktree "), again=again)
         repo.refuse(REFUSALS["not_default"], default=default, branch=branch or "a detached HEAD",
                     again=again)
     # The index and the working tree both, so a staged change undone in the folder still counts;
@@ -216,7 +223,8 @@ def release_notice(top: Path) -> list[str]:
                     tag = None
                 json.dump(tag, claimed)
         if isinstance(tag, str) and RELEASE.fullmatch(tag) and _numbers(tag) > _numbers(pinned):
-            return [f"Forge {tag} is out (you pin {pinned}): forge upgrade {tag}"]
+            return [f"Forge {tag} is out (you pin {pinned}): forge upgrade {tag}",
+                    f"Next: forge upgrade {tag}"]
     except (repo.Refused, OSError, ValueError):
         # No cache access or an in-flight writer: this optional notice must not block next.
         pass
