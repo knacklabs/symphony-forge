@@ -1,0 +1,74 @@
+{
+  "allow_large": "A release bumps the version in every file that records it",
+  "base": "b584f04078edb6e4ff80a0432aaba866e12923f5",
+  "branch": "fix/release-1-2-33",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1beb3-8411-7723-ad56-7485ac1b3176",
+    "head": null,
+    "start": "1e75be10df50b08530f648c72bc9621f4fd90a2f"
+  },
+  "done_when": "The version is 1.2.33, generated files are synced, this repo is pinned to v1.2.33, and the tests pass",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": ".factory/fixes/release-1-2-33.json",
+      "file": ".factory/fixes/release-1-2-33.json",
+      "gain": 4,
+      "harm": 1,
+      "line": 15,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: proof list",
+      "work": 1
+    }
+  ],
+  "proof_list": "Proof list: (1) The version is 1.2.33 everywhere it is recorded: tests/test_release_version.py (close's test run gives its result). (2) This repo is pinned to v1.2.33: tests/test_release_version.py. (3) Generated files are synced: coordinator reports .venv/bin/forge sync wrote no files beyond the version bump; uv.lock records 1.2.33. (4) The tests pass: coordinator reports full runs on main at the base commit b584f0407 all completed with success: forge.yml https://github.com/knacklabs/symphony-forge/actions/runs/42561994341, forge-next.yml https://github.com/knacklabs/symphony-forge/actions/runs/42561997512, starter-smoke https://github.com/knacklabs/symphony-forge/actions/runs/42562000717. Close owns the branch's CI checks. (5) Cheap repository checks: uv run --frozen --python 3.11 pytest -q tests/test_rules.py::test_4_one_test_per_rule tests/test_rules.py::test_5_forge_stays_small - passed (2 tests).",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "2e70c0132a192eca03012e8dde91fedd63e45d4ad3794c481d547d636dde2ced",
+    "changed": "a7c3a9ea7522127c1075bc3f2f086771a98a24fca43045af00ad4a2f4f1f8ed8",
+    "commit": "8cd2fe03e0a836fb23bc3681482e013407fdd8e5",
+    "dismissals": [],
+    "findings": [],
+    "id": "d7cb155a-9da5-42c0-a2c9-b946cf7d292c",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-09T04:28:39.311387+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-09T05:12:21.220034+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-09T05:16:07.019429+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-09T05:12:21.231836+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": ".factory/fixes/release-1-2-33.json",
+    "reason": "Put the proof list in a commit message Forge reads",
+    "wait_id": "21900365-1926-42ca-9cbb-de34f53ad4ce",
+    "worker_round": 1
+  },
+  "stuck": {
+    "close": "d48461d4-4eaa-4be8-b4f3-ab3fced9046e",
+    "head": "277c0751b9fc17bf3a2288359be75806322c57e3",
+    "keys": {},
+    "round": 1
+  },
+  "why": "Release v1.2.33: publish what merged since v1.2.32",
+  "worker": "codex"
+}
