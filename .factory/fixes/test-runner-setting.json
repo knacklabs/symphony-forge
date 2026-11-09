@@ -71,7 +71,7 @@
     "status": "blocked"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-09T12:17:08.201116+00:00",
@@ -84,8 +84,12 @@
   ],
   "stop": {
     "at": "2026-11-09T12:28:12.783920+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "src/forge/prcheck.py",
-    "wait_id": "bfc02bca-ffaa-445c-8853-31c9b39a9ce7"
+    "reason": "The owner wants one more round to fix both findings",
+    "wait_id": "bfc02bca-ffaa-445c-8853-31c9b39a9ce7",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
