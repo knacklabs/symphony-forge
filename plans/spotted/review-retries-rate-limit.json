@@ -30,8 +30,8 @@
       "text": "Gate: test_1_close_waits_and_retries_rate_limits_before_counting_failures",
       "from": "blocking",
       "item": "review-retries-rate-limit",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "edge\ttests/test_close_waits_for_review_rate_limits.py\tFollow-up: Exercise rate-limit retries through the Windows review wrapper",
