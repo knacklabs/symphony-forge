@@ -1,0 +1,92 @@
+{
+  "amendments": [
+    {
+      "at": "2026-11-09T06:56:35.464843+00:00",
+      "because": "The stall could not be reproduced; the builder found the wait message named running tests when the real reason was low memory",
+      "done_when": "When the test lane has a free place, the first waiting test is admitted and starts; a waiter re-checks admission instead of staying blocked on stale holders, and a test reproduces the stuck queue from the issue."
+    }
+  ],
+  "base": "9e496f963436afebeb83cccab88abb15b72b3131",
+  "branch": "fix/test-lane-stuck-waiter",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1bf07-6685-7f31-91ca-5290689273a1",
+    "head": null,
+    "start": "395d95bd4a9983876779f51e9d86f103bd737f0b"
+  },
+  "done_when": "A waiting forge test's message names the real current reason it waits (low memory or high load with the numbers, or the runs that hold the places), and still names the holders and how to free them when places are full; a test covers a memory wait with no admitted test.",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "test_1_waiters_report_memory_and_load_then_start_in_order() in tests/test_wait_reports_current_host_pressure.py",
+      "file": "tests/test_wait_reports_current_host_pressure.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 81,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: When the test lane has a free place, the first waiting test is admitted and starts; a waiter re-checks admission instead of being?",
+      "work": 3
+    },
+    {
+      "area": "_wait() in src/forge/machine.py",
+      "file": "src/forge/machine.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 289,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Preserve holder details when the host is under pressure",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "dd9d72b42775a0317ce131ca617b0176e1c32bd7559247465d4ee6d52c5b4aa3",
+    "changed": "40d7737fe83913d6215b67ef2f09c74e604e1ff496bf6fff1e71af243a105ff7",
+    "commit": "021bf38299a2a867605f5794acdb690aa48df339",
+    "dismissals": [],
+    "findings": [],
+    "id": "a6a43d49-4f4e-4635-b4f9-6be8520b5cf1",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-09T06:37:47.849269+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-09T06:54:45.396869+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-09T07:04:32.213391+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-09T06:54:45.409570+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "src/forge/machine.py",
+    "reason": "Owner chose one more round",
+    "wait_id": "21499648-59f9-4739-ab12-ef230d718682",
+    "worker_round": 2
+  },
+  "stuck": {
+    "close": "b1089ff2-20bd-4e4a-8d5f-acb292544407",
+    "head": "0fd7fad5e3bd168470832657a4c22dfa0c88f5d0",
+    "keys": {},
+    "round": 2
+  },
+  "why": "A waiting forge test can stay blocked for hours: the machine queue holds only waiting test entries, none admitted or started, yet the waiter keeps saying 5 test processes already run and never starts (issue #1475).",
+  "worker": "codex"
+}

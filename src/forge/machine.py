@@ -272,13 +272,11 @@ def _wait(entry: dict[str, Any]) -> dict[str, Any]:
                 occupied = test_allocation(holders) if kind == "test" else len(holders)
                 backlog = bool(mine.get("test_backlog") and kind == "work" and not mine.get("near_end"))
                 waiting = (place, tuple(run["id"] for run in holders), backlog)
-                busy = None
                 # External jobs also drive load, even when no Forge run has started.
                 # ponytail: the one-minute average lags, so a dip can admit up to half the cores at
                 # once; space admissions by a minute if that burst shows up in queue waits.
-                if place <= 0:
-                    busy = _load_per_core()
-                    busy = busy if busy is not None and busy >= LOAD_LIMIT else None
+                busy = _load_per_core()
+                busy = busy if busy is not None and busy >= LOAD_LIMIT else None
                 if place <= 0 and busy is None and not low_memory:
                     # Admission holds the place before the model process is launched.
                     if kind == "test":
@@ -288,26 +286,27 @@ def _wait(entry: dict[str, Any]) -> dict[str, Any]:
             if place <= 0 and busy is None and not low_memory:
                 _lane_event(entry, "lane admitted")
                 return entry
-            if place <= 0 and low_memory:
-                if said != "memory":
-                    print(f"This run is waiting for memory: {available / 1e9:.1f} GB free, "
-                          f"starts above {floor / 1e9:.1f} GB.", flush=True)
-                    said = "memory"
-            elif busy is not None:
-                if said != "busy":
-                    print(f"This machine is busy (load {busy:.1f} per core), so this work round waits "
-                          f"until it is under {LOAD_LIMIT}.", flush=True)
-                    said = "busy"
+            if low_memory or busy is not None:
+                full_holders = holders if occupied >= size else []
+                pressure = ("memory" if low_memory else "busy",
+                            tuple(run["id"] for run in full_holders), False)
+                if said != pressure:
+                    message = (f"This run is waiting for memory: {available / 1e9:.1f} GB free, "
+                               f"starts above {floor / 1e9:.1f} GB." if low_memory else
+                               f"This machine is busy (load {busy:.1f} per core), so this work round waits "
+                               f"until it is under {LOAD_LIMIT}.")
+                    print("\n".join([message, *(_holder(run) for run in full_holders)]), flush=True)
+                    said = pressure
             elif waiting != said:
                 lines = []
                 if backlog and (not isinstance(said, tuple) or not said[2]):
                     lines.append("New builds wait for the test line to clear.")
-                # A holder handover can precede admission of the next run without moving us.
-                if not isinstance(said, tuple) or said[0] != place:
+                # A holder handover can change the reason without moving us in line.
+                if not isinstance(said, tuple) or said[:2] != waiting[:2]:
                     reason = ("This round is near the end, so it goes before new builds."
                               if mine.get("near_end") else _WAIT_REASONS[unblocks])
-                    lines.append(("This one waits " if backlog else
-                                 f"{max(size, occupied)} Forge {'test processes' if kind == 'test' else 'agents'} already run on this machine, so this one waits ")
+                    lines.append(("This one waits " if backlog or not holders else
+                                 f"{occupied} Forge {'test processes' if kind == 'test' else 'agents'} already run on this machine, so this one waits ")
                                  + f"its turn: it is number {place} in line."
                                  + (f" {reason}" if kind != "test" else ""))
                 lines.extend(_holder(run) for run in holders)

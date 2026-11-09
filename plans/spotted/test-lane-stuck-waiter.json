@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/machine.py\tFunctional: Preserve holder details when the host is under pressure\ttest-lane-stuck-waiter",
+      "kind": "bug",
+      "path": "src/forge/machine.py",
+      "line": 289,
+      "text": "Functional: Preserve holder details when the host is under pressure",
+      "from": "blocking",
+      "item": "test-lane-stuck-waiter",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\ttests/test_wait_reports_current_host_pressure.py\tNot done: When the test lane has a free place, the first waiting test is admitted and starts; a waiter re-checks admission instead of being?",
+      "kind": "edge",
+      "path": "tests/test_wait_reports_current_host_pressure.py",
+      "line": 81,
+      "text": "Not done: When the test lane has a free place, the first waiting test is admitted and starts; a waiter re-checks admission instead of being?",
+      "from": "review",
+      "item": "test-lane-stuck-waiter",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
