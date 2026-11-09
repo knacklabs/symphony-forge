@@ -179,8 +179,6 @@ def close(args: argparse.Namespace) -> int:
         repo.refuse(REFUSALS["question"], item=item, question=question)
     if cfg["test_place"] == "ci" and not cfg["checks"]:
         repo.refuse(REFUSALS["no_checks"])
-    previous = state.get("review") or {}
-    dismissals = _dismissals(args, item, previous)
     branch, default = state["branch"], repo.default_branch(top)
     stacked_on = state.get("stacked_on") if "/" in item else ""
     pr = _pull_request(top, branch)
@@ -195,8 +193,12 @@ def close(args: argparse.Namespace) -> int:
         return _merged(top, item)
 
     checks.required(top, default)
-    if not (skip or previous.get("skipped")):
+    if not (skip or (state.get("review") or {}).get("skipped")):
         review.require_engine(cfg)  # before merging or committing state
+    reconcile(top, branch)
+    state = repo.read_state(item, top) or state
+    previous = state.get("review") or {}
+    dismissals = _dismissals(args, item, previous)
     legacy_diff = None
     if (previous and "branch_diff" not in previous and previous.get("changed") ==
             review.fingerprint("HEAD", item, top, state, f"origin/{default}")):
@@ -280,8 +282,6 @@ def close(args: argparse.Namespace) -> int:
     app_baseline.migrations(top, cfg, baseline)
     if not migrating:
         _synced(top, item)
-    # Reconcile remote work before choosing tests or reusing an earlier review.
-    reconcile(top, branch)
     if skip:
         review_skip.requested(args, top, item, state)
     _warn_fix_kind(top, state, review_ref)
@@ -323,7 +323,8 @@ def close(args: argparse.Namespace) -> int:
     requested = []
     for number, because in dismissals:
         finding = previous["findings"][number - 1]
-        requested.append((finding, because, _check_line(top, item, head, review_ref, because.split()[0])))
+        requested.append((finding, because, _check_line(top, item, result["commit"] if fresh else head,
+                                                       review_ref, because.split()[0])))
     evidence = ("\n\n".join(part for part in (
                     review.before_coding(top, base, head),
                     review.commit_paragraph(top, review_ref, "Functional check:")) if part),
@@ -396,9 +397,7 @@ def close(args: argparse.Namespace) -> int:
         number = next((n for n, current in enumerate(result["findings"], 1)
                        if score.identity(current["file"], current["title"]) == score.identity(finding["file"], finding["title"])), 0)
         if not number:
-            # Keep the owner's decision when the repair report omits the finding.
-            result["findings"].append(finding)
-            number = len(result["findings"])
+            continue  # The repair review no longer reports this earlier finding.
         result["dismissals"] = [d for d in result["dismissals"] if d["finding"] != number]
         result["dismissals"].append({"finding": number, "because": because,
                                      "from_base": from_base})
@@ -676,6 +675,7 @@ def _dismissals(args: argparse.Namespace, item: str, previous: dict[str, Any]) -
 
 def _check_line(top: Path, item: str, commit: str, base: str, where: str) -> bool:
     """Use the base only when the branch deleted the cited file."""
+    base = repo.git("merge-base", base, commit, cwd=top)
     path, _, line = where.rpartition(":")
     from_base = path in repo.git("diff", "--name-only", "-z", "--diff-filter=D", "--no-renames",
                                  base, commit, "--", path, cwd=top).split("\0")
