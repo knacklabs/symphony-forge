@@ -70,7 +70,7 @@
     "id": "ee802fee-c56b-4621-a23d-90605feb9d22",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -92,10 +92,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": null,
-    "head": "7f54a499974093dc8ac89860e127af606de5162b",
+    "close": "13434675-d7c7-4e05-bab7-08d4c02e6b67",
+    "head": "45600de4956c3f2f86d172e3c75d4b9fb42a3211",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "A client that pays for CI machines pays for every Forge CI job, because one runner setting picks the machine for all of them, including the short jobs and the nightly full test run",
   "worker": "codex"
