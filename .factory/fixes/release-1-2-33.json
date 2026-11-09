@@ -12,6 +12,7 @@
   "done_when": "The version is 1.2.33, generated files are synced, this repo is pinned to v1.2.33, and the tests pass",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "proof_list": "Proof list: (1) The version is 1.2.33 everywhere it is recorded: tests/test_release_version.py (close's test run gives its result). (2) This repo is pinned to v1.2.33: tests/test_release_version.py. (3) Generated files are synced: coordinator reports .venv/bin/forge sync wrote no files beyond the version bump; uv.lock records 1.2.33. (4) The tests pass: coordinator reports full runs on main at the base commit b584f0407 all completed with success: forge.yml https://github.com/knacklabs/symphony-forge/actions/runs/42561994341, forge-next.yml https://github.com/knacklabs/symphony-forge/actions/runs/42561997512, starter-smoke https://github.com/knacklabs/symphony-forge/actions/runs/42562000717. Close owns the branch's CI checks. (5) Cheap repository checks: uv run --frozen --python 3.11 pytest -q tests/test_rules.py::test_4_one_test_per_rule tests/test_rules.py::test_5_forge_stays_small - passed (2 tests).",
   "round": 1,
   "status": "working",
   "steps": [
