@@ -11,14 +11,82 @@
   "done_when": "In the generated CI workflow, a failed uv install step tries once more by itself before the job fails",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [
+    {
+      "area": "_assert_retry() in tests/test_ci_uv_install_retry.py",
+      "file": "tests/test_ci_uv_install_retry.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 29,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_new_repo_retries_uv_install_once and test_2_earlier_adopted_repo_gets_uv_retry_on_sync",
+      "work": 2
+    },
+    {
+      "area": "test_2_earlier_adopted_repo_gets_uv_retry_on_sync() in tests/test_ci_uv_install_retry.py",
+      "file": "tests/test_ci_uv_install_retry.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 44,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_2_earlier_adopted_repo_gets_uv_retry_on_sync",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "cf9f76dcad0392e1fa93cc462cebe721a8cf775e941863b89c96b8f63416aa98",
+    "changed": "af6edfd494f43714019ce263ef2c26f6ba0a4990622b4054e86fa9969cc4be1c",
+    "commit": "d540edac38fe4392f8ec57efdd8f0d2e30f53fd2",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - a transient uv installation failure in the trusted review or nightly job.\nBoth tests use `_assert_retry`, which checks only that the retry condition contains a particular substring. Appending `&& github.event_name == 'pull_request'` would still pass both tests, while disabling retries for `pull_request_target`, scheduled and manual runs. The helper also counts three pairs without checking which jobs contain them, so moving the nightly pair into another job would pass. Conversely, wrapping the equivalent condition in `${{ ... }}`, which [GitHub Actions accepts](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#jobsjob_idstepsif), breaks the test. Check the effective condition and its job at the generated-workflow boundary.",
+        "file": "tests/test_ci_uv_install_retry.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 29,
+        "priority": "P1",
+        "title": "Gate: test_1_new_repo_retries_uv_install_once and test_2_earlier_adopted_repo_gets_uv_retry_on_sync",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - an earlier-adopted client syncs its existing CI workflow after upgrading Forge.\nThe copied v1.2.2 fixture has no `.github/workflows/forge.yml`, and the seed repo contains only a README (`tests/conftest.py:475-479`). This test therefore checks creation, not replacement, of the workflow. A regression that creates missing workflows but leaves existing ones unchanged would pass, while existing clients retain the single-attempt install. Start this case with the earlier generated workflow and verify that sync replaces it.",
+        "file": "tests/test_ci_uv_install_retry.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 44,
+        "priority": "P1",
+        "title": "Gate: test_2_earlier_adopted_repo_gets_uv_retry_on_sync",
+        "work": 2
+      }
+    ],
+    "id": "9f338792-4645-438f-9473-3969a5085802",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-09T12:17:17.730932+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-09T12:28:35.111156+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-11-09T12:28:35.121826+00:00",
+    "file": "tests/test_ci_uv_install_retry.py",
+    "wait_id": "6c82fcdb-c33a-4cda-a3e4-822a556e3b37"
+  },
   "stuck": {
     "close": null,
     "head": "0bb78decfad81c4cc43991e9ab07d2164f9a13ab",
