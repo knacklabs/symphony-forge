@@ -1252,9 +1252,11 @@ what is still missing.
 A repo pinned to a release without `forge upgrade` runs it once through uv:
 `uvx --from git+https://github.com/knacklabs/symphony-forge@<release> forge upgrade <release>`.
 Until the upgrade merges, the default branch keeps working with the new release installed.
-After it merges, older branches keep their pinned release and its rules. If close stops because
-the branch pins an older release than the default branch, run `forge work <item>` to merge the
-default branch. Then run `forge close <item>` again.
+After it merges, older branches keep their pinned release and its rules. When Forge says the
+default branch already pins the installed release, merge `origin/<default>` into your branch to
+use that release and its rules.
+If close stops because the branch pins an older release than the default branch, run
+`forge work <item>` to merge the default branch. Then run `forge close <item>` again.
 
 ## Refresh dependencies
 
