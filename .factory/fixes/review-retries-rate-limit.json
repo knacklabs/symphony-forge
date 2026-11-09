@@ -11,14 +11,128 @@
   "done_when": "A review that gets a 429 rate-limit answer waits and tries again before it counts as failed, so closes that start together all finish their reviews",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [
+    {
+      "area": "run() in src/forge/review.py",
+      "file": "src/forge/review.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 989,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "A 429 usage-limit answer can still exhaust both review attempts",
+      "work": 2
+    },
+    {
+      "area": "run() in src/forge/review.py",
+      "file": "src/forge/review.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 979,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "A rate-limited sign-off can repeatedly restart every review part",
+      "work": 2
+    },
+    {
+      "area": "test_1_close_waits_and_retries_rate_limits_before_counting_failures() in tests/test_close_waits_for_review_rate_limits.py",
+      "file": "tests/test_close_waits_for_review_rate_limits.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 33,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_close_waits_and_retries_rate_limits_before_counting_failures",
+      "work": 2
+    },
+    {
+      "area": "tests/test_close_waits_for_review_rate_limits.py",
+      "file": "tests/test_close_waits_for_review_rate_limits.py",
+      "gain": 2,
+      "harm": 1,
+      "line": 18,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Follow-up: Exercise rate-limit retries through the Windows review wrapper",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "099edfa6db87a3082ea3f213969c6c64ae6fb383574689cd8ead4513e5d7b0bc",
+    "changed": "7009cfd42fe2a397f31c0e2540c5513d01876cd4ef2fdb3e19a4bc30999e8d3f",
+    "commit": "682f7ec65f7d0f580d6fa2fea2b5e007c2d16ae6",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - several reviews exhaust a shared Codex usage window and receive a 429. Codex maps a `usage_limit_reached` response to a message such as \u201cYou\u2019ve hit your usage limit\u201d ([mapping](https://github.com/openai/codex/blob/main/codex-rs/codex-api/src/api_bridge.rs), [message](https://github.com/openai/codex/blob/main/codex-rs/protocol/src/error.rs)). That message matches none of these patterns. `src/forge/autoreview.py:60` and `src/forge/autoreview.py:100` pass only the last nonempty output line as the reason, so when the helper returns that wording, close counts each response as a failure and stops after two attempts without waiting. The test supplies literal `429` strings instead. This misses the Done-when: \u201cA review that gets a 429 rate-limit answer waits and tries again before it counts as failed, so closes that start together all finish their reviews\u201d.",
+        "file": "src/forge/review.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 989,
+        "priority": "P1",
+        "title": "A 429 usage-limit answer can still exhaust both review attempts",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - a client sign-off has 13 review parts and the service permits fewer simultaneous requests. `src/forge/review_process.py:69` launches every part concurrently, and a failed part fails the whole attempt. This new loop retries the entire sign-off after a recognized 429, launching all 13 parts together again; the same concurrency limit can therefore reject a part on every retry. Sign-off never completes and repeatedly runs the parts that already succeeded. `tests/test_signoff_checks_overlap.py:38` shows a 13-part product review.\nAdds work: retry only failed sign-off parts; F 2 x H 2 = 4; 2 x C = 4",
+        "file": "src/forge/review.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 979,
+        "priority": "P1",
+        "title": "A rate-limited sign-off can repeatedly restart every review part",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - concurrent closes encounter temporary throttling. The named proof runs one close, so it does not establish that closes started together all finish. It also replaces `review.time.sleep` with an immediate log write and checks the wait log separately from the review-call log. An implementation that retried immediately and performed the recorded sleeps only after the attempts would still pass, although it gives the service no time to recover. Exercise the concurrent commands and verify that each retry waits before the next attempt. The shim also depends on the private `review.time` import shape, so a behavior-preserving clock refactor breaks the test.",
+        "file": "tests/test_close_waits_for_review_rate_limits.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 33,
+        "priority": "P1",
+        "title": "Gate: test_1_close_waits_and_retries_rate_limits_before_counting_failures",
+        "work": 2
+      },
+      {
+        "body": "Gain 2, Work 1, Harm 1\nWindows uses the separate `review_process.py` wrapper at `src/forge/review.py:973`, so a wrapper regression that loses a 429 diagnostic would leave Windows closes stopping after two attempts while the Linux proof passes. The proof list leaves platform proof to pull request CI, but `.github/workflows/forge.yml:49` runs Linux, and the Windows suite in `.github/workflows/forge-next.yml:75` runs on a schedule or manual dispatch and selects only `platform`-marked tests; this test has no such mark.\nAdds work: exercise the Windows wrapper in the retry test; F 1 x H 2 = 2; 2 x C = 2",
+        "file": "tests/test_close_waits_for_review_rate_limits.py",
+        "gain": 2,
+        "harm": 1,
+        "line": 18,
+        "priority": "P2",
+        "title": "Follow-up: Exercise rate-limit retries through the Windows review wrapper",
+        "work": 1
+      }
+    ],
+    "id": "ebdbdaf6-8449-4339-a093-08d3d557c629",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-09T17:20:27.575594+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-09T17:37:32.491092+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-11-09T17:37:32.502097+00:00",
+    "file": "src/forge/review.py",
+    "wait_id": "43cc520f-c354-4c62-a0a6-d3b3f553eb6b"
+  },
   "stuck": {
     "close": null,
     "head": "8dff81829ad17f96746562a630c165f7b6bbbee2",

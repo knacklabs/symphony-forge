@@ -1,0 +1,48 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/review.py\tA 429 usage-limit answer can still exhaust both review attempts\treview-retries-rate-limit",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 989,
+      "text": "A 429 usage-limit answer can still exhaust both review attempts",
+      "from": "blocking",
+      "item": "review-retries-rate-limit",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tA rate-limited sign-off can repeatedly restart every review part\treview-retries-rate-limit",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 979,
+      "text": "A rate-limited sign-off can repeatedly restart every review part",
+      "from": "blocking",
+      "item": "review-retries-rate-limit",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_close_waits_for_review_rate_limits.py\tGate: test_1_close_waits_and_retries_rate_limits_before_counting_failures\treview-retries-rate-limit",
+      "kind": "bug",
+      "path": "tests/test_close_waits_for_review_rate_limits.py",
+      "line": 33,
+      "text": "Gate: test_1_close_waits_and_retries_rate_limits_before_counting_failures",
+      "from": "blocking",
+      "item": "review-retries-rate-limit",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\ttests/test_close_waits_for_review_rate_limits.py\tFollow-up: Exercise rate-limit retries through the Windows review wrapper",
+      "kind": "edge",
+      "path": "tests/test_close_waits_for_review_rate_limits.py",
+      "line": 18,
+      "text": "Follow-up: Exercise rate-limit retries through the Windows review wrapper",
+      "from": "review",
+      "item": "review-retries-rate-limit",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
