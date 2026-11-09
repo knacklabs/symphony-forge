@@ -38,7 +38,7 @@
       "gain": 4,
       "harm": 4,
       "line": 754,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 1,
       "security": false,
@@ -51,7 +51,7 @@
       "gain": 3,
       "harm": 3,
       "line": 16,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 1,
       "security": false,
@@ -61,37 +61,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "98001d8544193deca37323f2516eaaf1992d5b7dedeed3dc0f4a4968599767b1",
-    "changed": "5e70494f9e38dd8c622bf3bf0d21967958c52a4189f7fa7aee0a46644ba87b70",
-    "commit": "dd1eccaf3b81f596911141e63208983923cb4900",
+    "branch_diff": "7c26753d11b635aa2f74c8e48a6dbae3afdf094f3352b76676d0f2ce48027a07",
+    "changed": "1c07bc4e93fff8e4f31cf506d5ce84e4efa92c66ab5e2c24863e10fae47fc288",
+    "commit": "7bc12cd3b5670885db90cca9583238f30678f26a",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 2, Harm 4\nRaise: Functional\nCase: normal use - a Forge source checkout is behind a release that adds a setting and changes a shipped template. The repaired comparison allows the merge, but `sync.refresh_merged_guides` then calls the old process's `repo.config(top)` at src/forge/sync.py:603-609. That parser rejects the unfamiliar setting before the handoff at src/forge/close.py:245, so close still stops instead of continuing under the newly pinned release.",
-        "file": "src/forge/close.py",
-        "gain": 4,
-        "harm": 4,
-        "line": 754,
-        "priority": "P1",
-        "title": "Avoid validating default-branch settings before the merge",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - a working branch and an incoming upgrade both refresh a generated guide, causing a conflict. The revised test installs a pre-commit hook, but its working branch changes only `app.py` (tests/test_close.py:228-232), so its incoming merge is clean. [Git](https://git-scm.com/docs/githooks) runs pre-merge-commit for that merge; Forge installs pre-commit and pre-push, not pre-merge-commit (src/forge/githooks.py:65). A generated-file conflict instead reaches `git commit` at src/forge/close.py:810, where a broken incoming-pin handoff in the real pre-commit hook would reject the new settings while both revised cases still pass. The existing changed-pin conflict proof explicitly has no installed pre-commit hook (tests/test_running_commands_follow_changed_forge_pin.py:194-199).",
-        "file": "tests/test_close_incoming_release.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 47,
-        "priority": "P1",
-        "title": "Gate: test_1_close_merges_default_release_before_upgrade_validation on real clients",
-        "work": 2
-      }
-    ],
-    "id": "4902f6ed-fbcd-4f1f-ba4d-1c14137b6ce8",
-    "status": "blocked"
+    "findings": [],
+    "id": "1f2607be-d533-4521-961a-3a3c87c26d9d",
+    "status": "clean"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-09T17:20:22.190382+00:00",
@@ -103,6 +82,10 @@
     },
     {
       "at": "2026-11-09T18:01:35.959385+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-09T18:33:49.997680+00:00",
       "step": "review"
     }
   ],
