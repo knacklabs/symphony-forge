@@ -315,6 +315,7 @@ def queued_reason(top: Path, sha: str, item: str = "", *, number: int | None = N
     """Doctor recovers queued runs, then diagnoses runner activity after five minutes."""
     now = datetime.fromisoformat(repo.now())
     queued = False
+    queued_names = set()
     untimed_suites = set()
     checks = _ask(top, item, ".check_runs",
                   f"repos/{{owner}}/{{repo}}/commits/{sha}/check-runs?per_page=100")
@@ -325,7 +326,9 @@ def queued_reason(top: Path, sha: str, item: str = "", *, number: int | None = N
         if check.get("status") != "queued" or check.get("head_sha", sha) != sha:
             continue
         try:
-            queued |= datetime.fromisoformat(check["started_at"]) <= now - timedelta(minutes=5)
+            if datetime.fromisoformat(check["started_at"]) <= now - timedelta(minutes=5):
+                queued = True
+                queued_names.add(check.get("name", ""))
         except (KeyError, ValueError, TypeError):
             if suite := check.get("check_suite", {}).get("id"):
                 untimed_suites.add(suite)
@@ -344,12 +347,19 @@ def queued_reason(top: Path, sha: str, item: str = "", *, number: int | None = N
         if run.get("check_suite_id") not in untimed_suites or run.get("status") != "queued":
             continue
         try:
-            queued |= since <= datetime.fromisoformat(run["run_started_at"]) <= now - timedelta(minutes=5)
+            if since <= datetime.fromisoformat(run["run_started_at"]) <= now - timedelta(minutes=5):
+                queued = True
+                queued_names.update(check.get("name", "") for check in checks
+                                    if check.get("status") == "queued"
+                                    and check.get("check_suite", {}).get("id") == run["check_suite_id"])
         except (KeyError, ValueError, TypeError):
             pass
     if not queued:
         return ""
-    runner = repo.config(top)["runner"]
+    cfg = repo.config(top)
+    runners = {key: cfg[key] for key in ("runner", "test_runner") if cfg.get(key)}
+    missing = {}
+    started_labels = set()
     # One newest-first page of runs and one page of latest jobs per run bound the lookup.
     for run in runs[:100]:
         if run.get("conclusion") == "success":
@@ -362,18 +372,31 @@ def queued_reason(top: Path, sha: str, item: str = "", *, number: int | None = N
         jobs = _ask(top, item, ".jobs",
                     f"repos/{{owner}}/{{repo}}/actions/runs/{run['id']}/jobs?per_page=100",
                     paginate=False)
+        if run.get("head_sha") == sha:
+            # The matrix's result job and a single test job both appear as "tests".
+            labels = {label.casefold() for job in jobs if job.get("status") == "queued"
+                      and job.get("name") in queued_names for label in job.get("labels") or []}
+            missing.update({key: runner for key, runner in runners.items() if runner.casefold() in labels})
         for job in jobs:
-            if not job.get("runner_id") or not any(
-                    runner.casefold() == label.casefold() for label in job.get("labels") or []):
+            if not job.get("runner_id"):
                 continue
             try:
                 if datetime.fromisoformat(job["started_at"]) <= now:
-                    return ""
+                    started_labels.update(label.casefold() for label in job.get("labels") or [])
             except (KeyError, ValueError, TypeError):
                 pass
+        if all(runner.casefold() in started_labels for runner in runners.values()):
+            return ""
+    # Keep the ordinary runner diagnosis when the sampled jobs supply no current labels.
+    if not missing:
+        missing = {"runner": cfg["runner"]}
+    missing = {key: runner for key, runner in missing.items() if runner.casefold() not in started_labels}
+    if not missing:
+        return ""
+    settings = ", ".join(f"{key} = {json.dumps(runner)}" for key, runner in sorted(missing.items()))
     return ("Checks have been queued for at least five minutes: likely missing runner; "
             "no matching job started in this repo's sampled non-successful runs from the "
-            f"last seven days using runner = {json.dumps(runner)} in forge.toml")
+            f"last seven days using {settings} in forge.toml")
 
 
 def _cancel_superseded(top: Path, item: str, checks: list[dict[str, Any]], *,
