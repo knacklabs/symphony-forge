@@ -195,17 +195,8 @@ def close(args: argparse.Namespace) -> int:
     checks.required(top, default)
     if not (skip or (state.get("review") or {}).get("skipped")):
         review.require_engine(cfg)  # before merging or committing state
-    reconcile(top, branch)
-    state = repo.read_state(item, top) or state
-    previous = state.get("review") or {}
-    dismissals = _dismissals(args, item, previous)
-    legacy_diff = None
-    if (previous and "branch_diff" not in previous and previous.get("changed") ==
-            review.fingerprint("HEAD", item, top, state, f"origin/{default}")):
-        legacy_diff = review.fingerprint(previous["commit"], item, top, state,
-                                         f"origin/{default}", branch_diff=True)
-    repairs = bool(stacked_on and previous.get("commit") and
-                   merge_review.repairs(top, previous["commit"]))
+    repairs = bool(stacked_on and (state.get("review") or {}).get("commit") and
+                   merge_review.repairs(top, state["review"]["commit"]))
     try:
         _merge_default(top, item, branch, default, pr, cfg, refreshed=refreshed, publish=False)
     except repo.Refused as error:
@@ -219,6 +210,15 @@ def close(args: argparse.Namespace) -> int:
                 _publish(top, item, state, branch, default, pr,
                          {"status": "reviewing", "findings": [], "dismissals": []}, ("", ""))
         raise
+    reconcile(top, branch)
+    state = repo.read_state(item, top) or state
+    previous = state.get("review") or {}
+    dismissals = _dismissals(args, item, previous)
+    legacy_diff = None
+    if (previous and "branch_diff" not in previous and previous.get("changed") ==
+            review.fingerprint("HEAD", item, top, state, f"origin/{default}")):
+        legacy_diff = review.fingerprint(previous["commit"], item, top, state,
+                                         f"origin/{default}", branch_diff=True)
     stacked_waiting = bool(stacked_on and not task._merged(f"origin/{default}", stacked_on, top))
     review_ref, pr_target = f"origin/{default}", default
     if stacked_waiting:
