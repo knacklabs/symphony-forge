@@ -1,0 +1,15 @@
+{
+  "base": "9608b31a568438a769be2a9e481fd769168d0df7",
+  "branch": "fix/test-runner-setting",
+  "done_when": "An optional test_runner setting in forge.toml picks the machine for the pull-request test jobs only; every other job, including the nightly full test run, uses runner; without test_runner nothing changes",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-09T12:17:08.201116+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "A client that pays for CI machines pays for every Forge CI job, because one runner setting picks the machine for all of them, including the short jobs and the nightly full test run"
+}
