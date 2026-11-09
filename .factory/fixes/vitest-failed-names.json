@@ -1,6 +1,13 @@
 {
   "base": "3e3edfb1079931edf1582b264629e447c73aeb03",
   "branch": "fix/vitest-failed-names",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1c13e-9be5-7ad3-9973-ffa73ccca3f5",
+    "head": null,
+    "start": "0aa47e2e264ce0e9857b6aec17fdfbef3704cee5"
+  },
   "done_when": "When a Vitest run fails, forge test's report names every failed test case with its first error line, and the worker brief carries them",
   "fix_kind": "mechanical",
   "kind": "fix",
