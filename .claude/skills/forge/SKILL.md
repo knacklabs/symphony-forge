@@ -2018,6 +2018,8 @@ Gain 1 or 2 is lived with. Never re-score a finding to change its
 outcome. Dismiss only a finding outside the boundary or factually wrong, with
 `forge close <item> --dismiss <n> --because "<file:line> <why>"`, where the why names the Leave
 out line it falls under or the Raise line it lacks, or the file:line is the code that disproves it.
+Use the number of an open finding in the item's saved review. Close checks the number and
+evidence before tests or review. A repair review can omit an earlier finding without refusing the request.
 Close fetches the default branch but merges it in only for a trial-merge clash, or when GitHub
 reports the pull request conflicting or behind under its up-to-date rule. Unrelated main changes
 add no merge. Close checks GitHub's clash state at every look, even with green checks; a clash
