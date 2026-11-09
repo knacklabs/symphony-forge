@@ -54,24 +54,13 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "17f6dbc69de1aac47331b7fa37ddfdd5139271df85ef7208fe582747e931a88c",
-    "changed": "199cfc470721ff6700e73d4d15b792b41800853cf132a15483ef86f9f75a9253",
-    "commit": "eb23f45786bbe4cd75219c034ed9708a4a2a9b51",
+    "branch_diff": "98001d8544193deca37323f2516eaaf1992d5b7dedeed3dc0f4a4968599767b1",
+    "changed": "5e70494f9e38dd8c622bf3bf0d21967958c52a4189f7fa7aee0a46644ba87b70",
+    "commit": "dd1eccaf3b81f596911141e63208983923cb4900",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 5, Work 3, Harm 3\nRaise: Not done\nCase: normal use - a task stacked on an unmerged part is closed after the default branch upgrades. `_merge_default` returns at src/forge/close.py:698-699 before reaching the new version comparison. The later validation at lines 821-831 then treats the inherited old pin as an upgrade and asks the person to install that older release.\nA developer closing from an old checkout can also miss the repair: src/forge/cli.py:147-148 calls `check_pin` first, and src/forge/repo.py:976-1011 runs the old pinned release. If `origin/main` has not yet been fetched, that handoff gives no merge advice; the old release can then retain the clean-merge shortcut.\nOwner's Done-when: \"Close on a branch behind the default branch's version bump merges the default branch first, or names that merge as the next step, and never tells the person to install an older release\"",
-        "file": "src/forge/close.py",
-        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
-        "gain": 5,
-        "harm": 3,
-        "line": 754,
-        "priority": "P1",
-        "title": "Not done: Close behind the default branch's version bump still misses the merge",
-        "work": 3
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 4 (floor: migration)\nRaise: Functional\nCase: normal use - main advances while a team is adopting Forge, or a newer release adds a setting the running release does not recognize. `repo.default_config` at src/forge/repo.py:713-721 requires and fully validates main's `forge.toml` before this condition checks whether GitHub already requires a merge. During initial adoption or migration, that file exists only on the work branch, so close now refuses with \"This repo has no forge.toml\" instead of closing. An older running release likewise rejects an unfamiliar new setting before it can merge and hand off to the new pin. The existing handoff test in tests/test_running_commands_follow_changed_forge_pin.py:19-35 and 151-170 models that second case; by inspection, the new lookup reaches the old parser first.",
+        "body": "Gain 4, Work 2, Harm 4\nRaise: Functional\nCase: normal use - a Forge source checkout is behind a release that adds a setting and changes a shipped template. The repaired comparison allows the merge, but `sync.refresh_merged_guides` then calls the old process's `repo.config(top)` at src/forge/sync.py:603-609. That parser rejects the unfamiliar setting before the handoff at src/forge/close.py:245, so close still stops instead of continuing under the newly pinned release.",
         "file": "src/forge/close.py",
         "gain": 4,
         "harm": 4,
@@ -81,17 +70,17 @@
         "work": 2
       },
       {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - an initialized or earlier-adopted client closes a branch after an upgrade changes the pin and generated files. The `new` case uses the bare seed repository and a hand-written configuration from tests/conftest.py:475-499 and tests/test_close.py:275-283. The adopted case copies tracked fixture files, but neither case initializes or syncs the client to install its Git hooks, and the simulated release changes only the version line. Both proofs would therefore pass if the real pre-commit hook at src/forge/githooks.py:122-146 rejected the incoming release merge. The repository's review rule requires the new-client cases and an earlier-adopted case, so the command-level proof needs to exercise those actual client setups.",
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - a working branch and an incoming upgrade both refresh a generated guide, causing a conflict. The revised test installs a pre-commit hook, but its working branch changes only `app.py` (tests/test_close.py:228-232), so its incoming merge is clean. [Git](https://git-scm.com/docs/githooks) runs pre-merge-commit for that merge; Forge installs pre-commit and pre-push, not pre-merge-commit (src/forge/githooks.py:65). A generated-file conflict instead reaches `git commit` at src/forge/close.py:810, where a broken incoming-pin handoff in the real pre-commit hook would reject the new settings while both revised cases still pass. The existing changed-pin conflict proof explicitly has no installed pre-commit hook (tests/test_running_commands_follow_changed_forge_pin.py:194-199).",
         "file": "tests/test_close_incoming_release.py",
         "gain": 3,
         "harm": 3,
-        "line": 16,
+        "line": 47,
         "priority": "P1",
         "title": "Gate: test_1_close_merges_default_release_before_upgrade_validation on real clients",
         "work": 2
       }
     ],
-    "id": "d8c4d991-a927-4785-af92-e054082dc3cc",
+    "id": "4902f6ed-fbcd-4f1f-ba4d-1c14137b6ce8",
     "status": "blocked"
   },
   "round": 2,
@@ -103,6 +92,10 @@
     },
     {
       "at": "2026-11-09T17:32:13.439650+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-09T18:01:35.959385+00:00",
       "step": "review"
     }
   ],
