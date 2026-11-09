@@ -4,12 +4,20 @@
   "done_when": "In the generated CI workflow, a failed uv install step tries once more by itself before the job fails",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-09T12:17:17.730932+00:00",
       "step": "start"
     }
   ],
-  "why": "The CI step that installs uv fails often on a GitHub server error, and each failure needs a manual rerun"
+  "stuck": {
+    "close": null,
+    "head": "0bb78decfad81c4cc43991e9ab07d2164f9a13ab",
+    "keys": {},
+    "round": null
+  },
+  "why": "The CI step that installs uv fails often on a GitHub server error, and each failure needs a manual rerun",
+  "worker": "codex"
 }
