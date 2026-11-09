@@ -504,6 +504,7 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False,
             report = results.read_text("utf-8") if results.is_file() else ""
             failures = sorted({node for outcome, node in re.findall(r"^(\w+) (.+)$", report, re.M)
                                if outcome in ("failed", "error")})
+            failures = sorted(set(failures) | fasttest.vitest_failures(out))
             lines += ["Failed tests:", *([f"- {node}" for node in failures] or
                        ["Test names are not available from this test command."]),
                       f"Full test log: {log.as_posix()}"]

@@ -603,6 +603,28 @@ def test_output(process, *, lines=True):
         watcher.join()
 
 
+def vitest_failures(lines):
+    """Read Vitest's failure groups, including pnpm's streamed package prefixes."""
+    cases, pending = {}, []
+    for line in lines:
+        line = re.sub(r"\x1b\[[0-9;]*m", "", line).strip()
+        # A bare multi-word error (Unknown Error) is not a package/script prefix.
+        if not re.match(r"(?:\w+ )*\w*Error:", line):
+            line = re.sub(r"^\S+\s+\S+:\s*", "", line)
+        header = re.match(r"(?:FAIL\s+|×\s+)(.+)", line)
+        if header:
+            pending.append(header[1])
+            cases.setdefault(header[1], "")
+        elif pending:
+            error = re.match(r"(?:(?:\w+ )*\w*Error:.*|→\s*(.+))", line)
+            if error:
+                for name in pending:
+                    if not cases[name]:
+                        cases[name] = error[1] or error[0]
+                pending.clear()
+    return {name + (f" - {error}" if error else "") for name, error in cases.items()}
+
+
 def test_process(top, item, command, env, entry, ran, log):
     """Stream one attempt's progress and stop its process group on interruption."""
     from forge import codex
