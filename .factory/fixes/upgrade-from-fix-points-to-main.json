@@ -1,0 +1,15 @@
+{
+  "base": "9e496f963436afebeb83cccab88abb15b72b3131",
+  "branch": "fix/upgrade-from-fix-points-to-main",
+  "done_when": "forge upgrade run in a fix worktree says to drop that fix and run forge upgrade from the main checkout, with the exact commands, and forge next names forge upgrade <release> when a newer Forge release exists than the repo pins.",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-09T06:37:54.601501+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "In a client repo, an agent asked to upgrade Forge runs forge fix start, but forge upgrade refuses in that fix's worktree, so the agent drops the fix and starts again (issue #1483)."
+}
