@@ -1255,6 +1255,8 @@ Until the upgrade merges, the default branch keeps working with the new release 
 After it merges, older branches keep their pinned release and its rules. When Forge says the
 default branch already pins the installed release, merge `origin/<default>` into your branch to
 use that release and its rules.
+If close stops because the branch pins an older release than the default branch, run
+`forge work <item>` to merge the default branch. Then run `forge close <item>` again.
 
 ## Refresh dependencies
 

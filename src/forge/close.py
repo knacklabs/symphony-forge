@@ -823,12 +823,12 @@ def _synced(top: Path, item: str) -> None:
     close pushes, changes and deletes nothing."""
     toml = story.show(top, "HEAD", "forge.toml") or ""
     pinned = repo._pin(toml)  # pyright: ignore[reportPrivateUsage]
-    if pinned == repo.default_config(top)["version"].removeprefix("v"):
+    if pinned == (release := repo._pin(story.show(top, f"origin/{repo.default_branch(top)}", "forge.toml") or "")):  # pyright: ignore[reportPrivateUsage]
         return
     kind = "task" if "/" in item else "fix"
-    if pinned != __version__:
-        repo.refuse(REFUSALS["unsynced_forge"], kind=kind, pinned=f"v{pinned}",
-                    installed=f"v{__version__}", item=item)
+    if (behind := repo._older(pinned, release)) or pinned != __version__:  # pyright: ignore[reportPrivateUsage]
+        repo.refuse(("This {kind} pins Forge {pinned}, but the default branch pins Forge {release}.", "forge work {item} to merge the default branch, then forge close {item}") if behind else REFUSALS["unsynced_forge"], kind=kind, pinned=f"v{pinned}",
+                    installed=f"v{__version__}", item=item, release=f"v{release}")
     # forge sync refuses a detached HEAD, so the throwaway checkout gets a throwaway branch.
     check, branch = Path(tempfile.mkdtemp()) / "sync", f"forge-synced-{os.getpid()}"
     repo.git("worktree", "add", "-q", "-b", branch, str(check), "HEAD", cwd=top)

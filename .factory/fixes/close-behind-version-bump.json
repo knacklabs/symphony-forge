@@ -1,0 +1,104 @@
+{
+  "amendments": [
+    {
+      "at": "2026-11-09T18:22:57.053319+00:00",
+      "because": "The owner narrowed the fix to the message after two rounds could not make the early settings check safe",
+      "done_when": "Close on a branch behind the default branch's version bump merges the default branch first, or names that merge as the next step, and never tells the person to install an older release"
+    }
+  ],
+  "base": "3e3edfb1079931edf1582b264629e447c73aeb03",
+  "branch": "fix/close-behind-version-bump",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1c153-da28-7140-b2fb-83060007ec16",
+    "head": null,
+    "start": "220450b1cb325ff8c9c6cb38f93fd310711c99ce"
+  },
+  "done_when": "When close stops on a branch whose pinned release is older than the default branch's, it names merging the default branch as the next step and never tells the person to install the older release; close does not read or check the default branch's settings before the merge",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "_merge_default() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 754,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Close behind the default branch's version bump still misses the merge",
+      "work": 3
+    },
+    {
+      "area": "_merge_default() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 4,
+      "harm": 4,
+      "line": 754,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Avoid validating default-branch settings before the merge",
+      "work": 2
+    },
+    {
+      "area": "test_1_close_merges_default_release_before_upgrade_validation() in tests/test_close_incoming_release.py",
+      "file": "tests/test_close_incoming_release.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 16,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_close_merges_default_release_before_upgrade_validation on real clients",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "c192a6f69056dc113ae281ddca09963132d8f58edc923166358c398c5523d55c",
+    "changed": "4bad26451c60e84e2aece0a84bd770dc9dcf4f6d05a6949cf5d9f06c2357a730",
+    "commit": "ed6ac8a551a4bb0634299d89fd9a16d19c7c8d56",
+    "dismissals": [],
+    "findings": [],
+    "id": "4172e9ee-2a24-4c26-bd63-46870294cf10",
+    "status": "clean"
+  },
+  "round": 4,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-09T17:20:22.190382+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-09T17:32:13.439650+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-09T18:01:35.959385+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-09T18:33:49.997680+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-09T19:39:54.771511+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "3863e38c-ebf9-46ae-ad72-0fb18d6c2af8",
+    "head": "13f9d3ac5b01cae1baefecf3083b1558f61dddb8",
+    "keys": {},
+    "round": 3
+  },
+  "why": "When a branch is behind a version bump on the default branch, close skips merging main and then tells the person to install the older release (#1217)",
+  "worker": "codex"
+}
