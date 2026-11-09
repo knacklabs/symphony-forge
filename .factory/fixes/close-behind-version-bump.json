@@ -1,4 +1,11 @@
 {
+  "amendments": [
+    {
+      "at": "2026-11-09T18:22:57.053319+00:00",
+      "because": "The owner narrowed the fix to the message after two rounds could not make the early settings check safe",
+      "done_when": "Close on a branch behind the default branch's version bump merges the default branch first, or names that merge as the next step, and never tells the person to install an older release"
+    }
+  ],
   "base": "3e3edfb1079931edf1582b264629e447c73aeb03",
   "branch": "fix/close-behind-version-bump",
   "chat": {
@@ -8,7 +15,7 @@
     "head": null,
     "start": "220450b1cb325ff8c9c6cb38f93fd310711c99ce"
   },
-  "done_when": "Close on a branch behind the default branch's version bump merges the default branch first, or names that merge as the next step, and never tells the person to install an older release",
+  "done_when": "When close stops on a branch whose pinned release is older than the default branch's, it names merging the default branch as the next step and never tells the person to install the older release; close does not read or check the default branch's settings before the merge",
   "fix_kind": "mechanical",
   "kind": "fix",
   "known": [
