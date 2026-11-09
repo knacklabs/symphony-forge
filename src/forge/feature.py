@@ -135,7 +135,7 @@ def build(args) -> int:
     names = {"projects": plural, "Projects": title, "PROJECTS": plural.replace("-", "_").upper(),
              "Project": model, "project": one}
     def rename(text: str) -> str:
-        return re.sub("projects|Projects|PROJECTS|Project|project", lambda match: names[match[0]], text)
+        return re.sub(r"\b(?:projects|Projects|PROJECTS|Project|project)\b", lambda match: names[match[0]], text)
     targets = sorted({field["target"] for field in fields if field["kind"] == "link"})
     for kind in ("contracts", "server"):
         for source in (STARTER / f"libs/projects/{kind}").glob("*.json"):

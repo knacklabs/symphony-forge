@@ -504,6 +504,7 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False,
             report = results.read_text("utf-8") if results.is_file() else ""
             failures = sorted({node for outcome, node in re.findall(r"^(\w+) (.+)$", report, re.M)
                                if outcome in ("failed", "error")})
+            failures = sorted(set(failures) | fasttest.vitest_failures(out))
             lines += ["Failed tests:", *([f"- {node}" for node in failures] or
                        ["Test names are not available from this test command."]),
                       f"Full test log: {log.as_posix()}"]
@@ -975,7 +976,8 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                          str(launcher) if os.name == "nt" and launcher else "",
                          "parallel" if signoff_prompt else "serial"]
         with machine.agent_slot(top, "review", item):
-            for attempt in ((1,) if signoff_prompt else (1, 2)):
+            attempt, delay = 1, 30
+            while attempt <= (1 if signoff_prompt else 2):
                 with repo.record_run(top, item, "review", family=engine) as ran:
                     findings, reason = autoreview.attempt(argv, tree, out, selected, top, item, ran["run_id"],
                                                          strict=bool(signoff_prompt))
@@ -985,7 +987,14 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                     ran.update(selected, **autoreview.spent(tmp / SPENT))
                 if not reason:
                     break
+                if re.search(r"\b429\b|rate limit|too many requests|usage limit|usage_limit_reached", reason, re.I):
+                    print(f"Review service rate limit. Waiting {delay} seconds before trying again.",
+                          file=sys.stderr)
+                    time.sleep(delay)
+                    delay = min(delay * 2, 120)
+                    continue
                 print(f"Autoreview run {attempt} did not finish: {reason}.", file=sys.stderr)
+                attempt += 1
         if reason:
             if saved.is_file():
                 print(f"Raw Autoreview output: {saved}", file=sys.stderr)
