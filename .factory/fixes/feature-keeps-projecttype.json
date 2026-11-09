@@ -1,0 +1,15 @@
+{
+  "base": "3e3edfb1079931edf1582b264629e447c73aeb03",
+  "branch": "fix/feature-keeps-projecttype",
+  "done_when": "A generated feature's Nx project files keep projectType unchanged, while the starter's project names are still renamed",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-09T17:20:16.588661+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The feature command renames every 'project' word in the starter's Nx project files, so it also rewrites Nx's projectType property and breaks the client's project file (#1350)"
+}
