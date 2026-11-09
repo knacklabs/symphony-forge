@@ -4,12 +4,20 @@
   "done_when": "forge upgrade run in a fix worktree says to drop that fix and run forge upgrade from the main checkout, with the exact commands, and forge next names forge upgrade <release> when a newer Forge release exists than the repo pins.",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-09T06:37:54.601501+00:00",
       "step": "start"
     }
   ],
-  "why": "In a client repo, an agent asked to upgrade Forge runs forge fix start, but forge upgrade refuses in that fix's worktree, so the agent drops the fix and starts again (issue #1483)."
+  "stuck": {
+    "close": null,
+    "head": "c15361c8643a153534c7576fb3fa1743be005b1a",
+    "keys": {},
+    "round": null
+  },
+  "why": "In a client repo, an agent asked to upgrade Forge runs forge fix start, but forge upgrade refuses in that fix's worktree, so the agent drops the fix and starts again (issue #1483).",
+  "worker": "codex"
 }
