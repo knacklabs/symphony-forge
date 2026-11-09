@@ -94,7 +94,7 @@
     "id": "d8c4d991-a927-4785-af92-e054082dc3cc",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -107,10 +107,12 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "91461c5146c282dbd86dbba8203789de45fc3989",
-    "keys": {},
-    "round": null
+    "close": "9272689b-f0bf-45bd-9323-3bc900f8a4e9",
+    "head": "d92cc73cd883a44c3d56faabd772c5dd90c7ee02",
+    "keys": {
+      "the open P0 avoid validating default-branch settings before the merge in src/forge/close.py": 1
+    },
+    "round": 1
   },
   "why": "When a branch is behind a version bump on the default branch, close skips merging main and then tells the person to install the older release (#1217)",
   "worker": "codex"
