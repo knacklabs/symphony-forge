@@ -547,7 +547,7 @@ def _fix_round(state: dict[str, Any]) -> tuple[list[dict[str, Any]], list[tuple[
 
 
 def _failing(branch: str) -> list[tuple[str, str]]:
-    """Each failing check on the branch's pull request, with the tail of its log."""
+    """Each failing check, with its log tail and complete named failure report."""
     try:  # gh exits non-zero when a check fails, so read what it printed either way
         checks = json.loads(repo.run("gh", "pr", "checks", branch, "--json", "name,bucket,link").stdout)
     except ValueError:  # no pull request yet
@@ -557,7 +557,13 @@ def _failing(branch: str) -> list[tuple[str, str]]:
         if check.get("bucket") == "fail":
             job = re.search(r"/job/(\d+)", check.get("link") or "")
             log = repo.run("gh", "run", "view", "--job", job[1], "--log-failed").stdout if job else ""
-            failing.append((check.get("name", "a check"), "\n".join(log.splitlines()[-30:])))
+            lines = log.splitlines()
+            start = next((n for n in range(len(lines) - 1, -1, -1)
+                          if "Failed tests:" in lines[n]), len(lines))
+            end = next((n + 1 for n in range(start, len(lines))
+                        if "Full test log:" in lines[n]), start)
+            picked = sorted(set(range(max(0, len(lines) - 30), len(lines))) | set(range(start, end)))
+            failing.append((check.get("name", "a check"), "\n".join(lines[n] for n in picked)))
     return failing
 
 

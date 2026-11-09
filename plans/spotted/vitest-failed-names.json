@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "edge\tsrc/forge/review.py\tNot done: When a Vitest run fails, forge test's report names every failed test case with its first error line, and worker brief carries them",
+      "kind": "edge",
+      "path": "src/forge/review.py",
+      "line": 510,
+      "text": "Not done: When a Vitest run fails, forge test's report names every failed test case with its first error line, and worker brief carries them",
+      "from": "review",
+      "item": "vitest-failed-names",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/worker.py\tNot done: When a Vitest run fails, forge test's report names every failed test case with its first error line, and worker brief carries them",
+      "kind": "edge",
+      "path": "src/forge/worker.py",
+      "line": 561,
+      "text": "Not done: When a Vitest run fails, forge test's report names every failed test case with its first error line, and worker brief carries them",
+      "from": "review",
+      "item": "vitest-failed-names",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
