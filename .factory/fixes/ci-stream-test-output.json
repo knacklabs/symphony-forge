@@ -71,7 +71,7 @@
     "status": "blocked"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-09T03:25:17.541116+00:00",
@@ -84,8 +84,12 @@
   ],
   "stop": {
     "at": "2026-11-09T03:35:40.850078+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "tests/test_ci_output_streaming.py",
-    "wait_id": "44beff62-ec8c-4a53-8b59-98af2aa5062a"
+    "reason": "Round 1 finding goes back to the worker: prove output appears while the test command still runs",
+    "wait_id": "44beff62-ec8c-4a53-8b59-98af2aa5062a",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
