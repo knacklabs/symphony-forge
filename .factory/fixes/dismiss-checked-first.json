@@ -67,33 +67,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "94781238ce996987afc0b5a608bf59abef4c9d41038bdacd8339b27680476665",
-    "changed": "aa2512b2c4156bd11d2749a6134fb9397f50e6985c1085514189115900b7b9b8",
-    "commit": "766a763a6791c782a6792f520321e6a625b513ce",
-    "dismissals": [
-      {
-        "accepted": true,
-        "because": "Human accepted the remaining finding: The owner accepts: evidence checked against the wrong file version needs a rare mix of steps; kept as a follow-up",
-        "finding": 1
-      }
-    ],
-    "findings": [
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - The default branch inserts a proof line into an existing file, and close reuses an earlier review after merging it.\nThe check at src/forge/close.py:682-683 verifies only that the cited line number exists in the reviewed commit, not that it is the line cited in the current checkout. If the new proof is inserted at line 20 and the older file already had a line 20, close accepts that unrelated old line and keeps the older commit as the dismissal baseline. A later edit to the inserted proof appears only as an addition in the diff from that baseline, so the check at src/forge/review.py:654-675 does not reopen the finding even though its evidence changed.",
-        "file": "src/forge/close.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 326,
-        "priority": "P1",
-        "title": "Dismissal evidence can be tied to the wrong commit",
-        "work": 2
-      }
-    ],
-    "id": "7351bb2f-f1cc-466f-8f00-7c51da812064",
+    "branch_diff": "2caff0ef1a2572c4cce525c28a28189c99f737d2cb734b1275883d49da8e6709",
+    "changed": "d72a63f98f3757deb0a789c6d5747a8a4c08478aa7cd5664df1bae824ac65c24",
+    "commit": "ad1534531fd8ec9b8c6cb8d1c942d2cd1e00b172",
+    "dismissals": [],
+    "findings": [],
+    "id": "0f2b2f83-6f6f-4cff-af55-edf020c48909",
     "status": "clean"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-09T17:20:33.010327+00:00",
@@ -105,6 +88,10 @@
     },
     {
       "at": "2026-11-09T18:03:00.580379+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-09T20:02:45.532776+00:00",
       "step": "review"
     }
   ],
