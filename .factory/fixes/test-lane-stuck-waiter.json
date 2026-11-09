@@ -78,7 +78,7 @@
     "id": "82f7339f-e177-4ace-95c1-03497ad32be8",
     "status": "blocked"
   },
-  "round": 2,
+  "round": 3,
   "status": "fixing",
   "steps": [
     {
@@ -100,10 +100,10 @@
     "worker_round": 2
   },
   "stuck": {
-    "close": null,
-    "head": "016977badebc6b47e6e4798c48dae47d3e7e6419",
+    "close": "b1089ff2-20bd-4e4a-8d5f-acb292544407",
+    "head": "0fd7fad5e3bd168470832657a4c22dfa0c88f5d0",
     "keys": {},
-    "round": null
+    "round": 2
   },
   "why": "A waiting forge test can stay blocked for hours: the machine queue holds only waiting test entries, none admitted or started, yet the waiter keeps saying 5 test processes already run and never starts (issue #1475).",
   "worker": "codex"
