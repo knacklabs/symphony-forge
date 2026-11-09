@@ -4,12 +4,20 @@
   "done_when": "Close checks each --dismiss against the item's open findings before it runs tests or review, and accepts a dismissal of an open finding from an earlier round",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-09T17:20:33.010327+00:00",
       "step": "start"
     }
   ],
-  "why": "A close with --dismiss runs the full tests and review, then refuses the dismissal because it checks only the new repair review's findings, so the whole run is wasted (#1253)"
+  "stuck": {
+    "close": null,
+    "head": "2408bab8bc4eece2a42800658df88eda0dd02880",
+    "keys": {},
+    "round": null
+  },
+  "why": "A close with --dismiss runs the full tests and review, then refuses the dismissal because it checks only the new repair review's findings, so the whole run is wasted (#1253)",
+  "worker": "codex"
 }
