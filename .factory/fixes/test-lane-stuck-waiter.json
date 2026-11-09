@@ -4,12 +4,20 @@
   "done_when": "When the test lane has a free place, the first waiting test is admitted and starts; a waiter re-checks admission instead of staying blocked on stale holders, and a test reproduces the stuck queue from the issue.",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-09T06:37:47.849269+00:00",
       "step": "start"
     }
   ],
-  "why": "A waiting forge test can stay blocked for hours: the machine queue holds only waiting test entries, none admitted or started, yet the waiter keeps saying 5 test processes already run and never starts (issue #1475)."
+  "stuck": {
+    "close": null,
+    "head": "016977badebc6b47e6e4798c48dae47d3e7e6419",
+    "keys": {},
+    "round": null
+  },
+  "why": "A waiting forge test can stay blocked for hours: the machine queue holds only waiting test entries, none admitted or started, yet the waiter keeps saying 5 test processes already run and never starts (issue #1475).",
+  "worker": "codex"
 }
