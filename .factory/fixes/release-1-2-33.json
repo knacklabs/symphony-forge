@@ -49,7 +49,7 @@
     "id": "6e5f1a52-e3d3-4ff8-a047-79ee3b308aa5",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -71,10 +71,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": null,
-    "head": "37bb29d5da1170935a3b1f53e40442876033827b",
+    "close": "d48461d4-4eaa-4be8-b4f3-ab3fced9046e",
+    "head": "277c0751b9fc17bf3a2288359be75806322c57e3",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "Release v1.2.33: publish what merged since v1.2.32",
   "worker": "codex"
