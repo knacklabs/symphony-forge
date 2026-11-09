@@ -751,7 +751,7 @@ def _merge_default(top: Path, item: str, branch: str, default: str,
         if publish:
             _push(top, branch)
         return
-    if (trial.returncode == 0 and (pr or {}).get("mergeable") != "CONFLICTING"
+    if (trial.returncode == 0 and cfg["version"] == repo.default_config(top)["version"] and (pr or {}).get("mergeable") != "CONFLICTING"
             and (pr or {}).get("mergeStateStatus") != "BEHIND"):
         return
     done = repo.run("git", "merge", "-q", "--no-edit", f"origin/{default}", cwd=top)
