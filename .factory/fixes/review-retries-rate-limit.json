@@ -44,8 +44,8 @@
       "gain": 3,
       "harm": 3,
       "line": 33,
-      "outcome": "open",
-      "reason": "",
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: The owner accepts: the test is tied to one sleep call; a failure is loud and safe",
       "round": 1,
       "security": false,
       "title": "Gate: test_1_close_waits_and_retries_rate_limits_before_counting_failures",
@@ -70,7 +70,13 @@
     "branch_diff": "99d25c272538684945c23ac670627d9a84a7e23e44517b3cb1f3a782a5d441fc",
     "changed": "56b4e443fc590f8196406bf55b971561df30f83835ff03826343937bf8179839",
     "commit": "26bfa1ed08062c8adb43c8a6e783ff354964efa7",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: The owner accepts: the test is tied to one sleep call; a failure is loud and safe",
+        "finding": 1
+      }
+    ],
     "findings": [
       {
         "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - concurrent closes encounter temporary throttling. The replacement test still depends on the sleep implementation: it intercepts `time.sleep`, so an equivalent change to `threading.Event().wait(delay)` would make the test time out even though close still waits correctly. The socket server also immediately acknowledges each recorded wait, so the trace proves that the patched function was called, not that the wait completed before the retry. For example, starting the sleep in a thread and joining it for only one second could pass with the immediate fake while retrying after one second in production. The previous test gate remains open; the proof needs to check waiting at the command and service boundary.",
@@ -84,10 +90,10 @@
       }
     ],
     "id": "5cb97d06-5cb4-495a-b23a-93f53e88a746",
-    "status": "blocked"
+    "status": "clean"
   },
   "round": 2,
-  "status": "hotspot",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-09T17:20:27.575594+00:00",
@@ -104,8 +110,12 @@
   ],
   "stop": {
     "at": "2026-11-09T18:02:02.088112+00:00",
+    "by": "owner",
+    "choice": "accept",
     "file": "tests/test_close_waits_for_review_rate_limits.py",
-    "wait_id": "89226ca3-963b-4c61-bb2a-6ddd66a8e79e"
+    "reason": "The owner accepts: the test is tied to one sleep call; a failure is loud and safe",
+    "wait_id": "89226ca3-963b-4c61-bb2a-6ddd66a8e79e",
+    "worker_round": 2
   },
   "stuck": {
     "close": "d379e26d-32fb-4eaa-8804-7d9861def59c",
