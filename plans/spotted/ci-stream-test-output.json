@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "bug\ttests/test_ci_output_streaming.py\tGate: test live output before the test command exits\tci-stream-test-output",
+      "kind": "bug",
+      "path": "tests/test_ci_output_streaming.py",
+      "line": 43,
+      "text": "Gate: test live output before the test command exits",
+      "from": "blocking",
+      "item": "ci-stream-test-output",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/fasttest.py\tFollow-up: expose pytest's unfinished test-start output",
+      "kind": "edge",
+      "path": "src/forge/fasttest.py",
+      "line": 618,
+      "text": "Follow-up: expose pytest's unfinished test-start output",
+      "from": "review",
+      "item": "ci-stream-test-output",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
