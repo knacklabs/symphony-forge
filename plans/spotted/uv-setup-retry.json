@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "bug\ttests/test_ci_uv_install_retry.py\tGate: test_1_new_repo_retries_uv_install_once and test_2_earlier_adopted_repo_gets_uv_retry_on_sync\tuv-setup-retry",
+      "kind": "bug",
+      "path": "tests/test_ci_uv_install_retry.py",
+      "line": 29,
+      "text": "Gate: test_1_new_repo_retries_uv_install_once and test_2_earlier_adopted_repo_gets_uv_retry_on_sync",
+      "from": "blocking",
+      "item": "uv-setup-retry",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\ttests/test_ci_uv_install_retry.py\tGate: test_2_earlier_adopted_repo_gets_uv_retry_on_sync\tuv-setup-retry",
+      "kind": "bug",
+      "path": "tests/test_ci_uv_install_retry.py",
+      "line": 44,
+      "text": "Gate: test_2_earlier_adopted_repo_gets_uv_retry_on_sync",
+      "from": "blocking",
+      "item": "uv-setup-retry",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

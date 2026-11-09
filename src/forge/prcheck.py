@@ -357,6 +357,11 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
                 .replace("<full-suite-job>", full_suite)
                 .replace("      - uses: astral-sh/setup-uv@v6\n",
                          "      - uses: astral-sh/setup-uv@v6\n"
+                         "        id: setup-uv\n"
+                         "        continue-on-error: true\n"
+                         "        with:\n          enable-cache: true\n"
+                         "      - uses: astral-sh/setup-uv@v6\n"
+                         "        if: steps.setup-uv.outcome == 'failure'\n"
                          "        with:\n          enable-cache: true\n")
                 .replace("<choose>", "" if source else CHOOSE)
                 .replace("<version>", cfg["version"])

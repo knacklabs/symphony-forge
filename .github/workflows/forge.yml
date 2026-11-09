@@ -63,6 +63,12 @@ jobs:
         with:
           python-version: '3.11'
       - uses: astral-sh/setup-uv@v6
+        id: setup-uv
+        continue-on-error: true
+        with:
+          enable-cache: true
+      - uses: astral-sh/setup-uv@v6
+        if: steps.setup-uv.outcome == 'failure'
         with:
           enable-cache: true
       - id: parent-tests
@@ -118,6 +124,12 @@ jobs:
         with:
           python-version: '3.11'
       - uses: astral-sh/setup-uv@v6
+        id: setup-uv
+        continue-on-error: true
+        with:
+          enable-cache: true
+      - uses: astral-sh/setup-uv@v6
+        if: steps.setup-uv.outcome == 'failure'
         with:
           enable-cache: true
       - env:
@@ -203,6 +215,12 @@ jobs:
         with:
           python-version: '3.11'
       - uses: astral-sh/setup-uv@v6
+        id: setup-uv
+        continue-on-error: true
+        with:
+          enable-cache: true
+      - uses: astral-sh/setup-uv@v6
+        if: steps.setup-uv.outcome == 'failure'
         with:
           enable-cache: true
       - uses: actions/cache@v4
