@@ -558,7 +558,8 @@ def _failing(branch: str) -> list[tuple[str, str]]:
             job = re.search(r"/job/(\d+)", check.get("link") or "")
             log = repo.run("gh", "run", "view", "--job", job[1], "--log-failed").stdout if job else ""
             lines = log.splitlines()
-            start = next((n for n, line in enumerate(lines) if "Failed tests:" in line), len(lines))
+            start = next((n for n in range(len(lines) - 1, -1, -1)
+                          if "Failed tests:" in lines[n]), len(lines))
             end = next((n + 1 for n in range(start, len(lines))
                         if "Full test log:" in lines[n]), start)
             picked = sorted(set(range(max(0, len(lines) - 30), len(lines))) | set(range(start, end)))
