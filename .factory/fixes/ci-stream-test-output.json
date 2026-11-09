@@ -70,7 +70,7 @@
     "id": "4bbc6b78-eff9-4408-95f4-bd6411f3130e",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -92,10 +92,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": null,
-    "head": "ce3c313a65caee8598fd9d0601a8f4ce3bf8f77c",
+    "close": "8e51c7ce-5a24-475f-8130-1d6c985351c4",
+    "head": "e5d3e508c69963a5d7537a09daa4b0d51052c674",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "In a client's GitHub Actions tests job, forge test writes the test command's output only to a log file inside .git and prints the last 30 lines when the command ends. A job that hits the 60-minute limit is cancelled and shows no test output at all, so nobody can see which test was slow or hung.",
   "worker": "codex"
