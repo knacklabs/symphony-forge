@@ -1,0 +1,45 @@
+{
+  "base": "3e3edfb1079931edf1582b264629e447c73aeb03",
+  "branch": "fix/feature-keeps-projecttype",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1c153-da28-7f72-b98c-681c8de9db81",
+    "head": null,
+    "start": "5d35010088729b51068119ad72dcc93a83003acf"
+  },
+  "done_when": "A generated feature's Nx project files keep projectType unchanged, while the starter's project names are still renamed",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "6f58f949f760ee24c94c541a07af4194a741ae989bb83c3f7abc7b64bffc4ead",
+    "changed": "5637fa7e1d4a160dbad715ed0e97a07d827af04c701f736c17cc7e366145e06d",
+    "commit": "526fadb07b6d803ac575b069c1c0cc546ec51462",
+    "dismissals": [],
+    "findings": [],
+    "id": "9b8eaf5c-1082-473b-8cfe-91e4df177eed",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-09T17:20:16.588661+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-09T17:27:35.760588+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "1deadbc2aca73165e2b0cd7cc04a272a91471e21",
+    "keys": {},
+    "round": null
+  },
+  "why": "The feature command renames every 'project' word in the starter's Nx project files, so it also rewrites Nx's projectType property and breaks the client's project file (#1350)",
+  "worker": "codex"
+}
