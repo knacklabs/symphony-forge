@@ -286,16 +286,17 @@ def _wait(entry: dict[str, Any]) -> dict[str, Any]:
             if place <= 0 and busy is None and not low_memory:
                 _lane_event(entry, "lane admitted")
                 return entry
-            if low_memory:
-                if said != "memory":
-                    print(f"This run is waiting for memory: {available / 1e9:.1f} GB free, "
-                          f"starts above {floor / 1e9:.1f} GB.", flush=True)
-                    said = "memory"
-            elif busy is not None:
-                if said != "busy":
-                    print(f"This machine is busy (load {busy:.1f} per core), so this work round waits "
-                          f"until it is under {LOAD_LIMIT}.", flush=True)
-                    said = "busy"
+            if low_memory or busy is not None:
+                full_holders = holders if occupied >= size else []
+                pressure = ("memory" if low_memory else "busy",
+                            tuple(run["id"] for run in full_holders), False)
+                if said != pressure:
+                    message = (f"This run is waiting for memory: {available / 1e9:.1f} GB free, "
+                               f"starts above {floor / 1e9:.1f} GB." if low_memory else
+                               f"This machine is busy (load {busy:.1f} per core), so this work round waits "
+                               f"until it is under {LOAD_LIMIT}.")
+                    print("\n".join([message, *(_holder(run) for run in full_holders)]), flush=True)
+                    said = pressure
             elif waiting != said:
                 lines = []
                 if backlog and (not isinstance(said, tuple) or not said[2]):

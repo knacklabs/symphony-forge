@@ -10,6 +10,7 @@ from test_fix_agent_runs_wait_in_line import _until
 from test_lanes_agents import start
 from test_lanes_tests import accepted, configure, reap, release_server  # noqa: F401
 from test_setup import _fresh_client
+from test_waiting_runs_name_holders import stop_command
 
 STORY = "test-lane-stuck-waiter"
 
@@ -83,6 +84,24 @@ def test_1_waiters_report_memory_and_load_then_start_in_order(
             connection, observed = accepted(server, connections, folder, process, output)
             assert observed["cpus"] == "2"
             assert all(not (later / "test-started.json").exists() for later in folders[number + 1:])
+            if number == 0:
+                # A real test fills the lane. Pressure must preserve its recovery
+                # details, including when the reason changes without moving us.
+                waiting_output = outputs[1]
+                _until(lambda: "2 Forge test processes already run" in waiting_output.read_text("utf-8"),
+                       "the second test to observe the admitted holder")
+                for reason, message in (("memory", "waiting for memory"), ("load", "load 2.0 per core")):
+                    offset = len(waiting_output.read_text("utf-8"))
+                    (pressure / reason).touch()
+                    other = "load" if reason == "memory" else "memory"
+                    (pressure / other).unlink(missing_ok=True)
+                    _until(lambda: message in waiting_output.read_text("utf-8")[offset:],
+                           "the occupied lane to report host pressure")
+                    said = waiting_output.read_text("utf-8")[offset:]
+                    assert "Held by Run the client test" in said, said
+                    assert stop_command(repo, "waiter-0") in said, said
+                    assert stop_command(repo, "waiter-1") not in said, said
+                (pressure / "load").unlink()
             connection.sendall(b"x")
             assert process.wait(timeout=30) == 0, output.read_text("utf-8")
     finally:
