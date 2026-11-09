@@ -1,6 +1,13 @@
 {
   "base": "9608b31a568438a769be2a9e481fd769168d0df7",
   "branch": "fix/test-runner-setting",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1c03e-7adf-76c1-a560-9d4608902afb",
+    "head": null,
+    "start": "16e59aa1feb5c2b58d6fde89538550f759b0f353"
+  },
   "done_when": "An optional test_runner setting in forge.toml picks the machine for the pull-request test jobs only; every other job, including the nightly full test run, uses runner; without test_runner nothing changes",
   "fix_kind": "mechanical",
   "kind": "fix",
