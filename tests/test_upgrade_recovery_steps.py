@@ -1,6 +1,6 @@
 """Upgrade recovery and next commands at the CLI boundary.
 
-These rules protect exact recovery commands and a cached release's next step.
+These rules protect plain recovery steps and a cached release's next step.
 Existing upgrade refusal tests cover ordinary branches, and release notice tests
 cover announcements, not actionable Next lines. Only GitHub is faked. No new
 production seam is needed, and source refactoring preserves these contracts.
@@ -34,20 +34,33 @@ def client(repo, gh, tmp_path, request):
         repo.git("add", "-A", cwd=path)
         repo.git("-c", f"core.hooksPath={tmp_path / 'no-hooks'}", "commit", "-q",
                  "-m", "Upgrade the earlier adoption", cwd=path)
+    repo.git("-c", f"core.hooksPath={tmp_path / 'no-hooks'}", "push", "-q",
+             "origin", "HEAD:main", cwd=path)
     return path
 
 
 def test_1_upgrade_in_fix_names_drop_and_main_checkout(repo, client, tmp_path):
-    tree = tmp_path / "upgrade fix with spaces"
-    repo.git("worktree", "add", "-q", "-b", "fix/upgrade-forge", str(tree), cwd=client)
-    for release in ([], ["v99.10.0"]):
-        refused = repo.forge("upgrade", *release, cwd=tree)
-        assert refused.returncode != 0
-        output = refused.stdout + refused.stderr
-        assert 'forge fix drop upgrade-forge --because "Use forge upgrade from the main checkout"' in output
-        assert f'cd "{client}"' in output
-        assert "forge upgrade" + (" v99.10.0" if release else "") in output
-        assert "git switch main" not in output
+    # A real fix can start while the main checkout is on a feature branch.
+    repo.git("switch", "-q", "-c", "feature/upgrade-setup", cwd=client)
+    started = repo.forge("fix", "start", "Upgrade Forge", "--done", "Forge is up to date",
+                         "--kind", "mechanical", cwd=client)
+    assert started.returncode == 0, started.stdout + started.stderr
+    tree = client.parent / f"{client.name}-fix-upgrade-forge"
+    assert tree.is_dir(), started.stdout
+    # The same words apply on an ordinary fix-prefixed branch, without a fix record.
+    repo.git("switch", "-q", "-c", "fix/ordinary-upgrade", cwd=client)
+    for checkout in (tree, client):
+        for release in ([], ["v99.10.0"], ["$(untrusted-release)"]):
+            refused = repo.forge("upgrade", *release, cwd=checkout)
+            assert refused.returncode != 0
+            output = refused.stdout + refused.stderr
+            assert output.splitlines() == [
+                "forge upgrade runs from the main checkout on the default branch.",
+                "Next: Move to the main checkout. Drop this fix only if Forge started it and the owner agrees.",
+                "Then switch to the default branch and run forge upgrade <release>.",
+            ]
+            assert client.as_posix() not in output
+            assert "fix/ordinary-upgrade" not in output
 
 
 def test_2_next_names_upgrade_from_known_newer_release(repo, gh, client, monkeypatch):

@@ -412,8 +412,9 @@ REFUSED = {
         "Next: forge next\n"),
     "another branch": (
         lambda up: up.repo.git("switch", "-q", "-c", "elsewhere"), [RELEASE],
-        "forge upgrade runs on main, and this checkout is on elsewhere.\n"
-        f"Next: git switch main, then forge upgrade {RELEASE}\n"),
+        "forge upgrade runs from the main checkout on the default branch.\n"
+        "Next: Move to the main checkout. Drop this fix only if Forge started it and the owner agrees.\n"
+        "Then switch to the default branch and run forge upgrade <release>.\n"),
     "uncommitted changes": (
         lambda up: up.repo.write("README.md", "# Edited\n"), [],
         "This checkout has changes you haven't committed: README.md.\n"

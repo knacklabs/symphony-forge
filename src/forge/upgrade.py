@@ -31,11 +31,9 @@ RELEASE = re.compile(r"v(\d+)\.(\d+)\.(\d+)")
 REFUSALS = {
     "own_repo": ("This is Forge's own repo, which moves its version by releasing a new Forge.",
                  "forge next"),
-    "not_default": ("forge upgrade runs on {default}, and this checkout is on {branch}.",
-                    "git switch {default}, then {again}"),
-    "in_fix": ("forge upgrade runs on {default}, and this checkout is on {branch}.",
-               'forge fix drop {fix} --because "Use forge upgrade from the main checkout"\n'
-               'Then run in the main checkout:\ncd "{main}"\n{again}'),
+    "not_default": ("forge upgrade runs from the main checkout on the default branch.",
+                    "Move to the main checkout. Drop this fix only if Forge started it and the owner agrees.\n"
+                    "Then switch to the default branch and run forge upgrade <release>."),
     "dirty": ("This checkout has changes you haven't committed: {files}.",
               "commit or undo them, then {again}"),
     "running": ("Forge runs are still in progress on this machine:\n{runs}\n"
@@ -70,12 +68,7 @@ def upgrade(args: argparse.Namespace) -> int:
         repo.refuse(REFUSALS["own_repo"])
     default, branch = repo.default_branch(top), repo.current_branch(top)
     if branch != default:
-        if branch.startswith("fix/"):
-            main = repo.git("worktree", "list", "--porcelain", cwd=top).splitlines()[0]
-            repo.refuse(REFUSALS["in_fix"], default=default, branch=branch, fix=branch[4:],
-                        main=main.removeprefix("worktree "), again=again)
-        repo.refuse(REFUSALS["not_default"], default=default, branch=branch or "a detached HEAD",
-                    again=again)
+        repo.refuse(REFUSALS["not_default"])
     # The index and the working tree both, so a staged change undone in the folder still counts;
     # untracked files don't.
     dirty = repo.run("git", "status", "--porcelain", "-z", "--no-renames", "--untracked-files=no",

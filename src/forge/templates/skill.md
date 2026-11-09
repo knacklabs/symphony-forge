@@ -1219,8 +1219,9 @@ An upgrade is one fix. Its pull request carries the new version and every file F
 repo, rewritten by that version. One command does all of it.
 Use `forge upgrade <release>` directly, not `forge fix start`: upgrade creates its own fix.
 `forge next` gives `Next: forge upgrade <release>` when its release check finds a newer release
-than the repo pins. If upgrade refuses in a fix checkout, ask the owner before dropping that
-fix, then follow the printed drop command and run upgrade in the named main checkout.
+than the repo pins. If upgrade refuses outside the default branch, move to the main checkout.
+Drop the current fix only if Forge started it and the owner agrees. Then switch to the default
+branch and run `forge upgrade <release>`. The refusal gives these steps in plain words.
 
 Before starting another upgrade, it removes an earlier upgrade's leftover worktree and local
 branch when its pull request has merged and the checkout has no unpushed or uncommitted work.
