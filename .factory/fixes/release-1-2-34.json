@@ -1,0 +1,15 @@
+{
+  "base": "72333acb3a8e6202172acf2482e590a852edd0f5",
+  "branch": "fix/release-1-2-34",
+  "done_when": "The version is 1.2.34, generated files are synced, this repo is pinned to v1.2.34, and the tests pass",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-09T14:52:24.880620+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Release v1.2.34: publish what merged since v1.2.33"
+}
