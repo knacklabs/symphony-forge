@@ -1,0 +1,70 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/upgrade.py\tAccount for the branch checked out in the main checkout\tupgrade-from-fix-points-to-main",
+      "kind": "bug",
+      "path": "src/forge/upgrade.py",
+      "line": 38,
+      "text": "Account for the branch checked out in the main checkout",
+      "from": "blocking",
+      "item": "upgrade-from-fix-points-to-main",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/upgrade.py\tDistinguish Forge fixes from ordinary fix-prefixed branches\tupgrade-from-fix-points-to-main",
+      "kind": "bug",
+      "path": "src/forge/upgrade.py",
+      "line": 73,
+      "text": "Distinguish Forge fixes from ordinary fix-prefixed branches",
+      "from": "blocking",
+      "item": "upgrade-from-fix-points-to-main",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/upgrade.py\tLeave the fix worktree before running its drop command on Windows\tupgrade-from-fix-points-to-main",
+      "kind": "bug",
+      "path": "src/forge/upgrade.py",
+      "line": 37,
+      "text": "Leave the fix worktree before running its drop command on Windows",
+      "from": "blocking",
+      "item": "upgrade-from-fix-points-to-main",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/upgrade.py\tQuote values before putting them into recovery commands\tupgrade-from-fix-points-to-main",
+      "kind": "bug",
+      "path": "src/forge/upgrade.py",
+      "line": 37,
+      "text": "Quote values before putting them into recovery commands",
+      "from": "blocking",
+      "item": "upgrade-from-fix-points-to-main",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_upgrade_recovery_steps.py\tGate: test_1_upgrade_in_fix_names_drop_and_main_checkout\tupgrade-from-fix-points-to-main",
+      "kind": "bug",
+      "path": "tests/test_upgrade_recovery_steps.py",
+      "line": 42,
+      "text": "Gate: test_1_upgrade_in_fix_names_drop_and_main_checkout",
+      "from": "blocking",
+      "item": "upgrade-from-fix-points-to-main",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_upgrade_recovery_steps.py\tStandard: A path compared as text goes through json.dumps or as_posix\tupgrade-from-fix-points-to-main",
+      "kind": "bug",
+      "path": "tests/test_upgrade_recovery_steps.py",
+      "line": 48,
+      "text": "Standard: A path compared as text goes through json.dumps or as_posix",
+      "from": "blocking",
+      "item": "upgrade-from-fix-points-to-main",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
