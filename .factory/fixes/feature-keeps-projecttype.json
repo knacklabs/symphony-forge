@@ -4,12 +4,20 @@
   "done_when": "A generated feature's Nx project files keep projectType unchanged, while the starter's project names are still renamed",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-09T17:20:16.588661+00:00",
       "step": "start"
     }
   ],
-  "why": "The feature command renames every 'project' word in the starter's Nx project files, so it also rewrites Nx's projectType property and breaks the client's project file (#1350)"
+  "stuck": {
+    "close": null,
+    "head": "1deadbc2aca73165e2b0cd7cc04a272a91471e21",
+    "keys": {},
+    "round": null
+  },
+  "why": "The feature command renames every 'project' word in the starter's Nx project files, so it also rewrites Nx's projectType property and breaks the client's project file (#1350)",
+  "worker": "codex"
 }
