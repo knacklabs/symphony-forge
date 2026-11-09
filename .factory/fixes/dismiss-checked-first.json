@@ -1,6 +1,13 @@
 {
   "base": "3e3edfb1079931edf1582b264629e447c73aeb03",
   "branch": "fix/dismiss-checked-first",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1c154-20b4-7423-9b4e-2ccde0eb95ec",
+    "head": null,
+    "start": "a2411d50ef5f2f2b87f9a61a598b5f36fc19571f"
+  },
   "done_when": "Close checks each --dismiss against the item's open findings before it runs tests or review, and accepts a dismissal of an open finding from an earlier round",
   "fix_kind": "mechanical",
   "kind": "fix",
