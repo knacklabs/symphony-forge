@@ -504,6 +504,19 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False,
             report = results.read_text("utf-8") if results.is_file() else ""
             failures = sorted({node for outcome, node in re.findall(r"^(\w+) (.+)$", report, re.M)
                                if outcome in ("failed", "error")})
+            cases, current = {}, None
+            for line in out:
+                line = re.sub(r"\x1b\[[0-9;]*m", "", line).strip()
+                header = re.match(r"(?:FAIL\s+|×\s+)(.+)", line)
+                if header:
+                    current = header[1]
+                    cases.setdefault(current, "")
+                elif current and not cases[current]:
+                    error = re.match(r"(?:\w*Error:.*|→\s*(.+))", line)
+                    if error:
+                        cases[current] = error[1] or error[0]
+            failures = sorted(set(failures) | {name + (f" - {error}" if error else "")
+                                             for name, error in cases.items()})
             lines += ["Failed tests:", *([f"- {node}" for node in failures] or
                        ["Test names are not available from this test command."]),
                       f"Full test log: {log.as_posix()}"]
