@@ -1,4 +1,11 @@
 {
+  "amendments": [
+    {
+      "at": "2026-11-09T07:55:55.770002+00:00",
+      "because": "Owner chose the simpler message: ready-to-run commands with paths and branch names broke on Windows and unusual branches",
+      "done_when": "forge upgrade run in a fix worktree says to drop that fix and run forge upgrade from the main checkout, with the exact commands, and forge next names forge upgrade <release> when a newer Forge release exists than the repo pins."
+    }
+  ],
   "base": "9e496f963436afebeb83cccab88abb15b72b3131",
   "branch": "fix/upgrade-from-fix-points-to-main",
   "chat": {
@@ -8,7 +15,7 @@
     "head": null,
     "start": "f0f45e6f6d79b9730e52efd76ceb002be901e6ab"
   },
-  "done_when": "forge upgrade run in a fix worktree says to drop that fix and run forge upgrade from the main checkout, with the exact commands, and forge next names forge upgrade <release> when a newer Forge release exists than the repo pins.",
+  "done_when": "forge upgrade run outside the default branch says in plain words to drop the current fix (if it is a Forge fix) and run forge upgrade <release> from the main checkout on the default branch, with no branch names or paths pasted into commands; forge next names forge upgrade <release> when a newer release exists than the repo pins.",
   "fix_kind": "mechanical",
   "kind": "fix",
   "known": [
