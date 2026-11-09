@@ -19,7 +19,7 @@
       "gain": 4,
       "harm": 1,
       "line": 15,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -30,27 +30,16 @@
   "proof_list": "Proof list: (1) The version is 1.2.33 everywhere it is recorded: tests/test_release_version.py (close's test run gives its result). (2) This repo is pinned to v1.2.33: tests/test_release_version.py. (3) Generated files are synced: coordinator reports .venv/bin/forge sync wrote no files beyond the version bump; uv.lock records 1.2.33. (4) The tests pass: coordinator reports full runs on main at the base commit b584f0407 all completed with success: forge.yml https://github.com/knacklabs/symphony-forge/actions/runs/42561994341, forge-next.yml https://github.com/knacklabs/symphony-forge/actions/runs/42561997512, starter-smoke https://github.com/knacklabs/symphony-forge/actions/runs/42562000717. Close owns the branch's CI checks. (5) Cheap repository checks: uv run --frozen --python 3.11 pytest -q tests/test_rules.py::test_4_one_test_per_rule tests/test_rules.py::test_5_forge_stays_small - passed (2 tests).",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "6e98b0e0eff03ec8922ea68b4fd6ae2f7e6998e1a964c4e11cea722045ebbf02",
-    "changed": "f78f16cd442fa2f05c1fadc0750e34452a33516503c84373cd0896deb80962f8",
-    "commit": "024f6508c6351e515bfbee7a9db9f8f66e482c72",
+    "branch_diff": "2e70c0132a192eca03012e8dde91fedd63e45d4ad3794c481d547d636dde2ced",
+    "changed": "a7c3a9ea7522127c1075bc3f2f086771a98a24fca43045af00ad4a2f4f1f8ed8",
+    "commit": "8cd2fe03e0a836fb23bc3681482e013407fdd8e5",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 1, Harm 1\nRaise: Gate. Case: normal use - closing the release. The proof is recorded here and in a commit that changes only this `.factory` record, but `src/forge/review.py:691-700` skips bookkeeping-only commits when collecting the proof list. The release code commit has no proof paragraph, so Forge supplies `missing` to the review and cannot attach test results to the named checks. This is new evidence not accounted for by the coordinator's instruction to record the list in the fix record. Put the same proof in a commit message Forge will read, without changing code.",
-        "file": ".factory/fixes/release-1-2-33.json",
-        "gain": 4,
-        "harm": 1,
-        "line": 15,
-        "priority": "P1",
-        "title": "Gate: proof list",
-        "work": 1
-      }
-    ],
-    "id": "6e5f1a52-e3d3-4ff8-a047-79ee3b308aa5",
-    "status": "blocked"
+    "findings": [],
+    "id": "d7cb155a-9da5-42c0-a2c9-b946cf7d292c",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-09T04:28:39.311387+00:00",
@@ -58,6 +47,10 @@
     },
     {
       "at": "2026-11-09T05:12:21.220034+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-09T05:16:07.019429+00:00",
       "step": "review"
     }
   ],
