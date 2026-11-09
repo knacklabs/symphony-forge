@@ -38,7 +38,7 @@
       "gain": 4,
       "harm": 3,
       "line": 289,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -48,38 +48,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "19038bafa6c9083973bec33191687e7483f5bc0ba1c06d118a541471f9000969",
-    "changed": "48862a0349f5a9ff7e659803829121cc11c784a188b8f6b6b7cf1cff9d94bdf5",
-    "commit": "6321fd71b63d2983a3520b4875d9f559b41c4433",
+    "branch_diff": "dd9d72b42775a0317ce131ca617b0176e1c32bd7559247465d4ee6d52c5b4aa3",
+    "changed": "40d7737fe83913d6215b67ef2f09c74e604e1ff496bf6fff1e71af243a105ff7",
+    "commit": "021bf38299a2a867605f5794acdb690aa48df339",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 5, Work 3, Harm 3\nRaise: Not done - The reported stall has no demonstrated repair or reproducing test.\nCase: normal use - Several Forge tests are waiting with no admitted test and a free lane place.\nThe new test removes a simulated low-memory blocker at this line and checks ordinary FIFO starts; it does not reproduce the reported stuck waiter or exercise a stale holder. The admission decision and polling loop remain functionally unchanged at src/forge/machine.py:264-286 and :315. The coordinator's clarification addresses the misleading wait message, but the recorded Done-when also requires the stuck-queue behavior and its reproduction.",
-        "file": "tests/test_wait_reports_current_host_pressure.py",
-        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
-        "gain": 5,
-        "harm": 3,
-        "line": 81,
-        "priority": "P1",
-        "title": "Not done: When the test lane has a free place, the first waiting test is admitted and starts; a waiter re-checks admission instead of being?",
-        "work": 3
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional - Host pressure now hides the runs holding a full lane.\nCase: normal use - A running test or work session fills the lane while the machine is low on memory or above the load limit.\nThe memory and load branches take precedence over the holder output for every waiter. A run that begins waiting under that pressure therefore receives no holder names or forge stop/forge handback commands while the pressure persists, even when a holder is causing it. Previously, a waiter behind an occupied lane received those recovery details. The existing holder contract is exercised at tests/test_waiting_runs_name_holders.py:31, but the new test has no admitted holder.",
-        "file": "src/forge/machine.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 289,
-        "priority": "P1",
-        "title": "Functional: Preserve holder details when the host is under pressure",
-        "work": 2
-      }
-    ],
-    "id": "82f7339f-e177-4ace-95c1-03497ad32be8",
-    "status": "blocked"
+    "findings": [],
+    "id": "a6a43d49-4f4e-4635-b4f9-6be8520b5cf1",
+    "status": "clean"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-09T06:37:47.849269+00:00",
@@ -87,6 +65,10 @@
     },
     {
       "at": "2026-11-09T06:54:45.396869+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-09T07:04:32.213391+00:00",
       "step": "review"
     }
   ],
