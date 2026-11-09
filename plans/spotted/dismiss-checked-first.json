@@ -19,8 +19,8 @@
       "text": "Dismissal evidence can be tied to the wrong commit",
       "from": "blocking",
       "item": "dismiss-checked-first",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/close.py\tRetaining an omitted finding can invalidate the required review check\tdismiss-checked-first",
