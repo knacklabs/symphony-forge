@@ -1,4 +1,11 @@
 {
+  "amendments": [
+    {
+      "at": "2026-11-09T06:56:35.464843+00:00",
+      "because": "The stall could not be reproduced; the builder found the wait message named running tests when the real reason was low memory",
+      "done_when": "When the test lane has a free place, the first waiting test is admitted and starts; a waiter re-checks admission instead of staying blocked on stale holders, and a test reproduces the stuck queue from the issue."
+    }
+  ],
   "base": "9e496f963436afebeb83cccab88abb15b72b3131",
   "branch": "fix/test-lane-stuck-waiter",
   "chat": {
@@ -8,7 +15,7 @@
     "head": null,
     "start": "395d95bd4a9983876779f51e9d86f103bd737f0b"
   },
-  "done_when": "When the test lane has a free place, the first waiting test is admitted and starts; a waiter re-checks admission instead of staying blocked on stale holders, and a test reproduces the stuck queue from the issue.",
+  "done_when": "A waiting forge test's message names the real current reason it waits (low memory or high load with the numbers, or the runs that hold the places), and still names the holders and how to free them when places are full; a test covers a memory wait with no admitted test.",
   "fix_kind": "mechanical",
   "kind": "fix",
   "known": [
