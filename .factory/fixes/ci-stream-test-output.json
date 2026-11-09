@@ -1,0 +1,89 @@
+{
+  "base": "e79cf8f55caeb756c17fb1e89fe726d0a7c63c60",
+  "branch": "fix/ci-stream-test-output",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1be56-ffb4-73b3-904b-a7c3daecd4a7",
+    "head": null,
+    "start": "b94714377254fb0784116141be8d7e5962bb0c50"
+  },
+  "done_when": "On GitHub Actions (GITHUB_ACTIONS=true), forge test prints each line of the test command's output to the job log as it arrives, so a cancelled job still shows how far the tests got; outside GitHub Actions the output stays as it is now.",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "test_1_github_prints_output_outside_the_final_tail() in tests/test_ci_output_streaming.py",
+      "file": "tests/test_ci_output_streaming.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 43,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test live output before the test command exits",
+      "work": 2
+    },
+    {
+      "area": "test_process() in src/forge/fasttest.py",
+      "file": "src/forge/fasttest.py",
+      "gain": 2,
+      "harm": 2,
+      "line": 618,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Follow-up: expose pytest's unfinished test-start output",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "0d6b358572c8b935b71ead018350dd96fbe87a18f0c8d28d4676e22e01bbcfcf",
+    "changed": "08277485938acfcf532cdf9d2b87b46dda8624c4311b3b1226ddf2c717d28b93",
+    "commit": "69c1c8aa87b474defbffb168576329aaee9ef86f",
+    "dismissals": [],
+    "findings": [],
+    "id": "517dc2e2-c786-4dc8-ac73-893741ee0410",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-09T03:25:17.541116+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-09T03:35:40.837650+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-09T03:41:56.911607+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-09T03:48:46.801577+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-09T03:35:40.850078+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "tests/test_ci_output_streaming.py",
+    "reason": "Round 1 finding goes back to the worker: prove output appears while the test command still runs",
+    "wait_id": "44beff62-ec8c-4a53-8b59-98af2aa5062a",
+    "worker_round": 1
+  },
+  "stuck": {
+    "close": "718e29d3-f7aa-4872-8c34-f940ee5c5b7a",
+    "head": "4560056c550d58c630361217313a9f80e10b52e8",
+    "keys": {},
+    "round": 2
+  },
+  "why": "In a client's GitHub Actions tests job, forge test writes the test command's output only to a log file inside .git and prints the last 30 lines when the command ends. A job that hits the 60-minute limit is cancelled and shows no test output at all, so nobody can see which test was slow or hung.",
+  "worker": "codex"
+}

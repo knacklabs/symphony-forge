@@ -180,6 +180,7 @@ Every client repo moves through seven steps. `forge next` names the current step
 **The build and review loop.** A worker builds the part and its tests, then a separate review checks the change. A serious problem goes back to the worker for another round. A task gets review rounds up to the repo's setting, two by default, and a fix gets one. At the round limit (the repo's setting, two by default), Forge stops and asks the owner, but a P0 problem keeps the loop going. It exists because a reviewer sees problems that the worker cannot see in its own work.
 
 **The CI checks.** GitHub runs the repo's checks on the pull request. Close waits while they are queued or running, and a red check goes back to the worker. They exist because the checks run the tests on a clean machine, the same way for every change.
+On GitHub Actions, `forge test` streams the test output into the job log.
 
 `forge next` adds one line under each running item that says what it waits on, why and for how long. Give that line to the person when they ask why something takes time.
 
