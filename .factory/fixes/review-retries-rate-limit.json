@@ -1,0 +1,15 @@
+{
+  "base": "3e3edfb1079931edf1582b264629e447c73aeb03",
+  "branch": "fix/review-retries-rate-limit",
+  "done_when": "A review that gets a 429 rate-limit answer waits and tries again before it counts as failed, so closes that start together all finish their reviews",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-09T17:20:27.575594+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Closes that start together send their reviews at once, the review service answers 429, and each close stops after two failures (#1102)"
+}
