@@ -11,12 +11,77 @@
   "done_when": "When a Vitest run fails, forge test's report names every failed test case with its first error line, and the worker brief carries them",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [
+    {
+      "area": "test_run() in src/forge/review.py",
+      "file": "src/forge/review.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 510,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: When a Vitest run fails, forge test's report names every failed test case with its first error line, and worker brief carries them",
+      "work": 2
+    },
+    {
+      "area": "_failing() in src/forge/worker.py",
+      "file": "src/forge/worker.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 561,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: When a Vitest run fails, forge test's report names every failed test case with its first error line, and worker brief carries them",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "73a5ef3fea1fe4754955eaff7e660310e50e414408cd0e87a57fc98406751486",
+    "changed": "5631179ef049aaeaeeec12339dc52d02282b553ad11a094119cf00c53b634947",
+    "commit": "187884e6bc0db7783c8a7460eaa820f11a54590e",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done: When a Vitest run fails, forge test's report names every failed test case with its first error line, and the worker brief carries them\nCase: normal use - A pnpm workspace runs `pnpm -r --stream test`. pnpm prefixes each child-output line with its package directory, so the anchored match sees neither the Vitest `FAIL` headers nor the `\u00d7` summaries. The report falls back to unavailable names and the worker brief loses those failures. [pnpm documents this output format](https://pnpm.io/10.x/cli/run#--stream). Even without prefixes, [Vitest 3.2.4 groups identical stack traces](https://github.com/vitest-dev/vitest/blob/v3.2.4/packages/vitest/src/node/reporters/base.ts#L560-L613) under consecutive `FAIL` headers; `src/forge/review.py:512` retains only the last header for the shared error. Line 515 also misses `Unknown Error: ...` when a test rejects a string. The named proof supplies only isolated, unprefixed `Error:` lines.",
+        "file": "src/forge/review.py",
+        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
+        "gain": 4,
+        "harm": 3,
+        "line": 510,
+        "priority": "P1",
+        "title": "Not done: When a Vitest run fails, forge test's report names every failed test case with its first error line, and worker brief carries them",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 1, Harm 3\nRaise: Not done: When a Vitest run fails, forge test's report names every failed test case with its first error line, and the worker brief carries them\nCase: normal use - A Windows CI job fails during package installation, then its automatic retry runs Vitest and finds more than 30 failing cases. The generated workflow retries the command in `src/forge/prcheck.py:263-270`, so the job log contains two Forge failure reports. This code selects the first report, which has no test names, and combines it with only the last 30 log lines. The worker therefore misses the earlier cases from the actual Vitest run. The named proof supplies only one report and does not catch this.",
+        "file": "src/forge/worker.py",
+        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
+        "gain": 3,
+        "harm": 3,
+        "line": 561,
+        "priority": "P1",
+        "title": "Not done: When a Vitest run fails, forge test's report names every failed test case with its first error line, and worker brief carries them",
+        "work": 1
+      }
+    ],
+    "id": "12284492-80f5-49b8-b808-142ab81e78de",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-09T16:57:28.867336+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-09T17:11:41.964077+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
