@@ -116,7 +116,7 @@
     "id": "326f4dd8-f63a-43d6-abdd-2368e6efdb43",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -138,10 +138,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": null,
-    "head": "2408bab8bc4eece2a42800658df88eda0dd02880",
+    "close": "1375f983-a42c-47f2-8ac3-c6293be9997b",
+    "head": "f43e86e1095b686f1913ee109c9f978ca11d2772",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "A close with --dismiss runs the full tests and review, then refuses the dismissal because it checks only the new repair review's findings, so the whole run is wasted (#1253)",
   "worker": "codex"
