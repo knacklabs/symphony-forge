@@ -169,7 +169,7 @@
     "id": "b90925e8-4c08-463e-93a3-4751c8cd7793",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -182,10 +182,12 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "c15361c8643a153534c7576fb3fa1743be005b1a",
-    "keys": {},
-    "round": null
+    "close": "644a8793-a1b3-47a5-92e2-e423e6e59099",
+    "head": "094065e3083410a6f2b9958a4d2da29ea5ee9a5d",
+    "keys": {
+      "the open P0 quote values before putting them into recovery commands in src/forge/upgrade.py": 1
+    },
+    "round": 1
   },
   "why": "In a client repo, an agent asked to upgrade Forge runs forge fix start, but forge upgrade refuses in that fix's worktree, so the agent drops the fix and starts again (issue #1483).",
   "worker": "codex"
