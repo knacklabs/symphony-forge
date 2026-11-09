@@ -322,9 +322,12 @@ Initial migration and adoption keep their new settings until their first pull re
 New and earlier-adopted repos get this check on upgrade. Workers never edit settings.
 A developer's own `tools`, `workers` and `[models.<kind>]` choices go in the git-ignored
 `forge.local.toml` instead, which you edit directly when they ask; Forge refuses any other key there.
-`runner` selects the GitHub Actions runner label for every job in the generated `forge.yml`;
+`runner` selects the GitHub Actions runner label in the generated `forge.yml`;
 it defaults to `"ubuntu-24.04"` because the starters' Playwright 1.56 browser installer
 does not support Ubuntu 26.04. Sync preserves explicit runner settings.
+Optional `test_runner` selects a different label for pull-request test jobs only, with one
+group or several groups. All other jobs, including the nightly full test run, use `runner`.
+Without `test_runner`, all jobs use `runner`. Set the label in `forge.toml`, then run `forge sync`.
 For self-hosted Linux runners, initialise with
 `forge init --runner self-hosted`, or set `runner = "self-hosted"` (or a custom label) in an
 existing repo's fix, then run `forge sync`. New repos get it at init; earlier adopted repos get

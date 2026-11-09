@@ -1,0 +1,89 @@
+{
+  "base": "9608b31a568438a769be2a9e481fd769168d0df7",
+  "branch": "fix/test-runner-setting",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1c03e-7adf-76c1-a560-9d4608902afb",
+    "head": null,
+    "start": "16e59aa1feb5c2b58d6fde89538550f759b0f353"
+  },
+  "done_when": "An optional test_runner setting in forge.toml picks the machine for the pull-request test jobs only; every other job, including the nightly full test run, uses runner; without test_runner nothing changes",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "src/forge/prcheck.py",
+      "file": "src/forge/prcheck.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 89,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Doctor diagnoses the wrong runner when PR tests queue",
+      "work": 2
+    },
+    {
+      "area": "test_1_only_pull_request_tests_use_the_optional_machine() in tests/test_pull_request_test_machines.py",
+      "file": "tests/test_pull_request_test_machines.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 44,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_only_pull_request_tests_use_the_optional_machine",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "3ebcaef4d88de4c5c60006fd881ea0daf9c7e733665e1e225f5928b910ce4f7c",
+    "changed": "a30cf7aa11ee90a727e1d003158939c4109d3ee8525a990898d7e276465929a2",
+    "commit": "e78d386669bcd7ae55f31438fa1f74606478d725",
+    "dismissals": [],
+    "findings": [],
+    "id": "907d1168-2fd1-45aa-9ba8-d1e9e9ffd057",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-09T12:17:08.201116+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-09T12:28:12.773161+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-09T13:12:59.405634+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-09T13:57:21.145870+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-09T12:28:12.783920+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "src/forge/prcheck.py",
+    "reason": "The owner wants one more round to fix both findings",
+    "wait_id": "bfc02bca-ffaa-445c-8853-31c9b39a9ce7",
+    "worker_round": 1
+  },
+  "stuck": {
+    "close": "e66109cc-c200-401d-8584-ed6dacb49417",
+    "head": "65ef725e0f0d6768a95f89c87117a5438687123f",
+    "keys": {},
+    "round": 2
+  },
+  "why": "A client that pays for CI machines pays for every Forge CI job, because one runner setting picks the machine for all of them, including the short jobs and the nightly full test run",
+  "worker": "codex"
+}

@@ -86,7 +86,7 @@ jobs:
       fail-fast: false
       matrix:
         group: ${{ fromJSON(needs.docs-check.outputs.test-only == 'true' && '[1]' || '<group-list>') }}
-    runs-on: <runner>
+    runs-on: <test-runner>
     env:
       UV_FROZEN: '1'
       FORGE_GROUP: ${{ matrix.group }}
@@ -259,7 +259,8 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
     test_install = ("      - run: " + ("uv tool install ." if source else sync.install_line(cfg["version"]))
                     + "\n        if: steps.parent-tests.outputs.reuse != 'true'\n"
                     if ci_tests else "")
-    windows = cfg.get("runner", repo.DEFAULTS["runner"]).startswith("windows-")
+    test_runner = cfg.get("test_runner") or cfg.get("runner", repo.DEFAULTS["runner"])
+    windows = test_runner.startswith("windows-")
     if windows:
         # Each attempt gets its own PowerShell process, so exit or throw cannot end the retry.
         script = ("$ErrorActionPreference = 'Stop'\n& {\n" + test +
@@ -395,6 +396,7 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
                     'echo "::warning::' + warning + '"') + "\n" if warning else "")
                 .replace("<groups>", str(groups))
                 .replace("<group-list>", str(list(range(1, groups + 1))))
+                .replace("<test-runner>", json.dumps(test_runner))
                 .replace("<runner>", json.dumps(cfg.get("runner", repo.DEFAULTS["runner"]))))
     if not ci_tests:
         start = workflow.index("  docs-check:\n" if groups > 1 else "  tests:\n")

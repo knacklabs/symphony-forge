@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/prcheck.py\tDoctor diagnoses the wrong runner when PR tests queue\ttest-runner-setting",
+      "kind": "bug",
+      "path": "src/forge/prcheck.py",
+      "line": 89,
+      "text": "Doctor diagnoses the wrong runner when PR tests queue",
+      "from": "blocking",
+      "item": "test-runner-setting",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_pull_request_test_machines.py\tGate: test_1_only_pull_request_tests_use_the_optional_machine\ttest-runner-setting",
+      "kind": "bug",
+      "path": "tests/test_pull_request_test_machines.py",
+      "line": 44,
+      "text": "Gate: test_1_only_pull_request_tests_use_the_optional_machine",
+      "from": "blocking",
+      "item": "test-runner-setting",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
