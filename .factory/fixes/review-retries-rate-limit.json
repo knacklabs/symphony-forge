@@ -1,6 +1,13 @@
 {
   "base": "3e3edfb1079931edf1582b264629e447c73aeb03",
   "branch": "fix/review-retries-rate-limit",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1c154-2016-78c2-8655-ca3f1a9cdab5",
+    "head": null,
+    "start": "36119cba4bf947d9dfa4603eb187b3ff2d4021b2"
+  },
   "done_when": "A review that gets a 429 rate-limit answer waits and tries again before it counts as failed, so closes that start together all finish their reviews",
   "fix_kind": "mechanical",
   "kind": "fix",
