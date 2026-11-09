@@ -2,6 +2,13 @@
   "allow_large": "A release bumps the version in every file that records it",
   "base": "b584f04078edb6e4ff80a0432aaba866e12923f5",
   "branch": "fix/release-1-2-33",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1beb3-8411-7723-ad56-7485ac1b3176",
+    "head": null,
+    "start": "1e75be10df50b08530f648c72bc9621f4fd90a2f"
+  },
   "done_when": "The version is 1.2.33, generated files are synced, this repo is pinned to v1.2.33, and the tests pass",
   "fix_kind": "mechanical",
   "kind": "fix",
