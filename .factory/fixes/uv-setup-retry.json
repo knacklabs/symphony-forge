@@ -66,8 +66,8 @@
     "id": "4ec6c37e-f8f0-4b1e-8cd8-9ffdcd98077d",
     "status": "clean"
   },
-  "round": 2,
-  "status": "waiting for checks",
+  "round": 3,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-09T12:17:17.730932+00:00",
@@ -92,10 +92,10 @@
     "worker_round": 2
   },
   "stuck": {
-    "close": "326ea873-4b84-491c-a433-3a7d75940855",
-    "head": "602e3f9f14b8b229086c4e854691957ebad15c3a",
+    "close": "c45904f4-cb66-42c5-9444-39c6e108014b",
+    "head": "0e5b448214b200b8355a2ce157036f5513311956",
     "keys": {},
-    "round": 1
+    "round": 2
   },
   "why": "The CI step that installs uv fails often on a GitHub server error, and each failure needs a manual rerun",
   "worker": "codex"
