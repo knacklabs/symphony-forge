@@ -90,7 +90,7 @@
     "id": "4902f6ed-fbcd-4f1f-ba4d-1c14137b6ce8",
     "status": "blocked"
   },
-  "round": 2,
+  "round": 3,
   "status": "fixing",
   "steps": [
     {
@@ -106,22 +106,13 @@
       "step": "review"
     }
   ],
-  "stop": {
-    "by": "owner",
-    "choice": "narrow",
-    "question": "When a branch is behind a version bump on the default branch, close is stuck. It should deliver: Close on a branch behind the default branch's version bump merges the default branch first, or names that merge as the next step, and never tells the person to install an older release\nTwo rounds in a row left the open P0 avoid validating default-branch settings before the merge in src/forge/close.py.\nThe worker tried: Read the incoming release pin before settings validation.\nChoose one: switch this item to Claude; keep Codex for one more round; or narrow or split it.",
-    "reason": "The owner narrows it: keep only the message change so close never names an older release; remove the new check of main's settings before the merge",
-    "tool": "codex",
-    "wait_id": "19c0280c-b6d9-4ca4-999f-30d7b91dd4af",
-    "worker_round": 2
-  },
   "stuck": {
-    "close": "9272689b-f0bf-45bd-9323-3bc900f8a4e9",
-    "head": "d92cc73cd883a44c3d56faabd772c5dd90c7ee02",
+    "close": "ec326ac6-5391-4c06-a27e-b06af8ab611f",
+    "head": "7bbe41045c7340eda790a14402b897baa82301e6",
     "keys": {
-      "the open P0 avoid validating default-branch settings before the merge in src/forge/close.py": 1
+      "the open P0 avoid validating default-branch settings before the merge in src/forge/close.py": 2
     },
-    "round": 1
+    "round": 2
   },
   "why": "When a branch is behind a version bump on the default branch, close skips merging main and then tells the person to install the older release (#1217)",
   "worker": "codex"
