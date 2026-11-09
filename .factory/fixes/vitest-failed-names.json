@@ -4,12 +4,20 @@
   "done_when": "When a Vitest run fails, forge test's report names every failed test case with its first error line, and the worker brief carries them",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-09T16:57:28.867336+00:00",
       "step": "start"
     }
   ],
-  "why": "When many Vitest tests fail in CI, forge test's report keeps only the last lines, says test names are not available, and the worker brief gets no failure details"
+  "stuck": {
+    "close": null,
+    "head": "fc460ad784f4029702aac7a3aa85ff80693ec82b",
+    "keys": {},
+    "round": null
+  },
+  "why": "When many Vitest tests fail in CI, forge test's report keeps only the last lines, says test names are not available, and the worker brief gets no failure details",
+  "worker": "codex"
 }
