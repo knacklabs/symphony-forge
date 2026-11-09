@@ -426,22 +426,22 @@ def _bad_dismissal(env):
     item = env.start_fix()[0]
     env.close(item)
     return {"item": item, "args": ["--dismiss", "1", "--because", "it is fine"],
-            "problem": "Each --dismiss needs a finding number from the latest review and its own "
+            "problem": "Each --dismiss needs an open finding number from the item's review and its own "
                        "--because that starts with the file:line proving that finding wrong.",
             "next": 'forge close tidy-readme --dismiss <n> --because "<file:line> <reason>"'}
 
 
 def _dismissal_of_replaced_finding(env):
-    # A changed branch no longer invalidates a dismissal. A different title still does.
+    # The earlier dismissal remains valid; the distinct new defect still blocks.
     env.reviews(blocked(finding("P0", "Not done: The readme opens with a greeting")),
                 blocked(finding("P0", "A different defect")))
     item, where = env.start_fix()
     env.close(item)
     env.commit(where, "app.py", "print('hello again')\n")
     return {"item": item, "args": ["--dismiss", "1", "--because", "app.py:1 it greets here"],
-            "problem": "Each --dismiss needs a finding number from the latest review and its own "
-                       "--because that starts with the file:line proving that finding wrong.",
-            "next": 'forge close tidy-readme --dismiss <n> --because "<file:line> <reason>"'}
+            "problem": "The review left serious findings open: finding 1 (A different defect).",
+            "next": 'forge work tidy-readme, or forge close tidy-readme --dismiss <n> '
+                    '--because "<file:line> <reason>"'}
 
 
 def _dismissal_cites_no_such_line(env):

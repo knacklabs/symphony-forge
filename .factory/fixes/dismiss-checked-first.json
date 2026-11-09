@@ -1,0 +1,115 @@
+{
+  "base": "3e3edfb1079931edf1582b264629e447c73aeb03",
+  "branch": "fix/dismiss-checked-first",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1c154-20b4-7423-9b4e-2ccde0eb95ec",
+    "head": null,
+    "start": "a2411d50ef5f2f2b87f9a61a598b5f36fc19571f"
+  },
+  "done_when": "Close checks each --dismiss against the item's open findings before it runs tests or review, and accepts a dismissal of an open finding from an earlier round",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "close() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 326,
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: The owner accepts: evidence checked against the wrong file version needs a rare mix of steps; kept as a follow-up",
+      "round": 1,
+      "security": false,
+      "title": "Dismissal evidence can be tied to the wrong commit",
+      "work": 2
+    },
+    {
+      "area": "close() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 400,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Retaining an omitted finding can invalidate the required review check",
+      "work": 2
+    },
+    {
+      "area": "close() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 183,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Check dismissal numbers after reconciling the item's remote review",
+      "work": 2
+    },
+    {
+      "area": "test_1_unknown_dismissal_stops_before_tests_or_review() in tests/test_close_dismiss_open_findings.py",
+      "file": "tests/test_close_dismiss_open_findings.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 48,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_unknown_dismissal_stops_before_tests_or_review",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "514f1131c3ef74372a1d328f12c94efad9d62d513c2644771c6a612738aa0e08",
+    "changed": "f2633d3e28ac7f7e604b5cb1a35444dbc65268eba42b853590381905851491a4",
+    "commit": "ad1534531fd8ec9b8c6cb8d1c942d2cd1e00b172",
+    "dismissals": [],
+    "findings": [],
+    "id": "0f2b2f83-6f6f-4cff-af55-edf020c48909",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-09T17:20:33.010327+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-09T17:37:38.299652+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-09T18:03:00.580379+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-09T20:02:45.532776+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-09T18:03:00.580616+00:00",
+    "by": "owner",
+    "choice": "accept",
+    "file": "src/forge/close.py",
+    "reason": "The owner accepts: evidence checked against the wrong file version needs a rare mix of steps; kept as a follow-up",
+    "wait_id": "a917310e-cba0-412c-9993-e33c72a354cc",
+    "worker_round": 2
+  },
+  "stuck": {
+    "close": "c4ecbdd9-d6e5-4d66-8897-28af49bb4ef7",
+    "head": "83488d5359581c69b85e0edeca2295c406b83c1f",
+    "keys": {},
+    "round": 2
+  },
+  "why": "A close with --dismiss runs the full tests and review, then refuses the dismissal because it checks only the new repair review's findings, so the whole run is wasted (#1253)",
+  "worker": "codex"
+}
