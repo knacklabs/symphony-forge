@@ -39,7 +39,7 @@ REFUSALS = {
                       "fetch and reconcile {branch}, then forge close {item}"),
     "base_merged_by_hand": ("{item} builds on {base}, which was merged on GitHub outside Forge, so its pull request still targets {base}'s branch.",
                             "gh pr edit {number} --base {default}, then forge close {item}"),
-    "bad_dismiss": ("Each --dismiss needs a finding number from the latest review and its own "
+    "bad_dismiss": ("Each --dismiss needs an open finding number from the item's review and its own "
                     "--because that starts with the file:line proving that finding wrong.",
                     'forge close {item} --dismiss <n> --because "<file:line> <reason>"'),
     "no_such_line": ("{where} is not a line of the reviewed commit, so it can't prove a finding "
@@ -179,7 +179,8 @@ def close(args: argparse.Namespace) -> int:
         repo.refuse(REFUSALS["question"], item=item, question=question)
     if cfg["test_place"] == "ci" and not cfg["checks"]:
         repo.refuse(REFUSALS["no_checks"])
-    dismissals = _dismissals(args, item)
+    previous = state.get("review") or {}
+    dismissals = _dismissals(args, item, previous)
     branch, default = state["branch"], repo.default_branch(top)
     stacked_on = state.get("stacked_on") if "/" in item else ""
     pr = _pull_request(top, branch)
@@ -194,7 +195,6 @@ def close(args: argparse.Namespace) -> int:
         return _merged(top, item)
 
     checks.required(top, default)
-    previous = state.get("review") or {}
     if not (skip or previous.get("skipped")):
         review.require_engine(cfg)  # before merging or committing state
     legacy_diff = None
@@ -320,12 +320,10 @@ def close(args: argparse.Namespace) -> int:
                          "HEAD", cwd=top).returncode != 0):
             result["commit"] = repo.git("rev-parse", "HEAD", cwd=top)
             refreshed = True
-    requested = {}
+    requested = []
     for number, because in dismissals:
-        if not 1 <= number <= len(previous.get("findings", [])):
-            repo.refuse(REFUSALS["bad_dismiss"], item=item)
         finding = previous["findings"][number - 1]
-        requested[score.identity(finding["file"], finding["title"])] = because
+        requested.append((finding, because, _check_line(top, item, head, review_ref, because.split()[0])))
     evidence = ("\n\n".join(part for part in (
                     review.before_coding(top, base, head),
                     review.commit_paragraph(top, review_ref, "Functional check:")) if part),
@@ -394,13 +392,13 @@ def close(args: argparse.Namespace) -> int:
             state.pop("tests", None)
         state["status"] = "fixing" if failed or review.blocking(result) else "waiting for checks"
         _save(top, item, state, f"Tests of {item}: {'failed' if failed else 'passed'}")
-    for key, because in requested.items():
-        number = next((n for n, finding in enumerate(result["findings"], 1)
-                       if score.identity(finding["file"], finding["title"]) == key), 0)
+    for finding, because, from_base in requested:
+        number = next((n for n, current in enumerate(result["findings"], 1)
+                       if score.identity(current["file"], current["title"]) == score.identity(finding["file"], finding["title"])), 0)
         if not number:
-            repo.refuse(REFUSALS["bad_dismiss"], item=item)
-        from_base = _check_line(top, item, result["commit"], review_ref,
-                                because.split()[0])
+            # Keep the owner's decision when the repair report omits the finding.
+            result["findings"].append(finding)
+            number = len(result["findings"])
         result["dismissals"] = [d for d in result["dismissals"] if d["finding"] != number]
         result["dismissals"].append({"finding": number, "because": because,
                                      "from_base": from_base})
@@ -667,9 +665,11 @@ def _worktree(item: str) -> Path:
     repo.refuse(REFUSALS["not_started"], item=item)
 
 
-def _dismissals(args: argparse.Namespace, item: str) -> list[tuple[int, str]]:
+def _dismissals(args: argparse.Namespace, item: str, previous: dict[str, Any]) -> list[tuple[int, str]]:
     numbers, reasons = args.dismiss or [], args.because or []
-    if len(numbers) != len(reasons) or not all(re.match(r"\S+:\d+\s+\S", r) for r in reasons):
+    open_numbers = {n for n, f in enumerate(previous.get("findings", []), 1) if f in score.open_findings(previous)}
+    if (len(numbers) != len(reasons) or not set(numbers) <= open_numbers
+            or not all(re.match(r"\S+:\d+\s+\S", r) for r in reasons)):
         repo.refuse(REFUSALS["bad_dismiss"], item=item)
     return list(zip(numbers, reasons))
 
