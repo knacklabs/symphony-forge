@@ -1,6 +1,13 @@
 {
   "base": "9e496f963436afebeb83cccab88abb15b72b3131",
   "branch": "fix/upgrade-from-fix-points-to-main",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1bf07-6ee6-7140-852d-0fb773e314af",
+    "head": null,
+    "start": "f0f45e6f6d79b9730e52efd76ceb002be901e6ab"
+  },
   "done_when": "forge upgrade run in a fix worktree says to drop that fix and run forge upgrade from the main checkout, with the exact commands, and forge next names forge upgrade <release> when a newer Forge release exists than the repo pins.",
   "fix_kind": "mechanical",
   "kind": "fix",
