@@ -71,7 +71,7 @@
     "status": "blocked"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-09T12:17:17.730932+00:00",
@@ -84,8 +84,12 @@
   ],
   "stop": {
     "at": "2026-11-09T12:28:35.121826+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "tests/test_ci_uv_install_retry.py",
-    "wait_id": "6c82fcdb-c33a-4cda-a3e4-822a556e3b37"
+    "reason": "The owner wants one more round to make both tests stronger",
+    "wait_id": "6c82fcdb-c33a-4cda-a3e4-822a556e3b37",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
