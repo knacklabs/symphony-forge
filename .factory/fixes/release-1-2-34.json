@@ -1,0 +1,31 @@
+{
+  "allow_large": "A release bumps the version in every file that records it; the owner approved this release",
+  "base": "72333acb3a8e6202172acf2482e590a852edd0f5",
+  "branch": "fix/release-1-2-34",
+  "done_when": "The version is 1.2.34, generated files are synced, this repo is pinned to v1.2.34, and the tests pass",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "ad9180054b2241fd67acf6b157fcf33a37c8139ca04fa3d671d7f7670a33a7a1",
+    "changed": "1938e65b5b0870d46e957190c7c84913c878b7ba674d5c5f7f9364fd2042c171",
+    "commit": "94c9185385a2ab67471a92b768fd18b4b8f9e5a0",
+    "dismissals": [],
+    "findings": [],
+    "id": "eb15efbe-665e-4501-b1c8-fa1779a9968c",
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-09T14:52:24.880620+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-09T14:58:30.072223+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Release v1.2.34: publish what merged since v1.2.33"
+}
