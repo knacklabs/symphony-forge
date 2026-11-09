@@ -8,6 +8,8 @@ Existing bootstrap tests only check tool presence. These command tests need no n
 import re
 import shutil
 
+import pytest
+
 from conftest import ROOT
 from test_fix_new_repos_get_claude_as_their_worker_by import _new_repo
 
@@ -35,6 +37,7 @@ def _assert_retry(client):
                             condition), (name, condition)
 
 
+@pytest.mark.platform
 def test_1_new_repo_retries_uv_install_once(repo, gh, tmp_path):
     client = _new_repo(repo, gh, tmp_path)
     result = repo.forge("init", "--actions", "yes", cwd=client)
@@ -42,6 +45,7 @@ def test_1_new_repo_retries_uv_install_once(repo, gh, tmp_path):
     _assert_retry(client)
 
 
+@pytest.mark.platform
 def test_2_earlier_adopted_repo_gets_uv_retry_on_sync(repo):
     shutil.copytree(ROOT / "tests/fixtures/doctor-v1.2.2", repo.path, dirs_exist_ok=True)
     workflow = repo.path / ".github/workflows/forge.yml"
