@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/repo.py\tNot done: The printed nightly full-run command has no quotes around a plain file name, and it is the same on Windows as on other systems.\ton-windows-the-printed-next-step-puts-do",
+      "kind": "bug",
+      "path": "src/forge/repo.py",
+      "line": 400,
+      "text": "Not done: The printed nightly full-run command has no quotes around a plain file name, and it is the same on Windows as on other systems.",
+      "from": "blocking",
+      "item": "on-windows-the-printed-next-step-puts-do",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/repo.py\tProtect quoted Windows arguments from PowerShell evaluation\ton-windows-the-printed-next-step-puts-do",
+      "kind": "bug",
+      "path": "src/forge/repo.py",
+      "line": 402,
+      "text": "Protect quoted Windows arguments from PowerShell evaluation",
+      "from": "blocking",
+      "item": "on-windows-the-printed-next-step-puts-do",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
