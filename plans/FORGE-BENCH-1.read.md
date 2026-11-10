@@ -1,13 +1,13 @@
 ---
 reader: codex (gpt-6.1-terra)
-read_at: 2026-11-10T18:04:05.872497+00:00
-seconds: 217.034
-read_hash: e9388e9061b1a13fb8badfb88dfb9d09e464ec7f
-round: 4
-passed: yes
-doc_seen: e9388e9061b1a13fb8badfb88dfb9d09e464ec7f
+read_at: 2026-11-10T19:37:00.253768+00:00
+seconds: 418.247
+read_hash: 1871e42e0d0326e0eec12cb6de14f9b7fbde96d9
+round: 5
+passed: no
+doc_seen: 1871e42e0d0326e0eec12cb6de14f9b7fbde96d9
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 223d9d4333408ca41aaa7f0a9998df9658dce5c5
+notes_seen: 8084915edafdaaeaff205ff1d2182c08fe32fb51
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a1c67a-137f-7750-ac95-00994b5ef6e8
 session:
@@ -149,11 +149,45 @@ Only a genuine trade-off goes to the human, as a question with options.
     Case: normal use - two releases are scored by hand in the opposite order.  
     The [lookup](/plans/FORGE-BENCH-1.md:71) selects the newest run with an artifact without checking which release it scored. Scoring `v1.2.37` and then `v1.2.36` would compare the older release against the newer one; the next run would use `v1.2.36` as its comparison. Forge’s existing [release ordering](/src/forge/releases.py:41) uses ancestry rather than run time.  
     Gain 3, Work 3, Harm 2
-   Disposition: keep - below the bar (follow-up)
+   Disposition: cut - Settled 6 compares only with a lower release number and ignores higher ones; `test_3` has a higher-release file present.
 
 17. Advisory: Unproven: item 1: a tag from before this story has no benchmark files.  
     Raise: Test  
     Case: normal use - after the workflow merges, the first manual run names the latest release already tagged.  
     The [plan](/plans/FORGE-BENCH-1.md:69) says the job checks out the named tag and can score any tag. The [scorer and notes](/plans/FORGE-BENCH-1.md:102) are new; `git ls-tree v1.2.35 -- benchmark scripts/bench_score.py` finds neither in the current latest release. The plan does not specify another source for those files, and the workflow test would pass with only the tag checkout.  
     Gain 3, Work 3, Harm 2
-   Disposition: keep - below the bar (follow-up)
+   Disposition: cut - Settled 4 says an older tag is scored with the current notes, checks and script from the fix's worktree and the app built from that tag.
+
+## Round 5
+
+18. Blocking: Plan gap: the builder is given the Forge checkout’s worker instructions.
+    
+    Raise: Plan gap  
+    Case: normal use - the coordinator starts the background worker from its Forge session and passes the scratch folder’s path.  
+    The [plan](/plans/FORGE-BENCH-1.md:69) assumes that passing the path selects the scratch repo’s worker. [Claude Code’s documentation](https://code.claude.com/docs/en/sub-agents) says project workers are discovered from the session’s working directory, and a subagent starts there. The current [worker’s system instructions](/.claude/agents/worker.md:9) say to work in that checkout and commit, conflicting with the requested scratch-folder, no-commit build. This is a new conflict introduced by the native worker setup; the guide test checks only its wording.  
+    Gain 5, Work 3, Harm 2
+   Disposition: cut - Settled 4 and 5 now start a `general-purpose` subagent (not the `worker` role) whose prompt is only the scratch folder, the notes and the rule to read the scratch folder's AGENTS.md and skills by path, start no story or fix and not commit; the evidence explains why the `worker` role comes from this repo (`worker.md` line 9); `test_1` asserts the subagent type and the prompt parts.
+
+19. Advisory: Unproven: the saved score is left outside the fix checkout.
+    
+    Raise: Test  
+    Case: normal use - the agent scores a release, then starts the fix that will save its result.  
+    The [steps](/plans/FORGE-BENCH-1.md:69) write the result before starting the fix. [Fix start](/src/forge/task.py:264) creates a separate checkout from a commit and does not carry the uncommitted result into it. The guide test does not require a transfer, so following the listed steps can leave the fix without the score it must commit.  
+    Gain 3, Work 2, Harm 2
+   Disposition: cut - Settled 4 starts the fix first and writes the score into the fix's worktree; `test_1` asserts that order.
+
+20. Advisory: Not done: the baseline can hash a different checker from the one being scored.
+    
+    Raise: Not done  
+    Case: normal use - two release tags are scored from the same newer Forge checkout after the design checker changed between them.  
+    The [baseline](/plans/FORGE-BENCH-1.md:73) hashes the checker in the coordinator’s checkout, while each scratch app receives the [checker shipped by its installed release](/src/forge/ui_checks.py:33). Both scores can therefore get the same baseline despite using different checkers, and the comparison can show a direction instead of “new baseline.” This arises from the new local design, where the scorer stays in the current checkout while the app is initialized from a named tag.  
+    Gain 4, Work 2, Harm 2
+   Disposition: cut - Settled 8 hashes the checker from the built app (`app_baseline`: its `ui-checks.js` and the impeccable `scripts/` folder), so the baseline follows the checker that was scored; `test_3` edits a file in each list.
+
+21. Advisory: Not done: saving the score through a normal fix creates GitHub work.
+    
+    Raise: Not done  
+    Case: normal use - the agent saves a release’s score as instructed.  
+    The [owner-facing text](/plans/FORGE-BENCH-1.md:7) says nothing runs on or is added to GitHub, but the required normal fix [pushes its branch](/src/forge/task.py:288) and [opens a pull request](/src/forge/close.py:981). That pull request starts the existing [GitHub workflow](/.github/workflows/forge.yml:4).  
+    Gain 3, Work 2, Harm 2
+   Disposition: cut - the owner text now says only the saved-score file goes through Forge's usual pull request; Settled 4 names the mechanical kind (one pull request, one light review, related tests).
