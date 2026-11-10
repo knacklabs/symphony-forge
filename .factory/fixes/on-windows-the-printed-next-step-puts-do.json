@@ -4,12 +4,20 @@
   "done_when": "The printed nightly full-run command has no quotes around a plain file name, and it is the same on Windows as on other systems.",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-10T19:39:53.711839+00:00",
       "step": "start"
     }
   ],
-  "why": "On Windows the printed next step puts double quotes around a plain file name, so the Windows platform run fails two nightly-setting tests and blocks the release."
+  "stuck": {
+    "close": null,
+    "head": "982dcf84fb7ef69eb94ffc5c66eaec80159110dc",
+    "keys": {},
+    "round": null
+  },
+  "why": "On Windows the printed next step puts double quotes around a plain file name, so the Windows platform run fails two nightly-setting tests and blocks the release.",
+  "worker": "codex"
 }
