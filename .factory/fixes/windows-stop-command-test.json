@@ -4,12 +4,20 @@
   "done_when": "tests/test_waiting_runs_name_holders.py expects the stop command the way Forge prints it on every platform, and the Windows platform run passes",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-10T22:09:26.485792+00:00",
       "step": "start"
     }
   ],
-  "why": "On Windows the test of waiting runs expects the stop command with double quotes around the repo path, and since the quoting fix a plain path prints with no quotes, so the Windows platform run fails and blocks the v1.2.36 release"
+  "stuck": {
+    "close": null,
+    "head": "88f6998b1b559cff975896e6c442001c048b17ca",
+    "keys": {},
+    "round": null
+  },
+  "why": "On Windows the test of waiting runs expects the stop command with double quotes around the repo path, and since the quoting fix a plain path prints with no quotes, so the Windows platform run fails and blocks the v1.2.36 release",
+  "worker": "claude"
 }
