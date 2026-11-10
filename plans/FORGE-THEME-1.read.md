@@ -1,13 +1,13 @@
 ---
 reader: codex (gpt-6.1-terra)
-read_at: 2026-11-10T18:03:12.515378+00:00
-seconds: 397.042
-read_hash: 0bda6e86ee06a2c4bdd9adcd56b1420e1c0e0f9a
-round: 2
-passed: no
-doc_seen: 0bda6e86ee06a2c4bdd9adcd56b1420e1c0e0f9a
+read_at: 2026-11-10T18:17:08.177540+00:00
+seconds: 528.971
+read_hash: 6bd4707e6b52adc64151e4bff4e03851d2018193
+round: 3
+passed: yes
+doc_seen: 6bd4707e6b52adc64151e4bff4e03851d2018193
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: baa36158f2ff57b90f059509e4a94f1140260c3b
+notes_seen: dda7588d60b963112042c8f7ba4a37a4f16be374
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a1c68c-71c0-7f11-be78-6c5527a290a1
 session:
@@ -130,3 +130,27 @@ Disposition: cut - one line in the fonts step: a generic browser family (`serif`
    Case: normal use - A client edits a React test helper such as `apps/web/test/provider.tsx` while the starter theme is unchanged. Close treats it as a screen change and refuses it.
    Gain 3, Work 3, Harm 2
 Disposition: cut - the screen-file rule now excludes `tests/`, `test/` and `__tests__/`, as the existing checker does.
+
+## Round 3
+
+17. Advisory: Not done: Prototype reviews do not receive the new stock-theme rule.
+    Raise: Not done. The plan adds the rule to [review.md](/plans/FORGE-THEME-1.md:109), but unsigned prototype fixes use [review-light.md](/src/forge/review.py:344), which says not to audit style.
+    Case: normal use - A prototype screen is built on the starter theme without an approved copy. Its reviewer is not given the rule that would report it.
+    Gain 3, Work 3, Harm 3
+   Disposition: keep - below the bar (follow-up)
+
+18. Advisory: Plan gap: Item 4’s test is assigned to two files.
+    Raise: Plan gap. [The general test instructions](/plans/FORGE-THEME-1.md:46) place `test_4` in `test_theme_check.py`, while [item 4](/plans/FORGE-THEME-1.md:111) and the DESIGN task place it in `test_theme_guide.py`. Adding both would fail the [one-test-per-rule check](/tests/test_rules.py:49).
+    Gain 3, Work 1, Harm 2
+   Disposition: keep - below the bar (follow-up)
+
+19. Advisory: Test: The review-rule test can pass with its condition reversed.
+    Raise: Test. [Item 4’s test](/plans/FORGE-THEME-1.md:110) pins only `untouched starter theme` and `docs/design/tokens.json`. A prompt telling the reviewer to report the theme only **when the copy exists** contains both phrases but misses the promised no-copy case.
+    Gain 3, Work 1, Harm 2
+   Disposition: keep - below the bar (follow-up)
+
+20. Advisory: Plan gap: The worker instruction forbids an approved neutral theme.
+    Raise: Plan gap. [The review rule](/plans/FORGE-THEME-1.md:109) applies when the approved copy is absent, but the worker is told to build no screen on the starter’s neutral theme without that condition.
+    Case: normal use - A client approves the neutral theme and the agent saves its copy. The worker instruction still forbids building the screen with the approved theme.
+    Gain 3, Work 1, Harm 2
+   Disposition: keep - below the bar (follow-up)
