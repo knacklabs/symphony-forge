@@ -88,8 +88,8 @@
     "id": "072f779a-8b0e-4259-811f-efa6413be4e0",
     "status": "clean"
   },
-  "round": 3,
-  "status": "waiting for checks",
+  "round": 4,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-10T15:36:54.188914+00:00",
@@ -113,10 +113,10 @@
     }
   ],
   "stuck": {
-    "close": "2e38e738-cf5b-4bd9-8aac-fe60071162ae",
-    "head": "ebf583ec0a57963d74c80649e1cebb63cdd8af80",
+    "close": "66a02687-f40a-4f6f-a729-b06aea931a22",
+    "head": "94c83e431715b8505b54f6402c60abdf3aeeca0b",
     "keys": {},
-    "round": 2
+    "round": 3
   },
   "why": "A repo with its own nightly test workflow still runs Forge's nightly full suite every night only to get the forge-full-suite status, so it pays for two nightly runs",
   "worker": "codex"
