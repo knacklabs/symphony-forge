@@ -42,7 +42,7 @@
     "status": "blocked"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-10T22:09:26.485792+00:00",
@@ -55,8 +55,12 @@
   ],
   "stop": {
     "at": "2026-11-10T22:15:16.311848+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "tests/test_waiting_runs_name_holders.py",
-    "wait_id": "6650bc52-a56b-4545-abdf-aafa45afab51"
+    "reason": "The owner was away on 11 Nov 2026 and told the coordinator to take the recommended option: the Windows run on this branch is now green, so one more round records that proof",
+    "wait_id": "6650bc52-a56b-4545-abdf-aafa45afab51",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
