@@ -33,7 +33,7 @@
       "gain": 3,
       "harm": 3,
       "line": 49,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 1,
       "security": false,
@@ -72,7 +72,7 @@
       "gain": 4,
       "harm": 4,
       "line": 50,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 2,
       "security": false,
@@ -82,37 +82,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "aa70e921fb67673d308639798be1447d49665465144064842a51379357df2675",
-    "changed": "acce5704e4fc06c4ee907eb32dd342d966b66eb482561f6292f766729101154b",
-    "commit": "7b7512123a93a51d787261d39e7958730ae0d822",
+    "branch_diff": "6416546d131c53cb4450d2dd6db7d1f012618a055deedd8cab690cebd2ebca6f",
+    "changed": "7a9f343504eb87780556a013692d4593d7d6968aaefdc2e27856ddeb44af7c9e",
+    "commit": "0f8c9bf9c53c85e59c2fbfcf430149c4c03e9eb3",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 1, Harm 4\nRaise: Functional\nCase: normal use - A new client app adds a form or navigation control to its home page. The starter's `apps/web/index.html:11` places the app's root before the test button appended by `mount` at `motion.spec.ts:12`. The first Tab therefore focuses the app's control, while this assertion expects the injected button. The shipped browser suite then fails on every web test run (`apps/web/project.json:14-16`), blocking normal screen development even when the app's controls work.",
-        "file": "src/forge/templates/starter/apps/web/e2e/motion.spec.ts",
-        "gain": 4,
-        "harm": 4,
-        "line": 50,
-        "priority": "P0",
-        "title": "Pressed-state test fails when the app has a focusable control",
-        "work": 1
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - A developer adjusts the styling of a shared switch. The repair still checks only whether the pressed utility occurs anywhere in the switch file. Moving it from the switch root to its existing thumb leaves this assertion green, but the thumb has `pointer-events-none` (`switch.tsx:25`) and cannot respond to the mouse press. The browser case at `motion.spec.ts:45` presses a separate synthetic button, so it also passes while the real switch loses its pressed state. The checkbox has the same file-wide assertion.",
-        "file": "tests/test_polish_parts.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 51,
-        "priority": "P1",
-        "title": "Gate: shared controls retain their pressed states",
-        "work": 2
-      }
-    ],
-    "id": "e27d6d6c-7fd0-44c0-999b-5643fc8b7423",
-    "status": "blocked"
+    "findings": [],
+    "id": "6746e534-18b4-459f-99e3-8bb15445e57c",
+    "status": "clean"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-10T18:29:46.396015+00:00",
@@ -124,6 +103,10 @@
     },
     {
       "at": "2026-11-10T19:40:24.928434+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-10T19:44:41.112579+00:00",
       "step": "review"
     }
   ],
