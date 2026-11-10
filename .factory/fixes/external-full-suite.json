@@ -4,12 +4,20 @@
   "done_when": "With an optional forge.toml setting, the generated workflow has no scheduled full suite and Forge's full-run next step names the repo's own workflow; sign-off and the push guard still accept a forge-full-suite status posted by that workflow; without the setting nothing changes",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-10T15:36:54.188914+00:00",
       "step": "start"
     }
   ],
-  "why": "A repo with its own nightly test workflow still runs Forge's nightly full suite every night only to get the forge-full-suite status, so it pays for two nightly runs"
+  "stuck": {
+    "close": null,
+    "head": "8c74ab0b1115ec1d5dda54644945da7dd2949a80",
+    "keys": {},
+    "round": null
+  },
+  "why": "A repo with its own nightly test workflow still runs Forge's nightly full suite every night only to get the forge-full-suite status, so it pays for two nightly runs",
+  "worker": "codex"
 }
