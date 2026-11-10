@@ -179,6 +179,13 @@ def _plant(client: Path, stack: str) -> set[tuple[str, str]]:
           '+<Route path="people" element={<PeoplePage />} />',
           "+import PeoplePage from './pages/people';",
           "+export const url = `${API_BASE}/people`;",
+          "+@Controller('people')",
+          "+@Get('people/export')",
+          "+providers: [PeopleController],",
+          "+providers: [PeopleService],",
+          "@Controller('people-archive')",
+          "@Get('people-archive')",
+          "export const archiveClasses = [PeopleArchiveController, PeopleArchiveService];",
           "// uses /api/v1/people",
           "export const seen = 1; // see /api/v1/people",
           '<Route path="people-archive" element={<PeopleArchivePage />} />',
@@ -197,7 +204,10 @@ def _plant(client: Path, stack: str) -> set[tuple[str, str]]:
               "+    from app.people import PeopleService",
               '+    session.execute(text("""INSERT INTO\n        people.person (name) VALUES (\'Ada\')"""))',
               "+    session.add(Person(name='Ada'))",
+              "+    session.add(PersonModel(name='Ada'))",
+              "+    service = PersonService(session)",
               "    session.add(PersonArchive(name='Ada'))",
+              "    session.add(PersonArchiveModel(name='Ada'))",
               "    seen = 1  # see /api/v1/people")
         write("apps/api/tests/test_tool_names.py",
               '+assert "people_search" in names',
@@ -210,6 +220,8 @@ def _plant(client: Path, stack: str) -> set[tuple[str, str]]:
     else:
         write("apps/api/src/demo/seed.ts",
               "+await prisma.person.create({ data: { name: 'Ada' } });",
+              "+await db.person.create({ data: { name: 'Ada' } });",
+              "await db.personArchive.create({ data: { name: 'Ada' } });",
               "+await prisma.$executeRaw`INSERT INTO\n  people.person (name) VALUES ('Ada')`;")
         write("apps/api/test/tool-names.e2e-spec.ts",
               "+expect(names).toContain('people_search');",
@@ -342,11 +354,16 @@ def test_2_the_check_names_the_features_that_use_the_feature(repo, gh, tmp_path,
     # Other import and address forms are uses; an inline comment and an example text are not.
     forms = "apps/api/app/jobs/imports.py" if python else "libs/jobs/server/src/forms.ts"
     sample = 'sample = {"example": "/clients"}' if python else "export const sample = { example: '/clients' };"
-    (client / forms).write_text("\n".join(
-        ["from app import clients", "from ..clients import ClientService",
-         "value = 1  # see /api/v1/clients", sample] if python else
-        ["export const base = `${API_BASE}/clients`;", "export const seen = 1; // see /api/v1/clients",
-         sample]) + "\n", encoding="utf-8")
+    # A block comment, a docstring and an example object that start on an earlier line are not uses.
+    quiet = (['def docs():', '    """Reads clients.', '', '    See /api/v1/clients for the list.', '    """',
+              'many = {', '    "example": {', '        "link": "/clients",', '    },', '}'] if python else
+             ['/*', '  Calls /api/v1/clients', '*/', 'export const many = {', '  example: {',
+              "    link: '/clients',", '  },', '};'])
+    body = (["from app import clients", "from ..clients import ClientService",
+             "value = 1  # see /api/v1/clients", sample] if python else
+            ["export const base = `${API_BASE}/clients`;", "export const seen = 1; // see /api/v1/clients",
+             sample]) + quiet
+    (client / forms).write_text("\n".join(body) + "\n", encoding="utf-8")
     # Files outside the module folders are leftovers.
     web = "apps/web/src/jobs-call.ts"
     (client / web).parent.mkdir(parents=True, exist_ok=True)
@@ -360,10 +377,11 @@ def test_2_the_check_names_the_features_that_use_the_feature(repo, gh, tmp_path,
     assert not re.search(re.escape(tool) + r":2(?!\d)", users), users
     for number in ((1, 2) if python else (1,)):
         assert re.search(re.escape(forms) + rf":{number}(?!\d)", users), users
-    for number in ((3, 4) if python else (2, 3)):
+    for number in range(3 if python else 2, len(body) + 1):
         assert not re.search(re.escape(forms) + rf":{number}(?!\d)", users), users
     assert (forms, sample.strip()) in _listed(out)
-    assert not [text for path, text in _listed(out) if path == forms and "see /api/v1/clients" in text]
+    assert (forms, '"link": "/clients",' if python else "link: '/clients',") in _listed(out)
+    assert not [text for path, text in _listed(out) if path == forms and "/api/v1/clients" in text]
     assert web not in users and (web, "api.get('/api/v1/clients');") in _listed(out)
     if python:
         assert "libs/shared" not in users
