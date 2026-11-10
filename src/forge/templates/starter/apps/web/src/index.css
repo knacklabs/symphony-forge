@@ -125,3 +125,22 @@
     @apply bg-background text-foreground font-sans;
   }
 }
+
+/* Motion (FORGE-POLISH-1) */
+@theme {
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --default-transition-timing-function: var(--ease-out);
+  --default-transition-duration: 150ms;
+  --enter-duration: 200ms;
+}
+
+/* Stylesheet animations and transitions end at once; a script's animation must read the setting itself. Spinners keep turning. */
+@media (prefers-reduced-motion: reduce) {
+  *:not(.animate-spin),
+  *:not(.animate-spin)::before,
+  *:not(.animate-spin)::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
+}
