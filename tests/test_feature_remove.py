@@ -61,7 +61,10 @@ def _commit(repo, client: Path, message: str) -> str:
 
 
 def _check(repo, client: Path, plural: str) -> tuple[int, str]:
+    # The check is read-only: no file is changed, added or removed, untracked files included.
+    before = repo.git("status", "--porcelain", "--untracked-files=all", cwd=client)
     done = repo.forge("task", "feature-check", plural, cwd=client)
+    assert repo.git("status", "--porcelain", "--untracked-files=all", cwd=client) == before
     return done.returncode, done.stdout + done.stderr
 
 
@@ -155,23 +158,37 @@ def _plant(client: Path, stack: str) -> set[tuple[str, str]]:
           "+export const mod = PeopleModule;",
           '+<Route path="/people" element={<Page />} />',
           "+{ label: 'People', to: '/people' },",
+          '+<Route path="people" element={<PeoplePage />} />',
+          "+import PeoplePage from './pages/people';",
+          "+export const url = `${API_BASE}/people`;",
           "// uses /api/v1/people",
+          "export const seen = 1; // see /api/v1/people",
+          '<Route path="people-archive" element={<PeopleArchivePage />} />',
+          "import ArchivePage from './pages/people-archive';",
           "export const archive = '/api/v1/people-archive';",
           "export const archiveTools = '/api/v1/agent-tools/people-archive';",
           "export const archiveTool = 'people_archive_search';",
           "export const archiveModule = PeopleArchiveModule;")
+    # A generated file over 1 MB is read like any other.
+    big = "apps/web/src/api-types.json"
+    (client / big).write_text(" " * 1_100_000 + '\n"/api/v1/people": {}\n', encoding="utf-8")
+    expected.add((big, '"/api/v1/people": {}'))
     if _is_python(stack):
         write("apps/api/app/demo/loader.py",
               "def load(session):",
               "+    from app.people import PeopleService",
-              '+    session.execute(text("""INSERT INTO\n        people.person (name) VALUES (\'Ada\')"""))')
+              '+    session.execute(text("""INSERT INTO\n        people.person (name) VALUES (\'Ada\')"""))',
+              "+    session.add(Person(name='Ada'))",
+              "    session.add(PersonArchive(name='Ada'))",
+              "    seen = 1  # see /api/v1/people")
         write("apps/api/tests/test_tool_names.py",
               '+assert "people_search" in names',
               '+assert any(n.startswith("people_") for n in names)',
               '+client.get("/api/v1/agent-tools/people")')
         with (client / "apps/api/app/people/__init__.py").open("a", encoding="utf-8") as handle:
-            handle.write("from app.people.routes import router\n")
-        expected.add(("apps/api/app/people/__init__.py", "from app.people.routes import router"))
+            handle.write("from app.people.routes import router\nregister_tools()\n")
+        expected.update(("apps/api/app/people/__init__.py", line)
+                        for line in ("from app.people.routes import router", "register_tools()"))
     else:
         write("apps/api/src/demo/seed.ts",
               "+await prisma.person.create({ data: { name: 'Ada' } });",
@@ -185,7 +202,7 @@ def _plant(client: Path, stack: str) -> set[tuple[str, str]]:
 
 
 def _unplant(client: Path, stack: str) -> None:
-    for rel in ("apps/web/src/links.ts", "apps/api/app/demo/loader.py",
+    for rel in ("apps/web/src/links.ts", "apps/web/src/api-types.json", "apps/api/app/demo/loader.py",
                 "apps/api/tests/test_tool_names.py", "apps/api/src/demo/seed.ts",
                 "apps/api/test/tool-names.e2e-spec.ts"):
         (client / rel).unlink(missing_ok=True)
@@ -276,6 +293,9 @@ def test_2_the_check_names_the_features_that_use_the_feature(repo, gh, tmp_path,
             assert any("projects.view" in text for _, text in _listed(own)), own
         else:
             assert any(path.startswith("apps/api/tests/") for path, _ in _listed(own)), own
+        # The starter's tests also read the feature's agent resources by address.
+        mcp = "apps/api/tests/test_mcp.py" if python else "apps/api/test/mcp.e2e-spec.ts"
+        assert any(path == mcp and "app://projects/fields" in text for path, text in _listed(own)), own
 
     _build(repo, client, CLIENT_LINE, CLIENTS_ARCHIVE_LINE, JOBS_LINE)
     _commit(repo, client, "Build clients, clients-archive and jobs")
@@ -286,19 +306,29 @@ def test_2_the_check_names_the_features_that_use_the_feature(repo, gh, tmp_path,
     assert "archive" not in users
 
     if not python:
+        # The package line and the project reference each name jobs on their own.
+        package = client / "libs/jobs/server/package.json"
+        package.write_text(re.sub(r'\n\s*"@app/clients-contracts": "workspace:\*",?', "",
+                                  package.read_text("utf-8")), encoding="utf-8")
+        assert "libs/jobs/server/tsconfig.json:" in _users(_check(repo, client, "clients")[1])
         # A web call by address counts, even when jobs imports nothing from clients.
         picker = client / "libs/jobs/web/src/clients-picker.tsx"
         picker.parent.mkdir(parents=True)
         picker.write_text("api.get('/clients');\n", encoding="utf-8")
-        package = client / "libs/jobs/server/package.json"
-        package.write_text(re.sub(r'\n\s*"@app/clients-contracts": "workspace:\*",?', "",
-                                  package.read_text("utf-8")), encoding="utf-8")
         assert "libs/jobs/web/src/clients-picker.tsx" in _users(_check(repo, client, "clients")[1])
 
     # A tool name in code is a use; the same words in a comment are not.
     tool = "apps/api/app/jobs/tool_names.py" if python else "libs/jobs/server/src/tool-names.ts"
     (client / tool).write_text(f"x = 'clients_search'\n{'#' if python else '//'} calls /api/v1/clients"
                                " and clients_search\n", encoding="utf-8")
+    # Other import and address forms are uses; an inline comment and an example text are not.
+    forms = "apps/api/app/jobs/imports.py" if python else "libs/jobs/server/src/forms.ts"
+    sample = 'sample = {"example": "/clients"}' if python else "export const sample = { example: '/clients' };"
+    (client / forms).write_text("\n".join(
+        ["from app import clients", "from ..clients import ClientService",
+         "value = 1  # see /api/v1/clients", sample] if python else
+        ["export const base = `${API_BASE}/clients`;", "export const seen = 1; // see /api/v1/clients",
+         sample]) + "\n", encoding="utf-8")
     # Files outside the module folders are leftovers.
     web = "apps/web/src/jobs-call.ts"
     (client / web).parent.mkdir(parents=True, exist_ok=True)
@@ -310,6 +340,12 @@ def test_2_the_check_names_the_features_that_use_the_feature(repo, gh, tmp_path,
     users = _users(out)
     assert re.search(re.escape(tool) + r":1(?!\d)", users), users
     assert not re.search(re.escape(tool) + r":2(?!\d)", users), users
+    for number in ((1, 2) if python else (1,)):
+        assert re.search(re.escape(forms) + rf":{number}(?!\d)", users), users
+    for number in ((3, 4) if python else (2, 3)):
+        assert not re.search(re.escape(forms) + rf":{number}(?!\d)", users), users
+    assert (forms, sample.strip()) in _listed(out)
+    assert not [text for path, text in _listed(out) if path == forms and "see /api/v1/clients" in text]
     assert web not in users and (web, "api.get('/api/v1/clients');") in _listed(out)
     if python:
         assert "libs/shared" not in users
@@ -351,12 +387,13 @@ def test_3_the_check_keeps_the_data_layer_out_of_the_list(repo, gh, tmp_path, st
     assert (code, ALL_CLEAR in out) == (0, True), out
     assert not _listed(out) and not _still_there(out)
 
-    # The removal added and deleted no migration and wrote no DROP.
+    # The removal added and deleted no migration (new files included) and wrote no DROP.
+    repo.git("add", "-A", cwd=client)
     changes = [line.split("\t") for line in
-               repo.git("diff", "--name-status", before, cwd=client).splitlines()]
+               repo.git("diff", "--cached", "--name-status", before, cwd=client).splitlines()]
     assert not [path for status, path in changes
                 if "migrations" in path and status[0] in "AD"], changes
-    diff = repo.git("diff", before, cwd=client)
+    diff = repo.git("diff", "--cached", before, cwd=client)
     assert not [line for line in diff.splitlines() if line.startswith("+") and "DROP" in line]
 
     # The database tests call the starter's API: a call to the removed feature is listed.
@@ -373,6 +410,10 @@ def test_3_the_check_keeps_the_data_layer_out_of_the_list(repo, gh, tmp_path, st
 
     if python:
         models = client / "apps/api/app/people/models.py"
+        # A file that names the schema but holds no model is not a data model either.
+        models.write_text('schema = "people"  # the "people" schema\n', encoding="utf-8")
+        code, out = _check(repo, client, "people")
+        assert code != 0 and NO_MODEL_PY in out and ALL_CLEAR not in out, out
         models.unlink()
         code, out = _check(repo, client, "people")
         assert code != 0 and NO_MODEL_PY in out and ALL_CLEAR not in out, out

@@ -12,14 +12,26 @@ COMMANDS = [{"words": "task feature-check", "help": "Check that a removed featur
 
 SKIPPED = (".git/", "docs/", "plans/", ".factory/", ".claude/", ".codex/")
 COMMENT = ("//", "/*", "*", "#", "{/*", "<!--")
+# A comment that ends a code line, and an example value: neither is a use of a feature.
+INLINE_COMMENT = re.compile(r"(?:^|\s)(?:#|//|/\*)|<!--")
+EXAMPLE = re.compile(r"\bexamples?[\"'\s]*[:=]")
 NOT_MODULES = {"core", "shared", "demo"}
+# Kinds that are always a leftover and never a use: (c) permission names, (m) Python model names,
+# (x) example values.
+LEFTOVER_ONLY = {"c", "m", "x"}
 PYTHON_FILES = ("routes", "service", "tools", "permissions")
 # A name never continues into a longer one: clients is not clients-archive.
 BEFORE, AFTER = r"(?<![A-Za-z0-9_-])", r"(?![A-Za-z0-9_-])"
 
 
-def _model_accessors(root: Path, module: str) -> list[str]:
-    """The Prisma accessor of each model that holds the feature's schema, in any schema file."""
+def _model_names(root: Path, module: str, python: bool) -> list[str]:
+    """The data model names the feature keeps: Python classes in models.py that name the schema, or
+    the Prisma accessor of each model that holds the schema, in any schema file."""
+    if python:
+        path = root / f"apps/api/app/{module}/models.py"
+        text = path.read_text("utf-8") if path.is_file() else ""
+        named = re.search(rf"[\"']schema[\"']\s*:\s*[\"']{module}[\"']|\bschema\s*=\s*[\"']{module}[\"']", text)
+        return re.findall(r"^class (\w+)\(", text, re.M) if named else []
     schema = re.compile(rf'@@schema\(\s*"{module}"\s*\)')
     found = []
     for path in sorted((root / "apps/api/prisma/schema").glob("*.prisma")):
@@ -43,25 +55,35 @@ def check(args) -> int:
     module = plural.replace("-", "_")
     title = "".join(word.capitalize() for word in plural.split("-"))
     pl, mod = re.escape(plural), re.escape(module)
-    accessors = [] if python else _model_accessors(root, module)
-    # Class (c), the permission names, is a leftover and never a use.
+    accessors = _model_names(root, module, python)
+    quoted = rf"[\"'`]{pl}(?:/[^\"'`\n]*)?[\"'`]"
     patterns = {
-        "a": [rf"@app/{pl}-(?:contracts|server|web){AFTER}", rf"{BEFORE}libs/{pl}/", rf"{BEFORE}scope:{pl}{AFTER}"],
-        "b": [rf"/api/v1/(?:agent-tools/)?{pl}{AFTER}", rf"[\"'`]/{pl}{AFTER}"],
+        # (a) also finds the project reference ../../<plural>/contracts; (b) also finds a relative route
+        # (path="people"), a page import (./pages/people), ${BASE}/people and app://people resources.
+        "a": [rf"@app/{pl}-(?:contracts|server|web){AFTER}", rf"{BEFORE}libs/{pl}/", rf"{BEFORE}scope:{pl}{AFTER}",
+              rf"\.\./{pl}/"],
+        "b": [rf"/api/v1/(?:agent-tools/)?{pl}{AFTER}", rf"[\"'`}}]/{pl}{AFTER}", rf"app://{pl}{AFTER}",
+              rf"\b(?:path|to|href)\s*[=:]\s*\{{?\s*{quoted}",
+              rf"(?:from|import|require\()\s*[\"'`][^\"'`\n]*/{pl}(?:/[^\"'`\n]*)?[\"'`]"],
         "c": [rf"{BEFORE}{pl}\.(?:view|create|edit|delete|restore){AFTER}"],
         "e": [rf"{BEFORE}(?:{title}(?:Module|Tools|Api)|{mod.upper()}_API){AFTER}"],
         "g": [rf'(?i)INSERT\s+INTO\s+"?{mod}"?\s*\.'],
         "h": [rf"{BEFORE}{mod}_(?:(?:search|get|create|update|delete|restore){AFTER}|(?=[\"'`]|\$\{{))"],
     }
     if python:
-        patterns["d"] = [rf"(?m)^[ \t]*(?:import|from) app\.{mod}{AFTER}", rf"{BEFORE}{mod}_router{AFTER}"]
-    if accessors:
-        patterns["f"] = [rf"{BEFORE}(?:prisma|tx)\.(?:{'|'.join(accessors)}){AFTER}"]
+        patterns["d"] = [rf"(?m)^[ \t]*(?:import|from) app\.{mod}{AFTER}", rf"{BEFORE}{mod}_router{AFTER}",
+                         rf"(?m)^[ \t]*from (?:app|\.\.) import[^\n]*{BEFORE}{mod}{AFTER}",
+                         rf"(?m)^[ \t]*from \.\.{mod}{AFTER}"]
+    if accessors:  # (f) the Prisma accessor, or (m) the Python model class built or passed on
+        models = "|".join(accessors)
+        patterns["m" if python else "f"] = [rf"{BEFORE}(?:{models})\(|[(\[,]\s*(?:{models})\s*[,)\]]" if python
+                                            else rf"{BEFORE}(?:prisma|tx)\.(?:{models}){AFTER}"]
     compiled = [(kind, re.compile(source)) for kind, sources in patterns.items() for source in sources]
-    names = "|".join(PYTHON_FILES)
+    removed = "|".join(PYTHON_FILES)
     in_kept_module = [re.compile(source) for source in (
-        rf"app\.{mod}\.(?:{names}){AFTER}", rf"from app\.{mod} import[^\n]*\b(?:{names})\b",
-        rf"from \.(?:{names}){AFTER}", rf"from \. import[^\n]*\b(?:{names})\b")]
+        rf"app\.{mod}\.(?:{removed}){AFTER}", rf"from app\.{mod} import[^\n]*\b(?:{removed})\b",
+        rf"from \.(?:{removed}){AFTER}", rf"from \. import[^\n]*\b(?:{removed})\b",
+        rf"{BEFORE}register_tools\s*\(")]
 
     # What counts as removed: each of these that exists is still there.
     gone = [f"libs/{plural}/"]
@@ -76,8 +98,7 @@ def check(args) -> int:
     users: dict[str, list[str]] = {}
     for rel in sorted(set(listing) - {""}):
         path = root / rel
-        if rel.startswith(skipped) or rel in gone or rel.startswith(gone[0]) or not path.is_file() \
-                or path.stat().st_size > 1_000_000:
+        if rel.startswith(skipped) or rel in gone or rel.startswith(gone[0]) or not path.is_file():
             continue
         try:
             text = path.read_text("utf-8")
@@ -87,15 +108,19 @@ def check(args) -> int:
         restricted = python and rel.startswith(kept)
         found: dict[int, str] = {}
         for kind, pattern in ([("d", p) for p in in_kept_module] if restricted else compiled):
+            if kind == "m" and not rel.endswith(".py"):
+                continue
             for match in pattern.finditer(text):
                 number = text.count("\n", 0, match.start()) + 1
-                if not lines[number - 1].lstrip().startswith(COMMENT):
-                    found[number] = found.get(number, "") + kind
+                before = text[text.rfind("\n", 0, match.start()) + 1:match.start()]
+                if lines[number - 1].lstrip().startswith(COMMENT) or INLINE_COMMENT.search(before):
+                    continue
+                found[number] = found.get(number, "") + ("x" if EXAMPLE.search(before) else kind)
         parts = rel.split("/")
         owner = (parts[1] if rel.startswith("libs/") and len(parts) > 2 else
                  parts[3] if rel.startswith("apps/api/app/") and len(parts) > 4 else "")
         for number, kinds in sorted(found.items()):
-            if owner and owner not in NOT_MODULES | {plural, module} and kinds.strip("c"):
+            if owner and owner not in NOT_MODULES | {plural, module} and set(kinds) - LEFTOVER_ONLY:
                 users.setdefault(owner, []).append(f"{rel}:{number}")
             else:
                 leftovers.append((rel, number, lines[number - 1].strip()))
@@ -112,12 +137,10 @@ def check(args) -> int:
     elif still or leftovers:
         print(f"Next: change or remove each line above, then run forge task feature-check {plural} again.")
     missing = ""
-    if python:
-        models = root / f"apps/api/app/{module}/models.py"
-        if not (models.is_file() and re.search(rf"[\"']{mod}[\"']", models.read_text("utf-8"))):
-            missing = (f"Forge could not find the data model for {plural} in apps/api/app/{module}/models.py, "
-                       "so it did not check that the database setup can still import it.\nNext: keep "
-                       "models.py as the guide says, or tell the person the check could not confirm it.")
+    if not accessors and python:
+        missing = (f"Forge could not find the data model for {plural} in apps/api/app/{module}/models.py, "
+                   "so it did not check that the database setup can still import it.\nNext: keep "
+                   "models.py as the guide says, or tell the person the check could not confirm it.")
     elif not accessors:
         missing = (f"Forge could not find the data model for {plural} in apps/api/prisma/schema, so it did "
                    "not look for database calls by model.\nNext: search the code for that model's calls by "
