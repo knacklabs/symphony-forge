@@ -7,7 +7,7 @@
       "gain": 4,
       "harm": 3,
       "line": 815,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -33,7 +33,7 @@
       "gain": 3,
       "harm": 3,
       "line": 140,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -46,7 +46,7 @@
       "gain": 3,
       "harm": 3,
       "line": 59,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -59,7 +59,7 @@
       "gain": 3,
       "harm": 3,
       "line": 118,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -82,79 +82,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "b842baa2bb0c1db88d763a0c87a2eb7415a1082e3b5c91ff9cd448eaab9b6730",
-    "changed": "4612e034febd22744620c0c5f9209cf86433201f3cc9f3a24db6c9317cf5d48d",
-    "commit": "de47f9634e190990aca334a0eac41621cce60a94",
+    "branch_diff": "aacfad5572e320139edd46b24093e772341652439a7bfc2c30ce6971772d4a87",
+    "changed": "ba63ee53d471cafdb53d9b7242a671c73c11233026447eb4b341073874bca8e1",
+    "commit": "52c4a691eed86804d4e01ea4775081287d973ca9",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 1, Harm 3\nRaise: Not done.\nCase: normal use - An earlier-adopted app still has the previous starter theme, which lacks the 12 new names. The guide tells the agent to build the system from the names in that app's theme file, but does not tell it to obtain the missing contract names from the starter before creating the system. Sync preserves the old app files, as shown by `tests/test_theme_guide.py:71`. The return-from-no-tools step at `skill.md:866` has the same problem: it then asks for missing app values from a system that was built without those names. Existing clients can therefore get a system without the fixed font, size, spacing and shadow names.",
-        "file": "src/forge/templates/skill.md",
-        "gain": 4,
-        "harm": 3,
-        "line": 815,
-        "priority": "P1",
-        "required_done_when": true,
-        "title": "Not done: The theme names are fixed once, in the starter's theme file, and the Claude design system uses the same names.",
-        "work": 1
-      },
-      {
-        "body": "Gain 3, Work 1, Harm 3\nRaise: Not done.\nCase: normal use - An earlier-adopted starter gets a design system with a heading font different from its body font. The return step adds missing theme declarations, but never tells the agent to add the heading rule introduced for new starters at `src/forge/templates/starter/apps/web/src/index.css:128`. Sync does not add that rule to existing app files, so copying and loading `--font-heading` alone leaves headings using the body font. The normal approval instructions at `skill.md:846` also say to add a missing declaration with the starter default, conflicting with copying its approved value.",
-        "file": "src/forge/templates/skill.md",
-        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
-        "gain": 3,
-        "harm": 3,
-        "line": 869,
-        "priority": "P1",
-        "title": "Not done: copy the approved theme, with a font the app can load, into the app and the repo before the first screen",
-        "work": 1
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Gate.\nCase: normal use - A worker builds a screen on the untouched starter theme without an approved copy. The recorded Functional check exercises the system, a colour transfer and the CSS, but does not exercise the covered review rule or observe the reviewer reporting that screen. The named `test_4` checks the text sent to a fake reviewer; it does not supply that missing functional walk.",
-        "file": "tests/test_theme_guide.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 140,
-        "priority": "P1",
-        "title": "Gate: functional check",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 1, Harm 3\nRaise: Test.\nCase: normal use - A re-exported design system renames its radius or spacing token while keeping its value. This test supplies the names `radius` and `spacing` itself instead of reading the tokens' `name` fields, so the test still passes even though the system and starter no longer share those names. It also checks declarations only: removing the new heading rule leaves the test green while a copied heading font no longer applies to headings.",
-        "file": "tests/test_theme_guide.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 59,
-        "priority": "P1",
-        "title": "Gate: tests/test_theme_guide.py::test_1_the_starter_theme_holds_every_contract_name",
-        "work": 1
-      },
-      {
-        "body": "Gain 3, Work 1, Harm 3\nRaise: Test.\nCase: normal use - A later guide edit removes the instruction to create each client's system from the app's shared parts and theme names. The test checks isolated phrases, all of which still occur elsewhere if `skill.md:814\u2013819` is removed, so the named proof passes while a central part of the guide is gone. The same phrase-only checks do not establish that the guide actually directs the agent to copy the theme or load the font.",
-        "file": "tests/test_theme_guide.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 118,
-        "priority": "P1",
-        "title": "Gate: tests/test_theme_guide.py::test_2_the_guide_tells_the_agent_to_build_the_design_system_and_copy_the_theme",
-        "work": 1
-      },
-      {
-        "body": "Gain 2, Work 1, Harm 3\nCase: normal use - An adopted app keeps its web frontend under `frontend/` or `web/`, layouts recognized by `src/forge/review.py:334`. The guide instead directs the agent to put font files and stylesheet links under `apps/web/`, where that app will not serve them. The frontend convention says an earlier app keeps its own folders at `src/forge/templates/conventions/frontend.md:38`.\nAdds work: adapt the font paths to the existing app; F 2 x H 2 = 4; 2 x C = 2",
-        "file": "src/forge/templates/skill.md",
-        "gain": 2,
-        "harm": 3,
-        "line": 855,
-        "priority": "P2",
-        "title": "Follow-up: Use the existing app's web root for font assets",
-        "work": 1
-      }
-    ],
-    "id": "18e4e7ee-f9c8-4947-bda7-5a94610356be",
-    "status": "blocked"
+    "findings": [],
+    "id": "a48985e9-94a2-481e-9235-32a0818a170d",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-10T20:58:37.283776+00:00",
@@ -162,6 +99,10 @@
     },
     {
       "at": "2026-11-10T22:21:28.733318+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-10T22:31:54.367813+00:00",
       "step": "review"
     }
   ],
