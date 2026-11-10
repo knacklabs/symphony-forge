@@ -485,6 +485,7 @@ RESULTS = """import json, os, pathlib, pytest
 FILE, ROOT = [], []
 COLLECTED = []
 FAILED, PASSED = set(), set()
+CRASHED, CRASH_ITEMS, FINISHED = set(), set(), set()
 INVOCATION_HEADER = """ + repr(INVOCATION_HEADER) + """
 RETRY_HEADER = """ + repr(RETRY_HEADER) + """
 RETRY_STEP = """ + repr(RETRY_STEP) + """
@@ -530,10 +531,15 @@ def pytest_collection_modifyitems(items):
     COLLECTED.append(len(items))
 @pytest.hookimpl(optionalhook=True)
 def pytest_testnodedown(node):
+    if not hasattr(node, "workeroutput"):
+        CRASHED.add(node)
     COLLECTED.append(getattr(node, "workeroutput", {}).get("forge_collected", 0))
 def pytest_runtest_logreport(report):
-    if not FILE or report.when != "call" and report.passed:
+    if report.when == "???":
+        CRASH_ITEMS.add(report.nodeid)
+    if not FILE or report.outcome == "rerun" or report.when != "call" and report.passed:
         return
+    FINISHED.add(report.nodeid)
     if report.when == "call":
         outcome = (("xfail" if report.skipped else "xpass") if hasattr(report, "wasxfail")
                    else report.outcome)
@@ -555,11 +561,16 @@ def _write_result(outcome, nodeid):
 @pytest.hookimpl(hookwrapper=True)
 def pytest_sessionfinish(session):
     yield  # Capture the final status, including always_test validation.
+    if CRASHED and (not FINISHED or len(FINISHED) < session.testscollected) and not session.exitstatus:
+        print("A parallel test process died before all tests reported a result.", flush=True)
+        session.exitstatus = pytest.ExitCode.TESTS_FAILED
     if hasattr(session.config, "workeroutput"):
         session.config.workeroutput["forge_collected"] = sum(COLLECTED)
     if FILE:
+        for nodeid in CRASH_ITEMS - FINISHED:
+            _write_result("error", nodeid)
         invocation = dict(files=sorted(FAILED), passed=sorted(PASSED), exit=int(session.exitstatus),
-                          collected=sum(COLLECTED))
+                          collected=sum(COLLECTED), interrupted=bool(CRASHED))
         with FILE[0].open("a", encoding="utf-8") as results:
             results.write(INVOCATION_HEADER + json.dumps(invocation) + "\\n")
 """
