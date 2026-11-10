@@ -23,6 +23,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/templates/starter/apps/web/e2e/motion.spec.ts\tPressed-state test fails when the app has a focusable control\tFORGE-POLISH-1/PARTS",
+      "kind": "bug",
+      "path": "src/forge/templates/starter/apps/web/e2e/motion.spec.ts",
+      "line": 50,
+      "text": "Pressed-state test fails when the app has a focusable control",
+      "from": "blocking",
+      "item": "FORGE-POLISH-1/PARTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_polish_parts.py\tGate: shared controls retain their pressed states\tFORGE-POLISH-1/PARTS",
       "kind": "bug",
       "path": "tests/test_polish_parts.py",
