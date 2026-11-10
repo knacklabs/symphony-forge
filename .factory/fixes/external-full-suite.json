@@ -139,7 +139,7 @@
     "id": "468a8a61-1bdc-4107-8b41-29af39fe7ec3",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -152,10 +152,12 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "8c74ab0b1115ec1d5dda54644945da7dd2949a80",
-    "keys": {},
-    "round": null
+    "close": "d417ce11-7ce1-49a2-8a5f-2b60956a15c0",
+    "head": "837c72fc80241339535c05ffd2c64209b5812113",
+    "keys": {
+      "the open P0 include the setup steps required for the external workflow in src/forge/templates/skill.md": 1
+    },
+    "round": 1
   },
   "why": "A repo with its own nightly test workflow still runs Forge's nightly full suite every night only to get the forge-full-suite status, so it pays for two nightly runs",
   "worker": "codex"
