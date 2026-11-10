@@ -1,69 +1,149 @@
 # One shared design system and theme, set in Claude and checked at close
 
-<n> parts · Risks: ... · New moving parts: ...
+2 parts · Risks: none one-way · New moving parts: none
 
 ## What changes for you
 
-- Forge keeps its design system (the shared parts and the theme names) once, in its code.
-- For each client, the agent builds that client's Claude design system from Forge's code.
-- Sales sets the client's theme (colours, fonts, corner size, spacing) in Claude, and the agent copies that theme into the prototype, so the prototype matches the approved design.
-- Close reports when the app's theme differs from the approved design. The later step that picks the look in code goes away.
-- A new client repo gets this when it starts. An existing client repo gets it when it upgrades to the new release and syncs.
+- Forge keeps one set of shared screen parts (buttons, tables, forms) and one list of theme names, such as the page colour, the main colour, the corner size and the heading font. A theme is the set of colours, fonts, sizes and shadows that gives an app its look. Both live once, in Forge's code. Each name is the same in Forge's code and in Claude. (Source: your decision, 10 Nov 2026)
+- For each client, the agent builds that client's own design system in Claude from those parts and names. A design system is the shared parts together with the theme they use. Sales sets the client's theme in Claude: colours for light and dark, fonts, sizes, spacing, corner size and shadows. The screens are designed with that system, so a client sees the Forge look before any app exists. (Source: your words, 10 Nov 2026: "The UI need to start with Claude artifact, design system and theming in it which can next transferred to prototype")
+- When the design is approved, the agent copies the theme into the prototype before it builds the first screen. It also keeps the approved theme as a file in the repo. The prototype then looks like the approved design. (Source: your decision, 10 Nov 2026)
+- The final check before a change is finished reports two things. First, any theme value in the app that differs from the approved copy. Second, a screen change made on the plain gray starter theme when no approved copy exists. Either one stops the change until the agent fixes it. One short comment with a reason sets a finding aside. The check makes no model call and starts no browser. (Source: your request, 10 Nov 2026; the choice of stop over report is the planner's, for you to confirm)
+- The step that picks the look in code stays in two places only. The agent still uses its five facts about the client to propose the first colours and fonts for the design system. A session with no Claude design tools uses the step to write the theme in code, as today. (Source: the planner's choice, for you to confirm)
+- The agent says so in one line when Claude's design tools are not available in a session. It then carries on with plain page drawings and a theme written in code, and builds the Claude design system when the tools return. (Source: your request, 10 Nov 2026)
+- Animation speed, button press feedback and the loading, empty and error parts belong to another story. This story does not touch them. (Source: your decision, 10 Nov 2026)
+- A new client repo gets all of this when it starts. An existing client repo keeps its theme file and every app file. After it upgrades and refreshes its Forge files, it gets the guide text and the check. The check can first stop a change when that repo's next screen change is finished. (Source: the Forge review rules)
+- Cost: the final check makes no model call. Building a client's design system is Claude work, done once for each client. Nobody has measured its size. The first one built will give a number. (Source: your rule on model cost)
+
+Design: none (Forge ships shared parts, rules and checks, not screens; this story adds no screen; owner rule, 31 Oct 2026)
 
 ## Why
 
-The look is picked in code at a later step, so the prototype can drift from the design the client approved, and nothing reports the difference.
+The look of a prototype is picked in code, at a later step, from a short brief. A prototype can drift from the design the client approved, and nothing reports the difference. Sales cannot change a colour or a font without help from an agent, and an app that keeps the stock gray theme looks like every other machine-made app.
 
 ## Done when
 
-1. **The shared parts and theme names live once in Forge's code, and each client's Claude design system is built from them.**
-2. **Sales sets a client's theme in Claude, and the prototype shows that theme.**
-3. **Close reports when the app's theme differs from the approved design.**
-4. **The code step that picks the look is gone for new and upgraded client repos.**
+1. **The theme names are fixed once, in the starter's theme file, and the Claude design system uses the same names.**
+2. **The guide tells the agent to build each client's design system in Claude from the app's parts and names, to design the screens with it, and to copy the approved theme into the app and the repo before the first screen.**
+3. **The final check reports each theme value that differs between the app and the approved copy.**
+4. **The final check reports a screen change made on the untouched starter theme when no approved copy exists.**
 
 ## Risks
 
-<!-- Each one-way step: deleting data, a destructive migration, a new vendor. -->
+Risks: none one-way. Each part reverts with its pull request. Nothing is deleted and no data changes.
 
-Risks: none
+Trade-off: Forge cannot see Claude. The check compares the app with the approved copy in the repo. If Sales change the theme in Claude and nobody copies it, the check stays green. The guide tells the agent to copy again after every theme change in Claude.
+
+Trade-off: the check stops a change; it does not only report. An existing app that never left the stock theme is stopped once, at its next screen change, and needs one comment with a reason or a copied theme. This follows how every design finding works today. A report only would leave a gray prototype free to reach a customer.
+
+Trade-off: building the design system needs Claude's design tools. Without them in a session, the agent works as it does today and builds the system later. The look then comes from code for a while. The check does not stop that path, because a theme written in code is no longer the stock one.
 
 ## For the builders
 
-<!-- Everything from here down is for the agents. The owner doesn't see it when approving, and
-tightening it needs no new approval. -->
+Rules for every part. No new `forge` command, no new setting, no new package, no model call and no screen. Nothing is added under `src/forge/templates/starter` or `src/forge/templates/starter-python` except lines in the starter's one theme file (a theme file is not a screen, page, route table or app shell, so the P1 review rule does not apply). `close.py` stays at its 1,200-line ceiling and does not change: the new check runs from `app_baseline.check`.
+
+Each new test file starts with `STORY = "FORGE-THEME-1"`. Tests run the forge command and never import forge. There is one test per Done-when number: `test_1` and `test_2` in `tests/test_theme_guide.py`, `test_3` and `test_4` in `tests/test_theme_check.py`. Each has a new-repo case and an earlier-adopted case (`tests/fixtures/adopted-v1.2.2/client` plus `forge sync`, as `tests/test_uistandards_words.py::_adopted` does). Before a round ends, run the two cheap checks from AGENTS.md.
+
+### What exists (evidence)
+
+Checked in this worktree on 10 Nov 2026. A task checks each name again before it starts.
+
+- The theme file. `src/forge/templates/starter/apps/web/src/index.css` (127 lines) holds 31 colour names in `:root` and again in `.dark` (`background`, `foreground`, `card`, `card-foreground`, `popover`, `popover-foreground`, `primary`, `primary-foreground`, `secondary`, `secondary-foreground`, `muted`, `muted-foreground`, `accent`, `accent-foreground`, `destructive`, `border`, `input`, `ring`, `chart-1` to `chart-5`, and eight `sidebar*` names; counted by script). It holds `radius` (`0.625rem`, `:root` only) and `font-sans` (a literal font list, in `@theme inline`). Its `@theme inline` block also maps every colour to Tailwind with `var()` (`--color-primary: var(--primary)`) and derives the other radii with `calc(var(--radius) ...)`; that part is app code and not a contract name. The stock colour values have not changed since the file was added (`git log --follow`: only an `@source` line was added later).
+- The Python starter has no web app of its own (`src/forge/templates/starter-python` has `apps/api` only). `src/forge/init.py::_starter_files` (lines 204 to 212) copies the React starter's `apps/web/**`, `libs/shared/ui/**` and each `libs/*/web/**` into a Python client. One theme file serves both starters, so one edit covers both.
+- The shared parts. `libs/shared/ui/src/components/ui/` holds 31 shadcn parts. They use `shadow-xs`, `shadow-sm`, `shadow-md` and `shadow-lg`, `font-medium` and `font-semibold`, and `rounded-*` from the radius scale. `theme-provider.tsx` toggles `dark` on the `html` element. React is 19.2.0, Tailwind 4.1.16, Vite 7.1.12 (`starter/package.json`).
+- Where an approved design is recorded today. (1) The brief's `## Design` section holds one link; for a Claude design the files are not in the repo (`design.source`, `src/forge/design.py:159`, and `skill.md:815-817`: "it need not be saved in the repo"). (2) A story's plan ends with `Design: docs/design/<KEY>/ (<tree id>)`; `design.check` (`design.py:93`) binds the images by tree id and, at the plan read and approval, needs a root `DESIGN.md` and runs `ui_checks.problems` on the folder's `.html` files. (3) The older `docs/design/prototype/` folder with a `prototype-design` decision that holds `design_tree`. (4) The accepted prototype plan covers the design (`records.prototype_plan`, `design.require_working_build`). Close knows none of these. It runs `app_baseline.check(top, cfg, baseline, changed_files)` (`close.py:280`) on the changed files, and that call makes no theme comparison. `docs/` is outside what counts as app code (`design.has_app_code` excludes it), so a theme copy under `docs/design/` needs no plan approval to merge; the theme file edit does, like any app code.
+- DESIGN.md. impeccable's `document` step writes it at the repo root; the detector and the worker brief read it (`worker.design_context`, `worker.py:739`). It holds prose and token notes, not Claude's two-theme token format, so it cannot be the approved copy.
+- What the guide says today. `skill.md:34` (use Claude for the design, impeccable and emil-design-eng from the first design), `skill.md:171` (journey step 3, canvas design), `skill.md:806-835` ("Canvas and app design": the five-fact brief, DESIGN.md, `support.js`, one link in `## Design`), `story.md:12-22` (Claude Design artifact; HTML artboards on a Codex-only host), `brief.md:59-61` and `worker.py:658` and `review.md:77-79` ("apply DESIGN.md's theme tokens, type and colours to the app's theme file"), `conventions/frontend.md:8-11` ("draft one on a design canvas from the client's brand") and `.codex/skills/app-baseline/SKILL.md:38-56` ("Pick the app's look": five facts, map them to tokens, record DESIGN.md, three looks to avoid) with the same text at `.claude/skills/app-baseline/SKILL.md`.
+- Tests that cover the design step today. `tests/test_uistandards_words.py::test_1` asserts the look-method words in both app-baseline copies; `tests/test_noscreens_guide.py` pins the sentences "The design comes first." and "Before the first canvas, write a short brief from five facts in the client's notes:"; `tests/test_fix_app_baseline.py` pins the skill's bytes in `BASELINE_SHA256`; `tests/test_design_context.py` asserts "theme tokens, type and colours" and "app's theme file" in both briefs and the review; `tests/test_starter_tree.py` (lines 549 to 570) pins the neutral colour values and `radius`; `tests/test_noscreens_starters.py` pins that `apps/web/src/index.css` ships in both starters; `tests/test_uistandards_close.py::test_3` covers close's design findings; `tests/test_trim_skills.py` pins the synced skill copies against `skill.md`.
+- Sample-data prototypes. `repo._sample_settings` (`repo.py:665`) blanks only the test and CI commands. `app_baseline.check` is called at `close.py:280`, before and apart from any sample-data test. A sample-data prototype is checked exactly like another, and it is the first user of the new check.
+- Another story. The animation and press-feedback story has its own worktree, and its plan is still the intake text. Its intake also says that close refuses a screen change on the stock gray theme. That is the same finding as Done-when 4 here (see Notes).
+
+### Not changed, and why
+
+- The stock check and the copy check run in Python (`src/forge/ui_checks.py`), not in `ui-checks.js`. `ui-checks.js` is shared with `support.js`, which also checks design canvases that have no app theme; and the check needs the starter's stock theme file, which Python reads from the Forge package. No new shipped file, so `tests/test_setup.py` and `tests/test_split_ships.py` stay as they are.
+- A token-level contrast check is not added. FORGE-RENDER-1 reports low contrast in rendered screens, and the Claude design system's own checklist asks for 4.5:1 in every theme.
+- No approval record for the copy. Git holds the history (principle 2): the copy is approved when the change that adds it passes the plan or fix review.
+
+### The theme contract
+
+The Claude design system's `tokens.json` and the app use the same names, and the copy is mechanical: token `N` is the variable `--N`.
+
+| Claude `tokens.json` | The app's theme file |
+|---|---|
+| `color` tokens, `value.light` and `value.dark` | `--N` in `:root` and in `.dark` (the 31 names above) |
+| `radius` token `radius` | `--radius` in `:root` |
+| font tokens `font-sans`, `font-heading` | `--font-sans` (`@theme inline`, kept) and `--font-heading` (new, `@theme`) |
+| size tokens `text-xs`, `text-sm`, `text-base`, `text-xl`, `text-2xl`, `text-3xl` | the same names, new, in `@theme` (12, 14, 16, 20, 24 and 30 pixels, the fixed baseline scale as defaults) |
+| spacing token `spacing` | `--spacing` (new, `@theme`, `0.25rem`) |
+| shadow tokens `shadow-xs`, `shadow-sm`, `shadow-md`, `shadow-lg` | the same names, new, in `@theme` (Tailwind's own defaults) |
+
+- Kept as they are: the 31 colour names, `radius` and `font-sans`. Added, because the owner's list needs them and the file has none: `font-heading`, six `text-*`, `spacing`, four `shadow-*`. That is 12 lines in one new `@theme` block plus one base-layer rule that gives `h1` to `h6` the heading font. Every added default equals what Tailwind already uses, so a new app renders as before.
+- Every contract value is literal. The app keeps `var()` and `calc()` only in the mapping and derived lines (`--color-*`, `--radius-sm` and the rest), which are not contract names. The added `--font-heading` repeats the `--font-sans` list as text and does not point at it.
+- Fit with the type's rules: all 45 names fit `[A-Za-z0-9][A-Za-z0-9_.-]{0,63}` (the longest, `sidebar-primary-foreground`, is 26 characters), none repeats, colour values are `oklch()`, and none uses `var()`, `color-mix()` or a named colour. Three dark values carry an alpha, such as `oklch(1 0 0 / 10%)` (`border`, `sidebar-border`; `input` is `/ 15%`); whether the page keeps an alpha value as written is not verified (see Notes).
+- Tailwind check run today, read only, in another checkout's `node_modules` (Tailwind 4.3.2; the starter pins 4.1.16): a scratch stylesheet that set `--spacing`, `--text-sm` and `--font-sans` in `:root` changed `p-4` (`calc(var(--spacing) * 4)`), `text-sm` (`var(--text-sm)`) and `font-sans` (`var(--font-sans)`); `shadow-sm` was written out as literal values at build time, so a `--shadow-sm` in `:root` would be ignored and the shadow lines must sit in an `@theme` block. A shadow set in `@theme` was not run. Task DESIGN repeats the run on 4.1.16 and keeps a name in the contract only when a built stylesheet shows the app reading it.
+- Motion. Speed and curve stay in the app code and are owned by the animation story; `tokens.json` has no motion section.
 
 ### Done-when details
 
-<!-- Under each Done-when item's number: its evidence, edge cases and the tests that prove it.
-Workers and reviewers get the entries of the items they cover. An item with nothing to add has
-no entry. -->
+1. Names.
+   - Cases. After `forge init --starter` and `forge init --starter python`, the theme file declares each of the 45 names once in its block (31 colours in `:root` and in `.dark`; the rest once), every name fits the name rule, no value of those names contains `var(` or `color-mix(`, and each colour value starts with `oklch(`, `#`, `rgb(` or `hsl(`. The fixture `tests/fixtures/design-system/tokens.json` is the real `tokens.json` of the first system made from the starter (see item 2). Its names and values equal the starter's for every family, so the Claude side and the app side are tested against each other: this is the one boundary test for the Claude design type (principle 7).
+   - New and existing. `tests/test_theme_guide.py::test_1_the_starter_theme_holds_every_contract_name`, parameters `typescript starter`, `python starter` and `earlier adopted`. The adopted case customises the repo's `index.css`, runs `forge sync` and asserts that `apps/` and `libs/` are byte for byte the same: Forge never rewrites a client's theme.
+2. Guide.
+   - What the text says, in the Forge skill (`skill.md`, in "Canvas and app design" and journey step 3), the worker brief and the review, `conventions/frontend.md`, `story.md` and the app-baseline skill:
+     1. For each client, make one design system in Claude (the Design System type) from the app's shared parts in `libs/shared/ui` and from the theme names above. Start its values from the app's own theme file (stock in a new app, the app's current theme in an existing one). For a new client, propose better first values from the five facts (industry, users, screen job, brand words, brand files) and write the proposal into the system; Sales then change them on the page.
+     2. Keep the system editable on the page: do not mark it as synced from code. Its README says which repo and which parts it came from. The README is the brand guide that every agent reads before it designs a screen, so it carries the look rules; without them the screens keep the stock look. Write it from the design rules in `conventions/frontend.md` and the five facts, in the client's terms, and add no rule that those two sources do not hold (one home per fact). It states: which colour token is for the page, the text, the one main action and each status, in light and dark; which font and size token is for headings, body text and table text; the corner size, when a border is used and when a shadow, and how dense tables and forms are; one main action per screen; and the looks to avoid that `app-baseline` already lists. Every token has a usage note that names where it is used, as the type's checklist asks. Before the system is shown to a person, text contrast is 4.5:1 on its ground in both themes; a client colour that fails is kept and its note says so. When the shared parts change later, revise the system's component files one at a time after reading the current files.
+     3. Design the client's screens with that system (the Design type uses a design system the person can open; name the system for the client so it is the one picked).
+     4. When the design is approved, read the system's `project/tokens.json`. Save it unchanged as `docs/design/tokens.json`. Write each contract value into the app's theme file by name. Run impeccable's `document` step so DESIGN.md describes the same theme. Do this as the first change after approval and before any screen. After any later theme change in Claude, repeat it in one change. In an existing app, add a missing contract line to the theme file with the starter's default.
+     5. Close compares the app with `docs/design/tokens.json` and stops on a difference, or on a screen change made on the stock theme with no copy (items 3 and 4). A waiver is one comment in the theme file: `/* forge-ui-ignore theme-drift: <reason> */` or `/* forge-ui-ignore theme-stock: <reason> */`.
+     6. No Claude design tools in the session (the agent cannot list or publish artifacts): say so in one line, keep going on HTML artboards with `support.js` as the Codex-only path does, set the theme in the app's theme file from the five facts, run impeccable's `document` step, and write `Claude design system: not made yet` in the brief's `## Design` section. When the tools return, make the system from the app's theme file as it stands, and from then on Claude is the source.
+     7. In `app-baseline`: "Pick the app's look" is retitled "Pick the starting theme". It is kept, with its five facts, the three looks to avoid and the brand-files rule, but its output goes to the design system's tokens (or, on the no-tools path, to the theme file and DESIGN.md). The step is not removed. It is no longer the place where the look is decided and kept. Sentences that existing tests pin stay word for word ("Before the first canvas, write a short brief from five facts in the client's notes:", "The design comes first."), and `BASELINE_SHA256` is updated.
+   - Manual proof, recorded in the pull request. The worker makes the first design system from the starter with the Design System type, reads its unread reference files (`format.md`, `craft.md`, `cover.md`, `from-code.md`), changes one colour on the page, copies `tokens.json` into a scratch app made with `forge init --starter`, and shows that close is green with the copy and refuses without it. Forge's tests cannot call Claude, so this run and the fixture are the proof for the Claude side. If the worker has no Claude design tools, it stops and says so. It does not write a fixture by hand.
+   - New and existing. `tests/test_theme_guide.py::test_2_the_guide_tells_the_agent_to_build_the_design_system_and_copy_the_theme`, parameters `new init` and `earlier adopted`: both synced Forge skill copies and both app-baseline copies carry the sentences above (pinned phrases: `design system`, `docs/design/tokens.json`, `before the first screen`, `not marked as synced from code`, `brand guide`, `usage note`, `Claude design system: not made yet`, `Pick the starting theme`); the worker brief and the review carry the one-line rule that `docs/design/tokens.json`, when present, is the approved theme.
+3. Differences.
+   - Rule. In `app_baseline.check`, after the design checker, `ui_checks.theme(top, files)` runs when the changed files include `apps/web/src/index.css` or `docs/design/tokens.json` and both files exist. It reads the copy as JSON. Each token of the `color` section is compared by name with `--N` in `:root` (light) and `.dark` (dark); each token of every other section that has `{tokens:[{name,value}]}` (radius, spacing, shadow) is compared with `--N` in `:root`, `.dark` or an `@theme` block. The type section (fonts and sizes) is compared by the mapping that task DESIGN pins from the fixture. A value is compared after trimming, collapsing spaces and lower-casing. A copy token with no `--N` in the app is reported as missing. A token that only the app has is not reported. Each finding is one line, `apps/web/src/index.css:<line> theme-drift: --primary (light) is <app value> in the app and <copy value> in docs/design/tokens.json.`, then the waiver comment, and it goes through the same refusal (`REFUSALS["design"]`) as the other design findings. A copy that is not valid JSON, or has no `color` section, is one finding that says so. No Node is needed.
+   - Cases (new repo). Equal copy and app pass. One colour changed in the app, one changed in the copy only, a token missing from the app, a changed shadow and a changed radius are each refused with the token, theme and both values named. A change that touches neither file is not checked, even when the files differ. A waiver with a reason passes; the same comment with no words after the rule still fails.
+   - New and existing. `tests/test_theme_check.py::test_3_close_reports_a_theme_that_differs_from_the_approved_copy`, parameters `new client` and `earlier adopted` (an earlier release's stock `index.css` plus a copy added by the change, checked; a drifted file the change does not touch, not checked).
+4. Stock theme.
+   - Rule. `ui_checks.theme` also reports `theme-stock` when `docs/design/tokens.json` does not exist, `apps/web/src/index.css` exists, the changed files include a `.tsx` or `.jsx` file that is not under `tests/` or `components/ui/` and is not a test file, and the theme is still the stock one. Stock means every `--name` the app declares in `:root` and `.dark` has the value that the starter's shipped `index.css` gives it (Python reads that file from the Forge package), and the app declares no name the starter lacks. A repo adopted earlier, whose file lacks the new `@theme` lines, still counts as stock; a file with one changed value does not. Message: `apps/web/src/index.css:1 theme-stock: the app has the starter's stock theme and no approved theme in docs/design/tokens.json.` and the waiver comment.
+   - Cases (new repo). A screen change on the stock theme with no copy is refused. The same change passes when an equal copy exists, when the theme has one changed value (the Codex-only path), when the change touches only files under `components/ui/` or tests, when the repo has no `apps/web/src/index.css`, and with a waiver that has a reason. A sample-data prototype is refused the same way.
+   - New and existing. `tests/test_theme_check.py::test_4_close_reports_a_screen_change_made_on_the_stock_theme`, parameters `new client` and `earlier adopted`. The adopted case also asserts that `forge sync` itself stops nothing: the first refusal comes at the next screen change.
+   - Tests that may now fail. Any existing test that closes a `.tsx` change in a repo with the shipped stock theme gets this refusal. The task runs the related tests (`tests/test_uistandards_close.py`, `tests/test_design_context.py`, `tests/test_noscreens_starters.py` and the starter tests) and fixes each by giving the test repo a non-stock theme, not by weakening the rule.
 
-1. <Evidence, edge cases and the tests that prove item 1.>
+### New and existing repos
+
+- New repos (`forge init`, `forge init --starter`, `forge init --starter python`): the new theme lines, the guide text in both hosts, the worker brief and the review wording. The check works from the first change. Plain `forge init` with no starter has no theme file, so it gets the guide only and the check skips it.
+- Existing repos (upgrade, then `forge sync`): the guide text and the check. The starter's theme file and every app file stay as they are, because Forge never changes a client's app code after init. The agent adds a missing contract line itself when it first copies a theme. Nothing blocks the upgrade or the sync. A repo with no `apps/web/src/index.css` (an older layout) is skipped. A repo whose theme is already custom, with no copy, passes: only the stock theme with no copy is stopped, at its next screen change.
+
+### Model cost
+
+Close and the check use no model. Building one client's design system uses Claude in the design tool, once for each client and again when the shared parts change. The size is unknown; no number exists yet. F x H >= 2 x C for the check: F 3 (every client app, every screen change), H 2 (the approved design and the prototype disagree), C 2 (about 50 lines of Python and no model), so 6 against 4. The added theme lines: F 2, H 1, C 1, so 2 against 2, kept because Sales cannot set shadows, sizes or spacing without them.
 
 ## Tasks
 
-<!-- One row per task. Covers: the Done-when numbers it delivers, at most three. Scope: the paths
-it may change. Before writing each Scope, search the code for the files the task needs. The plan
-check refuses two tasks whose Scope paths have the same prefix up to the first wildcard, unless
-one waits for the other through After, directly or through another task; it names both tasks.
-Paths with a segment named `tests`, `test`, `__tests__` or `spec` do not cause Scope overlaps
-and can be shared without an After link. Explicit After links still apply.
-When tasks need the same production file, put it in the first task's Scope with the shared names and stubs;
-tasks that need them wait for that task through After and then own only their files. Tests: the
-tests it adds or changes. After: the tasks it waits for. When two tasks share a function, field,
-file format or command, the first task pins it: it commits the shared names and stubs plus one
-test that crosses both sides, and the tasks that use it list it under After. Split tasks so each
-owns its files; shared lines (command table, guide list, registry) go to one task or a small last
-wiring task; After only when a task needs another task's code. The
-Developer column is optional: the lead fills or changes a GitHub username here, below For the
-builders, without another approval. Leave it blank for an unassigned part. Forge next uses
-the caller's GitHub login; another developer may start it with a warning. Existing tables
-without Developer still work. The moving-parts line stays last: "none", or each new dependency, service, datastore,
-queue, background job or abstraction layer, with the Done-when item that needs it. -->
-
 | ID | Name | What it delivers | Covers | Scope | Tests | After | User-facing | Developer |
 |---|---|---|---|---|---|---|---|---|
+| DESIGN | The theme names, the first design system and the guide | The 12 added theme lines and the heading rule in the starter's theme file; the first design system made from the starter with its real `tokens.json` kept as a fixture; the guide, brief, review, frontend convention, story template and app-baseline text that tell the agent to build the system, design with it, copy the approved theme and handle a session with no Claude tools | 1, 2 | `src/forge/templates/starter/apps/web/src/index.css`, `src/forge/templates/skill.md`, `.claude/skills/forge/`, `.codex/skills/forge/`, `.codex/skills/app-baseline/`, `.claude/skills/app-baseline/`, `src/forge/templates/brief.md`, `src/forge/templates/review.md`, `src/forge/templates/conventions/frontend.md`, `src/forge/templates/story.md`, `src/forge/worker.py`, `tests/fixtures/design-system/`, `tests/test_fix_app_baseline.py`, `tests/test_noscreens_guide.py`, `tests/test_uistandards_words.py`, `tests/test_design_context.py` | `tests/test_theme_guide.py` (`test_1`, `test_2`, new) | | yes | |
+| CHECK | Close compares the theme with the approved copy | `ui_checks.theme` with the copy comparison and the stock rule, its waivers, and the call from `app_baseline.check` | 3, 4 | `src/forge/ui_checks.py`, `src/forge/app_baseline.py`, `tests/test_uistandards_close.py` | `tests/test_theme_check.py` (`test_3`, `test_4`, new) | DESIGN | no | |
 
 New moving parts: none
 
 ## Notes
+
+- Open questions for the owner, recommended answer first.
+  1. Stop or report. Recommended: stop, with the one-comment waiver, for both findings and for new and existing repos. It is how every design finding works today (`REFUSALS["design"]`), and a report-only line would let a gray or drifted prototype reach a customer. Other choice: print one line and do not refuse, through the existing `note` line of `ui-checks.js`, which costs the same code and loses the stop.
+  2. Sales set sizes and spacing. Your decision lists them, so they are in the contract with the 6 Nov baseline values (12 to 30 pixel scale, 4 pixel unit) as defaults. The fixed guard rules (16 pixel body text, the 24 and 16 pixel gaps) can then be broken by a changed token. Recommended: each token's usage note in the design system states the rule, the review reports a breach, and close does not check it. Other choice: show sizes and spacing in the system as read-only and compare them, but give Sales only colours, fonts, corner size and shadows.
+  3. Heading font. Recommended: add `font-heading` so a client can pair two fonts, as the five-fact method asks, with one base rule for `h1` to `h6`. Other choice: body font only, and drop the added rule.
+  4. The "Pick the app's look" step. Recommended: keep it as "Pick the starting theme" (proposes the first values for the system; writes the theme in code only when no Claude tools exist). Other choice: delete it; a new client's system then starts from the stock gray values and Sales change them by hand, which is the look this story wants to avoid.
+  5. No Claude design tools in a session. Recommended: do not wait; carry on with HTML artboards and a theme in code, then make the system from the app's theme when the tools return. Other choice: stop design work until the tools return.
+- For the coordinator, with the animation story. Lines of `apps/web/src/index.css`: this story owns the colour and radius lines, the font lines, one new `@theme` block (fonts, sizes, spacing, shadows) and one heading rule in the base layer. The animation story owns the motion variables, its reduced-motion block and the shared parts in `libs/shared/ui/`. The plan check compares tasks inside one story only. If the animation plan lists the same file, its task should wait for DESIGN through After, or the two stories merge in order and the second rebases. Its intake also promises that close refuses a screen change on the stock gray theme. This story owns that finding (Done-when 4, one rule, one test). Recommended: remove that line from the animation story so the two do not write the same check.
+- User-facing is `yes` for DESIGN because it changes how Sales and the agent make every client's look, and because a worker needs Claude's design tools to make the first system and the fixture. With `workers = "split"` a user-facing task runs on Claude. CHECK is `no`.
+- Pinned between the tasks: the contract table above, the file `docs/design/tokens.json`, and the waiver names `theme-drift` and `theme-stock`. DESIGN commits the fixture and the mapping for the `type` section; CHECK reads the fixture and implements the same mapping, so a mismatch fails `test_1` or `test_3`.
+- Unverified, to be settled by DESIGN before it writes the guide:
+  - How the starter's React 19 and Tailwind parts become the one classic script and one stylesheet that the previews need, and whether the previews, which load React 18, render the parts. The task tries the starter's Vite in library mode with React as an external and Tailwind's output. If the parts cannot be bundled, the worker stops and reports. It does not ship a different set of parts.
+  - The five reference files of the type (`format.md`, `craft.md`, `cover.md`, `from-code.md`, `from-design-tool.md`) are unread. They are read on the first made system, and may change the mapping for the `type` section and the guide text.
+  - Whether a system built from code can stay editable on the page, that is, whether the build step writes the "synced from code" mark and whether removing it is allowed.
+  - Whether the page keeps `oklch(1 0 0 / 10%)` as written. If it rewrites the value, the starter's dark values must change to the form the page keeps, so that the fixture and the starter stay equal.
+  - How a person picks one client's system when they have several (the Design type uses the default). The guide text for this waits for the answer.
+  - Tailwind 4.1.16 honours the added lines like 4.3.2 did, and a shadow set in `@theme` reaches the `shadow-*` utilities.
+  - Claude's artifact tools were down for part of 10 Nov 2026. DESIGN needs them for the manual proof.
+- Rendered checks (cut text, contrast, layout) belong to FORGE-RENDER-1. Nothing here starts a browser.
+- Later list, not planned: a token-level contrast check; comparing the app with Claude directly (Forge cannot see the private artifact); a `forge` command that reads `tokens.json` and writes the theme file.
