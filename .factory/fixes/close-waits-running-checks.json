@@ -1,0 +1,15 @@
+{
+  "base": "22a569900e405b345833465cf95080e422878507",
+  "branch": "fix/close-waits-running-checks",
+  "done_when": "Close and merge keep waiting while GitHub shows a required check running, up to the same 90-minute limit land uses; when they stop at a limit they say which limit and that the checks are still running",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-10T02:44:02.537298+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Close and merge stop waiting after 10 minutes while the pull request's test groups are still running, so on repos with 30-minute test groups the coordinator reruns close and merge several times per change (#1500)"
+}
