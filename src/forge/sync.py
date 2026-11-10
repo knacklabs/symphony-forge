@@ -598,6 +598,25 @@ def write(top: Path, cfg: dict[str, Any], keep: frozenset[str] = frozenset()) ->
     return changed + [rel for rel in links if rel not in changed]
 
 
+def check_guides(top: Path) -> None:
+    """Stop before review when committed guides need sync, using this checkout's renderer."""
+    package = top / "src" if repo.config(top)["repo"] == "forge-source" else Path(__file__).resolve().parent.parent
+    script = f"""import sys, json
+sys.path.insert(0, {json.dumps(package.as_posix())})
+from forge import repo, sync
+top = repo.root()
+tracked = set(repo.git('ls-files', '-z', '--', '.claude/skills', '.codex/skills', cwd=top).split('\\0'))
+wanted = {{rel: text for rel, text in sync.files(top, repo.config(top)).items() if rel in tracked}}
+print(json.dumps(sync.differing(top, wanted)))
+"""
+    result = repo.run(sys.executable, "-B", "-c", script, cwd=top)
+    result.check_returncode()
+    if changed := json.loads(result.stdout):
+        repo.refuse(("Generated guides need updating: {paths}.",
+                     "Run forge sync, then commit the generated guides and run close again."),
+                    paths=", ".join(changed))
+
+
 def refresh_merged_guides(top: Path, before: str) -> None:
     """Keep committed skill copies current when a default merge changes their templates."""
     incoming = repo.git("diff", "--name-only", before, "HEAD", "--",
