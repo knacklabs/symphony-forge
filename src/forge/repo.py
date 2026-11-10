@@ -397,10 +397,9 @@ def _github_read(args: tuple[str, ...], execute) -> subprocess.CompletedProcess[
 def quote(argument: object) -> str:
     """One path or argument quoted for the user's shell, so a printed command runs as shown."""
     text = str(argument)
-    if re.fullmatch(r"[a-zA-Z0-9_./+-]+", text):
+    if re.fullmatch(r"[a-zA-Z0-9_@%+=:,./-]+", text):  # shlex.quote's safe set
         return text
-    # Windows setup uses PowerShell; single quotes prevent expression evaluation.
-    return "'" + text.replace("'", "''") + "'" if os.name == "nt" else shlex.quote(text)
+    return '"' + text.replace('"', '""') + '"' if os.name == "nt" else shlex.quote(text)
 
 
 def git(*args: str, cwd: str | os.PathLike[str] | None = None,
