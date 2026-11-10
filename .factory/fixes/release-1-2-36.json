@@ -12,12 +12,27 @@
   "done_when": "The version is 1.2.36, generated files are synced, this repo is pinned to v1.2.36, and the tests pass",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "f0ef0754977eefd16e1317a73a78f5777b12850fbda1d5c9fd80e6b5badd5356",
+    "changed": "3859b148cd84fb903e38a5f052ca4d5cce51db31dce6889943c9771750697ae5",
+    "commit": "c00f64e5795ff76127b09692b571e32c1aa3ce93",
+    "dismissals": [],
+    "findings": [],
+    "id": "e0cb1d57-0633-47ea-bf1a-d8e1b6d455d3",
+    "status": "clean"
+  },
   "round": 2,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-10T18:35:53.513257+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-10T19:34:24.828572+00:00",
+      "step": "review"
     }
   ],
   "stuck": {

@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/githooks.py\tThe worker commit hook refused the requested version-only release pin, so the coordinator committed it.",
+      "kind": "bug",
+      "path": "src/forge/githooks.py",
+      "line": 131,
+      "text": "The worker commit hook refused the requested version-only release pin, so the coordinator committed it.",
+      "from": "worker",
+      "item": "release-1-2-36",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
