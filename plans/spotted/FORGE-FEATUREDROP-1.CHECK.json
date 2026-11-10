@@ -1,0 +1,125 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/feature_remove.py\tFunctional: Detect generated TypeScript project references\tFORGE-FEATUREDROP-1/CHECK",
+      "kind": "bug",
+      "path": "src/forge/feature_remove.py",
+      "line": 49,
+      "text": "Functional: Detect generated TypeScript project references",
+      "from": "blocking",
+      "item": "FORGE-FEATUREDROP-1/CHECK",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_feature_remove.py\tGate: test_3_the_check_keeps_the_data_layer_out_of_the_list\tFORGE-FEATUREDROP-1/CHECK",
+      "kind": "bug",
+      "path": "tests/test_feature_remove.py",
+      "line": 355,
+      "text": "Gate: test_3_the_check_keeps_the_data_layer_out_of_the_list",
+      "from": "blocking",
+      "item": "FORGE-FEATUREDROP-1/CHECK",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/feature_remove.py\tNot done: Comments and examples are not feature uses",
+      "kind": "edge",
+      "path": "src/forge/feature_remove.py",
+      "line": 92,
+      "text": "Not done: Comments and examples are not feature uses",
+      "from": "review",
+      "item": "FORGE-FEATUREDROP-1/CHECK",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/feature_remove.py\tNot done: Refuse when the Python data model is missing",
+      "kind": "edge",
+      "path": "src/forge/feature_remove.py",
+      "line": 117,
+      "text": "Not done: Refuse when the Python data model is missing",
+      "from": "review",
+      "item": "FORGE-FEATUREDROP-1/CHECK",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/feature_remove.py\tNot done: The check detects leftover Python feature initialization",
+      "kind": "edge",
+      "path": "src/forge/feature_remove.py",
+      "line": 89,
+      "text": "Not done: The check detects leftover Python feature initialization",
+      "from": "review",
+      "item": "FORGE-FEATUREDROP-1/CHECK",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/feature_remove.py\tNot done: The check lists each leftover Python sample-data line",
+      "kind": "edge",
+      "path": "src/forge/feature_remove.py",
+      "line": 46,
+      "text": "Not done: The check lists each leftover Python sample-data line",
+      "from": "review",
+      "item": "FORGE-FEATUREDROP-1/CHECK",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/feature_remove.py\tNot done: The check lists each leftover screen, route and menu entry",
+      "kind": "edge",
+      "path": "src/forge/feature_remove.py",
+      "line": 50,
+      "text": "Not done: The check lists each leftover screen, route and menu entry",
+      "from": "review",
+      "item": "FORGE-FEATUREDROP-1/CHECK",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/feature_remove.py\tNot done: The check lists leftover custom access rules and tool tests",
+      "kind": "edge",
+      "path": "src/forge/feature_remove.py",
+      "line": 51,
+      "text": "Not done: The check lists leftover custom access rules and tool tests",
+      "from": "review",
+      "item": "FORGE-FEATUREDROP-1/CHECK",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/feature_remove.py\tNot done: The check lists leftover routes in large generated files",
+      "kind": "edge",
+      "path": "src/forge/feature_remove.py",
+      "line": 80,
+      "text": "Not done: The check lists leftover routes in large generated files",
+      "from": "review",
+      "item": "FORGE-FEATUREDROP-1/CHECK",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/feature_remove.py\tNot done: The check lists the starter's leftover resource tests",
+      "kind": "edge",
+      "path": "src/forge/feature_remove.py",
+      "line": 50,
+      "text": "Not done: The check lists the starter's leftover resource tests",
+      "from": "review",
+      "item": "FORGE-FEATUREDROP-1/CHECK",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/feature_remove.py\tNot done: The check names each feature that imports or calls the feature",
+      "kind": "edge",
+      "path": "src/forge/feature_remove.py",
+      "line": 50,
+      "text": "Not done: The check names each feature that imports or calls the feature",
+      "from": "review",
+      "item": "FORGE-FEATUREDROP-1/CHECK",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
