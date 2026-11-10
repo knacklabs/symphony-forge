@@ -1,11 +1,168 @@
 {
   "branch": "task/FORGE-PRODGAP-1-LIST",
+  "known": [
+    {
+      "area": "_light_parts() in src/forge/gaps.py",
+      "file": "src/forge/gaps.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 70,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Each line goes away when its fact changes: the labels are gone, or later changes name the parts.",
+      "work": 2
+    },
+    {
+      "area": "src/forge/gaps.py",
+      "file": "src/forge/gaps.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 15,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: The list names the files that carry the \"Demo only\" label and the parts that were built with only the light review.",
+      "work": 1
+    },
+    {
+      "area": "fix() in tests/test_prodgap_list.py",
+      "file": "tests/test_prodgap_list.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 132,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: tests/test_prodgap_list.py::test_5_light_reviewed_parts_show_and_clear_when_named",
+      "work": 2
+    },
+    {
+      "area": "test_3_open_gaps_show_together_and_stay_while_work_runs() in tests/test_prodgap_list.py",
+      "file": "tests/test_prodgap_list.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 162,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: tests/test_prodgap_list.py::test_3_open_gaps_show_together_and_stay_while_work_runs",
+      "work": 1
+    },
+    {
+      "area": "test_2_demo_only_labels_show_and_clear() in tests/test_prodgap_list.py",
+      "file": "tests/test_prodgap_list.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 146,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: tests/test_prodgap_list.py::test_2_demo_only_labels_show_and_clear",
+      "work": 1
+    },
+    {
+      "area": "test_5_light_reviewed_parts_show_and_clear_when_named() in tests/test_prodgap_list.py",
+      "file": "tests/test_prodgap_list.py",
+      "gain": 2,
+      "harm": 1,
+      "line": 203,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Follow-up: Exercise the board and completed story on their own fetch",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "daeb2d4cc5f688fdd967e22ce1a6256fe96e1fea2da5daf3ca3daeb7fdbb3466",
+    "changed": "016d1a50941625f1a2ae6d278db4be5496a95a0ba2285afcf6f893b4901c4185",
+    "commit": "4ddd2204622f0b2e8e4c33e2a7fc4c96cddec7df",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Not done\nCase: normal use - an earlier full-reviewed fix mentions login, and a later prototype fix named `login` receives a light review. The earlier fix is included in `said`, so it immediately clears the new fix from the list even though no later change has reviewed it. An earlier completed story title is treated the same way at line 75. Full-reviewed fixes can exist before sign-off, for example with an allowance other than the prototype allowance (`src/forge/review.py:183`); neither path checks when the naming change landed.",
+        "file": "src/forge/gaps.py",
+        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
+        "gain": 3,
+        "harm": 3,
+        "line": 70,
+        "priority": "P1",
+        "title": "Not done: Each line goes away when its fact changes: the labels are gone, or later changes name the parts.",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 1, Harm 3\nRaise: Not done\nCase: normal use - a root `tests/` regression test asserts that the app no longer displays `Demo only`. The search includes that test, so removing the label from the app still leaves a gap naming the test as a demo-only feature. It also includes `.github/`. This is new evidence beyond accepted note 14: that note addressed nested tests while assuming root `tests/` was excluded, but `NOT_APP` excludes neither root directory.",
+        "file": "src/forge/gaps.py",
+        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
+        "gain": 3,
+        "harm": 3,
+        "line": 15,
+        "priority": "P1",
+        "title": "Not done: The list names the files that carry the \"Demo only\" label and the parts that were built with only the light review.",
+        "work": 1
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - a light-reviewed fix is merged through Forge. Every list test constructs fixes with `status: merged`, but Forge identifies a merged fix by its state file on the default branch (`src/forge/task.py:603`), and landed records can still say `waiting for checks` (for example, `.factory/fixes/hook-keeps-repo-nonbare.json:44`). An implementation that accepts only `merged` would pass these tests while omitting actual landed fixes and failing to count actual follow-up fixes. Exercise the real merge lifecycle or use a representative landed state.",
+        "file": "tests/test_prodgap_list.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 132,
+        "priority": "P1",
+        "title": "Gate: tests/test_prodgap_list.py::test_5_light_reviewed_parts_show_and_clear_when_named",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 1, Harm 3\nRaise: Test\nCase: normal use - a developer starts the change that reviews a listed light-reviewed part. The test starts an unrelated readme fix, so an implementation that hides the particular gap being worked on would still pass. Start a change for one of the listed gaps and verify that all three rows remain visible.",
+        "file": "tests/test_prodgap_list.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 162,
+        "priority": "P1",
+        "title": "Gate: tests/test_prodgap_list.py::test_3_open_gaps_show_together_and_stay_while_work_runs",
+        "work": 1
+      },
+      {
+        "body": "Gain 3, Work 1, Harm 3\nRaise: Test\nCase: normal use - two app files carry the label. This test supplies only one app file; the other labelled file is documentation and is expected to be excluded. An implementation that lists only the first matching app file would pass every list test while omitting an open feature. The owning test needs to assert both app filenames.",
+        "file": "tests/test_prodgap_list.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 146,
+        "priority": "P1",
+        "title": "Gate: tests/test_prodgap_list.py::test_2_demo_only_labels_show_and_clear",
+        "work": 1
+      },
+      {
+        "body": "Gain 2, Work 1, Harm 1\nThe completed-story assertion calls `gaps()`, whose first action is an explicit fetch (`tests/test_prodgap_list.py:87`). The board is also first checked only after `forge next` and that fetch. A regression that reads stale story completion or board data before its own fetch would therefore pass the named proof, despite the planned fetch-order cases.\nAdds work: exercise those cases before an explicit fetch; F 2 x H 2 = 4; 2 x C = 2.",
+        "file": "tests/test_prodgap_list.py",
+        "gain": 2,
+        "harm": 1,
+        "line": 203,
+        "priority": "P2",
+        "title": "Follow-up: Exercise the board and completed story on their own fetch",
+        "work": 1
+      }
+    ],
+    "id": "3cefa34f-f361-42fd-8244-d6064572bb90",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-10T20:08:52.572713+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-10T20:29:50.578361+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
