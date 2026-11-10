@@ -114,7 +114,7 @@
     "id": "43c99eb2-0a2c-4649-8271-ae544e564ac4",
     "status": "blocked"
   },
-  "round": 3,
+  "round": 4,
   "status": "fixing",
   "steps": [
     {
@@ -135,10 +135,12 @@
     }
   ],
   "stuck": {
-    "close": "07067814-62c6-44bd-80f8-0060efc3718f",
-    "head": "4e74a1d2815b4d356265c8496b1ff053d89818c0",
-    "keys": {},
-    "round": 2
+    "close": "da423410-645f-4dcc-b74a-67a262ad8588",
+    "head": "76b9c664a8ea64a1243e4082d7dec54d7a48098d",
+    "keys": {
+      "the open P0 security: refresh cached sign-off files before checking merge permission in src/forge/repo.py": 1
+    },
+    "round": 3
   },
   "worker": "claude"
 }
