@@ -1,64 +1,115 @@
 # Score each Forge release on the same reference app
 
-<n> parts · Risks: ... · New moving parts: ...
+2 parts · Risks: none one-way · New moving parts: one release workflow, one Claude access key
 
 ## What changes for you
 
-- Each Forge release builds the same reference app from the same notes, and the result is scored.
-- The owner can see whether the quality of what Forge builds went up or down since the previous release.
+- After each Forge release is tagged, GitHub's own computers (called CI) build one small app from the same fixed notes about a made-up business. Claude builds it. Your laptop does nothing, and a pull request never starts this run.
+- The app gets a score from checks that use no AI model. The checks ask: does the app build, do its own tests pass, how many design problems does the design checker find, and do sign-in, a list, a form, a dashboard and one scheduled job work in a browser. The score reads like "6 of 8 checks pass", with each number beside it.
+- The run's summary page shows this score next to the previous release's score and says whether it went up, went down or stayed the same. It also shows how many tokens (the units a model is billed in) and how many minutes the build used. The first run has no earlier score and says so.
+- The run never holds a release. It starts after the tag. If it fails, or the access key is missing, it says so and stops.
+- You do one thing: add a Claude access key to the Forge repo's secrets on GitHub. Without it, the run prints a notice and does nothing.
+- Client repos get nothing. A new client repo and an existing client repo get no new file, setting or step from this story. (Source: the Forge review rules; this is a test of Forge itself, so it lives in Forge's own repo.)
+
+Design: none (no screen; the score appears on GitHub's own run summary page)
 
 ## Why
 
-Nothing today shows whether a new Forge release makes the apps it builds better or worse.
+Nothing today shows whether a new Forge release makes the apps it builds better or worse. Forge's tests prove that Forge's own commands work. They do not build a whole app from client notes, so a release can make the apps worse and nobody sees it until a client does. Releases come often (v1.2.34 on 9 November 2026, v1.2.35 on 10 November), so a score on each release shows the direction early.
 
 ## Done when
 
-1. **Each release has one quality score for the reference app, built from the same notes as the previous release.**
-2. **The score is shown beside the previous release's score, with the direction of change.**
+1. **After a release tag, one run on GitHub's computers builds the reference app from the fixed notes, with Claude only. It never runs on a pull request, never holds the release, and with no key or a failed build it says so and ends.**
+2. **The built app is scored by checks that use no model: it builds, its tests pass, the design checker's problem count, and a browser check for each of sign-in, a list, a form, a dashboard and one scheduled job. The result is one headline ("N of M checks pass") and the number behind each check.**
+3. **The run's summary shows this score beside the previous release's score, with up, down or same, and the tokens and minutes the build used. When the notes or checks changed since the previous run, it says "new baseline" and shows no direction.**
+4. **The notes describe an invented business that needs sign-in, a list, a form, a dashboard and one job. They name no real company, and every one of the five has an expected check that finds it by role and label.**
+5. **A new client repo and an existing client repo get no new file, setting or step from this story.**
 
 ## Risks
 
-<!-- Each one-way step: deleting data, a destructive migration, a new vendor. -->
+Risks: none one-way. The key can be deleted from GitHub's secrets at any time, and the workflow reverts with its pull request.
 
-Risks: none
+Trade-offs, in plain words:
+- One build per release is noisy. The same release built twice can score a point apart, so a one-point change may mean nothing. The plan adds no repeat builds. If the first runs show the score moving with no release change, a later story can add repeats.
+- The build runs in a scratch repo with no GitHub pull request, so it does not run `forge close` or Forge's review. The score measures what a release ships to an app (the guide, the skills, the starter code, the rules and the design checker), not Forge's review. Review findings and review rounds are not in the score. Adding them needs a scratch GitHub repo and a token that can create and delete repos; that is a later choice.
+- The run needs a Claude access key that does not exist yet. Until you add it, nothing is scored.
+- A browser check that fails on a real app looks the same as a check that is wrong. The first run is read by a person once; a check that is wrong is a bug in the benchmark, not in the release.
+
+Model cost: unknown until the first run; this is the main cost of the story. One run is one Claude build session for a small app. It uses many model calls (every file read, edit and command is a turn), so it costs far more than any other Forge CI job. Recorded data from Forge's own repo is the only scale I have: one Codex review of the v1.2.35 release change used about 5.3 million input tokens (95 percent from cache) and 26 thousand output tokens in 10 minutes. A full app build is expected to be larger. No number is known, and Forge has no price table, so the run reports tokens, turns and minutes. It does not turn them into money. The first run measures them. The job has a hard time limit of 120 minutes, a number I chose and did not measure. Every other part (the checks, the score, the summary) uses no model call. A model that looks at screenshots is left out (see Notes).
 
 ## For the builders
 
 <!-- Everything from here down is for the agents. The owner doesn't see it when approving, and
 tightening it needs no new approval. -->
 
+Each new test file starts with `STORY = "FORGE-BENCH-1"`. Tests run the forge command or the script as a subprocess and never import forge (as `tests/test_live_starter_nightly.py` runs `scripts/smoke_select.py`). Test numbers follow the Done-when items and stay unique across the two files. No test calls a real model. The live run is the workflow itself, started by a tag or by hand.
+
+### What exists (evidence)
+
+- Starter smoke (`.github/workflows/starter-smoke.yml`, selected by `scripts/smoke_select.py`) runs the real starter stack and its browser flows with `FORGE_STARTER_LIVE=1`. It tests Forge's starter, with no agent building anything, so it builds nothing from notes. It runs on a schedule, by hand and on pull requests that touch the templates. The new workflow shares none of that. Reuse: how it installs Node (`actions/setup-node`, 24), uv and Python 3.11, and how `tests/test_starter_tree.py` (`live_run`, `live_python_run`) starts the starter stack and its browser tests.
+- Real-model policy: `.github/workflows/codex-smoke.yml` runs only on the Codex files or by hand, uses `OPENAI_API_KEY`, prints a notice and skips when the secret is empty, and sets `FORGE_LIVE_CODEX=1`. `tests/conftest.py` strips every `FORGE_*` variable except `FORGE_LIVE_CODEX` from test processes. No workflow uses a Claude secret today. Reuse the "notice and skip when the secret is empty" step.
+- Release flow: `docs/guide.md`, "Releasing Forge" (lines 633 to 649): a fix bumps `__version__`, a full Linux run and a Windows run must be green, then the maintainer tags and pushes `vX.Y.Z`. `.github/workflows/forge-next.yml` already runs on `push: tags: ['v*']`. Forge has no release step in code (`src/forge/releases.py` only reads tags and GitHub release dates). A tag push is therefore the one trigger.
+- Design checker: `src/forge/templates/design/ui-checks.js` is model-free. Its output is `{problems, note}` as JSON on stdout. It takes file names as arguments or a JSON list on stdin, checks `.tsx .jsx .html .css .vue .svelte` files, and calls the bundled impeccable `detect` command when the launcher exists in `.claude/skills/impeccable/scripts` or `.codex/skills/impeccable/scripts`. It returns a `note` and still passes when the launcher is missing; the score reads that note as "not run", not as zero problems. `src/forge/ui_checks.py` ships it to client repos as `.forge/design/ui-checks.js`.
+- App checks: `src/forge/app_baseline.py` (`check`, `services`, `migrations`) run only inside `forge close` (`src/forge/close.py` lines 275 to 282), and each one refuses at the first problem. `forge doctor` runs none of them. They give a pass or a first failure, not a count, and `forge close` needs GitHub (`gh pr create`, `origin/<default>`). They are not in the score in this story (see Settled 3).
+- Browser rules: `src/forge/templates/starter/apps/web/e2e/rules/` holds `sign-in.spec.ts`, `reset-password.spec.ts`, `accept-invite.spec.ts` and `members.spec.ts`, which a client app's own screens must pass; `served-app.spec.ts` checks that the built app serves its page. The starters ship API tests (`apps/api/test/*.e2e-spec.ts`) and a sign-in, organisations and projects API in `libs/`.
+- Recorded cost and time: the event log keeps `run end` events with `input_tokens`, `cached_input_tokens`, `output_tokens` and `reasoning_output_tokens` for Codex runs (`src/forge/codex.py`, `autoreview.py`), and `time_records.py` keeps seconds per step. `docs/specs/item-cost.md` records that token counts are incomplete (about half of reviews, none for native Claude builds), so Forge's records are not a source for this run. `src/forge/worker.py` line 845 reads `num_turns` from a Claude `result` event; the Claude run itself reports its usage. No price table exists in `src/forge`.
+- Claude driver: `src/forge/claude_sdk.py` pins the Claude Agent SDK (`SDK_PIN`) in its own environment; `src/forge/claude_turn.py` runs one turn and prints the stream events, including the `result` event. `forge doctor --fix` installs it. Models per work kind are in `forge.toml` (`[models.build.claude]`, model `claude-sonnet-5-5`).
+- Start of a scratch repo: `forge init --starter react --actions no` (`src/forge/init.py`) needs an `origin` remote, the `gh` program, and `gh api` for branch protection. Forge's own tests give it a local bare remote and a stub `gh` (`tests/test_setup.py::_fresh_client`). Whether init finishes against a bare remote with a stub `gh` outside the tests is NOT verified.
+- FORGE-SCORE-1 (`src/forge/score.py`, Gain, Work and Harm scores on review notes) is a different thing and stays unchanged. This story's score is on a built app, not on a note.
+
+### Settled (with the reason)
+
+1. **The score comes only from checks that use no model.** The checks, in order: (a) the app builds, (b) the app's own tests pass, (c) the design checker's problem count (pass when 0), (d) one browser check each for sign-in, a list, a form, a dashboard and a scheduled job (5 checks). Total 8 checks. A check that did not run counts as failed and the summary says "did not run". Reason: the owner's cost rule. The cheapest design is the first one. The headline is a plain count, with no weights, so a reader sees what moved.
+2. **The expected checks are fixed Playwright specs in the Forge repo, run against the built app.** They find things by role and label, like the shipped rule specs, and never by markup, because Forge ships no screens. The notes name each thing in the client's words (for example "a list of orders", "a New order form with a Save button", "a count of orders due today", "a nightly job that marks late orders"). The job check calls the job's endpoint or runs its command the notes name, and looks at the result. Reason: the same specs run on every release, so only the app changes.
+3. **No `forge close`, no review and no rounds in v1.** Reason: close needs a GitHub pull request, and a story needs a person's approval through Plan Mode (`src/forge/approval.py`), so neither can run unattended. A scratch GitHub repo with a repo-create token would add a vendor secret and a second cost. The harness gives the Claude session the repo that `forge init --starter` makes (guide, skills, starter code, rules, design checker), the fixed notes, and one instruction: build the app from the notes and follow the repo's AGENTS.md. Review findings, rounds and `app_baseline` results are Notes questions.
+4. **Where it runs and when.** A new workflow `.github/workflows/release-bench.yml` on GitHub's Ubuntu computers. Triggers: `push` of tags `v*` and `workflow_dispatch` (with an optional ref). No `pull_request` trigger. It is not a required check, nothing waits for it, and the tag push does not wait for it. `timeout-minutes: 120`, with the number chosen, not measured. Without the key secret it prints a notice and skips, as `codex-smoke.yml` does.
+5. **Claude only.** The session uses the model in the new repo's own `[models.build.claude]` (what a new client gets). The workflow names no Fable or Astra model. A test asserts that.
+6. **The score's home is the run.** The score script writes one result file, saved with the run as a workflow artifact, and writes the comparison text to the run summary (`GITHUB_STEP_SUMMARY`). The next run finds the previous result with `gh run list --workflow release-bench.yml --status success` and `gh run download`. It reads `actions: read`, as `forge-next.yml` does. No new file in the repo and no new record format beyond the one result file. The board is not changed. Adding the line to the GitHub release notes is a Notes question.
+7. **One script, one checks file.** `scripts/bench_score.py` (Python standard library only, like `scripts/smoke_select.py`) reads `benchmark/checks.toml` (each check: name, command, kind `pass` or `count`), runs the commands in the built app's folder, and writes the result and the comparison. Its command line, pinned by Task SCORE: `python scripts/bench_score.py <app-dir> --checks <toml> --release <tag> --usage <json-file> [--previous <result-file>] --out <result-file>`, with the summary text on stdout. The usage file holds the tokens, turns and minutes that the workflow took from the Claude run. Tests pass their own small checks file with simple commands, so the script needs no other test seam.
+8. **A baseline id stops a false comparison.** The result holds a short id made from the bytes of `benchmark/notes.md` and `benchmark/checks.toml` and the specs. When the previous result has another id, the summary says "new baseline" and shows no direction. Reason: a changed check changes the score without the release changing.
+9. **The notes.** `benchmark/notes.md`: an invented business, "Breadbox Wholesale", that sells bread to local shops. Staff sign in. They see a list of orders, add an order with a form (shop, item, quantity, delivery date), see a dashboard with the number of orders due today and the number late, and a nightly job marks late orders. Short, in the client's words, no screens, no stack. The name is invented; the plan did not check that no real company has it, so a reviewer reads it once.
+10. **What this story removes or replaces.** Nothing. It adds one workflow, one script and one folder of fixed files and removes no process. It adds no step for the people who build or close work. The cost is the model run and nothing else.
+
 ### Done-when details
 
-<!-- Under each Done-when item's number: its evidence, edge cases and the tests that prove it.
-Workers and reviewers get the entries of the items they cover. An item with nothing to add has
-no entry. -->
+1. Run (RUN). `tests/test_release_bench_run.py::test_1_the_release_workflow_runs_after_a_tag_on_claude_and_never_on_a_pull_request`.
+   - Config boundary, no fake: the test reads `.github/workflows/release-bench.yml` as `tests/test_live_starter_nightly.py` reads `starter-smoke.yml`. It asserts the triggers are tag pushes `v*` and `workflow_dispatch` and not `pull_request`; the job has `timeout-minutes`; no other workflow lists it in `needs`; it prints a notice and skips when the key secret is empty; it names no model whose id contains `fable` or `astra` (the model is read from the built repo's `forge.toml`); it downloads the previous result and passes `--previous`; it appends the script's output to `GITHUB_STEP_SUMMARY`; and a failed build step does not fail the tag's other workflows (the workflow is separate).
+   - The builder starts the workflow once by hand (`gh workflow run release-bench.yml --ref main`) and reports the minutes, the tokens, the turns and the score in the pull request. This live run is the only proof of the live path. If `forge init` does not finish against a bare remote with a stub `gh`, the builder reports it and does not add a GitHub scratch repo without the owner (see Notes).
+2. Score (SCORE). `tests/test_release_bench_score.py::test_2_the_score_counts_each_check_and_names_the_ones_that_did_not_run`.
+   - The test writes a fake app folder and a checks file with five commands (`exit 0`, `exit 1`, a command that prints a count, a count of 0 and a command that does not exist). It runs the script and asserts the result: `passed` and `total`, each check with its number, and the missing command shown as "did not run" and counted as failed. The design checker's "not run" note counts as failed, not as 0 problems.
+3. Comparison (SCORE, wired in RUN). `tests/test_release_bench_score.py::test_3_the_summary_shows_the_previous_score_with_direction_or_a_new_baseline`.
+   - With `--previous`, the stdout holds both scores and "up 2", "down 1" or "same". With no previous file, it says there is no earlier score. With a previous result that has another baseline id, it says "new baseline" and prints no direction. The tokens and minutes from the usage file appear in the text.
+   - The workflow wiring is asserted by `test_1` above, not here.
+4. Notes (SCORE). `tests/test_release_bench_score.py::test_4_each_required_part_has_a_note_and_an_expected_check`.
+   - Reads `benchmark/notes.md` and `benchmark/checks.toml` from the real folder. Asserts that the notes mention sign-in, a list, a form, a dashboard and a job, and that `checks.toml` holds one check for each of the five, found by role and label. No real client name is checked by a program (the repo names no client, so a list of client names cannot live here); a reviewer reads the notes once.
+5. Clients get nothing (RUN). `tests/test_release_bench_run.py::test_5_a_new_and_an_existing_client_repo_get_no_benchmark_files`.
+   - New client: `forge init --starter react --actions no` through `tests/test_setup.py::_fresh_client`, then `forge sync`. The file list holds no path that starts with `benchmark/` or `scripts/bench`, and no `release-bench.yml`.
+   - Existing client: the earlier-release fixture (`tests/fixtures/adopted-v1.2.2/client`, as `tests/test_proto_signoff.py::_adopted_client` copies it), upgraded to this release with `forge sync`. Same assertion. Nothing else is needed: the files are not under `src/forge/templates`, and `pyproject.toml` ships only the listed paths.
 
-1. <Evidence, edge cases and the tests that prove item 1.>
+### New and existing repos
+
+- **New client repos** (`forge init`): nothing. The workflow, the script and the benchmark folder live in Forge's own repo and are not part of the wheel.
+- **Existing client repos** (upgrade, then `forge sync`): nothing. No setting, no file, no step for the agent. The guide's "Releasing Forge" section is for Forge's maintainers only.
 
 ## Tasks
 
-<!-- One row per task. Covers: the Done-when numbers it delivers, at most three. Scope: the paths
-it may change. Before writing each Scope, search the code for the files the task needs. The plan
-check refuses two tasks whose Scope paths have the same prefix up to the first wildcard, unless
-one waits for the other through After, directly or through another task; it names both tasks.
-Paths with a segment named `tests`, `test`, `__tests__` or `spec` do not cause Scope overlaps
-and can be shared without an After link. Explicit After links still apply.
-When tasks need the same production file, put it in the first task's Scope with the shared names and stubs;
-tasks that need them wait for that task through After and then own only their files. Tests: the
-tests it adds or changes. After: the tasks it waits for. When two tasks share a function, field,
-file format or command, the first task pins it: it commits the shared names and stubs plus one
-test that crosses both sides, and the tasks that use it list it under After. Split tasks so each
-owns its files; shared lines (command table, guide list, registry) go to one task or a small last
-wiring task; After only when a task needs another task's code. The
-Developer column is optional: the lead fills or changes a GitHub username here, below For the
-builders, without another approval. Leave it blank for an unassigned part. Forge next uses
-the caller's GitHub login; another developer may start it with a warning. Existing tables
-without Developer still work. The moving-parts line stays last: "none", or each new dependency, service, datastore,
-queue, background job or abstraction layer, with the Done-when item that needs it. -->
-
 | ID | Name | What it delivers | Covers | Scope | Tests | After | User-facing | Developer |
 |---|---|---|---|---|---|---|---|---|
+| SCORE | Score script and fixed notes | The invented business notes, the expected checks, the checks file and the script that runs them against a built app and prints the score beside the previous one. | 2, 3, 4 | `scripts/bench_score.py` (new), `benchmark/` (new: `notes.md`, `checks.toml`, `checks/`), `tests/test_release_bench_score.py` (new) | `tests/test_release_bench_score.py::test_2_the_score_counts_each_check_and_names_the_ones_that_did_not_run`, `::test_3_the_summary_shows_the_previous_score_with_direction_or_a_new_baseline`, `::test_4_each_required_part_has_a_note_and_an_expected_check` | | no | |
+| RUN | Release workflow | The workflow that builds the app after a tag with Claude, scores it with the script, saves the result and writes the comparison to the run summary; the maintainer step in the guide; the test that clients get nothing. | 1, 5 | `.github/workflows/release-bench.yml` (new), `docs/guide.md` (a "Read the score" line in "Releasing Forge"), `tests/test_release_bench_run.py` (new) | `tests/test_release_bench_run.py::test_1_the_release_workflow_runs_after_a_tag_on_claude_and_never_on_a_pull_request`, `::test_5_a_new_and_an_existing_client_repo_get_no_benchmark_files` | SCORE | no | |
 
-New moving parts: none
+SCORE pins the script's command line (Settled 7) and the folder layout; RUN calls them and waits for SCORE. The two tasks share no production file. Searched `scripts/`, `.github/workflows/`, `src/forge` and `tests/` for "benchmark" and "bench": nothing exists, so both Scopes are new files plus one guide line. `docs/guide.md` is also edited by other stories (a merge order only).
+
+New moving parts: one workflow that runs after a release tag, with one secret that holds Claude access (Done-when 1). No new service, datastore, queue or abstraction layer.
 
 ## Notes
+
+- **Scores (F x H >= 2 x C).** F 2 (once per release; releases come every day or two, but the problem of a release making apps worse is not known to be that frequent), H 2 (a release can make apps worse without anyone seeing it), C 3 (a new workflow and job, a secret, and a large model run). 2 x 2 = 4 < 2 x 3 = 6. Below the bar. Kept because you asked for it. Two cheaper forms exist: start the run by hand before chosen releases (drop the tag trigger, one line in the workflow), or run it on a weekly schedule. The model-free scoring keeps the cost to the one build session.
+- **Open question: where you look.** The plan puts the score on the run's summary page. Alternative: also add the same text to the GitHub release notes for the tag with one `gh release edit` call, because `releases.dates` already reads GitHub releases. Recommended answer: run summary only for now; add the release-notes line after you have read two scores.
+- **Open question: a model that judges screenshots.** Optional, adds a model call per screen and a second source of noise. Recommended answer: no. The browser checks and the design checker already look at the rendered pages.
+- **Open question: review findings and rounds.** The score leaves them out because they need `forge close`, which needs a GitHub pull request, and a story needs a person's approval. A scratch GitHub repo per run would allow them, but needs a token that can create and delete repos and adds a second model cost. Recommended answer: leave them out of v1; ask again after two runs.
+- **Open question: the Claude access key.** Someone must add it as a repo secret before the first run. Recommended: a long-lived token made with `claude setup-token` on a Claude account that has room for a long build session, named for example `CLAUDE_CODE_OAUTH_TOKEN`. I could not check which kind of key your account allows or how its limits would handle a build of this size.
+- **Open question: run on every tag.** Recommended answer: yes, as you asked, and switch to by-hand only if the first run costs more than you accept.
+- **Not verified.** (1) That `forge init --starter` finishes in a scratch folder with a local bare remote and a stub `gh` outside the tests. (2) That Claude Code's result event reports tokens, a cost and turns in the form the usage file needs; only `num_turns` is read in this repo today. (3) How long a build of this size takes; the 120 minute limit is a guess. (4) How the starter's browser rule specs are turned on for a client app, so the expected checks may reuse the same switch. (5) That the invented business name matches no real company.
+- **Order with other work.** FORGE-NOSCREENS-1 and FORGE-SAMPLE-1 edit `docs/guide.md` in other places; this story's guide change is one line, so the order is a merge order only. FORGE-SCORE-1 is unrelated (it scores review notes).
+- **Variance.** One build per release moves with luck. Repeats are not planned. The first runs show whether the score moves with no release change; only then is a repeat worth its cost.
