@@ -12,7 +12,10 @@ STATUS = "forge-full-suite"
 
 
 def next_run(top: Path) -> str:
-    if repo.test_place(repo.config(top)) == "ci":
+    cfg = repo.config(top)
+    if workflow := cfg.get("full_suite_workflow"):
+        return f"gh workflow run {repo.quote(workflow)} --ref {repo.default_branch(top)}"
+    if repo.test_place(cfg) == "ci":
         return f"gh workflow run forge.yml --ref {repo.default_branch(top)}"
     return "forge test --full in the main checkout"
 
