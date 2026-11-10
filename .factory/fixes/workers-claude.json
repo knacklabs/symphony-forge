@@ -85,7 +85,7 @@
     "id": "e67e03cd-5b7b-4d25-8cbb-f3bb7a37ddb0",
     "status": "blocked"
   },
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-10T18:00:54.626512+00:00",
@@ -98,8 +98,12 @@
   ],
   "stop": {
     "at": "2026-11-10T18:07:30.410314+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "forge.toml",
-    "wait_id": "c0b8c7b2-0df3-4254-acb1-136c92b7804a"
+    "reason": "The owner chose one more round on 10 Nov 2026 to repair the two tests and keep the design routing",
+    "wait_id": "c0b8c7b2-0df3-4254-acb1-136c92b7804a",
+    "worker_round": null
   },
   "why": "The owner chose on 10 Nov 2026 that every task and fix in this repo is built by Claude"
 }
