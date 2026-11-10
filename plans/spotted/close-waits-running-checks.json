@@ -1,0 +1,37 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/checks.py\tGate: Existing close wait tests fail on the new refusal\tclose-waits-running-checks",
+      "kind": "bug",
+      "path": "src/forge/checks.py",
+      "line": 179,
+      "text": "Gate: Existing close wait tests fail on the new refusal",
+      "from": "blocking",
+      "item": "close-waits-running-checks",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_close_waits_for_running_checks.py\tGate: test_1_close_waits_for_running_checks_until_green_or_the_limit\tclose-waits-running-checks",
+      "kind": "bug",
+      "path": "tests/test_close_waits_for_running_checks.py",
+      "line": 26,
+      "text": "Gate: test_1_close_waits_for_running_checks_until_green_or_the_limit",
+      "from": "blocking",
+      "item": "close-waits-running-checks",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/checks.py\tNot done: Running commit-status checks still stop after ten minutes",
+      "kind": "edge",
+      "path": "src/forge/checks.py",
+      "line": 173,
+      "text": "Not done: Running commit-status checks still stop after ten minutes",
+      "from": "review",
+      "item": "close-waits-running-checks",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
