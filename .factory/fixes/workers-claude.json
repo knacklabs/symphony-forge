@@ -85,6 +85,7 @@
     "id": "e67e03cd-5b7b-4d25-8cbb-f3bb7a37ddb0",
     "status": "blocked"
   },
+  "round": 1,
   "status": "fixing",
   "steps": [
     {
@@ -105,5 +106,12 @@
     "wait_id": "c0b8c7b2-0df3-4254-acb1-136c92b7804a",
     "worker_round": null
   },
-  "why": "The owner chose on 10 Nov 2026 that every task and fix in this repo is built by Claude"
+  "stuck": {
+    "close": "1ef9627d-71b2-418b-988a-58a6b2660e09",
+    "head": "20dd8927ce5c1fb3754dc73e701a5d3b14e14a25",
+    "keys": {},
+    "round": null
+  },
+  "why": "The owner chose on 10 Nov 2026 that every task and fix in this repo is built by Claude",
+  "worker": "claude"
 }
