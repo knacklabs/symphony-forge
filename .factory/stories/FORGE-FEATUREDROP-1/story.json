@@ -1,0 +1,12 @@
+{
+  "doc": "plans/FORGE-FEATUREDROP-1.md",
+  "status": "planning",
+  "steps": [
+    {
+      "at": "2026-11-10T17:08:21.025730+00:00",
+      "step": "start"
+    }
+  ],
+  "title": "Remove a feature from a client app in one change",
+  "touches": 0
+}
