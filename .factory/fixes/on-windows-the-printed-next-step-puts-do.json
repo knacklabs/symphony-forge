@@ -1,0 +1,15 @@
+{
+  "base": "454b02fcbc10d81404c703d688bb43f0fc123084",
+  "branch": "fix/on-windows-the-printed-next-step-puts-do",
+  "done_when": "The printed nightly full-run command has no quotes around a plain file name, and it is the same on Windows as on other systems.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-10T19:39:53.711839+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "On Windows the printed next step puts double quotes around a plain file name, so the Windows platform run fails two nightly-setting tests and blocks the release."
+}
