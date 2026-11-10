@@ -353,9 +353,10 @@ def _pending_check_not_named(env):
 
 
 def _pending_check(env):
+    # An explicit zero wait reports its limit as well as the running check.
     env.checks([run("tests (ubuntu-latest)", None, "in_progress"), run("forge-pr-check")])
     return {"draft": True, "item": env.start_fix()[0],
-            "problem": "The checks are not green yet: tests is still running.",
+            "problem": "The checks are not green yet: GitHub has shown no check progress for 0 minutes: tests is still running.",
             "next": "forge close tidy-readme"}
 
 
