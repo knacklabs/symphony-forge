@@ -1,6 +1,13 @@
 {
   "base": "22a569900e405b345833465cf95080e422878507",
   "branch": "fix/sync-before-close",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1c35a-984c-7ec2-b48f-92714eeb8177",
+    "head": null,
+    "start": "1b914fbc290c593a19ee725635b50cb1c82f0865"
+  },
   "done_when": "Before a fix or task round is handed back as done, Forge regenerates the synced guide copies when the template changed in the branch, or close stops locally with forge sync as the next step before any review or CI wait",
   "fix_kind": "mechanical",
   "kind": "fix",
