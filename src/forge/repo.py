@@ -396,7 +396,10 @@ def _github_read(args: tuple[str, ...], execute) -> subprocess.CompletedProcess[
 
 def quote(argument: object) -> str:
     """One path or argument quoted for the user's shell, so a printed command runs as shown."""
-    text = str(argument)  # on Windows always double-quoted: cmd.exe splits an unquoted `&`
+    text = str(argument)
+    if re.fullmatch(r"[a-zA-Z0-9_./-]+", text):
+        return text
+    # Keep shell operators quoted: cmd.exe splits an unquoted `&`.
     return '"' + text.replace('"', '""') + '"' if os.name == "nt" else shlex.quote(text)
 
 
