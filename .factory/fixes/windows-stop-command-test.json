@@ -1,0 +1,15 @@
+{
+  "base": "5dce565dc09d1cf63bd74ae6cfecaa5edde6eeaf",
+  "branch": "fix/windows-stop-command-test",
+  "done_when": "tests/test_waiting_runs_name_holders.py expects the stop command the way Forge prints it on every platform, and the Windows platform run passes",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-10T22:09:26.485792+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "On Windows the test of waiting runs expects the stop command with double quotes around the repo path, and since the quoting fix a plain path prints with no quotes, so the Windows platform run fails and blocks the v1.2.36 release"
+}
