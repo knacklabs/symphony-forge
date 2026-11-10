@@ -4,39 +4,17 @@
 
 ## What changes for you
 
-<What the people who use this will notice, in plain English. No IDs, codes or jargon. End each
-item with its source in plain words, such as (Source: the client's note on late orders, 12 Oct),
-or with the sourced item that needs it, such as (Needed by: the Customers screen). A source is a
-client note, a brief answer, a decision, a screen marked Build now at sign-off, a fixed rule of
-the app, or the owner's own request with its date. Name each screen, field, endpoint, tool and
-setting that the plan adds in one of these items.>
-
-<!-- For user-facing parts: run impeccable init if PRODUCT.md is absent. Design the screens
-in a Claude Design artifact; on a Codex-only host without artifact tools, use HTML artboards.
-Save each screen and its images in docs/design/<KEY>/. Copy .forge/design/support.js beside
-the HTML screens and run it for a 1440 by 900 PNG per screen. Commit the folder. Use its git tree
-id (git rev-parse HEAD:docs/design/<KEY>) in the last line below. For small changes to existing
-screens that add no screen and change no flow, use Design: none (<why>) instead.
-Remove this comment and omit
-the Design line for a backend-only story. Cold read follows the design; one plan approval binds
-these exact files. A folder edit needs its new tree id and a new plan approval.
-The rule starts with the next plan read and approval. Plans approved without a Design line
-before this rule keep their existing approval. -->
-Design: docs/design/<KEY>/ (<tree id>)
+- A person asks the agent to remove a feature, and the agent removes its screens, API, data, tests and menu entry in one change.
+- This is the reverse of the feature command.
 
 ## Why
 
-Remove a feature from a client app in one change
-
-
+The feature command builds a feature, but Forge has no command that removes one, so removal is done by hand.
 
 ## Done when
 
-<!-- One bold plain sentence per result, which the owner approves: no code names, file paths or
-test names. Its evidence, edge cases and proving tests go under the same number in Done-when
-details. -->
-
-1. **Something anyone can observe once this is done.**
+1. **Asking the agent to remove a feature from a client app removes its screens, API, data, tests and menu entry in one change.**
+2. **The client app's build and tests pass after the feature is removed.**
 
 ## Risks
 
