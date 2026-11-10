@@ -5,11 +5,26 @@
   "done_when": "The version is 1.2.35, generated files are synced, this repo is pinned to v1.2.35, and the tests pass",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "aa8c4806f1de1070570362bcca2be999867b65b7334555effcaf39524a1faae9",
+    "changed": "ba4fdc6d5b9ce87fc225e3cde79614c3682f722570ce1ffb610e632a80540214",
+    "commit": "218b1f5a7d301467e81f51b32e483dafb0da1469",
+    "dismissals": [],
+    "findings": [],
+    "id": "b5618576-8195-48ff-a6f0-3a1a926d9443",
+    "status": "clean"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-10T16:11:26.086754+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-10T16:22:07.356419+00:00",
+      "step": "review"
     }
   ],
   "why": "Release v1.2.35: publish what merged since v1.2.34"
