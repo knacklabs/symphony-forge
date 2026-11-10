@@ -1,13 +1,13 @@
 ---
 reader: codex (gpt-6.1-terra)
-read_at: 2026-11-10T17:49:02.372733+00:00
-seconds: 726.353
-read_hash: 1ef34e5d50e90f1a5ebeecfaf2deaef68b02f417
-round: 1
+read_at: 2026-11-10T18:05:32.290219+00:00
+seconds: 646.436
+read_hash: 3f865a51aa5b25c479ff1770ce19efef7fa72eda
+round: 2
 passed: no
-doc_seen: 1ef34e5d50e90f1a5ebeecfaf2deaef68b02f417
+doc_seen: 3f865a51aa5b25c479ff1770ce19efef7fa72eda
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+notes_seen: 5d4a5375fe4d18e30dc1e6555ef8c56f05e865f6
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a1c688-ccdd-7ac1-8f0f-d13c2a9f3269
 session:
@@ -109,3 +109,47 @@ Only a genuine trade-off goes to the human, as a question with options.
     Raise: Test. [The plan](/plans/FORGE-FEATUREDROP-1.md:60) makes `--one` and `--field` optional in the parser and specifies new refusal messages, but its tests do not exercise missing build arguments or those arguments combined with `--remove`. The existing [build handler](/src/forge/feature.py:96) assumes the singular name is present.
     Gain 3, Work 1, Harm 2
    Disposition: cut the check is a separate command, so the build command's arguments do not change and need no new refusal test
+
+## Round 2
+
+14. Blocking: Not done: The new users check reports the starter’s own examples as dependent features.
+    Raise: Not done. [The check](/plans/FORGE-FEATUREDROP-1.md:65) treats every matching line in another module as a use. When checking `projects`, the starter’s [auth example](/src/forge/templates/starter/libs/auth/server/src/auth.dto.ts:19) and [core comment](/src/forge/templates/starter/libs/core/web/src/permissions.ts:6) make it name `auth` and `core` as users. The guide then says to stop and ask the person which feature to change first, although these are only examples.
+    Case: normal use - a team removes the starter’s projects placeholder.
+    Gain 5, Work 2, Harm 3
+    Disposition: cut a use is now a non-comment match of the import, route, token, accessor or SQL-insert classes in another module's folder (not `core`, `shared`, `demo` or any file outside module folders); permission names are never a use; test_2 checks that `projects` in a new starter names no user of either stack
+
+15. Blocking: Not done: The check skips stale imports in the retained Python entry.
+    Raise: Not done. [The plan](/plans/FORGE-FEATUREDROP-1.md:64) skips the whole retained module, including `__init__.py`. If the agent deletes the listed route and service files but misses the entry-file edit, the [starter entry](/src/forge/templates/starter-python/apps/api/app/projects/__init__.py:2) still imports those deleted files. The check can report nothing left, while the retained [database setup](/src/forge/templates/starter-python/apps/api/migrations/env.py:9) fails to import the module.
+    Case: normal use - an agent misses the entry-file edit during manual removal.
+    Gain 5, Work 2, Harm 4 (floor: migration)
+    Disposition: cut inside the kept Python module the check scans every file for imports of the removed `routes`, `service`, `tools` and `permissions` (absolute or relative), so a missed entry-file edit is listed; test_1 leaves the starter's `__init__.py` imports in place first
+
+16. Advisory: Not done: A missing expected schema file can still produce a clean check.
+    Raise: Not done. [The revised rule](/plans/FORGE-FEATUREDROP-1.md:63) warns and continues when `<plural>.prisma` is absent. For a hand-built feature whose model is in another schema file, it cannot find a remaining `prisma.person` call but can still print `Nothing points at people any more.` The planned test uses the generated schema location.
+    Gain 3, Work 2, Harm 3
+    Disposition: cut model names are read from every schema file by its `@@schema` line, not from one file name; when none is found the check prints that it could not look, exits non-zero and never prints the all-clear line; test_3 covers a moved model and a missing model
+
+17. Advisory: Not done: The Python check can miss a demo-data insertion entirely.
+    Raise: Not done. [The scan classes](/plans/FORGE-FEATUREDROP-1.md:65) do not match a loader statement such as `session.execute(text("INSERT INTO clients.client ..."))`. The [demo-data convention](/src/forge/templates/conventions/demo-data.md:8) places that loader in the app, and the planned Python test plants an import rather than an insertion. The check can finish clean while a new demo database still receives the records.
+    Gain 3, Work 2, Harm 3
+    Disposition: cut class (g) matches an `INSERT INTO <schema>.` statement, with or without quotes and across line breaks, in SQL or code; test_1 plants one split over two lines in both stacks
+
+18. Advisory: Test: The check does not recognize one of the build command’s wiring lines.
+    Raise: Test. [Feature generation](/src/forge/feature.py:176) adds an ESLint line containing `scope:<plural>`, but [none of the planned scan classes](/plans/FORGE-FEATUREDROP-1.md:65) matches that line. The test can leave that wiring behind and still pass by using a different wiring line for its leftover assertion.
+    Gain 3, Work 1, Harm 2
+    Disposition: cut the lint rule line `scope:<plural>` is now matched by class (a)
+
+19. Advisory: Test: Indented Python imports are not covered by the pinned pattern.
+    Raise: Test. [The plan](/plans/FORGE-FEATUREDROP-1.md:65) matches lines that start with `from app.<module>` or `import app.<module>`. The starter already uses [an indented import inside a function](/src/forge/templates/starter-python/apps/api/app/auth/routes.py:51). A matcher using the pinned line start can miss that dependency while the planned generated-feature test passes.
+    Gain 3, Work 1, Harm 3
+    Disposition: cut the Python import pattern allows leading spaces, so an indented import inside a function is a match; test_1 plants one
+
+20. Advisory: Test: The full API route pattern has no feature-name boundary.
+    Raise: Test. [The route class](/plans/FORGE-FEATUREDROP-1.md:65) matches `/api/v1/<plural>` without the boundary specified for relative routes. Thus a substring matcher can treat `/api/v1/clients-archive` as a use of `clients`; [feature generation](/src/forge/feature_python.py:512) supports such hyphenated routes. The planned tests do not distinguish those two features.
+    Gain 3, Work 1, Harm 3
+    Disposition: cut every name pattern, the full route included, has the same boundary (no letter, digit, underscore or hyphen before or after); test_1 and test_2 build `people-archive` and `clients-archive` beside the checked feature
+
+21. Advisory: Plan gap: The earlier-adopted Python fixture has both starter markers.
+    Raise: Plan gap. [The starter check](/plans/FORGE-FEATUREDROP-1.md:62) gives no precedence when both markers exist. The named [earlier-adopted Python setup](/tests/test_feature_command.py:251) overlays the Python starter on an earlier TypeScript starter, while the [build command](/src/forge/feature.py:104) selects Python first. The planned adopted case permits either fixture, so it can pass without proving that choice.
+    Gain 3, Work 1, Harm 3
+    Disposition: cut Python wins when both markers exist, as in the build command; test_1 runs the adopted Python fixture, which holds both, and expects the Python-only imports to be found
