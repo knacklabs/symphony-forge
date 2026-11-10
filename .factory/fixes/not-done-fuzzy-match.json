@@ -1,0 +1,15 @@
+{
+  "base": "22a569900e405b345833465cf95080e422878507",
+  "branch": "fix/not-done-fuzzy-match",
+  "done_when": "A Not-done finding that matches the item's Done-when with small wording changes (missing or extra small words, case, punctuation) still blocks; a Not-done finding about builder details stays a follow-up",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-10T02:45:06.557778+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "A Not-done finding about the item's own Done-when becomes a non-blocking follow-up when the reviewer rewords the Done-when slightly (#1493)"
+}
