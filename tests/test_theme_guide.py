@@ -46,21 +46,27 @@ def _same(a, b):
 
 
 def _contract(tokens):
-    """(selector, name) -> value the Claude system holds for it; the colours per theme."""
+    """(block, name) -> the value the Claude system holds. Every name comes from the system's
+    own tokens; a colour is looked up per theme, any other family in any block outside .dark."""
     wanted = {}
     for token in tokens["color"]["tokens"]:
         wanted[(":root", token["name"])] = token["value"]["light"]
         wanted[(".dark", token["name"])] = token["value"]["dark"]
-    wanted[("@theme inline", "font-sans")] = tokens["type"]["families"]["sans"]
-    wanted[("@theme", "font-heading")] = tokens["type"]["families"]["heading"]
+    for key, stack in tokens["type"]["families"].items():
+        wanted[("theme", f"font-{key}")] = stack
     for group in tokens["type"]["groups"]:
         for style in group["styles"]:
-            wanted[("@theme", style["name"])] = style["fontSize"]
-    wanted[(":root", "radius")] = tokens["radius"]["tokens"][0]["value"]
-    wanted[("@theme", "spacing")] = tokens["spacing"]["tokens"][0]["value"]
-    for token in tokens["shadow"]["tokens"]:
-        wanted[("@theme", token["name"])] = token["value"]
+            wanted[("theme", style["name"])] = style["fontSize"]
+    for family in ("radius", "spacing", "shadow"):
+        for token in tokens[family]["tokens"]:
+            wanted[("theme", token["name"])] = token["value"]
     return wanted
+
+
+def _declared(blocks, selector, name):
+    """Values declared for a name: in one block, or in any block outside .dark."""
+    return [v for sel, items in blocks.items() if selector == "theme" and sel != ".dark" or sel == selector
+            for n, v in items if n == name]
 
 
 @pytest.mark.parametrize("starter", ["typescript starter", "python starter", "earlier adopted"])
@@ -81,21 +87,47 @@ def test_1_the_starter_theme_holds_every_contract_name(repo, gh, tmp_path, start
     args = ("--starter", "python") if starter == "python starter" else ("--starter",)
     client, made = _fresh_client(repo, gh, tmp_path, *args)
     assert made.returncode == 0, made.stdout + made.stderr
-    blocks = _blocks((client / "apps/web/src/index.css").read_text(encoding="utf-8"))
+    css = (client / "apps/web/src/index.css").read_text(encoding="utf-8")
+    blocks = _blocks(css)
     for (selector, name), value in wanted.items():
-        found = [v for n, v in blocks.get(selector, []) if n == name]
+        found = _declared(blocks, selector, name)
         assert len(found) == 1, (selector, name, found)
         assert NAME.fullmatch(name), name
         assert _same(found[0], value), (selector, name, found[0], value)
         assert "var(" not in found[0] and "color-mix(" not in found[0], (name, found[0])
-        if selector in (":root", ".dark") and name != "radius":
+        if selector in (":root", ".dark"):
             assert found[0].startswith(COLOUR), (selector, name, found[0])
+    # A heading font only applies to headings when one base rule gives h1 to h6 that font.
+    heading = re.sub(r"/\*.*?\*/", "", css, flags=re.S)
+    assert re.search(r"h1,\s*h2,\s*h3,\s*h4,\s*h5,\s*h6\s*\{[^}]*font-heading", heading), "heading rule"
 
 
-GUIDE_PHRASES = (
-    "design system", "docs/design/tokens.json", "before the first screen",
-    "not marked as synced from code", "brand guide", "usage note",
-    "Claude design system: not made yet", "docs/design/design-system.md", "@font-face",
+# Whole instructions, each in the guide's "Canvas and app design" section: removing one of them,
+# or moving it out of the section, fails the test.
+GUIDE_SENTENCES = (
+    "make one design system in Claude (the Design System type) from the app's shared parts in "
+    "`libs/shared/ui` and from the theme names in the app's theme file",
+    "Before you make the system, add them to its theme file with the starter's values",
+    "it is not marked as synced from code",
+    "The README is the brand guide that every agent reads before it designs a screen",
+    "Give every token a usage note that names where it is used",
+    "Keep the link to the client's system once in `docs/design/design-system.md`, as one line "
+    "`Design system: <link>`",
+    "open that link and read the system's `README.md` and `project/tokens.json`",
+    "Design the client's screens with that system",
+    "save it unchanged as `docs/design/tokens.json`",
+    "Write each value into the app's theme file by name",
+    "Do this as the first change after approval and before the first screen",
+    "add a missing theme line and the heading rule (`h1` to `h6` take `@apply font-heading`) to the "
+    "theme file, with the value the system holds",
+    "copy the file to `apps/web/public/fonts/` and add an `@font-face` rule with "
+    "`font-display: swap` in the theme file",
+    "add the host's stylesheet link to `apps/web/index.html`",
+    "An existing app keeps its own web root",
+    "write `Claude design system: not made yet` in the brief's `## Design` section",
+    "add the theme lines and the heading rule the app lacks, copied from the starter as above",
+    "remove the `Claude design system: not made yet` line",
+    "`/* forge-ui-ignore theme-drift --<token> (light|dark): <reason> */`",
 )
 APPROVED = "`docs/design/tokens.json`, when it exists, is the approved theme."
 
@@ -115,8 +147,10 @@ def test_2_the_guide_tells_the_agent_to_build_the_design_system_and_copy_the_the
     assert made.returncode == 0, made.stdout + made.stderr
     for host in (".codex", ".claude"):
         guide = _text(client / host / "skills/forge/SKILL.md")
-        for phrase in GUIDE_PHRASES:
-            assert phrase in guide, (host, phrase)
+        section = guide.split("**Canvas and app design.**")[1].split("**Sign-off.**")[0]
+        for sentence in GUIDE_SENTENCES:
+            assert sentence in section, (host, sentence)
+        assert "designed with the client's design system in Claude" in guide  # journey step 3
         baseline = _text(client / host / "skills/app-baseline/SKILL.md")
         assert "## Pick the starting theme" in baseline
         assert "docs/design/tokens.json" in baseline

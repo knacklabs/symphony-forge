@@ -813,8 +813,12 @@ before it is shown; the plan's read refuses a failing design folder or one with 
 
 **The client's design system.** For each client, make one design system in Claude (the Design
 System type) from the app's shared parts in `libs/shared/ui` and from the theme names in the app's
-theme file. Start its values from the app's own theme file: the stock values in a new app, the
-current theme in an existing one. For a new client, propose better first values from the five facts
+theme file. An earlier-adopted app may lack the added theme lines (heading font, text sizes,
+spacing, shadows) and the heading rule. Before you make the system, add them to its theme file with
+the starter's values, copied from the Forge starter's theme file: `templates/starter/apps/web/src/index.css`
+in the installed Forge package, next to its `conventions/` folder. Then the system has every name.
+Start its values from the app's own theme file: the stock values in a new app, the current theme in
+an existing one. For a new client, propose better first values from the five facts
 and write the proposal into the system. Sales then change the colours for light and dark, fonts,
 sizes, spacing, corner size and shadows on the page.
 
@@ -843,8 +847,8 @@ When the design is approved, read the system's `project/tokens.json` and save it
 `docs/design/tokens.json`. Write each value into the app's theme file by name, then run
 impeccable's `document` step so DESIGN.md describes the same theme. Do this as the first change
 after approval and before the first screen. After any later theme change in Claude, repeat it in
-one change. In an existing app, add a missing theme line to the theme file with the starter's
-default. `docs/design/tokens.json`, when it exists, is the approved theme. Close compares the app
+one change. In an existing app, add a missing theme line and the heading rule (`h1` to `h6` take
+`@apply font-heading`) to the theme file, with the value the system holds. `docs/design/tokens.json`, when it exists, is the approved theme. Close compares the app
 with it and stops on a difference whenever a screen or the theme changes. A waiver is one comment
 in the theme file that names the token and the theme:
 `/* forge-ui-ignore theme-drift --<token> (light|dark): <reason> */`. The review reports a screen
@@ -854,7 +858,8 @@ Fonts. The starter loads no font: a font name alone does not load, so a copied f
 source. If the system holds the font as a file in its `fonts/` folder, copy the file to
 `apps/web/public/fonts/` and add an `@font-face` rule with `font-display: swap` in the theme file;
 the licence must allow it. If the font is a hosted family, add the host's stylesheet link to
-`apps/web/index.html`. A generic family from the browser (`serif`, `sans-serif`, `system-ui`,
+`apps/web/index.html`. An existing app keeps its own web root (the folder with its `index.html`): use
+it in place of `apps/web`. A generic family from the browser (`serif`, `sans-serif`, `system-ui`,
 `monospace`) needs no file or link and is copied as it is. If the app can load the font in neither
 way, do not copy the font name: keep the app's font, tell the person in one line which font did not
 load, and set the difference aside with a waiver. Keep the fallback fonts of the token's list in
@@ -863,11 +868,11 @@ the copy.
 When the session has no Claude design tools (you cannot list or publish artifacts), say so in one
 line and keep going on HTML artboards with `support.js`. Set the theme in the app's theme file from
 the five facts, run impeccable's `document` step, and write `Claude design system: not made yet` in
-the brief's `## Design` section. When the tools return, make the system from the app's theme file as
-it stands; from then on Claude is the source. In the same change, save the new system's
-`project/tokens.json` unchanged as `docs/design/tokens.json`, write its link into
-`docs/design/design-system.md`, remove the `Claude design system: not made yet` line, and add to the
-theme file each theme line it lacks, with the value the system holds.
+the brief's `## Design` section. When the tools return, add the theme lines and the heading rule the app lacks,
+copied from the starter as above, then make the system from the app's theme file as it stands; from
+then on Claude is the source. In the same change, save the new system's `project/tokens.json`
+unchanged as `docs/design/tokens.json`, write its link into `docs/design/design-system.md`, and
+remove the `Claude design system: not made yet` line.
 
 Make each app's design from the whole `docs/product/BRIEF.md`: its
 purpose, users, records, fields, choice-list options and key flows. Use impeccable and
