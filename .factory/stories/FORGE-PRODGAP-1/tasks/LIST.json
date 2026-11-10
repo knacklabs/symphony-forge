@@ -85,7 +85,7 @@
       "gain": 5,
       "harm": 4,
       "line": 756,
-      "outcome": "open",
+      "outcome": "fixed in round 4",
       "reason": "",
       "round": 3,
       "security": true,
@@ -95,27 +95,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "a9aed60cbcb9e9ae916ebafe2defffa02eeda4ebb7163966c46cf983200cd637",
-    "changed": "8bf486a8bd0b0a25d2ba32c89a08f5e1cffa9ba39b1bee77688de35d2d2d7260",
-    "commit": "3a43bdc85ad69ebf6782d22aa384dd75d93fa08f",
+    "branch_diff": "746bc925b3664bf76f22da54eeefa94c3911d703ac3f49d07b121f40aabd2b0b",
+    "changed": "72c4d54f8526d8728781a702ce16c042bd2e8b6ab9eee43eb8f8c19268d3fddc",
+    "commit": "e0500f297c8ace158ba891cd416eee72826de747",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 5, Work 2, Harm 4\nRaise: Security\nCase: normal use - an accepted sign-off merges from another checkout before an unbuilt prototype fix is run with `forge land`, while the local remote-tracking branch is stale. The worker checks prototype status before close fetches (`src/forge/worker.py:726` and `src/forge/land.py:86`). This cache keeps the old file list under the mutable `origin/main` name, and the fetch does not invalidate it (`src/forge/repo.py:294`). Consequently `merge_setting` still treats the signed-off repo as an unsigned prototype (`src/forge/repo.py:734`), and `forge land` can merge the fix without the human required by `merge = \"human\"` (`src/forge/land.py:146` and `src/forge/merge.py:191`).",
-        "file": "src/forge/repo.py",
-        "gain": 5,
-        "harm": 4,
-        "line": 756,
-        "priority": "P0",
-        "title": "Security: Refresh cached sign-off files before checking merge permission",
-        "work": 2
-      }
-    ],
-    "id": "43c99eb2-0a2c-4649-8271-ae544e564ac4",
-    "status": "blocked"
+    "findings": [],
+    "id": "c8373ac7-936c-4a66-a081-338516809727",
+    "status": "clean"
   },
   "round": 4,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-10T20:08:52.572713+00:00",
@@ -131,6 +120,10 @@
     },
     {
       "at": "2026-11-10T22:28:16.778817+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-10T22:36:53.300340+00:00",
       "step": "review"
     }
   ],
