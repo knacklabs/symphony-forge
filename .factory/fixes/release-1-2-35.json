@@ -1,4 +1,5 @@
 {
+  "allow_large": "A release bumps the version in every file that records it; the owner approved this release",
   "base": "39e4f5c6828bb277efe3f786d76412889610d846",
   "branch": "fix/release-1-2-35",
   "done_when": "The version is 1.2.35, generated files are synced, this repo is pinned to v1.2.35, and the tests pass",
