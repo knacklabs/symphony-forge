@@ -1,18 +1,18 @@
 ---
 reader: codex (gpt-6.1-terra)
-read_at: 2026-11-10T17:47:52.340343+00:00
-seconds: 378.314
-read_hash: 0e0fb8fc3c3612af10278a51f8df7e8430c881f5
-round: 2
+read_at: 2026-11-10T17:55:22.196544+00:00
+seconds: 313.44
+read_hash: 7a36f3dd7d15d3f3ac06ea391c16a3f75eb9b77b
+round: 3
 passed: no
-doc_seen: 0e0fb8fc3c3612af10278a51f8df7e8430c881f5
+doc_seen: 7a36f3dd7d15d3f3ac06ea391c16a3f75eb9b77b
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: b938f3963c1dab37d3ab8cc0732204573be66cfd
+notes_seen: be7f067bc673a1c9ac7371c5aba9057ae6d0cced
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a1c67d-c6e9-70e3-b108-c24fe724077b
 session:
-loop_choice: more
-loop_reason: The owner chose one more round on 10 Nov 2026 to fix the wrong-screen case
+loop_choice:
+loop_reason:
 ---
 # Cold read notes
 
@@ -175,3 +175,12 @@ Only a genuine trade-off goes to the human, as a question with options.
     The amended [test](/plans/FORGE-RENDER-1.md:102) asserts only that `TS7016` is absent. A declaration with the wrong argument types can instead produce `TS2345`; Playwright can run the JavaScript while that TypeScript error remains, so the stated assertion can pass with a broken client type check.  
     Gain 3, Work 2, Harm 2
     Disposition: cut - `test_1` now asserts that `tsc --strict` exits 0, so any type error fails the test.
+
+## Round 3
+
+21. Blocking: Not done: the new screen check can run before a client-side redirect.
+    Raise: Not done  
+    Case: normal use - A protected screen checks the session after page load and then redirects a signed-out user to sign-in.  
+    The [plan](/plans/FORGE-RENDER-1.md:92) checks the URL before waiting for data requests. The redirect can happen during that wait, leaving the helper to measure sign-in and report the listed screen as clean. The [starter test](/src/forge/templates/starter/apps/web/e2e/rules/sign-in.spec.ts:50) waits for the redirect; the [planned test](/plans/FORGE-RENDER-1.md:105) covers an immediate server redirect. The same path check ignores fragments, so it also cannot distinguish routes in a [hash-routed app](/tests/test_sample_signoff.py:67). Finding 15 remains open.  
+    Gain 5, Work 2, Harm 3
+    Disposition: cut - the helper now compares the path after the wait for data requests and the settle, directly before it measures, so a redirect made by the page's own script is seen. The owner chose on 10 Nov 2026 to fix this sentence with no further read.
