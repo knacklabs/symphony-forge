@@ -117,14 +117,14 @@ Only a genuine trade-off goes to the human, as a question with options.
     Case: normal use - Claude reuses cached input or delegates work during the build.  
     The [plan](/plans/FORGE-BENCH-1.md:71) does not pin how the result event becomes total tokens. Claude reports cached input separately, and its result `usage` excludes subagent activity; [Anthropic’s SDK documentation](https://code.claude.com/docs/en/agent-sdk/cost-tracking) identifies `model_usage` as the whole-session breakdown. Forge already [adds cached input](/src/forge/repo.py:561) for its own records. The planned test supplies a finished usage file, so copying only the raw fields could pass it.  
     Gain 3, Work 2, Harm 2
-   Disposition: keep - below the bar (follow-up)
+   Disposition: cut - Settled 6 sets `GH_TOKEN` from `github.token` on the lookup step and the job has `actions: read`; `test_1` asserts both.
 
 13. Advisory: The baseline also changes when design guidance changes without changing the checker.  
     Raise: Not done  
     Case: normal use - a release improves the design instructions Claude uses to build the app.  
     The [baseline](/plans/FORGE-BENCH-1.md:72) hashes the entire impeccable folder, including [guidance Claude reads before UI edits](/src/forge/templates/skills/impeccable/SKILL.md:21) and the [vendor notice](/src/forge/templates/skills/impeccable/FORGE-NOTICE.md:1). Changing those files suppresses the direction even when the checker is unchanged, hiding the effect of a shipped skill change.  
     Gain 3, Work 2, Harm 2
-   Disposition: keep - below the bar (follow-up)
+   Disposition: cut - Settled 6 sets `GH_TOKEN` from `github.token` on the lookup step and the job has `actions: read`; `test_1` asserts both.
 
 14. Advisory: Unproven: item 2: an app that cannot start may produce no score.  
     Raise: Test  
@@ -140,4 +140,4 @@ Only a genuine trade-off goes to the human, as a question with options.
     Case: normal use - a release runs after an earlier score has been saved.  
     The [plan](/plans/FORGE-BENCH-1.md:70) specifies `actions: read` and allows a missing lookup to continue. GitHub CLI also needs a token in its environment; the existing [release workflow](/.github/workflows/forge-next.yml:58) supplies `GH_TOKEN`. The planned test does not check that authentication, so a workflow could pass it while reporting no earlier score on every run. [GitHub’s workflow documentation](https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-github-cli) describes the token requirement.  
     Gain 3, Work 2, Harm 2
-   Disposition: keep - below the bar (follow-up)
+   Disposition: cut - Settled 6 sets `GH_TOKEN` from `github.token` on the lookup step and the job has `actions: read`; `test_1` asserts both.
