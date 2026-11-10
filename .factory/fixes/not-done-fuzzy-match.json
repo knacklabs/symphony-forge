@@ -94,7 +94,7 @@
     "status": "blocked"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-10T02:45:06.557778+00:00",
@@ -107,8 +107,12 @@
   ],
   "stop": {
     "at": "2026-11-10T02:59:50.693487+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "src/forge/review.py",
-    "wait_id": "4322a57e-57ab-48b4-8809-9cd319276b82"
+    "reason": "The owner wants a simpler round: on a fix, every Not-done finding blocks; drop the word matching",
+    "wait_id": "4322a57e-57ab-48b4-8809-9cd319276b82",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
