@@ -657,6 +657,10 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
         if user_facing:
             brief += ("\nApply DESIGN.md's theme tokens, type and colours to the app's theme file"
                       + values["theme_file"] + ".\n")
+            brief += ("Build no screen on the untouched starter theme unless `docs/design/tokens.json` "
+                      "exists. `docs/design/tokens.json`, when it exists, is the approved theme. Copy "
+                      "it into the theme file by name before the first screen; a theme the client "
+                      "approved as neutral counts once its copy is saved there.\n")
             if owned_design:
                 brief += (f"Build each screen you touch that is marked Build now at sign-off, or, "
                           f"until sign-off can mark screens Build now, that your Done-when items "

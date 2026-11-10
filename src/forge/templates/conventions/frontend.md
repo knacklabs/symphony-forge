@@ -7,8 +7,9 @@ changes a screen.
 
 The starter keeps the web build setup, theme and API client, but has no route table, app shell or
 screens. Before adding screens, use the app's existing design. If it has none, draft one on a
-design canvas from the client's brand; use a neutral design when there is no brand. As the agent
-builds each API a person uses, it builds that screen in the client's design.
+design canvas from the client's design system in Claude (its link is in
+`docs/design/design-system.md`); the approved theme is `docs/design/tokens.json`, copied into
+`index.css`. Use a neutral design when there is no brand. As the agent builds each API a person uses, it builds that screen in the client's design.
 Webhooks, endpoints only agents or other systems call, and background jobs get no screen.
 This layout shows where the agent adds screens.
 

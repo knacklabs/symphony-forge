@@ -58,6 +58,7 @@ $design_context
 
 <!-- if user-facing -->
 If the app has a DESIGN.md, apply its theme tokens, type and colours to the app's theme file$theme_file.
+Build no screen on the untouched starter theme unless `docs/design/tokens.json` exists. `docs/design/tokens.json`, when it exists, is the approved theme. Copy it into the theme file by name before the first screen; a theme the client approved as neutral counts once its copy is saved there.
 <!-- end -->
 <!-- if screen-design -->
 Build each screen you touch that is marked Build now at sign-off, or, until sign-off can mark

@@ -168,7 +168,7 @@ Every client repo moves through seven steps. `forge next` names the current step
 
 1. **Ideas and client notes.** The person gives you the client notes or an idea. Put each note in `docs/context/` and read them all before you ask anything. You can say: "Here are the client notes" or "I have an idea: <idea>".
 2. **Brief.** You write `docs/product/BRIEF.md` from the notes, and ask only about a point that changes a screen, a field or a flow. You can say: "The brief looks right" or "Change this in the brief: <change>".
-3. **Canvas design.** You make the screens on a design canvas, which the client can click through in Play mode, and the owner or FDE approves the canvas. You can say: "Show me the screens" or "Change this screen: <change>".
+3. **Canvas design.** You make the screens on a design canvas, designed with the client's design system in Claude (see "Canvas and app design"), which the client can click through in Play mode, and the owner or FDE approves the canvas. You can say: "Show me the screens" or "Change this screen: <change>".
 4. **Sign-off.** Run the sign-off checks, then ask the client's named person to approve the canvas and answers. Build now and Later are planned choices, not available commands. Ask the owner what work to start or defer. You can say: "Record the client approval, then plan the first change".
 5. **Build.** You plan stories and fixes, build each one with its tests and a review, and merge it. You can say: "Build this next: <idea>" or "What is ready to merge?".
 6. **Deploy on Mainline.** Confirm the client's host and complete production preparation below. When the person asks for Mainline deployment, set up Mainline and deploy dev. An authorized person presses Promote for production. A client host without Mainline uses its agreed release process. You can say: "Deploy this on Mainline" or "Use the client's servers".
@@ -806,10 +806,68 @@ not listed as open, except Personal data, which needs a settled answer before re
 **Canvas and app design.** Before the first canvas, write a short brief from the industry,
 who uses the app and how often, the screen's job (work, read or persuade), two or three
 brand words and existing brand files; map them to font pairing, one accent, radius,
-density and tone, then record DESIGN.md through impeccable's document step using the
-app-baseline list and fixed guard rules, and use impeccable's Operate mode for app screens
-and prototypes. `support.js` checks each canvas and renders it at 1440 and 375 pixels
+density and tone, put them in the client's design system (below), then record DESIGN.md through
+impeccable's document step using the app-baseline list and fixed guard rules, and use impeccable's
+Operate mode for app screens and prototypes. `support.js` checks each canvas and renders it at 1440 and 375 pixels
 before it is shown; the plan's read refuses a failing design folder or one with no DESIGN.md.
+
+**The client's design system.** For each client, make one design system in Claude (the Design
+System type) from the app's shared parts in `libs/shared/ui` and from the theme names in the app's
+theme file. Start its values from the app's own theme file: the stock values in a new app, the
+current theme in an existing one. For a new client, propose better first values from the five facts
+and write the proposal into the system. Sales then change the colours for light and dark, fonts,
+sizes, spacing, corner size and shadows on the page.
+
+Keep the system editable on the page: it is not marked as synced from code. Its README says which
+repo and which parts it came from. The README is the brand guide that every agent reads before it
+designs a screen, so it carries the look rules; without them the screens keep the stock look.
+Write the brand guide from three existing sources, in the client's terms: the design rules in
+`conventions/frontend.md`, the design rules in the `app-baseline` skill (one main action per screen,
+the looks to avoid) and the five facts. Add no rule that these sources do not hold. It states which
+colour token is for the page, the text, the one main action and each status, in light and dark;
+which font and size token is for headings, body text and table text; the corner size, when a border
+is used and when a shadow, and how dense tables and forms are; one main action per screen; and the
+looks to avoid. Give every token a usage note that names where it is used. Before the system is
+shown to a person, check that text contrast is 4.5 to 1 on its ground in both themes. Keep a client
+colour that fails and say so in its usage note. When the shared parts change later, revise the
+system's component files one at a time after reading the current files.
+
+Keep the link to the client's system once in `docs/design/design-system.md`, as one line
+`Design system: <link>`, in the same change that makes the system. Before you design, copy a theme or
+revise the parts for a client, open that link and read the system's `README.md` and
+`project/tokens.json`. Never rely on which system the design tool treats as the default. Design the
+client's screens with that system. If the design tool can build a canvas only from its default
+system, say so in one line and ask the person to make that system the default.
+
+When the design is approved, read the system's `project/tokens.json` and save it unchanged as
+`docs/design/tokens.json`. Write each value into the app's theme file by name, then run
+impeccable's `document` step so DESIGN.md describes the same theme. Do this as the first change
+after approval and before the first screen. After any later theme change in Claude, repeat it in
+one change. In an existing app, add a missing theme line to the theme file with the starter's
+default. `docs/design/tokens.json`, when it exists, is the approved theme. Close compares the app
+with it and stops on a difference whenever a screen or the theme changes. A waiver is one comment
+in the theme file that names the token and the theme:
+`/* forge-ui-ignore theme-drift --<token> (light|dark): <reason> */`. The review reports a screen
+built on the untouched starter theme when `docs/design/tokens.json` does not exist.
+
+Fonts. The starter loads no font: a font name alone does not load, so a copied font name needs a
+source. If the system holds the font as a file in its `fonts/` folder, copy the file to
+`apps/web/public/fonts/` and add an `@font-face` rule with `font-display: swap` in the theme file;
+the licence must allow it. If the font is a hosted family, add the host's stylesheet link to
+`apps/web/index.html`. A generic family from the browser (`serif`, `sans-serif`, `system-ui`,
+`monospace`) needs no file or link and is copied as it is. If the app can load the font in neither
+way, do not copy the font name: keep the app's font, tell the person in one line which font did not
+load, and set the difference aside with a waiver. Keep the fallback fonts of the token's list in
+the copy.
+
+When the session has no Claude design tools (you cannot list or publish artifacts), say so in one
+line and keep going on HTML artboards with `support.js`. Set the theme in the app's theme file from
+the five facts, run impeccable's `document` step, and write `Claude design system: not made yet` in
+the brief's `## Design` section. When the tools return, make the system from the app's theme file as
+it stands; from then on Claude is the source. In the same change, save the new system's
+`project/tokens.json` unchanged as `docs/design/tokens.json`, write its link into
+`docs/design/design-system.md`, remove the `Claude design system: not made yet` line, and add to the
+theme file each theme line it lacks, with the value the system holds.
 
 Make each app's design from the whole `docs/product/BRIEF.md`: its
 purpose, users, records, fields, choice-list options and key flows. Use impeccable and

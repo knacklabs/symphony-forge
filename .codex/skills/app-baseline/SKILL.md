@@ -36,7 +36,7 @@ impeccable and emil-design-eng skills. This page lists what must be there and po
    The sidebar becomes a sheet.
 10. Use plain words and realistic sample data with units. No lorem ipsum or "John Doe".
 
-## Pick the app's look
+## Pick the starting theme
 
 Before the first canvas, write a short brief from five facts in the client's notes:
 
@@ -47,8 +47,12 @@ Before the first canvas, write a short brief from five facts in the client's not
 5. Existing brand files.
 
 Map these facts to tokens: font pairing, one accent, radius, density and tone. Explain
-each choice from the facts, rather than a stock industry theme. Use impeccable's
-`document` step to record the choices in DESIGN.md before the first canvas.
+each choice from the facts, rather than a stock industry theme. Write the choices into the
+client's design system tokens in Claude (the forge skill's "Canvas and app design" says how).
+The system's brand guide is then the look that every screen design starts from, and
+`docs/design/tokens.json` is the approved copy. With no Claude design tools, write the choices in
+the app's theme file and use impeccable's `document` step to record them in DESIGN.md before the
+first canvas.
 Ask: "Would a different client of this type get the same pick?" If yes, change one choice.
 Avoid three common machine looks: cream with a serif font and terracotta; near-black
 with a neon accent; thin editorial lines everywhere.
