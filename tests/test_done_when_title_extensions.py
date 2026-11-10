@@ -11,9 +11,10 @@ STORY = "not-done-with-added-words"
 @pytest.mark.parametrize("owner_item", [True, False], ids=["approved", "builder-detail"])
 def test_1_extended_done_when_title_blocks_but_builder_details_stay_follow_ups(env, adopted, owner_item):
     setup_client(env, adopted)
-    owner = "The readme opens with a greeting."
+    owner = "A shopper can save a basket."
     detail = "The greeting uses a separate formatter"
-    item, where = env.start_fix(done_when=owner)
+    # Story tasks keep the approved-prefix rule; every Not-done now holds a fix.
+    item, where = env.start_task()
     env.commit(where, "docs/implementation.md", f"# Builder details\n\n{detail}.\n")
     title = f"Not done: {owner if owner_item else detail} does not finish"
     note = finding("P2", title)

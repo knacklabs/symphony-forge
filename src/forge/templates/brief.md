@@ -31,10 +31,11 @@ If unreadable Autoreview output stops close, the refusal shows the saved output 
 When the review service returns a rate or usage limit, close waits 30, then 60, then at most 120 seconds between retries without counting these answers as failed reviews.
 From the second review round, close checks the previous round's findings and new P0s that
 happen in normal use. A round-one fix that breaks the main path counts as a P0.
-`task_review_rounds` sets the task review limit. At that limit (the repo's setting, two by default), open findings below P0 need the owner's choice before they become follow-ups. `Not done` blocks
-only against an owner-approved Done-when item (the fix's whole Done-when line or any sentence in it),
-including a title that starts with that item and adds words after it; builder details
-are guidance and never block as `Not done`.
+`task_review_rounds` sets the task review limit. At that limit (the repo's setting, two by default), open findings below P0 need the owner's choice before they become follow-ups.
+Every `Not done:` finding blocks a fix, including one about builder details.
+For a story task, `Not done` blocks only against a covered owner-approved Done-when item,
+including a title that starts with that item and adds words after it. Builder details
+are guidance and never block a story task as `Not done`.
 Close blocks a `Not done` on the item's own Done-when even below the score bar or in a light
 review. Each non-blocking finding close lists shows its own reason with its Gain, Work and Harm scores.
 The default branch's added_work_min_gain can keep added-work findings below its minimum as Known

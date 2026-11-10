@@ -250,14 +250,15 @@ A `Not done` finding is P1 only when this branch can meet it. Two cases are P2 a
 - when the story's Tasks table assigns a test or check to another task, report it as a
   P2 `Later:` finding naming that task, not `Not done`.
 
-A `Not done` finding blocks only when it names a Done-when item the change misses as
-written. A case the Done-when does not name, such as another language, platform, shell,
+Every `Not done:` finding blocks a fix, including one about builder details.
+For a story task, a `Not done` finding blocks only when it names a covered Done-when item
+the change misses as written. A case the Done-when does not name, such as another language, platform, shell,
 tool or folder layout, is a P2 `Follow-up: <the case>` finding that Forge records and the merge
 doesn't wait for, even when realistic (score it Gain 1 or 2); a functional, security or data-loss defect
 on the changed code still blocks under its own Raise line.
-Only the numbered owner-approved Done-when sentences above (or the fix's Done-when line)
+For a story task, only the covered numbered owner-approved Done-when sentences above
 can block as `Not done`. Builder details, Notes and implementation guidance cannot. Forge keeps
-a `Not done` finding that names none of those items as a follow-up, with its original scores.
+a task's `Not done` finding that names none of those items as a follow-up, with its original scores.
 A `Not done` that names one of this item's own Done-when lines blocks regardless of its scores,
 rare-case label or light review. Only the owner's recorded choice can accept that unmet work.
 
