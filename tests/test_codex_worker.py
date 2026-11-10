@@ -347,8 +347,9 @@ def test_3_models_per_kind(repo, monkeypatch, sdk_data, claude_session):
 
     # Claude workers take the kind's model and effort; Codex-only subagent settings are ignored.
     claude = install_claude(repo)
-    toml.write_text(_toml(version, "claude", {"build": {**SOL, "model": "opus", "effort": "high"}}),
-                   encoding="utf-8")
+    # PAGE is user-facing, and with workers = claude a source repo builds it on the design model.
+    toml.write_text(_toml(version, "claude", {"build": {**SOL, "model": "opus", "effort": "high"}})
+                    + '\n[models.design.claude]\nmodel = "opus"\neffort = "high"\n', encoding="utf-8")
     monkeypatch.setenv("CODEX_THREAD_ID", "thr-test-coordinator")
     monkeypatch.delenv("CLAUDECODE")
     built = repo.forge("work", "BOARD/PAGE")
