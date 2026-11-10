@@ -1,6 +1,13 @@
 {
   "base": "22a569900e405b345833465cf95080e422878507",
   "branch": "fix/close-waits-running-checks",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1c357-97fe-7100-84ac-1d0f6f4c494f",
+    "head": null,
+    "start": "4a29e3c9dbd44fb4078aa3788d9cac97771954af"
+  },
   "done_when": "Close and merge keep waiting while GitHub shows a required check running, up to the same 90-minute limit land uses; when they stop at a limit they say which limit and that the checks are still running",
   "fix_kind": "mechanical",
   "kind": "fix",
