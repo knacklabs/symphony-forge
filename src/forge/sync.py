@@ -564,7 +564,7 @@ def differing(top: Path, wanted: dict[str, str]) -> list[str]:
         path = top / rel
         raw = rel == "AGENTS.md" or rel.endswith("/skills/impeccable/scripts/impeccable.cmd")
         current = path.read_bytes().decode("utf-8") if raw and path.is_file() else read(path)
-        if rel == "AGENTS.md":
+        if rel == "AGENTS.md" or not raw:
             current, text = current.replace("\r\n", "\n"), text.replace("\r\n", "\n")
         if current != text or not text and path.exists(): changed.append(rel)
     return changed
@@ -596,6 +596,28 @@ def write(top: Path, cfg: dict[str, Any], keep: frozenset[str] = frozenset()) ->
         else:
             (top / rel).unlink()
     return changed + [rel for rel in links if rel not in changed]
+
+
+def check_guides(top: Path, changed_files: list[str]) -> None:
+    """Check branch guide edits without blocking unrelated work on inherited drift."""
+    if not any(path.startswith(("src/forge/templates/", "src/forge/standards.md",
+                                ".claude/skills/", ".codex/skills/")) for path in changed_files):
+        return
+    package = top / "src" if repo.config(top)["repo"] == "forge-source" else Path(__file__).resolve().parent.parent
+    script = f"""import sys, json
+sys.path.insert(0, {json.dumps(package.as_posix())})
+from forge import repo, sync
+top = repo.root()
+tracked = set(repo.git('ls-files', '-z', '--', '.claude/skills', '.codex/skills', cwd=top).split('\\0'))
+wanted = {{rel: text for rel, text in sync.files(top, repo.config(top)).items() if rel in tracked}}
+print(json.dumps(sync.differing(top, wanted)))
+"""
+    result = repo.run(sys.executable, "-B", "-c", script, cwd=top)
+    result.check_returncode()
+    if changed := json.loads(result.stdout):
+        repo.refuse(("Generated guides need updating: {paths}.",
+                     "in {folder}, run forge sync, then commit the generated guides and run close again."),
+                    paths=", ".join(changed), folder=top.as_posix())
 
 
 def refresh_merged_guides(top: Path, before: str) -> None:

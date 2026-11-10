@@ -1839,6 +1839,10 @@ Close and `forge next` warn when this item and another open branch add the same 
 number under a `migrations` folder. The warning names both items and the number. It does not
 stop work or need a setting. Forge refreshes origin once and reads its branch snapshot without
 a checkout. Completed items do not cause warnings, even when their branches remain on origin.
+Close checks the tracked guide copies before review or CI waits when this branch changes
+guides or their templates. If they differ from sync's output, run `forge sync` in the folder
+close names, then commit the generated guides and run close again. New and
+earlier-adopted repos get this check after upgrading Forge; other generated files stay as they are.
 Close brings in the current default branch before it tests or reviews. If only files `forge sync` writes
 conflict, close takes the default branch's copies, runs sync and commits the merge. A conflict in
 any other file stops close for the worker to resolve. While waiting for checks, close stops at once

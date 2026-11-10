@@ -1,0 +1,48 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/close_remote.py\tFunctional: Hand off to the new pin before rendering guides\tsync-before-close",
+      "kind": "bug",
+      "path": "src/forge/close_remote.py",
+      "line": 41,
+      "text": "Functional: Hand off to the new pin before rendering guides",
+      "from": "blocking",
+      "item": "sync-before-close",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/sync.py\tFunctional: Name the worktree in the sync next step\tsync-before-close",
+      "kind": "bug",
+      "path": "src/forge/sync.py",
+      "line": 616,
+      "text": "Functional: Name the worktree in the sync next step",
+      "from": "blocking",
+      "item": "sync-before-close",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_close_stops_stale_guides.py\tGate: tests/test_close_stops_stale_guides.py::test_1_close_stops_stale_branch_guides\tsync-before-close",
+      "kind": "bug",
+      "path": "tests/test_close_stops_stale_guides.py",
+      "line": 21,
+      "text": "Gate: tests/test_close_stops_stale_guides.py::test_1_close_stops_stale_branch_guides",
+      "from": "blocking",
+      "item": "sync-before-close",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/sync.py\tNot done: Before a fix or task round is handed back as done, Forge regenerates the synced guide copies",
+      "kind": "edge",
+      "path": "src/forge/sync.py",
+      "line": 609,
+      "text": "Not done: Before a fix or task round is handed back as done, Forge regenerates the synced guide copies",
+      "from": "review",
+      "item": "sync-before-close",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
