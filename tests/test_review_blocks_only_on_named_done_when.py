@@ -1,4 +1,4 @@
-"""A Not done finding blocks only on a Done-when line the change misses as written.
+"""Every fix Not-done blocks; tasks match a covered Done-when line as written.
 
 New and earlier-release clients get the rule in the guide sync writes and in close's review prompt.
 """
@@ -10,8 +10,9 @@ import pytest
 from test_close import env  # noqa: F401
 
 STORY = "review-blocks-on-done-when"
-RULE = ("A `Not done` finding blocks only when it names a Done-when item the change misses as "
-        "written. A case the Done-when does not name, such as another language, platform, shell, "
+FIX_RULE = "Every `Not done:` finding blocks a fix, including one about builder details."
+RULE = ("For a story task, a `Not done` finding blocks only when it names a covered Done-when item "
+        "the change misses as written. A case the Done-when does not name, such as another language, platform, shell, "
         "tool or folder layout, is a P2 `Follow-up: <the case>` finding")
 STILL_BLOCKS = "a functional, security or data-loss defect on the changed code still blocks"
 
@@ -33,10 +34,10 @@ def test_1_unnamed_cases_are_follow_ups_and_defects_still_block(env, adopted):
     assert synced.returncode == 0, synced.stdout + synced.stderr
     for host in (".codex", ".claude"):
         guide = " ".join((where / host / "skills/forge/SKILL.md").read_text("utf-8").split())
-        assert RULE in guide and STILL_BLOCKS in guide, host
+        assert FIX_RULE in guide and RULE in guide and STILL_BLOCKS in guide, host
     repo.git("add", "-A", cwd=where)
     repo.git("commit", "-q", "-m", "Sync the guide", cwd=where)
     closed = env.close(item)
     assert closed.returncode == 0, closed.stdout + closed.stderr
     review = " ".join(env.prompt().split())
-    assert RULE in review and STILL_BLOCKS in review
+    assert FIX_RULE in review and RULE in review and STILL_BLOCKS in review

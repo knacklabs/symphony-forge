@@ -1,0 +1,102 @@
+{
+  "base": "22a569900e405b345833465cf95080e422878507",
+  "branch": "fix/not-done-fuzzy-match",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1c358-dc4f-70b3-b0f4-e2ae8387c78f",
+    "head": null,
+    "start": "cd3a8c4b264dc12781f87e6b74fa0fb00cfc6337"
+  },
+  "done_when": "A Not-done finding that matches the item's Done-when with small wording changes (missing or extra small words, case, punctuation) still blocks; a Not-done finding about builder details stays a follow-up",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "bound_review.words() in src/forge/review.py",
+      "file": "src/forge/review.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 1076,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Reworded Done-when findings still become follow-ups",
+      "work": 2
+    },
+    {
+      "area": "bound_review.words() in src/forge/review.py",
+      "file": "src/forge/review.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 1075,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Distinct outcomes become the same normalized words",
+      "work": 2
+    },
+    {
+      "area": "test_1_small_word_changes_block_but_builder_details_stay_follow_ups() in tests/test_done_when_small_word_changes.py",
+      "file": "tests/test_done_when_small_word_changes.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 19,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_small_word_changes_block_but_builder_details_stay_follow_ups",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "28ec23e917274a7f84d8b17292776e27d405f68e6b7b3b0a729101486b9223b0",
+    "changed": "46491d2bdc07ee3901786cbfccfe26b1604fae73587263d2b277ca41d01cb726",
+    "commit": "5e994eac165510ce6d9442c25ffdfbde80ac4e9d",
+    "dismissals": [],
+    "findings": [],
+    "id": "4ced7c35-a03f-4c58-8e87-b617f11aa382",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-10T02:45:06.557778+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-10T02:59:50.682371+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-10T03:36:10.600844+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-10T05:18:55.958252+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-10T02:59:50.693487+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "src/forge/review.py",
+    "reason": "The owner wants a simpler round: on a fix, every Not-done finding blocks; drop the word matching",
+    "wait_id": "4322a57e-57ab-48b4-8809-9cd319276b82",
+    "worker_round": 1
+  },
+  "stuck": {
+    "close": "b71006a8-f9e1-41dc-96fb-60e46ea4ab3e",
+    "head": "0c5b7a6c81ee62cb0d01bc230df39d384cad8ecd",
+    "keys": {},
+    "round": 2
+  },
+  "why": "A Not-done finding about the item's own Done-when becomes a non-blocking follow-up when the reviewer rewords the Done-when slightly (#1493)",
+  "worker": "codex"
+}

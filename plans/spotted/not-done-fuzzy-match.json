@@ -1,0 +1,37 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/review.py\tFunctional: Distinct outcomes become the same normalized words\tnot-done-fuzzy-match",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 1075,
+      "text": "Functional: Distinct outcomes become the same normalized words",
+      "from": "blocking",
+      "item": "not-done-fuzzy-match",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tFunctional: Reworded Done-when findings still become follow-ups\tnot-done-fuzzy-match",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 1076,
+      "text": "Functional: Reworded Done-when findings still become follow-ups",
+      "from": "blocking",
+      "item": "not-done-fuzzy-match",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_done_when_small_word_changes.py\tGate: test_1_small_word_changes_block_but_builder_details_stay_follow_ups\tnot-done-fuzzy-match",
+      "kind": "bug",
+      "path": "tests/test_done_when_small_word_changes.py",
+      "line": 19,
+      "text": "Gate: test_1_small_word_changes_block_but_builder_details_stay_follow_ups",
+      "from": "blocking",
+      "item": "not-done-fuzzy-match",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

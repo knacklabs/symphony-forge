@@ -38,7 +38,8 @@ def test_1_any_done_when_sentence_blocks_close(env, adopted, missing, ending):
 @pytest.mark.parametrize("adopted", [False, True], ids=["new", "earlier-adopted"])
 def test_2_each_non_blocking_finding_has_its_reason_and_scores(env, adopted):
     setup_client(env, adopted)
-    item, _ = env.start_fix(changes={"README.md": "Hello readers\n"})
+    # A task can still have an unrelated Not-done follow-up; a fix cannot.
+    item, _ = env.start_task(changes={"README.md": "Hello readers\n"})
     detail = finding("P1", "Not done: The greeting uses a separate formatter")
     below = finding("P2", "Shorten the greeting")
     light = finding("P1", "Correct a spelling error")

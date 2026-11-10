@@ -12,9 +12,10 @@ from test_shortplan_briefs import NEW, SAVE_DETAILS
 STORY = "reviews-converge"
 CONVERGENCE = ("From the second review round, close checks the previous round's findings "
                "and new P0s that happen in normal use.")
-OWNER_ACCEPTANCE = ("`Not done` blocks only against a numbered owner-approved Done-when item "
-                    "(a fix uses its Done-when line). Builder details, Notes and implementation "
-                    "guidance never block as `Not done`.")
+OWNER_ACCEPTANCE = ("Every `Not done:` finding blocks a fix, including one about builder details. "
+                    "For a story task, `Not done` blocks only against a covered numbered "
+                    "owner-approved Done-when item. Builder details, Notes and implementation "
+                    "guidance never block a story task as `Not done`.")
 
 
 def guides(where):
@@ -46,7 +47,7 @@ def synced(env, where):
 @pytest.mark.parametrize("adopted", [False, True], ids=["new-client", "adopted-v1.2.2"])
 @pytest.mark.parametrize("kind", ["fix", "task"])
 @pytest.mark.parametrize("owner_item", [False, True], ids=["builder-detail", "owner-done-when"])
-def test_2_review_convergence_not_done_blocks_only_an_owner_approved_item(env, adopted, kind, owner_item):
+def test_2_review_convergence_not_done_holds_fixes_and_approved_task_items(env, adopted, kind, owner_item):
     client(env, adopted)
     if kind == "fix":
         owner = "The readme opens with a greeting"
@@ -62,8 +63,8 @@ def test_2_review_convergence_not_done_blocks_only_an_owner_approved_item(env, a
     env.reviews(blocked(note))
     closed = env.close(item)
     assert len(env.review_calls()) == 1, closed.stdout + closed.stderr
-    # A missed owner item blocks both kinds; a fix also reaches its review limit.
-    if owner_item:
+    # Every Not-done holds a fix; story tasks keep the approved-item boundary.
+    if owner_item or kind == "fix":
         assert closed.returncode == 1 and note["title"].rstrip(".") in closed.stderr, closed.stdout + closed.stderr
         if kind == "fix":
             assert "reached the round limit with open findings" in closed.stderr
