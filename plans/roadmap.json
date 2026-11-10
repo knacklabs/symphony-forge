@@ -582,6 +582,12 @@
       "title": "Tests run once, and only for the parts a change touches",
       "status": "pending",
       "order": 116
+    },
+    {
+      "key": "FORGE-THEME-1",
+      "title": "One shared design system and theme, set in Claude and checked at close",
+      "status": "pending",
+      "order": 118
     }
   ],
   "epics": [

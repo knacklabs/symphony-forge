@@ -1,0 +1,12 @@
+{
+  "doc": "plans/FORGE-THEME-1.md",
+  "status": "planning",
+  "steps": [
+    {
+      "at": "2026-11-10T17:18:59.464232+00:00",
+      "step": "start"
+    }
+  ],
+  "title": "One shared design system and theme, set in Claude and checked at close",
+  "touches": 0
+}
