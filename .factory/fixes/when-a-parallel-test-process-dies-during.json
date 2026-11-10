@@ -1,0 +1,15 @@
+{
+  "base": "4f7d80ce17430fcf801a14a049a198099489f739",
+  "branch": "fix/when-a-parallel-test-process-dies-during",
+  "done_when": "When a parallel test process dies, the run still reports the real result, including the failed test names.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-10T17:29:52.492775+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "When a parallel test process dies during a run, the plugin crashes with an internal error and the run shows no failed test names, so the real result is hidden."
+}
