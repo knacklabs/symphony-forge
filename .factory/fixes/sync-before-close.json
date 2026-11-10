@@ -4,12 +4,20 @@
   "done_when": "Before a fix or task round is handed back as done, Forge regenerates the synced guide copies when the template changed in the branch, or close stops locally with forge sync as the next step before any review or CI wait",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-10T02:45:15.795507+00:00",
       "step": "start"
     }
   ],
-  "why": "Workers change the guide template without regenerating its synced copies, so CI fails the synced-guide test after the round ends (#912)"
+  "stuck": {
+    "close": null,
+    "head": "825945f5dde0845ec38be7d64b55b592a9956327",
+    "keys": {},
+    "round": null
+  },
+  "why": "Workers change the guide template without regenerating its synced copies, so CI fails the synced-guide test after the round ends (#912)",
+  "worker": "codex"
 }
