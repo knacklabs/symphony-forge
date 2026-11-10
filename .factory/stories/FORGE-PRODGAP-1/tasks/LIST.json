@@ -78,17 +78,41 @@
       "security": false,
       "title": "Follow-up: Exercise the board and completed story on their own fetch",
       "work": 1
+    },
+    {
+      "area": "tree_names() in src/forge/repo.py",
+      "file": "src/forge/repo.py",
+      "gain": 5,
+      "harm": 4,
+      "line": 756,
+      "outcome": "open",
+      "reason": "",
+      "round": 3,
+      "security": true,
+      "title": "Security: Refresh cached sign-off files before checking merge permission",
+      "work": 2
     }
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "36a7d6a53ca5a9c6b1851976ad810368b4039458a257dc539729848986d5702b",
-    "changed": "61a973972b4a8b2239607787d7b87cd5afe79df716f3662ecffd6c88a58f8ffc",
-    "commit": "3e0490c1e8c19355679a8376b93e58abde711697",
+    "branch_diff": "a9aed60cbcb9e9ae916ebafe2defffa02eeda4ebb7163966c46cf983200cd637",
+    "changed": "8bf486a8bd0b0a25d2ba32c89a08f5e1cffa9ba39b1bee77688de35d2d2d7260",
+    "commit": "3a43bdc85ad69ebf6782d22aa384dd75d93fa08f",
     "dismissals": [],
-    "findings": [],
-    "id": "0c36ca13-7dc6-466b-b775-c44424451fab",
-    "status": "clean"
+    "findings": [
+      {
+        "body": "Gain 5, Work 2, Harm 4\nRaise: Security\nCase: normal use - an accepted sign-off merges from another checkout before an unbuilt prototype fix is run with `forge land`, while the local remote-tracking branch is stale. The worker checks prototype status before close fetches (`src/forge/worker.py:726` and `src/forge/land.py:86`). This cache keeps the old file list under the mutable `origin/main` name, and the fetch does not invalidate it (`src/forge/repo.py:294`). Consequently `merge_setting` still treats the signed-off repo as an unsigned prototype (`src/forge/repo.py:734`), and `forge land` can merge the fix without the human required by `merge = \"human\"` (`src/forge/land.py:146` and `src/forge/merge.py:191`).",
+        "file": "src/forge/repo.py",
+        "gain": 5,
+        "harm": 4,
+        "line": 756,
+        "priority": "P0",
+        "title": "Security: Refresh cached sign-off files before checking merge permission",
+        "work": 2
+      }
+    ],
+    "id": "43c99eb2-0a2c-4649-8271-ae544e564ac4",
+    "status": "blocked"
   },
   "round": 3,
   "status": "fixing",
@@ -103,6 +127,10 @@
     },
     {
       "at": "2026-11-10T20:36:23.721690+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-10T22:28:16.778817+00:00",
       "step": "review"
     }
   ],

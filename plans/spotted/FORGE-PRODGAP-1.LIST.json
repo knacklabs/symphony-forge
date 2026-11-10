@@ -1,6 +1,17 @@
 {
   "items": [
     {
+      "key": "bug\tsrc/forge/repo.py\tSecurity: Refresh cached sign-off files before checking merge permission\tFORGE-PRODGAP-1/LIST",
+      "kind": "bug",
+      "path": "src/forge/repo.py",
+      "line": 756,
+      "text": "Security: Refresh cached sign-off files before checking merge permission",
+      "from": "blocking",
+      "item": "FORGE-PRODGAP-1/LIST",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_prodgap_list.py\tGate: tests/test_prodgap_list.py::test_2_demo_only_labels_show_and_clear\tFORGE-PRODGAP-1/LIST",
       "kind": "bug",
       "path": "tests/test_prodgap_list.py",
