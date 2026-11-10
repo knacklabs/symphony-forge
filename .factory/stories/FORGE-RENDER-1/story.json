@@ -1,0 +1,12 @@
+{
+  "doc": "plans/FORGE-RENDER-1.md",
+  "status": "planning",
+  "steps": [
+    {
+      "at": "2026-11-10T17:11:24.283031+00:00",
+      "step": "start"
+    }
+  ],
+  "title": "Close shows what a changed screen looks like",
+  "touches": 0
+}
