@@ -121,7 +121,8 @@ def signoff(top: Path, cfg: dict[str, Any] | None = None) -> dict[str, Any]:
 
     empty: dict[str, Any] = {"line": "", "open": []}
     if not repo.is_prototype(top, cfg):  # signed off: the gaps that remain before production
-        return gaps.listing(top)
+        # Only a client prototype reads git for them; other repos add no call.
+        return gaps.listing(top) if cfg and cfg.get("repo") == "client" and cfg.get("stage") == "prototype" else empty
     if not journey.has_client_input(top):
         return empty
     answers = parse_answers(top)

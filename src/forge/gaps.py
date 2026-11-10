@@ -18,15 +18,20 @@ NOT_APP = [":(exclude)*.md", *(f":(exclude){name}" for name in (
 
 
 def listing(top: Path) -> dict[str, Any]:
-    """The open gaps as the sign-off block's line and rows; empty unless a prototype is signed off."""
+    """The open gaps as the sign-off block's line and rows. The caller has found the prototype signed off."""
     empty: dict[str, Any] = {"line": "", "open": []}
     ref = story.landed_ref(top)
+    return repo.command_fact(("before production", ref), top, lambda: _listing(top, ref))
+
+
+def _listing(top: Path, ref: str) -> dict[str, Any]:
+    empty: dict[str, Any] = {"line": "", "open": []}
     text = repo.read_blob(top, f"{ref}:forge.toml")
     try:
         cfg = {**repo.DEFAULTS, **tomllib.loads(text or "")}
     except tomllib.TOMLDecodeError:
         return empty
-    if cfg.get("repo") != "client" or cfg.get("stage") != "prototype" or repo.is_prototype(top, cfg, (ref,)):
+    if cfg.get("repo") != "client" or cfg.get("stage") != "prototype":
         return empty
     rows = []
     if cfg.get("sample_data") is True:
@@ -59,8 +64,8 @@ def _labelled(top: Path, ref: str) -> list[str]:
 
 def _light_parts(top: Path, ref: str) -> list[str]:
     """Fixes that got only the prototype's light review and that no later change names."""
-    names = repo.git("ls-tree", "-r", "--name-only", ref, "--", ".factory/fixes/", cwd=top).splitlines()
-    texts = repo.blob_texts(top, [f"{ref}:{name}" for name in names if name.endswith(".json")])
+    names = repo.tree_names(top, ref)
+    texts = repo.blob_texts(top, [f"{ref}:{name}" for name in names if re.fullmatch(r"\.factory/fixes/[^/]+\.json", name)])
     states = {Path(spec.partition(":")[2]).stem: story.json_of(text) for spec, text in texts.items()}
     states = {name: state for name, state in states.items() if state.get("status") != "dropped"}
     level = lambda state: (state.get("review") or {}).get("blocking_level", "P1")  # noqa: E731
@@ -75,8 +80,7 @@ def _light_parts(top: Path, ref: str) -> list[str]:
             if level(state) != "P0"]
     said = [(text, story.merged_at(top, ref, repo.state_path(name))) for text, name in said
             if any(_names(part, text) for part in light)]
-    paths = repo.git("ls-tree", "-r", "--name-only", ref, "--", ".factory/stories/", cwd=top).splitlines()
-    keys = {match[1]: f"{ref}:{match[0]}" for path in paths if (match := re.fullmatch(
+    keys = {match[1]: f"{ref}:{match[0]}" for path in names if (match := re.fullmatch(
         r"\.factory/stories/([A-Z][A-Z0-9-]*)/story\.json", path))}
     titles = {spec: str(story.json_of(text).get("title", ""))
               for spec, text in repo.blob_texts(top, list(keys.values())).items()}

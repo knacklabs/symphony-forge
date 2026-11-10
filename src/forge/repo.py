@@ -751,10 +751,16 @@ def is_prototype(top: Path, cfg: dict[str, Any] | None = None, refs: tuple[str, 
                    for _, text in _signoff_texts(top, cfg, refs or ("", story.landed_ref(top))) if text.startswith("---"))
 
 
+def tree_names(top: Path, ref: str) -> list[str]:
+    """Every file name at a ref, read once per command and shared by its callers."""
+    return command_fact(("default file names", ref), top,
+                        lambda: git("ls-tree", "-r", "--name-only", ref, cwd=top)).splitlines()
+
+
 def _signoff_texts(top: Path, cfg: dict[str, Any], refs: tuple[str, ...]):
     """Read the pinned sign-off, or matching decisions, from the requested trees or checkout."""
     for ref in refs:
-        names = (git("ls-tree", "-r", "--name-only", ref, "--", "docs/decisions", cwd=top).splitlines()
+        names = ([name for name in tree_names(top, ref) if name.startswith("docs/decisions/")]
                  if ref else [path.relative_to(top).as_posix() for path in top.glob("docs/decisions/*.md")])
         for name in names:
             if name == cfg["signoff"] or not cfg["signoff"] and name.endswith("client-signoff.md"):
