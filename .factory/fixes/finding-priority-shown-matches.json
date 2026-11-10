@@ -11,12 +11,76 @@
   "done_when": "Every finding that close treats as blocking past the round limit is shown with the same priority in close's table, finding list and stop message as the one close acts on",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [
+    {
+      "area": "run() in src/forge/review.py",
+      "file": "src/forge/review.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 1043,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Prior and rebuilt review rounds can still show P1",
+      "work": 2
+    },
+    {
+      "area": "priority() in src/forge/score.py",
+      "file": "src/forge/score.py",
+      "gain": 2,
+      "harm": 2,
+      "line": 142,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Follow-up: Keep board and worker priorities consistent",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "57dc4814235dc3d52213f512425426b1e891a364c53f31e180e61be8027335b4",
+    "changed": "a367f4afc067e309a06ff6b5e0f29d9ce7205883f2433d6e83f0a039b4656c8d",
+    "commit": "ff9ebb5873d9e452bd1aeb76a6c0733fb4db16a3",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 2, Harm 2\nRaise: Not done\nDone when: Every finding that close treats as blocking past the round limit is shown with the same priority in close's table, finding list and stop message as the one close acts on.\nCase: normal use - A client upgrades with a score-derived P0 finding already open and reruns close. This change normalizes only newly recorded review events, so the earlier event still contains the reviewer's P1. Also, `src/forge/backfill.py:127` reconstructs events from saved findings with their original priorities. `src/forge/time_records.py:389` renders those values directly, leaving P1 in the PR round history while the current finding list shows P0. The new test starts its reviews after upgrading, so it misses both saved and rebuilt history.",
+        "file": "src/forge/review.py",
+        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
+        "gain": 3,
+        "harm": 2,
+        "line": 1043,
+        "priority": "P1",
+        "title": "Not done: Prior and rebuilt review rounds can still show P1",
+        "work": 2
+      },
+      {
+        "body": "Gain 2, Work 2, Harm 2\nCase: normal use - A review reports P1 with scores that make close treat the finding as P0. This helper returns the effective priority without changing the finding, while `src/forge/board.py:420` and `src/forge/worker.py:645` still read its original priority. Consequently, `forge board --json` reports P1 for the open finding and P0 in its round history, and the next worker brief also says P1.\nAdds work: use the effective priority in those displays; F 2 x H 2 = 4; 2 x C = 4",
+        "file": "src/forge/score.py",
+        "gain": 2,
+        "harm": 2,
+        "line": 142,
+        "priority": "P2",
+        "title": "Follow-up: Keep board and worker priorities consistent",
+        "work": 2
+      }
+    ],
+    "id": "dc9f5238-d471-4eb3-b2fb-28419bc65754",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-10T02:45:11.175528+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-10T02:59:04.718603+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
