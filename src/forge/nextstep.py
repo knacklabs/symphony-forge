@@ -17,7 +17,7 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
-from forge import (__version__, approval, board, board_facts, close, codex, githooks, machine, migration_warnings,
+from forge import (__version__, approval, board, board_facts, close, codex, gaps, githooks, machine, migration_warnings,
                    journey, native, records, repo, review, spotted, story, score, task, time_records, upgrade)
 from forge.board_facts import machine_next
 from forge.task import _merged, _started, can_start, developer, github_login, owner, sections, start_base, unbuilt_fix, waits_for
@@ -115,12 +115,14 @@ def open_must_answer_topics(top: Path) -> list[str]:
 
 
 def signoff(top: Path, cfg: dict[str, Any] | None = None) -> dict[str, Any]:
-    """The sign-off status line and the open items, each with the phrase that fixes it.
-    Empty outside a prototype and once nothing is open."""
+    """The sign-off status line and the open items, each with the phrase that fixes it; after
+    sign-off, the Before production list. Empty outside a prototype and once nothing is open."""
     from forge import open_decisions
 
     empty: dict[str, Any] = {"line": "", "open": []}
-    if not repo.is_prototype(top, cfg) or not journey.has_client_input(top):
+    if not repo.is_prototype(top, cfg):  # signed off: the gaps that remain before production
+        return gaps.listing(top)
+    if not journey.has_client_input(top):
         return empty
     answers = parse_answers(top)
     topics = open_must_answer_topics(top)
@@ -373,7 +375,8 @@ def _report(top: Path, history: dict[str, Any] | None = None,
             lines += open_decisions.due_lines(top)
         shown = signoff(top, cfg)
         if shown["line"]:  # the checklist waits until nothing else is in progress
-            notice = [shown["line"], *(f'- {row["item"]}. Say: "{row["say"]}"' for row in shown["open"] if quiet)]
+            notice = [shown["line"], *(f'- {row["item"]}. Say: "{row["say"]}"' for row in shown["open"]
+                                       if quiet or shown["line"].startswith(gaps.HEADING))]
             lines = notice + lines if len(trees) > 1 else lines + notice
     if _needs_demo_address(top):
         lines += ["Next: connect the repo on our deploy platform, pick a subdomain, and record its "
