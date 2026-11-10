@@ -1,13 +1,13 @@
 ---
 reader: codex (gpt-6.1-terra)
-read_at: 2026-11-10T17:52:29.996297+00:00
-seconds: 694.984
-read_hash: fb14604663e7b79c01c04eb14208c7377d93602c
-round: 1
+read_at: 2026-11-10T18:03:12.515378+00:00
+seconds: 397.042
+read_hash: 0bda6e86ee06a2c4bdd9adcd56b1420e1c0e0f9a
+round: 2
 passed: no
-doc_seen: fb14604663e7b79c01c04eb14208c7377d93602c
+doc_seen: 0bda6e86ee06a2c4bdd9adcd56b1420e1c0e0f9a
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+notes_seen: baa36158f2ff57b90f059509e4a94f1140260c3b
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a1c68c-71c0-7f11-be78-6c5527a290a1
 session:
@@ -86,3 +86,47 @@ Disposition: cut - the starter loads no font today (checked: no font link, no `@
    Case: normal use - A new client’s five facts do not independently state those Forge rules, so the builder cannot follow both instructions.
    Gain 4, Work 1, Harm 2
 Disposition: cut - fixed by the coordinator: the brand-guide rules now come from three existing sources (the frontend convention, the app-baseline skill and the five facts), and the text no longer forbids the rules it requires.
+
+## Round 2
+
+10. Blocking: Plan gap: The stock-theme test now requires the result that finding 3 rejected.
+   Raise: Plan gap. [The new rule](/plans/FORGE-THEME-1.md:111) says an unrelated variable leaves the gray theme stock; [the test case](/plans/FORGE-THEME-1.md:112) says the same screen change passes.
+   Case: normal use - A screen change adds an unrelated layout variable while the theme remains gray. The rule and its test require opposite results.
+   Gain 3, Work 1, Harm 3
+Disposition: cut - the stock-theme close rule, its code, waiver, test and risk are removed (owner decision, 10 Nov 2026: make it a review rule); Done-when 4 is now a review line, widening `review.md:80`, tested on a new and an earlier-adopted repo.
+
+11. Blocking: Not done: Item 2’s return-to-Claude step fails for earlier-adopted apps.
+   Raise: Not done. [The new step](/plans/FORGE-THEME-1.md:102) saves the complete copy and says the app theme needs no edit. But an earlier starter lacks the 12 new names ([plan](/plans/FORGE-THEME-1.md:111)), and the check reports every copy token missing from the app ([plan](/plans/FORGE-THEME-1.md:107)).
+   Case: normal use - An earlier-adopted app uses the no-tools path, then creates its Claude system. Saving the copy causes close to refuse the missing theme values.
+   Gain 5, Work 3, Harm 3
+Disposition: cut - the return-to-Claude step now adds each contract line the theme file lacks (the 12 added lines and the heading rule), with the value the system holds, in the same change; `test_3` has an earlier-adopted case that is refused as missing and then passes.
+
+12. Blocking: Plan gap: The replacement proof requires a changed theme to equal the stock theme.
+   Raise: Plan gap. [The new manual proof](/plans/FORGE-THEME-1.md:104) changes a colour, saves that theme, and says `test_1` shows the saved values equal the starter. [Item 1](/plans/FORGE-THEME-1.md:92) also requires the real fixture’s values to equal the starter.
+   Case: normal use - The DESIGN worker follows the replacement proof for finding 1. The saved changed colour and the unchanged starter cannot both have the same value.
+   Gain 5, Work 1, Harm 2
+Disposition: cut - the fixture is saved before any change on the page and equals the starter; the changed-colour run goes only into a scratch app and is not committed.
+
+13. Advisory: Not done: A waiver for one colour value also hides the other theme’s value.
+   Raise: Not done. The revised promise says a comment names one value ([plan](/plans/FORGE-THEME-1.md:10)), but the new rule explicitly waives both light and dark for that token ([plan](/plans/FORGE-THEME-1.md:107)).
+   Case: normal use - A team accepts a light-mode primary-colour difference; an unintended dark-mode difference for the same token is also hidden.
+   Gain 3, Work 3, Harm 3
+Disposition: cut - a drift waiver now names the token and the theme (`--primary (light)`), so the other theme and other tokens stay reported; the case is in `test_3`.
+
+14. Advisory: Functional: An imported custom theme is reported as the stock theme.
+   Raise: Functional. [The revised stock rule](/plans/FORGE-THEME-1.md:111) treats every missing declaration as unchanged and reads only `index.css`. The starter already uses CSS imports ([index.css](/src/forge/templates/starter/apps/web/src/index.css:1)).
+   Case: normal use - An earlier-adopted app keeps its custom colours in a stylesheet imported by `index.css`. Its next screen change is refused as gray even though its theme is custom.
+   Gain 3, Work 3, Harm 3
+Disposition: cut - the stock-theme close rule this note was about no longer exists.
+
+15. Advisory: Functional: The font instructions misclassify browser-provided font families.
+   Raise: Functional. [The new font step](/plans/FORGE-THEME-1.md:100) requires a copied font to come from a system file or hosted stylesheet. The starter itself uses browser-provided families such as `system-ui` and `sans-serif` ([index.css](/src/forge/templates/starter/apps/web/src/index.css:40)).
+   Case: normal use - Sales selects a generic family such as `serif` for headings. The guide treats it as unavailable even though the browser can render it without either source.
+   Gain 3, Work 3, Harm 2
+Disposition: cut - one line in the fonts step: a generic browser family (`serif`, `sans-serif`, `system-ui`, `monospace`) needs no file or link and is copied as it is.
+
+16. Advisory: Functional: A test-helper change can trigger the screen check.
+   Raise: Functional. [The revised file filter](/plans/FORGE-THEME-1.md:107) excludes `tests/` and `__tests__/` but omits `test/`; the existing checker excludes all three ([ui-checks.js](/src/forge/templates/design/ui-checks.js:10)).
+   Case: normal use - A client edits a React test helper such as `apps/web/test/provider.tsx` while the starter theme is unchanged. Close treats it as a screen change and refuses it.
+   Gain 3, Work 3, Harm 2
+Disposition: cut - the screen-file rule now excludes `tests/`, `test/` and `__tests__/`, as the existing checker does.
