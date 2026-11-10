@@ -1716,8 +1716,9 @@ rules and the build-simple ladder. Apply its rules in every phase.
 **Finding forms.** `Simpler: <cut> → <replacement>` is P2, or P1 when a new moving part isn't
 named in the story. Untraced work: `Cut or defer: <item>`. An unmet Done-when item:
 `Not done: <item>` (P1). A missing rule-11 basic is its own P1, never `Simpler:`.
-A `Not done` finding blocks only when it names a Done-when item the change misses as
-written. A case the Done-when does not name, such as another language, platform, shell,
+Every `Not done:` finding blocks a fix, including one about builder details.
+For a story task, a `Not done` finding blocks only when it names a covered Done-when item
+the change misses as written. A case the Done-when does not name, such as another language, platform, shell,
 tool or folder layout, is a P2 `Follow-up: <the case>` finding that Forge records and the merge
 doesn't wait for, even when the case is realistic; a functional, security or data-loss defect
 on the changed code still blocks under its own Raise line.
@@ -1763,8 +1764,9 @@ A worker can decline a finding in a commit body with
 `Declined: <title> (<file>): not worth the code - <reason>`, using its exact title and file.
 An empty commit is fine. Close applies it even to a reused review and keeps it as a follow-up.
 A P0 stays open. Later rounds receive the decline as settled. Only the human dismisses findings.
-`Not done` blocks only against a numbered owner-approved Done-when item (a fix uses its Done-when
-line). Builder details, Notes and implementation guidance never block as `Not done`.
+Every `Not done:` finding blocks a fix, including one about builder details.
+For a story task, `Not done` blocks only against a covered numbered owner-approved Done-when
+item. Builder details, Notes and implementation guidance never block a story task as `Not done`.
 New repos get this guide on init; existing repos, including earlier adopted repos, get it on
 upgrade and sync. Close applies the same boundary in every repo.
 

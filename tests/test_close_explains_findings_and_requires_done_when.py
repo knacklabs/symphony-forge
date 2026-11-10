@@ -23,7 +23,8 @@ def setup_client(env, adopted):
 @pytest.mark.parametrize("adopted", [False, True], ids=["new", "earlier-adopted"])
 def test_1_clean_close_explains_why_findings_do_not_block(env, adopted):
     setup_client(env, adopted)
-    item, _ = env.start_fix()
+    # Story tasks retain the unrelated Not-done follow-up contract.
+    item, _ = env.start_task()
     env.reviews(blocked(finding("P1", "Not done: The greeting uses a separate formatter"),
                         finding("P2", "Simpler: shorten the greeting")))
     closed = env.close(item)
@@ -101,8 +102,7 @@ def test_4_worker_receives_required_acceptance_below_the_score_bar(env):
     assert f"- P1 {note['title']} (app.py:1): {note['body']}" in brief
 
 
-def test_5_upgrade_reclassifies_saved_reviews_without_another_model_call(env):
-    setup_client(env, True)
+def earlier_close_command(env):
     # Use the pinned earlier close/review/checker already used by the review-reuse tests.
     source = env.tmp / "earlier-src"
     shutil.copytree(ROOT / "src/forge", source / "forge", ignore=shutil.ignore_patterns("__pycache__"))
@@ -112,6 +112,12 @@ def test_5_upgrade_reclassifies_saved_reviews_without_another_model_call(env):
     shutil.copy(ROOT / "tests/fixtures/spotted-before-per-change.txt", source / "forge/spotted.py")
     command = env.tmp / "earlier-forge"
     command.write_text(FORGE_SHIM.format(python=sys.executable, src=source.as_posix()), encoding="utf-8")
+    return command
+
+
+def test_5_upgrade_reclassifies_saved_reviews_without_another_model_call(env):
+    setup_client(env, True)
+    command = earlier_close_command(env)
     # This pinned version predates scoring, so its non-blocking findings use P2.
     # Let that real command create the saved review rather than hand-writing its format.
     item, where = env.start_fix()
