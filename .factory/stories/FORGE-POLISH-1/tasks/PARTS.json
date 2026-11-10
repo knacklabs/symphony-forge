@@ -111,7 +111,7 @@
     "id": "e27d6d6c-7fd0-44c0-999b-5643fc8b7423",
     "status": "blocked"
   },
-  "round": 2,
+  "round": 3,
   "status": "fixing",
   "steps": [
     {
@@ -128,10 +128,12 @@
     }
   ],
   "stuck": {
-    "close": "6ebfaa0a-43a5-4525-a8b0-1324841315fa",
-    "head": "0814f408f6a01a5120d20776083b588708432d9d",
-    "keys": {},
-    "round": 1
+    "close": "dab7e01a-ca29-4c4d-8e9d-9d7722c691cd",
+    "head": "5f0ed483e29d052e4638929af9302975efee5575",
+    "keys": {
+      "the open P0 pressed-state test fails when the app has a focusable control in src/forge/templates/starter/apps/web/e2e/motion.spec.ts": 1
+    },
+    "round": 2
   },
   "worker": "claude"
 }
