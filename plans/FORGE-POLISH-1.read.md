@@ -1,13 +1,13 @@
 ---
 reader: codex (gpt-6.1-terra)
-read_at: 2026-11-10T17:49:41.634466+00:00
-seconds: 692.095
-read_hash: 18b7e28836abe24f519fbf73c036fa0e5a65f458
-round: 1
+read_at: 2026-11-10T18:02:07.390335+00:00
+seconds: 495.273
+read_hash: 0aaf7316969d4f83643489507e7162f8d9540bdc
+round: 2
 passed: no
-doc_seen: 18b7e28836abe24f519fbf73c036fa0e5a65f458
+doc_seen: 0aaf7316969d4f83643489507e7162f8d9540bdc
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+notes_seen: 461245f9e4a470e4704a64376d9ae9b066b8804f
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a1c689-ebd7-7ec3-848b-4e27b918dfb1
 session:
@@ -102,3 +102,40 @@ Only a genuine trade-off goes to the human, as a question with options.
     [test_3](/plans/FORGE-POLISH-1.md:77) checks names and imports, but does not exercise the components, their labels, message, action or retry. The [starter entry point](/src/forge/templates/starter/apps/web/src/main.tsx:8) renders no screen, so its build does not demonstrate those states either.  
     Gain 3, Work 2, Harm 3
     Disposition: cut: a vitest test in the starter (shared-states.test.tsx) renders each state part and asserts role, text, action and the retry call; test_3 checks the files and the roles named in the source. The plan states that the behaviour runs in the starter's own web tests, not in Forge's per-pull-request tests, and lists that in Risks and Not verified.
+
+## Round 2
+
+11. Advisory: Unproven: A retry button can also submit its enclosing form.  
+    Raise: Test  
+    Case: normal use - A data-loading form shows an error and the person selects Retry.  
+    The [plan](/plans/FORGE-POLISH-1.md:84) requires a retry `Button`, but the [shared Button](/src/forge/templates/starter/libs/shared/ui/src/components/ui/button.tsx:40) supplies no default `type`. Without `type="button"`, it submits the form as well. The planned test checks the retry call but would miss that submission.  
+    Gain 3, Work 1, Harm 3
+    Disposition: cut - the retry button is `type="button"` and the part's vitest test clicks it inside a form and asserts no submit. The owner chose on 10 Nov 2026 to fix this with no further read.
+
+12. Advisory: The remaining motion check misses a common CSS shorthand.  
+    Raise: Not done  
+    Case: normal use - A changed stylesheet uses `transition: 150ms ease`.  
+    CSS treats the omitted property as `all`, but the [planned patterns](/plans/FORGE-POLISH-1.md:89) only name explicit `all` forms. Close would pass a file covered by the promised refusal.  
+    Gain 3, Work 2, Harm 2
+   Disposition: keep - below the bar (follow-up)
+
+13. Advisory: The browser test does not prove that panels stop sliding or zooming.  
+    Raise: Test  
+    Case: normal use - A person with reduced motion opens a side panel.  
+    The [new test](/plans/FORGE-POLISH-1.md:81) measures a synthetic pulse and a colour transition, but never a sliding or zooming panel such as [SheetContent](/src/forge/templates/starter/libs/shared/ui/src/components/ui/sheet.tsx:59). It can pass while a panel still animates, although Done-when 2 says the browser test proves that case.  
+    Gain 3, Work 1, Harm 3
+    Disposition: cut - the browser test also appends elements with the sheet's slide classes and the dialog's zoom classes, and asserts their computed transform is none under reduced motion and not none without it; test_2 pins the class tokens in the real parts. The owner chose on 10 Nov 2026 to fix this with no further read.
+
+14. Advisory: The new review rule conflicts with the link-button exception.  
+    Raise: Plan gap  
+    Case: normal use - A screen uses the shared button’s link variant.  
+    The [plan](/plans/FORGE-POLISH-1.md:7) keeps that variant without a pressed state, while the [review rule](/plans/FORGE-POLISH-1.md:90) reports any button-like part without one. The shipped [link variant](/src/forge/templates/starter/libs/shared/ui/src/components/ui/button.tsx:20) is such a case.  
+    Gain 3, Work 1, Harm 2
+   Disposition: cut - one clause fixes it: the review rule exempts the link variant.
+
+15. Advisory: Put the motion case in the existing browser test file.  
+    Raise: Scale  
+    Case: normal use - A Python starter runs its browser suite.  
+    The [plan](/plans/FORGE-POLISH-1.md:81) adds a separate spec file. The Python [browser runner](/src/forge/templates/starter-python/scripts/test-browser.mjs:17) restarts the API and launches Playwright once per spec file, so this adds both operations to every full run. The existing [browser spec](/src/forge/templates/starter/apps/web/e2e/served-app.spec.ts:4) can carry the case.  
+    Gain 2, Work 1, Harm 1
+   Disposition: keep - below the bar (live with)
