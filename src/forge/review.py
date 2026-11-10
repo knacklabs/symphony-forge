@@ -463,6 +463,9 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False,
                     history.append(done.stdout)
                     if not closing or attempt or done.returncode == 0:
                         break
+                    if any(json.loads(line[len(fasttest.INVOCATION_HEADER):]).get("interrupted")
+                           for line in evidence.splitlines() if line.startswith(fasttest.INVOCATION_HEADER)):
+                        break  # Retrying only failed files would hide unfinished tests after a crash.
                     failed = sorted({node.split("::", 1)[0] for status, node in
                                      re.findall(r"^(failed|error) (.+)$", evidence, re.M)})
                     if not failed or fasttest.INVOCATION_HEADER not in evidence:

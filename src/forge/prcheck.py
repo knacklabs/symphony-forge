@@ -255,7 +255,7 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
                    else 6 if repo.pytest_split(top, cfg["test"]) else 1)
     ci_tests = repo.test_place(cfg) == "ci" and "tests" in cfg.get("checks", [])
     test = "forge test --change" if ci_tests else cfg["test"]
-    full_run = repo.test_place(cfg) == "ci"
+    full_run = repo.test_place(cfg) == "ci" and not cfg.get("full_suite_workflow")
     test_install = ("      - run: " + ("uv tool install ." if source else sync.install_line(cfg["version"]))
                     + "\n        if: steps.parent-tests.outputs.reuse != 'true'\n"
                     if ci_tests else "")
