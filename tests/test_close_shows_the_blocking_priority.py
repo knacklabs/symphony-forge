@@ -8,6 +8,7 @@ from test_worker import install_claude
 STORY = "finding-priority-shown-matches"
 
 
+@pytest.mark.platform
 @pytest.mark.parametrize("adopted,scores", [
     (False, "Gain 5, Work 1, Harm 1"),
     (False, "Gain 2, Work 5, Harm 4"),
