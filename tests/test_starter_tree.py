@@ -29,6 +29,7 @@ API_ZOD_CASES = (
 )
 BROWSER_FLOWS = (
     "the built app serves its page",
+    "the motion rules hold and reduced motion stops pulses, slides and zooms",
 )
 PINNED_PACKAGES = {
     "@nestjs/core": "11.2.7",
