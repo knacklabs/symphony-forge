@@ -179,7 +179,7 @@ Every client repo moves through seven steps. `forge next` names the current step
 
 **The build and review loop.** A worker builds the part and its tests, then a separate review checks the change. A serious problem goes back to the worker for another round. A task gets review rounds up to the repo's setting, two by default, and a fix gets one. At the round limit (the repo's setting, two by default), Forge stops and asks the owner, but a P0 problem keeps the loop going. It exists because a reviewer sees problems that the worker cannot see in its own work.
 
-**The CI checks.** GitHub runs the repo's checks on the pull request. Close and merge wait up to 90 minutes while a check is running, and a red check goes back to the worker. At a wait limit, the message names the limit and the checks still running. They exist because the checks run the tests on a clean machine, the same way for every change. If uv installation fails, the generated workflow retries it once before the job fails.
+**The CI checks.** GitHub runs the repo's checks on the pull request. Close waits while they are queued or running, and a red check goes back to the worker. They exist because the checks run the tests on a clean machine, the same way for every change. If uv installation fails, the generated workflow retries it once before the job fails.
 On GitHub Actions, `forge test` streams the test output into the job log.
 
 `forge next` adds one line under each running item that says what it waits on, why and for how long. Give that line to the person when they ask why something takes time.
@@ -1225,11 +1225,6 @@ Use `forge upgrade <release>` directly, not `forge fix start`: upgrade creates i
 than the repo pins. If upgrade refuses outside the default branch, move to the main checkout.
 Drop the current fix only if Forge started it and the owner agrees. Then switch to the default
 branch and run `forge upgrade <release>`. The refusal gives these steps in plain words.
-If the upgrade's fix name belongs to a dropped or restored fix with no other work, upgrade
-restores its folder or continues in it. If that fix has other work, the refusal names the
-command to restore or close it. For uncommitted work, it gives the stash command to save
-those edits before the upgrade. It preserves active fixes that were never dropped and names
-their work command. Keep that work and complete the named step first.
 
 Before starting another upgrade, it removes an earlier upgrade's leftover worktree and local
 branch when its pull request has merged and the checkout has no unpushed or uncommitted work.
@@ -1260,8 +1255,6 @@ Until the upgrade merges, the default branch keeps working with the new release 
 After it merges, older branches keep their pinned release and its rules. When Forge says the
 default branch already pins the installed release, merge `origin/<default>` into your branch to
 use that release and its rules.
-If close stops because the branch pins an older release than the default branch, run
-`forge work <item>` to merge the default branch. Then run `forge close <item>` again.
 
 ## Refresh dependencies
 
@@ -1721,9 +1714,8 @@ rules and the build-simple ladder. Apply its rules in every phase.
 **Finding forms.** `Simpler: <cut> → <replacement>` is P2, or P1 when a new moving part isn't
 named in the story. Untraced work: `Cut or defer: <item>`. An unmet Done-when item:
 `Not done: <item>` (P1). A missing rule-11 basic is its own P1, never `Simpler:`.
-Every `Not done:` finding blocks a fix, including one about builder details.
-For a story task, a `Not done` finding blocks only when it names a covered Done-when item
-the change misses as written. A case the Done-when does not name, such as another language, platform, shell,
+A `Not done` finding blocks only when it names a Done-when item the change misses as
+written. A case the Done-when does not name, such as another language, platform, shell,
 tool or folder layout, is a P2 `Follow-up: <the case>` finding that Forge records and the merge
 doesn't wait for, even when the case is realistic; a functional, security or data-loss defect
 on the changed code still blocks under its own Raise line.
@@ -1769,9 +1761,8 @@ A worker can decline a finding in a commit body with
 `Declined: <title> (<file>): not worth the code - <reason>`, using its exact title and file.
 An empty commit is fine. Close applies it even to a reused review and keeps it as a follow-up.
 A P0 stays open. Later rounds receive the decline as settled. Only the human dismisses findings.
-Every `Not done:` finding blocks a fix, including one about builder details.
-For a story task, `Not done` blocks only against a covered numbered owner-approved Done-when
-item. Builder details, Notes and implementation guidance never block a story task as `Not done`.
+`Not done` blocks only against a numbered owner-approved Done-when item (a fix uses its Done-when
+line). Builder details, Notes and implementation guidance never block as `Not done`.
 New repos get this guide on init; existing repos, including earlier adopted repos, get it on
 upgrade and sync. Close applies the same boundary in every repo.
 
@@ -1839,10 +1830,6 @@ Close and `forge next` warn when this item and another open branch add the same 
 number under a `migrations` folder. The warning names both items and the number. It does not
 stop work or need a setting. Forge refreshes origin once and reads its branch snapshot without
 a checkout. Completed items do not cause warnings, even when their branches remain on origin.
-Close checks the tracked guide copies before review or CI waits when this branch changes
-guides or their templates. If they differ from sync's output, run `forge sync` in the folder
-close names, then commit the generated guides and run close again. New and
-earlier-adopted repos get this check after upgrading Forge; other generated files stay as they are.
 Close brings in the current default branch before it tests or reviews. If only files `forge sync` writes
 conflict, close takes the default branch's copies, runs sync and commits the merge. A conflict in
 any other file stops close for the worker to resolve. While waiting for checks, close stops at once
@@ -1897,12 +1884,7 @@ existing repo with a direct pytest command and pytest-split keeps its six groups
 runs its share of the related tests through `forge test --change`. The required `tests` check passes
 only when every job passes; branch protection keeps the same `tests` check.
 A full run covers only `forge.toml`'s `test` command; if the repo's whole suite runs elsewhere, point that setting at it.
-Set `full_suite_workflow = "nightly.yml"` in `forge.toml`, then run `forge sync` and commit the generated workflow to omit Forge's full-suite jobs.
-The repo's workflow must support `workflow_dispatch`. Start its full run with `gh workflow run nightly.yml --ref <default>`.
-That workflow must post `forge-full-suite` on the default branch commit after its run, with `state` set to `success` or `failure`:
-`gh api --method POST "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" -f context=forge-full-suite -f "state=$state"`.
-Give the status job `permissions: {statuses: write}` and set `GH_TOKEN: ${{ github.token }}` in the posting step's `env`.
-In CI mode without this setting, `forge.yml` also runs `forge test --full` once a day on the default branch and supports
+In CI mode, `forge.yml` also runs `forge test --full` once a day on the default branch and supports
 `workflow_dispatch`. After the last product merge for a release or sign-off, start the full run
 at once with `gh workflow run forge.yml --ref <default>` when full-run proof is required.
 Prepare the release or sign-off notes while it runs, then follow that same run with
@@ -2036,8 +2018,6 @@ Gain 1 or 2 is lived with. Never re-score a finding to change its
 outcome. Dismiss only a finding outside the boundary or factually wrong, with
 `forge close <item> --dismiss <n> --because "<file:line> <why>"`, where the why names the Leave
 out line it falls under or the Raise line it lacks, or the file:line is the code that disproves it.
-Use the number of an open finding in the item's saved review. Close checks the number and
-evidence before tests or review. A repair review can omit an earlier finding without refusing the request.
 Close fetches the default branch but merges it in only for a trial-merge clash, or when GitHub
 reports the pull request conflicting or behind under its up-to-date rule. Unrelated main changes
 add no merge. Close checks GitHub's clash state at every look, even with green checks; a clash
@@ -2116,8 +2096,7 @@ even if checks remain in progress. At either wait limit, no decision is needed.
 Run `forge land <item>` again to resume without restarting checks.
 `FORGE_CHECKS_WAIT` keeps its explicit no-progress wait instead of the longer running-check wait.
 Land says which checks are still running, missing, or
-unreadable. Close and merge also wait up to 90 minutes while a check is running.
-With no running or queued checks, they wait at most ten minutes. When close
+unreadable. Close on its own still waits at most ten minutes while none are queued. When it
 stops, follow its refusal and the
 Closing section above, then run it again. Run it in the background and keep watching it.
 Never wrap `forge work` or `forge land` in a shell timeout. A forced kill cannot report an unfinished round or clean up its lock.
