@@ -1,6 +1,39 @@
 {
   "items": [
     {
+      "key": "bug\tsrc/forge/feature_remove.py\tDetect Nest controller prefixes without a leading slash\tFORGE-FEATUREDROP-1/CHECK",
+      "kind": "bug",
+      "path": "src/forge/feature_remove.py",
+      "line": 65,
+      "text": "Detect Nest controller prefixes without a leading slash",
+      "from": "blocking",
+      "item": "FORGE-FEATUREDROP-1/CHECK",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/feature_remove.py\tDetect sample-data inserts through Prisma client aliases\tFORGE-FEATUREDROP-1/CHECK",
+      "kind": "bug",
+      "path": "src/forge/feature_remove.py",
+      "line": 80,
+      "text": "Detect sample-data inserts through Prisma client aliases",
+      "from": "blocking",
+      "item": "FORGE-FEATUREDROP-1/CHECK",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/feature_remove.py\tExclude multiline comments and examples from feature users\tFORGE-FEATUREDROP-1/CHECK",
+      "kind": "bug",
+      "path": "src/forge/feature_remove.py",
+      "line": 115,
+      "text": "Exclude multiline comments and examples from feature users",
+      "from": "blocking",
+      "item": "FORGE-FEATUREDROP-1/CHECK",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/feature_remove.py\tFunctional: Detect generated TypeScript project references\tFORGE-FEATUREDROP-1/CHECK",
       "kind": "bug",
       "path": "src/forge/feature_remove.py",
