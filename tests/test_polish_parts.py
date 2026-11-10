@@ -11,6 +11,7 @@ STORY = "FORGE-POLISH-1"
 ROOT = Path(__file__).resolve().parents[1]
 STARTER = ROOT / "src/forge/templates/starter"
 CONVENTIONS = ROOT / "src/forge/templates/conventions"
+PRESS = "not-disabled:active:scale-97"
 STARTERS = pytest.mark.parametrize("init_args", [("--starter",), ("--starter", "python")],
                                    ids=["react", "python"])
 
@@ -45,10 +46,14 @@ def test_1_shared_parts_press_use_named_properties_and_share_one_curve_and_speed
             assert "ease-out" in text, path
 
     button, switch, checkbox = (_read(ui / f"{name}.tsx") for name in ("button", "switch", "checkbox"))
-    for text in (button, switch, checkbox):
-        assert "active:" in text
-    link = next(line for line in button.splitlines() if line.strip().startswith("link:"))
-    assert "active:" not in link
+    # Every button variant but link, and the whole switch and checkbox, carry the pressed state.
+    for text in (switch, checkbox):
+        assert PRESS in text
+    variants = re.search(r"variant: \{(.*?)\n      \},", button, re.S).group(1)
+    found = re.findall(r'^\s+(\w+):\s*\n?\s*"([^"]*)"', variants, re.M)
+    assert [name for name, _ in found] == ["default", "destructive", "outline", "secondary", "ghost", "link"]
+    for name, classes in found:
+        assert (PRESS in classes) == (name != "link"), name
     assert re.search(r"transition-\[[^\]]*scale", checkbox)
 
     css = _read(client / "apps/web/src/index.css")
@@ -80,9 +85,11 @@ def test_2_reduced_motion_is_one_rule_in_the_theme_and_a_browser_test_proves_it(
     for token in re.findall(r"data-\[state=open\]:[\w-]+(?:-\d+)?", spec):
         assert token in sheet or token in dialog, token
     assert "slide-in-from-right" in sheet and "zoom-in-95" in dialog
-    case = re.search(r"test\('([^']+)'", spec)
-    assert case
-    assert case.group(1) in _read(ROOT / "tests/test_starter_tree.py")
+    tree = _read(ROOT / "tests/test_starter_tree.py")
+    cases = re.findall(r"^test\('([^']+)'", spec, re.M)
+    assert len(cases) == 2
+    assert all(case in tree for case in cases)
+    assert PRESS in spec
 
 
 @pytest.mark.platform
