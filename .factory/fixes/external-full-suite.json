@@ -1,6 +1,13 @@
 {
   "base": "39e4f5c6828bb277efe3f786d76412889610d846",
   "branch": "fix/external-full-suite",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1c61b-4a5f-71e0-9248-e432f7a440d3",
+    "head": null,
+    "start": "a88bd13a14df46dc0631250d0b7d50cf48fb7bd7"
+  },
   "done_when": "With an optional forge.toml setting, the generated workflow has no scheduled full suite and Forge's full-run next step names the repo's own workflow; sign-off and the push guard still accept a forge-full-suite status posted by that workflow; without the setting nothing changes",
   "fix_kind": "mechanical",
   "kind": "fix",
