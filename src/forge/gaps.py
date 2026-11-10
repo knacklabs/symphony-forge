@@ -12,9 +12,8 @@ from forge import repo, story
 HEADING = "Before production: "
 ALLOWANCE = "Prototype before sign-off"
 LABEL = "Demo only"
-NOT_APP = [":(exclude)*.md", *(f":(exclude){name}" for name in (
-    "docs", "plans", ".factory", ".claude", ".codex", ".github", "tests", "test", "__tests__")),
-    *(f":(exclude,glob)**/{name}/**" for name in ("tests", "test", "__tests__"))]
+NOT_APP = {"docs", "plans", ".factory", ".claude", ".codex", ".github", "tests", "test", "__tests__"}
+BINARY = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".ico", ".pdf", ".woff", ".woff2", ".ttf", ".zip", ".lock"}
 
 
 def listing(top: Path) -> dict[str, Any]:
@@ -42,7 +41,7 @@ def _listing(top: Path, ref: str) -> dict[str, Any]:
         names = ", ".join(parts)
         rows.append((f"{_count(len(parts), 'part was', 'parts were')} built with only the light review: {names}",
                      f"Review and test {'this part' if len(parts) == 1 else 'these parts'} in full: {names}"))
-    if files := _labelled(top, ref):
+    if files := _labelled(top, ref, _tree(top, ref)):
         names = ", ".join(files)
         rows.append((f'{_count(len(files), "file carries", "files carry")} the "{LABEL}" label: {names}',
                      f"Build each demo-only feature properly or remove it: {names}"))
@@ -56,15 +55,17 @@ def _count(number: int, one: str, many: str) -> str:
     return f"{number} {one if number == 1 else many}"
 
 
-def _labelled(top: Path, ref: str) -> list[str]:
-    """App files on the default branch that hold the label."""
-    done = repo.run("git", "grep", "-l", "-I", "-F", LABEL, ref, "--", ".", *NOT_APP, cwd=top)
-    return sorted(line.removeprefix(f"{ref}:") for line in done.stdout.splitlines())
+def _labelled(top: Path, ref: str, names: list[str]) -> list[str]:
+    """App files on the default branch that hold the label, read through the shared blob reader."""
+    app = [name for name in names if name.partition("/")[0] not in NOT_APP and not NOT_APP & set(Path(name).parts)
+           and Path(name).suffix not in {".md", *BINARY}]
+    texts = repo.blob_texts(top, [f"{ref}:{name}" for name in app])
+    return sorted(name for name in app if LABEL in texts.get(f"{ref}:{name}", ""))
 
 
 def _light_parts(top: Path, ref: str) -> list[str]:
     """Fixes that got only the prototype's light review and that no later change names."""
-    names = repo.tree_names(top, ref)
+    names = _tree(top, ref)
     texts = repo.blob_texts(top, [f"{ref}:{name}" for name in names if re.fullmatch(r"\.factory/fixes/[^/]+\.json", name)])
     states = {Path(spec.partition(":")[2]).stem: story.json_of(text) for spec, text in texts.items()}
     states = {name: state for name, state in states.items() if state.get("status") != "dropped"}
@@ -90,6 +91,12 @@ def _light_parts(top: Path, ref: str) -> list[str]:
             if done.get("status") == "done":
                 said.append((titles[spec], str(done.get("finished", ""))))
     return [name for name in light if not any(_names(name, text) and when > landed[name] for text, when in said)]
+
+
+def _tree(top: Path, ref: str) -> list[str]:
+    """The default branch's file names; the same cached fact forge next reads for its other checks."""
+    return repo.command_fact(("default file names", ref), top,
+                             lambda: repo.git("ls-tree", "-r", "--name-only", ref, cwd=top)).splitlines()
 
 
 def _names(name: str, text: str) -> bool:
