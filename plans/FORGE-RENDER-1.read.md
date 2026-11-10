@@ -1,13 +1,13 @@
 ---
 reader: codex (gpt-6.1-terra)
-read_at: 2026-11-10T17:34:53.295209+00:00
-seconds: 599.586
-read_hash: e1fe3273f4ae1bd6bdb440e2ed152c62c88cb31b
-round: 1
+read_at: 2026-11-10T17:47:52.340343+00:00
+seconds: 378.314
+read_hash: 0e0fb8fc3c3612af10278a51f8df7e8430c881f5
+round: 2
 passed: no
-doc_seen: e1fe3273f4ae1bd6bdb440e2ed152c62c88cb31b
+doc_seen: 0e0fb8fc3c3612af10278a51f8df7e8430c881f5
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+notes_seen: b938f3963c1dab37d3ab8cc0732204573be66cfd
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a1c67d-c6e9-70e3-b108-c24fe724077b
 session:
@@ -130,3 +130,48 @@ Only a genuine trade-off goes to the human, as a question with options.
     The [plan](/plans/FORGE-RENDER-1.md:93) repeats the full browser cases after both init and sync, while its [upgrade test](/plans/FORGE-RENDER-1.md:100) already checks that both paths ship the same helper. The repeated browser cases exercise the same helper path.  
     Gain 2, Work 1, Harm 1
    Disposition: keep - below the bar (live with)
+
+## Round 2
+
+15. Blocking: Not done: a redirect can make the check report a different screen as clean.  
+    Raise: Not done  
+    Case: normal use - A listed screen requires sign-in, but its test reaches the sign-in page instead.  
+    The [helper contract](/plans/FORGE-RENDER-1.md:90) names a path but does not check which screen loaded. The starter’s [sign-in test](/src/forge/templates/starter/apps/web/e2e/rules/sign-in.spec.ts:50) shows that `/members` redirects to sign-in. The helper can therefore report “members: no problems” after checking sign-in. The planned static-page test does not cover a redirect.  
+    Gain 5, Work 2, Harm 3
+    Disposition: cut - the helper compares the final page path with the listed path and reports a mismatch as its own `wrong-screen` problem (path check chosen over a marker: no extra field, no knowledge of the markup); `test_2` gets a redirect case; no Done-when line added, only a clause in Done-when 2.
+
+16. Advisory: Not done: a later phone-view answer does not update existing list entries.  
+    Raise: Not done  
+    Case: normal use - The client initially defers the phone-view answer, then answers yes after several screens are listed.  
+    The [plan](/plans/FORGE-RENDER-1.md:91) stores the choice separately as a flag on each screen; the helper does not read the brief. The existing [answer flow](/src/forge/templates/skill.md:793) updates the brief when the client replies, but the plan gives no corresponding update for already-listed screens. They can continue to run at desktop width only.  
+    Gain 3, Work 3, Harm 3
+   Disposition: keep - below the bar (follow-up)
+
+17. Advisory: Not done: a repeated close loses clean-screen results.  
+    Raise: Not done  
+    Case: normal use - Local tests pass, close waits for another check, and the coordinator closes again on the same files.  
+    [Close reuses the passing run](/src/forge/review.py:410) and returns a skipped-test message. It does not replay the clean-screen lines required by [Done-when 1](/plans/FORGE-RENDER-1.md:24). The new output rule preserves problem lines, not clean results from a reused run.  
+    Gain 3, Work 2, Harm 2
+   Disposition: keep - below the bar (follow-up)
+
+18. Advisory: Plan gap: the single screen list becomes a shared file for parallel parts.  
+    Raise: Plan gap  
+    Case: normal use - Two independent parts each add a screen.  
+    Both must edit the [same array](/plans/FORGE-RENDER-1.md:74). If both name that file in Scope, [plan checking](/src/forge/plan_scope.py:16) refuses the overlap: `e2e` is not an exempt test-directory segment. If they name it only under Tests, concurrent additions at the same array location can conflict at merge.  
+    Adds work: coordinate the shared list edits; F 2 x H 2 = 4; 2 x C = 4.  
+    Gain 3, Work 3, Harm 2
+   Disposition: keep - below the bar (follow-up)
+
+19. Advisory: Scale: one screen list can exhaust the starter’s sign-in limit.  
+    Raise: Scale  
+    Case: normal use - A Python-backed app checks 31 protected screens whose setup signs in within one minute.  
+    The [new list](/plans/FORGE-RENDER-1.md:79) runs preparation once per screen in one test file. The Python starter permits [30 sign-in requests per client and path per minute](/src/forge/templates/starter-python/apps/api/app/core/security.py:17), and its runner resets that limit only [between files](/src/forge/templates/starter-python/scripts/test-browser.mjs:20). Later screens can fail before they are checked.  
+    Adds work: avoid exhausting the limit during screen preparation; F 2 x H 2 = 4; 2 x C = 4.  
+    Gain 3, Work 3, Harm 3
+   Disposition: keep - below the bar (follow-up)
+
+20. Advisory: Test: the type-check proof can pass while the screen test fails to compile.  
+    Raise: Test  
+    The amended [test](/plans/FORGE-RENDER-1.md:102) asserts only that `TS7016` is absent. A declaration with the wrong argument types can instead produce `TS2345`; Playwright can run the JavaScript while that TypeScript error remains, so the stated assertion can pass with a broken client type check.  
+    Gain 3, Work 2, Harm 2
+    Disposition: cut - `test_1` now asserts that `tsc --strict` exits 0, so any type error fails the test.
