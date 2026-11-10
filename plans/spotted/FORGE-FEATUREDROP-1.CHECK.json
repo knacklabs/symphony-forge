@@ -30,8 +30,8 @@
       "text": "Exclude multiline comments and examples from feature users",
       "from": "blocking",
       "item": "FORGE-FEATUREDROP-1/CHECK",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/feature_remove.py\tFunctional: Detect generated TypeScript project references\tFORGE-FEATUREDROP-1/CHECK",
