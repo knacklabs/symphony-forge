@@ -1,10 +1,18 @@
 {
   "branch": "task/FORGE-PRODGAP-1-LIST",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-10T20:08:52.572713+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "709de9f5a015c3c6befbd3e997779e8f332ac4ad",
+    "keys": {},
+    "round": null
+  },
+  "worker": "claude"
 }
