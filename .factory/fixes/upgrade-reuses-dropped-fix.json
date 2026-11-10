@@ -1,0 +1,15 @@
+{
+  "base": "22a569900e405b345833465cf95080e422878507",
+  "branch": "fix/upgrade-reuses-dropped-fix",
+  "done_when": "forge upgrade <release> on the default branch reuses a dropped or restored upgrade fix of the same name that has no other work, or names the one command that clears it; it never refuses with no next step",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-10T02:45:02.219707+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "After a fix named for an upgrade is dropped or restored, forge upgrade refuses both ways and leaves no Forge path (#1501)"
+}
