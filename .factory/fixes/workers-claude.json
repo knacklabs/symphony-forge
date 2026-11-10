@@ -1,7 +1,14 @@
 {
+  "amendments": [
+    {
+      "at": "2026-11-10T18:08:31.342608+00:00",
+      "because": "The review showed that forge next reads the setting from each part's starting branch, so branches made earlier need the default branch merged in, and that user-facing parts must keep the design routing",
+      "done_when": "forge.toml has workers = \"claude\" and forge next names Claude as the builder of every part"
+    }
+  ],
   "base": "eea868801ded3354134af94e738c67f9f2472c87",
   "branch": "fix/workers-claude",
-  "done_when": "forge.toml has workers = \"claude\" and forge next names Claude as the builder of every part",
+  "done_when": "forge.toml has workers = \"claude\"; a part whose starting branch has this setting is built by Claude, and a user-facing part still gets the design worker and the design model",
   "fix_kind": "mechanical",
   "kind": "fix",
   "known": [
