@@ -1,0 +1,15 @@
+{
+  "base": "eea868801ded3354134af94e738c67f9f2472c87",
+  "branch": "fix/workers-claude",
+  "done_when": "forge.toml has workers = \"claude\" and forge next names Claude as the builder of every part",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-10T18:00:54.626512+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The owner chose on 10 Nov 2026 that every task and fix in this repo is built by Claude"
+}
