@@ -137,13 +137,14 @@ def test_3_land_stops_when_github_shows_no_check_progress(clock, answer):
 
 
 def test_4_close_keeps_its_fixed_wait(clock):
+    # The explicit override keeps its short wait and now names that limit.
     env = clock
     _fix(env, "working", worked=True)
     _queue(env, RUNS, *_runs(*[look for stage in range(4) for look in [_pending(stage)] * 3], GREEN))
     done = env.repo.forge("close", ITEM)
     assert done.returncode == 1
-    assert "The checks are not green yet: tests is still running" in done.stderr
-    assert "no check progress" not in done.stderr
+    assert ("The checks are not green yet: GitHub has shown no check progress for 1 minutes: "
+            "tests is still running; forge-pr-check is still running.") in done.stderr
     assert not env.gh_calls("pr", "merge")
 
 
