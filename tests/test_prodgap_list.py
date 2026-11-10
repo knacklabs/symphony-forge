@@ -3,7 +3,9 @@
 Each test runs the real forge commands on a client whose remote default branch holds the facts.
 A second clone pushes the changes, the way a merge from another checkout would.
 """
+import itertools
 import json
+import os
 import re
 import shutil
 import sys
@@ -15,6 +17,7 @@ from test_sample_checklist import brief
 from test_setup import _fresh_client
 from test_story import DOC
 
+MINUTES = itertools.count(1)
 STORY = "FORGE-PRODGAP-1"
 SIGNOFF = "---\nstatus: accepted\n---\n\n# Client sign-off\n"
 LABEL = '<Badge>Demo only</Badge>\n'
@@ -22,6 +25,7 @@ APP = "apps/web/src/orders.tsx"
 SAMPLE = ('Sample data is on, so the app has no back end, no tests and no CI. Say: "Leave sample data: '
           'settle the Personal data answer, set the test command and checks, then set sample_data = '
           'false in forge.toml"')
+APP2 = "apps/web/src/basket.tsx"
 DEMO = f'1 file carries the "Demo only" label: {APP}. Say: "Build each demo-only feature properly or remove it: {APP}"'
 
 
@@ -37,7 +41,11 @@ def publish(repo, folder, message):
     quiet.mkdir(exist_ok=True)
     hooks = f"core.hooksPath={quiet.as_posix()}"
     repo.git("add", "-A", cwd=folder)
-    repo.git("-c", hooks, "commit", "-q", "-m", message, cwd=folder)
+    os.environ["GIT_COMMITTER_DATE"] = f"2026-11-10T10:{next(MINUTES):02d}:00+00:00"  # every change lands later
+    try:
+        repo.git("-c", hooks, "commit", "-q", "-m", message, cwd=folder)
+    finally:
+        del os.environ["GIT_COMMITTER_DATE"]
     repo.git("-c", hooks, "push", "-q", "origin", "HEAD:main", cwd=folder)
 
 
@@ -129,7 +137,7 @@ def test_1_sample_data_gap_shows_after_signoff_and_clears(repo, gh, tmp_path, ad
 def fix(name, why="Build it", level="P0", allowance=True, **state):
     review = {"blocking_level": level, "findings": []}
     return {f".factory/fixes/{name}.json": json.dumps({
-        "kind": "fix", "status": "merged", "why": why, "done_when": "It works", "review": review,
+        "kind": "fix", "status": "waiting for checks", "why": why, "done_when": "It works", "review": review,
         **({"allow_large": "Prototype before sign-off"} if allowance else {}), **state})}
 
 
@@ -143,12 +151,17 @@ def test_2_demo_only_labels_show_and_clear(repo, gh, tmp_path, adoption):
     for name in ("codex", "claude", "autoreview"):  # the list asks no model
         conftest._install(repo.bin, name, f"#!{sys.executable}\nimport pathlib, sys\n"
                           f"pathlib.Path({str(tmp_path / 'model-called')!r}).write_text('called')\nsys.exit(1)\n")
-    push(repo, tmp_path, {APP: f"export const Orders = () => {LABEL}", "docs/specs/demo.md": "Demo only pages.\n"})
+    push(repo, tmp_path, {APP: f"export const Orders = () => {LABEL}", "docs/specs/demo.md": "Demo only pages.\n",
+                          APP2: f"export const Basket = () => {LABEL}", "tests/test_orders.py": "assert 'Demo only'\n",
+                          ".github/notes.yml": "Demo only\n", "apps/web/tests/orders.spec.ts": "Demo only\n"})
     heading, rows = gaps(repo)
-    assert heading == ["Before production: 1 open gap"] and rows == [f"- {DEMO}"]
+    both = f'2 files carry the "Demo only" label: {APP2}, {APP}. Say: "Build each demo-only feature properly or remove it: {APP2}, {APP}"'
+    assert heading == ["Before production: 1 open gap"] and rows == [f"- {both}"]
     assert not (tmp_path / "model-called").exists()
     # Another checkout removes the label; this checkout still holds the old file.
     push(repo, tmp_path, {APP: "export const Orders = () => null\n"})
+    assert gaps(repo)[1] == [f"- {DEMO.replace(APP, APP2)}"]
+    push(repo, tmp_path, {APP2: "export const Basket = () => null\n"})
     assert gaps(repo) == ([], [])
 
 
@@ -159,11 +172,12 @@ def test_3_open_gaps_show_together_and_stay_while_work_runs(repo, gh, tmp_path, 
     rows = [f"- {SAMPLE}", f'- 1 part was built with only the light review: build-login. Say: "{light("build-login")}"',
             f"- {DEMO}"]
     assert gaps(repo) == (["Before production: 3 open gaps"], rows)
-    started = repo.forge("fix", "start", "Tidy the readme", "--done", "The readme is tidy", "--kind", "mechanical")
+    started = repo.forge("fix", "start", "Review and test build-login in full", "--done",
+                         "build-login is reviewed and tested in full", "--kind", "mechanical")
     assert started.returncode == 0, started.stdout + started.stderr
     busy = lines(repo, "next")
     assert "Before production: 3 open gaps" in busy and [row for row in busy if row.startswith("- ")] == rows
-    assert any("tidy-the-readme" in row for row in busy)
+    assert any("review-and-test-build-login" in row for row in busy)
     push(repo, tmp_path, {"forge.toml": lambda text: settings(text, sample_data=False)})
     assert gaps(repo) == (["Before production: 2 open gaps"], rows[1:])
 
@@ -183,6 +197,11 @@ def test_5_light_reviewed_parts_show_and_clear_when_named(repo, gh, tmp_path, ad
     assert lines(repo, "next").count(row) == 1  # no earlier fetch in this checkout
     assert gaps(repo) == (["Before production: 1 open gap"], [row])
 
+    # A change that landed before a part was built cannot have reviewed it.
+    push(repo, tmp_path, fix("early-review", "Review and test late-part in full", level="P1"))
+    push(repo, tmp_path, fix("late-part"))
+    assert "late-part" in gaps(repo)[1][0]
+    push(repo, tmp_path, {".factory/fixes/late-part.json": None, **fix("review-login", "x", level="P1")})
     # A full review that names build-login clears that name only, even beside build-login-2.
     push(repo, tmp_path, {**fix("review-login", "Review and test build-login in full", level="P1"),
                           **fix("build-login-2", "Build the second login, then old-page")})

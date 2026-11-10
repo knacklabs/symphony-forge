@@ -12,7 +12,9 @@ from forge import repo, story
 HEADING = "Before production: "
 ALLOWANCE = "Prototype before sign-off"
 LABEL = "Demo only"
-NOT_APP = [":(exclude)*.md", *(f":(exclude){name}" for name in ("docs", "plans", ".factory", ".claude", ".codex"))]
+NOT_APP = [":(exclude)*.md", *(f":(exclude){name}" for name in (
+    "docs", "plans", ".factory", ".claude", ".codex", ".github", "tests", "test", "__tests__")),
+    *(f":(exclude,glob)**/{name}/**" for name in ("tests", "test", "__tests__"))]
 
 
 def listing(top: Path) -> dict[str, Any]:
@@ -66,16 +68,24 @@ def _light_parts(top: Path, ref: str) -> list[str]:
                    if state.get("allow_large") == ALLOWANCE and level(state) == "P0")
     if not light:
         return []
-    # A full review names a part in its text; a story names it in its title once its last part is done.
-    said = [f"{state.get('why', '')} {state.get('done_when', '')}" for state in states.values() if level(state) != "P0"]
+    landed = {name: story.merged_at(top, ref, repo.state_path(name)) for name in light}
+    # A part leaves the list when a change that landed after it names it: a fully reviewed fix by its
+    # text, or a story by its title once its last part is done.
+    said = [(f"{state.get('why', '')} {state.get('done_when', '')}", name) for name, state in states.items()
+            if level(state) != "P0"]
+    said = [(text, story.merged_at(top, ref, repo.state_path(name))) for text, name in said
+            if any(_names(part, text) for part in light)]
     paths = repo.git("ls-tree", "-r", "--name-only", ref, "--", ".factory/stories/", cwd=top).splitlines()
     keys = {match[1]: f"{ref}:{match[0]}" for path in paths if (match := re.fullmatch(
         r"\.factory/stories/([A-Z][A-Z0-9-]*)/story\.json", path))}
-    titles = {spec: story.json_of(text).get("title", "") for spec, text in repo.blob_texts(top, list(keys.values())).items()}
-    said += [str(titles[spec]) for key, spec in keys.items()
-             if any(_names(name, str(titles[spec])) for name in light)
-             and story.completed(top, key, ref).get("status") == "done"]
-    return [name for name in light if not any(_names(name, text) for text in said)]
+    titles = {spec: str(story.json_of(text).get("title", ""))
+              for spec, text in repo.blob_texts(top, list(keys.values())).items()}
+    for key, spec in keys.items():
+        if any(_names(part, titles[spec]) for part in light):
+            done = story.completed(top, key, ref)
+            if done.get("status") == "done":
+                said.append((titles[spec], str(done.get("finished", ""))))
+    return [name for name in light if not any(_names(name, text) and when > landed[name] for text, when in said)]
 
 
 def _names(name: str, text: str) -> bool:
