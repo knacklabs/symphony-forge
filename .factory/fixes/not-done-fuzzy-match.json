@@ -93,7 +93,7 @@
     "id": "4d0ded76-c8eb-40ca-b321-19a6107f6c78",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -115,10 +115,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": null,
-    "head": "98d769eecb7949b07eaec41596fab5903e38202d",
+    "close": "271b4885-759d-4362-a009-40f93cd77dd4",
+    "head": "ff70f58b89a8c5b9ea4df4d4b5e62f5955aee863",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "A Not-done finding about the item's own Done-when becomes a non-blocking follow-up when the reviewer rewords the Done-when slightly (#1493)",
   "worker": "codex"
