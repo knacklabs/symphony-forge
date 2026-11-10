@@ -1,11 +1,144 @@
 {
   "branch": "task/FORGE-POLISH-1-PARTS",
+  "known": [
+    {
+      "area": "src/forge/templates/starter/libs/shared/ui/src/components/ui/popover.tsx",
+      "file": "src/forge/templates/starter/libs/shared/ui/src/components/ui/popover.tsx",
+      "gain": 3,
+      "harm": 2,
+      "line": 32,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Every shared control takes its curve and speed from the theme file",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/starter/apps/web/e2e/motion.spec.ts",
+      "file": "src/forge/templates/starter/apps/web/e2e/motion.spec.ts",
+      "gain": 3,
+      "harm": 3,
+      "line": 33,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: motion.spec.ts proves panels stop moving under reduced motion",
+      "work": 1
+    },
+    {
+      "area": "test_1_shared_parts_press_use_named_properties_and_share_one_curve_and_speed() in tests/test_polish_parts.py",
+      "file": "tests/test_polish_parts.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 49,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: shared controls retain their pressed states",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/starter/apps/web/src/shared-states.test.tsx",
+      "file": "src/forge/templates/starter/apps/web/src/shared-states.test.tsx",
+      "gain": 3,
+      "harm": 2,
+      "line": 10,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: the empty state's accessible role",
+      "work": 1
+    },
+    {
+      "area": "src/forge/templates/starter/apps/web/e2e/motion.spec.ts",
+      "file": "src/forge/templates/starter/apps/web/e2e/motion.spec.ts",
+      "gain": 3,
+      "harm": 3,
+      "line": 10,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: functional check",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "3db5afaa42dc2cfa1cf44dd347c89d2e2bb8a755b854a568ca5b84d64bff2c94",
+    "changed": "9cda2c21df2bf6ba713d2c1ed49ea3233aba4cf5afe0554882938122642b16f8",
+    "commit": "7eaaa1aec81d881f690862fc6f9ab4917390a48c",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 2, Harm 2\nRaise: Not done\nCase: normal use - A client changes the shared quick-speed token and opens a popover or menu. Popover, dropdown-menu, select and tooltip content have no duration utility, so [tw-animate-css 1.4.0](https://raw.githubusercontent.com/Wombosvideo/tw-animate-css/v1.4.0/src/tw-animate.css) falls back to its own 150ms value rather than reading `--default-transition-duration`. Their speed therefore stays at 150ms while ordinary transitions follow the changed theme. The browser test measures a `transition-colors` element, so it does not catch this mismatch.",
+        "file": "src/forge/templates/starter/libs/shared/ui/src/components/ui/popover.tsx",
+        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
+        "gain": 3,
+        "harm": 2,
+        "line": 32,
+        "priority": "P1",
+        "title": "Not done: Every shared control takes its curve and speed from the theme file",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 1, Harm 3\nRaise: Test\nCase: normal use - Reduced motion is enabled when a person opens a sheet or dialog. The test starts both animations before enabling reduced motion, then polls until their transforms become `none`. If the reduced-motion selector excludes open panels, their ordinary 150ms animations still finish within the poll timeout and the test passes. This is new evidence beyond the no-sleep ruling: the poll has no deadline that distinguishes an immediate finish from a complete normal animation.",
+        "file": "src/forge/templates/starter/apps/web/e2e/motion.spec.ts",
+        "gain": 3,
+        "harm": 3,
+        "line": 33,
+        "priority": "P1",
+        "title": "Gate: motion.spec.ts proves panels stop moving under reduced motion",
+        "work": 1
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - A person presses the default button. The named proof only requires one `active:` occurrence anywhere in each component file. Removing the pressed state from the default button and leaving it on the ghost variant would still pass, and the browser test never presses these controls. The promised pressed behavior can therefore regress without a failing test.",
+        "file": "tests/test_polish_parts.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 49,
+        "priority": "P1",
+        "title": "Gate: shared controls retain their pressed states",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 1, Harm 2\nRaise: Test\nCase: normal use - A data-loading screen renders an empty result. This test checks the title, description and action button, but asserts no role for `EmptyState` itself; `states.tsx:38` renders it as an `Empty` div without an assigned role. The required proof that each shared state draws its text and retains its accessible role is therefore missing for the empty state.",
+        "file": "src/forge/templates/starter/apps/web/src/shared-states.test.tsx",
+        "gain": 3,
+        "harm": 2,
+        "line": 10,
+        "priority": "P1",
+        "title": "Gate: the empty state's accessible role",
+        "work": 1
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Gate\nCase: normal use - A person presses a shared button, switch or checkbox. The recorded functional check reports inspecting compiled `scale-97` CSS, but does not report exercising or observing pressed feedback on those controls. The browser check inserts synthetic divs, and the state test clicks Retry only to check its callback. The covered interaction and its keyboard path have not been walked as a user would.",
+        "file": "src/forge/templates/starter/apps/web/e2e/motion.spec.ts",
+        "gain": 3,
+        "harm": 3,
+        "line": 10,
+        "priority": "P1",
+        "title": "Gate: functional check",
+        "work": 2
+      }
+    ],
+    "id": "ee4dbc13-4eda-4e4c-8bd1-c6f95278f698",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-10T18:29:46.396015+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-10T18:52:04.872874+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
