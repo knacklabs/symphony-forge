@@ -1897,9 +1897,11 @@ existing repo with a direct pytest command and pytest-split keeps its six groups
 runs its share of the related tests through `forge test --change`. The required `tests` check passes
 only when every job passes; branch protection keeps the same `tests` check.
 A full run covers only `forge.toml`'s `test` command; if the repo's whole suite runs elsewhere, point that setting at it.
-Set `full_suite_workflow = "nightly.yml"` in `forge.toml` to omit Forge's full-suite jobs. Start the repo's full run with `gh workflow run nightly.yml --ref <default>`.
+Set `full_suite_workflow = "nightly.yml"` in `forge.toml`, then run `forge sync` and commit the generated workflow to omit Forge's full-suite jobs.
+The repo's workflow must support `workflow_dispatch`. Start its full run with `gh workflow run nightly.yml --ref <default>`.
 That workflow must post `forge-full-suite` on the default branch commit after its run, with `state` set to `success` or `failure`:
-`gh api --method POST "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" -f context=forge-full-suite -f "state=$state"` (give the workflow `statuses: write`).
+`gh api --method POST "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" -f context=forge-full-suite -f "state=$state"`.
+Give the status job `permissions: {statuses: write}` and set `GH_TOKEN: ${{ github.token }}` in the posting step's `env`.
 In CI mode without this setting, `forge.yml` also runs `forge test --full` once a day on the default branch and supports
 `workflow_dispatch`. After the last product merge for a release or sign-off, start the full run
 at once with `gh workflow run forge.yml --ref <default>` when full-run proof is required.

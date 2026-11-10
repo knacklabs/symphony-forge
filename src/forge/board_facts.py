@@ -393,15 +393,16 @@ def details(top: Path) -> list[Item]:
 
 
 def failed_schedules(top: Path) -> list[Item]:
-    """Failed scheduled workflows and manual Forge full runs on the default branch.
+    """Failed scheduled workflows and manual full runs on the default branch.
     Read each run list once and one log per failed workflow, kept ten minutes."""
     branch = repo.default_branch(top)
+    workflow = repo.config(top).get("full_suite_workflow") or "forge.yml"
 
     def fetch(now: datetime) -> list[Item] | None:
         # ponytail: the newest 100 scheduled runs; a frequent schedule can crowd out a daily one.
         # Separate query fields avoid cmd.exe interpreting an ampersand in a gh.cmd argument.
         with ThreadPoolExecutor(2) as pool:
-            manual_read = pool.submit(repo.run, "gh", "api", "repos/{owner}/{repo}/actions/workflows/forge.yml/runs",
+            manual_read = pool.submit(repo.run, "gh", "api", f"repos/{{owner}}/{{repo}}/actions/workflows/{workflow}/runs",
                                       "--method", "GET", "--raw-field", "event=workflow_dispatch",
                                       "--raw-field", f"branch={branch}", "--raw-field", "per_page=100", cwd=top)
             done = repo.run("gh", "api", "repos/{owner}/{repo}/actions/runs", "--method", "GET",
