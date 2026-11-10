@@ -18,7 +18,7 @@
       "gain": 2,
       "harm": 4,
       "line": 402,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 1,
       "security": true,
@@ -31,7 +31,7 @@
       "gain": 2,
       "harm": 1,
       "line": 400,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 1,
       "security": false,
@@ -54,38 +54,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "374600a2f23358257102aafdc4ab9e420af16ab6a557bfb0e4a5ec7b04d806df",
-    "changed": "3eed5595f34000f7ab0b81f9570423a8363372141cd3c6e5fe4ace13a5035531",
-    "commit": "4a93b7ec7f824dbca4ba3c4a4a0a8973b432a555",
+    "branch_diff": "7ff2106ed9a7f007d766fd7c3bffe690f686e187e6e9b81e671cff4889f7132a",
+    "changed": "7c20ac13bcdeef5a84a7b6c8b61061e1cc886caaa01f570d49adca6ed27fcfce",
+    "commit": "ce072852d7096d491ed9a023d2defe888ac138ca",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 2, Work 2, Harm 4\nRaise: Security. Case: normal use - A Windows user copies a suggested command containing a repository-controlled workflow name. The new quoting escapes only ASCII apostrophes, but PowerShell also treats `\u2019` as a single-quote delimiter. For `full_suite_workflow = \"nightly\u2019;calc;#.yml\"`, `src/forge/fullrun.py:17` prints `gh workflow run 'nightly\u2019;calc;#.yml' --ref main`: the curly quote ends the string, `calc` runs, and the comment hides the suffix. The configuration check at `src/forge/repo.py:929` accepts this value, and the same helper handles worker notes and review reasons. This leaves the earlier command-injection finding open; [PowerShell's quoting rules](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_quoting_rules?view=powershell-7) document the additional delimiters.\n(floor: Security)\nAdds work: protect shell-sensitive Windows arguments; F 1 x H 3 = 3; 2 x C = 4.",
-        "file": "src/forge/repo.py",
-        "gain": 2,
-        "harm": 4,
-        "line": 403,
-        "priority": "P1",
-        "title": "Protect quoted Windows arguments from PowerShell evaluation",
-        "work": 2
-      },
-      {
-        "body": "Gain 2, Work 1, Harm 1\nRaise: Not done. Case: normal use - A repository names its scheduled workflow `nightly@2am.yml`. Adding `+` fixes the previous example, but the character class still excludes `@`, so Windows prints `'nightly@2am.yml'` while POSIX prints `nightly@2am.yml`. The at-sign inside this argument is literal in [PowerShell](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_parsing?view=powershell-7), and [Python's POSIX quoting](https://github.com/python/cpython/blob/3.11/Lib/shlex.py) leaves it unquoted. The incomplete safe-character set therefore still causes the mismatch identified in the previous finding.",
-        "file": "src/forge/repo.py",
-        "gain": 2,
-        "harm": 1,
-        "line": 400,
-        "priority": "P1",
-        "required_done_when": true,
-        "title": "Not done: The printed nightly full-run command has no quotes around a plain file name, and it is the same on Windows as on other systems.",
-        "work": 1
-      }
-    ],
-    "id": "9ec2937e-f9ec-49c7-95f5-2cb1074ccc94",
-    "status": "blocked"
+    "findings": [],
+    "id": "095c3150-d599-42a2-8b88-9cf2aa61fb37",
+    "status": "clean"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-10T19:39:53.711839+00:00",
@@ -97,6 +75,10 @@
     },
     {
       "at": "2026-11-10T19:57:56.540502+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-10T20:03:37.496872+00:00",
       "step": "review"
     }
   ],
