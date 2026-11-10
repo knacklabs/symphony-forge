@@ -120,6 +120,17 @@
       "item": "FORGE-FEATUREDROP-1/CHECK",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "improve\tplans/FORGE-FEATUREDROP-1.md\tThe plan skips files over 1 MB; the check reads them now, so the line should say so.",
+      "kind": "improve",
+      "path": "plans/FORGE-FEATUREDROP-1.md",
+      "line": 67,
+      "text": "The plan skips files over 1 MB; the check reads them now, so the line should say so.",
+      "from": "worker",
+      "item": "FORGE-FEATUREDROP-1/CHECK",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
