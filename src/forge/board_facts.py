@@ -396,7 +396,11 @@ def failed_schedules(top: Path) -> list[Item]:
     """Failed scheduled workflows and manual full runs on the default branch.
     Read each run list once and one log per failed workflow, kept ten minutes."""
     branch = repo.default_branch(top)
-    cfg = repo.config(top) if (top / "forge.toml").is_file() else {}
+    try:
+        cfg = repo.config(top)
+    except repo.Refused:
+        # Optional run notices must not hide next's unreadable-worktree report.
+        cfg = {}
     workflow = cfg.get("full_suite_workflow") or "forge.yml"
 
     def fetch(now: datetime) -> list[Item] | None:
