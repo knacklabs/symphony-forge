@@ -1,18 +1,18 @@
 ---
 reader: codex (gpt-6.1-terra)
-read_at: 2026-11-10T17:50:18.886226+00:00
-seconds: 949.912
-read_hash: 1b5a4f277ddd0dce1a3ee1681656e1a105dc2e0a
-round: 2
-passed: no
-doc_seen: 1b5a4f277ddd0dce1a3ee1681656e1a105dc2e0a
+read_at: 2026-11-10T17:56:31.803091+00:00
+seconds: 260.32
+read_hash: 8d122086dd5a54b3b404290b5bc5a6d445f5e053
+round: 3
+passed: yes
+doc_seen: 8d122086dd5a54b3b404290b5bc5a6d445f5e053
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: f6800a4a37f3aae2705d851cfda3c0f86a3650e8
+notes_seen: 1ca7eb7bf006256575d98bcb37a66cd2d20734c1
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a1c67a-137f-7750-ac95-00994b5ef6e8
 session:
-loop_choice: more
-loop_reason: The owner chose one more round on 10 Nov 2026 to fix the three remaining cases
+loop_choice:
+loop_reason:
 ---
 # Cold read notes
 
@@ -132,3 +132,12 @@ Only a genuine trade-off goes to the human, as a question with options.
     The [new start-and-ready step](/plans/FORGE-BENCH-1.md:66) precedes all five app checks, but [the planned test](/plans/FORGE-BENCH-1.md:82) only starts a working server. It can pass while a startup failure aborts the scorer instead of recording those checks as “did not run.”  
     Gain 3, Work 3, Harm 4 (floor: migration)
    Disposition: cut - Settled 2 adds `ready_timeout` and makes a failed or silent start count the 5 app checks as failed with "the app did not start", still stopping the app and writing the score; `test_2` has a second run with a `start` that exits at once.
+
+## Round 3
+
+15. Advisory: Unproven: item 3: an unauthenticated lookup can be mistaken for no earlier score.  
+    Raise: Test  
+    Case: normal use - a release runs after an earlier score has been saved.  
+    The [plan](/plans/FORGE-BENCH-1.md:70) specifies `actions: read` and allows a missing lookup to continue. GitHub CLI also needs a token in its environment; the existing [release workflow](/.github/workflows/forge-next.yml:58) supplies `GH_TOKEN`. The planned test does not check that authentication, so a workflow could pass it while reporting no earlier score on every run. [GitHub’s workflow documentation](https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-github-cli) describes the token requirement.  
+    Gain 3, Work 2, Harm 2
+   Disposition: keep - below the bar (follow-up)

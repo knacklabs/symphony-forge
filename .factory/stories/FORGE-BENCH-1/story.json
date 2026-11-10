@@ -1,10 +1,22 @@
 {
   "doc": "plans/FORGE-BENCH-1.md",
-  "status": "planning",
+  "status": "read",
   "steps": [
     {
       "at": "2026-11-10T17:10:38.935235+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-10T17:31:39.771718+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-11-10T17:50:18.901714+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-11-10T17:56:31.820272+00:00",
+      "step": "read"
     }
   ],
   "title": "Score each Forge release on the same reference app",
