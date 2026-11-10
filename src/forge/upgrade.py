@@ -52,7 +52,7 @@ REFUSALS = {
                  "Forge left it alone.", "check that folder, then git worktree remove --force "
                  "{path} && git branch -D fix/{fix}, then forge upgrade {release}"),
     "taken": ("Fix {fix} already exists {how}, so Forge left it alone.",
-              "finish or remove that fix, then forge upgrade {release}"),
+              "{next_command}"),
     "install": ("Installing Forge {release} failed: {reason}",
                 "run {install} in your own terminal, then forge upgrade {release}"),
     "stale": ("After the install, your PATH finds {found} instead of Forge {release}.",
@@ -118,11 +118,39 @@ def upgrade(args: argparse.Namespace) -> int:
     # 1. The fix, started like forge fix start's, or the one an earlier run left.
     path = trees.get(f"fix/{name}")
     state = {"kind": "fix", "why": why, "done_when": done}
+    branch = f"fix/{name}"
+    rel = repo.state_path(name)
+    saved = story.show(top, branch, rel) or story.show(top, f"origin/{branch}", rel)
+    existing = json.loads(saved or "{}")
+    if existing.get("kind") == "fix" and existing.get("branch") == branch and (
+            existing.get("drop") or existing.get("why") != why):
+        source = branch if story.show(top, branch, rel) else f"origin/{branch}"
+        # Inspect every commit, so work that was later reverted still belongs to its fix.
+        work = repo.git("log", "--format=", "--name-only", f"{ref}..{source}",
+                        "--", ".", f":(exclude){rel}", cwd=top)
+        next_command = (f"forge fix drop {name} --undo" if existing.get("status") == "dropped"
+                        else f"forge close {name}")
+        if work or path and repo.git("status", "--porcelain", "--untracked-files=all", cwd=path):
+            repo.refuse(REFUSALS["taken"], fix=name, how="for other work",
+                        next_command=next_command)
+        if existing.get("status") == "dropped":
+            task.fix_drop(argparse.Namespace(item=name, undo=True, because=None))
+            path = story.worktrees(top)[branch]
+        elif path is None:
+            path = task._folder(f"fix-{name}")
+            if source != branch:
+                repo.git("branch", branch, source, cwd=top)
+            repo.git("worktree", "add", "-q", str(path), branch, cwd=top)
+        existing = repo.read_state(name, path) or {}
+        existing.pop("drop", None)
+        existing.update(state)
+        repo.commit_state(f"Use the unused fix for Forge {release}",
+                          repo.write_state(name, existing, path), top=path)
     if path is None:
         if repo.run("git", "rev-parse", "-q", "--verify", f"refs/heads/fix/{name}", cwd=top
                     ).returncode == 0 or repo.git("ls-remote", "--heads", "origin", f"fix/{name}", cwd=top):
             repo.refuse(REFUSALS["taken"], fix=name, how="as a branch without its folder",
-                        release=release)
+                        next_command=f"git branch -d fix/{name}")
         path = task._new_checkout(name, f"fix/{name}", f"fix-{name}", ref,
                                   {**state, "base": repo.git("rev-parse", ref, cwd=top)},
                                   f"Start the fix: {why}")
@@ -138,7 +166,7 @@ def upgrade(args: argparse.Namespace) -> int:
                  "branch": f"fix/{name}"}, "start"), path)
             repo.commit_state(f"Start the fix: {why}", rel, top=path)
         elif found.get("why") != why:
-            repo.refuse(REFUSALS["taken"], fix=name, release=release,
+            repo.refuse(REFUSALS["taken"], fix=name, next_command=f"forge close {name}",
                         how="for other work" if path.is_dir() else "as a branch without its folder")
         print(f"Continuing fix {name} in {path}.", flush=True)
 

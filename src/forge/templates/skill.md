@@ -1225,6 +1225,9 @@ Use `forge upgrade <release>` directly, not `forge fix start`: upgrade creates i
 than the repo pins. If upgrade refuses outside the default branch, move to the main checkout.
 Drop the current fix only if Forge started it and the owner agrees. Then switch to the default
 branch and run `forge upgrade <release>`. The refusal gives these steps in plain words.
+If the upgrade's fix name belongs to a dropped or restored fix with no other work, upgrade
+restores its folder or continues in it. If that fix has other work, the refusal names the
+command to restore or close it. Keep that work and complete the named step first.
 
 Before starting another upgrade, it removes an earlier upgrade's leftover worktree and local
 branch when its pull request has merged and the checkout has no unpushed or uncommitted work.

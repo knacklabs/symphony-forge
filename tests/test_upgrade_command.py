@@ -463,11 +463,11 @@ REFUSED = {
     "a fix of that name for other work": (
         lambda up: _leftover(up, _taken_state), [RELEASE],
         f"Fix {NAME} already exists for other work, so Forge left it alone.\n"
-        f"Next: finish or remove that fix, then forge upgrade {RELEASE}\n"),
+        f"Next: forge close {NAME}\n"),
     "its branch without its folder": (
         lambda up: up.repo.git("branch", f"fix/{NAME}", "origin/main"), [RELEASE],
         f"Fix {NAME} already exists as a branch without its folder, so Forge left it alone.\n"
-        f"Next: finish or remove that fix, then forge upgrade {RELEASE}\n"),
+        f"Next: git branch -d fix/{NAME}\n"),
 }
 
 
