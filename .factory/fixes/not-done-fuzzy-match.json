@@ -4,12 +4,20 @@
   "done_when": "A Not-done finding that matches the item's Done-when with small wording changes (missing or extra small words, case, punctuation) still blocks; a Not-done finding about builder details stays a follow-up",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-10T02:45:06.557778+00:00",
       "step": "start"
     }
   ],
-  "why": "A Not-done finding about the item's own Done-when becomes a non-blocking follow-up when the reviewer rewords the Done-when slightly (#1493)"
+  "stuck": {
+    "close": null,
+    "head": "98d769eecb7949b07eaec41596fab5903e38202d",
+    "keys": {},
+    "round": null
+  },
+  "why": "A Not-done finding about the item's own Done-when becomes a non-blocking follow-up when the reviewer rewords the Done-when slightly (#1493)",
+  "worker": "codex"
 }
