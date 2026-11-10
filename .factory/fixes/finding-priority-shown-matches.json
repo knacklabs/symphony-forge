@@ -1,0 +1,15 @@
+{
+  "base": "22a569900e405b345833465cf95080e422878507",
+  "branch": "fix/finding-priority-shown-matches",
+  "done_when": "Every finding that close treats as blocking past the round limit is shown with the same priority in close's table, finding list and stop message as the one close acts on",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-10T02:45:11.175528+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Close lists a finding as P1 in its table and finding list while it treats it as a P0 that ignores the round limit, so the owner is offered accept and then refused (#1498)"
+}
