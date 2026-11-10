@@ -4,39 +4,22 @@
 
 ## What changes for you
 
-<What the people who use this will notice, in plain English. No IDs, codes or jargon. End each
-item with its source in plain words, such as (Source: the client's note on late orders, 12 Oct),
-or with the sourced item that needs it, such as (Needed by: the Customers screen). A source is a
-client note, a brief answer, a decision, a screen marked Build now at sign-off, a fixed rule of
-the app, or the owner's own request with its date. Name each screen, field, endpoint, tool and
-setting that the plan adds in one of these items.>
-
-<!-- For user-facing parts: run impeccable init if PRODUCT.md is absent. Design the screens
-in a Claude Design artifact; on a Codex-only host without artifact tools, use HTML artboards.
-Save each screen and its images in docs/design/<KEY>/. Copy .forge/design/support.js beside
-the HTML screens and run it for a 1440 by 900 PNG per screen. Commit the folder. Use its git tree
-id (git rev-parse HEAD:docs/design/<KEY>) in the last line below. For small changes to existing
-screens that add no screen and change no flow, use Design: none (<why>) instead.
-Remove this comment and omit
-the Design line for a backend-only story. Cold read follows the design; one plan approval binds
-these exact files. A folder edit needs its new tree id and a new plan approval.
-The rule starts with the next plan read and approval. Plans approved without a Design line
-before this rule keep their existing approval. -->
-Design: docs/design/<KEY>/ (<tree id>)
+- Forge keeps its design system (the shared parts and the theme names) once, in its code.
+- For each client, the agent builds that client's Claude design system from Forge's code.
+- Sales sets the client's theme (colours, fonts, corner size, spacing) in Claude, and the agent copies that theme into the prototype, so the prototype matches the approved design.
+- Close reports when the app's theme differs from the approved design. The later step that picks the look in code goes away.
+- A new client repo gets this when it starts. An existing client repo gets it when it upgrades to the new release and syncs.
 
 ## Why
 
-One shared design system and theme, set in Claude and checked at close
-
-
+The look is picked in code at a later step, so the prototype can drift from the design the client approved, and nothing reports the difference.
 
 ## Done when
 
-<!-- One bold plain sentence per result, which the owner approves: no code names, file paths or
-test names. Its evidence, edge cases and proving tests go under the same number in Done-when
-details. -->
-
-1. **Something anyone can observe once this is done.**
+1. **The shared parts and theme names live once in Forge's code, and each client's Claude design system is built from them.**
+2. **Sales sets a client's theme in Claude, and the prototype shows that theme.**
+3. **Close reports when the app's theme differs from the approved design.**
+4. **The code step that picks the look is gone for new and upgraded client repos.**
 
 ## Risks
 
