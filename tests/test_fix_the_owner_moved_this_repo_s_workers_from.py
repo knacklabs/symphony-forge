@@ -1,6 +1,7 @@
-"""This repo's Claude work uses Sonnet, with Codex Sol work and Terra reviews.
+"""This repo's work runs on Claude Sonnet (workers = claude since 10 Nov 2026), with Terra reviews.
 
 Build, fix and lite use low effort; design keeps high. Cold reads and reviews use Terra max.
+The Codex entries stay in forge.toml for an owner who switches back.
 """
 from __future__ import annotations
 
@@ -10,9 +11,10 @@ import tomllib
 
 from conftest import ROOT, _install
 from test_codex_setup import _signed_in_codex
-from test_codex_worker import QUIET, _sent, sdk_data  # noqa: F401 (fixture)
+from test_codex_worker import sdk_data  # noqa: F401 (fixture)
 from test_setup import _autoreview, _stub_forge
 from test_subagent_roles import _settings
+from test_worker import calls, install_claude
 
 import pytest
 
@@ -42,11 +44,11 @@ def _codex(repo, monkeypatch, sdk_data):
     return repo.bin / "codex-app-server.jsonl"
 
 
-def test_1_this_repo_works_on_codex_low_and_reviews_on_codex(repo, monkeypatch, sdk_data, claude_session):
+def test_1_this_repo_works_on_claude_low_and_reviews_on_codex(repo):
     text = (ROOT / "forge.toml").read_text(encoding="utf-8")
     config = tomllib.loads(text)
-    assert config["workers"] == "split"
-    # Ordinary work stays on Codex; both tools start implementation at low effort.
+    assert config["workers"] == "claude"
+    # Both tools start implementation at low effort; the Codex entries stay for a later switch.
     assert config["models"]["build"] == config["models"]["fix"] == {
         "codex": SOL, "claude": CLAUDE_BUILD}
     assert config["models"]["lite"] == {
@@ -60,23 +62,20 @@ def test_1_this_repo_works_on_codex_low_and_reviews_on_codex(repo, monkeypatch, 
     assert config["models"]["review"] == {"model": "gpt-6.1-terra", "effort": "max"}
     assert "stage" not in config and "signoff" not in config
 
-    log = _codex(repo, monkeypatch, sdk_data)
+    log = install_claude(repo)
     repo.write("forge.toml", text)
     repo.git("add", "forge.toml")
     repo.git("commit", "-q", "-m", "Configure Forge")
     repo.git("push", "-q", "origin", "main")
-    started = repo.forge("fix", "start", "Move workers to Codex", "--done", "Codex builds it")
+    started = repo.forge("fix", "start", "Move workers to Claude", "--done", "Claude builds it")
     assert started.returncode == 0, started.stderr
 
-    worked = repo.forge("work", "move-workers-to-codex")
+    worked = repo.forge("work", "move-workers-to-claude")
 
     assert worked.returncode == 0, worked.stdout + worked.stderr
-    [call] = _sent(log, "thread/start")
-    # A fix's first turn uses lite; its helpers must reach the SDK too.
-    assert call["config"] == {**QUIET, "features.multi_agent": True,
-        "model": "gpt-6.1-sol", "model_reasoning_effort": "low",
-        "agents.default_subagent_model": "gpt-6-luna",
-        "agents.default_subagent_reasoning_effort": "max"}
+    # A fix's first turn uses lite, which this repo sets to Sonnet at low effort.
+    [call] = calls(log)
+    assert (call["options"]["model"], call["options"]["effort"]) == ("claude-sonnet-5-5", "low")
 
 
 def test_2_forge_doctor_passes_on_this_repos_forge_toml(repo, gh, tmp_path, monkeypatch,
@@ -111,4 +110,5 @@ def test_2_forge_doctor_passes_on_this_repos_forge_toml(repo, gh, tmp_path, monk
 
     assert done.returncode == 0, done.stdout + done.stderr
     assert "Everything checks out for Forge " in done.stdout, done.stdout
-    assert "when Codex asks you to approve Forge's hooks, approve them" in done.stdout
+    # No worker runs on Codex now, so doctor has no Codex hook approval to ask for.
+    assert "approve Forge's hooks" not in done.stdout

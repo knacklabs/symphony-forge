@@ -1,0 +1,59 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/fullrun.py\tTrack manual runs of the configured full-suite workflow\texternal-full-suite",
+      "kind": "bug",
+      "path": "src/forge/fullrun.py",
+      "line": 17,
+      "text": "Track manual runs of the configured full-suite workflow",
+      "from": "blocking",
+      "item": "external-full-suite",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/skill.md\tClose refuses because the generated guide copies are stale\texternal-full-suite",
+      "kind": "bug",
+      "path": "src/forge/templates/skill.md",
+      "line": 1900,
+      "text": "Close refuses because the generated guide copies are stale",
+      "from": "blocking",
+      "item": "external-full-suite",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/skill.md\tInclude the setup steps required for the external workflow\texternal-full-suite",
+      "kind": "bug",
+      "path": "src/forge/templates/skill.md",
+      "line": 1900,
+      "text": "Include the setup steps required for the external workflow",
+      "from": "blocking",
+      "item": "external-full-suite",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_repo_full_suite_workflow.py\tGate: test_1_repo_workflow_replaces_only_the_optional_full_suite\texternal-full-suite",
+      "kind": "bug",
+      "path": "tests/test_repo_full_suite_workflow.py",
+      "line": 29,
+      "text": "Gate: test_1_repo_workflow_replaces_only_the_optional_full_suite",
+      "from": "blocking",
+      "item": "external-full-suite",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/fullrun.py\tFollow-up: Point local-mode reminders at the configured workflow",
+      "kind": "edge",
+      "path": "src/forge/fullrun.py",
+      "line": 16,
+      "text": "Follow-up: Point local-mode reminders at the configured workflow",
+      "from": "review",
+      "item": "external-full-suite",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
