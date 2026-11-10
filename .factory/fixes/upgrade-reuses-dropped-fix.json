@@ -1,6 +1,13 @@
 {
   "base": "22a569900e405b345833465cf95080e422878507",
   "branch": "fix/upgrade-reuses-dropped-fix",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1c358-dc4f-7052-822f-f1c711065978",
+    "head": null,
+    "start": "a399bb3bcb98e3cb4a636340cfde6d6d00ca623c"
+  },
   "done_when": "forge upgrade <release> on the default branch reuses a dropped or restored upgrade fix of the same name that has no other work, or names the one command that clears it; it never refuses with no next step",
   "fix_kind": "mechanical",
   "kind": "fix",
