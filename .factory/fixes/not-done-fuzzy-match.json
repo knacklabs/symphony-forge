@@ -62,8 +62,8 @@
     "id": "14a200da-0592-4c79-b2fd-185eca6699b4",
     "status": "clean"
   },
-  "round": 2,
-  "status": "waiting for checks",
+  "round": 3,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-10T02:45:06.557778+00:00",
@@ -88,10 +88,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": "271b4885-759d-4362-a009-40f93cd77dd4",
-    "head": "ff70f58b89a8c5b9ea4df4d4b5e62f5955aee863",
+    "close": "b71006a8-f9e1-41dc-96fb-60e46ea4ab3e",
+    "head": "0c5b7a6c81ee62cb0d01bc230df39d384cad8ecd",
     "keys": {},
-    "round": 1
+    "round": 2
   },
   "why": "A Not-done finding about the item's own Done-when becomes a non-blocking follow-up when the reviewer rewords the Done-when slightly (#1493)",
   "worker": "codex"
