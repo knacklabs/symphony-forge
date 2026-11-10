@@ -1,0 +1,15 @@
+{
+  "base": "39e4f5c6828bb277efe3f786d76412889610d846",
+  "branch": "fix/external-full-suite",
+  "done_when": "With an optional forge.toml setting, the generated workflow has no scheduled full suite and Forge's full-run next step names the repo's own workflow; sign-off and the push guard still accept a forge-full-suite status posted by that workflow; without the setting nothing changes",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-10T15:36:54.188914+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "A repo with its own nightly test workflow still runs Forge's nightly full suite every night only to get the forge-full-suite status, so it pays for two nightly runs"
+}
