@@ -117,7 +117,7 @@
     "id": "d701804d-a275-478b-91c8-07425e585f62",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -139,10 +139,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": null,
-    "head": "843618d4b8e44a7263e3a9a8674ddea41aa9a5b7",
+    "close": "d61526b9-dd74-4a0c-9a82-5695c5c79135",
+    "head": "42bf1f1e75428ae4774222964c142cbbd56c7625",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "After a fix named for an upgrade is dropped or restored, forge upgrade refuses both ways and leaves no Forge path (#1501)",
   "worker": "codex"
