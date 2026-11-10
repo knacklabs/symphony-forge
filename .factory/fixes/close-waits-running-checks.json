@@ -94,7 +94,7 @@
     "id": "d364de2e-c341-40ec-9d89-f3e45fe272bf",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -116,10 +116,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": null,
-    "head": "b4aff4821858a89026eee8054c7d1a1a46355f1f",
+    "close": "b4bbc2d2-09a7-43fc-84cc-1abafba0195d",
+    "head": "b4668ed954c8ecd16495d5f49bd699d7c3d22b77",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "Close and merge stop waiting after 10 minutes while the pull request's test groups are still running, so on repos with 30-minute test groups the coordinator reruns close and merge several times per change (#1500)",
   "worker": "codex"
