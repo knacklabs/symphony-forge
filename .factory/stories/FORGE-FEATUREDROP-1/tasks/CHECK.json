@@ -217,7 +217,7 @@
     "status": "blocked"
   },
   "round": 3,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-10T20:08:57.485640+00:00",
@@ -238,8 +238,12 @@
   ],
   "stop": {
     "at": "2026-11-10T21:05:52.713760+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "src/forge/feature_remove.py",
-    "wait_id": "c63f3c0f-ac34-42f0-b3af-b934ff84b3ea"
+    "reason": "The owner was away on 11 Nov 2026 and told the coordinator to take the recommended option: the three cases are common forms (a controller prefix with no leading slash, inserts through a client alias, multiline comments) and each is a small rule",
+    "wait_id": "c63f3c0f-ac34-42f0-b3af-b934ff84b3ea",
+    "worker_round": 3
   },
   "stuck": {
     "close": "d4ff31b7-a75f-4469-8f9e-858f358cbb3a",
