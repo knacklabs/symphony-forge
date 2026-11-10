@@ -802,9 +802,9 @@ def models(cfg: dict[str, Any], kind: str, family: str) -> dict[str, str]:
 
 
 def user_facing(cfg: dict[str, Any], row: dict[str, str]) -> bool:
-    """A User-facing row is design work in clients, with one tool, or under source split."""
-    return (cfg["repo"] == "client" or cfg["tools"] != "both" or cfg["workers"] == "split") and row.get(
-        "User-facing", "").lower() in ("yes", "true")
+    """A User-facing row is design work in clients, with one tool, or when workers use Claude."""
+    return (cfg["repo"] == "client" or cfg["tools"] != "both"
+            or cfg["workers"] in ("split", "claude")) and row.get("User-facing", "").lower() in ("yes", "true")
 
 
 def worker_models(cfg: dict[str, Any], kind: str, family: str) -> dict[str, str]:
