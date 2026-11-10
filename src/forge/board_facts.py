@@ -396,7 +396,8 @@ def failed_schedules(top: Path) -> list[Item]:
     """Failed scheduled workflows and manual full runs on the default branch.
     Read each run list once and one log per failed workflow, kept ten minutes."""
     branch = repo.default_branch(top)
-    workflow = repo.config(top).get("full_suite_workflow") or "forge.yml"
+    cfg = repo.config(top) if (top / "forge.toml").is_file() else {}
+    workflow = cfg.get("full_suite_workflow") or "forge.yml"
 
     def fetch(now: datetime) -> list[Item] | None:
         # ponytail: the newest 100 scheduled runs; a frequent schedule can crowd out a daily one.

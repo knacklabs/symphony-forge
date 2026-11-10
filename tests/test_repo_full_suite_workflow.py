@@ -20,6 +20,7 @@ from test_testplace_fullrun import _set_status
 from test_testplace_workflow import _jobs
 
 STORY = "external-full-suite"
+pytestmark = pytest.mark.platform
 
 
 @pytest.mark.parametrize("adopted", [False, True], ids=["new-external", "adopted-default"])
