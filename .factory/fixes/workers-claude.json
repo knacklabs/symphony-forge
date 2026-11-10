@@ -18,7 +18,7 @@
       "gain": null,
       "harm": null,
       "line": 4,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -31,7 +31,7 @@
       "gain": null,
       "harm": null,
       "line": 4,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -44,7 +44,7 @@
       "gain": null,
       "harm": null,
       "line": 4,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -54,39 +54,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "9ed0744240cf83e827f8d749316e486458ac55c8265fb5626c00732c9b5a97be",
-    "changed": "76a40553c4dc271cd338e0dc90e4eb8ce4ca8203cae70f60c32d85a002804e2b",
-    "commit": "20d68c99dd0d1673d48d540d73d4a520035396ae",
+    "branch_diff": "b0b33e84bb08f507d8c656d79dc0efade34226134e3d53345b92d776c999127d",
+    "changed": "ae74fe2c31185f00528be811f8a5e122bf99a06b62e86b52733788a00a3685c2",
+    "commit": "5d9c3070084c2f570a99036d1a79a521c41797cb",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "After this change merges, `forge next` can still name Codex for a ready part. `src/forge/nextstep.py:755-767` reads the configuration from the part\u2019s starting branch, and `src/forge/task.py:590-600` uses the story branch when its plan has not landed on main. The approved `FORGE-RENDER-1` story is in that state: its branch still has `workers = \"split\"`, and its dependency-free `HELPER` part is not user-facing. Started parts have another gap: without a local settings file, `src/forge/nextstep.py:1162-1164` returns no builder name at all. The configuration change therefore does not satisfy the every-part outcome.",
-        "file": "forge.toml",
-        "line": 4,
-        "priority": "P1",
-        "required_done_when": true,
-        "title": "Not done: forge.toml has workers = \"claude\" and forge next names Claude as the builder of every part"
-      },
-      {
-        "body": "The full test suite will fail with this setting. `tests/test_fix_the_owner_moved_this_repo_s_workers_from.py:46-48` reads this repository\u2019s `forge.toml` and asserts that `workers` is `split`. `tests/test_source_split_workers.py:24-35` also uses this file and expects a plain task to start Codex. Those assertions must be updated for the owner\u2019s new choice; otherwise the configured full test command and scheduled full-suite run remain red.",
-        "file": "forge.toml",
-        "line": 4,
-        "priority": "P1",
-        "title": "Update the tests that still require split workers"
-      },
-      {
-        "body": "Changing this source repository from `split` to `claude` also changes how its user-facing story tasks are classified. With the default `tools = \"both\"`, `src/forge/repo.py:804-807` returns false for those tasks, so `src/forge/worker.py:187-199` uses the ordinary worker and build model instead of the frontend role and design model. For example, board work now receives the configured Claude build effort `low` rather than the design effort `high`, contrary to the existing user-facing routing contract. `tests/test_source_split_workers.py:17-21` exercises that distinction.",
-        "file": "forge.toml",
-        "line": 4,
-        "priority": "P1",
-        "title": "Preserve design routing for user-facing source tasks"
-      }
-    ],
-    "id": "e67e03cd-5b7b-4d25-8cbb-f3bb7a37ddb0",
-    "status": "blocked"
+    "findings": [],
+    "id": "189c4303-36da-409b-b65b-33d3ce5cc031",
+    "status": "clean"
   },
   "round": 1,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-10T18:00:54.626512+00:00",
@@ -94,6 +71,10 @@
     },
     {
       "at": "2026-11-10T18:07:30.401656+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-10T18:29:15.377659+00:00",
       "step": "review"
     }
   ],
