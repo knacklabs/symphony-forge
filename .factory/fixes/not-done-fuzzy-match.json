@@ -18,7 +18,7 @@
       "gain": 4,
       "harm": 3,
       "line": 1076,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -31,7 +31,7 @@
       "gain": 4,
       "harm": 2,
       "line": 1075,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -44,7 +44,7 @@
       "gain": 3,
       "harm": 3,
       "line": 19,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -54,47 +54,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "aec143155fcac35ca0583a7c59da5457675cb1cbd9bf31eb1409fdfed2e21701",
-    "changed": "82a6bb1e78f073716894c8964c50ca5e6def3e7a5a663140feac2d4a6db0b825",
-    "commit": "7992e829abe703865d481b074dd9d7e6b1cdcdae",
+    "branch_diff": "ebb2097c4009c64a66517468cc7cee9333cc4c44a5c8c21f26e77afe905e6bd5",
+    "changed": "4ec8e9866a31c19238fe2f5d2c7283c8b6d4d844394dfac37d99339d8f9284ea",
+    "commit": "f485b98e7d8f4ff459cc1b67f39907618e7356d8",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done\nCase: normal use - a reviewer inserts \u201calso\u201d into an otherwise matching finding, such as \u201cThe guide lists the commands and the worker brief also carries them.\u201d The filter removes only six specific small words, so this finding does not match the approved sentence without \u201calso\u201d. Punctuation changes inside words also fail: \u201cThe e-mail is sent to users\u201d and \u201cThe email is sent to users\u201d produce different word sequences. In both cases, close classifies the unmet outcome as a follow-up. The new test covers an extra \u201cthe\u201d and punctuation between words, so it does not catch these cases.\nDone when: A Not-done finding that matches the item's Done-when with small wording changes (missing or extra small words, case, punctuation) still blocks; a Not-done finding about builder details stays a follow-up",
-        "file": "src/forge/review.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 1076,
-        "priority": "P1",
-        "title": "Functional: Reworded Done-when findings still become follow-ups",
-        "work": 2
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 2\nRaise: Functional\nCase: normal use - an approved outcome says \u201cThe form shows the name of the owner\u201d, while a reviewer requests the builder detail \u201cThe form shows the name to the owner in bold\u201d. Removing both \u201cof\u201d and \u201cto\u201d makes the approved words a prefix of the detail, so close treats the unapproved formatting and audience requirement as a blocking Done-when finding. Significant symbols also collapse: \u201cBuild a C++ client\u201d and \u201cBuild a C client\u201d normalize identically. These are different outcomes that become identical ordered sequences, which the ordered-word ruling did not address.",
-        "file": "src/forge/review.py",
-        "gain": 4,
-        "harm": 2,
-        "line": 1075,
-        "priority": "P1",
-        "title": "Functional: Distinct outcomes become the same normalized words",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - a reviewer rewords an approved story-task outcome, or an earlier-adopted repo closes a review saved before upgrading. Every new proof case starts a fresh fix, although story tasks obtain their approved items through a separate path in src/forge/review.py:1078, and saved reviews are reclassified at src/forge/close.py:290. Existing task and upgrade tests use exact wording. The proof would therefore still pass if reworded task findings or saved pre-upgrade findings remained non-blocking. Exercise both cases through forge close.",
-        "file": "tests/test_done_when_small_word_changes.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 19,
-        "priority": "P1",
-        "title": "Gate: test_1_small_word_changes_block_but_builder_details_stay_follow_ups",
-        "work": 2
-      }
-    ],
-    "id": "4d0ded76-c8eb-40ca-b321-19a6107f6c78",
-    "status": "blocked"
+    "findings": [],
+    "id": "14a200da-0592-4c79-b2fd-185eca6699b4",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-10T02:45:06.557778+00:00",
@@ -102,6 +71,10 @@
     },
     {
       "at": "2026-11-10T02:59:50.682371+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-10T03:36:10.600844+00:00",
       "step": "review"
     }
   ],
