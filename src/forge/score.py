@@ -137,6 +137,11 @@ def holds(finding: dict[str, Any], level: str | None = "P1") -> bool:
     return outcome == "block" if level == "P0" else outcome in HOLD
 
 
+def priority(finding: dict[str, Any]) -> str:
+    """Show P0 when the score keeps this finding blocking past the round limit."""
+    return "P0" if holds(finding, "P0") else finding["priority"]
+
+
 def note_holds(note: str) -> bool:
     """A read note (text after its number) holds by the bar, or unscored unless `Advisory:`."""
     if RARE.search(note):

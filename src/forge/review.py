@@ -1040,8 +1040,9 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         identity = repo.record_event(top, item, "review result", commit=head,
             review_round=round_number(top, item, state),
             outcome="failed" if reason else "blocked" if serious else "clean",
-            findings=None if reason else [{key: finding[key] for key in
-                ("title", "priority", "file")} for finding in findings])
+            findings=None if reason else [{"title": finding["title"],
+                                          "priority": finding["priority"] if signoff_prompt else score.priority(finding),
+                                          "file": finding["file"]} for finding in findings])
         if signoff_prompt:
             if reason:
                 problem, action = "The sign-off review did not finish: " + reason + ".", "check Autoreview"

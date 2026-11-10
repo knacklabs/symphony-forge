@@ -433,7 +433,7 @@ def close(args: argparse.Namespace) -> int:
 
     print(f"Review: {review_skip.label(result)}.", flush=True)
     for number, finding in serious:
-        print(f"{number}. {finding['priority']} {finding['title']} "
+        print(f"{number}. {score.priority(finding)} {finding['title']} "
               f"({finding['file']}:{finding['line']})\n{finding['body']}\n")
     advice = [(n, f) for n, f in enumerate(result["findings"], 1)
               if not f.get("required_done_when") and not score.holds(f, result.get("blocking_level"))]
@@ -441,7 +441,7 @@ def close(args: argparse.Namespace) -> int:
         print("Advice that does not block the merge:" if serious else
               "Follow-ups that do not block the merge (recorded in the pull request):")
         for number, finding in advice:
-            priority = f"{finding['priority']} " if serious else ""
+            priority = f"{score.priority(finding)} " if serious else ""
             reason = finding.get("follow_up") or (
                 "Rare case outside normal use" if score.RARE.search(finding["body"]) else
                 "Light review holds only P0 findings" if result.get("blocking_level") == "P0"
@@ -1120,7 +1120,7 @@ def _block(result: dict[str, Any], check: str) -> str:
                 else "advisory: " + " ".join(score.strip(finding.get("body", "")).split()))
         note += f"; {line}" if line and note != line else ""
         (blocking if is_blocking else below[outcome] if n not in because and outcome in below
-         else rest).append(f"- Finding {n} ({finding['priority']}): {finding['title']} "
+         else rest).append(f"- Finding {n} ({score.priority(finding)}): {finding['title']} "
                            f"({finding['file']}:{finding['line']}): {note}")
     if result.get("skipped"):
         lines = [BEGIN, f"Review: {review_skip.label(result, reason=True)}."]
