@@ -121,8 +121,8 @@ def _wait(top: Path, item: str, sha: str, names: list[str], branch: str, progres
         running = False
         try:
             seen, snapshot, check_runs, pr = _status(top, item, sha, branch, cache, requested)
-            running = any(run.get("status") == "in_progress" for run in check_runs)
-            result["state"] = ("running" if any(state == PENDING for _, state in seen)
+            running = any(state == PENDING for _, state in seen)
+            result["state"] = ("running" if running
                                else "queued" if any(state == QUEUED for _, state in seen)
                                else "unknown")
             if progress and snapshot != previous:
