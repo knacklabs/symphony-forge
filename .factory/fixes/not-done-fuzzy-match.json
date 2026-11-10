@@ -1,6 +1,13 @@
 {
   "base": "22a569900e405b345833465cf95080e422878507",
   "branch": "fix/not-done-fuzzy-match",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1c358-dc4f-70b3-b0f4-e2ae8387c78f",
+    "head": null,
+    "start": "cd3a8c4b264dc12781f87e6b74fa0fb00cfc6337"
+  },
   "done_when": "A Not-done finding that matches the item's Done-when with small wording changes (missing or extra small words, case, punctuation) still blocks; a Not-done finding about builder details stays a follow-up",
   "fix_kind": "mechanical",
   "kind": "fix",
