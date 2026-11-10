@@ -85,7 +85,7 @@
     "status": "blocked"
   },
   "round": 2,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-10T19:39:53.711839+00:00",
@@ -101,9 +101,13 @@
     }
   ],
   "stop": {
+    "by": "owner",
+    "choice": "switch",
     "question": "On Windows the printed next step puts double quotes around a plain is stuck. It should deliver: The printed nightly full-run command has no quotes around a plain file name, and it is the same on Windows as on other systems.\nTwo rounds in a row left the open P0 protect quoted windows arguments from powershell evaluation in src/forge/repo.py.\nThe worker tried: Keep Windows next-step arguments literal.\nChoose one: switch this item to Claude; keep Codex for one more round; or narrow or split it.",
+    "reason": "The owner was away on 11 Nov 2026 and told the coordinator to take the recommended option; he chose Claude builders for this repo on 10 Nov 2026, and the Codex worker was stuck on the same finding for two rounds",
     "tool": "codex",
-    "wait_id": "30bf6a8e-2fc4-41a0-9964-b4a098b8e2a0"
+    "wait_id": "30bf6a8e-2fc4-41a0-9964-b4a098b8e2a0",
+    "worker_round": 2
   },
   "stuck": {
     "close": "d7976db9-20b2-4366-901f-8aac7d764a80",
@@ -113,6 +117,7 @@
     },
     "round": 1
   },
+  "tool": "claude",
   "why": "On Windows the printed next step puts double quotes around a plain file name, so the Windows platform run fails two nightly-setting tests and blocks the release.",
   "worker": "codex"
 }
