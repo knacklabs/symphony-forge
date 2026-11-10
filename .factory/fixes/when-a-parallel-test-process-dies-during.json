@@ -117,7 +117,7 @@
     "id": "7f843309-abd8-4b2f-aa09-06d3e1aa6d83",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -130,10 +130,12 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "39b9db6d36dd9d4a53841c75ef722f375f0e1a9f",
-    "keys": {},
-    "round": null
+    "close": "00598c85-f97c-4527-841d-434d0241fd90",
+    "head": "5b3a82cd1dbfa4d762373c5fbc96ea05e1476a26",
+    "keys": {
+      "the open P0 not done: when a parallel test process dies, the run still reports the real result, including the failed test names. in src/forge/fasttest.py": 1
+    },
+    "round": 1
   },
   "why": "When a parallel test process dies during a run, the plugin crashes with an internal error and the run shows no failed test names, so the real result is hidden.",
   "worker": "codex"
