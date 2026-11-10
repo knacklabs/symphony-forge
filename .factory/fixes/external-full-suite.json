@@ -18,7 +18,7 @@
       "gain": 4,
       "harm": 3,
       "line": 1900,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -31,7 +31,7 @@
       "gain": 5,
       "harm": 3,
       "line": 1900,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -44,7 +44,7 @@
       "gain": 4,
       "harm": 3,
       "line": 17,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -57,7 +57,7 @@
       "gain": 3,
       "harm": 3,
       "line": 29,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -80,67 +80,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "c51298af422e153cd12bf819348c9d1420b2716a9a3caab7e71fe5bdcfd3fed0",
-    "changed": "8023d92e68edacd41300e8e2d1c0ea3e6115981510a3599f733d30ee03090254",
-    "commit": "3159ee103da8d7a06e35a406b905d16deeeeb397",
+    "branch_diff": "db81d6d3870a23cc87620b9c3494272cdeb81c378565ede474edf50d9f552e16",
+    "changed": "dd39952f480bf0f267ee46e296d4c240bf842901ec09d9dbda4378a4c71752ec",
+    "commit": "5f847d96e76d185cb954235d988df838359cd0d9",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 1, Harm 3\nRaise: Functional\nCase: normal use - Closing this fix after the template edit. Both tracked copies, `.claude/skills/forge/SKILL.md` and `.codex/skills/forge/SKILL.md`, still contain the old text. `src/forge/story.py:89-93` renders them from this template, and `src/forge/sync.py:601-620` makes close refuse when changed guides differ from that output. As a result, close stops before review or CI, and the repository's agents do not receive the new instructions. Regenerate and commit both copies.",
-        "file": "src/forge/templates/skill.md",
-        "gain": 4,
-        "harm": 3,
-        "line": 1900,
-        "priority": "P1",
-        "title": "Close refuses because the generated guide copies are stale",
-        "work": 1
-      },
-      {
-        "body": "Gain 5, Work 1, Harm 3\nRaise: Functional\nCase: normal use - An existing CI repo follows these instructions to replace Forge's nightly suite. Setting the key alone does not regenerate `.github/workflows/forge.yml`: `src/forge/sync.py:706-712` does that through `forge sync`, while `src/forge/close.py:821-827` does not check workflow drift for a same-version settings change. The old nightly job can therefore keep running. The instructions also omit two GitHub prerequisites: the status-posting step needs `GH_TOKEN` populated from `github.token`, and an existing schedule-only workflow needs `workflow_dispatch` for the suggested command. Without them, the status post or manual run fails and release or sign-off proof remains unavailable. See [GitHub CLI authentication in workflows](https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-github-cli) and [gh workflow run](https://cli.github.com/manual/gh_workflow_run).",
-        "file": "src/forge/templates/skill.md",
-        "gain": 5,
-        "harm": 3,
-        "line": 1900,
-        "priority": "P1",
-        "title": "Include the setup steps required for the external workflow",
-        "work": 1
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - A release starts the configured workflow manually and its tests fail, or a manual retry passes after a failed nightly run. This change dispatches the configured file, but `src/forge/board_facts.py:404-406` still reads manual runs only from `forge.yml`; `forge next` therefore misses the manual failure or continues reporting the older scheduled failure after a successful retry. The guide promises that failed manual full runs appear in `forge next` with their failing tests. Update the existing manual-run lookup to use the configured workflow, retaining the default when unset.\nAdds work: include the configured workflow in the existing failed-run lookup; F 2 x H 2 = 4; 2 x C = 2",
-        "file": "src/forge/fullrun.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 17,
-        "priority": "P1",
-        "title": "Track manual runs of the configured full-suite workflow",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - An earlier-adopted repo upgrades, or a repo enables the setting while keeping its pull-request tests. The `adopted-default` case copies the old fixture but then replaces its entire `forge.toml` with a new configuration and runs sync without exercising an upgrade or retaining an earlier workflow. It cannot establish that the adopted configuration keeps its default behavior. Separately, line 37 checks only that `forge test --change` occurs somewhere in the generated file; the test would still pass if the setting removed the pull-request trigger or made the test job skip pull requests. The named proof therefore does not protect both behaviors it claims.",
-        "file": "tests/test_repo_full_suite_workflow.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 29,
-        "priority": "P1",
-        "title": "Gate: test_1_repo_workflow_replaces_only_the_optional_full_suite",
-        "work": 2
-      },
-      {
-        "body": "Gain 2, Work 1, Harm 2\nCase: normal use - A repo runs pull-request tests locally, configures an external nightly workflow, and has no recent full-suite status. `src/forge/fullrun.py:133-165` ignores the new setting and tells `forge next` users to run `forge test --full` in the main checkout, despite the configured external run. Following that reminder can duplicate the suite locally.\nAdds work: direct the existing daily reminder to the configured workflow; F 2 x H 2 = 4; 2 x C = 2",
-        "file": "src/forge/fullrun.py",
-        "gain": 2,
-        "harm": 2,
-        "line": 16,
-        "priority": "P2",
-        "title": "Follow-up: Point local-mode reminders at the configured workflow",
-        "work": 1
-      }
-    ],
-    "id": "468a8a61-1bdc-4107-8b41-29af39fe7ec3",
-    "status": "blocked"
+    "findings": [],
+    "id": "1447c272-59a0-419a-8077-7a1dde45567b",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-10T15:36:54.188914+00:00",
@@ -148,6 +97,10 @@
     },
     {
       "at": "2026-11-10T15:52:31.191810+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-10T16:02:39.294604+00:00",
       "step": "review"
     }
   ],
