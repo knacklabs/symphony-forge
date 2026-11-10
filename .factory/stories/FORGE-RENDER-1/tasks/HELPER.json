@@ -1,11 +1,331 @@
 {
   "branch": "task/FORGE-RENDER-1-HELPER",
+  "known": [
+    {
+      "area": "src/forge/templates/design/render-check.mjs",
+      "file": "src/forge/templates/design/render-check.mjs",
+      "gain": 5,
+      "harm": 3,
+      "line": 36,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: A page that is not the listed screen is reported as a problem of its own.",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/design/render-check.mjs",
+      "file": "src/forge/templates/design/render-check.mjs",
+      "gain": 5,
+      "harm": 3,
+      "line": 15,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Screen-reader-only labels are reported as cut text",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/design/render-check.mjs",
+      "file": "src/forge/templates/design/render-check.mjs",
+      "gain": 4,
+      "harm": 3,
+      "line": 34,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: A UI change that closes lists the rendered problems of each screen on the app's check list, by width and theme",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/design/render-check.mjs",
+      "file": "src/forge/templates/design/render-check.mjs",
+      "gain": 4,
+      "harm": 3,
+      "line": 12,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Overflow, cut text and low contrast are each named with the screen, width and theme where they occur.",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/design/render-check.mjs",
+      "file": "src/forge/templates/design/render-check.mjs",
+      "gain": 4,
+      "harm": 3,
+      "line": 51,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Report contrast checks that axe could not complete",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/design/render-check.mjs",
+      "file": "src/forge/templates/design/render-check.mjs",
+      "gain": 4,
+      "harm": 3,
+      "line": 41,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Find the contrast tool in the app's workspace",
+      "work": 2
+    },
+    {
+      "area": "test_run() in src/forge/review.py",
+      "file": "src/forge/review.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 501,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: A UI change that closes lists the rendered problems of each screen on the app's check list",
+      "work": 2
+    },
+    {
+      "area": "test_1_a_closing_ui_change_lists_rendered_problems_or_says_none() in tests/test_render_check.py",
+      "file": "tests/test_render_check.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 145,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_a_closing_ui_change_lists_rendered_problems_or_says_none",
+      "work": 2
+    },
+    {
+      "area": "in_browser() in tests/test_render_check.py",
+      "file": "tests/test_render_check.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 191,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_2_each_rendered_problem_names_its_screen_width_and_theme_and_stops_close",
+      "work": 1
+    },
+    {
+      "area": "test_3_phone_width_is_checked_only_when_the_screen_asks_for_it() in tests/test_render_check.py",
+      "file": "tests/test_render_check.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 224,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_3_phone_width_is_checked_only_when_the_screen_asks_for_it",
+      "work": 1
+    },
+    {
+      "area": "in_browser() in tests/test_render_check.py",
+      "file": "tests/test_render_check.py",
+      "gain": 2,
+      "harm": 2,
+      "line": 212,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Follow-up: Cover cut text without the contrast package",
+      "work": 1
+    },
+    {
+      "area": "src/forge/templates/design/render-check.mjs",
+      "file": "src/forge/templates/design/render-check.mjs",
+      "gain": 2,
+      "harm": 2,
+      "line": 57,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Follow-up: Report unchecked contrast for failing screens",
+      "work": 1
+    },
+    {
+      "area": "src/forge/templates/design/render-check.mjs",
+      "file": "src/forge/templates/design/render-check.mjs",
+      "gain": 2,
+      "harm": 1,
+      "line": 63,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Follow-up: Show how to waive a rendered problem",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "9c239ded3b852a1d529970d211e017cc69fee353601768b27353d6b18203d496",
+    "changed": "b3cabd8c411bc1eb01e79effb4c424c6b1094b66ee888d32dc31f2ccb4d75c8a",
+    "commit": "c9f793bb5334698319428dbc9c408935bb7a016f",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 5, Work 2, Harm 3\nRaise: Not done\nCase: normal use - A listed route returns a 404 page, or a hash-routed app redirects from its orders screen to sign-in. The helper compares only `pathname`, so both error pages retain the expected pathname and can be reported as clean. It also ignores the response from `page.goto`; [Playwright documents](https://playwright.dev/docs/api/class-page#page-goto) that 404 and 500 responses do not throw. Hash routing is represented in `tests/test_sample_signoff.py:67`. The wrong-screen check must distinguish these pages before reporting the listed screen as checked.",
+        "file": "src/forge/templates/design/render-check.mjs",
+        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
+        "gain": 5,
+        "harm": 3,
+        "line": 36,
+        "priority": "P1",
+        "title": "Not done: A page that is not the listed screen is reported as a problem of its own.",
+        "work": 2
+      },
+      {
+        "body": "Gain 5, Work 2, Harm 3\nRaise: Functional\nCase: normal use - A client uses the starter's sidebar trigger. Its `sr-only` label at `src/forge/templates/starter/libs/shared/ui/src/components/ui/sidebar.tsx:277` is deliberately clipped to a one-pixel box so that it remains available to screen readers. Its computed visibility and display pass this filter, and its text exceeds that box, so the helper reports cut text and fails close for an accessible screen. Waiving cut text for the screen also hides genuine clipping elsewhere on it.",
+        "file": "src/forge/templates/design/render-check.mjs",
+        "gain": 5,
+        "harm": 3,
+        "line": 15,
+        "priority": "P1",
+        "title": "Functional: Screen-reader-only labels are reported as cut text",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done\nCase: normal use - A responsive screen chooses its mobile content from `matchMedia` during initialization. The helper navigates once at Playwright's initial viewport and only later resizes to 375 pixels, so that mobile content is never loaded even though the result says it was checked. It also measures immediately after each resize and theme change without waiting for responsive updates or requests to settle. The starter itself uses a viewport-dependent React update in `src/forge/templates/starter/libs/shared/ui/src/hooks/use-mobile.ts:8`; the new fixtures exercise only CSS media queries.",
+        "file": "src/forge/templates/design/render-check.mjs",
+        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
+        "gain": 4,
+        "harm": 3,
+        "line": 34,
+        "priority": "P1",
+        "title": "Not done: A UI change that closes lists the rendered problems of each screen on the app's check list, by width and theme",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done\nCase: normal use - A phone screen has a fixed toolbar whose button extends beyond the viewport. The check only compares the document's scroll width with its client width; fixed-positioned content can extend outside the viewport without contributing to that scroll width, and its default visible overflow does not trigger the cut-text check either. The helper can therefore call the screen clean while part of the toolbar is unreachable. The [CSS positioning specification](https://www.w3.org/TR/css-position-3/) describes this behavior for fixed boxes.",
+        "file": "src/forge/templates/design/render-check.mjs",
+        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
+        "gain": 4,
+        "harm": 3,
+        "line": 12,
+        "priority": "P1",
+        "title": "Not done: Overflow, cut text and low contrast are each named with the screen, width and theme where they occur.",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - A screen places text over a gradient or background image. The pinned axe rule returns such elements in `incomplete` when it cannot determine their background, but the helper reads only `violations` and can print `no problems` even when the text has poor contrast. The [axe rule's result messages](https://raw.githubusercontent.com/dequelabs/axe-core/v4.10.2/lib/checks/color/color-contrast.json) identify gradients and images as incomplete cases. The output needs to disclose that those elements were not checked.",
+        "file": "src/forge/templates/design/render-check.mjs",
+        "gain": 4,
+        "harm": 3,
+        "line": 51,
+        "priority": "P1",
+        "title": "Functional: Report contrast checks that axe could not complete",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - An adopted pnpm monorepo installs its browser tools in `apps/web/node_modules`, with no root copy. The helper is shipped under `.forge/design`, so its bare import resolves from that file's ancestors rather than from the app's test directory. The import fails, the catch disables contrast checks, and low-contrast screens can pass despite the app having the tool installed. The declaration's import at `render-check.d.mts:1` has the same resolution problem when declaration checking is enabled.",
+        "file": "src/forge/templates/design/render-check.mjs",
+        "gain": 4,
+        "harm": 3,
+        "line": 41,
+        "priority": "P1",
+        "title": "Functional: Find the contrast tool in the app's workspace",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done\nCase: normal use - Fifteen listed screens share a shell with one problem at both widths and themes, producing 60 rendered lines before the starter prints container logs. Although this clause selects the lines, the existing limit at `src/forge/review.py:503` retains only the first 50 selected lines and the final 30 log lines, dropping results for the later screens. There is a second loss path in CI: `fasttest.py:645` merges stdout and stderr, while Playwright's [dot reporter](https://github.com/microsoft/playwright/blob/v1.64.0/packages/playwright/src/reporters/dot.ts#L33-L61) writes progress marks without a newline, so a line can begin with a dot instead of `Rendered ` and never be selected.",
+        "file": "src/forge/review.py",
+        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
+        "gain": 4,
+        "harm": 3,
+        "line": 501,
+        "priority": "P1",
+        "title": "Not done: A UI change that closes lists the rendered problems of each screen on the app's check list",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - A client closes a change after its real Playwright run emits results. This test runs Playwright directly and inspects separately captured stdout and stderr; it never passes that output through `forge close`. The close case in `test_2` instead prints prepared lines from a stand-in command. Both tests can pass while the merged-stream and tail-selection behavior drops real rendered results, so the named closing behavior has no end-to-end proof.",
+        "file": "tests/test_render_check.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 145,
+        "priority": "P1",
+        "title": "Gate: test_1_a_closing_ui_change_lists_rendered_problems_or_says_none",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 1, Harm 3\nRaise: Test\nCase: normal use - A screen intentionally truncates a label but also has a contrast or overflow defect. The only screen with a valid waiver in this test has cut text as its sole defect. An implementation that suppresses every problem whenever any valid waiver exists would pass these cases, although the owner-approved behavior sets aside only one kind. The proof needs a waived screen with another unwaived problem.",
+        "file": "tests/test_render_check.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 191,
+        "priority": "P1",
+        "title": "Gate: test_2_each_rendered_problem_names_its_screen_width_and_theme_and_stops_close",
+        "work": 1
+      },
+      {
+        "body": "Gain 3, Work 1, Harm 3\nRaise: Test\nCase: normal use - An app needs both desktop and phone views. The phone-enabled fixtures are either clean or fail only at phone width, and the assertion that says `1440 and 375` checks a message generated from the flag. Changing the helper to measure only 375 whenever `phone` is true would still pass the named proofs, even though desktop must always be checked. A phone-enabled screen with a desktop-only defect would exercise that requirement.",
+        "file": "tests/test_render_check.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 224,
+        "priority": "P1",
+        "title": "Gate: test_3_phone_width_is_checked_only_when_the_screen_asks_for_it",
+        "work": 1
+      },
+      {
+        "body": "Gain 2, Work 1, Harm 2\nThe missing-package case supplies a clean contrast fixture and an overflow fixture, but no clipped-text fixture. A regression that skips cut-text measurement only when axe cannot be loaded would pass this proof, despite the planned fallback requiring both non-contrast checks.\nAdds work: add the missing browser case; F 2 x H 1 = 2; 2 x C = 2.",
+        "file": "tests/test_render_check.py",
+        "gain": 2,
+        "harm": 2,
+        "line": 212,
+        "priority": "P2",
+        "title": "Follow-up: Cover cut text without the contrast package",
+        "work": 1
+      },
+      {
+        "body": "Gain 2, Work 1, Harm 2\nWhen axe is unavailable and a screen has overflow or cut text, the contrast warning is inside the clean-result branch and is never printed for that screen. The failure therefore lists the other defect without disclosing that contrast was not checked, contrary to the stated fallback. The missing-package test checks the warning only on a separate clean screen.\nAdds work: include the unchecked-contrast notice in failing results; F 2 x H 1 = 2; 2 x C = 2.",
+        "file": "src/forge/templates/design/render-check.mjs",
+        "gain": 2,
+        "harm": 2,
+        "line": 57,
+        "priority": "P2",
+        "title": "Follow-up: Report unchecked contrast for failing screens",
+        "work": 1
+      },
+      {
+        "body": "Gain 2, Work 1, Harm 1\nA developer who encounters intentional truncation gets the problem lines and an error, but no example or instruction for setting the waiver. The approved behavior says the refusal shows how; currently the developer must inspect the shipped declaration to discover the required shape and rule name.\nAdds work: print the waiver syntax with the failure; F 2 x H 1 = 2; 2 x C = 2.",
+        "file": "src/forge/templates/design/render-check.mjs",
+        "gain": 2,
+        "harm": 1,
+        "line": 63,
+        "priority": "P2",
+        "title": "Follow-up: Show how to waive a rendered problem",
+        "work": 1
+      }
+    ],
+    "id": "12c67f8d-7f26-4396-bdf8-d066fb8ab5c2",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-10T20:08:47.982604+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-10T20:30:49.731765+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
