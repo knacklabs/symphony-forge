@@ -125,7 +125,7 @@
     "status": "blocked"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-10T02:45:15.795507+00:00",
@@ -138,8 +138,12 @@
   ],
   "stop": {
     "at": "2026-11-10T02:59:17.841239+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "src/forge/close_remote.py",
-    "wait_id": "a0307913-935f-4e79-90bd-1268e19f110e"
+    "reason": "The owner wants one more round on the narrowed Done-when for findings 2, 3 and 4",
+    "wait_id": "a0307913-935f-4e79-90bd-1268e19f110e",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
