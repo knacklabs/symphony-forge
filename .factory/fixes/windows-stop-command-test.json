@@ -11,7 +11,7 @@
       "gain": 4,
       "harm": 2,
       "line": 30,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -21,28 +21,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "72713b6376c4cadda3dfedced4d52e245636412bee31198770663498bccce5ad",
+    "branch_diff": "2a5155a8ea3d7d00094a68e2b5c10fea32f465f84ca0b7e9c05ca5cfdfc3c2d3",
     "changed": "df0d9d533f1f30fe321686bcd5e4d15f356d6273cc3e312122078f239381b3dc",
-    "commit": "41bd7754749604e9150f076faf9bec320d8bc8f2",
+    "commit": "7d87c9fdcccd2a8032b8dea972a332e71e569fe6",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 1, Harm 2\nRaise: Not done\nCase: normal use - verifying the fix before the Windows platform run permits release.\nThe Done-when item is \u201ctests/test_waiting_runs_name_holders.py expects the stop command the way Forge prints it on every platform, and the Windows platform run passes.\u201d The proof list marks the Windows run as not checked. The pull-request tests run on Linux (.github/workflows/forge.yml:41-49), while the Windows matrix runs only on a schedule or manual dispatch (.github/workflows/forge-next.yml:73-75). Close's pull-request checks therefore cannot establish the required Windows result. A passing Windows run on this branch is still needed.",
-        "file": "tests/test_waiting_runs_name_holders.py",
-        "gain": 4,
-        "harm": 2,
-        "line": 30,
-        "priority": "P1",
-        "required_done_when": true,
-        "title": "Not done: Windows platform run has no passing result",
-        "work": 1
-      }
-    ],
-    "id": "bc5ceada-e11a-4dc3-8f87-3f9c9c3ddbef",
-    "status": "blocked"
+    "findings": [],
+    "id": "2f51ff5b-12d0-405c-a651-77263810ea17",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-10T22:09:26.485792+00:00",
@@ -50,6 +38,10 @@
     },
     {
       "at": "2026-11-10T22:15:16.301640+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-10T22:42:10.434744+00:00",
       "step": "review"
     }
   ],
