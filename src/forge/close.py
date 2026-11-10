@@ -281,7 +281,7 @@ def close(args: argparse.Namespace) -> int:
     app_baseline.services(top, cfg)
     app_baseline.migrations(top, cfg, baseline)
     if not migrating:
-        _synced(top, item)
+        _synced(top, item, changed_files)
     if skip:
         review_skip.requested(args, top, item, state)
     _warn_fix_kind(top, state, review_ref)
@@ -818,13 +818,13 @@ def _merge_default(top: Path, item: str, branch: str, default: str,
                 path=top, item=item)
 
 
-def _synced(top: Path, item: str) -> None:
+def _synced(top: Path, item: str, changed_files: list[str]) -> None:
     """An upgrade is ready only once forge sync, run by the Forge it pins on a copy of the commit
     close pushes, changes and deletes nothing."""
     toml = story.show(top, "HEAD", "forge.toml") or ""
     pinned = repo._pin(toml)  # pyright: ignore[reportPrivateUsage]
     if pinned == (release := repo._pin(story.show(top, f"origin/{repo.default_branch(top)}", "forge.toml") or "")):  # pyright: ignore[reportPrivateUsage]
-        return sync.check_guides(top)
+        return sync.check_guides(top, changed_files)
     kind = "task" if "/" in item else "fix"
     if (behind := repo._older(pinned, release)) or pinned != __version__:  # pyright: ignore[reportPrivateUsage]
         repo.refuse(("This {kind} pins Forge {pinned}, but the default branch pins Forge {release}.", "forge work {item} to merge the default branch, then forge close {item}") if behind else REFUSALS["unsynced_forge"], kind=kind, pinned=f"v{pinned}",

@@ -39,6 +39,25 @@ def test_1_close_stops_stale_branch_guides(env, history):
         assert (where / host / "skills/forge/SKILL.md").read_text("utf-8") == expected
 
 
+@pytest.mark.parametrize("history", ["new", "upgraded"])
+def test_2_close_keeps_unrelated_work_moving_with_inherited_guides(env, history):
+    # Audit: inherited drift must not block unrelated work. The positive cases
+    # above change guides or their source on the branch; this case changes neither.
+    # Real close owns the decision, with the existing client setup and no new seam.
+    _client(env, history, "ubuntu-latest")
+    guide = ".codex/skills/forge/SKILL.md"
+    env.commit(env.repo.path, guide, "An inherited guide.\n")
+    env.repo.git("push", "-q", "origin", "main")
+    item, where = env.start_fix()
+
+    closed = env.close(item)
+
+    assert closed.returncode == 0, closed.stdout + closed.stderr
+    assert "Ready:" in closed.stdout
+    assert len(env.review_calls()) == 1
+    assert (where / guide).read_text("utf-8") == "An inherited guide.\n"
+
+
 def _source(env):
     repo = env.repo
     repo.git("checkout", "-q", "-b", "fix/setup-guides")
