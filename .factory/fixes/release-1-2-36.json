@@ -1,0 +1,46 @@
+{
+  "allow_large": "A release changes the version in every file that records it; v1.2.36, approved by the owner on 11 Nov 2026",
+  "base": "454b02fcbc10d81404c703d688bb43f0fc123084",
+  "branch": "fix/release-1-2-36",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1c6bf-0688-7082-b6cd-ab220da8c908",
+    "head": null,
+    "start": "b5dcec44ed6f26d26143d52b261d665d29b3c6b8"
+  },
+  "done_when": "The version is 1.2.36, generated files are synced, this repo is pinned to v1.2.36, and the tests pass",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "a4542a9d57f69d04a6beae55115d2321b5614f8da99c6c8601a563361b72603a",
+    "changed": "83a8a2d0388c42c58ed6b64c59c5c4c4fe739320d8cf4d75c17d024bed020e3a",
+    "commit": "c00f64e5795ff76127b09692b571e32c1aa3ce93",
+    "dismissals": [],
+    "findings": [],
+    "id": "e0cb1d57-0633-47ea-bf1a-d8e1b6d455d3",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-10T18:35:53.513257+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-10T19:34:24.828572+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "934099121f72e857a724b2519c00104cf83d7f97",
+    "keys": {},
+    "round": null
+  },
+  "why": "Release v1.2.36: publish what merged since v1.2.35",
+  "worker": "codex"
+}
