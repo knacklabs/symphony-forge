@@ -3,6 +3,7 @@
 Every case builds features with the build command in a repo and reads files; nothing runs the app.
 """
 import json
+import os
 import re
 import shutil
 from pathlib import Path
@@ -60,11 +61,28 @@ def _commit(repo, client: Path, message: str) -> str:
     return repo.git("rev-parse", "HEAD", cwd=client)
 
 
+def _snapshot(client: Path) -> dict[str, bytes | None]:
+    """Every file in the work tree by its bytes (a folder by None), so a change to a file that was
+    already modified, a new file and a new empty folder all show."""
+    found: dict[str, bytes | None] = {}
+    for folder, folders, names in os.walk(client):
+        folders[:] = [name for name in folders if name != ".git"]
+        for name in folders + [name for name in names if name != ".git"]:
+            path = Path(folder, name)
+            found[path.relative_to(client).as_posix()] = path.read_bytes() if path.is_file() else None
+    return found
+
+
 def _check(repo, client: Path, plural: str) -> tuple[int, str]:
-    # The check is read-only: no file is changed, added or removed, untracked files included.
-    before = repo.git("status", "--porcelain", "--untracked-files=all", cwd=client)
+    # The check is read-only: no file is changed, added or removed, whatever its Git status was.
+    before, status = _snapshot(client), repo.git("status", "--porcelain", "--untracked-files=all", cwd=client)
     done = repo.forge("task", "feature-check", plural, cwd=client)
-    assert repo.git("status", "--porcelain", "--untracked-files=all", cwd=client) == before
+    after = _snapshot(client)
+    absent = object()
+    changed = sorted(path for path in before.keys() | after.keys()
+                     if before.get(path, absent) != after.get(path, absent))
+    assert not changed, changed
+    assert repo.git("status", "--porcelain", "--untracked-files=all", cwd=client) == status
     return done.returncode, done.stdout + done.stderr
 
 
