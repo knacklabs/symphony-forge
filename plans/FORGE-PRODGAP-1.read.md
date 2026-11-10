@@ -1,13 +1,13 @@
 ---
 reader: codex (gpt-6.1-terra)
-read_at: 2026-11-10T17:35:35.329402+00:00
-seconds: 657.891
-read_hash: 164a2fc30096be6e636911fa3d2b2578524b018b
-round: 1
+read_at: 2026-11-10T17:53:21.502583+00:00
+seconds: 691.627
+read_hash: 09cbc0ef62bcc61105951e9764d656d55564639b
+round: 2
 passed: no
-doc_seen: 164a2fc30096be6e636911fa3d2b2578524b018b
+doc_seen: 09cbc0ef62bcc61105951e9764d656d55564639b
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: cf141ef63839177d0158bba68e2065d54e6a199b
+notes_seen: 75594a0d4cb3898a15ba1b164794d7ee994fbed7
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a1c67c-1a5c-7860-a9ac-8e6eb00519b7
 session:
@@ -80,11 +80,58 @@ Only a genuine trade-off goes to the human, as a question with options.
    Case: normal use - the agent starts the sample-data change before tests and CI exist.  
    The [plan](/plans/FORGE-PRODGAP-1.md:63) says to set up tests and CI before turning sample data off. While it remains on, [workers are told not to add or run either](/src/forge/worker.py:46), and [Forge does not generate the workflow](/src/forge/prcheck.py:225). The plan leaves those worker rules unchanged.  
    Gain 4, Work 2, Harm 3
-   Disposition: cut - the sample-data change only edits `forge.toml` and adds no test or CI file, so the sample-mode worker rule does not conflict; `forge sync` writes the workflow once the setting is off (`prcheck.ships` returns nothing only while it is on). The row text no longer says "set up tests" and now names the settings result. Evidence records this.
+   Disposition: cut - superseded by the owner's simpler form: the sample-data row starts no change, so no worker is told to set up tests while sample mode is on. It points to the existing coordinator-owned step in the guide.
 
 8. Blocking: Plan gap: The first gap can start a change that cannot close its settings edit.  
    Raise: Plan gap  
    Case: normal use - the start step describes the result as tests and CI being enabled and sample data being off.  
    The [pinned start phrase](/plans/FORGE-PRODGAP-1.md:63) does not name `forge.toml`, and [intake uses the generated Done-when text](/src/forge/intake.py:113). If that text also omits the filename, [close refuses the settings change](/src/forge/task.py:184). No proposed test starts and closes this change.  
    Gain 3, Work 2, Harm 3
-   Disposition: cut - the sample-data row's Say text names `forge.toml`, and the guide tells the agent to start that line with `forge fix start ... --done "<Say text>"`, so intake cannot drop the file name (Settled 3). `test_1` starts the change from the printed text and checks the fix's `done_when`; closing such a fix is already covered by `tests/test_sample_setup.py::test_7_turning_sample_data_off_needs_a_settled_personal_data_answer`.
+   Disposition: cut - superseded by the owner's simpler form: the sample-data row starts no change and fixes no Done-when text, so there is no change whose settings edit close could refuse. It points to the existing step, whose close is covered by `tests/test_sample_setup.py::test_7`.
+
+## Round 2
+
+9. Blocking: Plan gap: The first fix cannot record a Personal data answer.  
+   Raise: Plan gap  
+   Case: normal use - the customer answers Personal data after prototype sign-off.  
+   The [plan](/plans/FORGE-PRODGAP-1.md:60) restricts the fix to `forge.toml` and synced files. But [close](/src/forge/records.py:639) requires the answer in `docs/product/BRIEF.md`. The [existing close test](/tests/test_sample_setup.py:345) commits that brief, so it does not prove the prescribed settings-only fix can close.  
+   Gain 5, Work 2, Harm 3
+   Disposition: cut - correct for a settings-only fix. The sample-data row no longer prescribes a fix; it points to the existing coordinator-owned step, whose close needs the committed brief answer and is tested that way by `tests/test_sample_setup.py::test_7`.
+
+10. Blocking: Not done: The first fix clears the sample-data gap while the app still uses sample data.  
+    Raise: Not done  
+    Case: normal use - a signed-off browser-only prototype has mock data and no tests.  
+    The [first fix](/plans/FORGE-PRODGAP-1.md:60) changes only settings and generated Forge files. [Turning off the setting](/src/forge/repo.py:652) does not change the app or add tests, yet the [gap disappears](/plans/FORGE-PRODGAP-1.md:71). The list therefore stops reporting the main gap while the prototype still has it.  
+    Gain 5, Work 3, Harm 3
+   Disposition: cut - correct: turning the setting off changes no app file. The plan now says plainly (Evidence, Risks, Settled 6, Notes 5) that the row clears on the setting, the only fact the code uses and the only declaration there is; Forge cannot see made-up data or a missing back end, and the Personal data refusal on the turn-off is the guard. The owner-visible Risks say so.
+
+11. Advisory: Plan gap: The first fix is assigned to a worker instructed not to edit it.  
+    Raise: Plan gap  
+    The [plan](/plans/FORGE-PRODGAP-1.md:60) says naming `forge.toml` in Done-when permits the worker to edit it and says workers build this change. The [worker instruction](/src/forge/worker.py:42) instead says never to edit it; the existing [coordinator guide](/src/forge/templates/skill.md:679) assigns this fix to the coordinator.  
+    Gain 3, Work 1, Harm 3
+   Disposition: cut - correct. The plan no longer says a worker builds the sample-data change; it is the coordinator-owned step, and the brief rule that workers never edit `forge.toml` stays.
+
+12. Advisory: Functional: A merged stage change leaves the list using the old stage.  
+    Raise: Functional  
+    The amended [plan](/plans/FORGE-PRODGAP-1.md:65) reads `stage` from the checkout, although a [normal merge](/src/forge/merge.py:292) fetches the default branch without updating that checkout. After a settings fix changes the stage to `live`, the list can remain visible against the old `prototype` setting, contrary to the promised live-repo behavior.  
+    Gain 3, Work 2, Harm 3
+   Disposition: cut - Settled 1 now reads `repo` and `stage` from `forge.toml` at the landed ref, not from the checkout; `test_1` pushes `stage = "live"` from a second clone and checks that the list disappears.
+
+13. Advisory: Plan gap: A documentation-only follow-up can clear a part after another light review.  
+    Raise: Plan gap  
+    The [clearing rule](/plans/FORGE-PRODGAP-1.md:74) excludes only fixes in the prototype light-review set. A later documentation fix can name the part without that allowance and still receive a [light review](/src/forge/review.py:178); it would clear the part, although the [planned test](/plans/FORGE-PRODGAP-1.md:91) says a light-reviewed fix does not clear it.  
+    Gain 3, Work 2, Harm 3
+   Disposition: cut - Settled 7 now excludes any fix whose saved `review.blocking_level` is `P0` from naming a part, with or without the allowance; `test_5` uses the docs-only `tune-search` fix as the case.
+
+14. Advisory: Functional: A nested test can keep the Demo only gap open.  
+    Raise: Functional  
+    The [search](/plans/FORGE-PRODGAP-1.md:73) excludes only the root `tests/` directory. Forge also recognizes [nested test files](/src/forge/repo.py:31), including the starter’s [browser tests](/src/forge/templates/starter/apps/web/e2e/rules/sign-in.spec.ts:23). A test asserting that “Demo only” is absent would itself be listed after the app label was removed.  
+    Adds work: exclude nested test files from the label search; F 2 x H 2 = 4; 2 x C = 4.  
+    Gain 3, Work 2, Harm 2
+   Disposition: keep - below the bar (follow-up)
+
+15. Advisory: Plan gap: The board’s proposed fast fallback cannot recognize completed stories.  
+    Raise: Plan gap  
+    For a large history, the [fallback](/plans/FORGE-PRODGAP-1.md:157) reads only fix records and claims they provide the same data. But the [clearing rule](/plans/FORGE-PRODGAP-1.md:74) also needs completed stories, whose [completion check](/src/forge/story.py:877) reads story and task history. If the fallback is used, the board cannot clear a part named by a completed story.  
+    Gain 3, Work 2, Harm 2
+   Disposition: keep - below the bar (follow-up)
