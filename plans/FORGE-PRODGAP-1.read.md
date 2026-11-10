@@ -1,18 +1,18 @@
 ---
 reader: codex (gpt-6.1-terra)
-read_at: 2026-11-10T17:53:21.502583+00:00
-seconds: 691.627
-read_hash: 09cbc0ef62bcc61105951e9764d656d55564639b
-round: 2
+read_at: 2026-11-10T18:01:53.449588+00:00
+seconds: 342.697
+read_hash: a384a2c77d88fa521367a26151cdbfd2a5edbec8
+round: 3
 passed: no
-doc_seen: 09cbc0ef62bcc61105951e9764d656d55564639b
+doc_seen: a384a2c77d88fa521367a26151cdbfd2a5edbec8
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 75594a0d4cb3898a15ba1b164794d7ee994fbed7
+notes_seen: 9f0f188ef8fbd662554069f1b92140cee5b6210b
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a1c67c-1a5c-7860-a9ac-8e6eb00519b7
 session:
-loop_choice: more
-loop_reason: The owner chose one more round on 10 Nov 2026 with the simpler sample-data line
+loop_choice:
+loop_reason:
 ---
 # Cold read notes
 
@@ -134,4 +134,19 @@ Only a genuine trade-off goes to the human, as a question with options.
     Raise: Plan gap  
     For a large history, the [fallback](/plans/FORGE-PRODGAP-1.md:157) reads only fix records and claims they provide the same data. But the [clearing rule](/plans/FORGE-PRODGAP-1.md:74) also needs completed stories, whose [completion check](/src/forge/story.py:877) reads story and task history. If the fallback is used, the board cannot clear a part named by a completed story.  
     Gain 3, Work 2, Harm 2
+   Disposition: keep - below the bar (follow-up)
+
+## Round 3
+
+16. Blocking: Not done: The light-review list can use history from before a successful fetch.  
+    Raise: Not done  
+    Case: normal use - a teammate merges prototype fixes and sign-off from another clone before the agent runs `forge next`.  
+    [Forge next](/src/forge/nextstep.py:172) reads history while the fetch runs, then waits for the fetch. The [plan](/plans/FORGE-PRODGAP-1.md:70) passes that already-read history to the list. If the fetch takes longer than the local read, the list can see the accepted sign-off but omit the newly landed light-reviewed parts. The [planned fixtures](/plans/FORGE-PRODGAP-1.md:46) fetch before running the command, so they do not exercise this path.  
+    Gain 5, Work 2, Harm 3
+   Disposition: cut - correct: `next_step` reads `board._machine_history(top)` inside its thread pool while the fetch is still running and waits for the other reads afterwards. The list no longer uses that history. `signoff()` runs inside `_report`, after the pool has ended, and `gaps.listing` reads the fix and story states itself from the landed ref at that point (Settled 4); `test_5` has the case where fixes and the sign-off arrive from a second clone just before the command, with no earlier fetch. The owner chose on 10 Nov 2026 to fix this sentence with no further read.
+
+17. Advisory: Unproven: item 2: The live-stage check runs after the list is already empty.  
+    Raise: Test  
+    The [planned test](/plans/FORGE-PRODGAP-1.md:85) starts with one sample-data gap, clears it, then changes the stage to `live` and checks that the list is empty. Code that ignores the live-stage exclusion for Demo only or light-review gaps would still pass.  
+    Gain 3, Work 1, Harm 2
    Disposition: keep - below the bar (follow-up)
