@@ -181,8 +181,8 @@
     "id": "bfdaed7f-4666-49e8-a03f-4200465e2e0d",
     "status": "clean"
   },
-  "round": 2,
-  "status": "waiting for checks",
+  "round": 3,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-10T20:08:47.982604+00:00",
@@ -198,12 +198,10 @@
     }
   ],
   "stuck": {
-    "close": "4760992e-8c06-4166-9ffe-65f94670891f",
-    "head": "68a07adadf6450b6fd689b261d1b92d485db3593",
-    "keys": {
-      "the open P0 functional: screen-reader-only labels are reported as cut text in src/forge/templates/design/render-check.mjs": 1
-    },
-    "round": 1
+    "close": "b7a6efd3-fc00-4d4e-97ff-89352074a838",
+    "head": "07d4affecc37327ea7d034747c7f8ee2dc3b58ef",
+    "keys": {},
+    "round": 2
   },
   "worker": "claude"
 }
