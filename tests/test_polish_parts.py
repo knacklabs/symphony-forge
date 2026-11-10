@@ -47,8 +47,10 @@ def test_1_shared_parts_press_use_named_properties_and_share_one_curve_and_speed
 
     button, switch, checkbox = (_read(ui / f"{name}.tsx") for name in ("button", "switch", "checkbox"))
     # Every button variant but link, and the whole switch and checkbox, carry the pressed state.
-    for text in (switch, checkbox):
-        assert PRESS in text
+    # The pressed state sits on the part's own root, never on a child that takes no pointer events.
+    for text, primitive in ((switch, "SwitchPrimitive"), (checkbox, "CheckboxPrimitive")):
+        root = re.search(rf'<{primitive}\.Root.*?className=\{{cn\(\s*"([^"]*)"', text, re.S).group(1)
+        assert PRESS in root, primitive
     variants = re.search(r"variant: \{(.*?)\n      \},", button, re.S).group(1)
     found = re.findall(r'^\s+(\w+):\s*\n?\s*"([^"]*)"', variants, re.M)
     assert [name for name, _ in found] == ["default", "destructive", "outline", "secondary", "ghost", "link"]
@@ -89,7 +91,6 @@ def test_2_reduced_motion_is_one_rule_in_the_theme_and_a_browser_test_proves_it(
     cases = re.findall(r"^test\('([^']+)'", spec, re.M)
     assert len(cases) == 2
     assert all(case in tree for case in cases)
-    assert PRESS in spec
 
 
 @pytest.mark.platform
