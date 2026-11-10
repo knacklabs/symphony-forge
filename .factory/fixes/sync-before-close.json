@@ -82,8 +82,8 @@
     "id": "3993a35a-9dd7-40f7-9f7d-e932d563d1a3",
     "status": "clean"
   },
-  "round": 2,
-  "status": "waiting for checks",
+  "round": 3,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-10T02:45:15.795507+00:00",
@@ -108,10 +108,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": "60b8d255-c8de-475a-90e5-5208404bf860",
-    "head": "4d35baf0cdd7dfe7cd168861c47f43bdeb72a467",
+    "close": "5104bf10-d2aa-411f-b03a-16eb21583b23",
+    "head": "556c3af82cb309ddb5691ef0b26f61041795dd1d",
     "keys": {},
-    "round": 1
+    "round": 2
   },
   "why": "Workers change the guide template without regenerating its synced copies, so CI fails the synced-guide test after the round ends (#912)",
   "worker": "codex"
