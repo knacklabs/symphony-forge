@@ -1070,20 +1070,21 @@ def bound_review(top: Path, item: str, state: dict[str, Any], result: dict[str, 
     if not findings:
         return False
 
-    def sentence(text: str) -> str:
+    def words(text: str) -> list[str]:
         text = re.sub(r"^\d+[.)]\s*", "", text.replace("**", "").replace("`", "").strip())
-        return " ".join(text.casefold().split()).rstrip(".").strip('"\u201c\u201d\u2018\u2019\'').rstrip(".")
+        return [word for word in re.findall(r"\w+", text.casefold())
+                if word not in {"the", "a", "an", "and", "of", "to"}]
 
     if "/" in item:
         text, _, row = task(top, item, commit)
         doc = story.parse(text)
         covers = {int(n) for n in re.findall(r"\d+", row.get("covers", ""))}
-        approved = {sentence(doc["done"][n]) for n in covers if n in doc["done"]}
+        approved = [words(doc["done"][n]) for n in covers if n in doc["done"]]
     else:
         done_when = str(state.get("done_when", ""))
         # Keep closing quotes and Markdown markers with the sentence they end.
         parts = re.findall(r""".+?[.!?]["”’'`*_]*(?=\s|$)|.+$""", done_when, re.S)
-        approved = {sentence(done_when), *(sentence(part) for part in parts)}
+        approved = [words(done_when), *(words(part) for part in parts)]
     changed = False
     settings = repo.review_settings(top)
     kinds = {kind.strip().casefold() for kind in settings.get("always_block", [])}
@@ -1091,8 +1092,9 @@ def bound_review(top: Path, item: str, state: dict[str, Any], result: dict[str, 
     for finding in findings:
         title = re.sub(r"^\[P[0-3]\]\s*", "", finding["title"])
         missed = re.match(r"Not done\s*:\s*(.*)", title, re.I)
+        missed_words = words(missed[1]) if missed else []
         approved_missed = missed and any(
-            item and sentence(missed[1]).startswith(item) for item in approved)
+            item and missed_words[:len(item)] == item for item in approved)
         must = score.MUST.match(title)
         if approved_missed or (must and must[1].strip().casefold() in kinds):
             if not finding.get("required_done_when") or finding.get("follow_up"):
