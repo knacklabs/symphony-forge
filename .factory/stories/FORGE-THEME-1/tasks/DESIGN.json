@@ -1,10 +1,18 @@
 {
   "branch": "task/FORGE-THEME-1-DESIGN",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-10T20:58:37.283776+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "aa39fae44c9c3028594c3d730f44a9eb87b5df31",
+    "keys": {},
+    "round": null
+  },
+  "worker": "claude"
 }
