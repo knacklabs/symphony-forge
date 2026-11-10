@@ -120,17 +120,24 @@ def upgrade(args: argparse.Namespace) -> int:
     state = {"kind": "fix", "why": why, "done_when": done}
     branch = f"fix/{name}"
     rel = repo.state_path(name)
-    saved = story.show(top, branch, rel) or story.show(top, f"origin/{branch}", rel)
-    existing = json.loads(saved or "{}")
-    if existing.get("kind") == "fix" and existing.get("branch") == branch and (
-            existing.get("drop") or existing.get("why") != why):
-        source = branch if story.show(top, branch, rel) else f"origin/{branch}"
+    remote = repo.git("ls-remote", "--heads", "origin", branch, cwd=top)
+    if remote:
+        repo.git("fetch", "-q", "origin", f"+refs/heads/{branch}:refs/remotes/origin/{branch}", cwd=top)
+    local = story.show(top, branch, rel)
+    published = story.show(top, f"origin/{branch}", rel)
+    existing = json.loads(local or published or "{}")
+    if existing.get("kind") == "fix" and existing.get("branch") == branch and existing.get("drop"):
+        source = branch if local else f"origin/{branch}"
+        if path and repo.git("status", "--porcelain", "--untracked-files=all", cwd=path):
+            repo.refuse(REFUSALS["taken"], fix=name, how="with uncommitted work",
+                        next_command=f"git -C {repo.quote(path)} stash push --include-untracked")
         # Inspect every commit, so work that was later reverted still belongs to its fix.
-        work = repo.git("log", "--format=", "--name-only", f"{ref}..{source}",
+        work = repo.git("log", "--format=", "--name-only", source,
+                        *([f"origin/{branch}"] if published else []), "--not", ref,
                         "--", ".", f":(exclude){rel}", cwd=top)
         next_command = (f"forge fix drop {name} --undo" if existing.get("status") == "dropped"
                         else f"forge close {name}")
-        if work or path and repo.git("status", "--porcelain", "--untracked-files=all", cwd=path):
+        if work:
             repo.refuse(REFUSALS["taken"], fix=name, how="for other work",
                         next_command=next_command)
         if existing.get("status") == "dropped":
@@ -141,6 +148,11 @@ def upgrade(args: argparse.Namespace) -> int:
             if source != branch:
                 repo.git("branch", branch, source, cwd=top)
             repo.git("worktree", "add", "-q", str(path), branch, cwd=top)
+        # Restore fetches and reconciles again; check the commits it actually restored.
+        if repo.git("log", "--format=", "--name-only", f"{ref}..HEAD",
+                    "--", ".", f":(exclude){rel}", cwd=path):
+            repo.refuse(REFUSALS["taken"], fix=name, how="for other work",
+                        next_command=f"forge close {name}")
         existing = repo.read_state(name, path) or {}
         existing.pop("drop", None)
         existing.update(state)
@@ -148,7 +160,7 @@ def upgrade(args: argparse.Namespace) -> int:
                           repo.write_state(name, existing, path), top=path)
     if path is None:
         if repo.run("git", "rev-parse", "-q", "--verify", f"refs/heads/fix/{name}", cwd=top
-                    ).returncode == 0 or repo.git("ls-remote", "--heads", "origin", f"fix/{name}", cwd=top):
+                    ).returncode == 0 or remote:
             repo.refuse(REFUSALS["taken"], fix=name, how="as a branch without its folder",
                         next_command=f"git branch -d fix/{name}")
         path = task._new_checkout(name, f"fix/{name}", f"fix-{name}", ref,
@@ -166,7 +178,7 @@ def upgrade(args: argparse.Namespace) -> int:
                  "branch": f"fix/{name}"}, "start"), path)
             repo.commit_state(f"Start the fix: {why}", rel, top=path)
         elif found.get("why") != why:
-            repo.refuse(REFUSALS["taken"], fix=name, next_command=f"forge close {name}",
+            repo.refuse(REFUSALS["taken"], fix=name, next_command=f"forge work {name}",
                         how="for other work" if path.is_dir() else "as a branch without its folder")
         print(f"Continuing fix {name} in {path}.", flush=True)
 

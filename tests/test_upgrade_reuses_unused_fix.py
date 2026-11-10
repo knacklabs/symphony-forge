@@ -8,6 +8,7 @@ from pathlib import Path
 
 import pytest
 
+from conftest import Repo
 from test_close import env  # noqa: F401
 from test_upgrade_command import NAME, RELEASE, assert_ready, ours, up, unsynced_up  # noqa: F401
 
@@ -16,7 +17,9 @@ pytestmark = pytest.mark.platform
 
 
 @pytest.mark.parametrize("lifecycle,adopted", [("dropped", False), ("restored", False),
-                                                ("dropped", True), ("work", False)])
+                                                ("dropped", True), ("work", False),
+                                                ("remote work", False), ("unfetched", False),
+                                                ("dirty", False), ("active", False)])
 def test_1_upgrade_reuses_unused_fix_or_names_the_recovery_command(unsynced_up, request,
                                                                   lifecycle, adopted):
     upgrade = unsynced_up if adopted else request.getfixturevalue("up")
@@ -37,21 +40,55 @@ def test_1_upgrade_reuses_unused_fix_or_names_the_recovery_command(unsynced_up, 
     assert started.returncode == 0, started.stdout + started.stderr
     if lifecycle == "work":
         upgrade.env.commit(upgrade.folder, "README.md", "Keep the real work\n")
-    dropped = repo.forge("fix", "drop", NAME, "--because", "Use the upgrade command")
-    assert dropped.returncode == 0, dropped.stdout + dropped.stderr
-    if lifecycle == "restored":
+    if lifecycle != "active":
+        dropped = repo.forge("fix", "drop", NAME, "--because", "Use the upgrade command")
+        assert dropped.returncode == 0, dropped.stdout + dropped.stderr
+    if lifecycle in ("restored", "dirty"):
         restored = repo.forge("fix", "drop", NAME, "--undo")
         assert restored.returncode == 0, restored.stdout + restored.stderr
+    if lifecycle == "dirty":
+        (upgrade.folder / "README.md").write_bytes(b"Keep my unfinished work\n")
+    if lifecycle == "remote work":
+        peer = upgrade.tmp / "teammate"
+        repo.git("clone", "-q", repo.git("remote", "get-url", "origin"), str(peer))
+        teammate = Repo(peer, repo.bin)
+        restored = teammate.forge("fix", "drop", NAME, "--undo")
+        assert restored.returncode == 0, restored.stdout + restored.stderr
+        folder = peer.with_name(f"{peer.name}-fix-{NAME}")
+        upgrade.env.commit(folder, "README.md", "Keep the teammate work\n")
+        dropped = teammate.forge("fix", "drop", NAME, "--because", "Keep this work for later")
+        assert dropped.returncode == 0, dropped.stdout + dropped.stderr
     before = repo.git("rev-parse", f"origin/fix/{NAME}")
+    if lifecycle == "unfetched":
+        repo.git("update-ref", "-d", f"refs/remotes/origin/fix/{NAME}")
+    original = repo.git("show", f"origin/fix/{NAME}:.factory/fixes/{NAME}.json") if lifecycle == "active" else None
 
     done = upgrade.run(RELEASE)
 
-    if lifecycle == "work":
+    if lifecycle in ("work", "remote work"):
         assert done.returncode == 1
         assert done.stderr.endswith(f"Next: forge fix drop {NAME} --undo\n")
-        assert repo.git("rev-parse", f"origin/fix/{NAME}") == before
+        if lifecycle == "work":
+            assert repo.git("rev-parse", f"origin/fix/{NAME}") == before
+        else:
+            assert repo.git("show", f"origin/fix/{NAME}:README.md") == "Keep the teammate work"
         assert not upgrade.folder.exists()
         assert upgrade.uv() == []
+    elif lifecycle == "active":
+        assert done.returncode == 1
+        assert done.stderr.endswith(f"Next: forge work {NAME}\n")
+        assert repo.git("show", f"fix/{NAME}:.factory/fixes/{NAME}.json") == original
+        assert upgrade.uv() == []
+    elif lifecycle == "dirty":
+        assert done.returncode == 1
+        assert "stash push --include-untracked" in done.stderr
+        assert str(upgrade.folder) in done.stderr
+        assert (upgrade.folder / "README.md").read_bytes() == b"Keep my unfinished work\n"
+        assert upgrade.uv() == []
+        # The named command preserves the edit and actually clears the upgrade stop.
+        repo.git("stash", "push", "--include-untracked", cwd=upgrade.folder)
+        assert "Keep my unfinished work" in repo.git("stash", "show", "-p")
+        assert_ready(upgrade, upgrade.run(RELEASE), ours(upgrade, started=False))
     else:
         assert_ready(upgrade, done, ours(upgrade, started=False))
         assert f'version = "{RELEASE}"' in upgrade.show("forge.toml")
