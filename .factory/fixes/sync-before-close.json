@@ -1,4 +1,11 @@
 {
+  "amendments": [
+    {
+      "at": "2026-11-10T03:26:30.020169+00:00",
+      "because": "The owner narrowed the fix to close's early stop after round 1",
+      "done_when": "Before a fix or task round is handed back as done, Forge regenerates the synced guide copies when the template changed in the branch, or close stops locally with forge sync as the next step before any review or CI wait"
+    }
+  ],
   "base": "22a569900e405b345833465cf95080e422878507",
   "branch": "fix/sync-before-close",
   "chat": {
@@ -8,7 +15,7 @@
     "head": null,
     "start": "1b914fbc290c593a19ee725635b50cb1c82f0865"
   },
-  "done_when": "Before a fix or task round is handed back as done, Forge regenerates the synced guide copies when the template changed in the branch, or close stops locally with forge sync as the next step before any review or CI wait",
+  "done_when": "Close stops before any review or CI wait when the branch's synced guide copies are out of date, and names the exact forge sync step and folder; after an upgrade it builds the copies with the newly pinned release",
   "fix_kind": "mechanical",
   "kind": "fix",
   "known": [
