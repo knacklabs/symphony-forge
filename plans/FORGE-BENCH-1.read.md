@@ -1,13 +1,13 @@
 ---
 reader: codex (gpt-6.1-terra)
-read_at: 2026-11-10T17:56:31.803091+00:00
-seconds: 260.32
-read_hash: 8d122086dd5a54b3b404290b5bc5a6d445f5e053
-round: 3
+read_at: 2026-11-10T18:04:05.872497+00:00
+seconds: 217.034
+read_hash: e9388e9061b1a13fb8badfb88dfb9d09e464ec7f
+round: 4
 passed: yes
-doc_seen: 8d122086dd5a54b3b404290b5bc5a6d445f5e053
+doc_seen: e9388e9061b1a13fb8badfb88dfb9d09e464ec7f
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 1ca7eb7bf006256575d98bcb37a66cd2d20734c1
+notes_seen: 223d9d4333408ca41aaa7f0a9998df9658dce5c5
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a1c67a-137f-7750-ac95-00994b5ef6e8
 session:
@@ -141,3 +141,19 @@ Only a genuine trade-off goes to the human, as a question with options.
     The [plan](/plans/FORGE-BENCH-1.md:70) specifies `actions: read` and allows a missing lookup to continue. GitHub CLI also needs a token in its environment; the existing [release workflow](/.github/workflows/forge-next.yml:58) supplies `GH_TOKEN`. The planned test does not check that authentication, so a workflow could pass it while reporting no earlier score on every run. [GitHub’s workflow documentation](https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-github-cli) describes the token requirement.  
     Gain 3, Work 2, Harm 2
    Disposition: cut - Settled 6 sets `GH_TOKEN` from `github.token` on the lookup step and the job has `actions: read`; `test_1` asserts both.
+
+## Round 4
+
+16. Advisory: Not done: an older release can be compared with a newer one.  
+    Raise: Not done  
+    Case: normal use - two releases are scored by hand in the opposite order.  
+    The [lookup](/plans/FORGE-BENCH-1.md:71) selects the newest run with an artifact without checking which release it scored. Scoring `v1.2.37` and then `v1.2.36` would compare the older release against the newer one; the next run would use `v1.2.36` as its comparison. Forge’s existing [release ordering](/src/forge/releases.py:41) uses ancestry rather than run time.  
+    Gain 3, Work 3, Harm 2
+   Disposition: keep - below the bar (follow-up)
+
+17. Advisory: Unproven: item 1: a tag from before this story has no benchmark files.  
+    Raise: Test  
+    Case: normal use - after the workflow merges, the first manual run names the latest release already tagged.  
+    The [plan](/plans/FORGE-BENCH-1.md:69) says the job checks out the named tag and can score any tag. The [scorer and notes](/plans/FORGE-BENCH-1.md:102) are new; `git ls-tree v1.2.35 -- benchmark scripts/bench_score.py` finds neither in the current latest release. The plan does not specify another source for those files, and the workflow test would pass with only the tag checkout.  
+    Gain 3, Work 3, Harm 2
+   Disposition: keep - below the bar (follow-up)
