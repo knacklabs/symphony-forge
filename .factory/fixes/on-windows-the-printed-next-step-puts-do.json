@@ -85,7 +85,7 @@
     "status": "blocked"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-10T19:39:53.711839+00:00",
@@ -100,6 +100,11 @@
       "step": "review"
     }
   ],
+  "stop": {
+    "question": "On Windows the printed next step puts double quotes around a plain is stuck. It should deliver: The printed nightly full-run command has no quotes around a plain file name, and it is the same on Windows as on other systems.\nTwo rounds in a row left the open P0 protect quoted windows arguments from powershell evaluation in src/forge/repo.py.\nThe worker tried: Keep Windows next-step arguments literal.\nChoose one: switch this item to Claude; keep Codex for one more round; or narrow or split it.",
+    "tool": "codex",
+    "wait_id": "30bf6a8e-2fc4-41a0-9964-b4a098b8e2a0"
+  },
   "stuck": {
     "close": "d7976db9-20b2-4366-901f-8aac7d764a80",
     "head": "d9e6a7001e93632f334a7136c9c6d3cbcb9e6858",
