@@ -1,18 +1,18 @@
 ---
 reader: codex (gpt-6.1-terra)
-read_at: 2026-11-10T18:05:32.290219+00:00
-seconds: 646.436
-read_hash: 3f865a51aa5b25c479ff1770ce19efef7fa72eda
-round: 2
+read_at: 2026-11-10T18:22:51.569159+00:00
+seconds: 619.704
+read_hash: 022e8bc896e14466a2a20ec3e3cd42a27dfe77dc
+round: 3
 passed: no
-doc_seen: 3f865a51aa5b25c479ff1770ce19efef7fa72eda
+doc_seen: 022e8bc896e14466a2a20ec3e3cd42a27dfe77dc
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 5d4a5375fe4d18e30dc1e6555ef8c56f05e865f6
+notes_seen: bd325ac4b35aad84c7d43f911e24282e29338640
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a1c688-ccdd-7ac1-8f0f-d13c2a9f3269
 session:
-loop_choice: more
-loop_reason: The owner chose one more round on 10 Nov 2026 to make the check's rules exact
+loop_choice:
+loop_reason:
 ---
 # Cold read notes
 
@@ -153,3 +153,17 @@ Only a genuine trade-off goes to the human, as a question with options.
     Raise: Plan gap. [The starter check](/plans/FORGE-FEATUREDROP-1.md:62) gives no precedence when both markers exist. The named [earlier-adopted Python setup](/tests/test_feature_command.py:251) overlays the Python starter on an earlier TypeScript starter, while the [build command](/src/forge/feature.py:104) selects Python first. The planned adopted case permits either fixture, so it can pass without proving that choice.
     Gain 3, Work 1, Harm 3
     Disposition: cut Python wins when both markers exist, as in the build command; test_1 runs the adopted Python fixture, which holds both, and expects the Python-only imports to be found
+
+## Round 3
+
+22. Blocking: Not done: The check misses the starter’s agent-tool references.  
+    Raise: Not done. The [scan rules](/plans/FORGE-FEATUREDROP-1.md:65) match neither tool names such as `projects_search` nor the feature name in `/api/v1/agent-tools/projects`. The starter’s [agent-tool test](/src/forge/templates/starter/apps/api/test/mcp.e2e-spec.ts:150) expects the removed tool, and its [agent-access test](/src/forge/templates/starter/apps/api/test/agents.e2e-spec.ts:55) still names the feature. The check can report all clear while the first test fails and the second reference remains.  
+    Case: normal use - a team removes the starter’s projects placeholder.  
+    Gain 5, Work 2, Harm 3
+    Disposition: cut a new class (h) matches the agent-tool names `<snake plural>_<action>` (and the `startsWith('<plural>_')` and template forms), and class (b) matches `/api/v1/agent-tools/<plural>`; both count as uses and leftovers; test_1 plants them, test_2 has a jobs file that names `clients_search`, and the guide names the starter's agent-tool and agent-access tests. The owner chose on 10 Nov 2026 to fix this with no further read.
+
+23. Blocking: Not done: A missing Python data model can still produce an all-clear.  
+    Raise: Not done. The [plan](/plans/FORGE-FEATUREDROP-1.md:8) promises no all-clear when the data model cannot be found, but its [model check](/plans/FORGE-FEATUREDROP-1.md:63) applies only to TypeScript. If manual cleanup also removes Python’s `models.py`, the check can report clear even though the retained [database setup](/src/forge/templates/starter-python/apps/api/migrations/env.py:9) can no longer import the model. The planned missing-model test covers only TypeScript.  
+    Case: normal use - an agent removes the Python feature files by hand and also removes the model.  
+    Gain 5, Work 2, Harm 4
+    Disposition: cut the missing-data-model rule now covers Python: no `models.py` naming the module's schema ends in the could-not-find line, a non-zero exit and no all-clear line; test_3 deletes `models.py` after the guide's list. The owner chose on 10 Nov 2026 to fix this with no further read.
