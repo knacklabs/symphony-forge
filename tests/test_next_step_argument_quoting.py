@@ -22,7 +22,13 @@ pytestmark = pytest.mark.platform
     ("posix", "nightly.yml", "nightly.yml", False),
     ("nt", "nightly.yml", "nightly.yml", False),
     ("posix", "nightly & tests.yml", "'nightly & tests.yml'", False),
-    ("nt", "nightly & tests.yml", '"nightly & tests.yml"', False),
+    ("nt", "nightly & tests.yml", "'nightly & tests.yml'", False),
+    ("posix", "nightly+tests.yml", "nightly+tests.yml", False),
+    ("nt", "nightly+tests.yml", "nightly+tests.yml", False),
+    ("posix", "nightly$(calc).yml", "'nightly$(calc).yml'", False),
+    ("nt", "nightly$(calc).yml", "'nightly$(calc).yml'", False),
+    ("posix", "nightly's tests.yml", "'nightly'\"'\"'s tests.yml'", False),
+    ("nt", "nightly's tests.yml", "'nightly''s tests.yml'", False),
     ("nt", "nightly.yml", "nightly.yml", True),
 ])
 def test_1_nightly_next_command_quotes_only_when_needed(repo, gh, platform, workflow, expected, adopted):
