@@ -1,13 +1,13 @@
 ---
 reader: codex (gpt-6.1-terra)
-read_at: 2026-11-10T19:37:00.253768+00:00
-seconds: 418.247
-read_hash: 1871e42e0d0326e0eec12cb6de14f9b7fbde96d9
-round: 5
+read_at: 2026-11-10T19:44:35.554516+00:00
+seconds: 338.209
+read_hash: f7947da6e02a59eb6c480a86ad7138c52bce286c
+round: 6
 passed: no
-doc_seen: 1871e42e0d0326e0eec12cb6de14f9b7fbde96d9
+doc_seen: f7947da6e02a59eb6c480a86ad7138c52bce286c
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 8084915edafdaaeaff205ff1d2182c08fe32fb51
+notes_seen: d66d3ab111a97fa10ae16032c6b041a7a1a24db8
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a1c67a-137f-7750-ac95-00994b5ef6e8
 session:
@@ -191,3 +191,29 @@ Only a genuine trade-off goes to the human, as a question with options.
     The [owner-facing text](/plans/FORGE-BENCH-1.md:7) says nothing runs on or is added to GitHub, but the required normal fix [pushes its branch](/src/forge/task.py:288) and [opens a pull request](/src/forge/close.py:981). That pull request starts the existing [GitHub workflow](/.github/workflows/forge.yml:4).  
     Gain 3, Work 2, Harm 2
    Disposition: cut - the owner text now says only the saved-score file goes through Forge's usual pull request; Settled 4 names the mechanical kind (one pull request, one light review, related tests).
+
+## Round 6
+
+22. Blocking: Plan gap: the documented score command cannot start on the maintainer’s laptop.
+    
+    Raise: Plan gap  
+    Case: normal use - the agent runs the score command after building the app.  
+    The [plan](/plans/FORGE-BENCH-1.md:72) pins `python scripts/bench_score.py`, but `python --version` in this checkout’s shell returns `command not found`. `python3 --version` reports Python 3.14.2. The documented command therefore stops before writing a score, even when the build succeeds.  
+    Gain 5, Work 1, Harm 2
+   Disposition: cut - Settled 4 and 7 now use `uv run --frozen --python 3.11 python scripts/bench_score.py ...`, the form this repo's test command uses, and `test_1`, `test_2` and `test_3` run it that way. The owner was away on 11 Nov 2026 and told the coordinator to take the recommended option: fix with no further read.
+
+23. Advisory: Not done: the detector engine can change without changing the baseline.
+    
+    Raise: Not done  
+    Case: normal use - the maintainer updates their installed Impeccable engine between two release scores.  
+    The [new baseline](/plans/FORGE-BENCH-1.md:73) hashes the app’s checker and scripts, but the [launcher](/src/forge/templates/skills/impeccable/scripts/impeccable:111) can run an engine from the user’s home directory before its version-pinned cache. Changing that external engine can change the findings while the hashed files stay the same, so the summary can show a direction instead of “new baseline.” This is separate from the previous finding about hashing the coordinator checkout’s checker.  
+    Gain 4, Work 2, Harm 2
+   Disposition: cut - Settled 8 records the engine version that the launcher actually ran (`engine-probe`), stores it as `engine` and hashes it into the baseline id; `test_3` changes only the fake launcher's version line. The owner was away on 11 Nov 2026 and told the coordinator to take the recommended option: fix with no further read.
+
+24. Advisory: Not done: the Sonnet alias can select a different model from the release.
+    
+    Raise: Not done  
+    Case: normal use - the coordinator session uses an older Sonnet model while scoring a release configured for Sonnet 5.5.  
+    The [plan](/plans/FORGE-BENCH-1.md:70) starts the general-purpose builder with `model: sonnet` to match the scratch repo’s setting. [Claude Code’s documentation](https://code.claude.com/docs/en/sub-agents) says that when the main session already uses that model family, the subagent uses the main session’s exact model. The guide asks the agent to record the observed model but gives no action for a mismatch, so a score can reflect a different builder model from the named release.  
+    Gain 3, Work 2, Harm 2
+   Disposition: keep - below the bar (follow-up)
