@@ -530,7 +530,7 @@ def pytest_collection_modifyitems(items):
     COLLECTED.append(len(items))
 @pytest.hookimpl(optionalhook=True)
 def pytest_testnodedown(node):
-    COLLECTED.append(node.workeroutput.get("forge_collected", 0))
+    COLLECTED.append(getattr(node, "workeroutput", {}).get("forge_collected", 0))
 def pytest_runtest_logreport(report):
     if not FILE or report.when != "call" and report.passed:
         return
