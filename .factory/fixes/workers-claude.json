@@ -1,0 +1,106 @@
+{
+  "amendments": [
+    {
+      "at": "2026-11-10T18:08:31.342608+00:00",
+      "because": "The review showed that forge next reads the setting from each part's starting branch, so branches made earlier need the default branch merged in, and that user-facing parts must keep the design routing",
+      "done_when": "forge.toml has workers = \"claude\" and forge next names Claude as the builder of every part"
+    }
+  ],
+  "base": "eea868801ded3354134af94e738c67f9f2472c87",
+  "branch": "fix/workers-claude",
+  "done_when": "forge.toml has workers = \"claude\"; a part whose starting branch has this setting is built by Claude, and a user-facing part still gets the design worker and the design model",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "forge.toml",
+      "file": "forge.toml",
+      "gain": null,
+      "harm": null,
+      "line": 4,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: forge.toml has workers = \"claude\" and forge next names Claude as the builder of every part",
+      "work": null
+    },
+    {
+      "area": "forge.toml",
+      "file": "forge.toml",
+      "gain": null,
+      "harm": null,
+      "line": 4,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Update the tests that still require split workers",
+      "work": null
+    },
+    {
+      "area": "forge.toml",
+      "file": "forge.toml",
+      "gain": null,
+      "harm": null,
+      "line": 4,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Preserve design routing for user-facing source tasks",
+      "work": null
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "35e6a54742c32824d1149743b015807e7ff412c9d3baa11a80bc0ff8eec8f5f4",
+    "changed": "582c36f17934c83a4dba6fe9836c2b1beaee8232a57200d2b12a3861a58bd967",
+    "commit": "9b8e1e27952b1086852608153c513223c1ffa3a8",
+    "dismissals": [],
+    "findings": [],
+    "id": "9b7bbce3-e5a5-46e2-be7b-b22c329d3259",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-10T18:00:54.626512+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-10T18:07:30.401656+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-10T18:29:15.377659+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-10T19:32:41.706007+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-10T19:49:22.758533+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-10T18:07:30.410314+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "forge.toml",
+    "reason": "The owner chose one more round on 10 Nov 2026 to repair the two tests and keep the design routing",
+    "wait_id": "c0b8c7b2-0df3-4254-acb1-136c92b7804a",
+    "worker_round": null
+  },
+  "stuck": {
+    "close": "23873fea-7944-427e-a9bd-2b6082de7faa",
+    "head": "608d7da6946a11b7cbb941ff041983afb1b2c0f4",
+    "keys": {},
+    "round": 2
+  },
+  "why": "The owner chose on 10 Nov 2026 that every task and fix in this repo is built by Claude",
+  "worker": "claude"
+}
