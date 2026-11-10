@@ -1,0 +1,96 @@
+{
+  "base": "454b02fcbc10d81404c703d688bb43f0fc123084",
+  "branch": "fix/on-windows-the-printed-next-step-puts-do",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1c6f9-963c-7961-b77b-b8609118d045",
+    "head": null,
+    "start": "525cfa1c6a5e15b7327e6b1cca042e2b39de7383"
+  },
+  "done_when": "The printed nightly full-run command has no quotes around a plain file name, and it is the same on Windows as on other systems.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "quote() in src/forge/repo.py",
+      "file": "src/forge/repo.py",
+      "gain": 2,
+      "harm": 4,
+      "line": 402,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": true,
+      "title": "Protect quoted Windows arguments from PowerShell evaluation",
+      "work": 2
+    },
+    {
+      "area": "quote() in src/forge/repo.py",
+      "file": "src/forge/repo.py",
+      "gain": 2,
+      "harm": 1,
+      "line": 400,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: The printed nightly full-run command has no quotes around a plain file name, and it is the same on Windows as on other systems.",
+      "work": 1
+    },
+    {
+      "area": "test_1_nightly_next_command_quotes_only_when_needed() in tests/test_next_step_argument_quoting.py",
+      "file": "tests/test_next_step_argument_quoting.py",
+      "gain": 2,
+      "harm": 1,
+      "line": 42,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: tests/test_next_step_argument_quoting.py::test_1_nightly_next_command_quotes_only_when_needed",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "02cab9003545cca54129991b94ff436f4210eda1f2af155065b10de3772d1113",
+    "changed": "1b257066e285bc8af39ca8791ce27e84ece6ca48a63ee58780f63e4165f627e8",
+    "commit": "ce072852d7096d491ed9a023d2defe888ac138ca",
+    "dismissals": [],
+    "findings": [],
+    "id": "095c3150-d599-42a2-8b88-9cf2aa61fb37",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-10T19:39:53.711839+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-10T19:50:52.990510+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-10T19:57:56.540502+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-10T20:03:37.496872+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "7a3c9244-5dc4-43d4-afba-dc708f2e9cf1",
+    "head": "5513d0252d5cfcc5dde5a2b94fa649d1619955c7",
+    "keys": {
+      "the open P0 protect quoted windows arguments from powershell evaluation in src/forge/repo.py": 2
+    },
+    "round": 2
+  },
+  "tool": "claude",
+  "why": "On Windows the printed next step puts double quotes around a plain file name, so the Windows platform run fails two nightly-setting tests and blocks the release.",
+  "worker": "claude"
+}
