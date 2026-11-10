@@ -1,0 +1,48 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tFunctional: Do not list a successful worker rerun as a failed test\twhen-a-parallel-test-process-dies-during",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 533,
+      "text": "Functional: Do not list a successful worker rerun as a failed test",
+      "from": "blocking",
+      "item": "when-a-parallel-test-process-dies-during",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tFunctional: Preserve failure when a worker dies during collection\twhen-a-parallel-test-process-dies-during",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 533,
+      "text": "Functional: Preserve failure when a worker dies during collection",
+      "from": "blocking",
+      "item": "when-a-parallel-test-process-dies-during",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tNot done: When a parallel test process dies, the run still reports the real result, including the failed test names.\twhen-a-parallel-test-process-dies-during",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 533,
+      "text": "Not done: When a parallel test process dies, the run still reports the real result, including the failed test names.",
+      "from": "blocking",
+      "item": "when-a-parallel-test-process-dies-during",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_parallel_worker_crash_keeps_failed_names.py\tGate: test_1_parallel_worker_crash_keeps_failed_test_names\twhen-a-parallel-test-process-dies-during",
+      "kind": "bug",
+      "path": "tests/test_parallel_worker_crash_keeps_failed_names.py",
+      "line": 27,
+      "text": "Gate: test_1_parallel_worker_crash_keeps_failed_test_names",
+      "from": "blocking",
+      "item": "when-a-parallel-test-process-dies-during",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
