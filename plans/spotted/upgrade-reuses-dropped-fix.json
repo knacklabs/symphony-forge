@@ -1,0 +1,48 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/upgrade.py\tGive an actionable next step for uncommitted fix work\tupgrade-reuses-dropped-fix",
+      "kind": "bug",
+      "path": "src/forge/upgrade.py",
+      "line": 132,
+      "text": "Give an actionable next step for uncommitted fix work",
+      "from": "blocking",
+      "item": "upgrade-reuses-dropped-fix",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/upgrade.py\tPreserve active fixes that were never dropped\tupgrade-reuses-dropped-fix",
+      "kind": "bug",
+      "path": "src/forge/upgrade.py",
+      "line": 126,
+      "text": "Preserve active fixes that were never dropped",
+      "from": "blocking",
+      "item": "upgrade-reuses-dropped-fix",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/upgrade.py\tRecheck the fix after restoring its latest remote commits\tupgrade-reuses-dropped-fix",
+      "kind": "bug",
+      "path": "src/forge/upgrade.py",
+      "line": 129,
+      "text": "Recheck the fix after restoring its latest remote commits",
+      "from": "blocking",
+      "item": "upgrade-reuses-dropped-fix",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/upgrade.py\tNot done: recover a dropped fix absent from local remote-tracking refs",
+      "kind": "edge",
+      "path": "src/forge/upgrade.py",
+      "line": 153,
+      "text": "Not done: recover a dropped fix absent from local remote-tracking refs",
+      "from": "review",
+      "item": "upgrade-reuses-dropped-fix",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
