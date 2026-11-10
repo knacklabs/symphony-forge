@@ -380,7 +380,7 @@ def close_test(top: Path, base: str, *, closing: bool = True, head: str = "HEAD"
 
 # Close shows these fasttest lines, which a later runner's output can push out of the tail.
 GAP = "No local test names "
-RENDERED = "Rendered "  # the rendered check's lines
+RENDERED = ("Rendered problem: ", "Rendered check: ")  # close never cuts these; the dot reporter's marks can come before one
 
 
 def test_run(top: Path, command: str, base: str, *, always: bool = False,
@@ -496,12 +496,14 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False,
             preload_folder.cleanup()
             machine.leave(entry)
         out = [line.rstrip() for line in done.stdout.splitlines()]
-        picked = sorted({i for n, line in enumerate(out) if "skip" in line.lower()
-                         for i in (n - 1, n) if i >= 0} | set(range(max(0, len(out) - 30), len(out)))
-                        | {n for n, line in enumerate(out) if line.startswith((GAP, RENDERED))})
+        shown = {n for n, line in enumerate(out) if any(mark in line for mark in RENDERED)}
+        picked = sorted(({i for n, line in enumerate(out) if "skip" in line.lower()
+                          for i in (n - 1, n) if i >= 0} | set(range(max(0, len(out) - 30), len(out)))
+                         | {n for n, line in enumerate(out) if line.startswith(GAP)}) - shown)
         lines = [out[i] for i in picked]
         if len(lines) > 80:  # the tail is the last 30 picked; the earliest skip lines fill the rest
             lines = [*lines[:50], f"({len(lines) - 80} skip lines cut here)", *lines[-30:]]
+        lines = [*(out[i] for i in sorted(shown)), *lines]
         if done.returncode:
             if done.returncode == 5:
                 lines.append("No tests ran. Check the task's Tests column and the test command or filters.")
