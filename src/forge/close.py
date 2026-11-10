@@ -824,7 +824,7 @@ def _synced(top: Path, item: str) -> None:
     toml = story.show(top, "HEAD", "forge.toml") or ""
     pinned = repo._pin(toml)  # pyright: ignore[reportPrivateUsage]
     if pinned == (release := repo._pin(story.show(top, f"origin/{repo.default_branch(top)}", "forge.toml") or "")):  # pyright: ignore[reportPrivateUsage]
-        return
+        return sync.check_guides(top)
     kind = "task" if "/" in item else "fix"
     if (behind := repo._older(pinned, release)) or pinned != __version__:  # pyright: ignore[reportPrivateUsage]
         repo.refuse(("This {kind} pins Forge {pinned}, but the default branch pins Forge {release}.", "forge work {item} to merge the default branch, then forge close {item}") if behind else REFUSALS["unsynced_forge"], kind=kind, pinned=f"v{pinned}",

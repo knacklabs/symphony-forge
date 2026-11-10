@@ -613,8 +613,8 @@ print(json.dumps(sync.differing(top, wanted)))
     result.check_returncode()
     if changed := json.loads(result.stdout):
         repo.refuse(("Generated guides need updating: {paths}.",
-                     "Run forge sync, then commit the generated guides and run close again."),
-                    paths=", ".join(changed))
+                     "in {folder}, run forge sync, then commit the generated guides and run close again."),
+                    paths=", ".join(changed), folder=top.as_posix())
 
 
 def refresh_merged_guides(top: Path, before: str) -> None:

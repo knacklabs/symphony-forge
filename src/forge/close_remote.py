@@ -3,7 +3,7 @@ import json
 import subprocess
 from pathlib import Path
 
-from forge import checks, repo, review, sync
+from forge import checks, repo, review
 
 
 def replay_file(top: Path, branch: str) -> Path:
@@ -38,7 +38,6 @@ def push_replay(top: Path, branch: str, tags: list[str]) -> bool:
 
 
 def reconcile(top: Path, branch: str) -> None:
-    sync.check_guides(top)
     if replay_file(top, branch).exists():
         return  # Its captured lease protects the old remote history until the final push.
     target = f"refs/remotes/origin/{branch}"
@@ -66,4 +65,3 @@ def reconcile(top: Path, branch: str) -> None:
                      "in {path}, finish or abort the merge, then retry this command"),
                     problem=merged.stderr.strip(), path=top)
     checks.required(top, repo.default_branch(top))
-    sync.check_guides(top)
