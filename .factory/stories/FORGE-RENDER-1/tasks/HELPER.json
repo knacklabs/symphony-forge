@@ -1,10 +1,18 @@
 {
   "branch": "task/FORGE-RENDER-1-HELPER",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-10T20:08:47.982604+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "e807224f6acf3c979a0a42d9bc87cc7fd0082f81",
+    "keys": {},
+    "round": null
+  },
+  "worker": "claude"
 }
