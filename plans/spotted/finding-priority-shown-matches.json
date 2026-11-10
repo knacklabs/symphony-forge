@@ -1,6 +1,17 @@
 {
   "items": [
     {
+      "key": "edge\tsrc/forge/review.py\tFollow-up: Preserve sign-off priorities in review history",
+      "kind": "edge",
+      "path": "src/forge/review.py",
+      "line": 549,
+      "text": "Follow-up: Preserve sign-off priorities in review history",
+      "from": "review",
+      "item": "finding-priority-shown-matches",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/review.py\tNot done: Prior and rebuilt review rounds can still show P1",
       "kind": "edge",
       "path": "src/forge/review.py",
