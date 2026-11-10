@@ -121,8 +121,8 @@ def _wait(top: Path, item: str, sha: str, names: list[str], branch: str, progres
         running = False
         try:
             seen, snapshot, check_runs, pr = _status(top, item, sha, branch, cache, requested)
-            running = any(run.get("status") == "in_progress" for run in check_runs)
-            result["state"] = ("running" if any(state == PENDING for _, state in seen)
+            running = any(state == PENDING for _, state in seen)
+            result["state"] = ("running" if running
                                else "queued" if any(state == QUEUED for _, state in seen)
                                else "unknown")
             if progress and snapshot != previous:
@@ -169,17 +169,18 @@ def _wait(top: Path, item: str, sha: str, names: list[str], branch: str, progres
         else:
             queued_since = printed_minute = None
         left = deadline - time.monotonic()
-        if progress:
-            remaining = running_deadline - time.monotonic()
+        remaining = running_deadline - time.monotonic()
+        if progress or running:
             left = (remaining if running and "FORGE_CHECKS_WAIT" not in os.environ
                     else min(left, remaining))
         if left <= 0:
             if result["state"] in ("queued", "running"):
                 result["outcome"] = "gave_up_" + result["state"]
-            if progress:
+            if progress or running:
                 reason = (f"The wait reached its 90 minutes limit: {reason}"
                           if remaining <= 0 else
                           f"GitHub has shown no check progress for {timeout / 60:g} minutes: {reason}")
+            if progress:
                 repo.refuse(REFUSALS["wait_ended"], reason=reason, item=item)
             repo.refuse(REFUSALS["not_green"], reason=reason, item=item)
         # Queued checks keep backpressure; running checks need no local close place.

@@ -1,0 +1,98 @@
+{
+  "base": "22a569900e405b345833465cf95080e422878507",
+  "branch": "fix/close-waits-running-checks",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1c357-97fe-7100-84ac-1d0f6f4c494f",
+    "head": null,
+    "start": "4a29e3c9dbd44fb4078aa3788d9cac97771954af"
+  },
+  "done_when": "Close and merge keep waiting while GitHub shows a required check running, up to the same 90-minute limit land uses; when they stop at a limit they say which limit and that the checks are still running",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "_wait() in src/forge/checks.py",
+      "file": "src/forge/checks.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 173,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Running commit-status checks still stop after ten minutes",
+      "work": 2
+    },
+    {
+      "area": "_wait() in src/forge/checks.py",
+      "file": "src/forge/checks.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 179,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: Existing close wait tests fail on the new refusal",
+      "work": 1
+    },
+    {
+      "area": "test_1_close_waits_for_running_checks_until_green_or_the_limit() in tests/test_close_waits_for_running_checks.py",
+      "file": "tests/test_close_waits_for_running_checks.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 26,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_close_waits_for_running_checks_until_green_or_the_limit",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "0829d3b110c4757cd2a0cf8e18abfcdcecdf35b6c4eee14898b6b5aaeb4bd1d7",
+    "changed": "749ef1d28dfdabeca73ce20f619cc67cb868965776cc28833084c38e6573cdfb",
+    "commit": "f8dcb097fdc26fd64d046f297d76b1dae3ed8b54",
+    "dismissals": [],
+    "findings": [],
+    "id": "4f885c93-76e1-4d66-920f-6a81b31538d4",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-10T02:44:02.537298+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-10T02:55:21.379553+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-10T03:15:32.132709+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-10T02:55:21.391005+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "src/forge/checks.py",
+    "reason": "The owner wants one more round for all three findings",
+    "wait_id": "680a8e85-f160-4cb0-a0d1-6de0180524c7",
+    "worker_round": 1
+  },
+  "stuck": {
+    "close": "b4bbc2d2-09a7-43fc-84cc-1abafba0195d",
+    "head": "b4668ed954c8ecd16495d5f49bd699d7c3d22b77",
+    "keys": {},
+    "round": 1
+  },
+  "why": "Close and merge stop waiting after 10 minutes while the pull request's test groups are still running, so on repos with 30-minute test groups the coordinator reruns close and merge several times per change (#1500)",
+  "worker": "codex"
+}
