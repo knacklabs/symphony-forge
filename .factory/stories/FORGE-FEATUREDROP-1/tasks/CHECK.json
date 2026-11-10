@@ -150,7 +150,7 @@
       "gain": null,
       "harm": null,
       "line": 65,
-      "outcome": "open",
+      "outcome": "fixed in round 4",
       "reason": "",
       "round": 3,
       "security": false,
@@ -163,7 +163,7 @@
       "gain": null,
       "harm": null,
       "line": 80,
-      "outcome": "open",
+      "outcome": "fixed in round 4",
       "reason": "",
       "round": 3,
       "security": false,
@@ -186,38 +186,27 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "bd0ebbb69aef03f03c12cf7064e5b26a361e71eae8c09808eac81a11c9cbacc4",
-    "changed": "cfda12c0948c2aee39d44abbc974954c9888ece6a1bae044afc656b637b8cafd",
-    "commit": "8f0c7e99b42e8b364b1828920e336e2f14dc70aa",
+    "branch_diff": "83cc2f22ce9eb2c22bf3ff683d242266ccea298c5153f83cd1846ec44d855a0e",
+    "changed": "3be4ec8d01f3eb132f600094573df31adde387e4afc6abc8a60682f23c046055",
+    "commit": "7e736449aa3a406c05c8c87d768fbc014a81d2ea",
     "dismissals": [],
     "findings": [
       {
-        "body": "A hand-built controller under `apps/api/src` can retain `@Controller('people')` and a `PeopleController` registration after the feature files are removed. Neither matches these route patterns or the recognized class names, so the check can report all clear while the endpoint remains registered. This is the route form used by the starter\u2019s controller at `src/forge/templates/starter/libs/projects/server/src/projects.controller.ts:43`.",
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done.\nCase: normal use - a jobs response example contains `label: '1) Select client'` before `url: '/api/v1/clients'` in a multiline `example: { ... }` object. The bracket counter treats the `)` inside the label string as the end of the object, so the URL is classified as a real use and Forge names jobs as a dependency. The prior round's multiline-example issue therefore remains open. The starter uses response example objects at `src/forge/templates/starter/libs/auth/server/src/members.controller.ts:42`.",
         "file": "src/forge/feature_remove.py",
-        "line": 65,
+        "gain": 4,
+        "harm": 3,
+        "line": 44,
         "priority": "P1",
-        "title": "Detect Nest controller prefixes without a leading slash"
-      },
-      {
-        "body": "A demo loader can use `await db.person.create(...)`, where `db` is a Prisma client or transaction. The starter itself uses this alias pattern in `src/forge/templates/starter/libs/history/server/src/history.service.ts:13`, but this matcher only accepts `prisma.person` and `tx.person`. After the other references are removed, the check can report all clear while a fresh demo database still loads the feature\u2019s sample rows.",
-        "file": "src/forge/feature_remove.py",
-        "line": 80,
-        "priority": "P1",
-        "title": "Detect sample-data inserts through Prisma client aliases"
-      },
-      {
-        "body": "The previous fix handles comment markers and `example:` only on the matched line. A line containing `/api/v1/clients` inside a multiline block comment or inside an example object declared on a preceding line is therefore classified as code. If it is in the jobs module, the check reports jobs as a user and asks the person which feature to change first, even though there is no dependency.",
-        "file": "src/forge/feature_remove.py",
-        "line": 115,
-        "priority": "P1",
-        "title": "Exclude multiline comments and examples from feature users"
+        "title": "Exclude multiline comments and examples from feature users",
+        "work": 2
       }
     ],
-    "id": "aae1b818-0ad2-4a22-8c8d-75a7a1d93352",
+    "id": "5d9aaf8f-4fd0-4fc4-b33b-b02a17d08217",
     "status": "blocked"
   },
   "round": 4,
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-10T20:08:57.485640+00:00",
@@ -234,16 +223,16 @@
     {
       "at": "2026-11-10T21:05:52.713477+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-11-10T22:14:43.279161+00:00",
+      "step": "review"
     }
   ],
   "stop": {
-    "at": "2026-11-10T21:05:52.713760+00:00",
-    "by": "owner",
-    "choice": "more",
+    "at": "2026-11-10T22:14:43.279443+00:00",
     "file": "src/forge/feature_remove.py",
-    "reason": "The owner was away on 11 Nov 2026 and told the coordinator to take the recommended option: the three cases are common forms (a controller prefix with no leading slash, inserts through a client alias, multiline comments) and each is a small rule",
-    "wait_id": "c63f3c0f-ac34-42f0-b3af-b934ff84b3ea",
-    "worker_round": 3
+    "wait_id": "c46c7fa9-354c-475f-bf6f-81ebf23af7fb"
   },
   "stuck": {
     "close": "ee536f55-fecf-4f5b-8720-cbf0213086dd",
