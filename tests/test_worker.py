@@ -42,9 +42,11 @@ def test_17_worker(repo, gh, monkeypatch):
     log = install_claude(repo)
     version = repo.forge("--version").stdout.split()[-1]
     # This tests the configured Claude route; client design routing has its own command test.
+    # PAGE is user-facing, and with workers = claude a source repo builds it on the design model.
     repo.write("forge.toml", f'version = "{version}"\nrepo = "forge-source"\n'
                              'workers = "claude"\ntest = "pytest -q"\n'
                              'models.build = { model = "sonnet", effort = "medium" }\n'
+                             'models.design.claude = { model = "sonnet", effort = "medium" }\n'
                              'models.lite = { model = "sonnet", effort = "medium" }\n')
     # Tests already in the repo: one names a file in PAGE's Scope, the other doesn't, and one sits
     # next to its code.
