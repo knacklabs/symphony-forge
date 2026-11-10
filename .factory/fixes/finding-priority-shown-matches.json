@@ -4,12 +4,20 @@
   "done_when": "Every finding that close treats as blocking past the round limit is shown with the same priority in close's table, finding list and stop message as the one close acts on",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-10T02:45:11.175528+00:00",
       "step": "start"
     }
   ],
-  "why": "Close lists a finding as P1 in its table and finding list while it treats it as a P0 that ignores the round limit, so the owner is offered accept and then refused (#1498)"
+  "stuck": {
+    "close": null,
+    "head": "bcda4a891197aa234b830e8c5d7c61052f7c0b16",
+    "keys": {},
+    "round": null
+  },
+  "why": "Close lists a finding as P1 in its table and finding list while it treats it as a P0 that ignores the round limit, so the owner is offered accept and then refused (#1498)",
+  "worker": "codex"
 }
