@@ -4,12 +4,20 @@
   "done_when": "forge upgrade <release> on the default branch reuses a dropped or restored upgrade fix of the same name that has no other work, or names the one command that clears it; it never refuses with no next step",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-10T02:45:02.219707+00:00",
       "step": "start"
     }
   ],
-  "why": "After a fix named for an upgrade is dropped or restored, forge upgrade refuses both ways and leaves no Forge path (#1501)"
+  "stuck": {
+    "close": null,
+    "head": "843618d4b8e44a7263e3a9a8674ddea41aa9a5b7",
+    "keys": {},
+    "round": null
+  },
+  "why": "After a fix named for an upgrade is dropped or restored, forge upgrade refuses both ways and leaves no Forge path (#1501)",
+  "worker": "codex"
 }
