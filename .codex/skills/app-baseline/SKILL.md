@@ -30,7 +30,8 @@ impeccable and emil-design-eng skills. This page lists what must be there and po
 7. Use a select for fewer than 7 options, a search box (combobox) for 7 or more,
    and a radio group for 2 to 4 options when choices need to stay visible.
 8. Handle loading, empty (first use, no result, cleared), error, no permission and
-   partial data, with a clear next action.
+   partial data, with a clear next action. Where an app has `libs/shared/ui/src/components/states.tsx`,
+   use its `LoadingState`, `EmptyState` and `ErrorState` and build no state markup of your own.
 9. At 375 pixels, allow no sideways page scroll. Tables scroll inside their own box.
    The sidebar becomes a sheet.
 10. Use plain words and realistic sample data with units. No lorem ipsum or "John Doe".
@@ -57,7 +58,9 @@ Client brand files win, but must pass contrast.
 
 - Text contrast is at least 4.5 to 1, or 3 to 1 for large text, including brand colours.
 - Body text is 16 pixels, or 14 pixels in dense tables.
-- Every control has keyboard access and a visible focus mark. Respect reduced motion.
+- Every control has keyboard access and a visible focus mark. Respect reduced motion: the theme
+  file's one rule covers style sheet animation, and animation that a script starts must skip
+  movement when `matchMedia('(prefers-reduced-motion: reduce)').matches` is true.
 - Buttons and links are at least 24 pixels, or 44 pixels on touch screens.
 - Keep empty, loading and error states, one spacing scale and tabular numbers.
 - Use one icon library, Lucide, and no emoji icons or decoration.
@@ -151,7 +154,9 @@ reset password, accept invite, members and settings.
 
 ## 7. States
 
-- Loading skeletons shaped like the content. The page doesn't jump when data arrives.
+- Loading skeletons shaped like the content. The page doesn't jump when data arrives. Use
+  `LoadingState`, `EmptyState` and `ErrorState` from `@app/shared-ui/components/states`
+  wherever an app has them.
 - Empty states that say what the screen is for and offer the next action as a button. A new user
   knows what to do first.
 - Errors that say what happened, in plain words, and offer retry. The client can recover alone.
