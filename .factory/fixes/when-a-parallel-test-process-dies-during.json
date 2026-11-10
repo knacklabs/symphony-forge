@@ -1,0 +1,104 @@
+{
+  "base": "4f7d80ce17430fcf801a14a049a198099489f739",
+  "branch": "fix/when-a-parallel-test-process-dies-during",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1c682-9d88-7b32-ba21-83efb06482bd",
+    "head": null,
+    "start": "939b66216dc035a62f6a031ac44b58fb711f91bc"
+  },
+  "done_when": "When a parallel test process dies, the run still reports the real result, including the failed test names.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "src/forge/fasttest.py",
+      "file": "src/forge/fasttest.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 533,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: When a parallel test process dies, the run still reports the real result, including the failed test names.",
+      "work": 2
+    },
+    {
+      "area": "src/forge/fasttest.py",
+      "file": "src/forge/fasttest.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 533,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Preserve failure when a worker dies during collection",
+      "work": 2
+    },
+    {
+      "area": "src/forge/fasttest.py",
+      "file": "src/forge/fasttest.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 533,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Do not list a successful worker rerun as a failed test",
+      "work": 2
+    },
+    {
+      "area": "test_1_parallel_worker_crash_keeps_failed_test_names() in tests/test_parallel_worker_crash_keeps_failed_names.py",
+      "file": "tests/test_parallel_worker_crash_keeps_failed_names.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 27,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_parallel_worker_crash_keeps_failed_test_names",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "98be67bbf8735cdbeba520731e460381ec33d23859efd83269997492b5376968",
+    "changed": "cd230e7d30e471ad8f540010ad72163390b823b6e0f21d76f0930519f0c82096",
+    "commit": "304002c526d7ea0dc6bbf3fa6eda310a75c772a2",
+    "dismissals": [],
+    "findings": [],
+    "id": "881c185a-5da0-43c8-bbe9-7abfd278ed58",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-10T17:29:52.492775+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-10T17:40:39.023994+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-10T17:54:49.946576+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "00598c85-f97c-4527-841d-434d0241fd90",
+    "head": "5b3a82cd1dbfa4d762373c5fbc96ea05e1476a26",
+    "keys": {
+      "the open P0 not done: when a parallel test process dies, the run still reports the real result, including the failed test names. in src/forge/fasttest.py": 1
+    },
+    "round": 1
+  },
+  "why": "When a parallel test process dies during a run, the plugin crashes with an internal error and the run shows no failed test names, so the real result is hidden.",
+  "worker": "codex"
+}
