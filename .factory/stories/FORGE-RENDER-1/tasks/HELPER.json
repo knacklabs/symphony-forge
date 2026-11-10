@@ -316,7 +316,7 @@
     "id": "12c67f8d-7f26-4396-bdf8-d066fb8ab5c2",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -329,10 +329,12 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "e807224f6acf3c979a0a42d9bc87cc7fd0082f81",
-    "keys": {},
-    "round": null
+    "close": "4760992e-8c06-4166-9ffe-65f94670891f",
+    "head": "68a07adadf6450b6fd689b261d1b92d485db3593",
+    "keys": {
+      "the open P0 functional: screen-reader-only labels are reported as cut text in src/forge/templates/design/render-check.mjs": 1
+    },
+    "round": 1
   },
   "worker": "claude"
 }
