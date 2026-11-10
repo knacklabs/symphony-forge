@@ -94,7 +94,7 @@
     "id": "f26711e7-8de9-4d6e-88bf-4c126e0398c1",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -107,10 +107,12 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "982dcf84fb7ef69eb94ffc5c66eaec80159110dc",
-    "keys": {},
-    "round": null
+    "close": "d7976db9-20b2-4366-901f-8aac7d764a80",
+    "head": "d9e6a7001e93632f334a7136c9c6d3cbcb9e6858",
+    "keys": {
+      "the open P0 protect quoted windows arguments from powershell evaluation in src/forge/repo.py": 1
+    },
+    "round": 1
   },
   "why": "On Windows the printed next step puts double quotes around a plain file name, so the Windows platform run fails two nightly-setting tests and blocks the release.",
   "worker": "codex"
