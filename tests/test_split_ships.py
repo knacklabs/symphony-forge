@@ -34,6 +34,8 @@ SOURCES = {
     ".forge/records-only/action.yml": "src/forge/templates/records-only-action.yml",
     ".forge/design/support.js": "src/forge/templates/design/support.js",
     ".forge/design/ui-checks.js": "src/forge/templates/design/ui-checks.js",
+    ".forge/design/render-check.mjs": "src/forge/templates/design/render-check.mjs",
+    ".forge/design/render-check.d.mts": "src/forge/templates/design/render-check.d.mts",
 }
 # The new contract includes every support file in the pinned design skills, for both hosts.
 SOURCES.update({f"{host}/skills/{path.relative_to(ROOT / 'src/forge/templates/skills').as_posix()}":
