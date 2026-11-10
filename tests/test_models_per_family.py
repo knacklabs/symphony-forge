@@ -29,12 +29,20 @@ def _write(folder, workers: str, build: str) -> None:
                     encoding="utf-8")
 
 
-def _work(repo, folder, workers: str, build: str) -> None:
+def _work(repo, folder, workers: str, build: str, task: str = "BOARD/PAGE") -> None:
     _write(folder, workers, build)
     # Committed: a round that ends with changes uncommitted gets a second, commit-nudge turn.
     repo.git("commit", "-qam", "Choose the workers", "--allow-empty", cwd=folder)
-    done = repo.forge("work", "BOARD/PAGE")
+    done = repo.forge("work", task)
     assert done.returncode == 0, done.stdout + done.stderr
+
+
+def _plain_part(repo):
+    """BOARD/HELP, which is not user-facing. A source repo with Claude workers builds a
+    user-facing part on the design model, so the build kind's models show only on this part."""
+    started = repo.forge("task", "start", "BOARD/HELP")
+    assert started.returncode == 0, started.stdout + started.stderr
+    return repo.path.parent / f"{repo.path.name}-BOARD-HELP"
 
 
 def test_1_a_per_family_table_gives_each_family_its_own_entry(repo, monkeypatch, sdk_data, claude_session):
@@ -48,7 +56,7 @@ def test_1_a_per_family_table_gives_each_family_its_own_entry(repo, monkeypatch,
                                                           "model_reasoning_effort": "high"}
     monkeypatch.setenv("CODEX_THREAD_ID", "thr-test-coordinator")
     monkeypatch.delenv("CLAUDECODE")
-    _work(repo, folder, "claude", build)
+    _work(repo, _plain_part(repo), "claude", build, "BOARD/HELP")
     assert (claude_calls(claude)[-1]["options"]["model"], claude_calls(claude)[-1]["options"]["effort"]) == ("opus", "low")
 
 
@@ -62,7 +70,7 @@ def test_2_a_single_entry_is_used_by_its_own_family(repo, monkeypatch, sdk_data,
                                                           "model_reasoning_effort": "high"}
     monkeypatch.setenv("CODEX_THREAD_ID", "thr-test-coordinator")
     monkeypatch.delenv("CLAUDECODE")
-    _work(repo, folder, "claude", f"[models.build]\n{OPUS}")
+    _work(repo, _plain_part(repo), "claude", f"[models.build]\n{OPUS}", "BOARD/HELP")
     assert (claude_calls(claude)[-1]["options"]["model"], claude_calls(claude)[-1]["options"]["effort"]) == ("opus", "low")
 
 
@@ -81,7 +89,7 @@ def test_3_a_single_entry_asked_for_by_the_other_family_gives_the_default_model(
         **QUIET, "features.multi_agent": True, "model": "gpt-6.1-sol", "model_reasoning_effort": "low"}
     monkeypatch.setenv("CODEX_THREAD_ID", "thr-test-coordinator")
     monkeypatch.delenv("CLAUDECODE")
-    _work(repo, folder, "claude", f"[models.build]\n{NOVA}")
+    _work(repo, _plain_part(repo), "claude", f"[models.build]\n{NOVA}", "BOARD/HELP")
     options = claude_calls(claude)[-1]["options"]
     # Omitted Claude entries now default to Sonnet at low effort.
     assert (options["model"], options["effort"]) == ("claude-sonnet-5-5", "low")

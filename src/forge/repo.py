@@ -396,7 +396,9 @@ def _github_read(args: tuple[str, ...], execute) -> subprocess.CompletedProcess[
 
 def quote(argument: object) -> str:
     """One path or argument quoted for the user's shell, so a printed command runs as shown."""
-    text = str(argument)  # on Windows always double-quoted: cmd.exe splits an unquoted `&`
+    text = str(argument)
+    if re.fullmatch(r"[a-zA-Z0-9_@%+=:,./-]+", text):  # shlex.quote's safe set
+        return text
     return '"' + text.replace('"', '""') + '"' if os.name == "nt" else shlex.quote(text)
 
 
@@ -589,7 +591,7 @@ def record_run(top: Path, item: str, kind: str, **fields: Any):
 KEYS = {"version": str, "repo": str, "stage": str, "workers": str, "tools": str, "test": str, "fast_test": str,
         "signoff": str, "sample_data": bool, "runner": str, "test_runner": str, "codex_fast": str, "stop_default": str,
         "merge": str, "stack": str, "test_place": str, "checks": list, "interfaces": list,
-        "always_test": list, "groups": int, "models": dict,
+        "always_test": list, "groups": int, "models": dict, "full_suite_workflow": str,
         "added_work_min_gain": int, "always_block": list, "cold_read_rounds": int, "task_review_rounds": int}
 # A client repo without a stage counts as live: prototype rules never reach an app by default.
 DEFAULTS = {"repo": "client", "stage": "live", "workers": "codex", "tools": "both", "test": "", "fast_test": "",
@@ -802,9 +804,9 @@ def models(cfg: dict[str, Any], kind: str, family: str) -> dict[str, str]:
 
 
 def user_facing(cfg: dict[str, Any], row: dict[str, str]) -> bool:
-    """A User-facing row is design work in clients, with one tool, or under source split."""
-    return (cfg["repo"] == "client" or cfg["tools"] != "both" or cfg["workers"] == "split") and row.get(
-        "User-facing", "").lower() in ("yes", "true")
+    """A User-facing row is design work in clients, with one tool, or when workers use Claude."""
+    return (cfg["repo"] == "client" or cfg["tools"] != "both"
+            or cfg["workers"] in ("split", "claude")) and row.get("User-facing", "").lower() in ("yes", "true")
 
 
 def worker_models(cfg: dict[str, Any], kind: str, family: str) -> dict[str, str]:
