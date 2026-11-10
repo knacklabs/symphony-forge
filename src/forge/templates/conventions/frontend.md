@@ -29,6 +29,7 @@ libs/core/web/src/
 libs/shared/ui/src/
   components/ui/    shadcn/ui components
   components/       shared screen parts
+  components/states.tsx  LoadingState, EmptyState and ErrorState
   hooks/
   lib/utils.ts
 ```
@@ -100,6 +101,11 @@ crash reach that page instead of reporting it again in the component.
 - Each screen that loads data renders its loading, error and empty states. The error message comes
   from the API's `message`, which already says what to do next; the empty state says what the
   screen is for and offers its first action.
+- In an app that has `libs/shared/ui/src/components/states.tsx`, a screen that loads data renders
+  `LoadingState`, `ErrorState` (`message` from the API's `message`, `onRetry` from the query) and
+  `EmptyState`, imported from `@app/shared-ui/components/states`, and builds no loading, empty or
+  error markup of its own. Use these parts wherever an app has them. An app without that file
+  keeps its own state markup.
 - Forms use shadcn Form with react-hook-form and zod, reusing shared validators, and show the API's
   field errors next to their fields.
 - Style with Tailwind and the theme's tokens (`bg-primary`, not a raw colour), so the look changes
@@ -150,6 +156,18 @@ const Agentation = lazy(() => import('agentation').then((m) => ({ default: m.Age
   impeccable's Operate mode, so Emil's restraint wins over bold effects. Scale popovers from their
   trigger with shadcn/Radix's transform-origin variable. Do not animate keyboard-driven or very
   frequent actions.
+- The theme file's `/* Motion (FORGE-POLISH-1) */` section holds the one curve (`ease-out`) and two
+  speeds: `150ms` for hover and press (the default of every `transition`), and
+  `duration-(--enter-duration)` (`200ms`) for dialogs, side panels and the sidebar. Take them;
+  write no literal `duration-<number>`, `ease-linear` or `ease-in-out`, and never `transition-all`:
+  name the properties (`transition-[color,background-color,scale]`). Every button-like part has a
+  pressed state, `not-disabled:active:scale-97`; a link style and sidebar menu buttons have none.
+  The review reports a button-like part with no pressed state.
+- A device that asks for reduced motion gets this from one rule in the theme file: every animation
+  and transition written in a style sheet ends at once, except spinners. That rule cannot reach
+  animation that a script starts. Script animation (the Web Animations API, the Motion library)
+  must skip movement when `matchMedia('(prefers-reduced-motion: reduce)').matches` is true (Motion:
+  `useReducedMotion`). The review reports a new script animation that does not.
 - Every control works with the keyboard and shows visible focus, every input has a label, every
   image has alt text, contrast meets WCAG AA, and anything clickable is a `<button>` or a link.
   shadcn/ui components handle most of this; don't override their accessibility attributes.
@@ -159,3 +177,10 @@ const Agentation = lazy(() => import('agentation').then((m) => ({ default: m.Age
 These rules apply to code that a change adds. The app's current code stays as it is, and the
 review does not flag it. An app without React Compiler keeps its own memoization, and an app on
 <BrowserRouter> keeps it.
+
+Forge never rewrites an app's own shared parts. An older app has none of the motion polish above
+and may have no `states.tsx`. Change its shared parts in a normal change when the design check
+reports a problem in a file the change touches, or when the person asks. Copy the finished files
+from Forge's starter folder, which sits beside this conventions folder: `states.tsx`, `ui/empty.tsx`
+and the motion section at the end of `index.css`, under
+`starter/libs/shared/ui/src/components/` and `starter/apps/web/src/`.

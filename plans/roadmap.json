@@ -588,6 +588,12 @@
       "title": "Remove a feature from a client app in one change",
       "status": "pending",
       "order": 118
+    },
+    {
+      "key": "FORGE-POLISH-1",
+      "title": "Client apps look finished without design instructions",
+      "status": "pending",
+      "order": 118
     }
   ],
   "epics": [
