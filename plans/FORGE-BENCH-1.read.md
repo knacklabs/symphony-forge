@@ -1,13 +1,13 @@
 ---
 reader: codex (gpt-6.1-terra)
-read_at: 2026-11-10T17:31:39.754648+00:00
-seconds: 422.651
-read_hash: cb31c92fa60592304de765d7a8b5aabee64d2f5e
-round: 1
+read_at: 2026-11-10T17:50:18.886226+00:00
+seconds: 949.912
+read_hash: 1b5a4f277ddd0dce1a3ee1681656e1a105dc2e0a
+round: 2
 passed: no
-doc_seen: cb31c92fa60592304de765d7a8b5aabee64d2f5e
+doc_seen: 1b5a4f277ddd0dce1a3ee1681656e1a105dc2e0a
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 6353f525b7b298dded079f1b9dd7630e498653f7
+notes_seen: f6800a4a37f3aae2705d851cfda3c0f86a3650e8
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a1c67a-137f-7750-ac95-00994b5ef6e8
 session:
@@ -95,3 +95,40 @@ Only a genuine trade-off goes to the human, as a question with options.
    The [shared interface](/plans/FORGE-BENCH-1.md:68) names a JSON file containing tokens, turns and minutes but pins no field names or types. SCORE can pass its test with one shape while RUN writes another from the [Claude result event](/src/forge/claude_turn.py:27), leaving the summary unable to read the usage.  
    Gain 4, Work 2, Harm 2
    Disposition: cut - Settled 7 pins the usage file keys (`input_tokens`, `output_tokens`, `turns`, `minutes`; null prints "not reported") and where each comes from; `test_3` uses exactly those keys and a missing-key case; the unverified `usage` field names are listed under Not verified.
+
+## Round 2
+
+10. Blocking: Unproven: item 1: the specified SDK setup can stop the build on a fresh runner.  
+    Raise: Plan gap  
+    Case: normal use - the benchmark starts with Claude access but no Codex installation or login.  
+    The [plan](/plans/FORGE-BENCH-1.md:67) relies on the environment installed by `forge doctor --fix`. On a fresh runner, [init](/src/forge/init.py:182) keeps both tools enabled, and [doctor](/src/forge/doctor.py:349) reports the missing Codex login and exits with an error. If init detects only Claude instead, doctor installs the Claude SDK only when Codex is also installed. The workflow test does not exercise either setup.  
+    Gain 5, Work 2, Harm 2
+   Disposition: cut - Settled 3 names the Claude-only setup (Node 24, uv, Python 3.11, Forge from the triggering ref, the Claude SDK via `claude_sdk.install()` as `codex-smoke.yml` does for Codex), runs no `forge doctor`, and writes `tools = "claude"` and `workers = "claude"` after init; `test_1` asserts no doctor, no Codex step or key, and those lines.
+
+11. Blocking: Not done: a release without a key can prevent later releases from being scored.  
+    Raise: Not done  
+    Case: normal use - a release is tagged before the key is added, then another is tagged after it is added.  
+    The [previous-result lookup](/plans/FORGE-BENCH-1.md:70) selects successful tag runs. A notice-and-skip run like [codex-smoke](/.github/workflows/codex-smoke.yml:38) succeeds without producing a score artifact. The prescribed `gh run download` [fails when that run has no artifact](https://github.com/cli/cli/blob/trunk/pkg/cmd/run/download/download.go), and the plan gives no rule or test for continuing without a previous score.  
+    Gain 5, Work 2, Harm 2
+   Disposition: cut - Settled 6 picks the previous result as the newest successful tag run that has a `bench-result` artifact, so a skipped no-key run is passed over and a missing one never fails the job; `test_1` asserts the lookup and `test_3` has the missing or empty `--previous` case.
+
+12. Advisory: Unproven: item 3: the reported tokens can omit part of the Claude build.  
+    Raise: Test  
+    Case: normal use - Claude reuses cached input or delegates work during the build.  
+    The [plan](/plans/FORGE-BENCH-1.md:71) does not pin how the result event becomes total tokens. Claude reports cached input separately, and its result `usage` excludes subagent activity; [Anthropic’s SDK documentation](https://code.claude.com/docs/en/agent-sdk/cost-tracking) identifies `model_usage` as the whole-session breakdown. Forge already [adds cached input](/src/forge/repo.py:561) for its own records. The planned test supplies a finished usage file, so copying only the raw fields could pass it.  
+    Gain 3, Work 2, Harm 2
+   Disposition: keep - below the bar (follow-up)
+
+13. Advisory: The baseline also changes when design guidance changes without changing the checker.  
+    Raise: Not done  
+    Case: normal use - a release improves the design instructions Claude uses to build the app.  
+    The [baseline](/plans/FORGE-BENCH-1.md:72) hashes the entire impeccable folder, including [guidance Claude reads before UI edits](/src/forge/templates/skills/impeccable/SKILL.md:21) and the [vendor notice](/src/forge/templates/skills/impeccable/FORGE-NOTICE.md:1). Changing those files suppresses the direction even when the checker is unchanged, hiding the effect of a shipped skill change.  
+    Gain 3, Work 2, Harm 2
+   Disposition: keep - below the bar (follow-up)
+
+14. Advisory: Unproven: item 2: an app that cannot start may produce no score.  
+    Raise: Test  
+    Case: normal use - Claude builds an app whose container or migration fails at startup.  
+    The [new start-and-ready step](/plans/FORGE-BENCH-1.md:66) precedes all five app checks, but [the planned test](/plans/FORGE-BENCH-1.md:82) only starts a working server. It can pass while a startup failure aborts the scorer instead of recording those checks as “did not run.”  
+    Gain 3, Work 3, Harm 4 (floor: migration)
+   Disposition: cut - Settled 2 adds `ready_timeout` and makes a failed or silent start count the 5 app checks as failed with "the app did not start", still stopping the app and writing the score; `test_2` has a second run with a `start` that exits at once.
