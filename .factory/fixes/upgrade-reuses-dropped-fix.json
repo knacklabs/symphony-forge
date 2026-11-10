@@ -1,0 +1,115 @@
+{
+  "base": "22a569900e405b345833465cf95080e422878507",
+  "branch": "fix/upgrade-reuses-dropped-fix",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1c358-dc4f-7052-822f-f1c711065978",
+    "head": null,
+    "start": "a399bb3bcb98e3cb4a636340cfde6d6d00ca623c"
+  },
+  "done_when": "forge upgrade <release> on the default branch reuses a dropped or restored upgrade fix of the same name that has no other work, or names the one command that clears it; it never refuses with no next step",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "upgrade() in src/forge/upgrade.py",
+      "file": "src/forge/upgrade.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 153,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: recover a dropped fix absent from local remote-tracking refs",
+      "work": 2
+    },
+    {
+      "area": "upgrade() in src/forge/upgrade.py",
+      "file": "src/forge/upgrade.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 129,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Recheck the fix after restoring its latest remote commits",
+      "work": 2
+    },
+    {
+      "area": "upgrade() in src/forge/upgrade.py",
+      "file": "src/forge/upgrade.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 132,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Give an actionable next step for uncommitted fix work",
+      "work": 1
+    },
+    {
+      "area": "upgrade() in src/forge/upgrade.py",
+      "file": "src/forge/upgrade.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 126,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Preserve active fixes that were never dropped",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "1beb91920916ab27fb606804881aaf1b79c4cd273a385c2304540ce1bf812705",
+    "changed": "4e396a355e397cdcb74036b0f546d4dfe0d37f996da85b18361ec76d4d3433e3",
+    "commit": "45902b3c58323ff6d9c2cb8ad1eeff41724c6086",
+    "dismissals": [],
+    "findings": [],
+    "id": "75a44e44-73cc-45b8-9e1c-e42848088506",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-10T02:45:02.219707+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-10T03:03:54.076525+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-10T03:34:54.586971+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-10T04:11:32.533881+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-10T03:03:54.088287+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "src/forge/upgrade.py",
+    "reason": "The owner wants one more round for all four findings",
+    "wait_id": "66295ed3-cd00-44c6-b29d-75b518c80eed",
+    "worker_round": 1
+  },
+  "stuck": {
+    "close": "a1ba9dd1-2003-425b-bc21-416ad2cf48f0",
+    "head": "1802d84e7578c1a76e3868b9dd025fb92b46567e",
+    "keys": {},
+    "round": 2
+  },
+  "why": "After a fix named for an upgrade is dropped or restored, forge upgrade refuses both ways and leaves no Forge path (#1501)",
+  "worker": "codex"
+}
