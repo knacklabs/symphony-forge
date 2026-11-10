@@ -88,8 +88,8 @@
     "id": "1447c272-59a0-419a-8077-7a1dde45567b",
     "status": "clean"
   },
-  "round": 2,
-  "status": "waiting for checks",
+  "round": 3,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-10T15:36:54.188914+00:00",
@@ -105,12 +105,10 @@
     }
   ],
   "stuck": {
-    "close": "d417ce11-7ce1-49a2-8a5f-2b60956a15c0",
-    "head": "837c72fc80241339535c05ffd2c64209b5812113",
-    "keys": {
-      "the open P0 include the setup steps required for the external workflow in src/forge/templates/skill.md": 1
-    },
-    "round": 1
+    "close": "2e38e738-cf5b-4bd9-8aac-fe60071162ae",
+    "head": "ebf583ec0a57963d74c80649e1cebb63cdd8af80",
+    "keys": {},
+    "round": 2
   },
   "why": "A repo with its own nightly test workflow still runs Forge's nightly full suite every night only to get the forge-full-suite status, so it pays for two nightly runs",
   "worker": "codex"
