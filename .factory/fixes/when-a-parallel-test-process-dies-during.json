@@ -11,12 +11,122 @@
   "done_when": "When a parallel test process dies, the run still reports the real result, including the failed test names.",
   "fix_kind": "backend",
   "kind": "fix",
+  "known": [
+    {
+      "area": "src/forge/fasttest.py",
+      "file": "src/forge/fasttest.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 533,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: When a parallel test process dies, the run still reports the real result, including the failed test names.",
+      "work": 2
+    },
+    {
+      "area": "src/forge/fasttest.py",
+      "file": "src/forge/fasttest.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 533,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Preserve failure when a worker dies during collection",
+      "work": 2
+    },
+    {
+      "area": "src/forge/fasttest.py",
+      "file": "src/forge/fasttest.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 533,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Do not list a successful worker rerun as a failed test",
+      "work": 2
+    },
+    {
+      "area": "test_1_parallel_worker_crash_keeps_failed_test_names() in tests/test_parallel_worker_crash_keeps_failed_names.py",
+      "file": "tests/test_parallel_worker_crash_keeps_failed_names.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 27,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_parallel_worker_crash_keeps_failed_test_names",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "0262d91698ca25549b0f8d4576bd8bbdde08792f2cd815e807c565fb2816aad1",
+    "changed": "6901b0fde659449781bd95a42644a8e10f2867f04e92001fec0917b2fe126b83",
+    "commit": "79fb0b8d77ff6181c6d603c2174e30b842819af8",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 5, Work 2, Harm 3\nRaise: Not done\nCase: normal use - A worker is killed by memory pressure while other test files are pending, worker restarts are disabled, and the crashed test passes when retried serially. After this guard lets xdist report the crash, `src/forge/review.py:464-481` retries only files reported as failed and uses the retry's status for the whole run; `src/forge/fasttest.py:501-511` makes that retry serial. Forge can therefore report a green run without executing the pending files or listing the crashed test as failed. The coordinator's ruling did not address this retry path. The new test's unconditional `os._exit(42)` also kills the serial retry, so it misses the false pass.",
+        "file": "src/forge/fasttest.py",
+        "gain": 5,
+        "harm": 3,
+        "line": 533,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: When a parallel test process dies, the run still reports the real result, including the failed test names.",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - In a `-n 2 --max-worker-restart=0` run, a worker is killed during collection after its peer has collected tests. [xdist 3.8](https://raw.githubusercontent.com/pytest-dev/pytest-xdist/v3.8.0/src/xdist/dsession.py) has no running test to mark as failed in this case, but has already set the collected count from the peer; pytest can consequently exit zero without running any tests. This guard records zero for the dead worker without preserving the crash, and `src/forge/review.py:464` accepts the zero status, so a direct pytest `fast_test` run by `forge test --change` can pass its PR check without executing the selected tests. The coordinator's ruling did not consider a crash before a test was assigned.",
+        "file": "src/forge/fasttest.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 533,
+        "priority": "P1",
+        "title": "Functional: Preserve failure when a worker dies during collection",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - A suite using `pytest-rerunfailures` successfully reruns a test whose worker crashed, while another test still fails. [xdist](https://raw.githubusercontent.com/pytest-dev/pytest-xdist/v3.8.0/src/xdist/dsession.py) creates the crash report with `when = \"???\"`, and [pytest-rerunfailures 16.7](https://raw.githubusercontent.com/pytest-dev/pytest-rerunfailures/16.7/src/pytest_rerunfailures.py) changes its outcome to `rerun`. The handler at `src/forge/fasttest.py:534-542` nevertheless records it as an error, so `src/forge/review.py:504-508` lists the now-passing test under `Failed tests` alongside the real failure. The coordinator's ruling and the new test, which disables worker restarts, did not cover this recovery path.",
+        "file": "src/forge/fasttest.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 533,
+        "priority": "P1",
+        "title": "Functional: Do not list a successful worker rerun as a failed test",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - A newly initialized client or a client adopted on an earlier release runs its tests after upgrading. Both named proof cases overwrite `forge.toml` with `repo = \"forge-source\"`; the earlier-adoption case also replaces the fixture's `repo = \"client\"` and old version before committing it. Neither case initializes or upgrades a client. Thus the proof exercises Forge-source settings rather than either client configuration required by the repository's review rule. New client settings are generated as `repo = \"client\"` at `src/forge/init.py:191`.",
+        "file": "tests/test_parallel_worker_crash_keeps_failed_names.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 27,
+        "priority": "P1",
+        "title": "Gate: test_1_parallel_worker_crash_keeps_failed_test_names",
+        "work": 2
+      }
+    ],
+    "id": "7f843309-abd8-4b2f-aa09-06d3e1aa6d83",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-10T17:29:52.492775+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-10T17:40:39.023994+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
