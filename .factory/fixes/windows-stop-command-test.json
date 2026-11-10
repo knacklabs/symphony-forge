@@ -41,7 +41,7 @@
     "id": "bc5ceada-e11a-4dc3-8f87-3f9c9c3ddbef",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -63,10 +63,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": null,
-    "head": "88f6998b1b559cff975896e6c442001c048b17ca",
+    "close": "d6cce3de-2454-4602-871d-aac6facbc544",
+    "head": "d289cc720c83b291d12296c0f52c2645c2317744",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "On Windows the test of waiting runs expects the stop command with double quotes around the repo path, and since the quoting fix a plain path prints with no quotes, so the Windows platform run fails and blocks the v1.2.36 release",
   "worker": "claude"
