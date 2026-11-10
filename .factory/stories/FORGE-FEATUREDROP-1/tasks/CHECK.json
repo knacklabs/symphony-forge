@@ -186,33 +186,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "83cc2f22ce9eb2c22bf3ff683d242266ccea298c5153f83cd1846ec44d855a0e",
-    "changed": "3be4ec8d01f3eb132f600094573df31adde387e4afc6abc8a60682f23c046055",
-    "commit": "7e736449aa3a406c05c8c87d768fbc014a81d2ea",
-    "dismissals": [
-      {
-        "accepted": true,
-        "because": "Human accepted the remaining finding: The owner was away on 11 Nov 2026 and told the coordinator to take the recommended option. After four rounds one finding is left: some multiline comments or example texts can still make the check name a feature as a user. The check errs on the safe side (it reports more, never less), the agent then reads the named line, and the owner said at plan time that a text check keeps small gaps. It stays as a known issue",
-        "finding": 1
-      }
-    ],
-    "findings": [
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done.\nCase: normal use - a jobs response example contains `label: '1) Select client'` before `url: '/api/v1/clients'` in a multiline `example: { ... }` object. The bracket counter treats the `)` inside the label string as the end of the object, so the URL is classified as a real use and Forge names jobs as a dependency. The prior round's multiline-example issue therefore remains open. The starter uses response example objects at `src/forge/templates/starter/libs/auth/server/src/members.controller.ts:42`.",
-        "file": "src/forge/feature_remove.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 44,
-        "priority": "P1",
-        "title": "Exclude multiline comments and examples from feature users",
-        "work": 2
-      }
-    ],
-    "id": "5d9aaf8f-4fd0-4fc4-b33b-b02a17d08217",
+    "branch_diff": "94ffc1ca5339d4881930aee7594a0b456878b72e16f121b3e48b45d7fa22868b",
+    "changed": "02be4b1fbd3a46f1652dee32e3c4ed8e89f1f994c633aeaf3adf5de7477987be",
+    "commit": "c9b6f49b9a5266c93d46eda73486be81c89d7169",
+    "dismissals": [],
+    "findings": [],
+    "id": "24068f2c-3eb4-47f5-b252-5a7874b3f97f",
     "status": "clean"
   },
   "round": 5,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-10T20:08:57.485640+00:00",
@@ -232,6 +215,10 @@
     },
     {
       "at": "2026-11-10T22:14:43.279161+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-10T22:45:05.550578+00:00",
       "step": "review"
     }
   ],
