@@ -1,63 +1,133 @@
-# Client apps look finished without design instructions
+# Client apps feel finished without anyone asking for polish
 
-<n> parts · Risks: ... · New moving parts: ...
+2 parts · Risks: none one-way · New moving parts: none
 
 ## What changes for you
 
-- New client apps get shared buttons that respond when pressed, one shared motion speed, support for people who turn off motion, and ready loading, empty and error parts.
-- Existing client apps get the same shared parts on upgrade, and close refuses a screen change that still uses the stock gray theme.
+- In a new client app, the shared buttons, switches and checkboxes shrink a little while they are pressed, so the screen answers a click at once. The link style of button stays as it is. (Source: your request, 10 Nov 2026)
+- The shared parts change only the properties they need to change, such as colour or size. No part animates every property at once. (Source: your request, 10 Nov 2026)
+- The app's theme file holds one motion curve and one default motion speed. Hover, press and the opening of dialogs, menus, popovers and side panels all use them. Dialogs, menus and popovers already open from the right place, and notifications already animate well, so Forge does not rebuild those. (Source: your request, 10 Nov 2026)
+- When a person's device asks for reduced motion, the loading placeholder stops pulsing and panels no longer slide or zoom. One rule in the theme file does this for every screen, including screens built later. Spinners keep turning, because they show that work is in progress. (Source: your request, 10 Nov 2026)
+- A new app gets three small shared parts for the loading, empty and error states of a screen. The frontend rules say that every screen which loads data uses these parts and builds no copy of its own. The parts hold no page and no data. (Source: your request, 10 Nov 2026)
+- Close refuses a changed UI file when it animates all properties, when it holds a button-like part with no pressed state, or when it adds an animation in an app that has no reduced-motion rule. The refusal names the file, the line and the rule, and shows the one comment that sets the rule aside with a reason. These checks read the code and use no model. (Source: your request, 10 Nov 2026)
+- An existing client app keeps every app file as it is. When it upgrades and refreshes its Forge files, it gets the new checks and the new written rules. The agent changes the app's shared parts in a normal change, when a check reports a problem in a file the change touches or when the person asks. Forge never rewrites the app's own files. (Source: your request, 10 Nov 2026; the existing-app path is the planner's recommendation, see Notes)
+- Colours, fonts, corner size, spacing and shadows are not part of this plan. They belong to the theme story. (Source: your request, 10 Nov 2026)
+
+Design: none (this story adds no screen and changes none; it changes shared parts and the theme file of the starter, and Forge ships parts, rules and checks, not screens; owner rule, 31 Oct 2026)
 
 ## Why
 
-The starter's shared parts do not respond to presses, have no shared motion speed or reduced-motion support, and keep the stock gray theme, so new apps look generic unless each screen is styled by hand.
+People who use Forge do not know what to ask for to make an app look finished, and they must not need to. Today the polish rules are written text that the agent may or may not follow. The starter's shared parts have no pressed state, animate every property, share no motion speed or curve, and ignore the reduced-motion setting. This plan puts the polish inside the shared parts that every new app starts with, so each screen built from them has it with no instruction and no model cost.
 
 ## Done when
 
-1. **A new app's buttons show a press response, its loading placeholder stops pulsing when reduced motion is on, and close refuses a UI change that still uses the stock gray theme; an upgraded existing app shows the same results.**
+1. **In a new client app, shared buttons, switches and checkboxes show a pressed state, no shared part animates all properties, and hover, press and the opening of panels use one motion curve and one default speed from the theme file.**
+2. **In a new client app, a device that asks for reduced motion sees no loading pulse and no sliding or zooming panels, and one rule in the theme file does this for every screen.**
+3. **A new client app has shared loading, empty and error parts, and the frontend rules tell every screen that loads data to use them.**
+4. **Close refuses a changed UI file that animates all properties, holds a button-like part with no pressed state, or adds an animation in an app with no reduced-motion rule. It names the file, the line and the rule, and a comment with a reason sets one rule aside.**
+5. **After an upgrade and a refresh of Forge files, an existing client app has every app file unchanged and gets the checks and the written rules. The first check runs on the next change that touches a UI file.**
 
 ## Risks
 
-<!-- Each one-way step: deleting data, a destructive migration, a new vendor. -->
+Risks: none one-way. Each part reverts with its pull request. Nothing is deleted and no data changes.
 
-Risks: none
+Trade-off: a file is checked whole. In an existing app, the first change that touches an old shared part with an old problem (for example a switch that animates all properties) is refused until the part is fixed or the rule is set aside with a reason. The refusal shows the fix. This is how the existing design checks already work.
+
+Trade-off: the pressed-state check reads one file at a time. A file with one pressed state anywhere passes, even if another button-like part in it has none. A text check cannot see more. The review keeps its judgment for the rest.
+
+Trade-off: nothing in this plan runs a browser. Press, curve and reduced motion are proven from the source text on every pull request and from the built style sheet in the nightly full starter run. A rendered look at a real screen is the job of the rendered-check story.
+
+Model cost: none. The checks are text patterns that run inside the design script that close already runs, and the parts are static code. Nothing is measured; the extra close time from three more patterns is an estimate of well under a second.
 
 ## For the builders
 
 <!-- Everything from here down is for the agents. The owner doesn't see it when approving, and
 tightening it needs no new approval. -->
 
+Rules for every part. No new `forge` command, no new setting, no model call and no new dependency: the starter already installs tailwindcss 4.1.16, tw-animate-css 1.4.0, sonner 2.0.7, radix-ui 1.8.1 and lucide-react 0.548.0. Add no screen, page, route table or app shell under `src/forge/templates/starter` or `starter-python`: the review reports one as P1. The three state parts are components with props, not screens: they hold no route, no data call and no product copy.
+
+Each new test file starts with `STORY = "FORGE-POLISH-1"`. Tests run the forge command and never import forge. One test per Done-when number, numbered 1 to 5 and unique across the two files: `test_1`, `test_2`, `test_3` in `tests/test_polish_parts.py` and `test_4`, `test_5` in `tests/test_polish_checks.py`. Before a round ends, run the two cheap checks from AGENTS.md.
+
+### What exists (evidence)
+
+Checked in this worktree on 10 Nov 2026. A part checks each name again before it starts.
+
+- Shared parts today, all in `src/forge/templates/starter/libs/shared/ui/src/components/ui/` (shadcn copies, `new-york-v4`, icon library `lucide` in `components.json`): alert-dialog, alert, avatar, badge, breadcrumb, button, card, checkbox, collapsible, command, dialog, dropdown-menu, form, input, label, popover, select, separator, sheet, sidebar, skeleton, sonner, switch, table, textarea, tooltip. One more sits one folder up: `components/theme-provider.tsx`. The helper is `lib/utils.ts` (`cn`) and the hook is `hooks/use-mobile.ts`. The package exports `./components/*` as `@app/shared-ui/components/*`, so a new `components/states.tsx` imports as `@app/shared-ui/components/states` with no export change.
+- `starter-python` has no web files. `init._starter_files` (`src/forge/init.py:202`) copies `apps/web`, `libs/shared/util`, `libs/shared/ui` and every `libs/*/web` from `starter` into a Python app. Every starter edit below reaches both starters, and `starter-python` needs no edit.
+- Press and transitions. `button.tsx:7` has `transition-all` and no `active:` class. `switch.tsx:17` has `transition-all` and no `active:`. `checkbox.tsx` has neither a transition nor `active:`. `sidebar.tsx:294` (the rail button) has `transition-all ease-linear`. `sidebar.tsx:477` and `:689` already carry `active:` colour classes. No other file in `ui/` has `transition-all` or `active:`.
+- Enter and exit animation. dialog, alert-dialog, popover, dropdown-menu (two places), select and tooltip use tw-animate-css classes (`animate-in`, `fade-in-0`, `zoom-in-95`, `slide-in-from-*-2`). popover, dropdown-menu, select and tooltip set `origin-(--radix-*-transform-origin)`. dialog and alert-dialog stay centred, which is right for a modal. sheet uses `transition ease-in-out`, `duration-300` closed and `duration-500` open, above the 300 ms rule in `frontend.md`. Toasts need no work: sonner 2.0.7's stylesheet holds `@media (prefers-reduced-motion){...transition:none!important;animation:none!important}` for `[data-sonner-toast]` (read from the installed package).
+- tw-animate-css 1.4.0 (read from the installed package): the enter rule is `enter var(--tw-animation-duration, var(--tw-duration, .15s)) var(--tw-ease, ease) ...`, so its default curve is the browser's `ease`, not the shared curve. It registers `--tw-animation-duration` with `@property ... inherits: false`, but not `--tw-ease` or `--tw-duration`. Tailwind 4.1.16's `transition` utilities read `--tw-duration` and `--default-transition-duration`.
+- Tokens today. `apps/web/src/index.css` imports tailwindcss, `@source "../../../libs"`, tw-animate-css and `shadcn/tailwind.css`; it holds `@theme inline` (colours, font, radius), `:root`, `.dark` and one `@layer base`. It has no ease token, no duration token, no `prefers-reduced-motion` and no `@starting-style`. `frontend.md` and `app-baseline` name `cubic-bezier(0.23, 1, 0.32, 1)` as the one ease-out token, but no starter file defines it. A search of `libs` and `apps/web/src` finds no `motion-reduce` and no `prefers-reduced-motion`. `skeleton.tsx` is `animate-pulse`; `sonner.tsx:25` uses `animate-spin` for the loading icon.
+- `tests/test_starter_tree.py::test_2` pins the neutral theme through `_theme_block(css, ":root")`, `.dark` and `@theme inline`, and refuses a copy of a shadcn component outside `components/ui`. A plain `@theme { ... }` block and a file named `states.tsx` touch neither check.
+- The checks. `src/forge/templates/design/ui-checks.js` (98 lines) skips `components/ui/` and test files for every rule through `excluded`, strips comments, honours `forge-ui-ignore <rule>: <reason>`, and reports `file:line rule: message` plus the waiver comment. `src/forge/ui_checks.py` runs it on the changed files; its `ships` writes it to `.forge/design/ui-checks.js` in every client repo at init and sync. `app_baseline.check` (called from `close.py`) turns any problem into `REFUSALS["design"]` ("This change fails the design checks"), so every design check blocks close, and a touched file is checked whole.
+- Existing apps. Starter files are written only by `init._scaffold` through `_starter_files`. `sync.files` writes only what a module's `ships` returns (skills, hooks, `.forge/design/*.js`, workflow, settings); none covers `libs/shared/ui` or `apps/web/src/index.css`. `records._app_files` treats an edited starter file as the client's app code. Conventions are not copied into a client: `worker.CONVENTIONS` points at the installed Forge's `templates/conventions`, so an upgrade changes what a worker reads in `frontend.md` at once. The `app-baseline` skill reaches both hosts through `app_baseline.ships` and `sync`.
+- Words. `frontend.md` "Design and accessibility" holds the motion rules and the file ends with "In an app set up before this release". `.codex/skills/app-baseline/SKILL.md` section 9 lists the same rules and the guard rule "Respect reduced motion". `brief.md:443-453` and `:570-575`, `review.md:387-394` and `docs/guide.md:105-120` repeat them. `tests/test_fix_app_baseline.py` pins the skill's bytes in `BASELINE_SHA256`.
+- Size limits. `ui-checks.js` is 98 lines and no Python file changes. `close.py`, `story.py` and `board.py` sit at the 1,200-line ceiling and do not change.
+
 ### Done-when details
 
-<!-- Under each Done-when item's number: its evidence, edge cases and the tests that prove it.
-Workers and reviewers get the entries of the items they cover. An item with nothing to add has
-no entry. -->
+1. Press, properties and tokens.
+   - `button.tsx`: replace `transition-all` with a named list that includes `scale` (Tailwind 4 `scale-*` sets the `scale` property, not `transform`), for example `transition-[color,background-color,border-color,box-shadow,scale]`, and add a pressed state of about 0.97 (`not-disabled:active:scale-97`) to every variant except `link`. Do the same in `switch.tsx` (replace `transition-all`) and add the pressed state to `checkbox.tsx`. `sidebar.tsx:294`: replace `transition-all ease-linear` with the properties it changes; the builder reads which. Sidebar menu buttons get no scale: they are used many times a day and already change colour on press. Press time is the default speed below; set no second speed.
+   - `sheet.tsx`: remove `duration-500` and `ease-in-out`; open and close take the shared speed (open at most 300 ms, close faster) and the shared curve.
+   - `index.css`: append a section marked `/* Motion (FORGE-POLISH-1) */` at the end, with `@theme { --ease-out: cubic-bezier(0.23, 1, 0.32, 1); --default-transition-timing-function: var(--ease-out); --default-transition-duration: 150ms; }`. Overriding Tailwind's own `--ease-out` keeps one token, so `ease-out` and `var(--ease-out)` give the same curve. Then make tw-animate-css use it: first try `:root { --tw-ease: var(--ease-out); }` and read the compiled CSS; if the `animate-in` rule does not pick it up, add `ease-out` to the animated content classes of dialog, alert-dialog, popover, dropdown-menu, select, tooltip and sheet. Add no `@starting-style`: the Radix parts already enter through tw-animate-css, and `frontend.md` keeps the `@starting-style` rule for hand-built entering elements.
+   - Tests. `test_1` runs `forge init --starter` and `forge init --starter python` in a temp repo and reads the files: no `transition-all` or `transition: all` under `libs/shared/ui` and `apps/web/src`; `active:` in button, switch and checkbox and not in the `link` variant; `index.css` holds the curve as `--ease-out` and a default duration; `sheet.tsx` holds no `duration-500`. The adopted case for this item and the next two is `test_5`. The nightly live starter run (`tests/test_starter_tree.py`, `FORGE_STARTER_LIVE=1`, needs Docker, not in the per-pull-request suite) gains one assertion after the web build: the built CSS holds `.23,1,.32,1`.
+2. Reduced motion.
+   - `index.css`, same marked section: one `@media (prefers-reduced-motion: reduce)` block. It cuts animation and transition durations to about 1 ms and sets the iteration count to 1 for every element except `.animate-spin`, so the pulse ends on its resting state and panels appear with no slide or zoom. Planner's choice: instant, not gentler (Notes, question 2).
+   - Tests. `test_2` on both starters: the block exists in `index.css`; it leaves `.animate-spin` out; `skeleton.tsx` stays as it is, so the rule is the only place. The nightly built-CSS assertion also checks that `prefers-reduced-motion` is in the output.
+3. Shared state parts.
+   - New file `libs/shared/ui/src/components/states.tsx` (outside `components/ui/`, stem not a shadcn name) with three components: `LoadingState` (Skeleton rows, `role="status"`, an accessible label), `EmptyState` (`title`, `description`, optional `action` node, a Lucide icon), `ErrorState` (`message`, optional `onRetry`, `role="alert"`, a retry `Button`). They use only existing parts and Lucide icons, no emoji, and theme tokens for colour. If the pinned CLI (`npx shadcn@4.21.4`) has an `empty` component in its registry, build `EmptyState` on it and keep the copy in `components/ui/`; if not, compose it from existing parts. The builder looks first.
+   - `frontend.md` "Screens": a screen that loads data renders `LoadingState`, `ErrorState` (`message` from the API's `message`, `onRetry` from the query) and `EmptyState`, imported from `@app/shared-ui/components/states`, and builds no loading, empty or error markup of its own. The layout list gains `states.tsx` under `components/`. `app-baseline` item 8 and section 7 point to the same parts.
+   - Tests. `test_3`: the file exists in a new React and a new Python app; it exports the three names; it imports only `react`, `lucide-react` and shared parts; `frontend.md` and the synced `app-baseline` text name the three parts; the no-screens guard (`_assert_no_screens` in `tests/test_noscreens_starters.py`) still holds.
+4. Close checks.
+   - `ui-checks.js` gets three rules on the same changed-file list. `excluded` must stop skipping `components/ui/` for these three rules only; the spacing, shell and impeccable checker rules keep skipping shadcn copies, and test files stay skipped for all. Rule names: `motion-all`, `motion-press`, `motion-reduced`. Waivers use the existing `forge-ui-ignore <rule>: <reason>` comment.
+   - `motion-all`: after comment stripping, `transition-all`, `transition: all` or `transition-property: all`. The message says to list the properties.
+   - `motion-press`: a `.tsx` or `.jsx` file that renders a button-like element (`<button`, `SwitchPrimitive.Root`, `CheckboxPrimitive.Root`, or a part whose element is `"button"`) and holds no `active:` class. The message says to use the shared `Button` or add a pressed state. The builder fixes the exact marker list; the tests pin the behaviour.
+   - `motion-reduced`: a changed file holds `@keyframes`, an `animation:` declaration or an `animate-` class other than `animate-none`, and `apps/web/src/index.css` exists and holds no `prefers-reduced-motion`. The message says to add the reduced-motion section from the frontend rules to `index.css`. When that file is absent the rule says nothing. It reads one other file, as the shell check already reads imported components.
+   - A problem blocks close like the other design checks (same refusal, same waiver comment under each problem). `app_baseline.py` and `ui_checks.py` do not change.
+   - Tests. `test_4`, new client repo: each rule refuses a changed file and names `file:line rule` and the waiver comment; the same comment with a reason waives it and with no reason does not; a clean change passes; the script run over the freshly initialised `libs/shared/ui` and `apps/web/src` reports no motion problem (the shipped parts pass their own checks); `components/ui/` files are checked for the three rules but not for spacing. Adopted case, earlier-adopted repo: an old file with `transition-all` that the change does not touch passes; the same file touched is refused; a touched file with an animation is refused as `motion-reduced` while the old `index.css` has no reduced-motion section, and passes once the section is added.
+5. Existing apps.
+   - Nothing in code writes to app files: `sync` and `upgrade` already leave `libs/shared/ui` and `apps/web` alone, and this story adds no `ships` entry for them. An existing app gets the new `ui-checks.js` (through `ui_checks.ships`), the `app-baseline` skill text in both hosts, the new `frontend.md` text for workers, and the updated worker brief, review text and guide. The fix text for each rule is in `frontend.md`, in a new subsection under "In an app set up before this release": the `index.css` section to paste, the class changes for button, switch and checkbox, and the specification of the three state parts.
+   - `brief.md` (paragraph at `:570-575`): name the three motion rules and say a worker fixes a reported motion problem in the file the change touches, using the frontend rules. `review.md` (paragraph at `:387-394`): the shared curve and speed, the shared state parts, and one line that a hand-built loading, empty or error block on a screen that could use the shared parts is a finding. `skill.md` (design paragraph near `:816`): one sentence that for an app made before this release the agent applies the motion section of the frontend rules when a motion check reports a problem or the person asks, in a normal change. `docs/guide.md`: one short paragraph. Regenerate the synced `.claude/skills/forge/SKILL.md` and `.codex/skills/forge/SKILL.md` with `forge sync`.
+   - Tests. `test_5` runs `forge init` and, on an earlier-adopted repo (`tests/fixtures/adopted-v1.2.2/client`, or `_adopted_files_after_sync` in `tests/test_mcp.py`), `forge sync`: sync exits 0; no file under `apps/` or `libs/` changes, and an old `button.tsx` with `transition-all` stays byte for byte; `.forge/design/ui-checks.js` holds the three rule names; both hosts' `app-baseline` skill names the shared curve, the reduced-motion rule and the three state parts. `forge doctor` says nothing new about the old files.
 
-1. <Evidence, edge cases and the tests that prove item 1.>
+### New and existing repos
+
+- **New repos** (`forge init --starter`, `forge init --starter python`): the changed parts, the tokens and reduced-motion rule in the theme file, the three state parts, the checks, the skill text, the brief and the review text, from the first change. `forge init` without a starter, and adoption of an existing app, get the checks and the text only, because no starter is copied there.
+- **Existing repos** (on upgrade, after `forge sync`): the checks and the text. No app file changes and nothing blocks the upgrade. The checks run on the files a change touches, and the first one that reports a motion problem is when the agent applies the matching part change from `frontend.md`. A person can also ask for the whole set at once ("make my app feel finished"), and the agent applies the same subsection in one normal change.
 
 ## Tasks
 
-<!-- One row per task. Covers: the Done-when numbers it delivers, at most three. Scope: the paths
-it may change. Before writing each Scope, search the code for the files the task needs. The plan
-check refuses two tasks whose Scope paths have the same prefix up to the first wildcard, unless
-one waits for the other through After, directly or through another task; it names both tasks.
-Paths with a segment named `tests`, `test`, `__tests__` or `spec` do not cause Scope overlaps
-and can be shared without an After link. Explicit After links still apply.
-When tasks need the same production file, put it in the first task's Scope with the shared names and stubs;
-tasks that need them wait for that task through After and then own only their files. Tests: the
-tests it adds or changes. After: the tasks it waits for. When two tasks share a function, field,
-file format or command, the first task pins it: it commits the shared names and stubs plus one
-test that crosses both sides, and the tasks that use it list it under After. Split tasks so each
-owns its files; shared lines (command table, guide list, registry) go to one task or a small last
-wiring task; After only when a task needs another task's code. The
-Developer column is optional: the lead fills or changes a GitHub username here, below For the
-builders, without another approval. Leave it blank for an unassigned part. Forge next uses
-the caller's GitHub login; another developer may start it with a warning. Existing tables
-without Developer still work. The moving-parts line stays last: "none", or each new dependency, service, datastore,
-queue, background job or abstraction layer, with the Done-when item that needs it. -->
-
 | ID | Name | What it delivers | Covers | Scope | Tests | After | User-facing | Developer |
 |---|---|---|---|---|---|---|---|---|
+| PARTS | The starter's shared parts and theme file carry the polish | Press state on button, switch and checkbox; named transition properties; the shared curve and default speed and the reduced-motion rule in the theme file; the sheet speed; `states.tsx` with the three state parts; the frontend rules, the app-baseline skill text (both copies) with its new hash, and the existing-app fix subsection. | 1, 2, 3 | `src/forge/templates/starter/libs/shared/ui/**`, `src/forge/templates/starter/apps/web/src/index.css`, `src/forge/templates/conventions/frontend.md`, `.codex/skills/app-baseline/SKILL.md`, `.claude/skills/app-baseline/SKILL.md`, `tests/test_fix_app_baseline.py`, `tests/test_polish_parts.py` | `tests/test_polish_parts.py` (`test_1`, `test_2`, `test_3`, new, each on the React and the Python starter); `tests/test_fix_app_baseline.py` (new hash) | | yes | |
+| CHECKS | Close refuses the motion problems and existing apps get them on sync | The three rules in `ui-checks.js` with their waivers and the shadcn-copy exception; the worker brief, review, coordinator guide and guide text; the synced guide copies; the new-repo and earlier-adopted cases for the checks and for sync. | 4, 5 | `src/forge/templates/design/ui-checks.js`, `src/forge/templates/brief.md`, `src/forge/templates/review.md`, `src/forge/templates/skill.md`, `.claude/skills/forge/SKILL.md`, `.codex/skills/forge/SKILL.md`, `docs/guide.md`, `tests/test_polish_checks.py` | `tests/test_polish_checks.py` (`test_4`, `test_5`, new) | PARTS | no | |
+
+Order. PARTS first: it pins the part names and class changes, so CHECKS can prove that the shipped parts pass the new rules. CHECKS second, because its words state what PARTS built and its `test_5` reads the skill text that PARTS wrote. PARTS is user-facing because it changes shared parts and the theme file; CHECKS changes no part. The two tasks share no file: the `app-baseline` text and `frontend.md` belong to PARTS, and the worker-facing and coordinator text belongs to CHECKS.
 
 New moving parts: none
 
 ## Notes
+
+- **Open owner questions (recommendation first).**
+  1. Existing apps. Recommended: an existing app gets the new checks, the written rules and the fix text on upgrade and refresh, and the agent applies the part changes as a normal change in that repo when a check reports a problem in a file the change touches or when the person asks. Forge writes no part into an existing app, because those files are the client's. Other choices: a sync step that rewrites the client's shared parts (breaks "never overwrite a client's own files" and needs a new step, so not recommended), or checks that only list problems for existing apps for one release (cheaper to start, weaker where the rule is needed most). This plan blocks close on a motion problem, as every other design check does; say so if you want a list only.
+  2. Reduced motion. Recommended: instant (animation and transition time cut to about 1 ms), with spinners left running. Emil's rule is "fewer and gentler, not zero", so the other choice keeps the opacity fade and drops only slides and zooms; it costs about ten more lines and one more thing to keep in step with tw-animate-css. Say "gentler" to switch.
+  3. Visible keyboard focus. Recommended: leave it out. Every interactive shadcn part in the starter already shows a ring when focused (I read every `outline-none` and `outline-hidden` class string), and the only gap is a hand-built raw element, whose browser outline is faint because `index.css` sets `outline-ring/50` on every element. Score: F 1 (rare), H 1 (cosmetic), C 1 (a three-line base rule): 1 x 1 < 2 x 1. It fails the score. Say so if you want the rule anyway.
+- **Which lines of the theme file this story owns.** The theme story edits the same file, `apps/web/src/index.css`. This story owns only a marked section at the end: `/* Motion (FORGE-POLISH-1) */`, holding one `@theme { ... }` block (`--ease-out`, `--default-transition-timing-function`, `--default-transition-duration`, and `--tw-ease` in `:root` if that works) and one `@media (prefers-reduced-motion: reduce)` block. The theme story owns everything above it: `@theme inline` (colours, font, radius), `:root`, `.dark` and the `@layer base` rule. Claude's token file has no motion family, so the theme story's copy step must replace only its own blocks and leave the marked motion section alone; if it rewrites the whole file, it must carry the motion section across. Neither story touches the imports at the top.
+- **Planner's choices, tell-after.** (1) Sidebar menu buttons get no pressed scale, because they are used many times a day (Emil's rule: no motion on very frequent actions). (2) The link style of button gets none; scaling a text link looks odd. (3) Toasts and the Radix enter animations are not rebuilt, since they already work; only their curve and speed move to the shared tokens. (4) Close blocks on motion problems, with the existing waiver comment. (5) `motion-reduced` looks only for real animations (`@keyframes`, `animation:`, `animate-*`), not plain `transition`, so hover colour changes do not trigger it. (6) `motion-reduced` reads one fixed file, `apps/web/src/index.css`; an app whose theme file sits elsewhere is not checked by it.
+- **Scores (F x H >= 2 x C).**
+  - Tokens and reduced-motion rule: F 3, H 2 (a motion-sick person), C 1 (about 15 lines). 6 >= 2. Kept.
+  - Press state and named properties on the parts: F 3, H 1, C 1 (a few class edits). 3 >= 2. Kept.
+  - State parts: F 3, H 2 (a blank or jumping screen is a broken step), C 2 (about 60 lines, no model call). 6 >= 4. Kept.
+  - `motion-all`: F 3, H 1, C 1. 3 >= 2. Kept.
+  - `motion-press`: F 2, H 1, C 1. 2 >= 2. Kept, at the limit; the file-level reading is crude on purpose.
+  - `motion-reduced`: F 2, H 2, C 1. 4 >= 2. Kept.
+  - Focus rule: 1 < 2. Cut (question 3).
+- **Left out.** A gentler reduced-motion version (question 2). A check for `ease-in` or `ease-linear` (the sidebar uses `ease-linear` on width changes; fixing it adds edits to a long file for no wrong behaviour a person sees). A check that a screen uses the shared state parts (a text check cannot tell). A stock-gray-theme check and any look step: removed from the intake text; colours, fonts, corner size, spacing and shadows belong to the theme story. Rendered browser checks of motion at close belong to the rendered-check story. `@starting-style` in the starter (no part needs it).
+- **Not verified.**
+  - Whether `:root { --tw-ease: var(--ease-out); }` reaches the `animate-in` rule in the compiled CSS. I read the tw-animate-css rule and Tailwind's source but did not compile the starter. The builder checks, and adds `ease-out` to the seven content parts if it does not.
+  - Whether `npx shadcn@4.21.4` has an `empty` component. I could not reach the registry. The plan tells the builder to look first and compose from existing parts otherwise.
+  - That Tailwind 4.1.16 output animates `scale-*` through the `scale` property. I read its source only for `--tw-duration`. The builder reads the compiled CSS before choosing `scale` or `transform` in the transition list.
+  - The exact properties `sidebar.tsx:294` changes; the builder reads the rule.
+  - That the three state parts type-check in a full app build. The starter's `@app/shared-ui` project has a lint target only, and the web app type-checks only what it imports, so a part no screen imports is linted but not type-checked until the first screen uses it. The nightly run was not run for this plan.
+  - No test here runs a browser. Rendered proof belongs to the rendered-check story.
+  - I ran no `forge` command and no test.
