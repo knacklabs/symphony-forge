@@ -71,8 +71,8 @@
     "id": "dc9f5238-d471-4eb3-b2fb-28419bc65754",
     "status": "clean"
   },
-  "round": 1,
-  "status": "waiting for checks",
+  "round": 2,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-10T02:45:11.175528+00:00",
@@ -84,10 +84,10 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "bcda4a891197aa234b830e8c5d7c61052f7c0b16",
+    "close": "c1c3f45f-2d79-4c88-8b44-3c2aa8a4932f",
+    "head": "ddba5331a62031e62e1f819427b52436ad53d562",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "Close lists a finding as P1 in its table and finding list while it treats it as a P0 that ignores the round limit, so the owner is offered accept and then refused (#1498)",
   "worker": "codex"
