@@ -11,14 +11,106 @@
   "done_when": "Close and merge keep waiting while GitHub shows a required check running, up to the same 90-minute limit land uses; when they stop at a limit they say which limit and that the checks are still running",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [
+    {
+      "area": "_wait() in src/forge/checks.py",
+      "file": "src/forge/checks.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 173,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Running commit-status checks still stop after ten minutes",
+      "work": 2
+    },
+    {
+      "area": "_wait() in src/forge/checks.py",
+      "file": "src/forge/checks.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 179,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: Existing close wait tests fail on the new refusal",
+      "work": 1
+    },
+    {
+      "area": "test_1_close_waits_for_running_checks_until_green_or_the_limit() in tests/test_close_waits_for_running_checks.py",
+      "file": "tests/test_close_waits_for_running_checks.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 26,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_close_waits_for_running_checks_until_green_or_the_limit",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "cbd9363f8129b7b719900d20d7ba8a37348da3a04bf52aa3b48c93cca7618f12",
+    "changed": "2c7b0f166170157a915be57b60eabca9c3f5bb3ed68735b0a7a691765813d48a",
+    "commit": "49148a420824d6b98f537fe7756ddda95faab4be",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done\nCase: normal use - A repository requires a Jenkins build that GitHub shows as started through a pending commit status, after its GitHub Actions jobs have finished.\nThe Done-when item is: Close and merge keep waiting while GitHub shows a required check running, up to the same 90-minute limit land uses; when they stop at a limit they say which limit and that the checks are still running.\nThe coordinator's note considered check runs, but `checks.py:495-496` also accepts commit statuses. A provider can report a started build using a [pending status](https://issues.jenkins.io/browse/JENKINS-22157). Because `running` at line 124 only examines check runs, this branch keeps the ten-minute deadline for that build and stops without naming the limit, even though `_pending` describes it as still running.",
+        "file": "src/forge/checks.py",
+        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
+        "gain": 4,
+        "harm": 3,
+        "line": 173,
+        "priority": "P1",
+        "title": "Not done: Running commit-status checks still stop after ten minutes",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 1, Harm 3\nRaise: Gate\nCase: normal use - Running Forge's configured test suite after this change.\nFor an in-progress check with `FORGE_CHECKS_WAIT` set, this branch prepends the no-progress limit to the refusal. `tests/test_close.py:355-358,492-502` still requires the old exact message with the zero override, and `tests/test_land_waits_for_check_progress.py:139-146` requires the old message and excludes the new prefix with the 60-second override. Both tests therefore fail by inspection; their expectations need to reflect the new limit message.",
+        "file": "src/forge/checks.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 179,
+        "priority": "P1",
+        "title": "Gate: Existing close wait tests fail on the new refusal",
+        "work": 1
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Test\nCase: normal use - A coordinator runs standalone merge, or Forge's generated workflow runs a long test group.\nThe named proof invokes only `close`; the existing merge revalidation test at `tests/test_land_waits_for_check_progress.py:150-171` invokes `land`, which sets `wait_for_progress=True` in `src/forge/land.py:53`. A regression limited to standalone `merge` can pass both. The new fixture also uses a running check named `tests`, while `.github/workflows/forge.yml:41-44,91-98` runs `test group ...` before the required `tests` aggregate exists, so an implementation that waits only for the named check can pass while the reported test-group case fails. Finally, the limit assertion checks only printed words, not elapsed time or the check name, and the zero-override assertion also passes if the override is ignored and the command eventually times out at 90 minutes.",
+        "file": "tests/test_close_waits_for_running_checks.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 26,
+        "priority": "P1",
+        "title": "Gate: test_1_close_waits_for_running_checks_until_green_or_the_limit",
+        "work": 2
+      }
+    ],
+    "id": "d364de2e-c341-40ec-9d89-f3e45fe272bf",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-10T02:44:02.537298+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-10T02:55:21.379553+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-11-10T02:55:21.391005+00:00",
+    "file": "src/forge/checks.py",
+    "wait_id": "680a8e85-f160-4cb0-a0d1-6de0180524c7"
+  },
   "stuck": {
     "close": null,
     "head": "b4aff4821858a89026eee8054c7d1a1a46355f1f",
