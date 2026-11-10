@@ -118,7 +118,7 @@
     "status": "blocked"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-10T02:45:02.219707+00:00",
@@ -131,8 +131,12 @@
   ],
   "stop": {
     "at": "2026-11-10T03:03:54.088287+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "src/forge/upgrade.py",
-    "wait_id": "66295ed3-cd00-44c6-b29d-75b518c80eed"
+    "reason": "The owner wants one more round for all four findings",
+    "wait_id": "66295ed3-cd00-44c6-b29d-75b518c80eed",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
