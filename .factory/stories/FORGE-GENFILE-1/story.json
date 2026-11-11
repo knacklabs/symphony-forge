@@ -1,0 +1,12 @@
+{
+  "doc": "plans/FORGE-GENFILE-1.md",
+  "status": "planning",
+  "steps": [
+    {
+      "at": "2026-11-11T08:03:33.687942+00:00",
+      "step": "start"
+    }
+  ],
+  "title": "Flag a generated file that many tasks share",
+  "touches": 0
+}

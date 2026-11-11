@@ -624,6 +624,12 @@
       "title": "Research the prospect before a prototype and propose features from what is found",
       "status": "pending",
       "order": 119
+    },
+    {
+      "key": "FORGE-GENFILE-1",
+      "title": "Flag a generated file that many tasks share",
+      "status": "pending",
+      "order": 120
     }
   ],
   "epics": [
