@@ -221,7 +221,7 @@ def test_1_parts_start_on_reviewed_remote_work(env, previous, plan_source):
     for case in ("not-started", "remote-story", "old-story", "not-reviewed", "changed",
                  "older", "two-bases", "stacked", "stacked-merged",
                  "stacked-merged-proof", "stacked-merged-prose", "stacked-human-merged")
-    for previous in (False, True) if not previous or case == "older"
+    for previous in (False, True) if not previous or case in ("older", "stacked-human-merged")
 ])
 def test_2_unsafe_starts_name_the_blocker_without_creating_work(env, previous, case):
     repo = configured(env, previous)
@@ -279,31 +279,40 @@ def test_2_unsafe_starts_name_the_blocker_without_creating_work(env, previous, c
                     assert len(submitted.encode("utf-8")) <= LIMIT
                     assert submitted.rstrip().endswith("Forge-merged: STACK/A")
             elif case == "stacked-human-merged":
-                # A merge outside Forge has no receipt; B still cannot be a new base.
+                # A merge outside Forge has no receipt; B is a base once it holds the merge.
                 repo.git("merge", "-q", "--squash", "task/STACK-A")
                 repo.git("commit", "-qm", "Merge the first part on GitHub")
                 repo.git("push", "-q", "origin", "main")
             part, command = "D", "forge next"
             problem = "STACK/D waits for STACK/B, which builds on STACK/A, so it starts once STACK/A merges."
-            if case.startswith("stacked-merged"):
+            if case.startswith("stacked-merged") or case == "stacked-human-merged":
                 problem = "STACK/D waits for STACK/B to include the merge of STACK/A from main."
                 command = "forge close STACK/B"
     refuses_without_start(repo, part, problem, command)
+    if case == "stacked-human-merged":
+        # forge next is where the wait was reported: it must give the same true wait.
+        shown = repo.forge("next")
+        assert shown.returncode == 0, shown.stdout + shown.stderr
+        assert "starts once STACK/A merges" not in shown.stdout
+        assert problem in shown.stdout and f"Next: {command}" in shown.stdout
     if case.startswith("stacked-merged") or case == "stacked-human-merged":
-        # CLOSE owns automatic replay. Put B's own commits onto merged main
-        # with real Git, then have close record a clean review of that history.
-        saved = json.loads((upper / ".factory/stories/STACK/tasks/B.json").read_text("utf-8"))
-        repo.git("rebase", "--onto", "origin/main", saved["base"], cwd=upper)
-        repo.git("push", "--force-with-lease", "origin", "task/STACK-B", cwd=upper)
+        # CLOSE owns automatic replay. After a Forge merge, put B's own commits onto
+        # merged main with real Git first; after a button merge, the printed close step
+        # does the replay itself.
+        if case != "stacked-human-merged":
+            saved = json.loads((upper / ".factory/stories/STACK/tasks/B.json").read_text("utf-8"))
+            repo.git("rebase", "--onto", "origin/main", saved["base"], cwd=upper)
+            repo.git("push", "--force-with-lease", "origin", "task/STACK-B", cwd=upper)
         _install(repo.bin, "gh", GH_STUB.format(python=sys.executable))
         env.open_pr("")
         closed = env.close("STACK/B")
         assert closed.returncode == 0, closed.stdout + closed.stderr
-        if case == "stacked-human-merged":
-            # Ancestry and a new clean review cannot replace Forge provenance.
-            refuses_without_start(repo, part, problem, command)
-            return
         head = repo.git("rev-parse", "origin/task/STACK-B")
+        if case == "stacked-human-merged":
+            shown = repo.forge("next")
+            assert shown.returncode == 0, shown.stdout + shown.stderr
+            assert "Next: forge task start STACK/D" in shown.stdout, shown.stdout
+            assert "waits for STACK/B" not in shown.stdout
         where, _ = start(repo, "D")
         repo.git("merge-base", "--is-ancestor", head, "HEAD", cwd=where)
 
