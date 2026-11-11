@@ -63,7 +63,7 @@
     "id": "e44beeed-65e6-48f2-a0b6-89b03ecef6a5",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -85,10 +85,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": null,
-    "head": "b06cfca0c6118bb05d1da322be2edff22d2d2820",
+    "close": "ca5ed9a8-78d2-4542-87a2-fd53bd1d933f",
+    "head": "3ac8f345aeb8473a9bc97e9ceb3a30370501ed6e",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "Bug 1533. A part started on top of another part stays blocked after that part merges with GitHub's button, because forge next keeps saying it waits for the merge.",
   "worker": "claude"
