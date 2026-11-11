@@ -128,10 +128,11 @@ Only a genuine trade-off goes to the human, as a question with options.
     [The plan](/plans/FORGE-GENCOMMIT-1.md:81) says not to list the files in a part’s scope but does not exempt apps that still commit them. Its automatic move-over trigger depends on a plan read naming them as shared ([plan](/plans/FORGE-GENCOMMIT-1.md:98)).
     Case: normal use - Two parts in an unmigrated app omit the files, so Forge’s scope check cannot see that both will change them ([task.py](/src/forge/task.py:525)).
     Gain 3, Work 1, Harm 3
+    Disposition: cut - `python.md` and the guide now say in one sentence that an app that still commits the two files lists both in a part's scope as today until it has moved over, so the scope check still sees the shared change; the move-over trigger is now the agent seeing the two files tracked in git (`git ls-files`) when it writes the next plan or fix for that app, then offering the fix to the owner, with no dependence on the plan read naming them; `test_5` checks both sentences.
 
 14. Advisory: Scale: The live regression runs again for every copied Python app.
     Raise: Scale
     [The plan](/plans/FORGE-GENCOMMIT-1.md:90) puts the real fast-test regression in a helper gated only by the Python app’s `pyproject.toml`. That helper also runs for generated-feature and database-kind apps ([feature test](/tests/test_feature_command.py:381), [database test](/tests/test_database_kinds.py:260)).
     Case: normal use - A Python-starter pull request runs those smoke jobs, and each repeats the container start and API suite for the same regression. The plan estimates a few minutes per run; it has not measured them.
     Gain 3, Work 2, Harm 2
-   Disposition: keep - below the bar (follow-up)
+    Disposition: cut - the regression and the contract read move out of the shared `_run_live_starter` into `live_python_run`, which runs once per session and is the one place the Python starter smoke run starts the starter; the feature, database-kind and store helpers no longer run it; cost stated as one stack start and the API suite, once, in the Python starter smoke job (estimate).
