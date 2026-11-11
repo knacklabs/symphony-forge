@@ -89,7 +89,7 @@
     "status": "blocked"
   },
   "round": 2,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-11T03:41:43.481012+00:00",
@@ -106,8 +106,12 @@
   ],
   "stop": {
     "at": "2026-11-11T04:12:13.387044+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "tests/test_theme_check.py",
-    "wait_id": "09bd0784-fa7b-4607-8ce8-d505e2fb2050"
+    "reason": "Owner chose one more round on 11 Nov 2026: add the test case for a change to the app's theme file only",
+    "wait_id": "09bd0784-fa7b-4607-8ce8-d505e2fb2050",
+    "worker_round": 2
   },
   "stuck": {
     "close": "d5fa6d29-b3bf-409d-a00b-16c9ba0ffa69",
