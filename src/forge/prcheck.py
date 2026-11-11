@@ -185,8 +185,15 @@ jobs:
           elif [ "$REVIEW_OUTCOME" = failure ] && [ "$REVIEW_PENDING" = true ]; then
             state=pending
           fi
-          job_url=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/jobs" --jq '.jobs[] | select(.name == "Review pull request") | .html_url')
-          gh api --method POST "repos/$GITHUB_REPOSITORY/statuses/$HEAD_SHA" -f context=forge-pr-check -f "state=$state" -f "target_url=$job_url" > /dev/null
+          if command -v gh > /dev/null; then
+            job_url=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/jobs" --jq '.jobs[] | select(.name == "Review pull request") | .html_url')
+            gh api --method POST "repos/$GITHUB_REPOSITORY/statuses/$HEAD_SHA" -f context=forge-pr-check -f "state=$state" -f "target_url=$job_url" > /dev/null
+          else
+            # A self-hosted runner may have no gh. Same two API calls through curl.
+            api="${GITHUB_API_URL:-https://api.github.com}/repos/$GITHUB_REPOSITORY"
+            job_url=$(curl -fsS -H "Authorization: Bearer $GH_TOKEN" "$api/actions/runs/$GITHUB_RUN_ID/jobs" | python3 -c 'import json,sys; print(next(j["html_url"] for j in json.load(sys.stdin)["jobs"] if j["name"] == "Review pull request"))')
+            curl -fsS -X POST -H "Authorization: Bearer $GH_TOKEN" "$api/statuses/$HEAD_SHA" -d '{"context":"forge-pr-check","state":"'"$state"'","target_url":"'"$job_url"'"}' > /dev/null
+          fi
           test "$state" != failure
       - name: Report pull request size
         if: always()
@@ -332,7 +339,12 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
                   "        run: |\n"
                   "          state=failure\n"
                   "          if [ \"$FULL_RESULT\" = success ]; then state=success; fi\n"
-                  "          gh api --method POST \"repos/$GITHUB_REPOSITORY/statuses/$HEAD_SHA\" -f context=forge-full-suite -f \"state=$state\" -f \"target_url=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID\"\n"
+                  "          url=\"$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID\"\n"
+                  "          if command -v gh > /dev/null; then\n"
+                  "            gh api --method POST \"repos/$GITHUB_REPOSITORY/statuses/$HEAD_SHA\" -f context=forge-full-suite -f \"state=$state\" -f \"target_url=$url\"\n"
+                  "          else\n"
+                  "            curl -fsS -X POST -H \"Authorization: Bearer $GH_TOKEN\" \"${GITHUB_API_URL:-https://api.github.com}/repos/$GITHUB_REPOSITORY/statuses/$HEAD_SHA\" -d '{\"context\":\"forge-full-suite\",\"state\":\"'\"$state\"'\",\"target_url\":\"'\"$url\"'\"}' > /dev/null\n"
+                  "          fi\n"
                   "          test \"$state\" = success\n" if full_run else "")
     full_suite = full_suite.replace("<groups>", str(full_groups)).replace(
         "<group-list>", str(list(range(1, full_groups + 1))))

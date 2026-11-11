@@ -8,6 +8,7 @@ import subprocess
 import sys
 from pathlib import Path
 from urllib.parse import quote
+from urllib.request import Request, urlopen
 
 
 # <docs-only-rule>
@@ -17,6 +18,22 @@ def run(*args: str) -> str:
     # Resolve PATH first, including the .cmd shims used on Windows.
     return subprocess.run([shutil.which(args[0]) or args[0], *args[1:]], check=True,
                           capture_output=True, text=True).stdout.strip()
+
+
+def api_runs(endpoint: str, sha: str) -> list[dict]:
+    """The same workflow-run list as `gh api --paginate`, for a runner without gh."""
+    runs, page = [], 1
+    while True:
+        request = Request(f"{os.environ.get('GITHUB_API_URL', 'https://api.github.com')}/{endpoint}"
+                          f"?head_sha={sha}&per_page=100&page={page}",
+                          headers={"Authorization": f"Bearer {os.environ['GH_TOKEN']}",
+                                   "Accept": "application/vnd.github+json"})
+        with urlopen(request, timeout=60) as response:
+            found = json.load(response)["workflow_runs"]
+        runs += found
+        if len(found) < 100:
+            return runs
+        page += 1
 
 
 def test_files(top: Path, base: str, excludes: list[str], *, head: str = "HEAD") -> tuple[bool, list[str]]:
@@ -79,9 +96,10 @@ def reuse() -> bool:
             if ({k: v for k, v in before.items() if k not in bookkeeping}
                     != {k: v for k, v in after.items() if k not in bookkeeping}):
                 return False
-        runs = [json.loads(line) for line in run("gh", "api", "--paginate", "--jq",
-                                               ".workflow_runs[]", endpoint, "--method", "GET",
-                                               "-f", f"head_sha={parent}", "-f", "per_page=100").splitlines()]
+        runs = ([json.loads(line) for line in run("gh", "api", "--paginate", "--jq",
+                                                ".workflow_runs[]", endpoint, "--method", "GET",
+                                                "-f", f"head_sha={parent}", "-f", "per_page=100").splitlines()]
+                if shutil.which("gh") else api_runs(endpoint, parent))
         # Target-event runs check the PR but skip tests, so their success proves nothing here.
         matching = [r for r in runs if r.get("head_sha") == parent
                     and (r.get("event") == "push" or r.get("event") == "pull_request"
