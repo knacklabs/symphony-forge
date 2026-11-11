@@ -1,6 +1,50 @@
 {
   "items": [
     {
+      "key": "bug\tforge.toml\tFunctional: The new pin blocks closing the release before tagging\trelease-1-2-37",
+      "kind": "bug",
+      "path": "forge.toml",
+      "line": 2,
+      "text": "Functional: The new pin blocks closing the release before tagging",
+      "from": "blocking",
+      "item": "release-1-2-37",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tforge.toml\tNot done: forge.toml has workers = \"claude\" and forge next names Claude as the builder of every part\tworkers-claude",
+      "kind": "bug",
+      "path": "forge.toml",
+      "line": 4,
+      "text": "Not done: forge.toml has workers = \"claude\" and forge next names Claude as the builder of every part",
+      "from": "blocking",
+      "item": "workers-claude",
+      "status": "done",
+      "closed_by": "release-1-2-37"
+    },
+    {
+      "key": "bug\tforge.toml\tPreserve design routing for user-facing source tasks\tworkers-claude",
+      "kind": "bug",
+      "path": "forge.toml",
+      "line": 4,
+      "text": "Preserve design routing for user-facing source tasks",
+      "from": "blocking",
+      "item": "workers-claude",
+      "status": "done",
+      "closed_by": "release-1-2-37"
+    },
+    {
+      "key": "bug\tforge.toml\tUpdate the tests that still require split workers\tworkers-claude",
+      "kind": "bug",
+      "path": "forge.toml",
+      "line": 4,
+      "text": "Update the tests that still require split workers",
+      "from": "blocking",
+      "item": "workers-claude",
+      "status": "done",
+      "closed_by": "release-1-2-37"
+    },
+    {
       "key": "bug\ttests/test_release_version.py\tNot done: The version is 1.2.37, generated files are synced, this repo is pinned to v1.2.37, and the tests pass\trelease-1-2-37",
       "kind": "bug",
       "path": "tests/test_release_version.py",

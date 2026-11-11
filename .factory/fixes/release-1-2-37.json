@@ -24,12 +24,25 @@
       "gain": 5,
       "harm": 3,
       "line": 20,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
       "title": "Not done: The version is 1.2.37, generated files are synced, this repo is pinned to v1.2.37, and the tests pass",
       "work": 1
+    },
+    {
+      "area": "forge.toml",
+      "file": "forge.toml",
+      "gain": 5,
+      "harm": 4,
+      "line": 2,
+      "outcome": "open",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Functional: The new pin blocks closing the release before tagging",
+      "work": 2
     }
   ],
   "land": {
@@ -38,24 +51,23 @@
   },
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "98dd9e374f09412edddfbc2fd89ffae9380fb11d3cea2cfe65c374ef437705aa",
-    "changed": "3bf8321bb7d3d2ed7810889c2970f9964e9b428168ad13b2c3a63f684ae17e20",
-    "commit": "ceb33a74a3fad851cc7276a32d54db1ddaab5c39",
+    "branch_diff": "0d566d1490e5bd410a93d57afd47eb26e70613c9f64d62b51a1dff78a29685aa",
+    "changed": "ce4f578cca24d19a26cf493c6f87e0b1f4c81e4cf380c710cef7df280bb26be8",
+    "commit": "0771c30f4ea05f1c5440aa683b0f095f87ecde56",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 5, Work 1, Harm 3\nRaise: Not done\nCase: normal use - running this repository after the release.\nThe release tests require the repository pin to be v1.2.37, but forge.toml:2 still pins v1.2.36. All three named version-and-pin tests therefore contain assertions that cannot pass. State-changing commands also hand off to the older release, as shown in src/forge/repo.py:978 and src/forge/repo.py:1005. The changed .forge/hooks.sh and .github/workflows/forge.yml say v1.2.37 even though their generators use the repository pin (src/forge/sync.py:109 and src/forge/prcheck.py:392), so they are not synced to its current configuration. Update the pin, sync the generated files, and rerun the release tests.",
-        "file": "tests/test_release_version.py",
+        "body": "Gain 5, Work 2, Harm 4\nRaise: Functional\nCase: normal use - a maintainer closes this release with Forge v1.2.36 installed from its published tag.\nFrom the release worktree, `forge close` checks the new pin and tries to fetch v1.2.37 from GitHub (`src/forge/cli.py:147`, `src/forge/repo.py:1013`, `src/forge/repo.py:1034`). The documented release process pushes that tag only after the fix is closed and merged (`docs/guide.md:674`, `docs/guide.md:680`). Running close from the default checkout does not avoid the problem: `src/forge/close.py:829` rejects the fix's pin when close itself is running v1.2.36. The published installation therefore cannot complete the documented release path.",
+        "file": "forge.toml",
         "gain": 5,
-        "harm": 3,
-        "line": 20,
-        "priority": "P1",
-        "required_done_when": true,
-        "title": "Not done: The version is 1.2.37, generated files are synced, this repo is pinned to v1.2.37, and the tests pass",
-        "work": 1
+        "harm": 4,
+        "line": 2,
+        "priority": "P0",
+        "title": "Functional: The new pin blocks closing the release before tagging",
+        "work": 2
       }
     ],
-    "id": "65712780-a17b-45e9-94be-7cfef4b147e9",
+    "id": "b7bcc028-1525-4b46-87e1-03abd28cfe78",
     "status": "blocked"
   },
   "round": 2,
@@ -67,6 +79,10 @@
     },
     {
       "at": "2026-11-11T13:27:09.634596+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-11T13:32:59.609233+00:00",
       "step": "review"
     }
   ],
