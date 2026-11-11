@@ -44,12 +44,12 @@ def test_3_close_reports_a_theme_that_differs_from_the_approved_copy(env, tmp_pa
         (repo.path / rel).write_text(text, encoding="utf-8")
     _commit_main(repo, tmp_path, "Keep the theme and its approved copy")
 
-    def start(name, path):
+    def start(name, path, text=None):
         return env.start(name, f"fix/{name}", f".factory/fixes/{name}.json",
                          {"kind": "fix", "why": "Keep the screen on the theme",
                           "done_when": "The screen uses the approved theme"},
-                         {path: "export const Screen = () => <main><h1>Screen</h1></main>;\n"
-                          if path.endswith(".tsx") else "x = 1\n"})
+                         {path: text or ("export const Screen = () => <main><h1>Screen</h1></main>;\n"
+                                         if path.endswith(".tsx") else "x = 1\n")})
 
     def close(item):
         env.checks(GREEN)
@@ -74,6 +74,12 @@ def test_3_close_reports_a_theme_that_differs_from_the_approved_copy(env, tmp_pa
 
     item, where = start("screen", SCREEN)
     assert close(item)[0] == 0, "the starter equals the real fixture"
+
+    # A nested rule in a theme block hides none of that block's values and sets none of its own.
+    env.commit(where, CSS, STARTER.replace(
+        ".dark {\n", ".dark {\n  @media (prefers-contrast: more) {\n    --border: oklch(1 0 0 / 30%);\n  }\n", 1))
+    code, out = close(item)
+    assert code == 0, out
 
     def refuse(old, new, finding):
         env.commit(where, CSS, STARTER.replace(old, new, 1))
@@ -106,6 +112,9 @@ def test_3_close_reports_a_theme_that_differs_from_the_approved_copy(env, tmp_pa
     # A waiver sets aside one value only, and it needs words.
     drift = STARTER.replace("  --primary: oklch(0.205 0 0);", "  --primary: oklch(0.5 0 0);", 1).replace(
         "  --radius: 0.625rem;", "  --radius: 1rem;", 1)
+    env.commit(where, CSS, drift)
+    code, out = close(item)
+    assert code == 1 and "--primary (light) is" in out and "--radius is 1rem" in out, "one refusal lists both"
     env.commit(where, CSS, "/* forge-ui-ignore theme-drift --primary (light): */\n" + drift)
     code, out = close(item)
     assert code == 1 and "--primary (light) is" in out, out
@@ -115,6 +124,27 @@ def test_3_close_reports_a_theme_that_differs_from_the_approved_copy(env, tmp_pa
     env.commit(where, CSS, "/* forge-ui-ignore theme-drift --primary (light): Brand file */\n" + drift)
     code, out = close(item)
     assert code == 1 and "--radius is 1rem" in out and "--primary (light) is" not in out, out
+    both = drift.replace("  --primary: oklch(0.922 0 0);", "  --primary: oklch(0.8 0 0);", 1)
+    env.commit(where, CSS, "/* forge-ui-ignore theme-drift --primary (light): Brand file */\n" + both)
+    code, out = close(item)
+    assert code == 1 and "--primary (dark) is oklch(0.8 0 0)" in out and "--primary (light) is" not in out, out
     env.commit(where, CSS, "/* forge-ui-ignore theme-drift --primary (light): Brand file */\n"
                "/* forge-ui-ignore theme-drift --radius: Brand file */\n" + drift)
     assert close(item)[0] == 0
+    # A value with no light or dark form takes the guide's comment, with the theme, as well.
+    georgia = STARTER.replace("  --font-heading: ui-sans-serif", "  --font-heading: Georgia", 1)
+    env.commit(where, CSS, "/* forge-ui-ignore theme-drift --font-heading (light): Font did not load */\n" + georgia)
+    assert close(item)[0] == 0
+
+    # A change to the approved copy alone is checked, and only the committed files count.
+    alone, there = start("copy", COPY, TOKENS.replace('"light": "oklch(0.205 0 0)"', '"light": "oklch(0.3 0 0)"', 1))
+    finding = "--primary (light) is oklch(0.205 0 0) in the app and oklch(0.3 0 0)"
+    code, out = close(alone)
+    assert code == 1 and finding in out, out
+    (there / COPY).write_bytes(TOKENS.encode("utf-8"))
+    code, out = close(alone)
+    assert code == 1 and finding in out, "an uncommitted fix is not published"
+    env.commit(there, COPY, TOKENS)
+    env.commit(there, CSS, STARTER + "/* The theme matches its approved copy. */\n")
+    code, out = close(alone)
+    assert code == 0, out
