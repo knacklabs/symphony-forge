@@ -1,0 +1,12 @@
+{
+  "base": "10472546fd52a0afba0321b5199ff210a876ccb0",
+  "branch": "task/FORGE-GENFILE-1-NOTE",
+  "stacked_on": "FORGE-PRODGAP-1/GUIDE",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-11T10:02:06.115359+00:00",
+      "step": "start"
+    }
+  ]
+}
