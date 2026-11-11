@@ -1,0 +1,59 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/ui_checks.py\tFunctional: Accept the documented waiver for shared theme values\tFORGE-THEME-1/CHECK",
+      "kind": "bug",
+      "path": "src/forge/ui_checks.py",
+      "line": 81,
+      "text": "Functional: Accept the documented waiver for shared theme values",
+      "from": "blocking",
+      "item": "FORGE-THEME-1/CHECK",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/ui_checks.py\tFunctional: Compare the committed theme and copy during close\tFORGE-THEME-1/CHECK",
+      "kind": "bug",
+      "path": "src/forge/ui_checks.py",
+      "line": 68,
+      "text": "Functional: Compare the committed theme and copy during close",
+      "from": "blocking",
+      "item": "FORGE-THEME-1/CHECK",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/ui_checks.py\tFunctional: Preserve declarations in theme rules with nested CSS\tFORGE-THEME-1/CHECK",
+      "kind": "bug",
+      "path": "src/forge/ui_checks.py",
+      "line": 72,
+      "text": "Functional: Preserve declarations in theme rules with nested CSS",
+      "from": "blocking",
+      "item": "FORGE-THEME-1/CHECK",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_theme_check.py\tGate: test_3_close_reports_a_theme_that_differs_from_the_approved_copy\tFORGE-THEME-1/CHECK",
+      "kind": "bug",
+      "path": "tests/test_theme_check.py",
+      "line": 75,
+      "text": "Gate: test_3_close_reports_a_theme_that_differs_from_the_approved_copy",
+      "from": "blocking",
+      "item": "FORGE-THEME-1/CHECK",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/ui_checks.py\tNot done: The final check reports each theme value that differs between the app and the approved copy whenever a screen or the theme changes",
+      "kind": "edge",
+      "path": "src/forge/ui_checks.py",
+      "line": 76,
+      "text": "Not done: The final check reports each theme value that differs between the app and the approved copy whenever a screen or the theme changes",
+      "from": "review",
+      "item": "FORGE-THEME-1/CHECK",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

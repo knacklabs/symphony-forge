@@ -1,0 +1,48 @@
+{
+  "items": [
+    {
+      "key": "bug\t.forge/review-tests.py\tNot done: A pull request whose branch has merged the default branch in runs the normal test groups, not one.\tbug-1522-the-one-group-run-widens-its-te",
+      "kind": "bug",
+      "path": ".forge/review-tests.py",
+      "line": 173,
+      "text": "Not done: A pull request whose branch has merged the default branch in runs the normal test groups, not one.",
+      "from": "blocking",
+      "item": "bug-1522-the-one-group-run-widens-its-te",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\t.forge/review-tests.py\tRun one group for test-only pull requests without a branch merge\tbug-1522-the-one-group-run-widens-its-te",
+      "kind": "bug",
+      "path": ".forge/review-tests.py",
+      "line": 170,
+      "text": "Run one group for test-only pull requests without a branch merge",
+      "from": "blocking",
+      "item": "bug-1522-the-one-group-run-widens-its-te",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_test_only_pull_requests_select_changed_files.py\tGate: proof list\tbug-1522-the-one-group-run-widens-its-te",
+      "kind": "bug",
+      "path": "tests/test_test_only_pull_requests_select_changed_files.py",
+      "line": 114,
+      "text": "Gate: proof list",
+      "from": "blocking",
+      "item": "bug-1522-the-one-group-run-widens-its-te",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_test_only_pull_requests_select_changed_files.py\tGate: test_2_branch_with_merged_default_branch_runs_normal_groups\tbug-1522-the-one-group-run-widens-its-te",
+      "kind": "bug",
+      "path": "tests/test_test_only_pull_requests_select_changed_files.py",
+      "line": 148,
+      "text": "Gate: test_2_branch_with_merged_default_branch_runs_normal_groups",
+      "from": "blocking",
+      "item": "bug-1522-the-one-group-run-widens-its-te",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

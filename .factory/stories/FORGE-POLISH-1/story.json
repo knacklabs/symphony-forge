@@ -1,0 +1,33 @@
+{
+  "approval": {
+    "at": "2026-11-10T18:27:28.676260+00:00",
+    "by": "human-via-Claude",
+    "event": "toolu_01P1KLjytMkthTjjUwKR9KvQ",
+    "hash": "c2713467e7a6db203fcee7f27ea5e9d6d8022119d80a06648fb5f385fc409ed1",
+    "round": 2,
+    "runtime": "claude",
+    "session": "c01a489d-c76f-41c1-8371-d6f0052b027c"
+  },
+  "doc": "plans/FORGE-POLISH-1.md",
+  "status": "approved",
+  "steps": [
+    {
+      "at": "2026-11-10T17:11:28.682270+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-10T17:49:41.648437+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-11-10T18:02:07.424100+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-11-10T18:27:28.676634+00:00",
+      "step": "approved"
+    }
+  ],
+  "title": "Client apps look finished without design instructions",
+  "touches": 1
+}

@@ -1,0 +1,135 @@
+{
+  "base": "040846c6c5c32d79acd3d39aff01d16c7fc03832",
+  "branch": "task/FORGE-RENDER-1-WORDS",
+  "known": [
+    {
+      "area": "src/forge/templates/brief.md",
+      "file": "src/forge/templates/brief.md",
+      "gain": 3,
+      "harm": 3,
+      "line": 582,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Honor a recorded yes for the phone view",
+      "work": 1
+    },
+    {
+      "area": "src/forge/templates/brief.md",
+      "file": "src/forge/templates/brief.md",
+      "gain": 4,
+      "harm": 3,
+      "line": 582,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Include rendered checks in the tests selected for close",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/review.md",
+      "file": "src/forge/templates/review.md",
+      "gain": 3,
+      "harm": 3,
+      "line": 337,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: A new client repo gets the check, the question about the phone view and the review rule when it starts.",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/brief.md",
+      "file": "src/forge/templates/brief.md",
+      "gain": 4,
+      "harm": 3,
+      "line": 578,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: A sample-data prototype runs no rendered check before sign-off. The check starts with its first tests.",
+      "work": 2
+    },
+    {
+      "area": "test_4_new_and_existing_repos_get_the_rendered_check_and_the_phone_question() in tests/test_render_words.py",
+      "file": "tests/test_render_words.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 60,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: tests/test_render_words.py::test_4_new_and_existing_repos_get_the_rendered_check_and_the_phone_question",
+      "work": 2
+    },
+    {
+      "area": "test_5_a_sample_data_prototype_runs_no_rendered_check_before_signoff() in tests/test_render_words.py",
+      "file": "tests/test_render_words.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 91,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: tests/test_render_words.py::test_5_a_sample_data_prototype_runs_no_rendered_check_before_signoff",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "0ad907749369d8430f98c6eaffb2678f16cb65ad1c8a8ad1b380153052af45fa",
+    "changed": "9e61f0e23075ddb9017548b7aeb4dbb8f22c1b236d8c00fb262f9dc3406c829c",
+    "commit": "afde235aeed3d460f26fde55e4450d94f7dc9bce",
+    "dismissals": [],
+    "findings": [],
+    "id": "258c5d1c-a563-4f98-87dd-131fcc4b4230",
+    "status": "clean"
+  },
+  "round": 5,
+  "stacked_on": "FORGE-THEME-1/DESIGN",
+  "status": "fixing",
+  "steps": [
+    {
+      "at": "2026-11-11T01:17:05.874438+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-11T01:36:41.570687+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-11T01:58:17.793822+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-11T02:05:11.061332+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-11T03:54:47.283558+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-11T01:58:17.794063+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "tests/test_render_words.py",
+    "reason": "Owner asleep; overnight rule: take the recommended option. One finding left, about one test; one more round to repair it, simpler: exercise the true-to-false sample-data change inside the first-tests fix. Owner is told on return.",
+    "wait_id": "531b79b2-368b-4d8a-898a-2513c8599f4b",
+    "worker_round": 2
+  },
+  "stuck": {
+    "close": "3c1f1934-737f-4974-a90c-fc6693003b37",
+    "head": "0ae51ab66202d918d42e514a89c715d7ad25b72f",
+    "keys": {},
+    "round": 4
+  },
+  "worker": "claude"
+}

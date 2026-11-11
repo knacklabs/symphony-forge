@@ -1,0 +1,139 @@
+{
+  "branch": "task/FORGE-PRODGAP-1-LIST",
+  "known": [
+    {
+      "area": "_light_parts() in src/forge/gaps.py",
+      "file": "src/forge/gaps.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 70,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Each line goes away when its fact changes: the labels are gone, or later changes name the parts.",
+      "work": 2
+    },
+    {
+      "area": "src/forge/gaps.py",
+      "file": "src/forge/gaps.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 15,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: The list names the files that carry the \"Demo only\" label and the parts that were built with only the light review.",
+      "work": 1
+    },
+    {
+      "area": "fix() in tests/test_prodgap_list.py",
+      "file": "tests/test_prodgap_list.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 132,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: tests/test_prodgap_list.py::test_5_light_reviewed_parts_show_and_clear_when_named",
+      "work": 2
+    },
+    {
+      "area": "test_3_open_gaps_show_together_and_stay_while_work_runs() in tests/test_prodgap_list.py",
+      "file": "tests/test_prodgap_list.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 162,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: tests/test_prodgap_list.py::test_3_open_gaps_show_together_and_stay_while_work_runs",
+      "work": 1
+    },
+    {
+      "area": "test_2_demo_only_labels_show_and_clear() in tests/test_prodgap_list.py",
+      "file": "tests/test_prodgap_list.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 146,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: tests/test_prodgap_list.py::test_2_demo_only_labels_show_and_clear",
+      "work": 1
+    },
+    {
+      "area": "test_5_light_reviewed_parts_show_and_clear_when_named() in tests/test_prodgap_list.py",
+      "file": "tests/test_prodgap_list.py",
+      "gain": 2,
+      "harm": 1,
+      "line": 203,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Follow-up: Exercise the board and completed story on their own fetch",
+      "work": 1
+    },
+    {
+      "area": "tree_names() in src/forge/repo.py",
+      "file": "src/forge/repo.py",
+      "gain": 5,
+      "harm": 4,
+      "line": 756,
+      "outcome": "fixed in round 4",
+      "reason": "",
+      "round": 3,
+      "security": true,
+      "title": "Security: Refresh cached sign-off files before checking merge permission",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "746bc925b3664bf76f22da54eeefa94c3911d703ac3f49d07b121f40aabd2b0b",
+    "changed": "72c4d54f8526d8728781a702ce16c042bd2e8b6ab9eee43eb8f8c19268d3fddc",
+    "commit": "e0500f297c8ace158ba891cd416eee72826de747",
+    "dismissals": [],
+    "findings": [],
+    "id": "c8373ac7-936c-4a66-a081-338516809727",
+    "status": "clean"
+  },
+  "round": 4,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-10T20:08:52.572713+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-10T20:29:50.578361+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-10T20:36:23.721690+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-10T22:28:16.778817+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-10T22:36:53.300340+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "da423410-645f-4dcc-b74a-67a262ad8588",
+    "head": "76b9c664a8ea64a1243e4082d7dec54d7a48098d",
+    "keys": {
+      "the open P0 security: refresh cached sign-off files before checking merge permission in src/forge/repo.py": 1
+    },
+    "round": 3
+  },
+  "worker": "claude"
+}

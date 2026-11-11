@@ -77,7 +77,7 @@ approved design folder. Other design folders are context only.
 <!-- design-theme -->
 Check that the worker follows this instruction:
 Apply DESIGN.md's theme tokens, type and colours to the app's theme file$theme_file.
-Report as P1 a starter app that still has the starter's neutral tokens when DESIGN.md sets others.
+Report as P1 a screen built in an app that still has the untouched starter theme (the starter's neutral tokens) when DESIGN.md sets others or `docs/design/tokens.json` does not exist. A theme that is already custom is not reported. `docs/design/tokens.json`, when it exists, is the approved theme.
 
 <!-- functional-check -->
 ## Functional check
@@ -334,6 +334,11 @@ fixed guard rules on changed screens. Report a changed screen that breaks the ba
 where code checks cannot see it as P1 `Gate: UI standards`: a select for a long list,
 a title repeated on the rendered page, or several primary buttons.
 
+In an app with Playwright browser tests, report a screen this change adds or changes that is not on the
+render list (`checkScreen` in the browser tests) as P1 `Gate: rendered check`. Report a `waive` with no
+real reason the same way. An app with no browser tests, and a sample-data prototype before sign-off,
+have no render list and no finding.
+
 In an app with shadcn/ui set up (a `components.json`), report a new UI component that hand-builds what a shadcn/ui component or block already does as a P1 finding titled `shadcn: <the component>`, unless a `Not shadcn: <why>` comment at the component says why shadcn/ui cannot do it. A composite built from shadcn/ui components is not a finding, and neither is a library or component the default branch already has.
 
 <!-- screens -->
@@ -389,6 +394,12 @@ routine app-screen motion under 300 ms; reserve longer timing for one authored l
 keep content visible by default and enter with `@starting-style` or transitions, never wait for a
 script to reveal it; share `cubic-bezier(0.23, 1, 0.32, 1)` as the one ease-out token; use CSS or
 the Web Animations API first and Motion only when a Done-when item needs springs or drag.
+Report as findings: a button-like part or element, in a screen or a shared part, with no pressed
+state anywhere (the `link` variant is exempt; read the style sheets too, because an `:active` style may
+sit there); a new animation, a transition that moves something, or a script animation that ignores
+reduced motion; a hand-built loading, empty or error block on a screen in an app that has the shared
+state parts; and motion that does not use the shared curve and speeds. Close already refuses
+`transition-all`, so do not report it.
 App screens and prototypes use impeccable's Operate mode and Emil's restraint. Popovers scale from their trigger with
 shadcn/Radix's transform-origin variable. Do not animate keyboard-driven or very frequent actions.
 Motion that follows these rules is not a `Simpler:` finding.
