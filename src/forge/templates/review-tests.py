@@ -25,11 +25,7 @@ def test_files(top: Path, base: str, excludes: list[str], *, head: str = "HEAD")
                             "--no-renames", f"{base}...{head}", "--", ".", *excludes],
                            cwd=top, check=True, capture_output=True, text=True).stdout
     changed = list(filter(None, paths.split("\0")))
-    # A merged-in default branch makes `forge test --change` widen to everything it brought.
-    merged = subprocess.run([shutil.which("git") or "git", "rev-list", "--merges",
-                             f"{base}..{head}"], cwd=top, check=True,
-                            capture_output=True, text=True).stdout.strip()
-    if merged or not changed or any(not (Path(name).name.startswith("test_") or name.endswith("_test.py"))
+    if not changed or any(not (Path(name).name.startswith("test_") or name.endswith("_test.py"))
                           or not name.endswith(".py") or not (top / name).is_file()
                           for name in changed):
         return False, []
@@ -104,12 +100,18 @@ records_only = "--records-only" in sys.argv[1:]
 try:
     # Sync copies close's classifier and supplies its Git path exclusions.
     if not records_only and os.environ.get("BASE_SHA") and os.environ.get("DOCS_ONLY_EXCLUDES"):
+        # `forge test --change` widens to what a merged-in default branch brought, which one
+        # group cannot finish. Ask about the pull request's own branch, not Actions' merge result.
+        merged = run("git", "rev-list", "--merges",
+                     f"{os.environ['BASE_SHA']}..{os.environ['HEAD_SHA']}")
         tests_only, platform_files = test_files(Path.cwd(), os.environ["BASE_SHA"],
                                                 json.loads(os.environ["DOCS_ONLY_EXCLUDES"]))
         docs_only = only_docs(Path.cwd(), os.environ["BASE_SHA"],
                               json.loads(os.environ["DOCS_ONLY_EXCLUDES"]), allow_required=True)
         if docs_only and required_tests(Path.cwd()):
             docs_only, tests_only = False, True
+        if merged:
+            tests_only, platform_files = False, []
     if records_only:
         passed = os.environ.get("GITHUB_EVENT_NAME") in {"push", "pull_request"} and reuse()
     else:
