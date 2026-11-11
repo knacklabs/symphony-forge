@@ -1,0 +1,116 @@
+{
+  "branch": "task/FORGE-THEME-1-CHECK",
+  "known": [
+    {
+      "area": "theme() in src/forge/ui_checks.py",
+      "file": "src/forge/ui_checks.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 68,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Compare the committed theme and copy during close",
+      "work": 2
+    },
+    {
+      "area": "theme() in src/forge/ui_checks.py",
+      "file": "src/forge/ui_checks.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 76,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: The final check reports each theme value that differs between the app and the approved copy whenever a screen or the theme changes",
+      "work": 2
+    },
+    {
+      "area": "theme() in src/forge/ui_checks.py",
+      "file": "src/forge/ui_checks.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 72,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Preserve declarations in theme rules with nested CSS",
+      "work": 2
+    },
+    {
+      "area": "theme() in src/forge/ui_checks.py",
+      "file": "src/forge/ui_checks.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 81,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Accept the documented waiver for shared theme values",
+      "work": 2
+    },
+    {
+      "area": "test_3_close_reports_a_theme_that_differs_from_the_approved_copy() in tests/test_theme_check.py",
+      "file": "tests/test_theme_check.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 75,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_3_close_reports_a_theme_that_differs_from_the_approved_copy",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "0335d823423f75f5ce9afe88cfab90763408a77376f8ad42e7d99b8c79f52d51",
+    "changed": "3497f0ae608501b118cd96e13d11cea06cb18e762916884c0874e4489231b4e7",
+    "commit": "9e6865a6269ae4a086cfd444bbbc11297c079c46",
+    "dismissals": [],
+    "findings": [],
+    "id": "aed3ff3a-78ec-435e-94b0-31665f0c5cc6",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-11T03:41:43.481012+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-11T03:57:42.324620+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-11T04:12:13.386809+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-11T04:27:13.518566+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-11T04:12:13.387044+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "tests/test_theme_check.py",
+    "reason": "Owner chose one more round on 11 Nov 2026: add the test case for a change to the app's theme file only",
+    "wait_id": "09bd0784-fa7b-4607-8ce8-d505e2fb2050",
+    "worker_round": 2
+  },
+  "stuck": {
+    "close": "8b6e3a0d-d6b7-4224-b937-f1df701d4d87",
+    "head": "92266efb652f12fcf216a4e32d8e626cb9a99a86",
+    "keys": {},
+    "round": 2
+  },
+  "worker": "claude"
+}
