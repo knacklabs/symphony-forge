@@ -1,0 +1,15 @@
+{
+  "base": "eab58b3676963906109f39612ac17a2f05cef75c",
+  "branch": "fix/bug-1524-on-a-self-hosted-or-new-each-jo",
+  "done_when": "On a runner without gh, the nightly full-test result step sets up Python, posts the forge-full-suite status with Python's standard library, reads the token from the environment, and passes or fails to match the full run.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-11T09:39:13.453844+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Bug 1524. On a self-hosted or new-each-job runner without the GitHub command-line tool (gh), the nightly full-test result step fails, so the full-suite status is never posted."
+}
