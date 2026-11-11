@@ -40,54 +40,91 @@
       "security": false,
       "title": "Gate: test_4_the_guide_turns_remove_this_feature_into_the_path",
       "work": 2
+    },
+    {
+      "area": "src/forge/templates/brief.md",
+      "file": "src/forge/templates/brief.md",
+      "gain": 4,
+      "harm": 3,
+      "line": 571,
+      "outcome": "open",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Distinguish retained schema entries from removed API calls",
+      "work": 1
+    },
+    {
+      "area": "src/forge/templates/brief.md",
+      "file": "src/forge/templates/brief.md",
+      "gain": 2,
+      "harm": 2,
+      "line": 551,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Follow-up: Deliver the non-starter fallback to workers",
+      "work": 1
+    },
+    {
+      "area": "src/forge/templates/skill.md",
+      "file": "src/forge/templates/skill.md",
+      "gain": 2,
+      "harm": 2,
+      "line": 806,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Follow-up: Reconcile removal testing with sample mode",
+      "work": 1
     }
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "10a7d604cec2138091178bbd0497b6ec40efebc75b745875530e3f8affe5dc87",
-    "changed": "4b483c14524058e52d4806f93a9f9f0dd90041fd3244736284876046a5e8e89d",
-    "commit": "d9654bfbeabf294c163d016e86ef2a8dc307e449",
+    "branch_diff": "aff7d3f214c7280ba3cf1dd3cb4289cf6e36d557022a9f67d44c1a9cab4750b8",
+    "changed": "7acb0cf2bf74f71573ebcadff4b357e7b3a2539c0bd5d4843bc23479cbd01f94",
+    "commit": "4a0ed24642b6d382565a55145773bf8f6faf42ca",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 5, Work 2, Harm 3\nRaise: Not done\nCase: normal use - a worker removes a feature from either starter.\nThe brief points the worker to the fixed list in the Forge skill, but `src/forge/worker.py:61` injects an instruction telling workers not to read that skill. The brief itself contains neither starter list, so the worker cannot follow both instructions or obtain the prescribed removal steps. Include the lists in the worker brief or explicitly make them available to the worker, and check the delivered instructions in the test.",
+        "body": "Gain 4, Work 1, Harm 3\nRaise: Functional\nCase: normal use - removing the built-in projects feature from a Python starter.\nThe new list tells the worker to keep the feature's lines in test_module_schemas.py, but that file also calls the projects API at src/forge/templates/starter-python/apps/api/tests/test_module_schemas.py:42 and :48. The checker matches those calls under src/forge/feature_remove.py:93, so keeping them prevents the required all-clear. This is a conflict in the newly delivered list: src/forge/worker.py:61 also tells the worker not to read the coordinator guide, where the database-test exception appears. Specify that the schema inventory stays while the removed API calls must change.",
         "file": "src/forge/templates/brief.md",
-        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
-        "gain": 5,
-        "harm": 3,
-        "line": 552,
-        "priority": "P1",
-        "title": "Not done: The guide and the worker brief give the fixed list for each starter",
-        "work": 2
-      },
-      {
-        "body": "Gain 4, Work 1, Harm 4\nRaise: Not done\nCase: normal use - a coordinator plans removal of a feature with customer records.\nThe skill's data rule says to keep the table and write no drop migration, but it does not state that every row and the feature's existing change history must remain. The worker brief contains that fuller rule; the coordinator's removal guide needs it too. Keeping a table alone does not express the required preservation of its contents and separate history.",
-        "file": "src/forge/templates/skill.md",
-        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
         "gain": 4,
-        "harm": 4,
-        "line": 808,
+        "harm": 3,
+        "line": 571,
         "priority": "P1",
-        "title": "Not done: The guide and the worker brief give the fixed list for each starter, the data rule",
+        "title": "Distinguish retained schema entries from removed API calls",
         "work": 1
       },
       {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Test\nCase: normal use - an earlier-adopted starter upgrades and syncs.\nThe earlier-adopted case rewrites and commits the version pin before calling only `forge sync`; it never exercises `forge upgrade`. Consequently it would still pass if the upgrade changed application files. Its sync assertion also accepts every path under `docs/`, including client product documents that are not synced files. Exercise the upgrade path and verify that only the intended synced files change.",
-        "file": "tests/test_feature_remove.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 556,
-        "priority": "P1",
-        "title": "Gate: test_4_the_guide_turns_remove_this_feature_into_the_path",
-        "work": 2
+        "body": "Gain 2, Work 1, Harm 2\nWhen an existing non-starter app removes a feature through a fix whose Done line simply says the feature is removed, this brief gives no instruction to search for its name or run the app's build and tests. The coordinator guide has that fallback, but src/forge/worker.py:61 forbids the worker from reading it, and the starter-only paragraph does not tell the worker to run the command that would print the refusal guidance. Include the non-starter path in the delivered worker instructions.",
+        "file": "src/forge/templates/brief.md",
+        "gain": 2,
+        "harm": 2,
+        "line": 551,
+        "priority": "P2",
+        "title": "Follow-up: Deliver the non-starter fallback to workers",
+        "work": 1
+      },
+      {
+        "body": "Gain 2, Work 1, Harm 2\nFor a no-backend prototype with sample_data = true, the new non-starter guidance says to run the app's tests, while src/forge/worker.py:46-49 explicitly tells its worker not to add or run automated tests. The same conflict appears in the general removal steps at line 774. The removal flow needs an applicable proof instruction for sample mode so the agent is not given incompatible directions.",
+        "file": "src/forge/templates/skill.md",
+        "gain": 2,
+        "harm": 2,
+        "line": 806,
+        "priority": "P2",
+        "title": "Follow-up: Reconcile removal testing with sample mode",
+        "work": 1
       }
     ],
-    "id": "538b1e47-9485-414c-8f91-8d92f99d9647",
+    "id": "186e2f0b-e7ed-4f9a-ba56-ac4ae5144d51",
     "status": "blocked"
   },
   "round": 2,
   "stacked_on": "FORGE-GENFILE-1/NOTE",
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-11T18:55:30.794072+00:00",
@@ -96,8 +133,17 @@
     {
       "at": "2026-11-11T19:08:02.726507+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-11-11T19:29:27.555720+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-11-11T19:29:27.555955+00:00",
+    "file": "src/forge/templates/brief.md",
+    "wait_id": "001d4ffe-4c48-4ee4-9aea-798d61c786fa"
+  },
   "stuck": {
     "close": "9fe742cc-1cbb-4e5e-b628-818a4ff0549d",
     "head": "d6bc386f0474f0ebbba15827a5ea2089f81030c6",
