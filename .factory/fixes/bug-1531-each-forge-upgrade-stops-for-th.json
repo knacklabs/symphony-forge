@@ -24,7 +24,7 @@
       "gain": 4,
       "harm": 3,
       "line": 62,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 1,
       "security": false,
@@ -64,27 +64,16 @@
   },
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "f4be5598efa491de2fa4abdb70c65539b1edd75b4441f1efb72d90ee9ce25604",
-    "changed": "9a4febee88168e9a387ff9323aa6acfc7fad0453160b7988cdf22bc049ab714c",
-    "commit": "ad5ca0bb322e47f5508d330ecc1370b5c24d5673",
+    "branch_diff": "a1e0e46476d72e36f5eea71a54a3052e26b767b1a43f3a546326b806b18898ac",
+    "changed": "6ac6cd66400c59af173789ad1163b83400b581091b660adcff9cba2d9e195dd7",
+    "commit": "d96338010c6351e8a3d4cf6a79a382f7ce1e910e",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - an upgrade from an adopted v1.2.2 repo adds an impeccable launcher, and an extra edit removes its executable bit before a subsequent close.\nThis check accepts mode 100644 for a newly added launcher because its base mode is 000000. The adopted fixture has no impeccable launcher, while sync adds one for each host and sets its mode to 755 on POSIX (`src/forge/design_skills.py:12`, `src/forge/sync.py:164`). The content comparison and the earlier sync check do not detect a mode-only change, so close skips model review and can publish a launcher that cannot run.",
-        "file": "src/forge/review_skip.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 64,
-        "priority": "P1",
-        "title": "Functional: Review extra TOML edits and synced-file mode changes",
-        "work": 2
-      }
-    ],
-    "id": "f9d225a5-990e-489e-9f92-55901e71b0ed",
-    "status": "blocked"
+    "findings": [],
+    "id": "adcc3043-44c3-4490-a685-130fc88dbd0a",
+    "status": "clean"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-11T08:07:26.887337+00:00",
@@ -96,6 +85,10 @@
     },
     {
       "at": "2026-11-11T09:11:52.918424+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-11T09:32:45.004459+00:00",
       "step": "review"
     }
   ],
