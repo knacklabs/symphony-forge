@@ -1,11 +1,97 @@
 {
   "branch": "task/FORGE-PROSPECT-1-RESEARCH",
+  "known": [
+    {
+      "area": "src/forge/templates/skill.md",
+      "file": "src/forge/templates/skill.md",
+      "gain": 3,
+      "harm": 3,
+      "line": 698,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: functional check",
+      "work": 2
+    },
+    {
+      "area": "test_1_the_agent_researches_the_prospect_in_one_bounded_pass() in tests/test_prospect_research.py",
+      "file": "tests/test_prospect_research.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 64,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: tests/test_prospect_research.py::test_1_the_agent_researches_the_prospect_in_one_bounded_pass",
+      "work": 2
+    },
+    {
+      "area": "test_2_the_salesperson_chooses_one_prototype_before_any_build() in tests/test_prospect_research.py",
+      "file": "tests/test_prospect_research.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 98,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: tests/test_prospect_research.py::test_2_the_salesperson_chooses_one_prototype_before_any_build",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "cdc45aa50605090aedddaf52469a86b4b8cf5f084753376bff5fbf7e0c06d1d7",
+    "changed": "db2a86cd11e47cc550f2147e22a6a4c14c57262ed903e70da0f87d249daaebcf",
+    "commit": "63e32adebe957d4d0832ef966d5689261b1a8a94",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Gate. The recorded functional check says the worker read the marks list and dated headings, but it does not report choosing a prototype, saving its task in the brief, or checking that a second pass or choice preserves the earlier page. Init and sync exercise guide delivery, but they do not walk those Sales interactions.\nCase: normal use - a salesperson chooses a prototype and later changes the choice. The recorded check does not show what was saved or whether the earlier choice remained.",
+        "file": "src/forge/templates/skill.md",
+        "gain": 3,
+        "harm": 3,
+        "line": 698,
+        "priority": "P1",
+        "title": "Gate: functional check",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Test. The named proof checks the three numeric phrases and `one agent` independently; it does not check that there is one pass or that searches and page reads are reserved for similar companies. A guide retaining the numbers as examples while allowing the prospect to consume the full budget would pass. Also, line 81 skips the first finding in the outline because the flattened text starts with `- ` rather than ` - `, so that example can lose its link without this test failing.\nCase: normal use - a prospect has little public information and the research budget is exhausted before the similar-company study.",
+        "file": "tests/test_prospect_research.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 64,
+        "priority": "P1",
+        "title": "Gate: tests/test_prospect_research.py::test_1_the_agent_researches_the_prospect_in_one_bounded_pass",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Test. The proof checks for the demo-workflow example but not the instruction to write it in the product brief. Changing the guide to put that line only on the research page would leave the assertion passing. It also does not check that the full chosen prototype comes from the selected option with the salesperson's changes applied.\nCase: normal use - the salesperson selects an alternative or changes the proposal, but the saved demo task does not reflect that choice; the named proof would not catch the regression.",
+        "file": "tests/test_prospect_research.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 98,
+        "priority": "P1",
+        "title": "Gate: tests/test_prospect_research.py::test_2_the_salesperson_chooses_one_prototype_before_any_build",
+        "work": 2
+      }
+    ],
+    "id": "f6849d2c-93f9-4f73-bde5-189257d500af",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-11T06:10:18.049973+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-11T06:36:12.964929+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
