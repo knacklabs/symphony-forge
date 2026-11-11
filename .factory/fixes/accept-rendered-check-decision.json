@@ -1,0 +1,15 @@
+{
+  "base": "2ea3377dcfab775d41096f7d9f4f7f561f792e1f",
+  "branch": "fix/accept-rendered-check-decision",
+  "done_when": "The decision record for rendered checks in the client's browser tests is marked accepted with the owner's name",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-11T06:15:33.778981+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The owner accepted the decision record for rendered checks on 11 Nov 2026; the record still says proposed"
+}
