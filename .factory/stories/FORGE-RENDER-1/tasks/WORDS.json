@@ -73,7 +73,7 @@
       "gain": 3,
       "harm": 3,
       "line": 91,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 1,
       "security": false,
@@ -83,28 +83,17 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "9f12d5e893cd335853b1a04414fd48cb481c43d7f3863ea09984313fe57870af",
-    "changed": "cf4abbb6ba26131d9965bb2ffdf5331f988dfd58da4b402897f9b5130a083001",
-    "commit": "ed84e71f596b7aebbba316c158fdb6dacc2fba42",
+    "branch_diff": "88e76a60ea5f76a00174e2ac5d01c89a1686805a767b70a442f4631c2eda23d9",
+    "changed": "f0d5befbbd5d15baefac5804ce310600362101f058ca0d70915527a0ff0d6f90",
+    "commit": "b64b0b8ecaed39c461367a00c87e7338e55f9aa2",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - a signed-off sample-data prototype adds its first browser tests. The test's Python command scans a hand-written spec for the text `checkScreen` and writes a marker; it never runs Playwright or the helper, so it passes even if no rendered check runs. It also turns `sample_data` off on main before starting the first-tests fix, so it cannot detect a close that skips tests on the actual true-to-false transition. Exercise that transition with an executable rendered check.",
-        "file": "tests/test_render_words.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 137,
-        "priority": "P1",
-        "title": "Gate: tests/test_render_words.py::test_5_a_sample_data_prototype_runs_no_rendered_check_before_signoff",
-        "work": 2
-      }
-    ],
-    "id": "eebfdba1-681d-4feb-87d6-996fa1d11b1b",
-    "status": "blocked"
+    "findings": [],
+    "id": "1856f834-615b-4ccc-9a12-9a1bb35d5ea6",
+    "status": "clean"
   },
   "round": 3,
   "stacked_on": "FORGE-THEME-1/DESIGN",
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-11T01:17:05.874438+00:00",
@@ -116,6 +105,10 @@
     },
     {
       "at": "2026-11-11T01:58:17.793822+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-11T02:05:11.061332+00:00",
       "step": "review"
     }
   ],
