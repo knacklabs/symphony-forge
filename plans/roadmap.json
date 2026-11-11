@@ -624,6 +624,12 @@
       "title": "Research the prospect before a prototype and propose features from what is found",
       "status": "pending",
       "order": 119
+    },
+    {
+      "key": "FORGE-SLOWTEST-1",
+      "title": "Faster tests for repos with one combined test command",
+      "status": "pending",
+      "order": 120
     }
   ],
   "epics": [
