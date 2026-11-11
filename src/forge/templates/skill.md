@@ -965,7 +965,9 @@ accepted is never copied into the app or into `docs/design/tokens.json`. In an e
 with it and stops on a difference whenever a screen or the theme changes. A waiver is one comment
 in the theme file that names the token and the theme:
 `/* forge-ui-ignore theme-drift --<token> (light|dark): <reason> */`. The review reports a screen
-built on the untouched starter theme when `docs/design/tokens.json` does not exist.
+built on the untouched starter theme when `docs/design/tokens.json` does not exist. A value with no light or dark form (corner size, spacing, shadow, font, text size) can be set aside with or without a theme name in the comment.
+
+Motion. Close refuses a changed UI file that animates all properties (`transition-all`, `transition: all` or `transition-property: all`), including a shadcn copy under `components/ui/`. It names `file:line motion-all`. List the properties instead, or set it aside with `forge-ui-ignore motion-all: <reason>`. Review reports a button-like part with no pressed state (the `link` variant is exempt), a new animation that ignores reduced motion, a hand-built loading, empty or error block in an app that has the shared state parts, and motion that skips the shared curve and speeds. For an app made before this release, apply the "In an app set up before this release" part of the frontend convention when `motion-all` reports a problem or the person asks, in a normal change.
 
 Fonts. The starter loads no font: a font name alone does not load, so a copied font name needs a
 source. If the system holds the font as a file in its `fonts/` folder, copy the file to

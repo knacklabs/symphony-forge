@@ -7,11 +7,12 @@ async function check(files) {
   // The canvas renderer can also pass a few file names as arguments.
   if (!files.length) files = JSON.parse(fs.readFileSync(0, 'utf8') || '[]');
   const slash = file => file.replaceAll('\\', '/');
-  const excluded = file => /(?:^|\/)components\/ui\//.test(slash(file)) ||
-    /(?:^|\/)(?:__tests__|tests?)\//.test(slash(file)) ||
+  const tests = file => /(?:^|\/)(?:__tests__|tests?)\//.test(slash(file)) ||
     /\.(?:test|spec)\.[^/]+$/.test(file);
+  // Shadcn copies are skipped by every rule except motion-all.
+  const excluded = file => /(?:^|\/)components\/ui\//.test(slash(file)) || tests(file);
   files = [...new Set(files.filter(file => /\.(tsx|jsx|html|css|vue|svelte)$/i.test(file) &&
-    !excluded(file) && fs.existsSync(file)))];
+    !tests(file) && fs.existsSync(file)))];
   const problems = [];
   if (!files.length) return { problems };
   const comment = (file, text) => /\.html$/i.test(file) ? `<!-- ${text} -->` :
@@ -32,6 +33,17 @@ async function check(files) {
       if (!waived.has(rule)) problems.push(`${slash(file)}:${line(text, index)} ${rule}: ${message}\n` +
         `  ${comment(file, `forge-ui-ignore ${rule}: <reason>`)}`);
     };
+    // Only motion-all also reads a // at the end of a code line. A // after a colon (a URL) or
+    // inside a quoted string is not a comment, and only the text after it is set aside.
+    let motion = text;
+    if (!/\.(html|css)$/i.test(file)) motion = text.replace(/(["'`])(?:\\.|(?!\1)[^\\\n])*\1|(?<!:)\/\/[^\n]*/g, match => {
+      if (!match.startsWith('//')) return match;
+      if (/^forge-ui-ignore\s+motion-all:\s*\S/.test(match.slice(2).trim())) waived.add('motion-all');
+      return match.replace(/[^\n]/g, ' ');
+    });
+    for (const match of motion.matchAll(/\btransition-all\b|\btransition(?:-?[pP]roperty)?\s*:\s*['"`]?all(?![\w-])/g))
+      report('motion-all', match.index, 'List the properties that change instead of animating all of them.');
+    if (excluded(file)) continue;
     const spacing = /\b(?:p[xytrbl]?|m[xytrblse]?|gap(?:-[xy])?|space-[xy])-\[-?(?:\d+(?:\.\d+)?|\.\d+)(?:px|r?em|[sld]?v[wh]|vmin|vmax|ch|ex|cm|mm|in|pt|pc|%)?\]/g;
     for (const match of text.matchAll(spacing)) report('spacing-scale', match.index, `Use the spacing scale instead of ${match[0]}.`);
 
@@ -64,6 +76,7 @@ async function check(files) {
     .map(file => path.resolve(file)).find(file => fs.existsSync(file));
   const note = 'The design checker did not run. The other design checks still ran.';
   if (!launcher) return { problems, note };
+  files = files.filter(file => !excluded(file));
   const allowed = new Set(files.map(file => path.resolve(file)));
   for (let offset = 0; offset < files.length; offset += 50) {
     const batch = files.slice(offset, offset + 50).map(file =>
