@@ -221,7 +221,7 @@ def test_1_parts_start_on_reviewed_remote_work(env, previous, plan_source):
     for case in ("not-started", "remote-story", "old-story", "not-reviewed", "changed",
                  "older", "two-bases", "stacked", "stacked-merged",
                  "stacked-merged-proof", "stacked-merged-prose", "stacked-human-merged")
-    for previous in (False, True) if not previous or case == "older"
+    for previous in (False, True) if not previous or case in ("older", "stacked-human-merged")
 ])
 def test_2_unsafe_starts_name_the_blocker_without_creating_work(env, previous, case):
     repo = configured(env, previous)
@@ -279,13 +279,13 @@ def test_2_unsafe_starts_name_the_blocker_without_creating_work(env, previous, c
                     assert len(submitted.encode("utf-8")) <= LIMIT
                     assert submitted.rstrip().endswith("Forge-merged: STACK/A")
             elif case == "stacked-human-merged":
-                # A merge outside Forge has no receipt; B still cannot be a new base.
+                # A merge outside Forge has no receipt; B is a base once it holds the merge.
                 repo.git("merge", "-q", "--squash", "task/STACK-A")
                 repo.git("commit", "-qm", "Merge the first part on GitHub")
                 repo.git("push", "-q", "origin", "main")
             part, command = "D", "forge next"
             problem = "STACK/D waits for STACK/B, which builds on STACK/A, so it starts once STACK/A merges."
-            if case.startswith("stacked-merged"):
+            if case.startswith("stacked-merged") or case == "stacked-human-merged":
                 problem = "STACK/D waits for STACK/B to include the merge of STACK/A from main."
                 command = "forge close STACK/B"
     refuses_without_start(repo, part, problem, command)
@@ -299,10 +299,6 @@ def test_2_unsafe_starts_name_the_blocker_without_creating_work(env, previous, c
         env.open_pr("")
         closed = env.close("STACK/B")
         assert closed.returncode == 0, closed.stdout + closed.stderr
-        if case == "stacked-human-merged":
-            # Ancestry and a new clean review cannot replace Forge provenance.
-            refuses_without_start(repo, part, problem, command)
-            return
         head = repo.git("rev-parse", "origin/task/STACK-B")
         where, _ = start(repo, "D")
         repo.git("merge-base", "--is-ancestor", head, "HEAD", cwd=where)
