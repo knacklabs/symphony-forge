@@ -41,8 +41,8 @@
       "text": "Not done: Pure upgrades with a linked AGENTS.md still reach model review",
       "from": "blocking",
       "item": "bug-1531-each-forge-upgrade-stops-for-th",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/review_skip.py\tNot done: Pure upgrades with npm or pnpm lockfiles still reach model review\tbug-1531-each-forge-upgrade-stops-for-th",
