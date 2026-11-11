@@ -110,7 +110,7 @@
     "id": "d1b856bc-ed82-415b-9af0-57de9e7a4ae6",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -132,10 +132,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": null,
-    "head": "8219025e584d570e940039daa022559b0b4cecd2",
+    "close": "0da766ca-490e-4bf5-9a32-8cc51aa1ba23",
+    "head": "16fc33c8b59a4ad9657067f0e05973b31196f2ad",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "Bug 1522. The one-group run widens its test selection to cover every change merged in from the default branch, which takes longer than the group's 45-minute limit.",
   "worker": "claude"
