@@ -334,6 +334,11 @@ fixed guard rules on changed screens. Report a changed screen that breaks the ba
 where code checks cannot see it as P1 `Gate: UI standards`: a select for a long list,
 a title repeated on the rendered page, or several primary buttons.
 
+In an app with Playwright browser tests, report a screen this change adds or changes that is not on the
+render list (`checkScreen` in the browser tests) as P1 `Gate: rendered check`. Report a `waive` with no
+real reason the same way. An app with no browser tests, and a sample-data prototype before sign-off,
+have no render list and no finding.
+
 In an app with shadcn/ui set up (a `components.json`), report a new UI component that hand-builds what a shadcn/ui component or block already does as a P1 finding titled `shadcn: <the component>`, unless a `Not shadcn: <why>` comment at the component says why shadcn/ui cannot do it. A composite built from shadcn/ui components is not a finding, and neither is a library or component the default branch already has.
 
 <!-- screens -->

@@ -102,6 +102,18 @@ read refuses a failing design folder or one with no DESIGN.md.
 The source checks do not count main headings. Judge headings on the rendered page during
 the canvas and design review.
 
+Close shows what a changed screen looks like. Every client repo gets `.forge/design/render-check.mjs`.
+The agent calls it from the app's own Playwright tests, once for each screen on the render list, and adds
+a screen when it builds or changes it. The check opens each screen in its loaded state, in light and dark,
+at 1440 pixels, and also at 375 pixels when the brief's `Phone view` answer is `desktop and phone`. With
+no answer it uses desktop width only and refuses nothing. It reports sideways overflow, cut text and low
+contrast, each with the screen, width and theme, and reports a page that is not the listed screen. A hash
+counts as part of the screen's address only when the listed address has one. A problem fails the test and
+so stops close; one screen can set one kind aside with a written reason. The check makes no model call.
+It adds about 1 to 3 seconds for each screen; nobody has measured this yet. A prototype with
+`sample_data = true` has no tests before sign-off, so it runs no rendered check then. An app with no
+browser tests keeps today's rules.
+
 Client repos get pinned copies of impeccable and emil-design-eng with their licences at init and sync, with or without a web app; both laptop installers install them too.
 Make each app's design from the whole brief: its purpose, users, records, fields, choice-list
 options and key flows. Run impeccable's init when PRODUCT.md is missing. Use impeccable and

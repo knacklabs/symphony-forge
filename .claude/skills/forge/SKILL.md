@@ -776,6 +776,7 @@ or sign-off, and `not known yet` is an accepted answer.
 | Users and roles | Who uses it, and what can each kind of user do? | admin and staff; other | before sign-off |
 | Existing systems | Which systems must this work with? | none; CRM; accounting; email or SMS; payments; company sign-in | before sign-off |
 | Sign-in | How will people sign in? The client chooses the method. | email and password (default if the client gives no other answer); one-time codes; company sign-in (Google or Microsoft) | before sign-off |
+| Phone view | Does the app need a phone view? | desktop only (default); desktop and phone | before the app's build starts |
 | Personal data | Will it hold personal, health or payment data, or data that must stay in one country? | none; personal only; regulated | before sign-off |
 | Production host | Where will the real app run? | our platform; the client's cloud; the client's servers | before sign-off |
 | Data import | Does data need to come in from today's tools? | no; a spreadsheet; another system | when a story needs it |
@@ -783,6 +784,9 @@ or sign-off, and `not known yet` is an accepted answer.
 | Domain | Which web address? | our subdomain; the client's domain | when a story needs it |
 | Backups and uptime | How much downtime or data loss is acceptable? | the platform's daily backups; stricter | when a story needs it |
 | Log retention | How long must logs be kept? | the platform's default; longer | when a story needs it |
+
+A missing `Phone view` answer means desktop width only and refuses nothing. An existing app has no
+answer yet; ask at the next change to one of its screens.
 
 Ask topics at the suggested time when possible. These are conversation prompts, not gates: a
 missing answer or an open client question never blocks planning, review, ordinary close, merge or
