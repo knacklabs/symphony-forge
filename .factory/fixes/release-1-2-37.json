@@ -27,6 +27,10 @@
       "work": 1
     }
   ],
+  "land": {
+    "rounds": 1,
+    "stop": null
+  },
   "review": {
     "blocking_level": "P1",
     "branch_diff": "98dd9e374f09412edddfbc2fd89ffae9380fb11d3cea2cfe65c374ef437705aa",
@@ -49,7 +53,7 @@
     "id": "65712780-a17b-45e9-94be-7cfef4b147e9",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -62,10 +66,12 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "3f674598967302cc596ee6d6edc1a2e9b9d8822d",
-    "keys": {},
-    "round": null
+    "close": "33402365-6d4a-434d-b22c-502bcfc1523d",
+    "head": "23aa0957fb034e311453bf6b6cb5c50805468446",
+    "keys": {
+      "the open P0 not done: the version is 1.2.37, generated files are synced, this repo is pinned to v1.2.37, and the tests pass in tests/test_release_version.py": 1
+    },
+    "round": 1
   },
   "why": "Release v1.2.37: publish what merged since v1.2.36",
   "worker": "claude"
