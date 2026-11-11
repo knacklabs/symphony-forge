@@ -59,7 +59,7 @@
       "gain": 3,
       "harm": 3,
       "line": 75,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 1,
       "security": false,
@@ -69,27 +69,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "a9771ae3a1e856991af89385b1be0a6b735c07211934e986917335332916b792",
-    "changed": "12b5d046ac4f38581212e99df2524f6ce49c409402900defb1c876c896ea8eaf",
-    "commit": "95066c435fefb1dfe02882ae5c7f46ef4507f8fe",
+    "branch_diff": "0335d823423f75f5ce9afe88cfab90763408a77376f8ad42e7d99b8c79f52d51",
+    "changed": "3497f0ae608501b118cd96e13d11cea06cb18e762916884c0874e4489231b4e7",
+    "commit": "9e6865a6269ae4a086cfd444bbbc11297c079c46",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Test. The drifting app-theme cases still use the branch that also changes a screen. The new independent branch tests a copy-only drift, then restores the copy and changes the CSS without introducing drift. A regression that checks screen or copy changes but skips a drifting app-theme-only change would therefore pass this proof. The branch setup is in tests/test_close.py:216.\nCase: normal use - A worker changes only apps/web/src/index.css to a value that differs from the approved copy. Add a refusal assertion for that change without a screen or copy change.",
-        "file": "tests/test_theme_check.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 148,
-        "priority": "P1",
-        "title": "Gate: test_3_close_reports_a_theme_that_differs_from_the_approved_copy",
-        "work": 2
-      }
-    ],
-    "id": "b9baaf71-0f3d-4441-a718-6bd837f1e8ce",
-    "status": "blocked"
+    "findings": [],
+    "id": "aed3ff3a-78ec-435e-94b0-31665f0c5cc6",
+    "status": "clean"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-11T03:41:43.481012+00:00",
@@ -101,6 +90,10 @@
     },
     {
       "at": "2026-11-11T04:12:13.386809+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-11T04:27:13.518566+00:00",
       "step": "review"
     }
   ],
