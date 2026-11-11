@@ -1,0 +1,15 @@
+{
+  "base": "df97bf7c6d5338589346fb24b6639dbccb3973bd",
+  "branch": "fix/bug-1532-a-self-hosted-runner-without-gh",
+  "done_when": "On a self-hosted runner without gh installed, the Review pull request job sets the pull request status and passes its check.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-11T08:10:41.974838+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Bug 1532. A self-hosted runner without gh fails the Review pull request job, and a repo's own setup step is removed on every forge sync, so the failure comes back."
+}
