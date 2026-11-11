@@ -543,10 +543,15 @@ def can_start(item: str, waiting: list[str], scope: list[str], started: dict[str
         return None, error
 
 
+def _merge_commit(main: str, item: str, top: Path | None = None) -> str:
+    """The default branch commit that brought this item's state, however it was merged."""
+    return git("log", "--first-parent", "--diff-filter=A", "-1", "--format=%H", main,
+               "--", repo.state_path(item), cwd=top)
+
+
 def forge_merged(main: str, item: str, top: Path | None = None) -> str:
     """The default branch commit where Forge merged this item, or an empty string."""
-    commit = git("log", "--first-parent", "--diff-filter=A", "-1", "--format=%H", main,
-                 "--", repo.state_path(item), cwd=top)
+    commit = _merge_commit(main, item, top)
     if commit and f"Forge-merged: {item}" in git("show", "-s", "--format=%B", commit, cwd=top).splitlines():
         return commit
     return ""
@@ -569,7 +574,8 @@ def stack_base(item: str, blockers: list[str], main: str, top: Path | None = Non
             refuse(REFUSALS["base_local"], item=item, base=base)
         refuse(REFUSALS["base_not_started"], item=item, base=base)
     if below := state.get("stacked_on"):
-        merged = forge_merged(main, below, top)
+        # A merge with GitHub's button has no trailer; the base containing that commit is the proof.
+        merged = _merge_commit(main, below, top)
         if not merged:
             refuse(REFUSALS["base_stacked"], item=item, base=base, below=below)
         if run("git", "merge-base", "--is-ancestor", merged, ref, cwd=top).returncode:

@@ -59,6 +59,7 @@ FORGE_COMMAND = re.compile(r'forge"? hook ')
 
 
 LAUNCHER = ".forge/hooks.sh"
+EXECUTABLE = {f"{host}/skills/impeccable/scripts/impeccable" for host in (".claude", ".codex")}
 
 
 def command(hook: str) -> str:
@@ -160,7 +161,7 @@ def write_file(top: Path, rel: str, text: str) -> None:
         repo.refuse(REFUSALS["outside"], path=rel)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_bytes(text.encode("utf-8"))
-    if rel in {f"{host}/skills/impeccable/scripts/impeccable" for host in (".claude", ".codex")}:
+    if rel in EXECUTABLE:
         path.chmod(0o755)
 
 
@@ -475,7 +476,7 @@ def synced(top: Path, cfg: dict[str, Any], base: str, head: str, paths: list[str
     # worktree: no checkout filters, hooks, index changes or module discovery are needed.
     inputs = {"AGENTS.md", "CLAUDE.md", ".claude/settings.json", ".codex/hooks.json",
               ".codex/config.toml", ".gitattributes", ".gitignore", "package.json", ".nvmrc",
-              ".node-version", "pyproject.toml"}
+              ".node-version", "pnpm-lock.yaml", "package-lock.json", "pyproject.toml"}
     hooks = githooks.husky_folder(top)
     if hooks:
         inputs.update((hooks.relative_to(top) / name).as_posix()

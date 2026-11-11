@@ -1050,6 +1050,23 @@ design files for sign-off. A sample-data repo may approve its rules page and sta
 open `Personal data` answer. A repo that never declared sample data keeps today's refusal at rules
 page approval.
 
+After sign-off, read `Before production` in `forge next`. First check what is already in progress,
+so no line is started twice. Leave sample data by the existing step: settle the `Personal data`
+answer, set the test command and checks, then the coordinator turns `sample_data` off. For the
+light-review line and the "Demo only" line, start one normal change with
+`forge start "<your sentence>"`. Take the work from the row's Say text, but write your own sentence.
+Never paste the Say text into a command, because a file name in it can hold shell characters. Use
+only letters, digits, spaces and the signs `. , : _ - /` in your sentence, so the double quotes are
+safe in every shell. Name each part the line lists, so the line clears. Name a file only when its
+name uses just those signs. Describe any other file in words, such as the other files with the Demo
+only label. A change that touches code has the full review, and its tests follow the repo's settings
+once sample data is off. A fix that changes only documentation gets only the light check, even after
+sign-off, and the light-review line does not count it. If a part in that line changed only
+documentation, tell the owner: the owner accepts that line in chat, or the follow-up change includes
+the code that the documentation describes. Do not press or ask for Promote while a line is open,
+unless the owner accepts the rest in chat. Tell the owner plainly that Forge cannot see the release
+or whether the app still shows made-up data, and that it refuses nothing.
+
 For a prototype without the setting, fix held findings from one sign-off review in one fix. Run the
 printed repair command from the sign-off checkout that the refusal names. The repair includes the
 sign-off record and publishes its earlier review commits, even when that checkout's first fix
@@ -1400,6 +1417,9 @@ shares its cache across worktrees, and stays silent when GitHub cannot be reache
 
 An upgrade is one fix. Its pull request carries the new version and every file Forge keeps in the
 repo, rewritten by that version. One command does all of it.
+Close checks the fix that `forge upgrade` made mechanically instead of asking a model when it changes only
+the value of forge.toml's `version` line and files exactly as that version's sync writes them (content and
+mode). Any other change, or an earlier review of that fix that still blocks, gets the normal model review.
 Use `forge upgrade <release>` directly, not `forge fix start`: upgrade creates its own fix.
 `forge next` gives `Next: forge upgrade <release>` when its release check finds a newer release
 than the repo pins. If upgrade refuses outside the default branch, move to the main checkout.

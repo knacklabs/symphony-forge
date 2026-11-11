@@ -17,7 +17,7 @@ reader while available. A native read uses a separate `reader` subagent.
 Install the release a repo pins (uv brings Python 3.11 or later if you don't have it):
 
 ```
-uv tool install git+https://github.com/knacklabs/symphony-forge@v1.2.36
+uv tool install git+https://github.com/knacklabs/symphony-forge@v1.2.37
 ```
 
 `forge --version` prints the installed version. Each repo pins its release in `forge.toml`, and
@@ -169,6 +169,7 @@ set the test command and CI checks as needed, then turn off the setting. In the 
 prototype's screens in the app's browser tests with `checkScreen` from `.forge/design/render-check.mjs`,
 so the rendered check starts with the first tests. Close blocks that fix until
 the `Personal data` answer is settled.
+After sign-off, `forge next` also lists `Before production` gaps. The agent starts one normal change for each light-review and "Demo only" line and does not promote while a line is open. Forge cannot see the release and refuses nothing.
 The design comes first. Before any screen, use the app's existing design. If it has none, draft
 one from the client's brand; use a neutral design when there is no brand. Every
 API a person uses gets its screen in the client's design, built by the agent when it builds the API, with no
@@ -597,9 +598,11 @@ Each job that uses the step skips only its guarded steps.
 New and upgraded repos use `stack = "on"` by default, with no settings change. A part can start
 on one reviewed, unmerged part when its After list or Scope makes it wait for that part.
 The base must use the same Forge release and must start from the default branch.
-A part that builds on another can become a base after Forge merges the lower part and close
-moves it onto that merged code and reviews it again. Set `stack = "off"` to make new parts
-wait for merges. Parts that already started on another part keep their base.
+A part that builds on another can become a base after the lower part merges, through Forge or
+with GitHub's button, and close moves it onto that merged code and reviews it again. Until then,
+`forge next` says the new part waits for the base to include the merge from the default branch:
+run `forge close` on that base. Set `stack = "off"` to make new parts wait for merges.
+Parts that already started on another part keep their base.
 
 ## Merging a ready item
 
