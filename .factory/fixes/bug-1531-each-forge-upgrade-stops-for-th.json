@@ -60,7 +60,15 @@
   ],
   "land": {
     "rounds": 1,
-    "stop": null
+    "stop": {
+      "at": "2026-11-11T09:11:52.918693+00:00",
+      "by": "owner",
+      "choice": "more",
+      "file": "src/forge/review_skip.py",
+      "reason": "Owner chose one more round on 11 Nov 2026: the check must require exactly the file mode that Forge writes",
+      "wait_id": "93f4d5fc-4db5-4daa-a19b-9083af13bf96",
+      "worker_round": 2
+    }
   },
   "review": {
     "blocking_level": "P1",
@@ -72,8 +80,8 @@
     "id": "adcc3043-44c3-4490-a685-130fc88dbd0a",
     "status": "clean"
   },
-  "round": 3,
-  "status": "waiting for checks",
+  "round": 4,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-11T08:07:26.887337+00:00",
@@ -102,10 +110,10 @@
     "worker_round": 2
   },
   "stuck": {
-    "close": "40e6a432-0c83-490a-9781-62ff6ef334d4",
-    "head": "fdde36cfc4804e8f49660797b522da449aa356e6",
+    "close": "2dd2dbf2-f656-49f9-8a79-e40a4497d498",
+    "head": "27d8307a49a281d4f7329b46dd4f19809f5b9f2f",
     "keys": {},
-    "round": 2
+    "round": 3
   },
   "why": "Bug 1531. Each Forge upgrade stops for the person's choice, because the model review of the upgrade fix applies the repo's review rules, a proof-list rule raises a P1, and the one-round limit is reached.",
   "worker": "claude"
