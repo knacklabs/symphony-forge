@@ -175,6 +175,8 @@ def read(args: Any) -> int:
     if choice or reason is not None:
         if not choice or not reason or not reason.strip() or not stopped(record, findings, config["cold_read_rounds"]):
             repo.refuse(REFUSALS["bad_choice"], target=target)
+        if is_story:
+            plan_scope.say(_text(doc), top)
         folder = design.check(top, _text(doc)) if choice == "accept" and is_story else None
         reason = " ".join(reason.split())
         record.update(loop_choice=choice, loop_reason=reason)
@@ -367,6 +369,8 @@ def read_result(top: Path, target: str, result: dict[str, Any], said: str,
         if _snapshot(top) != before:
             repo.refuse(REFUSALS["discarded"], doc=rel, target=target)
         repo.refuse(REFUSALS["reader_failed"], doc=rel, target=target, problem=problem)
+    if is_story:  # advice from this plan's own Scope cells, before any write; it cannot refuse the read
+        plan_scope.say(text.decode("utf-8"), top)
     settled = {" ".join(FINDING.sub("", block.splitlines()[0]).split()).casefold()
                for block in blocks.values() if DISPOSITION.search(block)}
     if settled and FINDING.search(said):

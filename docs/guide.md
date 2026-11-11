@@ -331,6 +331,11 @@ A prototype without the sample-data mark also needs its strict whole-product rev
    do not cause Scope overlaps. Parts can share these test paths without an After link. Explicit
    After links still apply. An in-flight story gets the same check at its next plan check;
    follow the refusal's step to amend the plan.
+   Keep a file that a script can make at build time (a generated API contract or the types made from
+   it) out of the repo and out of every Scope, when nobody needs it stored. When the repo keeps such a
+   file on purpose, give its change to one first part that the other parts wait for. Three or more
+   parts that list the same file make the plan read print a `Shared file:` note. The `Shared file:` note
+   is advice: it does not stop the read or the approval, and it looks only at the plan being read.
 3. `forge read <KEY>` runs an independent cold read. Answer every finding (cut, defer or keep),
    amend the doc, then run `forge read <KEY>` again; the same reader reads the whole doc again,
    and this repeats until a round finds nothing.

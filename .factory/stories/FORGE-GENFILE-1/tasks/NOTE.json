@@ -1,0 +1,139 @@
+{
+  "base": "10472546fd52a0afba0321b5199ff210a876ccb0",
+  "branch": "task/FORGE-GENFILE-1-NOTE",
+  "known": [
+    {
+      "area": "read_result() in src/forge/story.py",
+      "file": "src/forge/story.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 432,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Avoid revalidating other stories when showing the note",
+      "work": 2
+    },
+    {
+      "area": "read_result() in src/forge/story.py",
+      "file": "src/forge/story.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 431,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Disputed keep Plan read note 14: Stopped reads omit the shared-file note",
+      "work": 1
+    },
+    {
+      "area": "start() in tests/test_plan_read_names_shared_files.py",
+      "file": "tests/test_plan_read_names_shared_files.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 41,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_the_plan_read_names_a_file_that_three_parts_share",
+      "work": 2
+    },
+    {
+      "area": "tests/test_plan_read_names_shared_files.py",
+      "file": "tests/test_plan_read_names_shared_files.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 92,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_2_session_read_prints_the_note_when_the_result_is_handed_back",
+      "work": 1
+    },
+    {
+      "area": "shared_files() in src/forge/plan_scope.py",
+      "file": "src/forge/plan_scope.py",
+      "gain": 2,
+      "harm": 2,
+      "line": 37,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Follow-up: Folder scopes without a trailing slash are reported as files",
+      "work": 1
+    },
+    {
+      "area": "say() in src/forge/plan_scope.py",
+      "file": "src/forge/plan_scope.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 51,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 3,
+      "security": false,
+      "title": "Not done: the advice to make a generated file at build time or put its change in one first part",
+      "work": 2
+    },
+    {
+      "area": "say() in src/forge/plan_scope.py",
+      "file": "src/forge/plan_scope.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 47,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 3,
+      "security": false,
+      "title": "Not done: When three or more parts of a plan list the same file in their scope",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "db6eb454f7ea89407f7f082156b2e056bcce76747b3ed29d05f99f473cbe124c",
+    "changed": "c9c6aa628a76d03fbf066878f94639d50baca2a91b630199591b149f3a6c3b53",
+    "commit": "a2d4bfce94d0df2e898fcb6613c1cca29c5bb71b",
+    "dismissals": [],
+    "findings": [],
+    "id": "e89c3b3c-4654-4595-95ca-f0fc46087039",
+    "status": "clean"
+  },
+  "round": 3,
+  "stacked_on": "FORGE-PRODGAP-1/GUIDE",
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-11T10:02:06.115359+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-11T10:39:05.152653+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-11T11:02:51.485324+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-11T18:35:13.129102+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-11T18:58:38.579285+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "1abf2aed-52c8-4960-a3bf-f8a5b22c1fbf",
+    "head": "057f6b7718e52faa59720d006c3bb9c66ad100e1",
+    "keys": {},
+    "round": 2
+  },
+  "worker": "claude"
+}
