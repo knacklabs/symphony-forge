@@ -8,8 +8,8 @@
       "text": "Strip trailing JavaScript comments before applying motion-all",
       "from": "blocking",
       "item": "FORGE-POLISH-1/CHECKS",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "edge\tsrc/forge/templates/design/ui-checks.js\tFollow-up: use template comments for Vue and Svelte waivers",
