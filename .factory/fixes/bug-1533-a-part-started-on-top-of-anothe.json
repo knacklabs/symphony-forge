@@ -4,12 +4,20 @@
   "done_when": "A part can start on top of a part merged with GitHub's button, and the existing test that refuses that case is changed to match.",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-11T09:39:33.742791+00:00",
       "step": "start"
     }
   ],
-  "why": "Bug 1533. A part started on top of another part stays blocked after that part merges with GitHub's button, because forge next keeps saying it waits for the merge."
+  "stuck": {
+    "close": null,
+    "head": "b06cfca0c6118bb05d1da322be2edff22d2d2820",
+    "keys": {},
+    "round": null
+  },
+  "why": "Bug 1533. A part started on top of another part stays blocked after that part merges with GitHub's button, because forge next keeps saying it waits for the merge.",
+  "worker": "claude"
 }
