@@ -200,7 +200,7 @@
     "id": "5a48b547-c67e-44f4-bec7-428f1d7b5832",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -213,10 +213,12 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "f138f1434d970005d49b028a22dcf0c8e70649cc",
-    "keys": {},
-    "round": null
+    "close": "94555c69-f6fb-46fd-8850-39bde6954304",
+    "head": "f2368da40040e627805d8ef9a90c5cad9b69bdc2",
+    "keys": {
+      "the open P0 data loss: isolate the benchmark's docker compose project in benchmark/checks.toml": 1
+    },
+    "round": 1
   },
   "worker": "claude"
 }
