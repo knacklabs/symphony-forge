@@ -6,10 +6,13 @@
 
 - Some repos run all their tests through one combined script: a type check, a build, all unit tests and all browser tests, one after the other. For such a repo, Forge now suggests a quicker test setting. Forge builds it only from the steps the script already has. The steps stay the same, except that unit tests run only for the code that the change touches. Forge prints the suggestion when it checks the setup, when it upgrades a repo and when it adopts a live app. The agent asks you, then sets it in a small fix. Forge never changes the setting by itself. (Source: your decision, 11 Nov 2026)
 - When the script has no unit-test step that Forge can limit this way, Forge says so in one line and suggests nothing. (Source: your decision, 11 Nov 2026)
-- On a Windows laptop, a builder's own test run skips the browser tests. Browser tests are the tests that open the app in a real browser. The pull request check and the nightly full test run still run them. On Mac and Linux, nothing changes. (Source: your decision, 11 Nov 2026)
-- When the latest nightly test run on the main branch fails, the board shows it under "Needs you", with a link to the run on GitHub. The next-step text also starts its lines with "Needs you". The entry goes away when a fix for that run starts, or when the next run passes. A repo with no nightly run shows nothing. (Source: your decision, 11 Nov 2026; when the entry goes away is the planner's choice)
+- The suggested setting keeps every step of the script, also the build step and the browser tests. Only the unit tests are limited. (Source: planner's choice, for you to confirm)
+- On a Windows laptop, a builder's own test run skips the browser tests. Browser tests are the tests that open the app in a real browser. The pull request check and the nightly full test run still run them. On Mac and Linux, nothing changes. (Source: your decision, 11 Nov 2026; skipping only in the builder's own run, so the pull request check keeps the browser tests, is the planner's choice for you to confirm)
+- When the latest nightly test run on the main branch fails, the board shows it as one more row under "Needs you". The row looks like the other rows there. When you click it, the run opens on GitHub. The next-step text also starts its lines with "Needs you". The entry goes away when a fix for that run starts, or when the next run passes. A repo with no nightly run shows nothing. (Source: your decision, 11 Nov 2026; when the entry goes away is the planner's choice for you to confirm)
 - New repos and repos that adopted Forge on an earlier release both get these changes with the next release. Forge changes no app file. The quicker test setting comes only through the fix that you agree to.
 - No model is called for any of this. The model cost does not change.
+
+Design: none (the failed run is one more row in the board's existing Needs you list, drawn by the same row code with the same look; no new screen, style or layout)
 
 ## Why
 
@@ -165,10 +168,14 @@ no entry. -->
    - `nextstep`: the first line of an unclaimed alert starts with `Needs you: `. Claimed alerts
      keep today's text. `nextstep.py` has 1,197 lines; this change must add no more than three.
      Do not touch `board.py` (1,200 lines).
-   - `board_app/now.js`: the Me view keeps `run` entries (no owner), and `ask()` renders a `run`
-     entry as a link to `url` that opens a new tab, with the verb `Fix` and the label `Nightly
-     run` in place of the key. Use the existing `.ask` look; add to `now.css` only what an anchor
-     needs to match the button. No new screen, no command on the page.
+   - `board_app/now.js`: the Me view keeps `run` entries (no owner). The existing `ask()` renders
+     a `run` entry with its existing markup and classes (the same `button.ask`, `ask-head`,
+     `verb`, `key`, `ask-title`), with the verb `Fix` (a `VERB` entry) and the label `Nightly run`
+     in place of the key. Only its click differs: it opens `url` in a new tab
+     (`window.open(url, '_blank', 'noopener')`) in place of the item drawer. No CSS change, no
+     new screen, no new layout, no command on the page. This is what makes the plan's
+     `Design: none` line true; a change that needs new styling must stop and go back to the
+     coordinator for a design first.
    - `run-reference.md` lists the new `failed run` reason and the `run` kind under
      `team.needs_you`. The pane (`mod/hooks/summary.ts`) already shows an entry with an unknown id
      by its title and reason, so it needs no change.
@@ -210,7 +217,7 @@ queue, background job or abstraction layer, with the Done-when item that needs i
 | ID | Name | What it delivers | Covers | Scope | Tests | After | User-facing | Developer |
 |---|---|---|---|---|---|---|---|---|
 | QUICK | Quick tests for combined scripts and the Windows browser skip | `suggest` expands a combined package script into its own steps and limits only its Vitest or Jest steps; the one-line "nothing to limit" case; the same guard on combined runner scripts; adoption prints the suggestion; the `browser` part kind; bare `forge test` on Windows skips browser parts with one line; the pytest picker drops browser parts; the guide and brief text. | 1, 2, 3 | `src/forge/quicktest.py`, `src/forge/fasttest.py`, `src/forge/init.py`, `src/forge/templates/skill.md`, `src/forge/templates/brief.md`, `tests/test_combined_script_quick_test.py`, `tests/test_windows_worker_skips_browser_tests.py` | `tests/test_combined_script_quick_test.py` (`test_1`, new); `tests/test_windows_worker_skips_browser_tests.py` (`test_1`, new) | | no | |
-| NIGHTLY | A failed nightly run shows under Needs you | The run link and date in `failed_schedules`; one Needs you entry per unclaimed failed run in `team`; the `Needs you: ` prefix in `forge next`; the board row as a link; the `failed run` reason in the run reference. | 4, 5 | `src/forge/board_facts.py`, `src/forge/nextstep.py`, `src/forge/board_app/now.js`, `src/forge/board_app/now.css`, `src/forge/templates/run-reference.md`, `tests/test_failed_nightly_needs_you.py`, `tests/test_next_names_a_failed_scheduled_run.py` | `tests/test_failed_nightly_needs_you.py` (`test_1`, new); `tests/test_next_names_a_failed_scheduled_run.py` (`test_1`, line text updated) | | yes | |
+| NIGHTLY | A failed nightly run shows under Needs you | The run link and date in `failed_schedules`; one Needs you entry per unclaimed failed run in `team`; the `Needs you: ` prefix in `forge next`; the board row through the existing row renderer, whose click opens the run page; the `failed run` reason in the run reference. | 4, 5 | `src/forge/board_facts.py`, `src/forge/nextstep.py`, `src/forge/board_app/now.js`, `src/forge/templates/run-reference.md`, `tests/test_failed_nightly_needs_you.py`, `tests/test_next_names_a_failed_scheduled_run.py` | `tests/test_failed_nightly_needs_you.py` (`test_1`, new); `tests/test_next_names_a_failed_scheduled_run.py` (`test_1`, line text updated) | | yes | |
 
 New moving parts: none
 
@@ -218,10 +225,11 @@ New moving parts: none
 
 - **Owner decision (11 Nov 2026, settled).** Start all three: (1) doctor, init and adoption see a combined test script with no `fast_test` and propose one; the agent asks the owner, then sets it through a fix; (2) heavy browser tests stay out of the builder's local test loop on Windows by default, and CI still runs them; (3) a failed nightly full run shows under Needs you on the board and in `forge next`.
 - **Finding that changes point 1 and point 2.** The pull request check runs `fast_test` too: the generated workflow's tests job runs `forge test --change`, and `review.close_test` returns `fast_test` (with `{base}`) for it, the same command the builder's bare `forge test` runs. So a `fast_test` that leaves the browser tests out also removes them from every pull request check, and only the nightly run would catch a browser failure, after merge. It would also contradict the brief's rendered-check rule (`brief.md` about line 591: close runs browser tests only when the close command includes them). This is why the plan keeps the browser steps in the suggested line and skips them only in the builder's own run, which `fasttest.test` can tell apart (`--change` absent).
-- **Open questions for the owner, recommendation first.**
-  1. Where should browser tests run? **Recommended: the suggested line keeps the browser step; Forge skips it only in a builder's own run on Windows.** The pull request check and the nightly run keep running it, and Mac and Linux builders still see browser failures before the pull request. Option B: skip it in a builder's own run on every platform (the same code without the Windows condition; faster loops on Mac too, but a builder who changes a screen sees a browser failure only at the pull request check, which costs a round). Option C: leave the browser step out of the suggested line (no skip code; pull request checks then stop running browser tests, and failures show only in the nightly run after merge).
-  2. When does the Needs you entry go away? **Recommended: when a fix for that run starts, or when the next run passes.** The coordinator already starts that fix without asking (`skill.md` about line 2411), and the fix then shows as work in progress. Option B: keep it until the next run passes, even while a fix is building; the owner then sees "needs you" when nothing waits on them.
-  3. Should the suggestion drop the build step? **Recommended: no, keep every step except the unit tests.** Browser tests often need the build, and Forge cannot tell. The agent and the owner can remove a step before the fix.
+- **Planner's choices, written into the plan, for the owner to confirm at approval.**
+  1. Where browser tests run: **the suggested line keeps the browser step; Forge skips it only in a builder's own run on Windows.** The pull request check and the nightly run keep running it, and Mac and Linux builders still see browser failures before the pull request. Other options: B, skip it in a builder's own run on every platform (the same code without the Windows condition; faster loops on Mac too, but a builder who changes a screen sees a browser failure only at the pull request check, which costs a round); C, leave the browser step out of the suggested line (no skip code; pull request checks then stop running browser tests, and failures show only in the nightly run after merge).
+  2. When the Needs you entry goes away: **when a fix for that run starts, or when the next run passes.** The coordinator already starts that fix without asking (`skill.md` about line 2411), and the fix then shows as work in progress. Other option: keep it until the next run passes, even while a fix is building; the owner then sees "needs you" when nothing waits on them.
+  3. The build step: **the suggestion keeps every step except the narrowed unit tests, the build step included.** Browser tests often need the build, and Forge cannot tell. The agent and the owner can remove a step before the fix.
+- **Design: none.** The NIGHTLY row reuses the existing Needs you row renderer (`ask()` in `now.js`) with the same markup and classes and no CSS change; only its click target differs. If the builder finds the row needs new styling, the part stops and the coordinator makes the design first.
 - **Scores (F x H >= 2 x C).**
   - Suggestion for combined scripts: F 2, H 2 (slow loops; a wrong suggestion today), C 2 (about 40 lines). 4 >= 4. Kept.
   - Windows skip of browser parts: F 3 (every builder test run on Windows in such a repo), H 2 (failed rounds for unrelated reasons), C 1 (about 15 lines). 6 >= 2. Kept.
@@ -239,4 +247,4 @@ New moving parts: none
   - The client's exact script shape is not known. The plan covers steps that name other scripts and steps that call tools directly, one level deep.
   - Changed-only selection (`vitest --changed`, `jest --changedSince`) follows imports. API tests that reach the code only through a URL are not selected in the pull request check; the nightly run covers them. The guide tells the agent to say this to the owner.
   - The Windows causes (locked temporary folders, browser start-up timeouts, the test database) come from the report. Only the browser steps are skipped; a database failure in API tests is not addressed.
-  - The board row as a link was not drawn or checked on screen; NIGHTLY's builder checks it on the running board at 1440 width, light and dark.
+  - The board row was not drawn or checked on screen; NIGHTLY's builder checks it on the running board at 1440 width, light and dark.
