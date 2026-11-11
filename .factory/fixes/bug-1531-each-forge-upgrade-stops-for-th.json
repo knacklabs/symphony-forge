@@ -83,7 +83,7 @@
     "id": "f9d225a5-990e-489e-9f92-55901e71b0ed",
     "status": "blocked"
   },
-  "round": 2,
+  "round": 3,
   "status": "fixing",
   "steps": [
     {
@@ -109,12 +109,10 @@
     "worker_round": 2
   },
   "stuck": {
-    "close": "f9ac37eb-962d-49c3-b761-bd19c6a66f39",
-    "head": "5d50af90f70f9e5ad903208eb094a0b71ea20b25",
-    "keys": {
-      "the open P0 not done: pure upgrades with npm or pnpm lockfiles still reach model review in src/forge/review_skip.py": 1
-    },
-    "round": 1
+    "close": "40e6a432-0c83-490a-9781-62ff6ef334d4",
+    "head": "fdde36cfc4804e8f49660797b522da449aa356e6",
+    "keys": {},
+    "round": 2
   },
   "why": "Bug 1531. Each Forge upgrade stops for the person's choice, because the model review of the upgrade fix applies the repo's review rules, a proof-list rule raises a P1, and the one-round limit is reached.",
   "worker": "claude"
