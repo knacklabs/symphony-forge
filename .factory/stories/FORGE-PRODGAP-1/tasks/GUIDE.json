@@ -82,7 +82,7 @@
     "id": "a1f52005-5575-4345-bd46-0dae2288f7c2",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -95,10 +95,12 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "2712e70487ef1f929b267c65a7791e4fc8960aa4",
-    "keys": {},
-    "round": null
+    "close": "26782613-ccd5-4f8a-8bfe-f1b48432e4bc",
+    "head": "6ae0c41e8b61c0c6ad3ceab70f5b737037b9a41a",
+    "keys": {
+      "the open P0 security: pass the row text as a literal shell argument in src/forge/templates/skill.md": 1
+    },
+    "round": 1
   },
   "worker": "claude"
 }
