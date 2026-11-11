@@ -428,6 +428,9 @@ def read_result(top: Path, target: str, result: dict[str, Any], said: str,
     if stopped(record, f"{kept}\n\n## Round {round_number}\n\n{said}\n", repo.config(top)["cold_read_rounds"]):
         repo.refuse(REFUSALS["read_loop"], target=target, round=round_number,
                     question=read_question(text.decode("utf-8"), _text(notes)))
+    if is_story:
+        for line in plan_scope.shared_files(_parsed(text.decode("utf-8"), rel)["tasks"]):
+            print(line)
     print(f"Round {round_number} of the cold read of {rel} {outcome}.\nNext: forge next" if clean else
           f"Wrote round {round_number} of the cold read to {_rel(top, notes)}.\n"
           f"Next: give every blocking finding a disposition, amend the doc, then forge read {target}")

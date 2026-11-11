@@ -67,7 +67,9 @@ one waits for the other through After, directly or through another task; it name
 Paths with a segment named `tests`, `test`, `__tests__` or `spec` do not cause Scope overlaps
 and can be shared without an After link. Explicit After links still apply.
 When tasks need the same production file, put it in the first task's Scope with the shared names and stubs;
-tasks that need them wait for that task through After and then own only their files. Tests: the
+tasks that need them wait for that task through After and then own only their files. Keep a file
+that a script can make at build time out of the repo and out of every Scope; when the repo keeps such
+a file on purpose, give its change to one part that the others wait for. Tests: the
 tests it adds or changes. After: the tasks it waits for. When two tasks share a function, field,
 file format or command, the first task pins it: it commits the shared names and stubs plus one
 test that crosses both sides, and the tasks that use it list it under After. Split tasks so each

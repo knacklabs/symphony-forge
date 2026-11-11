@@ -1,4 +1,5 @@
 """Task dependencies and file ownership in story plans."""
+import re
 from typing import Any
 
 from forge import repo
@@ -25,6 +26,21 @@ def check(tasks: list[dict[str, Any]]) -> None:
                             f"({left}, {right}).",
                             "name separate files in Scope, add an After link, "
                             "or put the shared file in a first task that both wait for."))
+
+
+def shared_files(tasks: list[dict[str, Any]]) -> list[str]:
+    """One advice line per file that three or more parts list by its exact path. Folders, globs
+    and test paths are not counted; other stories are not looked at."""
+    owners: dict[str, list[str]] = {}
+    for task in tasks:
+        for path in dict.fromkeys(re.split(r"[`\s]", entry)[0] for entry in task["scope"]):  # drop "(note)"
+            if not re.search(r"[*?[]|/$", path) and not {"tests", "test", "__tests__", "spec"} & set(path.split("/")):
+                owners.setdefault(path, []).append(task["id"])
+    return [f"Shared file: {len(ids)} parts of this plan list {path} in their Scope ({', '.join(ids)}). "
+            "Forge builds them one after another. If a script can make this file when the app is built, "
+            "make it at build time and take it out of every Scope. If the repo keeps it on purpose, "
+            "put its change in one first part that the other parts wait for."
+            for path, ids in owners.items() if len(ids) >= 3]
 
 
 def no_cycle(tasks: dict[str, dict[str, Any]]) -> None:
