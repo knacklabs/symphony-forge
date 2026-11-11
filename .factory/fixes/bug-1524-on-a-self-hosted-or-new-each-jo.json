@@ -1,0 +1,82 @@
+{
+  "base": "eab58b3676963906109f39612ac17a2f05cef75c",
+  "branch": "fix/bug-1524-on-a-self-hosted-or-new-each-jo",
+  "done_when": "On a runner without gh, the nightly full-test result step sets up Python, posts the forge-full-suite status with Python's standard library, reads the token from the environment, and passes or fails to match the full run.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "test_3_full_test_result_is_posted_without_gh() in tests/test_runner_without_gh.py",
+      "file": "tests/test_runner_without_gh.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 150,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: proof list",
+      "work": 1
+    },
+    {
+      "area": "test_3_full_test_result_is_posted_without_gh() in tests/test_runner_without_gh.py",
+      "file": "tests/test_runner_without_gh.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 161,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_3_full_test_result_is_posted_without_gh",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "3722df04e31beba9559cb9ec4955911077430577b16fcf759c8ad9d57b56b353",
+    "changed": "aa01f99a1a3a65e78b401d3eea6a18b4aaf64803105297be93eb13c643f5bb2e",
+    "commit": "744b03ac3f78d56b2a176dd921242fea81864503",
+    "dismissals": [],
+    "findings": [],
+    "id": "c31ff66b-98b8-43c9-9c9c-fb74ff2b24f0",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-11T09:39:13.453844+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-11T10:08:14.303492+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-11T10:26:44.124951+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-11T10:37:48.256382+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-11T10:26:44.125189+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "tests/test_runner_without_gh.py",
+    "reason": "Owner's standing choice for 11 Nov 2026: one more round for a test point",
+    "wait_id": "c2bd679a-3556-4c94-82e4-5db36d6497e6",
+    "worker_round": 2
+  },
+  "stuck": {
+    "close": "6d838dc9-923f-4326-93d0-60855f92e804",
+    "head": "dba68c7dce03daba49d675d3af33d8d3c28d951b",
+    "keys": {},
+    "round": 2
+  },
+  "why": "Bug 1524. On a self-hosted or new-each-job runner without the GitHub command-line tool (gh), the nightly full-test result step fails, so the full-suite status is never posted.",
+  "worker": "claude"
+}
