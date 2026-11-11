@@ -1,0 +1,58 @@
+# Fixed checks for the release score. scripts/bench_score.py runs each command in the built app's
+# folder. Commands see CHECKS_DIR (benchmark/checks) and, for app checks, APP_URL (the ready address).
+# kind "pass": passes on exit 0. kind "count": the last word printed is a number; 0 passes.
+# baseline: files and folders next to this file; app_baseline: files and folders in the built app.
+# When any of them change, the score has a new baseline and no direction is shown.
+baseline = ["notes.md", "checks.toml", "checks"]
+app_baseline = [".forge/design/ui-checks.js", ".claude/skills/impeccable/scripts"]
+
+[app]
+start = "docker compose -f compose.test.yml up -d --build --wait --wait-timeout 180 && docker compose -f compose.test.yml exec -T -e ADMIN_EMAIL=staff@example.test -e ADMIN_PASSWORD=bread-and-butter-1 one-company-api corepack pnpm run setup:company"
+ready = "http://127.0.0.1:3002/health"
+ready_timeout = 300
+stop = "docker compose -f compose.test.yml down --volumes"
+
+[[check]]
+name = "build"
+command = "corepack pnpm run build"
+kind = "pass"
+
+[[check]]
+name = "tests"
+command = "node scripts/test.mjs"
+kind = "pass"
+
+[[check]]
+name = "design"
+command = "node \"$CHECKS_DIR/design-count.mjs\""
+kind = "count"
+
+[[check]]
+name = "sign-in"
+command = "node \"$CHECKS_DIR/sign-in.mjs\""
+kind = "pass"
+app = true
+
+[[check]]
+name = "list"
+command = "node \"$CHECKS_DIR/list.mjs\""
+kind = "pass"
+app = true
+
+[[check]]
+name = "form"
+command = "node \"$CHECKS_DIR/form.mjs\""
+kind = "pass"
+app = true
+
+[[check]]
+name = "dashboard"
+command = "node \"$CHECKS_DIR/dashboard.mjs\""
+kind = "pass"
+app = true
+
+[[check]]
+name = "job"
+command = "node \"$CHECKS_DIR/job.mjs\""
+kind = "pass"
+app = true
