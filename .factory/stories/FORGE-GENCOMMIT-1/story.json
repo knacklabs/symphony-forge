@@ -1,6 +1,15 @@
 {
+  "approval": {
+    "at": "2026-11-11T11:17:55.834562+00:00",
+    "by": "human-via-Claude",
+    "event": "toolu_01AHffAyo1TzBp2Bnp5P5qQo",
+    "hash": "ce9bf60908952b2a3816db90f80b13560bf70013efbe73761c802879239f38bf",
+    "round": 6,
+    "runtime": "claude",
+    "session": "c01a489d-c76f-41c1-8371-d6f0052b027c"
+  },
   "doc": "plans/FORGE-GENCOMMIT-1.md",
-  "status": "read",
+  "status": "approved",
   "steps": [
     {
       "at": "2026-11-11T09:47:34.952648+00:00",
@@ -29,8 +38,12 @@
     {
       "at": "2026-11-11T11:07:01.290656+00:00",
       "step": "read"
+    },
+    {
+      "at": "2026-11-11T11:17:55.834850+00:00",
+      "step": "approved"
     }
   ],
   "title": "Stop committing generated API types in Python apps",
-  "touches": 0
+  "touches": 1
 }
