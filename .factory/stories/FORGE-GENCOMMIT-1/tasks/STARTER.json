@@ -82,7 +82,7 @@
     "id": "539f4414-ada6-4b3f-a8c9-6220d43318fa",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -95,10 +95,12 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "d6650853386d2e11e37be09dcb18b5b79c4ce65f",
-    "keys": {},
-    "round": null
+    "close": "11a7cd2d-dbb5-4eb8-b7f1-33bff95a920c",
+    "head": "e6c75bb367979d44ea9ba704e464ed2fb0538a1c",
+    "keys": {
+      "the open P0 gate: test_3_generated_files_stay_out_of_git_for_both_stacks in tests/test_gencommit_starter.py": 1
+    },
+    "round": 1
   },
   "worker": "claude"
 }
