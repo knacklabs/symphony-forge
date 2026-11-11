@@ -83,17 +83,17 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "88e76a60ea5f76a00174e2ac5d01c89a1686805a767b70a442f4631c2eda23d9",
-    "changed": "f0d5befbbd5d15baefac5804ce310600362101f058ca0d70915527a0ff0d6f90",
-    "commit": "b64b0b8ecaed39c461367a00c87e7338e55f9aa2",
+    "branch_diff": "0ad907749369d8430f98c6eaffb2678f16cb65ad1c8a8ad1b380153052af45fa",
+    "changed": "9e61f0e23075ddb9017548b7aeb4dbb8f22c1b236d8c00fb262f9dc3406c829c",
+    "commit": "afde235aeed3d460f26fde55e4450d94f7dc9bce",
     "dismissals": [],
     "findings": [],
-    "id": "1856f834-615b-4ccc-9a12-9a1bb35d5ea6",
+    "id": "258c5d1c-a563-4f98-87dd-131fcc4b4230",
     "status": "clean"
   },
   "round": 4,
   "stacked_on": "FORGE-THEME-1/DESIGN",
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-11T01:17:05.874438+00:00",
@@ -109,6 +109,10 @@
     },
     {
       "at": "2026-11-11T02:05:11.061332+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-11T03:54:47.283558+00:00",
       "step": "review"
     }
   ],
