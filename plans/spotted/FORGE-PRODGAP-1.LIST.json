@@ -1,0 +1,81 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/repo.py\tSecurity: Refresh cached sign-off files before checking merge permission\tFORGE-PRODGAP-1/LIST",
+      "kind": "bug",
+      "path": "src/forge/repo.py",
+      "line": 756,
+      "text": "Security: Refresh cached sign-off files before checking merge permission",
+      "from": "blocking",
+      "item": "FORGE-PRODGAP-1/LIST",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_prodgap_list.py\tGate: tests/test_prodgap_list.py::test_2_demo_only_labels_show_and_clear\tFORGE-PRODGAP-1/LIST",
+      "kind": "bug",
+      "path": "tests/test_prodgap_list.py",
+      "line": 146,
+      "text": "Gate: tests/test_prodgap_list.py::test_2_demo_only_labels_show_and_clear",
+      "from": "blocking",
+      "item": "FORGE-PRODGAP-1/LIST",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_prodgap_list.py\tGate: tests/test_prodgap_list.py::test_3_open_gaps_show_together_and_stay_while_work_runs\tFORGE-PRODGAP-1/LIST",
+      "kind": "bug",
+      "path": "tests/test_prodgap_list.py",
+      "line": 162,
+      "text": "Gate: tests/test_prodgap_list.py::test_3_open_gaps_show_together_and_stay_while_work_runs",
+      "from": "blocking",
+      "item": "FORGE-PRODGAP-1/LIST",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_prodgap_list.py\tGate: tests/test_prodgap_list.py::test_5_light_reviewed_parts_show_and_clear_when_named\tFORGE-PRODGAP-1/LIST",
+      "kind": "bug",
+      "path": "tests/test_prodgap_list.py",
+      "line": 132,
+      "text": "Gate: tests/test_prodgap_list.py::test_5_light_reviewed_parts_show_and_clear_when_named",
+      "from": "blocking",
+      "item": "FORGE-PRODGAP-1/LIST",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/gaps.py\tNot done: Each line goes away when its fact changes: the labels are gone, or later changes name the parts.",
+      "kind": "edge",
+      "path": "src/forge/gaps.py",
+      "line": 70,
+      "text": "Not done: Each line goes away when its fact changes: the labels are gone, or later changes name the parts.",
+      "from": "review",
+      "item": "FORGE-PRODGAP-1/LIST",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/gaps.py\tNot done: The list names the files that carry the \"Demo only\" label and the parts that were built with only the light review.",
+      "kind": "edge",
+      "path": "src/forge/gaps.py",
+      "line": 15,
+      "text": "Not done: The list names the files that carry the \"Demo only\" label and the parts that were built with only the light review.",
+      "from": "review",
+      "item": "FORGE-PRODGAP-1/LIST",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\ttests/test_prodgap_list.py\tFollow-up: Exercise the board and completed story on their own fetch",
+      "kind": "edge",
+      "path": "tests/test_prodgap_list.py",
+      "line": 203,
+      "text": "Follow-up: Exercise the board and completed story on their own fetch",
+      "from": "review",
+      "item": "FORGE-PRODGAP-1/LIST",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
