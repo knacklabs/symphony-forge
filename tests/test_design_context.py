@@ -76,8 +76,14 @@ def context(prompt, folder):
 ])
 def test_1_workers_and_reviewers_receive_the_apps_design(env, monkeypatch, sdk_data,
                                                         family, adopted, starter, none):
+    run_design_flow(env, monkeypatch, sdk_data, family, adopted, starter, none)
+
+
+def run_design_flow(env, monkeypatch, sdk_data, family, adopted, starter, none):
+    """Work a task twice and close it; return the worker briefs and the review prompt."""
     # Only the third-party model/reviewer is fake; it does not assemble the asserted context.
     repo = env.repo
+    briefs = []
     codex_log = prepare(env, monkeypatch, sdk_data, family, adopted=adopted, starter=starter)
     if none:
         # HANDOFF owns admission of user-facing Design:none stories. A backend task already
@@ -112,6 +118,7 @@ def test_1_workers_and_reviewers_receive_the_apps_design(env, monkeypatch, sdk_d
         assert built.returncode == 0, built.stdout + built.stderr
         prompt = (_sent(codex_log, "turn/start")[-1]["input"][0]["text"] if family == "codex"
                   else calls(claude_log)[-1]["brief"])
+        briefs.append(prompt)
         context(prompt, folder)
         assert f"{folder}{'canvas' if none else 'screen'}.svg" in prompt
         if not none:
@@ -139,6 +146,7 @@ def test_1_workers_and_reviewers_receive_the_apps_design(env, monkeypatch, sdk_d
         assert "starter's neutral tokens" in prompt
         assert "component or field" in prompt
         assert "Do not report a field missing from any other screen" in prompt
+    return briefs, prompt
 
 
 def test_2_unsigned_prototype_fix_receives_its_own_screen_requirements(env, monkeypatch, sdk_data):

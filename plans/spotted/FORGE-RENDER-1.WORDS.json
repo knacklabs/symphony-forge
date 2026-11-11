@@ -1,0 +1,70 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/templates/brief.md\tFunctional: Honor a recorded yes for the phone view\tFORGE-RENDER-1/WORDS",
+      "kind": "bug",
+      "path": "src/forge/templates/brief.md",
+      "line": 582,
+      "text": "Functional: Honor a recorded yes for the phone view",
+      "from": "blocking",
+      "item": "FORGE-RENDER-1/WORDS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/brief.md\tFunctional: Include rendered checks in the tests selected for close\tFORGE-RENDER-1/WORDS",
+      "kind": "bug",
+      "path": "src/forge/templates/brief.md",
+      "line": 582,
+      "text": "Functional: Include rendered checks in the tests selected for close",
+      "from": "blocking",
+      "item": "FORGE-RENDER-1/WORDS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/brief.md\tNot done: A sample-data prototype runs no rendered check before sign-off. The check starts with its first tests.\tFORGE-RENDER-1/WORDS",
+      "kind": "bug",
+      "path": "src/forge/templates/brief.md",
+      "line": 578,
+      "text": "Not done: A sample-data prototype runs no rendered check before sign-off. The check starts with its first tests.",
+      "from": "blocking",
+      "item": "FORGE-RENDER-1/WORDS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_render_words.py\tGate: tests/test_render_words.py::test_4_new_and_existing_repos_get_the_rendered_check_and_the_phone_question\tFORGE-RENDER-1/WORDS",
+      "kind": "bug",
+      "path": "tests/test_render_words.py",
+      "line": 60,
+      "text": "Gate: tests/test_render_words.py::test_4_new_and_existing_repos_get_the_rendered_check_and_the_phone_question",
+      "from": "blocking",
+      "item": "FORGE-RENDER-1/WORDS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_render_words.py\tGate: tests/test_render_words.py::test_5_a_sample_data_prototype_runs_no_rendered_check_before_signoff\tFORGE-RENDER-1/WORDS",
+      "kind": "bug",
+      "path": "tests/test_render_words.py",
+      "line": 91,
+      "text": "Gate: tests/test_render_words.py::test_5_a_sample_data_prototype_runs_no_rendered_check_before_signoff",
+      "from": "blocking",
+      "item": "FORGE-RENDER-1/WORDS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/templates/review.md\tNot done: A new client repo gets the check, the question about the phone view and the review rule when it starts.",
+      "kind": "edge",
+      "path": "src/forge/templates/review.md",
+      "line": 337,
+      "text": "Not done: A new client repo gets the check, the question about the phone view and the review rule when it starts.",
+      "from": "review",
+      "item": "FORGE-RENDER-1/WORDS",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

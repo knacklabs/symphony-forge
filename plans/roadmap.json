@@ -612,6 +612,12 @@
       "title": "Research the prospect before a prototype and propose features from what is found",
       "status": "pending",
       "order": 119
+    },
+    {
+      "key": "FORGE-THEME-1",
+      "title": "One shared design system and theme, set in Claude and checked at close",
+      "status": "pending",
+      "order": 118
     }
   ],
   "epics": [
