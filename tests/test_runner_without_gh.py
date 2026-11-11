@@ -5,6 +5,7 @@ import re
 import shutil
 import subprocess
 import sys
+import textwrap
 import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
@@ -68,6 +69,21 @@ def logged_python(path, log):
                        f"open({str(log)!r}, 'a').write(json.dumps(sys.argv[1:]) + '\\n')\n"
                        f"os.execv({sys.executable!r}, [{sys.executable!r}, *sys.argv[1:]])\n")
     wrapper.chmod(0o755)
+
+
+def read_job(job):
+    """A generated job as plain data: its permissions and its steps. A mapping such as env or with
+    becomes a dict, a run block its text. The suite has no YAML library and the job is block YAML."""
+    def mapping(block):
+        return dict(re.findall(r"^([\w-]+): (.*)$", textwrap.dedent(block), re.M))
+    steps = []
+    for chunk in re.split(r"^      - ", job.split("    steps:\n", 1)[1], flags=re.M)[1:]:
+        step = {}
+        for key, inline, block in re.findall(r"^        ([\w-]+):[ ]*(.*)\n((?:          .*\n|\n)*)",
+                                             "        " + chunk, re.M):
+            step[key] = textwrap.dedent(block) if inline == "|" else inline or mapping(block)
+        steps.append(step)
+    return mapping(re.search(r"^    permissions:\n((?:      .*\n)+)", job, re.M)[1]), steps
 
 
 @pytest.mark.parametrize("adopted,review", [(False, "clean"), (False, "stale"), (True, "clean")],
@@ -157,24 +173,36 @@ def test_3_full_test_result_is_posted_without_gh(repo, gh, github, tmp_path, mon
     _settings(work, test="python -m pytest tests -q")
     synced = repo.forge("sync", cwd=work)
     assert synced.returncode == 0, synced.stdout + synced.stderr
-    report = _jobs((work / ".github/workflows/forge.yml").read_text("utf-8"))["full-suite-result"]
-    assert "actions/setup-python" in report and "actions/checkout" not in report
-    script = re.search(r"        run: \|\n((?:          .*\n|\n)+)", report)[1]
-    script = "\n".join(line.removeprefix("          ") for line in script.splitlines())
+    workflow = (work / ".github/workflows/forge.yml").read_text("utf-8")
+    permissions, steps = read_job(_jobs(workflow)["full-suite-result"])
+    uses = [step.get("uses", "") for step in steps]
+    [setup] = [at for at, name in enumerate(uses) if name.startswith("actions/setup-python@")]
+    [report] = [at for at, step in enumerate(steps) if step.get("name") == "Report full test result"]
+    # Python is set up before the report step runs, the job has no checkout, and it can only set statuses.
+    assert setup < report and not [name for name in uses if name.startswith("actions/checkout")]
+    assert permissions == {"statuses": "write"}
+    script, step_env = steps[report]["run"], steps[report]["env"]
+    # The runner sets the GITHUB_* variables itself. Every other variable the script reads must come
+    # from the step's env.
+    runner = {"GITHUB_API_URL": server, "GITHUB_REPOSITORY": "acme/shop", "GITHUB_RUN_ID": "7",
+              "GITHUB_SERVER_URL": "https://github.example"}
+    reads = set(re.findall(r"(?:\$\{?|env(?:\[|\.get\()')([A-Z][A-Z0-9_]+)", script))
+    assert reads <= set(step_env) | set(runner), reads - set(step_env) - set(runner)
+    # `python` is the only interpreter on the PATH, as the set-up interpreter would be.
     log = tmp_path / "python-arguments.jsonl"
     path = no_gh_path(tmp_path, "git")
     logged_python(tmp_path / "no-gh-bin", log)
     for outcome in ("success", "failure"):
+        values = {"${{ github.token }}": "test-token", "${{ github.sha }}": "abc123",
+                  "${{ needs.full-suite.result }}": outcome}
         before = len(calls)
         ran = subprocess.run([shutil.which("bash"), "-e", "-c", script], cwd=work, capture_output=True,
                              text=True, encoding="utf-8", timeout=60,
-                             env={**os.environ, "PATH": path, "FULL_RESULT": outcome, "HEAD_SHA": "abc123",
-                                  "GITHUB_API_URL": server, "GH_TOKEN": "test-token",
-                                  "GITHUB_REPOSITORY": "acme/shop", "GITHUB_RUN_ID": "7",
-                                  "GITHUB_SERVER_URL": "https://github.example"})
+                             env={"PATH": path, **runner, **{key: values[text] for key, text in step_env.items()}})
         assert ran.returncode == (0 if outcome == "success" else 1), ran.stdout + ran.stderr
         method, endpoint, auth, body = calls[before]
         assert (method, endpoint, auth) == ("POST", "/repos/acme/shop/statuses/abc123", "Bearer test-token")
         assert json.loads(body) == {"context": "forge-full-suite", "state": outcome,
                                     "target_url": "https://github.example/acme/shop/actions/runs/7"}
-    assert "test-token" not in log.read_text("utf-8")
+    arguments = log.read_text("utf-8")
+    assert len(arguments.splitlines()) == 2 and "test-token" not in arguments
