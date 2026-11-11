@@ -73,20 +73,23 @@ def upgrade_only(top: Path, item: str, cfg: dict[str, Any], base: str, head: str
     """True when this is the fix forge upgrade made and its branch changed only the value of
     forge.toml's version line, its own record and files exactly as forge sync writes them (content
     and mode), and no earlier review of it still blocks. Anything else, or any error, gets the
-    model review."""
+    model review. An item that is not named like an upgrade fix costs no git call."""
     from forge import upgrade  # upgrade imports close, which imports this module
+
+    if not item.startswith(upgrade.PREFIX) or review.blocking(previous):
+        return False
+    release = item.removeprefix(upgrade.PREFIX).replace("-", ".")
 
     def blob(ref: str, path: str) -> str:  # bytes, so a changed comment or line ending shows
         return subprocess.run(["git", "show", f"{ref}:{path}"], cwd=top, capture_output=True,
                               check=True).stdout.decode("utf-8")
 
     try:
+        if not upgrade.made(item, json.loads(blob(head, repo.state_path(item))), release):
+            return False
         old, new = blob(base, "forge.toml"), blob(head, "forge.toml")
-        release = tomllib.loads(new)["version"]
-        record = json.loads(blob(head, repo.state_path(item)))
-        if (review.blocking(previous) or tomllib.loads(old).get("version") == release
-                or repo.set_version(old, release) != new or not upgrade.made(item, record, release)
-                or not _modes_kept(top, base, head)):
+        if (tomllib.loads(new).get("version") != release or tomllib.loads(old).get("version") == release
+                or repo.set_version(old, release) != new or not _modes_kept(top, base, head)):
             return False
         rest = set(files) - {"forge.toml", repo.state_path(item)}
         return rest <= sync.synced(top, cfg, base, head, sorted(rest))
