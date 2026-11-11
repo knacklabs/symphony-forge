@@ -554,7 +554,7 @@ def _refresh(top: Path, trees: dict[str, Path]) -> list[str]:
         return []
     ref = story.landed_ref(top)
     names = repo.command_fact(("default file names", ref), top,
-                             lambda: repo.git("ls-tree", "-r", "--name-only", ref, cwd=top)).splitlines()
+                             lambda: repo.git("ls-tree", "-r", "-z", "--name-only", ref, cwd=top)).split("\0")
     locks = [name for name in names if Path(name).name in LOCKFILES]
     if not locks:
         return []

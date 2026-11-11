@@ -5,12 +5,15 @@ import re
 import shutil
 import subprocess
 import sys
+import textwrap
 import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 import pytest
 
 from test_close import blocked, env, finding  # noqa: F401
+from test_groups_pytest import _adopted_client, _new_client, _settings
+from test_testplace_workflow import _jobs
 from test_two_round_limit import client
 
 STORY = "FIX-RUNNER-WITHOUT-GH"
@@ -66,6 +69,21 @@ def logged_python(path, log):
                        f"open({str(log)!r}, 'a').write(json.dumps(sys.argv[1:]) + '\\n')\n"
                        f"os.execv({sys.executable!r}, [{sys.executable!r}, *sys.argv[1:]])\n")
     wrapper.chmod(0o755)
+
+
+def read_job(job):
+    """A generated job as plain data: its permissions and its steps. A mapping such as env or with
+    becomes a dict, a run block its text. The suite has no YAML library and the job is block YAML."""
+    def mapping(block):
+        return dict(re.findall(r"^([\w-]+): (.*)$", textwrap.dedent(block), re.M))
+    steps = []
+    for chunk in re.split(r"^      - ", job.split("    steps:\n", 1)[1], flags=re.M)[1:]:
+        step = {}
+        for key, inline, block in re.findall(r"^        ([\w-]+):[ ]*(.*)\n((?:          .*\n|\n)*)",
+                                             "        " + chunk, re.M):
+            step[key] = textwrap.dedent(block) if inline == "|" else inline or mapping(block)
+        steps.append(step)
+    return mapping(re.search(r"^    permissions:\n((?:      .*\n)+)", job, re.M)[1]), steps
 
 
 @pytest.mark.parametrize("adopted,review", [(False, "clean"), (False, "stale"), (True, "clean")],
@@ -142,3 +160,55 @@ def test_2_earlier_green_run_is_read_without_gh(env, github, tmp_path, previous)
     assert checked.returncode == 0, checked.stdout + checked.stderr
     assert "reuse=true" in output.read_text("utf-8")
     assert calls[0][2] == "Bearer test-token"
+
+
+@pytest.mark.parametrize("adopted", [False, True], ids=["new", "earlier-adopted"])
+def test_3_full_test_result_is_posted_without_gh(repo, gh, github, tmp_path, monkeypatch, adopted):
+    server, calls, _ = github
+    monkeypatch.delenv("PYTEST_ADDOPTS", raising=False)
+    work = (_adopted_client(repo, tmp_path, "nightly-client") if adopted else
+            _new_client(repo, gh, tmp_path, "nightly-client"))
+    if not adopted:
+        repo.git("checkout", "-qb", "fix/nightly-result", cwd=work)
+    _settings(work, test="python -m pytest tests -q")
+    synced = repo.forge("sync", cwd=work)
+    assert synced.returncode == 0, synced.stdout + synced.stderr
+    workflow = (work / ".github/workflows/forge.yml").read_text("utf-8")
+    job = _jobs(workflow)["full-suite-result"]
+    permissions, steps = read_job(job)
+    uses = [step.get("uses", "") for step in steps]
+    [setup] = [at for at, name in enumerate(uses) if name.startswith("actions/setup-python@")]
+    [report] = [at for at, step in enumerate(steps) if step.get("name") == "Report full test result"]
+    # Python is set up right before the report step. The job needs no checkout, and it can only set statuses.
+    assert report == setup + 1 and not [name for name in uses if name.startswith("actions/checkout")]
+    assert permissions == {"statuses": "write"}
+    # A failed full run posts its status too: the job runs after a failed needs (always()), and no step
+    # waits for a passed run.
+    job_if = re.search(r"^    if: (.*)$", job, re.M)[1]
+    assert job_if.startswith("always() &&") and "needs." not in job_if
+    assert not [step for step in steps if "if" in step]
+    script, step_env = steps[report]["run"], steps[report]["env"]
+    # The runner sets the GITHUB_* variables itself. Every other variable the script reads must come
+    # from the step's env.
+    runner = {"GITHUB_API_URL": server, "GITHUB_REPOSITORY": "acme/shop", "GITHUB_RUN_ID": "7",
+              "GITHUB_SERVER_URL": "https://github.example"}
+    reads = set(re.findall(r"(?:\$\{?|env(?:\[|\.get\()')([A-Z][A-Z0-9_]+)", script))
+    assert reads <= set(step_env) | set(runner), reads - set(step_env) - set(runner)
+    # `python` is the only interpreter on the PATH, as the set-up interpreter would be.
+    log = tmp_path / "python-arguments.jsonl"
+    path = no_gh_path(tmp_path, "git")
+    logged_python(tmp_path / "no-gh-bin", log)
+    for outcome in ("success", "failure"):
+        values = {"${{ github.token }}": "test-token", "${{ github.sha }}": "abc123",
+                  "${{ needs.full-suite.result }}": outcome}
+        before = len(calls)
+        ran = subprocess.run([shutil.which("bash"), "-e", "-c", script], cwd=work, capture_output=True,
+                             text=True, encoding="utf-8", timeout=60,
+                             env={"PATH": path, **runner, **{key: values[text] for key, text in step_env.items()}})
+        assert ran.returncode == (0 if outcome == "success" else 1), ran.stdout + ran.stderr
+        method, endpoint, auth, body = calls[before]
+        assert (method, endpoint, auth) == ("POST", "/repos/acme/shop/statuses/abc123", "Bearer test-token")
+        assert json.loads(body) == {"context": "forge-full-suite", "state": outcome,
+                                    "target_url": "https://github.example/acme/shop/actions/runs/7"}
+    arguments = log.read_text("utf-8")
+    assert len(arguments.splitlines()) == 2 and "test-token" not in arguments
