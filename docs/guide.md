@@ -169,6 +169,7 @@ set the test command and CI checks as needed, then turn off the setting. In the 
 prototype's screens in the app's browser tests with `checkScreen` from `.forge/design/render-check.mjs`,
 so the rendered check starts with the first tests. Close blocks that fix until
 the `Personal data` answer is settled.
+After sign-off, `forge next` also lists `Before production` gaps. The agent starts one normal change for each light-review and "Demo only" line and does not promote while a line is open. Forge cannot see the release and refuses nothing.
 The design comes first. Before any screen, use the app's existing design. If it has none, draft
 one from the client's brand; use a neutral design when there is no brand. Every
 API a person uses gets its screen in the client's design, built by the agent when it builds the API, with no

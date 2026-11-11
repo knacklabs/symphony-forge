@@ -5,17 +5,18 @@
 Client sign-off approves the product direction, not production readiness. Plan and build the
 remaining production work through stories and reviewed pull requests. Before the first Promote:
 
-1. Confirm the client's production host, account owner, region, domain, budget and release
+1. Run `forge next`: no `Before production` line may be open, or the owner accepts the rest in writing.
+2. Confirm the client's production host, account owner, region, domain, budget and release
    approver. Check the `Personal data` answer in `docs/product/BRIEF.md`. Record the decisions,
    but no secrets, in the repo.
-2. Confirm production access, secrets, HTTPS, DNS, database access, migrations and external
+3. Confirm production access, secrets, HTTPS, DNS, database access, migrations and external
    services. Check the release in a non-production environment with a green full test run,
    the customer's main task and permissions for each role.
-3. Confirm a current database backup and a demonstrated restore. Record the recovery steps,
+4. Confirm a current database backup and a demonstrated restore. Record the recovery steps,
    the person responsible and the rollback plan for the app and migrations.
-4. Confirm health checks, error alerts, the support contact, release time and any data import
+5. Confirm health checks, error alerts, the support contact, release time and any data import
    or downtime with the client.
-5. The authorized person presses Promote. Workers never deploy, and agents never promote
+6. The authorized person presses Promote. Workers never deploy, and agents never promote
    production. Check the production address and main task after release. Use the agreed
    rollback plan if a check fails and notify the support contact.
 
