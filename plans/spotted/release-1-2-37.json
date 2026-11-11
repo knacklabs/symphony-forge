@@ -8,8 +8,8 @@
       "text": "Functional: The new pin blocks closing the release before tagging",
       "from": "blocking",
       "item": "release-1-2-37",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tforge.toml\tNot done: forge.toml has workers = \"claude\" and forge next names Claude as the builder of every part\tworkers-claude",
