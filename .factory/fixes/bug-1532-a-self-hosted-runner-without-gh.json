@@ -58,6 +58,10 @@
       "work": 1
     }
   ],
+  "land": {
+    "rounds": 1,
+    "stop": null
+  },
   "review": {
     "blocking_level": "P1",
     "branch_diff": "f2573c9b9906e08e7453f45635104e4034f4abade97fd7be8d908b38a13affcf",
@@ -110,7 +114,7 @@
     "id": "3ee7db58-0af9-45ec-b64e-b73c458fa47e",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -123,10 +127,12 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "ef789ed2c7f3699c0791106b1182ed57e88d1f40",
-    "keys": {},
-    "round": null
+    "close": "f8eeaac2-138b-4b95-8774-9d7772a1a091",
+    "head": "794bcf363c329cfb9c4e126a7b9c73d23e65c5e2",
+    "keys": {
+      "the open P0 security: keep the github token out of curl arguments in src/forge/prcheck.py": 1
+    },
+    "round": 1
   },
   "why": "Bug 1532. A self-hosted runner without gh fails the Review pull request job, and a repo's own setup step is removed on every forge sync, so the failure comes back.",
   "worker": "claude"
