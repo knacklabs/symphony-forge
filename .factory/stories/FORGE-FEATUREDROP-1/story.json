@@ -1,0 +1,37 @@
+{
+  "approval": {
+    "at": "2026-11-10T18:29:08.993854+00:00",
+    "by": "human-via-Claude",
+    "event": "toolu_016Hp9GcSmzA9ArLotzfh3F9",
+    "hash": "961ce4a7ef69fe7f82c4d357f19208f0d1c84580da62472232d44040e493d4ea",
+    "round": 3,
+    "runtime": "claude",
+    "session": "c01a489d-c76f-41c1-8371-d6f0052b027c"
+  },
+  "doc": "plans/FORGE-FEATUREDROP-1.md",
+  "status": "approved",
+  "steps": [
+    {
+      "at": "2026-11-10T17:08:21.025730+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-10T17:49:02.386925+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-11-10T18:05:32.307478+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-11-10T18:22:51.634094+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-11-10T18:29:08.994058+00:00",
+      "step": "approved"
+    }
+  ],
+  "title": "Remove a feature from a client app in one change",
+  "touches": 1
+}

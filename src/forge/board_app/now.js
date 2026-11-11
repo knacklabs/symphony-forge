@@ -142,11 +142,11 @@ function strip(shown) {
     more('asks', 'Needs you', shown.asks, ASKS));
 }
 
-// What is open before a prototype's sign-off: one quiet line, then each item with the phrase that fixes it.
+// What is open before a prototype's sign-off, or before production once it is signed off: one quiet line, then each item with the phrase that fixes it.
 function signoff(shown) {
   const { line, open: items } = shown.signoff;
   if (!line) return null;
-  return el('section', { class: 'signoff', 'aria-label': 'Open before sign-off' },
+  return el('section', { class: 'signoff', 'aria-label': line.startsWith('Before production') ? 'Open before production' : 'Open before sign-off' },
     el('p', { class: 'signoff-line' }, line),
     el('ul', {}, items.map((entry) => el('li', {}, el('span', { class: 'signoff-item' }, entry.item),
       el('span', { class: 'signoff-say' }, `Say: "${entry.say}"`)))));
