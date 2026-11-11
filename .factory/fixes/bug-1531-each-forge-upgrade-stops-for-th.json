@@ -111,8 +111,8 @@
     "id": "c469abe7-8091-47ae-addf-4d09f007604d",
     "status": "clean"
   },
-  "round": 4,
-  "status": "waiting for checks",
+  "round": 5,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-11T08:07:26.887337+00:00",
@@ -145,10 +145,10 @@
     "worker_round": 4
   },
   "stuck": {
-    "close": "2dd2dbf2-f656-49f9-8a79-e40a4497d498",
-    "head": "27d8307a49a281d4f7329b46dd4f19809f5b9f2f",
+    "close": "b295f4e6-faef-4d39-95c2-f8ef95160aea",
+    "head": "b35d88746f7db44d6610e0e260d40d08dbcb8a28",
     "keys": {},
-    "round": 3
+    "round": 4
   },
   "why": "Bug 1531. Each Forge upgrade stops for the person's choice, because the model review of the upgrade fix applies the repo's review rules, a proof-list rule raises a P1, and the one-round limit is reached.",
   "worker": "claude"
