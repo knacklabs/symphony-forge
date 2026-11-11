@@ -5,11 +5,16 @@
       "at": "2026-11-11T13:14:20.611653+00:00",
       "because": "Same Done-when as the earlier release changes",
       "done_when": "Every place that names the Forge release says v1.2.37, and the release tests pass"
+    },
+    {
+      "at": "2026-11-11T13:28:05.422288+00:00",
+      "because": "The pin is a settings change, so the Done-when names forge.toml",
+      "done_when": "The version is 1.2.37, generated files are synced, this repo is pinned to v1.2.37, and the tests pass"
     }
   ],
   "base": "e3e60b39d12488ec5808c8769a5e27bb147a1832",
   "branch": "fix/release-1-2-37",
-  "done_when": "The version is 1.2.37, generated files are synced, this repo is pinned to v1.2.37, and the tests pass",
+  "done_when": "The version is 1.2.37, generated files are synced, forge.toml pins this repo to v1.2.37, and the tests pass",
   "fix_kind": "mechanical",
   "kind": "fix",
   "known": [
