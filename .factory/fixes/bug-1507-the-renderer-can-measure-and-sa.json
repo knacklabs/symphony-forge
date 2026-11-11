@@ -24,8 +24,8 @@
       "gain": 4,
       "harm": 3,
       "line": 60,
-      "outcome": "open",
-      "reason": "",
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: Owner accepted on 11 Nov 2026: the fix has no open point; a real picture needs a real browser, which the other design tests run; the stand-in test proves the wait rejects the empty first page",
       "round": 1,
       "security": false,
       "title": "Keep the renderer regression test executable on Windows",
@@ -37,8 +37,8 @@
       "gain": 4,
       "harm": 3,
       "line": 31,
-      "outcome": "open",
-      "reason": "",
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: Owner accepted on 11 Nov 2026: the fix has no open point; a real picture needs a real browser, which the other design tests run; the stand-in test proves the wait rejects the empty first page",
       "round": 1,
       "security": false,
       "title": "Gate: test_1_renderer_waits_for_the_page_to_load",
@@ -63,7 +63,18 @@
     "branch_diff": "09aa162cdea890c61b00ff35a4dd2a20e9c98d511614726089e4952a26c02233",
     "changed": "05bfc583750fbef9639afe8c47a0a6aac8fb289a63ac923e963e57f3c05afc01",
     "commit": "fbd1273b88ee956afe3c809abc00975dae697749",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner accepted on 11 Nov 2026: the fix has no open point; a real picture needs a real browser, which the other design tests run; the stand-in test proves the wait rejects the empty first page",
+        "finding": 1
+      },
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner accepted on 11 Nov 2026: the fix has no open point; a real picture needs a real browser, which the other design tests run; the stand-in test proves the wait rejects the empty first page",
+        "finding": 2
+      }
+    ],
     "findings": [
       {
         "body": "Gain 4, Work 2, Harm 3\nRaise: Test\nCase: normal use - saving either screen picture after the target page loads.\nThe stand-in now evaluates the readiness expression, but its screenshot is still fabricated: it appends the page's HTML to a 24-byte buffer rather than rendering a PNG. The assertions at lines 91\u201395 therefore do not show that either saved picture contains the page. For example, a regression that asks Chrome to capture an empty area would pass because the stand-in ignores screenshot parameters and returns the HTML anyway. The existing real-browser viewport test checks dimensions, not page content.",
@@ -87,10 +98,10 @@
       }
     ],
     "id": "96df5e6d-683f-44f7-8145-9e46cc2adf26",
-    "status": "blocked"
+    "status": "clean"
   },
   "round": 2,
-  "status": "hotspot",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-11T09:38:58.937298+00:00",
@@ -107,8 +118,12 @@
   ],
   "stop": {
     "at": "2026-11-11T10:20:38.987394+00:00",
+    "by": "owner",
+    "choice": "accept",
     "file": "tests/test_renderer_waits_for_page.py",
-    "wait_id": "c4eaf1f1-438b-4986-8e1c-ab00ae51ee53"
+    "reason": "Owner accepted on 11 Nov 2026: the fix has no open point; a real picture needs a real browser, which the other design tests run; the stand-in test proves the wait rejects the empty first page",
+    "wait_id": "c4eaf1f1-438b-4986-8e1c-ab00ae51ee53",
+    "worker_round": 2
   },
   "stuck": {
     "close": "eadae9dd-dd34-40f6-8be7-136fa896fe4e",
