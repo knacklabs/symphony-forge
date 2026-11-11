@@ -1,10 +1,18 @@
 {
   "branch": "task/FORGE-POLISH-1-CHECKS",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-11T07:02:31.537690+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "0b9298840c46c26f8666b1484b8ec8e3cbe2b4c5",
+    "keys": {},
+    "round": null
+  },
+  "worker": "claude"
 }
