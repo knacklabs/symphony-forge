@@ -91,28 +91,32 @@ Only a genuine trade-off goes to the human, as a question with options.
    [The plan](/plans/FORGE-GENCOMMIT-1.md:70) keeps `vitest --changed <base> --passWithNoTests` from [test.mjs](/src/forge/templates/starter-python/scripts/test.mjs:71). Vitest selects changed files through Git and excludes ignored files. [Vitest source](https://raw.githubusercontent.com/vitest-dev/vitest/v3.2.4/packages/vitest/src/node/git.ts)
    Case: normal use - Only Python API code changes; the generated types are ignored, so no web test is selected and the command passes with zero tests.
    Gain 3, Work 2, Harm 3
+   Disposition: cut - the plan now says exactly what a change to the API's code runs on the web side: `api-types`, the web type check and the browser tests always; Vitest stays changed-only because an API-only change leaves every web source file the same and the generated types are type-only imports removed before tests run, so no web unit test can see it; Done-when 2 no longer promises web unit tests; cost stated (a few minutes per such fast test, estimate).
 
 9. Advisory: Plan gap: The updated selector conflicts with an existing test case.
    Raise: Plan gap
    [The plan](/plans/FORGE-GENCOMMIT-1.md:89) updates the tracked API-file case, but [the untracked API-test case](/tests/test_affected_py_starter.py:62) still requires `test:browser` to be absent.
    Case: normal use - A new API test selects the web part under the new rule, so this existing assertion fails.
    Gain 4, Work 1, Harm 2
+   Disposition: cut - only a change under `apps/api/app/` (the code that makes the contract) selects the web part; a change to API tests, migrations or config selects only `api`, so the untracked `apps/api/tests/test_new.py` case keeps `test:browser` absent and no existing untracked case changes.
 
 10. Advisory: Plan gap: The live regression conflicts with the history contract check.
     Raise: Plan gap
     [The plan](/plans/FORGE-GENCOMMIT-1.md:90) renames `HistoryEntry` in the live copy, then [the history test](/tests/test_assistant_historypy.py:26) reads that copy expecting `HistoryEntry`. The fallback selects another model, but the required error is still fixed to [the history contract](/src/forge/templates/starter-python/libs/history/contracts/src/index.ts:3), which reads only `HistoryEntry`.
     Case: normal use - The Python starter smoke run follows either named model choice and cannot satisfy both assertions as written.
     Gain 4, Work 1, Harm 2
+    Disposition: cut - `_run_live_starter` reads the generated contract right after the full run and returns it as `run["contract"]`; the contract tests read only that, and the `HistoryEntry` rename runs last in the same copy, after which no test reads the copy; the fallback model is `Member` with its own expected file `libs/organisations/contracts/src/index.ts`.
 
 11. Advisory: Functional: The conflict instruction fails when only one generated file changed.
     Raise: Functional
     [The guide step](/plans/FORGE-GENCOMMIT-1.md:105) names both paths in `git rm --cached`. Git stops if a named path has no index entry. [Git source](https://raw.githubusercontent.com/git/git/v2.47.1/builtin/rm.c)
     Case: normal use - One file has a modify/delete conflict while the other was deleted cleanly; the command fails and leaves the conflict unresolved.
     Gain 3, Work 1, Harm 2
-   Disposition: keep - below the bar (follow-up)
+    Disposition: cut - the conflict step now runs `git rm --cached --ignore-unmatch` on both paths, which keeps the removal for whichever path is still in the index and does not stop on a path already gone; `test_5` checks for `--ignore-unmatch`.
 
 12. Advisory: Test: A local move-over test does not start without the files.
     Raise: Test
     [The plan](/plans/FORGE-GENCOMMIT-1.md:99) keeps both files on disk, but later says the fix’s test starts without them. In local mode, Forge runs the test in the existing checkout ([fasttest.py](/src/forge/fasttest.py:639)).
     Case: normal use - A local test passes using the files left on disk, without proving that a fresh checkout can regenerate them.
     Gain 3, Work 2, Harm 3
+    Disposition: cut - the step now deletes the two files on disk by their two full paths and nothing else, says why that is safe (`api-types` writes both from the API code every time), then runs the repo's test command, which must pass and make both files again; the claim that the fix's test run starts without the files is removed; the git step keeps the "only these two paths, kept on disk" wording.
