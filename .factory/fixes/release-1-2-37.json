@@ -1,0 +1,15 @@
+{
+  "base": "e3e60b39d12488ec5808c8769a5e27bb147a1832",
+  "branch": "fix/release-1-2-37",
+  "done_when": "Every place that names the Forge release says v1.2.37, and the release tests pass",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-11T13:14:08.273104+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Release v1.2.37: publish what merged since v1.2.36"
+}
