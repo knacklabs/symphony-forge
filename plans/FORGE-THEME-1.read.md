@@ -203,3 +203,4 @@ Disposition: cut - the fallback no longer points to item 7. With no app, the age
     Raise: Plan gap. [The new no-app rule](/plans/FORGE-THEME-1.md:94) says to write no theme anywhere. But [the no-tools path](/plans/FORGE-THEME-1.md:100) still requires the document step, and [the starting-look step](/plans/FORGE-THEME-1.md:101) sends its theme choices to `DESIGN.md`. This is separate from the missing app theme file in finding 26.
     Case: normal use - A client runs plain `forge init` and Claude’s design tools are unavailable. Before making the first canvas, the agent is told both to record the look in `DESIGN.md` and to write no theme anywhere.
     Gain 5, Work 1, Harm 3
+Disposition: cut - the no-app rule now says: change no app file, record the look in DESIGN.md only; item 7's document step and its not-made-yet line apply, its theme-file step does not.
