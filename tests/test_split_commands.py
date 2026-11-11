@@ -162,17 +162,18 @@ HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
           '    new            Start a story branch, worktree and story doc, or promote a\n'
           '                   fix\n'
           "    done           Record a finished story's outcome sentence and dates\n",
- 'task': 'usage: forge task [-h] {start,feature} ...\n'
+ 'task': 'usage: forge task [-h] {start,feature,feature-check} ...\n'
           '\n'
           'Start a task\n'
           '\n'
           'options:\n'
-          '  -h, --help       show this help message and exit\n'
+          '  -h, --help            show this help message and exit\n'
           '\n'
           'commands:\n'
-          '  {start,feature}\n'
-          '    start          Start a task in its own branch and worktree\n'
-          '    feature        Build a feature from the starter.\n',
+          '  {start,feature,feature-check}\n'
+          '    start               Start a task in its own branch and worktree\n'
+          '    feature             Build a feature from the starter.\n'
+          '    feature-check       Check that a removed feature left nothing behind.\n',
  # The starter adds an opt-in flag; keep runner selection and the remaining CLI contract.
  'init': 'usage: forge init [-h] [--starter [{react,python}]] [--actions {yes,no}]\n'
          '                  [--test TEST] [--runner RUNNER] [--checks CHECK]\n'

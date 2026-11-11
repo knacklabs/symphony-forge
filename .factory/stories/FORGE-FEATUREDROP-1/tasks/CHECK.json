@@ -1,0 +1,241 @@
+{
+  "branch": "task/FORGE-FEATUREDROP-1-CHECK",
+  "known": [
+    {
+      "area": "check() in src/forge/feature_remove.py",
+      "file": "src/forge/feature_remove.py",
+      "gain": 4,
+      "harm": 4,
+      "line": 89,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: The check detects leftover Python feature initialization",
+      "work": 2
+    },
+    {
+      "area": "check() in src/forge/feature_remove.py",
+      "file": "src/forge/feature_remove.py",
+      "gain": 4,
+      "harm": 4,
+      "line": 117,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Refuse when the Python data model is missing",
+      "work": 2
+    },
+    {
+      "area": "check() in src/forge/feature_remove.py",
+      "file": "src/forge/feature_remove.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 50,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: The check names each feature that imports or calls the feature",
+      "work": 2
+    },
+    {
+      "area": "check() in src/forge/feature_remove.py",
+      "file": "src/forge/feature_remove.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 50,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: The check lists each leftover screen, route and menu entry",
+      "work": 2
+    },
+    {
+      "area": "check() in src/forge/feature_remove.py",
+      "file": "src/forge/feature_remove.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 46,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: The check lists each leftover Python sample-data line",
+      "work": 2
+    },
+    {
+      "area": "check() in src/forge/feature_remove.py",
+      "file": "src/forge/feature_remove.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 51,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: The check lists leftover custom access rules and tool tests",
+      "work": 2
+    },
+    {
+      "area": "check() in src/forge/feature_remove.py",
+      "file": "src/forge/feature_remove.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 50,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: The check lists the starter's leftover resource tests",
+      "work": 2
+    },
+    {
+      "area": "check() in src/forge/feature_remove.py",
+      "file": "src/forge/feature_remove.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 49,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Detect generated TypeScript project references",
+      "work": 2
+    },
+    {
+      "area": "check() in src/forge/feature_remove.py",
+      "file": "src/forge/feature_remove.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 92,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Comments and examples are not feature uses",
+      "work": 2
+    },
+    {
+      "area": "check() in src/forge/feature_remove.py",
+      "file": "src/forge/feature_remove.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 80,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: The check lists leftover routes in large generated files",
+      "work": 2
+    },
+    {
+      "area": "test_3_the_check_keeps_the_data_layer_out_of_the_list() in tests/test_feature_remove.py",
+      "file": "tests/test_feature_remove.py",
+      "gain": 3,
+      "harm": 4,
+      "line": 355,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_3_the_check_keeps_the_data_layer_out_of_the_list",
+      "work": 2
+    },
+    {
+      "area": "check() in src/forge/feature_remove.py",
+      "file": "src/forge/feature_remove.py",
+      "gain": null,
+      "harm": null,
+      "line": 65,
+      "outcome": "fixed in round 4",
+      "reason": "",
+      "round": 3,
+      "security": false,
+      "title": "Detect Nest controller prefixes without a leading slash",
+      "work": null
+    },
+    {
+      "area": "check() in src/forge/feature_remove.py",
+      "file": "src/forge/feature_remove.py",
+      "gain": null,
+      "harm": null,
+      "line": 80,
+      "outcome": "fixed in round 4",
+      "reason": "",
+      "round": 3,
+      "security": false,
+      "title": "Detect sample-data inserts through Prisma client aliases",
+      "work": null
+    },
+    {
+      "area": "check() in src/forge/feature_remove.py",
+      "file": "src/forge/feature_remove.py",
+      "gain": null,
+      "harm": null,
+      "line": 115,
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: The owner was away on 11 Nov 2026 and told the coordinator to take the recommended option. After four rounds one finding is left: some multiline comments or example texts can still make the check name a feature as a user. The check errs on the safe side (it reports more, never less), the agent then reads the named line, and the owner said at plan time that a text check keeps small gaps. It stays as a known issue",
+      "round": 3,
+      "security": false,
+      "title": "Exclude multiline comments and examples from feature users",
+      "work": null
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "94ffc1ca5339d4881930aee7594a0b456878b72e16f121b3e48b45d7fa22868b",
+    "changed": "02be4b1fbd3a46f1652dee32e3c4ed8e89f1f994c633aeaf3adf5de7477987be",
+    "commit": "c9b6f49b9a5266c93d46eda73486be81c89d7169",
+    "dismissals": [],
+    "findings": [],
+    "id": "24068f2c-3eb4-47f5-b252-5a7874b3f97f",
+    "status": "clean"
+  },
+  "round": 5,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-10T20:08:57.485640+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-10T20:29:04.251446+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-10T20:52:18.723291+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-10T21:05:52.713477+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-10T22:14:43.279161+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-10T22:45:05.550578+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-10T22:14:43.279443+00:00",
+    "by": "owner",
+    "choice": "accept",
+    "file": "src/forge/feature_remove.py",
+    "reason": "The owner was away on 11 Nov 2026 and told the coordinator to take the recommended option. After four rounds one finding is left: some multiline comments or example texts can still make the check name a feature as a user. The check errs on the safe side (it reports more, never less), the agent then reads the named line, and the owner said at plan time that a text check keeps small gaps. It stays as a known issue",
+    "wait_id": "c46c7fa9-354c-475f-bf6f-81ebf23af7fb",
+    "worker_round": 4
+  },
+  "stuck": {
+    "close": "07e43e5b-5a62-41b6-8f05-83510592e326",
+    "head": "0edfe59f424465551ec45978c641b54523bc0695",
+    "keys": {},
+    "round": 4
+  },
+  "worker": "claude"
+}
