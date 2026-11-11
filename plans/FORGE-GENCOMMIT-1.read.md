@@ -1,18 +1,18 @@
 ---
 reader: codex (gpt-6.1-terra)
-read_at: 2026-11-11T10:22:45.999192+00:00
-seconds: 615.562
-read_hash: d9421ea6618f653404fb70085efccf409d4923ef
-round: 1
+read_at: 2026-11-11T10:35:00.157477+00:00
+seconds: 410.472
+read_hash: b428796f6d849b0b967744925b892241c764404d
+round: 2
 passed: no
-doc_seen: d9421ea6618f653404fb70085efccf409d4923ef
+doc_seen: b428796f6d849b0b967744925b892241c764404d
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+notes_seen: 1a11e8d49a75b1906b286913ac9d5e11af0b7c29
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a1ca18-47ba-77a0-80ef-f0460a3afaad
 session:
-loop_choice:
-loop_reason:
+loop_choice: more
+loop_reason: Owner's standing choice for 11 Nov 2026: one more round for test and plan-gap notes
 ---
 # Cold read notes
 
@@ -83,3 +83,36 @@ Only a genuine trade-off goes to the human, as a question with options.
    Case: normal use - A fast command that lists `tsc --build` but omits the contract projects can pass both checks while missing an API incompatibility.
    Gain 3, Work 2, Harm 3
    Disposition: cut - the selection test now also asserts that the listed `tsc --build` line names the shared API types, the history and projects contract projects and the web app; a new live block in `test_starter_tree.py` runs `node scripts/test.mjs <base>` for real after an API-only change that breaks a web type and asserts it fails with the TypeScript error in `libs/history/contracts/src/index.ts`.
+
+## Round 2
+
+8. Advisory: Not done: An API-only fast run can execute no web unit tests.
+   Raise: Not done
+   [The plan](/plans/FORGE-GENCOMMIT-1.md:70) keeps `vitest --changed <base> --passWithNoTests` from [test.mjs](/src/forge/templates/starter-python/scripts/test.mjs:71). Vitest selects changed files through Git and excludes ignored files. [Vitest source](https://raw.githubusercontent.com/vitest-dev/vitest/v3.2.4/packages/vitest/src/node/git.ts)
+   Case: normal use - Only Python API code changes; the generated types are ignored, so no web test is selected and the command passes with zero tests.
+   Gain 3, Work 2, Harm 3
+
+9. Advisory: Plan gap: The updated selector conflicts with an existing test case.
+   Raise: Plan gap
+   [The plan](/plans/FORGE-GENCOMMIT-1.md:89) updates the tracked API-file case, but [the untracked API-test case](/tests/test_affected_py_starter.py:62) still requires `test:browser` to be absent.
+   Case: normal use - A new API test selects the web part under the new rule, so this existing assertion fails.
+   Gain 4, Work 1, Harm 2
+
+10. Advisory: Plan gap: The live regression conflicts with the history contract check.
+    Raise: Plan gap
+    [The plan](/plans/FORGE-GENCOMMIT-1.md:90) renames `HistoryEntry` in the live copy, then [the history test](/tests/test_assistant_historypy.py:26) reads that copy expecting `HistoryEntry`. The fallback selects another model, but the required error is still fixed to [the history contract](/src/forge/templates/starter-python/libs/history/contracts/src/index.ts:3), which reads only `HistoryEntry`.
+    Case: normal use - The Python starter smoke run follows either named model choice and cannot satisfy both assertions as written.
+    Gain 4, Work 1, Harm 2
+
+11. Advisory: Functional: The conflict instruction fails when only one generated file changed.
+    Raise: Functional
+    [The guide step](/plans/FORGE-GENCOMMIT-1.md:105) names both paths in `git rm --cached`. Git stops if a named path has no index entry. [Git source](https://raw.githubusercontent.com/git/git/v2.47.1/builtin/rm.c)
+    Case: normal use - One file has a modify/delete conflict while the other was deleted cleanly; the command fails and leaves the conflict unresolved.
+    Gain 3, Work 1, Harm 2
+   Disposition: keep - below the bar (follow-up)
+
+12. Advisory: Test: A local move-over test does not start without the files.
+    Raise: Test
+    [The plan](/plans/FORGE-GENCOMMIT-1.md:99) keeps both files on disk, but later says the fix’s test starts without them. In local mode, Forge runs the test in the existing checkout ([fasttest.py](/src/forge/fasttest.py:639)).
+    Case: normal use - A local test passes using the files left on disk, without proving that a fresh checkout can regenerate them.
+    Gain 3, Work 2, Harm 3
