@@ -104,7 +104,7 @@
   },
   "round": 2,
   "stacked_on": "FORGE-THEME-1/DESIGN",
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-11T01:17:05.874438+00:00",
@@ -121,8 +121,12 @@
   ],
   "stop": {
     "at": "2026-11-11T01:58:17.794063+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "tests/test_render_words.py",
-    "wait_id": "531b79b2-368b-4d8a-898a-2513c8599f4b"
+    "reason": "Owner asleep; overnight rule: take the recommended option. One finding left, about one test; one more round to repair it, simpler: exercise the true-to-false sample-data change inside the first-tests fix. Owner is told on return.",
+    "wait_id": "531b79b2-368b-4d8a-898a-2513c8599f4b",
+    "worker_round": 2
   },
   "stuck": {
     "close": "e2e03d48-4bb0-48ba-8d24-7ec69549c963",
