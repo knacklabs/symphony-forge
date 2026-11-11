@@ -4,14 +4,82 @@
   "done_when": "A part can start on top of a part merged with GitHub's button, and the existing test that refuses that case is changed to match.",
   "fix_kind": "backend",
   "kind": "fix",
+  "known": [
+    {
+      "area": "test_2_unsafe_starts_name_the_blocker_without_creating_work() in tests/test_stack_start.py",
+      "file": "tests/test_stack_start.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 288,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: Exercise forge next after a GitHub-button merge",
+      "work": 2
+    },
+    {
+      "area": "stack_base() in src/forge/task.py",
+      "file": "src/forge/task.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 578,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: Update the shipped stacking instructions",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "be8d11b51553416235ce1ebe0a1728c77c06b9c39b0d761a08c61f399fe240b4",
+    "changed": "60168ad238ad42079919e4884919dbab27a85e46b5478861ac2f6e3967f4c642",
+    "commit": "c94bce8e8bfa6ff91c531bf1275154b907199be3",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - a coordinator follows Forge's instructions after someone squash-merges the lower part on GitHub.\nThe `stacked-human-merged` case checks `forge task start`, but never checks `forge next`, which is where the reported bug appeared. It also manually rebases the stacked part before calling close (`tests/test_stack_start.py:295-300`), so it does not prove that the suggested close step makes the part usable. The existing next test at `tests/test_stack_status.py:48-58` uses `forge merge`, not a GitHub-button merge. The listed proof would pass if `forge next` still reported the old wait for a button-merged base, or if close could not replay that base. Exercise the next/close/start sequence for the button merge.",
+        "file": "tests/test_stack_start.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 288,
+        "priority": "P1",
+        "title": "Gate: Exercise forge next after a GitHub-button merge",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 1, Harm 3\nRaise: Gate\nCase: normal use - an agent decides whether it can start another part after the lower part was merged on GitHub.\nThis change makes that start possible, but neither the shipped skill nor the worker brief is updated. The brief still describes the base as merging through Forge at `src/forge/templates/brief.md:145-146`, and `docs/guide.md:600-601` likewise describes Forge merging the lower part as the route to making the stacked part a base. The repository's review rule requires the skill or brief to change when what a coordinator or worker can do changes; the shipped guidance needs to describe the newly allowed path.",
+        "file": "src/forge/task.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 578,
+        "priority": "P1",
+        "title": "Gate: Update the shipped stacking instructions",
+        "work": 1
+      }
+    ],
+    "id": "e44beeed-65e6-48f2-a0b6-89b03ecef6a5",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-11T09:39:33.742791+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-11T10:19:32.033831+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-11-11T10:19:32.045932+00:00",
+    "file": "tests/test_stack_start.py",
+    "wait_id": "7a973813-6cee-425e-b6cb-e4ba52148561"
+  },
   "stuck": {
     "close": null,
     "head": "b06cfca0c6118bb05d1da322be2edff22d2d2820",
