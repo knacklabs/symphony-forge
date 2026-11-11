@@ -1,18 +1,18 @@
 ---
 reader: codex (gpt-6.1-terra)
-read_at: 2026-11-11T10:53:25.139821+00:00
-seconds: 276.997
-read_hash: 608ea18fd56cf4c7776332a0b45d3dd114902ae7
-round: 4
+read_at: 2026-11-11T11:03:12.765666+00:00
+seconds: 180.631
+read_hash: 2fac06c23bb89cd2077fa21b209e41c8a0148796
+round: 5
 passed: no
-doc_seen: 608ea18fd56cf4c7776332a0b45d3dd114902ae7
+doc_seen: 2fac06c23bb89cd2077fa21b209e41c8a0148796
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 909311d4b38b2a1c3fac026578d6e2d4d9aa1fec
+notes_seen: 8b9a2004e36776cc9a4b77125b11a6a6cf8c0880
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a1ca18-47ba-77a0-80ef-f0460a3afaad
 session:
-loop_choice:
-loop_reason:
+loop_choice: more
+loop_reason: Owner's standing choice for 11 Nov 2026: one more round for one test-order point
 ---
 # Cold read notes
 
@@ -153,3 +153,11 @@ Only a genuine trade-off goes to the human, as a question with options.
     Case: normal use - An app already stopped tracking one generated file; the offered fix fails before removing the other from Git.
     Gain 3, Work 1, Harm 2
     Disposition: cut - the trigger now fires when one or both files are tracked, and the main step now runs `git rm --cached --ignore-unmatch` on both paths, the same as the conflict step, so it removes whichever is still tracked and does not stop on an untracked one; the delete step needs nothing for a missing file; `test_5` checks `--ignore-unmatch` in both steps and the "one or both" trigger.
+
+## Round 5
+
+17. Advisory: Gate: The fast regression can replace the full run’s API report.
+    Raise: Gate
+    [The plan](/plans/FORGE-GENCOMMIT-1.md:83) runs the callback before the helper reads its API report ([test_starter_tree.py](/tests/test_starter_tree.py:340)). The callback’s fast run executes `test:api`, which writes that same report ([test.mjs](/src/forge/templates/starter-python/scripts/test.mjs:66), [package.json](/src/forge/templates/starter-python/package.json:14)).
+    Case: normal use - If a change removes API tests from the full test command, the fast run can create a passing report afterward, so the existing smoke assertions still pass.
+    Gain 3, Work 2, Harm 3
