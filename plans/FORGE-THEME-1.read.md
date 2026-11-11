@@ -1,18 +1,18 @@
 ---
 reader: codex (gpt-6.1-terra)
-read_at: 2026-11-11T02:36:55.551611+00:00
-seconds: 225.735
-read_hash: 49ae538f2565f9c9570a29d224a44a8a8902b548
-round: 6
+read_at: 2026-11-11T02:46:38.459204+00:00
+seconds: 503.327
+read_hash: cae4a0de60360550b50a6cc51a7f1161c72e9601
+round: 7
 passed: no
-doc_seen: 49ae538f2565f9c9570a29d224a44a8a8902b548
+doc_seen: cae4a0de60360550b50a6cc51a7f1161c72e9601
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 3450a38bbc95dc0f233ea5b9161b47d0fff330bb
+notes_seen: b125e0ffb55835544c104100b37b2c7e08b705ec
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a1c68c-71c0-7f11-be78-6c5527a290a1
 session:
 loop_choice: more
-loop_reason: Owner chose one more round on 11 Nov 2026: one-sentence repair for a repo with no app
+loop_reason: Owner chose one more round on 11 Nov 2026: with no app, the look is recorded in DESIGN.md only
 ---
 # Cold read notes
 
@@ -196,3 +196,10 @@ Disposition: cut - the plan now says the client's main screens, up to three and 
     Case: normal use - A new client runs plain `forge init` and has no app yet. The agent has no app theme file in which to perform the replacement path’s required code step.
     Gain 5, Work 3, Harm 3
 Disposition: cut - the fallback no longer points to item 7. With no app, the agent writes no theme and makes the system when the app exists; an app with its own theme file keeps its look there, with no design system and no approved copy, until it has the starter's parts and names.
+
+## Round 7
+
+27. Blocking: Plan gap: The no-app rule conflicts with the no-tools design record.
+    Raise: Plan gap. [The new no-app rule](/plans/FORGE-THEME-1.md:94) says to write no theme anywhere. But [the no-tools path](/plans/FORGE-THEME-1.md:100) still requires the document step, and [the starting-look step](/plans/FORGE-THEME-1.md:101) sends its theme choices to `DESIGN.md`. This is separate from the missing app theme file in finding 26.
+    Case: normal use - A client runs plain `forge init` and Claude’s design tools are unavailable. Before making the first canvas, the agent is told both to record the look in `DESIGN.md` and to write no theme anywhere.
+    Gain 5, Work 1, Harm 3
