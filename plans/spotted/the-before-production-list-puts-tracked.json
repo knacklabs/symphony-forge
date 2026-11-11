@@ -8,8 +8,8 @@
       "text": "Not done: The Demo only row names only files whose names use letters, digits and the signs . _ / -, and says \"and N other files\"\u2026",
       "from": "blocking",
       "item": "the-before-production-list-puts-tracked",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\ttests/test_prodgap_list.py\tGate: Demo only unsafe-file counting test\tthe-before-production-list-puts-tracked",
