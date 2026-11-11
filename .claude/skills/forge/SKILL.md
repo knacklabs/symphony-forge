@@ -1580,14 +1580,14 @@ recording succeeds; if the repo pins a newer release, install that pinned releas
   Parts can share these test paths without an After link. Explicit After links still apply.
   A refusal caused by a Scope overlap names the shared path, or the glob when its literal prefix is empty.
   Put a shared production file with its names and stubs in the first task that needs it. Tasks that need it
+  wait for that task through After, then own only their files. Each row names the Done-when items
+  it Covers, its Scope (the paths it may change) and its Tests. A task that covers nothing is cut;
+  work wanted later goes to Notes, or the linked spec's Out of scope.
   Keep a file that a script can make at build time (a generated API contract or the types made from
   it) out of the repo and out of every Scope, when nobody needs it stored. When the repo keeps such a
   file on purpose, give its change to one first part that the other parts wait for. Three or more
   parts that list the same file make the plan read print a `Shared file:` note. The `Shared file:` note
   is advice: it does not stop the read or the approval, and it looks only at the plan being read.
-  wait for that task through After, then own only their files. Each row names the Done-when items
-  it Covers, its Scope (the paths it may change) and its Tests. A task that covers nothing is cut;
-  work wanted later goes to Notes, or the linked spec's Out of scope.
 - The Tests column names one end-to-end case per Done-when item that changes runtime behaviour,
   and none for settings, docs, deletions or test-only items: the check the item names proves those.
 - Keep tasks small: at most three Done-when items and about 400 changed lines each, counting
