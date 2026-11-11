@@ -3,10 +3,11 @@ from __future__ import annotations
 
 import argparse
 import os
+import tomllib
 from pathlib import Path
 from typing import Any
 
-from forge import repo, review
+from forge import repo, review, sync
 
 REFUSALS = {
     "bad_skip": ("A review skip needs a person's name and reason, without dismissals or a review-loop choice.",
@@ -49,3 +50,18 @@ def label(result: dict[str, Any], *, reason: bool = False) -> str:
 def readiness(result: dict[str, Any]) -> str:
     return (f"no model review (skipped by {result['skipped']['by']})"
             if result.get("skipped") else "a clean review")
+
+
+def upgrade_only(top: Path, item: str, cfg: dict[str, Any], base: str, head: str, files: list[str]) -> bool:
+    """True when the branch changed only forge.toml's top-level version, this item's record and
+    files exactly as forge sync writes them. Anything else, or any error, gets the model review."""
+    try:
+        old = tomllib.loads(repo.git("show", f"{base}:forge.toml", cwd=top))
+        new = tomllib.loads(repo.git("show", f"{head}:forge.toml", cwd=top))
+        if (new.get("version") == old.get("version") or
+                {k: v for k, v in new.items() if k != "version"} != {k: v for k, v in old.items() if k != "version"}):
+            return False
+        rest = set(files) - {"forge.toml", repo.state_path(item)}
+        return rest <= sync.synced(top, cfg, base, head, sorted(rest))
+    except Exception:  # noqa: BLE001 - a comparison that cannot be made means a normal review
+        return False
