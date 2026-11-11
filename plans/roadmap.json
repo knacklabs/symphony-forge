@@ -618,6 +618,12 @@
       "title": "Close shows what a changed screen looks like",
       "status": "pending",
       "order": 118
+    },
+    {
+      "key": "FORGE-PROSPECT-1",
+      "title": "Research the prospect before a prototype and propose features from what is found",
+      "status": "pending",
+      "order": 119
     }
   ],
   "epics": [
