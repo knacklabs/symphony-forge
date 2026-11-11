@@ -1,6 +1,7 @@
 import { spawnSync } from 'node:child_process';
 
 // HTTP tests have no import graph: an API change runs the API suite.
+// The web types come from the API's code, so a change there also checks the web.
 export function affected(base) {
   if (!base) return null;
   const files = [];
@@ -14,6 +15,6 @@ export function affected(base) {
   if (files.some(file => !['apps/api/', 'apps/web/', 'libs/'].some(root => file.startsWith(root)))) return null;
   const parts = [];
   if (files.some(file => file.startsWith('apps/api/'))) parts.push('api');
-  if (files.some(file => file.startsWith('apps/web/') || file.startsWith('libs/'))) parts.push('web');
+  if (files.some(file => file.startsWith('apps/web/') || file.startsWith('libs/') || file.startsWith('apps/api/app/'))) parts.push('web');
   return parts;
 }

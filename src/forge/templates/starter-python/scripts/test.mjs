@@ -58,8 +58,8 @@ try {
   }
   if (parts === null) run(corepack, ['pnpm', 'test']);
   else {
+    if (api || web) run(corepack, ['pnpm', 'run', 'api-types']);
     if (api) {
-      run(corepack, ['pnpm', 'run', 'api-types']);
       for (const args of [['ruff', 'check'], ['ruff', 'format', '--check'], ['mypy']]) {
         run('uv', ['--directory', 'apps/api', 'run', ...args]);
       }

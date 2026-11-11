@@ -48,6 +48,12 @@ The root `package.json` pins pnpm and has a `test` script for lint, type checks,
 tests and browser tests (see testing.md). Nx builds and type-checks the web and API apps and checks
 the module boundaries.
 
+A file that a script makes from the app's code every time (the Prisma client, an API contract and the
+types made from it) stays out of git. It goes in `.gitignore`, and the type check and test scripts that
+need it run its script first, as `prisma generate` runs first in `build` and `typecheck`. Migrations and
+lock files are records: commit them. An app that already commits such a file keeps doing so until a fix
+moves it out.
+
 An app set up before Nx keeps its npm workspaces and its Dockerfile.
 An app set up before this release keeps its package manager, lockfile and folder layout.
 An app set up before this release keeps its own organisation, date, export, history and error code.
