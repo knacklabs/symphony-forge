@@ -1417,6 +1417,9 @@ shares its cache across worktrees, and stays silent when GitHub cannot be reache
 
 An upgrade is one fix. Its pull request carries the new version and every file Forge keeps in the
 repo, rewritten by that version. One command does all of it.
+Close checks the fix that `forge upgrade` made mechanically instead of asking a model when it changes only
+the value of forge.toml's `version` line and files exactly as that version's sync writes them (content and
+mode). Any other change, or an earlier review of that fix that still blocks, gets the normal model review.
 Use `forge upgrade <release>` directly, not `forge fix start`: upgrade creates its own fix.
 `forge next` gives `Next: forge upgrade <release>` when its release check finds a newer release
 than the repo pins. If upgrade refuses outside the default branch, move to the main checkout.

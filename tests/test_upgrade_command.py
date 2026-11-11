@@ -335,14 +335,22 @@ def _rerun_after_the_commit(up):
 
 
 def _close_refuses(up):
-    # A P1 at the bar proves that upgrade returns close's refusal and owner question.
+    # A P1 at the bar proves that upgrade returns close's refusal and owner question. A pure
+    # upgrade skips the model review, so a hand edit in the fix brings the review back.
+    assert up.run(RELEASE).returncode == 0
+    (up.folder / "docs").mkdir(exist_ok=True)
+    (up.folder / "docs" / "notes.md").write_text("hand edit\n", encoding="utf-8")
+    up.repo.git("add", "docs/notes.md", cwd=up.folder)
+    up.repo.git("-c", f"core.hooksPath={up.tmp / 'no-hooks'}", "commit", "-q", "-m", "Add a note",
+                cwd=up.folder)
     up.env.reviews(blocked({**finding("P1", "The launcher pins the wrong release", ".forge/hooks.sh"),
                             "body": "Gain 4, Work 1, Harm 2\nThe launcher runs the wrong release."}))
 
     done = up.run(RELEASE)
 
+    steps = ours(up, started=False, installed=False, committed=False)
     assert done.returncode == 1  # close's own refusal code
-    assert [line for line in done.stdout.splitlines() if line in ours(up)] == ours(up)
+    assert [line for line in done.stdout.splitlines() if line in steps] == steps
     assert "1. P1 The launcher pins the wrong release (.forge/hooks.sh:1)" in done.stdout
     assert "reached the round limit with open findings, so Forge stopped." in done.stderr
     assert "Ask the human" in done.stderr
