@@ -134,6 +134,7 @@ def test_4_a_fix_that_forge_upgrade_did_not_make_gets_a_review(env, name, why):
     assert len(env.review_calls()) == 1
 
 
+@pytest.mark.platform
 def test_5_an_earlier_blocking_finding_is_not_replaced_by_the_mechanical_result(unsynced_up):
     up = _ready(unsynced_up, False)
     assert up.run(RELEASE).returncode == 0
