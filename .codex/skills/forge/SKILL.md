@@ -1050,6 +1050,8 @@ design files for sign-off. A sample-data repo may approve its rules page and sta
 open `Personal data` answer. A repo that never declared sample data keeps today's refusal at rules
 page approval.
 
+After sign-off, read `Before production` in `forge next`. First check what is already in progress, so no line is started twice. Leave sample data by the existing step: settle the `Personal data` answer, set the test command and checks, then the coordinator turns `sample_data` off. For the light-review line and the "Demo only" line, start one normal change with `forge start "<the row's Say text>"` and keep its text naming the parts the line lists, so the line clears. A normal change has the full review, and its tests follow the repo's settings once sample data is off. Do not press or ask for Promote while a line is open, unless the owner accepts the rest in chat. Tell the owner plainly that Forge cannot see the release or whether the app still shows made-up data, and that it refuses nothing.
+
 For a prototype without the setting, fix held findings from one sign-off review in one fix. Run the
 printed repair command from the sign-off checkout that the refusal names. The repair includes the
 sign-off record and publishes its earlier review commits, even when that checkout's first fix
