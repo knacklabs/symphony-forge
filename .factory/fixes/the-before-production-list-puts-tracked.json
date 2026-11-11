@@ -110,7 +110,7 @@
     "id": "be1f189e-31dc-4108-896f-7a34b4301d38",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -132,10 +132,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": null,
-    "head": "daf4645d9ac5fe190895fb9dd97471ca637016f9",
+    "close": "b27f5dab-1e93-48b2-b51c-be8cd09b5b2c",
+    "head": "a71a8f53c28cced029b04457a51cf6ea62dabaca",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "The Before production list puts tracked file names into the Demo only row's Say text, which is printed inside double quotes, so a file name with shell characters could run on the agent's machine when pasted into a command.",
   "worker": "claude"
