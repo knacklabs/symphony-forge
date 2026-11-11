@@ -1,13 +1,170 @@
 {
   "base": "040846c6c5c32d79acd3d39aff01d16c7fc03832",
   "branch": "task/FORGE-RENDER-1-WORDS",
+  "known": [
+    {
+      "area": "src/forge/templates/brief.md",
+      "file": "src/forge/templates/brief.md",
+      "gain": 3,
+      "harm": 3,
+      "line": 582,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Honor a recorded yes for the phone view",
+      "work": 1
+    },
+    {
+      "area": "src/forge/templates/brief.md",
+      "file": "src/forge/templates/brief.md",
+      "gain": 4,
+      "harm": 3,
+      "line": 582,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Include rendered checks in the tests selected for close",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/review.md",
+      "file": "src/forge/templates/review.md",
+      "gain": 3,
+      "harm": 3,
+      "line": 337,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: A new client repo gets the check, the question about the phone view and the review rule when it starts.",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/brief.md",
+      "file": "src/forge/templates/brief.md",
+      "gain": 4,
+      "harm": 3,
+      "line": 578,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: A sample-data prototype runs no rendered check before sign-off. The check starts with its first tests.",
+      "work": 2
+    },
+    {
+      "area": "test_4_new_and_existing_repos_get_the_rendered_check_and_the_phone_question() in tests/test_render_words.py",
+      "file": "tests/test_render_words.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 60,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: tests/test_render_words.py::test_4_new_and_existing_repos_get_the_rendered_check_and_the_phone_question",
+      "work": 2
+    },
+    {
+      "area": "test_5_a_sample_data_prototype_runs_no_rendered_check_before_signoff() in tests/test_render_words.py",
+      "file": "tests/test_render_words.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 91,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: tests/test_render_words.py::test_5_a_sample_data_prototype_runs_no_rendered_check_before_signoff",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "646c7a0bfd475e716dab0f9ee6868418817f60478282147cd6cc56af2b09446c",
+    "changed": "9a31ea07ca77ef16c87cecc7cb05c6f7480f2dd798ed1b732e7b8cb2f124d43b",
+    "commit": "5c1ac34269a00344838bd14393b58aa05cec0139",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 1, Harm 3\nRaise: Functional\nCase: normal use - the customer answers yes and the brief records `Phone view: yes`. The question in `src/forge/templates/skill.md:779` is a yes-or-no question, and `skill.md:797` says to record the answer. This instruction sets `phone: true` only for the literal answer `desktop and phone`, so that valid yes answer leaves new screens checked at desktop width only. The review rule checks for a `checkScreen` entry, not whether its phone flag reflects the answer.",
+        "file": "src/forge/templates/brief.md",
+        "gain": 3,
+        "harm": 3,
+        "line": 582,
+        "priority": "P1",
+        "title": "Functional: Honor a recorded yes for the phone view",
+        "work": 1
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - an adopted app has Playwright browser tests but its configured `fast_test` runs changed Vitest tests only. Adding a render entry to the Playwright suite does not make it run at close: `src/forge/review.py:368` selects `fast_test`, and the generated PR check also uses change-test selection (`src/forge/prcheck.py:256`). This is a supported configuration; `src/forge/templates/skill.md:1212` even recommends changed-only commands. The review rule sees the entry, so a screen with a rendered problem can close green without the promised check running.",
+        "file": "src/forge/templates/brief.md",
+        "gain": 4,
+        "harm": 3,
+        "line": 582,
+        "priority": "P1",
+        "title": "Functional: Include rendered checks in the tests selected for close",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Not done\nCase: normal use - a new non-sample-data prototype builds a screen before sign-off and the worker omits its render entry. Prototype fixes receive the light review: `src/forge/review.py:344` uses `review-light.md` instead of the rules block containing this instruction, and `review.py:178` makes that review P0-only. The promised P1 rendered-check rule therefore neither reaches the reviewer nor blocks the change, so the missing screen can merge.",
+        "file": "src/forge/templates/review.md",
+        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
+        "gain": 3,
+        "harm": 3,
+        "line": 337,
+        "priority": "P1",
+        "title": "Not done: A new client repo gets the check, the question about the phone view and the review rule when it starts.",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done\nCase: normal use - a sample-data prototype is signed off and its coordinator enables the first tests without changing a screen. The sample-data brief at `src/forge/templates/brief.md:733` previously prohibited adding tests, while the post-sign-off steps at `src/forge/templates/skill.md:679` only configure tests and turn off the setting. This new instruction adds render entries only when a screen is built or changed, so the first test run can have no render list and run no rendered check at all.",
+        "file": "src/forge/templates/brief.md",
+        "gain": 4,
+        "harm": 3,
+        "line": 578,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: A sample-data prototype runs no rendered check before sign-off. The check starts with its first tests.",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - a new or earlier-adopted client starts a UI change. This test reads the worker and review templates directly rather than checking the instructions delivered by Forge, so it passes even though light prototype reviews omit the new rule. Its app-preservation assertion at lines 65\u201368 is also vacuous for existing files: the adopted fixture and seed contain no files under `apps/`, `libs/` or `scripts/`, and no `package.json`. Exercise the delivered prompts and preserve actual app files in the upgrade case.",
+        "file": "tests/test_render_words.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 60,
+        "priority": "P1",
+        "title": "Gate: tests/test_render_words.py::test_4_new_and_existing_repos_get_the_rendered_check_and_the_phone_question",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - a sample-data prototype is signed off and its first tests are enabled. This test never records client sign-off or creates a rendered check. Its configured command, defined in `tests/test_sample_setup.py:70`, only writes a marker, so the second iteration passes even if no screen is ever checked after sign-off. It proves that a generic test command runs after changing the setting, but not the named rendered-check behavior.",
+        "file": "tests/test_render_words.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 91,
+        "priority": "P1",
+        "title": "Gate: tests/test_render_words.py::test_5_a_sample_data_prototype_runs_no_rendered_check_before_signoff",
+        "work": 2
+      }
+    ],
+    "id": "fee1e798-a80b-48c2-8c94-cfb027002874",
+    "status": "blocked"
+  },
   "round": 1,
   "stacked_on": "FORGE-THEME-1/DESIGN",
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-11T01:17:05.874438+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-11T01:36:41.570687+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
