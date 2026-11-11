@@ -136,6 +136,11 @@ def test_3_close_reports_a_theme_that_differs_from_the_approved_copy(env, tmp_pa
     env.commit(where, CSS, "/* forge-ui-ignore theme-drift --font-heading (light): Font did not load */\n" + georgia)
     assert close(item)[0] == 0
 
+    # A change to the app's theme file alone, with no screen and no copy change, is checked.
+    only, _ = start("theme", CSS, drift)
+    code, out = close(only)
+    assert code == 1 and "theme-drift: --primary (light) is oklch(0.5 0 0) in the app" in out, out
+
     # A change to the approved copy alone is checked, and only the committed files count.
     alone, there = start("copy", COPY, TOKENS.replace('"light": "oklch(0.205 0 0)"', '"light": "oklch(0.3 0 0)"', 1))
     finding = "--primary (light) is oklch(0.205 0 0) in the app and oklch(0.3 0 0)"
