@@ -1,0 +1,53 @@
+{
+  "approval": {
+    "at": "2026-11-11T06:33:34.960634+00:00",
+    "by": "human-via-Claude",
+    "event": "toolu_01Xa6LZoJv67SKhx5Yw9Pzn5",
+    "hash": "f70f5998c27eddcacc0b215a2dd7d97b6debc767e2df2fdce8662b5879c8ee68",
+    "round": 6,
+    "runtime": "claude",
+    "session": "c01a489d-c76f-41c1-8371-d6f0052b027c"
+  },
+  "doc": "plans/FORGE-BENCH-1.md",
+  "status": "approved",
+  "steps": [
+    {
+      "at": "2026-11-10T17:10:38.935235+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-10T17:31:39.771718+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-11-10T17:50:18.901714+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-11-10T17:56:31.820272+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-11-10T18:04:05.886722+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-11-10T18:07:00.337511+00:00",
+      "step": "approved"
+    },
+    {
+      "at": "2026-11-10T19:37:00.269808+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-11-10T19:44:35.568575+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-11-11T06:33:34.960816+00:00",
+      "step": "approved"
+    }
+  ],
+  "title": "Score each Forge release on the same reference app",
+  "touches": 2
+}

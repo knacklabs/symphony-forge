@@ -1,0 +1,144 @@
+{
+  "branch": "task/FORGE-BENCH-1-SCORE",
+  "known": [
+    {
+      "area": "benchmark/checks.toml",
+      "file": "benchmark/checks.toml",
+      "gain": 5,
+      "harm": 5,
+      "line": 13,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Data loss: Isolate the benchmark's Docker Compose project",
+      "work": 2
+    },
+    {
+      "area": "start_app() in scripts/bench_score.py",
+      "file": "scripts/bench_score.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 52,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Wait for app setup before running the checks",
+      "work": 2
+    },
+    {
+      "area": "benchmark/checks.toml",
+      "file": "benchmark/checks.toml",
+      "gain": 4,
+      "harm": 3,
+      "line": 10,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Avoid fixed Compose ports during scoring",
+      "work": 2
+    },
+    {
+      "area": "benchmark/checks/job.mjs",
+      "file": "benchmark/checks/job.mjs",
+      "gain": 4,
+      "harm": 3,
+      "line": 6,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: a check for each of sign-in, a list, a form, a dashboard and one job",
+      "work": 1
+    },
+    {
+      "area": "benchmark/checks/design-count.mjs",
+      "file": "benchmark/checks/design-count.mjs",
+      "gain": 4,
+      "harm": 3,
+      "line": 5,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: the design checker's problem count",
+      "work": 1
+    },
+    {
+      "area": "benchmark/checks/design-count.mjs",
+      "file": "benchmark/checks/design-count.mjs",
+      "gain": 4,
+      "harm": 3,
+      "line": 10,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Count an unavailable design checker as a failed check",
+      "work": 1
+    },
+    {
+      "area": "benchmark/checks/dashboard.mjs",
+      "file": "benchmark/checks/dashboard.mjs",
+      "gain": 3,
+      "harm": 3,
+      "line": 7,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: every one of the five has an expected check that finds it by role and label",
+      "work": 2
+    },
+    {
+      "area": "benchmark/checks/job.mjs",
+      "file": "benchmark/checks/job.mjs",
+      "gain": 4,
+      "harm": 3,
+      "line": 5,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Check the job without requiring a backdated order",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "7101a494ae0527f215655300a907dc5f9063d30123d55b435dc6534165b241e9",
+    "changed": "d421528b10f3cffdf7dbf99e12062879b1d5ad2c9643e722505daa3c2e026b8b",
+    "commit": "5936a9b9fd72f73543af40a5a8b6ab157d893cc3",
+    "dismissals": [],
+    "findings": [],
+    "id": "8585a1a5-91a6-4abe-b7bc-2cd11fb302ee",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-11T06:33:48.588659+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-11T06:48:59.992362+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-11T07:05:22.195767+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "94555c69-f6fb-46fd-8850-39bde6954304",
+    "head": "f2368da40040e627805d8ef9a90c5cad9b69bdc2",
+    "keys": {
+      "the open P0 data loss: isolate the benchmark's docker compose project in benchmark/checks.toml": 1
+    },
+    "round": 1
+  },
+  "worker": "claude"
+}
