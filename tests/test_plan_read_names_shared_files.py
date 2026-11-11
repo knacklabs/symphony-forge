@@ -12,6 +12,7 @@ from test_scope_overlap_explains_waits import _prepare
 from test_story import DOC, claude_plan, hook, new_story, setup
 from test_tools_native_reads import native_host  # noqa: F401  (the session fixture)
 
+STORY = "FORGE-GENFILE-1"
 pytestmark = pytest.mark.platform
 
 OLD = re.search(r"\| ID \|.*?\n\nNew moving parts", DOC, re.S)[0]
