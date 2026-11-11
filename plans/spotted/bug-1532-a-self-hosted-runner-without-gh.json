@@ -43,6 +43,17 @@
       "item": "bug-1532-a-self-hosted-runner-without-gh",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/prcheck.py\tThe nightly full-suite status step still needs gh; its job has no checkout or Python, so a gh-less self-hosted runner still fails there.",
+      "kind": "edge",
+      "path": "src/forge/prcheck.py",
+      "line": 340,
+      "text": "The nightly full-suite status step still needs gh; its job has no checkout or Python, so a gh-less self-hosted runner still fails there.",
+      "from": "worker",
+      "item": "bug-1532-a-self-hosted-runner-without-gh",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }

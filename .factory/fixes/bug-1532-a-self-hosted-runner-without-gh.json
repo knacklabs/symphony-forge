@@ -11,7 +11,7 @@
       "gain": 5,
       "harm": 4,
       "line": 194,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": true,
@@ -24,7 +24,7 @@
       "gain": 4,
       "harm": 3,
       "line": 194,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -37,7 +37,7 @@
       "gain": 4,
       "harm": 3,
       "line": 53,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -50,7 +50,7 @@
       "gain": 4,
       "harm": 3,
       "line": 72,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -64,58 +64,16 @@
   },
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "f2573c9b9906e08e7453f45635104e4034f4abade97fd7be8d908b38a13affcf",
-    "changed": "8a3f1f9d5d36fab59825ed16e5e6184d38e0cf77dbe9ca940e0772f0645ebcc0",
-    "commit": "de6dde6c36ffe7a25ba006fc7fe1e2dfe6e9b77b",
+    "branch_diff": "e3e2f50457f896c27f482805ab5108a652cade198ac9ef614c959af09426b162",
+    "changed": "ed4ea6538a4dd5aa1245c01875f13f46b9044d4f40969523e03a1e2a257618bf",
+    "commit": "cd566d4cca375fa18ec95f6747b4ff5c2db6330f",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 5, Work 1, Harm 4\nRaise: Security\nCase: normal use - A shared self-hosted Linux machine runs jobs under separate user accounts.\nThe fallback expands GH_TOKEN into curl's command-line arguments, so another local user can read the token from the process list or an audit record. The token has statuses:write permission and can be used to forge commit statuses. The review POST at src/forge/prcheck.py:195, the full-suite POST at line 346, and the generated workflow have the same exposure. [GitHub's secret guidance](https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-secrets) specifically warns that command arguments can be visible to other users. Pass the token through the environment or standard input instead.",
-        "file": "src/forge/prcheck.py",
-        "gain": 5,
-        "harm": 4,
-        "line": 194,
-        "priority": "P1",
-        "title": "Security: Keep the GitHub token out of curl arguments",
-        "work": 1
-      },
-      {
-        "body": "Gain 4, Work 1, Harm 3\nRaise: Not done\nCase: normal use - A minimal self-hosted Linux runner has Git and Python but neither gh nor the curl executable.\nThe fallback immediately calls curl, but the workflow does not install it, and [GitHub's self-hosted runner requirements](https://docs.github.com/en/actions/reference/runners/self-hosted-runners) do not require it. The job therefore fails before posting a status. The new test always puts curl on PATH at tests/test_runner_without_gh.py:52, so it cannot catch this case. The full-suite status fallback at src/forge/prcheck.py:346 has the same dependency.",
-        "file": "src/forge/prcheck.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 194,
-        "priority": "P1",
-        "required_done_when": true,
-        "title": "Not done: On a self-hosted runner without gh installed, the Review pull request job sets the pull request status and passes its check.",
-        "work": 1
-      },
-      {
-        "body": "Gain 4, Work 1, Harm 3\nRaise: Functional\nCase: normal use - A Windows developer runs the repository's full test command from forge.toml.\nThe earlier-run test is not skipped on Windows, but this helper creates extensionless links such as git. Windows executable lookup uses extensions, so the generated review script cannot find git on this PATH and reports reuse=false; the test then fails. Link creation can also fail when the required tools or symlink privilege are unavailable. The Windows-specific command shims in tests/conftest.py:134 show the required executable lookup handling.",
-        "file": "tests/test_runner_without_gh.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 53,
-        "priority": "P1",
-        "title": "Keep the no-gh test executable on Windows",
-        "work": 1
-      },
-      {
-        "body": "Gain 4, Work 1, Harm 3\nRaise: Test\nCase: normal use - A client without gh pushes a reviewed pull request.\nThe named proof extracts only the reporting step and supplies REVIEW_OUTCOME=success itself. It never runs the generated forge hook pr-check command without gh, so it would still pass if that command required gh and the actual job failed. The existing review-state test runs the command with a gh stub present. Exercise the check and reporter together without gh and verify the resulting status and job outcome.",
-        "file": "tests/test_runner_without_gh.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 72,
-        "priority": "P1",
-        "title": "Gate: test_1_review_status_is_set_without_gh",
-        "work": 1
-      }
-    ],
-    "id": "3ee7db58-0af9-45ec-b64e-b73c458fa47e",
-    "status": "blocked"
+    "findings": [],
+    "id": "89d52c77-01c3-42d3-a328-77986120399d",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-11T08:10:41.974838+00:00",
@@ -123,6 +81,10 @@
     },
     {
       "at": "2026-11-11T08:24:46.824608+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-11T08:40:44.234304+00:00",
       "step": "review"
     }
   ],
