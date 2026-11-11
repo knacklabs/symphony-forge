@@ -111,7 +111,7 @@
     "status": "blocked"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-11T09:38:58.937298+00:00",
@@ -124,8 +124,12 @@
   ],
   "stop": {
     "at": "2026-11-11T09:53:21.229126+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "src/forge/templates/design/support.js",
-    "wait_id": "a8496807-6864-4c0f-8730-4e4b217b9643"
+    "reason": "Owner chose one more round on 11 Nov 2026: repair the three test points; the old-copy case becomes its own later fix",
+    "wait_id": "a8496807-6864-4c0f-8730-4e4b217b9643",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
