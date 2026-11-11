@@ -1,0 +1,120 @@
+{
+  "branch": "task/FORGE-THEME-1-DESIGN",
+  "known": [
+    {
+      "area": "src/forge/templates/skill.md",
+      "file": "src/forge/templates/skill.md",
+      "gain": 4,
+      "harm": 3,
+      "line": 815,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: The theme names are fixed once, in the starter's theme file, and the Claude design system uses the same names.",
+      "work": 1
+    },
+    {
+      "area": "src/forge/templates/skill.md",
+      "file": "src/forge/templates/skill.md",
+      "gain": 3,
+      "harm": 3,
+      "line": 869,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: copy the approved theme, with a font the app can load, into the app and the repo before the first screen",
+      "work": 1
+    },
+    {
+      "area": "test_4_the_review_reports_a_screen_built_on_the_untouched_starter_theme() in tests/test_theme_guide.py",
+      "file": "tests/test_theme_guide.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 140,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: functional check",
+      "work": 2
+    },
+    {
+      "area": "_contract() in tests/test_theme_guide.py",
+      "file": "tests/test_theme_guide.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 59,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: tests/test_theme_guide.py::test_1_the_starter_theme_holds_every_contract_name",
+      "work": 1
+    },
+    {
+      "area": "test_2_the_guide_tells_the_agent_to_build_the_design_system_and_copy_the_theme() in tests/test_theme_guide.py",
+      "file": "tests/test_theme_guide.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 118,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: tests/test_theme_guide.py::test_2_the_guide_tells_the_agent_to_build_the_design_system_and_copy_the_theme",
+      "work": 1
+    },
+    {
+      "area": "src/forge/templates/skill.md",
+      "file": "src/forge/templates/skill.md",
+      "gain": 2,
+      "harm": 3,
+      "line": 855,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Follow-up: Use the existing app's web root for font assets",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "873cc4b738e2422fc16bccc473eb242f78be88d36cbe32a0b4c12c0662c63f43",
+    "changed": "9bdfdb7a791ddad732d58dd0c1a8e6a12c9b31dd761862267bc8fa669600ea98",
+    "commit": "e5c80d0f1cd412143100fc5e5134f3ed051074b0",
+    "dismissals": [],
+    "findings": [],
+    "id": "0f9c7ea9-ede7-4d84-b136-a696186297ad",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-10T20:58:37.283776+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-10T22:21:28.733318+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-10T22:31:54.367813+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-11T03:04:30.180406+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "a3f1a764-c7ad-4b25-8614-6dfd69edf5d9",
+    "head": "f03ebc2a8853e4f9de28dae8e43076f688140190",
+    "keys": {},
+    "round": 2
+  },
+  "worker": "claude"
+}

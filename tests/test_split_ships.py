@@ -34,6 +34,8 @@ SOURCES = {
     ".forge/records-only/action.yml": "src/forge/templates/records-only-action.yml",
     ".forge/design/support.js": "src/forge/templates/design/support.js",
     ".forge/design/ui-checks.js": "src/forge/templates/design/ui-checks.js",
+    ".forge/design/render-check.mjs": "src/forge/templates/design/render-check.mjs",
+    ".forge/design/render-check.d.mts": "src/forge/templates/design/render-check.d.mts",
 }
 # The new contract includes every support file in the pinned design skills, for both hosts.
 SOURCES.update({f"{host}/skills/{path.relative_to(ROOT / 'src/forge/templates/skills').as_posix()}":
@@ -53,7 +55,7 @@ GENERATED["claude_node"] = GENERATED["plain"] | {"CLAUDE.md"}
 def test_3_sync_keeps_previous_output_and_gathers_new_owner(repo, case, tmp_path):
     repo.git("checkout", "-q", "-b", "fix/sync-compatibility")
     # Exercise this checkout's sync, rather than routing to a historical release.
-    repo.write("forge.toml", 'version = "v1.2.35"\ntest = "echo ok"\n'
+    repo.write("forge.toml", 'version = "v1.2.36"\ntest = "echo ok"\n'
                              'checks = ["tests", "forge-pr-check"]\n')
     if case == "claude_node":
         repo.write("CLAUDE.md", "# Team notes\n")

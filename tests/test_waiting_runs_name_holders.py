@@ -5,6 +5,7 @@ commands. Real commands create admissions; only model providers wait at their ed
 """
 import json
 import os
+import re
 import subprocess
 
 import pytest
@@ -24,8 +25,11 @@ pytestmark = pytest.mark.platform
 
 def stop_command(repo, item):
     root = repo.path.as_posix()
-    return (f'forge stop --repo "{root}" {item}' if os.name == "nt" else
-            shell(["forge", "stop", "--repo", root, item]))
+    # Forge prints a path made only of shell-safe characters with no quotes, on every platform.
+    if os.name == "nt":
+        shown = root if re.fullmatch(r"[a-zA-Z0-9_@%+=:,./-]+", root) else f'"{root}"'
+        return f"forge stop --repo {shown} {item}"
+    return shell(["forge", "stop", "--repo", root, item])
 
 
 @pytest.mark.parametrize("adopted", [False, True], ids=["new", "earlier-adoption"])

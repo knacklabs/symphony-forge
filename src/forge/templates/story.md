@@ -12,7 +12,8 @@ the app, or the owner's own request with its date. Name each screen, field, endp
 setting that the plan adds in one of these items.>
 
 <!-- For user-facing parts: run impeccable init if PRODUCT.md is absent. Design the screens
-in a Claude Design artifact; on a Codex-only host without artifact tools, use HTML artboards.
+in a Claude Design artifact made with the client's design system (link in
+docs/design/design-system.md); on a Codex-only host without artifact tools, use HTML artboards.
 Save each screen and its images in docs/design/<KEY>/. Copy .forge/design/support.js beside
 the HTML screens and run it for a 1440 by 900 PNG per screen. Commit the folder. Use its git tree
 id (git rev-parse HEAD:docs/design/<KEY>) in the last line below. For small changes to existing

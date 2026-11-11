@@ -17,7 +17,7 @@ reader while available. A native read uses a separate `reader` subagent.
 Install the release a repo pins (uv brings Python 3.11 or later if you don't have it):
 
 ```
-uv tool install git+https://github.com/knacklabs/symphony-forge@v1.2.35
+uv tool install git+https://github.com/knacklabs/symphony-forge@v1.2.36
 ```
 
 `forge --version` prints the installed version. Each repo pins its release in `forge.toml`, and
@@ -85,6 +85,14 @@ the answers in `docs/product/BRIEF.md`. Ask each build-changing question when it
 one at a time, and record the answer and who gave it. If a requested feature does not help test
 the problem, say why and offer to note it for after sign-off.
 
+A Sales person who does not know what the prototype should show gives the agent the company's
+name and website, plus any notes. The agent researches the company once on the public web (at
+most 12 web searches and 20 page reads) and writes `docs/context/prospect-research.md` with a link
+for each finding. It then proposes one prototype with a source on every feature line, and two
+other options. The Sales person says yes, picks another or changes it in plain words; nothing is
+built before that choice. A later pass or choice is added to the page and never replaces an
+earlier one.
+
 Keep one `## Answers` section in the brief and update it during the talks. Record an open question
 as `ask the client`, and record a current unknown as `not known yet`. These answers are accepted:
 no missing answer or open client question blocks planning, review, close, merge or sign-off. A repo
@@ -101,6 +109,23 @@ checks each canvas and renders it at 1440 and 375 pixels before it is shown; the
 read refuses a failing design folder or one with no DESIGN.md.
 The source checks do not count main headings. Judge headings on the rendered page during
 the canvas and design review.
+
+Close shows what a changed screen looks like. Every client repo gets `.forge/design/render-check.mjs`.
+The agent calls it from the app's own Playwright tests, once for each screen on the render list, and adds
+a screen when it builds or changes it. The check opens each screen in its loaded state, in light and dark,
+at 1440 pixels, and also at 375 pixels when the brief's `Phone view` answer is `desktop and phone`. With
+no answer it uses desktop width only and refuses nothing. It reports sideways overflow, cut text and low
+contrast, each with the screen, width and theme, and reports a page that is not the listed screen. A hash
+counts as part of the screen's address only when the listed address has one. A problem fails the test and
+so stops close; one screen can set one kind aside with a written reason. The check makes no model call.
+It adds about 1 to 3 seconds for each screen; nobody has measured this yet. It runs wherever the app's
+browser tests run. Close runs those tests only when the repo's close command (`fast_test`, else `test`)
+includes them; a new starter's command does for web changes. When an app's command does not, the check
+runs only in the full test run. The worker says so, and the coordinator can ask the owner to add the
+browser tests to `fast_test`. A prototype with `sample_data = true` has no tests before sign-off,
+so it runs no rendered check then; the first tests after sign-off list the prototype's screens, and the
+check starts with them. The light review of an unsigned prototype does not report a screen that is
+missing from the list. An app with no browser tests keeps today's rules.
 
 Client repos get pinned copies of impeccable and emil-design-eng with their licences at init and sync, with or without a web app; both laptop installers install them too.
 Make each app's design from the whole brief: its purpose, users, records, fields, choice-list
@@ -134,7 +159,9 @@ coordinator set `sample_data = true` in `forge.toml`. An existing sign-off recor
 `sample_data: true` still works until this setting is present. Forge skips tests and CI while the
 setting is on; walk the demo steps in a browser. Real data or a back end keeps tests from day one.
 After sign-off, `forge next` shows setting up tests as the first step. In a coordinator-owned fix,
-set the test command and CI checks as needed, then turn off the setting. Close blocks that fix until
+set the test command and CI checks as needed, then turn off the setting. In the same fix, list the
+prototype's screens in the app's browser tests with `checkScreen` from `.forge/design/render-check.mjs`,
+so the rendered check starts with the first tests. Close blocks that fix until
 the `Personal data` answer is settled.
 The design comes first. Before any screen, use the app's existing design. If it has none, draft
 one from the client's brand; use a neutral design when there is no brand. Every

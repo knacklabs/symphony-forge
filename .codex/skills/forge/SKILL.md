@@ -30,6 +30,7 @@ the repo link, and what help you need. Let the person send it.
 
 For a sales demo, save transcripts in `docs/context/`. Mark each point from a transcript
 as "Heard from the customer" and name its transcript. Keep your guesses separate.
+For a Sales person with a company's name and website, research the company and propose one prototype before the design (see Discovery).
 Use Claude for the design. Require impeccable and emil-design-eng from the first
 design onward, for both the Claude design artifact and the browser-only web app.
 Then build a browser-only web app with fake data, no server, no database, and no
@@ -166,9 +167,9 @@ first, a question of fact gets neutral choices.
 
 Every client repo moves through seven steps. `forge next` names the current step in its first line.
 
-1. **Ideas and client notes.** The person gives you the client notes or an idea. Put each note in `docs/context/` and read them all before you ask anything. You can say: "Here are the client notes" or "I have an idea: <idea>".
+1. **Ideas and client notes.** The person gives you the client notes or an idea. Put each note in `docs/context/` and read them all before you ask anything. You can say: "Here are the client notes" or "I have an idea: <idea>". A Sales person can give a company's name and website instead, with any notes: do the research in Discovery first.
 2. **Brief.** You write `docs/product/BRIEF.md` from the notes, and ask only about a point that changes a screen, a field or a flow. You can say: "The brief looks right" or "Change this in the brief: <change>".
-3. **Canvas design.** You make the screens on a design canvas, which the client can click through in Play mode, and the owner or FDE approves the canvas. You can say: "Show me the screens" or "Change this screen: <change>".
+3. **Canvas design.** You make the screens on a design canvas, designed with the client's design system in Claude (see "Canvas and app design"), which the client can click through in Play mode, and the owner or FDE approves the canvas. You can say: "Show me the screens" or "Change this screen: <change>".
 4. **Sign-off.** Run the sign-off checks, then ask the client's named person to approve the canvas and answers. Build now and Later are planned choices, not available commands. Ask the owner what work to start or defer. You can say: "Record the client approval, then plan the first change".
 5. **Build.** You plan stories and fixes, build each one with its tests and a review, and merge it. You can say: "Build this next: <idea>" or "What is ready to merge?".
 6. **Deploy on Mainline.** Confirm the client's host and complete production preparation below. When the person asks for Mainline deployment, set up Mainline and deploy dev. An authorized person presses Promote for production. A client host without Mainline uses its agreed release process. You can say: "Deploy this on Mainline" or "Use the client's servers".
@@ -624,6 +625,93 @@ they reply, record the Demo workflow and Sign-off person answers from it with `c
 source, as `- Demo workflow: <task> (client, <YYYY-MM-DD>)` and `- Sign-off person: <name, role>
 (client, <YYYY-MM-DD>)`. The salesperson sends the recap; Forge sends nothing.
 
+**Research the prospect.** A Sales person starts with the company's name and website, plus any
+notes or call transcripts. They do not need to know what to build: you find out. Ask nothing
+before the pass. Save their notes in `docs/context/`; when the session cannot read a recording,
+ask for its transcript. Run the pass before the first meeting, or before the prototype plan when
+they have already met the prospect. It is the pre-meeting brief, written as
+`docs/context/prospect-research.md` in the client repo, never in Forge's own files. Do one
+pass on the public web, with this session's own web search, over this list in this order:
+
+1. what it sells and to whom, from its own site;
+2. how it works today: its service or ordering pages, case studies and the duties in its job posts;
+3. complaints from its customers and its staff, from public review pages and public employer
+   review pages that open without a sign-in;
+4. its tools, from job posts, its site and vendors' public case studies;
+5. its job posts, from its careers page and public job boards;
+6. two or three close competitors and what each offers, from their own sites.
+
+Stop at 12 web searches and 20 page reads for the whole pass. Items 1 to 6 get at most 8
+searches and 14 page reads. Keep the last 4 searches and 6 page reads for similar companies, and
+use them only when the findings are thin. These numbers are an estimate, not a measurement; they
+change after the first real runs. Use no paid data service. Only one agent runs the pass: this
+session's agent, or one helper agent when the host has one (for example the `explorer` role),
+so the page reads stay out of the main chat. Never use more than one.
+
+Read public pages only, never a page behind a sign-in. Name a person only by role ("the
+operations head"), and summarise complaints with no reviewer names. Write short notes in your
+own words, each with a link; copy no text. Use neutral words, because the client may read this
+repo one day. Every finding under What we found has its own link to the public page it comes
+from; a finding without a link is not written.
+
+The page follows the outline in [the reference page](fde.md). It records the searches and page
+reads used, What we found, Not found, For the look and Questions for you. Under Not found, write
+what you could not find and what you tried; write "not reached" for an item the limit stopped.
+For the look, give the five facts the design starts from: the industry, the users, the main job
+of the screens, brand words, and brand files as links to the company's logo or brand page (no
+download).
+
+Findings are thin when fewer than three of items 1 to 5 hold a finding about this company. Then
+say what you could not find, ask the Sales person up to five questions about the company in one
+message, under Questions for you, and use the kept part of the limit to study two or three
+companies of the same kind and size. Mark every idea from them `from similar companies`. Do not
+wait for the answers: show the proposal now, and add the answers in a new dated part.
+
+When this session cannot search the web or read pages, say in one line: "This session cannot
+search the web, so I could not research <company>." Then work from the notes and questions as
+you do without this step.
+
+**Propose one prototype.** Under `## Proposed prototype, <YYYY-MM-DD>`, write one proposed
+prototype: the one task the demo shows, start to finish, and up to five features around it, one
+line each. Each line has exactly one source mark, chosen by where the idea came from:
+
+- a link to a public page about this company;
+- `from similar companies: <company>` and a link to that company's page;
+- `heard from the customer: <note file in docs/context/>`;
+- `from the salesperson`, for a feature the Sales person added in their reply;
+- `not researched`, for an idea with no source.
+
+Use `not researched` only when the session cannot search the web or the pass did not reach the
+item the idea depends on. An idea with no source in any other case does not appear. A point from
+a transcript is `heard from the customer: <note file in docs/context/>` with or without web
+search. An idea that comes from the Sales person's own notes, not from a reply, is
+`from the salesperson: <note file in docs/context/>`. Nothing general appears as if it were about
+this company. Before you show the proposal, check every line against this list, and fix or
+remove a line with no mark.
+
+Under `## Other possible prototypes, <YYYY-MM-DD>`, write two other possible prototypes, numbered:
+each a task and one or two lines with their marks. Show the same text in the chat in plain
+words, with the links, so the Sales person sees every link. Never ask them to pick from a long
+list of features. This proposal is not the Options step: Options below stay for a chosen
+problem in a story.
+
+The Sales person says yes, picks another, or says in plain words what to change. Build nothing
+before this choice. Then append `## Chosen prototype, <YYYY-MM-DD>` to the page: the full
+chosen prototype with its marks, copied from the option they chose, with their changes applied
+(an added feature is `from the salesperson`). Its first line is
+`- Chosen by: salesperson: yes | option <n> | changed: <their words>`; this line is not a
+feature and needs no mark. Leave the proposal and other-options parts as they were. Write
+`- Demo workflow: <task> (salesperson, <YYYY-MM-DD>)` in the brief's Answers; the client's reply
+to the recap replaces it with `(client, <YYYY-MM-DD>)`. Save the page and that line as one fix,
+as discovery notes are saved.
+
+A later research pass or a later choice adds a new dated part to the research page; never
+remove or rewrite an earlier part.
+A second pass appends `## Research of <YYYY-MM-DD>` with its own findings, counts, Not found and
+proposal. A second choice appends a new `## Chosen prototype, <YYYY-MM-DD>`, and the newest one
+is the one in use. When the customer's reply to the recap corrects the demo task, add a new
+dated `Chosen prototype` part too, so the page and the brief agree.
+
 **The card.** Write each problem as a card under `## Problems` in `docs/product/DISCOVERY.md`,
 adding the section to an older file on first use: `### <short problem title>`, then Job,
 Workaround, Cost, Who feels it, How often and Evidence. Write customer notes in `docs/context/`
@@ -648,6 +736,7 @@ workaround, cost, people, frequency and evidence. Then write the prototype plan:
 with their fields in `docs/product/BRIEF.md`, the Roles table and architecture choices in
 `docs/product/CONSTITUTION.md`, one link to the design in the BRIEF, and the demo steps.
 The design can be made through Forge or separately; the BRIEF holds one link to it.
+When the research page has a `Chosen prototype` part, the plan's demo steps come from the newest `Chosen prototype` part, the task first.
 Each demo step is one Done-when item in the plan, with the client's business task first and
 basic screens (sign-in, members, settings) last. Create the plan record with
 `forge decision new prototype-plan`.
@@ -677,7 +766,9 @@ coordinator set `sample_data = true` in `forge.toml`. A sign-off record does not
 on. Forge skips tests and CI while the setting is on; walk the demo steps in a browser.
 Real data or a back end keeps tests from day one.
 After sign-off, `forge next` shows setting up tests as the first step. In a coordinator-owned fix,
-set the test command and CI checks as needed, then turn off the setting. Close blocks that fix until
+set the test command and CI checks as needed, then turn off the setting. In the same fix, list the
+prototype's screens in the app's browser tests with `checkScreen` from `.forge/design/render-check.mjs`,
+so the rendered check starts with the first tests. Close blocks that fix until
 the `Personal data` answer is settled.
 
 For every prototype, build the demo-data loader in the first version, so the customer sees their own kind of
@@ -776,6 +867,7 @@ or sign-off, and `not known yet` is an accepted answer.
 | Users and roles | Who uses it, and what can each kind of user do? | admin and staff; other | before sign-off |
 | Existing systems | Which systems must this work with? | none; CRM; accounting; email or SMS; payments; company sign-in | before sign-off |
 | Sign-in | How will people sign in? The client chooses the method. | email and password (default if the client gives no other answer); one-time codes; company sign-in (Google or Microsoft) | before sign-off |
+| Phone view | Which screen sizes must the app work on? | desktop only (default); desktop and phone | before the app's build starts |
 | Personal data | Will it hold personal, health or payment data, or data that must stay in one country? | none; personal only; regulated | before sign-off |
 | Production host | Where will the real app run? | our platform; the client's cloud; the client's servers | before sign-off |
 | Data import | Does data need to come in from today's tools? | no; a spreadsheet; another system | when a story needs it |
@@ -783,6 +875,10 @@ or sign-off, and `not known yet` is an accepted answer.
 | Domain | Which web address? | our subdomain; the client's domain | when a story needs it |
 | Backups and uptime | How much downtime or data loss is acceptable? | the platform's daily backups; stricter | when a story needs it |
 | Log retention | How long must logs be kept? | the platform's default; longer | when a story needs it |
+
+Record a yes to a phone view as `Phone view: desktop and phone`, and a no as `Phone view: desktop only`.
+A missing `Phone view` answer means desktop width only and refuses nothing. An existing app has no
+answer yet; ask at the next change to one of its screens.
 
 Ask topics at the suggested time when possible. These are conversation prompts, not gates: a
 missing answer or an open client question never blocks planning, review, ordinary close, merge or
@@ -806,10 +902,89 @@ not listed as open, except Personal data, which needs a settled answer before re
 **Canvas and app design.** Before the first canvas, write a short brief from the industry,
 who uses the app and how often, the screen's job (work, read or persuade), two or three
 brand words and existing brand files; map them to font pairing, one accent, radius,
-density and tone, then record DESIGN.md through impeccable's document step using the
-app-baseline list and fixed guard rules, and use impeccable's Operate mode for app screens
-and prototypes. `support.js` checks each canvas and renders it at 1440 and 375 pixels
+density and tone, put them in the client's design system (below), then record DESIGN.md through
+impeccable's document step using the app-baseline list and fixed guard rules, and use impeccable's
+Operate mode for app screens and prototypes. `support.js` checks each canvas and renders it at 1440 and 375 pixels
 before it is shown; the plan's read refuses a failing design folder or one with no DESIGN.md.
+
+**The client's design system.** This step needs the app's shared parts in `libs/shared/ui` and its
+theme file. A repo made with plain `forge init`, or an app of its own, may have neither; then say so
+in one line. With no app at all, change no app file: record the look that the starting-theme step
+chooses in DESIGN.md only (impeccable's `document` step, and write `Claude design system: not made
+yet` in the brief's `## Design` section), and make the system when the app exists. With an app that
+has its own theme file but not the starter's parts or names, keep the look in that file as today,
+with no design system and no `docs/design/tokens.json` (so the check stays off), until the app has
+both. Otherwise, for each client, make one design system in Claude (the Design System type) from the
+app's shared parts in `libs/shared/ui` and from the theme names in the app's theme file. An earlier-adopted app may lack the added theme lines (heading font, text sizes,
+spacing, shadows) and the heading rule. Before you make the system, add them to its theme file with
+the starter's values, copied from the Forge starter's theme file: `templates/starter/apps/web/src/index.css`
+in the installed Forge package, next to its `conventions/` folder. Then the system has every name.
+Start its values from the app's own theme file: the stock values in a new app, the current theme in
+an existing one. For a new client, and for an existing app whose theme file still holds the
+starter's stock values, decide better first values yourself from the five facts and write them into
+the system: colours for light and dark, fonts, sizes, spacing, corner size and shadows. Take the five
+facts from the client's notes. Ask the Sales person only for a missing fact, one question at a time.
+Then design the client's main screens with the system: up to three, and only screens the app needs
+(for example the main list, one record and one form; a one-screen app shows that one screen), in
+light and dark. Show those whole screens to the Sales person, never single parts alone. The person
+says yes, or says in plain words what to change, for example "warmer" or "more serious". Change the
+theme in the system, redraw the same screens and show them again. The Sales person sets no value by
+hand.
+
+Keep the system editable on the page: it is not marked as synced from code. Its README says which
+repo and which parts it came from. The README is the brand guide that every agent reads before it
+designs a screen, so it carries the look rules; without them the screens keep the stock look.
+Write the brand guide from three existing sources, in the client's terms: the design rules in
+`conventions/frontend.md`, the design rules in the `app-baseline` skill (one main action per screen,
+the looks to avoid) and the five facts. Add no rule that these sources do not hold. It states which
+colour token is for the page, the text, the one main action and each status, in light and dark;
+which font and size token is for headings, body text and table text; the corner size, when a border
+is used and when a shadow, and how dense tables and forms are; one main action per screen; and the
+looks to avoid. Give every token a usage note that names where it is used. Before the system is
+shown to a person, check that text contrast is 4.5 to 1 on its ground in both themes. Keep a client
+colour that fails and say so in its usage note. When the shared parts change later, revise the
+system's component files one at a time after reading the current files.
+
+Keep the link to the client's system once in `docs/design/design-system.md`, as one line
+`Design system: <link>`, in the same change that makes the system. Before you design, copy a theme or
+revise the parts for a client, open that link and read the system's `README.md` and
+`project/tokens.json`. Never rely on which system the design tool treats as the default. Design the
+client's screens with that system. If the design tool can build a canvas only from its default
+system, say so in one line and ask the person to make that system the default. When the system is
+made, remove the `Claude design system: not made yet` line from the brief's `## Design` section if it
+is there, also when the tools were never missing.
+
+When the Sales person says yes to the screens (the design is approved), read the system's
+`project/tokens.json` and save it unchanged as
+`docs/design/tokens.json`. Write each value into the app's theme file by name, then run
+impeccable's `document` step so DESIGN.md describes the same theme. Do this as the first change
+after approval and before the first screen. After any later theme change in Claude, repeat it in
+one change, but only after the person says yes to that change: a trial look that the person has not
+accepted is never copied into the app or into `docs/design/tokens.json`. In an existing app, add a missing theme line and the heading rule (`h1` to `h6` take
+`@apply font-heading`) to the theme file, with the value the system holds. `docs/design/tokens.json`, when it exists, is the approved theme. Close compares the app
+with it and stops on a difference whenever a screen or the theme changes. A waiver is one comment
+in the theme file that names the token and the theme:
+`/* forge-ui-ignore theme-drift --<token> (light|dark): <reason> */`. The review reports a screen
+built on the untouched starter theme when `docs/design/tokens.json` does not exist.
+
+Fonts. The starter loads no font: a font name alone does not load, so a copied font name needs a
+source. If the system holds the font as a file in its `fonts/` folder, copy the file to
+`apps/web/public/fonts/` and add an `@font-face` rule with `font-display: swap` in the theme file;
+the licence must allow it. If the font is a hosted family, add the host's stylesheet link to
+`apps/web/index.html`. An existing app keeps its own web root (the folder with its `index.html`): use
+it in place of `apps/web`. A generic family from the browser (`serif`, `sans-serif`, `system-ui`,
+`monospace`) needs no file or link and is copied as it is. If the app can load the font in neither
+way, do not copy the font name: keep the app's font, tell the person in one line which font did not
+load, and set the difference aside with a waiver. Keep the fallback fonts of the token's list in
+the copy.
+
+When the session has no Claude design tools (you cannot list or publish artifacts), say so in one
+line and keep going on HTML artboards with `support.js`. Set the theme in the app's theme file from
+the five facts, run impeccable's `document` step, and write `Claude design system: not made yet` in
+the brief's `## Design` section. When the tools return, add the theme lines and the heading rule the app lacks,
+copied from the starter as above, then make the system from the app's theme file as it stands; from
+then on Claude is the source. In the same change, save the new system's `project/tokens.json`
+unchanged as `docs/design/tokens.json` and write its link into `docs/design/design-system.md`.
 
 Make each app's design from the whole `docs/product/BRIEF.md`: its
 purpose, users, records, fields, choice-list options and key flows. Use impeccable and
@@ -1156,6 +1331,9 @@ keep existing settings until that fix changes them. An explicit `test_place` kee
    beside changed-test selection in TypeScript `fast_test`, through the normal settings fix after
    the human agrees. Keep `test` as the full suite. New repos get this review at setup; existing
    adopted repos get this guidance on upgrade and sync, with settings changed only through that fix.
+   If the app has Playwright browser tests, its close command (`fast_test`, else `test`) should run
+   them; if it does not, the rendered check runs only in the full test run. A worker who finds this
+   says so in its last message.
    Forge writes no `fast_test` by itself.
    Client CI caches npm downloads and the default pnpm stores by the root lockfile and enables
    uv's package cache. It keeps the app's own pnpm setup and version.

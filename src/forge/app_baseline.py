@@ -53,7 +53,7 @@ def check(top: Path, cfg: dict[str, Any], base: str, files: list[str]) -> None:
     if problems:
         repo.refuse(REFUSALS["shadcn"], problems="; ".join(problems),
                     item=repo.current_branch(top).partition("/")[2])
-    problems = ui_checks.problems(top, files)
+    problems = ui_checks.problems(top, files) + ui_checks.theme(top, files)
     if problems:
         repo.refuse(REFUSALS["design"], problems="\n" + "\n".join(problems),
                     item=repo.current_branch(top).partition("/")[2])
