@@ -4,12 +4,20 @@
   "done_when": "An upgrade that changes only the pin and Forge's synced files passes close with no choice stop, and any other change in an upgrade still gets the normal model review.",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-11T08:07:26.887337+00:00",
       "step": "start"
     }
   ],
-  "why": "Bug 1531. Each Forge upgrade stops for the person's choice, because the model review of the upgrade fix applies the repo's review rules, a proof-list rule raises a P1, and the one-round limit is reached."
+  "stuck": {
+    "close": null,
+    "head": "485af2b27ad662525c0a37f5ace190b884654279",
+    "keys": {},
+    "round": null
+  },
+  "why": "Bug 1531. Each Forge upgrade stops for the person's choice, because the model review of the upgrade fix applies the repo's review rules, a proof-list rule raises a P1, and the one-round limit is reached.",
+  "worker": "claude"
 }
