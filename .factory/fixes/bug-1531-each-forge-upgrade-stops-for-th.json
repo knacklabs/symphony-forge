@@ -1,0 +1,15 @@
+{
+  "base": "df97bf7c6d5338589346fb24b6639dbccb3973bd",
+  "branch": "fix/bug-1531-each-forge-upgrade-stops-for-th",
+  "done_when": "An upgrade that changes only the pin and Forge's synced files passes close with no choice stop, and any other change in an upgrade still gets the normal model review.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-11T08:07:26.887337+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Bug 1531. Each Forge upgrade stops for the person's choice, because the model review of the upgrade fix applies the repo's review rules, a proof-list rule raises a P1, and the one-round limit is reached."
+}
