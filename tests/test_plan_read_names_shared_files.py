@@ -40,6 +40,15 @@ def start(repo, adopted):
         setup(repo)
     else:
         setup(repo)
+        repo.git("switch", "-qc", "fix/sync-guides")
+        synced = repo.forge("sync")
+        assert synced.returncode == 0, synced.stdout + synced.stderr
+        repo.git("config", "core.hooksPath", (repo.path.parent / "fixture-no-hooks").as_posix())
+        repo.git("add", "-A")
+        repo.git("commit", "-qm", "Sync the guides")
+        repo.git("switch", "-q", "main")
+        repo.git("merge", "-q", "--ff-only", "fix/sync-guides")
+        repo.git("push", "-q", "origin", "main")
 
 
 @pytest.mark.parametrize("adopted", [False, True], ids=["new repo", "earlier adopted"])
@@ -80,7 +89,7 @@ def test_1_the_plan_read_names_a_file_that_three_parts_share(repo, claude_payloa
 
 
 @pytest.mark.parametrize("tool", ["claude"])
-def test_1_session_read_prints_the_note_when_the_result_is_handed_back(
+def test_2_session_read_prints_the_note_when_the_result_is_handed_back(
         repo, monkeypatch, tmp_path, tool, native_host):
     setup(repo)
     monkeypatch.setenv("CLAUDECODE", "1")
