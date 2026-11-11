@@ -148,6 +148,12 @@ every record type in the plan with `forge task feature`, with the Roles table an
 questions. For each record type whose row differs from the command's default (member view, create),
 edit that feature's one `definePermissions` call. Build and demo the prototype through
 `forge fix start`, `forge work` and `forge close`.
+
+Close refuses a changed UI file that animates all properties (`transition-all`), including a shadcn
+copy. List the properties, or set the rule aside with `forge-ui-ignore motion-all: <reason>`. Review
+reports a button-like part with no pressed state and a new animation that ignores reduced motion.
+An app made before this release gets the check and these rules on sync, and keeps every app file;
+the agent copies Forge's finished parts when a change needs them or the person asks.
 A prototype fix started before sign-off can exceed the usual fix size and change an interface; it
 still gets tests, review and a pull request. Save and confirm specs as the work reveals them. Before sign-off,
 `forge next` shows open answers, but they do not block work. Its light rounds prove the demo steps,

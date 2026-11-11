@@ -574,6 +574,11 @@ the canvas and design review.
 A refusal names the file, the rule and its waiver comment. Fix the problem, or use that comment
 with a reason. If the checker cannot run, close prints one line and runs the other checks.
 Without Node, close prints one line and skips the design checks. Sync changes no app code.
+Close also refuses a changed UI file that animates all properties, shadcn copies included; list the
+properties, or use `forge-ui-ignore motion-all: <reason>`. Review reports a button-like part with no
+pressed state (the `link` variant is exempt), a new animation that ignores reduced motion, a
+hand-built loading, empty or error block where the app has the shared state parts, and motion that
+skips the shared curve and speeds.
 
 When you build or change a screen in an app that has Playwright browser tests, add it to the render list
 beside the app's browser tests: one `checkScreen(page, { name, path })` call from
