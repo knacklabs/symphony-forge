@@ -42,9 +42,14 @@ def _listing(top: Path, ref: str) -> dict[str, Any]:
         rows.append((f"{_count(len(parts), 'part was', 'parts were')} built with only the light review: {names}",
                      f"Review and test {'this part' if len(parts) == 1 else 'these parts'} in full: {names}"))
     if files := _labelled(top, ref, _tree(top, ref)):
-        names = ", ".join(files)
-        rows.append((f'{_count(len(files), "file carries", "files carry")} the "{LABEL}" label: {names}',
-                     f"Build each demo-only feature properly or remove it: {names}"))
+        # Say text is pasted into commands: name only files with plain names, count the rest.
+        safe = [name for name in files if re.fullmatch(r"[A-Za-z0-9_./-]+", name)]
+        other = len(files) - len(safe)
+        names = ", ".join(safe) + (f" and {_count(other, 'other file', 'other files')}" if safe and other else "")
+        head = f'{_count(len(files), "file carries", "files carry")} the "{LABEL}" label'
+        rows.append((f"{head}: {names}" if safe else head,
+                     f"Build each demo-only feature properly or remove it: {names}" if safe else
+                     f"Search the app files for the {LABEL} label, then build each demo-only feature properly or remove it"))
     if not rows:
         return empty
     return {"line": f"{HEADING}{_count(len(rows), 'open gap', 'open gaps')}",
