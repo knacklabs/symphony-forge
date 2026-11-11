@@ -1,10 +1,10 @@
 {
   "approval": {
-    "at": "2026-11-10T18:07:00.337125+00:00",
+    "at": "2026-11-11T06:33:34.960634+00:00",
     "by": "human-via-Claude",
-    "event": "toolu_01Dp9dAWC46y9HL6Cgpb4zqi",
-    "hash": "12328454517a20384285299a9c21791a0eb4d0ad3548a13ddb0e11a76817138f",
-    "round": 4,
+    "event": "toolu_01Xa6LZoJv67SKhx5Yw9Pzn5",
+    "hash": "f70f5998c27eddcacc0b215a2dd7d97b6debc767e2df2fdce8662b5879c8ee68",
+    "round": 6,
     "runtime": "claude",
     "session": "c01a489d-c76f-41c1-8371-d6f0052b027c"
   },
@@ -34,8 +34,20 @@
     {
       "at": "2026-11-10T18:07:00.337511+00:00",
       "step": "approved"
+    },
+    {
+      "at": "2026-11-10T19:37:00.269808+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-11-10T19:44:35.568575+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-11-11T06:33:34.960816+00:00",
+      "step": "approved"
     }
   ],
   "title": "Score each Forge release on the same reference app",
-  "touches": 1
+  "touches": 2
 }
