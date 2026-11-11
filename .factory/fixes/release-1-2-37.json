@@ -12,12 +12,53 @@
   "done_when": "The version is 1.2.37, generated files are synced, this repo is pinned to v1.2.37, and the tests pass",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [
+    {
+      "area": "test_1_forge_version_is_1_2_27_everywhere_it_is_recorded() in tests/test_release_version.py",
+      "file": "tests/test_release_version.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 20,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: The version is 1.2.37, generated files are synced, this repo is pinned to v1.2.37, and the tests pass",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "98dd9e374f09412edddfbc2fd89ffae9380fb11d3cea2cfe65c374ef437705aa",
+    "changed": "3bf8321bb7d3d2ed7810889c2970f9964e9b428168ad13b2c3a63f684ae17e20",
+    "commit": "ceb33a74a3fad851cc7276a32d54db1ddaab5c39",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 5, Work 1, Harm 3\nRaise: Not done\nCase: normal use - running this repository after the release.\nThe release tests require the repository pin to be v1.2.37, but forge.toml:2 still pins v1.2.36. All three named version-and-pin tests therefore contain assertions that cannot pass. State-changing commands also hand off to the older release, as shown in src/forge/repo.py:978 and src/forge/repo.py:1005. The changed .forge/hooks.sh and .github/workflows/forge.yml say v1.2.37 even though their generators use the repository pin (src/forge/sync.py:109 and src/forge/prcheck.py:392), so they are not synced to its current configuration. Update the pin, sync the generated files, and rerun the release tests.",
+        "file": "tests/test_release_version.py",
+        "gain": 5,
+        "harm": 3,
+        "line": 20,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: The version is 1.2.37, generated files are synced, this repo is pinned to v1.2.37, and the tests pass",
+        "work": 1
+      }
+    ],
+    "id": "65712780-a17b-45e9-94be-7cfef4b147e9",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-11T13:14:08.273104+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-11T13:27:09.634596+00:00",
+      "step": "review"
     }
   ],
   "stuck": {

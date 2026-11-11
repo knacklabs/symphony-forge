@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\ttests/test_release_version.py\tNot done: The version is 1.2.37, generated files are synced, this repo is pinned to v1.2.37, and the tests pass\trelease-1-2-37",
+      "kind": "bug",
+      "path": "tests/test_release_version.py",
+      "line": 20,
+      "text": "Not done: The version is 1.2.37, generated files are synced, this repo is pinned to v1.2.37, and the tests pass",
+      "from": "blocking",
+      "item": "release-1-2-37",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
