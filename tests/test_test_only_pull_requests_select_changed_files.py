@@ -108,3 +108,49 @@ def test_1_test_only_pull_requests_select_changed_files(repo, gh, tmp_path, adop
     assert "needs.selection.outputs.run-windows != 'false'" not in windows
     assert "ConvertFrom-Json $env:PLATFORM_FILES" in windows
     assert "'tests/test_installers_explain_docker_start.py' | Sort-Object -Unique" in windows
+
+
+@pytest.mark.parametrize("adopted", [False, True], ids=["new", "earlier-adopted"])
+def test_2_branch_with_merged_default_branch_runs_normal_groups(repo, gh, tmp_path, adopted):
+    client = (_adopted_client(repo, tmp_path, "client") if adopted
+              else _new_client(repo, gh, tmp_path, "client"))
+    if not adopted:
+        _branch(repo, client, "merged-default")
+    ignore = client / ".gitignore"
+    ignore.write_text((ignore.read_text("utf-8") if ignore.exists() else "")
+                      + "\n__pycache__/\n", encoding="utf-8")
+    tests = client / "tests"
+    tests.mkdir(exist_ok=True)
+    for name in ("mine", "theirs"):
+        (tests / f"test_{name}.py").write_text("def test_it(): assert True\n", encoding="utf-8")
+    repo.git("add", "-A", cwd=client)
+    repo.git("commit", "-qm", "Set up", cwd=client)
+    base = repo.git("rev-parse", "HEAD", cwd=client).strip()
+    # Build the default branch's commit with plumbing: hooks refuse commits off a Forge branch.
+    blob = subprocess.run(["git", "hash-object", "-w", "--stdin"], cwd=client, check=True,
+                          input="def test_it(): assert True\n# Incoming\n",
+                          capture_output=True, text=True).stdout.strip()
+    index = {**os.environ, "GIT_INDEX_FILE": str(tmp_path / "incoming-index")}
+    for args in (["read-tree", "HEAD"],
+                 ["update-index", "--cacheinfo", f"100644,{blob},tests/test_theirs.py"]):
+        subprocess.run(["git", *args], cwd=client, env=index, check=True)
+    tree = subprocess.run(["git", "write-tree"], cwd=client, env=index, check=True,
+                          capture_output=True, text=True).stdout.strip()
+    incoming = repo.git("commit-tree", tree, "-p", "HEAD", "-m", "Incoming", cwd=client).strip()
+    (tests / "test_mine.py").write_text("def test_it(): assert True\n# Mine\n", encoding="utf-8")
+    repo.git("commit", "-qam", "Change my test", cwd=client)
+
+    def classify():
+        output = tmp_path / "outputs"
+        output.write_text("", encoding="utf-8")
+        done = subprocess.run(
+            [sys.executable, ".forge/review-tests.py"], cwd=client,
+            env={**os.environ, "BASE_SHA": base, "HEAD_SHA": "HEAD",
+                 "DOCS_ONLY_EXCLUDES": '[]', "GITHUB_OUTPUT": str(output)},
+            capture_output=True, text=True, timeout=30)
+        assert done.returncode == 0, done.stdout + done.stderr
+        return dict(line.split("=", 1) for line in output.read_text("utf-8").splitlines())
+
+    assert classify().get("test-only") == "true"
+    repo.git("merge", "--no-ff", "-qm", "Merge default", incoming, cwd=client)
+    assert classify().get("test-only") == "false"

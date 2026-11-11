@@ -25,7 +25,11 @@ def test_files(top: Path, base: str, excludes: list[str], *, head: str = "HEAD")
                             "--no-renames", f"{base}...{head}", "--", ".", *excludes],
                            cwd=top, check=True, capture_output=True, text=True).stdout
     changed = list(filter(None, paths.split("\0")))
-    if not changed or any(not (Path(name).name.startswith("test_") or name.endswith("_test.py"))
+    # A merged-in default branch makes `forge test --change` widen to everything it brought.
+    merged = subprocess.run([shutil.which("git") or "git", "rev-list", "--merges",
+                             f"{base}..{head}"], cwd=top, check=True,
+                            capture_output=True, text=True).stdout.strip()
+    if merged or not changed or any(not (Path(name).name.startswith("test_") or name.endswith("_test.py"))
                           or not name.endswith(".py") or not (top / name).is_file()
                           for name in changed):
         return False, []
