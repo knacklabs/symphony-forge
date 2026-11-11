@@ -30,8 +30,8 @@
       "text": "Gate: test_1_renderer_waits_for_the_page_to_load",
       "from": "blocking",
       "item": "bug-1507-the-renderer-can-measure-and-sa",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\ttests/test_renderer_waits_for_page.py\tKeep the renderer regression test executable on Windows\tbug-1507-the-renderer-can-measure-and-sa",
@@ -41,8 +41,8 @@
       "text": "Keep the renderer regression test executable on Windows",
       "from": "blocking",
       "item": "bug-1507-the-renderer-can-measure-and-sa",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "improve\tsrc/forge/templates/story.md\tThe plan template tells workers to copy support.js beside the screens, so an old design folder keeps its own copy and never gets a renderer fix; running .forge/design/support.js on the folder needs no copy.",
