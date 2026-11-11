@@ -53,7 +53,7 @@
     "id": "d8a8e838-a9f3-4f73-b855-5731627f145b",
     "status": "blocked"
   },
-  "round": 2,
+  "round": 3,
   "status": "fixing",
   "steps": [
     {
@@ -79,10 +79,10 @@
     "worker_round": 2
   },
   "stuck": {
-    "close": "80cc086a-8b4f-4a38-ab96-7e8798f19289",
-    "head": "e036160255c68949a2d068b624757da56ff866ca",
+    "close": "6d838dc9-923f-4326-93d0-60855f92e804",
+    "head": "dba68c7dce03daba49d675d3af33d8d3c28d951b",
     "keys": {},
-    "round": 1
+    "round": 2
   },
   "why": "Bug 1524. On a self-hosted or new-each-job runner without the GitHub command-line tool (gh), the nightly full-test result step fails, so the full-suite status is never posted.",
   "worker": "claude"
