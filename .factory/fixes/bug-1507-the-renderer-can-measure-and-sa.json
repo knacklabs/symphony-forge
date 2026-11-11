@@ -110,7 +110,7 @@
     "id": "feedad86-bf44-41c6-9508-32c4b031e823",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -132,10 +132,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": null,
-    "head": "c571769764b4f440967eb45e900aa637fcb3f870",
+    "close": "eadae9dd-dd34-40f6-8be7-136fa896fe4e",
+    "head": "a1be96dfd4bc7f7ca1e5e8e22ce1920019d0ba92",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "Bug 1507. The renderer can measure and save the empty first page (about:blank) as the design screen, so a saved picture can be blank while the phone width check still passes.",
   "worker": "claude"
