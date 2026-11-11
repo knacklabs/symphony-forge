@@ -1,6 +1,15 @@
 {
+  "approval": {
+    "at": "2026-11-11T09:59:23.218435+00:00",
+    "by": "human-via-Claude",
+    "event": "toolu_01XMbtJpUTgLWocqRsuhRQhC",
+    "hash": "17417647be08328fd98d64d8d157e4c8cbdc9d8779ab1dad2487dd5e9214abba",
+    "round": 2,
+    "runtime": "claude",
+    "session": "c01a489d-c76f-41c1-8371-d6f0052b027c"
+  },
   "doc": "plans/FORGE-GENFILE-1.md",
-  "status": "read",
+  "status": "approved",
   "steps": [
     {
       "at": "2026-11-11T08:03:33.687942+00:00",
@@ -13,8 +22,12 @@
     {
       "at": "2026-11-11T08:31:02.630000+00:00",
       "step": "read"
+    },
+    {
+      "at": "2026-11-11T09:59:23.218773+00:00",
+      "step": "approved"
     }
   ],
   "title": "Flag a generated file that many tasks share",
-  "touches": 0
+  "touches": 1
 }
