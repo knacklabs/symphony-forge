@@ -1,0 +1,15 @@
+{
+  "base": "eab58b3676963906109f39612ac17a2f05cef75c",
+  "branch": "fix/bug-1507-the-renderer-can-measure-and-sa",
+  "done_when": "Every saved screen picture, at 1440 and 375 pixels wide, shows the target page after it has loaded, never the empty first page.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-11T09:38:58.937298+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Bug 1507. The renderer can measure and save the empty first page (about:blank) as the design screen, so a saved picture can be blank while the phone width check still passes."
+}
