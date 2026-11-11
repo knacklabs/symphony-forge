@@ -597,9 +597,11 @@ Each job that uses the step skips only its guarded steps.
 New and upgraded repos use `stack = "on"` by default, with no settings change. A part can start
 on one reviewed, unmerged part when its After list or Scope makes it wait for that part.
 The base must use the same Forge release and must start from the default branch.
-A part that builds on another can become a base after Forge merges the lower part and close
-moves it onto that merged code and reviews it again. Set `stack = "off"` to make new parts
-wait for merges. Parts that already started on another part keep their base.
+A part that builds on another can become a base after the lower part merges, through Forge or
+with GitHub's button, and close moves it onto that merged code and reviews it again. Until then,
+`forge next` says the new part waits for the base to include the merge from the default branch:
+run `forge close` on that base. Set `stack = "off"` to make new parts wait for merges.
+Parts that already started on another part keep their base.
 
 ## Merging a ready item
 
