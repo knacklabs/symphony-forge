@@ -1,0 +1,15 @@
+{
+  "base": "eab58b3676963906109f39612ac17a2f05cef75c",
+  "branch": "fix/the-before-production-list-puts-tracked",
+  "done_when": "The Demo only row names only files whose names use letters, digits and the signs . _ / -, and says \"and N other files\" for the rest, so the row never holds a shell character.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-11T09:47:18.740598+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The Before production list puts tracked file names into the Demo only row's Say text, which is printed inside double quotes, so a file name with shell characters could run on the agent's machine when pasted into a command."
+}
