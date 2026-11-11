@@ -58,14 +58,28 @@ def delivered(repo, gh, tmp_path, request):
 
 
 AFTER_SIGN_OFF = (
-    "After sign-off, read `Before production` in `forge next`. First check what is already in "
-    "progress, so no line is started twice. Leave sample data by the existing step: settle the `Personal data` answer, set the test command and checks, then the coordinator turns `sample_data` off. For the "
-    'light-review line and the "Demo only" line, start one normal change with `forge start '
-    '"<the row\'s Say text>"` and keep its text naming the parts the line lists, so the line clears. '
-    "A normal change has the full review, and its tests follow the repo's settings once sample data is off. "
-    "Do not press or ask for Promote while a line is open, unless the owner accepts the rest in chat. "
-    "Tell the owner plainly that Forge cannot see the release or whether the app still shows made-up data, "
-    "and that it refuses nothing."
+    "After sign-off, read `Before production` in `forge next`.",
+    "First check what is already in progress, so no line is started twice.",
+    "Leave sample data by the existing step: settle the `Personal data` answer, set the test command "
+    "and checks, then the coordinator turns `sample_data` off.",
+    'For the light-review line and the "Demo only" line, start one normal change with '
+    '`forge start "<your sentence>"`.',
+    "Take the work from the row's Say text, but write your own sentence.",
+    "Never paste the Say text into a command, because a file name in it can hold shell characters.",
+    "Use only letters, digits, spaces and the signs `. , : _ - /` in your sentence, so the double "
+    "quotes are safe in every shell.",
+    "Name each part the line lists, so the line clears.",
+    "Name a file only when its name uses just those signs.",
+    "Describe any other file in words, such as the other files with the Demo only label.",
+    "A change that touches code has the full review, and its tests follow the repo's settings once "
+    "sample data is off.",
+    "A fix that changes only documentation gets only the light check, even after sign-off, and the "
+    "light-review line does not count it.",
+    "If a part in that line changed only documentation, tell the owner: the owner accepts that line "
+    "in chat, or the follow-up change includes the code that the documentation describes.",
+    "Do not press or ask for Promote while a line is open, unless the owner accepts the rest in chat.",
+    "Tell the owner plainly that Forge cannot see the release or whether the app still shows made-up "
+    "data, and that it refuses nothing.",
 )
 FIRST_STEP = "Run `forge next`: no `Before production` line may be open, or the owner accepts the rest in writing."
 
@@ -73,7 +87,11 @@ FIRST_STEP = "Run `forge next`: no `Before production` line may be open, or the 
 def test_4_the_guide_says_what_to_do_with_each_gap(delivered):
     guides, deploy = delivered
     for guide in guides:
-        assert AFTER_SIGN_OFF in guide
+        for sentence in AFTER_SIGN_OFF:
+            assert sentence in guide
+        # A start command that holds the row text, in double quotes or bare, would run a file name
+        # such as $(id).tsx on the coordinator's machine.
+        assert not re.search(r"forge start\s+[\"']?<[^>`]*(?:row|Say)", guide)
     assert FIRST_STEP in deploy
     assert FIRST_STEP in _collapsed(ROOT / "docs/start-a-prototype.md")
     assert "Forge cannot see the release and refuses nothing." in _collapsed(ROOT / "docs/guide.md")
