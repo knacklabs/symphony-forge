@@ -18,4 +18,4 @@ Forge ships `.forge/design/render-check.mjs` to every client repo. The agent cal
 
 ## Consequences
 
-Forge itself still starts no browser. A screen that is not on the list is not checked; review reports it as `Gate: rendered check`. A missing `Phone view` answer means desktop width only and refuses nothing. This decision does not reverse the 5 August 2026 decision for Forge's own tools.
+Forge itself still starts no browser. A screen that is not on the list is not checked; review reports it as `Gate: rendered check`, except in the light review of an unsigned prototype. The check runs wherever the app's browser tests run. Close runs them only when the repo's close command (`fast_test`, else `test`) includes them; when it does not, the check runs only in the full test run, and the worker says so. A sample-data prototype has no rendered check before sign-off; the fix that adds its first tests lists its screens. A missing `Phone view` answer means desktop width only and refuses nothing; a yes is recorded as `desktop and phone`. This decision does not reverse the 5 August 2026 decision for Forge's own tools.

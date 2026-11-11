@@ -677,7 +677,9 @@ coordinator set `sample_data = true` in `forge.toml`. A sign-off record does not
 on. Forge skips tests and CI while the setting is on; walk the demo steps in a browser.
 Real data or a back end keeps tests from day one.
 After sign-off, `forge next` shows setting up tests as the first step. In a coordinator-owned fix,
-set the test command and CI checks as needed, then turn off the setting. Close blocks that fix until
+set the test command and CI checks as needed, then turn off the setting. In the same fix, list the
+prototype's screens in the app's browser tests with `checkScreen` from `.forge/design/render-check.mjs`,
+so the rendered check starts with the first tests. Close blocks that fix until
 the `Personal data` answer is settled.
 
 For every prototype, build the demo-data loader in the first version, so the customer sees their own kind of
@@ -776,7 +778,7 @@ or sign-off, and `not known yet` is an accepted answer.
 | Users and roles | Who uses it, and what can each kind of user do? | admin and staff; other | before sign-off |
 | Existing systems | Which systems must this work with? | none; CRM; accounting; email or SMS; payments; company sign-in | before sign-off |
 | Sign-in | How will people sign in? The client chooses the method. | email and password (default if the client gives no other answer); one-time codes; company sign-in (Google or Microsoft) | before sign-off |
-| Phone view | Does the app need a phone view? | desktop only (default); desktop and phone | before the app's build starts |
+| Phone view | Which screen sizes must the app work on? | desktop only (default); desktop and phone | before the app's build starts |
 | Personal data | Will it hold personal, health or payment data, or data that must stay in one country? | none; personal only; regulated | before sign-off |
 | Production host | Where will the real app run? | our platform; the client's cloud; the client's servers | before sign-off |
 | Data import | Does data need to come in from today's tools? | no; a spreadsheet; another system | when a story needs it |
@@ -785,6 +787,7 @@ or sign-off, and `not known yet` is an accepted answer.
 | Backups and uptime | How much downtime or data loss is acceptable? | the platform's daily backups; stricter | when a story needs it |
 | Log retention | How long must logs be kept? | the platform's default; longer | when a story needs it |
 
+Record a yes to a phone view as `Phone view: desktop and phone`, and a no as `Phone view: desktop only`.
 A missing `Phone view` answer means desktop width only and refuses nothing. An existing app has no
 answer yet; ask at the next change to one of its screens.
 
@@ -1223,6 +1226,9 @@ keep existing settings until that fix changes them. An explicit `test_place` kee
    beside changed-test selection in TypeScript `fast_test`, through the normal settings fix after
    the human agrees. Keep `test` as the full suite. New repos get this review at setup; existing
    adopted repos get this guidance on upgrade and sync, with settings changed only through that fix.
+   If the app has Playwright browser tests, its close command (`fast_test`, else `test`) should run
+   them; if it does not, the rendered check runs only in the full test run. A worker who finds this
+   says so in its last message.
    Forge writes no `fast_test` by itself.
    Client CI caches npm downloads and the default pnpm stores by the root lockfile and enables
    uv's package cache. It keeps the app's own pnpm setup and version.

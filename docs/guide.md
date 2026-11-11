@@ -110,9 +110,14 @@ no answer it uses desktop width only and refuses nothing. It reports sideways ov
 contrast, each with the screen, width and theme, and reports a page that is not the listed screen. A hash
 counts as part of the screen's address only when the listed address has one. A problem fails the test and
 so stops close; one screen can set one kind aside with a written reason. The check makes no model call.
-It adds about 1 to 3 seconds for each screen; nobody has measured this yet. A prototype with
-`sample_data = true` has no tests before sign-off, so it runs no rendered check then. An app with no
-browser tests keeps today's rules.
+It adds about 1 to 3 seconds for each screen; nobody has measured this yet. It runs wherever the app's
+browser tests run. Close runs those tests only when the repo's close command (`fast_test`, else `test`)
+includes them; a new starter's command does for web changes. When an app's command does not, the check
+runs only in the full test run. The worker says so, and the coordinator can ask the owner to add the
+browser tests to `fast_test`. A prototype with `sample_data = true` has no tests before sign-off,
+so it runs no rendered check then; the first tests after sign-off list the prototype's screens, and the
+check starts with them. The light review of an unsigned prototype does not report a screen that is
+missing from the list. An app with no browser tests keeps today's rules.
 
 Client repos get pinned copies of impeccable and emil-design-eng with their licences at init and sync, with or without a web app; both laptop installers install them too.
 Make each app's design from the whole brief: its purpose, users, records, fields, choice-list
@@ -146,7 +151,9 @@ coordinator set `sample_data = true` in `forge.toml`. An existing sign-off recor
 `sample_data: true` still works until this setting is present. Forge skips tests and CI while the
 setting is on; walk the demo steps in a browser. Real data or a back end keeps tests from day one.
 After sign-off, `forge next` shows setting up tests as the first step. In a coordinator-owned fix,
-set the test command and CI checks as needed, then turn off the setting. Close blocks that fix until
+set the test command and CI checks as needed, then turn off the setting. In the same fix, list the
+prototype's screens in the app's browser tests with `checkScreen` from `.forge/design/render-check.mjs`,
+so the rendered check starts with the first tests. Close blocks that fix until
 the `Personal data` answer is settled.
 The design comes first. Before any screen, use the app's existing design. If it has none, draft
 one from the client's brand; use a neutral design when there is no brand. Every
