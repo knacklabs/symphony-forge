@@ -1,0 +1,142 @@
+{
+  "branch": "task/FORGE-POLISH-1-CHECKS",
+  "known": [
+    {
+      "area": "src/forge/templates/design/ui-checks.js",
+      "file": "src/forge/templates/design/ui-checks.js",
+      "gain": 3,
+      "harm": 2,
+      "line": 36,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Close refuses a changed UI file that animates all properties",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/design/ui-checks.js",
+      "file": "src/forge/templates/design/ui-checks.js",
+      "gain": 4,
+      "harm": 2,
+      "line": 36,
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: Owner accepted on 11 Nov 2026: the case is rare (a trailing comment that names transition-all in an HTML draft's script, or on a line with an apostrophe) and the way out is to reword one comment",
+      "round": 1,
+      "security": false,
+      "title": "Strip trailing JavaScript comments before applying motion-all",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/review.md",
+      "file": "src/forge/templates/review.md",
+      "gain": 3,
+      "harm": 2,
+      "line": 397,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: The review reports a button-like part with no pressed state, and a new animation or transition that ignores reduced motion",
+      "work": 2
+    },
+    {
+      "area": "_check() in tests/test_polish_checks.py",
+      "file": "tests/test_polish_checks.py",
+      "gain": 3,
+      "harm": 1,
+      "line": 19,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_4 must prove the close and review rules",
+      "work": 2
+    },
+    {
+      "area": "test_4_motion_all_refuses_a_changed_file_and_a_reason_sets_it_aside() in tests/test_polish_checks.py",
+      "file": "tests/test_polish_checks.py",
+      "gain": 3,
+      "harm": 1,
+      "line": 29,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: earlier-adopted sync must prove delivery of the new rules",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/design/ui-checks.js",
+      "file": "src/forge/templates/design/ui-checks.js",
+      "gain": 2,
+      "harm": 2,
+      "line": 37,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Follow-up: use template comments for Vue and Svelte waivers",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "da8172bd85cf516cf255abcca495ae9437e778a92a6017876ddee91fe8ebe29b",
+    "changed": "7acecef215bf0a7d354aec23267268ea9218cc4fd693ba3975dfe748163bf695",
+    "commit": "60859165f7c1a118de83d301ddcdfa260df5caee",
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner accepted on 11 Nov 2026: the case is rare (a trailing comment that names transition-all in an HTML draft's script, or on a line with an apostrophe) and the way out is to reword one comment",
+        "finding": 1
+      }
+    ],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 2\nRaise: Functional. Case: normal use - An HTML design draft contains an inline script with `button.className = 'transition-opacity'; // replaced transition-all`. Line 39 skips HTML, so `motion-all` still reads the JavaScript comment and refuses the clean draft; `src/forge/design.py:129-133` shows that Forge checks these HTML files during plan read. A trailing JavaScript waiver inside the script is ignored for the same reason. JSX and TSX also remain affected when a label has an apostrophe and the comment quotes the old class: in `const C = () => <button className=\"transition-opacity\">Don't</button>; // replaced 'transition-all'`, the quoted-string matcher consumes the `//` marker and leaves the comment visible. The synchronized `.forge/design/ui-checks.js:39` has the same behavior.",
+        "file": "src/forge/templates/design/ui-checks.js",
+        "gain": 4,
+        "harm": 2,
+        "line": 39,
+        "priority": "P1",
+        "title": "Strip trailing JavaScript comments before applying motion-all",
+        "work": 2
+      }
+    ],
+    "id": "13930603-ab32-4044-b934-507ea9112539",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-11T07:02:31.537690+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-11T07:23:48.391446+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-11T07:33:41.976020+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-11T07:33:41.976235+00:00",
+    "by": "owner",
+    "choice": "accept",
+    "file": "src/forge/templates/design/ui-checks.js",
+    "reason": "Owner accepted on 11 Nov 2026: the case is rare (a trailing comment that names transition-all in an HTML draft's script, or on a line with an apostrophe) and the way out is to reword one comment",
+    "wait_id": "2f923be7-dcd8-4533-acdd-e02b62f45c95",
+    "worker_round": 2
+  },
+  "stuck": {
+    "close": "597c0af1-3a60-455d-872a-0513860cb28b",
+    "head": "1adfa6b4695c31b1629bf4d419b6e222cc726d2b",
+    "keys": {},
+    "round": 1
+  },
+  "worker": "claude"
+}

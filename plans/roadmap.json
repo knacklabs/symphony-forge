@@ -588,6 +588,42 @@
       "title": "Remove a feature from a client app in one change",
       "status": "pending",
       "order": 118
+    },
+    {
+      "key": "FORGE-BENCH-1",
+      "title": "Score each Forge release on the same reference app",
+      "status": "pending",
+      "order": 118
+    },
+    {
+      "key": "FORGE-THEME-1",
+      "title": "One shared design system and theme, set in Claude and checked at close",
+      "status": "pending",
+      "order": 118
+    },
+    {
+      "key": "FORGE-POLISH-1",
+      "title": "Client apps look finished without design instructions",
+      "status": "pending",
+      "order": 118
+    },
+    {
+      "key": "FORGE-PRODGAP-1",
+      "title": "List prototype gaps after sign-off and close each one before production",
+      "status": "pending",
+      "order": 118
+    },
+    {
+      "key": "FORGE-RENDER-1",
+      "title": "Close shows what a changed screen looks like",
+      "status": "pending",
+      "order": 118
+    },
+    {
+      "key": "FORGE-PROSPECT-1",
+      "title": "Research the prospect before a prototype and propose features from what is found",
+      "status": "pending",
+      "order": 119
     }
   ],
   "epics": [

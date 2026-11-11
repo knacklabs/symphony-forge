@@ -1,0 +1,37 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/templates/skill.md\tFunctional: Handle documentation-only light-review gaps\tFORGE-PRODGAP-1/GUIDE",
+      "kind": "bug",
+      "path": "src/forge/templates/skill.md",
+      "line": 1053,
+      "text": "Functional: Handle documentation-only light-review gaps",
+      "from": "blocking",
+      "item": "FORGE-PRODGAP-1/GUIDE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/skill.md\tSecurity: Pass the row text as a literal shell argument\tFORGE-PRODGAP-1/GUIDE",
+      "kind": "bug",
+      "path": "src/forge/templates/skill.md",
+      "line": 1053,
+      "text": "Security: Pass the row text as a literal shell argument",
+      "from": "blocking",
+      "item": "FORGE-PRODGAP-1/GUIDE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/templates/skill.md\tFollow-up: Preserve light-review names in a story\u2019s saved title",
+      "kind": "edge",
+      "path": "src/forge/templates/skill.md",
+      "line": 1053,
+      "text": "Follow-up: Preserve light-review names in a story\u2019s saved title",
+      "from": "review",
+      "item": "FORGE-PRODGAP-1/GUIDE",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

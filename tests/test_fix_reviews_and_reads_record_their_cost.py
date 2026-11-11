@@ -123,6 +123,15 @@ def test_1_reviews_and_reads_record_model_effort_chat_and_tokens(env, monkeypatc
             HELPER.format(python=sys.executable, report=report()), 'utf-8')
         conftest._install(repo.bin, 'codex', CODEX.format(python=sys.executable))
         _repo_adopted_on_the_previous_release(up)
+        # A pure upgrade is checked without a model, so it records no review. A hand edit in the
+        # fix brings the upgraded release's model review back.
+        (up.folder / 'docs').mkdir(exist_ok=True)
+        (up.folder / 'docs' / 'notes.md').write_text('hand edit\n', 'utf-8')
+        repo.git('add', 'docs/notes.md', cwd=up.folder)
+        repo.git('-c', f'core.hooksPath={tmp_path / "no-hooks"}', 'commit', '-q', '-m', 'Add a note',
+                 cwd=up.folder)
+        reviewed = repo.forge('close', NAME, cwd=up.folder)
+        assert reviewed.returncode == 0, reviewed.stdout + reviewed.stderr
         end = run_end(repo, 'review')
         spent = CODEX_REVIEW_SPENT
         assert end | spent == end

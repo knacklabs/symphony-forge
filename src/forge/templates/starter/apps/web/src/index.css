@@ -124,4 +124,43 @@
   body {
     @apply bg-background text-foreground font-sans;
   }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading;
+  }
+}
+
+/* Theme names shared with the Claude design system (FORGE-THEME-1). Each value is literal and equals Tailwind's own default. */
+@theme {
+  --font-heading: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+  --spacing: 0.25rem;
+  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
+
+/* Motion (FORGE-POLISH-1) */
+@theme {
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --default-transition-timing-function: var(--ease-out);
+  --default-transition-duration: 150ms;
+  --enter-duration: 200ms;
+}
+
+/* Stylesheet animations and transitions end at once; a script's animation must read the setting itself. Spinners keep turning. */
+@media (prefers-reduced-motion: reduce) {
+  *:not(.animate-spin),
+  *:not(.animate-spin)::before,
+  *:not(.animate-spin)::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
 }

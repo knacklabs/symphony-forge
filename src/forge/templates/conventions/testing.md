@@ -65,6 +65,21 @@ await page.getByRole('button', { name: 'Cancel order' }).click();
 await expect(page.getByText('Order cancelled')).toBeVisible();
 ```
 
+Each screen of the app gets one rendered check in the same browser tests. Import `checkScreen` from
+`.forge/design/render-check.mjs` and call it once for each listed screen:
+
+```ts
+import { checkScreen } from '../../../.forge/design/render-check.mjs';
+
+test('renders orders', async ({ page }) => { await checkScreen(page, { name: 'orders', path: '/orders' }); });
+```
+
+It opens the screen in its loaded state, in light and dark, at 1440 pixels. Add `phone: true` only for an
+app that needs a phone view; it then also checks at 375 pixels. `path` is the address the screen ends on.
+A hash counts as part of it only when `path` has one. Overflow, cut text and low contrast fail the test.
+To set one kind aside for one screen, add `waive: { 'cut-text': '<the reason>' }`.
+Close runs this check only when its test command runs the browser tests.
+
 Keep browser tests in the root test command alongside unit and API tests. Playwright runs in
 parallel workers with zero retries: an intermittent failure fails the check. Fix its cause by
 waiting for real app state, never by adding a fixed sleep. A minimal config is:

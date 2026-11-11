@@ -1,0 +1,59 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/prcheck.py\tNot done: On a self-hosted runner without gh installed, the Review pull request job sets the pull request status and passes its check.\tbug-1532-a-self-hosted-runner-without-gh",
+      "kind": "bug",
+      "path": "src/forge/prcheck.py",
+      "line": 194,
+      "text": "Not done: On a self-hosted runner without gh installed, the Review pull request job sets the pull request status and passes its check.",
+      "from": "blocking",
+      "item": "bug-1532-a-self-hosted-runner-without-gh",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/prcheck.py\tSecurity: Keep the GitHub token out of curl arguments\tbug-1532-a-self-hosted-runner-without-gh",
+      "kind": "bug",
+      "path": "src/forge/prcheck.py",
+      "line": 194,
+      "text": "Security: Keep the GitHub token out of curl arguments",
+      "from": "blocking",
+      "item": "bug-1532-a-self-hosted-runner-without-gh",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_runner_without_gh.py\tGate: test_1_review_status_is_set_without_gh\tbug-1532-a-self-hosted-runner-without-gh",
+      "kind": "bug",
+      "path": "tests/test_runner_without_gh.py",
+      "line": 72,
+      "text": "Gate: test_1_review_status_is_set_without_gh",
+      "from": "blocking",
+      "item": "bug-1532-a-self-hosted-runner-without-gh",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_runner_without_gh.py\tKeep the no-gh test executable on Windows\tbug-1532-a-self-hosted-runner-without-gh",
+      "kind": "bug",
+      "path": "tests/test_runner_without_gh.py",
+      "line": 53,
+      "text": "Keep the no-gh test executable on Windows",
+      "from": "blocking",
+      "item": "bug-1532-a-self-hosted-runner-without-gh",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/prcheck.py\tThe nightly full-suite status step still needs gh; its job has no checkout or Python, so a gh-less self-hosted runner still fails there.",
+      "kind": "edge",
+      "path": "src/forge/prcheck.py",
+      "line": 340,
+      "text": "The nightly full-suite status step still needs gh; its job has no checkout or Python, so a gh-less self-hosted runner still fails there.",
+      "from": "worker",
+      "item": "bug-1532-a-self-hosted-runner-without-gh",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

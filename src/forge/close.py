@@ -351,7 +351,7 @@ def close(args: argparse.Namespace) -> int:
             testing = (pool.submit(review.test_run, top, command, review_ref, always=switch)
                        if local_tests else None)
             try:
-                if switch or records_only or skip:
+                if switch or records_only or skip or review_skip.upgrade_only(top, item, cfg, ancestor, head, [p for p in files if p], previous):
                     head = repo.git("rev-parse", "HEAD", cwd=top)
                     identity = repo.record_event(top, item, "review result", commit=head, outcome="clean", findings=[],
                                                  review_round=review.round_number(top, item, state),

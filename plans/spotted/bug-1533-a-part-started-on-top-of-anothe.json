@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/task.py\tGate: Update the shipped stacking instructions\tbug-1533-a-part-started-on-top-of-anothe",
+      "kind": "bug",
+      "path": "src/forge/task.py",
+      "line": 578,
+      "text": "Gate: Update the shipped stacking instructions",
+      "from": "blocking",
+      "item": "bug-1533-a-part-started-on-top-of-anothe",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_stack_start.py\tGate: Exercise forge next after a GitHub-button merge\tbug-1533-a-part-started-on-top-of-anothe",
+      "kind": "bug",
+      "path": "tests/test_stack_start.py",
+      "line": 288,
+      "text": "Gate: Exercise forge next after a GitHub-button merge",
+      "from": "blocking",
+      "item": "bug-1533-a-part-started-on-top-of-anothe",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
