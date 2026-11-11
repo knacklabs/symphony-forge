@@ -43,6 +43,17 @@
       "item": "bug-1507-the-renderer-can-measure-and-sa",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "improve\tsrc/forge/templates/story.md\tThe plan template tells workers to copy support.js beside the screens, so an old design folder keeps its own copy and never gets a renderer fix; running .forge/design/support.js on the folder needs no copy.",
+      "kind": "improve",
+      "path": "src/forge/templates/story.md",
+      "line": 17,
+      "text": "The plan template tells workers to copy support.js beside the screens, so an old design folder keeps its own copy and never gets a renderer fix; running .forge/design/support.js on the folder needs no copy.",
+      "from": "worker",
+      "item": "bug-1507-the-renderer-can-measure-and-sa",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }

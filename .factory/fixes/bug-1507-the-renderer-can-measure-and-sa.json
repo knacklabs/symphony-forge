@@ -11,7 +11,7 @@
       "gain": 3,
       "harm": 3,
       "line": 93,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -50,7 +50,7 @@
       "gain": 4,
       "harm": 2,
       "line": 44,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -60,58 +60,37 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "da99023a8a3876e42f1a0b96924030b85efce6067cc26d327264113c5bb36470",
-    "changed": "5cc405a667f699f298ffb87cb10ba26bd4aa0da21fdf8c718af66c3774c696bc",
-    "commit": "743bea4a1daf4dd3ed627c7fbf01ba1b04f58bb9",
+    "branch_diff": "09aa162cdea890c61b00ff35a4dd2a20e9c98d511614726089e4952a26c02233",
+    "changed": "05bfc583750fbef9639afe8c47a0a6aac8fb289a63ac923e963e57f3c05afc01",
+    "commit": "fbd1273b88ee956afe3c809abc00975dae697749",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 3, Work 3, Harm 3\nRaise: Not done\nCase: normal use - an existing client reruns a design folder created before upgrading Forge.\nThe fix updates the managed renderer, but src/forge/templates/story.md:17-18 instructs workers to copy and commit a separate support.js beside the screens. Sync ships only .forge/design/support.js (src/forge/story.py:91), so an already-copied renderer retains the old race and can still save about:blank at either width. The earlier-adopted test copies the new renderer after sync (tests/test_renderer_waits_for_page.py:54-55), so it does not cover this path.",
-        "file": "src/forge/templates/design/support.js",
-        "gain": 3,
-        "harm": 3,
-        "line": 93,
-        "priority": "P1",
-        "required_done_when": true,
-        "title": "Not done: Every saved screen picture, at 1440 and 375 pixels wide, shows the target page after it has loaded, never the empty first page.",
-        "work": 3
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - running Forge's configured full test suite on Windows.\nThe test passes an extensionless JavaScript file with a Unix shebang as CHROME_BIN, and the renderer spawns that path directly (src/forge/templates/design/support.js:46). Windows cannot execute that file as a program, so both test cases fail in the pytest suite configured by forge.toml:6. The Windows workflow selects only tests marked platform (.github/workflows/forge-next.yml:140), but this test has no such mark, so that workflow will not catch the failure. See the [Windows process-creation contract](https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-createprocessw).",
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Test\nCase: normal use - saving either screen picture after the target page loads.\nThe stand-in now evaluates the readiness expression, but its screenshot is still fabricated: it appends the page's HTML to a 24-byte buffer rather than rendering a PNG. The assertions at lines 91\u201395 therefore do not show that either saved picture contains the page. For example, a regression that asks Chrome to capture an empty area would pass because the stand-in ignores screenshot parameters and returns the HTML anyway. The existing real-browser viewport test checks dimensions, not page content.",
         "file": "tests/test_renderer_waits_for_page.py",
         "gain": 4,
         "harm": 3,
-        "line": 60,
-        "priority": "P1",
-        "title": "Keep the renderer regression test executable on Windows",
-        "work": 2
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Test\nCase: normal use - the readiness check accepts the initial blank document.\nThe fake browser never evaluates the supplied readiness expression: it returns its own loaded flag for any expression other than the measurement. Replacing the new condition with an unconditional true would therefore still pass this test, although a real browser could immediately capture about:blank. The fabricated screenshot also appends PAGE based on that same flag rather than rendering the HTML, so neither width proves that the saved picture shows the target page.",
-        "file": "tests/test_renderer_waits_for_page.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 31,
+        "line": 51,
         "priority": "P1",
         "title": "Gate: test_1_renderer_waits_for_the_page_to_load",
         "work": 2
       },
       {
-        "body": "Gain 4, Work 1, Harm 2\nRaise: Gate\nCase: normal use - closing this fix and checking its Done-when proof.\nThe supplied proof list is missing. Although the branch adds a regression test, its final commit contains a Proof paragraph rather than the required Proof list mapping the Done-when item to its test, so close cannot match that proof to its pull-request result.",
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - running the platform-sensitive suite on Windows.\nThe Windows skip avoids the original process-launch failure, but both cases of the renderer regression test are still never executable there. The Windows workflow selects the platform-marked file and then skips both cases, so it cannot detect the blank-page race on this supported platform. The existing real-browser viewport test checks image dimensions and overflow, not the delayed navigation case.",
         "file": "tests/test_renderer_waits_for_page.py",
-        "gain": 4,
-        "harm": 2,
-        "line": 44,
+        "gain": 3,
+        "harm": 3,
+        "line": 14,
         "priority": "P1",
-        "title": "Gate: proof list",
-        "work": 1
+        "title": "Keep the renderer regression test executable on Windows",
+        "work": 2
       }
     ],
-    "id": "feedad86-bf44-41c6-9508-32c4b031e823",
+    "id": "96df5e6d-683f-44f7-8145-9e46cc2adf26",
     "status": "blocked"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-11T09:38:58.937298+00:00",
@@ -120,16 +99,16 @@
     {
       "at": "2026-11-11T09:53:21.219045+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-11-11T10:20:38.987103+00:00",
+      "step": "review"
     }
   ],
   "stop": {
-    "at": "2026-11-11T09:53:21.229126+00:00",
-    "by": "owner",
-    "choice": "more",
-    "file": "src/forge/templates/design/support.js",
-    "reason": "Owner chose one more round on 11 Nov 2026: repair the three test points; the old-copy case becomes its own later fix",
-    "wait_id": "a8496807-6864-4c0f-8730-4e4b217b9643",
-    "worker_round": 1
+    "at": "2026-11-11T10:20:38.987394+00:00",
+    "file": "tests/test_renderer_waits_for_page.py",
+    "wait_id": "c4eaf1f1-438b-4986-8e1c-ab00ae51ee53"
   },
   "stuck": {
     "close": "eadae9dd-dd34-40f6-8be7-136fa896fe4e",
