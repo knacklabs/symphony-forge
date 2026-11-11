@@ -1,13 +1,13 @@
 ---
 reader: codex (gpt-6.1-terra)
-read_at: 2026-11-10T18:17:08.177540+00:00
-seconds: 528.971
-read_hash: 6bd4707e6b52adc64151e4bff4e03851d2018193
-round: 3
+read_at: 2026-11-11T02:26:15.914492+00:00
+seconds: 287.105
+read_hash: b34cc10d461b81ed9ae8cc6a8a35bc07398860c2
+round: 4
 passed: yes
-doc_seen: 6bd4707e6b52adc64151e4bff4e03851d2018193
+doc_seen: b34cc10d461b81ed9ae8cc6a8a35bc07398860c2
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: dda7588d60b963112042c8f7ba4a37a4f16be374
+notes_seen: 3bf4d0a6598af721f6e7e7ac0b254f261d74e4a4
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a1c68c-71c0-7f11-be78-6c5527a290a1
 session:
@@ -153,4 +153,24 @@ Disposition: cut - the screen-file rule now excludes `tests/`, `test/` and `__te
     Raise: Plan gap. [The review rule](/plans/FORGE-THEME-1.md:109) applies when the approved copy is absent, but the worker is told to build no screen on the starter’s neutral theme without that condition.
     Case: normal use - A client approves the neutral theme and the agent saves its copy. The worker instruction still forbids building the screen with the approved theme.
     Gain 3, Work 1, Harm 2
+   Disposition: keep - below the bar (follow-up)
+
+## Round 4
+
+21. Advisory: Plan gap: A trial theme change can replace the approved copy before Sales accepts it.
+    Raise: Plan gap. [The feedback loop](/plans/FORGE-THEME-1.md:94) asks the agent to show each revision again, but [the copy rule](/plans/FORGE-THEME-1.md:97) says to copy every later Claude theme change into the app and approved copy. Forge’s current [design source](/src/forge/design.py:159) records a link, not approval of each theme revision.
+    Case: normal use - Sales asks for a warmer look after approval and rejects the first revision. The copy rule can make that trial the approved copy before Sales says yes.
+    Gain 3, Work 3, Harm 3
+   Disposition: keep - below the bar (follow-up)
+
+22. Advisory: Plan gap: The guide does not tell the agent to choose a first look for an earlier-adopted stock app.
+    Raise: Plan gap. [The owner-facing change](/plans/FORGE-THEME-1.md:8) says the agent decides each client’s theme from five facts. [The guide](/plans/FORGE-THEME-1.md:94) starts an existing client from its current theme but specifies better first values only for a new client.
+    Case: normal use - An earlier-adopted app still has the [starter’s neutral colours](/src/forge/templates/starter/apps/web/src/index.css:50). Its first system can be shown in gray without the agent making the promised five-fact choice.
+    Gain 3, Work 3, Harm 3
+   Disposition: keep - below the bar (follow-up)
+
+23. Advisory: Test: The guide test does not pin the new agent-led feedback flow.
+    Raise: Test. [Item 2’s test](/plans/FORGE-THEME-1.md:103) lists no assertion that the agent chooses the values, asks only for missing facts, or makes the changes Sales requests. The [existing look test](/tests/test_uistandards_words.py:43) also checks the fact names rather than who chooses the theme.
+    Case: normal use - The delivered guide retains the previous instruction for Sales to change values on the page; the listed assertions can still pass.
+    Gain 3, Work 3, Harm 3
    Disposition: keep - below the bar (follow-up)
