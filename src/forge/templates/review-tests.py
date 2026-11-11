@@ -8,6 +8,7 @@ import subprocess
 import sys
 from pathlib import Path
 from urllib.parse import quote
+from urllib.request import Request, urlopen
 
 
 # <docs-only-rule>
@@ -17,6 +18,38 @@ def run(*args: str) -> str:
     # Resolve PATH first, including the .cmd shims used on Windows.
     return subprocess.run([shutil.which(args[0]) or args[0], *args[1:]], check=True,
                           capture_output=True, text=True).stdout.strip()
+
+
+def api(path: str, body: dict | None = None) -> dict:
+    """One GitHub API call without gh: a GET, or a POST with a body. The token is read here,
+    so it is never in a command line."""
+    request = Request(f"{os.environ.get('GITHUB_API_URL', 'https://api.github.com')}/{path}",
+                      data=json.dumps(body).encode() if body else None,
+                      headers={"Authorization": f"Bearer {os.environ['GH_TOKEN']}",
+                               "Accept": "application/vnd.github+json",
+                               "Content-Type": "application/json"})
+    with urlopen(request, timeout=60) as response:
+        return json.load(response)
+
+
+def api_runs(endpoint: str, sha: str) -> list[dict]:
+    """The same workflow-run list as `gh api --paginate`, for a runner without gh."""
+    runs, page = [], 1
+    while True:
+        found = api(f"{endpoint}?head_sha={sha}&per_page=100&page={page}")["workflow_runs"]
+        runs += found
+        if len(found) < 100:
+            return runs
+        page += 1
+
+
+def set_status(context: str, state: str, job_name: str) -> None:
+    """The workflow's status step on a runner without gh: link the commit status to the job."""
+    repo, run_id = os.environ["GITHUB_REPOSITORY"], os.environ["GITHUB_RUN_ID"]
+    jobs = api(f"repos/{repo}/actions/runs/{run_id}/jobs")["jobs"]
+    api(f"repos/{repo}/statuses/{os.environ['HEAD_SHA']}",
+        {"context": context, "state": state,
+         "target_url": next(job["html_url"] for job in jobs if job["name"] == job_name)})
 
 
 def test_files(top: Path, base: str, excludes: list[str], *, head: str = "HEAD") -> tuple[bool, list[str]]:
@@ -79,9 +112,10 @@ def reuse() -> bool:
             if ({k: v for k, v in before.items() if k not in bookkeeping}
                     != {k: v for k, v in after.items() if k not in bookkeeping}):
                 return False
-        runs = [json.loads(line) for line in run("gh", "api", "--paginate", "--jq",
-                                               ".workflow_runs[]", endpoint, "--method", "GET",
-                                               "-f", f"head_sha={parent}", "-f", "per_page=100").splitlines()]
+        runs = ([json.loads(line) for line in run("gh", "api", "--paginate", "--jq",
+                                                ".workflow_runs[]", endpoint, "--method", "GET",
+                                                "-f", f"head_sha={parent}", "-f", "per_page=100").splitlines()]
+                if shutil.which("gh") else api_runs(endpoint, parent))
         # Target-event runs check the PR but skip tests, so their success proves nothing here.
         matching = [r for r in runs if r.get("head_sha") == parent
                     and (r.get("event") == "push" or r.get("event") == "pull_request"
@@ -93,6 +127,10 @@ def reuse() -> bool:
             return latest.get("status") == "completed" and latest.get("conclusion") == "success"
         head = parent
 
+
+if sys.argv[1:2] == ["status"]:
+    set_status(*sys.argv[2:5])
+    sys.exit()
 
 docs_only = False
 tests_only, platform_files = False, []
