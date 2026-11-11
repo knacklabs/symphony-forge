@@ -129,7 +129,7 @@
     "id": "4a81e1d1-a164-43a3-b150-979fe06e096f",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "stacked_on": "FORGE-PRODGAP-1/GUIDE",
   "status": "fixing",
   "steps": [
@@ -143,10 +143,10 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "a53424b0bee1251b745430a94e178e8b1e893039",
+    "close": "9588aa03-7e98-4148-9185-3ce6d63cc289",
+    "head": "382794d585ec6052e518ff2d9fdfcba75a962a7f",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "worker": "claude"
 }
