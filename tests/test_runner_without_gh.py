@@ -15,8 +15,10 @@ from test_two_round_limit import client
 
 STORY = "FIX-RUNNER-WITHOUT-GH"
 
-# A runner without gh is a Linux runner running bash; PATH links to tools need POSIX.
-pytestmark = pytest.mark.skipif(os.name == "nt", reason="The trusted workflow runs in bash on Linux")
+# A runner without gh is a Linux runner running bash, and the PATH is built from links, so
+# Windows skips these. The platform mark keeps the policy test happy about the os.name branch.
+pytestmark = [pytest.mark.platform,
+              pytest.mark.skipif(os.name == "nt", reason="The trusted workflow runs in bash on Linux")]
 
 
 @pytest.fixture
