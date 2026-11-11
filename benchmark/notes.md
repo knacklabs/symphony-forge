@@ -18,11 +18,17 @@ Only the wholesaler's staff. A staff member is ready when the app starts: the em
   fields "Shop", "Item", "Quantity" and "Delivery date" and a "Save" button. After "Save", the
   new order is in the list. A new order is "Open".
 - **See a dashboard.** The "Dashboard" page shows "Orders due today" and "Late orders". Each one
-  has a number beside it.
+  is a section named by its label (a `<section>` with `aria-label` or `aria-labelledby`) and has a
+  number inside it.
 
-## The nightly job
+## Calls for the wholesaler's other systems
 
-The wholesaler runs its own scheduler. Each night it calls the app at one address, as a signed-in
-staff member: `POST /api/jobs/mark-late-orders`. The job marks every open order whose delivery
-date has passed as "Late". The app does not schedule anything. The job answers with a success
-status when it has done its work.
+Both calls are made as a signed-in staff member, with the same session and `x-csrf-token` header
+that the app's own pages use. Each answers with a success status when it has done its work.
+
+- **Add an order.** `POST /api/orders` with a JSON body of `shop`, `item`, `quantity` (a whole
+  number) and `deliveryDate` (like `2020-01-31`). The date can be in the past, because the
+  wholesaler's other systems send orders late. The new order is "Open".
+- **The nightly job.** The wholesaler runs its own scheduler. Each night it calls the app at one
+  address: `POST /api/jobs/mark-late-orders`. The job marks every open order whose delivery date
+  has passed as "Late". The app does not schedule anything.

@@ -4,11 +4,14 @@ import hashlib
 import json
 import os
 import re
+import socket
+import string
 import subprocess
 import time
 import tomllib
 import urllib.error
 import urllib.request
+import uuid
 from pathlib import Path
 
 LAUNCHER = ".claude/skills/impeccable/scripts/impeccable"
@@ -37,25 +40,39 @@ def run_check(check, app, env):
     return {"status": "pass" if int(words[-1]) == 0 else "fail", "number": int(words[-1]), "reason": ""}
 
 
-def start_app(app_entry, app, env):
-    """Start the app and wait for its address; False when it never answers."""
+def free_ports(names):
+    """A free local port for each name. Every socket stays open until each name has one, so none repeats."""
+    held = [socket.socket() for _ in names]
     try:
-        launch = subprocess.Popen(app_entry["start"], shell=True, cwd=app, env=env,
+        for one in held:
+            one.bind(("127.0.0.1", 0))
+        return {name: str(one.getsockname()[1]) for name, one in zip(names, held)}
+    finally:
+        for one in held:
+            one.close()
+
+
+def start_app(entry, app, env):
+    """Start the app, wait for its address, then run its setup. Returns why it is not ready, or ""."""
+    try:
+        launch = subprocess.Popen(entry["start"], shell=True, cwd=app, env=env,
                                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     except OSError:
-        return False
-    deadline = time.monotonic() + app_entry.get("ready_timeout", 300)
-    while time.monotonic() < deadline:
-        if launch.poll() not in (None, 0):
-            return False
+        return "the app did not start"
+    deadline = time.monotonic() + entry.get("ready_timeout", 300)
+    while time.monotonic() < deadline and launch.poll() in (None, 0):
         try:
-            urllib.request.urlopen(app_entry["ready"], timeout=2)
-            return True
+            urllib.request.urlopen(env["APP_URL"], timeout=2)
         except urllib.error.HTTPError:
-            return True  # any answer means the app is up
+            pass  # any answer means the app is up
         except OSError:
             time.sleep(1)
-    return False
+            continue
+        setup = entry.get("setup")
+        if setup and subprocess.run(setup, shell=True, cwd=app, env=env, capture_output=True).returncode != 0:
+            return "the app setup failed"
+        return ""
+    return "the app did not start"
 
 
 def fingerprint(base, paths):
@@ -134,11 +151,13 @@ def main():
     wanted = [c for c in config["check"] if c.get("app")]
     if wanted:
         entry = config["app"]
-        env["APP_URL"] = entry["ready"]
-        up = start_app(entry, app, env)
+        # This run's own Compose project name and free ports: no command may touch another app's containers.
+        env.update(free_ports(entry.get("ports", [])))
+        env["BENCH_PROJECT"] = f"forge-bench-{args.release.replace('.', '-')}-{uuid.uuid4().hex[:8]}"
+        env["APP_URL"] = string.Template(entry["ready"]).safe_substitute(env)
+        reason = start_app(entry, app, env)
         for check in wanted:
-            done[check["name"]] = run_check(check, app, env) if up else {
-                "status": "fail", "number": None, "reason": "the app did not start"}
+            done[check["name"]] = {"status": "fail", "number": None, "reason": reason} if reason else run_check(check, app, env)
         subprocess.run(entry["stop"], shell=True, cwd=app, env=env, capture_output=True)
     listed = [{"name": c["name"], **done[c["name"]]} for c in config["check"]]
     passed = sum(c["status"] == "pass" for c in listed)

@@ -26,6 +26,12 @@ export async function signIn(page) {
   await expect(page.getByRole('link', { name: 'Orders' })).toBeVisible();
 }
 
+// The header a call needs after sign-in: the starter's own client sends the csrf cookie back as x-csrf-token.
+export async function csrfHeader(page) {
+  const cookie = (await page.context().cookies()).find((one) => one.name === 'starter_csrf');
+  return { 'x-csrf-token': decodeURIComponent(cookie?.value ?? '') };
+}
+
 export async function addOrder(page, shop, delivery) {
   await page.getByRole('link', { name: 'Orders' }).click();
   await page.getByRole('button', { name: 'New order' }).click();
