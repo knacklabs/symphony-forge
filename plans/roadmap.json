@@ -594,6 +594,12 @@
       "title": "Client apps look finished without design instructions",
       "status": "pending",
       "order": 118
+    },
+    {
+      "key": "FORGE-RENDER-1",
+      "title": "Close shows what a changed screen looks like",
+      "status": "pending",
+      "order": 118
     }
   ],
   "epics": [
