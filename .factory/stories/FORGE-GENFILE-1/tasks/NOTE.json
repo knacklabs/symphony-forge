@@ -1,12 +1,20 @@
 {
   "base": "10472546fd52a0afba0321b5199ff210a876ccb0",
   "branch": "task/FORGE-GENFILE-1-NOTE",
+  "round": 1,
   "stacked_on": "FORGE-PRODGAP-1/GUIDE",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-11T10:02:06.115359+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "a53424b0bee1251b745430a94e178e8b1e893039",
+    "keys": {},
+    "round": null
+  },
+  "worker": "claude"
 }
