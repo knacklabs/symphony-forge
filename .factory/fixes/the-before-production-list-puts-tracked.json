@@ -11,8 +11,8 @@
       "gain": 3,
       "harm": 3,
       "line": 48,
-      "outcome": "open",
-      "reason": "",
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: Owner accepted on 11 Nov 2026: the remaining case is rare (an accented top-level name that sorts first, or a name with a line break) and nothing unsafe is shown",
       "round": 1,
       "security": false,
       "title": "Not done: The Demo only row names only files whose names use letters, digits and the signs . _ / -, and says \"and N other files\"\u2026",
@@ -63,7 +63,13 @@
     "branch_diff": "e3b1f02cedc9e501993ac2d36a8ebadf7ba1f8391295eaf123d4976fa3fcc273",
     "changed": "433a192b9af7b1716cc7eef65480d65285c22bcf6e530a74ff3cc6fdf21abff7",
     "commit": "00ab0e851547958845fc05a4cb7330fba8384351",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner accepted on 11 Nov 2026: the remaining case is rare (an accented top-level name that sorts first, or a name with a line break) and nothing unsafe is shown",
+        "finding": 1
+      }
+    ],
     "findings": [
       {
         "body": "Gain 2, Work 2, Harm 3\nRaise: Not done\nCase: rare - a signed-off prototype has a labelled root-level file named ` caf\u00e9.tsx` that sorts first, or a labelled filename contains a newline.\nOwner's exact title: Not done: The Demo only row names only files whose names use letters, digits and the signs . _ / -, and says \"and N other files\" for the rest, so the row never holds a shell character.\nThe NUL-separated listing still goes through `repo.git`, which strips leading whitespace from its entire output (`src/forge/repo.py:405-411`). The first example is therefore looked up as `caf\u00e9.tsx`, not ` caf\u00e9.tsx`. Separately, the shared blob reader skips paths containing newlines (`src/forge/repo.py:193-194`). These labelled files are omitted from the count, and the Demo only row disappears if no other labelled file remains. The earlier round already raised omission of non-ASCII names; accepting these exclusions would require narrowing the clause.",
@@ -78,10 +84,10 @@
       }
     ],
     "id": "f5a71a26-a078-403b-b3dd-e829647ae84a",
-    "status": "blocked"
+    "status": "clean"
   },
   "round": 2,
-  "status": "hotspot",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-11T09:47:18.740598+00:00",
@@ -98,8 +104,12 @@
   ],
   "stop": {
     "at": "2026-11-11T10:34:17.142554+00:00",
+    "by": "owner",
+    "choice": "accept",
     "file": "src/forge/gaps.py",
-    "wait_id": "550c9078-5060-4901-ae9a-f5e4fa60504d"
+    "reason": "Owner accepted on 11 Nov 2026: the remaining case is rare (an accented top-level name that sorts first, or a name with a line break) and nothing unsafe is shown",
+    "wait_id": "550c9078-5060-4901-ae9a-f5e4fa60504d",
+    "worker_round": 2
   },
   "stuck": {
     "close": "b27f5dab-1e93-48b2-b51c-be8cd09b5b2c",
