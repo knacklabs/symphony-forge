@@ -7,7 +7,7 @@
       "gain": 3,
       "harm": 3,
       "line": 377,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -20,7 +20,7 @@
       "gain": 3,
       "harm": 3,
       "line": 32,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -43,47 +43,27 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "55ceb356bef03abb8b2d14d6031b0f4867ebdf8b5600df530957a8fbb485f7b8",
-    "changed": "b9019c98768f44c0f0aeb0f907c11ee00515483c8f4b858c606512853890efda",
-    "commit": "efeb01e621e0c23bde465ce002aa711bf1f77a46",
+    "branch_diff": "386ec99b1eace3b2685db99643d1426019989db07b23cc9618a92403932d4d85",
+    "changed": "e2794a6d56a16905a073606bd360fc0fdfa832b1fda351ef3f4fd4663b8a8976",
+    "commit": "2247e74850845d1e768c1ccc40f1ab22318dabb8",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 3, Work 1, Harm 3\nRaise: Standard\nThe standard says tests must \u201cown and clean up every process they start, even after a crash.\u201d This detached fast-test process is stopped only for its own `subprocess.TimeoutExpired`. The enclosing helper\u2019s `finally` tracks the earlier full-test process, not this one (`tests/test_starter_tree.py:349-351`). If pytest\u2019s 1,800-second limit or an interrupt occurs during the fast run, it can continue while the helper tears down the same Docker project. The per-test process check scans a different temporary folder; session-wide cleanup occurs only later (`tests/conftest.py:413-429`).\nCase: normal use - a developer interrupts the long live smoke run, or it reaches the pytest timeout during the second command.\nAdds work: stop the fast-test process group on interruption; F 2 x H 2 = 4; 2 x C = 2.",
-        "file": "tests/test_starter_tree.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 377,
-        "priority": "P1",
-        "title": "Standard: Tests own and clean up every process they start",
-        "work": 1
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nThe API-change selection test only checks that `test:browser` appears in `--list` output (`tests/test_affected_py_starter.py:44`). The real fast run deliberately stops at a TypeScript error (`tests/test_starter_tree.py:385-387`), before the browser command at `scripts/test.mjs:72`; the full smoke uses the separate no-base branch. For example, changing the fast command to the nonexistent script `test:browser-typo` would retain the checked substring and pass the negative regression, while compatible API changes fail instead of running browser tests.\nCase: normal use - a compatible change under `apps/api/app/` should complete the fast test with browser coverage.",
-        "file": "tests/test_affected_py_starter.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 32,
-        "priority": "P1",
-        "title": "Gate: a successful API fast test runs the browser suite",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 1, Harm 4 (floor: migration)\nRaise: Test\nThis proof does not check the complete stack rule. Removing \u201ccommit them\u201d from the migrations and lock-files sentence leaves the asserted fragment intact, even though the guidance no longer tells workers to keep those records in Git. The tracked-file check also accepts a script-generated file such as `libs/generated/client/index.ts`, since it checks only `node_modules`, `.gen.` and OpenAPI JSON names. Both regressions violate item 3 while this test stays green.\nCase: normal use - a worker relies on the shipped stack guidance or a TypeScript starter gains a generated artifact.",
+        "body": "Gain 3, Work 1, Harm 3\nRaise: Test\nThe generated-file proof still misses an existing starter generator. The scanner skips files other than JSON and Prisma files, so it never reads the Vite output directory configured in `src/forge/templates/starter/apps/web/vite.config.ts:18`; the web build runs Vite through `apps/web/project.json:18-22`. If that output is changed to `generated` and `apps/web/generated/index.html` is committed, a new app tracks the generated bundle while this test still passes.\nCase: normal use - a starter change commits an output of the web build.",
         "file": "tests/test_gencommit_starter.py",
         "gain": 3,
-        "harm": 4,
-        "line": 49,
+        "harm": 3,
+        "line": 48,
         "priority": "P1",
         "title": "Gate: test_3_generated_files_stay_out_of_git_for_both_stacks",
         "work": 1
       }
     ],
-    "id": "539f4414-ada6-4b3f-a8c9-6220d43318fa",
+    "id": "36718208-cd25-46a4-bcfa-96feae252afe",
     "status": "blocked"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-11T18:55:37.075913+00:00",
@@ -92,8 +72,17 @@
     {
       "at": "2026-11-11T19:08:15.563721+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-11-11T19:23:39.322925+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-11-11T19:23:39.323135+00:00",
+    "file": "tests/test_gencommit_starter.py",
+    "wait_id": "616c7bbe-ef37-417f-9b2a-c30d19fe6f38"
+  },
   "stuck": {
     "close": "11a7cd2d-dbb5-4eb8-b7f1-33bff95a920c",
     "head": "e6c75bb367979d44ea9ba704e464ed2fb0538a1c",
