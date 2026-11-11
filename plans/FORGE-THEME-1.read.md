@@ -1,13 +1,13 @@
 ---
 reader: codex (gpt-6.1-terra)
-read_at: 2026-11-11T02:26:15.914492+00:00
-seconds: 287.105
-read_hash: b34cc10d461b81ed9ae8cc6a8a35bc07398860c2
-round: 4
-passed: yes
-doc_seen: b34cc10d461b81ed9ae8cc6a8a35bc07398860c2
+read_at: 2026-11-11T02:32:16.577554+00:00
+seconds: 207.099
+read_hash: 3c17aab7424b37317beacf75348a1e3dfe336c78
+round: 5
+passed: no
+doc_seen: 3c17aab7424b37317beacf75348a1e3dfe336c78
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 3bf4d0a6598af721f6e7e7ac0b254f261d74e4a4
+notes_seen: b73c1ecfbd2a2399ee5a2e8e0fcdabeff4e8af23
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a1c68c-71c0-7f11-be78-6c5527a290a1
 session:
@@ -174,3 +174,17 @@ Disposition: cut - the screen-file rule now excludes `tests/`, `test/` and `__te
     Case: normal use - The delivered guide retains the previous instruction for Sales to change values on the page; the listed assertions can still pass.
     Gain 3, Work 3, Harm 3
    Disposition: keep - below the bar (follow-up)
+
+## Round 5
+
+24. Blocking: Not done: A default new repo has no inputs for its first design system.
+    Raise: Not done. [The guide](/plans/FORGE-THEME-1.md:94) requires the app’s shared parts and theme file, but [plain `forge init`](/src/forge/init.py:241) copies neither. Init also creates a commit, after which [`forge init --starter` is refused](/src/forge/init.py:383).
+    Case: normal use - A new client runs `forge init` without `--starter`. The agent cannot make the first design system from the specified files or show the required screens.
+    Gain 5, Work 3, Harm 3
+Disposition: cut - the guide step now starts with the case of a repo with no shared parts or theme file (plain `forge init` or its own app): say so in one line, set the look in code as on the no-tools path, make the system when the app has both. The owner-facing line says a repo that starts from the Forge starter gets the full flow.
+
+25. Advisory: Plan gap: The preview requires extra screens for a one-screen app.
+    Raise: Plan gap. [The new guide](/plans/FORGE-THEME-1.md:94) requires two or three main screens, while the [worker brief](/src/forge/templates/brief.md:62) says to build nothing for screens the work does not need.
+    Case: normal use - A client wants a single-page dashboard with filters and no detail or form screen. The agent cannot show two distinct main screens without inventing another one.
+    Gain 3, Work 1, Harm 2
+Disposition: cut - the plan now says the client's main screens, up to three and only screens the app needs; a one-screen app shows that one screen.
