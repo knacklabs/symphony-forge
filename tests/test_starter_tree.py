@@ -233,6 +233,7 @@ def _run_live_starter(tmp_path_factory, sources, required_output=(), after=None)
     project = "starter-smoke-" + uuid.uuid4().hex[:12]
     env.update({"PWD": str(copy), "FORGE_STARTER_LIVE": "1", "COMPOSE_PROJECT_NAME": project})
     process = None
+    started = []  # processes that `after` starts: the finally below stops them with the full run's
     try:
         process = subprocess.Popen(
             ["node", Path("scripts") / "test.mjs"], cwd=copy, env=env, stdout=subprocess.PIPE,
@@ -343,12 +344,13 @@ def _run_live_starter(tmp_path_factory, sources, required_output=(), after=None)
             "browser": _junit_cases(copy / "test-results" / "browser.xml"),
         }
         if after:
-            after(copy, env)
+            after(copy, env, started)
             # after() may add keys through its own closure; it cannot touch the reports read above.
         return result
     finally:
-        if process is not None and process.poll() is None:
-            _stop_process_group(process)
+        for running in (process, *started):
+            if running is not None and running.poll() is None:
+                _stop_process_group(running)
         cleanup = subprocess.run(
             ["docker", "compose", "-f", "compose.test.yml", "down", "--volumes",
              "--remove-orphans"], cwd=copy, env=env, capture_output=True, text=True,
@@ -361,7 +363,7 @@ def _git(copy, env, *args):
                           capture_output=True, text=True, timeout=120).stdout
 
 
-def _break_a_web_type(copy, env):
+def _break_a_web_type(copy, env, started):
     """Rename an API model: the fast test must make the types and fail the web type check."""
     for args in (("init", "-q"), ("config", "user.name", "Forge starter test"),
                  ("config", "user.email", "forge-starter@example.test"), ("add", "-A"),
@@ -377,6 +379,7 @@ def _break_a_web_type(copy, env):
     process = subprocess.Popen(["node", Path("scripts") / "test.mjs", base], cwd=copy, env=env,
                                stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
                                start_new_session=True)
+    started.append(process)
     try:
         output, _ = process.communicate(timeout=1800)
     except subprocess.TimeoutExpired:
@@ -447,10 +450,10 @@ def live_python_run(tmp_path_factory):
         )
         contract = {}
 
-        def regression(copy, env):
+        def regression(copy, env, started):
             contract.update(json.loads(
                 (copy / "libs/shared/api-types/openapi.json").read_text(encoding="utf-8")))
-            _break_a_web_type(copy, env)
+            _break_a_web_type(copy, env, started)
 
         run = _run_live_starter(
             tmp_path_factory, sources, ("GET /health returned 200",), after=regression)

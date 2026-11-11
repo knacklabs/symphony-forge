@@ -1,4 +1,5 @@
 """The Python starter selects checks through its generated command."""
+import json
 import shutil
 import subprocess
 import tomllib
@@ -26,18 +27,22 @@ def test_6_python_starter_selects_its_affected_parts(repo, gh, tmp_path):
     # Fail before the old script can install dependencies.
     assert (client / "scripts/affected.mjs").is_file()
     base = repo.git("rev-parse", "HEAD", cwd=client)
+    scripts = json.loads((client / "package.json").read_text(encoding="utf-8"))["scripts"]
+    # The last field is every `pnpm run <script>` the list prints, in order. A compatible API change
+    # must end at the real browser script, so a typo such as `test:browser-typo` fails here.
     cases = (
         ("apps/api/app/projects/service.py",
          ("Affected parts: api, web", "api-types", "ruff", "mypy", "test:imports", "test:api", "tsc --build",
           "test:browser", "libs/shared/api-types/tsconfig.json", "libs/history/contracts/tsconfig.json",
-          "libs/projects/contracts/tsconfig.json", "apps/web/tsconfig.json"), ()),
+          "libs/projects/contracts/tsconfig.json", "apps/web/tsconfig.json"), (),
+         ["api-types", "test:imports", "test:api", "test:browser"]),
         ("apps/web/src/index.css", ("api-types", "eslint", "tsc --build", "vitest run", "--changed", "test:browser"),
-         ("test:api", "ruff", "mypy")),
+         ("test:api", "ruff", "mypy"), ["api-types", "test:browser"]),
         ("libs/shared/util/src/index.ts", ("eslint", "tsc --build", "vitest run", "test:browser"),
-         ("test:api", "ruff")),
-        ("package.json", ("Affected parts: all", "pnpm test"), ()),
+         ("test:api", "ruff"), ["api-types", "test:browser"]),
+        ("package.json", ("Affected parts: all", "pnpm test"), (), []),
     )
-    for relative, expected, absent in cases:
+    for relative, expected, absent, ran in cases:
         path = client / relative
         original = path.read_bytes()
         path.write_bytes(original + b"\n")
@@ -51,6 +56,10 @@ def test_6_python_starter_selects_its_affected_parts(repo, gh, tmp_path):
             assert command not in result.stdout, result.stdout
         if "tsc --build" in expected:
             assert result.stdout.index("api-types") < result.stdout.index("tsc --build"), result.stdout
+        named = [line.rsplit(" ", 1)[1] for line in result.stdout.splitlines()
+                 if line.startswith("corepack pnpm run ")]
+        assert named == ran, result.stdout
+        assert all(name in scripts for name in named), (named, sorted(scripts))
     for args, expected in ((["--list"], "Affected parts: all"),
                            (["--list", base], "Affected parts: none")):
         result = subprocess.run([node, "scripts/test.mjs", *args], cwd=client,
