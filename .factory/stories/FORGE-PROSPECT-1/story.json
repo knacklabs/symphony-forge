@@ -1,0 +1,12 @@
+{
+  "doc": "plans/FORGE-PROSPECT-1.md",
+  "status": "planning",
+  "steps": [
+    {
+      "at": "2026-11-11T02:40:19.127346+00:00",
+      "step": "start"
+    }
+  ],
+  "title": "Research the prospect before a prototype and propose features from what is found",
+  "touches": 0
+}
