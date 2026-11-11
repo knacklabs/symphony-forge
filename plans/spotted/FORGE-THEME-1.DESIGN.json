@@ -1,0 +1,81 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/templates/skill.md\tNot done: The theme names are fixed once, in the starter's theme file, and the Claude design system uses the same names.\tFORGE-THEME-1/DESIGN",
+      "kind": "bug",
+      "path": "src/forge/templates/skill.md",
+      "line": 815,
+      "text": "Not done: The theme names are fixed once, in the starter's theme file, and the Claude design system uses the same names.",
+      "from": "blocking",
+      "item": "FORGE-THEME-1/DESIGN",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_theme_guide.py\tGate: functional check\tFORGE-THEME-1/DESIGN",
+      "kind": "bug",
+      "path": "tests/test_theme_guide.py",
+      "line": 140,
+      "text": "Gate: functional check",
+      "from": "blocking",
+      "item": "FORGE-THEME-1/DESIGN",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_theme_guide.py\tGate: tests/test_theme_guide.py::test_1_the_starter_theme_holds_every_contract_name\tFORGE-THEME-1/DESIGN",
+      "kind": "bug",
+      "path": "tests/test_theme_guide.py",
+      "line": 59,
+      "text": "Gate: tests/test_theme_guide.py::test_1_the_starter_theme_holds_every_contract_name",
+      "from": "blocking",
+      "item": "FORGE-THEME-1/DESIGN",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_theme_guide.py\tGate: tests/test_theme_guide.py::test_2_the_guide_tells_the_agent_to_build_the_design_system_and_copy_the_theme\tFORGE-THEME-1/DESIGN",
+      "kind": "bug",
+      "path": "tests/test_theme_guide.py",
+      "line": 118,
+      "text": "Gate: tests/test_theme_guide.py::test_2_the_guide_tells_the_agent_to_build_the_design_system_and_copy_the_theme",
+      "from": "blocking",
+      "item": "FORGE-THEME-1/DESIGN",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tplans/FORGE-THEME-1.md\tThe plan counts 31 shared parts, but libs/shared/ui/src/components/ui holds 27 part files.",
+      "kind": "edge",
+      "path": "plans/FORGE-THEME-1.md",
+      "line": 54,
+      "text": "The plan counts 31 shared parts, but libs/shared/ui/src/components/ui holds 27 part files.",
+      "from": "worker",
+      "item": "FORGE-THEME-1/DESIGN",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/templates/skill.md\tFollow-up: Use the existing app's web root for font assets",
+      "kind": "edge",
+      "path": "src/forge/templates/skill.md",
+      "line": 855,
+      "text": "Follow-up: Use the existing app's web root for font assets",
+      "from": "review",
+      "item": "FORGE-THEME-1/DESIGN",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/templates/skill.md\tNot done: copy the approved theme, with a font the app can load, into the app and the repo before the first screen",
+      "kind": "edge",
+      "path": "src/forge/templates/skill.md",
+      "line": 869,
+      "text": "Not done: copy the approved theme, with a font the app can load, into the app and the repo before the first screen",
+      "from": "review",
+      "item": "FORGE-THEME-1/DESIGN",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "approval": {
+    "at": "2026-11-11T02:56:50.122643+00:00",
+    "by": "human-via-Claude",
+    "event": "toolu_01NB77wyMoZd9FnpWU5BG7z8",
+    "hash": "2a0124fd5e65232b6fa119d3d785bc47c27a7b11b413125b7429c3a69af606da",
+    "round": 8,
+    "runtime": "claude",
+    "session": "c01a489d-c76f-41c1-8371-d6f0052b027c"
+  },
+  "doc": "plans/FORGE-THEME-1.md",
+  "status": "approved",
+  "steps": [
+    {
+      "at": "2026-11-10T17:18:59.464232+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-10T17:52:30.016168+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-11-10T18:03:12.535906+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-11-10T18:17:08.201783+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-11-10T18:26:50.515021+00:00",
+      "step": "approved"
+    },
+    {
+      "at": "2026-11-11T02:26:15.929731+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-11-11T02:32:16.591828+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-11-11T02:36:55.566424+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-11-11T02:46:38.476668+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-11-11T02:55:14.107145+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-11-11T02:56:50.122839+00:00",
+      "step": "approved"
+    }
+  ],
+  "title": "One shared design system and theme, set in Claude and checked at close",
+  "touches": 2
+}
