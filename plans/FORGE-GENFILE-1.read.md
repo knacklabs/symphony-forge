@@ -1,13 +1,13 @@
 ---
 reader: codex (gpt-6.1-terra)
-read_at: 2026-11-11T08:21:14.019341+00:00
-seconds: 697.345
-read_hash: d07db25a99645f4ad63e0e6d76544d8b5fbbc36b
-round: 1
-passed: no
-doc_seen: d07db25a99645f4ad63e0e6d76544d8b5fbbc36b
+read_at: 2026-11-11T08:31:02.616417+00:00
+seconds: 395.179
+read_hash: 7e5059c0b718bdb2bba551b419d94539ef918b93
+round: 2
+passed: yes
+doc_seen: 7e5059c0b718bdb2bba551b419d94539ef918b93
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+notes_seen: 20c58f165d96ccb5fc532f40664b9bbaa2fe7ca2
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a1c9a7-c377-7881-953a-6d7117ffcf1a
 session:
@@ -103,3 +103,33 @@ Only a genuine trade-off goes to the human, as a question with options.
     The specified [earlier-adopted setup](/tests/test_scope_overlap_explains_waits.py:19) copies a fixture with no plans, runs sync, and commits before returning. The proposed `git diff --quiet -- plans/` can therefore pass without checking an existing approved plan, and it does not check application files.  
     Gain 3, Work 1, Harm 3
     Disposition: cut - Done-when 3 no longer claims that a client's own files stay unchanged; the earlier-adopted case proves the rule after sync and the note from the new release (Done-when detail 3).
+
+## Round 2
+
+11. Advisory: Functional: Paths containing spaces lose part of their name.  
+    Raise: Functional  
+    Case: normal use - three parts list `docs/api contracts/openapi.json`.  
+    [Scope parsing](/src/forge/story.py:1150) preserves the path, but the [new rule](/plans/FORGE-GENFILE-1.md:54) cuts it at the first space. The note would name `docs/api`, not the shared file.  
+    Gain 3, Work 2, Harm 2
+   Disposition: keep - below the bar (follow-up)
+
+12. Advisory: Plan gap: The guide permits several parts to own a file that the result gives to one part.  
+    Raise: Plan gap  
+    Case: normal use - a repo deliberately commits generated API types.  
+    [Done-when item 2](/plans/FORGE-GENFILE-1.md:22) gives that file to one part. The [proposed guide text](/plans/FORGE-GENFILE-1.md:58) also permits a chain of parts that each change it, while the [existing template](/src/forge/templates/story.md:69) says later parts own only their files.  
+    Gain 3, Work 1, Harm 2
+   Disposition: keep - below the bar (follow-up)
+
+13. Advisory: Unproven: Item 3 on a newly initialized client repo.  
+    Raise: Test  
+    Case: normal use - a new client runs `forge init` and expects the rule immediately.  
+    The [planned case](/plans/FORGE-GENFILE-1.md:68) can use `forge sync` after [`test_story.setup`](/tests/test_story.py:137), which creates a `forge-source` repo without running init. Its assertions could pass even if [init](/src/forge/init.py:376) did not deliver the rule.  
+    Gain 3, Work 2, Harm 2
+   Disposition: keep - below the bar (follow-up)
+
+14. Advisory: Unproven: Item 1 when a read reaches its round limit.  
+    Raise: Test  
+    Case: normal use - a read with open findings stops at the configured round limit.  
+    The [plan](/plans/FORGE-GENFILE-1.md:56) requires the note before the `read_loop` refusal, but its cases return “No findings.” A print placed after the [stop check](/src/forge/story.py:428) would pass those cases and omit the note on the stopped read.  
+    Gain 3, Work 2, Harm 2
+   Disposition: keep - below the bar (follow-up)
