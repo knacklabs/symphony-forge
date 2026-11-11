@@ -168,7 +168,7 @@ Every client repo moves through seven steps. `forge next` names the current step
 
 1. **Ideas and client notes.** The person gives you the client notes or an idea. Put each note in `docs/context/` and read them all before you ask anything. You can say: "Here are the client notes" or "I have an idea: <idea>".
 2. **Brief.** You write `docs/product/BRIEF.md` from the notes, and ask only about a point that changes a screen, a field or a flow. You can say: "The brief looks right" or "Change this in the brief: <change>".
-3. **Canvas design.** You make the screens on a design canvas, which the client can click through in Play mode, and the owner or FDE approves the canvas. You can say: "Show me the screens" or "Change this screen: <change>".
+3. **Canvas design.** You make the screens on a design canvas, designed with the client's design system in Claude (see "Canvas and app design"), which the client can click through in Play mode, and the owner or FDE approves the canvas. You can say: "Show me the screens" or "Change this screen: <change>".
 4. **Sign-off.** Run the sign-off checks, then ask the client's named person to approve the canvas and answers. Build now and Later are planned choices, not available commands. Ask the owner what work to start or defer. You can say: "Record the client approval, then plan the first change".
 5. **Build.** You plan stories and fixes, build each one with its tests and a review, and merge it. You can say: "Build this next: <idea>" or "What is ready to merge?".
 6. **Deploy on Mainline.** Confirm the client's host and complete production preparation below. When the person asks for Mainline deployment, set up Mainline and deploy dev. An authorized person presses Promote for production. A client host without Mainline uses its agreed release process. You can say: "Deploy this on Mainline" or "Use the client's servers".
@@ -677,7 +677,9 @@ coordinator set `sample_data = true` in `forge.toml`. A sign-off record does not
 on. Forge skips tests and CI while the setting is on; walk the demo steps in a browser.
 Real data or a back end keeps tests from day one.
 After sign-off, `forge next` shows setting up tests as the first step. In a coordinator-owned fix,
-set the test command and CI checks as needed, then turn off the setting. Close blocks that fix until
+set the test command and CI checks as needed, then turn off the setting. In the same fix, list the
+prototype's screens in the app's browser tests with `checkScreen` from `.forge/design/render-check.mjs`,
+so the rendered check starts with the first tests. Close blocks that fix until
 the `Personal data` answer is settled.
 
 For every prototype, build the demo-data loader in the first version, so the customer sees their own kind of
@@ -776,6 +778,7 @@ or sign-off, and `not known yet` is an accepted answer.
 | Users and roles | Who uses it, and what can each kind of user do? | admin and staff; other | before sign-off |
 | Existing systems | Which systems must this work with? | none; CRM; accounting; email or SMS; payments; company sign-in | before sign-off |
 | Sign-in | How will people sign in? The client chooses the method. | email and password (default if the client gives no other answer); one-time codes; company sign-in (Google or Microsoft) | before sign-off |
+| Phone view | Which screen sizes must the app work on? | desktop only (default); desktop and phone | before the app's build starts |
 | Personal data | Will it hold personal, health or payment data, or data that must stay in one country? | none; personal only; regulated | before sign-off |
 | Production host | Where will the real app run? | our platform; the client's cloud; the client's servers | before sign-off |
 | Data import | Does data need to come in from today's tools? | no; a spreadsheet; another system | when a story needs it |
@@ -783,6 +786,10 @@ or sign-off, and `not known yet` is an accepted answer.
 | Domain | Which web address? | our subdomain; the client's domain | when a story needs it |
 | Backups and uptime | How much downtime or data loss is acceptable? | the platform's daily backups; stricter | when a story needs it |
 | Log retention | How long must logs be kept? | the platform's default; longer | when a story needs it |
+
+Record a yes to a phone view as `Phone view: desktop and phone`, and a no as `Phone view: desktop only`.
+A missing `Phone view` answer means desktop width only and refuses nothing. An existing app has no
+answer yet; ask at the next change to one of its screens.
 
 Ask topics at the suggested time when possible. These are conversation prompts, not gates: a
 missing answer or an open client question never blocks planning, review, ordinary close, merge or
@@ -806,10 +813,89 @@ not listed as open, except Personal data, which needs a settled answer before re
 **Canvas and app design.** Before the first canvas, write a short brief from the industry,
 who uses the app and how often, the screen's job (work, read or persuade), two or three
 brand words and existing brand files; map them to font pairing, one accent, radius,
-density and tone, then record DESIGN.md through impeccable's document step using the
-app-baseline list and fixed guard rules, and use impeccable's Operate mode for app screens
-and prototypes. `support.js` checks each canvas and renders it at 1440 and 375 pixels
+density and tone, put them in the client's design system (below), then record DESIGN.md through
+impeccable's document step using the app-baseline list and fixed guard rules, and use impeccable's
+Operate mode for app screens and prototypes. `support.js` checks each canvas and renders it at 1440 and 375 pixels
 before it is shown; the plan's read refuses a failing design folder or one with no DESIGN.md.
+
+**The client's design system.** This step needs the app's shared parts in `libs/shared/ui` and its
+theme file. A repo made with plain `forge init`, or an app of its own, may have neither; then say so
+in one line. With no app at all, change no app file: record the look that the starting-theme step
+chooses in DESIGN.md only (impeccable's `document` step, and write `Claude design system: not made
+yet` in the brief's `## Design` section), and make the system when the app exists. With an app that
+has its own theme file but not the starter's parts or names, keep the look in that file as today,
+with no design system and no `docs/design/tokens.json` (so the check stays off), until the app has
+both. Otherwise, for each client, make one design system in Claude (the Design System type) from the
+app's shared parts in `libs/shared/ui` and from the theme names in the app's theme file. An earlier-adopted app may lack the added theme lines (heading font, text sizes,
+spacing, shadows) and the heading rule. Before you make the system, add them to its theme file with
+the starter's values, copied from the Forge starter's theme file: `templates/starter/apps/web/src/index.css`
+in the installed Forge package, next to its `conventions/` folder. Then the system has every name.
+Start its values from the app's own theme file: the stock values in a new app, the current theme in
+an existing one. For a new client, and for an existing app whose theme file still holds the
+starter's stock values, decide better first values yourself from the five facts and write them into
+the system: colours for light and dark, fonts, sizes, spacing, corner size and shadows. Take the five
+facts from the client's notes. Ask the Sales person only for a missing fact, one question at a time.
+Then design the client's main screens with the system: up to three, and only screens the app needs
+(for example the main list, one record and one form; a one-screen app shows that one screen), in
+light and dark. Show those whole screens to the Sales person, never single parts alone. The person
+says yes, or says in plain words what to change, for example "warmer" or "more serious". Change the
+theme in the system, redraw the same screens and show them again. The Sales person sets no value by
+hand.
+
+Keep the system editable on the page: it is not marked as synced from code. Its README says which
+repo and which parts it came from. The README is the brand guide that every agent reads before it
+designs a screen, so it carries the look rules; without them the screens keep the stock look.
+Write the brand guide from three existing sources, in the client's terms: the design rules in
+`conventions/frontend.md`, the design rules in the `app-baseline` skill (one main action per screen,
+the looks to avoid) and the five facts. Add no rule that these sources do not hold. It states which
+colour token is for the page, the text, the one main action and each status, in light and dark;
+which font and size token is for headings, body text and table text; the corner size, when a border
+is used and when a shadow, and how dense tables and forms are; one main action per screen; and the
+looks to avoid. Give every token a usage note that names where it is used. Before the system is
+shown to a person, check that text contrast is 4.5 to 1 on its ground in both themes. Keep a client
+colour that fails and say so in its usage note. When the shared parts change later, revise the
+system's component files one at a time after reading the current files.
+
+Keep the link to the client's system once in `docs/design/design-system.md`, as one line
+`Design system: <link>`, in the same change that makes the system. Before you design, copy a theme or
+revise the parts for a client, open that link and read the system's `README.md` and
+`project/tokens.json`. Never rely on which system the design tool treats as the default. Design the
+client's screens with that system. If the design tool can build a canvas only from its default
+system, say so in one line and ask the person to make that system the default. When the system is
+made, remove the `Claude design system: not made yet` line from the brief's `## Design` section if it
+is there, also when the tools were never missing.
+
+When the Sales person says yes to the screens (the design is approved), read the system's
+`project/tokens.json` and save it unchanged as
+`docs/design/tokens.json`. Write each value into the app's theme file by name, then run
+impeccable's `document` step so DESIGN.md describes the same theme. Do this as the first change
+after approval and before the first screen. After any later theme change in Claude, repeat it in
+one change, but only after the person says yes to that change: a trial look that the person has not
+accepted is never copied into the app or into `docs/design/tokens.json`. In an existing app, add a missing theme line and the heading rule (`h1` to `h6` take
+`@apply font-heading`) to the theme file, with the value the system holds. `docs/design/tokens.json`, when it exists, is the approved theme. Close compares the app
+with it and stops on a difference whenever a screen or the theme changes. A waiver is one comment
+in the theme file that names the token and the theme:
+`/* forge-ui-ignore theme-drift --<token> (light|dark): <reason> */`. The review reports a screen
+built on the untouched starter theme when `docs/design/tokens.json` does not exist.
+
+Fonts. The starter loads no font: a font name alone does not load, so a copied font name needs a
+source. If the system holds the font as a file in its `fonts/` folder, copy the file to
+`apps/web/public/fonts/` and add an `@font-face` rule with `font-display: swap` in the theme file;
+the licence must allow it. If the font is a hosted family, add the host's stylesheet link to
+`apps/web/index.html`. An existing app keeps its own web root (the folder with its `index.html`): use
+it in place of `apps/web`. A generic family from the browser (`serif`, `sans-serif`, `system-ui`,
+`monospace`) needs no file or link and is copied as it is. If the app can load the font in neither
+way, do not copy the font name: keep the app's font, tell the person in one line which font did not
+load, and set the difference aside with a waiver. Keep the fallback fonts of the token's list in
+the copy.
+
+When the session has no Claude design tools (you cannot list or publish artifacts), say so in one
+line and keep going on HTML artboards with `support.js`. Set the theme in the app's theme file from
+the five facts, run impeccable's `document` step, and write `Claude design system: not made yet` in
+the brief's `## Design` section. When the tools return, add the theme lines and the heading rule the app lacks,
+copied from the starter as above, then make the system from the app's theme file as it stands; from
+then on Claude is the source. In the same change, save the new system's `project/tokens.json`
+unchanged as `docs/design/tokens.json` and write its link into `docs/design/design-system.md`.
 
 Make each app's design from the whole `docs/product/BRIEF.md`: its
 purpose, users, records, fields, choice-list options and key flows. Use impeccable and
@@ -1156,6 +1242,9 @@ keep existing settings until that fix changes them. An explicit `test_place` kee
    beside changed-test selection in TypeScript `fast_test`, through the normal settings fix after
    the human agrees. Keep `test` as the full suite. New repos get this review at setup; existing
    adopted repos get this guidance on upgrade and sync, with settings changed only through that fix.
+   If the app has Playwright browser tests, its close command (`fast_test`, else `test`) should run
+   them; if it does not, the rendered check runs only in the full test run. A worker who finds this
+   says so in its last message.
    Forge writes no `fast_test` by itself.
    Client CI caches npm downloads and the default pnpm stores by the root lockfile and enables
    uv's package cache. It keeps the app's own pnpm setup and version.

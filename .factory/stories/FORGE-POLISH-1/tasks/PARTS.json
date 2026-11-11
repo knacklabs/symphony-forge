@@ -1,0 +1,122 @@
+{
+  "branch": "task/FORGE-POLISH-1-PARTS",
+  "known": [
+    {
+      "area": "src/forge/templates/starter/libs/shared/ui/src/components/ui/popover.tsx",
+      "file": "src/forge/templates/starter/libs/shared/ui/src/components/ui/popover.tsx",
+      "gain": 3,
+      "harm": 2,
+      "line": 32,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Every shared control takes its curve and speed from the theme file",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/starter/apps/web/e2e/motion.spec.ts",
+      "file": "src/forge/templates/starter/apps/web/e2e/motion.spec.ts",
+      "gain": 3,
+      "harm": 3,
+      "line": 33,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: motion.spec.ts proves panels stop moving under reduced motion",
+      "work": 1
+    },
+    {
+      "area": "test_1_shared_parts_press_use_named_properties_and_share_one_curve_and_speed() in tests/test_polish_parts.py",
+      "file": "tests/test_polish_parts.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 49,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: shared controls retain their pressed states",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/starter/apps/web/src/shared-states.test.tsx",
+      "file": "src/forge/templates/starter/apps/web/src/shared-states.test.tsx",
+      "gain": 3,
+      "harm": 2,
+      "line": 10,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: the empty state's accessible role",
+      "work": 1
+    },
+    {
+      "area": "src/forge/templates/starter/apps/web/e2e/motion.spec.ts",
+      "file": "src/forge/templates/starter/apps/web/e2e/motion.spec.ts",
+      "gain": 3,
+      "harm": 3,
+      "line": 10,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: functional check",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/starter/apps/web/e2e/motion.spec.ts",
+      "file": "src/forge/templates/starter/apps/web/e2e/motion.spec.ts",
+      "gain": 4,
+      "harm": 4,
+      "line": 50,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Pressed-state test fails when the app has a focusable control",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "6416546d131c53cb4450d2dd6db7d1f012618a055deedd8cab690cebd2ebca6f",
+    "changed": "7a9f343504eb87780556a013692d4593d7d6968aaefdc2e27856ddeb44af7c9e",
+    "commit": "0f8c9bf9c53c85e59c2fbfcf430149c4c03e9eb3",
+    "dismissals": [],
+    "findings": [],
+    "id": "6746e534-18b4-459f-99e3-8bb15445e57c",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-10T18:29:46.396015+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-10T18:52:04.872874+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-10T19:40:24.928434+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-10T19:44:41.112579+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "dab7e01a-ca29-4c4d-8e9d-9d7722c691cd",
+    "head": "5f0ed483e29d052e4638929af9302975efee5575",
+    "keys": {
+      "the open P0 pressed-state test fails when the app has a focusable control in src/forge/templates/starter/apps/web/e2e/motion.spec.ts": 1
+    },
+    "round": 2
+  },
+  "worker": "claude"
+}
