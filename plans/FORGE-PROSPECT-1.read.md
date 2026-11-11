@@ -1,13 +1,13 @@
 ---
 reader: codex (gpt-6.1-terra)
-read_at: 2026-11-11T03:01:50.332099+00:00
-seconds: 563.805
-read_hash: 41005a6f4f1025e762f9484fb31fdd816fce42de
-round: 1
-passed: no
-doc_seen: 41005a6f4f1025e762f9484fb31fdd816fce42de
+read_at: 2026-11-11T03:13:33.541920+00:00
+seconds: 464.041
+read_hash: 8bc9e812b17fa3c1bcc79cc51f2638e770430d7e
+round: 2
+passed: yes
+doc_seen: 8bc9e812b17fa3c1bcc79cc51f2638e770430d7e
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+notes_seen: 4810d8de0f67a8b750d02b7fbf90f56e15017b66
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a1c885-61d2-73b0-bce0-db133fc404e2
 session:
@@ -86,3 +86,17 @@ Disposition: cut - the review rule is removed (see note 1), so no research findi
    Case: normal use - The generated guide permits several company findings with no links while retaining a linked problem card; the planned assertions still pass.
    Gain 3, Work 2, Harm 3
 Disposition: cut - Settled 6 now pins the sentence "Every finding under What we found has its own link to the public page it comes from; a finding without a link is not written.", and test_1 asserts it word for word in both hosts' synced skill, so a guide that allows unlinked findings fails.
+
+## Round 2
+
+10. Advisory: Plan gap: A customer’s correction can leave the prototype plan using the old task.
+    Raise: Plan gap. [The plan](/plans/FORGE-PROSPECT-1.md:84) says the customer’s recap reply replaces the demo task in the brief, but the prototype plan takes its steps from the newest chosen part of the research page. It does not say that a customer correction adds a chosen part. The [current guide](/src/forge/templates/skill.md:620) treats that reply as the source of the demo task.
+    Case: normal use - The salesperson chooses bookings, then the customer replies that the demo should track orders. The brief can say orders while the chosen part still says bookings.
+    Gain 4, Work 3, Harm 3
+   Disposition: keep - below the bar (follow-up)
+
+11. Advisory: Plan gap: An idea based on the salesperson’s own notes has no source mark.
+    Raise: Plan gap. [The plan](/plans/FORGE-PROSPECT-1.md:68) accepts the salesperson’s notes as input, but [its marks](/plans/FORGE-PROSPECT-1.md:75) cover customer words and a feature the salesperson adds in a reply, not an idea the agent derives from the salesperson’s own observation. The [current guide](/src/forge/templates/skill.md:793) recognizes the salesperson as a source.
+    Case: normal use - The initial notes say the prospect tracks orders in a spreadsheet, but the web pass finds no public evidence of that. If the relevant research item was reached, the proposed tracking feature has none of the permitted marks.
+    Gain 3, Work 2, Harm 2
+   Disposition: keep - below the bar (follow-up)
