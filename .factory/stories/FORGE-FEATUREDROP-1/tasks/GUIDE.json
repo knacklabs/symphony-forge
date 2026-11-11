@@ -1,13 +1,101 @@
 {
   "base": "057f6b7718e52faa59720d006c3bb9c66ad100e1",
   "branch": "task/FORGE-FEATUREDROP-1-GUIDE",
+  "known": [
+    {
+      "area": "src/forge/templates/brief.md",
+      "file": "src/forge/templates/brief.md",
+      "gain": 5,
+      "harm": 3,
+      "line": 552,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: The guide and the worker brief give the fixed list for each starter",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/skill.md",
+      "file": "src/forge/templates/skill.md",
+      "gain": 4,
+      "harm": 4,
+      "line": 808,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: The guide and the worker brief give the fixed list for each starter, the data rule",
+      "work": 1
+    },
+    {
+      "area": "test_4_the_guide_turns_remove_this_feature_into_the_path() in tests/test_feature_remove.py",
+      "file": "tests/test_feature_remove.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 556,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_4_the_guide_turns_remove_this_feature_into_the_path",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "10a7d604cec2138091178bbd0497b6ec40efebc75b745875530e3f8affe5dc87",
+    "changed": "4b483c14524058e52d4806f93a9f9f0dd90041fd3244736284876046a5e8e89d",
+    "commit": "d9654bfbeabf294c163d016e86ef2a8dc307e449",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 5, Work 2, Harm 3\nRaise: Not done\nCase: normal use - a worker removes a feature from either starter.\nThe brief points the worker to the fixed list in the Forge skill, but `src/forge/worker.py:61` injects an instruction telling workers not to read that skill. The brief itself contains neither starter list, so the worker cannot follow both instructions or obtain the prescribed removal steps. Include the lists in the worker brief or explicitly make them available to the worker, and check the delivered instructions in the test.",
+        "file": "src/forge/templates/brief.md",
+        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
+        "gain": 5,
+        "harm": 3,
+        "line": 552,
+        "priority": "P1",
+        "title": "Not done: The guide and the worker brief give the fixed list for each starter",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 1, Harm 4\nRaise: Not done\nCase: normal use - a coordinator plans removal of a feature with customer records.\nThe skill's data rule says to keep the table and write no drop migration, but it does not state that every row and the feature's existing change history must remain. The worker brief contains that fuller rule; the coordinator's removal guide needs it too. Keeping a table alone does not express the required preservation of its contents and separate history.",
+        "file": "src/forge/templates/skill.md",
+        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
+        "gain": 4,
+        "harm": 4,
+        "line": 808,
+        "priority": "P1",
+        "title": "Not done: The guide and the worker brief give the fixed list for each starter, the data rule",
+        "work": 1
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Test\nCase: normal use - an earlier-adopted starter upgrades and syncs.\nThe earlier-adopted case rewrites and commits the version pin before calling only `forge sync`; it never exercises `forge upgrade`. Consequently it would still pass if the upgrade changed application files. Its sync assertion also accepts every path under `docs/`, including client product documents that are not synced files. Exercise the upgrade path and verify that only the intended synced files change.",
+        "file": "tests/test_feature_remove.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 556,
+        "priority": "P1",
+        "title": "Gate: test_4_the_guide_turns_remove_this_feature_into_the_path",
+        "work": 2
+      }
+    ],
+    "id": "538b1e47-9485-414c-8f91-8d92f99d9647",
+    "status": "blocked"
+  },
   "round": 1,
   "stacked_on": "FORGE-GENFILE-1/NOTE",
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-11T18:55:30.794072+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-11T19:08:02.726507+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
