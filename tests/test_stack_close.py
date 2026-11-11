@@ -201,8 +201,8 @@ def _close_guides_a_manually_merged_base_before_replaying_the_child(env, previou
     d = repo.forge("task", "start", "STACK/D")
     assert d.returncode == 1
     assert d.stderr == (
-        "STACK/D waits for STACK/B, which builds on STACK/A, so it starts once STACK/A merges.\n"
-        "Next: forge next\n")
+        "STACK/D waits for STACK/B to include the merge of STACK/A from main.\n"
+        "Next: forge close STACK/B\n")
     github_merge(env, "task/STACK-B")
     review_count = len(env.review_calls())
     checks_count = len(env.gh_calls("api", "--paginate", "--jq", ".check_runs[]"))

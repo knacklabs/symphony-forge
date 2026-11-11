@@ -1,0 +1,78 @@
+{
+  "base": "eab58b3676963906109f39612ac17a2f05cef75c",
+  "branch": "fix/bug-1533-a-part-started-on-top-of-anothe",
+  "done_when": "A part can start on top of a part merged with GitHub's button, and the existing test that refuses that case is changed to match.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "test_2_unsafe_starts_name_the_blocker_without_creating_work() in tests/test_stack_start.py",
+      "file": "tests/test_stack_start.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 288,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: Exercise forge next after a GitHub-button merge",
+      "work": 2
+    },
+    {
+      "area": "stack_base() in src/forge/task.py",
+      "file": "src/forge/task.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 578,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: Update the shipped stacking instructions",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "3a321f1f05ee1449feddb5182d9765b48662cff21aa0952f063ceafdab07d4be",
+    "changed": "2afbe8d0883f9457729e43c70758e5733fd7d08853bfc10df4cf48d150e8ed7b",
+    "commit": "1f72fee85cda61dccf4be9d4a295f70c26607fdc",
+    "dismissals": [],
+    "findings": [],
+    "id": "97cf62de-9af4-4835-bdfb-2ae3bc62195c",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-11T09:39:33.742791+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-11T10:19:32.033831+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-11T10:38:15.079891+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-11T10:19:32.045932+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "tests/test_stack_start.py",
+    "reason": "Owner's standing choice for 11 Nov 2026: one more round for test and guide-text points",
+    "wait_id": "7a973813-6cee-425e-b6cb-e4ba52148561",
+    "worker_round": 1
+  },
+  "stuck": {
+    "close": "ca5ed9a8-78d2-4542-87a2-fd53bd1d933f",
+    "head": "3ac8f345aeb8473a9bc97e9ceb3a30370501ed6e",
+    "keys": {},
+    "round": 1
+  },
+  "why": "Bug 1533. A part started on top of another part stays blocked after that part merges with GitHub's button, because forge next keeps saying it waits for the merge.",
+  "worker": "claude"
+}

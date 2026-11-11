@@ -87,6 +87,17 @@ async function render() {
         width, height: 900, deviceScaleFactor: 1, mobile: false,
       });
       await pageCommand('Page.navigate', { url });
+      // The first empty page (about:blank) is already complete; wait for the real one.
+      const wait = Date.now() + 30000;
+      for (;;) {
+        const { result } = await pageCommand('Runtime.evaluate', {
+          expression: `location.href !== 'about:blank' && document.readyState === 'complete'`,
+          returnByValue: true,
+        });
+        if (result.value === true) break;
+        if (Date.now() > wait) throw new Error(`${url}: The page did not finish loading in 30 seconds. Check the file and its assets, then run the renderer again.`);
+        await new Promise(done => setTimeout(done, 50));
+      }
       const measured = await pageCommand('Runtime.evaluate', {
         expression: `new Promise(resolve => {
           const measure = async () => {
