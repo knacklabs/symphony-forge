@@ -1,0 +1,12 @@
+{
+  "doc": "plans/FORGE-GENCOMMIT-1.md",
+  "status": "planning",
+  "steps": [
+    {
+      "at": "2026-11-11T09:47:34.952648+00:00",
+      "step": "start"
+    }
+  ],
+  "title": "Stop committing generated API types in Python apps",
+  "touches": 0
+}

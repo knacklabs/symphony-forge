@@ -624,6 +624,12 @@
       "title": "Research the prospect before a prototype and propose features from what is found",
       "status": "pending",
       "order": 119
+    },
+    {
+      "key": "FORGE-GENCOMMIT-1",
+      "title": "Stop committing generated API types in Python apps",
+      "status": "pending",
+      "order": 120
     }
   ],
   "epics": [
