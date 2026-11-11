@@ -1,0 +1,37 @@
+{
+  "items": [
+    {
+      "key": "bug\ttests/test_affected_py_starter.py\tGate: a successful API fast test runs the browser suite\tFORGE-GENCOMMIT-1/STARTER",
+      "kind": "bug",
+      "path": "tests/test_affected_py_starter.py",
+      "line": 32,
+      "text": "Gate: a successful API fast test runs the browser suite",
+      "from": "blocking",
+      "item": "FORGE-GENCOMMIT-1/STARTER",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_gencommit_starter.py\tGate: test_3_generated_files_stay_out_of_git_for_both_stacks\tFORGE-GENCOMMIT-1/STARTER",
+      "kind": "bug",
+      "path": "tests/test_gencommit_starter.py",
+      "line": 49,
+      "text": "Gate: test_3_generated_files_stay_out_of_git_for_both_stacks",
+      "from": "blocking",
+      "item": "FORGE-GENCOMMIT-1/STARTER",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_starter_tree.py\tStandard: Tests own and clean up every process they start\tFORGE-GENCOMMIT-1/STARTER",
+      "kind": "bug",
+      "path": "tests/test_starter_tree.py",
+      "line": 377,
+      "text": "Standard: Tests own and clean up every process they start",
+      "from": "blocking",
+      "item": "FORGE-GENCOMMIT-1/STARTER",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
