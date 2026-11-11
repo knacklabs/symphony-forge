@@ -46,6 +46,8 @@ Before the first canvas, write a short brief from five facts in the client's not
 4. Two or three brand words.
 5. Existing brand files.
 
+Take the facts from the client's notes and ask the Sales person only for a missing fact, one question at a time.
+Then decide the choices yourself and show them on the client's main screens, not on single parts.
 Map these facts to tokens: font pairing, one accent, radius, density and tone. Explain
 each choice from the facts, rather than a stock industry theme. Write the choices into the
 client's design system tokens in Claude (the forge skill's "Canvas and app design" says how).
