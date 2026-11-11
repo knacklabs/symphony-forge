@@ -575,6 +575,20 @@ A refusal names the file, the rule and its waiver comment. Fix the problem, or u
 with a reason. If the checker cannot run, close prints one line and runs the other checks.
 Without Node, close prints one line and skips the design checks. Sync changes no app code.
 
+When you build or change a screen in an app that has Playwright browser tests, add it to the render list
+beside the app's browser tests: one `checkScreen(page, { name, path })` call from
+`.forge/design/render-check.mjs` for each screen, with the address the screen ends on. A hash counts as
+part of that address only when the listed address has one. Set `phone: true` when the brief's
+`## Answers` has `Phone view: desktop and phone` (or `yes`); with `desktop only`, no answer or any
+other answer, leave it out. When the browser tests run, the check opens each listed screen in light and
+dark and fails on sideways overflow, cut text, low contrast or a page that is not the listed screen.
+To set one kind of problem aside for a screen, add `waive: { '<kind>': '<the reason>' }` to its entry.
+Close runs the browser tests only when the repo's close test command (`fast_test`, else `test`) includes
+them. If it does not, say so in your last message: the check then runs only in the full test run, until
+the coordinator adds the browser tests to `fast_test`. When you add a sample-data prototype's first
+tests, list every screen the prototype has. A new app asks the phone-view question before its build
+starts; an existing app asks at the next change to one of its screens.
+
 In a feature that makes a record wait for a person, use the `notifications` module.
 Add `notify` in the same transaction as the change that makes a record wait;
 add `resolve` in the transaction of the action.
