@@ -1,0 +1,92 @@
+{
+  "items": [
+    {
+      "key": "bug\tbenchmark/checks.toml\tData loss: Isolate the benchmark's Docker Compose project\tFORGE-BENCH-1/SCORE",
+      "kind": "bug",
+      "path": "benchmark/checks.toml",
+      "line": 13,
+      "text": "Data loss: Isolate the benchmark's Docker Compose project",
+      "from": "blocking",
+      "item": "FORGE-BENCH-1/SCORE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tbenchmark/checks.toml\tFunctional: Avoid fixed Compose ports during scoring\tFORGE-BENCH-1/SCORE",
+      "kind": "bug",
+      "path": "benchmark/checks.toml",
+      "line": 10,
+      "text": "Functional: Avoid fixed Compose ports during scoring",
+      "from": "blocking",
+      "item": "FORGE-BENCH-1/SCORE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tbenchmark/checks/design-count.mjs\tFunctional: Count an unavailable design checker as a failed check\tFORGE-BENCH-1/SCORE",
+      "kind": "bug",
+      "path": "benchmark/checks/design-count.mjs",
+      "line": 10,
+      "text": "Functional: Count an unavailable design checker as a failed check",
+      "from": "blocking",
+      "item": "FORGE-BENCH-1/SCORE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tbenchmark/checks/job.mjs\tFunctional: Check the job without requiring a backdated order\tFORGE-BENCH-1/SCORE",
+      "kind": "bug",
+      "path": "benchmark/checks/job.mjs",
+      "line": 5,
+      "text": "Functional: Check the job without requiring a backdated order",
+      "from": "blocking",
+      "item": "FORGE-BENCH-1/SCORE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tscripts/bench_score.py\tFunctional: Wait for app setup before running the checks\tFORGE-BENCH-1/SCORE",
+      "kind": "bug",
+      "path": "scripts/bench_score.py",
+      "line": 52,
+      "text": "Functional: Wait for app setup before running the checks",
+      "from": "blocking",
+      "item": "FORGE-BENCH-1/SCORE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tbenchmark/checks/dashboard.mjs\tNot done: every one of the five has an expected check that finds it by role and label",
+      "kind": "edge",
+      "path": "benchmark/checks/dashboard.mjs",
+      "line": 7,
+      "text": "Not done: every one of the five has an expected check that finds it by role and label",
+      "from": "review",
+      "item": "FORGE-BENCH-1/SCORE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tbenchmark/checks/design-count.mjs\tNot done: the design checker's problem count",
+      "kind": "edge",
+      "path": "benchmark/checks/design-count.mjs",
+      "line": 5,
+      "text": "Not done: the design checker's problem count",
+      "from": "review",
+      "item": "FORGE-BENCH-1/SCORE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tbenchmark/checks/job.mjs\tNot done: a check for each of sign-in, a list, a form, a dashboard and one job",
+      "kind": "edge",
+      "path": "benchmark/checks/job.mjs",
+      "line": 6,
+      "text": "Not done: a check for each of sign-in, a list, a form, a dashboard and one job",
+      "from": "review",
+      "item": "FORGE-BENCH-1/SCORE",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

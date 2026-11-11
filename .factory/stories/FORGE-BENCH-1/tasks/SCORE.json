@@ -1,11 +1,215 @@
 {
   "branch": "task/FORGE-BENCH-1-SCORE",
+  "known": [
+    {
+      "area": "benchmark/checks.toml",
+      "file": "benchmark/checks.toml",
+      "gain": 5,
+      "harm": 5,
+      "line": 13,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Data loss: Isolate the benchmark's Docker Compose project",
+      "work": 2
+    },
+    {
+      "area": "start_app() in scripts/bench_score.py",
+      "file": "scripts/bench_score.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 52,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Wait for app setup before running the checks",
+      "work": 2
+    },
+    {
+      "area": "benchmark/checks.toml",
+      "file": "benchmark/checks.toml",
+      "gain": 4,
+      "harm": 3,
+      "line": 10,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Avoid fixed Compose ports during scoring",
+      "work": 2
+    },
+    {
+      "area": "benchmark/checks/job.mjs",
+      "file": "benchmark/checks/job.mjs",
+      "gain": 4,
+      "harm": 3,
+      "line": 6,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: a check for each of sign-in, a list, a form, a dashboard and one job",
+      "work": 1
+    },
+    {
+      "area": "benchmark/checks/design-count.mjs",
+      "file": "benchmark/checks/design-count.mjs",
+      "gain": 4,
+      "harm": 3,
+      "line": 5,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: the design checker's problem count",
+      "work": 1
+    },
+    {
+      "area": "benchmark/checks/design-count.mjs",
+      "file": "benchmark/checks/design-count.mjs",
+      "gain": 4,
+      "harm": 3,
+      "line": 10,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Count an unavailable design checker as a failed check",
+      "work": 1
+    },
+    {
+      "area": "benchmark/checks/dashboard.mjs",
+      "file": "benchmark/checks/dashboard.mjs",
+      "gain": 3,
+      "harm": 3,
+      "line": 7,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: every one of the five has an expected check that finds it by role and label",
+      "work": 2
+    },
+    {
+      "area": "benchmark/checks/job.mjs",
+      "file": "benchmark/checks/job.mjs",
+      "gain": 4,
+      "harm": 3,
+      "line": 5,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Check the job without requiring a backdated order",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "c2970163a5d5da61f8e00cd4ef156000738907d696d5e2760e3eb2ce84f50ec5",
+    "changed": "b3759a7652a01247a2495253959c2f2d7167c63312ddececcd09d400abca1219",
+    "commit": "c6f5a5cb71dbf571d8e79a7fdc23b6a829396237",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 5, Work 2, Harm 5\nRaise: Data loss\nCase: normal use - the scratch app and another running Compose app both have a directory named `app`. Compose uses the directory name as its default project name, so the benchmark can target the other app's containers. Its unconditional `down --volumes` can remove those containers and their anonymous volumes, including data, even after benchmark startup fails. The starter's own test runner assigns a unique project name in `src/forge/templates/starter/scripts/test.mjs:9`. See Docker's [project naming](https://docs.docker.com/compose/how-tos/project-name/) and [`down --volumes`](https://docs.docker.com/reference/cli/docker/compose/down/) documentation.\nAdds work: isolate the Compose project; F 1 x H 3 = 3; 2 x C = 2",
+        "file": "benchmark/checks.toml",
+        "gain": 5,
+        "harm": 5,
+        "line": 13,
+        "priority": "P1",
+        "title": "Data loss: Isolate the benchmark's Docker Compose project",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - the health endpoint responds while `docker compose up` is still running or before the subsequent `setup:company` command has created the staff account. `start_app` returns as soon as the endpoint answers even when the launch process is still running, so sign-in and the other checks can run before setup, or a later setup failure can be missed. The ruling establishes that checks run between start and stop; it does not address this unfinished setup command.",
+        "file": "scripts/bench_score.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 52,
+        "priority": "P1",
+        "title": "Functional: Wait for app setup before running the checks",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - a developer already has a local app listening on port 3000. The benchmark starts every service in `compose.test.yml`, whose default ports are 3000, 3001 and 3002 (`src/forge/templates/starter/compose.test.yml:25` and `:42`). The bind failure makes the five app checks fail even if the generated app works. The starter's own test runner selects free ports at `src/forge/templates/starter/scripts/test.mjs:31`.",
+        "file": "benchmark/checks.toml",
+        "gain": 4,
+        "harm": 3,
+        "line": 10,
+        "priority": "P1",
+        "title": "Functional: Avoid fixed Compose ports during scoring",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 1, Harm 3\nRaise: Not done\nCase: normal use - the generated job uses the starter's authenticated POST guard. The request shares the signed-in browser's cookies but supplies no `x-csrf-token` header. The global `CsrfGuard` in `src/forge/templates/starter/libs/core/server/src/common/csrf.guard.ts:20` requires that header for an authenticated POST, so a working job returns 403 and is scored as failed. [Playwright documents](https://playwright.dev/docs/api-testing#context-request-vs-global-request) the shared cookie behavior.",
+        "file": "benchmark/checks/job.mjs",
+        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
+        "gain": 4,
+        "harm": 3,
+        "line": 6,
+        "priority": "P1",
+        "title": "Not done: a check for each of sign-in, a list, a form, a dashboard and one job",
+        "work": 1
+      },
+      {
+        "body": "Gain 4, Work 1, Harm 3\nRaise: Not done\nCase: normal use - the generated app follows the shipped frontend layout and puts order or dashboard screens under `libs/<module>/web/src/pages`, as described in `src/forge/templates/conventions/frontend.md:23`. This glob sends only `apps/web/src` files to the checker, so problems in those screens and shared screen parts are omitted from the reported count; the design check can pass while the actual screens contain problems.",
+        "file": "benchmark/checks/design-count.mjs",
+        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
+        "gain": 4,
+        "harm": 3,
+        "line": 5,
+        "priority": "P1",
+        "title": "Not done: the design checker's problem count",
+        "work": 1
+      },
+      {
+        "body": "Gain 4, Work 1, Harm 3\nRaise: Functional\nCase: normal use - the Impeccable engine is unavailable, for example because its download fails. The shipped checker returns `{problems, note}` with a successful exit in `src/forge/templates/design/ui-checks.js:65`, but this wrapper discards the note and prints only the partial problem count. With no other problems the scorer records a passing zero even though the checker did not run. The test at `tests/test_release_bench_score.py:95` substitutes an `echo` and does not exercise this wrapper.",
+        "file": "benchmark/checks/design-count.mjs",
+        "gain": 4,
+        "harm": 3,
+        "line": 10,
+        "priority": "P1",
+        "title": "Functional: Count an unavailable design checker as a failed check",
+        "work": 1
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Not done\nCase: normal use - a dashboard places its metric label inside a heading and the number beside that heading. The notes require the label and number, but the check requires the number to be in the label's immediate DOM parent. It therefore fails a compliant dashboard depending on its markup, and uses parent traversal instead of finding the metric by role and label.",
+        "file": "benchmark/checks/dashboard.mjs",
+        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
+        "gain": 3,
+        "harm": 3,
+        "line": 7,
+        "priority": "P1",
+        "title": "Not done: every one of the five has an expected check that finds it by role and label",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - the order form rejects delivery dates in the past, while the job correctly marks orders that were placed earlier and have since become late. The check tries to create a 2020 order through that form, so it fails before calling the working job. The notes require the job to process late orders but do not require staff to be able to create backdated orders.",
+        "file": "benchmark/checks/job.mjs",
+        "gain": 4,
+        "harm": 3,
+        "line": 5,
+        "priority": "P1",
+        "title": "Functional: Check the job without requiring a backdated order",
+        "work": 2
+      }
+    ],
+    "id": "5a48b547-c67e-44f4-bec7-428f1d7b5832",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-11T06:33:48.588659+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-11T06:48:59.992362+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
