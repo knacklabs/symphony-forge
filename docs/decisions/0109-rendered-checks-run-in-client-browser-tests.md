@@ -1,6 +1,6 @@
 ---
-status: proposed
-confirmed_by: ""
+status: accepted
+confirmed_by: "Ravi Kiran Vemula"
 date: 2026-11-11
 stories: [FORGE-RENDER-1]
 supersedes: ""
