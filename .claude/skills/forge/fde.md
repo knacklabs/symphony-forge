@@ -81,21 +81,62 @@ Once every story from the spec is done and the date has passed, `forge next` lis
 
 ## Pre-meeting brief
 
-One page in `docs/context/`, drafted from the prospect's website before the first meeting.
+One page in `docs/context/`, drafted from the prospect's website before the first meeting. It
+is written as `docs/context/prospect-research.md` from one research pass (see
+[Research the prospect](SKILL.md#discovery)). Every finding line has a link. Every idea line has
+one source mark.
 
 ```markdown
 # <Prospect>: pre-meeting brief
 - Likely jobs: <what their people do each week>
 - Their terms: <words the site uses for their work>
 
+## Research of <YYYY-MM-DD>
+- Limit used: Company: <n> of 8 searches, <n> of 14 page reads. Similar companies: <n> of 4 searches, <n> of 6 page reads.
+
+### What we found
+- <what it sells and to whom, in your own words> ([<page name>](<https link to the public page>))
+- <a customer complaint, with no reviewer name> ([<page name>](<https link to the public page>))
+
+### Not found
+- <item>: could not find (tried: <what>) | not reached
+
+### For the look
+- Industry: <industry>
+- Users: <by role>
+- Main job of the screens: work, read or persuade
+- Brand words: <two or three>
+- Brand files: [<logo or brand page>](<https link>)
+
+### Questions for you
+1. <about the company, up to five, only when the findings are thin>
+
 ### <short problem title> (guess)
 - Job: <guess>
 - Workaround: <guess>
 - Cost: unknown
+- Evidence: <the finding in your own words> (<its source mark>)
+
+## Proposed prototype, <YYYY-MM-DD>
+- Task: <the one task the demo shows, start to finish>
+- <feature> (<its source mark>)
+
+## Other possible prototypes, <YYYY-MM-DD>
+1. <task>: <one or two lines, each with its source mark>
+2. <task>: <one or two lines, each with its source mark>
+
+## Chosen prototype, <YYYY-MM-DD>
+- Chosen by: salesperson: yes | option <n> | changed: <their words>
+- Task: <the chosen task>
+- <feature> (<its source mark>)
 
 ## First five questions
 1. <about the last time a guessed problem happened>
 ```
+
+A source mark is one of: a link to a public page about this company; `from similar companies:
+<company>` and a link; `heard from the customer: <note file>`; `from the salesperson`; or
+`not researched`. A later pass or choice adds a new dated part and never removes an earlier one.
 
 ## Recap
 

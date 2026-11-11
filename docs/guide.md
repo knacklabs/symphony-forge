@@ -85,6 +85,14 @@ the answers in `docs/product/BRIEF.md`. Ask each build-changing question when it
 one at a time, and record the answer and who gave it. If a requested feature does not help test
 the problem, say why and offer to note it for after sign-off.
 
+A Sales person who does not know what the prototype should show gives the agent the company's
+name and website, plus any notes. The agent researches the company once on the public web (at
+most 12 web searches and 20 page reads) and writes `docs/context/prospect-research.md` with a link
+for each finding. It then proposes one prototype with a source on every feature line, and two
+other options. The Sales person says yes, picks another or changes it in plain words; nothing is
+built before that choice. A later pass or choice is added to the page and never replaces an
+earlier one.
+
 Keep one `## Answers` section in the brief and update it during the talks. Record an open question
 as `ask the client`, and record a current unknown as `not known yet`. These answers are accepted:
 no missing answer or open client question blocks planning, review, close, merge or sign-off. A repo

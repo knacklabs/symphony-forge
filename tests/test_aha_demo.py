@@ -115,8 +115,11 @@ def test_6_signoff_is_read_back_and_reviewed_first(repo, signoff, skill):
 
     # The skill once recorded the recap reply's answers as `client recap reply`, a source
     # `forge decision accept` refuses, so a client following it never reached the review.
-    examples = dict(re.findall(r"`- (Sign-off person|Demo workflow): <[^>]+> \(([^,()]+), "
-                               r"<YYYY-MM-DD>\)`", skill))
+    examples = {}
+    for topic, source in re.findall(r"`- (Sign-off person|Demo workflow): <[^>]+> \(([^,()]+), "
+                                    r"<YYYY-MM-DD>\)`", skill):
+        # The recap reply's example comes first; the research step adds a later `salesperson` one.
+        examples.setdefault(topic, source)
     assert set(examples) == {"Sign-off person", "Demo workflow"}, examples
     fix, answers, queue = signoff
     for topic, source in examples.items():
