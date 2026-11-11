@@ -1,12 +1,20 @@
 {
   "base": "057f6b7718e52faa59720d006c3bb9c66ad100e1",
   "branch": "task/FORGE-FEATUREDROP-1-GUIDE",
+  "round": 1,
   "stacked_on": "FORGE-GENFILE-1/NOTE",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-11T18:55:30.794072+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "58e0efeada773af3c084da333ad5da1a18a6ecc4",
+    "keys": {},
+    "round": null
+  },
+  "worker": "claude"
 }
