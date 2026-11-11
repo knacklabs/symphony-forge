@@ -584,20 +584,14 @@
       "order": 116
     },
     {
-      "key": "FORGE-THEME-1",
-      "title": "One shared design system and theme, set in Claude and checked at close",
+      "key": "FORGE-FEATUREDROP-1",
+      "title": "Remove a feature from a client app in one change",
       "status": "pending",
       "order": 118
     },
     {
       "key": "FORGE-POLISH-1",
       "title": "Client apps look finished without design instructions",
-      "status": "pending",
-      "order": 118
-    },
-    {
-      "key": "FORGE-FEATUREDROP-1",
-      "title": "Remove a feature from a client app in one change",
       "status": "pending",
       "order": 118
     },
@@ -610,6 +604,18 @@
     {
       "key": "FORGE-RENDER-1",
       "title": "Close shows what a changed screen looks like",
+      "status": "pending",
+      "order": 118
+    },
+    {
+      "key": "FORGE-PROSPECT-1",
+      "title": "Research the prospect before a prototype and propose features from what is found",
+      "status": "pending",
+      "order": 119
+    },
+    {
+      "key": "FORGE-THEME-1",
+      "title": "One shared design system and theme, set in Claude and checked at close",
       "status": "pending",
       "order": 118
     }

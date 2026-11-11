@@ -30,6 +30,7 @@ the repo link, and what help you need. Let the person send it.
 
 For a sales demo, save transcripts in `docs/context/`. Mark each point from a transcript
 as "Heard from the customer" and name its transcript. Keep your guesses separate.
+For a Sales person with a company's name and website, research the company and propose one prototype before the design (see Discovery).
 Use Claude for the design. Require impeccable and emil-design-eng from the first
 design onward, for both the Claude design artifact and the browser-only web app.
 Then build a browser-only web app with fake data, no server, no database, and no
@@ -166,7 +167,7 @@ first, a question of fact gets neutral choices.
 
 Every client repo moves through seven steps. `forge next` names the current step in its first line.
 
-1. **Ideas and client notes.** The person gives you the client notes or an idea. Put each note in `docs/context/` and read them all before you ask anything. You can say: "Here are the client notes" or "I have an idea: <idea>".
+1. **Ideas and client notes.** The person gives you the client notes or an idea. Put each note in `docs/context/` and read them all before you ask anything. You can say: "Here are the client notes" or "I have an idea: <idea>". A Sales person can give a company's name and website instead, with any notes: do the research in Discovery first.
 2. **Brief.** You write `docs/product/BRIEF.md` from the notes, and ask only about a point that changes a screen, a field or a flow. You can say: "The brief looks right" or "Change this in the brief: <change>".
 3. **Canvas design.** You make the screens on a design canvas, designed with the client's design system in Claude (see "Canvas and app design"), which the client can click through in Play mode, and the owner or FDE approves the canvas. You can say: "Show me the screens" or "Change this screen: <change>".
 4. **Sign-off.** Run the sign-off checks, then ask the client's named person to approve the canvas and answers. Build now and Later are planned choices, not available commands. Ask the owner what work to start or defer. You can say: "Record the client approval, then plan the first change".
@@ -624,6 +625,93 @@ they reply, record the Demo workflow and Sign-off person answers from it with `c
 source, as `- Demo workflow: <task> (client, <YYYY-MM-DD>)` and `- Sign-off person: <name, role>
 (client, <YYYY-MM-DD>)`. The salesperson sends the recap; Forge sends nothing.
 
+**Research the prospect.** A Sales person starts with the company's name and website, plus any
+notes or call transcripts. They do not need to know what to build: you find out. Ask nothing
+before the pass. Save their notes in `docs/context/`; when the session cannot read a recording,
+ask for its transcript. Run the pass before the first meeting, or before the prototype plan when
+they have already met the prospect. It is the pre-meeting brief, written as
+`docs/context/prospect-research.md` in the client repo, never in Forge's own files. Do one
+pass on the public web, with this session's own web search, over this list in this order:
+
+1. what it sells and to whom, from its own site;
+2. how it works today: its service or ordering pages, case studies and the duties in its job posts;
+3. complaints from its customers and its staff, from public review pages and public employer
+   review pages that open without a sign-in;
+4. its tools, from job posts, its site and vendors' public case studies;
+5. its job posts, from its careers page and public job boards;
+6. two or three close competitors and what each offers, from their own sites.
+
+Stop at 12 web searches and 20 page reads for the whole pass. Items 1 to 6 get at most 8
+searches and 14 page reads. Keep the last 4 searches and 6 page reads for similar companies, and
+use them only when the findings are thin. These numbers are an estimate, not a measurement; they
+change after the first real runs. Use no paid data service. Only one agent runs the pass: this
+session's agent, or one helper agent when the host has one (for example the `explorer` role),
+so the page reads stay out of the main chat. Never use more than one.
+
+Read public pages only, never a page behind a sign-in. Name a person only by role ("the
+operations head"), and summarise complaints with no reviewer names. Write short notes in your
+own words, each with a link; copy no text. Use neutral words, because the client may read this
+repo one day. Every finding under What we found has its own link to the public page it comes
+from; a finding without a link is not written.
+
+The page follows the outline in [the reference page](fde.md). It records the searches and page
+reads used, What we found, Not found, For the look and Questions for you. Under Not found, write
+what you could not find and what you tried; write "not reached" for an item the limit stopped.
+For the look, give the five facts the design starts from: the industry, the users, the main job
+of the screens, brand words, and brand files as links to the company's logo or brand page (no
+download).
+
+Findings are thin when fewer than three of items 1 to 5 hold a finding about this company. Then
+say what you could not find, ask the Sales person up to five questions about the company in one
+message, under Questions for you, and use the kept part of the limit to study two or three
+companies of the same kind and size. Mark every idea from them `from similar companies`. Do not
+wait for the answers: show the proposal now, and add the answers in a new dated part.
+
+When this session cannot search the web or read pages, say in one line: "This session cannot
+search the web, so I could not research <company>." Then work from the notes and questions as
+you do without this step.
+
+**Propose one prototype.** Under `## Proposed prototype, <YYYY-MM-DD>`, write one proposed
+prototype: the one task the demo shows, start to finish, and up to five features around it, one
+line each. Each line has exactly one source mark, chosen by where the idea came from:
+
+- a link to a public page about this company;
+- `from similar companies: <company>` and a link to that company's page;
+- `heard from the customer: <note file in docs/context/>`;
+- `from the salesperson`, for a feature the Sales person added in their reply;
+- `not researched`, for an idea with no source.
+
+Use `not researched` only when the session cannot search the web or the pass did not reach the
+item the idea depends on. An idea with no source in any other case does not appear. A point from
+a transcript is `heard from the customer: <note file in docs/context/>` with or without web
+search. An idea that comes from the Sales person's own notes, not from a reply, is
+`from the salesperson: <note file in docs/context/>`. Nothing general appears as if it were about
+this company. Before you show the proposal, check every line against this list, and fix or
+remove a line with no mark.
+
+Under `## Other possible prototypes, <YYYY-MM-DD>`, write two other possible prototypes, numbered:
+each a task and one or two lines with their marks. Show the same text in the chat in plain
+words, with the links, so the Sales person sees every link. Never ask them to pick from a long
+list of features. This proposal is not the Options step: Options below stay for a chosen
+problem in a story.
+
+The Sales person says yes, picks another, or says in plain words what to change. Build nothing
+before this choice. Then append `## Chosen prototype, <YYYY-MM-DD>` to the page: the full
+chosen prototype with its marks, copied from the option they chose, with their changes applied
+(an added feature is `from the salesperson`). Its first line is
+`- Chosen by: salesperson: yes | option <n> | changed: <their words>`; this line is not a
+feature and needs no mark. Leave the proposal and other-options parts as they were. Write
+`- Demo workflow: <task> (salesperson, <YYYY-MM-DD>)` in the brief's Answers; the client's reply
+to the recap replaces it with `(client, <YYYY-MM-DD>)`. Save the page and that line as one fix,
+as discovery notes are saved.
+
+A later research pass or a later choice adds a new dated part to the research page; never
+remove or rewrite an earlier part.
+A second pass appends `## Research of <YYYY-MM-DD>` with its own findings, counts, Not found and
+proposal. A second choice appends a new `## Chosen prototype, <YYYY-MM-DD>`, and the newest one
+is the one in use. When the customer's reply to the recap corrects the demo task, add a new
+dated `Chosen prototype` part too, so the page and the brief agree.
+
 **The card.** Write each problem as a card under `## Problems` in `docs/product/DISCOVERY.md`,
 adding the section to an older file on first use: `### <short problem title>`, then Job,
 Workaround, Cost, Who feels it, How often and Evidence. Write customer notes in `docs/context/`
@@ -648,6 +736,7 @@ workaround, cost, people, frequency and evidence. Then write the prototype plan:
 with their fields in `docs/product/BRIEF.md`, the Roles table and architecture choices in
 `docs/product/CONSTITUTION.md`, one link to the design in the BRIEF, and the demo steps.
 The design can be made through Forge or separately; the BRIEF holds one link to it.
+When the research page has a `Chosen prototype` part, the plan's demo steps come from the newest `Chosen prototype` part, the task first.
 Each demo step is one Done-when item in the plan, with the client's business task first and
 basic screens (sign-in, members, settings) last. Create the plan record with
 `forge decision new prototype-plan`.

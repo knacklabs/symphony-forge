@@ -1,0 +1,37 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/templates/skill.md\tGate: functional check\tFORGE-PROSPECT-1/RESEARCH",
+      "kind": "bug",
+      "path": "src/forge/templates/skill.md",
+      "line": 698,
+      "text": "Gate: functional check",
+      "from": "blocking",
+      "item": "FORGE-PROSPECT-1/RESEARCH",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_prospect_research.py\tGate: tests/test_prospect_research.py::test_1_the_agent_researches_the_prospect_in_one_bounded_pass\tFORGE-PROSPECT-1/RESEARCH",
+      "kind": "bug",
+      "path": "tests/test_prospect_research.py",
+      "line": 64,
+      "text": "Gate: tests/test_prospect_research.py::test_1_the_agent_researches_the_prospect_in_one_bounded_pass",
+      "from": "blocking",
+      "item": "FORGE-PROSPECT-1/RESEARCH",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_prospect_research.py\tGate: tests/test_prospect_research.py::test_2_the_salesperson_chooses_one_prototype_before_any_build\tFORGE-PROSPECT-1/RESEARCH",
+      "kind": "bug",
+      "path": "tests/test_prospect_research.py",
+      "line": 98,
+      "text": "Gate: tests/test_prospect_research.py::test_2_the_salesperson_chooses_one_prototype_before_any_build",
+      "from": "blocking",
+      "item": "FORGE-PROSPECT-1/RESEARCH",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

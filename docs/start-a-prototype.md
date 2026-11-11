@@ -55,6 +55,10 @@ Talk with the customer about the job they do today, their workaround, what it co
 feels it and how often. Tell the agent what you learned and ask it to record the discovery.
 Choose the one task the demo should let the customer do from start to finish.
 
+If you do not know what the demo should show, give the agent the company's name and website and
+any notes you have. It researches the company, with a link for each finding, and proposes one
+prototype and two other options. You say yes, pick another, or say what to change.
+
 ## Build and show the demo
 
 Start with a canvas of the screens. You or the FDE approve it before a build. The customer
