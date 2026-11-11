@@ -1,0 +1,211 @@
+{
+  "branch": "task/FORGE-RENDER-1-HELPER",
+  "known": [
+    {
+      "area": "src/forge/templates/design/render-check.mjs",
+      "file": "src/forge/templates/design/render-check.mjs",
+      "gain": 5,
+      "harm": 3,
+      "line": 36,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: A page that is not the listed screen is reported as a problem of its own.",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/design/render-check.mjs",
+      "file": "src/forge/templates/design/render-check.mjs",
+      "gain": 5,
+      "harm": 3,
+      "line": 15,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Screen-reader-only labels are reported as cut text",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/design/render-check.mjs",
+      "file": "src/forge/templates/design/render-check.mjs",
+      "gain": 4,
+      "harm": 3,
+      "line": 34,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: A UI change that closes lists the rendered problems of each screen on the app's check list, by width and theme",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/design/render-check.mjs",
+      "file": "src/forge/templates/design/render-check.mjs",
+      "gain": 4,
+      "harm": 3,
+      "line": 12,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Overflow, cut text and low contrast are each named with the screen, width and theme where they occur.",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/design/render-check.mjs",
+      "file": "src/forge/templates/design/render-check.mjs",
+      "gain": 4,
+      "harm": 3,
+      "line": 51,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Report contrast checks that axe could not complete",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/design/render-check.mjs",
+      "file": "src/forge/templates/design/render-check.mjs",
+      "gain": 4,
+      "harm": 3,
+      "line": 41,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Find the contrast tool in the app's workspace",
+      "work": 2
+    },
+    {
+      "area": "test_run() in src/forge/review.py",
+      "file": "src/forge/review.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 501,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: A UI change that closes lists the rendered problems of each screen on the app's check list",
+      "work": 2
+    },
+    {
+      "area": "test_1_a_closing_ui_change_lists_rendered_problems_or_says_none() in tests/test_render_check.py",
+      "file": "tests/test_render_check.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 145,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_a_closing_ui_change_lists_rendered_problems_or_says_none",
+      "work": 2
+    },
+    {
+      "area": "in_browser() in tests/test_render_check.py",
+      "file": "tests/test_render_check.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 191,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_2_each_rendered_problem_names_its_screen_width_and_theme_and_stops_close",
+      "work": 1
+    },
+    {
+      "area": "test_3_phone_width_is_checked_only_when_the_screen_asks_for_it() in tests/test_render_check.py",
+      "file": "tests/test_render_check.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 224,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_3_phone_width_is_checked_only_when_the_screen_asks_for_it",
+      "work": 1
+    },
+    {
+      "area": "in_browser() in tests/test_render_check.py",
+      "file": "tests/test_render_check.py",
+      "gain": 2,
+      "harm": 2,
+      "line": 212,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Follow-up: Cover cut text without the contrast package",
+      "work": 1
+    },
+    {
+      "area": "src/forge/templates/design/render-check.mjs",
+      "file": "src/forge/templates/design/render-check.mjs",
+      "gain": 2,
+      "harm": 2,
+      "line": 57,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Follow-up: Report unchecked contrast for failing screens",
+      "work": 1
+    },
+    {
+      "area": "src/forge/templates/design/render-check.mjs",
+      "file": "src/forge/templates/design/render-check.mjs",
+      "gain": 2,
+      "harm": 1,
+      "line": 63,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Follow-up: Show how to waive a rendered problem",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "5438f659614b0e9dee8f24e79598b28f7814046770baa7f473fb0c333d1c0757",
+    "changed": "4da92bb4f2150f7586983b6661da4f7a762965bff655aa87d8288ae655b65509",
+    "commit": "b309d79ba4a096e36158b2ccdc411bc4e3ffa0d1",
+    "dismissals": [],
+    "findings": [],
+    "id": "80dab43d-820b-490f-a105-35f4aaff2d9b",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-10T20:08:47.982604+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-10T20:30:49.731765+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-10T21:11:04.782559+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-10T22:14:56.260141+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "b7a6efd3-fc00-4d4e-97ff-89352074a838",
+    "head": "07d4affecc37327ea7d034747c7f8ee2dc3b58ef",
+    "keys": {},
+    "round": 2
+  },
+  "worker": "claude"
+}

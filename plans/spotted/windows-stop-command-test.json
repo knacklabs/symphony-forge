@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\ttests/test_waiting_runs_name_holders.py\tNot done: Windows platform run has no passing result\twindows-stop-command-test",
+      "kind": "bug",
+      "path": "tests/test_waiting_runs_name_holders.py",
+      "line": 30,
+      "text": "Not done: Windows platform run has no passing result",
+      "from": "blocking",
+      "item": "windows-stop-command-test",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
