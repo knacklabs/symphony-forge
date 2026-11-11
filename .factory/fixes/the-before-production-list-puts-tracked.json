@@ -111,7 +111,7 @@
     "status": "blocked"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-11T09:47:18.740598+00:00",
@@ -124,8 +124,12 @@
   ],
   "stop": {
     "at": "2026-11-11T10:15:01.459615+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "src/forge/gaps.py",
-    "wait_id": "8324c93d-c9a0-49a0-adb4-d4cd8c8cfdf3"
+    "reason": "Owner's standing choice for 11 Nov 2026: one more round for test and proof points; the round also repairs the count for file names that git prints quoted",
+    "wait_id": "8324c93d-c9a0-49a0-adb4-d4cd8c8cfdf3",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
