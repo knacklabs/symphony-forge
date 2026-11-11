@@ -1,0 +1,65 @@
+{
+  "base": "5dce565dc09d1cf63bd74ae6cfecaa5edde6eeaf",
+  "branch": "fix/windows-stop-command-test",
+  "done_when": "tests/test_waiting_runs_name_holders.py expects the stop command the way Forge prints it on every platform, and the Windows platform run passes",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "stop_command() in tests/test_waiting_runs_name_holders.py",
+      "file": "tests/test_waiting_runs_name_holders.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 30,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Windows platform run has no passing result",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "2a5155a8ea3d7d00094a68e2b5c10fea32f465f84ca0b7e9c05ca5cfdfc3c2d3",
+    "changed": "df0d9d533f1f30fe321686bcd5e4d15f356d6273cc3e312122078f239381b3dc",
+    "commit": "7d87c9fdcccd2a8032b8dea972a332e71e569fe6",
+    "dismissals": [],
+    "findings": [],
+    "id": "2f51ff5b-12d0-405c-a651-77263810ea17",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-10T22:09:26.485792+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-10T22:15:16.301640+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-10T22:42:10.434744+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-10T22:15:16.311848+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "tests/test_waiting_runs_name_holders.py",
+    "reason": "The owner was away on 11 Nov 2026 and told the coordinator to take the recommended option: the Windows run on this branch is now green, so one more round records that proof",
+    "wait_id": "6650bc52-a56b-4545-abdf-aafa45afab51",
+    "worker_round": 1
+  },
+  "stuck": {
+    "close": "d6cce3de-2454-4602-871d-aac6facbc544",
+    "head": "d289cc720c83b291d12296c0f52c2645c2317744",
+    "keys": {},
+    "round": 1
+  },
+  "why": "On Windows the test of waiting runs expects the stop command with double quotes around the repo path, and since the quoting fix a plain path prints with no quotes, so the Windows platform run fails and blocks the v1.2.36 release",
+  "worker": "claude"
+}

@@ -77,7 +77,7 @@ approved design folder. Other design folders are context only.
 <!-- design-theme -->
 Check that the worker follows this instruction:
 Apply DESIGN.md's theme tokens, type and colours to the app's theme file$theme_file.
-Report as P1 a starter app that still has the starter's neutral tokens when DESIGN.md sets others.
+Report as P1 a screen built in an app that still has the untouched starter theme (the starter's neutral tokens) when DESIGN.md sets others or `docs/design/tokens.json` does not exist. A theme that is already custom is not reported. `docs/design/tokens.json`, when it exists, is the approved theme.
 
 <!-- functional-check -->
 ## Functional check

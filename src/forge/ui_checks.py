@@ -33,5 +33,5 @@ def problems(top: Path, files: list[str]) -> list[str]:
 def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
     from forge import sync
 
-    return {".forge/design/ui-checks.js":
-            (sync.TEMPLATES / "design/ui-checks.js").read_text(encoding="utf-8")}
+    return {f".forge/design/{name}": (sync.TEMPLATES / "design" / name).read_text(encoding="utf-8")
+            for name in ("ui-checks.js", "render-check.mjs", "render-check.d.mts")}

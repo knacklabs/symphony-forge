@@ -5,6 +5,7 @@ Exercises src/forge/nextstep.py through the real command, including an unavailab
 
 import json
 import os
+import re
 import shlex
 
 from test_story import DOC, setup
@@ -44,7 +45,8 @@ def test_1_next_names_merged_items_and_their_worktree_cleanup(repo, gh):
     assert result.returncode == 0, result.stderr
     assert "SHOP/SAVE is merged" in result.stdout
     assert "The fix tidy-up is merged" in result.stdout
-    quote = (lambda path: f'"{path}"') if os.name == "nt" else (lambda path: shlex.quote(str(path)))
+    quote = (lambda path: str(path) if re.fullmatch(r"[a-zA-Z0-9_@%+=:,./-]+", str(path))
+             else f'"{path}"' if os.name == "nt" else shlex.quote(str(path)))
     cleanup = {line for line in result.stdout.splitlines() if line.startswith("Next: git worktree remove ")}
     assert cleanup == {f"Next: git worktree remove {quote(task)}", f"Next: git worktree remove {quote(fix)}"}
     assert "waiting for its checks" not in result.stdout
