@@ -33,7 +33,15 @@ async function check(files) {
       if (!waived.has(rule)) problems.push(`${slash(file)}:${line(text, index)} ${rule}: ${message}\n` +
         `  ${comment(file, `forge-ui-ignore ${rule}: <reason>`)}`);
     };
-    for (const match of text.matchAll(/\btransition-all\b|\btransition(?:-property)?\s*:\s*all(?![\w-])/g))
+    // Only motion-all also reads a // at the end of a code line. A // after a colon (a URL) or
+    // inside a quoted string is not a comment, and only the text after it is set aside.
+    let motion = text;
+    if (!/\.(html|css)$/i.test(file)) motion = text.replace(/(["'`])(?:\\.|(?!\1)[^\\\n])*\1|(?<!:)\/\/[^\n]*/g, match => {
+      if (!match.startsWith('//')) return match;
+      if (/^forge-ui-ignore\s+motion-all:\s*\S/.test(match.slice(2).trim())) waived.add('motion-all');
+      return match.replace(/[^\n]/g, ' ');
+    });
+    for (const match of motion.matchAll(/\btransition-all\b|\btransition(?:-?[pP]roperty)?\s*:\s*['"`]?all(?![\w-])/g))
       report('motion-all', match.index, 'List the properties that change instead of animating all of them.');
     if (excluded(file)) continue;
     const spacing = /\b(?:p[xytrbl]?|m[xytrblse]?|gap(?:-[xy])?|space-[xy])-\[-?(?:\d+(?:\.\d+)?|\.\d+)(?:px|r?em|[sld]?v[wh]|vmin|vmax|ch|ex|cm|mm|in|pt|pc|%)?\]/g;

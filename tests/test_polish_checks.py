@@ -55,3 +55,24 @@ def test_4_motion_all_refuses_a_changed_file_and_a_reason_sets_it_aside(repo, gh
     assert not _check(client, SWITCH)
     (client / SWITCH).write_text("{/* transition-all */}\nexport const A = 1;\n", encoding="utf-8")
     assert not _check(client, SWITCH)
+    # A // comment at the end of a code line counts as a comment and can carry the waiver.
+    ok = ('export const A = () => <i className="transition-opacity" />; // replaced transition-all\n',
+          BAD.rstrip() + " // forge-ui-ignore motion-all: Fades the whole card\n")
+    # Only the text after // is set aside: a URL, a quoted // or a real class before it still counts.
+    bad = (BAD.rstrip() + " // forge-ui-ignore motion-all:\n",
+           'export const A = () => <a href="https://x.dev" className="transition-all" />;\n',
+           'export const A = () => <i title="a // b" className="transition-all" />;\n',
+           'export const A = () => <p>https://x.dev</p>;\nexport const B = <i className="transition-all" />;\n',
+           "export const A = { transition: 'all 150ms ease' };\n",
+           'export const A = { transitionProperty: "all" };\n')
+    for text in ok:
+        (client / SWITCH).write_text(text, encoding="utf-8")
+        assert not _check(client, SWITCH), text
+    for text in bad:
+        (client / SWITCH).write_text(text, encoding="utf-8")
+        assert [p for p in _check(client, SWITCH) if "motion-all" in p], text
+    # The other rules keep their reading: an end-of-line waiver does not set them aside.
+    other = "apps/web/src/c.tsx"
+    (client / other).write_text('export const A = () => <i className="p-[13px]" />; '
+                                "// forge-ui-ignore spacing-scale: Odd gap\n", encoding="utf-8")
+    assert [p for p in _check(client, other) if "spacing-scale" in p]
