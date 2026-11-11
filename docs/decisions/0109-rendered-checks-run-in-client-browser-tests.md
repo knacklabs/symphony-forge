@@ -1,6 +1,6 @@
 ---
-status: accepted
-confirmed_by: "Ravi"
+status: proposed
+confirmed_by: ""
 date: 2026-11-11
 stories: [FORGE-RENDER-1]
 supersedes: ""
