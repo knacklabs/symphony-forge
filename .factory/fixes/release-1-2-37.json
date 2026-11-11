@@ -1,4 +1,5 @@
 {
+  "allow_large": "A release names the version in many files: 8 code files change by one version string each",
   "amendments": [
     {
       "at": "2026-11-11T13:14:20.611653+00:00",
