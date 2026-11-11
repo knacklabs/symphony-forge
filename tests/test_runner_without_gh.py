@@ -15,6 +15,9 @@ from test_two_round_limit import client
 
 STORY = "FIX-RUNNER-WITHOUT-GH"
 
+# A runner without gh is a Linux runner running bash; PATH links to tools need POSIX.
+pytestmark = pytest.mark.skipif(os.name == "nt", reason="The trusted workflow runs in bash on Linux")
+
 
 @pytest.fixture
 def github():
@@ -45,37 +48,68 @@ def github():
     server.shutdown()
 
 
-def no_gh_path(tmp_path):
-    """A PATH with the tools the steps need and no gh."""
+def no_gh_path(tmp_path, *tools):
+    """A PATH with only the named tools linked in, so gh is not found."""
     bin_dir = tmp_path / "no-gh-bin"
     bin_dir.mkdir()
-    for tool in ("bash", "cat", "curl", "git", "python3"):
+    for tool in tools:
         (bin_dir / tool).symlink_to(shutil.which(tool))
     return str(bin_dir)
 
 
-@pytest.mark.platform
-@pytest.mark.skipif(os.name == "nt", reason="The trusted workflow runs in bash on Linux")
-@pytest.mark.parametrize("previous", [False, True], ids=["new", "earlier-adopted"])
-def test_1_review_status_is_set_without_gh(env, github, tmp_path, previous):
+def logged_python(path, log):
+    """The runner's `python`, recording each command line so the test can read it."""
+    wrapper = path / "python"
+    wrapper.write_text(f"#!{sys.executable}\nimport json, os, sys\n"
+                       f"open({str(log)!r}, 'a').write(json.dumps(sys.argv[1:]) + '\\n')\n"
+                       f"os.execv({sys.executable!r}, [{sys.executable!r}, *sys.argv[1:]])\n")
+    wrapper.chmod(0o755)
+
+
+@pytest.mark.parametrize("adopted,review", [(False, "clean"), (False, "stale"), (True, "clean")],
+                         ids=["new-clean", "new-stale", "earlier-adopted-clean"])
+def test_1_review_status_is_set_without_gh(env, github, tmp_path, adopted, review):
     server, calls, answers = github
-    client(env, previous)
+    client(env, adopted)
+    item, where = env.start_fix()
+    assert env.close(item).returncode == 0
+    if review == "stale":
+        env.commit(where, "app.py", "print('changed after review')\n")
+    repo = env.repo
     job_url = "https://github.com/acme/shop/actions/runs/123/job/456"
     answers["/repos/acme/shop/actions/runs/123/jobs"] = {
         "jobs": [{"name": "Other", "html_url": "x"}, {"name": "Review pull request", "html_url": job_url}]}
-    workflow = env.repo.git("show", "main:.github/workflows/forge.yml")
-    step = next(s for s in re.split(r"^      - ", workflow, flags=re.M) if "Report review status" in s)
-    script = step.split("        run: |\n", 1)[1]
-    script = "\n".join(line.removeprefix("          ") for line in script.splitlines())
-    variables = {"PATH": no_gh_path(tmp_path), "GITHUB_API_URL": server, "GH_TOKEN": "test-token",
-                 "GITHUB_REPOSITORY": "acme/shop", "GITHUB_RUN_ID": "123", "HEAD_SHA": "abc123",
-                 "REVIEW_OUTCOME": "success", "REVIEW_PENDING": "", "RUNNER_TEMP": str(tmp_path)}
-    done = subprocess.run(["bash", "-e", "-c", script], env=variables, capture_output=True,
-                          text=True, timeout=60)
-    assert done.returncode == 0, done.stderr
-    method, path, auth, body = calls[-1]
-    assert (method, path, auth) == ("POST", "/repos/acme/shop/statuses/abc123", "Bearer test-token")
-    assert json.loads(body) == {"context": "forge-pr-check", "state": "success", "target_url": job_url}
+    job = repo.git("show", "main:.github/workflows/forge.yml").split("\n  forge-pr-check:\n", 1)[1]
+    steps = re.split(r"^      - ", job, flags=re.M)
+    command = re.search(r"^        run: (.+)$", next(s for s in steps if "run: forge hook pr-check" in s), re.M)[1]
+    reporter = next(s for s in steps if "Report review status" in s).split("        run: |\n", 1)[1]
+    reporter = "\n".join(line.removeprefix("          ") for line in reporter.splitlines())
+    path = no_gh_path(tmp_path, "git", "forge", "cat")
+    log = tmp_path / "python-arguments.jsonl"
+    logged_python(tmp_path / "no-gh-bin", log)
+    head = repo.git("rev-parse", "HEAD", cwd=where)
+    variables = {**os.environ, "PATH": path, "GITHUB_API_URL": server, "GH_TOKEN": "test-token",
+                 "GITHUB_REPOSITORY": "acme/shop", "GITHUB_RUN_ID": "123", "HEAD_SHA": head,
+                 "BASE_SHA": repo.git("rev-parse", "main"), "HEAD_REF": "fix/tidy-readme",
+                 "RUNNER_TEMP": str(tmp_path), "GITHUB_OUTPUT": str(tmp_path / "outputs")}
+    bash = shutil.which("bash")
+    checked = subprocess.run([bash, "-e", "-c", command], cwd=repo.path, env=variables,
+                             capture_output=True, text=True, encoding="utf-8", timeout=60)
+    variables["REVIEW_OUTCOME"] = "success" if checked.returncode == 0 else "failure"
+    variables["REVIEW_PENDING"] = ""
+    reported = subprocess.run([bash, "-e", "-c", reporter], cwd=repo.path, env=variables,
+                              capture_output=True, text=True, encoding="utf-8", timeout=60)
+    state = "success" if review == "clean" else "failure"
+    assert (checked.returncode, reported.returncode) == (0 if review == "clean" else 1,) * 2, (
+        checked.stderr, reported.stderr)
+    method, endpoint, auth, body = calls[-1]
+    assert (method, endpoint, auth) == ("POST", f"/repos/acme/shop/statuses/{head}", "Bearer test-token")
+    assert json.loads(body) == {"context": "forge-pr-check", "state": state, "target_url": job_url}
+    # The token reaches GitHub in a header. The shell never expands it into a command line, and
+    # no program that ran got it as an argument.
+    arguments = log.read_text("utf-8")
+    assert "GH_TOKEN" not in reporter and ".forge/review-tests.py" in arguments
+    assert "test-token" not in arguments
 
 
 @pytest.mark.parametrize("previous", [False, True], ids=["new", "earlier-adopted"])
@@ -97,7 +131,7 @@ def test_2_earlier_green_run_is_read_without_gh(env, github, tmp_path, previous)
         "id": 1, "head_sha": parent, "status": "completed", "conclusion": "success",
         "event": "pull_request", "pull_requests": [{"head": {"sha": parent}, "base": {"sha": base}}]}]}
     output = tmp_path / "ci-output"
-    ci_env = dict(os.environ, PATH=no_gh_path(tmp_path), HEAD_SHA=head, BASE_SHA=base,
+    ci_env = dict(os.environ, PATH=no_gh_path(tmp_path, "git"), HEAD_SHA=head, BASE_SHA=base,
                   GITHUB_OUTPUT=str(output), GITHUB_API_URL=server, GH_TOKEN="test-token",
                   GITHUB_REPOSITORY="acme/shop", GITHUB_EVENT_NAME="pull_request",
                   GITHUB_WORKFLOW_REF="acme/shop/.github/workflows/forge.yml@refs/heads/main")

@@ -20,20 +20,36 @@ def run(*args: str) -> str:
                           capture_output=True, text=True).stdout.strip()
 
 
+def api(path: str, body: dict | None = None) -> dict:
+    """One GitHub API call without gh: a GET, or a POST with a body. The token is read here,
+    so it is never in a command line."""
+    request = Request(f"{os.environ.get('GITHUB_API_URL', 'https://api.github.com')}/{path}",
+                      data=json.dumps(body).encode() if body else None,
+                      headers={"Authorization": f"Bearer {os.environ['GH_TOKEN']}",
+                               "Accept": "application/vnd.github+json",
+                               "Content-Type": "application/json"})
+    with urlopen(request, timeout=60) as response:
+        return json.load(response)
+
+
 def api_runs(endpoint: str, sha: str) -> list[dict]:
     """The same workflow-run list as `gh api --paginate`, for a runner without gh."""
     runs, page = [], 1
     while True:
-        request = Request(f"{os.environ.get('GITHUB_API_URL', 'https://api.github.com')}/{endpoint}"
-                          f"?head_sha={sha}&per_page=100&page={page}",
-                          headers={"Authorization": f"Bearer {os.environ['GH_TOKEN']}",
-                                   "Accept": "application/vnd.github+json"})
-        with urlopen(request, timeout=60) as response:
-            found = json.load(response)["workflow_runs"]
+        found = api(f"{endpoint}?head_sha={sha}&per_page=100&page={page}")["workflow_runs"]
         runs += found
         if len(found) < 100:
             return runs
         page += 1
+
+
+def set_status(context: str, state: str, job_name: str) -> None:
+    """The workflow's status step on a runner without gh: link the commit status to the job."""
+    repo, run_id = os.environ["GITHUB_REPOSITORY"], os.environ["GITHUB_RUN_ID"]
+    jobs = api(f"repos/{repo}/actions/runs/{run_id}/jobs")["jobs"]
+    api(f"repos/{repo}/statuses/{os.environ['HEAD_SHA']}",
+        {"context": context, "state": state,
+         "target_url": next(job["html_url"] for job in jobs if job["name"] == job_name)})
 
 
 def test_files(top: Path, base: str, excludes: list[str], *, head: str = "HEAD") -> tuple[bool, list[str]]:
@@ -111,6 +127,10 @@ def reuse() -> bool:
             return latest.get("status") == "completed" and latest.get("conclusion") == "success"
         head = parent
 
+
+if sys.argv[1:2] == ["status"]:
+    set_status(*sys.argv[2:5])
+    sys.exit()
 
 docs_only = False
 tests_only, platform_files = False, []
