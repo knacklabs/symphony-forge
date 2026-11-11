@@ -185,8 +185,13 @@ jobs:
           elif [ "$REVIEW_OUTCOME" = failure ] && [ "$REVIEW_PENDING" = true ]; then
             state=pending
           fi
-          job_url=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/jobs" --jq '.jobs[] | select(.name == "Review pull request") | .html_url')
-          gh api --method POST "repos/$GITHUB_REPOSITORY/statuses/$HEAD_SHA" -f context=forge-pr-check -f "state=$state" -f "target_url=$job_url" > /dev/null
+          if command -v gh > /dev/null; then
+            job_url=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/jobs" --jq '.jobs[] | select(.name == "Review pull request") | .html_url')
+            gh api --method POST "repos/$GITHUB_REPOSITORY/statuses/$HEAD_SHA" -f context=forge-pr-check -f "state=$state" -f "target_url=$job_url" > /dev/null
+          else
+            # A self-hosted runner may have no gh. The same two API calls, made by the checked-out script.
+            python .forge/review-tests.py status forge-pr-check "$state" "Review pull request"
+          fi
           test "$state" != failure
       - name: Report pull request size
         if: always()

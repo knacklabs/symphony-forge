@@ -1,0 +1,103 @@
+{
+  "base": "df97bf7c6d5338589346fb24b6639dbccb3973bd",
+  "branch": "fix/bug-1532-a-self-hosted-runner-without-gh",
+  "done_when": "On a self-hosted runner without gh installed, the Review pull request job sets the pull request status and passes its check.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "src/forge/prcheck.py",
+      "file": "src/forge/prcheck.py",
+      "gain": 5,
+      "harm": 4,
+      "line": 194,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": true,
+      "title": "Security: Keep the GitHub token out of curl arguments",
+      "work": 1
+    },
+    {
+      "area": "src/forge/prcheck.py",
+      "file": "src/forge/prcheck.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 194,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: On a self-hosted runner without gh installed, the Review pull request job sets the pull request status and passes its check.",
+      "work": 1
+    },
+    {
+      "area": "no_gh_path() in tests/test_runner_without_gh.py",
+      "file": "tests/test_runner_without_gh.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 53,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Keep the no-gh test executable on Windows",
+      "work": 1
+    },
+    {
+      "area": "test_1_review_status_is_set_without_gh() in tests/test_runner_without_gh.py",
+      "file": "tests/test_runner_without_gh.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 72,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_review_status_is_set_without_gh",
+      "work": 1
+    }
+  ],
+  "land": {
+    "rounds": 1,
+    "stop": null
+  },
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "076cce7f6667787e4448ce3cabb4db9503bd79dc1f4a49e066c99755255f4a18",
+    "changed": "ad6cd7ffe904648042e713412442b34b0717b99ad8ea5d0aeb88368ee78cb004",
+    "commit": "c7aeb59fae22dae963ee0a35f22a574c3abc6ed5",
+    "dismissals": [],
+    "findings": [],
+    "id": "4474a641-abf9-4981-a9b7-ec2fa3013455",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-11T08:10:41.974838+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-11T08:24:46.824608+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-11T08:40:44.234304+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-11T09:15:53.977269+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "9ad421f6-4ef8-42e5-b480-f8647664f418",
+    "head": "2497322305286d8b17af5a475de393b157385e62",
+    "keys": {},
+    "round": 2
+  },
+  "why": "Bug 1532. A self-hosted runner without gh fails the Review pull request job, and a repo's own setup step is removed on every forge sync, so the failure comes back.",
+  "worker": "claude"
+}
