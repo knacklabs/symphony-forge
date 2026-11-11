@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import shlex
 import subprocess
 import sys
@@ -247,7 +248,8 @@ def _check_dirty_merge(
     assert item not in next_step.stdout
     (env.repo.path / ".git" / "forge" / "ready" / f"{item}.json").unlink()
     legacy = env.repo.forge("next")
-    quoted = f'"{where}"' if os.name == "nt" else shlex.quote(str(where))
+    safe = re.fullmatch(r"[a-zA-Z0-9_@%+=:,./-]+", str(where))
+    quoted = str(where) if safe else f'"{where}"' if os.name == "nt" else shlex.quote(str(where))
     # Cleanup advice precedes next's final build-count summary.
     assert legacy.stdout.splitlines()[-2] == f"Next: git worktree remove {quoted}"
 

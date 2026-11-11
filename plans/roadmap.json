@@ -584,8 +584,8 @@
       "order": 116
     },
     {
-      "key": "FORGE-THEME-1",
-      "title": "One shared design system and theme, set in Claude and checked at close",
+      "key": "FORGE-FEATUREDROP-1",
+      "title": "Remove a feature from a client app in one change",
       "status": "pending",
       "order": 118
     },
@@ -596,10 +596,16 @@
       "order": 118
     },
     {
+      "key": "FORGE-PRODGAP-1",
+      "title": "List prototype gaps after sign-off and close each one before production",
+      "status": "pending",
+      "order": 118
+    },
+    {
       "key": "FORGE-RENDER-1",
       "title": "Close shows what a changed screen looks like",
       "status": "pending",
-      "order": 119
+      "order": 118
     }
   ],
   "epics": [
