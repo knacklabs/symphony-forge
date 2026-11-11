@@ -24,7 +24,7 @@
       "gain": 4,
       "harm": 3,
       "line": 161,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 1,
       "security": false,
@@ -34,27 +34,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "8823a69dfd86ad2be8cd0587a7d14158c73b10d39f082ea412b700a6b302bb80",
-    "changed": "8cf36b531d918a594f30a080cf1e88e61fd926994d8bbb063b241e49e16fa114",
-    "commit": "831043f7fedd66045410a07f7335352aedea1531",
+    "branch_diff": "3722df04e31beba9559cb9ec4955911077430577b16fcf759c8ad9d57b56b353",
+    "changed": "aa01f99a1a3a65e78b401d3eea6a18b4aaf64803105297be93eb13c643f5bb2e",
+    "commit": "744b03ac3f78d56b2a176dd921242fea81864503",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Test. The repaired test still supplies Python independently of the workflow and checks only that the setup step precedes the reporter. If setup is conditioned on `needs.full-suite.result == 'success'`, the test passes for both outcomes, but a failed run on a runner without Python or gh cannot post its failure status. The assertion also still rejects a behavior-preserving implementation that uses checkout, as noted in the previous review.\nCase: normal use - A nightly full run fails on a fresh runner without gh or preinstalled Python.",
-        "file": "tests/test_runner_without_gh.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 182,
-        "priority": "P1",
-        "title": "Gate: test_3_full_test_result_is_posted_without_gh",
-        "work": 2
-      }
-    ],
-    "id": "d8a8e838-a9f3-4f73-b855-5731627f145b",
-    "status": "blocked"
+    "findings": [],
+    "id": "c31ff66b-98b8-43c9-9c9c-fb74ff2b24f0",
+    "status": "clean"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-11T09:39:13.453844+00:00",
@@ -66,6 +55,10 @@
     },
     {
       "at": "2026-11-11T10:26:44.124951+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-11T10:37:48.256382+00:00",
       "step": "review"
     }
   ],
