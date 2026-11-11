@@ -11,12 +11,20 @@
   "done_when": "The version is 1.2.37, generated files are synced, this repo is pinned to v1.2.37, and the tests pass",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-11T13:14:08.273104+00:00",
       "step": "start"
     }
   ],
-  "why": "Release v1.2.37: publish what merged since v1.2.36"
+  "stuck": {
+    "close": null,
+    "head": "3f674598967302cc596ee6d6edc1a2e9b9d8822d",
+    "keys": {},
+    "round": null
+  },
+  "why": "Release v1.2.37: publish what merged since v1.2.36",
+  "worker": "claude"
 }
