@@ -1,18 +1,18 @@
 ---
 reader: codex (gpt-6.1-terra)
-read_at: 2026-11-11T10:35:00.157477+00:00
-seconds: 410.472
-read_hash: b428796f6d849b0b967744925b892241c764404d
-round: 2
+read_at: 2026-11-11T10:46:45.094408+00:00
+seconds: 485.396
+read_hash: 11cb621a33daf848a92a12d2b14f78b157b15689
+round: 3
 passed: no
-doc_seen: b428796f6d849b0b967744925b892241c764404d
+doc_seen: 11cb621a33daf848a92a12d2b14f78b157b15689
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 1a11e8d49a75b1906b286913ac9d5e11af0b7c29
+notes_seen: aba56d9fecf8d9a92f310ae0fc268edb51507557
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a1ca18-47ba-77a0-80ef-f0460a3afaad
 session:
 loop_choice: more
-loop_reason: Owner's standing choice for 11 Nov 2026: one more round for test and plan-gap notes
+loop_reason: Owner's standing choice for 11 Nov 2026: one more round for a one-sentence plan gap
 ---
 # Cold read notes
 
@@ -120,3 +120,18 @@ Only a genuine trade-off goes to the human, as a question with options.
     Case: normal use - A local test passes using the files left on disk, without proving that a fresh checkout can regenerate them.
     Gain 3, Work 2, Harm 3
     Disposition: cut - the step now deletes the two files on disk by their two full paths and nothing else, says why that is safe (`api-types` writes both from the API code every time), then runs the repo's test command, which must pass and make both files again; the claim that the fix's test run starts without the files is removed; the git step keeps the "only these two paths, kept on disk" wording.
+
+## Round 3
+
+13. Advisory: Plan gap: Existing apps are told to omit files they still commit.
+    Raise: Plan gap
+    [The plan](/plans/FORGE-GENCOMMIT-1.md:81) says not to list the files in a part’s scope but does not exempt apps that still commit them. Its automatic move-over trigger depends on a plan read naming them as shared ([plan](/plans/FORGE-GENCOMMIT-1.md:98)).
+    Case: normal use - Two parts in an unmigrated app omit the files, so Forge’s scope check cannot see that both will change them ([task.py](/src/forge/task.py:525)).
+    Gain 3, Work 1, Harm 3
+
+14. Advisory: Scale: The live regression runs again for every copied Python app.
+    Raise: Scale
+    [The plan](/plans/FORGE-GENCOMMIT-1.md:90) puts the real fast-test regression in a helper gated only by the Python app’s `pyproject.toml`. That helper also runs for generated-feature and database-kind apps ([feature test](/tests/test_feature_command.py:381), [database test](/tests/test_database_kinds.py:260)).
+    Case: normal use - A Python-starter pull request runs those smoke jobs, and each repeats the container start and API suite for the same regression. The plan estimates a few minutes per run; it has not measured them.
+    Gain 3, Work 2, Harm 2
+   Disposition: keep - below the bar (follow-up)
