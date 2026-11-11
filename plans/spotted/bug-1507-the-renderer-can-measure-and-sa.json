@@ -1,0 +1,48 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/templates/design/support.js\tNot done: Every saved screen picture, at 1440 and 375 pixels wide, shows the target page after it has loaded, never the empty first page.\tbug-1507-the-renderer-can-measure-and-sa",
+      "kind": "bug",
+      "path": "src/forge/templates/design/support.js",
+      "line": 93,
+      "text": "Not done: Every saved screen picture, at 1440 and 375 pixels wide, shows the target page after it has loaded, never the empty first page.",
+      "from": "blocking",
+      "item": "bug-1507-the-renderer-can-measure-and-sa",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_renderer_waits_for_page.py\tGate: proof list\tbug-1507-the-renderer-can-measure-and-sa",
+      "kind": "bug",
+      "path": "tests/test_renderer_waits_for_page.py",
+      "line": 44,
+      "text": "Gate: proof list",
+      "from": "blocking",
+      "item": "bug-1507-the-renderer-can-measure-and-sa",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_renderer_waits_for_page.py\tGate: test_1_renderer_waits_for_the_page_to_load\tbug-1507-the-renderer-can-measure-and-sa",
+      "kind": "bug",
+      "path": "tests/test_renderer_waits_for_page.py",
+      "line": 31,
+      "text": "Gate: test_1_renderer_waits_for_the_page_to_load",
+      "from": "blocking",
+      "item": "bug-1507-the-renderer-can-measure-and-sa",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_renderer_waits_for_page.py\tKeep the renderer regression test executable on Windows\tbug-1507-the-renderer-can-measure-and-sa",
+      "kind": "bug",
+      "path": "tests/test_renderer_waits_for_page.py",
+      "line": 60,
+      "text": "Keep the renderer regression test executable on Windows",
+      "from": "blocking",
+      "item": "bug-1507-the-renderer-can-measure-and-sa",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
