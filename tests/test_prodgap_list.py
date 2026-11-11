@@ -163,17 +163,28 @@ def test_2_demo_only_labels_show_and_clear(repo, gh, tmp_path, adoption):
     assert gaps(repo)[1] == [f"- {DEMO.replace(APP, APP2)}"]
     push(repo, tmp_path, {APP2: "export const Basket = () => null\n"})
     assert gaps(repo) == ([], [])
-    # File names with shell characters stay out of the row; only the count shows them.
-    odd = ["apps/web/src/a$(id).tsx", "apps/web/src/b`id`.tsx", "apps/web/src/c'd.tsx", "apps/web/src/d e.tsx"]
-    push(repo, tmp_path, {name: LABEL for name in odd})
-    row = gaps(repo)[1]
-    assert row == ['- 4 files carry the "Demo only" label. Say: "Search the app files for the Demo only label, '
-                   'then build each demo-only feature properly or remove it"']
+    # File names with shell characters, spaces or accents stay out of the row; the count still names them.
+    shell = ["apps/web/src/a$(id).tsx", "apps/web/src/b`id`.tsx", "apps/web/src/c'd.tsx"]
+    spaced = ["apps/web/src/d e.tsx", "apps/web/src/f g.tsx"]
+    accent = "apps/web/src/caf\u00e9.tsx"
+
+    def row(total, shown):
+        head = f'{total} file{"s carry" if total != 1 else " carries"} the "Demo only" label'
+        return [f'- {head}: {shown}. Say: "Build each demo-only feature properly or remove it: {shown}"']
+
+    push(repo, tmp_path, {name: LABEL for name in spaced})
+    assert gaps(repo)[1] == row(2, "none with a plain name and 2 other files")
+    push(repo, tmp_path, {accent: LABEL})
+    assert gaps(repo)[1] == row(3, "none with a plain name and 3 other files")
+    push(repo, tmp_path, {name: LABEL for name in shell})
+    assert gaps(repo)[1] == row(6, "none with a plain name and 6 other files")
     push(repo, tmp_path, {APP: LABEL})
-    row = gaps(repo)[1]
-    assert row == [f'- 5 files carry the "Demo only" label: {APP} and 4 other files. Say: "Build each demo-only '
-                   f'feature properly or remove it: {APP} and 4 other files"']
-    push(repo, tmp_path, {name: None for name in odd} | {APP: "export const Orders = () => null\n"})
+    assert gaps(repo)[1] == row(7, f"{APP} and 6 other files")
+    push(repo, tmp_path, {name: None for name in [*shell, *spaced, accent]} | {APP: "export const Orders = () => null\n"})
+    assert gaps(repo) == ([], [])
+    push(repo, tmp_path, {accent: LABEL})
+    assert gaps(repo)[1] == row(1, "none with a plain name and 1 other file")
+    push(repo, tmp_path, {accent: None})
     assert gaps(repo) == ([], [])
 
 

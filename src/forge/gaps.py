@@ -45,11 +45,9 @@ def _listing(top: Path, ref: str) -> dict[str, Any]:
         # Say text is pasted into commands: name only files with plain names, count the rest.
         safe = [name for name in files if re.fullmatch(r"[A-Za-z0-9_./-]+", name)]
         other = len(files) - len(safe)
-        names = ", ".join(safe) + (f" and {_count(other, 'other file', 'other files')}" if safe and other else "")
-        head = f'{_count(len(files), "file carries", "files carry")} the "{LABEL}" label'
-        rows.append((f"{head}: {names}" if safe else head,
-                     f"Build each demo-only feature properly or remove it: {names}" if safe else
-                     f"Search the app files for the {LABEL} label, then build each demo-only feature properly or remove it"))
+        names = (", ".join(safe) or "none with a plain name") + (f" and {_count(other, 'other file', 'other files')}" if other else "")
+        rows.append((f'{_count(len(files), "file carries", "files carry")} the "{LABEL}" label: {names}',
+                     f"Build each demo-only feature properly or remove it: {names}"))
     if not rows:
         return empty
     return {"line": f"{HEADING}{_count(len(rows), 'open gap', 'open gaps')}",
@@ -99,9 +97,11 @@ def _light_parts(top: Path, ref: str) -> list[str]:
 
 
 def _tree(top: Path, ref: str) -> list[str]:
-    """The default branch's file names; the same cached fact forge next reads for its other checks."""
-    return repo.command_fact(("default file names", ref), top,
-                             lambda: repo.git("ls-tree", "-r", "--name-only", ref, cwd=top)).splitlines()
+    """The default branch's file names; the same cached fact forge next reads for its other checks.
+    NUL-separated, so Git does not quote names with accents, quotes or tabs."""
+    listing = repo.command_fact(("default file names", ref), top,
+                                lambda: repo.git("ls-tree", "-r", "-z", "--name-only", ref, cwd=top))
+    return [name for name in listing.split("\0") if name]
 
 
 def _names(name: str, text: str) -> bool:
