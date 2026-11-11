@@ -1,10 +1,14 @@
 {
   "doc": "plans/FORGE-SLOWTEST-1.md",
-  "status": "planning",
+  "status": "read",
   "steps": [
     {
       "at": "2026-11-11T09:47:00.828714+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-11T10:33:21.850966+00:00",
+      "step": "read"
     }
   ],
   "title": "Faster tests for repos with one combined test command",
