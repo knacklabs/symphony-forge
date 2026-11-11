@@ -818,16 +818,29 @@ impeccable's document step using the app-baseline list and fixed guard rules, an
 Operate mode for app screens and prototypes. `support.js` checks each canvas and renders it at 1440 and 375 pixels
 before it is shown; the plan's read refuses a failing design folder or one with no DESIGN.md.
 
-**The client's design system.** For each client, make one design system in Claude (the Design
-System type) from the app's shared parts in `libs/shared/ui` and from the theme names in the app's
-theme file. An earlier-adopted app may lack the added theme lines (heading font, text sizes,
+**The client's design system.** This step needs the app's shared parts in `libs/shared/ui` and its
+theme file. A repo made with plain `forge init`, or an app of its own, may have neither; then say so
+in one line. With no app at all, change no app file: record the look that the starting-theme step
+chooses in DESIGN.md only (impeccable's `document` step, and write `Claude design system: not made
+yet` in the brief's `## Design` section), and make the system when the app exists. With an app that
+has its own theme file but not the starter's parts or names, keep the look in that file as today,
+with no design system and no `docs/design/tokens.json` (so the check stays off), until the app has
+both. Otherwise, for each client, make one design system in Claude (the Design System type) from the
+app's shared parts in `libs/shared/ui` and from the theme names in the app's theme file. An earlier-adopted app may lack the added theme lines (heading font, text sizes,
 spacing, shadows) and the heading rule. Before you make the system, add them to its theme file with
 the starter's values, copied from the Forge starter's theme file: `templates/starter/apps/web/src/index.css`
 in the installed Forge package, next to its `conventions/` folder. Then the system has every name.
 Start its values from the app's own theme file: the stock values in a new app, the current theme in
-an existing one. For a new client, propose better first values from the five facts
-and write the proposal into the system. Sales then change the colours for light and dark, fonts,
-sizes, spacing, corner size and shadows on the page.
+an existing one. For a new client, and for an existing app whose theme file still holds the
+starter's stock values, decide better first values yourself from the five facts and write them into
+the system: colours for light and dark, fonts, sizes, spacing, corner size and shadows. Take the five
+facts from the client's notes. Ask the Sales person only for a missing fact, one question at a time.
+Then design the client's main screens with the system: up to three, and only screens the app needs
+(for example the main list, one record and one form; a one-screen app shows that one screen), in
+light and dark. Show those whole screens to the Sales person, never single parts alone. The person
+says yes, or says in plain words what to change, for example "warmer" or "more serious". Change the
+theme in the system, redraw the same screens and show them again. The Sales person sets no value by
+hand.
 
 Keep the system editable on the page: it is not marked as synced from code. Its README says which
 repo and which parts it came from. The README is the brand guide that every agent reads before it
@@ -848,13 +861,17 @@ Keep the link to the client's system once in `docs/design/design-system.md`, as 
 revise the parts for a client, open that link and read the system's `README.md` and
 `project/tokens.json`. Never rely on which system the design tool treats as the default. Design the
 client's screens with that system. If the design tool can build a canvas only from its default
-system, say so in one line and ask the person to make that system the default.
+system, say so in one line and ask the person to make that system the default. When the system is
+made, remove the `Claude design system: not made yet` line from the brief's `## Design` section if it
+is there, also when the tools were never missing.
 
-When the design is approved, read the system's `project/tokens.json` and save it unchanged as
+When the Sales person says yes to the screens (the design is approved), read the system's
+`project/tokens.json` and save it unchanged as
 `docs/design/tokens.json`. Write each value into the app's theme file by name, then run
 impeccable's `document` step so DESIGN.md describes the same theme. Do this as the first change
 after approval and before the first screen. After any later theme change in Claude, repeat it in
-one change. In an existing app, add a missing theme line and the heading rule (`h1` to `h6` take
+one change, but only after the person says yes to that change: a trial look that the person has not
+accepted is never copied into the app or into `docs/design/tokens.json`. In an existing app, add a missing theme line and the heading rule (`h1` to `h6` take
 `@apply font-heading`) to the theme file, with the value the system holds. `docs/design/tokens.json`, when it exists, is the approved theme. Close compares the app
 with it and stops on a difference whenever a screen or the theme changes. A waiver is one comment
 in the theme file that names the token and the theme:
@@ -878,8 +895,7 @@ the five facts, run impeccable's `document` step, and write `Claude design syste
 the brief's `## Design` section. When the tools return, add the theme lines and the heading rule the app lacks,
 copied from the starter as above, then make the system from the app's theme file as it stands; from
 then on Claude is the source. In the same change, save the new system's `project/tokens.json`
-unchanged as `docs/design/tokens.json`, write its link into `docs/design/design-system.md`, and
-remove the `Claude design system: not made yet` line.
+unchanged as `docs/design/tokens.json` and write its link into `docs/design/design-system.md`.
 
 Make each app's design from the whole `docs/product/BRIEF.md`: its
 purpose, users, records, fields, choice-list options and key flows. Use impeccable and

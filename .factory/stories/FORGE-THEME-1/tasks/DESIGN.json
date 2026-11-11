@@ -82,15 +82,15 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "aacfad5572e320139edd46b24093e772341652439a7bfc2c30ce6971772d4a87",
-    "changed": "ba63ee53d471cafdb53d9b7242a671c73c11233026447eb4b341073874bca8e1",
-    "commit": "52c4a691eed86804d4e01ea4775081287d973ca9",
+    "branch_diff": "873cc4b738e2422fc16bccc473eb242f78be88d36cbe32a0b4c12c0662c63f43",
+    "changed": "9bdfdb7a791ddad732d58dd0c1a8e6a12c9b31dd761862267bc8fa669600ea98",
+    "commit": "e5c80d0f1cd412143100fc5e5134f3ed051074b0",
     "dismissals": [],
     "findings": [],
-    "id": "a48985e9-94a2-481e-9235-32a0818a170d",
+    "id": "0f9c7ea9-ede7-4d84-b136-a696186297ad",
     "status": "clean"
   },
-  "round": 2,
+  "round": 3,
   "status": "waiting for checks",
   "steps": [
     {
@@ -104,13 +104,17 @@
     {
       "at": "2026-11-10T22:31:54.367813+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-11-11T03:04:30.180406+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
-    "close": "a600502a-1edf-4d8e-b00f-fb2eed33665b",
-    "head": "c96902cfee0fb8b8d745e8f27c13aa1a733eb66e",
+    "close": "a3f1a764-c7ad-4b25-8614-6dfd69edf5d9",
+    "head": "f03ebc2a8853e4f9de28dae8e43076f688140190",
     "keys": {},
-    "round": 1
+    "round": 2
   },
   "worker": "claude"
 }

@@ -128,6 +128,15 @@ GUIDE_SENTENCES = (
     "add the theme lines and the heading rule the app lacks, copied from the starter as above",
     "remove the `Claude design system: not made yet` line",
     "`/* forge-ui-ignore theme-drift --<token> (light|dark): <reason> */`",
+    "With no app at all, change no app file",
+    "keep the look in that file as today",
+    "decide better first values yourself from the five facts",
+    "Ask the Sales person only for a missing fact",
+    "Show those whole screens to the Sales person, never single parts alone",
+    "The person says yes, or says in plain words what to change",
+    "The Sales person sets no value by hand",
+    "only after the person says yes to that change",
+    "also when the tools were never missing",
 )
 APPROVED = "`docs/design/tokens.json`, when it exists, is the approved theme."
 
@@ -155,6 +164,7 @@ def test_2_the_guide_tells_the_agent_to_build_the_design_system_and_copy_the_the
         assert "## Pick the starting theme" in baseline
         assert "docs/design/tokens.json" in baseline
         assert "Pick the app's look" not in baseline
+        assert "ask the Sales person only for a missing fact" in baseline
     for name in ("brief.md", "review.md"):
         assert APPROVED in _text(ROOT / "src/forge/templates" / name), name
 

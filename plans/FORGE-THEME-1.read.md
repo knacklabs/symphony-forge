@@ -1,13 +1,13 @@
 ---
 reader: codex (gpt-6.1-terra)
-read_at: 2026-11-10T18:17:08.177540+00:00
-seconds: 528.971
-read_hash: 6bd4707e6b52adc64151e4bff4e03851d2018193
-round: 3
+read_at: 2026-11-11T02:55:14.090130+00:00
+seconds: 171.848
+read_hash: 56bd2ef20282296aa4ef3085a40c98b3d4189f5a
+round: 8
 passed: yes
-doc_seen: 6bd4707e6b52adc64151e4bff4e03851d2018193
+doc_seen: 56bd2ef20282296aa4ef3085a40c98b3d4189f5a
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: dda7588d60b963112042c8f7ba4a37a4f16be374
+notes_seen: b389ebe193501c06b21f5832a318d4627685d980
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a1c68c-71c0-7f11-be78-6c5527a290a1
 session:
@@ -152,5 +152,63 @@ Disposition: cut - the screen-file rule now excludes `tests/`, `test/` and `__te
 20. Advisory: Plan gap: The worker instruction forbids an approved neutral theme.
     Raise: Plan gap. [The review rule](/plans/FORGE-THEME-1.md:109) applies when the approved copy is absent, but the worker is told to build no screen on the starter’s neutral theme without that condition.
     Case: normal use - A client approves the neutral theme and the agent saves its copy. The worker instruction still forbids building the screen with the approved theme.
+    Gain 3, Work 1, Harm 2
+   Disposition: keep - below the bar (follow-up)
+
+## Round 4
+
+21. Advisory: Plan gap: A trial theme change can replace the approved copy before Sales accepts it.
+    Raise: Plan gap. [The feedback loop](/plans/FORGE-THEME-1.md:94) asks the agent to show each revision again, but [the copy rule](/plans/FORGE-THEME-1.md:97) says to copy every later Claude theme change into the app and approved copy. Forge’s current [design source](/src/forge/design.py:159) records a link, not approval of each theme revision.
+    Case: normal use - Sales asks for a warmer look after approval and rejects the first revision. The copy rule can make that trial the approved copy before Sales says yes.
+    Gain 3, Work 3, Harm 3
+   Disposition: keep - below the bar (follow-up)
+
+22. Advisory: Plan gap: The guide does not tell the agent to choose a first look for an earlier-adopted stock app.
+    Raise: Plan gap. [The owner-facing change](/plans/FORGE-THEME-1.md:8) says the agent decides each client’s theme from five facts. [The guide](/plans/FORGE-THEME-1.md:94) starts an existing client from its current theme but specifies better first values only for a new client.
+    Case: normal use - An earlier-adopted app still has the [starter’s neutral colours](/src/forge/templates/starter/apps/web/src/index.css:50). Its first system can be shown in gray without the agent making the promised five-fact choice.
+    Gain 3, Work 3, Harm 3
+   Disposition: keep - below the bar (follow-up)
+
+23. Advisory: Test: The guide test does not pin the new agent-led feedback flow.
+    Raise: Test. [Item 2’s test](/plans/FORGE-THEME-1.md:103) lists no assertion that the agent chooses the values, asks only for missing facts, or makes the changes Sales requests. The [existing look test](/tests/test_uistandards_words.py:43) also checks the fact names rather than who chooses the theme.
+    Case: normal use - The delivered guide retains the previous instruction for Sales to change values on the page; the listed assertions can still pass.
+    Gain 3, Work 3, Harm 3
+   Disposition: keep - below the bar (follow-up)
+
+## Round 5
+
+24. Blocking: Not done: A default new repo has no inputs for its first design system.
+    Raise: Not done. [The guide](/plans/FORGE-THEME-1.md:94) requires the app’s shared parts and theme file, but [plain `forge init`](/src/forge/init.py:241) copies neither. Init also creates a commit, after which [`forge init --starter` is refused](/src/forge/init.py:383).
+    Case: normal use - A new client runs `forge init` without `--starter`. The agent cannot make the first design system from the specified files or show the required screens.
+    Gain 5, Work 3, Harm 3
+Disposition: cut - the guide step now starts with the case of a repo with no shared parts or theme file (plain `forge init` or its own app): say so in one line, set the look in code as on the no-tools path, make the system when the app has both. The owner-facing line says a repo that starts from the Forge starter gets the full flow.
+
+25. Advisory: Plan gap: The preview requires extra screens for a one-screen app.
+    Raise: Plan gap. [The new guide](/plans/FORGE-THEME-1.md:94) requires two or three main screens, while the [worker brief](/src/forge/templates/brief.md:62) says to build nothing for screens the work does not need.
+    Case: normal use - A client wants a single-page dashboard with filters and no detail or form screen. The agent cannot show two distinct main screens without inventing another one.
+    Gain 3, Work 1, Harm 2
+Disposition: cut - the plan now says the client's main screens, up to three and only screens the app needs; a one-screen app shows that one screen.
+
+## Round 6
+
+26. Blocking: Plan gap: The replacement path still requires the missing app theme file.
+    Raise: Plan gap. [The new fallback](/plans/FORGE-THEME-1.md:94) sends a repo with no app or theme file to [item 7](/plans/FORGE-THEME-1.md:100), which requires the agent to set the theme in the app’s theme file. Plain [`forge init`](/src/forge/init.py:241) creates no such file, and the fallback does not say where to create one or defer that step.
+    Case: normal use - A new client runs plain `forge init` and has no app yet. The agent has no app theme file in which to perform the replacement path’s required code step.
+    Gain 5, Work 3, Harm 3
+Disposition: cut - the fallback no longer points to item 7. With no app, the agent writes no theme and makes the system when the app exists; an app with its own theme file keeps its look there, with no design system and no approved copy, until it has the starter's parts and names.
+
+## Round 7
+
+27. Blocking: Plan gap: The no-app rule conflicts with the no-tools design record.
+    Raise: Plan gap. [The new no-app rule](/plans/FORGE-THEME-1.md:94) says to write no theme anywhere. But [the no-tools path](/plans/FORGE-THEME-1.md:100) still requires the document step, and [the starting-look step](/plans/FORGE-THEME-1.md:101) sends its theme choices to `DESIGN.md`. This is separate from the missing app theme file in finding 26.
+    Case: normal use - A client runs plain `forge init` and Claude’s design tools are unavailable. Before making the first canvas, the agent is told both to record the look in `DESIGN.md` and to write no theme anywhere.
+    Gain 5, Work 1, Harm 3
+Disposition: cut - the no-app rule now says: change no app file, record the look in DESIGN.md only; item 7's document step and its not-made-yet line apply, its theme-file step does not.
+
+## Round 8
+
+28. Advisory: Plan gap: The no-app marker can remain after the system is made.
+    Raise: Plan gap. [The new rule](/plans/FORGE-THEME-1.md:94) adds `Claude design system: not made yet` whenever there is no app, even if Claude’s tools are available. [The removal step](/plans/FORGE-THEME-1.md:100) is tied to the tools returning.
+    Case: normal use - A client starts with plain `forge init` while the tools are available. The app is created later and the system is made, but the brief can still say the system has not been made.
     Gain 3, Work 1, Harm 2
    Disposition: keep - below the bar (follow-up)
