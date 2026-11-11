@@ -174,13 +174,19 @@ def test_3_full_test_result_is_posted_without_gh(repo, gh, github, tmp_path, mon
     synced = repo.forge("sync", cwd=work)
     assert synced.returncode == 0, synced.stdout + synced.stderr
     workflow = (work / ".github/workflows/forge.yml").read_text("utf-8")
-    permissions, steps = read_job(_jobs(workflow)["full-suite-result"])
+    job = _jobs(workflow)["full-suite-result"]
+    permissions, steps = read_job(job)
     uses = [step.get("uses", "") for step in steps]
     [setup] = [at for at, name in enumerate(uses) if name.startswith("actions/setup-python@")]
     [report] = [at for at, step in enumerate(steps) if step.get("name") == "Report full test result"]
-    # Python is set up before the report step runs, the job has no checkout, and it can only set statuses.
-    assert setup < report and not [name for name in uses if name.startswith("actions/checkout")]
+    # Python is set up right before the report step. The job needs no checkout, and it can only set statuses.
+    assert report == setup + 1 and not [name for name in uses if name.startswith("actions/checkout")]
     assert permissions == {"statuses": "write"}
+    # A failed full run posts its status too: the job runs after a failed needs (always()), and no step
+    # waits for a passed run.
+    job_if = re.search(r"^    if: (.*)$", job, re.M)[1]
+    assert job_if.startswith("always() &&") and "needs." not in job_if
+    assert not [step for step in steps if "if" in step]
     script, step_env = steps[report]["run"], steps[report]["env"]
     # The runner sets the GITHUB_* variables itself. Every other variable the script reads must come
     # from the step's env.
