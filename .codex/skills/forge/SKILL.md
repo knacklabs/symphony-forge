@@ -110,6 +110,7 @@ the next merge.
 | "Make it a fix" or "Just fix it" (a plan with no started part or part records, even if approved; merged parts count after branch cleanup) | `forge fix start "<its Problem>" --done "<its first Done-when>"`, then `forge story drop <KEY> --because "Moved to the fix <fix>"` |
 | "Do it later" (a fix) | `forge fix drop <fix> --because "The owner wants it later"`, then `forge start "Do this later: <its why> (kept on fix <fix>)"`. `fix drop --undo` brings it back |
 | "Do it now" (an idea-list entry) | `forge start "<the owner's new words>: <the entry's idea without its deferral words>"`, for example `forge start "Do it now: add dark mode"`. Then remove the entry from the main checkout's file while it is waiting, or else in the new item's branch |
+| "Remove this feature" or "We do not need X any more" (in a client app) | `forge start "Remove the <feature> feature"`; the removal is the part's work |
 | "Let this fix go over the limit" | `forge fix allow-large "<reason>"` |
 | "Build it" | `forge work <item>` |
 | "Tell the worker this round" | `forge work <item> --note "<text>"` |
@@ -760,6 +761,52 @@ Build the business screens next. The demo opens on the client's business task; s
 screens last.
 Push back when a requested feature does not serve the problem card: explain why and
 offer to note it for after sign-off. Keep the same app as it grows into production.
+
+### Removing a feature
+
+When a person asks to remove a feature, run `forge start "Remove the <feature> feature"`; the
+removal is the part's work. A plan that removes a feature names its plural and these steps, in
+order: confirm the record type with the person if the words are unclear; in a starter app, run
+`forge task feature-check <plural>` first, and if it names a feature that uses this one, stop,
+tell the person and ask which feature to change first; work through the fixed list for the
+stack; run the check until it prints that nothing points at the feature; update
+`docs/product/BRIEF.md` (the record type), the Roles table row and any demo step that uses the
+feature; run the app's own tests; commit as one change.
+
+The fixed list, TypeScript. Delete: `libs/<plural>/` and `apps/api/test/<plural>.e2e-spec.ts`.
+Edit: the import and the entry in `apps/api/src/app.module.ts`; the dependency in
+`apps/api/package.json`; the reference in `apps/api/tsconfig.json`; the `scope:<plural>` line in
+`eslint.config.mjs`; the two `dist` names in `scripts/test-build.mjs`; the feature's importer
+blocks and the app's dependency lines in `pnpm-lock.yaml`. Keep: the Prisma schema file, the
+migration folder, the name in `base.prisma`, the relation lines in `Account` and `Organisation`
+and the catalog entry in `apps/api/test/database.e2e-spec.ts`.
+
+The fixed list, Python. Delete: `routes.py`, `service.py`, `tools.py` and `permissions.py` in
+`apps/api/app/<module>/`, `apps/api/tests/test_<module>.py` and `libs/<plural>/`. Edit: cut
+`apps/api/app/<module>/__init__.py` to one line that imports `models` (the starter's entry file
+imports `routes`, `service` and `tools`, and the check lists those imports until they are gone);
+remove the two lines in `apps/api/app/main.py`; remove the path in the root `package.json`
+`typecheck`; remove the importer in `pnpm-lock.yaml`; then run `corepack pnpm run api-types`
+before the last check, because the shared API types still name the removed routes. Keep:
+`models.py` and every file in the module that `models.py` imports, the Alembic revision, `import
+app.<module>` in `migrations/env.py`, the `<plural> internals` contract and the lines in
+`apps/api/tests/test_module_schemas.py`.
+
+In the client's own files, remove its screens, menu entries, routes, API calls and demo loader
+lines.
+
+Other cases: a database test that calls the removed feature's API is changed to create its row
+another way; the starter's own `projects` feature has such calls. The starter's tests for agent
+tools and agent access name `projects_*` tools and `/api/v1/agent-tools/projects`; the check
+lists them. Examples in the starter's own text (the auth response example and the page path
+example name `projects`) are listed as leftovers when `projects` is removed; change the word in
+them. If the check says it could not find the data model, search for that model's calls by hand
+and tell the person. A feature not made by the build step: use the same list for what exists,
+then the check. An app that is not a starter app: skip the check, search the code for the
+feature's name and run the app's own build and tests.
+
+Data rule: the table stays; write no drop migration in this change; a later drop follows the
+database skill and the deploy guide as they are.
 
 If the prototype holds only made-up data and has no back end, ask the person, then have the
 coordinator set `sample_data = true` in `forge.toml`. A sign-off record does not turn sample mode
@@ -1613,6 +1660,8 @@ forge task feature jobs --one job --field 'name:text' --field 'description?:long
   changes the role permissions, name that change for the worker to make in the feature's
   permission mapping. A non-starter or older starter missing the required parts gets a refusal
   naming what is missing; build that feature by hand in its existing layout.
+- A plan that removes a feature names its plural and follows "Removing a feature" in the Prototype
+  section: the check, the fixed list, then the check again and the app's tests.
 - In a starter app, each feature's agent tools are in its one tools file
   (`libs/<plural>/server/src/<plural>.tools.ts`, Python `apps/api/app/<plural>/tools.py`),
   and the feature command writes it. When a story adds a route that agents need, the part

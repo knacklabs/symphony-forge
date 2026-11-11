@@ -548,6 +548,12 @@ Roles table asks for it; keep that mapping in one place. Add unsupported field k
 refuses a non-starter or an older starter, follow its named missing parts and build the feature
 by hand in the app's existing layout. Existing apps keep their code on upgrade and sync.
 
+To remove a feature from a starter app, run `forge task feature-check <plural>` first and stop
+if it names a feature that uses this one. Work through the fixed list in the forge skill's
+"Removing a feature" section, run the check until it prints that nothing points at the feature,
+then run the app's own tests. The table, its rows and its change history stay: write no drop
+migration.
+
 In an app with `libs/core/server/src/common/tools.ts` (Python `app/core/tools.py`), a
 feature's agent tools are in its tools file. Add a tool there only when your part names
 it, with `defineTool`, one permission, strict `input` and `output` schemas, all four
