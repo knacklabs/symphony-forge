@@ -4,14 +4,82 @@
   "done_when": "On a runner without gh, the nightly full-test result step sets up Python, posts the forge-full-suite status with Python's standard library, reads the token from the environment, and passes or fails to match the full run.",
   "fix_kind": "backend",
   "kind": "fix",
+  "known": [
+    {
+      "area": "test_3_full_test_result_is_posted_without_gh() in tests/test_runner_without_gh.py",
+      "file": "tests/test_runner_without_gh.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 150,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: proof list",
+      "work": 1
+    },
+    {
+      "area": "test_3_full_test_result_is_posted_without_gh() in tests/test_runner_without_gh.py",
+      "file": "tests/test_runner_without_gh.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 161,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_3_full_test_result_is_posted_without_gh",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "c964e8f0611fb642206b2ec88946d44f47c819ccf9ab674d8e3ded230ce51b75",
+    "changed": "8c3f9e02c67ffb72f4d40bb24c31017b6010f05f623616081850f67e856ed60f",
+    "commit": "dcd0fd9bf10300a62edbc8155231b2d34c978a87",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 1, Harm 2\nRaise: Gate. The supplied proof list is marked `missing`, so the Done-when details are not mapped to named tests and their pull-request results. The new test at this location exists, but the required proof list is still absent.\nCase: normal use - Forge reviews the nightly result fix before merge.",
+        "file": "tests/test_runner_without_gh.py",
+        "gain": 4,
+        "harm": 2,
+        "line": 150,
+        "priority": "P1",
+        "title": "Gate: proof list",
+        "work": 1
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Test. The test bypasses the result job's Python setup and token wiring, so it can pass when the nightly run cannot post a status. It executes only the extracted script with its own Python and `GH_TOKEN`; the assertion at line 161 checks only that setup appears somewhere in the job. Moving setup after the reporter or removing the token binding at `.github/workflows/forge.yml:261` and `src/forge/prcheck.py:337` would leave this test passing while the real job fails. The existing group test checks the result binding at `tests/test_nightly_group_results.py:77`, but not these prerequisites. The new test also rejects an otherwise valid implementation that uses checkout.\nCase: normal use - A nightly result runs on a fresh runner without gh or preinstalled Python.",
+        "file": "tests/test_runner_without_gh.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 161,
+        "priority": "P1",
+        "title": "Gate: test_3_full_test_result_is_posted_without_gh",
+        "work": 2
+      }
+    ],
+    "id": "247a127f-ca8a-4dea-9286-c679e2f9a260",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-11T09:39:13.453844+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-11T10:08:14.303492+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-11-11T10:08:14.313515+00:00",
+    "file": "tests/test_runner_without_gh.py",
+    "wait_id": "7d10528e-e1ab-4e06-872a-08d4af503091"
+  },
   "stuck": {
     "close": null,
     "head": "a73a29a4ffb7dc9b435b2c1a02318df80870ad0d",

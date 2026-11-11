@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "bug\ttests/test_runner_without_gh.py\tGate: proof list\tbug-1524-on-a-self-hosted-or-new-each-jo",
+      "kind": "bug",
+      "path": "tests/test_runner_without_gh.py",
+      "line": 150,
+      "text": "Gate: proof list",
+      "from": "blocking",
+      "item": "bug-1524-on-a-self-hosted-or-new-each-jo",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_runner_without_gh.py\tGate: test_3_full_test_result_is_posted_without_gh\tbug-1524-on-a-self-hosted-or-new-each-jo",
+      "kind": "bug",
+      "path": "tests/test_runner_without_gh.py",
+      "line": 161,
+      "text": "Gate: test_3_full_test_result_is_posted_without_gh",
+      "from": "blocking",
+      "item": "bug-1524-on-a-self-hosted-or-new-each-jo",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
