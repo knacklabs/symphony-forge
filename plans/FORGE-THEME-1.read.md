@@ -195,3 +195,4 @@ Disposition: cut - the plan now says the client's main screens, up to three and 
     Raise: Plan gap. [The new fallback](/plans/FORGE-THEME-1.md:94) sends a repo with no app or theme file to [item 7](/plans/FORGE-THEME-1.md:100), which requires the agent to set the theme in the app’s theme file. Plain [`forge init`](/src/forge/init.py:241) creates no such file, and the fallback does not say where to create one or defer that step.
     Case: normal use - A new client runs plain `forge init` and has no app yet. The agent has no app theme file in which to perform the replacement path’s required code step.
     Gain 5, Work 3, Harm 3
+Disposition: cut - the fallback no longer points to item 7. With no app, the agent writes no theme and makes the system when the app exists; an app with its own theme file keeps its look there, with no design system and no approved copy, until it has the starter's parts and names.
