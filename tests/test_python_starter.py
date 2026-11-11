@@ -142,7 +142,6 @@ def _assert_python_tree(client: Path):
     assert "mypy" in scripts["typecheck"]
     assert "api-types" in scripts["test"] and "test:imports" in scripts["test"]
     assert scripts["test"].index("api-types") < scripts["test"].index("typecheck")
-    assert (client / "libs/shared/api-types/src/api-types.ts").is_file()
 
     dockerfile = (client / "Dockerfile").read_text(encoding="utf-8")
     assert dockerfile.index("USER app") < dockerfile.index("uv sync --frozen --no-dev")

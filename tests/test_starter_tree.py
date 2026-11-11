@@ -159,7 +159,7 @@ def _stop_process_group(process):
         return process.communicate()
 
 
-def _run_live_starter(tmp_path_factory, sources, required_output=()):
+def _run_live_starter(tmp_path_factory, sources, required_output=(), after=None):
     """Run one starter tree with the isolated Node and Docker setup shared by both starters."""
     node = shutil.which("node")
     if not node:
@@ -222,7 +222,7 @@ def _run_live_starter(tmp_path_factory, sources, required_output=()):
 
     copy = tmp_path_factory.mktemp("starter-smoke")
     ignore = shutil.ignore_patterns(".git", "node_modules", "dist", ".nx", "reports", "test-results",
-                                    "playwright-report", "coverage")
+                                    "playwright-report", "coverage", "openapi.json", "api-types.ts")
     for source, target in sources:
         destination = copy / target
         if source.is_dir():
@@ -337,11 +337,15 @@ def _run_live_starter(tmp_path_factory, sources, required_output=()):
             assert "playwright test --config apps/web/playwright.config.ts" in selected, selected
             assert "apps/api/vitest.config.ts" not in selected, selected
             assert "test:api" not in selected, selected
-        return {
+        result = {
             "folder": copy,
             "api": _junit_cases(copy / "test-results" / "api.xml"),
             "browser": _junit_cases(copy / "test-results" / "browser.xml"),
         }
+        if after:
+            after(copy, env)
+            # after() may add keys through its own closure; it cannot touch the reports read above.
+        return result
     finally:
         if process is not None and process.poll() is None:
             _stop_process_group(process)
@@ -350,6 +354,37 @@ def _run_live_starter(tmp_path_factory, sources, required_output=()):
              "--remove-orphans"], cwd=copy, env=env, capture_output=True, text=True,
             timeout=180)
         assert cleanup.returncode == 0, cleanup.stdout + cleanup.stderr
+
+
+def _git(copy, env, *args):
+    return subprocess.run(["git", *args], cwd=copy, env=env, check=True,
+                          capture_output=True, text=True, timeout=120).stdout
+
+
+def _break_a_web_type(copy, env):
+    """Rename an API model: the fast test must make the types and fail the web type check."""
+    for args in (("init", "-q"), ("config", "user.name", "Forge starter test"),
+                 ("config", "user.email", "forge-starter@example.test"), ("add", "-A"),
+                 ("commit", "-q", "-m", "Starter smoke baseline")):
+        _git(copy, env, *args)
+    base = _git(copy, env, "rev-parse", "HEAD").strip()
+    for path in (copy / "apps/api").rglob("*.py"):
+        text = path.read_text(encoding="utf-8")
+        if "HistoryEntry" in text and ".venv" not in path.parts:
+            path.write_text(text.replace("HistoryEntry", "HistoryRow"), encoding="utf-8")
+    _git(copy, env, "add", "-A")
+    _git(copy, env, "commit", "-q", "-m", "Rename one API model")
+    process = subprocess.Popen(["node", Path("scripts") / "test.mjs", base], cwd=copy, env=env,
+                               stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
+                               start_new_session=True)
+    try:
+        output, _ = process.communicate(timeout=1800)
+    except subprocess.TimeoutExpired:
+        output, _ = _stop_process_group(process)
+        pytest.fail(f"affected API change timed out after 1800 seconds\n{output}")
+    assert process.returncode != 0, output
+    assert "Affected parts: api, web" in output, output
+    assert "libs/history/contracts/src/index.ts" in output and "error TS" in output, output
 
 
 _LIVE_RUNS = {}
@@ -410,8 +445,16 @@ def live_python_run(tmp_path_factory):
             (ROOT / "src" / "forge" / "templates" / "skeleton" / ".dockerignore",
              Path(".dockerignore")),
         )
-        _LIVE_RUNS["python"] = _run_live_starter(
-            tmp_path_factory, sources, ("GET /health returned 200",))
+        contract = {}
+
+        def regression(copy, env):
+            contract.update(json.loads(
+                (copy / "libs/shared/api-types/openapi.json").read_text(encoding="utf-8")))
+            _break_a_web_type(copy, env)
+
+        run = _run_live_starter(
+            tmp_path_factory, sources, ("GET /health returned 200",), after=regression)
+        _LIVE_RUNS["python"] = {**run, "contract": contract}
     return _LIVE_RUNS["python"]
 
 

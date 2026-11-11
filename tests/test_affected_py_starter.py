@@ -27,9 +27,11 @@ def test_6_python_starter_selects_its_affected_parts(repo, gh, tmp_path):
     assert (client / "scripts/affected.mjs").is_file()
     base = repo.git("rev-parse", "HEAD", cwd=client)
     cases = (
-        ("apps/api/app/projects/service.py", ("api-types", "ruff", "mypy", "test:imports", "test:api"),
-         ("eslint", "vitest", "test:browser")),
-        ("apps/web/src/index.css", ("eslint", "tsc --build", "vitest run", "--changed", "test:browser"),
+        ("apps/api/app/projects/service.py",
+         ("Affected parts: api, web", "api-types", "ruff", "mypy", "test:imports", "test:api", "tsc --build",
+          "test:browser", "libs/shared/api-types/tsconfig.json", "libs/history/contracts/tsconfig.json",
+          "libs/projects/contracts/tsconfig.json", "apps/web/tsconfig.json"), ()),
+        ("apps/web/src/index.css", ("api-types", "eslint", "tsc --build", "vitest run", "--changed", "test:browser"),
          ("test:api", "ruff", "mypy")),
         ("libs/shared/util/src/index.ts", ("eslint", "tsc --build", "vitest run", "test:browser"),
          ("test:api", "ruff")),
@@ -47,6 +49,8 @@ def test_6_python_starter_selects_its_affected_parts(repo, gh, tmp_path):
             assert command in result.stdout, result.stdout
         for command in absent:
             assert command not in result.stdout, result.stdout
+        if "tsc --build" in expected:
+            assert result.stdout.index("api-types") < result.stdout.index("tsc --build"), result.stdout
     for args, expected in ((["--list"], "Affected parts: all"),
                            (["--list", base], "Affected parts: none")):
         result = subprocess.run([node, "scripts/test.mjs", *args], cwd=client,
