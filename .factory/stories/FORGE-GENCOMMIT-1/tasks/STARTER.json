@@ -1,10 +1,18 @@
 {
   "branch": "task/FORGE-GENCOMMIT-1-STARTER",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-11T18:55:37.075913+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "d6650853386d2e11e37be09dcb18b5b79c4ce65f",
+    "keys": {},
+    "round": null
+  },
+  "worker": "claude"
 }
