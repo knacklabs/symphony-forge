@@ -127,9 +127,9 @@
     "id": "06265cb2-2784-4ad9-a00e-759a15094cec",
     "status": "clean"
   },
-  "round": 2,
+  "round": 3,
   "stacked_on": "FORGE-PRODGAP-1/GUIDE",
-  "status": "waiting for checks",
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-11T10:02:06.115359+00:00",
@@ -149,10 +149,10 @@
     }
   ],
   "stuck": {
-    "close": "9588aa03-7e98-4148-9185-3ce6d63cc289",
-    "head": "382794d585ec6052e518ff2d9fdfcba75a962a7f",
+    "close": "1abf2aed-52c8-4960-a3bf-f8a5b22c1fbf",
+    "head": "057f6b7718e52faa59720d006c3bb9c66ad100e1",
     "keys": {},
-    "round": 1
+    "round": 2
   },
   "worker": "claude"
 }
