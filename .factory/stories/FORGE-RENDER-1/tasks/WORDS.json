@@ -102,7 +102,7 @@
     "id": "eebfdba1-681d-4feb-87d6-996fa1d11b1b",
     "status": "blocked"
   },
-  "round": 2,
+  "round": 3,
   "stacked_on": "FORGE-THEME-1/DESIGN",
   "status": "fixing",
   "steps": [
@@ -129,10 +129,10 @@
     "worker_round": 2
   },
   "stuck": {
-    "close": "e2e03d48-4bb0-48ba-8d24-7ec69549c963",
-    "head": "a8a7c9d20c811e0636a6b89c316240bb9f2f73d6",
+    "close": "88188b1d-7eec-44d6-b84d-ac810b44d1ce",
+    "head": "35585f0c4ac3611fc3a93e127a48eed273566d7c",
     "keys": {},
-    "round": 1
+    "round": 2
   },
   "worker": "claude"
 }
