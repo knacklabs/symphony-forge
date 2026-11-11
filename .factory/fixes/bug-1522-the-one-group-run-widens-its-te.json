@@ -4,12 +4,20 @@
   "done_when": "A pull request whose branch has merged the default branch in runs the normal test groups, not one.",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-11T04:44:49.366135+00:00",
       "step": "start"
     }
   ],
-  "why": "Bug 1522. The one-group run widens its test selection to cover every change merged in from the default branch, which takes longer than the group's 45-minute limit."
+  "stuck": {
+    "close": null,
+    "head": "8219025e584d570e940039daa022559b0b4cecd2",
+    "keys": {},
+    "round": null
+  },
+  "why": "Bug 1522. The one-group run widens its test selection to cover every change merged in from the default branch, which takes longer than the group's 45-minute limit.",
+  "worker": "claude"
 }
