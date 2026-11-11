@@ -1,0 +1,48 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/templates/design/ui-checks.js\tStrip trailing JavaScript comments before applying motion-all\tFORGE-POLISH-1/CHECKS",
+      "kind": "bug",
+      "path": "src/forge/templates/design/ui-checks.js",
+      "line": 36,
+      "text": "Strip trailing JavaScript comments before applying motion-all",
+      "from": "blocking",
+      "item": "FORGE-POLISH-1/CHECKS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/templates/design/ui-checks.js\tFollow-up: use template comments for Vue and Svelte waivers",
+      "kind": "edge",
+      "path": "src/forge/templates/design/ui-checks.js",
+      "line": 37,
+      "text": "Follow-up: use template comments for Vue and Svelte waivers",
+      "from": "review",
+      "item": "FORGE-POLISH-1/CHECKS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/templates/design/ui-checks.js\tNot done: Close refuses a changed UI file that animates all properties",
+      "kind": "edge",
+      "path": "src/forge/templates/design/ui-checks.js",
+      "line": 36,
+      "text": "Not done: Close refuses a changed UI file that animates all properties",
+      "from": "review",
+      "item": "FORGE-POLISH-1/CHECKS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/templates/review.md\tNot done: The review reports a button-like part with no pressed state, and a new animation or transition that ignores reduced motion",
+      "kind": "edge",
+      "path": "src/forge/templates/review.md",
+      "line": 397,
+      "text": "Not done: The review reports a button-like part with no pressed state, and a new animation or transition that ignores reduced motion",
+      "from": "review",
+      "item": "FORGE-POLISH-1/CHECKS",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
