@@ -64,7 +64,7 @@
     "status": "blocked"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-11T09:39:13.453844+00:00",
@@ -77,8 +77,12 @@
   ],
   "stop": {
     "at": "2026-11-11T10:08:14.313515+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "tests/test_runner_without_gh.py",
-    "wait_id": "7d10528e-e1ab-4e06-872a-08d4af503091"
+    "reason": "Owner chose one more round on 11 Nov 2026: repair the test and write the proof list",
+    "wait_id": "7d10528e-e1ab-4e06-872a-08d4af503091",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
