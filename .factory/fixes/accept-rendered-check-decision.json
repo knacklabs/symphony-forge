@@ -1,0 +1,30 @@
+{
+  "base": "2ea3377dcfab775d41096f7d9f4f7f561f792e1f",
+  "branch": "fix/accept-rendered-check-decision",
+  "done_when": "The decision record for rendered checks in the client's browser tests is marked accepted with the owner's name",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "e241abe85d09d838d0c643436be2c326aa1792d00169c5904b7694b04495ca4b",
+    "changed": "5370b4dec44687a94a9b6194e5f9236a51a855effbda10881f1c9c1e2b0d233a",
+    "commit": "9111dada0c9a53f47fd1e176162d16437f09d5ae",
+    "dismissals": [],
+    "findings": [],
+    "id": "8b8d3e41-87fd-4044-9297-dfac748b80a1",
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-11T06:15:33.778981+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-11T06:19:27.578599+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "The owner accepted the decision record for rendered checks on 11 Nov 2026; the record still says proposed"
+}
