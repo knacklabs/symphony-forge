@@ -11,6 +11,8 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 import pytest
 
 from test_close import blocked, env, finding  # noqa: F401
+from test_groups_pytest import _adopted_client, _new_client, _settings
+from test_testplace_workflow import _jobs
 from test_two_round_limit import client
 
 STORY = "FIX-RUNNER-WITHOUT-GH"
@@ -142,3 +144,37 @@ def test_2_earlier_green_run_is_read_without_gh(env, github, tmp_path, previous)
     assert checked.returncode == 0, checked.stdout + checked.stderr
     assert "reuse=true" in output.read_text("utf-8")
     assert calls[0][2] == "Bearer test-token"
+
+
+@pytest.mark.parametrize("adopted", [False, True], ids=["new", "earlier-adopted"])
+def test_3_full_test_result_is_posted_without_gh(repo, gh, github, tmp_path, monkeypatch, adopted):
+    server, calls, _ = github
+    monkeypatch.delenv("PYTEST_ADDOPTS", raising=False)
+    work = (_adopted_client(repo, tmp_path, "nightly-client") if adopted else
+            _new_client(repo, gh, tmp_path, "nightly-client"))
+    if not adopted:
+        repo.git("checkout", "-qb", "fix/nightly-result", cwd=work)
+    _settings(work, test="python -m pytest tests -q")
+    synced = repo.forge("sync", cwd=work)
+    assert synced.returncode == 0, synced.stdout + synced.stderr
+    report = _jobs((work / ".github/workflows/forge.yml").read_text("utf-8"))["full-suite-result"]
+    assert "actions/setup-python" in report and "actions/checkout" not in report
+    script = re.search(r"        run: \|\n((?:          .*\n|\n)+)", report)[1]
+    script = "\n".join(line.removeprefix("          ") for line in script.splitlines())
+    log = tmp_path / "python-arguments.jsonl"
+    path = no_gh_path(tmp_path, "git")
+    logged_python(tmp_path / "no-gh-bin", log)
+    for outcome in ("success", "failure"):
+        before = len(calls)
+        ran = subprocess.run([shutil.which("bash"), "-e", "-c", script], cwd=work, capture_output=True,
+                             text=True, encoding="utf-8", timeout=60,
+                             env={**os.environ, "PATH": path, "FULL_RESULT": outcome, "HEAD_SHA": "abc123",
+                                  "GITHUB_API_URL": server, "GH_TOKEN": "test-token",
+                                  "GITHUB_REPOSITORY": "acme/shop", "GITHUB_RUN_ID": "7",
+                                  "GITHUB_SERVER_URL": "https://github.example"})
+        assert ran.returncode == (0 if outcome == "success" else 1), ran.stdout + ran.stderr
+        method, endpoint, auth, body = calls[before]
+        assert (method, endpoint, auth) == ("POST", "/repos/acme/shop/statuses/abc123", "Bearer test-token")
+        assert json.loads(body) == {"context": "forge-full-suite", "state": outcome,
+                                    "target_url": "https://github.example/acme/shop/actions/runs/7"}
+    assert "test-token" not in log.read_text("utf-8")
