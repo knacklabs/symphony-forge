@@ -1,0 +1,12 @@
+{
+  "base": "057f6b7718e52faa59720d006c3bb9c66ad100e1",
+  "branch": "task/FORGE-FEATUREDROP-1-GUIDE",
+  "stacked_on": "FORGE-GENFILE-1/NOTE",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-11T18:55:30.794072+00:00",
+      "step": "start"
+    }
+  ]
+}
