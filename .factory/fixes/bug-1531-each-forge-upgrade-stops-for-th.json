@@ -63,8 +63,8 @@
       "gain": 3,
       "harm": 3,
       "line": 65,
-      "outcome": "open",
-      "reason": "",
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: Owner accepted on 11 Nov 2026: a repo with a linked AGENTS.md keeps today's behaviour, because the check sends anything it is not sure about to the normal review; fix later if a real project hits it",
       "round": 4,
       "security": false,
       "title": "Not done: Pure upgrades with a linked AGENTS.md still reach model review",
@@ -88,7 +88,13 @@
     "branch_diff": "544964ed316ac528b78a1ad7152c6ce04c9a5d805815a5a710410c47ec1322c1",
     "changed": "17f3bb7d949a4467d68cc2def65e4fd005621b735caa617340b48ebf81ac0f30",
     "commit": "b6c48ab033c8c61d3106e8a3306345f77bd5e36a",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner accepted on 11 Nov 2026: a repo with a linked AGENTS.md keeps today's behaviour, because the check sends anything it is not sure about to the normal review; fix later if a real project hits it",
+        "finding": 1
+      }
+    ],
     "findings": [
       {
         "body": "Gain 3, Work 2, Harm 3\nRaise: Not done\nCase: normal use - an existing client repo has AGENTS.md linked to an in-repo instructions file. Earlier Forge sync writes through such a link (tests/fixtures/forge-v1.2.2/src/forge/sync.py:117), while the current sync replaces it with a regular file (src/forge/sync.py:577). That produces a valid synced mode change from 120000 to 100644, but this check expects the old 120000 mode and rejects the upgrade. Close therefore invokes the model, which can reproduce the choice stop this fix is meant to avoid.",
@@ -103,10 +109,10 @@
       }
     ],
     "id": "c469abe7-8091-47ae-addf-4d09f007604d",
-    "status": "blocked"
+    "status": "clean"
   },
   "round": 4,
-  "status": "hotspot",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-11T08:07:26.887337+00:00",
@@ -131,8 +137,12 @@
   ],
   "stop": {
     "at": "2026-11-11T10:16:10.982084+00:00",
+    "by": "owner",
+    "choice": "accept",
     "file": "src/forge/review_skip.py",
-    "wait_id": "1dd3674f-8883-443b-b468-3e55adc54ddb"
+    "reason": "Owner accepted on 11 Nov 2026: a repo with a linked AGENTS.md keeps today's behaviour, because the check sends anything it is not sure about to the normal review; fix later if a real project hits it",
+    "wait_id": "1dd3674f-8883-443b-b468-3e55adc54ddb",
+    "worker_round": 4
   },
   "stuck": {
     "close": "2dd2dbf2-f656-49f9-8a79-e40a4497d498",
