@@ -54,6 +54,28 @@
       "item": "FORGE-GENFILE-1/NOTE",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/plan_scope.py\tNot done: When three or more parts of a plan list the same file in their scope",
+      "kind": "edge",
+      "path": "src/forge/plan_scope.py",
+      "line": 47,
+      "text": "Not done: When three or more parts of a plan list the same file in their scope",
+      "from": "review",
+      "item": "FORGE-GENFILE-1/NOTE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/plan_scope.py\tNot done: the advice to make a generated file at build time or put its change in one first part",
+      "kind": "edge",
+      "path": "src/forge/plan_scope.py",
+      "line": 51,
+      "text": "Not done: the advice to make a generated file at build time or put its change in one first part",
+      "from": "review",
+      "item": "FORGE-GENFILE-1/NOTE",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
