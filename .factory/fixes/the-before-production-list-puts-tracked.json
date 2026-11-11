@@ -4,14 +4,129 @@
   "done_when": "The Demo only row names only files whose names use letters, digits and the signs . _ / -, and says \"and N other files\" for the rest, so the row never holds a shell character.",
   "fix_kind": "backend",
   "kind": "fix",
+  "known": [
+    {
+      "area": "_listing() in src/forge/gaps.py",
+      "file": "src/forge/gaps.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 48,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: The Demo only row names only files whose names use letters, digits and the signs . _ / -, and says \"and N other files\"\u2026",
+      "work": 2
+    },
+    {
+      "area": "test_2_demo_only_labels_show_and_clear() in tests/test_prodgap_list.py",
+      "file": "tests/test_prodgap_list.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 167,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: Demo only unsafe-file counting test",
+      "work": 2
+    },
+    {
+      "area": "test_2_demo_only_labels_show_and_clear() in tests/test_prodgap_list.py",
+      "file": "tests/test_prodgap_list.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 167,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: proof list",
+      "work": 1
+    },
+    {
+      "area": "_listing() in src/forge/gaps.py",
+      "file": "src/forge/gaps.py",
+      "gain": 1,
+      "harm": 1,
+      "line": 46,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Simpler: Unrecorded approach \u2192 record the rationale",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "52d93165ffc40431c77293e941638d551efb0c081c83a7b356d7d9b1e73515ca",
+    "changed": "256916d13773f04cd9ca83c02d8073415e069451d671d931d3f9051561e3918f",
+    "commit": "270365052bc0c5237aec9187745399edd413f08e",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Not done\nCase: normal use - a signed-off prototype has a labelled file with a non-ASCII name or only labelled files with spaces in their names.\nOwner's exact title: Not done: The Demo only row names only files whose names use letters, digits and the signs . _ / -, and says \"and N other files\" for the rest, so the row never holds a shell character.\nThe count uses only files returned by `_labelled`. At `src/forge/gaps.py:104`, `git ls-tree` quotes non-ASCII paths under its default settings, and `src/forge/gaps.py:67` passes those quoted strings as literal blob paths. A labelled file such as `caf\u00e9.tsx` is therefore omitted from the count; if it is the only labelled file, the entire gap disappears. [Git documents the default path quoting](https://git-scm.com/docs/git-config#Documentation/git-config.txt-corequotePath). Separately, line 48 suppresses the required `and N other files` text when every detected name is unsafe.",
+        "file": "src/forge/gaps.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 48,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: The Demo only row names only files whose names use letters, digits and the signs . _ / -, and says \"and N other files\"\u2026",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - a labelled app file has a non-ASCII name, or all labelled filenames contain spaces.\nThe new command-level test uses names that Git prints without quoting, so it passes while a non-ASCII labelled file is omitted entirely. Its all-unsafe assertion also expects a row without the required `and N other files` text. Cover both cases through the existing command-level test so it fails when the promised count is missing.",
+        "file": "tests/test_prodgap_list.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 167,
+        "priority": "P1",
+        "title": "Gate: Demo only unsafe-file counting test",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 1, Harm 3\nRaise: Gate\nCase: normal use - close reviews the fix before merge.\nThe supplied proof list is missing. The code commit names tests under `Proof:`, but `src/forge/review.py:698` and `src/forge/review.py:754` retrieve a `Proof list:` paragraph, so close has no mapping from the Done-when item to the changed test or its result. Record that mapping in a `Proof list:` paragraph.",
+        "file": "tests/test_prodgap_list.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 167,
+        "priority": "P1",
+        "title": "Gate: proof list",
+        "work": 1
+      },
+      {
+        "body": "Gain 1, Work 1, Harm 1\nAdds work: record the rationale; F 1 x H 1 = 1; 2 x C = 2\nThe branch has no pre-code commit recording the required Need, Simplest option and Existing code reused lines for this filter. The choice and reuse rationale are therefore absent from the work record.",
+        "file": "src/forge/gaps.py",
+        "gain": 1,
+        "harm": 1,
+        "line": 46,
+        "priority": "P2",
+        "title": "Simpler: Unrecorded approach \u2192 record the rationale",
+        "work": 1
+      }
+    ],
+    "id": "be1f189e-31dc-4108-896f-7a34b4301d38",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-11T09:47:18.740598+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-11T10:15:01.447608+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-11-11T10:15:01.459615+00:00",
+    "file": "src/forge/gaps.py",
+    "wait_id": "8324c93d-c9a0-49a0-adb4-d4cd8c8cfdf3"
+  },
   "stuck": {
     "close": null,
     "head": "daf4645d9ac5fe190895fb9dd97471ca637016f9",

@@ -1,0 +1,48 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/gaps.py\tNot done: The Demo only row names only files whose names use letters, digits and the signs . _ / -, and says \"and N other files\"\u2026\tthe-before-production-list-puts-tracked",
+      "kind": "bug",
+      "path": "src/forge/gaps.py",
+      "line": 48,
+      "text": "Not done: The Demo only row names only files whose names use letters, digits and the signs . _ / -, and says \"and N other files\"\u2026",
+      "from": "blocking",
+      "item": "the-before-production-list-puts-tracked",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_prodgap_list.py\tGate: Demo only unsafe-file counting test\tthe-before-production-list-puts-tracked",
+      "kind": "bug",
+      "path": "tests/test_prodgap_list.py",
+      "line": 167,
+      "text": "Gate: Demo only unsafe-file counting test",
+      "from": "blocking",
+      "item": "the-before-production-list-puts-tracked",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_prodgap_list.py\tGate: proof list\tthe-before-production-list-puts-tracked",
+      "kind": "bug",
+      "path": "tests/test_prodgap_list.py",
+      "line": 167,
+      "text": "Gate: proof list",
+      "from": "blocking",
+      "item": "the-before-production-list-puts-tracked",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "simplify\tsrc/forge/gaps.py\tSimpler: Unrecorded approach \u2192 record the rationale",
+      "kind": "simplify",
+      "path": "src/forge/gaps.py",
+      "line": 46,
+      "text": "Simpler: Unrecorded approach \u2192 record the rationale",
+      "from": "review",
+      "item": "the-before-production-list-puts-tracked",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
