@@ -1,13 +1,145 @@
 {
   "base": "10472546fd52a0afba0321b5199ff210a876ccb0",
   "branch": "task/FORGE-GENFILE-1-NOTE",
+  "known": [
+    {
+      "area": "read_result() in src/forge/story.py",
+      "file": "src/forge/story.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 432,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Avoid revalidating other stories when showing the note",
+      "work": 2
+    },
+    {
+      "area": "read_result() in src/forge/story.py",
+      "file": "src/forge/story.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 431,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Disputed keep Plan read note 14: Stopped reads omit the shared-file note",
+      "work": 1
+    },
+    {
+      "area": "start() in tests/test_plan_read_names_shared_files.py",
+      "file": "tests/test_plan_read_names_shared_files.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 41,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_the_plan_read_names_a_file_that_three_parts_share",
+      "work": 2
+    },
+    {
+      "area": "tests/test_plan_read_names_shared_files.py",
+      "file": "tests/test_plan_read_names_shared_files.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 92,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_2_session_read_prints_the_note_when_the_result_is_handed_back",
+      "work": 1
+    },
+    {
+      "area": "shared_files() in src/forge/plan_scope.py",
+      "file": "src/forge/plan_scope.py",
+      "gain": 2,
+      "harm": 2,
+      "line": 37,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Follow-up: Folder scopes without a trailing slash are reported as files",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "37e0ff678cb090b272156cc5333abbeed74016b8ccaa3e7749dd501482070d2c",
+    "changed": "ba03c8e77cfb0959bedbdfd7dcbefb6af9aefb48fa41cd8892b516b7053a9472",
+    "commit": "fbad5560662da37b98ca5461614f66a7caab400b",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - a plan depends on another story\u2019s task, and that story develops conflicting local and published edits while a native reader is running. The new `_parsed` call runs after the read notes and state are written and, for a clean read, committed (`story.py:411-426`). Parsing resolves cross-story After entries through `_plan` (`story.py:527-530`), which refuses on conflicting edits (`story.py:603-624`). Handback therefore fails after recording the result solely while preparing advisory output, even if the plan has no shared file. The note must not introduce a new refusal based on another story.",
+        "file": "src/forge/story.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 432,
+        "priority": "P1",
+        "title": "Functional: Avoid revalidating other stories when showing the note",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 1, Harm 3\nRaise: Not done\nCase: normal use - a plan with three shared-file parts reaches its configured read limit with an open finding; with `cold_read_rounds = 1`, this can happen on its first read. `stopped` refuses at `story.py:428-430` before this new print loop runs, so the result is recorded without showing the advice. Resolving the stop and accepting the read does not print it either. This is new evidence beyond note 14\u2019s accepted test-coverage concern: the implementation now exhibits the missing output, contrary to item 1\u2019s requirement that it show with the result on every way the read runs.",
+        "file": "src/forge/story.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 431,
+        "priority": "P1",
+        "title": "Disputed keep Plan read note 14: Stopped reads omit the shared-file note",
+        "work": 1
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Test\nCase: normal use - an earlier-adopted client upgrades and reads a plan. `_prepare` starts with a client fixture, but this subsequent `setup(repo)` overwrites its configuration with `repo = \"forge-source\"` (`tests/test_story.py:137-142`); the new-repo branch does the same. Thus none of this test\u2019s read, approval or task-start assertions exercises a client repo, and a client-only regression would pass. This is distinct from the accepted note 13 about testing init on a new repo: the earlier-adopted read is also no longer a client. In addition, the guide and template assertions at lines 83-89 check only the introductory phrase, so they pass if the rules to keep the file out of the repo and scopes, or assign a deliberately kept file to one first part, are removed or reversed.",
+        "file": "tests/test_plan_read_names_shared_files.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 41,
+        "priority": "P1",
+        "title": "Gate: test_1_the_plan_read_names_a_file_that_three_parts_share",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 1, Harm 3\nRaise: Test\nCase: normal use - Codex coordinates a native plan read and receives its result through handback. This test runs only the Claude host and explicitly configures Claude at lines 96-103. The existing native-read test exercises both hosts but uses a plan without three shared-file parts (`tests/test_tools_native_reads.py:32-35`). A regression that omits the note or corrupts the offer only for Codex would pass both tests, leaving one required way of running the read without proof.",
+        "file": "tests/test_plan_read_names_shared_files.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 92,
+        "priority": "P1",
+        "title": "Gate: test_2_session_read_prints_the_note_when_the_result_is_handed_back",
+        "work": 1
+      },
+      {
+        "body": "Gain 2, Work 1, Harm 2\nCase: normal use - three chained parts list an existing directory as `src/api`, without a trailing slash. Forge accepts that form as a folder scope (`src/forge/review.py:318-319`), but this condition treats it as a file and prints advice about a shared file. The story says folder entries are excluded. The test\u2019s no-`tests/` assertion at `tests/test_plan_read_names_shared_files.py:64` examines only lines already matched to the expected file, so it cannot catch an extra folder note either.\nAdds work: distinguish existing folder scopes from file paths; F 2 x H 2 = 4; 2 x C = 2",
+        "file": "src/forge/plan_scope.py",
+        "gain": 2,
+        "harm": 2,
+        "line": 37,
+        "priority": "P2",
+        "title": "Follow-up: Folder scopes without a trailing slash are reported as files",
+        "work": 1
+      }
+    ],
+    "id": "4a81e1d1-a164-43a3-b150-979fe06e096f",
+    "status": "blocked"
+  },
   "round": 1,
   "stacked_on": "FORGE-PRODGAP-1/GUIDE",
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-11T10:02:06.115359+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-11T10:39:05.152653+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
