@@ -1,18 +1,18 @@
 ---
 reader: codex (gpt-6.1-terra)
-read_at: 2026-11-11T10:46:45.094408+00:00
-seconds: 485.396
-read_hash: 11cb621a33daf848a92a12d2b14f78b157b15689
-round: 3
+read_at: 2026-11-11T10:53:25.139821+00:00
+seconds: 276.997
+read_hash: 608ea18fd56cf4c7776332a0b45d3dd114902ae7
+round: 4
 passed: no
-doc_seen: 11cb621a33daf848a92a12d2b14f78b157b15689
+doc_seen: 608ea18fd56cf4c7776332a0b45d3dd114902ae7
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: aba56d9fecf8d9a92f310ae0fc268edb51507557
+notes_seen: 909311d4b38b2a1c3fac026578d6e2d4d9aa1fec
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a1ca18-47ba-77a0-80ef-f0460a3afaad
 session:
-loop_choice: more
-loop_reason: Owner's standing choice for 11 Nov 2026: one more round for a one-sentence plan gap
+loop_choice:
+loop_reason:
 ---
 # Cold read notes
 
@@ -136,3 +136,20 @@ Only a genuine trade-off goes to the human, as a question with options.
     Case: normal use - A Python-starter pull request runs those smoke jobs, and each repeats the container start and API suite for the same regression. The plan estimates a few minutes per run; it has not measured them.
     Gain 3, Work 2, Harm 2
     Disposition: cut - the regression and the contract read move out of the shared `_run_live_starter` into `live_python_run`, which runs once per session and is the one place the Python starter smoke run starts the starter; the feature, database-kind and store helpers no longer run it; cost stated as one stack start and the API suite, once, in the Python starter smoke job (estimate).
+
+## Round 4
+
+15. Blocking: Data loss: The moved live run can remove another Docker project’s data.
+    Raise: Data loss
+    [The plan](/plans/FORGE-GENCOMMIT-1.md:90) moves the real run outside the helper that assigns an isolated Docker project. That helper does not return its isolated environment ([test_starter_tree.py](/tests/test_starter_tree.py:233)). The added run has no isolation specified; the starter script honors an inherited project name and removes its containers on cleanup ([test.mjs](/src/forge/templates/starter-python/scripts/test.mjs:17), [Docker documentation](https://docs.docker.com/reference/cli/docker/compose/down/)).
+    Case: normal use - A developer runs the live smoke test with `COMPOSE_PROJECT_NAME` set to an existing project. The added run can remove a container and data stored in its writable layer.
+    Adds work: isolate the added run’s Docker project; F 1 x H 3 = 3; 2 x C = 2.
+    Gain 4, Work 2, Harm 4
+    Disposition: cut - the regression now runs through an optional `after(copy, env)` argument of `_run_live_starter` that only `live_python_run` passes, inside the helper's `try`, in its own temporary copy and with its own `env` whose `COMPOSE_PROJECT_NAME` is the run's `starter-smoke-<uuid>`; it starts no second project, adds no `docker`, `down` or volume command, and the only removal is the `down` that `scripts/test.mjs` and the helper already run on that same project. The existing run has no such fault: it always sets its own project name over any inherited one (`test_starter_tree.py:233-234`).
+
+16. Advisory: Functional: The offered fix fails when only one file is tracked.
+    Raise: Functional
+    [The new trigger](/plans/FORGE-GENCOMMIT-1.md:98) offers the fix if either file is tracked, but its first command names both without `--ignore-unmatch` ([plan](/plans/FORGE-GENCOMMIT-1.md:99)). Git stops when a named path is absent from the index. [Git source](https://raw.githubusercontent.com/git/git/v2.47.1/builtin/rm.c)
+    Case: normal use - An app already stopped tracking one generated file; the offered fix fails before removing the other from Git.
+    Gain 3, Work 1, Harm 2
+    Disposition: cut - the trigger now fires when one or both files are tracked, and the main step now runs `git rm --cached --ignore-unmatch` on both paths, the same as the conflict step, so it removes whichever is still tracked and does not stop on an untracked one; the delete step needs nothing for a missing file; `test_5` checks `--ignore-unmatch` in both steps and the "one or both" trigger.
