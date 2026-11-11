@@ -5,6 +5,8 @@ and reads both hosts' copies of the Forge skill and the Discovery reference page
 rule fails here; the page is written by the agent, so no code can check it and none is added.
 The example company is made up.
 """
+import re
+
 import pytest
 
 from test_setup import _fresh_client
@@ -61,8 +63,14 @@ def test_1_the_agent_researches_the_prospect_in_one_bounded_pass(repo, gh, tmp_p
         "the company's name and website",
         "1. what it sells and to whom", "2. how it works today", "3. complaints from its customers",
         "4. its tools", "5. its job posts", "6. two or three close competitors",
-        "12 web searches and 20 page reads", "8 searches and 14 page reads",
-        "4 searches and 6 page reads", "an estimate, not a measurement",
+        # One pass, one whole-pass limit, the company's share and the share kept for similar
+        # companies, as connected sentences: a guide that lets the company use it all fails.
+        "Do one pass on the public web, with this session's own web search, over this list "
+        "in this order:",
+        "Stop at 12 web searches and 20 page reads for the whole pass. Items 1 to 6 get at most "
+        "8 searches and 14 page reads. Keep the last 4 searches and 6 page reads for similar "
+        "companies, and use them only when the findings are thin.",
+        "an estimate, not a measurement",
         "one agent", "public pages", "sign-in", "by role", "own words",
         "`docs/context/prospect-research.md`",
         "Every finding under What we found has its own link to the public page it comes from; "
@@ -77,8 +85,9 @@ def test_1_the_agent_researches_the_prospect_in_one_bounded_pass(repo, gh, tmp_p
                  "### Questions for you", "Evidence:", "Likely jobs:", "Their terms:", "(guess)",
                  "## First five questions", "`docs/context/`", "website"))
     findings = brief.split("### What we found ")[1].split(" ### ")[0]
-    assert findings.count("- ") >= 2
-    assert all("](" in line for line in findings.split(" - ")[1:])
+    lines = [line for line in re.split(r"(?:^|\s)- ", findings) if line.strip()]
+    assert len(lines) >= 2
+    assert all("](" in line for line in lines), lines
 
 
 @pytest.mark.parametrize("adopted", [False, True], ids=["init", "earlier-adoption"])
@@ -97,6 +106,11 @@ def test_2_the_salesperson_chooses_one_prototype_before_any_build(repo, gh, tmp_
         "`- Chosen by: salesperson: yes | option <n> | changed: <their words>`", "needs no mark",
         "`- Demo workflow: <task> (salesperson, <YYYY-MM-DD>)`",
         "Build nothing before this choice",
+        "Then append `## Chosen prototype, <YYYY-MM-DD>` to the page: the full chosen prototype "
+        "with its marks, copied from the option they chose, with their changes applied "
+        "(an added feature is `from the salesperson`).",
+        "Write `- Demo workflow: <task> (salesperson, <YYYY-MM-DD>)` in the brief's Answers; "
+        "the client's reply to the recap replaces it with `(client, <YYYY-MM-DD>)`.",
         "This proposal is not the Options step",
         "always with `Don't build` and `Smallest slice`",
     ))
