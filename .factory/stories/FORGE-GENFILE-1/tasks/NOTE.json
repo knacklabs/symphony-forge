@@ -96,40 +96,17 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "d161019d7fe2c10b01ad51ec0254933bc5aa3a91bb2d440ac57ac35ec570387d",
-    "changed": "963481972c5032635aef7707b8ecf91859537e610e3715e9a4a161c70d8160e7",
-    "commit": "d2bed4997e6955d43576652807d20391bfec915b",
+    "branch_diff": "db6eb454f7ea89407f7f082156b2e056bcce76747b3ed29d05f99f473cbe124c",
+    "changed": "c9c6aa628a76d03fbf066878f94639d50baca2a91b630199591b149f3a6c3b53",
+    "commit": "a2d4bfce94d0df2e898fcb6613c1cca29c5bb71b",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done\nCase: normal use - three parts list an intentionally committed generated API contract. The note says to take the file out of every Scope whenever a script can build it, then says to put its change in one part when the repo keeps it. Both conditions hold for Forge's Python starter: its generator is in `src/forge/templates/starter-python/package.json:9`, and its convention requires committing the output at `src/forge/templates/conventions/python.md:182`. The advice therefore directs the planner both to remove the file from all Scopes and to assign its change to a part. The first instruction needs the stated condition that nobody needs the file stored.",
-        "file": "src/forge/plan_scope.py",
-        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
-        "gain": 4,
-        "harm": 3,
-        "line": 51,
-        "priority": "P1",
-        "title": "Not done: the advice to make a generated file at build time or put its change in one first part",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Not done\nCase: normal use - three parts linked by After all list a generated contract at `spec/openapi.yaml`. The new segment filter skips every path containing `spec`, so the read gives no shared-file note for this exact file. Although the existing overlap check also exempts `spec` paths (`src/forge/task.py:641`), the explicit After chain still makes these parts wait for one another. The approved item does not exclude files in such directories.",
-        "file": "src/forge/plan_scope.py",
-        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
-        "gain": 3,
-        "harm": 3,
-        "line": 47,
-        "priority": "P1",
-        "title": "Not done: When three or more parts of a plan list the same file in their scope",
-        "work": 2
-      }
-    ],
-    "id": "06265cb2-2784-4ad9-a00e-759a15094cec",
+    "findings": [],
+    "id": "e89c3b3c-4654-4595-95ca-f0fc46087039",
     "status": "clean"
   },
   "round": 3,
   "stacked_on": "FORGE-PRODGAP-1/GUIDE",
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-11T10:02:06.115359+00:00",
@@ -145,6 +122,10 @@
     },
     {
       "at": "2026-11-11T18:35:13.129102+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-11T18:58:38.579285+00:00",
       "step": "review"
     }
   ],
