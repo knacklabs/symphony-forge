@@ -1,0 +1,147 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/templates/design/render-check.mjs\tFunctional: Find the contrast tool in the app's workspace\tFORGE-RENDER-1/HELPER",
+      "kind": "bug",
+      "path": "src/forge/templates/design/render-check.mjs",
+      "line": 41,
+      "text": "Functional: Find the contrast tool in the app's workspace",
+      "from": "blocking",
+      "item": "FORGE-RENDER-1/HELPER",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/design/render-check.mjs\tFunctional: Report contrast checks that axe could not complete\tFORGE-RENDER-1/HELPER",
+      "kind": "bug",
+      "path": "src/forge/templates/design/render-check.mjs",
+      "line": 51,
+      "text": "Functional: Report contrast checks that axe could not complete",
+      "from": "blocking",
+      "item": "FORGE-RENDER-1/HELPER",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/design/render-check.mjs\tFunctional: Screen-reader-only labels are reported as cut text\tFORGE-RENDER-1/HELPER",
+      "kind": "bug",
+      "path": "src/forge/templates/design/render-check.mjs",
+      "line": 15,
+      "text": "Functional: Screen-reader-only labels are reported as cut text",
+      "from": "blocking",
+      "item": "FORGE-RENDER-1/HELPER",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_render_check.py\tGate: test_1_a_closing_ui_change_lists_rendered_problems_or_says_none\tFORGE-RENDER-1/HELPER",
+      "kind": "bug",
+      "path": "tests/test_render_check.py",
+      "line": 145,
+      "text": "Gate: test_1_a_closing_ui_change_lists_rendered_problems_or_says_none",
+      "from": "blocking",
+      "item": "FORGE-RENDER-1/HELPER",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_render_check.py\tGate: test_2_each_rendered_problem_names_its_screen_width_and_theme_and_stops_close\tFORGE-RENDER-1/HELPER",
+      "kind": "bug",
+      "path": "tests/test_render_check.py",
+      "line": 191,
+      "text": "Gate: test_2_each_rendered_problem_names_its_screen_width_and_theme_and_stops_close",
+      "from": "blocking",
+      "item": "FORGE-RENDER-1/HELPER",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_render_check.py\tGate: test_3_phone_width_is_checked_only_when_the_screen_asks_for_it\tFORGE-RENDER-1/HELPER",
+      "kind": "bug",
+      "path": "tests/test_render_check.py",
+      "line": 224,
+      "text": "Gate: test_3_phone_width_is_checked_only_when_the_screen_asks_for_it",
+      "from": "blocking",
+      "item": "FORGE-RENDER-1/HELPER",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/review.py\tNot done: A UI change that closes lists the rendered problems of each screen on the app's check list",
+      "kind": "edge",
+      "path": "src/forge/review.py",
+      "line": 501,
+      "text": "Not done: A UI change that closes lists the rendered problems of each screen on the app's check list",
+      "from": "review",
+      "item": "FORGE-RENDER-1/HELPER",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/templates/design/render-check.mjs\tFollow-up: Report unchecked contrast for failing screens",
+      "kind": "edge",
+      "path": "src/forge/templates/design/render-check.mjs",
+      "line": 57,
+      "text": "Follow-up: Report unchecked contrast for failing screens",
+      "from": "review",
+      "item": "FORGE-RENDER-1/HELPER",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/templates/design/render-check.mjs\tFollow-up: Show how to waive a rendered problem",
+      "kind": "edge",
+      "path": "src/forge/templates/design/render-check.mjs",
+      "line": 63,
+      "text": "Follow-up: Show how to waive a rendered problem",
+      "from": "review",
+      "item": "FORGE-RENDER-1/HELPER",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/templates/design/render-check.mjs\tNot done: A UI change that closes lists the rendered problems of each screen on the app's check list, by width and theme",
+      "kind": "edge",
+      "path": "src/forge/templates/design/render-check.mjs",
+      "line": 34,
+      "text": "Not done: A UI change that closes lists the rendered problems of each screen on the app's check list, by width and theme",
+      "from": "review",
+      "item": "FORGE-RENDER-1/HELPER",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/templates/design/render-check.mjs\tNot done: A page that is not the listed screen is reported as a problem of its own.",
+      "kind": "edge",
+      "path": "src/forge/templates/design/render-check.mjs",
+      "line": 36,
+      "text": "Not done: A page that is not the listed screen is reported as a problem of its own.",
+      "from": "review",
+      "item": "FORGE-RENDER-1/HELPER",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/templates/design/render-check.mjs\tNot done: Overflow, cut text and low contrast are each named with the screen, width and theme where they occur.",
+      "kind": "edge",
+      "path": "src/forge/templates/design/render-check.mjs",
+      "line": 12,
+      "text": "Not done: Overflow, cut text and low contrast are each named with the screen, width and theme where they occur.",
+      "from": "review",
+      "item": "FORGE-RENDER-1/HELPER",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\ttests/test_render_check.py\tFollow-up: Cover cut text without the contrast package",
+      "kind": "edge",
+      "path": "tests/test_render_check.py",
+      "line": 212,
+      "text": "Follow-up: Cover cut text without the contrast package",
+      "from": "review",
+      "item": "FORGE-RENDER-1/HELPER",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
