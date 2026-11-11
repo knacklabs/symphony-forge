@@ -75,7 +75,9 @@ def test_1_the_plan_read_names_a_file_that_three_parts_share(repo, claude_payloa
     out = read.stdout.replace("\r\n", "\n")
     assert len(LINE.findall(out)) == 1 and "tests/" not in "".join(LINE.findall(out)), out
     note = LINE.search(out)[0]
+    assert "If a script can make this file and nobody needs it stored in the repo" in note
     assert "make it at build time and take it out of every Scope" in note
+    assert "If the repo keeps it on purpose, put its change" in note
     assert "put its change in one first part that the other parts wait for" in note
     assert out.index("Shared file:") < out.index("Round 1") and "found nothing" in out
     assert "Shared file" not in (path / "plans/SHOP.read.md").read_text("utf-8")

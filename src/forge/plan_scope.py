@@ -48,7 +48,7 @@ def say(text: str, top: Path) -> None:
                         and not (top / path).is_dir() and not any(other.startswith(path + "/") for other in every)):
                     owners.setdefault(path, []).append(task)
         lines = [f"Shared file: {len(ids)} parts of this plan list {path} in their Scope ({', '.join(ids)}). "
-                 "Forge builds them one after another. If a script can make this file when the app is built, "
+                 "Forge builds them one after another. If a script can make this file and nobody needs it stored in the repo, "
                  "make it at build time and take it out of every Scope. If the repo keeps it on purpose, "
                  "put its change in one first part that the other parts wait for."
                  for path, ids in owners.items() if len(ids) >= 3]
