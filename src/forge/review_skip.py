@@ -2,7 +2,9 @@
 from __future__ import annotations
 
 import argparse
+import json
 import os
+import subprocess
 import tomllib
 from pathlib import Path
 from typing import Any
@@ -52,14 +54,37 @@ def readiness(result: dict[str, Any]) -> str:
             if result.get("skipped") else "a clean review")
 
 
-def upgrade_only(top: Path, item: str, cfg: dict[str, Any], base: str, head: str, files: list[str]) -> bool:
-    """True when the branch changed only forge.toml's top-level version, this item's record and
-    files exactly as forge sync writes them. Anything else, or any error, gets the model review."""
+def _modes_kept(top: Path, base: str, head: str) -> bool:
+    """No file changed its mode. A new file has the mode sync gives it; sync cannot set a
+    launcher's executable bit on Windows."""
+    rows = repo.git("diff", "--raw", "-z", "--no-renames", base, head, cwd=top).split("\0")
+    for meta, path in zip(rows[::2], rows[1::2]):
+        old, new = meta[1:].split()[:2]
+        if new != "000000" and new not in ((old,) if old != "000000" else
+                                           ("100644", "100755") if path in sync.EXECUTABLE else ("100644",)):
+            return False
+    return True
+
+
+def upgrade_only(top: Path, item: str, cfg: dict[str, Any], base: str, head: str, files: list[str],
+                 previous: dict[str, Any]) -> bool:
+    """True when this is the fix forge upgrade made and its branch changed only the value of
+    forge.toml's version line, its own record and files exactly as forge sync writes them (content
+    and mode), and no earlier review of it still blocks. Anything else, or any error, gets the
+    model review."""
+    from forge import upgrade  # upgrade imports close, which imports this module
+
+    def blob(ref: str, path: str) -> str:  # bytes, so a changed comment or line ending shows
+        return subprocess.run(["git", "show", f"{ref}:{path}"], cwd=top, capture_output=True,
+                              check=True).stdout.decode("utf-8")
+
     try:
-        old = tomllib.loads(repo.git("show", f"{base}:forge.toml", cwd=top))
-        new = tomllib.loads(repo.git("show", f"{head}:forge.toml", cwd=top))
-        if (new.get("version") == old.get("version") or
-                {k: v for k, v in new.items() if k != "version"} != {k: v for k, v in old.items() if k != "version"}):
+        old, new = blob(base, "forge.toml"), blob(head, "forge.toml")
+        release = tomllib.loads(new)["version"]
+        record = json.loads(blob(head, repo.state_path(item)))
+        if (review.blocking(previous) or tomllib.loads(old).get("version") == release
+                or repo.set_version(old, release) != new or not upgrade.made(item, record, release)
+                or not _modes_kept(top, base, head)):
             return False
         rest = set(files) - {"forge.toml", repo.state_path(item)}
         return rest <= sync.synced(top, cfg, base, head, sorted(rest))
