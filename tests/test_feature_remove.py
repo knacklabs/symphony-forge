@@ -21,7 +21,9 @@ from test_feature_command import (
     _adopted_starter,
     _run_line,
 )
+from test_close import env  # noqa: F401 (the shared fixture unsynced_up builds on)
 from test_setup import _fresh_client
+from test_upgrade_command import NAME as UPGRADE, RELEASE, unsynced_up  # noqa: F401
 from test_worker import install_claude
 
 STORY = "FORGE-FEATUREDROP-1"
@@ -519,12 +521,12 @@ OTHER_CASES = ("Other cases: a database test that calls the removed feature's AP
                "person. A feature not made by the build step: use the same list for what exists, then the check. "
                "An app that is not a starter app: skip the check, search the code for the feature's name and run "
                "the app's own build and tests.")
-DATA_RULE = ("Data rule: the table stays; write no drop migration in this change; a later drop follows the "
-             "database skill and the deploy guide as they are.")
+DATA_RULE = ("Data rule: the table, every row in it and the feature's existing change history stay; write no "
+             "drop migration in this change; a later drop follows the database skill and the deploy guide as "
+             "they are.")
 BRIEF = ("To remove a feature from a starter app, run `forge task feature-check <plural>` first and stop if it "
-         "names a feature that uses this one. Work through the fixed list in the forge skill's \"Removing a "
-         "feature\" section, run the check until it prints that nothing points at the feature, then run the "
-         "app's own tests. The table, its rows and its change history stay: write no drop migration.")
+         "names a feature that uses this one. Work through the fixed list for the stack, run the check until it "
+         "prints that nothing points at the feature, then run the app's own tests.")
 GUIDE = ("To remove a feature, tell the agent, for example \"we do not need invoices any more\". It runs "
          "`forge task feature-check` before and after it works through a fixed list of places to clean, then "
          "runs the app's own tests. No customer data is deleted: the table and its rows stay for a later, "
@@ -536,34 +538,54 @@ DELETES = {
                "apps/api/tests/test_people.py", "libs/people/"],
 }
 
+# What `forge upgrade` and `forge sync` may change in the adopted app: Forge's own folders and files,
+# the upgrade fix's record and the pin in forge.toml. No app file and nothing under docs/.
+SYNCED = re.compile(rf"(\.claude|\.codex|\.forge)/.+|\.factory/fixes/{re.escape(UPGRADE)}\.json"
+                    r"|\.gitattributes|\.github/workflows/forge\.yml|AGENTS\.md|forge\.toml")
+
 
 def _flat(text: str) -> str:
     return " ".join(text.split())
 
 
+def _upgraded_adopted_app(up) -> tuple[Path, list[str]]:
+    """The earlier-adopted starter app after `forge upgrade` merged and `forge sync` ran.
+
+    Returns the app and every path that differs from the app as it was adopted, committed or not."""
+    repo, no_hooks = up.repo, f"core.hooksPath={(up.tmp / 'no-hooks').as_posix()}"
+    shutil.copytree(ADOPTED, repo.path, dirs_exist_ok=True)
+    _copy_earlier_starter(repo.path)
+    repo.git("switch", "-q", "-c", "adoption")
+    repo.git("add", "-A")
+    repo.git("-c", no_hooks, "commit", "-q", "-m", "The earlier starter app")
+    repo.git("switch", "-q", "main")
+    repo.git("merge", "-q", "--ff-only", "adoption")
+    repo.git("-c", no_hooks, "push", "-q", "origin", "main")
+    adopted = repo.git("rev-parse", "HEAD")
+    upgraded = up.run(RELEASE)
+    assert upgraded.returncode == 0, upgraded.stdout + upgraded.stderr
+    # The human merges the upgrade's pull request; the pinned release then runs sync.
+    repo.git("merge", "-q", "--ff-only", f"fix/{UPGRADE}")
+    repo.git("-c", no_hooks, "push", "-q", "origin", "main")
+    synced = repo.forge("sync")
+    assert synced.returncode == 0, synced.stdout + synced.stderr
+    changed = repo.git("diff", "--name-only", adopted).splitlines() + repo.git(
+        "ls-files", "--others", "--exclude-standard").splitlines()
+    return repo.path, sorted(set(changed))
+
+
 @pytest.mark.platform
 @pytest.mark.timeout(1800)
 @pytest.mark.parametrize("case", ["new init", "earlier adopted"])
-def test_4_the_guide_turns_remove_this_feature_into_the_path(repo, gh, tmp_path, case):
+def test_4_the_guide_turns_remove_this_feature_into_the_path(repo, gh, tmp_path, request, case):
     log = install_claude(repo)
     stacks = ["typescript"] if case == "earlier adopted" else ["typescript", "python"]
     for stack in stacks:
         if case == "earlier adopted":
-            shutil.copytree(ADOPTED, repo.path, dirs_exist_ok=True)
-            _copy_earlier_starter(repo.path)
-            config = repo.path / "forge.toml"
-            version = repo.forge("--version").stdout.split()[-1]
-            config.write_text(config.read_text("utf-8").replace('"v1.2.2"', f'"{version}"'),
-                              encoding="utf-8")
-            client = repo.path
-            _commit(repo, client, "The earlier starter app")
-            repo.git("checkout", "-q", "-b", "fix/remove-guide-adopted", cwd=client)
-            synced = repo.forge("sync", cwd=client)
-            assert synced.returncode == 0, synced.stdout + synced.stderr
-            allowed = (".claude/", ".codex/", "AGENTS.md", ".forge/", "forge.toml", "docs/", ".github/", ".gitattributes")
-            changed = [line.split(maxsplit=1)[1].strip('"') for line in
-                       repo.git("status", "--porcelain", "--untracked-files=all", cwd=client).splitlines()]
-            assert all(path.startswith(allowed) for path in changed), [p for p in changed if not p.startswith(allowed)]
+            client, changed = _upgraded_adopted_app(request.getfixturevalue("unsynced_up"))
+            # Upgrade and sync write Forge's own files and no app file or product document.
+            assert not [path for path in changed if not SYNCED.fullmatch(path)], changed
+            assert {".claude/skills/forge/SKILL.md", ".codex/skills/forge/SKILL.md", "forge.toml"} <= set(changed)
         else:
             sub = tmp_path / stack
             sub.mkdir()
@@ -587,6 +609,8 @@ def test_4_the_guide_turns_remove_this_feature_into_the_path(repo, gh, tmp_path,
         assert (code, ALL_CLEAR in out) == (0, True), out
 
         if stack == "typescript":
-            brief = _assert_feature_guidance(repo, client, log)
-            assert _flat(BRIEF) in _flat(brief)
+            # The worker is told not to read the skill, so the brief it gets carries the lists.
+            brief = _flat(_assert_feature_guidance(repo, client, log))
+            for piece in (BRIEF, TS_LIST, PY_LIST, CLIENT_FILES, DATA_RULE):
+                assert _flat(piece) in brief, piece[:60]
     assert _flat(GUIDE) in _flat((Path(__file__).parent.parent / "docs/guide.md").read_text("utf-8"))

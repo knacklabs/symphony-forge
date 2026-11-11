@@ -549,10 +549,34 @@ refuses a non-starter or an older starter, follow its named missing parts and bu
 by hand in the app's existing layout. Existing apps keep their code on upgrade and sync.
 
 To remove a feature from a starter app, run `forge task feature-check <plural>` first and stop
-if it names a feature that uses this one. Work through the fixed list in the forge skill's
-"Removing a feature" section, run the check until it prints that nothing points at the feature,
-then run the app's own tests. The table, its rows and its change history stay: write no drop
-migration.
+if it names a feature that uses this one. Work through the fixed list for the stack, run the
+check until it prints that nothing points at the feature, then run the app's own tests.
+
+The fixed list, TypeScript. Delete: `libs/<plural>/` and `apps/api/test/<plural>.e2e-spec.ts`.
+Edit: the import and the entry in `apps/api/src/app.module.ts`; the dependency in
+`apps/api/package.json`; the reference in `apps/api/tsconfig.json`; the `scope:<plural>` line in
+`eslint.config.mjs`; the two `dist` names in `scripts/test-build.mjs`; the feature's importer
+blocks and the app's dependency lines in `pnpm-lock.yaml`. Keep: the Prisma schema file, the
+migration folder, the name in `base.prisma`, the relation lines in `Account` and `Organisation`
+and the catalog entry in `apps/api/test/database.e2e-spec.ts`.
+
+The fixed list, Python. Delete: `routes.py`, `service.py`, `tools.py` and `permissions.py` in
+`apps/api/app/<module>/`, `apps/api/tests/test_<module>.py` and `libs/<plural>/`. Edit: cut
+`apps/api/app/<module>/__init__.py` to one line that imports `models` (the starter's entry file
+imports `routes`, `service` and `tools`, and the check lists those imports until they are gone);
+remove the two lines in `apps/api/app/main.py`; remove the path in the root `package.json`
+`typecheck`; remove the importer in `pnpm-lock.yaml`; then run `corepack pnpm run api-types`
+before the last check, because the shared API types still name the removed routes. Keep:
+`models.py` and every file in the module that `models.py` imports, the Alembic revision, `import
+app.<module>` in `migrations/env.py`, the `<plural> internals` contract and the lines in
+`apps/api/tests/test_module_schemas.py`.
+
+In the client's own files, remove its screens, menu entries, routes, API calls and demo loader
+lines.
+
+Data rule: the table, every row in it and the feature's existing change history stay; write no
+drop migration in this change; a later drop follows the database skill and the deploy guide as
+they are.
 
 In an app with `libs/core/server/src/common/tools.ts` (Python `app/core/tools.py`), a
 feature's agent tools are in its tools file. Add a tool there only when your part names

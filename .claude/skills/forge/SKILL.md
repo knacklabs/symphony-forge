@@ -805,8 +805,9 @@ and tell the person. A feature not made by the build step: use the same list for
 then the check. An app that is not a starter app: skip the check, search the code for the
 feature's name and run the app's own build and tests.
 
-Data rule: the table stays; write no drop migration in this change; a later drop follows the
-database skill and the deploy guide as they are.
+Data rule: the table, every row in it and the feature's existing change history stay; write no
+drop migration in this change; a later drop follows the database skill and the deploy guide as
+they are.
 
 If the prototype holds only made-up data and has no back end, ask the person, then have the
 coordinator set `sample_data = true` in `forge.toml`. A sign-off record does not turn sample mode
