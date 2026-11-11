@@ -82,18 +82,29 @@ def test_2_pure_upgrade_in_a_repo_with_a_lockfile_skips_review(unsynced_up, case
     assert up.env.review_calls() == []
 
 
-@pytest.mark.parametrize("change", ["forge.toml comment", "executable bit"])
-def test_3_a_byte_that_is_not_the_version_or_sync_output_gets_a_review(unsynced_up, change):
-    up = _ready(unsynced_up, False)
+LAUNCHER = ".claude/skills/impeccable/scripts/impeccable"
+
+
+@pytest.mark.parametrize("change, adopted", [
+    ("forge.toml comment", False), ("executable bit", False), ("new launcher loses its bit", True)],
+    ids=["forge.toml-comment", "executable-bit", "new-launcher-adopted-v1.2.2"])
+def test_3_a_byte_that_is_not_the_version_or_sync_output_gets_a_review(unsynced_up, change, adopted):
+    up = _ready(unsynced_up, adopted)
     assert up.run(RELEASE).returncode == 0
     assert up.env.review_calls() == []
 
     if change == "forge.toml comment":
         (up.folder / "forge.toml").write_bytes((up.folder / "forge.toml").read_bytes() + b"# a note\n")
         _commit_in_fix(up, "Note in forge.toml", "forge.toml")
-    else:
+    elif change == "executable bit":
         up.repo.git("update-index", "--chmod=+x", ".claude/skills/forge/SKILL.md", cwd=up.folder)
         _commit_in_fix(up, "Make the skill executable")
+    else:
+        # The adopted release shipped no launcher, so the upgrade adds it, and sync makes it
+        # executable. An extra commit that clears the bit is not what sync writes.
+        assert up.repo.git("ls-tree", f"fix/{NAME}", LAUNCHER, cwd=up.folder).startswith("100755 ")
+        up.repo.git("update-index", "--chmod=-x", LAUNCHER, cwd=up.folder)
+        _commit_in_fix(up, "Clear the launcher's executable bit")
     closed = up.repo.forge("close", NAME, cwd=up.folder)
 
     assert len(up.env.review_calls()) == 1, closed.stdout + closed.stderr

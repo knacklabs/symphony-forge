@@ -55,13 +55,15 @@ def readiness(result: dict[str, Any]) -> str:
 
 
 def _modes_kept(top: Path, base: str, head: str) -> bool:
-    """No file changed its mode. A new file has the mode sync gives it; sync cannot set a
-    launcher's executable bit on Windows."""
+    """Every changed file has the mode forge sync gives it: a launcher is executable (sync's chmod
+    sets no executable bit on Windows, where git records 100644), any other file keeps its mode
+    or, when new, is 100644."""
     rows = repo.git("diff", "--raw", "-z", "--no-renames", base, head, cwd=top).split("\0")
     for meta, path in zip(rows[::2], rows[1::2]):
         old, new = meta[1:].split()[:2]
-        if new != "000000" and new not in ((old,) if old != "000000" else
-                                           ("100644", "100755") if path in sync.EXECUTABLE else ("100644",)):
+        expected = ("100755" if path in sync.EXECUTABLE and os.name != "nt"
+                    else old if old != "000000" else "100644")
+        if new not in ("000000", expected):
             return False
     return True
 
