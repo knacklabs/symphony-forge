@@ -91,9 +91,9 @@
     "id": "258c5d1c-a563-4f98-87dd-131fcc4b4230",
     "status": "clean"
   },
-  "round": 4,
+  "round": 5,
   "stacked_on": "FORGE-THEME-1/DESIGN",
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-11T01:17:05.874438+00:00",
@@ -126,10 +126,10 @@
     "worker_round": 2
   },
   "stuck": {
-    "close": "dab40a7e-df2e-4bc5-82c0-273971e3c320",
-    "head": "56e59353f1f7a6fea36d0a63948254ac3004b159",
+    "close": "3c1f1934-737f-4974-a90c-fc6693003b37",
+    "head": "0ae51ab66202d918d42e514a89c715d7ad25b72f",
     "keys": {},
-    "round": 3
+    "round": 4
   },
   "worker": "claude"
 }
