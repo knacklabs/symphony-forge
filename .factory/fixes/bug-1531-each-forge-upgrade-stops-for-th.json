@@ -4,12 +4,122 @@
   "done_when": "An upgrade that changes only the pin and Forge's synced files passes close with no choice stop, and any other change in an upgrade still gets the normal model review.",
   "fix_kind": "backend",
   "kind": "fix",
+  "known": [
+    {
+      "area": "upgrade_only() in src/forge/review_skip.py",
+      "file": "src/forge/review_skip.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 65,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Pure upgrades with npm or pnpm lockfiles still reach model review",
+      "work": 2
+    },
+    {
+      "area": "upgrade_only() in src/forge/review_skip.py",
+      "file": "src/forge/review_skip.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 62,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Review extra TOML edits and synced-file mode changes",
+      "work": 2
+    },
+    {
+      "area": "close() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 354,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Restrict the automatic bypass to upgrade fixes",
+      "work": 2
+    },
+    {
+      "area": "close() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 354,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Preserve blocking findings when an upgrade becomes pure",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "d9bf7c5288229c63edde1604f477adbe4ffffad3f989cd36e7f27b6ac7a99c75",
+    "changed": "a2b524a24aad733c43301bf73062dd8c821fe5ef9d5b5a3b5d4615d6bd8227cb",
+    "commit": "b4de3e3eb202aee5e344469be6a241bff048b3eb",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 5, Work 2, Harm 3\nRaise: Not done\nCase: normal use - upgrading a CI-enabled Forge starter or an adopted Node app with a lockfile.\nThe promised behavior is: \"An upgrade that changes only the pin and Forge's synced files passes close with no choice stop, and any other change in an upgrade still gets the normal model review.\" The call to `sync.synced` renders from a snapshot that omits both `pnpm-lock.yaml` and `package-lock.json` (`src/forge/sync.py:476`). The workflow renderer uses those files to add cache steps (`src/forge/prcheck.py:243` and `:276`), so its expected workflow differs from the actual synced workflow. The upgrade consequently invokes the model and can reach the same choice stop this fix is meant to prevent. The new test's fresh client has no starter and its adopted fixture has no lockfile, so neither case detects this.",
+        "file": "src/forge/review_skip.py",
+        "gain": 5,
+        "harm": 3,
+        "line": 65,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: Pure upgrades with npm or pnpm lockfiles still reach model review",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - an upgrade also changes a comment in `forge.toml` or the executable permission on a synced file.\nThe comparison discards TOML comments and formatting, so such edits are treated as a version-only change. Separately, `sync.synced` compares blob IDs without file modes (`src/forge/sync.py:470` and `:533`), so changing the shipped `impeccable` launcher's executable bit also passes the mechanical check. Close skips the required model review in both cases; the latter can leave the UI helper unable to run. The test checks an extra `docs/notes.md`, so it does not catch either case.",
+        "file": "src/forge/review_skip.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 62,
+        "priority": "P1",
+        "title": "Functional: Review extra TOML edits and synced-file mode changes",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - a worker on an unrelated fix updates the Forge pin and synced files but leaves the requested fix unfinished.\nThis condition applies to every item without checking that it is an upgrade fix. `task.check_settings_change` permits a version-only change in an unrelated item (`src/forge/task.py:184`), so close records a clean mechanical review instead of letting the model assess that item's Done-when. The existing fixture at `tests/test_upgrade_synced.py:30` demonstrates this shape: its fix promises a README greeting (`tests/test_close.py:228`) but changes the pin and synced files.",
+        "file": "src/forge/close.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 354,
+        "priority": "P1",
+        "title": "Functional: Restrict the automatic bypass to upgrade fixes",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - an upgrade with an extra edit receives a blocking finding on a synced file, the owner permits another round, and the worker removes the extra edit without repairing that finding.\nAfter the owner's `more` choice releases the stop (`src/forge/close.py:567`), the remaining branch qualifies as a pure upgrade. This branch then replaces the previous review with empty findings without checking whether its blocker was fixed, and can mark the pull request ready. The changed refusal test already exercises a blocking finding on the synced launcher (`tests/test_upgrade_command.py:346`), but does not cover this next round.\nAdds work: rerun model review when an earlier review still blocks; F 2 x H 2 = 4; 2 x C = 4.",
+        "file": "src/forge/close.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 354,
+        "priority": "P1",
+        "title": "Functional: Preserve blocking findings when an upgrade becomes pure",
+        "work": 2
+      }
+    ],
+    "id": "b32c6c26-789e-424a-9f54-e0252bad00f6",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-11T08:07:26.887337+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-11T08:34:18.693569+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
