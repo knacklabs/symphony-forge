@@ -122,6 +122,7 @@ def test_3_adoption_suggests_no_pytest_command_for_another_runner(repo, gh):
     assert "fast_test" not in done.stdout and "Suggested quick tests" not in done.stdout, done.stdout
 
 
+@pytest.mark.platform  # shell quoting: Windows must read the script's quotes the same way
 def test_4_a_quoted_pipe_in_one_runner_argument_is_not_a_combined_script(repo, gh, tmp_path):
     client = _new_repo(repo, gh, tmp_path)
     assert repo.forge("init", "--actions", "yes", cwd=client).returncode == 0
