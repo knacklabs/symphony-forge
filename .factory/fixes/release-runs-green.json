@@ -1,0 +1,15 @@
+{
+  "base": "f216fcaba29095ffa92af0aa12389d55eab06430",
+  "branch": "fix/release-runs-green",
+  "done_when": "The Python starter selection test passes on Windows and Linux with the same assertions, and the starter-smoke and python-starter-smoke jobs have a 60-minute limit",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-12T11:38:10.292084+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The release full runs fail: a Python starter selection test compares command text that differs on Windows, and two starter smoke jobs run at their 45-minute limit and get cancelled"
+}
