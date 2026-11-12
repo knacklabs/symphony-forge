@@ -38,10 +38,12 @@ def test_1_the_guide_carries_the_steps_to_score_a_release_in_claude_code():
 def test_5_a_new_and_an_existing_client_repo_get_no_benchmark_files(repo, gh, tmp_path):
     client, initialized = _fresh_client(repo, gh, tmp_path, "--starter", "react", "--actions", "no")
     assert initialized.returncode == 0, initialized.stdout + initialized.stderr
+    repo.git("checkout", "-q", "-b", "fix/new-client", cwd=client)
     synced = repo.forge("sync", cwd=client)
     assert synced.returncode == 0, synced.stdout + synced.stderr
     assert _bench_paths(_files(client)) == []
 
+    repo.git("checkout", "-q", "-b", "fix/adopted-client")
     shutil.copytree(ROOT / "tests/fixtures/adopted-v1.2.2/client", repo.path, dirs_exist_ok=True)
     installed = repo.forge("--version").stdout.split()[-1]
     settings = (repo.path / "forge.toml").read_text("utf-8")
