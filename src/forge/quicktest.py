@@ -36,10 +36,49 @@ def _npm_runner_index(words: list[str]) -> int:
     return index
 
 
+def _scripts(top: Path) -> dict[str, str]:
+    package = top / "package.json"
+    return json.loads(package.read_text("utf-8")).get("scripts", {}) if package.is_file() else {}
+
+
+# Programs that only start another program, and the one word after Playwright or Cypress that runs tests.
+LAUNCHERS = {"npx", "npm", "pnpm", "yarn", "bun", "bunx", "corepack", "exec", "dlx", "cross-env"}
+BROWSER_RUNNERS = {"playwright": "test", "cypress": "run"}
+
+
+def browser_step(top: Path, part: str) -> bool:
+    """Is this step one Playwright or Cypress run, direct or as the only command of a package script?
+
+    A step or script that chains commands (&& ; | &) runs several things, so it is not one."""
+    chained = re.compile(r"[;|&]")
+    if chained.search(part):
+        return False
+    try:
+        words = shlex.split(part)
+        if words[:1] == ["corepack"]:
+            words = words[1:]
+        if words[:1] in (["npm"], ["pnpm"], ["yarn"], ["bun"]):
+            script = words[2] if len(words) > 2 and words[1] in ("run", "run-script") else (
+                words[1] if len(words) > 1 else "")
+            body = _scripts(top).get(script)
+            if body is not None:
+                if chained.search(body):
+                    return False
+                words = shlex.split(body)
+    except ValueError:
+        return False
+    for index, word in enumerate(words):
+        name = word.replace("\\", "/").rsplit("/", 1)[-1]
+        if name in BROWSER_RUNNERS and words[index + 1:index + 2] == [BROWSER_RUNNERS[name]]:
+            return True
+        if name not in LAUNCHERS and not name.startswith("-") and "=" not in name:
+            return False  # another program, such as a lint step or a script runner
+    return False
+
+
 def test_parts(top: Path, command: str) -> list[tuple[str, str, str]]:
     """Classify the same runner and setup parts for advice and Python-only execution."""
-    package = top / "package.json"
-    scripts = json.loads(package.read_text("utf-8")).get("scripts", {}) if package.is_file() else {}
+    scripts = _scripts(top)
     parts = []
     if command == init.NODE_TEST:
         command = command.partition("(")[2][:-1]
@@ -53,13 +92,11 @@ def test_parts(top: Path, command: str) -> list[tuple[str, str, str]]:
         names = [word.replace("\\", "/").rsplit("/", 1)[-1] for word in words]
         runner_words = words
         passthrough = ""
-        body = ""
         if words and words[0] in ("npm", "pnpm", "yarn", "bun"):
             script = words[2] if len(words) > 2 and words[1] in ("run", "run-script") else (
                 words[1] if len(words) > 1 else "")
             if script in scripts:
-                body = scripts[script]
-                runner_words = shlex.split(body)
+                runner_words = shlex.split(scripts[script])
                 passthrough = " --" if words[0] == "npm" and "--" not in words else ""
         if words[:2] == ["npm", "exec"]:
             index = _npm_runner_index(words)
@@ -68,9 +105,6 @@ def test_parts(top: Path, command: str) -> list[tuple[str, str, str]]:
         node = bool(words and words[0] in ("npm", "pnpm", "yarn", "bun", "npx"))
         kind = next((name for name in ("vitest", "jest") if name in runner_names),
                     "node-check" if node else "")
-        if kind == "node-check" and re.search(r"\b(playwright|cypress)\b", f"{part} {body}") \
-                and not re.search(r"&&|[;|]", f"{part} {body}"):
-            kind = "browser"  # a separate browser-test step; Windows builder runs skip it
         if "pytest" in names:
             kind = "python"
         elif words and words[0] in ("npm", "pnpm", "yarn", "bun") and len(words) > 1 and words[1] in ("ci", "install"):
