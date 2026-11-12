@@ -76,6 +76,17 @@
       "item": "on-a-windows-laptop-a-builder-s-own-test",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_windows_worker_skips_browser_tests.py\tGate: test_3_windows_builder_run_skips_browser_tests_and_nothing_else\ton-a-windows-laptop-a-builder-s-own-test",
+      "kind": "bug",
+      "path": "tests/test_windows_worker_skips_browser_tests.py",
+      "line": 85,
+      "text": "Gate: test_3_windows_builder_run_skips_browser_tests_and_nothing_else",
+      "from": "blocking",
+      "item": "on-a-windows-laptop-a-builder-s-own-test",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
