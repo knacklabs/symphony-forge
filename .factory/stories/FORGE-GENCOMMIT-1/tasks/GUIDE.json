@@ -1,11 +1,120 @@
 {
   "branch": "task/FORGE-GENCOMMIT-1-GUIDE",
+  "known": [
+    {
+      "area": "src/forge/templates/skill.md",
+      "file": "src/forge/templates/skill.md",
+      "gain": 4,
+      "harm": 3,
+      "line": 1532,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Start the move-over fix outside the active story checkout",
+      "work": 1
+    },
+    {
+      "area": "src/forge/templates/brief.md",
+      "file": "src/forge/templates/brief.md",
+      "gain": 4,
+      "harm": 3,
+      "line": 505,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Account for the fix limit when applying the starter's test changes",
+      "work": 2
+    },
+    {
+      "area": "test_5_the_guide_and_the_brief_give_the_move_over_steps() in tests/test_gencommit_guide.py",
+      "file": "tests/test_gencommit_guide.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 105,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_5_the_guide_and_the_brief_give_the_move_over_steps",
+      "work": 2
+    },
+    {
+      "area": "test_4_an_earlier_python_app_keeps_its_committed_files() in tests/test_gencommit_guide.py",
+      "file": "tests/test_gencommit_guide.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 100,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_4_an_earlier_python_app_keeps_its_committed_files",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "39119801cd50b1c6471e6507bcf79241886beedcea6bf430cd9793ce150ebdd1",
+    "changed": "6c9fa3e4c9dc0645f0e59139ed0ff3da1985931a4fccdb361b03533a69627590",
+    "commit": "b0a74ec70c76f9c872241e8937b6d9d4214c9d9d",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 1, Harm 3\nRaise: Functional\nCase: normal use - The agent is writing the next plan in its story checkout and starts the offered fix there. `src/forge/intake.py:88` runs the result in that checkout, and `src/forge/task.py:696` stacks the fix on the story. `src/forge/merge.py:54` and `src/forge/land.py:133` then prevent the fix from merging until the story has reached the default branch through a part. The move-over therefore cannot land before that part, contrary to the stated trigger. The guide needs to direct the agent to start an independent fix from the default checkout; the same instruction appears in both synced copies.",
+        "file": "src/forge/templates/skill.md",
+        "gain": 4,
+        "harm": 3,
+        "line": 1532,
+        "priority": "P1",
+        "title": "Functional: Start the move-over fix outside the active story checkout",
+        "work": 1
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - An earlier-adopted live Python app follows these steps and makes the test-selection changes as the new starter does. That changes `.gitignore`, `package.json`, `scripts/test.mjs`, `scripts/affected.mjs`, and the two removed generated files: six paths. The earlier starter does not mark those files as generated, and `scripts/test.mjs` is not among `src/forge/repo.py:32`'s test-path exclusions. With no allowance, `src/forge/githooks.py:223` counts them and refuses the commit at the five-file limit; the worker brief at line 332 tells the worker to stop. The move-over guidance needs to account for the available allowance or keep the prescribed changes within the limit.",
+        "file": "src/forge/templates/brief.md",
+        "gain": 4,
+        "harm": 3,
+        "line": 505,
+        "priority": "P1",
+        "title": "Functional: Account for the fix limit when applying the starter's test changes",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Test\nCase: normal use - A new repo is initialized and an existing repo receives the guide on sync. The `client` fixture in `tests/test_workers_leave_settings_to_coordinator.py:27` runs `forge sync` after `forge init` before this test reads either guide, so the test still passes if init fails to deliver the steps and sync repairs them. It also checks for `git clean` only in a bounded slice of the guide, never in the delivered worker brief; an unsafe command appended after the checked conflict sentence would pass. The named proof needs to inspect the init result before sync and cover the full delivered move-over instructions.",
+        "file": "tests/test_gencommit_guide.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 105,
+        "priority": "P1",
+        "title": "Gate: test_5_the_guide_and_the_brief_give_the_move_over_steps",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 1, Harm 3\nRaise: Test\nCase: normal use - An earlier Python app upgrades and syncs with existing ignore rules. This assertion checks only `new - old`, so it passes if sync deletes existing rules, including the earlier starter's `.env` rule, while adding no unexpected line. That breaks the promised preservation of the app's files and can expose files previously kept out of Git. The test needs to verify that the old rules remain as well as limiting additions.",
+        "file": "tests/test_gencommit_guide.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 100,
+        "priority": "P1",
+        "title": "Gate: test_4_an_earlier_python_app_keeps_its_committed_files",
+        "work": 1
+      }
+    ],
+    "id": "3ae6bab8-208f-4a85-b48f-1dcfbc0ba248",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-12T03:33:19.536356+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-12T03:48:35.824511+00:00",
+      "step": "review"
     }
   ],
   "stuck": {

@@ -1,0 +1,48 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/templates/brief.md\tFunctional: Account for the fix limit when applying the starter's test changes\tFORGE-GENCOMMIT-1/GUIDE",
+      "kind": "bug",
+      "path": "src/forge/templates/brief.md",
+      "line": 505,
+      "text": "Functional: Account for the fix limit when applying the starter's test changes",
+      "from": "blocking",
+      "item": "FORGE-GENCOMMIT-1/GUIDE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/skill.md\tFunctional: Start the move-over fix outside the active story checkout\tFORGE-GENCOMMIT-1/GUIDE",
+      "kind": "bug",
+      "path": "src/forge/templates/skill.md",
+      "line": 1532,
+      "text": "Functional: Start the move-over fix outside the active story checkout",
+      "from": "blocking",
+      "item": "FORGE-GENCOMMIT-1/GUIDE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_gencommit_guide.py\tGate: test_4_an_earlier_python_app_keeps_its_committed_files\tFORGE-GENCOMMIT-1/GUIDE",
+      "kind": "bug",
+      "path": "tests/test_gencommit_guide.py",
+      "line": 100,
+      "text": "Gate: test_4_an_earlier_python_app_keeps_its_committed_files",
+      "from": "blocking",
+      "item": "FORGE-GENCOMMIT-1/GUIDE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_gencommit_guide.py\tGate: test_5_the_guide_and_the_brief_give_the_move_over_steps\tFORGE-GENCOMMIT-1/GUIDE",
+      "kind": "bug",
+      "path": "tests/test_gencommit_guide.py",
+      "line": 105,
+      "text": "Gate: test_5_the_guide_and_the_brief_give_the_move_over_steps",
+      "from": "blocking",
+      "item": "FORGE-GENCOMMIT-1/GUIDE",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
