@@ -1,10 +1,18 @@
 {
   "branch": "task/FORGE-BENCH-1-STEPS",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-12T02:29:39.123593+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "0869ba8c8fa98cc9cc30b4371f9596728b086d81",
+    "keys": {},
+    "round": null
+  },
+  "worker": "claude"
 }
