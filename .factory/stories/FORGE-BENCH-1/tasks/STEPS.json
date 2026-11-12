@@ -33,7 +33,7 @@
       "gain": 3,
       "harm": 3,
       "line": 25,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -69,69 +69,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "4d25e523cc10d68e17b2f24d27a0c7ec3826e74cc91f5cf8a7b7cdd33e6556ec",
-    "changed": "ed5a2bd3cc24c5eb219959ed39cb58f27845b5e1ccb4fa9dc8c79077058e9d11",
-    "commit": "cfe7d5f59eff9e7ac5c9d4def3548229ca038d68",
+    "branch_diff": "0621743ff4eda854ec1811c52fa6a197d9d36dcad2e217cfd1989d39002897ea",
+    "changed": "9b8c896098cdf89836c78a9b37247302f05b01eb5fb2c83c73bc852b444a85b4",
+    "commit": "862250a37e818e81da5df5e132d077db5f9f6582",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 5, Work 2, Harm 3\nRaise: Not done\nCase: normal use - starting a benchmark in a newly created scratch folder.\nThe guide runs `forge init` immediately after creating the folder, but `src/forge/init.py:376-393` first requires a Git checkout and an `origin` remote. It therefore stops before writing the starter, not at the expected protection step. The test helper sets up both prerequisites in `tests/test_setup.py:218-223`, but the guide does not. Initialize the scratch checkout and a local bare origin before running the tagged release.",
-        "file": "docs/guide.md",
-        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
-        "gain": 5,
-        "harm": 3,
-        "line": 699,
-        "priority": "P1",
-        "title": "Not done: in a scratch folder outside the Forge repo, and scores it",
-        "work": 2
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done\nCase: normal use - delegating the reference build to the specified general-purpose subagent.\nThe instructions give the subagent the folder, notes and constraints, but never assign it the task of building the app from those notes or tell it to work only in the scratch folder. [Claude Code's subagent documentation](https://code.claude.com/docs/en/sub-agents) says a non-fork subagent receives a fresh context and starts in the parent session's working directory. The release steps therefore do not provide the builder with the required objective and working boundary. State both in the delegation.",
-        "file": "docs/guide.md",
-        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
-        "gain": 4,
-        "harm": 3,
-        "line": 703,
-        "priority": "P1",
-        "title": "Not done: your agent builds the reference app for that release from the fixed notes",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - a later guide edit breaks the release-scoring instructions.\nThe named proof checks disconnected phrases rather than several essential parts of the documented commands and policy. It still passes if the init URL loses `@vX.Y.Z`, causing a different Forge revision to be used, or if the scorer command loses `--checks` and `--release`, which `scripts/bench_score.py:136-137` requires. It also does not check the Claude-only, no-PR and failed-build-scoring instructions. Extend the guide check to catch those concrete regressions.",
-        "file": "tests/test_release_bench_steps.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 25,
-        "priority": "P1",
-        "title": "Gate: test_1_the_guide_carries_the_steps_to_score_a_release_in_claude_code",
-        "work": 2
-      },
-      {
-        "body": "Gain 2, Work 1, Harm 2\nCase: normal use - the Claude session does not report token counts.\nThe guide asks for tokens only when reported and does not give the usage file's format. A JSON file containing just the known minutes and turns is rejected by `scripts/bench_score.py:117-130`: it requires `input_tokens`, `output_tokens`, `turns` and `minutes`, with `null` for unavailable values. The saved score then has `usage: null`, losing the known minutes as well. Document the required keys and null values.",
-        "file": "docs/guide.md",
-        "gain": 2,
-        "harm": 2,
-        "line": 710,
-        "priority": "P2",
-        "title": "Follow-up: Preserve usage when tokens are not reported",
-        "work": 1
-      },
-      {
-        "body": "Gain 2, Work 1, Harm 2\nCase: normal use - the first score, or a score after the notes, checks or design checker change.\nThe guide unconditionally asks for an up, down or same direction. The scorer instead reports no earlier score on the first run and explicitly reports a new baseline with no direction when its inputs change (`scripts/bench_score.py:184-193`). The guide should carry those cases so it does not instruct the agent to provide an unavailable or misleading comparison.",
-        "file": "docs/guide.md",
-        "gain": 2,
-        "harm": 2,
-        "line": 715,
-        "priority": "P2",
-        "title": "Follow-up: Report when there is no comparable previous score",
-        "work": 1
-      }
-    ],
-    "id": "40c2bc96-d875-42b8-8d40-02b69f9d9e88",
-    "status": "blocked"
+    "findings": [],
+    "id": "32c6e03b-c69c-43ab-a25f-1d823ebf3f47",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-12T02:29:39.123593+00:00",
@@ -139,6 +86,10 @@
     },
     {
       "at": "2026-11-12T02:43:41.895123+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-12T02:49:46.877735+00:00",
       "step": "review"
     }
   ],
