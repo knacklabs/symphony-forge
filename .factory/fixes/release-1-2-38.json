@@ -1,4 +1,5 @@
 {
+  "allow_large": "A release bump changes the version in every file that records it",
   "base": "b9e87a9eed3e46a15337179e00a1aed7b4ae5d7b",
   "branch": "fix/release-1-2-38",
   "done_when": "The version is 1.2.38, generated files are synced, forge.toml pins this repo to v1.2.38, and the tests pass",
