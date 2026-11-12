@@ -12,6 +12,11 @@ STORY = "FORGE-AFFECTED-1"
 
 
 @pytest.mark.platform
+def _unix(text):
+    # Windows prints corepack.cmd and backslash paths.
+    return text.replace("\\", "/").replace("corepack.cmd ", "corepack ")
+
+
 def test_6_python_starter_selects_its_affected_parts(repo, gh, tmp_path):
     # Contract: init's command selects API, web and library checks. A full-only
     # script would run unrelated suites. Existing tests do not run Python list
@@ -48,24 +53,26 @@ def test_6_python_starter_selects_its_affected_parts(repo, gh, tmp_path):
         path.write_bytes(original + b"\n")
         result = subprocess.run([node, "scripts/test.mjs", "--list", base], cwd=client,
                                 capture_output=True, text=True, timeout=30)
+        out = _unix(result.stdout)
         path.write_bytes(original)
-        assert result.returncode == 0, result.stdout + result.stderr
+        assert result.returncode == 0, out + result.stderr
         for command in expected:
-            assert command in result.stdout, result.stdout
+            assert command in out, out
         for command in absent:
-            assert command not in result.stdout, result.stdout
+            assert command not in out, out
         if "tsc --build" in expected:
-            assert result.stdout.index("api-types") < result.stdout.index("tsc --build"), result.stdout
-        named = [line.rsplit(" ", 1)[1] for line in result.stdout.splitlines()
+            assert out.index("api-types") < out.index("tsc --build"), out
+        named = [line.rsplit(" ", 1)[1] for line in out.splitlines()
                  if line.startswith("corepack pnpm run ")]
-        assert named == ran, result.stdout
+        assert named == ran, out
         assert all(name in scripts for name in named), (named, sorted(scripts))
     for args, expected in ((["--list"], "Affected parts: all"),
                            (["--list", base], "Affected parts: none")):
         result = subprocess.run([node, "scripts/test.mjs", *args], cwd=client,
                                 capture_output=True, text=True, timeout=30)
-        assert result.returncode == 0, result.stdout + result.stderr
-        assert expected in result.stdout
+        out = _unix(result.stdout)
+        assert result.returncode == 0, out + result.stderr
+        assert expected in out
 
     # New unstaged tests must select their part, alone or alongside tracked
     # changes in the other part. The old cases above only changed tracked files,
@@ -89,11 +96,12 @@ def test_6_python_starter_selects_its_affected_parts(repo, gh, tmp_path):
         try:
             result = subprocess.run([node, "scripts/test.mjs", "--list", base], cwd=client,
                                     capture_output=True, text=True, timeout=30)
-            assert result.returncode == 0, result.stdout + result.stderr
+            out = _unix(result.stdout)
+            assert result.returncode == 0, out + result.stderr
             for command in expected:
-                assert command in result.stdout, result.stdout
+                assert command in out, out
             for command in absent:
-                assert command not in result.stdout, result.stdout
+                assert command not in out, out
         finally:
             new.unlink()
             if tracked:
