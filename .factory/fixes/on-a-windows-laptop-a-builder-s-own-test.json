@@ -1,0 +1,15 @@
+{
+  "base": "fe7caf4e9b8e88d417e5e62fe2564dd90f4216be",
+  "branch": "fix/on-a-windows-laptop-a-builder-s-own-test",
+  "done_when": "On Windows, a builder's own test run skips each separate browser-test step and prints one line saying so, while the pull request check, the final check and the full test run still run them, Mac and Linux runs stay the same, and a test setting that is one combined script still runs whole.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-12T15:31:06.392653+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "On a Windows laptop, a builder's own test run can take up to 24 minutes (a client team reports this; Forge did not measure it), and its browser test steps (Playwright or Cypress) fail there for reasons unrelated to the change, which costs builders time and rounds."
+}
