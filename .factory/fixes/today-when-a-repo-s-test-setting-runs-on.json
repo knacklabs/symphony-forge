@@ -1,0 +1,15 @@
+{
+  "base": "fe7caf4e9b8e88d417e5e62fe2564dd90f4216be",
+  "branch": "fix/today-when-a-repo-s-test-setting-runs-on",
+  "done_when": "For a repo whose test setting runs one combined script with no quick-test setting, the setup check, upgrade and adoption each print one line saying so and suggest no command, and the shipped guide explains how the agent writes the quicker command.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-12T15:30:43.911641+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Today, when a repo's test setting runs one combined script and has no quick-test setting, Forge prints a wrong suggested command for some such repos, prints nothing for others, and prints nothing at all when it adopts a live app."
+}
