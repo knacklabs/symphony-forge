@@ -258,6 +258,11 @@ An existing app from the current starter can use the command. A non-starter or a
 missing required parts gets a refusal naming what is missing and no file changes; the worker
 builds the feature by hand in that app's layout.
 
+To remove a feature, tell the agent, for example "we do not need invoices any more". It runs
+`forge task feature-check` before and after it works through a fixed list of places to clean,
+then runs the app's own tests. No customer data is deleted: the table and its rows stay for a
+later, separate step.
+
 Only starter apps get an MCP server inside the API at `/mcp`, marked with `mcp = "/mcp"`
 in `services.toml`. Each feature has six tools: `<feature>_search`, `<feature>_get`,
 `<feature>_create`, `<feature>_update`, `<feature>_delete` and `<feature>_restore`.
