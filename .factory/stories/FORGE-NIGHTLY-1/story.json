@@ -1,12 +1,33 @@
 {
+  "approval": {
+    "at": "2026-11-12T17:13:33.517490+00:00",
+    "by": "human-via-Claude",
+    "event": "toolu_01UsiMkgWRq9nqSAg5EkMGUf",
+    "hash": "83b21cb0397a12d74c4ef3334bae5993dd6b59e5593b067d2f9f1ffbe55a45ba",
+    "round": 2,
+    "runtime": "claude",
+    "session": "c01a489d-c76f-41c1-8371-d6f0052b027c"
+  },
   "doc": "plans/FORGE-NIGHTLY-1.md",
-  "status": "planning",
+  "status": "approved",
   "steps": [
     {
       "at": "2026-11-12T15:31:01.239814+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-12T16:06:56.172165+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-11-12T16:15:51.574241+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-11-12T17:13:33.517879+00:00",
+      "step": "approved"
     }
   ],
   "title": "Show a failed full test run under Needs you",
-  "touches": 0
+  "touches": 1
 }
