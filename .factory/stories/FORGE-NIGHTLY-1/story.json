@@ -1,0 +1,12 @@
+{
+  "doc": "plans/FORGE-NIGHTLY-1.md",
+  "status": "planning",
+  "steps": [
+    {
+      "at": "2026-11-12T15:31:01.239814+00:00",
+      "step": "start"
+    }
+  ],
+  "title": "Show a failed full test run under Needs you",
+  "touches": 0
+}
