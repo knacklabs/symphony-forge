@@ -11,12 +11,12 @@ from test_setup import _fresh_client
 STORY = "FORGE-AFFECTED-1"
 
 
-@pytest.mark.platform
 def _unix(text):
     # Windows prints corepack.cmd and backslash paths.
     return text.replace("\\", "/").replace("corepack.cmd ", "corepack ")
 
 
+@pytest.mark.platform
 def test_6_python_starter_selects_its_affected_parts(repo, gh, tmp_path):
     # Contract: init's command selects API, web and library checks. A full-only
     # script would run unrelated suites. Existing tests do not run Python list
