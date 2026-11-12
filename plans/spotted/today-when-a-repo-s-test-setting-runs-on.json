@@ -1,0 +1,48 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/init.py\tFunctional: Adoption suggests the pytest picker for unittest projects\ttoday-when-a-repo-s-test-setting-runs-on",
+      "kind": "bug",
+      "path": "src/forge/init.py",
+      "line": 490,
+      "text": "Functional: Adoption suggests the pytest picker for unittest projects",
+      "from": "blocking",
+      "item": "today-when-a-repo-s-test-setting-runs-on",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/quicktest.py\tNot done: Default Node and Corepack commands miss combined scripts\ttoday-when-a-repo-s-test-setting-runs-on",
+      "kind": "bug",
+      "path": "src/forge/quicktest.py",
+      "line": 81,
+      "text": "Not done: Default Node and Corepack commands miss combined scripts",
+      "from": "blocking",
+      "item": "today-when-a-repo-s-test-setting-runs-on",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/quicktest.py\tNot done: Upgrades started by an older Forge use the old suggestion logic\ttoday-when-a-repo-s-test-setting-runs-on",
+      "kind": "bug",
+      "path": "src/forge/quicktest.py",
+      "line": 97,
+      "text": "Not done: Upgrades started by an older Forge use the old suggestion logic",
+      "from": "blocking",
+      "item": "today-when-a-repo-s-test-setting-runs-on",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/quicktest.py\tFollow-up: Quoted test filters are mistaken for combined scripts",
+      "kind": "edge",
+      "path": "src/forge/quicktest.py",
+      "line": 89,
+      "text": "Follow-up: Quoted test filters are mistaken for combined scripts",
+      "from": "review",
+      "item": "today-when-a-repo-s-test-setting-runs-on",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
