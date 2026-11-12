@@ -1,0 +1,59 @@
+{
+  "items": [
+    {
+      "key": "bug\ttests/test_release_bench_steps.py\tGate: test_1_the_guide_carries_the_steps_to_score_a_release_in_claude_code\tFORGE-BENCH-1/STEPS",
+      "kind": "bug",
+      "path": "tests/test_release_bench_steps.py",
+      "line": 25,
+      "text": "Gate: test_1_the_guide_carries_the_steps_to_score_a_release_in_claude_code",
+      "from": "blocking",
+      "item": "FORGE-BENCH-1/STEPS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tdocs/guide.md\tFollow-up: Preserve usage when tokens are not reported",
+      "kind": "edge",
+      "path": "docs/guide.md",
+      "line": 710,
+      "text": "Follow-up: Preserve usage when tokens are not reported",
+      "from": "review",
+      "item": "FORGE-BENCH-1/STEPS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tdocs/guide.md\tFollow-up: Report when there is no comparable previous score",
+      "kind": "edge",
+      "path": "docs/guide.md",
+      "line": 715,
+      "text": "Follow-up: Report when there is no comparable previous score",
+      "from": "review",
+      "item": "FORGE-BENCH-1/STEPS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tdocs/guide.md\tNot done: in a scratch folder outside the Forge repo, and scores it",
+      "kind": "edge",
+      "path": "docs/guide.md",
+      "line": 699,
+      "text": "Not done: in a scratch folder outside the Forge repo, and scores it",
+      "from": "review",
+      "item": "FORGE-BENCH-1/STEPS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tdocs/guide.md\tNot done: your agent builds the reference app for that release from the fixed notes",
+      "kind": "edge",
+      "path": "docs/guide.md",
+      "line": 703,
+      "text": "Not done: your agent builds the reference app for that release from the fixed notes",
+      "from": "review",
+      "item": "FORGE-BENCH-1/STEPS",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

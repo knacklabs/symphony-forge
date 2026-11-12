@@ -12,6 +12,8 @@ import pytest
 
 from test_feature_command import (
     ADOPTED,
+    _assert_feature_guidance,
+    _copy_earlier_starter,
     CLIENT_LINE,
     JOBS_LINE,
     SHELLS,
@@ -19,11 +21,15 @@ from test_feature_command import (
     _adopted_starter,
     _run_line,
 )
+from test_close import env  # noqa: F401 (the shared fixture unsynced_up builds on)
 from test_setup import _fresh_client
+from test_upgrade_command import NAME as UPGRADE, RELEASE, unsynced_up  # noqa: F401
+from test_worker import install_claude
 
 STORY = "FORGE-FEATUREDROP-1"
 ALL_CLEAR = "Nothing points at people any more."
 ARCHIVE_LINE = "forge task feature people-archive --one person-archive --field 'name:text'"
+PYTHON_NAMES = ("routes", "service", "tools", "permissions")
 PEOPLE_LINE = "forge task feature people --one person --field 'name:text'"
 CLIENTS_ARCHIVE_LINE = "forge task feature clients-archive --one client-archive --field 'name:text'"
 NO_MODEL_TS = ("Forge could not find the data model for people in apps/api/prisma/schema, so it did "
@@ -471,3 +477,174 @@ def test_3_the_check_keeps_the_data_layer_out_of_the_list(repo, gh, tmp_path, st
     assert code != 0 and NO_MODEL_TS in out and ALL_CLEAR not in out, out
     assert ("Next: search the code for that model's calls by hand and tell the person the check "
             "could not confirm them.") in out
+
+
+SAMPLE = ("In a sample-data prototype (`sample_data = true`), the proof is the app's build and the look check "
+          "(walk each demo step in a browser), not automated tests.")
+ROW = ('| "Remove this feature" or "We do not need X any more" (in a client app) | '
+       '`forge start "Remove the <feature> feature"`; the removal is the part\'s work |')
+STEPS = ("### Removing a feature "
+         "When a person asks to remove a feature, run `forge start \"Remove the <feature> feature\"`; "
+         "the removal is the part's work. A plan that removes a feature names its plural and these steps, in order: "
+         "confirm the record type with the person if the words are unclear; in a starter app, run "
+         "`forge task feature-check <plural>` first, and if it names a feature that uses this one, stop, tell the "
+         "person and ask which feature to change first; work through the fixed list for the stack; run the check "
+         "until it prints that nothing points at the feature; update `docs/product/BRIEF.md` (the record type), "
+         "the Roles table row and any demo step that uses the feature; run the app's own tests; commit as one change. "
+         + SAMPLE)
+TS_LIST = ("The fixed list, TypeScript. Delete: `libs/<plural>/` and `apps/api/test/<plural>.e2e-spec.ts`. "
+           "Edit: the import and the entry in `apps/api/src/app.module.ts`; the dependency in "
+           "`apps/api/package.json`; the reference in `apps/api/tsconfig.json`; the `scope:<plural>` line in "
+           "`eslint.config.mjs`; the two `dist` names in `scripts/test-build.mjs`; the feature's importer blocks "
+           "and the app's dependency lines in `pnpm-lock.yaml`; the calls to the removed feature's API in "
+           "`apps/api/test/database.e2e-spec.ts` (the starter's `projects` calls `/api/v1/projects` there, and "
+           "the check lists those calls). Keep: the Prisma schema file, the migration "
+           "folder, the name in `base.prisma`, the relation lines in `Account` and `Organisation` and the catalog "
+           "entry in `apps/api/test/database.e2e-spec.ts`.")
+PY_LIST = ("The fixed list, Python. Delete: `routes.py`, `service.py`, `tools.py` and `permissions.py` in "
+           "`apps/api/app/<module>/`, `apps/api/tests/test_<module>.py` and `libs/<plural>/`. Edit: cut "
+           "`apps/api/app/<module>/__init__.py` to one line that imports `models` (the starter's entry file "
+           "imports `routes`, `service` and `tools`, and the check lists those imports until they are gone); "
+           "remove the two lines in `apps/api/app/main.py`; remove the path in the root `package.json` "
+           "`typecheck`; remove the importer in `pnpm-lock.yaml`; change the calls to the removed feature's API in "
+           "`apps/api/tests/test_module_schemas.py` (the starter's `projects` creates and reads a row through its "
+           "API there, and the check lists those calls); then run `corepack pnpm run api-types` before "
+           "the last check, because the shared API types still name the removed routes. Keep: `models.py` and "
+           "every file in the module that `models.py` imports, the Alembic revision, `import app.<module>` in "
+           "`migrations/env.py`, the `<plural> internals` contract and the schema inventory lines in "
+           "`apps/api/tests/test_module_schemas.py`.")
+CLIENT_FILES = ("In the client's own files, remove its screens, menu entries, routes, API calls and "
+                "demo loader lines.")
+OTHER_CASES = ("Other cases: a database test that calls the removed feature's API is changed to create its row "
+               "another way; the starter's own `projects` feature has such calls. The starter's tests for agent "
+               "tools and agent access name `projects_*` tools and `/api/v1/agent-tools/projects`; the check lists "
+               "them. Examples in the starter's own text (the auth response example and the page path example name "
+               "`projects`) are listed as leftovers when `projects` is removed; change the word in them. If the "
+               "check says it could not find the data model, search for that model's calls by hand and tell the "
+               "person. A feature not made by the build step: use the same list for what exists, then the check. "
+               "An app that is not a starter app: skip the check, search the code for the feature's name and run "
+               "the app's own build and tests.")
+DATA_RULE = ("Data rule: the table, every row in it and the feature's existing change history stay; write no "
+             "drop migration in this change; a later drop follows the database skill and the deploy guide as "
+             "they are.")
+BRIEF = ("To remove a feature from a starter app, run `forge task feature-check <plural>` first and stop if it "
+         "names a feature that uses this one. Work through the fixed list for the stack, run the check until it "
+         "prints that nothing points at the feature, then run the app's own tests. " + SAMPLE + " In an app "
+         "not built from the starter, skip the check: search the code for the feature's name, remove what points "
+         "at it, and run the app's build and tests.")
+GUIDE = ("To remove a feature, tell the agent, for example \"we do not need invoices any more\". It runs "
+         "`forge task feature-check` before and after it works through a fixed list of places to clean, then "
+         "runs the app's own tests. No customer data is deleted: the table and its rows stay for a later, "
+         "separate step.")
+# The guide's Delete paths for a stack, with <plural> and <module> filled in for people.
+DELETES = {
+    "typescript": ["libs/people/", "apps/api/test/people.e2e-spec.ts"],
+    "python": [*(f"apps/api/app/people/{name}.py" for name in PYTHON_NAMES),
+               "apps/api/tests/test_people.py", "libs/people/"],
+}
+
+# What `forge upgrade` and `forge sync` may change in the adopted app: Forge's own folders and files,
+# the upgrade fix's record and the pin in forge.toml. No app file and nothing under docs/.
+SYNCED = re.compile(rf"(\.claude|\.codex|\.forge)/.+|\.factory/fixes/{re.escape(UPGRADE)}\.json"
+                    r"|\.gitattributes|\.github/workflows/forge\.yml|AGENTS\.md|forge\.toml")
+
+
+def _flat(text: str) -> str:
+    return " ".join(text.split())
+
+
+def _upgraded_adopted_app(up) -> tuple[Path, list[str]]:
+    """The earlier-adopted starter app after `forge upgrade` merged and `forge sync` ran.
+
+    Returns the app and every path that differs from the app as it was adopted, committed or not."""
+    repo, no_hooks = up.repo, f"core.hooksPath={(up.tmp / 'no-hooks').as_posix()}"
+    shutil.copytree(ADOPTED, repo.path, dirs_exist_ok=True)
+    _copy_earlier_starter(repo.path)
+    repo.git("switch", "-q", "-c", "adoption")
+    repo.git("add", "-A")
+    repo.git("-c", no_hooks, "commit", "-q", "-m", "The earlier starter app")
+    repo.git("switch", "-q", "main")
+    repo.git("merge", "-q", "--ff-only", "adoption")
+    repo.git("-c", no_hooks, "push", "-q", "origin", "main")
+    adopted = repo.git("rev-parse", "HEAD")
+    upgraded = up.run(RELEASE)
+    assert upgraded.returncode == 0, upgraded.stdout + upgraded.stderr
+    # The human merges the upgrade's pull request; the pinned release then runs sync.
+    repo.git("merge", "-q", "--ff-only", f"fix/{UPGRADE}")
+    repo.git("-c", no_hooks, "push", "-q", "origin", "main")
+    synced = repo.forge("sync")
+    assert synced.returncode == 0, synced.stdout + synced.stderr
+    changed = repo.git("diff", "--name-only", adopted).splitlines() + repo.git(
+        "ls-files", "--others", "--exclude-standard").splitlines()
+    return repo.path, sorted(set(changed))
+
+
+@pytest.mark.platform
+@pytest.mark.timeout(1800)
+@pytest.mark.parametrize("case", ["new init", "earlier adopted"])
+def test_4_the_guide_turns_remove_this_feature_into_the_path(repo, gh, tmp_path, request, case):
+    log = install_claude(repo)
+    stacks = ["typescript"] if case == "earlier adopted" else ["typescript", "python"]
+    for stack in stacks:
+        if case == "earlier adopted":
+            client, changed = _upgraded_adopted_app(request.getfixturevalue("unsynced_up"))
+            # Upgrade and sync write Forge's own files and no app file or product document.
+            assert not [path for path in changed if not SYNCED.fullmatch(path)], changed
+            assert {".claude/skills/forge/SKILL.md", ".codex/skills/forge/SKILL.md", "forge.toml"} <= set(changed)
+        else:
+            sub = tmp_path / stack
+            sub.mkdir()
+            client, initialized = _fresh_client(repo, gh, sub, "--starter",
+                                                "python" if stack == "python" else "react")
+            assert initialized.returncode == 0, initialized.stdout + initialized.stderr
+
+        for host in (".claude", ".codex"):
+            skill = _flat((client / host / "skills/forge/SKILL.md").read_text("utf-8"))
+            for piece in (ROW, STEPS, TS_LIST, PY_LIST, CLIENT_FILES, OTHER_CASES, DATA_RULE):
+                assert _flat(piece) in skill, (host, piece[:60])
+
+        # The guide's Delete list is what the hand removal in test 1 does, and the check agrees.
+        _build(repo, client, PEOPLE_LINE)
+        _commit(repo, client, "Build people")
+        for rel in DELETES[stack]:
+            assert (client / rel).exists(), rel
+        _remove_by_hand(client, stack)
+        assert not [rel for rel in DELETES[stack] if (client / rel).exists()]
+        code, out = _check(repo, client, "people")
+        assert (code, ALL_CLEAR in out) == (0, True), out
+
+        if stack == "python":
+            # The starter's own projects feature: its schema test calls the projects API. The check lists
+            # those two calls and not the inventory line, and the guide's edit clears them.
+            schema_test = "apps/api/tests/test_module_schemas.py"
+            code, out = _check(repo, client, "projects")
+            calls = {text for path, text in _listed(out) if path == schema_test}
+            assert code != 0 and len(calls) == 2 and all("/api/v1/projects" in text for text in calls), out
+            _edit(client, schema_test, lambda text: re.sub(
+                r"    _, csrf = sign_up\(client\)\n.*?assert read\.json\(\)\[\"data\"\]\[\"id\"\] == project_id\n\n",
+                "", text, flags=re.S))
+            code, out = _check(repo, client, "projects")
+            assert not [path for path, _ in _listed(out) if path == schema_test], out
+            assert '"projects.project",' in (client / schema_test).read_text("utf-8")
+
+        if stack == "typescript" and case == "new init":
+            # The starter's own projects feature: its database test calls the projects API. The check lists
+            # those two calls and not the catalog entry, and the guide's edit clears them.
+            database_test = "apps/api/test/database.e2e-spec.ts"
+            code, out = _check(repo, client, "projects")
+            calls = {text for path, text in _listed(out) if path == database_test}
+            assert code != 0 and len(calls) == 2 and all("/api/v1/projects" in text for text in calls), out
+            _edit(client, database_test, lambda text: re.sub(
+                r"    const (?:created|fetched) = await client\.(?:post|get)\(.*?\n"
+                r"(?:      \.send\(.*?\n)?    (?:projectId = created|expect\(fetched)[^\n]*\n",
+                "", text))
+            code, out = _check(repo, client, "projects")
+            assert not [path for path, _ in _listed(out) if path == database_test], out
+            assert "Project: 'projects'" in (client / database_test).read_text("utf-8")
+
+        if stack == "typescript":
+            # The worker is told not to read the skill, so the brief it gets carries the lists.
+            brief = _flat(_assert_feature_guidance(repo, client, log))
+            for piece in (BRIEF, TS_LIST, PY_LIST, CLIENT_FILES, DATA_RULE):
+                assert _flat(piece) in brief, piece[:60]
+    assert _flat(GUIDE) in _flat((Path(__file__).parent.parent / "docs/guide.md").read_text("utf-8"))

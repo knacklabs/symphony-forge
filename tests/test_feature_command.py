@@ -845,7 +845,7 @@ assert SHELLS[0], "The planner command must run through bash -c."
 SHELL_CASES = [SHELLS[0], shutil.which("zsh") or "zsh"]
 
 
-def _assert_feature_guidance(repo, client: Path, log: Path) -> None:
+def _assert_feature_guidance(repo, client: Path, log: Path) -> str:
     # Audit: (1) delivered planner/worker instructions are a prompt contract;
     # (2) omitting them from init/sync or work breaks it; (3) generation checks
     # do not cover prompts, so extend their new/adopted owner test;
@@ -892,6 +892,7 @@ def _assert_feature_guidance(repo, client: Path, log: Path) -> None:
     assert "Admins have all five" in brief
     assert "keep that mapping in one place" in brief
     assert "every screen and API call" in brief
+    return brief
 
 
 @pytest.mark.platform
