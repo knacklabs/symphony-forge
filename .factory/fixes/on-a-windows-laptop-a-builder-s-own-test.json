@@ -4,12 +4,202 @@
   "done_when": "On Windows, a builder's own test run skips each separate browser-test step and prints one line saying so, while the pull request check, the final check and the full test run still run them, Mac and Linux runs stay the same, and a test setting that is one combined script still runs whole.",
   "fix_kind": "backend",
   "kind": "fix",
+  "known": [
+    {
+      "area": "test_parts() in src/forge/quicktest.py",
+      "file": "src/forge/quicktest.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 71,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Preserve non-browser checks when identifying browser steps",
+      "work": 2
+    },
+    {
+      "area": "test_parts() in src/forge/quicktest.py",
+      "file": "src/forge/quicktest.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 71,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Windows builder runs do not skip every separate browser-test step",
+      "work": 2
+    },
+    {
+      "area": "tests/fixtures/adopted-v1.2.2/client/.claude/skills/forge/SKILL.md",
+      "file": "tests/fixtures/adopted-v1.2.2/client/.claude/skills/forge/SKILL.md",
+      "gain": 4,
+      "harm": 4,
+      "line": 146,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_one_command_upgrades_forge_and_opens_its_pull_request",
+      "work": 1
+    },
+    {
+      "area": "_setup() in tests/test_windows_worker_skips_browser_tests.py",
+      "file": "tests/test_windows_worker_skips_browser_tests.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 66,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_3_windows_builder_run_skips_browser_steps_and_nothing_else",
+      "work": 2
+    },
+    {
+      "area": "tests/fixtures/copied-client/source/.claude/skills/forge/SKILL.md",
+      "file": "tests/fixtures/copied-client/source/.claude/skills/forge/SKILL.md",
+      "gain": 4,
+      "harm": 4,
+      "line": 2267,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: restore the historical guide fixtures",
+      "work": 1
+    },
+    {
+      "area": "test_parts() in src/forge/quicktest.py",
+      "file": "src/forge/quicktest.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 71,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Windows browser-test steps are classified incorrectly",
+      "work": 2
+    },
+    {
+      "area": "tests/fixtures/doctor-v1.2.2/.claude/skills/forge/SKILL.md",
+      "file": "tests/fixtures/doctor-v1.2.2/.claude/skills/forge/SKILL.md",
+      "gain": 4,
+      "harm": 4,
+      "line": 2267,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: Restore the historical fixture guides",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "674e10242997c909a13eaa066677da217cbebe2cfb5a59d509c87d86c411c028",
+    "changed": "ba1cf179bc7c89f1ebd11545e4651c0d72cc6221316c9e042c1fce4d13e1757f",
+    "commit": "02ae7625914f3fe8e3a39786bb008d099f3fd7b3",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "chunk 1/3:\n\nGain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - A Windows builder runs a combined test script or a lint step whose name mentions Playwright or Cypress. The text search classifies `npm run test:playwright` as a browser step even when its script is `node scripts/run-all.js`, which also runs unit tests; Forge removes the entire script and can return success without running any tests. It likewise drops `npm run lint:playwright`. A Windows command such as `npm run test:e2e & npm run lint` is treated as one browser step, so the lint step is removed too.",
+        "file": "src/forge/quicktest.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 71,
+        "priority": "P1",
+        "title": "Functional: Preserve non-browser checks when identifying browser steps",
+        "work": 2
+      },
+      {
+        "body": "chunk 1/3:\n\nGain 4, Work 2, Harm 3\nRaise: Not done\nCase: normal use - A Windows builder uses `playwright test`, `cypress run`, or `corepack pnpm run test:browser` as a separate step. These commands do not start with one of the recognized Node launchers, so they never become `browser` parts and run without the skip notice. The starter itself uses the Corepack form in `src/forge/templates/starter/package.json:16`. Separately, `src/forge/fasttest.py:272` exempts the default Node setting in `src/forge/init.py:75`, so its `npm test` also runs when that script contains only browser tests.\nDone when: On Windows, a builder's own test run skips each separate browser-test step and prints one line saying so, while the pull request check, the final check and the full test run still run them, Mac and Linux runs stay the same, and a test setting that is one combined script still runs whole.",
+        "file": "src/forge/quicktest.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 71,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: Windows builder runs do not skip every separate browser-test step",
+        "work": 2
+      },
+      {
+        "body": "chunk 1/3:\n\nGain 4, Work 1, Harm 4 (floor: migration)\nRaise: Gate\nCase: normal use - The full suite exercises an upgrade from the earlier adopted release. Both historical client guides were replaced with the current guide, so `tests/test_upgrade_command.py:518` now fails its assertion that those guides do not already contain `forge upgrade`. The same refresh replaced both `tests/fixtures/copied-client/source` guides with the current template; `tests/test_migrate.py:205`\u2013`220` requires those guides to appear in the migration diff, but identical before and after files cannot appear there. The updated fixtures also make older-client sync checks pass with guidance already present before sync. Restore the historical fixture contents, including the similarly refreshed doctor fixture.",
+        "file": "tests/fixtures/adopted-v1.2.2/client/.claude/skills/forge/SKILL.md",
+        "gain": 4,
+        "harm": 4,
+        "line": 146,
+        "priority": "P1",
+        "title": "Gate: test_1_one_command_upgrades_forge_and_opens_its_pull_request",
+        "work": 1
+      },
+      {
+        "body": "chunk 1/3:\n\nGain 4, Work 2, Harm 3\nRaise: Test\nCase: normal use - The named proof does not establish several promised behaviors. Its unit script is empty, and the fake npm only creates the same marker for every invocation, so the test still passes if non-browser checks or the contents of a combined script never run. It exercises `--change` but neither close nor `--full`, and covers only one npm Playwright step, with no direct runner, Cypress, or multiple browser steps. The test also lacks the `platform` marker: the repository's native Windows workflow selects `-m platform` at `.github/workflows/forge-next.yml:140`, so this Windows-specific test is deselected there.",
+        "file": "tests/test_windows_worker_skips_browser_tests.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 66,
+        "priority": "P1",
+        "title": "Gate: test_3_windows_builder_run_skips_browser_steps_and_nothing_else",
+        "work": 2
+      },
+      {
+        "body": "chunk 2/3:\n\nGain 4, Work 1, Harm 4 (floor: migration)\nRaise: Gate: replacing historical guides with the current generated guide breaks existing tests and weakens upgrade coverage. Case: normal use - the full test run. Both copied-client source guides are now byte-for-byte equal to `src/forge/templates/skill.md`. Consequently, migration leaves them unchanged in Git, but `tests/test_migrate.py:210-220` requires both to appear in the migration diff, so its `moves in one branch` case fails. The adopted-v1.2.2 guides were replaced too: they now contain `forge upgrade`, which `tests/test_upgrade_command.py:518` explicitly asserts is absent before upgrading. They also make `tests/test_tools_guide.py:17-27` pass without proving that sync replaces an older guide. Restore the historical fixture contents, including the doctor fixture.",
+        "file": "tests/fixtures/copied-client/source/.claude/skills/forge/SKILL.md",
+        "gain": 4,
+        "harm": 4,
+        "line": 2267,
+        "priority": "P1",
+        "title": "Gate: restore the historical guide fixtures",
+        "work": 1
+      },
+      {
+        "body": "chunk 3/3:\n\nGain 5, Work 2, Harm 3\nRaise: Not done\nCase: normal use - a Windows repo runs Playwright directly or has a combined npm script.\nThe approved result says: On Windows, a builder's own test run skips each separate browser-test step and prints one line saying so, while the pull request check, the final check and the full test run still run them, Mac and Linux runs stay the same, and a test setting that is one combined script still runs whole. This classifier leaves `playwright test` and `corepack pnpm exec playwright test` unclassified, so `skip_browser` in `src/forge/fasttest.py:274` runs them. Conversely, an `npm run ci` script whose body is `npm-run-all test:unit test:playwright` is classified as browser-only and discarded in full, including the unit tests. The name match needs to distinguish browser commands from combined and non-browser steps.",
+        "file": "src/forge/quicktest.py",
+        "gain": 5,
+        "harm": 3,
+        "line": 71,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: Windows browser-test steps are classified incorrectly",
+        "work": 2
+      },
+      {
+        "body": "chunk 3/3:\n\nGain 4, Work 2, Harm 4 (floor: migration)\nRaise: Gate\nCase: normal use - Forge runs its migration and upgrade tests before a release.\nThis v1.2.2 guide now contains the current template. The same replacement was made in both host guides under `tests/fixtures/adopted-v1.2.2/client` and `tests/fixtures/copied-client/source`. This weakens upgrade checks: `tests/test_mod_guide.py:21-29` starts with guides that already match the current template, so its adopted-repo case can pass if sync fails to update existing guides. It also breaks the migration test: `tests/test_migrate.py:204-220` requires both copied-client guides in the migration diff, but those fixtures are now byte-identical to the output in `src/forge/story.py:89-93`, so neither appears in that diff. Restore the historical fixture contents.",
+        "file": "tests/fixtures/doctor-v1.2.2/.claude/skills/forge/SKILL.md",
+        "gain": 4,
+        "harm": 4,
+        "line": 2267,
+        "priority": "P1",
+        "title": "Gate: Restore the historical fixture guides",
+        "work": 2
+      },
+      {
+        "body": "chunk 3/3:\n\nGain 4, Work 2, Harm 3\nRaise: Test\nCase: normal use - a Windows repo runs unit and browser checks before close or a full run.\nThe named proof does not verify that the non-browser steps run: `unit.py` is empty, and the npm stub writes the same marker for every invocation, so it cannot establish that the combined script ran whole. It covers only one npm Playwright step, calls neither close nor `forge test --full`, and misses direct runners, Cypress and multiple browser steps. The actual misclassifications in `src/forge/quicktest.py:71` therefore pass this proof. Also, the sole adopted case uses `fast-test-chain`, but `full` is `None`, so lines 42-44 put that command in `test` and never configure the claimed `fast_test` path. Exercise those cases and observe which steps ran.",
+        "file": "tests/test_windows_worker_skips_browser_tests.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 34,
+        "priority": "P1",
+        "title": "Gate: test_3_windows_builder_run_skips_browser_steps_and_nothing_else",
+        "work": 2
+      }
+    ],
+    "id": "faa0919c-adec-4fed-bf9e-a3c12fd9e766",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-12T15:31:06.392653+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-12T16:03:19.368832+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
