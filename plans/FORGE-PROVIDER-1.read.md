@@ -1,18 +1,18 @@
 ---
 reader: codex (gpt-6.1-terra)
-read_at: 2026-11-12T16:54:20.236711+00:00
-seconds: 765.286
-read_hash: 959efd829c912110ec524495dc3e3131f4ab2afd
-round: 2
+read_at: 2026-11-12T17:16:32.047968+00:00
+seconds: 476.506
+read_hash: db278d6f81b19fcc028e15258d5b87cbe67f042a
+round: 3
 passed: no
-doc_seen: 959efd829c912110ec524495dc3e3131f4ab2afd
+doc_seen: db278d6f81b19fcc028e15258d5b87cbe67f042a
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 946d27b1e37bf62a1d4d20c9ca7ce9db8e8a80ab
+notes_seen: b5e3feaf99b41218ae21978e4ef4fe1662bcf9bf
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a1d08a-3b0f-7ba3-8056-a21706cc3701
 session:
 loop_choice: more
-loop_reason: The owner chose one more round: repair the three blocking notes and the smaller ones
+loop_reason: The owner chose one more round
 ---
 # Cold read notes
 
@@ -202,3 +202,40 @@ Only a genuine trade-off goes to the human, as a question with options.
     Case: normal use - A repository uses this checkout’s [`fast_test`](/forge.toml:7), which starts `forge test --pytest`. The [box environment](/plans/FORGE-PROVIDER-1.md:117) has no parent lane entry in the copy, so [the picker](/src/forge/fasttest.py:345) joins its own lane and replaces the four-processor setting. On a four-processor box, the existing [allocation rule](/src/forge/machine.py:89) gives it two.  
     Gain 3, Work 2, Harm 2
     Disposition: cut - `machine.test_slots` returns all cores when `FORGE_BOX=1`, as for `GITHUB_ACTIONS`, and the copy sets it, so the picker in the copy uses its 4 processors; `test_1` checks the picker's worker count.
+
+## Round 3
+
+29. Blocking: Data loss: setup can overwrite an approved settings file in the kept box.
+    Raise: Data loss  
+    Case: normal use - After a developer copies an ignored settings file, the default branch begins tracking a file at the same path. [Setup](/plans/FORGE-PROVIDER-1.md:132) now checks out that branch in the kept box. [Git overwrites ignored files by default](https://git-scm.com/docs/git-checkout), so the saved settings are lost without warning. The laptop file may since have changed or been removed.  
+    Gain 5, Work 2, Harm 4
+
+30. Blocking: Security: a replacement kept box can make a surviving copy unfindable.
+    Raise: Security  
+    Case: normal use - Turning boxes off fails to delete a copy but deletes the kept box. [Turn-off](/plans/FORGE-PROVIDER-1.md:156) retains the old record, but if the developer later enables boxes and runs setup, [setup](/plans/FORGE-PROVIDER-1.md:128) replaces the gone kept box. The record has only one kept-box ID, so later turn-off looks for copies of the new box and misses the old copy with its GitHub sign-in. The failure test only rejects deletion of the kept box.  
+    Gain 5, Work 2, Harm 4
+
+31. Advisory: Not done: chunked reads can corrupt multilingual test output.
+    Raise: Not done  
+    Case: normal use - A large test log or results file contains non-English text at a chunk boundary. [The new reader](/plans/FORGE-PROVIDER-1.md:85) cuts by bytes, but each exec response is a string. A UTF-8 character split between responses cannot be reconstructed by concatenating those strings. The [results hook](/src/forge/fasttest.py:552) writes UTF-8 text, while the large-file test can pass with ASCII alone.  
+    Gain 3, Work 2, Harm 3
+
+32. Advisory: Unproven: item 1: a large retry file may not fit in an exec request.
+    Raise: Test  
+    Case: normal use - A large failing test run is retried in another box. [The plan](/plans/FORGE-PROVIDER-1.md:121) transfers the previous results into that copy, but pins no transfer method. [Agent37 caps an exec request body at 1 MB](https://www.agent37.com/docs/agents-api/exec.md), so the planned 1.2 MB example cannot be sent in one request. The large-file test only reads results back from a box.  
+    Gain 3, Work 2, Harm 3
+
+33. Advisory: Not done: an immediate install retry reuses the failed provider command.
+    Raise: Not done  
+    Case: normal use - A temporary download failure makes the kept-box tool installation fail, and the developer immediately reruns setup. [Setup](/plans/FORGE-PROVIDER-1.md:130) uses the same `forge-install-<version>` name. [Agent37 retains a command name for five minutes](https://www.agent37.com/docs/agents-api/exec.md), so the retry cannot start a fresh identical command during that time. The fake records these install commands without running them.  
+    Gain 3, Work 2, Harm 3
+
+34. Advisory: Plan gap: the two parts do not pin the name of the box checkout.
+    Raise: Plan gap  
+    Case: normal use - Setup runs in the main checkout and a builder tests from a task worktree. [The plan](/plans/FORGE-PROVIDER-1.md:132) shares `$HOME/work/<repo name>` between KEEP and TESTS without defining whether the name comes from GitHub, the main checkout, or the current checkout. [Forge names task worktrees differently](/src/forge/task.py:228), so the parts can select different paths while a test that sets up and runs in one checkout passes.  
+    Gain 4, Work 1, Harm 2
+
+35. Advisory: Unproven: item 2: the setup test never executes the tool installer.
+    Raise: Test  
+    Case: normal use - The install script contains the pinned version strings but fails before installing the tools. [The fake](/plans/FORGE-PROVIDER-1.md:147) records `forge-install-*` scripts without running them and supplies a `gh` stub separately. The planned setup and contract tests can therefore pass while the first real setup has no working installed tools.  
+    Gain 3, Work 2, Harm 3
