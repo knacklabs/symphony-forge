@@ -1,10 +1,18 @@
 {
   "branch": "task/FORGE-NIGHTLY-1-NIGHTLY",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-12T17:14:03.286501+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "b9ec5f204e675bda6c226f08390e649b6f92f2ee",
+    "keys": {},
+    "round": null
+  },
+  "worker": "claude"
 }
