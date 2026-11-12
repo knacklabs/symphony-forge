@@ -122,7 +122,7 @@
     "id": "186e2f0b-e7ed-4f9a-ba56-ac4ae5144d51",
     "status": "blocked"
   },
-  "round": 2,
+  "round": 3,
   "stacked_on": "FORGE-GENFILE-1/NOTE",
   "status": "fixing",
   "steps": [
@@ -149,10 +149,10 @@
     "worker_round": 2
   },
   "stuck": {
-    "close": "9fe742cc-1cbb-4e5e-b628-818a4ff0549d",
-    "head": "d6bc386f0474f0ebbba15827a5ea2089f81030c6",
+    "close": "dac25d32-1cba-4af2-8e7a-10df5adbd117",
+    "head": "aaf8c2a01e52eb5c9a2f06fbe63a8e483b98a41e",
     "keys": {},
-    "round": 1
+    "round": 2
   },
   "worker": "claude"
 }
