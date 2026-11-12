@@ -41,7 +41,7 @@
     "status": "blocked"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-12T11:38:10.292084+00:00",
@@ -54,8 +54,12 @@
   ],
   "stop": {
     "at": "2026-11-12T11:45:14.952488+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": ".github/workflows/starter-smoke.yml",
-    "wait_id": "0c1bc44e-48a6-4817-9299-7ced130331de"
+    "reason": "Owner: one more round. Update the test that pins the Python smoke limit.",
+    "wait_id": "0c1bc44e-48a6-4817-9299-7ced130331de",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
