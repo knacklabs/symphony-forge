@@ -497,6 +497,8 @@ $checks
 <!-- end -->
 ## Moving a Python app off committed API types
 
+A fix that moves an existing Python app off committed API types changes six files (`.gitignore`, `package.json`, `scripts/test.mjs`, `scripts/affected.mjs` and the two removed generated files), one over a fix's five-code-file limit. The coordinator records `forge fix allow-large` for the fix before you start, so the limit does not apply to you: make all six changes in this fix, and do not skip a step, split the fix or stop at the limit.
+
 When your fix moves an existing Python app off committing its API contract and types, do these steps:
 
 1. Run `git rm --cached --ignore-unmatch libs/shared/api-types/openapi.json libs/shared/api-types/src/api-types.ts`. This removes only these two files from git's index, whichever of them is still tracked, and keeps them on disk. It does not stop when one of them is already untracked. Do not clean the work tree and use no path pattern.

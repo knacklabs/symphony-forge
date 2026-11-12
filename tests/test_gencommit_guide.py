@@ -11,10 +11,9 @@ from conftest import ROOT
 from test_close import env  # noqa: F401 (the shared fixture unsynced_up builds on)
 from test_feature_command import ADOPTED
 from test_feature_remove import SYNCED, _flat
-from test_task import story
+from test_notes_first_discovery import client  # noqa: F401
 from test_upgrade_command import NAME as UPGRADE, RELEASE, unsynced_up  # noqa: F401
 from test_worker import calls, install_claude
-from test_workers_leave_settings_to_coordinator import client  # noqa: F401
 
 STORY = "FORGE-GENCOMMIT-1"
 CONTRACT = "libs/shared/api-types/openapi.json"
@@ -40,6 +39,8 @@ STEPS = [
     f"default branch. Run `{REMOVE}`: it keeps the removal for whichever of the two paths is still "
     "in the index, and does not stop on a path that is already gone. Then run its tests.",
 ]
+SIX = ("`.gitignore`, `package.json`, `scripts/test.mjs`, `scripts/affected.mjs` and the two "
+       "removed generated files")
 GUIDE_ONLY = [
     f"New Python starter apps keep the API contract file (`{CONTRACT}`) and its types "
     f"(`{TYPES}`) out of git.",
@@ -47,8 +48,20 @@ GUIDE_ONLY = [
     "changes the API lists both files in its scope as today, so Forge still sees that those parts "
     "change the same files.",
     "When you write the next plan or fix for a Python app and `git ls-files` lists one or both of "
-    "those paths, offer the owner the move-over fix in one line, before more API parts; on a yes, "
-    "start one fix with `forge start`.",
+    "those paths, offer the owner the move-over fix in one line, before more API parts.",
+    "On a yes, run `forge start` in the main checkout, on the default branch, not in a story, "
+    "part or fix checkout: a fix started in one of those stacks on that item and cannot merge "
+    "before it.",
+    f"The fix changes six files ({SIX}), one over the five-code-file limit of a fix, so before the "
+    'worker starts, run `forge fix allow-large "Move the API contract and its types out of git"` '
+    "in the new fix's folder, as for any fix that corrects one kind of problem in every place it "
+    "appears.",
+]
+BRIEF_ONLY = [
+    f"A fix that moves an existing Python app off committed API types changes six files ({SIX}), "
+    "one over a fix's five-code-file limit. The coordinator records `forge fix allow-large` for the "
+    "fix before you start, so the limit does not apply to you: make all six changes in this fix, "
+    "and do not skip a step, split the fix or stop at the limit.",
 ]
 
 
@@ -97,24 +110,39 @@ def test_4_an_earlier_python_app_keeps_its_committed_files(unsynced_up):
     assert CONTRACT in tracked and TYPES in tracked
     old = set(repo.git("show", f"{adopted}:.gitignore").splitlines())
     new = set((repo.path / ".gitignore").read_text("utf-8").splitlines())
+    # Every old rule stays (the earlier starter's `.env` rule keeps secrets out of git).
+    assert old <= new, old - new
     assert new - old <= {"forge.local.toml"}, new - old
 
 
 @pytest.mark.platform
 @pytest.mark.timeout(1800)
-def test_5_the_guide_and_the_brief_give_the_move_over_steps(client):
+@pytest.mark.parametrize("adoption", ["new init", "previous release upgrade and sync"])
+def test_5_the_guide_and_the_brief_give_the_move_over_steps(repo, client, adoption):
+    # `client` is the app right after `forge init` (no sync), or the v1.2.2 app after sync.
     for host in (".claude", ".codex"):
-        skill = _flat((client.path / host / "skills/forge/SKILL.md").read_text("utf-8"))
+        skill = _flat((client / host / "skills/forge/SKILL.md").read_text("utf-8"))
         for piece in GUIDE_ONLY + STEPS:
             assert _flat(piece) in skill, (host, piece[:60])
-        start = skill.index(_flat(GUIDE_ONLY[0]))
-        assert "git clean" not in skill[start:skill.index(_flat(STEPS[-1])) + len(_flat(STEPS[-1]))]
+        assert "git clean" not in skill, host
 
-    log = install_claude(client)
-    story(client)
-    assert client.forge("task", "start", "BOARD/API").returncode == 0
-    worked = client.forge("work", "BOARD/API")
+    log = install_claude(repo)
+    if adoption == "new init":
+        started = repo.forge("fix", "start", "Read the move-over steps", "--done",
+                             "The worker reads the steps", "--kind", "mechanical", cwd=client)
+        assert started.returncode == 0, started.stdout + started.stderr
+        client = Path(re.search(r" in (.+)\n", started.stdout)[1])
+        item = "read-the-move-over-steps"
+    else:
+        item = "sync-the-discovery-guide"
+    config = client / "forge.toml"
+    config.write_text(re.sub(r'^workers = ".*"$', 'workers = "claude"', config.read_text("utf-8"),
+                             flags=re.M), encoding="utf-8")
+    repo.git("add", "-A", cwd=client)
+    repo.git("commit", "-q", "--allow-empty", "-m", "Use Claude for the worker check", cwd=client)
+    worked = repo.forge("work", item, cwd=client)
     assert worked.returncode == 0, worked.stdout + worked.stderr
     brief = _flat(calls(log)[-1]["brief"])
-    for piece in STEPS:
+    for piece in STEPS + BRIEF_ONLY:
         assert _flat(piece) in brief, piece[:60]
+    assert "git clean" not in brief

@@ -1529,7 +1529,9 @@ Playwright Docker image tag matches the package version, then run the app's brow
 
 New Python starter apps keep the API contract file (`libs/shared/api-types/openapi.json`) and its types (`libs/shared/api-types/src/api-types.ts`) out of git. Existing apps keep theirs on upgrade and sync; until an app has moved over, a part that changes the API lists both files in its scope as today, so Forge still sees that those parts change the same files.
 
-When you write the next plan or fix for a Python app and `git ls-files` lists one or both of those paths, offer the owner the move-over fix in one line, before more API parts; on a yes, start one fix with `forge start`. The steps:
+When you write the next plan or fix for a Python app and `git ls-files` lists one or both of those paths, offer the owner the move-over fix in one line, before more API parts.
+On a yes, run `forge start` in the main checkout, on the default branch, not in a story, part or fix checkout: a fix started in one of those stacks on that item and cannot merge before it.
+The fix changes six files (`.gitignore`, `package.json`, `scripts/test.mjs`, `scripts/affected.mjs` and the two removed generated files), one over the five-code-file limit of a fix, so before the worker starts, run `forge fix allow-large "Move the API contract and its types out of git"` in the new fix's folder, as for any fix that corrects one kind of problem in every place it appears. The steps:
 
 1. Run `git rm --cached --ignore-unmatch libs/shared/api-types/openapi.json libs/shared/api-types/src/api-types.ts`. This removes only these two files from git's index, whichever of them is still tracked, and keeps them on disk. It does not stop when one of them is already untracked. Do not clean the work tree and use no path pattern.
 2. Add both paths to `.gitignore`.
