@@ -2507,6 +2507,9 @@ Problems noted before accepted client sign-off no longer count towards these lin
 When `forge next` says the latest scheduled run of the default branch failed, it names the
 failed jobs and tests; start its fix command the same way, or follow the step it gives for the
 fix already started.
+For the full test run Forge knows (`full_suite_workflow`, or `forge.yml` in a CI-test repo), that first
+line starts with `Needs you:`, and the board lists the run under Needs you until a later scheduled or
+manual full run passes. The mark is for the owner; still start the fix without asking.
 
 Close stops at the round limit (the repo's setting, two by default) for a story part or after one round for a fix when findings below P0
 remain open. It asks the owner: "One more round, split or accept?" Close, land and work show

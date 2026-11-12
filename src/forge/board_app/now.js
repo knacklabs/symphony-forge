@@ -10,7 +10,7 @@ const STAGE_OF = {
   reviewing: 'review', 'waiting for checks': 'review', hotspot: 'review',
   ready: 'ready', merged: 'merged', done: 'merged',
 };
-const VERB = { approval: 'Approve', 'worker question': 'Answer', merge: 'Merge' }; // every other wait: Decide
+const VERB = { approval: 'Approve', 'worker question': 'Answer', merge: 'Merge', 'failed run': 'Fix' }; // every other wait: Decide
 const KINDS = [['all', 'All'], ['task', 'Story parts'], ['fix', 'Fixes']];
 const RUN = { work: 'Building', worker: 'Building', review: 'Reviewing', read: 'Reading the plan', test: 'Testing' };
 const CARDS = 4; // per stage, then "and N more"
@@ -91,7 +91,7 @@ function facts(snapshot) {
   const ids = new Set([...stories.filter(mine), ...cards].map((row) => row.id));
   return {
     viewer, stages, signoff: snapshot.signoff || { line: '', open: [] },
-    asks: snapshot.team.needs_you.filter((ask) => viewer === null || ids.has(ask.id)),
+    asks: snapshot.team.needs_you.filter((ask) => viewer === null || ask.kind === 'run' || ids.has(ask.id)), // a failed run has no owner
     merged: viewer === null ? (kind === 'all' ? counted.parts + counted.fixes : counted[kind === 'task' ? 'parts' : 'fixes'])
       : recent.length,
     median: timed.length ? hours(median(timed.map((row) => row.total_seconds))) : 'unknown',
@@ -124,11 +124,14 @@ function more(name, title, entries, shown) {
   `and ${entries.length - shown} more`);
 }
 
+// A failed full test run has no item to open: its row says whether a fix is under way and opens the run on GitHub.
 function ask(entry) {
   const verb = VERB[entry.reason] || 'Decide';
-  return el('button', { type: 'button', class: 'ask', 'data-focus': `ask:${entry.id}:${entry.reason}`, onclick: open(entry) },
-    el('span', { class: 'ask-head' }, el('span', { class: 'verb' }, verb),
-      el('span', { class: 'key' }, entry.kind === 'fix' ? 'Fix' : key(entry.id))),
+  const run = entry.kind === 'run';
+  const place = run ? (entry.fixing ? 'Fix in progress' : 'Full test run') : entry.kind === 'fix' ? 'Fix' : key(entry.id);
+  return el('button', { type: 'button', class: 'ask', 'data-focus': `ask:${entry.id}:${entry.reason}`,
+    onclick: run && entry.url ? () => window.open(entry.url, '_blank', 'noopener') : open(entry) },
+    el('span', { class: 'ask-head' }, el('span', { class: 'verb' }, verb), el('span', { class: 'key' }, place)),
     el('span', { class: 'ask-title' }, entry.title));
 }
 
