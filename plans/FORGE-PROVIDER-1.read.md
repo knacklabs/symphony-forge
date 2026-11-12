@@ -159,39 +159,46 @@ Only a genuine trade-off goes to the human, as a question with options.
     Raise: Security  
     Case: normal use - agent37 rejects a delete while the developer turns boxes off. [The plan](/plans/FORGE-PROVIDER-1.md:83) makes `drop` return an error string, but [turn-off](/plans/FORGE-PROVIDER-1.md:152) has no failure branch: it removes the record and says the boxes were deleted. The surviving box can retain the GitHub sign-in and approved files, and a second turn-off finds no record.  
     Gain 5, Work 2, Harm 4
+    Disposition: cut - turn-off counts a box as deleted only when agent37 confirms it (`200` with `deleted: true`, or `404`); on any failure it keeps the record, names each box left, says its GitHub sign-in and copied files are still at agent37, and exits 1 with `Next: forge lanes --box off`; `test_5` has the failure case.
 
 22. Blocking: Not done: first-time setup cannot pass the private-repository check.
     Raise: Not done  
     Case: normal use - A developer approves GitHub sign-in for a private repository. [Setup](/plans/FORGE-PROVIDER-1.md:127) requires `git ls-remote` to succeed before it runs `gh auth setup-git`. The [pinned GitHub CLI](https://raw.githubusercontent.com/cli/cli/v2.103.3/pkg/cmd/auth/shared/login_flow.go) does not configure Git’s credential helper during this noninteractive login, so Git cannot use the new sign-in. The fake maps the URL to an unauthenticated local repository and misses the failure.  
     Gain 5, Work 2, Harm 3
+    Disposition: cut - the sign-in steps now run `gh auth status`, then `gh auth setup-git --hostname github.com`, then `git ls-remote` of the https URL, and repeat all three after the device sign-in; the fake's unauthenticated ls-remote fails until the stub `setup-git` runs after an approved sign-in, so `test_2` fails on the wrong order.
 
 23. Blocking: Not done: setup can record a package version it has not installed.
     Raise: Not done  
     Case: normal use - The default branch updates its dependencies, then a developer reruns setup after a Forge upgrade. [Setup](/plans/FORGE-PROVIDER-1.md:128) fetches the new default branch without checking it out, runs the install command against the old checkout, and records the new default-branch commit as the installed baseline. [The changed-package check](/plans/FORGE-PROVIDER-1.md:90) then skips installation for tasks based on that new commit. Their tests can pass using old dependencies.  
     Gain 5, Work 2, Harm 3
+    Disposition: cut - setup now checks out the fetched `origin/<default branch>` commit detached, runs the install there, and records that commit as `head` only after the install passes; `test_2` moves the default branch and checks the checkout comes before the install and `head` is the new commit.
 
 24. Advisory: Not done: one read truncates results from a realistic large test run.
     Raise: Not done  
     Case: normal use - A close runs roughly 4,000 tests. [The results hook](/src/forge/fasttest.py:552) writes each passing test name twice; this repo’s [.test_durations](/.test_durations:1) contains 3,962 names totaling about 471 KB. [The plan](/plans/FORGE-PROVIDER-1.md:117) reads the resulting file with one `cat`, but [agent37 cuts the middle of output over 512 KB](https://www.agent37.com/docs/agents-api/exec.md). Test results and the invocation record used for retries can be lost.  
     Gain 4, Work 2, Harm 3
+    Disposition: cut - results and logs are read in parts of at most 400 KB through `box.read_file` until a short part, under agent37's 512 KB cap; the fake cuts output at 512 KB and `test_1` moves a 1.2 MB results file whole.
 
 25. Advisory: Not done: a retry can use file paths from the other machine.
     Raise: Not done  
     Case: normal use - A box test fails, and a laptop place becomes free before close retries it. [The results hook](/src/forge/fasttest.py:552) records failed files as absolute box paths; [the retry](/src/forge/fasttest.py:503) uses those paths unchanged. The amended [second admission](/plans/FORGE-PROVIDER-1.md:114) can select the laptop, where those paths do not exist. The same problem occurs in the other direction.  
     Gain 3, Work 2, Harm 3
+    Disposition: cut - results going to the laptop map the box checkout prefix to the laptop checkout, and a retry's results going to a box map it back, so each machine gets its own paths; `test_1` checks the laptop file names only laptop paths.
 
 26. Advisory: Unproven: item 2: setup can execute commands before a restarted box is ready.
     Raise: Test  
     Case: normal use - A developer copies an approved file into the stopped kept box. [The plan](/plans/FORGE-PROVIDER-1.md:130) starts it and writes the file, although start can return `202` while the box is still starting. [Agent37’s exec contract](https://www.agent37.com/docs/agents-api/exec.md) rejects commands in that state. No setup rule or test pins waiting for readiness after start.  
     Gain 3, Work 2, Harm 3
+    Disposition: cut - `box.ready` waits for `running` and a passing `true` exec after every `create`, `start` and `copy`, including `--copy`; the fake's `start` answers `202` and refuses exec for two seconds in `test_2`.
 
 27. Advisory: Unproven: item 4: a failed code push has no specified laptop fallback.
     Raise: Plan gap  
     Case: normal use - GitHub is unreachable when Forge pushes the temporary code reference. [The plan](/plans/FORGE-PROVIDER-1.md:118) specifies fallback for `ProviderError`, but not for a failed Git command; the existing [Git helper](/src/forge/repo.py:405) raises `CalledProcessError`. The planned failure test covers a provider fork failure, so it can pass without covering this path.  
     Gain 3, Work 2, Harm 3
+    Disposition: cut - the code-ref push runs through `repo.run`, and a non-zero exit sends the run back to the laptop with `the code could not reach GitHub: ...`; `test_4` has the case.
 
 28. Advisory: Not done: Forge’s test picker reduces the box’s four-processor allocation.
     Raise: Functional  
     Case: normal use - A repository uses this checkout’s [`fast_test`](/forge.toml:7), which starts `forge test --pytest`. The [box environment](/plans/FORGE-PROVIDER-1.md:117) has no parent lane entry in the copy, so [the picker](/src/forge/fasttest.py:345) joins its own lane and replaces the four-processor setting. On a four-processor box, the existing [allocation rule](/src/forge/machine.py:89) gives it two.  
     Gain 3, Work 2, Harm 2
-   Disposition: keep - below the bar (follow-up)
+    Disposition: cut - `machine.test_slots` returns all cores when `FORGE_BOX=1`, as for `GITHUB_ACTIONS`, and the copy sets it, so the picker in the copy uses its 4 processors; `test_1` checks the picker's worker count.
