@@ -74,8 +74,30 @@ def test_parts(top: Path, command: str) -> list[tuple[str, str, str]]:
     return parts
 
 
+def _combined_script(top: Path, command: str) -> str:
+    """The first package script in the command whose body chains steps, or empty."""
+    package = top / "package.json"
+    scripts = json.loads(package.read_text("utf-8")).get("scripts", {}) if package.is_file() else {}
+    for part in command.split("&&"):
+        words = part.split()
+        if not words or words[0] not in ("npm", "pnpm", "yarn", "bun"):
+            continue
+        # `npm ci` and `npm install` are not package scripts, even when a script has that name.
+        if len(words) < 2 or words[1] in ("ci", "install"):
+            continue
+        name = words[2] if words[1] in ("run", "run-script") and len(words) > 2 else words[1]
+        if re.search(r"&&|;|\|", scripts.get(name, "")):
+            return name
+    return ""
+
+
 def suggest(top: Path, cfg: dict[str, Any]) -> None:
     if cfg["fast_test"]:
+        return
+    if script := _combined_script(top, cfg["test"]):
+        print(f'The test setting runs the combined script "{script}", so Forge cannot limit its tests '
+              "to the change. Write a fast_test for this repo as the Forge guide says, then ask the owner.",
+              flush=True)
         return
     python = any((top / marker).is_file() for marker in
                  ("pyproject.toml", "pytest.ini", "setup.py", "requirements.txt"))
