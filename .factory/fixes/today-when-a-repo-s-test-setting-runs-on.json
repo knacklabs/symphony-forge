@@ -11,7 +11,7 @@
       "gain": 4,
       "harm": 3,
       "line": 490,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -24,7 +24,7 @@
       "gain": 5,
       "harm": 3,
       "line": 81,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -86,75 +86,24 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "6318860133e78938323c92a47207feec995a893e79ae11d1eae20df445c6ea69",
-    "changed": "21cae0d45edaa2562bf42b8e07d727be890a3c53fbca91f3f21cad1edc5747ff",
-    "commit": "4a0dd8a340b7805b77abab57c03143ad63abb274",
+    "branch_diff": "a4bd7c3197254baf9ba0a6e505b949857c7464edfda5ef31ed4d548cc2292ef3",
+    "changed": "98300e13502dec327888e212955ea2ee92ac5f45058998a9cd9503df5619f140",
+    "commit": "b16146403df467665d7be0441f15f5658bcec7ec",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - adopting a Python application that uses unittest and accepting Forge's suggested quick-test setting.\nThe new adoption call prints a pytest recommendation for any repo with a Python marker, even when `test` is `python -m unittest discover` (`src/forge/quicktest.py:102` and `:129`). Once that recommendation is set, `src/forge/fasttest.py:125`, `:138` and `:772` append `-p _forge_pytest_selection` to unittest. Unittest treats `-p` as a test-file pattern, so it discovers zero tests and exits successfully; a changed test can therefore receive a green close or PR check without running. See the [Python unittest discovery options](https://docs.python.org/3.11/library/unittest.html#test-discovery).\nAdds work: restrict the adoption recommendation to supported test commands; F 2 x H 2 = 4; 2 x C = 4.",
-        "file": "src/forge/init.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 490,
-        "priority": "P1",
-        "title": "Functional: Adoption suggests the pytest picker for unittest projects",
-        "work": 2
-      },
-      {
-        "body": "Gain 5, Work 2, Harm 3\nRaise: Not done - For a repo whose test setting runs one combined script with no quick-test setting, the setup check, upgrade and adoption each print one line saying so and suggest no command, and the shipped guide explains how the agent writes the quicker command.\nCase: normal use - a new Node repo retains Forge's generated test setting and adds a combined `test` script.\n`src/forge/init.py:75` generates `[ ! -f package.json ] || (npm ci && npm test)`. Splitting it here leaves `test)` as the script name, so the detector misses `test`. With a body such as `tsc && vitest run && playwright test`, the existing suggestion path instead appends Vitest flags to the npm script, where they reach Playwright. A command such as `corepack pnpm run test` is also skipped because its first word is `corepack`; Forge's starter documents Corepack in `src/forge/templates/starter/README.md:13`. These repos get a wrong suggestion or no advisory.",
+        "body": "Gain 5, Work 2, Harm 3\nRaise: Not done - For a repo whose test setting runs one combined script with no quick-test setting, the setup check, upgrade and adoption each print one line saying so and suggest no command, and the shipped guide explains how the agent writes the quicker command.\nCase: normal use - a repo running Forge v1.2.38 upgrades with Forge's generated Node test setting and a `test` script such as `tsc && vitest run && playwright test`.\nThe v1.2.38 `src/forge/upgrade.py:201` calls its own `quicktest.suggest` before installing and running the new release's sync. Its `quicktest.py:59-67,102-115` prints an npm quick-test suggestion whose Vitest flags reach Playwright. The guard here runs only in the new release, so the later advisory from `src/forge/sync.py:743` cannot suppress that incorrect suggestion. The upgrade proof still starts this checkout's Forge (`tests/test_upgrade_command.py:87-88`, `tests/conftest.py:59-69`) and uses a script without a direct Vitest invocation (`tests/test_combined_script_quick_test.py:21,76`), so it misses the failure.",
         "file": "src/forge/quicktest.py",
         "gain": 5,
         "harm": 3,
-        "line": 81,
-        "priority": "P1",
-        "required_done_when": true,
-        "title": "Not done: Default Node and Corepack commands miss combined scripts",
-        "work": 2
-      },
-      {
-        "body": "Gain 5, Work 2, Harm 3\nRaise: Not done - For a repo whose test setting runs one combined script with no quick-test setting, the setup check, upgrade and adoption each print one line saying so and suggest no command, and the shipped guide explains how the agent writes the quicker command.\nCase: normal use - an earlier-adopted repo runs the documented `forge upgrade` while its previous Forge release is installed.\n`src/forge/upgrade.py:201` calls the installed release's `quicktest.suggest` before installing the target release at `:207`; the target release is subsequently invoked only for sync at `:222`. Thus the new detection is not called during that upgrade: the previous release still prints the wrong suggestion or nothing. The new upgrade test invokes the current checkout's Forge instead, as shown by `tests/conftest.py:59` and `:319`.",
-        "file": "src/forge/quicktest.py",
-        "gain": 5,
-        "harm": 3,
-        "line": 97,
+        "line": 111,
         "priority": "P1",
         "required_done_when": true,
         "title": "Not done: Upgrades started by an older Forge use the old suggestion logic",
         "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 2\nRaise: Test\nCase: normal use - a generated Node repo is checked or an earlier-adopted repo upgrades and syncs.\nEvery case replaces the generated test setting with `npm ci && npm run ci`, so the proof passes while Forge's default wrapper is broken. The upgrade case also forces installation to fail before sync and launches the current checkout's code rather than the previously installed release. Finally, `LINE in done.stdout` accepts duplicate advisory lines, although the Done-when requires one. The named proof therefore does not cover these required behaviors.",
-        "file": "tests/test_combined_script_quick_test.py",
-        "gain": 3,
-        "harm": 2,
-        "line": 24,
-        "priority": "P1",
-        "title": "Gate: tests/test_combined_script_quick_test.py::test_1_the_combined_script_is_named_and_no_command_is_suggested",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 1, Harm 2\nRaise: Test\nCase: normal use - an agent reconstructs a quick command from a combined script.\nThe proof checks that the guide says to write a command, retain browser tests and ask the owner, but it does not check the instructions for preserving the other steps and their order or the `pre` and `post` scripts. Those instructions can disappear while this test stays green, leaving an agent copying a script body without its required setup or cleanup. It also checks only a new repo's synced guide, not the guide delivered to an earlier-adopted repo after upgrade and sync.",
-        "file": "tests/test_combined_script_quick_test.py",
-        "gain": 3,
-        "harm": 2,
-        "line": 71,
-        "priority": "P1",
-        "title": "Gate: tests/test_combined_script_quick_test.py::test_2_the_synced_guide_tells_the_agent_how_to_write_the_quicker_command",
-        "work": 1
-      },
-      {
-        "body": "Gain 2, Work 1, Harm 2\nCase: normal use - a Jest package script uses a quoted regular-expression filter, such as `jest --testNamePattern='login|signup'`.\nThe pipe is an argument to one runner, but the unquoted regular-expression search treats it as a shell pipeline. Doctor, upgrade and adoption therefore suppress the previously available quick-test suggestion and incorrectly say the script is combined. [Jest documents the test-name filter](https://jestjs.io/docs/cli#--testnamepatternregex).\nAdds work: distinguish quoted arguments from shell separators; F 2 x H 2 = 4; 2 x C = 2.",
-        "file": "src/forge/quicktest.py",
-        "gain": 2,
-        "harm": 2,
-        "line": 89,
-        "priority": "P2",
-        "title": "Follow-up: Quoted test filters are mistaken for combined scripts",
-        "work": 1
       }
     ],
-    "id": "4f85c094-3337-4c84-89b2-8e5d37b97981",
+    "id": "590f83b9-11e7-42f7-96a2-fcd706f6d2ae",
     "status": "blocked"
   },
   "round": 2,
@@ -166,6 +115,10 @@
     },
     {
       "at": "2026-11-12T15:59:16.858933+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-12T16:19:04.415680+00:00",
       "step": "review"
     }
   ],

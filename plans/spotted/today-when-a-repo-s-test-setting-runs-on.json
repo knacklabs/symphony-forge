@@ -43,6 +43,17 @@
       "item": "today-when-a-repo-s-test-setting-runs-on",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/quicktest.py\tsuggest prints the pytest quick-test command for any Python repo, even when the test command is unittest, in doctor and upgrade.",
+      "kind": "edge",
+      "path": "src/forge/quicktest.py",
+      "line": 140,
+      "text": "suggest prints the pytest quick-test command for any Python repo, even when the test command is unittest, in doctor and upgrade.",
+      "from": "worker",
+      "item": "today-when-a-repo-s-test-setting-runs-on",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
