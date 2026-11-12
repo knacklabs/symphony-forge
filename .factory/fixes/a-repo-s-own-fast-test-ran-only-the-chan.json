@@ -4,12 +4,20 @@
   "done_when": "For new and existing client repos, the shipped guide says a fast test in pull request CI must include the tests that import changed source files, split across the test groups, that a local fast test may stay smaller, that the full suite stays nightly, and it warns against a changed-files-only script.",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-12T15:51:20.606328+00:00",
       "step": "start"
     }
   ],
-  "why": "A repo's own fast test ran only the changed test files plus a few fixed files in pull request CI, so unchanged tests that import a changed source file were skipped, failed on the main branch, and blocked every other close."
+  "stuck": {
+    "close": null,
+    "head": "f5c494a77f4550888951723137cd27e39be915a5",
+    "keys": {},
+    "round": null
+  },
+  "why": "A repo's own fast test ran only the changed test files plus a few fixed files in pull request CI, so unchanged tests that import a changed source file were skipped, failed on the main branch, and blocked every other close.",
+  "worker": "claude"
 }
