@@ -495,6 +495,21 @@ $findings
 $checks
 
 <!-- end -->
+## Moving a Python app off committed API types
+
+A fix that moves an existing Python app off committed API types changes six files (`.gitignore`, `package.json`, `scripts/test.mjs`, `scripts/affected.mjs` and the two removed generated files), one over a fix's five-code-file limit. The coordinator records `forge fix allow-large` for the fix before you start, so the limit does not apply to you: make all six changes in this fix, and do not skip a step, split the fix or stop at the limit.
+
+When your fix moves an existing Python app off committing its API contract and types, do these steps:
+
+1. Run `git rm --cached --ignore-unmatch libs/shared/api-types/openapi.json libs/shared/api-types/src/api-types.ts`. This removes only these two files from git's index, whichever of them is still tracked, and keeps them on disk. It does not stop when one of them is already untracked. Do not clean the work tree and use no path pattern.
+2. Add both paths to `.gitignore`.
+3. Start the `typecheck` script in `package.json` with `corepack pnpm run api-types && `.
+4. If `scripts/test.mjs` picks parts, run `api-types` before any `tsc` call, and let a change under `apps/api/app/` select the web part too, as the new starter does.
+5. Remove the two paths from the scope of planned parts. Leave their `After` links as they are: parts that add a module still share other files, such as `apps/api/app/main.py`.
+6. Delete these two files on disk, by their two full paths and nothing else (a file that is not there needs nothing). This is safe: `api-types` writes both files from the API code every time, and nothing else is in them. Then run the repo's test command. It must pass and must make both files again. Forge's local test runs in this checkout, so this step is what proves that a fresh copy works.
+
+A branch that changed one or both files gets a modify/delete conflict when it merges the default branch. Run `git rm --cached --ignore-unmatch libs/shared/api-types/openapi.json libs/shared/api-types/src/api-types.ts`: it keeps the removal for whichever of the two paths is still in the index, and does not stop on a path that is already gone. Then run its tests.
+
 ## Build simple
 
 Record this paragraph in an empty commit before you edit code:

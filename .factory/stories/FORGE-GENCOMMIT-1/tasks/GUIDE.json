@@ -1,0 +1,90 @@
+{
+  "branch": "task/FORGE-GENCOMMIT-1-GUIDE",
+  "known": [
+    {
+      "area": "src/forge/templates/skill.md",
+      "file": "src/forge/templates/skill.md",
+      "gain": 4,
+      "harm": 3,
+      "line": 1532,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Start the move-over fix outside the active story checkout",
+      "work": 1
+    },
+    {
+      "area": "src/forge/templates/brief.md",
+      "file": "src/forge/templates/brief.md",
+      "gain": 4,
+      "harm": 3,
+      "line": 505,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Account for the fix limit when applying the starter's test changes",
+      "work": 2
+    },
+    {
+      "area": "test_5_the_guide_and_the_brief_give_the_move_over_steps() in tests/test_gencommit_guide.py",
+      "file": "tests/test_gencommit_guide.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 105,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_5_the_guide_and_the_brief_give_the_move_over_steps",
+      "work": 2
+    },
+    {
+      "area": "test_4_an_earlier_python_app_keeps_its_committed_files() in tests/test_gencommit_guide.py",
+      "file": "tests/test_gencommit_guide.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 100,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_4_an_earlier_python_app_keeps_its_committed_files",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "5266d3ad989e5ad0b8b75e811b15d488dcabcb60a8f1c1f6071cff1f9639b12c",
+    "changed": "acff2327584595f326d9b8ac913c5a425ba01a70b80fc53f85f5aa1b9d468cf7",
+    "commit": "97cfd5afbf79a7d8376fde726cc386a0e9a33986",
+    "dismissals": [],
+    "findings": [],
+    "id": "518a0cf6-1a02-4386-ab9e-9eaf169ae342",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-12T03:33:19.536356+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-12T03:48:35.824511+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-12T03:59:14.407167+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "3552f069-4948-4c39-95cd-8b92a4f2a208",
+    "head": "a713ed827a0c8f574da3a8ff85eada3e545ab1da",
+    "keys": {},
+    "round": 1
+  },
+  "worker": "claude"
+}
