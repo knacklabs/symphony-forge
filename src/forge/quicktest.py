@@ -26,13 +26,16 @@ def group_warning(top: Path, cfg: dict[str, Any]) -> str:
     return ""
 
 
+NPM_VALUE_OPTIONS = ("--package", "-p", "--workspace", "-w", "--cache", "--prefix", "--registry",
+                     "--userconfig", "--globalconfig")
+
+
 def _npm_runner_index(words: list[str]) -> int:
     index = 2
     while index < len(words) and words[index].startswith("-"):
         if words[index] == "--":
             return index + 1
-        index += 2 if words[index] in ("--package", "-p", "--workspace", "-w", "--cache",
-                                      "--prefix", "--registry", "--userconfig", "--globalconfig") else 1
+        index += 2 if words[index] in NPM_VALUE_OPTIONS else 1
     return index
 
 
@@ -49,7 +52,8 @@ BROWSER_RUNNERS = {"playwright": "test", "cypress": "run"}
 def browser_step(top: Path, part: str) -> bool:
     """Is this step one Playwright or Cypress run, direct or as the only command of a package script?
 
-    A step or script that chains commands (&& ; | &) runs several things, so it is not one."""
+    A step or script that chains commands (&& ; | &), or a script that has a pre or post script
+    (npm runs those with it), does more than the browser run, so it is not one."""
     chained = re.compile(r"[;|&]")
     if chained.search(part):
         return False
@@ -60,18 +64,24 @@ def browser_step(top: Path, part: str) -> bool:
         if words[:1] in (["npm"], ["pnpm"], ["yarn"], ["bun"]):
             script = words[2] if len(words) > 2 and words[1] in ("run", "run-script") else (
                 words[1] if len(words) > 1 else "")
-            body = _scripts(top).get(script)
+            scripts = _scripts(top)
+            body = scripts.get(script)
             if body is not None:
-                if chained.search(body):
+                if chained.search(body) or f"pre{script}" in scripts or f"post{script}" in scripts:
                     return False
                 words = shlex.split(body)
     except ValueError:
         return False
-    for index, word in enumerate(words):
+    rest = iter(enumerate(words))
+    for index, word in rest:
+        if word.startswith("-"):  # a launcher option; an option's value is not a program
+            if word in NPM_VALUE_OPTIONS:
+                next(rest, None)
+            continue
         name = word.replace("\\", "/").rsplit("/", 1)[-1]
         if name in BROWSER_RUNNERS and words[index + 1:index + 2] == [BROWSER_RUNNERS[name]]:
             return True
-        if name not in LAUNCHERS and not name.startswith("-") and "=" not in name:
+        if name not in LAUNCHERS and "=" not in name:
             return False  # another program, such as a lint step or a script runner
     return False
 

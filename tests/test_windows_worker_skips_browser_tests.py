@@ -22,26 +22,39 @@ STORY = "FIX-ON-A-WINDOWS-LAPTOP-A-BUILDER-S-OWN-TEST"
 # The Windows workflow runs only platform tests, and this is a Windows-only rule.
 pytestmark = pytest.mark.platform
 
-# npm and corepack run the repo's package scripts, npx and `exec` run the rest of the line, and every
-# other program logs its name and first two words (Forge adds options to some runners after those).
-# The shell runs script bodies, as the real tools do.
+# npm and corepack run the repo's package scripts with their pre and post scripts, npx and `exec` run
+# the rest of the line after their own options, and every other program logs its name and first two
+# words (Forge adds options to some runners after those). The shell runs script bodies, as the real
+# tools do.
 PROGRAM = f"""#!{sys.executable}
 import json, os, pathlib, subprocess, sys
 
 name, args = pathlib.Path(sys.argv[0]).name, sys.argv[1:]
 
 
-def shell(command):
-    sys.exit(subprocess.run(command, shell=True).returncode)
+def shell(*commands):
+    for command in commands:
+        code = subprocess.run(command, shell=True).returncode
+        if code:
+            sys.exit(code)
+    sys.exit(0)
+
+
+def program(words):  # npm exec and npx options come first; some take a value, and -- ends them
+    index = 0
+    while index < len(words) and words[index].startswith("-"):
+        index += 2 if words[index] in ("--package", "-p", "--workspace", "-w", "--prefix") else 1
+    return words[index:]
 
 
 if name == "corepack":  # corepack pnpm ...: pnpm takes the same words as npm here
     name, args = "npm", args[1:]
 if name == "npx" or args[:1] == ["exec"]:
-    shell(subprocess.list2cmdline(args if name == "npx" else args[1:]))
+    shell(subprocess.list2cmdline(program(args if name == "npx" else args[1:])))
 if name == "npm" and args[:1] != ["ci"]:
     scripts = json.loads(pathlib.Path("package.json").read_text("utf-8"))["scripts"]
-    shell(scripts[args[1] if args[0] == "run" else args[0]])
+    script = args[1] if args[0] == "run" else args[0]
+    shell(*(scripts[hook] for hook in ("pre" + script, script, "post" + script) if hook in scripts))
 with open(os.environ["RAN_LOG"], "a", encoding="utf-8") as log:
     log.write(" ".join([name, *args[:2]]) + "\\n")
 """
@@ -61,6 +74,12 @@ STEPS = [
     ("playwright test direct", ["playwright test direct"], True),
     ("cypress run direct", ["cypress run direct"], True),
     ("npx playwright test npx", ["playwright test npx"], True),
+    # npm launcher options that take a value are not programs.
+    ("npm exec --workspace apps/web -- playwright test workspace", ["playwright test workspace"], True),
+    ("npm exec -w apps/web -- playwright test w", ["playwright test w"], True),
+    ("npm exec --prefix apps/web -- playwright test prefix", ["playwright test prefix"], True),
+    ("npx --package=@playwright/test -- playwright test package", ["playwright test package"], True),
+    ("npx -p @playwright/test playwright test p", ["playwright test p"], True),
     ("corepack pnpm exec playwright test corepack", ["playwright test corepack"], True),
     ("corepack pnpm run test:browser", ["playwright test script"], True),
     ("npm run test:e2e", ["cypress run script"], True),
@@ -83,6 +102,12 @@ NODE_SETTING = "[ ! -f package.json ] || (npm ci && npm test)"  # what init writ
 PYTEST = f'"{Path(sys.executable).as_posix()}" -m pytest tests -q'
 CASES = {
     "new-repo": dict(test=ALL, ran=KEPT, said=SKIPPED),
+    # One combined script with nothing to skip: both of its steps run and Forge says nothing.
+    "one-combined-script": dict(test="npm run ci", ran=["unit-tests two", "playwright test combined"], said=""),
+    # npm runs pretest and posttest with `npm test`, so that step is more than the browser run.
+    "script-with-pre-and-post": dict(
+        test=NODE_SETTING, scripts={"pretest": "unit-tests pre", "posttest": "lint-tests post"},
+        ran=["npm ci", "unit-tests pre", "playwright test default", "lint-tests post"], said=""),
     # fast_test is the command a builder's run uses; test would run full-suite.
     "adopted-repo": dict(adopted=True, test="full-suite", fast_test=ALL, ran=KEPT, said=SKIPPED),
     "default-node-setting": dict(test=NODE_SETTING, ran=["npm ci"], said=said("npm test")),
@@ -99,7 +124,7 @@ CASES = {
 }
 
 
-def set_up(env, monkeypatch, *, test, fast_test="", adopted=False, **_):
+def set_up(env, monkeypatch, *, test, fast_test="", adopted=False, scripts=None, **_):
     if adopted:
         adopt_earlier(env)
     for name in PROGRAMS:
@@ -110,7 +135,7 @@ def set_up(env, monkeypatch, *, test, fast_test="", adopted=False, **_):
     lines = ['test_place = "local"', 'always_test = ["tests/test_unit.py"]', f"test = {json.dumps(test)}"]
     lines += [f"fast_test = {json.dumps(fast_test)}"] if fast_test else []
     env.repo.write("forge.toml", "\n".join(lines) + "\n" + settings)
-    env.repo.write("package.json", json.dumps({"scripts": SCRIPTS}))
+    env.repo.write("package.json", json.dumps({"scripts": {**SCRIPTS, **(scripts or {})}}))
     env.repo.write("tests/test_unit.py", "import os\n\n\ndef test_unit():\n"
                    "    with open(os.environ['RAN_LOG'], 'a') as log:\n        log.write('pytest unit\\n')\n")
     env.repo.git("add", "-A")
@@ -138,7 +163,8 @@ def test_3_windows_builder_run_skips_browser_steps_and_nothing_else(env, monkeyp
 
     assert done.returncode == 0, done.stdout + done.stderr
     assert steps_run(log) == CASES[case]["ran"], done.stdout
-    assert done.stdout.count("On Windows this run skips") == 1 and CASES[case]["said"] in done.stdout
+    notice = CASES[case]["said"]
+    assert done.stdout.count("On Windows this run skips") == bool(notice) and notice in done.stdout
 
 
 def test_4_every_other_run_keeps_the_browser_steps(env, monkeypatch):
