@@ -152,7 +152,7 @@
     "id": "00255962-0a59-4b2d-afd4-e5b8b1fed14b",
     "status": "blocked"
   },
-  "round": 2,
+  "round": 3,
   "status": "fixing",
   "steps": [
     {
@@ -178,15 +178,10 @@
     "worker_round": 2
   },
   "stuck": {
-    "close": "ea7db8a0-f48f-4df4-afa8-1872a94cec84",
-    "head": "f105a51303992bfb9ae29100180274aa34052137",
-    "keys": {
-      "the open P0 gate: restore the historical fixture guides in tests/fixtures/doctor-v1.2.2/.claude/skills/forge/skill.md": 1,
-      "the open P0 gate: restore the historical guide fixtures in tests/fixtures/copied-client/source/.claude/skills/forge/skill.md": 1,
-      "the open P0 gate: test_1_one_command_upgrades_forge_and_opens_its_pull_request in tests/fixtures/adopted-v1.2.2/client/.claude/skills/forge/skill.md": 1,
-      "the open P0 not done: windows browser-test steps are classified incorrectly in src/forge/quicktest.py": 1
-    },
-    "round": 1
+    "close": "8bbc180a-efa2-4fa6-8f9d-7b5d58de6fec",
+    "head": "a8ec3091d9789f2356b4ae35389395cd78e96528",
+    "keys": {},
+    "round": 2
   },
   "why": "On a Windows laptop, a builder's own test run can take up to 24 minutes (a client team reports this; Forge did not measure it), and its browser test steps (Playwright or Cypress) fail there for reasons unrelated to the change, which costs builders time and rounds.",
   "worker": "claude"
