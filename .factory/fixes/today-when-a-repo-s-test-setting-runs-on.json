@@ -101,8 +101,8 @@
     "id": "d9a243d1-0ecf-4018-95c5-260b21fe78fd",
     "status": "clean"
   },
-  "round": 2,
-  "status": "waiting for checks",
+  "round": 3,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-12T15:30:43.911641+00:00",
@@ -122,13 +122,10 @@
     }
   ],
   "stuck": {
-    "close": "1c99ec3e-eba0-4116-b2bb-c32bbf477e76",
-    "head": "c9700215be6be0fbd8c06f05b35351dda70aa960",
-    "keys": {
-      "the open P0 not done: default node and corepack commands miss combined scripts in src/forge/quicktest.py": 1,
-      "the open P0 not done: upgrades started by an older forge use the old suggestion logic in src/forge/quicktest.py": 1
-    },
-    "round": 1
+    "close": "aec7acc6-00d9-4a3f-88c9-5409a833777b",
+    "head": "bb4851761c2ed8fc713be71203d97ee360719c6a",
+    "keys": {},
+    "round": 2
   },
   "why": "Today, when a repo's test setting runs one combined script and has no quick-test setting, Forge prints a wrong suggested command for some such repos, prints nothing for others, and prints nothing at all when it adopts a live app.",
   "worker": "claude"
