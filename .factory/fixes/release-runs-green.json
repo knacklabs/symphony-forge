@@ -40,7 +40,7 @@
     "id": "ca9cf19e-db3e-4d66-8a0f-a91fd102fdad",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -62,10 +62,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": null,
-    "head": "0c1cb08205a2ea0beee4a3e4063c312b13b10889",
+    "close": "307bbe64-1c89-4526-bf93-47f5972839fb",
+    "head": "21364560cd3118312e8456a1829ea1a06e0dacd0",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "The release full runs fail: a Python starter selection test compares command text that differs on Windows, and two starter smoke jobs run at their 45-minute limit and get cancelled",
   "worker": "claude"
