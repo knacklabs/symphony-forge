@@ -25,7 +25,7 @@ def test_1_the_guide_carries_the_steps_to_score_a_release_in_claude_code():
     for phrase in ("scratch folder", "outside the Forge repo", "uvx --from git+", "forge init",
                    "general-purpose", "not the `worker`", "benchmark/notes.md", "no person is here",
                    "no stories", "no fixes", "does not commit", "AGENTS.md", "skills",
-                   "start the fix before", "worktree", "120 minutes", "stop",
+                   "Start the fix before you write the score", "worktree", "120 minutes", "stop",
                    "forge-bench-", "BENCH_PROJECT", "`ports`", "`setup`", "down --volumes",
                    "uv run --frozen --python 3.11 python scripts/bench_score.py",
                    "--results benchmark/results", "normal fix", "[models.build.claude]"):

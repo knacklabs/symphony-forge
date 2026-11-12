@@ -693,6 +693,27 @@ For Forge's maintainers:
    The tag push runs the Windows checks again or reuses passed proof for the same tree.
    Confirm that run is green too.
 4. Install from the tag and check that `forge --version` prints `vX.Y.Z`.
+5. Score the release. Nothing else starts this, a pull request never does, and it never holds the
+   release. Use Claude only, in your own Claude Code session. Use no model whose id contains
+   `fable` or `astra`.
+   - Make a scratch folder outside the Forge repo. Run `forge init` there from the tag:
+     `uvx --from git+https://github.com/knacklabs/symphony-forge@vX.Y.Z forge init --starter react --actions no`.
+     At the protection step the `gh api` call can fail. That is expected for this folder.
+   - Start a `general-purpose` subagent, not the `worker` role. Set its model to the one in
+     `[models.build.claude]` in `forge.toml`. Give it only the scratch folder, `benchmark/notes.md` from
+     the Forge repo, and the rule "no person is here". It makes no stories and no fixes, and does not commit.
+     Point it at the scratch folder's AGENTS.md and skills.
+   - Stop a step that hangs. Stop the whole build after 120 minutes (a guess, not measured) and
+     score what exists. A failed build still gets a score.
+   - Start the fix before you write the score, in the Forge repo, and write the score into that fix's worktree:
+     `uv run --frozen --python 3.11 python scripts/bench_score.py <scratch app> --checks benchmark/checks.toml --release vX.Y.Z --results benchmark/results`
+     (add `--usage <file>` with the minutes, turns and, if the session reports them, tokens). Do not use bare `python`.
+   - The script gives each run its own Compose project, `forge-bench-<release>-<id>` (in `BENCH_PROJECT`),
+     and a free local port for each name in the `ports` key of `benchmark/checks.toml`. The `setup` key runs
+     once after the app answers. The stop command is `down --volumes` for that project only. If a compose
+     command hangs, stop it and run that stop command by hand.
+   - Show the score next to the previous one, with up, down or same, the minutes and the tokens
+     (or "not reported"). Commit the result file in a normal fix and close it as usual.
 
 What the switch to this Forge removed from the repo, and where to find it, is in
 `docs/archive.md`.
