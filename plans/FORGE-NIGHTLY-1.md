@@ -14,7 +14,7 @@
 - The agent still starts the fix for a failed run without asking you, as it does today. The guide that Forge ships says so. (Source: the planner's choice)
 - New client repos get all of this at once. Existing client repos get the board row and the next-step text with the new release, and the new guide sentences after the usual guide update. Forge changes no app file and writes no setting. No model is called, so the model cost does not change. (Source: the planner's choice)
 
-Design: none. The failed run is one more row in the board's existing Needs you list. The same row code draws it, with the same look. There is no new screen, style or layout.
+Design: none (the failed run is one more row in the board's existing Needs you list; the same row code draws it with the same look; there is no new screen, style or layout)
 
 ## Why
 
