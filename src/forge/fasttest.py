@@ -266,9 +266,27 @@ def own_version_only(path: Path, base: str) -> bool:
     return snapshots[0] == snapshots[1]
 
 
+def skip_browser(top: Path, command: str) -> str:
+    """On Windows a builder's own run leaves out separate browser-test steps and says so once."""
+    # FORGE_OS lets a test pick the platform; ponytail: no user-facing setting.
+    if os.environ.get("FORGE_OS", os.name) != "nt" or command == init.NODE_TEST:
+        return command
+    parts = quicktest.test_parts(top, command)
+    skipped = [part for kind, part, _ in parts if kind == "browser"]
+    if not skipped:
+        return command
+    if not os.environ.get("FORGE_BROWSER_SKIPPED"):
+        os.environ["FORGE_BROWSER_SKIPPED"] = "1"
+        print(f"On Windows this run skips the browser tests ({', '.join(skipped)}). The pull request check, "
+              "the final check and the full test run still run them.", flush=True)
+    return " && ".join(part for kind, part, _ in parts if kind != "browser") or "exit 0"
+
+
 def close_tests(base: str) -> int:
     """Use supported runners' selection; leave other commands unchanged."""
     command = repo.grouped(Path.cwd(), repo.config(Path.cwd())["test"])
+    if os.environ.get("FORGE_WORKER_TESTS") == "1":
+        command = skip_browser(Path.cwd(), command)
     parts = quicktest.test_parts(Path.cwd(), command)
     package = Path("package.json")
     if command == init.NODE_TEST:
@@ -332,8 +350,11 @@ def test(args) -> int:
             if merges:
                 base = repo.git("merge-base", "--octopus", base,
                                 *(f"{commit}^1" for commit in merges), cwd=top)
+        command = review.close_test(top, base, closing=args.change)
+        if not args.change:
+            command = skip_browser(top, command)
         # CI groups reuse their own passes; explicit ungrouped commands always execute.
-        status, report = review.test_run(top, review.close_test(top, base, closing=args.change), base,
+        status, report = review.test_run(top, command, base,
                                         always=not (args.change and "FORGE_GROUPS" in os.environ),
                                         closing=args.change)
         print(report)
@@ -695,11 +716,13 @@ def test_process(top, item, command, env, entry, ran, log):
 
 
 def pytest_tests(base: str, command: str, entry: dict | None = None) -> int:
+    if os.environ.get("FORGE_WORKER_TESTS") == "1":
+        command = skip_browser(Path.cwd(), command)
     parts = quicktest.test_parts(Path.cwd(), command)
     mixed = any(kind in ("vitest", "jest") for kind, _, _ in parts)
     if mixed:
         command = " && ".join(part for kind, part, _ in parts
-                              if kind not in ("vitest", "jest", "node-install", "node-check"))
+                              if kind not in ("vitest", "jest", "node-install", "node-check", "browser"))
         parts = quicktest.test_parts(Path.cwd(), command)
     environment = dict(os.environ)
     worker = environment.pop("FORGE_WORKER_TESTS", None) == "1"

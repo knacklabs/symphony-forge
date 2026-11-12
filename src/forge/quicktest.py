@@ -53,11 +53,13 @@ def test_parts(top: Path, command: str) -> list[tuple[str, str, str]]:
         names = [word.replace("\\", "/").rsplit("/", 1)[-1] for word in words]
         runner_words = words
         passthrough = ""
+        body = ""
         if words and words[0] in ("npm", "pnpm", "yarn", "bun"):
             script = words[2] if len(words) > 2 and words[1] in ("run", "run-script") else (
                 words[1] if len(words) > 1 else "")
             if script in scripts:
-                runner_words = shlex.split(scripts[script])
+                body = scripts[script]
+                runner_words = shlex.split(body)
                 passthrough = " --" if words[0] == "npm" and "--" not in words else ""
         if words[:2] == ["npm", "exec"]:
             index = _npm_runner_index(words)
@@ -66,6 +68,9 @@ def test_parts(top: Path, command: str) -> list[tuple[str, str, str]]:
         node = bool(words and words[0] in ("npm", "pnpm", "yarn", "bun", "npx"))
         kind = next((name for name in ("vitest", "jest") if name in runner_names),
                     "node-check" if node else "")
+        if kind == "node-check" and re.search(r"\b(playwright|cypress)\b", f"{part} {body}") \
+                and not re.search(r"&&|[;|]", f"{part} {body}"):
+            kind = "browser"  # a separate browser-test step; Windows builder runs skip it
         if "pytest" in names:
             kind = "python"
         elif words and words[0] in ("npm", "pnpm", "yarn", "bun") and len(words) > 1 and words[1] in ("ci", "install"):
