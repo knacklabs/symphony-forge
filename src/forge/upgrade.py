@@ -11,6 +11,7 @@ import re
 import shutil
 import subprocess
 from pathlib import Path
+from typing import Any
 
 from forge import close, machine, quicktest, repo, story, task
 
@@ -26,6 +27,7 @@ SOURCE = "knacklabs/symphony-forge"
 INSTALL = ("uv tool install --force --reinstall --no-cache --python 3.11 "
            f"git+https://github.com/{SOURCE}@{{release}}")
 PREFIX = "upgrade-forge-to-"
+WHY, DONE = "Upgrade Forge to {release}.", "This repo pins and runs Forge {release}."
 RELEASE = re.compile(r"v(\d+)\.(\d+)\.(\d+)")
 
 REFUSALS = {
@@ -59,6 +61,13 @@ REFUSALS = {
               "remove that forge or put uv's tool folder ahead of it on PATH, then "
               "forge upgrade {release}"),
 }
+
+
+def made(item: str, state: dict[str, Any], release: str) -> bool:
+    """The fix that forge upgrade makes for this release: its name and its record both say so."""
+    return (item == PREFIX + release.replace(".", "-") and state.get("kind") == "fix"
+            and state.get("why") == WHY.format(release=release)
+            and state.get("done_when") == DONE.format(release=release))
 
 
 def upgrade(args: argparse.Namespace) -> int:
@@ -113,7 +122,7 @@ def upgrade(args: argparse.Namespace) -> int:
                 continue
             repo.refuse(REFUSALS["other_open"], fix=other[4:], path=path,
                         other=other[4 + len(PREFIX):].replace("-", "."))
-    why, done = f"Upgrade Forge to {release}.", f"This repo pins and runs Forge {release}."
+    why, done = WHY.format(release=release), DONE.format(release=release)
 
     # 1. The fix, started like forge fix start's, or the one an earlier run left.
     path = trees.get(f"fix/{name}")

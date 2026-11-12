@@ -1,0 +1,79 @@
+{
+  "branch": "task/FORGE-PRODGAP-1-GUIDE",
+  "known": [
+    {
+      "area": "src/forge/templates/skill.md",
+      "file": "src/forge/templates/skill.md",
+      "gain": 5,
+      "harm": 4,
+      "line": 1053,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": true,
+      "title": "Security: Pass the row text as a literal shell argument",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/skill.md",
+      "file": "src/forge/templates/skill.md",
+      "gain": 3,
+      "harm": 3,
+      "line": 1053,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Handle documentation-only light-review gaps",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/skill.md",
+      "file": "src/forge/templates/skill.md",
+      "gain": 2,
+      "harm": 2,
+      "line": 1053,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Follow-up: Preserve light-review names in a story\u2019s saved title",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "31c6de15ead99c9e6b531bad697f960a5bc9c699a57a0ae33952e4ce64ce503c",
+    "changed": "fb5a35f3ced4af9bbf7740572dc315a2ad6ae725a9a8b4e8467080b456b056cf",
+    "commit": "9c7aeddc784a049c74f80d862ff03efd2edd93d5",
+    "dismissals": [],
+    "findings": [],
+    "id": "b98fa844-42b0-445d-9a0b-6229f225cadb",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-11T08:48:02.807943+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-11T09:07:31.523232+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-11T09:46:13.039265+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "26782613-ccd5-4f8a-8bfe-f1b48432e4bc",
+    "head": "6ae0c41e8b61c0c6ad3ceab70f5b737037b9a41a",
+    "keys": {
+      "the open P0 security: pass the row text as a literal shell argument in src/forge/templates/skill.md": 1
+    },
+    "round": 1
+  },
+  "worker": "claude"
+}

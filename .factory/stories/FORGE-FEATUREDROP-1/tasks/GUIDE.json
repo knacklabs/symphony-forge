@@ -1,0 +1,131 @@
+{
+  "base": "057f6b7718e52faa59720d006c3bb9c66ad100e1",
+  "branch": "task/FORGE-FEATUREDROP-1-GUIDE",
+  "known": [
+    {
+      "area": "src/forge/templates/brief.md",
+      "file": "src/forge/templates/brief.md",
+      "gain": 5,
+      "harm": 3,
+      "line": 552,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: The guide and the worker brief give the fixed list for each starter",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/skill.md",
+      "file": "src/forge/templates/skill.md",
+      "gain": 4,
+      "harm": 4,
+      "line": 808,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: The guide and the worker brief give the fixed list for each starter, the data rule",
+      "work": 1
+    },
+    {
+      "area": "test_4_the_guide_turns_remove_this_feature_into_the_path() in tests/test_feature_remove.py",
+      "file": "tests/test_feature_remove.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 556,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_4_the_guide_turns_remove_this_feature_into_the_path",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/brief.md",
+      "file": "src/forge/templates/brief.md",
+      "gain": 4,
+      "harm": 3,
+      "line": 571,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Distinguish retained schema entries from removed API calls",
+      "work": 1
+    },
+    {
+      "area": "src/forge/templates/brief.md",
+      "file": "src/forge/templates/brief.md",
+      "gain": 2,
+      "harm": 2,
+      "line": 551,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Follow-up: Deliver the non-starter fallback to workers",
+      "work": 1
+    },
+    {
+      "area": "src/forge/templates/skill.md",
+      "file": "src/forge/templates/skill.md",
+      "gain": 2,
+      "harm": 2,
+      "line": 806,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Follow-up: Reconcile removal testing with sample mode",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "8ff03a25d2339932ab28ab64263434a103bfcd98f87f8e75646493e00c7255e8",
+    "changed": "ed2d2441bcfae98e33fba847f9b953195acf96d005a2707540d52c77e1d045cf",
+    "commit": "e606a97f50e645f9f7c5c980dca2fb97a730d87f",
+    "dismissals": [],
+    "findings": [],
+    "id": "07889e6a-0252-4dbf-bd3d-e3241a949770",
+    "status": "clean"
+  },
+  "round": 3,
+  "stacked_on": "FORGE-GENFILE-1/NOTE",
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-11T18:55:30.794072+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-11T19:08:02.726507+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-11T19:29:27.555720+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-12T02:27:23.251489+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-11T19:29:27.555955+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "src/forge/templates/brief.md",
+    "reason": "Owner: one more round. Fix the Python list conflict and add one sentence for each of the two small points.",
+    "wait_id": "001d4ffe-4c48-4ee4-9aea-798d61c786fa",
+    "worker_round": 2
+  },
+  "stuck": {
+    "close": "dac25d32-1cba-4af2-8e7a-10df5adbd117",
+    "head": "aaf8c2a01e52eb5c9a2f06fbe63a8e483b98a41e",
+    "keys": {},
+    "round": 2
+  },
+  "worker": "claude"
+}

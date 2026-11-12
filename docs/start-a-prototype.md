@@ -55,6 +55,10 @@ Talk with the customer about the job they do today, their workaround, what it co
 feels it and how often. Tell the agent what you learned and ask it to record the discovery.
 Choose the one task the demo should let the customer do from start to finish.
 
+If you do not know what the demo should show, give the agent the company's name and website and
+any notes you have. It researches the company, with a link for each finding, and proposes one
+prototype and two other options. You say yes, pick another, or say what to change.
+
 ## Build and show the demo
 
 Start with a canvas of the screens. You or the FDE approve it before a build. The customer
@@ -104,19 +108,20 @@ merge setting applies.
 
 Client sign-off approves the product direction. It does not prove production readiness.
 After sign-off, plan and build the remaining production work through stories and reviewed
-pull requests. Follow this checklist before the first Promote:
+pull requests. The `Before production` list in `forge next` shows the gaps that remain. Follow this checklist before the first Promote:
 
-1. Confirm the production host, account owner, region, domain, budget and release approver
+1. Run `forge next`: no `Before production` line may be open, or the owner accepts the rest in writing.
+2. Confirm the production host, account owner, region, domain, budget and release approver
    with the client. Record the decisions in the repo. Keep secrets out of the repo.
-2. Confirm production access and secrets in the host, HTTPS and DNS for the real domain,
+3. Confirm production access and secrets in the host, HTTPS and DNS for the real domain,
    database access and migrations, and the external services the app needs.
-3. Check the release in a non-production environment. Confirm the full test run is green,
+4. Check the release in a non-production environment. Confirm the full test run is green,
    the customer's main task works, and sign-in and permissions work for each role.
-4. Confirm a current database backup and a demonstrated restore. Record who can restore it,
+5. Confirm a current database backup and a demonstrated restore. Record who can restore it,
    the recovery steps and the rollback plan for the app and migrations.
-5. Confirm health checks, error alerts and the support contact. Agree the release time and
+6. Confirm health checks, error alerts and the support contact. Agree the release time and
    any data import or downtime with the client.
-6. Ask the authorized person to press Promote in Mainline. An agent or worker never promotes
+7. Ask the authorized person to press Promote in Mainline. An agent or worker never promotes
    production. Check the production address and the customer's main task after release.
    If a check fails, use the agreed rollback plan and notify the support contact.
 

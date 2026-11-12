@@ -1,0 +1,70 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/templates/brief.md\tDistinguish retained schema entries from removed API calls\tFORGE-FEATUREDROP-1/GUIDE",
+      "kind": "bug",
+      "path": "src/forge/templates/brief.md",
+      "line": 571,
+      "text": "Distinguish retained schema entries from removed API calls",
+      "from": "blocking",
+      "item": "FORGE-FEATUREDROP-1/GUIDE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_feature_remove.py\tGate: test_4_the_guide_turns_remove_this_feature_into_the_path\tFORGE-FEATUREDROP-1/GUIDE",
+      "kind": "bug",
+      "path": "tests/test_feature_remove.py",
+      "line": 556,
+      "text": "Gate: test_4_the_guide_turns_remove_this_feature_into_the_path",
+      "from": "blocking",
+      "item": "FORGE-FEATUREDROP-1/GUIDE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/templates/brief.md\tFollow-up: Deliver the non-starter fallback to workers",
+      "kind": "edge",
+      "path": "src/forge/templates/brief.md",
+      "line": 551,
+      "text": "Follow-up: Deliver the non-starter fallback to workers",
+      "from": "review",
+      "item": "FORGE-FEATUREDROP-1/GUIDE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/templates/brief.md\tNot done: The guide and the worker brief give the fixed list for each starter",
+      "kind": "edge",
+      "path": "src/forge/templates/brief.md",
+      "line": 552,
+      "text": "Not done: The guide and the worker brief give the fixed list for each starter",
+      "from": "review",
+      "item": "FORGE-FEATUREDROP-1/GUIDE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/templates/skill.md\tFollow-up: Reconcile removal testing with sample mode",
+      "kind": "edge",
+      "path": "src/forge/templates/skill.md",
+      "line": 806,
+      "text": "Follow-up: Reconcile removal testing with sample mode",
+      "from": "review",
+      "item": "FORGE-FEATUREDROP-1/GUIDE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/templates/skill.md\tNot done: The guide and the worker brief give the fixed list for each starter, the data rule",
+      "kind": "edge",
+      "path": "src/forge/templates/skill.md",
+      "line": 808,
+      "text": "Not done: The guide and the worker brief give the fixed list for each starter, the data rule",
+      "from": "review",
+      "item": "FORGE-FEATUREDROP-1/GUIDE",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

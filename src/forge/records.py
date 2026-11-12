@@ -627,8 +627,8 @@ def constitution(top: Path) -> str:
         return ""
     # Next already lists the default branch while checking dependency refreshes.
     names = repo.command_fact(("default file names", ref), top,
-                             lambda: repo.git("ls-tree", "-r", "--name-only", ref, cwd=top))
-    for name in names.splitlines():
+                             lambda: repo.git("ls-tree", "-r", "-z", "--name-only", ref, cwd=top))
+    for name in names.split("\0"):
         if re.fullmatch(r"docs/decisions/\d{4}-(?:app-constitution|prototype-plan)\.md", name):
             fields, _ = _front(story.show(top, ref, name) or "")
             if fields.get("status") == "accepted":

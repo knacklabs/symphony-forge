@@ -17,7 +17,7 @@ reader while available. A native read uses a separate `reader` subagent.
 Install the release a repo pins (uv brings Python 3.11 or later if you don't have it):
 
 ```
-uv tool install git+https://github.com/knacklabs/symphony-forge@v1.2.36
+uv tool install git+https://github.com/knacklabs/symphony-forge@v1.2.37
 ```
 
 `forge --version` prints the installed version. Each repo pins its release in `forge.toml`, and
@@ -85,6 +85,14 @@ the answers in `docs/product/BRIEF.md`. Ask each build-changing question when it
 one at a time, and record the answer and who gave it. If a requested feature does not help test
 the problem, say why and offer to note it for after sign-off.
 
+A Sales person who does not know what the prototype should show gives the agent the company's
+name and website, plus any notes. The agent researches the company once on the public web (at
+most 12 web searches and 20 page reads) and writes `docs/context/prospect-research.md` with a link
+for each finding. It then proposes one prototype with a source on every feature line, and two
+other options. The Sales person says yes, picks another or changes it in plain words; nothing is
+built before that choice. A later pass or choice is added to the page and never replaces an
+earlier one.
+
 Keep one `## Answers` section in the brief and update it during the talks. Record an open question
 as `ask the client`, and record a current unknown as `not known yet`. These answers are accepted:
 no missing answer or open client question blocks planning, review, close, merge or sign-off. A repo
@@ -140,6 +148,12 @@ every record type in the plan with `forge task feature`, with the Roles table an
 questions. For each record type whose row differs from the command's default (member view, create),
 edit that feature's one `definePermissions` call. Build and demo the prototype through
 `forge fix start`, `forge work` and `forge close`.
+
+Close refuses a changed UI file that animates all properties (`transition-all`), including a shadcn
+copy. List the properties, or set the rule aside with `forge-ui-ignore motion-all: <reason>`. Review
+reports a button-like part with no pressed state and a new animation that ignores reduced motion.
+An app made before this release gets the check and these rules on sync, and keeps every app file;
+the agent copies Forge's finished parts when a change needs them or the person asks.
 A prototype fix started before sign-off can exceed the usual fix size and change an interface; it
 still gets tests, review and a pull request. Save and confirm specs as the work reveals them. Before sign-off,
 `forge next` shows open answers, but they do not block work. Its light rounds prove the demo steps,
@@ -155,6 +169,7 @@ set the test command and CI checks as needed, then turn off the setting. In the 
 prototype's screens in the app's browser tests with `checkScreen` from `.forge/design/render-check.mjs`,
 so the rendered check starts with the first tests. Close blocks that fix until
 the `Personal data` answer is settled.
+After sign-off, `forge next` also lists `Before production` gaps. The agent starts one normal change for each light-review and "Demo only" line and does not promote while a line is open. Forge cannot see the release and refuses nothing.
 The design comes first. Before any screen, use the app's existing design. If it has none, draft
 one from the client's brand; use a neutral design when there is no brand. Every
 API a person uses gets its screen in the client's design, built by the agent when it builds the API, with no
@@ -243,6 +258,11 @@ An existing app from the current starter can use the command. A non-starter or a
 missing required parts gets a refusal naming what is missing and no file changes; the worker
 builds the feature by hand in that app's layout.
 
+To remove a feature, tell the agent, for example "we do not need invoices any more". It runs
+`forge task feature-check` before and after it works through a fixed list of places to clean,
+then runs the app's own tests. No customer data is deleted: the table and its rows stay for a
+later, separate step.
+
 Only starter apps get an MCP server inside the API at `/mcp`, marked with `mcp = "/mcp"`
 in `services.toml`. Each feature has six tools: `<feature>_search`, `<feature>_get`,
 `<feature>_create`, `<feature>_update`, `<feature>_delete` and `<feature>_restore`.
@@ -316,6 +336,11 @@ A prototype without the sample-data mark also needs its strict whole-product rev
    do not cause Scope overlaps. Parts can share these test paths without an After link. Explicit
    After links still apply. An in-flight story gets the same check at its next plan check;
    follow the refusal's step to amend the plan.
+   Keep a file that a script can make at build time (a generated API contract or the types made from
+   it) out of the repo and out of every Scope, when nobody needs it stored. When the repo keeps such a
+   file on purpose, give its change to one first part that the other parts wait for. Three or more
+   parts that list the same file make the plan read print a `Shared file:` note. The `Shared file:` note
+   is advice: it does not stop the read or the approval, and it looks only at the plan being read.
 3. `forge read <KEY>` runs an independent cold read. Answer every finding (cut, defer or keep),
    amend the doc, then run `forge read <KEY>` again; the same reader reads the whole doc again,
    and this repeats until a round finds nothing.
@@ -583,9 +608,11 @@ Each job that uses the step skips only its guarded steps.
 New and upgraded repos use `stack = "on"` by default, with no settings change. A part can start
 on one reviewed, unmerged part when its After list or Scope makes it wait for that part.
 The base must use the same Forge release and must start from the default branch.
-A part that builds on another can become a base after Forge merges the lower part and close
-moves it onto that merged code and reviews it again. Set `stack = "off"` to make new parts
-wait for merges. Parts that already started on another part keep their base.
+A part that builds on another can become a base after the lower part merges, through Forge or
+with GitHub's button, and close moves it onto that merged code and reviews it again. Until then,
+`forge next` says the new part waits for the base to include the merge from the default branch:
+run `forge close` on that base. Set `stack = "off"` to make new parts wait for merges.
+Parts that already started on another part keep their base.
 
 ## Merging a ready item
 

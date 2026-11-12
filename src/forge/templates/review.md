@@ -394,6 +394,12 @@ routine app-screen motion under 300 ms; reserve longer timing for one authored l
 keep content visible by default and enter with `@starting-style` or transitions, never wait for a
 script to reveal it; share `cubic-bezier(0.23, 1, 0.32, 1)` as the one ease-out token; use CSS or
 the Web Animations API first and Motion only when a Done-when item needs springs or drag.
+Report as findings: a button-like part or element, in a screen or a shared part, with no pressed
+state anywhere (the `link` variant is exempt; read the style sheets too, because an `:active` style may
+sit there); a new animation, a transition that moves something, or a script animation that ignores
+reduced motion; a hand-built loading, empty or error block on a screen in an app that has the shared
+state parts; and motion that does not use the shared curve and speeds. Close already refuses
+`transition-all`, so do not report it.
 App screens and prototypes use impeccable's Operate mode and Emil's restraint. Popovers scale from their trigger with
 shadcn/Radix's transform-origin variable. Do not animate keyboard-driven or very frequent actions.
 Motion that follows these rules is not a `Simpler:` finding.

@@ -1,0 +1,141 @@
+{
+  "base": "df97bf7c6d5338589346fb24b6639dbccb3973bd",
+  "branch": "fix/bug-1531-each-forge-upgrade-stops-for-th",
+  "done_when": "An upgrade that changes only the pin and Forge's synced files passes close with no choice stop, and any other change in an upgrade still gets the normal model review.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "upgrade_only() in src/forge/review_skip.py",
+      "file": "src/forge/review_skip.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 65,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Pure upgrades with npm or pnpm lockfiles still reach model review",
+      "work": 2
+    },
+    {
+      "area": "upgrade_only() in src/forge/review_skip.py",
+      "file": "src/forge/review_skip.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 62,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Review extra TOML edits and synced-file mode changes",
+      "work": 2
+    },
+    {
+      "area": "close() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 354,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Restrict the automatic bypass to upgrade fixes",
+      "work": 2
+    },
+    {
+      "area": "close() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 354,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Preserve blocking findings when an upgrade becomes pure",
+      "work": 2
+    },
+    {
+      "area": "_modes_kept() in src/forge/review_skip.py",
+      "file": "src/forge/review_skip.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 65,
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: Owner accepted on 11 Nov 2026: a repo with a linked AGENTS.md keeps today's behaviour, because the check sends anything it is not sure about to the normal review; fix later if a real project hits it",
+      "round": 4,
+      "security": false,
+      "title": "Not done: Pure upgrades with a linked AGENTS.md still reach model review",
+      "work": 2
+    }
+  ],
+  "land": {
+    "rounds": 1,
+    "stop": {
+      "at": "2026-11-11T09:11:52.918693+00:00",
+      "by": "owner",
+      "choice": "more",
+      "file": "src/forge/review_skip.py",
+      "reason": "Owner chose one more round on 11 Nov 2026: the check must require exactly the file mode that Forge writes",
+      "wait_id": "93f4d5fc-4db5-4daa-a19b-9083af13bf96",
+      "worker_round": 2
+    }
+  },
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "80d8896b2d10dc4f279f88e2e69452b3ea387c5d1bc2a4cb81c2cf6e7fe93ba4",
+    "changed": "be4561482cd0706e16a3760d287b413b43dc564fb47dde1d7997b5e521e22658",
+    "commit": "8c8bab18e31c2db4ca47bf5a5a8e0033d579fca9",
+    "dismissals": [],
+    "findings": [],
+    "id": "f675c7b4-836d-4ad0-8169-42950823b923",
+    "status": "clean"
+  },
+  "round": 5,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-11T08:07:26.887337+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-11T08:34:18.693569+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-11T09:11:52.918424+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-11T09:32:45.004459+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-11T10:16:10.981833+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-11T11:06:40.316810+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-11T10:16:10.982084+00:00",
+    "by": "owner",
+    "choice": "accept",
+    "file": "src/forge/review_skip.py",
+    "reason": "Owner accepted on 11 Nov 2026: a repo with a linked AGENTS.md keeps today's behaviour, because the check sends anything it is not sure about to the normal review; fix later if a real project hits it",
+    "wait_id": "1dd3674f-8883-443b-b468-3e55adc54ddb",
+    "worker_round": 4
+  },
+  "stuck": {
+    "close": "b295f4e6-faef-4d39-95c2-f8ef95160aea",
+    "head": "b35d88746f7db44d6610e0e260d40d08dbcb8a28",
+    "keys": {},
+    "round": 4
+  },
+  "why": "Bug 1531. Each Forge upgrade stops for the person's choice, because the model review of the upgrade fix applies the repo's review rules, a proof-list rule raises a P1, and the one-round limit is reached.",
+  "worker": "claude"
+}

@@ -143,10 +143,12 @@ line asking you to split them into smaller stories; already approved larger stor
 
 Parts can start on one reviewed, unmerged part by default. `stack = "off"` in `forge.toml`
 makes new parts wait for merges. A part that builds on another part keeps that base until close
-moves its own changes onto the default branch after the base merges through Forge.
+moves its own changes onto the default branch after the base merges.
 Close reviews only the stacked part's own changes and waits for its base to merge before CI and merge.
 After Forge merges the base, run the printed `forge close <part>` step to move the part onto the default branch.
 If a new part waits for its base to include an earlier merge, close that base first, then start the new part again.
+This holds when a person merged the lower part with GitHub's button. The wait line reads
+`<part> waits for <base> to include the merge of <lower part> from <default branch>`; its step is `forge close <base>`.
 After a merge outside Forge, follow close's printed pull request target correction, then close the part again.
 The board and `forge next` show the part's base. After a clean review, they say that
 the part waits for its base to merge. After that merge, run `forge close <part>`.
@@ -546,6 +548,44 @@ Roles table asks for it; keep that mapping in one place. Add unsupported field k
 refuses a non-starter or an older starter, follow its named missing parts and build the feature
 by hand in the app's existing layout. Existing apps keep their code on upgrade and sync.
 
+To remove a feature from a starter app, run `forge task feature-check <plural>` first and stop
+if it names a feature that uses this one. Work through the fixed list for the stack, run the
+check until it prints that nothing points at the feature, then run the app's own tests.
+In a sample-data prototype (`sample_data = true`), the proof is the app's build and the look check
+(walk each demo step in a browser), not automated tests. In an app not built from the starter, skip
+the check: search the code for the feature's name, remove what points at it, and run the app's
+build and tests.
+
+The fixed list, TypeScript. Delete: `libs/<plural>/` and `apps/api/test/<plural>.e2e-spec.ts`.
+Edit: the import and the entry in `apps/api/src/app.module.ts`; the dependency in
+`apps/api/package.json`; the reference in `apps/api/tsconfig.json`; the `scope:<plural>` line in
+`eslint.config.mjs`; the two `dist` names in `scripts/test-build.mjs`; the feature's importer
+blocks and the app's dependency lines in `pnpm-lock.yaml`; the calls to the removed feature's API
+in `apps/api/test/database.e2e-spec.ts` (the starter's `projects` calls `/api/v1/projects` there,
+and the check lists those calls). Keep: the Prisma schema file, the migration folder, the name in
+`base.prisma`, the relation lines in `Account` and `Organisation` and the catalog entry in
+`apps/api/test/database.e2e-spec.ts`.
+
+The fixed list, Python. Delete: `routes.py`, `service.py`, `tools.py` and `permissions.py` in
+`apps/api/app/<module>/`, `apps/api/tests/test_<module>.py` and `libs/<plural>/`. Edit: cut
+`apps/api/app/<module>/__init__.py` to one line that imports `models` (the starter's entry file
+imports `routes`, `service` and `tools`, and the check lists those imports until they are gone);
+remove the two lines in `apps/api/app/main.py`; remove the path in the root `package.json`
+`typecheck`; remove the importer in `pnpm-lock.yaml`; change the calls to the removed feature's
+API in `apps/api/tests/test_module_schemas.py` (the starter's `projects` creates and reads a row
+through its API there, and the check lists those calls); then run `corepack pnpm run api-types`
+before the last check, because the shared API types still name the removed routes. Keep:
+`models.py` and every file in the module that `models.py` imports, the Alembic revision, `import
+app.<module>` in `migrations/env.py`, the `<plural> internals` contract and the schema inventory
+lines in `apps/api/tests/test_module_schemas.py`.
+
+In the client's own files, remove its screens, menu entries, routes, API calls and demo loader
+lines.
+
+Data rule: the table, every row in it and the feature's existing change history stay; write no
+drop migration in this change; a later drop follows the database skill and the deploy guide as
+they are.
+
 In an app with `libs/core/server/src/common/tools.ts` (Python `app/core/tools.py`), a
 feature's agent tools are in its tools file. Add a tool there only when your part names
 it, with `defineTool`, one permission, strict `input` and `output` schemas, all four
@@ -574,6 +614,11 @@ the canvas and design review.
 A refusal names the file, the rule and its waiver comment. Fix the problem, or use that comment
 with a reason. If the checker cannot run, close prints one line and runs the other checks.
 Without Node, close prints one line and skips the design checks. Sync changes no app code.
+Close also refuses a changed UI file that animates all properties, shadcn copies included; list the
+properties, or use `forge-ui-ignore motion-all: <reason>`. Review reports a button-like part with no
+pressed state (the `link` variant is exempt), a new animation that ignores reduced motion, a
+hand-built loading, empty or error block where the app has the shared state parts, and motion that
+skips the shared curve and speeds.
 
 When you build or change a screen in an app that has Playwright browser tests, add it to the render list
 beside the app's browser tests: one `checkScreen(page, { name, path })` call from

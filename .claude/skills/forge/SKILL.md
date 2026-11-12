@@ -30,6 +30,7 @@ the repo link, and what help you need. Let the person send it.
 
 For a sales demo, save transcripts in `docs/context/`. Mark each point from a transcript
 as "Heard from the customer" and name its transcript. Keep your guesses separate.
+For a Sales person with a company's name and website, research the company and propose one prototype before the design (see Discovery).
 Use Claude for the design. Require impeccable and emil-design-eng from the first
 design onward, for both the Claude design artifact and the browser-only web app.
 Then build a browser-only web app with fake data, no server, no database, and no
@@ -109,6 +110,7 @@ the next merge.
 | "Make it a fix" or "Just fix it" (a plan with no started part or part records, even if approved; merged parts count after branch cleanup) | `forge fix start "<its Problem>" --done "<its first Done-when>"`, then `forge story drop <KEY> --because "Moved to the fix <fix>"` |
 | "Do it later" (a fix) | `forge fix drop <fix> --because "The owner wants it later"`, then `forge start "Do this later: <its why> (kept on fix <fix>)"`. `fix drop --undo` brings it back |
 | "Do it now" (an idea-list entry) | `forge start "<the owner's new words>: <the entry's idea without its deferral words>"`, for example `forge start "Do it now: add dark mode"`. Then remove the entry from the main checkout's file while it is waiting, or else in the new item's branch |
+| "Remove this feature" or "We do not need X any more" (in a client app) | `forge start "Remove the <feature> feature"`; the removal is the part's work |
 | "Let this fix go over the limit" | `forge fix allow-large "<reason>"` |
 | "Build it" | `forge work <item>` |
 | "Tell the worker this round" | `forge work <item> --note "<text>"` |
@@ -166,7 +168,7 @@ first, a question of fact gets neutral choices.
 
 Every client repo moves through seven steps. `forge next` names the current step in its first line.
 
-1. **Ideas and client notes.** The person gives you the client notes or an idea. Put each note in `docs/context/` and read them all before you ask anything. You can say: "Here are the client notes" or "I have an idea: <idea>".
+1. **Ideas and client notes.** The person gives you the client notes or an idea. Put each note in `docs/context/` and read them all before you ask anything. You can say: "Here are the client notes" or "I have an idea: <idea>". A Sales person can give a company's name and website instead, with any notes: do the research in Discovery first.
 2. **Brief.** You write `docs/product/BRIEF.md` from the notes, and ask only about a point that changes a screen, a field or a flow. You can say: "The brief looks right" or "Change this in the brief: <change>".
 3. **Canvas design.** You make the screens on a design canvas, designed with the client's design system in Claude (see "Canvas and app design"), which the client can click through in Play mode, and the owner or FDE approves the canvas. You can say: "Show me the screens" or "Change this screen: <change>".
 4. **Sign-off.** Run the sign-off checks, then ask the client's named person to approve the canvas and answers. Build now and Later are planned choices, not available commands. Ask the owner what work to start or defer. You can say: "Record the client approval, then plan the first change".
@@ -624,6 +626,93 @@ they reply, record the Demo workflow and Sign-off person answers from it with `c
 source, as `- Demo workflow: <task> (client, <YYYY-MM-DD>)` and `- Sign-off person: <name, role>
 (client, <YYYY-MM-DD>)`. The salesperson sends the recap; Forge sends nothing.
 
+**Research the prospect.** A Sales person starts with the company's name and website, plus any
+notes or call transcripts. They do not need to know what to build: you find out. Ask nothing
+before the pass. Save their notes in `docs/context/`; when the session cannot read a recording,
+ask for its transcript. Run the pass before the first meeting, or before the prototype plan when
+they have already met the prospect. It is the pre-meeting brief, written as
+`docs/context/prospect-research.md` in the client repo, never in Forge's own files. Do one
+pass on the public web, with this session's own web search, over this list in this order:
+
+1. what it sells and to whom, from its own site;
+2. how it works today: its service or ordering pages, case studies and the duties in its job posts;
+3. complaints from its customers and its staff, from public review pages and public employer
+   review pages that open without a sign-in;
+4. its tools, from job posts, its site and vendors' public case studies;
+5. its job posts, from its careers page and public job boards;
+6. two or three close competitors and what each offers, from their own sites.
+
+Stop at 12 web searches and 20 page reads for the whole pass. Items 1 to 6 get at most 8
+searches and 14 page reads. Keep the last 4 searches and 6 page reads for similar companies, and
+use them only when the findings are thin. These numbers are an estimate, not a measurement; they
+change after the first real runs. Use no paid data service. Only one agent runs the pass: this
+session's agent, or one helper agent when the host has one (for example the `explorer` role),
+so the page reads stay out of the main chat. Never use more than one.
+
+Read public pages only, never a page behind a sign-in. Name a person only by role ("the
+operations head"), and summarise complaints with no reviewer names. Write short notes in your
+own words, each with a link; copy no text. Use neutral words, because the client may read this
+repo one day. Every finding under What we found has its own link to the public page it comes
+from; a finding without a link is not written.
+
+The page follows the outline in [the reference page](fde.md). It records the searches and page
+reads used, What we found, Not found, For the look and Questions for you. Under Not found, write
+what you could not find and what you tried; write "not reached" for an item the limit stopped.
+For the look, give the five facts the design starts from: the industry, the users, the main job
+of the screens, brand words, and brand files as links to the company's logo or brand page (no
+download).
+
+Findings are thin when fewer than three of items 1 to 5 hold a finding about this company. Then
+say what you could not find, ask the Sales person up to five questions about the company in one
+message, under Questions for you, and use the kept part of the limit to study two or three
+companies of the same kind and size. Mark every idea from them `from similar companies`. Do not
+wait for the answers: show the proposal now, and add the answers in a new dated part.
+
+When this session cannot search the web or read pages, say in one line: "This session cannot
+search the web, so I could not research <company>." Then work from the notes and questions as
+you do without this step.
+
+**Propose one prototype.** Under `## Proposed prototype, <YYYY-MM-DD>`, write one proposed
+prototype: the one task the demo shows, start to finish, and up to five features around it, one
+line each. Each line has exactly one source mark, chosen by where the idea came from:
+
+- a link to a public page about this company;
+- `from similar companies: <company>` and a link to that company's page;
+- `heard from the customer: <note file in docs/context/>`;
+- `from the salesperson`, for a feature the Sales person added in their reply;
+- `not researched`, for an idea with no source.
+
+Use `not researched` only when the session cannot search the web or the pass did not reach the
+item the idea depends on. An idea with no source in any other case does not appear. A point from
+a transcript is `heard from the customer: <note file in docs/context/>` with or without web
+search. An idea that comes from the Sales person's own notes, not from a reply, is
+`from the salesperson: <note file in docs/context/>`. Nothing general appears as if it were about
+this company. Before you show the proposal, check every line against this list, and fix or
+remove a line with no mark.
+
+Under `## Other possible prototypes, <YYYY-MM-DD>`, write two other possible prototypes, numbered:
+each a task and one or two lines with their marks. Show the same text in the chat in plain
+words, with the links, so the Sales person sees every link. Never ask them to pick from a long
+list of features. This proposal is not the Options step: Options below stay for a chosen
+problem in a story.
+
+The Sales person says yes, picks another, or says in plain words what to change. Build nothing
+before this choice. Then append `## Chosen prototype, <YYYY-MM-DD>` to the page: the full
+chosen prototype with its marks, copied from the option they chose, with their changes applied
+(an added feature is `from the salesperson`). Its first line is
+`- Chosen by: salesperson: yes | option <n> | changed: <their words>`; this line is not a
+feature and needs no mark. Leave the proposal and other-options parts as they were. Write
+`- Demo workflow: <task> (salesperson, <YYYY-MM-DD>)` in the brief's Answers; the client's reply
+to the recap replaces it with `(client, <YYYY-MM-DD>)`. Save the page and that line as one fix,
+as discovery notes are saved.
+
+A later research pass or a later choice adds a new dated part to the research page; never
+remove or rewrite an earlier part.
+A second pass appends `## Research of <YYYY-MM-DD>` with its own findings, counts, Not found and
+proposal. A second choice appends a new `## Chosen prototype, <YYYY-MM-DD>`, and the newest one
+is the one in use. When the customer's reply to the recap corrects the demo task, add a new
+dated `Chosen prototype` part too, so the page and the brief agree.
+
 **The card.** Write each problem as a card under `## Problems` in `docs/product/DISCOVERY.md`,
 adding the section to an older file on first use: `### <short problem title>`, then Job,
 Workaround, Cost, Who feels it, How often and Evidence. Write customer notes in `docs/context/`
@@ -648,6 +737,7 @@ workaround, cost, people, frequency and evidence. Then write the prototype plan:
 with their fields in `docs/product/BRIEF.md`, the Roles table and architecture choices in
 `docs/product/CONSTITUTION.md`, one link to the design in the BRIEF, and the demo steps.
 The design can be made through Forge or separately; the BRIEF holds one link to it.
+When the research page has a `Chosen prototype` part, the plan's demo steps come from the newest `Chosen prototype` part, the task first.
 Each demo step is one Done-when item in the plan, with the client's business task first and
 basic screens (sign-in, members, settings) last. Create the plan record with
 `forge decision new prototype-plan`.
@@ -671,6 +761,59 @@ Build the business screens next. The demo opens on the client's business task; s
 screens last.
 Push back when a requested feature does not serve the problem card: explain why and
 offer to note it for after sign-off. Keep the same app as it grows into production.
+
+### Removing a feature
+
+When a person asks to remove a feature, run `forge start "Remove the <feature> feature"`; the
+removal is the part's work. A plan that removes a feature names its plural and these steps, in
+order: confirm the record type with the person if the words are unclear; in a starter app, run
+`forge task feature-check <plural>` first, and if it names a feature that uses this one, stop,
+tell the person and ask which feature to change first; work through the fixed list for the
+stack; run the check until it prints that nothing points at the feature; update
+`docs/product/BRIEF.md` (the record type), the Roles table row and any demo step that uses the
+feature; run the app's own tests; commit as one change. In a sample-data prototype
+(`sample_data = true`), the proof is the app's build and the look check (walk each demo step in a
+browser), not automated tests.
+
+The fixed list, TypeScript. Delete: `libs/<plural>/` and `apps/api/test/<plural>.e2e-spec.ts`.
+Edit: the import and the entry in `apps/api/src/app.module.ts`; the dependency in
+`apps/api/package.json`; the reference in `apps/api/tsconfig.json`; the `scope:<plural>` line in
+`eslint.config.mjs`; the two `dist` names in `scripts/test-build.mjs`; the feature's importer
+blocks and the app's dependency lines in `pnpm-lock.yaml`; the calls to the removed feature's API
+in `apps/api/test/database.e2e-spec.ts` (the starter's `projects` calls `/api/v1/projects` there,
+and the check lists those calls). Keep: the Prisma schema file, the migration folder, the name in
+`base.prisma`, the relation lines in `Account` and `Organisation` and the catalog entry in
+`apps/api/test/database.e2e-spec.ts`.
+
+The fixed list, Python. Delete: `routes.py`, `service.py`, `tools.py` and `permissions.py` in
+`apps/api/app/<module>/`, `apps/api/tests/test_<module>.py` and `libs/<plural>/`. Edit: cut
+`apps/api/app/<module>/__init__.py` to one line that imports `models` (the starter's entry file
+imports `routes`, `service` and `tools`, and the check lists those imports until they are gone);
+remove the two lines in `apps/api/app/main.py`; remove the path in the root `package.json`
+`typecheck`; remove the importer in `pnpm-lock.yaml`; change the calls to the removed feature's
+API in `apps/api/tests/test_module_schemas.py` (the starter's `projects` creates and reads a row
+through its API there, and the check lists those calls); then run `corepack pnpm run api-types`
+before the last check, because the shared API types still name the removed routes. Keep:
+`models.py` and every file in the module that `models.py` imports, the Alembic revision, `import
+app.<module>` in `migrations/env.py`, the `<plural> internals` contract and the schema inventory
+lines in `apps/api/tests/test_module_schemas.py`.
+
+In the client's own files, remove its screens, menu entries, routes, API calls and demo loader
+lines.
+
+Other cases: a database test that calls the removed feature's API is changed to create its row
+another way; the starter's own `projects` feature has such calls. The starter's tests for agent
+tools and agent access name `projects_*` tools and `/api/v1/agent-tools/projects`; the check
+lists them. Examples in the starter's own text (the auth response example and the page path
+example name `projects`) are listed as leftovers when `projects` is removed; change the word in
+them. If the check says it could not find the data model, search for that model's calls by hand
+and tell the person. A feature not made by the build step: use the same list for what exists,
+then the check. An app that is not a starter app: skip the check, search the code for the
+feature's name and run the app's own build and tests.
+
+Data rule: the table, every row in it and the feature's existing change history stay; write no
+drop migration in this change; a later drop follows the database skill and the deploy guide as
+they are.
 
 If the prototype holds only made-up data and has no back end, ask the person, then have the
 coordinator set `sample_data = true` in `forge.toml`. A sign-off record does not turn sample mode
@@ -876,7 +1019,9 @@ accepted is never copied into the app or into `docs/design/tokens.json`. In an e
 with it and stops on a difference whenever a screen or the theme changes. A waiver is one comment
 in the theme file that names the token and the theme:
 `/* forge-ui-ignore theme-drift --<token> (light|dark): <reason> */`. The review reports a screen
-built on the untouched starter theme when `docs/design/tokens.json` does not exist.
+built on the untouched starter theme when `docs/design/tokens.json` does not exist. A value with no light or dark form (corner size, spacing, shadow, font, text size) can be set aside with or without a theme name in the comment.
+
+Motion. Close refuses a changed UI file that animates all properties (`transition-all`, `transition: all` or `transition-property: all`), including a shadcn copy under `components/ui/`. It names `file:line motion-all`. List the properties instead, or set it aside with `forge-ui-ignore motion-all: <reason>`. Review reports a button-like part with no pressed state (the `link` variant is exempt), a new animation that ignores reduced motion, a hand-built loading, empty or error block in an app that has the shared state parts, and motion that skips the shared curve and speeds. For an app made before this release, apply the "In an app set up before this release" part of the frontend convention when `motion-all` reports a problem or the person asks, in a normal change.
 
 Fonts. The starter loads no font: a font name alone does not load, so a copied font name needs a
 source. If the system holds the font as a file in its `fonts/` folder, copy the file to
@@ -958,6 +1103,23 @@ written, and get the brief rules after upgrading and syncing. They do not need t
 design files for sign-off. A sample-data repo may approve its rules page and start stories with an
 open `Personal data` answer. A repo that never declared sample data keeps today's refusal at rules
 page approval.
+
+After sign-off, read `Before production` in `forge next`. First check what is already in progress,
+so no line is started twice. Leave sample data by the existing step: settle the `Personal data`
+answer, set the test command and checks, then the coordinator turns `sample_data` off. For the
+light-review line and the "Demo only" line, start one normal change with
+`forge start "<your sentence>"`. Take the work from the row's Say text, but write your own sentence.
+Never paste the Say text into a command, because a file name in it can hold shell characters. Use
+only letters, digits, spaces and the signs `. , : _ - /` in your sentence, so the double quotes are
+safe in every shell. Name each part the line lists, so the line clears. Name a file only when its
+name uses just those signs. Describe any other file in words, such as the other files with the Demo
+only label. A change that touches code has the full review, and its tests follow the repo's settings
+once sample data is off. A fix that changes only documentation gets only the light check, even after
+sign-off, and the light-review line does not count it. If a part in that line changed only
+documentation, tell the owner: the owner accepts that line in chat, or the follow-up change includes
+the code that the documentation describes. Do not press or ask for Promote while a line is open,
+unless the owner accepts the rest in chat. Tell the owner plainly that Forge cannot see the release
+or whether the app still shows made-up data, and that it refuses nothing.
 
 For a prototype without the setting, fix held findings from one sign-off review in one fix. Run the
 printed repair command from the sign-off checkout that the refusal names. The repair includes the
@@ -1309,6 +1471,9 @@ shares its cache across worktrees, and stays silent when GitHub cannot be reache
 
 An upgrade is one fix. Its pull request carries the new version and every file Forge keeps in the
 repo, rewritten by that version. One command does all of it.
+Close checks the fix that `forge upgrade` made mechanically instead of asking a model when it changes only
+the value of forge.toml's `version` line and files exactly as that version's sync writes them (content and
+mode). Any other change, or an earlier review of that fix that still blocks, gets the normal model review.
 Use `forge upgrade <release>` directly, not `forge fix start`: upgrade creates its own fix.
 `forge next` gives `Next: forge upgrade <release>` when its release check finds a newer release
 than the repo pins. If upgrade refuses outside the default branch, move to the main checkout.
@@ -1472,6 +1637,11 @@ recording succeeds; if the repo pins a newer release, install that pinned releas
   wait for that task through After, then own only their files. Each row names the Done-when items
   it Covers, its Scope (the paths it may change) and its Tests. A task that covers nothing is cut;
   work wanted later goes to Notes, or the linked spec's Out of scope.
+  Keep a file that a script can make at build time (a generated API contract or the types made from
+  it) out of the repo and out of every Scope, when nobody needs it stored. When the repo keeps such a
+  file on purpose, give its change to one first part that the other parts wait for. Three or more
+  parts that list the same file make the plan read print a `Shared file:` note. The `Shared file:` note
+  is advice: it does not stop the read or the approval, and it looks only at the plan being read.
 - The Tests column names one end-to-end case per Done-when item that changes runtime behaviour,
   and none for settings, docs, deletions or test-only items: the check the item names proves those.
 - Keep tasks small: at most three Done-when items and about 400 changed lines each, counting
@@ -1497,6 +1667,8 @@ forge task feature jobs --one job --field 'name:text' --field 'description?:long
   changes the role permissions, name that change for the worker to make in the feature's
   permission mapping. A non-starter or older starter missing the required parts gets a refusal
   naming what is missing; build that feature by hand in its existing layout.
+- A plan that removes a feature names its plural and follows "Removing a feature" in the Prototype
+  section: the check, the fixed list, then the check again and the app's tests.
 - In a starter app, each feature's agent tools are in its one tools file
   (`libs/<plural>/server/src/<plural>.tools.ts`, Python `apps/api/app/<plural>/tools.py`),
   and the feature command writes it. When a story adds a route that agents need, the part

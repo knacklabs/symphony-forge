@@ -1,4 +1,4 @@
-"""The upgrade's own commit supplies proof to its first close review."""
+"""The upgrade's own commit carries its proof into the pull request."""
 import json
 import shutil
 import sys
@@ -70,11 +70,7 @@ def test_1_upgrade_commit_proof_reaches_first_close_review(unsynced_up, adopted)
     assert [call["args"] for call in up.uv()][-2:] == [
         release_run(RELEASE, "sync"), release_run(RELEASE, "close", NAME)]
     assert f"<!-- {MARK} {RELEASE} -->" in up.show(".codex/skills/forge/SKILL.md")
-    assert len(up.env.review_calls()) == 1
-    prompt = up.env.prompt()
-    assert proof in prompt
-    assert "CI runs the change's related tests on the pull request" in prompt
-    assert "close waits for them after the review" in prompt
+    assert up.env.review_calls() == []  # a pure upgrade is checked mechanically
     assert "client checks passed" not in upgraded.stdout
     assert "exited with status 0" not in upgraded.stdout
     assert proof in body(up.env.gh_calls("pr", "create")[-1])

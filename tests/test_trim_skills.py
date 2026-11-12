@@ -29,7 +29,7 @@ SOURCES = {
 # The approved guide uses INR, defers unbuilt parts and names Mainline error-log alerts.
 # Current-source equality alone would miss a shared change across all three installs.
 PRE_TRIM_SHA256 = {
-    ".codex/skills/forge/fde.md": "b47159d2bf5109482de58fdfdcbc8167f5df53413bcce2d6ea3e8b5fc02371ba",
+    ".codex/skills/forge/fde.md": "304d2a1cf91f5e40c289af47c566f9a9d055bb609c2e0528f4288818fd4e2fcf",
     ".codex/skills/test-audit/SKILL.md": "7684c6c1d5e43fd06365feb5d50d69c9591f03163de457b8dd811a334b2590bc",
     ".codex/skills/test-audit/NOTICE.md": "05713febd8aeaca480afdc78074c66544635517e1868d3a59d7fe1cb54d70149",
     ".claude/skills/remote-approval/SKILL.md": "f3d334b989b73b65f6255d874592c052db96089df476dd1f0c9efa1d95ce8e01",
