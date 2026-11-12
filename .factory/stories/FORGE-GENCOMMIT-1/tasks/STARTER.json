@@ -1,0 +1,105 @@
+{
+  "branch": "task/FORGE-GENCOMMIT-1-STARTER",
+  "known": [
+    {
+      "area": "_break_a_web_type() in tests/test_starter_tree.py",
+      "file": "tests/test_starter_tree.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 377,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Standard: Tests own and clean up every process they start",
+      "work": 1
+    },
+    {
+      "area": "test_6_python_starter_selects_its_affected_parts() in tests/test_affected_py_starter.py",
+      "file": "tests/test_affected_py_starter.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 32,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: a successful API fast test runs the browser suite",
+      "work": 2
+    },
+    {
+      "area": "test_3_generated_files_stay_out_of_git_for_both_stacks() in tests/test_gencommit_starter.py",
+      "file": "tests/test_gencommit_starter.py",
+      "gain": 3,
+      "harm": 4,
+      "line": 49,
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: Owner: accept as a known issue. The test covers the declared generators; the starter does not commit a web bundle today, and each round adds one more generator to a growing scanner.",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_3_generated_files_stay_out_of_git_for_both_stacks",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "0f1aa5766c1930c45be3eb2973a3109b80214a9bd09dbef9b6f0e192ff87bf67",
+    "changed": "9287403554038e97e014c9727736fdfbc72a52e6507d8cd11ed1a02780eb5325",
+    "commit": "2247e74850845d1e768c1ccc40f1ab22318dabb8",
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner: accept as a known issue. The test covers the declared generators; the starter does not commit a web bundle today, and each round adds one more generator to a growing scanner.",
+        "finding": 1
+      }
+    ],
+    "findings": [
+      {
+        "body": "Gain 3, Work 1, Harm 3\nRaise: Test\nThe generated-file proof still misses an existing starter generator. The scanner skips files other than JSON and Prisma files, so it never reads the Vite output directory configured in `src/forge/templates/starter/apps/web/vite.config.ts:18`; the web build runs Vite through `apps/web/project.json:18-22`. If that output is changed to `generated` and `apps/web/generated/index.html` is committed, a new app tracks the generated bundle while this test still passes.\nCase: normal use - a starter change commits an output of the web build.",
+        "file": "tests/test_gencommit_starter.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 48,
+        "priority": "P1",
+        "title": "Gate: test_3_generated_files_stay_out_of_git_for_both_stacks",
+        "work": 1
+      }
+    ],
+    "id": "36718208-cd25-46a4-bcfa-96feae252afe",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-11T18:55:37.075913+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-11T19:08:15.563721+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-11T19:23:39.322925+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-11T19:23:39.323135+00:00",
+    "by": "owner",
+    "choice": "accept",
+    "file": "tests/test_gencommit_starter.py",
+    "reason": "Owner: accept as a known issue. The test covers the declared generators; the starter does not commit a web bundle today, and each round adds one more generator to a growing scanner.",
+    "wait_id": "616c7bbe-ef37-417f-9b2a-c30d19fe6f38",
+    "worker_round": 2
+  },
+  "stuck": {
+    "close": "11a7cd2d-dbb5-4eb8-b7f1-33bff95a920c",
+    "head": "e6c75bb367979d44ea9ba704e464ed2fb0538a1c",
+    "keys": {
+      "the open P0 gate: test_3_generated_files_stay_out_of_git_for_both_stacks in tests/test_gencommit_starter.py": 1
+    },
+    "round": 1
+  },
+  "worker": "claude"
+}

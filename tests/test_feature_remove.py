@@ -374,9 +374,6 @@ def test_2_the_check_names_the_features_that_use_the_feature(repo, gh, tmp_path,
     web = "apps/web/src/jobs-call.ts"
     (client / web).parent.mkdir(parents=True, exist_ok=True)
     (client / web).write_text("api.get('/api/v1/clients');\n", encoding="utf-8")
-    if python:
-        _edit(client, "libs/shared/api-types/openapi.json", lambda text: text.replace(
-            '"paths": {', '"paths": {\n    "/api/v1/clients": {},', 1))
     code, out = _check(repo, client, "clients")
     users = _users(out)
     assert re.search(re.escape(tool) + r":1(?!\d)", users), users
@@ -391,7 +388,6 @@ def test_2_the_check_names_the_features_that_use_the_feature(repo, gh, tmp_path,
     assert web not in users and (web, "api.get('/api/v1/clients');") in _listed(out)
     if python:
         assert "libs/shared" not in users
-        assert ("libs/shared/api-types/openapi.json", '"/api/v1/clients": {},') in _listed(out)
 
     # Nothing uses jobs, and jobs does not use itself.
     code, out = _check(repo, client, "jobs")

@@ -20,7 +20,7 @@ libs/<module>/contracts/     zod schemas and types, exported as @app/<module>-co
 libs/<module>/web/           module screens and hooks, exported as @app/<module>-web
 libs/core/web/               API client, query client and route error page
 libs/shared/ui/              shadcn/ui components and shared screen parts
-libs/shared/api-types/       openapi.json and src/api-types.ts, exported as @app/shared-api-types
+libs/shared/api-types/       package files; `pnpm run api-types` writes openapi.json and src/api-types.ts here (not committed), exported as @app/shared-api-types
 libs/shared/util/            general helpers copied from the TypeScript starter
 pnpm-workspace.yaml          apps/web and libs/*/*; Python dependencies stay in uv
 compose.test.yml             Postgres and test API instances
@@ -179,9 +179,11 @@ account's record; 409 conflict; 429 rate limit; 500 our fault. GET never changes
 PUT replaces a resource; PATCH changes part. Use plain query filters and `?search=`.
 Lists take limit (20 by default, at most 100), one cursor (after or before), sortBy from an allowed column list, and sortOrder asc or desc. Return `data.items` and `data.paging` with limit, nextCursor, previousCursor, total and totalCapped, as `app/projects/service.py` does. Follow the standards page's versioning and Idempotency-Key rules.
 
-After an API change, run `pnpm run api-types`. Commit both `libs/shared/api-types/openapi.json` and
-`libs/shared/api-types/src/api-types.ts`; module contract libraries import these generated types
-through `@app/shared-api-types`.
+The type check and the tests run `pnpm run api-types` first. Git ignores `libs/shared/api-types/openapi.json`
+and `libs/shared/api-types/src/api-types.ts`: do not commit them and do not list them in a part's scope.
+Module contract libraries import these generated types through `@app/shared-api-types`. An app made
+before this release may still commit both files: until it has moved over, it keeps committing them and a
+part that changes the API lists both in its scope as today (the Forge guide has the move-over steps).
 
 ## Database
 
@@ -311,7 +313,7 @@ Cover invalid input, missing sign-in, CSRF and another account's records through
 Playwright walks new and changed UI flows as testing.md says, with zero retries and no sleeps.
 Fake only third-party services at their edge. Unit tests are only for pure logic with many cases.
 
-The root test script runs api-types before typecheck, lint (ESLint, `ruff check` and
+The type check and the root test script run api-types first, then typecheck, lint (ESLint, `ruff check` and
 `ruff format --check`), `mypy` with `strict = true`, `lint-imports`, pytest, hooks and
 Playwright. Run `node scripts/test.mjs` to install, build and run the whole check, as forge.toml's
 test command does.

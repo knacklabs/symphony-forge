@@ -74,6 +74,8 @@ Each module's form schemas and public types live in `libs/<module>/contracts`. T
 come from `apps/api` OpenAPI in `libs/shared/api-types`, and general helpers live in
 `libs/shared/util`.
 
+The type check and the tests make these API types from the API, and git does not keep them. After a clone, run `corepack pnpm run api-types` once so the editor finds them.
+
 Passwords use scrypt. Postgres holds sessions, reset tokens, accounts, and projects. Each project
 query checks the account. Delete keeps the audit record. When the agent builds the Members screen,
 an admin can copy an invite link and send it by chat when the app has no mail provider. Email

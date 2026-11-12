@@ -9,3 +9,5 @@ __pycache__/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+libs/shared/api-types/openapi.json
+libs/shared/api-types/src/api-types.ts
