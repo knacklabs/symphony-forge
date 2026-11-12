@@ -44,7 +44,7 @@
       "gain": 5,
       "harm": 3,
       "line": 97,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 1,
       "security": false,
@@ -93,28 +93,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "a4bd7c3197254baf9ba0a6e505b949857c7464edfda5ef31ed4d548cc2292ef3",
-    "changed": "98300e13502dec327888e212955ea2ee92ac5f45058998a9cd9503df5619f140",
-    "commit": "b16146403df467665d7be0441f15f5658bcec7ec",
+    "branch_diff": "eed76f145f805e7b38d9e66581518eb8cd155eb063ea524baa0fe5a607c64860",
+    "changed": "2b663fefdeebebcca7221c1553addecb32829e59321fdd524da96b573a45d253",
+    "commit": "0fc9559d0e5868eaccbcb525e38fc5e5ec53c32e",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 5, Work 2, Harm 3\nRaise: Not done - For a repo whose test setting runs one combined script with no quick-test setting, the setup check, upgrade and adoption each print one line saying so and suggest no command, and the shipped guide explains how the agent writes the quicker command.\nCase: normal use - a repo running Forge v1.2.38 upgrades with Forge's generated Node test setting and a `test` script such as `tsc && vitest run && playwright test`.\nThe v1.2.38 `src/forge/upgrade.py:201` calls its own `quicktest.suggest` before installing and running the new release's sync. Its `quicktest.py:59-67,102-115` prints an npm quick-test suggestion whose Vitest flags reach Playwright. The guard here runs only in the new release, so the later advisory from `src/forge/sync.py:743` cannot suppress that incorrect suggestion. The upgrade proof still starts this checkout's Forge (`tests/test_upgrade_command.py:87-88`, `tests/conftest.py:59-69`) and uses a script without a direct Vitest invocation (`tests/test_combined_script_quick_test.py:21,76`), so it misses the failure.",
-        "file": "src/forge/quicktest.py",
-        "gain": 5,
-        "harm": 3,
-        "line": 111,
-        "priority": "P1",
-        "required_done_when": true,
-        "title": "Not done: Upgrades started by an older Forge use the old suggestion logic",
-        "work": 2
-      }
-    ],
-    "id": "590f83b9-11e7-42f7-96a2-fcd706f6d2ae",
-    "status": "blocked"
+    "findings": [],
+    "id": "d9a243d1-0ecf-4018-95c5-260b21fe78fd",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-12T15:30:43.911641+00:00",
@@ -126,6 +114,10 @@
     },
     {
       "at": "2026-11-12T16:19:04.415680+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-12T16:34:11.424328+00:00",
       "step": "review"
     }
   ],
