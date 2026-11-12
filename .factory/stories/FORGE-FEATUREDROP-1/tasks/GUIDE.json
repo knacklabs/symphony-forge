@@ -124,7 +124,7 @@
   },
   "round": 2,
   "stacked_on": "FORGE-GENFILE-1/NOTE",
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-11T18:55:30.794072+00:00",
@@ -141,8 +141,12 @@
   ],
   "stop": {
     "at": "2026-11-11T19:29:27.555955+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "src/forge/templates/brief.md",
-    "wait_id": "001d4ffe-4c48-4ee4-9aea-798d61c786fa"
+    "reason": "Owner: one more round. Fix the Python list conflict and add one sentence for each of the two small points.",
+    "wait_id": "001d4ffe-4c48-4ee4-9aea-798d61c786fa",
+    "worker_round": 2
   },
   "stuck": {
     "close": "9fe742cc-1cbb-4e5e-b628-818a4ff0549d",
