@@ -1,0 +1,12 @@
+{
+  "doc": "plans/FORGE-PROVIDER-1.md",
+  "status": "planning",
+  "steps": [
+    {
+      "at": "2026-11-12T15:50:13.481414+00:00",
+      "step": "start"
+    }
+  ],
+  "title": "Builds and tests run on separate cloud machines when the laptop is full",
+  "touches": 0
+}
