@@ -4,40 +4,19 @@
 
 ## What changes for you
 
-<What the people who use this will notice, in plain English. No IDs, codes or jargon. End each
-item with its source in plain words, such as (Source: the client's note on late orders, 12 Oct),
-or with the sourced item that needs it, such as (Needed by: the Customers screen). A source is a
-client note, a brief answer, a decision, a screen marked Build now at sign-off, a fixed rule of
-the app, or the owner's own request with its date. Name each screen, field, endpoint, tool and
-setting that the plan adds in one of these items.>
-
-<!-- For user-facing parts: run impeccable init if PRODUCT.md is absent. Design the screens
-in a Claude Design artifact made with the client's design system (link in
-docs/design/design-system.md); on a Codex-only host without artifact tools, use HTML artboards.
-Save each screen and its images in docs/design/<KEY>/. Copy .forge/design/support.js beside
-the HTML screens and run it for a 1440 by 900 PNG per screen. Commit the folder. Use its git tree
-id (git rev-parse HEAD:docs/design/<KEY>) in the last line below. For small changes to existing
-screens that add no screen and change no flow, use Design: none (<why>) instead.
-Remove this comment and omit
-the Design line for a backend-only story. Cold read follows the design; one plan approval binds
-these exact files. A folder edit needs its new tree id and a new plan approval.
-The rule starts with the next plan read and approval. Plans approved without a Design line
-before this rule keep their existing approval. -->
-Design: docs/design/<KEY>/ (<tree id>)
+- A repo names one provider for these machines in its settings file, and each developer uses their own account with that provider.
+- Each developer signs in once inside a kept machine to Claude Code, Codex and GitHub. Forge never sees or carries a model login.
+- The feature is off by default, and the agent turns it on per repo. Runs on these machines show their minutes in the machine view, and a stop command ends one.
 
 ## Why
 
-Builds and tests run on separate cloud machines when the laptop is full
-
-
+Every build round and test run waits for one of the laptop's few places, so an idea reaches a ready pull request slowly.
 
 ## Done when
 
-<!-- One bold plain sentence per result, which the owner approves: no code names, file paths or
-test names. Its evidence, edge cases and proving tests go under the same number in Done-when
-details. -->
-
-1. **Something anyone can observe once this is done.**
+1. **With the feature on, a build round or test run that would wait for the laptop starts on a machine at once.**
+2. **When a provider fails, the run goes back to the laptop's line with one line saying why.**
+3. **Turning the feature off deletes the kept machines, and the model review stays on the laptop.**
 
 ## Risks
 
