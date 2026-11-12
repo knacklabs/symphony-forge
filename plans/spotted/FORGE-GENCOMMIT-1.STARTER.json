@@ -19,8 +19,8 @@
       "text": "Gate: test_3_generated_files_stay_out_of_git_for_both_stacks",
       "from": "blocking",
       "item": "FORGE-GENCOMMIT-1/STARTER",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\ttests/test_starter_tree.py\tStandard: Tests own and clean up every process they start\tFORGE-GENCOMMIT-1/STARTER",
