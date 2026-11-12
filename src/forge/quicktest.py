@@ -76,28 +76,39 @@ def test_parts(top: Path, command: str) -> list[tuple[str, str, str]]:
 
 def _combined_script(top: Path, command: str) -> str:
     """The first package script in the command whose body chains steps, or empty."""
-    package = top / "package.json"
-    scripts = json.loads(package.read_text("utf-8")).get("scripts", {}) if package.is_file() else {}
-    for part in command.split("&&"):
-        words = part.split()
-        if not words or words[0] not in ("npm", "pnpm", "yarn", "bun"):
-            continue
-        # `npm ci` and `npm install` are not package scripts, even when a script has that name.
-        if len(words) < 2 or words[1] in ("ci", "install"):
-            continue
-        name = words[2] if words[1] in ("run", "run-script") and len(words) > 2 else words[1]
-        if re.search(r"&&|;|\|", scripts.get(name, "")):
-            return name
+    if command == init.NODE_TEST:  # Forge's generated wrapper: look inside it
+        command = command.partition("(")[2][:-1]
+    try:
+        scripts = json.loads((top / "package.json").read_text("utf-8")).get("scripts", {})
+        for part in command.split("&&"):
+            words = part.split()
+            if words[:1] == ["corepack"]:
+                words = words[1:]
+            if not words or words[0] not in ("npm", "pnpm", "yarn", "bun"):
+                continue
+            # `npm ci` and `npm install` are not package scripts, even when a script has that name.
+            if len(words) < 2 or words[1] in ("ci", "install"):
+                continue
+            name = words[2] if words[1] in ("run", "run-script") and len(words) > 2 else words[1]
+            # An operator inside quotes, such as a test name "a|b", is part of one step.
+            lexer = shlex.shlex(scripts.get(name, ""), posix=True, punctuation_chars=True)
+            if any(token in ("&&", "||", ";", "|") for token in lexer):
+                return name
+    except (OSError, ValueError, AttributeError):
+        pass  # no readable package scripts: skip this advice instead of crashing sync or setup
     return ""
 
 
-def suggest(top: Path, cfg: dict[str, Any]) -> None:
-    if cfg["fast_test"]:
-        return
-    if script := _combined_script(top, cfg["test"]):
+def combined_note(top: Path, cfg: dict[str, Any]) -> None:
+    """One line for a combined test script with no fast_test; Forge suggests no command for it."""
+    if not cfg["fast_test"] and (script := _combined_script(top, cfg["test"])):
         print(f'The test setting runs the combined script "{script}", so Forge cannot limit its tests '
               "to the change. Write a fast_test for this repo as the Forge guide says, then ask the owner.",
               flush=True)
+
+
+def suggest(top: Path, cfg: dict[str, Any]) -> None:
+    if cfg["fast_test"] or _combined_script(top, cfg["test"]):  # combined_note names that case
         return
     python = any((top / marker).is_file() for marker in
                  ("pyproject.toml", "pytest.ini", "setup.py", "requirements.txt"))

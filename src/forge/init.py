@@ -487,5 +487,5 @@ def _adopt(top: Path, args: argparse.Namespace) -> None:
     print(f"After that pull request merges, forge close {ADOPT_ITEM} turns on branch protection "
           f"for {default}, keeping its existing rules.")
     from forge import quicktest  # imported here because quicktest imports init
-    quicktest.suggest(path, repo.config(path))
+    quicktest.combined_note(path, repo.config(path))
     print(f"Next: your tests in {path}, then forge close {ADOPT_ITEM}")
