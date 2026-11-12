@@ -1,0 +1,10 @@
+{
+  "branch": "task/FORGE-NIGHTLY-1-NIGHTLY",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-12T17:14:03.286501+00:00",
+      "step": "start"
+    }
+  ]
+}
