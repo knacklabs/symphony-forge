@@ -1,0 +1,136 @@
+{
+  "amendments": [
+    {
+      "at": "2026-11-12T16:32:39.228237+00:00",
+      "because": "The owner accepted as a known issue that the older release, which starts the upgrade, prints its own advice first; no change in the new release can alter it",
+      "done_when": "For a repo whose test setting runs one combined script with no quick-test setting, the setup check, upgrade and adoption each print one line saying so and suggest no command, and the shipped guide explains how the agent writes the quicker command."
+    }
+  ],
+  "base": "fe7caf4e9b8e88d417e5e62fe2564dd90f4216be",
+  "branch": "fix/today-when-a-repo-s-test-setting-runs-on",
+  "done_when": "For a repo whose test setting runs one combined script with no quick-test setting, the setup check, sync and adoption each print one line saying so and suggest no command, and the shipped guide explains how the agent writes the quicker command. An upgrade prints the line through the new release's sync. During an upgrade that an older release starts, that older release still prints its own quick-test advice first; this is a known issue the owner accepted.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "_adopt() in src/forge/init.py",
+      "file": "src/forge/init.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 490,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Adoption suggests the pytest picker for unittest projects",
+      "work": 2
+    },
+    {
+      "area": "_combined_script() in src/forge/quicktest.py",
+      "file": "src/forge/quicktest.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 81,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Default Node and Corepack commands miss combined scripts",
+      "work": 2
+    },
+    {
+      "area": "suggest() in src/forge/quicktest.py",
+      "file": "src/forge/quicktest.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 97,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Upgrades started by an older Forge use the old suggestion logic",
+      "work": 2
+    },
+    {
+      "area": "tests/test_combined_script_quick_test.py",
+      "file": "tests/test_combined_script_quick_test.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 24,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: tests/test_combined_script_quick_test.py::test_1_the_combined_script_is_named_and_no_command_is_suggested",
+      "work": 2
+    },
+    {
+      "area": "test_2_the_synced_guide_tells_the_agent_how_to_write_the_quicker_command() in tests/test_combined_script_quick_test.py",
+      "file": "tests/test_combined_script_quick_test.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 71,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: tests/test_combined_script_quick_test.py::test_2_the_synced_guide_tells_the_agent_how_to_write_the_quicker_command",
+      "work": 1
+    },
+    {
+      "area": "_combined_script() in src/forge/quicktest.py",
+      "file": "src/forge/quicktest.py",
+      "gain": 2,
+      "harm": 2,
+      "line": 89,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Follow-up: Quoted test filters are mistaken for combined scripts",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "0c365a209dcc1752a5b6811437ab1012e22533d1d9f5a5377000f3e78fb0398a",
+    "changed": "e233d56dcdec14b3f38195124025268d58e825e0aab3f6decfc43e12d95924d5",
+    "commit": "28c75ddf260022b30f6f31b6e062b3db8f9c7028",
+    "dismissals": [],
+    "findings": [],
+    "id": "e5a9aa48-f994-4ee7-ac04-a1a95a3791ab",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-12T15:30:43.911641+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-12T15:59:16.858933+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-12T16:19:04.415680+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-12T16:34:11.424328+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-12T16:42:42.502331+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "aec7acc6-00d9-4a3f-88c9-5409a833777b",
+    "head": "bb4851761c2ed8fc713be71203d97ee360719c6a",
+    "keys": {},
+    "round": 2
+  },
+  "why": "Today, when a repo's test setting runs one combined script and has no quick-test setting, Forge prints a wrong suggested command for some such repos, prints nothing for others, and prints nothing at all when it adopts a live app.",
+  "worker": "claude"
+}

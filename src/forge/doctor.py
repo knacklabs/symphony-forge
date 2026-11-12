@@ -504,6 +504,7 @@ def doctor(args: argparse.Namespace) -> int:
             + [f"models.{name} ({', '.join(f'{key} {value}' for key, value in entry.items())})"
                for name, entry in entries]) + ".")
     if plan_note: print(f"- Note: {plan_note}")
+    quicktest.combined_note(top, cfg)
     quicktest.suggest(top, cfg)
     if cfg["fast_test"]: print(f"- Note: change tests use fast_test ({cfg['fast_test']}) instead of test, with {{base}} as "
               "the merge base with the default branch" + (". The pull request's tests check runs related tests. "
