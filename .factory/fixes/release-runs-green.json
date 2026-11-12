@@ -11,7 +11,7 @@
       "gain": 4,
       "harm": 3,
       "line": 114,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -21,27 +21,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "314568f55eb8a86bc539b81d061e2d904935814cb5ad0becbab32f46115fa5e5",
-    "changed": "5b973d8c2b2a705ef8f70162814a1f615c35edd5106e63368a83a629e850d71d",
-    "commit": "c9b5c33e1875e02a16de3e65bdfe16380877197e",
+    "branch_diff": "1a89382fd47110a3bd51de68d549f90e76335eab15827a0f6b52a582f88bfbb7",
+    "changed": "696d032956793390fe1fcc4eb45b29759a95b39e7eea67ad26147131af72c149",
+    "commit": "e827bb125a606609e5c06a9642fd05dba820571f",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 1, Harm 3\nRaise: Functional\nCase: normal use - running the pull request checks or the release full suite.\n`tests/test_affected_own.py:117-126` still requires `timeout-minutes: 45` for every `python_*` smoke job, including `python_starter_smoke`. Changing that job to 60 minutes makes the existing test fail. Update its assertion for this job while retaining the 45-minute expectations for the other Python smoke jobs.",
-        "file": ".github/workflows/starter-smoke.yml",
-        "gain": 4,
-        "harm": 3,
-        "line": 114,
-        "priority": "P1",
-        "title": "Functional: Update the test that still requires a 45-minute Python smoke limit",
-        "work": 1
-      }
-    ],
-    "id": "ca9cf19e-db3e-4d66-8a0f-a91fd102fdad",
-    "status": "blocked"
+    "findings": [],
+    "id": "d15a8ce5-ef2b-454e-afee-6beb397e1214",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-12T11:38:10.292084+00:00",
@@ -49,6 +38,10 @@
     },
     {
       "at": "2026-11-12T11:45:14.942591+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-12T11:50:11.115939+00:00",
       "step": "review"
     }
   ],
