@@ -1,0 +1,65 @@
+{
+  "base": "f216fcaba29095ffa92af0aa12389d55eab06430",
+  "branch": "fix/release-runs-green",
+  "done_when": "The Python starter selection test passes on Windows and Linux with the same assertions, and the starter-smoke and python-starter-smoke jobs have a 60-minute limit",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": ".github/workflows/starter-smoke.yml",
+      "file": ".github/workflows/starter-smoke.yml",
+      "gain": 4,
+      "harm": 3,
+      "line": 114,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Update the test that still requires a 45-minute Python smoke limit",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "1a89382fd47110a3bd51de68d549f90e76335eab15827a0f6b52a582f88bfbb7",
+    "changed": "696d032956793390fe1fcc4eb45b29759a95b39e7eea67ad26147131af72c149",
+    "commit": "e827bb125a606609e5c06a9642fd05dba820571f",
+    "dismissals": [],
+    "findings": [],
+    "id": "d15a8ce5-ef2b-454e-afee-6beb397e1214",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-12T11:38:10.292084+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-12T11:45:14.942591+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-12T11:50:11.115939+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-12T11:45:14.952488+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": ".github/workflows/starter-smoke.yml",
+    "reason": "Owner: one more round. Update the test that pins the Python smoke limit.",
+    "wait_id": "0c1bc44e-48a6-4817-9299-7ced130331de",
+    "worker_round": 1
+  },
+  "stuck": {
+    "close": "307bbe64-1c89-4526-bf93-47f5972839fb",
+    "head": "21364560cd3118312e8456a1829ea1a06e0dacd0",
+    "keys": {},
+    "round": 1
+  },
+  "why": "The release full runs fail: a Python starter selection test compares command text that differs on Windows, and two starter smoke jobs run at their 45-minute limit and get cancelled",
+  "worker": "claude"
+}
