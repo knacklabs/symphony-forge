@@ -630,6 +630,12 @@
       "title": "Stop committing generated API types in Python apps",
       "status": "pending",
       "order": 120
+    },
+    {
+      "key": "FORGE-GENFILE-1",
+      "title": "Flag a generated file that many tasks share",
+      "status": "pending",
+      "order": 120
     }
   ],
   "epics": [

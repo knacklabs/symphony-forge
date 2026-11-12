@@ -1,0 +1,81 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/story.py\tDisputed keep Plan read note 14: Stopped reads omit the shared-file note\tFORGE-GENFILE-1/NOTE",
+      "kind": "bug",
+      "path": "src/forge/story.py",
+      "line": 431,
+      "text": "Disputed keep Plan read note 14: Stopped reads omit the shared-file note",
+      "from": "blocking",
+      "item": "FORGE-GENFILE-1/NOTE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/story.py\tFunctional: Avoid revalidating other stories when showing the note\tFORGE-GENFILE-1/NOTE",
+      "kind": "bug",
+      "path": "src/forge/story.py",
+      "line": 432,
+      "text": "Functional: Avoid revalidating other stories when showing the note",
+      "from": "blocking",
+      "item": "FORGE-GENFILE-1/NOTE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_plan_read_names_shared_files.py\tGate: test_1_the_plan_read_names_a_file_that_three_parts_share\tFORGE-GENFILE-1/NOTE",
+      "kind": "bug",
+      "path": "tests/test_plan_read_names_shared_files.py",
+      "line": 41,
+      "text": "Gate: test_1_the_plan_read_names_a_file_that_three_parts_share",
+      "from": "blocking",
+      "item": "FORGE-GENFILE-1/NOTE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_plan_read_names_shared_files.py\tGate: test_2_session_read_prints_the_note_when_the_result_is_handed_back\tFORGE-GENFILE-1/NOTE",
+      "kind": "bug",
+      "path": "tests/test_plan_read_names_shared_files.py",
+      "line": 92,
+      "text": "Gate: test_2_session_read_prints_the_note_when_the_result_is_handed_back",
+      "from": "blocking",
+      "item": "FORGE-GENFILE-1/NOTE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/plan_scope.py\tFollow-up: Folder scopes without a trailing slash are reported as files",
+      "kind": "edge",
+      "path": "src/forge/plan_scope.py",
+      "line": 37,
+      "text": "Follow-up: Folder scopes without a trailing slash are reported as files",
+      "from": "review",
+      "item": "FORGE-GENFILE-1/NOTE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/plan_scope.py\tNot done: When three or more parts of a plan list the same file in their scope",
+      "kind": "edge",
+      "path": "src/forge/plan_scope.py",
+      "line": 47,
+      "text": "Not done: When three or more parts of a plan list the same file in their scope",
+      "from": "review",
+      "item": "FORGE-GENFILE-1/NOTE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/plan_scope.py\tNot done: the advice to make a generated file at build time or put its change in one first part",
+      "kind": "edge",
+      "path": "src/forge/plan_scope.py",
+      "line": 51,
+      "text": "Not done: the advice to make a generated file at build time or put its change in one first part",
+      "from": "review",
+      "item": "FORGE-GENFILE-1/NOTE",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
