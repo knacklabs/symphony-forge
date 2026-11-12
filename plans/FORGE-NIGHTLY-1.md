@@ -120,15 +120,19 @@ forge, and assert whole lines. Only `gh` is faked.
    by run id before sorting. Reason: other frequent scheduled jobs can no longer push the full
    run's newest result out of the shared 100 (old read note 12). One request per event, because
    GitHub's `event` filter takes one value.
-3. **The newest finished run decides, for the full run only.** Inside `fetch`, for runs whose
-   file is `workflow` (line 404, the workflow that the requests ask for) and whose event is
+3. **The newest finished run decides, for the full run only.** Inside `fetch`, only when
+   `full_workflow(cfg)` is not `None`: for runs whose file is that workflow and whose event is
    `schedule` or `workflow_dispatch`, skip runs whose `conclusion` is not `success` or `failure`
    before `latest.setdefault`. A run in progress (`null`), cancelled, skipped or timed out
-   neither adds nor removes a failure (old read note 7). Other workflows keep today's rule (the
-   newest run in any state decides); this story does not change their behaviour.
+   neither adds nor removes a failure (old read note 7). Do not key this rule on line 404's
+   `workflow`, which falls back to `forge.yml` even in a local-test repo: when `full_workflow`
+   is `None`, `forge.yml`'s scheduled runs keep today's rule (round 2 note 9). Other workflows
+   keep today's rule too (the newest run in any state decides); this story does not change
+   their behaviour.
 4. **A rerun.** A rerun keeps its run id and raises `run_attempt`
    (`tests/test_busy_repo_views_finish_quickly.py:22-27,116`), so the list holds no separate
-   entry for the failed attempt. For a full-run candidate that is not finished or was cancelled
+   entry for the failed attempt. For a full-run candidate (Settled 3: only when `full_workflow`
+   is not `None`) that is not finished or was cancelled
    and has `run_attempt` > 1, read `repos/{owner}/{repo}/actions/runs/<id>/attempts/<n>` for
    n = `run_attempt` - 1 down to 1 until one attempt has `conclusion` `success` or `failure`,
    and use that attempt in its place (its `conclusion` and number). Read its log with
@@ -147,9 +151,13 @@ forge, and assert whole lines. Only `gh` is faked.
    entries never expire. `full_run` is not cached: `failed_schedules` sets it on every call,
    after `_cached` returns, from the current `forge.toml` (`full_workflow(cfg)` and the event),
    so a switch to local tests takes effect at once. Rename the ten-minute cache from
-   `schedule-cache` to `failed-runs-<workflow>-cache` (characters other than letters, digits,
-   `.` and `-` become `-`), so a newly named full workflow has its own runs read at once, and a
-   list cached by an earlier release is never read (old read note 16). No test reads a cache.
+   `schedule-cache` to `failed-runs-<hash>-cache`, where `<hash>` is the first 12 hex digits of
+   `hashlib.sha256` of `f"{workflow}\0{full_workflow(cfg) or ''}"`: the exact requested workflow
+   name and the full run that Settled 3 and 4 read inside `fetch`. Two names that differ only
+   in `_` and `-` (for example `nightly_tests.yml` and `nightly-tests.yml`) get different caches
+   (round 2 note 8); a newly named full workflow, or a switch between CI and local tests, has
+   its runs read at once; and a list cached by an earlier release is never read (old read note
+   16). No test reads a cache.
 7. **Shared `clean`.** Move the nested `clean` of `nextstep._failed_schedules` to
    `board_facts.clean` (module level) and call it from nextstep. The board builds the same key
    `(<clean(file)>)` that `claim` matches, so a file such as `nightly@2am.yml` still matches
@@ -226,7 +234,8 @@ forge, and assert whole lines. Only `gh` is faked.
      entry still show, and the `backup.yml` line ends `failed in: unknown jobs.`.
    - Without moving `FORGE_NOW` (inside the ten-minute cache): `test_place = "local"` with no
      `full_suite_workflow`, and the same failed `forge.yml` run in the fake: no `Needs you:` line
-     and no `run` entry.
+     and no `run` entry. Then, past the cache, a newer cancelled `forge.yml` scheduled run: no
+     `forge.yml` line at all, as today (the newest-finished rule does not apply; round 2 note 9).
    - Again without moving `FORGE_NOW`: `full_suite_workflow = "nightly.yml"` and a failed manual
      `nightly.yml` run: the line
      `Needs you: The latest manual <name> (nightly.yml) run on main failed in: <job>.` and one
@@ -234,10 +243,16 @@ forge, and assert whole lines. Only `gh` is faked.
 3. **When the row goes, and the fix words.** Same file,
    `test_3_the_row_stays_until_a_later_full_run_passes`, both parameters. In order, each with a
    later `FORGE_NOW`:
-   - a failed `forge.yml` scheduled run (id 61, `run_attempt` 1), then the same run started
-     again (id 61, `run_attempt` 2, `conclusion` null; `api repos/{owner}/{repo}/actions/runs/
-     61/attempts/1` answers `conclusion` `failure`), then that rerun cancelled: the entry and the
-     `Needs you:` line stay each time;
+   - first read of the repo, so no log is cached yet (round 2 note 10): the failed `forge.yml`
+     scheduled run is already started again (id 61, `run_attempt` 2, `conclusion` null).
+     `api repos/{owner}/{repo}/actions/runs/61/attempts/1` answers `conclusion` `failure`;
+     `run view 61 --attempt 1` answers a log with the job `full suite` and the test
+     `tests/test_attempt.py::test_first`; any other `run view 61` call answers exit 1. `forge next`
+     prints exactly `Needs you: The latest scheduled forge (forge.yml) run on main failed in:
+     full suite.` and `Failing tests: tests/test_attempt.py::test_first.`, and the board entry's
+     `detail` is `full suite`. So the test fails if the earlier-attempt log is not read and the
+     unreadable-log fallback ("unknown jobs") shows instead;
+   - then that rerun cancelled: the entry and the `Needs you:` line stay;
    - a newer run in progress (`conclusion` null), then a newer cancelled run, then a newer
      passing `pull_request` run of `forge.yml` on `main`: the entry and the `Needs you:` line
      stay each time;
