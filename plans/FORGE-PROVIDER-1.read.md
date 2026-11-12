@@ -1,18 +1,18 @@
 ---
 reader: codex (gpt-6.1-terra)
-read_at: 2026-11-12T16:27:14.995142+00:00
-seconds: 752.986
-read_hash: f5f0e8b90fc28116838e40e4c67e47a6425bbb12
-round: 1
+read_at: 2026-11-12T16:54:20.236711+00:00
+seconds: 765.286
+read_hash: 959efd829c912110ec524495dc3e3131f4ab2afd
+round: 2
 passed: no
-doc_seen: f5f0e8b90fc28116838e40e4c67e47a6425bbb12
+doc_seen: 959efd829c912110ec524495dc3e3131f4ab2afd
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+notes_seen: 946d27b1e37bf62a1d4d20c9ca7ce9db8e8a80ab
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a1d08a-3b0f-7ba3-8056-a21706cc3701
 session:
-loop_choice:
-loop_reason:
+loop_choice: more
+loop_reason: The owner chose one more round: repair the three blocking notes and the smaller ones
 ---
 # Cold read notes
 
@@ -152,3 +152,46 @@ Only a genuine trade-off goes to the human, as a question with options.
     Case: normal use - A developer enables boxes, signs in, approves files one by one, and later deletes the boxes. [The plan](/plans/FORGE-PROVIDER-1.md:38) marks design as none even though KEEP changes that flow; [the current command](/src/forge/machine.py:25) only displays lanes.
     Gain 4, Work 2, Harm 3
     Disposition: keep factually wrong: no screen, page or app shell is added; setup and turn-off are terminal lines whose exact words the builders' section pins, and the machine view gains only the words "in a box"; the plan's Design line now states this reason.
+
+## Round 2
+
+21. Blocking: Security: turn-off can report deletion while sign-ins remain at the provider.
+    Raise: Security  
+    Case: normal use - agent37 rejects a delete while the developer turns boxes off. [The plan](/plans/FORGE-PROVIDER-1.md:83) makes `drop` return an error string, but [turn-off](/plans/FORGE-PROVIDER-1.md:152) has no failure branch: it removes the record and says the boxes were deleted. The surviving box can retain the GitHub sign-in and approved files, and a second turn-off finds no record.  
+    Gain 5, Work 2, Harm 4
+
+22. Blocking: Not done: first-time setup cannot pass the private-repository check.
+    Raise: Not done  
+    Case: normal use - A developer approves GitHub sign-in for a private repository. [Setup](/plans/FORGE-PROVIDER-1.md:127) requires `git ls-remote` to succeed before it runs `gh auth setup-git`. The [pinned GitHub CLI](https://raw.githubusercontent.com/cli/cli/v2.103.3/pkg/cmd/auth/shared/login_flow.go) does not configure Git’s credential helper during this noninteractive login, so Git cannot use the new sign-in. The fake maps the URL to an unauthenticated local repository and misses the failure.  
+    Gain 5, Work 2, Harm 3
+
+23. Blocking: Not done: setup can record a package version it has not installed.
+    Raise: Not done  
+    Case: normal use - The default branch updates its dependencies, then a developer reruns setup after a Forge upgrade. [Setup](/plans/FORGE-PROVIDER-1.md:128) fetches the new default branch without checking it out, runs the install command against the old checkout, and records the new default-branch commit as the installed baseline. [The changed-package check](/plans/FORGE-PROVIDER-1.md:90) then skips installation for tasks based on that new commit. Their tests can pass using old dependencies.  
+    Gain 5, Work 2, Harm 3
+
+24. Advisory: Not done: one read truncates results from a realistic large test run.
+    Raise: Not done  
+    Case: normal use - A close runs roughly 4,000 tests. [The results hook](/src/forge/fasttest.py:552) writes each passing test name twice; this repo’s [.test_durations](/.test_durations:1) contains 3,962 names totaling about 471 KB. [The plan](/plans/FORGE-PROVIDER-1.md:117) reads the resulting file with one `cat`, but [agent37 cuts the middle of output over 512 KB](https://www.agent37.com/docs/agents-api/exec.md). Test results and the invocation record used for retries can be lost.  
+    Gain 4, Work 2, Harm 3
+
+25. Advisory: Not done: a retry can use file paths from the other machine.
+    Raise: Not done  
+    Case: normal use - A box test fails, and a laptop place becomes free before close retries it. [The results hook](/src/forge/fasttest.py:552) records failed files as absolute box paths; [the retry](/src/forge/fasttest.py:503) uses those paths unchanged. The amended [second admission](/plans/FORGE-PROVIDER-1.md:114) can select the laptop, where those paths do not exist. The same problem occurs in the other direction.  
+    Gain 3, Work 2, Harm 3
+
+26. Advisory: Unproven: item 2: setup can execute commands before a restarted box is ready.
+    Raise: Test  
+    Case: normal use - A developer copies an approved file into the stopped kept box. [The plan](/plans/FORGE-PROVIDER-1.md:130) starts it and writes the file, although start can return `202` while the box is still starting. [Agent37’s exec contract](https://www.agent37.com/docs/agents-api/exec.md) rejects commands in that state. No setup rule or test pins waiting for readiness after start.  
+    Gain 3, Work 2, Harm 3
+
+27. Advisory: Unproven: item 4: a failed code push has no specified laptop fallback.
+    Raise: Plan gap  
+    Case: normal use - GitHub is unreachable when Forge pushes the temporary code reference. [The plan](/plans/FORGE-PROVIDER-1.md:118) specifies fallback for `ProviderError`, but not for a failed Git command; the existing [Git helper](/src/forge/repo.py:405) raises `CalledProcessError`. The planned failure test covers a provider fork failure, so it can pass without covering this path.  
+    Gain 3, Work 2, Harm 3
+
+28. Advisory: Not done: Forge’s test picker reduces the box’s four-processor allocation.
+    Raise: Functional  
+    Case: normal use - A repository uses this checkout’s [`fast_test`](/forge.toml:7), which starts `forge test --pytest`. The [box environment](/plans/FORGE-PROVIDER-1.md:117) has no parent lane entry in the copy, so [the picker](/src/forge/fasttest.py:345) joins its own lane and replaces the four-processor setting. On a four-processor box, the existing [allocation rule](/src/forge/machine.py:89) gives it two.  
+    Gain 3, Work 2, Harm 2
+   Disposition: keep - below the bar (follow-up)
