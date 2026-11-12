@@ -7,10 +7,10 @@
 - When the latest full test run on the main branch fails, the board shows it under Needs you. The row looks like the other rows there. When you click it, the run opens on GitHub. (Source: your decision, 11 Nov 2026)
 - The next-step text (the list that `forge next` shows the agent) starts the first line about that run with "Needs you". (Source: your decision, 11 Nov 2026)
 - Only the full test run that Forge knows counts: its own nightly run, or the workflow that the repo names for its full run. Other scheduled jobs never show under Needs you. They keep the lines that the next-step text shows for them today. A repo with no full test run shows nothing new. (Source: your decision, 11 Nov 2026)
-- The row stays until a later full test run passes. A run that is still going or was cancelled does not remove it. Only a nightly run or a run that a person starts by hand counts as a full test run. Another run of the same workflow, for example a check on a pull request, does not remove the row. (Source: your decision, 11 Nov 2026; the last two sentences are the planner's choice)
+- The row stays until a later full test run passes. A run that is still going or was cancelled does not remove it. This is also true when a person starts the failed run again. Only a nightly run or a run that a person starts by hand counts as a full test run. Another run of the same workflow, for example a check on a pull request, does not remove the row. (Source: your decision, 11 Nov 2026; the last two sentences are the planner's choice)
 - While a fix for the failure is in progress, the row says "Fix in progress". The row still shows. (Source: your decision, 11 Nov 2026)
-- For every scheduled job, the next-step text also stops hiding a failure behind a newer run that is still going or was cancelled. (Source: the planner's choice, so that the board and the next-step text agree)
-- When Forge cannot reach GitHub, it shows no row until it can read GitHub again, as the next-step text does today. (Source: the planner's choice)
+- When Forge cannot read the log of a failed scheduled job, it still shows that failure, without the names of the failed tests. Today one such job hides all failed runs, the full test run too. (Source: the planner's choice, so that another job cannot hide the full test run)
+- When Forge cannot reach GitHub for more than ten minutes, the row goes away until Forge can read GitHub again. The next-step text does the same today. (Source: the planner's choice)
 - The agent still starts the fix for a failed run without asking you, as it does today. The guide that Forge ships says so. (Source: the planner's choice)
 - New client repos get all of this at once. Existing client repos get the board row and the next-step text with the new release, and the new guide sentences after the usual guide update. Forge changes no app file and writes no setting. No model is called, so the model cost does not change. (Source: the planner's choice)
 
@@ -115,26 +115,49 @@ forge, and assert whole lines. Only `gh` is faked.
 2. **Its own runs.** `failed_schedules` adds a third parallel request: `actions/workflows/
    <workflow>/runs` with `event=schedule`, beside the existing `event=workflow_dispatch` one,
    which stays as it is (so `test_testplace_fullrun.py:433` keeps passing; old read note 19).
-   Merge the three lists by run id before sorting. Reason: other frequent scheduled jobs can no
-   longer push the full run's newest result out of the shared 100 (old read note 12). One request
-   per event, because GitHub's `event` filter takes one value.
-3. **The newest finished run decides.** Per `workflow_id`, skip runs whose `conclusion` is not
-   `success` or `failure` before `latest.setdefault`. A run in progress (`null`), cancelled,
-   skipped or timed out neither adds nor removes a failure. This also applies to the other
-   scheduled workflows in `forge next` (old read note 7).
-4. **New fields.** Each failure gets `url` (the run's `html_url`), `created_at` and `full_run`,
-   added after the per-attempt cache returns (outside `read`), because those cached entries never
-   expire. Rename the ten-minute cache from `schedule-cache` to `failed-runs-cache`, so a list
-   cached by an earlier release, which lacks these fields, is never read (old read note 16). No
-   test reads either cache.
-5. **Shared `clean`.** Move the nested `clean` of `nextstep._failed_schedules` to
+   Both use the argument order of today's request (`--method GET --raw-field event=<event>`
+   first, `board_facts.py:410-412`), so a test can answer each one apart. Merge the three lists
+   by run id before sorting. Reason: other frequent scheduled jobs can no longer push the full
+   run's newest result out of the shared 100 (old read note 12). One request per event, because
+   GitHub's `event` filter takes one value.
+3. **The newest finished run decides, for the full run only.** Inside `fetch`, for runs whose
+   file is `workflow` (line 404, the workflow that the requests ask for) and whose event is
+   `schedule` or `workflow_dispatch`, skip runs whose `conclusion` is not `success` or `failure`
+   before `latest.setdefault`. A run in progress (`null`), cancelled, skipped or timed out
+   neither adds nor removes a failure (old read note 7). Other workflows keep today's rule (the
+   newest run in any state decides); this story does not change their behaviour.
+4. **A rerun.** A rerun keeps its run id and raises `run_attempt`
+   (`tests/test_busy_repo_views_finish_quickly.py:22-27,116`), so the list holds no separate
+   entry for the failed attempt. For a full-run candidate that is not finished or was cancelled
+   and has `run_attempt` > 1, read `repos/{owner}/{repo}/actions/runs/<id>/attempts/<n>` for
+   n = `run_attempt` - 1 down to 1 until one attempt has `conclusion` `success` or `failure`,
+   and use that attempt in its place (its `conclusion` and number). Read its log with
+   `gh run view <id> --attempt <n> --log-failed`, cached as `run-<id>-<n>-failure-cache` like
+   today. A finished latest attempt keeps today's log call with no `--attempt` (so
+   `test_busy_repo_views_finish_quickly.py:115` still counts one call). These reads happen only
+   while a rerun of the full run is going or was cancelled.
+5. **An unreadable log hides nothing else.** Today `board_facts.py:451` returns no list at all
+   when any one failure's log cannot be read (for example an old job whose logs expired). Instead,
+   that failure stays in the list with empty `jobs` and `tests`; the per-attempt cache stores
+   nothing for it (`_read_cached` writes nothing for `None`, `board_facts.py:192-194`), so its
+   log is read again after ten minutes. `forge next` then prints its existing
+   `failed in: unknown jobs.` wording (`nextstep.py:449-450`).
+6. **Fields, cache and the setting.** Each failure gets `url` (the run's `html_url`) and
+   `created_at`, added after the per-attempt cache returns (outside `read`), because those cached
+   entries never expire. `full_run` is not cached: `failed_schedules` sets it on every call,
+   after `_cached` returns, from the current `forge.toml` (`full_workflow(cfg)` and the event),
+   so a switch to local tests takes effect at once. Rename the ten-minute cache from
+   `schedule-cache` to `failed-runs-<workflow>-cache` (characters other than letters, digits,
+   `.` and `-` become `-`), so a newly named full workflow has its own runs read at once, and a
+   list cached by an earlier release is never read (old read note 16). No test reads a cache.
+7. **Shared `clean`.** Move the nested `clean` of `nextstep._failed_schedules` to
    `board_facts.clean` (module level) and call it from nextstep. The board builds the same key
    `(<clean(file)>)` that `claim` matches, so a file such as `nightly@2am.yml` still matches
    (old read note 15). This also frees two lines in `nextstep.py`.
-6. **The `forge next` mark.** In `nextstep._failed_schedules`, the first line of an alert whose
+8. **The `forge next` mark.** In `nextstep._failed_schedules`, the first line of an alert whose
    run has `full_run` starts with `Needs you: `, whether a fix claims it or not. Its other lines,
    the fix command and `claim` do not change. `nextstep.py` must stay at 1,200 lines or fewer.
-7. **The board entry.** In `team`, only when `full_workflow(cfg)` is not `None` (so a repo with no
+9. **The board entry.** In `team`, only when `full_workflow(cfg)` is not `None` (so a repo with no
    full run makes no extra GitHub call), call `failed_schedules(top)` and add one entry per
    `full_run` failure to `waiting` before line 609 counts it, then sort all entries oldest first
    as `needs_you` does:
@@ -144,14 +167,14 @@ forge, and assert whole lines. Only `gh` is faked.
    `fixing` is true when a fix in `best` whose board row `state` is not `done` has a `why` that
    holds the key `(<clean(file)>)`. A fix never hides the entry (old read note 8). Read the
    config with the same `repo.Refused` guard that `failed_schedules` uses.
-8. **The row on the page** (`now.js`). Add `'failed run': 'Fix'` to `VERB`. In `ask`, for
+10. **The row on the page** (`now.js`). Add `'failed run': 'Fix'` to `VERB`. In `ask`, for
    `kind === 'run'` the `key` place shows `Fix in progress` when `entry.fixing`, else
    `Full test run`; the title stays, so the short words fit the one-line row (old read note 14).
    A row with a `url` opens it with `window.open(entry.url, '_blank', 'noopener')` in place of
    the drawer. In `facts`, the Me view also keeps `kind === 'run'` entries (they have no owner).
    Same markup and classes, no CSS change, no new screen or layout, no command on the page. A
    change that needs new styling stops and goes back to the coordinator for a design first.
-9. **Guide text, exact words.**
+11. **Guide text, exact words.**
    - `run-reference.md`, in the reasons list after `blocked plan`: "`failed run` (the latest full
      test run on the default branch failed: `kind` is `run`, `id` is `run:<workflow file>`,
      `url` opens the run on GitHub, and `fixing` is true while an open fix names that run)".
@@ -170,44 +193,62 @@ forge, and assert whole lines. Only `gh` is faked.
    fixture of `tests/test_board_server.py` (parameters `new` and `adopted-v1.2.2`, so an
    earlier-adopted repo is covered), `live` for the real `forge board` page, and a `BROWSER`
    script in real Chrome run the way `tests/test_board_now_screen.py::look` runs it. The stub
-   `gh` answers `repos/{owner}/{repo}/actions/runs` with one failed `forge.yml` scheduled run on
+   `gh` answers the shared `repos/{owner}/{repo}/actions/runs` request with 100 passing scheduled
+   runs of another workflow only (a busy repo), the `actions/workflows/forge.yml/runs` request
+   with `--method GET --raw-field event=schedule` with one failed `forge.yml` scheduled run on
    `main` (with `html_url` `https://github.com/acme/shop/actions/runs/41` and a `created_at`),
-   `actions/workflows/forge.yml/runs` with no runs, and `run view 41 --log-failed` with one
-   failed job.
-   - The snapshot's `team.needs_you` holds the entry of Settled 7 with `title` "The latest full
+   the same request with `event=workflow_dispatch` with no runs, and `run view 41` with one
+   failed job. So the row can come only from the full run's own scheduled-runs request.
+   - The snapshot's `team.needs_you` holds the entry of Settled 9 with `title` "The latest full
      test run on main failed", `reason` "failed run", `kind` "run", the given `url` and
      `fixing` false; `team.sentence` counts it.
    - On the page, the Needs you strip shows a row with the words `Fix`, `Full test run` and
      "The latest full test run on main failed". A click opens a new page at the run's `url`
      (route `https://github.com/**` to a stub reply so the test stays offline) and opens no
      drawer. In the Me view the same row shows.
+   - The page's "Fix in progress" words are part of Done-when 3 and are checked in this same
+     browser script: after `forge fix start` with the suggested why (`The scheduled forge
+     (forge.yml) run fails on main`), the live page shows the same row with `Fix in progress` in
+     place of `Full test run`, and the same title. This test function stays `test_1`; its Tests
+     cell entry names both items.
 2. **The mark and what does not show.** New file `tests/test_failed_full_run_needs_you.py`,
    `test_2_next_marks_only_the_full_test_run`, parameters `new` (`_fresh_client` of
    `tests/test_setup.py`) and `earlier adopted` (the v1.2.2 fixture upgraded and synced as
    `tests/test_next_names_a_failed_scheduled_run.py::test_1` builds it). Each step moves
-   `FORGE_NOW` past the ten-minute cache.
+   `FORGE_NOW` past the ten-minute cache unless it says otherwise.
    - A failed latest `forge.yml` scheduled run: `forge next` prints exactly
      `Needs you: The latest scheduled forge (forge.yml) run on main failed in: <job>.`, then the
      unchanged `Failing tests:` and `Next: forge fix start ...` lines.
    - A failed scheduled run of another workflow (`backup.yml`): its lines exactly as today, with
      no `Needs you:`; `forge board --json` has no `run` entry.
-   - `test_place = "local"` with no `full_suite_workflow`, and the same failed `forge.yml` run in
-     the fake: no `Needs you:` line and no `run` entry.
-   - `full_suite_workflow = "nightly.yml"` and a failed manual `nightly.yml` run: the line
+   - A failed `backup.yml` run whose log read fails (`run view <its id>` answers exit 1, as an
+     expired log does) beside the failed `forge.yml` run: the `Needs you:` line and the `run`
+     entry still show, and the `backup.yml` line ends `failed in: unknown jobs.`.
+   - Without moving `FORGE_NOW` (inside the ten-minute cache): `test_place = "local"` with no
+     `full_suite_workflow`, and the same failed `forge.yml` run in the fake: no `Needs you:` line
+     and no `run` entry.
+   - Again without moving `FORGE_NOW`: `full_suite_workflow = "nightly.yml"` and a failed manual
+     `nightly.yml` run: the line
      `Needs you: The latest manual <name> (nightly.yml) run on main failed in: <job>.` and one
      `run` entry with id `run:nightly.yml`.
 3. **When the row goes, and the fix words.** Same file,
    `test_3_the_row_stays_until_a_later_full_run_passes`, both parameters. In order, each with a
    later `FORGE_NOW`:
-   - a failed `forge.yml` scheduled run, then a newer run in progress (`conclusion` null), then a
-     newer cancelled run, then a newer passing `pull_request` run of `forge.yml` on `main`: the
-     entry and the `Needs you:` line stay each time;
+   - a failed `forge.yml` scheduled run (id 61, `run_attempt` 1), then the same run started
+     again (id 61, `run_attempt` 2, `conclusion` null; `api repos/{owner}/{repo}/actions/runs/
+     61/attempts/1` answers `conclusion` `failure`), then that rerun cancelled: the entry and the
+     `Needs you:` line stay each time;
+   - a newer run in progress (`conclusion` null), then a newer cancelled run, then a newer
+     passing `pull_request` run of `forge.yml` on `main`: the entry and the `Needs you:` line
+     stay each time;
    - `forge fix start` with the suggested why: the entry stays with `fixing` true and the same
      title, and `forge next` still prints the `Needs you:` line above the fix's own lines;
    - that fix recorded as merged on `main` (its state file with `status` `merged`, pushed the way
      `tests/test_board_now_screen.py::merged_fixes` does), then a newer failed scheduled run: the
      entry stays with `fixing` false;
    - a newer passing scheduled run: no `run` entry and no `Needs you:` line.
+   - The page shows `Fix in progress` for a started fix: checked in `test_1`'s browser script
+     (Done-when 1 details), because only that test drives the live page.
 
 ### New and existing repos
 
@@ -241,11 +282,12 @@ queue, background job or abstraction layer, with the Done-when item that needs i
 
 | ID | Name | What it delivers | Covers | Scope | Tests | After | User-facing | Developer |
 |---|---|---|---|---|---|---|---|---|
-| NIGHTLY | A failed full test run shows under Needs you | `full_workflow`; the full run's own scheduled-runs request; the newest finished run decides; `url`, `created_at` and `full_run` on each failure; the renamed cache; `clean` shared from `board_facts`; the `Needs you: ` mark in `forge next`; one board entry per failed full run, with `fixing`; the row's words and its click in `now.js`; the guide sentences. | 1, 2, 3 | `src/forge/board_facts.py`, `src/forge/nextstep.py`, `src/forge/board_app/now.js`, `src/forge/templates/run-reference.md`, `src/forge/templates/skill.md`, `.claude/skills/forge/SKILL.md`, `.codex/skills/forge/SKILL.md`, `.claude/skills/forge/run-reference.md`, `.codex/skills/forge/run-reference.md`, `tests/test_failed_full_run_row_opens_run.py`, `tests/test_failed_full_run_needs_you.py` | `tests/test_failed_full_run_row_opens_run.py::test_1_a_failed_full_test_run_shows_under_needs_you_and_opens_the_run` (new); `tests/test_failed_full_run_needs_you.py::test_2_next_marks_only_the_full_test_run` and `::test_3_the_row_stays_until_a_later_full_run_passes` (new) | | yes | |
+| NIGHTLY | A failed full test run shows under Needs you | `full_workflow`; the full run's own scheduled-runs request; the newest finished run or attempt decides for the full run; an unreadable log keeps the failure; `url` and `created_at` on each failure and `full_run` from the current settings; the renamed cache; `clean` shared from `board_facts`; the `Needs you: ` mark in `forge next`; one board entry per failed full run, with `fixing`; the row's words and its click in `now.js`; the guide sentences. | 1, 2, 3 | `src/forge/board_facts.py`, `src/forge/nextstep.py`, `src/forge/board_app/now.js`, `src/forge/templates/run-reference.md`, `src/forge/templates/skill.md`, `.claude/skills/forge/SKILL.md`, `.codex/skills/forge/SKILL.md`, `.claude/skills/forge/run-reference.md`, `.codex/skills/forge/run-reference.md`, `tests/test_failed_full_run_row_opens_run.py`, `tests/test_failed_full_run_needs_you.py` | `tests/test_failed_full_run_row_opens_run.py::test_1_a_failed_full_test_run_shows_under_needs_you_and_opens_the_run` (new; also the page's "Fix in progress" words of item 3); `tests/test_failed_full_run_needs_you.py::test_2_next_marks_only_the_full_test_run` and `::test_3_the_row_stays_until_a_later_full_run_passes` (new) | | yes | |
 
 The four synced guide copies are rewritten by `forge sync`, not by hand. Run
 `tests/test_testplace_fullrun.py`, `tests/test_repo_full_suite_workflow.py` and
-`tests/test_next_names_a_failed_scheduled_run.py` as related tests; none of them should need a
+`tests/test_next_names_a_failed_scheduled_run.py` and
+`tests/test_busy_repo_views_finish_quickly.py` as related tests; none of them should need a
 change.
 
 New moving parts: none
@@ -255,17 +297,22 @@ New moving parts: none
 - **Scores (F x H >= 2 x C).** Needs you entry and its click: F 1 to 2, H 2, C 2; close, kept
   because the owner decided it. Newest finished run decides, and the full run's own request: F 2
   (a run is in progress for an hour each night; frequent jobs fill the shared list), H 2 (a
-  failure disappears), C 1; 4 >= 2, kept. Keeping the last answer while GitHub cannot be read:
-  F 1, H 1, C 1; 1 < 2, left out (the owner's section says so). A failed local full run (repos
+  failure disappears), C 1; 4 >= 2, kept. Earlier attempts of a rerun: F 2 (people rerun a
+  failed nightly run), H 2, C 2 (one request per earlier attempt, only while a rerun is going or
+  was cancelled); 4 >= 4, kept. An unreadable log keeps the failure: F 1 to 2, H 3 (the full
+  run's failure vanishes), C 1; kept. Keeping the last answer while GitHub cannot be read
+  beyond the ten-minute cache: F 1, H 1, C 1; 1 < 2, left out (the owner's section says so). A failed local full run (repos
   with no CI) under Needs you: F 1, H 2, C 2; 2 < 4, left out; that run prints its fix line when
   it fails.
 - **Planner's choices, for the owner to confirm at approval.**
   1. Only scheduled and manual runs of the full workflow count, so a passing pull request or push
      run of that workflow does not remove the row.
-  2. The newest finished run decides for every scheduled job in `forge next`, not only the full
-     run.
-  3. While GitHub cannot be read, no row shows.
+  2. A failed scheduled job whose log Forge cannot read still shows, with no test names.
+  3. When GitHub cannot be read for more than ten minutes, no row shows.
   4. The coordinator still starts the fix without asking; the guide says so.
+- **Cut after the first read.** The first draft also changed `forge next` for every other
+  scheduled job (a newer unfinished run would no longer hide its failure). That was a planner's
+  choice and needed its own tests (round 1 note 6), so it is cut: other jobs keep today's rule.
 - **Read notes from the older plan, settled here.** 6 (only the full run), 7 (newest finished
   run), 8 (a merged fix never hides a new failure), 9 (the click is tested in Chrome), 10 (one
   test number per item), 12 (the full run's own request), 14 (short words in the key place),
@@ -279,7 +326,10 @@ New moving parts: none
 - **Guides in flight.** The two other pieces split from the same older plan also edit
   `src/forge/templates/skill.md` and its synced copies. Forge makes overlapping parts wait, so
   this part may wait for one of them; the edits are in different paragraphs.
-- **Not verified.** Whether GitHub reports a run whose job hit its time limit as `failure` or as
+- **Not verified.** That `gh run view <id> --attempt <n> --log-failed` prints that attempt's
+  failed log (the builder checks `gh run view --help` first; if it does not, read the log with
+  `gh api repos/{owner}/{repo}/actions/runs/<id>/attempts/<n>/logs` and say so in the Proof
+  list). Whether GitHub reports a run whose job hit its time limit as `failure` or as
   `timed_out` (only `failure` makes a row, as today). Whether a `pull_request_target` run of
   `forge.yml` can report `main` as its branch (the event rule covers it either way).
 - No client repo or company is named in this story's code, tests, texts or commits.
