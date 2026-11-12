@@ -1,7 +1,14 @@
 {
+  "amendments": [
+    {
+      "at": "2026-11-12T16:32:39.228237+00:00",
+      "because": "The owner accepted as a known issue that the older release, which starts the upgrade, prints its own advice first; no change in the new release can alter it",
+      "done_when": "For a repo whose test setting runs one combined script with no quick-test setting, the setup check, upgrade and adoption each print one line saying so and suggest no command, and the shipped guide explains how the agent writes the quicker command."
+    }
+  ],
   "base": "fe7caf4e9b8e88d417e5e62fe2564dd90f4216be",
   "branch": "fix/today-when-a-repo-s-test-setting-runs-on",
-  "done_when": "For a repo whose test setting runs one combined script with no quick-test setting, the setup check, upgrade and adoption each print one line saying so and suggest no command, and the shipped guide explains how the agent writes the quicker command.",
+  "done_when": "For a repo whose test setting runs one combined script with no quick-test setting, the setup check, sync and adoption each print one line saying so and suggest no command, and the shipped guide explains how the agent writes the quicker command. An upgrade prints the line through the new release's sync. During an upgrade that an older release starts, that older release still prints its own quick-test advice first; this is a known issue the owner accepted.",
   "fix_kind": "backend",
   "kind": "fix",
   "known": [
