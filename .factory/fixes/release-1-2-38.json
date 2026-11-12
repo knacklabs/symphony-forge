@@ -1,0 +1,64 @@
+{
+  "allow_large": "A release bump changes the version in every file that records it",
+  "base": "b9e87a9eed3e46a15337179e00a1aed7b4ae5d7b",
+  "branch": "fix/release-1-2-38",
+  "done_when": "The version is 1.2.38, generated files are synced, forge.toml pins this repo to v1.2.38, and the tests pass",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "test_1_forge_version_is_1_2_27_everywhere_it_is_recorded() in tests/test_release_version.py",
+      "file": "tests/test_release_version.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 17,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: proof list",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "0d04143d82b6b9addd277b5869d87748fc857c3aa24349ae99509bf0bf50a006",
+    "changed": "ce917dbd9b2697c79324ca9af2919af6a2d19fbf4fe95dfe569d0af7b43e992d",
+    "commit": "458f567d8a46176fb465d4022dd643008ba3dd78",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 1, Harm 2\nRaise: Gate\nCase: normal use - a reviewer checks the release evidence before merge.\nThe proof list maps the repository pin and generated files, but omits explicit entries for the release version and the passing-tests clauses of Done-when. This test already checks the version, and the pull-request tests check is configured in .github/workflows/forge.yml. Map those checks to the missing clauses; a pending CI result need not be treated as a failure.",
+        "file": "tests/test_release_version.py",
+        "gain": 3,
+        "harm": 2,
+        "line": 17,
+        "priority": "P1",
+        "title": "Gate: proof list",
+        "work": 1
+      }
+    ],
+    "id": "3ab97d0f-4e75-48fc-bdbb-b2a9791f9269",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-12T04:02:18.216277+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-12T04:10:44.927906+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "7ef80d2beeb6e76d8ce63254e7417700132c143f",
+    "keys": {},
+    "round": null
+  },
+  "why": "Release v1.2.38: publish what merged since v1.2.37",
+  "worker": "claude"
+}
