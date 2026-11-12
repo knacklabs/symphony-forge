@@ -153,7 +153,7 @@
     "status": "blocked"
   },
   "round": 2,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-12T15:31:06.392653+00:00",
@@ -170,8 +170,12 @@
   ],
   "stop": {
     "at": "2026-11-12T16:49:46.664558+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "src/forge/quicktest.py",
-    "wait_id": "fe3ff138-3527-4f0c-bdb1-e62856874c0f"
+    "reason": "The owner chose one more round: repair all three findings",
+    "wait_id": "fe3ff138-3527-4f0c-bdb1-e62856874c0f",
+    "worker_round": 2
   },
   "stuck": {
     "close": "ea7db8a0-f48f-4df4-afa8-1872a94cec84",
