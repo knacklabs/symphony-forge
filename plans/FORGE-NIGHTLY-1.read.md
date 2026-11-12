@@ -1,18 +1,18 @@
 ---
 reader: codex (gpt-6.1-terra)
-read_at: 2026-11-12T16:06:56.154987+00:00
-seconds: 501.813
-read_hash: eaa557b536e1651aabf9b724dd902e1d767aa288
-round: 1
+read_at: 2026-11-12T16:15:51.559145+00:00
+seconds: 304.453
+read_hash: 0a39d9bdfe2a5d2510ceb27a81eaac750f832b86
+round: 2
 passed: no
-doc_seen: eaa557b536e1651aabf9b724dd902e1d767aa288
+doc_seen: f2a4ce5fc6c7ebcae6ae59ad3320b998687ffdb9
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+notes_seen: fc59d98f15df5172ead411a88f80dd62d8892ff0
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a1d07b-7a0a-7023-acde-70599b29afa0
 session:
-loop_choice:
-loop_reason:
+loop_choice: accept
+loop_reason: The owner chose: accept, and correct the line in the builder notes; the three notes are corrected below For the builders
 ---
 # Cold read notes
 
@@ -83,3 +83,26 @@ Only a genuine trade-off goes to the human, as a question with options.
    Adds work: check GitHub while the cached result is fresh; F 1 x H 1 = 1; 2 x C = 2  
    Gain 2, Work 2, Harm 2
    Disposition: cut - the owner sentence now says the row goes away only when GitHub cannot be read for more than ten minutes, which matches the ten-minute cache.
+
+## Round 2
+
+8. Blocking: Disputed keep 3: Distinct workflow names can share the new cache.
+   Raise: Not done  
+   Case: normal use - A team switches from `nightly_tests.yml` to `nightly-tests.yml` within ten minutes, after a manually started run of the newly named workflow failed.  
+   [The plan](/plans/FORGE-NIGHTLY-1.md:149) replaces underscores with hyphens, so both names use the same cache. The cached list contains manual runs for the old workflow; Forge does not request the new workflow’s failed manual run and can miss its row and alert.  
+   Gain 3, Work 2, Harm 3
+   Disposition: keep - The owner chose: accept, and correct the line in the builder notes; the three notes are corrected below For the builders
+
+9. Advisory: Disputed keep 6: Local-test repositories can still get changed scheduled-job advice.
+   Raise: Plan gap  
+   Case: normal use - A repository switches to local tests after a `forge.yml` scheduled run failed and a newer one was cancelled.  
+   [The plan’s selection rule](/plans/FORGE-NIGHTLY-1.md:123) uses `workflow`, which [currently falls back to `forge.yml`](/src/forge/board_facts.py:404) even when the plan’s `full_workflow` is `None`. It therefore skips the cancelled run and reports the old failure, although the plan says other scheduled jobs keep today’s rule.  
+   Gain 3, Work 2, Harm 2
+   Disposition: keep - below the bar (follow-up)
+
+10. Advisory: Unproven: item 2: Earlier-attempt logs are not exercised on a new machine.
+    Raise: Test  
+    Case: normal use - Someone opens Forge on a machine that has no cached log while a failed full run is being retried.  
+    [The rerun test](/plans/FORGE-NIGHTLY-1.md:234) reads the first failure before starting the retry, which can populate [the permanent attempt cache](/src/forge/board_facts.py:445). It checks that the row and alert remain, but can pass if the new earlier-attempt log request is broken: the unreadable-log fallback still shows the alert with unknown jobs.  
+    Gain 3, Work 2, Harm 2
+   Disposition: keep - below the bar (follow-up)
