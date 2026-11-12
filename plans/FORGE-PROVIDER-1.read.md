@@ -209,33 +209,40 @@ Only a genuine trade-off goes to the human, as a question with options.
     Raise: Data loss  
     Case: normal use - After a developer copies an ignored settings file, the default branch begins tracking a file at the same path. [Setup](/plans/FORGE-PROVIDER-1.md:132) now checks out that branch in the kept box. [Git overwrites ignored files by default](https://git-scm.com/docs/git-checkout), so the saved settings are lost without warning. The laptop file may since have changed or been removed.  
     Gain 5, Work 2, Harm 4
+    Disposition: cut - approved files now live in `FILES_DIR` (`$HOME/forge-files`), outside the checkout, so no checkout in the kept box or a copy can overwrite them; a run copies them in only where its commit tracks no file at that path; `--copy` of a file already there refuses unless `--replace` is given; `test_2` covers the tracked-later case and the refusal.
 
 30. Blocking: Security: a replacement kept box can make a surviving copy unfindable.
     Raise: Security  
     Case: normal use - Turning boxes off fails to delete a copy but deletes the kept box. [Turn-off](/plans/FORGE-PROVIDER-1.md:156) retains the old record, but if the developer later enables boxes and runs setup, [setup](/plans/FORGE-PROVIDER-1.md:128) replaces the gone kept box. The record has only one kept-box ID, so later turn-off looks for copies of the new box and misses the old copy with its GitHub sign-in. The failure test only rejects deletion of the kept box.  
     Gain 5, Work 2, Harm 4
+    Disposition: cut - names now come from the GitHub owner and repo and the developer's hashed git email, with no box id (`forge-keep-<o>-<r>-<dev>`, `forge-copy-<o>-<r>-<dev>-<entry>`); setup finds the kept box and turn-off finds every box and copy through the provider's list by those names, whatever the record says, and turn-off also deletes leftover code refs under `refs/forge-box/<dev>/`; `test_5` deletes boxes the record does not know.
 
 31. Advisory: Not done: chunked reads can corrupt multilingual test output.
     Raise: Not done  
     Case: normal use - A large test log or results file contains non-English text at a chunk boundary. [The new reader](/plans/FORGE-PROVIDER-1.md:85) cuts by bytes, but each exec response is a string. A UTF-8 character split between responses cannot be reconstructed by concatenating those strings. The [results hook](/src/forge/fasttest.py:552) writes UTF-8 text, while the large-file test can pass with ASCII alone.  
     Gain 3, Work 2, Harm 3
+    Disposition: cut - `read_file` now moves 300 KB parts base64-encoded and returns bytes; callers decode the whole text once, so no character is cut; `test_1` puts a non-English character across each part boundary.
 
 32. Advisory: Unproven: item 1: a large retry file may not fit in an exec request.
     Raise: Test  
     Case: normal use - A large failing test run is retried in another box. [The plan](/plans/FORGE-PROVIDER-1.md:121) transfers the previous results into that copy, but pins no transfer method. [Agent37 caps an exec request body at 1 MB](https://www.agent37.com/docs/agents-api/exec.md), so the planned 1.2 MB example cannot be sent in one request. The large-file test only reads results back from a box.  
     Gain 3, Work 2, Harm 3
+    Disposition: cut - the retry file reaches the copy through `box.write_file`, base64 parts of 300 KB, each request far under agent37's 1 MB cap; the fake answers `413` above 1 MB, and `test_1`'s close case sends a 1.2 MB retry file to a box.
 
 33. Advisory: Not done: an immediate install retry reuses the failed provider command.
     Raise: Not done  
     Case: normal use - A temporary download failure makes the kept-box tool installation fail, and the developer immediately reruns setup. [Setup](/plans/FORGE-PROVIDER-1.md:130) uses the same `forge-install-<version>` name. [Agent37 retains a command name for five minutes](https://www.agent37.com/docs/agents-api/exec.md), so the retry cannot start a fresh identical command during that time. The fake records these install commands without running them.  
     Gain 3, Work 2, Harm 3
+    Disposition: cut - every exec name now ends with a part unique to the attempt (`forge-install-<version>-<unix seconds>`, `forge-sign-in-<unix seconds>`, `forge-run-<lane entry id>`); the fake answers a reused name with another command with `400`, as agent37 documents.
 
 34. Advisory: Plan gap: the two parts do not pin the name of the box checkout.
     Raise: Plan gap  
     Case: normal use - Setup runs in the main checkout and a builder tests from a task worktree. [The plan](/plans/FORGE-PROVIDER-1.md:132) shares `$HOME/work/<repo name>` between KEEP and TESTS without defining whether the name comes from GitHub, the main checkout, or the current checkout. [Forge names task worktrees differently](/src/forge/task.py:228), so the parts can select different paths while a test that sets up and runs in one checkout passes.  
     Gain 4, Work 1, Harm 2
+    Disposition: cut - `checkout_dir(top)` is pinned in KEEP as `$HOME/work/<GitHub repo name>`, from `github_repo(top)`, the same from the main checkout and any task worktree; TESTS uses it for the checkout and the path mapping.
 
 35. Advisory: Unproven: item 2: the setup test never executes the tool installer.
     Raise: Test  
     Case: normal use - The install script contains the pinned version strings but fails before installing the tools. [The fake](/plans/FORGE-PROVIDER-1.md:147) records `forge-install-*` scripts without running them and supplies a `gh` stub separately. The planned setup and contract tests can therefore pass while the first real setup has no working installed tools.  
     Gain 3, Work 2, Harm 3
+    Disposition: cut - the fake now serves the pinned `gh` and uv downloads, `FORGE_BOX_DOWNLOADS` points the real install script at them, and setup checks `gh`, `uv` and `forge` versions in the box after the install; `test_2` has a case whose `gh` download gives the wrong version and expects the install refusal.
