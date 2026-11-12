@@ -21,14 +21,30 @@ def _bench_paths(files):
 def test_1_the_guide_carries_the_steps_to_score_a_release_in_claude_code():
     guide = (ROOT / "docs/guide.md").read_text(encoding="utf-8")
     section = " ".join(guide.split("## Releasing Forge", 1)[1].split("\n## ", 1)[0].split())
-    assert "5." in section and section.index("5.") > section.index("forge --version")
-    for phrase in ("scratch folder", "outside the Forge repo", "uvx --from git+", "forge init",
-                   "general-purpose", "not the `worker`", "benchmark/notes.md", "no person is here",
-                   "no stories", "no fixes", "does not commit", "AGENTS.md", "skills",
-                   "Start the fix before you write the score", "worktree", "120 minutes", "stop",
-                   "forge-bench-", "BENCH_PROJECT", "`ports`", "`setup`", "down --volumes",
-                   "uv run --frozen --python 3.11 python scripts/bench_score.py",
-                   "--results benchmark/results", "normal fix", "[models.build.claude]"):
+    assert "5. Score the release." in section and section.index("5. Score the release.") > section.index("forge --version")
+    exact = (
+        # The policy lines: Claude only, nothing else starts it, no pull request, no hold, a failed build scores.
+        "Nothing else starts this, a pull request never does, and it never holds the release. Use Claude only",
+        "A failed build still gets a score",
+        # The scratch folder is a git checkout with an origin remote, which forge init needs.
+        "git init -b main app", "git init --bare -b main origin.git", "git -C app remote add origin ../origin.git",
+        # The release's own Forge, and the one scorer command with every option it requires.
+        "uvx --from git+https://github.com/knacklabs/symphony-forge@vX.Y.Z forge init --starter react --actions no",
+        "uv run --frozen --python 3.11 python scripts/bench_score.py <scratch app> --checks benchmark/checks.toml"
+        " --release vX.Y.Z --results benchmark/results",
+        # The subagent: its task, its boundary, and what it must not do.
+        "general-purpose", "not the `worker`", "benchmark/notes.md", "no person is here",
+        "to build the reference app described in the notes", "only in the scratch folder",
+        "starts in your working directory", "no stories", "no fixes", "does not commit", "AGENTS.md", "skills",
+        # Limits, the fix that holds the score, the compose project, and the builder's model.
+        "120 minutes", "Start the fix before you write the score", "worktree", "normal fix",
+        "forge-bench-", "BENCH_PROJECT", "`ports`", "`setup`", "down --volumes", "[models.build.claude]",
+        # The usage file: all four keys, null for an unknown value.
+        "`input_tokens`", "`output_tokens`", "`turns`", "`minutes`", "`null`",
+        # What to report with no comparable earlier score.
+        "No earlier score to compare with", "first score", "This is a new baseline", "no direction",
+    )
+    for phrase in exact:
         assert phrase in section, phrase
     assert "fable" not in section.lower().replace("no model whose id contains `fable`", "")
     assert "astra" not in section.lower().replace("or `astra`", "")

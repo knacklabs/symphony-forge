@@ -696,24 +696,36 @@ For Forge's maintainers:
 5. Score the release. Nothing else starts this, a pull request never does, and it never holds the
    release. Use Claude only, in your own Claude Code session. Use no model whose id contains
    `fable` or `astra`.
-   - Make a scratch folder outside the Forge repo. Run `forge init` there from the tag:
+   - Make a scratch folder outside the Forge repo. `forge init` needs a git checkout with an `origin`
+     remote, so in the scratch folder make the app as `app` and a local bare repo as its remote:
+     `git init -b main app`, `git init --bare -b main origin.git`, `git -C app remote add origin ../origin.git`.
+     Run `forge init` in `app` from the tag:
      `uvx --from git+https://github.com/knacklabs/symphony-forge@vX.Y.Z forge init --starter react --actions no`.
-     At the protection step the `gh api` call can fail. That is expected for this folder.
+     Init sets up the app and pushes its first commit to that remote, then stops with "Forge cannot identify
+     a GitHub repository from origin". That is expected for this folder; the app is ready.
    - Start a `general-purpose` subagent, not the `worker` role. Set its model to the one in
-     `[models.build.claude]` in `forge.toml`. Give it only the scratch folder, `benchmark/notes.md` from
-     the Forge repo, and the rule "no person is here". It makes no stories and no fixes, and does not commit.
-     Point it at the scratch folder's AGENTS.md and skills.
+     `[models.build.claude]` in `forge.toml`. Give it only the full path of the scratch folder, the path of
+     `benchmark/notes.md` in the Forge repo, and the rule "no person is here". Its task is to build the
+     reference app described in the notes, in `app`. Its boundary: it works only in the scratch folder and
+     never changes the Forge repo, because a new subagent starts in your working directory. It makes no
+     stories and no fixes, and does not commit. Point it at the scratch app's AGENTS.md and skills.
    - Stop a step that hangs. Stop the whole build after 120 minutes (a guess, not measured) and
      score what exists. A failed build still gets a score.
    - Start the fix before you write the score, in the Forge repo, and write the score into that fix's worktree:
      `uv run --frozen --python 3.11 python scripts/bench_score.py <scratch app> --checks benchmark/checks.toml --release vX.Y.Z --results benchmark/results`
-     (add `--usage <file>` with the minutes, turns and, if the session reports them, tokens). Do not use bare `python`.
+     Do not use bare `python`. Add `--usage <file>` for the build's use: a JSON file with all four keys
+     `input_tokens`, `output_tokens`, `turns` and `minutes`. Write `null` for a value the session does not
+     report. A file that lacks a key is not used.
    - The script gives each run its own Compose project, `forge-bench-<release>-<id>` (in `BENCH_PROJECT`),
      and a free local port for each name in the `ports` key of `benchmark/checks.toml`. The `setup` key runs
      once after the app answers. The stop command is `down --volumes` for that project only. If a compose
      command hangs, stop it and run that stop command by hand.
    - Show the score next to the previous one, with up, down or same, the minutes and the tokens
-     (or "not reported"). Commit the result file in a normal fix and close it as usual.
+     (or "not reported"). When the script prints "No earlier score to compare with" (the first score),
+     report the score, the minutes and the tokens and say it is the first score. When it prints "This is a
+     new baseline" (the notes, checks or design checker changed since the previous score), say "new baseline"
+     and show the previous score beside it with no direction. Commit the result file in a normal fix and
+     close it as usual.
 
 What the switch to this Forge removed from the repo, and where to find it, is in
 `docs/archive.md`.
