@@ -1,0 +1,113 @@
+{
+  "base": "024bae4be3784dc0a8b0c3607c7c6573d6816079",
+  "branch": "fix/review-findings-split-from-a-repo-s-own",
+  "done_when": "A review no longer finds: Functional: The Python picker misses direct imports in nested apps (src/forge/templates/skill.md:1462)",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "related() in src/forge/fasttest.py",
+      "file": "src/forge/fasttest.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 425,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: A review no longer finds: Functional: The Python picker misses direct imports in nested apps (src/forge/templates/skill.md:1462)",
+      "work": 2
+    },
+    {
+      "area": "related() in src/forge/fasttest.py",
+      "file": "src/forge/fasttest.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 442,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Keep unrelated nested apps out of the selection",
+      "work": 2
+    },
+    {
+      "area": "test_1_a_changed_nested_app_file_selects_its_own_apps_importing_test() in tests/test_python_picker_follows_imports_in_nested_apps.py",
+      "file": "tests/test_python_picker_follows_imports_in_nested_apps.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 27,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: nested-app picker test on Windows paths with spaces",
+      "work": 1
+    },
+    {
+      "area": "tests/test_fast_test_in_ci_includes_importing_tests.py",
+      "file": "tests/test_fast_test_in_ci_includes_importing_tests.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 19,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: tests/test_fast_test_in_ci_includes_importing_tests.py",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "a0017683b29950a909f11eb5d195b89692febd42dd523e47ed877d1c982de627",
+    "changed": "648753f754673c536cfa2d3ba69beff1fd6b617e750a9acc794f0a65794b3ced",
+    "commit": "e6444d43162cde4f5541b7d96c84f3a9167aaa00",
+    "dismissals": [],
+    "findings": [],
+    "id": "9145652a-4a0c-46f4-ba6f-3b75d38a66a4",
+    "status": "clean"
+  },
+  "round": 4,
+  "stacked_on": "a-repo-s-own-fast-test-ran-only-the-chan",
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-13T02:08:46.213465+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-13T03:13:39.443727+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-13T03:26:58.366945+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-13T04:06:05.457474+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-13T04:44:26.917124+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-13T03:13:39.455986+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "src/forge/fasttest.py",
+    "reason": "The owner chose one more round: repair all four notes",
+    "wait_id": "9fd39b69-129f-4855-8ef0-a23ff5fe0468",
+    "worker_round": 1
+  },
+  "stuck": {
+    "close": "738c69af-c48d-494e-8b7f-863f99e71104",
+    "head": "bcb16c730cf7ee27d80e2e3458d0ef0eec7a3c78",
+    "keys": {},
+    "round": 3
+  },
+  "why": "Review findings split from a-repo-s-own-fast-test-ran-only-the-chan: Functional: The Python picker misses direct imports in nested apps (src/forge/templates/skill.md:1462)",
+  "worker": "claude"
+}

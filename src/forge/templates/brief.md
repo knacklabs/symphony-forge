@@ -219,6 +219,9 @@ $delegation
   reviews take no agent place. New builds pause when waiting test items exceed twice
   the test lane's place count and start again at that count or below. New and upgraded
   repos on this release get this behaviour.
+- Never run `forge fix allow-large`: only the coordinator records that allowance, between rounds, after
+  the owner agrees. When Forge refuses a fix for going past the five-file limit, stop and report that
+  refusal in your last message.
 - Only the human decides to drop a fix. Leave `forge fix drop <fix> --because "<reason>"`
   to the coordinator after a clear yes. `forge fix drop <fix> --undo` restores it; a restored
   fix needs `forge close` again before it is ready.
