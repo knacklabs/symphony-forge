@@ -1,0 +1,15 @@
+{
+  "base": "a081d814a233ba23bb691e1dd032c49fa10d2ff0",
+  "branch": "fix/while-a-person-reads-a-plan-on-the-board",
+  "done_when": "After a refresh, a person reading a plan or an item keeps their place and every section they opened, on the board, the full item page and the drawer.",
+  "fix_kind": "ui",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-13T04:00:53.113339+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "While a person reads a plan on the board, each refresh jumps the view to the top and closes the For the builders section again."
+}
