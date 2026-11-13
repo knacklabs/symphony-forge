@@ -1,0 +1,37 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/board_app/item.css\tNot done: every control is at least 24 pixels high\tat-half-screen-width-768-pixels-the-forg",
+      "kind": "bug",
+      "path": "src/forge/board_app/item.css",
+      "line": 243,
+      "text": "Not done: every control is at least 24 pixels high",
+      "from": "blocking",
+      "item": "at-half-screen-width-768-pixels-the-forg",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board_app/item.css\tNot done: the page has no sideways scroll\tat-half-screen-width-768-pixels-the-forg",
+      "kind": "bug",
+      "path": "src/forge/board_app/item.css",
+      "line": 348,
+      "text": "Not done: the page has no sideways scroll",
+      "from": "blocking",
+      "item": "at-half-screen-width-768-pixels-the-forg",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_board_half_screen_width.py\tGate: tests/test_board_half_screen_width.py::test_1_the_board_reads_at_half_a_screen\tat-half-screen-width-768-pixels-the-forg",
+      "kind": "bug",
+      "path": "tests/test_board_half_screen_width.py",
+      "line": 78,
+      "text": "Gate: tests/test_board_half_screen_width.py::test_1_the_board_reads_at_half_a_screen",
+      "from": "blocking",
+      "item": "at-half-screen-width-768-pixels-the-forg",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
