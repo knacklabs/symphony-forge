@@ -221,50 +221,97 @@ def _rerun(top: Path, item: str, branch: str) -> bool:
     marker = repo.forge_dir(top) / "reruns" / repo.git("rev-parse", "HEAD", cwd=top)
     if cfg["test_place"] != "ci" or marker.exists():
         return False
-    try:  # gh exits non-zero when a check fails, so read what it printed either way
-        listed = json.loads(repo.run("gh", "pr", "checks", branch, "--json", "name,bucket,link",
-                                     cwd=top).stdout)
-    except ValueError:
+    listed = _listed(top, branch)
+    if listed is None:
         return False
     failing = [check for check in listed if check.get("bucket") not in ("pass", "skipping")]
+    # forge-pr-check verifies the review itself; replaying CI cannot repair its findings.
+    if any(check.get("name", "") == "forge-pr-check" or check.get("name", "").startswith("forge-pr-check (")
+           for check in failing):
+        return False
+    logs = _failed_logs(top, branch)
+    if not logs or any(_attempt(top, run) != 1 for run in logs):
+        return False
     changed = [path for path in repo.git("diff", "--name-only", "-z", "--no-renames",
                                          f"origin/{default}...HEAD", cwd=top).split("\0") if path]
+    if _names(logs, changed):
+        return False
     runs: dict[str, list[str]] = {}
     for check in failing:
-        # forge-pr-check verifies the review itself; replaying CI cannot repair its findings.
-        name = check.get("name", "")
-        if name == "forge-pr-check" or name.startswith("forge-pr-check ("):
-            return False
-        job = re.search(r"/runs/(\d+)/job/(\d+)", check.get("link") or "")
-        if check.get("bucket") != "fail" or not job:
-            return False
-        if job[1] not in runs and _attempt(top, job[1]) != 1:
-            return False
-        log = repo.run("gh", "run", "view", "--job", job[2], "--log-failed", cwd=top)
-        if log.returncode or any(path in log.stdout or path.replace("/", "\\") in log.stdout
-                                 for path in changed):
-            return False
-        runs.setdefault(job[1], []).append(check.get("name", "a check"))
-    if not runs:
-        return False
+        runs.setdefault(re.search(r"/runs/(\d+)/", check["link"])[1], []).append(check.get("name", "a check"))
     marker.parent.mkdir(exist_ok=True)
     marker.touch()
     for names in runs.values():
         for name in names:
             say(f"Re-running {name} once: its failure names none of this change's files and "
                 "CI runs this repo's tests.")
+    late = _restart(top, list(runs))
+    if late == "gh":
+        return False
+    if late:
+        repo.refuse(REFUSALS["rerun"], check=", ".join(runs[late]), item=item)
+    return True
+
+
+def _listed(top: Path, branch: str) -> list[dict] | None:
+    """The pull request's checks. gh exits non-zero when a check fails, so read what it printed either way."""
+    try:
+        listed = json.loads(repo.run("gh", "pr", "checks", branch, "--json", "name,bucket,link",
+                                     cwd=top).stdout)
+    except ValueError:
+        return None
+    return listed if isinstance(listed, list) else None
+
+
+def _own(check: dict, skip: set[int]) -> bool:
+    """Forge's own review: its status, and the run of forge.yml's pull_request_target workflow."""
+    run = re.search(r"/runs/(\d+)/", check.get("link") or "")
+    return check.get("name", "").startswith("forge-pr-check") or (
+        check.get("name") == "Review pull request" and bool(run) and int(run[1]) in skip)
+
+
+def _failed_logs(top: Path, branch: str, skip: set[int] = frozenset()) -> dict[str, list[str]] | None:
+    """Run id to the full failed-job logs of the checks that failed, leaving out Forge's own review (its
+    status, and the "Review pull request" job of a run in skip). None when any other failing check is not
+    a "fail" with a job link, or its log cannot be read."""
+    listed = _listed(top, branch)
+    if listed is None:
+        return None
+    runs: dict[str, list[str]] = {}
+    for check in listed:
+        if check.get("bucket") in ("pass", "skipping") or _own(check, skip):
+            continue
+        job = re.search(r"/runs/(\d+)/job/(\d+)", check.get("link") or "")
+        if check.get("bucket") != "fail" or not job:
+            return None
+        log = repo.run("gh", "run", "view", "--job", job[2], "--log-failed", cwd=top)
+        if log.returncode:
+            return None
+        runs.setdefault(job[1], []).append(log.stdout)
+    return runs
+
+
+def _names(logs: dict[str, list[str]], paths) -> bool:
+    """Whether a failed log holds one of the paths, written with / or \\."""
+    return any(path in text or path.replace("/", "\\") in text
+               for texts in logs.values() for text in texts for path in paths)
+
+
+def _restart(top: Path, runs: list[str]) -> str:
+    """Run the failed jobs of each run again and wait for their second attempt. "" when they started,
+    "gh" when GitHub refused, else the run that had not started in time."""
     for run in runs:
         if repo.run("gh", "run", "rerun", run, "--failed", cwd=top).returncode:
-            return False
+            return "gh"
     # ponytail: FORGE_CHECKS_WAIT is the wait seam, as in checks.wait (tests set 0 to look once).
     deadline = time.monotonic() + float(os.environ.get("FORGE_CHECKS_WAIT", "600"))
-    for run, names in runs.items():
+    for run in runs:
         while (_attempt(top, run) or 0) <= 1:
             left = deadline - time.monotonic()
             if left <= 0:
-                repo.refuse(REFUSALS["rerun"], check=", ".join(names), item=item)
+                return run
             time.sleep(min(15, left))
-    return True
+    return ""
 
 
 def _attempt(top: Path, run: str) -> int | None:
@@ -382,11 +429,18 @@ def _queue(top: Path) -> int:
             and repo.test_place(settings := repo.default_config(top)) == "ci"
             and "tests" in settings["checks"] else None)
     members = {member[0] for member in plan["members"]} if plan else set()
-    held, notes, handled = set(), [], set()
+    held, notes, handled, last = set(), [], set(), []
+    former = set(members)
 
     def ride() -> None:
         try:
-            handled.update(_train(top, default, plan, merged, needs, notes))
+            handled.update(_train(top, default, plan, merged, needs, notes, last))
+            # One change left a red train: the rest, if two or more, are tested again from a fresh default branch.
+            rest = [change for change in changes if change[1] in former - set(last)]
+            if last and not handled and len(rest) > 1:
+                repo.git("fetch", "-q", "origin", cwd=top)
+                if again := _form_train(top, default, rest, branches, stacked):
+                    handled.update(_train(top, default, again, merged, needs, notes, [], second=True))
         except Exception as error:  # a failed train must not stop the others
             say(f"Train: stopped: {str(error).splitlines()[0] if str(error) else type(error).__name__}, {ONE_BY_ONE}")
     train = threading.Thread(target=ride, daemon=True)
@@ -416,6 +470,8 @@ def _queue(top: Path) -> int:
                     pass
         for index, (age, item, files, ready) in enumerate(changes):
             if item in running or item in finished or item in members:
+                continue
+            if item in last and not (former - set(last)) <= finished:  # it merges after every other former member
                 continue
             parent = stacked[item]
             if parent and parent not in queued and not task._merged(f"origin/{default}", parent, top):
@@ -554,7 +610,7 @@ def _form_train(top: Path, default: str, changes: list, branches: dict[str, str]
         taken |= files
         tip = repo.git("commit-tree", merged, "-p", tip, "-p", head, "-m", "Forge merge train", cwd=top)
         trees.append(merged)
-        members.append((item, branches[item], head, age))
+        members.append((item, branches[item], head, age, files))
     if len(members) < 2:
         for line in out:  # no train, but each change still hears why it stays out
             say(line)
@@ -584,10 +640,46 @@ def _up_to_date_rule(top: Path, default: str) -> bool | None:
     return any(asked) if asked else None
 
 
-def _train(top: Path, default: str, plan: dict, merged: list[str], needs: dict, notes: list[str]) -> set[str]:
+def _red(top: Path, members: list, branch: str, tip: str, reran: bool, leave: bool) -> tuple[str, str]:
+    """What a red combined check means, once every job has finished: ("rerun", "") after it ran the failed
+    jobs again, ("leave", change) for the one change whose files the logs name, else ("alone", why)."""
+    if reran:
+        return "alone", "the combined check failed again"
+    own = {run["id"] for run in checks.own_runs(top, members[0][0], tip)}
+    if not _settled(top, branch, own):
+        return "alone", "the combined check did not finish"
+    logs = _failed_logs(top, branch, own)
+    if logs is None:
+        return "alone", "the combined check failed and Forge cannot read which change broke it"
+    named = [member[0] for member in members if _names(logs, member[4])]
+    if len(named) == 1 and leave:
+        return "leave", named[0]
+    if named:
+        return "alone", f"the combined check failed in files of {', '.join(named[:-1])}{' and ' if named[1:] else ''}{named[-1]}"
+    say("Train: the combined check failed in no change's files. Forge runs the failed jobs again once.")
+    return ("alone", "Forge could not run the failed jobs again") if _restart(top, list(logs)) else ("rerun", "")
+
+
+def _settled(top: Path, branch: str, own: set[int]) -> bool:
+    """Wait until no check but Forge's own review still runs; False at the limit, as _restart waits."""
+    deadline = time.monotonic() + float(os.environ.get("FORGE_CHECKS_WAIT", str(90 * 60)))
+    while True:
+        listed = _listed(top, branch)
+        if listed is None or not any(check.get("bucket") == "pending" and not _own(check, own)
+                                     for check in listed):
+            return True
+        left = deadline - time.monotonic()
+        if left <= 0:
+            return False
+        time.sleep(min(15, left))
+
+
+def _train(top: Path, default: str, plan: dict, merged: list[str], needs: dict, notes: list[str],
+           last: list[str], second: bool = False) -> set[str]:
     """Test the members together on a temporary draft pull request, then merge each in order. Returns
-    the members it merged or stopped; the rest go one at a time. It closes the pull request and deletes
-    its branch, but only the ones it made."""
+    the members it merged or stopped; the rest go one at a time. A red check that names one change adds
+    it to last, which merges after the others. It closes the pull request and deletes its branch, but
+    only the ones it made."""
     members, tip = plan["members"], plan["tip"]
     names = ", ".join(member[0] for member in members)
     branch = f"forge-merge-train/{tip[:12]}"
@@ -622,16 +714,31 @@ def _train(top: Path, default: str, plan: dict, merged: list[str], needs: dict, 
         say(f"Train: testing {len(members)} ready changes together: {names}.")
         for line in plan["out"]:
             say(line)
-        try:
-            checks.wait(top, members[0][0], tip,
-                        [name for name in repo.default_config(top)["checks"] if name != "forge-pr-check"],
-                        branch=branch, progress=True, train=True)
-        except repo.Refused as error:
-            say(f"Train: the combined check failed: {str(error).splitlines()[0].rstrip('.')}. "
-                f"The ready changes merge one at a time, each with its own check.")
-            return handled
+        reran = False
+        while True:
+            try:
+                checks.wait(top, members[0][0], tip,
+                            [name for name in repo.default_config(top)["checks"] if name != "forge-pr-check"],
+                            branch=branch, progress=True, train=True)
+                break
+            except repo.Refused as error:
+                if error.entry is not checks.REFUSALS["red"]:
+                    say(f"Train: the combined check failed: {str(error).splitlines()[0].rstrip('.')}. "
+                        f"The ready changes merge one at a time, each with its own check.")
+                    return handled
+                kind, what = _red(top, members, branch, tip, reran, not second)
+                if kind == "rerun":
+                    reran = True
+                    continue
+                if kind == "leave":
+                    say(f"Train: the combined check failed in files of {what}. {what} leaves the train and "
+                        "merges last, one at a time, with its own check.")
+                    last.append(what)
+                else:
+                    say(f"Train: {what}, so each change merges one at a time with its own check.")
+                return handled
         say(f"Train: the combined check passed. Forge merges {len(members)} changes in order.")
-        for k, (item, member_branch, head, age) in enumerate(members):
+        for k, (item, member_branch, head, age, _) in enumerate(members):
             if line := _stale(top, default, plan["trees"][k], item, member_branch, head):
                 say(line)
                 return handled

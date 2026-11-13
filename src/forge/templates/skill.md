@@ -2453,11 +2453,16 @@ clash. Other changes in the run close at the same time but merge after the train
 closes the draft pull request and deletes its branch (`forge-merge-train/<code>`) when the train
 ends, but only a branch it made in this run: if that name already exists, even at the same commit,
 Forge runs no train and leaves the branch and its pull request alone. If the run itself stops,
-close that pull request by hand; it never merges. A red check, a moved default branch, a changed
+close that pull request by hand; it never merges. A moved default branch, a changed
 pull request or GitHub's rule that each pull request must be up to date sends the changes back to
 one at a time, as before, with a `Train:` line that says why. Forge checks this again at each
 merge: the default branch must hold what the train tested so far, and the pull request the tested
-commit. Only one run
+commit. When the combined check is red, Forge waits until every job has finished. If the failed
+logs name the files of exactly one change, that change leaves and merges last, one at a time, with
+its own check, and the rest run once more as a new train when two or more remain. If the logs name
+no change, Forge runs the failed jobs again once; if they stay red, or the logs name several
+changes, each change goes one at a time. New repos get this at init; existing repos get the train
+on upgrade, with no workflow change, and this guide on sync. Only one run
 works in a repo at a time. When two closes in the run collide on git's ref lock while fetching,
 the run starts that change again once and says so. A failed CI check gets one fix round on
 that change's builder thread, then close runs again. Other worker or owner stops affect only
