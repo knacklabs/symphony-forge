@@ -41,7 +41,7 @@
     "status": "blocked"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-13T04:53:08.625764+00:00",
@@ -54,8 +54,12 @@
   ],
   "stop": {
     "at": "2026-11-13T05:00:36.859540+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "tests/test_background_refresh_guidance.py",
-    "wait_id": "8761b18c-b67e-4824-b776-2c247ae23eb8"
+    "reason": "The owner chose one more round: make the existing-repo test start from a repo with the older rules",
+    "wait_id": "8761b18c-b67e-4824-b776-2c247ae23eb8",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
