@@ -41,8 +41,8 @@
       "text": "Not done: Refreshes can still discard the plan selection, the open Releases file, and list scroll",
       "from": "blocking",
       "item": "while-a-person-reads-a-plan-on-the-board",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\ttests/test_board_plan_stays_open.py\tGate: the plan, Releases and first-screen refresh tests\twhile-a-person-reads-a-plan-on-the-board",
