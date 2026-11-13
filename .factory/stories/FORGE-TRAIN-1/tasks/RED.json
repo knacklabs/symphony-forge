@@ -1,0 +1,10 @@
+{
+  "branch": "task/FORGE-TRAIN-1-RED",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-13T07:18:09.194958+00:00",
+      "step": "start"
+    }
+  ]
+}
