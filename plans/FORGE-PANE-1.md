@@ -42,8 +42,7 @@ What the pane looks like in a wide terminal (mock-up). The design images show th
 In a narrow terminal the pane sits above the prompt, with one line for each run:
 `Building  One combined check for ready changes · round 3 · 21 min`
 
-Design: docs/design/FORGE-PANE-1/ (c7d6d52b1896c72d69834388a4ad5e3c973a1542)
-
+Design: docs/design/FORGE-PANE-1/ (563213e8f9e35e273bd42af7e2eb043d4238d5c4)
 ## Why
 
 Today /forge never opens the pane in a Forge repo. When a session starts, the pane asks Claude Code for the name /forge. The guide skill already has that name, so Claude Code refuses it, and the rest of the pane's start step does not run. The pane says "Loading Forge…" for the whole session, and /forge opens the guide. The tests did not see this, because they used a stand-in that always accepts the name. Behind that, the pane read the whole board every 10 seconds. In Forge's own repo one read takes about 16 seconds and prints 14 MB, more than a pane can take (4 MB). Forge's short machine report takes 0.18 seconds and 3 KB.
