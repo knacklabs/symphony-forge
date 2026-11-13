@@ -133,7 +133,9 @@
     background: none;
     font-size: var(--size-label);
     font-weight: 600;
+    transition: transform 160ms var(--ease-out);
   }
+  .known .more:active, .known .close:active { transform: scale(0.97); }
   .known .more { border: 0; color: var(--moving); }
   .known .more:hover { text-decoration: underline; }
   .known .close { border: 1px solid var(--line); color: var(--ink); }

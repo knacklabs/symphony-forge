@@ -64,7 +64,10 @@
   background: none;
   color: var(--ink-2);
   cursor: pointer;
+  transition: transform 160ms var(--ease-out);
 }
+
+.close:active { transform: scale(0.97); }
 
 .close svg { width: 16px; height: 16px; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; }
 
@@ -253,6 +256,7 @@
 .summary {
   width: 320px;
   flex: none;
+  overflow-wrap: break-word;
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
@@ -263,6 +267,7 @@
 .sheet {
   flex: 1;
   min-width: 0;
+  overflow-wrap: break-word;
   border: 1px solid var(--line);
   border-radius: var(--radius-card);
   background: var(--surface);
@@ -315,7 +320,7 @@
 
 .facts dt { font-size: var(--size-label); color: var(--ink-2); }
 .facts dd { margin: 0; }
-.panel a { color: var(--moving); }
+.panel a { padding-block: 5px; color: var(--moving); } /* padding on an inline link makes its target 24 pixels tall and moves no line */
 
 .events li, .issues li {
   display: flex;
