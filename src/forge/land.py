@@ -29,9 +29,11 @@ REFUSALS = {
 # A child of forge land --all: lend its queue place while close waits for CI.
 QUEUED = "FORGE_LAND_QUEUED"
 SLOT_WAIT, SLOT_RESUME = "::forge-land-wait::", "::forge-land-resume::"
-# A change that left the train waits for the train to end before it merges; a train member merges
-# without its own close or re-run, because the train already tested it.
+# A change that left the train waits for the train to end before it merges, and a failed check of its
+# own stops it for you instead of a fix round; a train member merges without its own close or re-run,
+# because the train already tested it.
 HELD, TRAIN, HOLD = "::forge-land-held::", "FORGE_LAND_TRAIN", "FORGE_LAND_HOLD"
+LEFT = "FORGE_LAND_LEFT"
 TRAIN_LIMIT = 5
 ONE_BY_ONE = "so the ready changes merge one at a time, each with its own check."
 UP_TO_DATE = ("Train: GitHub requires each pull request to be up to date with {default}, so a train cannot "
@@ -49,6 +51,7 @@ def land(args: argparse.Namespace) -> int:
         return _land_all()
     queued = os.environ.pop(QUEUED, "") == "1"
     member, hold = os.environ.pop(TRAIN, ""), os.environ.pop(HOLD, "") == "1"
+    left = os.environ.pop(LEFT, "") == "1"
     item = args.item
     match = repo.ITEM.fullmatch(item)
     if not match or not (match["task"] or match["fix"]):
@@ -122,6 +125,8 @@ def land(args: argparse.Namespace) -> int:
                     continue
                 if red and _rerun(top, item, branch):
                     continue
+                if red and left:  # it left a red train: its own check failed too, so it stops for you
+                    raise
                 what = ("the review's serious findings" if error.entry is close.REFUSALS["blocked"]
                         else "the failing tests" if error.entry is close.REFUSALS["tests_failed"]
                         # In a queue run, close's own check gate decides (a skipped required check
@@ -444,6 +449,10 @@ def _queue(top: Path) -> int:
         except Exception as error:  # a failed train must not stop the others
             say(f"Train: stopped: {str(error).splitlines()[0] if str(error) else type(error).__name__}, {ONE_BY_ONE}")
     train = threading.Thread(target=ride, daemon=True)
+
+    def spawn(item: str) -> tuple[subprocess.Popen, threading.Thread, list[str]]:
+        return _child(top, item, slots, {LEFT: "1"} if item in last else None,
+                      held=held, hold=plan and train.is_alive())
     if plan:
         train.start()
     while len(finished) < len(changes):
@@ -508,7 +517,7 @@ def _queue(top: Path) -> int:
                     for other, (child, _, lines) in running.items()):
                 continue
             say(f"Starting {item}.")
-            running[item] = _child(top, item, slots, held=held, hold=plan and train.is_alive())
+            running[item] = spawn(item)
         for age, item, *_ in changes:
             if item not in running or running[item][0].poll() is None:
                 continue
@@ -520,7 +529,7 @@ def _queue(top: Path) -> int:
             if child.returncode and item not in retried and any("cannot lock ref" in line for line in lines):
                 retried.add(item)
                 say(f"{item} met another change's git lock; starting it again once.")
-                running[item] = _child(top, item, slots, held=held, hold=plan and train.is_alive())
+                running[item] = spawn(item)
                 continue
             finished.add(item)
             url = next((line.rsplit(": ", 1)[1] for line in lines
@@ -642,15 +651,16 @@ def _up_to_date_rule(top: Path, default: str) -> bool | None:
 
 def _red(top: Path, members: list, branch: str, tip: str, reran: bool, leave: bool) -> tuple[str, str]:
     """What a red combined check means, once every job has finished: ("rerun", "") after it ran the failed
-    jobs again, ("leave", change) for the one change whose files the logs name, else ("alone", why)."""
-    if reran:
-        return "alone", "the combined check failed again"
+    jobs again, ("leave", change) for the one change whose files the logs name, ("alone", why) when each
+    change goes one at a time, and ("other", "") when the logs cannot be read."""
     own = {run["id"] for run in checks.own_runs(top, members[0][0], tip)}
     if not _settled(top, branch, own):
         return "alone", "the combined check did not finish"
+    if reran:
+        return "alone", "the combined check failed again"
     logs = _failed_logs(top, branch, own)
     if logs is None:
-        return "alone", "the combined check failed and Forge cannot read which change broke it"
+        return "other", ""
     named = [member[0] for member in members if _names(logs, member[4])]
     if len(named) == 1 and leave:
         return "leave", named[0]
@@ -722,11 +732,9 @@ def _train(top: Path, default: str, plan: dict, merged: list[str], needs: dict, 
                             branch=branch, progress=True, train=True)
                 break
             except repo.Refused as error:
-                if error.entry is not checks.REFUSALS["red"]:
-                    say(f"Train: the combined check failed: {str(error).splitlines()[0].rstrip('.')}. "
-                        f"The ready changes merge one at a time, each with its own check.")
-                    return handled
-                kind, what = _red(top, members, branch, tip, reran, not second)
+                # A red check, and a job that ran out of time, say which files broke it in their logs.
+                kind, what = (_red(top, members, branch, tip, reran, not second)
+                              if error.entry in (checks.REFUSALS["red"], checks.REFUSALS["timeout"]) else ("other", ""))
                 if kind == "rerun":
                     reran = True
                     continue
@@ -734,8 +742,11 @@ def _train(top: Path, default: str, plan: dict, merged: list[str], needs: dict, 
                     say(f"Train: the combined check failed in files of {what}. {what} leaves the train and "
                         "merges last, one at a time, with its own check.")
                     last.append(what)
-                else:
+                elif kind == "alone":
                     say(f"Train: {what}, so each change merges one at a time with its own check.")
+                else:  # another stop, or logs Forge cannot read: today's line, which names the failed checks
+                    say(f"Train: the combined check failed: {str(error).splitlines()[0].rstrip('.')}. "
+                        f"The ready changes merge one at a time, each with its own check.")
                 return handled
         say(f"Train: the combined check passed. Forge merges {len(members)} changes in order.")
         for k, (item, member_branch, head, age, _) in enumerate(members):

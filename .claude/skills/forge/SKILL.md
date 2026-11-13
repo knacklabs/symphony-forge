@@ -2459,8 +2459,10 @@ one at a time, as before, with a `Train:` line that says why. Forge checks this 
 merge: the default branch must hold what the train tested so far, and the pull request the tested
 commit. When the combined check is red, Forge waits until every job has finished. If the failed
 logs name the files of exactly one change, that change leaves and merges last, one at a time, with
-its own check, and the rest run once more as a new train when two or more remain. If the logs name
-no change, Forge runs the failed jobs again once; if they stay red, or the logs name several
+its own check, and the rest run once more as a new train when two or more remain. If the check of
+the change that left fails, it stops under Needs you with the failure and gets no fix round. If the
+logs name no change, Forge runs the failed jobs again once (a job that ran out of time counts as
+failed), and waits for every job of that run too; if they stay red, or the logs name several
 changes, each change goes one at a time. New repos get this at init; existing repos get the train
 on upgrade, with no workflow change, and this guide on sync. Only one run
 works in a repo at a time. When two closes in the run collide on git's ref lock while fetching,
