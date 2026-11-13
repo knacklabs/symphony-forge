@@ -66,7 +66,7 @@ console.log(JSON.stringify({{lanes:samples.fixture(), board:samples.boardFixture
     machine = result["text"].split("Machine ·", 1)[1]
     assert "Current first" in machine
     if scenario == "release":
-        assert "Current third" in machine and "Older second" not in machine and "waiting #2" in machine
+        assert "Current third" in machine and "Older second" in machine and "waiting #2" in machine
     else:
         assert "waiting #1" in machine
         for title in ("Shoppers can save a basket", "Save baskets"):
@@ -162,8 +162,10 @@ def test_6_machine_tab_lanes_report_release_rows_and_keep_other_release_admissio
         assert data["machine"]["load"] is None or len(data["machine"]["load"]) == 3
         rows = data["agents"]["entries"]
         if scenario == "release":
-            assert [row["item"] for row in rows] == [items[0][0], items[2][0]]
-            assert [row["place"] for row in rows] == [0, 2]
+            # The older release's row shows too: it holds a place in the same line.
+            assert [row["item"] for row in rows] == [items[0][0], items[1][0], items[2][0]]
+            assert [row["place"] for row in rows] == [0, 1, 2]
+            assert rows[1]["version"] == "0.0.0" and rows[1]["repo_name"] == other.path.name
         else:
             # The read runs beside the first worker, while the foreign task still waits.
             assert [row["item"] for row in rows] == [items[0][0], "SHOP", "BASKET/SAVE"]
@@ -173,11 +175,12 @@ def test_6_machine_tab_lanes_report_release_rows_and_keep_other_release_admissio
             for row in rows[1:]:
                 assert row["repo_root"] == foreign.path.resolve().as_posix()
                 # Admission records carry the known worker round; the reader's
-                # round and unavailable tool/step metadata stay unknown.
+                # round and unavailable tool metadata stay unknown; Forge sees no step of a read or a task
+                # that waits.
                 assert row["round"] == (1 if row["item"] == "BASKET/SAVE" else None)
-                assert "tool" not in row and "step" not in row
+                assert "tool" not in row and row["step"] is None
         assert len({row["id"] for row in rows}) == len(rows)
-        for row in rows[:2 if scenario == "release" else 1]:
+        for row in ([rows[0], rows[2]] if scenario == "release" else rows[:1]):
             assert row["repo_name"] == repo.path.name
             assert row["repo_root"] == repo.path.resolve().as_posix()
             assert row["checkout_root"] == worktree(repo, "fix/" + row["item"]).resolve().as_posix()
@@ -214,11 +217,12 @@ def test_6_machine_tab_lanes_report_release_rows_and_keep_other_release_admissio
         if scenario == "release":
             (repo.bin / f"go-{items[0][1]}").touch()
             _until(lambda: (repo.bin / f"started-{items[1][1]}").exists(), "older release admitted")
-            _until(lambda: len(view()["agents"]["entries"]) == 1, "finished entry removed")
-            assert view()["agents"]["entries"][0]["place"] == 1
+            _until(lambda: len(view()["agents"]["entries"]) == 2, "finished entry removed")
+            assert [row["place"] for row in view()["agents"]["entries"]] == [0, 1]
             assert not (repo.bin / f"started-{items[2][1]}").exists()
             (repo.bin / f"go-{items[1][1]}").touch()
             _until(lambda: (repo.bin / f"started-{items[2][1]}").exists(), "current release admitted")
+            _until(lambda: len(view()["agents"]["entries"]) == 1, "older release entry removed")
             assert view()["agents"]["entries"][0]["place"] == 0
     finally:
         reap(test_processes, server, connections)
