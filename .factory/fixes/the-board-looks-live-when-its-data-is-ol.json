@@ -150,7 +150,7 @@
     "id": "fbd69038-8dd4-49b5-86c7-c1513082fa7a",
     "status": "blocked"
   },
-  "round": 3,
+  "round": 4,
   "status": "fixing",
   "steps": [
     {
@@ -176,12 +176,10 @@
     "worker_round": 3
   },
   "stuck": {
-    "close": "744626bf-a142-4990-8980-2d470f50718a",
-    "head": "9c26e8e2c071dc32932e1a48afaae7d0ddd81fa9",
-    "keys": {
-      "the open P0 not done: an open board never sees failed background rebuilds in src/forge/board_app/app.js": 1
-    },
-    "round": 1
+    "close": "0464048c-be0c-48e6-be21-14a0279f91f8",
+    "head": "a8a742ffde2ab38c235b44bfa6adc858e185cbd1",
+    "keys": {},
+    "round": 3
   },
   "why": "The board looks live when its data is old: a stopped server, a failed read and a restart all leave only a small grey Offline word, and after a restart the old page stays Offline because the new board has a new address.",
   "worker": "claude"
