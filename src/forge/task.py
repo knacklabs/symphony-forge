@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import sys
 import tomllib
@@ -40,6 +41,8 @@ REFUSALS = {
                  'forge fix start "<why>" --done "<done when>" --kind <kind>'),
     "not_fix": ("{branch} is not a fix, and allow-large works only inside a fix's folder.",
                 'cd <the fix folder> && forge fix allow-large "<reason>"'),
+    "worker_allow": ("A worker cannot allow a fix past the five-file limit: stop and report this refusal "
+                     "to the coordinator, who records the allowance between rounds.", "forge next"),
     "no_reason": ("The permission needs a one-line reason.", 'forge fix allow-large "<reason>"'),
     "bad_slug": ("{slug!r} is not a fix name; a fix name is lowercase words joined by hyphens.",
                  'forge fix start "<why>" --done "<done when>" --slug <name>'),
@@ -724,6 +727,10 @@ def allow_large(args: argparse.Namespace) -> None:
     if found is None:
         refuse(REFUSALS["not_fix"], branch=branch or "A detached HEAD")
     name, state = found
+    from forge import board
+    if os.environ.get("FORGE_WORKER") or any(
+            run.get("kind") in ("work", "worker") for run in board.active_runs(top, name)):
+        refuse(REFUSALS["worker_allow"])
     state["allow_large"] = args.reason.strip()
     kind, limit = ("story part", "line limit") if "/" in name else ("fix", "fix limit")
     repo.commit_state(f"Allow the {kind} past the {limit}: {state['allow_large']}",
