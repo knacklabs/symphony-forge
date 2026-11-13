@@ -1,0 +1,15 @@
+{
+  "base": "5a4c64caf73e3cbf9ec8dfc20fefb12b5910ab58",
+  "branch": "fix/on-a-background-refresh-client-apps-show",
+  "done_when": "After a sync or an upgrade, a client repo's app-baseline skill keeps the screen on a background refresh and names the open tab of a detail page in its URL rule, in both its Claude and Codex copies, and a test pins that text.",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-13T04:53:08.625764+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "On a background refresh, client apps show the loading state again or rebuild the list, so the reader loses scroll position, open sections, selection, focus and typed text."
+}
