@@ -1,6 +1,39 @@
 {
   "items": [
     {
+      "key": "bug\tsrc/forge/land.py\tA non-test check can still admit an untested train\tFORGE-TRAIN-1/TRAIN",
+      "kind": "bug",
+      "path": "src/forge/land.py",
+      "line": 382,
+      "text": "A non-test check can still admit an untested train",
+      "from": "blocking",
+      "item": "FORGE-TRAIN-1/TRAIN",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/land.py\tKeep an existing train branch that already points at the candidate\tFORGE-TRAIN-1/TRAIN",
+      "kind": "bug",
+      "path": "src/forge/land.py",
+      "line": 585,
+      "text": "Keep an existing train branch that already points at the candidate",
+      "from": "blocking",
+      "item": "FORGE-TRAIN-1/TRAIN",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/land.py\tRefresh older ready evidence before using the train shortcut\tFORGE-TRAIN-1/TRAIN",
+      "kind": "bug",
+      "path": "src/forge/land.py",
+      "line": 69,
+      "text": "Refresh older ready evidence before using the train shortcut",
+      "from": "blocking",
+      "item": "FORGE-TRAIN-1/TRAIN",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/land.py\tRequire an app-test check before forming a train\tFORGE-TRAIN-1/TRAIN",
       "kind": "bug",
       "path": "src/forge/land.py",
@@ -17,6 +50,28 @@
       "path": "src/forge/merge.py",
       "line": 161,
       "text": "Keep the existing check gate for each train member",
+      "from": "blocking",
+      "item": "FORGE-TRAIN-1/TRAIN",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/merge.py\tKeep the member check gate after a switch from local tests to CI\tFORGE-TRAIN-1/TRAIN",
+      "kind": "bug",
+      "path": "src/forge/merge.py",
+      "line": 110,
+      "text": "Keep the member check gate after a switch from local tests to CI",
+      "from": "blocking",
+      "item": "FORGE-TRAIN-1/TRAIN",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_train_land_all.py\tGate: prove each train fallback waits for its own CI\tFORGE-TRAIN-1/TRAIN",
+      "kind": "bug",
+      "path": "tests/test_train_land_all.py",
+      "line": 185,
+      "text": "Gate: prove each train fallback waits for its own CI",
       "from": "blocking",
       "item": "FORGE-TRAIN-1/TRAIN",
       "status": "open",
@@ -61,6 +116,28 @@
       "path": "src/forge/checks.py",
       "line": 200,
       "text": "Not done: Recognize the draft's own review check",
+      "from": "review",
+      "item": "FORGE-TRAIN-1/TRAIN",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/land.py\tA member whose merge succeeded but whose cleanup failed reads as a moved default branch, so it runs again one at a time instead of stopping with the cleanup error.",
+      "kind": "edge",
+      "path": "src/forge/land.py",
+      "line": 655,
+      "text": "A member whose merge succeeded but whose cleanup failed reads as a moved default branch, so it runs again one at a time instead of stopping with the cleanup error.",
+      "from": "worker",
+      "item": "FORGE-TRAIN-1/TRAIN",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/land.py\tFollow-up: Report exclusions when fewer than two changes can join",
+      "kind": "edge",
+      "path": "src/forge/land.py",
+      "line": 549,
+      "text": "Follow-up: Report exclusions when fewer than two changes can join",
       "from": "review",
       "item": "FORGE-TRAIN-1/TRAIN",
       "status": "open",
