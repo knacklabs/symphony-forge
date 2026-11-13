@@ -12,7 +12,7 @@ const TONE = { Building: 'moving', Review: 'moving', Ready: 'ready', Merged: 're
 
 let Board;
 let drawer = null; // { id, node, opener, seen }
-let page = null; // { id, node, tab, row, seen }
+let page = null; // { id, node, tab, row }
 const planFolds = new Map(); // story -> section open states, for this board session
 
 function el(tag, attrs = {}, ...children) {
@@ -51,6 +51,22 @@ function replaceContent(node, ...children) {
 function restoreLostFocus(part) {
   if (!lostFocus || !lostFocus.node.contains(part) || document.activeElement !== document.body) return;
   if (refocus(part, lostFocus.key)) lostFocus = null;
+}
+
+// What a part of the page looked like as built. A refresh compares the new drawing with this copy, not
+// with the live node, which also holds the reader's own state (an open section) and controls that
+// other scripts add. A part is replaced only when its drawing changed.
+function drawn(node) {
+  node.copy = node.cloneNode(true);
+  return node;
+}
+
+function swap(old, fresh) {
+  if (old.copy.isEqualNode(fresh)) return;
+  const active = document.activeElement;
+  const key = old.contains(active) ? focusKey(active) : null;
+  old.replaceWith(drawn(fresh));
+  if (key) lostFocus = refocus(fresh, key) ? null : { node: fresh, key };
 }
 
 function recordedWords(value, fallback = 'See the recorded review for technical details.') {
@@ -255,45 +271,78 @@ async function showPage() {
   closeDrawer(false);
   closePage();
   const main = document.querySelector('main:not(.item-page)');
+  const held = rows().find((one) => one.id === id); // the board already holds an item it shows
   const node = el('main', { class: 'item-page' },
     el('nav', { 'aria-label': 'Breadcrumb', class: 'crumbs' }, el('a', { href: '#now' }, 'Now'), el('span', { 'aria-hidden': 'true' }, '›'),
       el('span', { 'aria-current': 'page' }, id)),
-    el('p', { class: 'quiet' }, 'Reading this item…'));
-  page = { id, node, tab: 'Overview', row: null, seen: '' };
+    held ? null : el('p', { class: 'quiet' }, 'Reading this item…'));
+  page = { id, node, tab: 'Overview', row: held || null };
   main.hidden = true;
   main.after(node);
+  if (held) return fillPage();
+  let row;
   try {
-    page.row = await item(id);
+    row = await item(id);
   } catch (error) {
     if (page?.node !== node) return;
     node.replaceChildren(node.firstChild, el('p', { role: 'alert', class: 'problem' }, `${error.message} Go back to Now to pick another.`));
     return;
   }
-  if (page?.node === node) fillPage();
+  if (page?.node === node) {
+    page.row = row; // after the check: a slower read must not give a newer page another item's row
+    fillPage();
+  }
 }
 
-function fillPage() {
-  const { row } = page;
-  const tabId = (name) => `tab-${name.replaceAll(' ', '-')}`;
-  page.seen = JSON.stringify(rows().find((one) => one.id === row.id) || null);
+function tabId(name) {
+  return `tab-${name.replaceAll(' ', '-')}`;
+}
+
+// The page's left summary and its row of tabs.
+function frame(row) {
   const tabs = ['Overview', ...(row.kind === 'story' ? ['Plan'] : []), 'Rounds', 'Known issues'];
   const kept = issues(row);
-  page.node.querySelector('.crumbs [aria-current]').textContent = row.title;
   const tablist = el('div', { role: 'tablist', 'aria-label': row.title, class: 'tabs' }, tabs.map((name) => el('button', {
     type: 'button', role: 'tab', id: tabId(name), 'data-focus': tabId(name), 'aria-controls': 'tab-panel', 'aria-selected': String(name === page.tab),
     onclick: () => { page.tab = name; fillPage(); document.getElementById(tabId(name)).focus(); },
   }, name === 'Known issues' ? `Known issues · ${kept.length}` : name)));
+  const summary = el('div', { class: 'summary' },
+    el('p', { class: 'kind' }, tag(row), el('span', {}, kind(row))),
+    el('h1', {}, row.title),
+    el('p', { class: 'person' }, el('span', { 'data-assign': row.id }, person(row))),
+    el('p', { class: 'state-line' }, row.status || 'Status unknown.'),
+    figures(row));
+  return { tablist, summary };
+}
+
+function tabPanel(row) {
   const panel = el('section', { role: 'tabpanel', id: 'tab-panel', 'aria-labelledby': tabId(page.tab), class: 'panel' });
   panel.append(...{ Overview: overview, Plan: plan, Rounds: roundsTab, 'Known issues': knownIssues }[page.tab](row, panel));
+  return panel;
+}
+
+function fillPage() {
+  const { row } = page;
+  const { tablist, summary } = frame(row);
+  const panel = tabPanel(row);
+  page.node.querySelector('.crumbs [aria-current]').textContent = row.title;
   replaceContent(page.node, page.node.firstChild,
-    el('div', { class: 'item-grid' },
-      el('div', { class: 'summary' },
-        el('p', { class: 'kind' }, tag(row), el('span', {}, kind(row))),
-        el('h1', {}, row.title),
-        el('p', { class: 'person' }, el('span', { 'data-assign': row.id }, person(row))),
-        el('p', { class: 'state-line' }, row.status || 'Status unknown.'),
-        figures(row)),
-      el('div', { class: 'sheet' }, tablist, panel)));
+    el('div', { class: 'item-grid' }, drawn(summary), el('div', { class: 'sheet' }, drawn(tablist), drawn(panel))));
+}
+
+// A new snapshot: each part of the page is replaced only if it changed. The plan is read again in the
+// background and replaced only when its words changed, so the reader's place in it stays.
+function refreshPage() {
+  const { row } = page;
+  const grid = page.node.querySelector('.item-grid');
+  const { tablist, summary } = frame(row);
+  const crumb = page.node.querySelector('.crumbs [aria-current]');
+  if (crumb.textContent !== row.title) crumb.textContent = row.title;
+  swap(grid.querySelector('.summary'), summary);
+  swap(grid.querySelector('.tabs'), tablist);
+  const panel = grid.querySelector('.panel');
+  if (page.tab === 'Plan') readPlan(panel.firstChild, row.id);
+  else swap(panel, tabPanel(row));
 }
 
 function fact(label, value) {
@@ -321,22 +370,31 @@ function overview(row) {
   ].filter(Boolean);
 }
 
-function plan(row, panel) {
+function plan(row) {
   if (!planFolds.has(row.id)) planFolds.set(row.id, {});
-  const folds = planFolds.get(row.id);
   const doc = el('article', { class: 'plan' }, el('p', { class: 'quiet' }, 'Reading the plan…'));
-  fetch(`plan/${encodeURIComponent(row.id)}${TOKEN}`, { cache: 'no-store' })
+  readPlan(doc, row.id);
+  return [doc];
+}
+
+function readPlan(doc, id) {
+  // A plan on screen stays when a read fails; only a page with no plan yet shows the reason.
+  const fail = (node) => { if (doc.text === undefined) doc.replaceChildren(node); };
+  fetch(`plan/${encodeURIComponent(id)}${TOKEN}`, { cache: 'no-store' })
     .then(async (answer) => {
       const text = await answer.text();
-      if (answer.ok) return doc.replaceChildren(renderPlan(text, folds)), restoreLostFocus(doc);
+      if (answer.ok) {
+        if (text === doc.text) return;
+        doc.text = text;
+        return replaceContent(doc, renderPlan(text, planFolds.get(id))), restoreLostFocus(doc);
+      }
       let reason = 'The board could not read the plan. Open the tab again in a moment.';
       try {
         reason = JSON.parse(text).error;
       } catch {}
-      doc.replaceChildren(el('p', { class: 'quiet' }, reason));
+      fail(el('p', { class: 'quiet' }, reason));
     })
-    .catch(() => doc.replaceChildren(el('p', { role: 'alert', class: 'problem' }, 'The board cannot reach its server. Start the board again from the terminal.')));
-  return [doc];
+    .catch(() => fail(el('p', { role: 'alert', class: 'problem' }, 'The board cannot reach its server. Start the board again from the terminal.')));
 }
 
 function roundsTab(row) {
@@ -382,8 +440,10 @@ export function install(board) {
   Board.onSnapshot(() => {
     const row = drawer && rows().find((one) => one.id === drawer.id);
     if (row && JSON.stringify(row) !== drawer.seen) fillDrawer(row);
-    if (page?.row && JSON.stringify(rows().find((one) => one.id === page.id) || null) !== page.seen) {
-      item(page.id).then((fresh) => { if (page?.id === fresh.id) { page.row = fresh; fillPage(); } }, () => {});
+    const held = page?.row && rows().find((one) => one.id === page.id);
+    if (held) {
+      page.row = held;
+      refreshPage();
     }
   });
   showPage();

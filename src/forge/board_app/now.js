@@ -242,7 +242,7 @@ function render(main, snapshot) {
         el('div', { class: 'stages' }, STAGES.map((entry) => stage(entry, shown)))),
       full(shown) || rail(shown)),
     figures(shown));
-  main.replaceChildren(screen);
+  if (!Board.show(screen)) return;
   if (opening) refocus('list');
   else if (focused) refocus(focused);
 }

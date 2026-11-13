@@ -9,6 +9,7 @@ const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
 const FILES = 10; // files in the known issues rail, then "and N more"
 let everyFile = false; // the known issues rail shows every file
 let asked = 0; // the newest page read; an older answer that comes later is dropped
+const seen = {}; // page -> the last answer drawn; the same answer again leaves the page as it is
 
 export function h(tag, attrs = {}, ...children) {
   const node = document.createElement(tag);
@@ -37,7 +38,8 @@ export function rows(view) {
 }
 
 // Reads the untrimmed board for `page` and draws it into main. The first read shows a loading line;
-// later reads keep the page on screen until the new answer arrives.
+// later reads keep the page on screen until the new answer arrives, and draw again only if it differs,
+// so the reader's open file and scroll stay.
 export async function load(Board, page, main, draw) {
   if (!document.querySelector('link[data-pages]')) {
     document.head.append(h('link', { rel: 'stylesheet', href: `pages.css${TOKEN}`, 'data-pages': '' }));
@@ -49,9 +51,10 @@ export async function load(Board, page, main, draw) {
   }
   const mine = ++asked;
   let view;
+  let text;
   try {
     const answer = await fetch(`board.json${TOKEN}&page=${page}`, { cache: 'no-store' });
-    const text = await answer.text();
+    text = await answer.text();
     if (!answer.ok) {
       let reason = 'The board could not read the work. The terminal that runs it shows why.';
       try {
@@ -69,6 +72,8 @@ export async function load(Board, page, main, draw) {
     return;
   }
   if (mine !== asked || Board.page !== page) return;
+  if (shown && seen[page] === text) return main.setAttribute('aria-busy', 'false');
+  seen[page] = text;
   const drawn = draw(view);
   drawn.dataset.page = page;
   main.replaceChildren(drawn);

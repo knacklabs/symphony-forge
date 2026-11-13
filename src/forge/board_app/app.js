@@ -14,6 +14,7 @@ const SCREENS = [
 const POLL = 10000; // ms between reads while the events stream is down
 const listeners = [];
 const main = document.querySelector('main');
+let drawn = null; // the screen on the page and a copy of it as built
 const status = document.querySelector('[role=status]');
 
 export const Board = {
@@ -24,6 +25,15 @@ export const Board = {
   onSnapshot(fn) {
     listeners.push(fn);
     if (Board.snapshot) fn(Board.snapshot);
+  },
+  // Puts a screen on the page only when it differs from the last one drawn, and says whether it did.
+  // The copy is compared, not the live page, which also holds the reader's own state (an open file).
+  // A refresh with nothing new then keeps the reader's scroll, selection, focus and open sections.
+  show(screen) {
+    if (main.firstChild === drawn?.node && drawn.copy.isEqualNode(screen)) return false;
+    drawn = { node: screen, copy: screen.cloneNode(true) };
+    main.replaceChildren(screen);
+    return true;
   },
   // ponytail: stubs until the drawer and item page part replaces them
   select(itemId) {},
