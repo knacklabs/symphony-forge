@@ -153,7 +153,7 @@
     "id": "9a32d686-ab48-4e21-8297-7de588b47eb7",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -166,10 +166,10 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "c2c24ee4d4854f1cbd59b25546998e01a824272d",
+    "close": "24ef21cb-1e5d-4547-bd2a-adcebbc07162",
+    "head": "8c442ace2b7357fe825add73f5baac039f85f336",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "worker": "claude"
 }
