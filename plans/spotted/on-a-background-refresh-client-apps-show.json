@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "bug\ttests/test_background_refresh_guidance.py\tGate: test_1_baseline_keeps_the_screen_on_a_background_refresh\ton-a-background-refresh-client-apps-show",
+      "kind": "bug",
+      "path": "tests/test_background_refresh_guidance.py",
+      "line": 18,
+      "text": "Gate: test_1_baseline_keeps_the_screen_on_a_background_refresh",
+      "from": "blocking",
+      "item": "on-a-background-refresh-client-apps-show",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "improve\tsrc/forge/templates/starter/libs/shared/ui/src/components/states.tsx\tThe starter has only the shared LoadingState part and no data hooks, so no default breaks the new refresh rule today.",
+      "kind": "improve",
+      "path": "src/forge/templates/starter/libs/shared/ui/src/components/states.tsx",
+      "line": 16,
+      "text": "The starter has only the shared LoadingState part and no data hooks, so no default breaks the new refresh rule today.",
+      "from": "worker",
+      "item": "on-a-background-refresh-client-apps-show",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

@@ -1,0 +1,65 @@
+{
+  "base": "5a4c64caf73e3cbf9ec8dfc20fefb12b5910ab58",
+  "branch": "fix/on-a-background-refresh-client-apps-show",
+  "done_when": "After a sync or an upgrade, a client repo's app-baseline skill keeps the screen on a background refresh and names the open tab of a detail page in its URL rule, in both its Claude and Codex copies, and a test pins that text.",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "test_1_baseline_keeps_the_screen_on_a_background_refresh() in tests/test_background_refresh_guidance.py",
+      "file": "tests/test_background_refresh_guidance.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 18,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_baseline_keeps_the_screen_on_a_background_refresh",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "db5fe65906b3c08b667df3412887cbca846d2840b9b00c34940babfed602bdda",
+    "changed": "004fa0b9b293b5d87ff0b3f9db0f42fc9f710330188581674962fdfe1e25b775",
+    "commit": "a2de85572789a1158bd703ca9e090602115c7a5e",
+    "dismissals": [],
+    "findings": [],
+    "id": "9bb15cd7-1fd1-4b63-9115-b8de506479e1",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-13T04:53:08.625764+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-13T05:00:36.849884+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-13T05:10:24.467323+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-13T05:00:36.859540+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "tests/test_background_refresh_guidance.py",
+    "reason": "The owner chose one more round: make the existing-repo test start from a repo with the older rules",
+    "wait_id": "8761b18c-b67e-4824-b776-2c247ae23eb8",
+    "worker_round": 1
+  },
+  "stuck": {
+    "close": "30fa4d9e-3158-4246-ac2f-880ee8e22a85",
+    "head": "055c4c52bf904f004db50b8adfe6602b134b5d99",
+    "keys": {},
+    "round": 1
+  },
+  "why": "On a background refresh, client apps show the loading state again or rebuild the list, so the reader loses scroll position, open sections, selection, focus and typed text.",
+  "worker": "claude"
+}
