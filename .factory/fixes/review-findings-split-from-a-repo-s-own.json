@@ -11,7 +11,7 @@
       "gain": 3,
       "harm": 3,
       "line": 425,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -24,7 +24,7 @@
       "gain": 3,
       "harm": 3,
       "line": 442,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -37,7 +37,7 @@
       "gain": 3,
       "harm": 3,
       "line": 27,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -50,7 +50,7 @@
       "gain": 3,
       "harm": 3,
       "line": 19,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -60,59 +60,17 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "29cb953d4e7adfc434a6b88bce33b069bd7c72cd5192f5cb4079e6bcba2b98c4",
-    "changed": "9cb1299cbf859b42401b51a92d6ebff098e1f83a9b47adbcfccf4dc85ba6b277",
-    "commit": "c38fdca8bb0fac2a7862f98708c208812b118efe",
+    "branch_diff": "71a45940737ad0be88aa1080e333966f359f756ea5c966f226b37a05b0651de0",
+    "changed": "b06bcc24e8b9bd152faffda6a5c8fb6171fb6dba622762ed22d2b5551419f417",
+    "commit": "38906dbb7eeea5bafeb9848a41007dca088cc63c",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Not done\nCase: normal use - A nested app changes its package initializer while its tests import a submodule.\nFor `apps/api/app/__init__.py`, this adds the module name `app`, but `mentions()` in `src/forge/fasttest.py:159,168-174` does not match a single-component package against `from app.core.config import load_settings`. Python loads `app/__init__.py` for that import, yet the starter's `apps/api/tests/test_config.py:5` is skipped. If no other tests are selected, the picker returns success without running it.",
-        "file": "src/forge/fasttest.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 425,
-        "priority": "P1",
-        "required_done_when": true,
-        "title": "Not done: A review no longer finds: Functional: The Python picker misses direct imports in nested apps (src/forge/templates/skill.md:1462)",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional\nCase: normal use - The API and worker each have a `tests/test_config.py` containing a `test_config_...` function.\nThe root check here initially selects only the API test, but `docskip.test_readers()` at `src/forge/docskip.py:76-80` subsequently adds every test whose text contains the selected file's stem. It therefore adds the worker test too. With ordinary unpackaged pytest test directories, the two identically named files can then fail collection with an import-file mismatch. The new proof uses different file stems and `test_it`, so it does not expose this violation of the requested app isolation.",
-        "file": "src/forge/fasttest.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 442,
-        "priority": "P1",
-        "title": "Functional: Keep unrelated nested apps out of the selection",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 1, Harm 3\nRaise: Test\nCase: normal use - A Windows developer runs the suite from a virtual environment under a path such as `C:/Users/Jane Doe/`.\n`shlex.join()` puts POSIX single quotes around the Python executable, but the picker runs this configured command with `shell=True` through `cmd.exe` (`src/forge/fasttest.py:821`). Windows does not treat those single quotes as executable-path quoting, so the new platform-sensitive test fails before pytest can run.",
-        "file": "tests/test_python_picker_follows_imports_in_nested_apps.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 27,
-        "priority": "P1",
-        "title": "Gate: nested-app picker test on Windows paths with spaces",
-        "work": 1
-      },
-      {
-        "body": "Gain 3, Work 1, Harm 3\nRaise: Test\nCase: normal use - A new or upgraded repo receives a synced guide that still contains the obsolete nested-app warning.\nThe named proof removes the warning from `GUIDE`, but only asserts that the remaining sentences are present. It never asserts that the warning is absent, so it would still pass if the deleted sentence were restored in both hosts' guides. The proof list specifically claims this test covers removal of that sentence.",
-        "file": "tests/test_fast_test_in_ci_includes_importing_tests.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 19,
-        "priority": "P1",
-        "title": "Gate: tests/test_fast_test_in_ci_includes_importing_tests.py",
-        "work": 1
-      }
-    ],
-    "id": "312246cd-5afe-405d-a7e4-5a883003058d",
-    "status": "blocked"
+    "findings": [],
+    "id": "d7b53afd-c78f-4ab1-9126-3c45ff806b2a",
+    "status": "clean"
   },
   "round": 2,
   "stacked_on": "a-repo-s-own-fast-test-ran-only-the-chan",
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-13T02:08:46.213465+00:00",
@@ -120,6 +78,10 @@
     },
     {
       "at": "2026-11-13T03:13:39.443727+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-13T03:26:58.366945+00:00",
       "step": "review"
     }
   ],
