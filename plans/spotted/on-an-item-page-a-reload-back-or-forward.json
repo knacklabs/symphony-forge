@@ -1,0 +1,70 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/board_app/item.js\tNot done: Escape on a full item page does nothing and Escape closes only the drawer\ton-an-item-page-a-reload-back-or-forward",
+      "kind": "bug",
+      "path": "src/forge/board_app/item.js",
+      "line": 478,
+      "text": "Not done: Escape on a full item page does nothing and Escape closes only the drawer",
+      "from": "blocking",
+      "item": "on-an-item-page-a-reload-back-or-forward",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board_app/item.js\tNot done: after a refresh, Escape on the drawer puts the keyboard focus back on the card it came from.\ton-an-item-page-a-reload-back-or-forward",
+      "kind": "bug",
+      "path": "src/forge/board_app/item.js",
+      "line": 227,
+      "text": "Not done: after a refresh, Escape on the drawer puts the keyboard focus back on the card it came from.",
+      "from": "blocking",
+      "item": "on-an-item-page-a-reload-back-or-forward",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_board_item_tab_in_address.py\tGate: test_1_a_reload_a_link_back_and_forward_show_the_tab_the_address_names\ton-an-item-page-a-reload-back-or-forward",
+      "kind": "bug",
+      "path": "tests/test_board_item_tab_in_address.py",
+      "line": 53,
+      "text": "Gate: test_1_a_reload_a_link_back_and_forward_show_the_tab_the_address_names",
+      "from": "blocking",
+      "item": "on-an-item-page-a-reload-back-or-forward",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_board_item_tab_in_address.py\tGate: test_3_after_a_refresh_escape_on_the_drawer_returns_focus_to_its_card\ton-an-item-page-a-reload-back-or-forward",
+      "kind": "bug",
+      "path": "tests/test_board_item_tab_in_address.py",
+      "line": 136,
+      "text": "Gate: test_3_after_a_refresh_escape_on_the_drawer_returns_focus_to_its_card",
+      "from": "blocking",
+      "item": "on-an-item-page-a-reload-back-or-forward",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_board_item_tab_in_address.py\tStandard: Fake only third-party services at their edge\ton-an-item-page-a-reload-back-or-forward",
+      "kind": "bug",
+      "path": "tests/test_board_item_tab_in_address.py",
+      "line": 122,
+      "text": "Standard: Fake only third-party services at their edge",
+      "from": "blocking",
+      "item": "on-an-item-page-a-reload-back-or-forward",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/board_app/item.js\tA reload still closes the drawer because the drawer is not in the address; the audit's finding 9 mentions it, the Done-when does not ask for it.",
+      "kind": "edge",
+      "path": "src/forge/board_app/item.js",
+      "line": 220,
+      "text": "A reload still closes the drawer because the drawer is not in the address; the audit's finding 9 mentions it, the Done-when does not ask for it.",
+      "from": "worker",
+      "item": "on-an-item-page-a-reload-back-or-forward",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

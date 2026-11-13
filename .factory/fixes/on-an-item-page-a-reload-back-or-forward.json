@@ -1,0 +1,128 @@
+{
+  "amendments": [
+    {
+      "at": "2026-11-13T08:02:09.236338+00:00",
+      "because": "The audit's own done-when for this fix covers all three findings",
+      "done_when": "After a reload on an item's Plan tab, the Plan tab is still open, and a link to the Plan tab opens it."
+    }
+  ],
+  "base": "6f59a2bc0698eea1c962260f1176be01582bb4b8",
+  "branch": "fix/on-an-item-page-a-reload-back-or-forward",
+  "done_when": "A reload on an item's Plan tab shows the Plan tab, a link can open the Plan tab, and Back and Forward return to the tab that was open; Escape on a full item page does nothing and Escape closes only the drawer; and after a refresh, Escape on the drawer puts the keyboard focus back on the card it came from.",
+  "fix_kind": "ui",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "src/forge/board_app/item.js",
+      "file": "src/forge/board_app/item.js",
+      "gain": 3,
+      "harm": 3,
+      "line": 227,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: after a refresh, Escape on the drawer puts the keyboard focus back on the card it came from.",
+      "work": 2
+    },
+    {
+      "area": "src/forge/board_app/item.js",
+      "file": "src/forge/board_app/item.js",
+      "gain": 3,
+      "harm": 3,
+      "line": 478,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Escape on a full item page does nothing and Escape closes only the drawer",
+      "work": 2
+    },
+    {
+      "area": "tests/test_board_item_tab_in_address.py",
+      "file": "tests/test_board_item_tab_in_address.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 136,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_3_after_a_refresh_escape_on_the_drawer_returns_focus_to_its_card",
+      "work": 1
+    },
+    {
+      "area": "tests/test_board_item_tab_in_address.py",
+      "file": "tests/test_board_item_tab_in_address.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 122,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Standard: Fake only third-party services at their edge",
+      "work": 2
+    },
+    {
+      "area": "tests/test_board_item_tab_in_address.py",
+      "file": "tests/test_board_item_tab_in_address.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 53,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_a_reload_a_link_back_and_forward_show_the_tab_the_address_names",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "21029f613333c1825caaeb0cfa599bcdd8fb36d76578c7379f66535e0fcf0b0e",
+    "changed": "4dd3808c7d72801c80149c3f0392db7939f5eb83b86bad7286ae6ed2763c9818",
+    "commit": "247af43b37eaf88d2a985931b2cf500ea640d2da",
+    "dismissals": [],
+    "findings": [],
+    "id": "6bce0cb8-9480-47b8-8ee6-1dfbc457d1c4",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-13T08:02:05.772982+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-13T08:34:24.202873+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-13T10:45:33.433529+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-13T15:17:17.781670+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-13T10:45:33.433819+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "src/forge/board_app/item.js",
+    "reason": "The owner chose one more round: repair the keyboard focus after a refresh",
+    "wait_id": "fe44c92a-dc61-4bdb-9a2d-a96c17013075",
+    "worker_round": 2
+  },
+  "stuck": {
+    "close": "e9135051-efa0-4e7f-9cda-b253c139407e",
+    "head": "58b0e9e3ad50d80604b51a7edf04e7471d7ccaa0",
+    "keys": {},
+    "round": 2
+  },
+  "why": "On an item page, a reload, Back or Forward returns the reader to the Overview tab, and no link can open the Plan tab. Escape on a full item page sends the reader to the Now screen instead of doing nothing, and after a reload Escape on the drawer leaves keyboard focus at the top of the page instead of on the card it came from.",
+  "worker": "claude"
+}
