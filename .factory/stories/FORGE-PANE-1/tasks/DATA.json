@@ -1,10 +1,18 @@
 {
   "branch": "task/FORGE-PANE-1-DATA",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-13T15:05:54.927030+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "c2c24ee4d4854f1cbd59b25546998e01a824272d",
+    "keys": {},
+    "round": null
+  },
+  "worker": "claude"
 }
