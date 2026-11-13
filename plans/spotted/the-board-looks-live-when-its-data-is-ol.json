@@ -45,11 +45,44 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/board_app/app.js\tNot done: Retry an item's first failed read\tthe-board-looks-live-when-its-data-is-ol",
+      "kind": "bug",
+      "path": "src/forge/board_app/app.js",
+      "line": 142,
+      "text": "Not done: Retry an item's first failed read",
+      "from": "blocking",
+      "item": "the-board-looks-live-when-its-data-is-ol",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board_app/app.js\tNot done: Show failed reads of a story's plan\tthe-board-looks-live-when-its-data-is-ol",
+      "kind": "bug",
+      "path": "src/forge/board_app/app.js",
+      "line": 97,
+      "text": "Not done: Show failed reads of a story's plan",
+      "from": "blocking",
+      "item": "the-board-looks-live-when-its-data-is-ol",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/board_app/tokens.css\tNot done: The item drawer covers the stale-data message\tthe-board-looks-live-when-its-data-is-ol",
       "kind": "bug",
       "path": "src/forge/board_app/tokens.css",
       "line": 178,
       "text": "Not done: The item drawer covers the stale-data message",
+      "from": "blocking",
+      "item": "the-board-looks-live-when-its-data-is-ol",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board_server.py\tNot done: Update the reason when a rebuild fails for a different cause\tthe-board-looks-live-when-its-data-is-ol",
+      "kind": "bug",
+      "path": "src/forge/board_server.py",
+      "line": 376,
+      "text": "Not done: Update the reason when a rebuild fails for a different cause",
       "from": "blocking",
       "item": "the-board-looks-live-when-its-data-is-ol",
       "status": "open",
@@ -73,6 +106,17 @@
       "line": 81,
       "text": "Standard: Tests own and clean up every process they start",
       "from": "blocking",
+      "item": "the-board-looks-live-when-its-data-is-ol",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/board_app/app.js\tFollow-up: Discard failures belonging to views that have been left",
+      "kind": "edge",
+      "path": "src/forge/board_app/app.js",
+      "line": 263,
+      "text": "Follow-up: Discard failures belonging to views that have been left",
+      "from": "review",
       "item": "the-board-looks-live-when-its-data-is-ol",
       "status": "open",
       "closed_by": null
