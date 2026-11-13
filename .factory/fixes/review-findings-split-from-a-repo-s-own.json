@@ -68,9 +68,9 @@
     "id": "d7b53afd-c78f-4ab1-9126-3c45ff806b2a",
     "status": "clean"
   },
-  "round": 2,
+  "round": 3,
   "stacked_on": "a-repo-s-own-fast-test-ran-only-the-chan",
-  "status": "waiting for checks",
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-13T02:08:46.213465+00:00",
@@ -95,10 +95,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": "29e500c3-f39f-4d86-8a66-74861e49866e",
-    "head": "4848a75e5258254b0cc39920cc8ca0d3fbeb96de",
+    "close": "e8051778-f294-4748-bb44-37225475b562",
+    "head": "f097f09aca21925cbdb0e582362c9d2ba8606c1b",
     "keys": {},
-    "round": 1
+    "round": 2
   },
   "why": "Review findings split from a-repo-s-own-fast-test-ran-only-the-chan: Functional: The Python picker misses direct imports in nested apps (src/forge/templates/skill.md:1462)",
   "worker": "claude"
