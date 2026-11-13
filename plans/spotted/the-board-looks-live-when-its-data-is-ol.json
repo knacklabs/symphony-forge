@@ -78,6 +78,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/board_server.py\tKeep rebuild logging from blocking recovery\tthe-board-looks-live-when-its-data-is-ol",
+      "kind": "bug",
+      "path": "src/forge/board_server.py",
+      "line": 200,
+      "text": "Keep rebuild logging from blocking recovery",
+      "from": "blocking",
+      "item": "the-board-looks-live-when-its-data-is-ol",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/board_server.py\tNot done: Update the reason when a rebuild fails for a different cause\tthe-board-looks-live-when-its-data-is-ol",
       "kind": "bug",
       "path": "src/forge/board_server.py",
@@ -116,6 +127,17 @@
       "path": "src/forge/board_app/app.js",
       "line": 263,
       "text": "Follow-up: Discard failures belonging to views that have been left",
+      "from": "review",
+      "item": "the-board-looks-live-when-its-data-is-ol",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/board_app/tokens.css\tPreserve auto-height on narrow board screens",
+      "kind": "edge",
+      "path": "src/forge/board_app/tokens.css",
+      "line": 193,
+      "text": "Preserve auto-height on narrow board screens",
       "from": "review",
       "item": "the-board-looks-live-when-its-data-is-ol",
       "status": "open",
