@@ -205,18 +205,22 @@ Only a genuine trade-off goes to the human, as a question with options.
 33. Blocking: The new guide folder can still overwrite a team file.
     Raise: Data loss. Case: normal use - An existing repo has Forge’s old skill and a team-owned `.claude/skills/forge-guide/run-reference.md`, but no `SKILL.md` in the new folder. [The new guard](/plans/FORGE-PANE-1.md:136) does not refuse, and [sync overwrites the file](/src/forge/sync.py:589). Finding 22 remains open for files alongside the new skill.
     Gain 5, Work 3, Harm 4
+    Disposition: cut — The owner chose no rename (13 Nov 2026): the guide skill stays in its folder, no client repo file changes, and the mod answers a typed /forge with its own hook, so this case no longer exists.
 
 34. Blocking: A refused sync can replace a team’s instruction link.
     Raise: Data loss. Case: normal use - A repo has the conflicting guide skills and a `CLAUDE.md` symlink to `AGENTS.md`. [Sync replaces that link with a regular file](/src/forge/sync.py:577) before it calls the proposed refusal in `story.ships`. The link is lost even though [the plan promises no changes on refusal](/plans/FORGE-PANE-1.md:15).
     Gain 4, Work 2, Harm 4
+    Disposition: cut — The owner chose no rename (13 Nov 2026): the guide skill stays in its folder, no client repo file changes, and the mod answers a typed /forge with its own hook, so this case no longer exists.
 
 35. Blocking: An exact guide copy can still be a file the team added.
     Raise: Data loss. Case: normal use - A v1.2.2 repo’s team copied a later Forge `run-reference.md` into the old guide folder. [That release did not ship the file](/tests/fixtures/forge-v1.2.2/src/forge/story.py:85), but [the hash rule](/plans/FORGE-PANE-1.md:136) deletes it because its text matches a later release. Finding 23 remains open: matching content does not establish who added the file.
     Gain 5, Work 3, Harm 4
+    Disposition: cut — The owner chose no rename (13 Nov 2026): the guide skill stays in its folder, no client repo file changes, and the mod answers a typed /forge with its own hook, so this case no longer exists.
 
 36. Blocking: A changed old skill leaves `/forge` owned after sync succeeds.
     Raise: Functional. Case: normal use - A team has changed its old `forge/SKILL.md`. On its first upgrade, the new skill does not yet exist, so [the guard](/plans/FORGE-PANE-1.md:136) allows sync to create it while preserving the changed old skill. The old skill still owns `/forge`, so the pane cannot open after the reported successful sync.
     Gain 5, Work 3, Harm 4
+    Disposition: cut — The owner chose no rename (13 Nov 2026): the guide skill stays in its folder, no client repo file changes, and the mod answers a typed /forge with its own hook, so this case no longer exists.
 
 37. Blocking: An answer can be marked handled before a worker receives it.
     Raise: Data loss. Case: normal use - A person answers a question while the machine is busy, then cancels the queued work command. [The new rule](/plans/FORGE-PANE-1.md:120) records only the answered question’s ID before admission; [the answer text is committed only after admission](/src/forge/worker.py:299). The answer never reaches a worker, but the pane stops showing the question.
@@ -237,6 +241,7 @@ Only a genuine trade-off goes to the human, as a question with options.
 40. Blocking: Doctor can hold back an exact old guide that the plan says it repairs.
     Raise: Not done. Case: normal use - A client committed a previous `forge sync` separately from its version-pin change. Even when the old guide matches the frozen hash list, [doctor’s existing ownership check](/src/forge/doctor.py:203) holds a file last changed by that ordinary commit back. This contradicts [the promised repair](/plans/FORGE-PANE-1.md:136) and can leave the old skill owning `/forge`.
     Gain 4, Work 3, Harm 4
+    Disposition: cut — The owner chose no rename (13 Nov 2026): the guide skill stays in its folder, no client repo file changes, and the mod answers a typed /forge with its own hook, so this case no longer exists.
 
 41. Advisory: A build can appear to wait after its tests have returned its place.
     Raise: Functional. [Returning from tests clears `started_at`](/src/forge/machine.py:345), and re-admission sets `admitted` without restoring it. [The planned rule](/plans/FORGE-PANE-1.md:117) therefore labels the resumed build as waiting.
