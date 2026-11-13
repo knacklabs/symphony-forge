@@ -177,7 +177,7 @@
     "id": "bb4d0005-2652-4889-9eb4-f6a1f77cd9fa",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "stacked_on": "FORGE-NIGHTLY-1/NIGHTLY",
   "status": "fixing",
   "steps": [
@@ -191,10 +191,10 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "33e086b56d5717d392376713cc50f5b2d9f890d6",
+    "close": "d3cd28c8-b745-4cc0-b8d5-90f9fc929f98",
+    "head": "b617d880ba77bcdeb8e86d9e511b7169434cf636",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "worker": "claude"
 }
