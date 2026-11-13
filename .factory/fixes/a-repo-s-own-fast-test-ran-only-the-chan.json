@@ -28,28 +28,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "718151c18902fb9a0197faedbd3b071855ebecda1f3b3c7701996a123e696991",
-    "changed": "0b9a9a02db6de2cf78547951978632272bcb5772023191a2dc9312cd55001e2d",
-    "commit": "819e153f4e037d8eaef238bd0611480cb48daf71",
+    "branch_diff": "2486d7e852f1b0b033f84aff21273a08dc489c81bbf819c23254fcbbe753eee3",
+    "changed": "6f39c868a19736d66914014af91842573c154031c45d684fa2b0ed671670ef17",
+    "commit": "8d86aefe6786f8360bb56afccd341c1cf1f27b24",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 1, Harm 3\nRaise: Functional\nCase: normal use - An adopted Python repo has its app under `apps/api` and uses the recommended picker in pull request CI.\nThe picker example does not cover this common layout. For example, `apps/api/tests/test_config.py` imports `app.core.config` (see `src/forge/templates/starter-python/apps/api/tests/test_config.py:5`), but `src/forge/fasttest.py:32` and `:379` derive the changed file's module as `apps.api.app.core.config`, so the import does not match and the test is skipped. CI can pass while an unchanged importing test fails nightly, recreating the reported problem. The coordinator's approved example did not account for this nested-source mismatch. The same unqualified example appears in both `.claude/skills/forge/SKILL.md` and `.codex/skills/forge/SKILL.md`.",
-        "file": "src/forge/templates/skill.md",
-        "follow_up": "Split into follow-up fix review-findings-split-from-a-repo-s-own",
-        "gain": 4,
-        "harm": 3,
-        "line": 1462,
-        "priority": "P1",
-        "title": "Functional: The Python picker misses direct imports in nested apps",
-        "work": 1
-      }
-    ],
-    "id": "da1a9f27-d182-451f-9f85-69b341a91712",
+    "findings": [],
+    "id": "491bea10-4862-4146-aab7-a9a0f7716eb6",
     "status": "clean"
   },
   "round": 2,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-12T15:51:20.606328+00:00",
@@ -57,6 +45,10 @@
     },
     {
       "at": "2026-11-12T17:26:05.044704+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-13T02:13:04.939560+00:00",
       "step": "review"
     }
   ],
