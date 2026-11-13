@@ -15,6 +15,12 @@ const POLL = 10000; // ms between reads while the events stream is down
 const listeners = [];
 const main = document.querySelector('main');
 const status = document.querySelector('[role=status]');
+// One quiet line under the header says why the page may be old; it is empty, and so hidden, when data is fresh.
+const stale = document.createElement('p');
+stale.className = 'stale';
+stale.setAttribute('aria-live', 'polite');
+document.querySelector('header').after(stale);
+let retry = null; // a read the server refused is asked again after POLL, while the events stream still works
 
 export const Board = {
   page: 'now',
@@ -72,11 +78,13 @@ function render() {
 }
 
 async function refresh() {
+  clearTimeout(retry);
   let answer;
   try {
     answer = await fetch(`board.json${TOKEN}`, { cache: 'no-store' });
   } catch {
-    return fail('The board cannot reach its server. Start the board again from the terminal.');
+    return fail('offline', 'Offline', 'The board has stopped, so this page may be old. '
+      + 'Start the board again from the terminal, then open its new link.');
   }
   const text = await answer.text();
   if (!answer.ok) {
@@ -84,23 +92,27 @@ async function refresh() {
     try {
       reason = JSON.parse(text).error;
     } catch {}
-    return fail(reason);
+    retry = setTimeout(refresh, POLL);
+    return fail('stale', 'Not updating', 'The server could not read the work, so this page may be old. '
+      + `It said: \u201c${reason}\u201d The page tries again.`);
   }
   const snapshot = JSON.parse(text);
   if (Board.snapshot && snapshot.snapshot.version < Board.snapshot.snapshot.version) return; // a slower, older read
   Board.snapshot = snapshot;
   const updating = Boolean(snapshot.snapshot.updating);
   mark(updating ? 'updating' : 'live', updating ? 'Updating' : 'Live');
+  stale.textContent = '';
   document.querySelector('[data-repo]').textContent = snapshot.repo_root.split(/[\\/]/).pop();
   main.setAttribute('aria-busy', 'false');
   render();
   for (const fn of listeners) fn(snapshot);
 }
 
-function fail(reason) {
-  mark('offline', 'Offline');
+function fail(state, word, line) {
+  mark(state, word);
+  stale.textContent = line;
   main.setAttribute('aria-busy', 'false');
-  if (!Board.snapshot) say('problem', reason); // a board already on screen stays; the mark says it is old
+  if (!Board.snapshot) say('note', 'There is no board to show yet.'); // a board already on screen stays
 }
 
 let polling = null;

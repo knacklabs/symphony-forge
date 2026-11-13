@@ -173,7 +173,18 @@ body {
 
 .status[data-state="live"]::before { background: var(--bar-live); }
 .status[data-state="updating"]::before { background: var(--bar-moving); }
-.status[data-state="offline"]::before { background: var(--bar-stuck); }
+.status[data-state="offline"]::before, .status[data-state="stale"]::before { background: var(--bar-stuck); }
+
+.stale {
+  flex: none;
+  margin: 0;
+  padding: var(--space-2) var(--space-8);
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+  text-wrap: pretty;
+}
+
+.stale:empty { display: none; }
 
 main {
   flex: 1;
