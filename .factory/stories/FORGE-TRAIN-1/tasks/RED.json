@@ -1,10 +1,18 @@
 {
   "branch": "task/FORGE-TRAIN-1-RED",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-13T07:18:09.194958+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "4f824ecb402c0fbaf5801a13314219f86a2ef537",
+    "keys": {},
+    "round": null
+  },
+  "worker": "claude"
 }
