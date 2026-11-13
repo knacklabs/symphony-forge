@@ -1,0 +1,75 @@
+{
+  "amendments": [
+    {
+      "at": "2026-11-13T02:09:06.786577+00:00",
+      "because": "The owner chose to split: the picker's fault is repaired in a separate fix, and this guide fix states the limit honestly",
+      "done_when": "For new and existing client repos, the shipped guide says a fast test in pull request CI must include the tests that import changed source files, split across the test groups, that a local fast test may stay smaller, that the full suite stays nightly, and it warns against a changed-files-only script."
+    }
+  ],
+  "base": "fe7caf4e9b8e88d417e5e62fe2564dd90f4216be",
+  "branch": "fix/a-repo-s-own-fast-test-ran-only-the-chan",
+  "done_when": "For new and existing client repos, the shipped guide says a fast test in pull request CI must include the tests that import changed source files, split across the test groups, that a local fast test may stay smaller, that the full suite stays nightly, and it warns against a changed-files-only script. The guide also says that Forge's Python picker does not yet follow imports in an app that lives in a sub-folder; the repair of the picker is the separate fix review-findings-split-from-a-repo-s-own.",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "src/forge/templates/skill.md",
+      "file": "src/forge/templates/skill.md",
+      "gain": 4,
+      "harm": 3,
+      "line": 1462,
+      "outcome": "follow-up",
+      "reason": "Split into follow-up fix review-findings-split-from-a-repo-s-own",
+      "round": 1,
+      "security": false,
+      "title": "Functional: The Python picker misses direct imports in nested apps",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "2486d7e852f1b0b033f84aff21273a08dc489c81bbf819c23254fcbbe753eee3",
+    "changed": "6f39c868a19736d66914014af91842573c154031c45d684fa2b0ed671670ef17",
+    "commit": "8d86aefe6786f8360bb56afccd341c1cf1f27b24",
+    "dismissals": [],
+    "findings": [],
+    "id": "491bea10-4862-4146-aab7-a9a0f7716eb6",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-12T15:51:20.606328+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-12T17:26:05.044704+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-13T02:13:04.939560+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-12T17:26:05.057300+00:00",
+    "by": "owner",
+    "choice": "split",
+    "file": "src/forge/templates/skill.md",
+    "fixes": [
+      "review-findings-split-from-a-repo-s-own"
+    ],
+    "reason": "The owner chose: split; the picker is repaired in a separate Forge fix, and this guide fix goes on with one honest sentence about the limit",
+    "wait_id": "ae9e9aa2-288a-4547-9eba-dedc41ca1ac1",
+    "worker_round": 1
+  },
+  "stuck": {
+    "close": "ed2bc3dd-3f15-4bf1-96ff-d668c12744c6",
+    "head": "e18bb0ba8cde4e41a67082316b0560c40548d24e",
+    "keys": {},
+    "round": 1
+  },
+  "why": "A repo's own fast test ran only the changed test files plus a few fixed files in pull request CI, so unchanged tests that import a changed source file were skipped, failed on the main branch, and blocked every other close.",
+  "worker": "claude"
+}

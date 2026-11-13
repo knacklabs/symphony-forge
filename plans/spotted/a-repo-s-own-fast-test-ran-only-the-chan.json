@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/templates/skill.md\tFunctional: The Python picker misses direct imports in nested apps\ta-repo-s-own-fast-test-ran-only-the-chan",
+      "kind": "bug",
+      "path": "src/forge/templates/skill.md",
+      "line": 1462,
+      "text": "Functional: The Python picker misses direct imports in nested apps",
+      "from": "blocking",
+      "item": "a-repo-s-own-fast-test-ran-only-the-chan",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
