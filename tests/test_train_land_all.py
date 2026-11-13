@@ -186,6 +186,12 @@ def _everyone_merges_alone(env, done, slugs, moved=()) -> None:
         assert f"{slug} merged." in lines and f"{slug}: Closing {slug}." in lines, done.stdout + done.stderr
     for slug in moved:
         assert any(line.startswith(f"{slug}: ") and RERUN in line for line in lines), done.stdout
+    # Each waited for its own CI: GitHub's checks for the head it merged were read before its merge.
+    calls = env.gh.calls()
+    for slug in slugs:
+        at = max(n for n, call in enumerate(calls) if call[:3] == ["pr", "merge", _number(f"fix/{slug}")])
+        head = calls[at][calls[at].index("--match-head-commit") + 1]
+        assert any(f"/commits/{head}/check-runs" in arg for call in calls[:at] for arg in call), (slug, done.stdout)
 
 
 def _restarted(env) -> list[list[str]]:
@@ -303,8 +309,8 @@ def _stacked(env, monkeypatch, base_merged: bool) -> None:
 
 
 @pytest.mark.timeout(1800)
-@pytest.mark.parametrize("variant", ["out", "taken", "no-drafts", "rule", "behind", "stale", "stacked", "human",
-                                     "no-app-check"])
+@pytest.mark.parametrize("variant", ["out", "taken", "taken-same", "no-drafts", "rule", "behind", "stale", "stacked",
+                                     "human", "no-app-check", "lint-only", "switched", "older", "alone"])
 def test_2_changes_that_cannot_join_stay_out(train, monkeypatch, request, variant):
     env = train
     adopted = request.node.callspec.params["client"] == "adopted"
@@ -323,15 +329,24 @@ def test_2_changes_that_cannot_join_stay_out(train, monkeypatch, request, varian
     elif variant == "stacked":  # a ready fix built on the ready, unmerged fix jb
         heads = _ready(env, monkeypatch, ("aa", "bb"))
         _stacked(env, monkeypatch, base_merged=False)
+    elif variant == "alone":  # only aa can join: bb clashes with the default branch
+        heads = _ready(env, monkeypatch, ("aa", "bb"), files={"bb": {"shared.py": _edit(7, "mine")}})
+        _rival(env, {"shared.py": _edit(7, "rival")})
     else:
         if variant == "human":
             _settings(env, merge="human")
+        if variant == "switched":  # ready under laptop tests, then the default branch moves to CI
+            _settings(env, test_place="local")
         heads = _ready(env, monkeypatch, ("aa", "bb", "cc"))
+        if variant == "switched":
+            _settings(env, test_place="ci")
+        if variant == "older":  # ready by an earlier release's evidence: no ready record of its own
+            (env.common / "forge" / "ready" / "bb.json").unlink()
     if variant == "out" and not adopted:
         _stacked(env, monkeypatch, base_merged=True)
         heads.update(_ready(env, monkeypatch, ("ff", "gg", "hh"), first=9))
         _rival(env, {"shared.py": _edit(7, "rival"), "plans/roadmap.json": _roadmap("A-1", "Z-1")})
-    if variant == "taken":
+    if variant in ("taken", "taken-same"):
         # The branch name the train would take, held by someone else, with an open pull request.
         monkeypatch.setenv("GIT_AUTHOR_DATE", "2026-01-01T12:00:00")
         monkeypatch.setenv("GIT_COMMITTER_DATE", "2026-01-01T12:00:00")
@@ -340,18 +355,20 @@ def test_2_changes_that_cannot_join_stay_out(train, monkeypatch, request, varian
             tree = env.repo.git("merge-tree", "--write-tree", tip, heads[slug]).split()[0]
             tip = env.repo.git("commit-tree", tree, "-p", tip, "-p", heads[slug], "-m", "Forge merge train")
         taken = f"forge-merge-train/{tip[:12]}"
-        stranger = env.repo.git("commit-tree", env.repo.git("rev-parse", "HEAD^{tree}"), "-p",
-                                env.repo.git("rev-parse", "HEAD"), "-m", "Someone else's work")
+        stranger = tip if variant == "taken-same" else env.repo.git(  # the very commit the train would push
+            "commit-tree", env.repo.git("rev-parse", "HEAD^{tree}"), "-p", env.repo.git("rev-parse", "HEAD"),
+            "-m", "Someone else's work")
         env.repo.git("push", "-q", "origin", f"{stranger}:refs/heads/{taken}")
         (env.repo.bin / "pr-77.json").write_text(json.dumps({
             "number": 77, "headRefName": taken, "baseRefName": "main", "title": "Mine", "isDraft": False,
             "body": "", "url": "https://github.com/acme/shop/pull/77"}), "utf-8")
     if variant == "stale":  # the remote's settings say laptop tests; the main checkout still says CI
         _rival(env, {"forge.toml": (env.repo.path / "forge.toml").read_text("utf-8") + 'test_place = "local"\n'})
-    if variant == "no-app-check":  # CI is the place, but only Forge's own review check is required
+    if variant in ("no-app-check", "lint-only"):  # CI is the place, but no required check runs the app's tests
         kept = [line for line in (env.repo.path / "forge.toml").read_text("utf-8").splitlines()
                 if not line.startswith("checks =")]
-        _rival(env, {"forge.toml": "\n".join(kept + ['checks = ["forge-pr-check"]', 'test_place = "ci"']) + "\n"})
+        required = '["forge-pr-check"]' if variant == "no-app-check" else '["lint", "forge-pr-check"]'
+        _rival(env, {"forge.toml": "\n".join(kept + [f"checks = {required}", 'test_place = "ci"']) + "\n"})
     ready = env.common / "forge" / "ready" / "hh.json"  # hh closes again while the train waits
     _stub(env, pending_again={"path": str(ready), "mtime": ready.stat().st_mtime_ns} if variant == "out" and not adopted else None,
           no_drafts=variant == "no-drafts",
@@ -386,12 +403,25 @@ def test_2_changes_that_cannot_join_stay_out(train, monkeypatch, request, varian
         assert [number for number, _ in _merge_heads(env)] == [
             _number(f"fix/{slug}") for slug in ("aa", "bb", "jb", "jj")], text
         assert any(line.startswith("jj: ") and RERUN in line for line in lines), text
-    elif variant == "taken":
+    elif variant in ("taken", "taken-same"):  # no train, one line; the branch and its pull request stay
         assert f"Train: could not create {taken}, {LATER}" in lines, text
         assert not created and not env.gh_calls("pr", "close"), text
         assert env.repo.git("ls-remote", "--heads", env.remote, f"refs/heads/{taken}").split()[0] == stranger
         assert (env.repo.bin / "pr-77.json").exists()
         _everyone_merges_alone(env, done, ('aa', 'bb', 'cc'))
+    elif variant == "switched":
+        for slug in ("aa", "bb", "cc"):
+            assert f"{slug} stays out of the train: it was ready before the default branch changed forge.toml." in lines, text
+        assert not any(line.startswith("Train: testing") for line in lines) and not created, text
+        _everyone_merges_alone(env, done, ("aa", "bb", "cc"))
+    elif variant == "older":
+        assert "bb stays out of the train: it has no ready record from its own close." in lines, text
+        assert "Train: testing 2 ready changes together: aa, cc." in lines, text
+        _everyone_merges_alone(env, done, ("bb",))  # the train never ran bb's merge, so bb closed first
+        assert "Merged (3): " in done.stdout and "Needs you (0): none" in done.stdout, text
+    elif variant == "alone":
+        assert "bb stays out of the train: it clashes with the default branch." in lines, text
+        assert not any(line.startswith("Train: testing") for line in lines) and not created, text
     elif variant == "no-drafts":
         assert f"Train: this repo allows no draft pull requests, {LATER}" in lines, text
         assert _train_branches(env) == [], text
@@ -410,7 +440,7 @@ def test_2_changes_that_cannot_join_stay_out(train, monkeypatch, request, varian
         assert not any(line.startswith("Train:") for line in lines) and not created, text
         assert not env.gh_calls("pr", "merge"), text
         assert lines[-1].startswith("Merged (0): none · Ready to merge (3): aa "), text
-    else:  # stale, no-app-check
+    else:  # stale, no-app-check, lint-only
         assert not any(line.startswith("Train:") for line in lines), text
         assert not created, text
 
@@ -424,7 +454,8 @@ def test_5_the_default_branch_must_hold_what_the_train_tested(train, monkeypatch
     heads = _ready(env, monkeypatch, ("aa", "bb", "cc"))
     # late-*: the move comes while the first member's own merge runs, after Forge looked at main and
     # the pull request, so only the merge itself can catch it.
-    _stub(env, moved=variant == "moved", changed=variant == "changed",
+    # moved also turns bb's own CI red, to see that a fallback's own check can stop its merge.
+    _stub(env, moved=variant == "moved", changed=variant == "changed", red="bb" if variant == "moved" else None,
           late=variant.removeprefix("late-") if variant.startswith("late-") else None,
           stray=_number("fix/cc") if variant == "differs" else None)
     done = _all(env)
@@ -435,7 +466,12 @@ def test_5_the_default_branch_must_hold_what_the_train_tested(train, monkeypatch
         assert ("Train: main no longer matches what the train tested, so the remaining changes merge one at a "
                 "time, each with its own check.") in lines, text
         # Main moved before every member's merge, so each one finds it moved and runs its own check.
-        _everyone_merges_alone(env, done, ("aa", "bb", "cc"), moved=("aa", "bb", "cc"))
+        if variant == "late-main":
+            _everyone_merges_alone(env, done, ("aa", "bb", "cc"), moved=("aa", "bb", "cc"))
+        else:  # bb's new head has a red check, so bb stops on it while aa and cc merge
+            _everyone_merges_alone(env, done, ("aa", "cc"), moved=("aa", "cc"))
+            assert "- bb: Checks failed on the pull request: lint." in lines, text
+            assert not env.gh_calls("pr", "merge", _number("fix/bb")), text
     elif variant in ("changed", "late-head"):
         stale = "bb" if variant == "changed" else "aa"
         assert (f"Train: {stale} changed after the combined check, so it and the remaining changes merge one at a "

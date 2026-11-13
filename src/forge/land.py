@@ -375,11 +375,12 @@ def _queue(top: Path) -> int:
     slots: dict[str, str] = {}
     finished, waiting, retried, merged, ready_prs = set(), set(), set(), [], []
     # Two to five ready changes get one combined check; the others close meanwhile and merge after it.
-    # A required check besides Forge's review must report the combined run, as in merge.py's CI retest.
+    # forge.yml runs the app's tests only where "tests" is a required check (prcheck.py's ci_tests), so
+    # that is the check that must report the combined run; any other check name proves no test ran.
     plan = (_form_train(top, default, changes, branches, stacked)
             if hold and sum(change[3] for change in changes) > 1
             and repo.test_place(settings := repo.default_config(top)) == "ci"
-            and any(name != "forge-pr-check" for name in settings["checks"]) else None)
+            and "tests" in settings["checks"] else None)
     members = {member[0] for member in plan["members"]} if plan else set()
     held, notes, handled = set(), [], set()
 
@@ -526,9 +527,17 @@ def _form_train(top: Path, default: str, changes: list, branches: dict[str, str]
         head = repo.git("rev-parse", branches[item], cwd=top)
         fork = repo.git("merge-base", base, head, cwd=top)
         theirs = set(repo.git("diff", "--name-only", "--no-renames", "-z", fork, base, cwd=top).split("\0"))
+        try:  # merge.py accepts only this record, which the item's own close wrote at this head
+            receipt = json.loads(repo.ready_path(item, top).read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            receipt = None
         merged = None
         if "forge.toml" in files:
             why = "it changes forge.toml"
+        elif "forge.toml" in theirs:  # its checks gate would follow settings older than the ones read here
+            why = "it was ready before the default branch changed forge.toml"
+        elif not (isinstance(receipt, dict) and receipt.get("review") == "clean" and receipt.get("commit") == head):
+            why = "it has no ready record from its own close"
         elif stacked[item] and not task._merged(f"origin/{default}", stacked[item], top):
             why = f"it builds on {stacked[item]}, which has not merged"
         elif _tree(top, base, head) is None or _ruled(top, files & theirs):
@@ -547,6 +556,8 @@ def _form_train(top: Path, default: str, changes: list, branches: dict[str, str]
         trees.append(merged)
         members.append((item, branches[item], head, age))
     if len(members) < 2:
+        for line in out:  # no train, but each change still hears why it stays out
+            say(line)
         return None
     if _up_to_date_rule(top, default):
         say(UP_TO_DATE.format(default=default))
@@ -581,9 +592,11 @@ def _train(top: Path, default: str, plan: dict, merged: list[str], needs: dict, 
     names = ", ".join(member[0] for member in members)
     branch = f"forge-merge-train/{tip[:12]}"
     number, handled, pushed = None, set(), False
-    try:  # an empty lease: the push refuses a branch that already exists
-        if repo.run("git", "push", f"--force-with-lease=refs/heads/{branch}:", "origin",
-                    f"{tip}:refs/heads/{branch}", cwd=top).returncode:
+    try:  # an empty lease refuses a branch at another commit; porcelain tells a new branch ("*") from one
+        # already at this commit ("="), which git calls up to date and Forge did not make: leave it alone.
+        made = repo.run("git", "push", "--porcelain", f"--force-with-lease=refs/heads/{branch}:", "origin",
+                        f"{tip}:refs/heads/{branch}", cwd=top)
+        if made.returncode or not any(line.startswith("*\t") for line in made.stdout.splitlines()):
             say(f"Train: could not create {branch}, {ONE_BY_ONE}")
             return handled
         pushed = True

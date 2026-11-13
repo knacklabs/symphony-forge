@@ -361,9 +361,11 @@ A prototype without the sample-data mark also needs its strict whole-product rev
    every task and fix in close, starts them oldest first, several at a time up to the machine's
    agent places, and merges each one when it passes, where the repo allows agent merges. A change
    not yet ready that changes a file an older change in the run also changes waits for it. Where
-   the agent merges and CI runs the tests, two to five ready changes are tested together once on a
-   temporary draft pull request, then merge in order with no new run of their own; a change that
-   clashes, builds on an unmerged change or changes `forge.toml` stays out and merges one at a time.
+   the agent merges and CI runs the tests (`tests` is a required check), two to five ready changes
+   are tested together once on a temporary draft pull request, then merge in order with no new run
+   of their own; a change that clashes, builds on an unmerged change, changes `forge.toml`, was ready
+   before the default branch changed it or has no ready record of its own stays out and merges one
+   at a time.
    Only one run works in a repo at a time. A change that needs a worker or you stops alone; the run
    ends with `Merged (n): ... · Ready to merge (n): ... · Needs you (n): ...` and each stopped
    change's reason and next step. A failed check whose log names none of the change's files
