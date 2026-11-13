@@ -1,0 +1,70 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/board_app/app.js\tRefresh the destination of a failed-run button\twhile-a-person-reads-a-plan-on-the-board",
+      "kind": "bug",
+      "path": "src/forge/board_app/app.js",
+      "line": 33,
+      "text": "Refresh the destination of a failed-run button",
+      "from": "blocking",
+      "item": "while-a-person-reads-a-plan-on-the-board",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board_app/item.js\tKeep older parts in a story's full history\twhile-a-person-reads-a-plan-on-the-board",
+      "kind": "bug",
+      "path": "src/forge/board_app/item.js",
+      "line": 274,
+      "text": "Keep older parts in a story's full history",
+      "from": "blocking",
+      "item": "while-a-person-reads-a-plan-on-the-board",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board_app/now.js\tGate: rendered check\twhile-a-person-reads-a-plan-on-the-board",
+      "kind": "bug",
+      "path": "src/forge/board_app/now.js",
+      "line": 245,
+      "text": "Gate: rendered check",
+      "from": "blocking",
+      "item": "while-a-person-reads-a-plan-on-the-board",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board_app/releases.js\tNot done: Refreshes can still discard the plan selection, the open Releases file, and list scroll\twhile-a-person-reads-a-plan-on-the-board",
+      "kind": "bug",
+      "path": "src/forge/board_app/releases.js",
+      "line": 75,
+      "text": "Not done: Refreshes can still discard the plan selection, the open Releases file, and list scroll",
+      "from": "blocking",
+      "item": "while-a-person-reads-a-plan-on-the-board",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_board_plan_stays_open.py\tGate: the plan, Releases and first-screen refresh tests\twhile-a-person-reads-a-plan-on-the-board",
+      "kind": "bug",
+      "path": "tests/test_board_plan_stays_open.py",
+      "line": 212,
+      "text": "Gate: the plan, Releases and first-screen refresh tests",
+      "from": "blocking",
+      "item": "while-a-person-reads-a-plan-on-the-board",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "improve\tsrc/forge/board_app/item.js\tThe drawer still rebuilds its whole content on each row change and loses its scroll.",
+      "kind": "improve",
+      "path": "src/forge/board_app/item.js",
+      "line": 233,
+      "text": "The drawer still rebuilds its whole content on each row change and loses its scroll.",
+      "from": "worker",
+      "item": "while-a-person-reads-a-plan-on-the-board",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
