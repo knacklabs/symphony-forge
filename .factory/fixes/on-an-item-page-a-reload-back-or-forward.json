@@ -18,7 +18,7 @@
       "gain": 3,
       "harm": 3,
       "line": 227,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 1,
       "security": false,
@@ -80,28 +80,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "614e82cc09c8b75f9aaa17d276e29ac4215a6c685c0bb4f5e002d71c3c6b5ea5",
-    "changed": "5ad84c66684a548a3cebe098497afeac7fa009996bbdf4cacb335417ace550d0",
-    "commit": "f643c12aa8784adfcc0e3e9e0d89efef81f29825",
+    "branch_diff": "21029f613333c1825caaeb0cfa599bcdd8fb36d76578c7379f66535e0fcf0b0e",
+    "changed": "4dd3808c7d72801c80149c3f0392db7939f5eb83b86bad7286ae6ed2763c9818",
+    "commit": "247af43b37eaf88d2a985931b2cf500ea640d2da",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Not done.\nCase: normal use - Open the only Building card with no list open, then let a refresh move it behind four Review cards. `now.js:166\u2013179` leaves Building with no controls and omits the fifth Review card. Neither search here finds a target, so Escape leaves focus on the page body. Also, `item.js:222\u2013225` captures `document.activeElement` rather than the clicked card. Forge opens the default browser (`board_server.py:390`), and [Safari does not focus clicked buttons](https://bugs.webkit.org/show_bug.cgi?id=22261), so choosing another outside card can still restore the old opener or the body.",
-        "file": "src/forge/board_app/item.js",
-        "gain": 3,
-        "harm": 3,
-        "line": 65,
-        "priority": "P1",
-        "required_done_when": true,
-        "title": "Not done: after a refresh, Escape on the drawer puts the keyboard focus back on the card it came from.",
-        "work": 2
-      }
-    ],
-    "id": "461f2b08-cfb9-4bba-8692-8e1059f87557",
-    "status": "blocked"
+    "findings": [],
+    "id": "6bce0cb8-9480-47b8-8ee6-1dfbc457d1c4",
+    "status": "clean"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-13T08:02:05.772982+00:00",
@@ -113,6 +101,10 @@
     },
     {
       "at": "2026-11-13T10:45:33.433529+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-13T15:17:17.781670+00:00",
       "step": "review"
     }
   ],
