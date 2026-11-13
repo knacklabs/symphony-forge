@@ -89,6 +89,28 @@
       "closed_by": null
     },
     {
+      "key": "improve\tsrc/forge/board_app/item.js\tA first read of an item that fails shows its own error and the line says the page tries again, but only the next new snapshot retries it.",
+      "kind": "improve",
+      "path": "src/forge/board_app/item.js",
+      "line": 262,
+      "text": "A first read of an item that fails shows its own error and the line says the page tries again, but only the next new snapshot retries it.",
+      "from": "worker",
+      "item": "the-board-looks-live-when-its-data-is-ol",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "improve\tsrc/forge/board_app/item.js\tA first read of an item that fails shows its own error, and the line says the page tries again, but only the next snapshot retries it.",
+      "kind": "improve",
+      "path": "src/forge/board_app/item.js",
+      "line": 262,
+      "text": "A first read of an item that fails shows its own error, and the line says the page tries again, but only the next snapshot retries it.",
+      "from": "worker",
+      "item": "the-board-looks-live-when-its-data-is-ol",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "improve\tsrc/forge/board_app/pages.css\tThe Releases and Insights pages use a height of 100vh less 96px, so the new line under the header may make them scroll by about 37px while it shows.",
       "kind": "improve",
       "path": "src/forge/board_app/pages.css",
