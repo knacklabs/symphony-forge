@@ -60,17 +60,17 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "71a45940737ad0be88aa1080e333966f359f756ea5c966f226b37a05b0651de0",
-    "changed": "b06bcc24e8b9bd152faffda6a5c8fb6171fb6dba622762ed22d2b5551419f417",
-    "commit": "38906dbb7eeea5bafeb9848a41007dca088cc63c",
+    "branch_diff": "eab897df03ef84b2b5d34ab78a80426a76421dc4ad7e8979ca634ad635eda3e5",
+    "changed": "bcabf04978f67785e6d8b7faacb366a945419771c5634c1757706e057a2d1d4e",
+    "commit": "6f2c752669c1f6b0e8dbf0ad022bf4306b11cc8c",
     "dismissals": [],
     "findings": [],
-    "id": "d7b53afd-c78f-4ab1-9126-3c45ff806b2a",
+    "id": "26f67c64-0d7b-4db7-9eff-58526b0c6fd9",
     "status": "clean"
   },
   "round": 3,
   "stacked_on": "a-repo-s-own-fast-test-ran-only-the-chan",
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-13T02:08:46.213465+00:00",
@@ -82,6 +82,10 @@
     },
     {
       "at": "2026-11-13T03:26:58.366945+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-13T04:06:05.457474+00:00",
       "step": "review"
     }
   ],
