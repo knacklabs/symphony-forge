@@ -1,7 +1,14 @@
 {
+  "amendments": [
+    {
+      "at": "2026-11-13T02:09:06.786577+00:00",
+      "because": "The owner chose to split: the picker's fault is repaired in a separate fix, and this guide fix states the limit honestly",
+      "done_when": "For new and existing client repos, the shipped guide says a fast test in pull request CI must include the tests that import changed source files, split across the test groups, that a local fast test may stay smaller, that the full suite stays nightly, and it warns against a changed-files-only script."
+    }
+  ],
   "base": "fe7caf4e9b8e88d417e5e62fe2564dd90f4216be",
   "branch": "fix/a-repo-s-own-fast-test-ran-only-the-chan",
-  "done_when": "For new and existing client repos, the shipped guide says a fast test in pull request CI must include the tests that import changed source files, split across the test groups, that a local fast test may stay smaller, that the full suite stays nightly, and it warns against a changed-files-only script.",
+  "done_when": "For new and existing client repos, the shipped guide says a fast test in pull request CI must include the tests that import changed source files, split across the test groups, that a local fast test may stay smaller, that the full suite stays nightly, and it warns against a changed-files-only script. The guide also says that Forge's Python picker does not yet follow imports in an app that lives in a sub-folder; the repair of the picker is the separate fix review-findings-split-from-a-repo-s-own.",
   "fix_kind": "mechanical",
   "kind": "fix",
   "known": [
