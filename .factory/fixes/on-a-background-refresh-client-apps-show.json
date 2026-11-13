@@ -11,7 +11,7 @@
       "gain": 3,
       "harm": 3,
       "line": 18,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -21,27 +21,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "361919605bc73dd7ef6641e77780f19ee5f1299c410ebe124ea45be073ebd926",
-    "changed": "d86b43f16f90180b2ec1e6724a6c387b6926427b05f14d1042a577258e8949fe",
-    "commit": "514848d56e46fef030c7e99af1dd1aca416e31cf",
+    "branch_diff": "db5fe65906b3c08b667df3412887cbca846d2840b9b00c34940babfed602bdda",
+    "changed": "004fa0b9b293b5d87ff0b3f9db0f42fc9f710330188581674962fdfe1e25b775",
+    "commit": "a2de85572789a1158bd703ca9e090602115c7a5e",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - a client creates a repo or upgrades one that already has app-baseline skills from an earlier release.\nThe helper at line 18 copies an earlier-adoption fixture with no app-baseline files and runs sync before returning (`tests/test_score_notes.py:35-44`). The test then syncs a second time and checks already-current files. The package test also deletes both copies before syncing (`tests/test_fix_app_baseline.py:43-45`). A regression that creates missing skills but fails to replace older copies would pass these proofs while upgraded clients retained the old guidance. The helper also syncs after init before the assertions, masking an init-only omission. Check the new repo immediately after init and an earlier repo with stale copies immediately after its update.",
-        "file": "tests/test_background_refresh_guidance.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 18,
-        "priority": "P1",
-        "title": "Gate: test_1_baseline_keeps_the_screen_on_a_background_refresh",
-        "work": 2
-      }
-    ],
-    "id": "1125937d-f767-4ef9-b7f1-db94f1ab598c",
-    "status": "blocked"
+    "findings": [],
+    "id": "9bb15cd7-1fd1-4b63-9115-b8de506479e1",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-13T04:53:08.625764+00:00",
@@ -49,6 +38,10 @@
     },
     {
       "at": "2026-11-13T05:00:36.849884+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-13T05:10:24.467323+00:00",
       "step": "review"
     }
   ],
