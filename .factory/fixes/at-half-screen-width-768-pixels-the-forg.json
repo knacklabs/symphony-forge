@@ -18,7 +18,7 @@
       "gain": 4,
       "harm": 3,
       "line": 348,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -31,7 +31,7 @@
       "gain": 3,
       "harm": 2,
       "line": 243,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -44,7 +44,7 @@
       "gain": 3,
       "harm": 3,
       "line": 78,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -67,59 +67,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "4f8dede0080994507bbb5a6798770d9b0cd88c3d95045043f412b0a346caf7bb",
-    "changed": "a6b8a5a6943b668b8e4f21fac77c08fbedfe3fbd65154634f36d5d4049cbd863",
-    "commit": "fcf4245bc67dfbecff238a93d91fdebab5a75815",
+    "branch_diff": "cf4ca56542c491448c1b21e6106b0b4543fd53f7ac6f282a9333e75255cbf943",
+    "changed": "a09b6c71b68458b66cc84fd1c672edaeecc2d7b62627de580143d119ca8975ed",
+    "commit": "347d264e46d808e5eb1fa5f5bb483cdc67923fde",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 1, Harm 3\nRaise: Not done. Case: normal use - a reader opens the existing FORGE-AGENTREADY-1 plan at 768 pixels and expands For the builders. `plans/FORGE-AGENTREADY-1.md:104` contains a 96-character test name in a list. The new wrapping rule applies only to code inside table cells, so this identifier remains unbreakable and extends beyond the viewport. The page consequently scrolls sideways. The renderer creates the code element at `markdown.js:27`; normal CSS wrapping does not break an unbreakable string to prevent overflow ([MDN](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/overflow-wrap)).",
-        "file": "src/forge/board_app/item.css",
-        "gain": 4,
-        "harm": 3,
-        "line": 348,
-        "priority": "P1",
-        "required_done_when": true,
-        "title": "Not done: the page has no sideways scroll",
-        "work": 1
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 2\nRaise: Not done. Case: normal use - a reader opens an item's Overview when it has a pull request, or follows a link in its plan. `item.js:365-375` renders the pull-request link inline, and `item.css:318` gives it only a color; its 14-pixel text does not have a 24-pixel target. Plan links are likewise inline, and the new test explicitly excludes them. The height added here covers the breadcrumb but leaves these controls below the promised minimum.",
-        "file": "src/forge/board_app/item.css",
-        "gain": 3,
-        "harm": 2,
-        "line": 243,
-        "priority": "P1",
-        "required_done_when": true,
-        "title": "Not done: every control is at least 24 pixels high",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Test. Case: normal use - a reader resizes near 1,000 pixels, opens a long plan, or uses an item's controls. This proof runs only at 768 pixels, so a breakpoint at 800 pixels would pass while the summary and rail remain beside their content near 1,000. It measures the table wrapper rather than the table, so a narrow table also passes. The control check excludes plan links, omits inputs, and never opens the Assign or full-list controls; the fixture also puts its long code only in a table, missing the overflowing prose case. Finally, the drawer is opened through the internal `Board.openDrawer` call rather than the user's card.",
-        "file": "tests/test_board_half_screen_width.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 78,
-        "priority": "P1",
-        "title": "Gate: tests/test_board_half_screen_width.py::test_1_the_board_reads_at_half_a_screen",
-        "work": 2
-      },
-      {
-        "body": "Gain 2, Work 1, Harm 1\nRaise: Gate. Case: normal use - a reader presses Close in the expanded Known issues list or in an item drawer. Neither button has a pressed state: the Releases button's changed rule is here, and the drawer button is styled at `item.css:57-67`; the existing `:active` rules apply to other controls. This fails the required emil-design-eng button-feedback check.\nAdds work: pressed feedback for the two Close buttons; F 3 x H 1 = 3; 2 x C = 2.",
-        "file": "src/forge/board_app/pages.css",
-        "gain": 2,
-        "harm": 1,
-        "line": 130,
-        "priority": "P1",
-        "title": "Gate: UI check",
-        "work": 1
-      }
-    ],
-    "id": "68cd4c5f-e374-4323-9b5e-b3ac038e816c",
-    "status": "blocked"
+    "findings": [],
+    "id": "fd63f291-898a-42c6-b13e-ed51ca3251e1",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-13T08:01:34.889922+00:00",
@@ -127,6 +84,10 @@
     },
     {
       "at": "2026-11-13T08:34:32.362610+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-13T10:47:11.663469+00:00",
       "step": "review"
     }
   ],
