@@ -4,12 +4,20 @@
   "done_when": "At widths from 600 to 768 pixels, a story page keeps its summary above its plan after a click on each tab, and tests/test_board_half_screen_width.py passes on the default branch",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-13T19:03:20.153718+00:00",
       "step": "start"
     }
   ],
-  "why": "The default branch is red: after the tab-in-address fix merged on top of the half-screen fix, tests/test_board_half_screen_width.py::test_1 fails at 768 pixels: after a click on the Rounds tab of a story page, the summary and the plan are in the wrong places"
+  "stuck": {
+    "close": null,
+    "head": "fbef8016eeffae7294382dfcd4dd5537fea78f25",
+    "keys": {},
+    "round": null
+  },
+  "why": "The default branch is red: after the tab-in-address fix merged on top of the half-screen fix, tests/test_board_half_screen_width.py::test_1 fails at 768 pixels: after a click on the Rounds tab of a story page, the summary and the plan are in the wrong places",
+  "worker": "claude"
 }
