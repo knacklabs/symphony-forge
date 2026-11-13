@@ -12,7 +12,7 @@
 | `forge upgrade [release]` | Upgrades Forge to the release, or the newest: installs it, has it refresh Forge's files in a fix, and closes that fix |
 | `forge next` | Says where things stand and gives the exact next command |
 | `forge board` | Opens the live board page on this computer; stops after 30 minutes with no page open or Ctrl-C (`--out <path>` writes every item's facts as JSON instead) |
-| `forge lanes --json` | Runs on this machine from repos on this Forge release |
+| `forge lanes --json` | Runs on this machine from every repo, and the items that wait for the person |
 | `forge stop <item>` | Person only: stops the item's runs in this repo (`--repo <root>` or `--id <id>`) |
 | `forge story new <KEY> "<title>"` | Starts a story's branch, worktree and doc (`--from-fix <fix>` promotes a fix) |
 | `forge story drop <KEY> --because "<reason>"` | Drops a plan and keeps its remote branch |

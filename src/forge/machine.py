@@ -26,7 +26,7 @@ _WAIT_REASONS = {
 COMMANDS = [{"words": "lanes", "run": "lanes", "changes_state": False,
     "help": "Show this release's machine-wide runs", "position": 60,
     "args": [(("--json",), {"action": "store_true"})],
-    "listing": "| `forge lanes --json` | Runs on this machine from repos on this Forge release |"},
+    "listing": "| `forge lanes --json` | Runs on this machine from every repo, and the items that wait for the person |"},
     {"words": "stop", "run": "stop", "changes_state": False,
     "help": "Stop a running or waiting run (only a person)", "position": 61,
     "args": [(("item",), {"nargs": "?"}), (("--repo",), {"metavar": "ROOT"}),

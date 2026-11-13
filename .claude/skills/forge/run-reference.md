@@ -54,8 +54,17 @@ session's place in line. `/forge` includes the machine summary where panes canno
 Lanes record each item's title when it joins, so other repos' stories and tasks keep their
 plain names in rows, selectors and stop confirmation. Only this repo's board adds tool,
 round, current step and gates.
-`forge lanes --json` supplies the Machine tab; other releases still count towards admission but
-are left out of its rows. New repos receive the mod on setup; existing repos receive it on
+`forge lanes --json` supplies the Machine tab and the pane. Its rows show every release's runs;
+an entry that an old release wrote with no start or item is left out. Each row has `step`
+(`editing <file name>` for a build whose step Forge knows), `waiting` (true until the run holds
+its place; a build that lent its place to its tests waits), `first_started_at` and `elapsed`.
+`elapsed` counts a wait from joining the line and a started run from its first start, so a
+commit nudge does not reset it. A review row has an `output_path` that already holds the
+review tool's lines while it runs. The top level adds `busy` (a run waits for a free place) and
+`needs_you`, a list of `{title, repo_name, repo_root}`: items on this laptop, in any
+remembered repo, that wait for the person (a worker question, a stop that waits for the owner's
+choice, or a cold read stopped at its round limit) and have no build round that runs or
+waits. It reads only files on this laptop. New repos receive the mod on setup; existing repos receive it on
 upgrade and `forge sync`. An unreadable output or a failed refresh is explained in the pane;
 failed refreshes keep the last rows. The mod adds no background work or dependencies.
 
