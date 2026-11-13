@@ -1,0 +1,15 @@
+{
+  "base": "6f59a2bc0698eea1c962260f1176be01582bb4b8",
+  "branch": "fix/on-an-item-page-a-reload-back-or-forward",
+  "done_when": "After a reload on an item's Plan tab, the Plan tab is still open, and a link to the Plan tab opens it.",
+  "fix_kind": "ui",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-13T08:02:05.772982+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "On an item page, a reload, Back or Forward returns the reader to the Overview tab, and no link can open the Plan tab. Escape on a full item page sends the reader to the Now screen instead of doing nothing, and after a reload Escape on the drawer leaves keyboard focus at the top of the page instead of on the card it came from."
+}
