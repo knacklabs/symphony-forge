@@ -1,0 +1,160 @@
+{
+  "base": "fe7caf4e9b8e88d417e5e62fe2564dd90f4216be",
+  "branch": "fix/on-a-windows-laptop-a-builder-s-own-test",
+  "done_when": "On Windows, a builder's own test run skips each separate browser-test step and prints one line saying so, while the pull request check, the final check and the full test run still run them, Mac and Linux runs stay the same, and a test setting that is one combined script still runs whole.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "test_parts() in src/forge/quicktest.py",
+      "file": "src/forge/quicktest.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 71,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Preserve non-browser checks when identifying browser steps",
+      "work": 2
+    },
+    {
+      "area": "test_parts() in src/forge/quicktest.py",
+      "file": "src/forge/quicktest.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 71,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Windows builder runs do not skip every separate browser-test step",
+      "work": 2
+    },
+    {
+      "area": "tests/fixtures/adopted-v1.2.2/client/.claude/skills/forge/SKILL.md",
+      "file": "tests/fixtures/adopted-v1.2.2/client/.claude/skills/forge/SKILL.md",
+      "gain": 4,
+      "harm": 4,
+      "line": 146,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_one_command_upgrades_forge_and_opens_its_pull_request",
+      "work": 1
+    },
+    {
+      "area": "_setup() in tests/test_windows_worker_skips_browser_tests.py",
+      "file": "tests/test_windows_worker_skips_browser_tests.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 66,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_3_windows_builder_run_skips_browser_steps_and_nothing_else",
+      "work": 2
+    },
+    {
+      "area": "tests/fixtures/copied-client/source/.claude/skills/forge/SKILL.md",
+      "file": "tests/fixtures/copied-client/source/.claude/skills/forge/SKILL.md",
+      "gain": 4,
+      "harm": 4,
+      "line": 2267,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: restore the historical guide fixtures",
+      "work": 1
+    },
+    {
+      "area": "test_parts() in src/forge/quicktest.py",
+      "file": "src/forge/quicktest.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 71,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Windows browser-test steps are classified incorrectly",
+      "work": 2
+    },
+    {
+      "area": "tests/fixtures/doctor-v1.2.2/.claude/skills/forge/SKILL.md",
+      "file": "tests/fixtures/doctor-v1.2.2/.claude/skills/forge/SKILL.md",
+      "gain": 4,
+      "harm": 4,
+      "line": 2267,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: Restore the historical fixture guides",
+      "work": 2
+    },
+    {
+      "area": "tests/test_windows_worker_skips_browser_tests.py",
+      "file": "tests/test_windows_worker_skips_browser_tests.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 85,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Gate: test_3_windows_builder_run_skips_browser_tests_and_nothing_else",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "79399096ffcd50e7c37e53242202c6fa8fad6622b8f34abc1e2a69aa8c02ad0c",
+    "changed": "383e6164d2e813c7210ef35665aa4109f6bced7b0975d1d040ec080d3644e47e",
+    "commit": "beea5b635aa43d94674e7141efb693ea841e5988",
+    "dismissals": [],
+    "findings": [],
+    "id": "bb567d0d-06c7-492f-8550-e94f1d081a90",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-12T15:31:06.392653+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-12T16:03:19.368832+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-12T16:49:46.664296+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-12T17:15:54.067309+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-12T16:49:46.664558+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "src/forge/quicktest.py",
+    "reason": "The owner chose one more round: repair all three findings",
+    "wait_id": "fe3ff138-3527-4f0c-bdb1-e62856874c0f",
+    "worker_round": 2
+  },
+  "stuck": {
+    "close": "8bbc180a-efa2-4fa6-8f9d-7b5d58de6fec",
+    "head": "a8ec3091d9789f2356b4ae35389395cd78e96528",
+    "keys": {},
+    "round": 2
+  },
+  "why": "On a Windows laptop, a builder's own test run can take up to 24 minutes (a client team reports this; Forge did not measure it), and its browser test steps (Playwright or Cypress) fail there for reasons unrelated to the change, which costs builders time and rounds.",
+  "worker": "claude"
+}

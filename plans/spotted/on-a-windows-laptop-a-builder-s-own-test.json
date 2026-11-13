@@ -1,0 +1,92 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/quicktest.py\tFunctional: Preserve non-browser checks when identifying browser steps\ton-a-windows-laptop-a-builder-s-own-test",
+      "kind": "bug",
+      "path": "src/forge/quicktest.py",
+      "line": 71,
+      "text": "Functional: Preserve non-browser checks when identifying browser steps",
+      "from": "blocking",
+      "item": "on-a-windows-laptop-a-builder-s-own-test",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/quicktest.py\tNot done: Windows browser-test steps are classified incorrectly\ton-a-windows-laptop-a-builder-s-own-test",
+      "kind": "bug",
+      "path": "src/forge/quicktest.py",
+      "line": 71,
+      "text": "Not done: Windows browser-test steps are classified incorrectly",
+      "from": "blocking",
+      "item": "on-a-windows-laptop-a-builder-s-own-test",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/quicktest.py\tNot done: Windows builder runs do not skip every separate browser-test step\ton-a-windows-laptop-a-builder-s-own-test",
+      "kind": "bug",
+      "path": "src/forge/quicktest.py",
+      "line": 71,
+      "text": "Not done: Windows builder runs do not skip every separate browser-test step",
+      "from": "blocking",
+      "item": "on-a-windows-laptop-a-builder-s-own-test",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/fixtures/adopted-v1.2.2/client/.claude/skills/forge/SKILL.md\tGate: test_1_one_command_upgrades_forge_and_opens_its_pull_request\ton-a-windows-laptop-a-builder-s-own-test",
+      "kind": "bug",
+      "path": "tests/fixtures/adopted-v1.2.2/client/.claude/skills/forge/SKILL.md",
+      "line": 146,
+      "text": "Gate: test_1_one_command_upgrades_forge_and_opens_its_pull_request",
+      "from": "blocking",
+      "item": "on-a-windows-laptop-a-builder-s-own-test",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/fixtures/copied-client/source/.claude/skills/forge/SKILL.md\tGate: restore the historical guide fixtures\ton-a-windows-laptop-a-builder-s-own-test",
+      "kind": "bug",
+      "path": "tests/fixtures/copied-client/source/.claude/skills/forge/SKILL.md",
+      "line": 2267,
+      "text": "Gate: restore the historical guide fixtures",
+      "from": "blocking",
+      "item": "on-a-windows-laptop-a-builder-s-own-test",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/fixtures/doctor-v1.2.2/.claude/skills/forge/SKILL.md\tGate: Restore the historical fixture guides\ton-a-windows-laptop-a-builder-s-own-test",
+      "kind": "bug",
+      "path": "tests/fixtures/doctor-v1.2.2/.claude/skills/forge/SKILL.md",
+      "line": 2267,
+      "text": "Gate: Restore the historical fixture guides",
+      "from": "blocking",
+      "item": "on-a-windows-laptop-a-builder-s-own-test",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_windows_worker_skips_browser_tests.py\tGate: test_3_windows_builder_run_skips_browser_steps_and_nothing_else\ton-a-windows-laptop-a-builder-s-own-test",
+      "kind": "bug",
+      "path": "tests/test_windows_worker_skips_browser_tests.py",
+      "line": 66,
+      "text": "Gate: test_3_windows_builder_run_skips_browser_steps_and_nothing_else",
+      "from": "blocking",
+      "item": "on-a-windows-laptop-a-builder-s-own-test",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_windows_worker_skips_browser_tests.py\tGate: test_3_windows_builder_run_skips_browser_tests_and_nothing_else\ton-a-windows-laptop-a-builder-s-own-test",
+      "kind": "bug",
+      "path": "tests/test_windows_worker_skips_browser_tests.py",
+      "line": 85,
+      "text": "Gate: test_3_windows_builder_run_skips_browser_tests_and_nothing_else",
+      "from": "blocking",
+      "item": "on-a-windows-laptop-a-builder-s-own-test",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
