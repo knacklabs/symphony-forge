@@ -16,6 +16,39 @@ const listeners = [];
 const main = document.querySelector('main');
 const status = document.querySelector('[role=status]');
 
+// A refresh draws a screen again and changes the page only where the drawing differs, so the reader keeps
+// scroll, selection, focus and open sections everywhere else. Each drawn node has a copy of itself as built,
+// because the live node also holds what the reader and other scripts did to it: an open section, a control
+// another script added, and the focus. Only what was built is compared.
+// A click handler is not compared: whatever one uses must show in the drawing, such as a link's address.
+// ponytail: children are matched by position, so a block put in the middle replaces the blocks after it.
+const built = new WeakMap(); // node -> a copy of it without its children, as built, and without `open`
+
+function copyOf(node) {
+  const copy = node.cloneNode(false);
+  copy.removeAttribute?.('open'); // the reader opens and closes sections; a drawing does not decide it
+  return copy;
+}
+
+// Records a drawing so a later one can be compared with it.
+function keep(node) {
+  built.set(node, copyOf(node));
+  node.childNodes.forEach(keep);
+  return node;
+}
+
+function patch(live, fresh) {
+  if (!built.get(live)?.isEqualNode(copyOf(fresh))) {
+    live.replaceWith(keep(fresh));
+    return fresh;
+  }
+  const kids = [...live.childNodes].filter((node) => built.has(node)); // not the nodes other scripts added
+  const next = [...fresh.childNodes];
+  next.forEach((child, at) => (kids[at] ? patch(kids[at], child) : live.append(keep(child))));
+  kids.slice(next.length).forEach((node) => node.remove());
+  return live;
+}
+
 export const Board = {
   page: 'now',
   view: 'team', // 'team' or 'me'
@@ -25,6 +58,14 @@ export const Board = {
     listeners.push(fn);
     if (Board.snapshot) fn(Board.snapshot);
   },
+  // Puts a screen on the page. The screen already on it changes only where the new one differs.
+  show(screen) {
+    const live = main.firstChild;
+    if (built.has(live)) patch(live, screen);
+    else main.replaceChildren(keep(screen));
+  },
+  patch,
+  keep,
   // ponytail: stubs until the drawer and item page part replaces them
   select(itemId) {},
   openDrawer(itemId) {},

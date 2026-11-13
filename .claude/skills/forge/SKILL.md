@@ -1460,9 +1460,6 @@ keep existing settings until that fix changes them. An explicit `test_place` kee
    A fast test that runs in pull request CI must include the tests that import the changed source
    files, split across the test groups: for example `vitest related`, `vitest run --changed {base}`,
    `jest --findRelatedTests` or `jest --changedSince {base}`, or the Python picker.
-   Forge's Python picker does not yet follow imports in an app that lives in a sub-folder
-   (for example apps/api, where tests import app.core.config); for such a repo, list that app's
-   test folder in the fast test until the picker is repaired.
    A script that runs only the changed test files must not be the pull request check: unchanged
    tests that import a changed source file are skipped, fail on the main branch and block every
    other close.
@@ -2444,7 +2441,30 @@ base to merge, including a base whose builder or another command still works on 
 stops, the stacked fix stops with it. A base outside the run must merge before the stacked fix
 can enter close. Among changes whose bases are ready, the oldest starts first. A change
 not yet ready that changes a file an older change in the run also changes waits until that one
-merges or stops; Forge's own `plans/spotted.json` and `.factory/` files never count. Only one run
+merges or stops; Forge's own `plans/spotted.json` and `.factory/` files never count. Where the agent
+merges and CI runs the tests (read from the newest default branch, with `tests` as a required check),
+two to five ready changes form a merge train: Forge tests them together once on a temporary draft
+pull request, then merges each in order with no new run of its own. Each change still needs its
+existing checks green. A change that clashes with the default branch or with a change in the train,
+builds on a change that has not merged, changes `forge.toml`, was ready before the default branch
+changed `forge.toml`, or has no ready record from its own close stays out, and Forge names it and
+why. Two changes that edit a file Forge merges with its own rule, such as the roadmap, count as a
+clash. Other changes in the run close at the same time but merge after the train ends. Forge
+closes the draft pull request and deletes its branch (`forge-merge-train/<code>`) when the train
+ends, but only a branch it made in this run: if that name already exists, even at the same commit,
+Forge runs no train and leaves the branch and its pull request alone. If the run itself stops,
+close that pull request by hand; it never merges. A moved default branch, a changed
+pull request or GitHub's rule that each pull request must be up to date sends the changes back to
+one at a time, as before, with a `Train:` line that says why. Forge checks this again at each
+merge: the default branch must hold what the train tested so far, and the pull request the tested
+commit. When the combined check is red, Forge waits until every job has finished. If the failed
+logs name the files of exactly one change, that change leaves and merges last, one at a time, with
+its own check, and the rest run once more as a new train when two or more remain. If the check of
+the change that left fails, it stops under Needs you with the failure and gets no fix round. If the
+logs name no change, Forge runs the failed jobs again once (a job that ran out of time counts as
+failed), and waits for every job of that run too; if they stay red, or the logs name several
+changes, each change goes one at a time. New repos get this at init; existing repos get the train
+on upgrade, with no workflow change, and this guide on sync. Only one run
 works in a repo at a time. When two closes in the run collide on git's ref lock while fetching,
 the run starts that change again once and says so. A failed CI check gets one fix round on
 that change's builder thread, then close runs again. Other worker or owner stops affect only

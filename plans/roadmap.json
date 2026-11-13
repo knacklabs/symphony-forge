@@ -648,6 +648,12 @@
       "title": "/forge opens a small live pane of what is running on this laptop",
       "status": "pending",
       "order": 122
+    },
+    {
+      "key": "FORGE-TRAIN-1",
+      "title": "Merge several ready items in one train",
+      "status": "pending",
+      "order": 122
     }
   ],
   "epics": [

@@ -1,0 +1,144 @@
+{
+  "amendments": [
+    {
+      "at": "2026-11-13T04:50:52.587919+00:00",
+      "because": "An audit on screen found the real cause: every refresh rebuilds each view, and for an unfinished item the data always differs because it holds running time counters; the section itself closes only through a key press after the jump or a reload",
+      "done_when": "After a refresh, a person reading a plan or an item keeps their place and every section they opened, on the board, the full item page and the drawer."
+    }
+  ],
+  "base": "a081d814a233ba23bb691e1dd032c49fa10d2ff0",
+  "branch": "fix/while-a-person-reads-a-plan-on-the-board",
+  "done_when": "With a plan open on the full item page, the For the builders section open, the view scrolled far down and text selected, three board refreshes leave the scroll position, the open section, the selection and the same page element; the loading line never shows over a plan that is already on screen; the Releases page keeps its open file and its scroll; the first screen keeps the scroll of its long list; and the full item page opens from the data the page already holds.",
+  "fix_kind": "ui",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "src/forge/board_app/releases.js",
+      "file": "src/forge/board_app/releases.js",
+      "gain": 5,
+      "harm": 3,
+      "line": 75,
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: The owner accepts it as a known issue: when the plan's text really changes above the reader's place, that part is drawn again; it is rare",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Refreshes can still discard the plan selection, the open Releases file, and list scroll",
+      "work": 2
+    },
+    {
+      "area": "src/forge/board_app/item.js",
+      "file": "src/forge/board_app/item.js",
+      "gain": 4,
+      "harm": 3,
+      "line": 274,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Keep older parts in a story's full history",
+      "work": 2
+    },
+    {
+      "area": "src/forge/board_app/app.js",
+      "file": "src/forge/board_app/app.js",
+      "gain": 4,
+      "harm": 3,
+      "line": 33,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Refresh the destination of a failed-run button",
+      "work": 1
+    },
+    {
+      "area": "tests/test_board_plan_stays_open.py",
+      "file": "tests/test_board_plan_stays_open.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 212,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: the plan, Releases and first-screen refresh tests",
+      "work": 2
+    },
+    {
+      "area": "src/forge/board_app/now.js",
+      "file": "src/forge/board_app/now.js",
+      "gain": 3,
+      "harm": 3,
+      "line": 245,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: rendered check",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "5df01ba8552a52999af445cf78bb74eb8ef3389ba2cab3277843ebaec332dece",
+    "changed": "943e26c4bbb3323e26b0a583017e2625ffc4ba5fc60f8cbd5616d13d38a9cb0f",
+    "commit": "f1f6fccb5cc08abf994770e74e340c90d96a70fe",
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: The owner accepts it as a known issue: when the plan's text really changes above the reader's place, that part is drawn again; it is rare",
+        "finding": 1
+      }
+    ],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done\nCase: normal use - A teammate adds a paragraph before the open For the builders section while text inside it is selected. The plan renderer places that paragraph before the details element (src/forge/board_app/markdown.js:94\u2013107), but the positional patch at src/forge/board_app/app.js:40\u201348 replaces the old details element with the paragraph and appends a new details element. The selection and original section element are lost.\nCase: normal use - A merged fix adds a known issue for a file sorted before the open file. Releases sorts the rows at src/forge/board_app/releases.js:157\u2013176; the positional patch keeps the open details element at its old position but changes it to a different file, leaving the original file closed.\nCase: normal use - The last sign-off question is answered while a first-screen list is open. The optional sign-off section disappears (src/forge/nextstep.py:117\u2013135 and src/forge/board_app/now.js:239\u2013245), so positional matching replaces the work region containing the list and loses its scroll.",
+        "file": "src/forge/board_app/releases.js",
+        "gain": 4,
+        "harm": 3,
+        "line": 76,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: Refreshes can still discard the plan selection, the open Releases file, and list scroll",
+        "work": 2
+      }
+    ],
+    "id": "ef0b6ec5-e7fd-46db-964c-1c6d8bf0933e",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-13T04:00:53.113339+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-13T05:24:55.275725+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-13T06:31:39.309426+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-13T06:31:39.309682+00:00",
+    "by": "owner",
+    "choice": "accept",
+    "file": "src/forge/board_app/releases.js",
+    "reason": "The owner accepts it as a known issue: when the plan's text really changes above the reader's place, that part is drawn again; it is rare",
+    "wait_id": "4ba18309-71b2-480b-9b35-adc972d20ec9",
+    "worker_round": 2
+  },
+  "stuck": {
+    "close": "9a0ee19b-eef6-4dbc-92bf-ff73cb80145b",
+    "head": "b1fdb49a1b8d5d491d04c4fb8892a46928c6fb79",
+    "keys": {
+      "the open P0 not done: refreshes can still discard the plan selection, the open releases file, and list scroll in src/forge/board_app/releases.js": 1
+    },
+    "round": 1
+  },
+  "why": "While a person reads a plan on the board, each refresh jumps the view to the top and closes the For the builders section again.",
+  "worker": "claude"
+}
