@@ -31,8 +31,8 @@ Image: desktop-running.png (440 by 1000)
 
 Image: desktop-needs-you.png (440 by 1000)
 
-- A soft banner in place of the plain line: "2 items need you" and
-  "First: Show late orders has a question for you."
+- A soft banner in place of the plain line: "2 items need you" and "First: Show late orders."
+  With one item the line reads "Show late orders needs you."
 - A waiting run has a hollow dot, its round as a tag, and the line "Waiting for its tests" or
   "Waiting for a free place".
 - Last line when the machine is busy: "The machine is busy. New runs wait."
