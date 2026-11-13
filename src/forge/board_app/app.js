@@ -11,7 +11,7 @@ const SCREENS = [
   'releases', 'insights',
   'assign',
 ];
-const POLL = 10000; // ms between reads: the events stream says nothing when a rebuild fails, so the page also asks
+const POLL = 10000; // ms before a page read that failed is asked again
 const listeners = [];
 const main = document.querySelector('main');
 const status = document.querySelector('[role=status]');
@@ -28,6 +28,7 @@ const OFFLINE = {
   line: 'The board has stopped, so this page may be old. Start the board again from the terminal, then open its new link.',
 };
 const failed = new Map(); // read name -> its mark and line; the newest failed read is the one shown
+let retry = null;
 
 export const Board = {
   page: 'now',
@@ -81,6 +82,25 @@ function lose(name, why) {
   failed.delete(name); // set again, so the newest failure is last
   failed.set(name, why);
   show();
+  // A failed rebuild is told by the events stream. A page read has no such signal, so it is asked again here.
+  if (name !== 'now') {
+    clearTimeout(retry);
+    retry = setTimeout(askAgain, POLL);
+  }
+}
+
+function askAgain() {
+  if (![...failed.keys()].some((name) => name !== 'now')) return; // it worked, or the person left that page
+  if (Board.page === 'now') for (const fn of listeners) fn(Board.snapshot); // the item page and drawer read again
+  else render(); // the Releases or Insights page reads again, and changes only when the read works
+}
+
+function unread(reason) {
+  return {
+    state: 'stale',
+    word: 'Not updating',
+    line: `The server could not read the work, so this page may be old. It said: \u201c${reason}\u201d The page tries again.`,
+  };
 }
 
 function fresh(name) {
@@ -102,11 +122,7 @@ async function read(name, url) {
     try {
       reason = JSON.parse(reason).error;
     } catch {}
-    lose(name, {
-      state: 'stale',
-      word: 'Not updating',
-      line: `The server could not read the work, so this page may be old. It said: \u201c${reason}\u201d The page tries again.`,
-    });
+    lose(name, unread(reason));
   }
   return answer;
 }
@@ -146,19 +162,29 @@ async function refresh() {
   }
   if (!answer.ok) return fail();
   const snapshot = JSON.parse(await answer.text());
-  const held = Board.snapshot?.snapshot;
-  const { version, updating } = snapshot.snapshot;
-  if (held && version < held.version) return; // a slower, older read
-  // While a rebuild runs, the server answers with the old snapshot marked as updating: that is no new data.
-  if (updating && held && version === held.version && failed.has('now')) return;
-  const unchanged = held && version === held.version && Boolean(updating) === Boolean(held.updating);
+  if (Board.snapshot && snapshot.snapshot.version < Board.snapshot.snapshot.version) return; // a slower, older read
   Board.snapshot = snapshot;
   fresh('now');
   document.querySelector('[data-repo]').textContent = snapshot.repo_root.split(/[\\/]/).pop();
   main.setAttribute('aria-busy', 'false');
-  if (unchanged && !failed.size) return; // nothing new: the screen stays as it is, with its focus and scroll
-  render(); // a page read that failed is tried again here, as every page reads when it is drawn
+  render();
   for (const fn of listeners) fn(snapshot);
+}
+
+// The events stream is down or has just opened: ask the small status answer, and read the whole board
+// only when it says there is a new snapshot.
+async function probe() {
+  let answer;
+  try {
+    answer = await read('now', `board.json${TOKEN}&page=status`);
+  } catch {
+    return fail();
+  }
+  if (!answer.ok) return fail();
+  const { version, reason } = await answer.json();
+  if (reason) lose('now', unread(reason));
+  else if (!Board.snapshot || version !== Board.snapshot.snapshot.version) await refresh();
+  else fresh('now');
 }
 
 function fail() {
@@ -169,10 +195,13 @@ function fail() {
 function listen() {
   const events = new EventSource(`events${TOKEN}`);
   events.addEventListener('changed', refresh);
-  // The stream counts from the snapshot it sees when it connects, so read once more: a rebuild that
-  // finished before it connected sends no "changed". A broken stream is asked about at once too.
-  events.addEventListener('open', refresh);
-  events.addEventListener('error', refresh);
+  // A rebuild that fails makes no new snapshot, so the stream says it failed, and says when the next one works.
+  events.addEventListener('failed', (event) => lose('now', unread(event.data)));
+  events.addEventListener('recovered', () => fresh('now'));
+  // The stream counts from the snapshot it sees when it connects, so a rebuild that finished before it
+  // connected sends no "changed". The browser reconnects a broken stream every few seconds, and each try asks.
+  events.addEventListener('open', probe);
+  events.addEventListener('error', probe);
 }
 
 addEventListener('hashchange', () => {
@@ -190,4 +219,3 @@ for (const name of SCREENS) (await import(`./${name}.js${TOKEN}`)).install(Board
 render();
 await refresh(); // the snapshot first, so the page shows the board before anything else asks
 listen();
-setInterval(refresh, POLL);

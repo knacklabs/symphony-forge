@@ -3,7 +3,8 @@ the header gives the reason and the next step when the server has stopped, and a
 server answers but cannot read the work; the line goes away by itself when data comes back.
 The records are real; the server is stopped, or made to fail, the way a person would. Only the one
 read that a test names is refused at the browser, to reach a state the real server cannot be put in.
-The page asks again every 10 seconds, so the test moves the page's clock on instead of waiting.
+The events stream, not a timer, tells the page that a rebuild failed; a page read that failed is asked again
+after 10 seconds, so the test moves the page's clock on instead of waiting.
 """
 from __future__ import annotations
 
@@ -68,14 +69,22 @@ with sync_playwright() as p:
             expect(status).to_have_text('Offline')
             assert context.pages[0].evaluate('document.documentElement.scrollWidth <= innerWidth')
 
-        elif mode == 'failed':
-            # Nothing is blocked: the page keeps its events stream, which says nothing about a failed rebuild,
-            # and the server waits for a rebuild as long as it does for everyone.
+        elif mode in ('failed', 'down'):
+            # 'failed': nothing is blocked. The page keeps its events stream, and the server waits for a rebuild
+            # as long as it does for everyone. 'down': the stream cannot connect while the server runs.
             page = context.new_page()
+            full = []  # every read of the whole board, the first one included
+            page.on('request', lambda request: NOW.search(request.url) and full.append(request.url))
+            if mode == 'down':
+                page.route(re.compile(r'/events'), lambda route: route.abort())
             status, line = look(page)
             expect(status).to_have_text('Live', timeout=60000)
             expect(line).to_be_hidden()
-            good = page.evaluate("async () => (await import(new URL('app.js' + location.search, location.href))).Board.snapshot")
+            held = lambda: page.evaluate("async () => (await import(new URL('app.js' + location.search, location.href))).Board.snapshot.snapshot.version")
+            reads, version = len(full), held()
+            context.clock.run_for(60000)  # a minute passes on the page's clock
+            # Only a new snapshot makes the page read the whole board again.
+            assert len(full) - reads <= held() - version, f'{len(full) - reads} reads of the whole board in a minute'
             good_branch = Path(branch).read_text(encoding='utf-8')
             try:
                 # A damaged branch pointer: git cannot say where the work is, so the board cannot read it.
@@ -83,24 +92,17 @@ with sync_playwright() as p:
                 refused = page.request.get(base + 'board.json' + query)
                 assert refused.status == 500, refused.text()
                 expected = ('The server could not read the work, so this page may be old. '
-                            f'It said: “{refused.json()["error"]}” The page tries again.')
-                later(lambda: expect(line).to_have_text(expected, timeout=2000))
+                            f'It said: \u201c{refused.json()["error"]}\u201d The page tries again.')
+                expect(line).to_have_text(expected, timeout=60000)
                 assert 'offline' not in page.locator('body').inner_text().lower()
                 expect(status).to_have_text('Not updating')
                 assert not Axe().run(page, options={'runOnly': ['wcag2aa']}).response['violations']
                 assert page.evaluate('document.querySelector(".bar").nextElementSibling === document.querySelector(".stale")')
-                # The server answers while it rebuilds with the old snapshot marked as updating: no new data.
-                page.route(NOW, lambda route: route.fulfill(content_type='application/json', body=json.dumps(
-                    {**good, 'snapshot': {**good['snapshot'], 'updating': True}})))
-                for _ in range(2):
-                    with page.expect_request(NOW):
-                        context.clock.fast_forward(10000)
-                expect(line).to_have_text(expected)
-                expect(status).to_have_text('Not updating')
-                page.unroute(NOW)
+                if mode == 'down':
+                    assert len(full) - reads <= held() - version, 'the page read the whole board while the work could not be read'
             finally:
                 Path(branch).write_text(good_branch, encoding='utf-8')
-            later(lambda: expect(line).to_be_hidden(timeout=2000))
+            expect(line).to_be_hidden(timeout=60000)
             expect(status).to_have_text('Live')
 
         elif mode == 'page':
@@ -196,3 +198,9 @@ def test_4_the_line_fits_on_every_board_screen_and_stays_clear_of_the_drawer(cli
     fix(client, "line-fits")
     with live(client) as url:
         look(url, "fits", item="line-fits")
+
+
+@pytest.mark.timeout(BROWSER_SECONDS + 120)
+def test_5_a_failed_read_shows_the_line_when_the_events_stream_is_down(client):
+    with live(client, FORGE_BOARD_REBUILD_WAIT="0.5") as url:
+        look(url, "down", client)

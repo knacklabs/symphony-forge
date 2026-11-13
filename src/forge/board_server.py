@@ -2,7 +2,8 @@
 token and stops after 30 minutes without a page. A request serves the last snapshot while the cheaply checked
 inputs are unchanged; otherwise one background thread rebuilds only the changed rows, a request
 waits at most REBUILD_WAIT and then gets the last snapshot marked as updating, and `/events` says
-"changed" when a new one exists. The last snapshot and its rows are saved, so a restart is instant.
+"changed" when a new one exists, "failed" when a rebuild fails and "recovered" when the next one works.
+The last snapshot and its rows are saved, so a restart is instant.
 """
 from __future__ import annotations
 
@@ -38,6 +39,7 @@ CSP = ("default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' 
 # forever, and test runs' per-test results, which the test lane rewrites all the time.
 WRITTEN = re.compile(r"(-cache\.json|^test-results-.*\.txt|prs-week-[\d-]+\.json|viewer-login\.json|known-issues\.json|board-snapshot\.json|"
                      r"\.guard|\.tmp|\.new)$")
+UNREADABLE = "The board could not read the work. The terminal that runs it shows why."
 # ponytail: the tests' seams, like FORGE_CHECKS_WAIT
 FETCH_WAIT = float(os.environ.get("FORGE_BOARD_FETCH_WAIT", "60"))
 # How long a request waits for a rebuild before it gets the last snapshot marked as updating.
@@ -274,10 +276,10 @@ def handler(snapshots: Snapshots, token: str) -> type[BaseHTTPRequestHandler]:
             except (BrokenPipeError, ConnectionResetError):
                 pass  # the page closed or reloaded
             except repo.Refused as refusal:
-                self.say(500, str(refusal).splitlines()[0])
+                self.say(500, why(refusal))
             except Exception:
                 traceback.print_exc()
-                self.say(500, "The board could not read the work. The terminal that runs it shows why.")
+                self.say(500, UNREADABLE)
 
         def do_POST(self) -> None:
             url = urlsplit(self.path)
@@ -325,6 +327,10 @@ def handler(snapshots: Snapshots, token: str) -> type[BaseHTTPRequestHandler]:
                 self.send(200, "application/json", snapshots.now()[1])
             elif page in ("releases", "insights"):
                 self.send(200, "application/json", json.dumps(snapshots.untrimmed()).encode("utf-8"))
+            elif page == "status":  # small: what a page whose events stream is down asks, not the whole board
+                error = snapshots.failed
+                body = {"version": snapshots.changed(), "reason": None if error is None else why(error)}
+                self.send(200, "application/json", json.dumps(body).encode("utf-8"))
             elif page == "item":
                 rows = [row for parent in snapshots.untrimmed()["items"] for row in (parent, *parent["children"])]
                 found = next((row for row in rows if row["id"] == item), None)
@@ -336,7 +342,8 @@ def handler(snapshots: Snapshots, token: str) -> type[BaseHTTPRequestHandler]:
                 self.say(404, "The board has no page by that name.")
 
         def events(self) -> None:
-            """Says "changed" each time a new snapshot exists; the page then reads /board.json."""
+            """Says "changed" each time a new snapshot exists, and the page then reads /board.json. A failed
+            rebuild makes no snapshot, so it says "failed" with the reason, and "recovered" when one works."""
             with snapshots.done:
                 snapshots.viewers += 1
             try:
@@ -353,7 +360,7 @@ def handler(snapshots: Snapshots, token: str) -> type[BaseHTTPRequestHandler]:
                                 ("X-Content-Type-Options", "nosniff")):
                 self.send_header(name, value)
             self.end_headers()
-            sent, quiet = snapshots.changed(), 0.0
+            sent, quiet, told = snapshots.changed(), 0.0, None  # told: the failure the page was last sent
             self.wfile.write(b"retry: 10000\n\n")
             self.wfile.flush()
             while True:
@@ -361,17 +368,26 @@ def handler(snapshots: Snapshots, token: str) -> type[BaseHTTPRequestHandler]:
                 # closed, so stop watching before asking for another rebuild.
                 if select.select([self.connection], [], [], TICK)[0]:
                     return
-                version = snapshots.changed()
+                version, error = snapshots.changed(), snapshots.failed
                 quiet += TICK
-                if version != sent:
-                    self.wfile.write(f"event: changed\ndata: {version}\n\n".encode())
-                    sent, quiet = version, 0.0
+                if version != sent or (error is None) != (told is None):
+                    if version != sent:
+                        self.wfile.write(f"event: changed\ndata: {version}\n\n".encode())
+                    if (error is None) != (told is None):
+                        self.wfile.write(b"event: recovered\ndata: ok\n\n" if error is None
+                                         else f"event: failed\ndata: {why(error)}\n\n".encode())
+                    sent, told, quiet = version, error, 0.0
                 elif quiet >= 15:  # a comment line, so a closed page ends this thread
                     self.wfile.write(b": still here\n\n")
                     quiet = 0.0
                 self.wfile.flush()
 
     return Handler
+
+
+def why(error: Exception) -> str:
+    """The one line a page shows for a read that failed: a refusal's own first line, else a pointer to the terminal."""
+    return str(error).splitlines()[0] if isinstance(error, repo.Refused) else UNREADABLE
 
 
 def serve(top: Path) -> int:
