@@ -195,3 +195,12 @@ def test_3_the_row_stays_until_a_later_full_run_passes(client, gh, monkeypatch, 
     answer(gh, schedule=[run(66, conclusion="success"), run(65)])
     lines, entries, _ = read(client)
     assert entries == [] and not [line for line in lines if line.startswith("Needs you:")]
+
+    # Older runs whose reruns were cancelled cannot change a newer result: their attempts are not read.
+    clock.tick()
+    old = [{**run(200 + n, conclusion="cancelled", attempt=2), "created_at": "2029-12-31T00:00:00Z"} for n in range(20)]
+    answer(gh, schedule=[run(67, conclusion="success"), *old])
+    before = len(gh.calls())
+    lines, entries, _ = read(client)
+    assert entries == [] and not [line for line in lines if line.startswith("Needs you:")]
+    assert [call for call in gh.calls()[before:] if "/attempts/" in call[1]] == []

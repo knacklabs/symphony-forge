@@ -469,6 +469,8 @@ def failed_schedules(top: Path) -> list[Item]:
             return None
         latest: dict[Any, Item] = {}
         for run in runs:  # newest first
+            if run.get("workflow_id") in latest:  # a newer run decided it: read no attempts for this one
+                continue
             if full and file_of(run) == full:  # only scheduled and manual runs count, and only finished ones
                 run = finished(run) if run.get("event", "schedule") in ways else None
                 if run is None:
