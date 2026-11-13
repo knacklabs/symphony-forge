@@ -488,7 +488,7 @@ def needs_you(building: set[tuple[str, str]]) -> list[dict[str, str]]:
             for branch, path in story.worktrees(root).items():
                 item = _item_of(branch, path)
                 state = repo.read_state(item, path) if item else None
-                if not item or not state or (root.as_posix(), item) in building:
+                if not item or not state or state.get("status") == "dropped" or (root.as_posix(), item) in building:
                     continue
                 stop = state.get("stop") or {}
                 if branch.startswith("story/"):
@@ -504,6 +504,16 @@ def needs_you(building: set[tuple[str, str]]) -> list[dict[str, str]]:
         except (OSError, CalledProcessError, repo.Refused):
             continue
     return list(found.values())
+
+
+def _pressed(agents: list[dict[str, Any]]) -> bool:
+    """Whether a new build or review must wait: memory under the floor, the machine's load at its
+    limit, or an agent run that waits for its place. A test that waits for the test lane does not count."""
+    reading = memory()
+    free = reading["available_bytes"]
+    busy = _load_per_core()
+    return bool(free is not None and free < memory_floor(reading) or busy is not None and busy >= LOAD_LIMIT
+                or any(run["waiting"] and not run.get("suspended_by") for run in agents))
 
 
 def lanes(args: Any) -> int:
@@ -528,7 +538,7 @@ def lanes(args: Any) -> int:
     runs = [run for name in ("agents", "tests") for run in result[name]["entries"]]
     result.update(needs_you=needs_you({(run["repo_root"], run["item"]) for run in runs
                                        if run["kind"] == "work"}),
-                  busy=any(run["waiting"] and not run.get("suspended_by") for run in runs))
+                  busy=_pressed(result["agents"]["entries"]))
     result.update(version=__version__, machine={**load(), "cores":
                   getattr(os, "process_cpu_count", os.cpu_count)()})
     if args.json:

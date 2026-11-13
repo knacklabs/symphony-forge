@@ -5,7 +5,6 @@ Real commands and real git; only the model programs are held or scripted at thei
 """
 import json
 import os
-import shlex
 import shutil
 import subprocess
 import sys
@@ -18,6 +17,7 @@ from datetime import datetime, timezone
 from test_close import env  # noqa: F401
 from test_fix_agent_runs_wait_in_line import _other_repo, _until
 from test_hotspot_stop import rounds, seed
+from test_lanes_tests import shell
 from test_lanes_agents import finish, hold_agents, make_work, start
 from test_machine_memory_budget import measurements, publish
 from test_story import approved_constitution, worktree
@@ -79,6 +79,22 @@ def test_3_lanes_say_who_needs_the_person_and_what_runs_now(env, tmp_path, monke
     for where in (repo.path, folder, outside):
         assert lanes(env, where)["needs_you"] == shown, where
 
+    gate = hold_tests(env, folder, "go-question-test")
+    tester, _ = start(folder, tmp_path / "question-tests", repo, "test")
+    _until(lambda: lanes(env)["tests"]["entries"], "the test run")
+    assert lanes(env)["needs_you"] == shown
+    gate.touch()
+    assert tester.wait(timeout=60) == 0
+
+    # A worker's question on a task lists the task by its plan's name.
+    _, task_folder = env.start_task()
+    record = Path(repo.git("rev-parse", "--path-format=absolute", "--git-common-dir")) / "forge/threads/task/SHOP/T1.json"
+    record.parent.mkdir(parents=True, exist_ok=True)
+    record.write_text(json.dumps({"question": "Question: May I reuse the basket parser?"}), "utf-8")
+    assert {"title": "Save a basket", **mine_of(repo)} in lanes(env)["needs_you"]
+    repo.git("worktree", "remove", "--force", str(task_folder))
+    assert all(row["title"] != "Save a basket" for row in lanes(env)["needs_you"])
+
     # A build round that runs hides it; a round that fails brings it back; a test run does not hide it.
     hold_agents(env)
     monkeypatch.setenv("STUB_CLAUDE_EXIT", "1")
@@ -100,13 +116,7 @@ def test_3_lanes_say_who_needs_the_person_and_what_runs_now(env, tmp_path, monke
     mine = {"repo_name": repo.path.name, "repo_root": repo.path.resolve().as_posix()}
     loops = [{"title": "Loop", **mine}]
     assert lanes(env)["needs_you"] == loops
-    gate = repo.bin / "go-test"
-    code = f"import pathlib, time\nwhile not pathlib.Path({gate.as_posix()!r}).exists(): time.sleep(0.05)"
-    command = json.dumps(subprocess.list2cmdline([sys.executable, "-c", code]) if sys.platform == "win32"
-                         else shlex.join([sys.executable, "-c", code]))
-    config = "\n".join(line for line in (loop / "forge.toml").read_text("utf-8").splitlines()
-                       if line.partition("=")[0].strip() not in ("test", "fast_test")) + "\n"
-    env.commit(loop, "forge.toml", f"test = {command}\nfast_test = {command}\n" + config, "Hold the tests")
+    gate = hold_tests(env, loop, "go-test")
     tester, _ = start(loop, tmp_path / "tests-run", repo, "test")
     _until(lambda: lanes(env)["tests"]["entries"], "the test run")
     assert [row["item"] for row in lanes(env)["tests"]["entries"]] == ["loop"]
@@ -187,12 +197,7 @@ def test_3_lanes_say_who_needs_the_person_and_what_runs_now(env, tmp_path, monke
     # A build that lends its place to its tests waits for them, and does not wait once it has it back.
     item, name = make_work(repo, "Lends")
     folder = worktree(repo, "fix/" + item)
-    gate = repo.bin / "go-lent-test"
-    code = f"import pathlib, time\nwhile not pathlib.Path({gate.as_posix()!r}).exists(): time.sleep(0.05)"
-    command = json.dumps(shlex.join([sys.executable, "-c", code]))
-    config = "\n".join(line for line in (folder / "forge.toml").read_text("utf-8").splitlines()
-                       if line.partition("=")[0].strip() not in ("test", "fast_test")) + "\n"
-    env.commit(folder, "forge.toml", f"test = {command}\nfast_test = {command}\n" + config, "Hold the tests")
+    gate = hold_tests(env, folder, "go-lent-test")
     builder, _ = start(folder, tmp_path / "lender", repo, "work", item)
     _until(lambda: (repo.bin / f"started-{name}").exists(), "the lending build")
     (repo.bin / f"go-{name}").touch()
@@ -248,6 +253,10 @@ def test_3_lanes_say_who_needs_the_person_and_what_runs_now(env, tmp_path, monke
         sleeper.wait()
 
 
+def mine_of(repo):
+    return {"repo_name": repo.path.name, "repo_root": repo.path.resolve().as_posix()}
+
+
 def row_of(env, item):
     return next(row for row in lanes(env)["agents"]["entries"] if row["item"] == item)
 
@@ -272,3 +281,14 @@ def step_gates(env):
         '    (here / f"edited-{name}-{launch}").touch()\n'
         '    while not (here / f"release-{name}-{launch}").exists() and not (here / "go-all").exists():\n'
         '        await asyncio.sleep(0.05)\n' + marker), "utf-8")
+
+
+def hold_tests(env, folder, name):
+    """The item's test command waits until the returned file exists."""
+    gate = env.repo.bin / name
+    code = f"import pathlib, time\nwhile not pathlib.Path({gate.as_posix()!r}).exists(): time.sleep(0.05)"
+    command = json.dumps(shell([sys.executable, "-c", code]))
+    config = "\n".join(line for line in (folder / "forge.toml").read_text("utf-8").splitlines()
+                       if line.partition("=")[0].strip() not in ("test", "fast_test")) + "\n"
+    env.commit(folder, "forge.toml", f"test = {command}\nfast_test = {command}\n" + config, "Hold the tests")
+    return gate
