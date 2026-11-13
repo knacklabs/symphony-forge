@@ -5,6 +5,7 @@ its own. Keys a later part fills stay null until then.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import math
 import os
@@ -392,66 +393,116 @@ def details(top: Path) -> list[Item]:
         limit="25")) or []
 
 
-def failed_schedules(top: Path) -> list[Item]:
-    """Failed scheduled workflows and manual full runs on the default branch.
-    Read each run list once and one log per failed workflow, kept ten minutes."""
-    branch = repo.default_branch(top)
+def clean(text: str) -> str:  # safe inside double quotes in POSIX, PowerShell and cmd
+    return " ".join(re.sub(r"[^A-Za-z0-9 .,:;/_=()-]", " ", text).split())
+
+
+def _config(top: Path) -> Item:
     try:
-        cfg = repo.config(top)
+        return repo.config(top)
     except repo.Refused:
         # Optional run notices must not hide next's unreadable-worktree report.
-        cfg = {}
+        return {}
+
+
+def full_workflow(cfg: Item) -> str | None:
+    """The workflow whose scheduled and manual runs are Forge's full test run, if the repo has one."""
+    return cfg.get("full_suite_workflow") or ("forge.yml" if repo.test_place(cfg) == "ci" else None)
+
+
+def failed_schedules(top: Path) -> list[Item]:
+    """Failed scheduled workflows and manual full runs on the default branch.
+    Read each run list once and one log per failed workflow, kept ten minutes.
+    The full run (`full_run`) is read from its own list, and its newest finished run decides."""
+    branch = repo.default_branch(top)
+    cfg = _config(top)
     workflow = cfg.get("full_suite_workflow") or "forge.yml"
+    full = full_workflow(cfg)
+    ways = ("schedule", "workflow_dispatch")
+
+    def file_of(run: Item) -> str:
+        return str(run.get("path") or run.get("workflow_id")).rsplit("/", 1)[-1]
 
     def fetch(now: datetime) -> list[Item] | None:
-        # ponytail: the newest 100 scheduled runs; a frequent schedule can crowd out a daily one.
+        # ponytail: the newest 100 scheduled runs of all workflows; a frequent schedule can crowd out a daily one.
         # Separate query fields avoid cmd.exe interpreting an ampersand in a gh.cmd argument.
-        with ThreadPoolExecutor(2) as pool:
-            manual_read = pool.submit(repo.run, "gh", "api", f"repos/{{owner}}/{{repo}}/actions/workflows/{workflow}/runs",
-                                      "--method", "GET", "--raw-field", "event=workflow_dispatch",
-                                      "--raw-field", f"branch={branch}", "--raw-field", "per_page=100", cwd=top)
+        def own(event: str) -> Any:
+            return repo.run("gh", "api", f"repos/{{owner}}/{{repo}}/actions/workflows/{workflow}/runs",
+                            "--method", "GET", "--raw-field", f"event={event}",
+                            "--raw-field", f"branch={branch}", "--raw-field", "per_page=100", cwd=top)
+        with ThreadPoolExecutor(3) as pool:
+            manual_read = pool.submit(own, "workflow_dispatch")
+            scheduled_read = pool.submit(own, "schedule") if full else None
             done = repo.run("gh", "api", "repos/{owner}/{repo}/actions/runs", "--method", "GET",
                             "--raw-field", "event=schedule", "--raw-field", f"branch={branch}",
                             "--raw-field", "per_page=100", cwd=top)
-            manual = manual_read.result()
+            lists = [read.result() for read in (manual_read, scheduled_read) if read]
         try:
             runs = json.loads(done.stdout).get("workflow_runs") if done.returncode == 0 else None
         except (ValueError, AttributeError):
             return None
         if not isinstance(runs, list) or not all(isinstance(run, dict) for run in runs):
             return None
-        try:
-            manual_runs = json.loads(manual.stdout).get("workflow_runs", []) if not manual.returncode else []
-        except (ValueError, AttributeError):
-            manual_runs = []
-        if isinstance(manual_runs, list) and all(isinstance(run, dict) for run in manual_runs):
-            runs += manual_runs
+        for read in lists:
+            try:
+                more = json.loads(read.stdout).get("workflow_runs", []) if not read.returncode else []
+            except (ValueError, AttributeError):
+                more = []
+            if isinstance(more, list) and all(isinstance(run, dict) for run in more):
+                runs += more
+        # One entry per run: the full workflow's own lists repeat runs of the shared one.
+        runs = list({run.get("id", id(run)): run for run in runs}.values())
         runs.sort(key=lambda run: run.get("created_at", ""), reverse=True)
+
+        def finished(run: Item) -> Item | None:
+            """The run, or for a rerun in progress or cancelled the latest attempt that finished."""
+            if run.get("conclusion") in ("success", "failure"):
+                return run
+            for attempt in range(run["run_attempt"] - 1 if type(run.get("run_attempt")) is int else 0, 0, -1):
+                got = repo.run("gh", "api", f"repos/{{owner}}/{{repo}}/actions/runs/{run.get('id')}/attempts/{attempt}", cwd=top)
+                try:
+                    conclusion = json.loads(got.stdout).get("conclusion") if got.returncode == 0 else None
+                except (ValueError, AttributeError):
+                    conclusion = None
+                if conclusion in ("success", "failure"):
+                    return {**run, "conclusion": conclusion, "run_attempt": attempt, "earlier": True}
+            return None
         latest: dict[Any, Item] = {}
         for run in runs:  # newest first
+            if run.get("workflow_id") in latest:  # a newer run decided it: read no attempts for this one
+                continue
+            if full and file_of(run) == full:  # only scheduled and manual runs count, and only finished ones
+                run = finished(run) if run.get("event", "schedule") in ways else None
+                if run is None:
+                    continue
             latest.setdefault(run.get("workflow_id"), run)
-        def failure(run: Item) -> Item | None:
+        def failure(run: Item) -> Item:
             def read(_now: datetime) -> Item | None:
-                log = repo.run("gh", "run", "view", str(run.get("id")), "--log-failed", cwd=top)
+                attempt = ["--attempt", str(run["run_attempt"])] if run.get("earlier") else []
+                log = repo.run("gh", "run", "view", str(run.get("id")), *attempt, "--log-failed", cwd=top)
                 if log.returncode != 0:
                     return None
                 lines = log.stdout.splitlines()
-                return {"workflow": str(run.get("name") or "workflow"), "branch": branch,
-                        "event": run.get("event", "schedule"),
-                        "file": str(run.get("path") or run.get("workflow_id")).rsplit("/", 1)[-1],
-                        "jobs": sorted({line.split("\t", 1)[0] for line in lines if "\t" in line}),
+                return {"jobs": sorted({line.split("\t", 1)[0] for line in lines if "\t" in line}),
                         "tests": sorted({found[1] for line in lines if (found := re.search(
                             r"(?:FAILED|ERROR|-) (\S+?::[^\s\[]+(?:\[.*?\])?|\S+\.py)(?= - |$)", line))})}
             # A completed attempt's log is immutable; reruns reuse the id with a new attempt.
             if type(run.get("id")) is int and type(run.get("run_attempt")) is int and run["run_attempt"] > 0:
-                return _cached(top, f"run-{run['id']}-{run['run_attempt']}-failure-cache", read, seconds=math.inf)
-            return read(now)  # Missing attempt information cannot establish an immutable answer.
+                logged = _cached(top, f"run-{run['id']}-{run['run_attempt']}-failure-cache", read, seconds=math.inf)
+            else:  # Missing attempt information cannot establish an immutable answer.
+                logged = read(now)
+            # An unreadable log keeps the failure, without its jobs and tests, and is read again later.
+            return {"workflow": str(run.get("name") or "workflow"), "branch": branch,
+                    "event": run.get("event", "schedule"), "file": file_of(run),
+                    "jobs": (logged or {}).get("jobs", []), "tests": (logged or {}).get("tests", []),
+                    "url": run.get("html_url"), "created_at": run.get("created_at")}
         with ThreadPoolExecutor(4) as pool:
             failed = list(pool.map(failure, [run for run in latest.values() if run.get("conclusion") == "failure"]))
-        if None in failed:
-            return None
-        return sorted((run for run in failed if run is not None), key=lambda run: (run["workflow"], run["file"]))
-    return _cached(top, "schedule-cache", fetch, seconds=600) or []
+        return sorted(failed, key=lambda run: (run["workflow"], run["file"]))
+    # The full run is part of the name: a changed setting reads GitHub again, and an earlier release's list is not reused.
+    named = hashlib.sha256(f"{workflow}\0{full or ''}".encode()).hexdigest()[:12]
+    return [{**run, "full_run": bool(full) and run["file"] == full and run["event"] in ways}
+            for run in _cached(top, f"failed-runs-{named}-cache", fetch, seconds=600) or []]
 
 
 def merged_prs(github: Item | None) -> list[Item]:
@@ -474,10 +525,25 @@ def _entry(row: Item, reason: str, detail: str | None, since: Any, now: datetime
             "since": since if at else None, "seconds": max(0, (now - at).total_seconds()) if at else None}
 
 
+def failed_runs(top: Path, items: dict[str, Item], best: dict[str, Any], now: datetime) -> list[Item]:
+    """The failed full test run, if the repo has one: a repo with no full run asks GitHub for nothing.
+    `fixing` is true while an unfinished fix names the run, as `forge next` matches it."""
+    if full_workflow(_config(top)) is None:
+        return []
+    fixes = [state.get("why") or "" for rel, (state, _) in best.items() if rel.startswith(".factory/fixes/")
+             and items.get(rel.removeprefix(".factory/fixes/").removesuffix(".json"), {}).get("state", "done") != "done"]
+    return [{**_entry({"id": f"run:{run['file']}", "kind": "run",
+                       "title": f"The latest full test run on {run['branch']} failed"}, "failed run",
+                      "; ".join(run["jobs"]) or None, run["created_at"], now),
+             "url": run["url"], "fixing": any(f"({clean(run['file'])})" in why for why in fixes)}
+            for run in failed_schedules(top) if run["full_run"]]
+
+
 def needs_you(top: Path, rows: list[Item], readiness: dict[str, Item], person_waits: dict[str, list[Item]],
-              now: datetime) -> list[Item]:
+              now: datetime, runs: list[Item]) -> list[Item]:
     """Every item waiting on a person, oldest first, as `nextstep.person_waits` decides it: the
-    waits each part's and fix's row worked out, and each story's plan approval or blocking problem."""
+    waits each part's and fix's row worked out, each story's plan approval or blocking problem,
+    and the failed full test run."""
     from forge import nextstep  # nextstep imports this module
 
     found = []
@@ -490,6 +556,7 @@ def needs_you(top: Path, rows: list[Item], readiness: dict[str, Item], person_wa
         elif row.get("state") in ("in progress", "ready to merge"):
             waits = person_waits.get(row["id"], [])
         found += [_entry(row, wait["reason"], wait["detail"], wait["since"], now) for wait in waits]
+    found += runs
     for entry in found:
         entry["waited_seconds"] = entry.pop("seconds")
     return sorted(found, key=lambda entry: (entry["since"] is None, time_records.when(entry["since"]) or now))
@@ -603,7 +670,8 @@ def team(top: Path, history: Item, items: dict[str, Item], maps: list[Item], bes
     later, clause = board_trends.facts(top, history, counts, list(items.values()), github, names)
     now = time_records.when(repo.now()) or datetime.now(timezone.utc)
     rows = [row for parent in items.values() for row in (parent, *parent["children"])]
-    waiting, slow = needs_you(top, rows, readiness, person_waits, now), blocked(top, rows, best, maps, now)
+    waiting = needs_you(top, rows, readiness, person_waits, now, failed_runs(top, items, best, now))
+    slow = blocked(top, rows, best, maps, now)
     work = [counts[kind][state] for state in ("in progress", "ready to merge") for kind in ("parts", "fixes")]
     building = counts["stories"]["building"]
     sentence = (f"{building} {'story' if building == 1 else 'stories'} building, {sum(work[:2])} parts and fixes "
