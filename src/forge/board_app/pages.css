@@ -38,6 +38,12 @@
 .releases > div { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 20px; }
 .insights { flex-direction: column; gap: 20px; }
 
+/* Half a screen (under about 1,100 pixels): the known issues go under the releases and the page scrolls. */
+@media (max-width: 1099px) {
+  .releases, .insights { height: auto; }
+  .releases { flex-direction: column; }
+}
+
 /* Everything below applies only inside these two pages, so no other screen or the header changes. */
 :is(.releases, .insights) {
   .hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
@@ -121,12 +127,15 @@
   .known h2:focus { outline: none; }
   .known .more, .known .close {
     align-self: flex-start;
+    min-height: 24px;
     border-radius: var(--radius-tag);
     padding: var(--space-1) var(--space-2);
     background: none;
     font-size: var(--size-label);
     font-weight: 600;
+    transition: transform 160ms var(--ease-out);
   }
+  .known .more:active, .known .close:active { transform: scale(0.97); }
   .known .more { border: 0; color: var(--moving); }
   .known .more:hover { text-decoration: underline; }
   .known .close { border: 1px solid var(--line); color: var(--ink); }
@@ -164,4 +173,6 @@
   .bars .stack span { flex: var(--n) 0 0; background: var(--swatch); }
   .weeks span, .bars .total { font-size: var(--size-label); color: var(--ink-2); text-align: center; }
   .people .who small { font-size: var(--size-label); color: var(--ink-3); font-weight: 400; }
+
+  @media (max-width: 1099px) { .known { width: auto; } }
 }
