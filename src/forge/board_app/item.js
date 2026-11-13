@@ -11,7 +11,7 @@ const STAGES = {
 const TONE = { Building: 'moving', Review: 'moving', Ready: 'ready', Merged: 'ready', Planned: 'waiting' };
 
 let Board;
-let drawer = null; // { id, node, opener, back, seen }
+let drawer = null; // { id, node, opener, back, seen }: back is where the opener sat, see placeOf
 let page = null; // { id, node, tab, row, whole, reading }
 const planFolds = new Map(); // story -> section open states, for this board session
 const plans = new Map(); // story -> its plan as last read: { text }, or { reason, alert } while none has been read
@@ -37,6 +37,32 @@ function refocus(node, key) {
   if (!control) return;
   if (control.tagName !== 'SUMMARY') control.closest('details:not([open])')?.setAttribute('open', '');
   control.focus({ preventScroll: true });
+}
+
+// Where a control sits: its key, the labelled part of the screen around it, and its place among that part's
+// controls. The same item can show in two places (the Needs you strip and a full list), and a refresh can draw
+// the control again, so Escape finds it again in the place the drawer was opened from.
+const CONTROLS = 'a, button, summary, [tabindex]:not([tabindex="-1"])';
+
+function placeOf(control) {
+  const key = control?.dataset?.focus;
+  const area = control?.closest?.('section[aria-label], [role=dialog]');
+  if (!key) return null;
+  const label = area?.getAttribute('aria-label');
+  const where = !area ? null : label ? `section[aria-label="${CSS.escape(label)}"]` : '[role=dialog]';
+  return { key, where, at: area ? [...area.querySelectorAll(CONTROLS)].indexOf(control) : -1 };
+}
+
+// The opener if it is still on the page, else its key in its place, else the control now nearest its old
+// spot in that place (the item left or moved, so the card is gone), else its key anywhere.
+function returnTarget({ opener, back }) {
+  if (opener?.isConnected) return opener;
+  if (!back) return null;
+  const area = back.where && document.querySelector(back.where);
+  const controls = area ? [...area.querySelectorAll(CONTROLS)] : [];
+  return controls.find((one) => one.dataset.focus === back.key)
+    || (controls.length ? controls[Math.min(Math.max(back.at, 0), controls.length - 1)] : null)
+    || document.querySelector(`[data-focus="${CSS.escape(back.key)}"]`);
 }
 
 function replaceContent(node, ...children) {
@@ -192,8 +218,11 @@ function closeIcon() {
 
 async function openDrawer(id) {
   let row = rows().find((one) => one.id === id);
-  const opener = drawer?.opener || document.activeElement;
-  const back = drawer?.back || opener?.dataset?.focus; // a refresh can draw the opener again, so keep its key too
+  // Moving between items inside the drawer keeps its opener; choosing a card outside it makes that card the opener.
+  const from = document.activeElement;
+  const inside = drawer?.node.contains(from);
+  const opener = inside ? drawer.opener : from;
+  const back = inside ? drawer.back : placeOf(from);
   // Moving between items keeps the open drawer, so it slides in only once.
   const node = drawer?.node || el('aside', { class: 'drawer', 'aria-labelledby': 'drawer-title' });
   drawer = { id, node, opener, back, seen: '' };
@@ -224,8 +253,7 @@ function closeDrawer(restore = true) {
   const { opener, back } = drawer;
   drawer = null;
   if (!restore) return;
-  const card = opener?.isConnected ? opener : back && document.querySelector(`[data-focus="${CSS.escape(back)}"]`);
-  card?.focus();
+  returnTarget({ opener, back })?.focus();
 }
 
 // The full page
@@ -474,6 +502,14 @@ export function install(board) {
   document.head.append(el('link', { rel: 'stylesheet', href: `item.css${TOKEN}` }));
   Object.assign(Board, { select: openDrawer, openDrawer, openItem });
   addEventListener('hashchange', showPage);
+  // One Escape closes one thing. A drawer sits over a list, so from the list the drawer closes first and the
+  // list stays. Inside the drawer a control that closes itself (the assign form) goes first, and stops the event.
+  addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && drawer && !drawer.node.contains(event.target)) {
+      event.stopPropagation();
+      closeDrawer();
+    }
+  }, true);
   addEventListener('keydown', (event) => {
     if (event.key === 'Escape') closeDrawer(); // a full page stays; only the drawer closes
   });
