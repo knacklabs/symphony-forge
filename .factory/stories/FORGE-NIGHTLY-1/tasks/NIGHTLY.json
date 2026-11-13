@@ -1,0 +1,77 @@
+{
+  "branch": "task/FORGE-NIGHTLY-1-NIGHTLY",
+  "known": [
+    {
+      "area": "failed_schedules.fetch() in src/forge/board_facts.py",
+      "file": "src/forge/board_facts.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 473,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: A failed latest full test run on the main branch shows under Needs you on the board",
+      "work": 2
+    },
+    {
+      "area": "failed_schedules.fetch.own() in src/forge/board_facts.py",
+      "file": "src/forge/board_facts.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 432,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: The row stays until a later full test run passes",
+      "work": 2
+    },
+    {
+      "area": "failed_schedules.fetch() in src/forge/board_facts.py",
+      "file": "src/forge/board_facts.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 473,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Scale: Avoid reading obsolete rerun attempts after the latest result is known",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "8bb1fd032379b632eef0bc1f289787f94934ddb6cbe23a3d9e5eac4ae360bba6",
+    "changed": "7d197371dd68ba611234d7017689272049b26e3b651da4f5bcea224418227b39",
+    "commit": "9bde77508394f727dc65f2ae4ad020a9c6aac61c",
+    "dismissals": [],
+    "findings": [],
+    "id": "279b74ce-27bf-4c0a-9287-a2b83d09d748",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-12T17:14:03.286501+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-12T18:34:04.359434+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-13T02:17:25.560725+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "e9244a59-9607-44ba-8e36-00b53beb6d7a",
+    "head": "e4656f73f176f80aa7dd4e77055e078abc17ba1e",
+    "keys": {},
+    "round": 1
+  },
+  "worker": "claude"
+}

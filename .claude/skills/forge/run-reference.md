@@ -119,14 +119,16 @@ Both are null without GitHub, and a week capped at 1,000 results is null.
 `team.needs_you` lists every item that waits on a person, oldest first, each with its `reason`,
 `since` and `waited_seconds`: `approval` (a plan waiting for approval), `review loop` (a review
 loop or stuck-worker choice), `worker question`, `conflict` (a merge conflict close stopped on),
-`merge` (a ready pull request a human merges) and `blocked plan`, with the question or the
+`merge` (a ready pull request a human merges), `blocked plan` and `failed run` (the latest full
+test run on the default branch failed: `kind` is `run`, `id` is `run:<workflow file>`, `url` opens the
+run on GitHub, and `fixing` is true while an open fix names that run), with the question or the
 problem `forge next` reports in `detail`. Close and `forge work` publish
 these waits to the pull request, so every machine lists the same ones; answer a worker question
 with `forge work <item> --note` on any machine. `team.blocked` lists started parts and fixes
 idle 24 hours or more (`stalled`) and the unfinished part the most unfinished parts wait on
 (`blocks the most`), longest first, each
 with `detail` and `seconds`. `team.sentence` counts both. Ask the human about each Needs you
-item as `forge next` words it.
+item as `forge next` words it. For a `failed run`, start the fix that `forge next` names; do not ask the human.
 Active parts and fixes show recorded
 Build, Tests, Review, CI and Merge times for their current round, with the current stage
 marked. Missing times remain unknown. New clients get this at init; earlier adopted clients

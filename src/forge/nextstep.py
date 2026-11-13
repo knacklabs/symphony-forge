@@ -435,9 +435,7 @@ def _overlaps(top: Path, items: list[tuple[str, dict[str, Any]]],
 
 def _failed_schedules(top: Path) -> dict[str, list[str]]:
     """By workflow file: each failed scheduled or manual full run, with one fix to start or continue."""
-    def clean(text: str) -> str:  # safe inside double quotes in POSIX, PowerShell and cmd
-        return " ".join(re.sub(r"[^A-Za-z0-9 .,:;/_=()-]", " ", text).split())
-    alerts = {}
+    clean, alerts = board_facts.clean, {}
     for run in board_facts.failed_schedules(top):
         key = f"({clean(run['file'])})"
         run = {**run, "workflow": f"{run['workflow']} {key}"}
@@ -446,7 +444,8 @@ def _failed_schedules(top: Path) -> dict[str, list[str]]:
         why = f"The {kind} {workflow} run fails on {branch}"
         jobs = "; ".join(clean(job) for job in run["jobs"]) or "its failed jobs"
         done = f"{jobs} of the {kind} {workflow} workflow pass again on the next {kind} run on {branch}"
-        alerts[key] = [f"The latest {kind} {run['workflow']} run on {run['branch']} failed in: "
+        mark = "Needs you: " if run["full_run"] else ""
+        alerts[key] = [f"{mark}The latest {kind} {run['workflow']} run on {run['branch']} failed in: "
                        f"{'; '.join(run['jobs']) or 'unknown jobs'}.",
                        *([f"Failing tests: {', '.join(run['tests'])}."] if run["tests"] else []),
                        f'Next: forge fix start "{why}" --done "{done}" --kind mechanical']
