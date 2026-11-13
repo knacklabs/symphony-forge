@@ -48,7 +48,7 @@ def land(args: argparse.Namespace) -> int:
             repo.refuse(REFUSALS["note_all"])
         return _land_all()
     queued = os.environ.pop(QUEUED, "") == "1"
-    member, hold = os.environ.pop(TRAIN, "") == "1", os.environ.pop(HOLD, "") == "1"
+    member, hold = os.environ.pop(TRAIN, ""), os.environ.pop(HOLD, "") == "1"
     item = args.item
     match = repo.ITEM.fullmatch(item)
     if not match or not (match["task"] or match["fix"]):
@@ -60,14 +60,14 @@ def land(args: argparse.Namespace) -> int:
     state, branch = repo.read_state(item, top) or {}, repo.current_branch(top)
     step = argparse.Namespace(item=item, dismiss=None, because=None, wait_for_progress=True,
                               note=getattr(args, "note", None))
-    if queued:
+    if queued and not member:  # a train member merges alone, with no queue place to lend
         step.check_slot = _check_slot
     rounds = 0
     conflict_retry = False
     review_retry = False
     try:
         if member:  # the train tested this change; its own close and re-run would only move its head
-            step.train = True
+            step.train = member
             say(f"Merging {item}.")
             return merge.merge(step)
         close.check_stop(item, state, top)
@@ -170,7 +170,7 @@ def land(args: argparse.Namespace) -> int:
                 conflict_retry = True
     except repo.Refused as error:
         _problems(top, item)
-        if rounds <= 1 and error.entry is not checks.REFUSALS["wait_ended"]:
+        if rounds <= 1 and error.entry not in (checks.REFUSALS["wait_ended"], merge.REFUSALS["train_moved"]):
             say(f"Stopped: {item} needs you.")
         if error.entry == close.REFUSALS["hotspot"]:
             problem, _, next_step = str(error).partition("\nNext: ")
@@ -375,9 +375,11 @@ def _queue(top: Path) -> int:
     slots: dict[str, str] = {}
     finished, waiting, retried, merged, ready_prs = set(), set(), set(), [], []
     # Two to five ready changes get one combined check; the others close meanwhile and merge after it.
+    # A required check besides Forge's review must report the combined run, as in merge.py's CI retest.
     plan = (_form_train(top, default, changes, branches, stacked)
             if hold and sum(change[3] for change in changes) > 1
-            and repo.test_place(repo.default_config(top)) == "ci" else None)
+            and repo.test_place(settings := repo.default_config(top)) == "ci"
+            and any(name != "forge-pr-check" for name in settings["checks"]) else None)
     members = {member[0] for member in plan["members"]} if plan else set()
     held, notes, handled = set(), [], set()
 
@@ -617,32 +619,23 @@ def _train(top: Path, default: str, plan: dict, merged: list[str], needs: dict, 
             return handled
         say(f"Train: the combined check passed. Forge merges {len(members)} changes in order.")
         for k, (item, member_branch, head, age) in enumerate(members):
-            repo.git("fetch", "-q", "origin", default, cwd=top)
-            if _tree(top, f"origin/{default}") != plan["trees"][k]:
-                say(f"Train: {default} no longer matches what the train tested, so the remaining changes "
-                    "merge one at a time, each with its own check.")
+            if line := _stale(top, default, plan["trees"][k], item, member_branch, head):
+                say(line)
                 return handled
-            shown = repo.run("gh", "pr", "view", member_branch, "--json", "headRefOid,mergeStateStatus", cwd=top)
-            try:
-                current = json.loads(shown.stdout) if shown.returncode == 0 else {}
-            except ValueError:
-                current = {}
-            if current.get("headRefOid") != head:
-                say(f"Train: {item} changed after the combined check, so it and the remaining changes "
-                    "merge one at a time.")
-                return handled
-            if current.get("mergeStateStatus") == "BEHIND":
-                say(UP_TO_DATE.format(default=default))
-                return handled
-            child, reader, lines = _child(top, item, {}, {TRAIN: "1"})
+            # merge.py looks at main again at the moment of the merge; the head is GitHub's to match then.
+            child, reader, lines = _child(top, item, {}, {TRAIN: plan["trees"][k]})
             child.wait()
             reader.join()
             child.stdin.close()
-            handled.add(item)
-            if child.returncode:
+            if child.returncode:  # a move during its merge sends it and the rest one at a time, not to you
+                if line := _stale(top, default, plan["trees"][k], item, member_branch, head):
+                    say(line)
+                    return handled
+                handled.add(item)
                 needs[item] = _stop(item, age, lines, child.returncode)
                 say(f"{item} stopped: {needs[item][1]}")
                 return handled
+            handled.add(item)
             merged.append(item)
             say(f"{item} merged.")
         repo.git("fetch", "-q", "origin", default, cwd=top)
@@ -657,6 +650,25 @@ def _train(top: Path, default: str, plan: dict, merged: list[str], needs: dict, 
         if pushed:
             repo.run("git", "push", f"--force-with-lease=refs/heads/{branch}:{tip}", "origin", "--delete",
                      branch, cwd=top)
+
+
+def _stale(top: Path, default: str, tested: str, item: str, branch: str, head: str) -> str | None:
+    """The Train line that says why a member cannot merge in the train now, or None. The default branch
+    must hold the tree the train tested so far, and the pull request the commit it tested."""
+    repo.git("fetch", "-q", "origin", default, cwd=top)
+    if _tree(top, f"origin/{default}") != tested:
+        return (f"Train: {default} no longer matches what the train tested, so the remaining changes "
+                "merge one at a time, each with its own check.")
+    shown = repo.run("gh", "pr", "view", branch, "--json", "headRefOid,mergeStateStatus", cwd=top)
+    try:
+        current = json.loads(shown.stdout) if shown.returncode == 0 else {}
+    except ValueError:
+        current = {}
+    if current.get("headRefOid") != head:
+        return f"Train: {item} changed after the combined check, so it and the remaining changes merge one at a time."
+    if current.get("mergeStateStatus") == "BEHIND":
+        return UP_TO_DATE.format(default=default)
+    return None
 
 
 def _child(top: Path, item: str, slots: dict[str, str], extra: dict[str, str] | None = None, *,

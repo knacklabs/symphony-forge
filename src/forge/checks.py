@@ -123,10 +123,13 @@ def _wait(top: Path, item: str, sha: str, names: list[str], branch: str, progres
         try:
             seen, snapshot, check_runs, pr = _status(top, item, sha, branch, cache, requested)
             if train:  # keep every entry's place, so the timeout reader still lines up with the runs
+                # Forge's own review is exactly the "Review pull request" run of forge.yml's
+                # pull_request_target workflow and the forge-pr-check status; _seen lists runs first.
                 own = _own_review(top, item, sha)
-                seen = [(name, PASS) if name == "forge-pr-check" or (
-                    index < len(check_runs) and check_runs[index].get("check_suite", {}).get("id") in own)
-                    else (name, state) for index, (name, state) in enumerate(seen)]
+                for index, (name, _) in enumerate(seen):
+                    if (name == "Review pull request" and check_runs[index].get("check_suite", {}).get("id") in own
+                            if index < len(check_runs) else name == "forge-pr-check"):
+                        seen[index] = (name, PASS)
             running = any(state == PENDING for _, state in seen)
             result["state"] = ("running" if running
                                else "queued" if any(state == QUEUED for _, state in seen)

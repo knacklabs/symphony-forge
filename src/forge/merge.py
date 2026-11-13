@@ -27,6 +27,8 @@ REFUSALS = {
     "not_ready": ("Forge has no clean ready record for {item}.", "forge close {item}"),
     "changed": ("The pull request's head changed since Forge recorded {item} ready.", "forge close {item}"),
     "retest_failed": ("The combined change failed its tests.\n{tests}", "forge work {item}"),
+    "train_moved": ("{default} no longer holds what the merge train tested, so {item} did not merge.",
+                    "forge land {item}"),
     "dirty_retest": ("The worktree has uncommitted changes:\n{files}",
                      "commit or set aside these changes, then forge merge {item}"),
     "base_moved": ("The default branch moved five times after the retest. Run forge merge again.",
@@ -102,7 +104,7 @@ def merge(args: argparse.Namespace, *, refreshed: bool = False) -> int:
                                   cwd=worktree).split("\0")) - {""}
         moves = 0
         combined_tested = False
-        train = getattr(args, "train", False)  # a merge train tested this head on the combined default branch
+        train = getattr(args, "train", None)  # the default branch's tree that a merge train tested for this head
         while True:
             checked_default = repo.git("rev-parse", f"origin/{default}", cwd=top)
             retested = checked_default != base and not train
@@ -158,8 +160,8 @@ def merge(args: argparse.Namespace, *, refreshed: bool = False) -> int:
                     # Only the local test needs this merge. Keep GitHub's already checked head.
                     repo.git("reset", "--keep", head, cwd=worktree)
             try:
-                if not train and (checks.required(worktree, default, head) is not None or
-                                  config["test_place"] == "ci" and (not retested or overlap or ci_retest)):
+                if (checks.required(worktree, default, head) is not None or
+                        config["test_place"] == "ci" and (not retested or overlap or ci_retest)):
                     checks.wait(worktree, item, head, config["checks"],
                                 branch=branch, progress=getattr(args, "wait_for_progress", False),
                                 slot=getattr(args, "check_slot", None))
@@ -192,13 +194,15 @@ def merge(args: argparse.Namespace, *, refreshed: bool = False) -> int:
             repo.git("fetch", "-q", "origin", default, cwd=top)
             if repo.merge_setting(top) != "agent":
                 repo.refuse(REFUSALS["owner_merges" if item == ENABLE else "disabled"], item=item)
-            if repo.git("rev-parse", f"origin/{default}", cwd=top) == checked_default:
-                break
+            if train or repo.git("rev-parse", f"origin/{default}", cwd=top) == checked_default:
+                break  # a train member never tests again: the check below decides
             if combined_tested:
                 moves += 1
             if moves >= 5:
                 repo.refuse(REFUSALS["base_moved"], item=item)
             base = checked_default
+        if train and repo.git("rev-parse", f"origin/{default}^{{tree}}", cwd=top) != train:
+            repo.refuse(REFUSALS["train_moved"], item=item, default=default)
         done = repo.run("gh", "pr", "merge", str(pr["number"]), "--squash",
                         "--subject", pr["title"], *completion, "--match-head-commit", head, cwd=top, input=body)
         after = repo.run("gh", "pr", "view", str(pr["number"]), "--json", "state", "--jq", ".state", cwd=top)

@@ -14,13 +14,15 @@ import pytest
 
 from conftest import machine_cores
 from test_close import env  # noqa: F401
-from test_queue_land_all import _edit, _fix, _number, client  # noqa: F401
+from test_queue_land_all import _edit, _fix, _number, _settings, client  # noqa: F401
 from test_conflicting_pull_requests_stop_check_waits import _publish_default
 
 # The stub gh of test_queue_land_all, plus what the train asks of GitHub. train.json in its folder
 # picks the answers: pending_until (a file the check waits for), same_name, no_drafts,
 # no_create_output, rules ("strict", "unreadable"), behind, moved, changed and stray (a pull
-# request number whose merge also leaves a stray file on main). pending_again keeps the check
+# request number whose merge also leaves a stray file on main), red (a member whose own "lint"
+# check turns red when the train's check passes) and late ("main" or "head": the first own check read
+# of a member after that moves main, or the member's branch). pending_again keeps the check
 # pending until its file ("path") no longer has its saved time ("mtime").
 TRAIN_GH = r'''
 cfg = json.loads((here / "train.json").read_text()) if (here / "train.json").exists() else {}
@@ -60,12 +62,22 @@ if args[:1] == ["api"] and "/commits/" in endpoint and train_sha(sha_of(endpoint
             push("main", "unrelated.py", "x = 1\n")
         if cfg.get("changed"):
             push("fix/bb", "bb_more.py", "y = 1\n")
+        if cfg.get("red"):
+            (here / ("checks-fix-%s.txt" % cfg["red"])).write_text(lines([
+                {"name": name, "status": "completed", "conclusion": conclusion} for name, conclusion in
+                (("tests", "success"), ("forge-pr-check", "success"), ("lint", "failure"))]))
     rows = [{**tests, "status": "completed", "conclusion": "success"},
             {"name": "Review pull request", "head_sha": sha, "status": "completed",
              "conclusion": "failure", "check_suite": {"id": 1}}]
     if cfg.get("same_name"):
         rows.append({**rows[1], "check_suite": {"id": 3}})
+        rows.append({**rows[1], "name": "forge-pr-check", "check_suite": {"id": 3}})
     answer(lines(rows))
+if cfg.get("late") and args[:4] == ["api", "--paginate", "--jq", ".check_runs[]"]:
+    if (here / "acted").exists() and not (here / "late").exists():
+        (here / "late").touch()
+        own = subprocess.run(["git", "branch", "--show-current"], capture_output=True, text=True).stdout.strip()
+        push("main" if cfg["late"] == "main" else own, "late.py", "x = 2\n")
 if args[:4] == ["api", "--paginate", "--jq", ".workflow_runs[]"] and any(a.startswith("head_sha=") for a in args):
     runs = [{"id": 1, "check_suite_id": 1, "event": "pull_request_target", "path": ".github/workflows/forge.yml@refs/heads/main"},
             {"id": 2, "check_suite_id": 2, "event": "pull_request", "path": ".github/workflows/forge.yml@refs/pull/1/merge"}]
@@ -165,17 +177,25 @@ def _train_head(call) -> bool:
     return call[call.index("--head") + 1].startswith("forge-merge-train/")
 
 
-def _everyone_merges_alone(env, done, slugs) -> None:
-    """Each merges with its own check: all but the first to merge find the default branch moved."""
+def _everyone_merges_alone(env, done, slugs, moved=()) -> None:
+    """Each goes through its own close and checks, which a train member never does, then merges. The
+    ones in `moved` also find the default branch moved before their merge, which is certain only when
+    a merge came before they started; changes that start together race for it."""
     lines = done.stdout.splitlines()
     for slug in slugs:
-        assert f"{slug} merged." in lines, done.stdout + done.stderr
-    rerun = [slug for slug in slugs if any(line.startswith(f"{slug}: ") and RERUN in line for line in lines)]
-    assert len(rerun) >= len(slugs) - 1, done.stdout
+        assert f"{slug} merged." in lines and f"{slug}: Closing {slug}." in lines, done.stdout + done.stderr
+    for slug in moved:
+        assert any(line.startswith(f"{slug}: ") and RERUN in line for line in lines), done.stdout
+
+
+def _restarted(env) -> list[list[str]]:
+    """GitHub calls that start CI again on a head: a re-run, a dispatch or a POST to the API."""
+    return [call for call in env.gh.calls() if call[:2] in (["run", "rerun"], ["workflow", "run"])
+            or call[:1] == ["api"] and "POST" in call]
 
 
 @pytest.mark.timeout(900)
-@pytest.mark.parametrize("variant", ["plain", "same-name", "no-create-output"])
+@pytest.mark.parametrize("variant", ["plain", "same-name", "no-create-output", "member-red"])
 def test_1_ready_changes_merge_after_one_combined_check(train, monkeypatch, request, variant):
     env = train
     if variant != "plain" and request.node.callspec.params["client"] == "adopted":
@@ -187,7 +207,8 @@ def test_1_ready_changes_merge_after_one_combined_check(train, monkeypatch, requ
     env.repo.git("push", "-q", "origin", "HEAD:refs/heads/forge-merge-train/keep")
     keep = env.repo.git("rev-parse", "HEAD")
     _stub(env, pending_until=str(env.common / "forge" / "ready" / "dd.json"),
-          same_name=variant == "same-name", no_create_output=variant == "no-create-output")
+          same_name=variant == "same-name", no_create_output=variant == "no-create-output",
+          red="bb" if variant == "member-red" else None)
     done = _all(env)
     lines = done.stdout.splitlines()
     out = done.stdout + done.stderr
@@ -195,13 +216,25 @@ def test_1_ready_changes_merge_after_one_combined_check(train, monkeypatch, requ
         assert "Train: testing 3 ready changes together: aa, bb, cc." in lines, out
         assert not any("the combined check passed" in line for line in lines), out
         assert any(line.startswith("Train: the combined check failed: Checks failed on the pull request: "
-                                   "Review pull request.") and line.endswith(
+                                   "Review pull request, forge-pr-check.") and line.endswith(
             "The ready changes merge one at a time, each with its own check.") for line in lines), out
         _everyone_merges_alone(env, done, ("aa", "bb", "cc"))
         return
-    assert done.returncode == 0, out
     assert "Train: testing 3 ready changes together: aa, bb, cc." in lines, out
     assert "Train: the combined check passed. Forge merges 3 changes in order." in lines, out
+    if variant == "member-red":
+        # bb's own check turned red while the train ran: it keeps today's gate, so it stops with that
+        # failure, and cc, the member after it, merges one at a time. aa merged before bb's check.
+        assert done.returncode == 1, out
+        assert "- bb: Checks failed on the pull request: lint." in lines, out
+        assert not env.gh_calls("pr", "merge", _number("fix/bb")), out
+        assert not any(line.startswith("aa: ") and RERUN in line for line in lines), out
+        assert any(line.startswith("cc: ") and RERUN in line for line in lines), out
+        summary = next(line for line in lines if line.startswith("Merged ("))
+        assert summary.startswith("Merged (3): aa, ") and summary.endswith(
+            " · Ready to merge (0): none · Needs you (1): bb"), out
+        return
+    assert done.returncode == 0, out
     created = [call for call in env.gh_calls("pr", "create") if _train_head(call)]
     assert len(created) == 1 and "--draft" in created[0], out
     branch = created[0][created[0].index("--head") + 1]
@@ -219,6 +252,7 @@ def test_1_ready_changes_merge_after_one_combined_check(train, monkeypatch, requ
     assert not any(line.startswith(("aa: ", "bb: ", "cc: ")) and "moved; Forge will merge it into this branch"
                    in line for line in lines), out
     assert any(line.startswith("dd: ") and RERUN in line for line in lines), out
+    assert not _restarted(env), out  # no member's own workflow starts again; each head is the closed one
     if variant == "no-create-output":
         assert len(env.gh_calls("pr", "list", "--head", branch)) == 1, out
     assert env.gh_calls("pr", "close") == [["pr", "close", _number(branch)]], out
@@ -250,8 +284,9 @@ def _on_main(env, path: str, text: str) -> None:
     env.repo.git("merge", "--ff-only", "fix/upgrade-client")
 
 
-def _stacked_on_merged_base(env, monkeypatch) -> None:
-    """A fix built on another fix whose pull request merged before the run, closed ready again after."""
+def _stacked(env, monkeypatch, base_merged: bool) -> None:
+    """A fix built on another fix, closed ready. The base's pull request merges before the run (the
+    fix is then closed ready again) or stays open."""
     base = _fix(env, monkeypatch, "jb", 7, {"jb.py": "print('jb')\n"}, status="working")
     assert env.repo.forge("close", "jb").returncode == 0
     main, env.repo.path = env.repo.path, base
@@ -260,14 +295,16 @@ def _stacked_on_merged_base(env, monkeypatch) -> None:
     finally:
         env.repo.path = main
     assert env.repo.forge("close", "jj").returncode == 0
-    merged = env.repo.forge("merge", "jb")
-    assert merged.returncode == 0, merged.stdout + merged.stderr
-    closed = env.repo.forge("close", "jj")
-    assert closed.returncode == 0, closed.stdout + closed.stderr
+    if base_merged:
+        merged = env.repo.forge("merge", "jb")
+        assert merged.returncode == 0, merged.stdout + merged.stderr
+        closed = env.repo.forge("close", "jj")
+        assert closed.returncode == 0, closed.stdout + closed.stderr
 
 
 @pytest.mark.timeout(1800)
-@pytest.mark.parametrize("variant", ["out", "taken", "no-drafts", "rule", "behind", "stale"])
+@pytest.mark.parametrize("variant", ["out", "taken", "no-drafts", "rule", "behind", "stale", "stacked", "human",
+                                     "no-app-check"])
 def test_2_changes_that_cannot_join_stay_out(train, monkeypatch, request, variant):
     env = train
     adopted = request.node.callspec.params["client"] == "adopted"
@@ -283,13 +320,17 @@ def test_2_changes_that_cannot_join_stay_out(train, monkeypatch, request, varian
             "ee": {"shared.py": _edit(7, "mine")}, "kk": {"plans/roadmap.json": _roadmap("A-1", "K-1")}})
     elif variant == "out":
         heads = _ready(env, monkeypatch, ("aa", "bb", "cc"), files={"bb": shared("first"), "cc": shared("other")})
+    elif variant == "stacked":  # a ready fix built on the ready, unmerged fix jb
+        heads = _ready(env, monkeypatch, ("aa", "bb"))
+        _stacked(env, monkeypatch, base_merged=False)
     else:
+        if variant == "human":
+            _settings(env, merge="human")
         heads = _ready(env, monkeypatch, ("aa", "bb", "cc"))
     if variant == "out" and not adopted:
-        _stacked_on_merged_base(env, monkeypatch)
+        _stacked(env, monkeypatch, base_merged=True)
         heads.update(_ready(env, monkeypatch, ("ff", "gg", "hh"), first=9))
         _rival(env, {"shared.py": _edit(7, "rival"), "plans/roadmap.json": _roadmap("A-1", "Z-1")})
-    out_lines = []
     if variant == "taken":
         # The branch name the train would take, held by someone else, with an open pull request.
         monkeypatch.setenv("GIT_AUTHOR_DATE", "2026-01-01T12:00:00")
@@ -307,6 +348,10 @@ def test_2_changes_that_cannot_join_stay_out(train, monkeypatch, request, varian
             "body": "", "url": "https://github.com/acme/shop/pull/77"}), "utf-8")
     if variant == "stale":  # the remote's settings say laptop tests; the main checkout still says CI
         _rival(env, {"forge.toml": (env.repo.path / "forge.toml").read_text("utf-8") + 'test_place = "local"\n'})
+    if variant == "no-app-check":  # CI is the place, but only Forge's own review check is required
+        kept = [line for line in (env.repo.path / "forge.toml").read_text("utf-8").splitlines()
+                if not line.startswith("checks =")]
+        _rival(env, {"forge.toml": "\n".join(kept + ['checks = ["forge-pr-check"]', 'test_place = "ci"']) + "\n"})
     ready = env.common / "forge" / "ready" / "hh.json"  # hh closes again while the train waits
     _stub(env, pending_again={"path": str(ready), "mtime": ready.stat().st_mtime_ns} if variant == "out" and not adopted else None,
           no_drafts=variant == "no-drafts",
@@ -334,6 +379,13 @@ def test_2_changes_that_cannot_join_stay_out(train, monkeypatch, request, varian
             for slug in ("dd", "kk", "hh"):  # cc and ee really clash: they stop for the worker
                 assert any(line.startswith(f"{slug}: ") and RERUN in line for line in lines), text
             assert "Needs you (2): cc, ee" in done.stdout, text
+    elif variant == "stacked":
+        assert "jj stays out of the train: it builds on jb, which has not merged." in lines, text
+        assert "Train: testing 3 ready changes together: aa, bb, jb." in lines, text
+        assert lines.index("jb merged.") < lines.index("jj merged."), text
+        assert [number for number, _ in _merge_heads(env)] == [
+            _number(f"fix/{slug}") for slug in ("aa", "bb", "jb", "jj")], text
+        assert any(line.startswith("jj: ") and RERUN in line for line in lines), text
     elif variant == "taken":
         assert f"Train: could not create {taken}, {LATER}" in lines, text
         assert not created and not env.gh_calls("pr", "close"), text
@@ -353,34 +405,52 @@ def test_2_changes_that_cannot_join_stay_out(train, monkeypatch, request, varian
             _everyone_merges_alone(env, done, ('aa', 'bb', 'cc'))
         else:
             assert lines.index("aa merged.") < lines.index(line), text
-            _everyone_merges_alone(env, done, ("bb", "cc"))
-    else:
+            _everyone_merges_alone(env, done, ("bb", "cc"), moved=("bb", "cc"))  # aa merged before they started
+    elif variant == "human":  # nothing merges in a human-merge run, so nothing is tested together
+        assert not any(line.startswith("Train:") for line in lines) and not created, text
+        assert not env.gh_calls("pr", "merge"), text
+        assert lines[-1].startswith("Merged (0): none · Ready to merge (3): aa "), text
+    else:  # stale, no-app-check
         assert not any(line.startswith("Train:") for line in lines), text
         assert not created, text
 
 
 @pytest.mark.timeout(900)
-@pytest.mark.parametrize("variant", ["moved", "changed", "differs"])
+@pytest.mark.parametrize("variant", ["moved", "changed", "late-main", "late-head", "differs"])
 def test_5_the_default_branch_must_hold_what_the_train_tested(train, monkeypatch, request, variant):
     env = train
     if variant != "moved" and request.node.callspec.params["client"] == "adopted":
         pytest.skip("new repos only")
     heads = _ready(env, monkeypatch, ("aa", "bb", "cc"))
+    # late-*: the move comes while the first member's own merge runs, after Forge looked at main and
+    # the pull request, so only the merge itself can catch it.
     _stub(env, moved=variant == "moved", changed=variant == "changed",
+          late=variant.removeprefix("late-") if variant.startswith("late-") else None,
           stray=_number("fix/cc") if variant == "differs" else None)
     done = _all(env)
     lines = done.stdout.splitlines()
     text = done.stdout + done.stderr
-    if variant == "moved":
+    merges = _merge_heads(env)
+    if variant in ("moved", "late-main"):
         assert ("Train: main no longer matches what the train tested, so the remaining changes merge one at a "
                 "time, each with its own check.") in lines, text
-        _everyone_merges_alone(env, done, ("aa", "bb", "cc"))
-    elif variant == "changed":
-        assert ("Train: bb changed after the combined check, so it and the remaining changes merge one at a "
+        # Main moved before every member's merge, so each one finds it moved and runs its own check.
+        _everyone_merges_alone(env, done, ("aa", "bb", "cc"), moved=("aa", "bb", "cc"))
+    elif variant in ("changed", "late-head"):
+        stale = "bb" if variant == "changed" else "aa"
+        assert (f"Train: {stale} changed after the combined check, so it and the remaining changes merge one at a "
                 "time.") in lines, text
-        merges = _merge_heads(env)
-        assert (_number("fix/aa"), heads["aa"]) in merges, text
-        assert not [1 for number, head in merges if number == _number("fix/bb") and head == heads["bb"]], text
+        # It merges with the head it has now. late-head offers the tested head, as the move came after
+        # Forge looked, and GitHub refuses it; changed never offers it.
+        ours = [head for number, head in merges if number == _number(f"fix/{stale}")]
+        assert ours and ours[-1] != heads[stale], text
+        if variant == "changed":
+            assert heads[stale] not in ours and (_number("fix/aa"), heads["aa"]) in merges, text
+            assert "aa merged." in lines and "aa: Closing aa." not in lines, text  # aa took the train
+        # aa merged in the train before changed's others started, so they found main moved; late-head
+        # starts all three together.
+        _everyone_merges_alone(env, done, ("bb", "cc") if variant == "changed" else ("aa", "bb", "cc"),
+                               moved=("bb", "cc") if variant == "changed" else ())
     else:
         note = ("Train: after the last merge, main does not match what the train tested. Check main: the next "
                 "pull request check or the nightly full run tests it.")
