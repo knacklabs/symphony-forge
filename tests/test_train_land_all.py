@@ -19,7 +19,8 @@ from test_conflicting_pull_requests_stop_check_waits import _publish_default
 
 # The stub gh of test_queue_land_all, plus what the train asks of GitHub. train.json in its folder
 # picks the answers: pending_until (a file the check waits for), same_name, no_drafts,
-# no_create_output, rules ("strict", "unreadable"), behind, moved, changed and stray (a pull
+# no_create_output, rules ("strict", "unreadable"), behind (the merge step reads BEHIND once anything has
+# merged) and behind_listed (so does the listing that close reads), moved, changed and stray (a pull
 # request number whose merge also leaves a stray file on main), red (a member whose own "lint"
 # check turns red when the train's check passes) and late ("main" or "head": the first own check read
 # of a member after that moves main, or the member's branch). pending_again keeps the check
@@ -27,6 +28,15 @@ from test_conflicting_pull_requests_stop_check_waits import _publish_default
 # that is not one of its "closed" ones, as a fallback publishes: the first read says the tests still
 # run, later reads say green, and a "red" member's heads fail. A ["check-pending", sha] or
 # ["check-green", sha, time] entry in the call log marks the answer that came, in order with the calls.
+# red_train makes a train's combined check red: "in" (a path; red only for a train that holds it), "heal"
+# (a run id whose re-run turns it green) and "settle" (a second test group still runs when the check is
+# first read as red, and for the first `gh pr checks` after it). "logs" maps a job id to its failed log.
+# fresh may also say "failing": "tests" so a red member's new heads fail the tests check, not lint. A
+# red member's heads, like the others, say first that the tests still run: ["check-red", sha, time]
+# marks the answer that turned red. red_train may also say "slow" (after its re-run, the train's check
+# still runs at first and then turns green: ["train-pending"] and ["train-green"] mark those answers),
+# "conclusion" (what group 1 ends with, "failure" by default) and, with "settle", a re-run starts
+# the second group running again. The "red" member of fresh also lists its failing check (job 70).
 TRAIN_GH = r'''
 cfg = json.loads((here / "train.json").read_text()) if (here / "train.json").exists() else {}
 endpoint = args[-1] if args else ""
@@ -48,6 +58,35 @@ def train_sha(sha):
 
 
 lines = lambda rows: "".join(json.dumps(row) + "\n" for row in rows)
+
+
+def broken(red):
+    """The train's combined check is red: it holds the path, if one is named, and no re-run healed it."""
+    tree = (here / "train-tree.txt").read_text() if (here / "train-tree.txt").exists() else ""
+    return (red.get("in") is None or red["in"] in tree) and not (
+        red.get("heal") and (here / ("rerun-" + red["heal"])).exists())
+
+
+if args[:2] == ["run", "rerun"] and (cfg.get("red_train") or {}).get("settle"):
+    (here / "polled").unlink(missing_ok=True)  # the re-run starts its jobs again: one is running at the next read
+if args[:2] == ["pr", "checks"] and args[2].startswith("forge-merge-train/") and cfg.get("red_train") is not None:
+    red = cfg["red_train"]
+    link = lambda run, job: "https://github.com/acme/shop/actions/runs/%d/job/%d" % (run, job)  # noqa: E731
+    first = red.get("settle") and not (here / "polled").exists()
+    if red.get("settle"):
+        append_json(here / "gh-calls.jsonl", ["settle-pending" if first else "settle-done"])
+    (here / "polled").touch()
+    rows = [{"name": "test group 1 of 2", "bucket": "fail", "link": link(2, 21)},
+            {"name": "test group 2 of 2", "bucket": "pending" if first else "pass", "link": link(2, 22)},
+            {"name": "Review pull request", "bucket": "fail", "link": link(1, 11)},
+            {"name": "forge-pr-check", "bucket": "fail", "link": ""}]
+    answer(json.dumps(rows), 1)
+if args[:2] == ["pr", "checks"] and cfg.get("fresh") and args[2] == "fix/%s" % cfg["fresh"].get("red"):
+    # the red member's pull request lists its failing check, as GitHub does (job 70 of run 7)
+    answer(json.dumps([{"name": cfg["fresh"].get("failing", "lint"), "bucket": "fail",
+                        "link": "https://github.com/acme/shop/actions/runs/7/job/70"}]), 1)
+if args[:2] == ["run", "view"] and "--log-failed" in args and cfg.get("logs") is not None:
+    answer(cfg["logs"].get(args[args.index("--job") + 1], ""))
 if args[:1] == ["api"] and "/commits/" in endpoint and train_sha(sha_of(endpoint)):
     sha = sha_of(endpoint)
     if endpoint.split("?")[0].endswith("/status"):
@@ -72,6 +111,22 @@ if args[:1] == ["api"] and "/commits/" in endpoint and train_sha(sha_of(endpoint
     rows = [{**tests, "status": "completed", "conclusion": "success"},
             {"name": "Review pull request", "head_sha": sha, "status": "completed",
              "conclusion": "failure", "check_suite": {"id": 1}}]
+    red = cfg.get("red_train")
+    if red is not None and broken(red):
+        later = {"name": "test group 2 of 2", "head_sha": sha, "check_suite": {"id": 2}, "conclusion": "success",
+                 "status": "completed"}
+        if red.get("settle") and not (here / "polled").exists():
+            later.update(status="in_progress", conclusion=None)
+        rows = [{**tests, "name": "test group 1 of 2", "status": "completed",
+                 "conclusion": red.get("conclusion", "failure")}, later, rows[1]]
+    elif red is not None and red.get("slow"):  # a re-run's jobs run again: still running, then green
+        if not (here / "train-pending").exists():
+            (here / "train-pending").touch()
+            append_json(here / "gh-calls.jsonl", ["train-pending"])
+            answer(lines([{**tests, "status": "in_progress", "conclusion": None}]))
+        if not (here / "train-green").exists():
+            (here / "train-green").touch()
+            append_json(here / "gh-calls.jsonl", ["train-green"])
     if cfg.get("same_name"):
         rows.append({**rows[1], "check_suite": {"id": 3}})
         rows.append({**rows[1], "name": "forge-pr-check", "check_suite": {"id": 3}})
@@ -81,13 +136,18 @@ if fresh and args[:4] == ["api", "--paginate", "--jq", ".check_runs[]"] and sha_
     sha = sha_of(endpoint)
     own = subprocess.run(["git", "branch", "--show-current"], capture_output=True, text=True).stdout.strip()
     ok = {"name": "forge-pr-check", "status": "completed", "conclusion": "success"}
-    if own == "fix/%s" % fresh.get("red"):
-        answer(lines([{"name": "tests", "status": "completed", "conclusion": "success"}, ok,
-                      {"name": "lint", "status": "completed", "conclusion": "failure"}]))
     if not (here / ("pending-" + sha)).exists():
         (here / ("pending-" + sha)).touch()
         append_json(here / "gh-calls.jsonl", ["check-pending", sha, str(time.time())])
         answer(lines([{"name": "tests", "status": "in_progress", "conclusion": None}, ok]))
+    if own == "fix/%s" % fresh.get("red"):
+        if not (here / ("red-" + sha)).exists():
+            (here / ("red-" + sha)).touch()
+            append_json(here / "gh-calls.jsonl", ["check-red", sha, str(time.time())])
+        failing = fresh.get("failing", "lint")
+        answer(lines([{"name": "tests", "status": "completed",
+                       "conclusion": "failure" if failing == "tests" else "success"}, ok]
+                     + ([] if failing == "tests" else [{"name": "lint", "status": "completed", "conclusion": "failure"}])))
     if not (here / ("green-" + sha)).exists():
         (here / ("green-" + sha)).touch()
         append_json(here / "gh-calls.jsonl", ["check-green", sha, str(time.time())])
@@ -122,6 +182,10 @@ if args[:2] == ["pr", "create"] and args[args.index("--head") + 1].startswith("f
 if args[:2] == ["pr", "close"]:
     (here / ("pr-%s.json" % args[2])).unlink()
     answer("")
+if args[:2] == ["pr", "list"] and "--head" in args and cfg.get("behind_listed") and list(here.glob("merged-*")):
+    found = pr(args[args.index("--head") + 1])  # the listing close reads, once anything merged
+    if found and found["state"] == "OPEN":
+        answer(json.dumps([{**found, "mergeStateStatus": "BEHIND"}]))
 if args[:2] == ["pr", "view"] and cfg.get("behind") and list(here.glob("merged-*")):
     found = pr(args[2])
     if found and found["state"] == "OPEN":
@@ -468,6 +532,180 @@ def test_2_changes_that_cannot_join_stay_out(train, monkeypatch, request, varian
     else:  # stale, no-app-check, lint-only
         assert not any(line.startswith("Train:") for line in lines), text
         assert not created, text
+
+
+def _failed_log(*paths: str) -> str:
+    """A failed job's log; a path is written as the runner of the platform writes it."""
+    return "".join(f"FAILED tests/test_x.py - AssertionError in {os.path.join(*path.split('/'))}\n" for path in paths)
+
+
+def _marker(calls, name: str, head: str | None = None, after: int = -1) -> int | None:
+    """Where in the call log the stub marked an answer (check-pending, check-green, check-red for a head;
+    train-pending, train-green for the train), after a given place."""
+    return next((n for n, call in enumerate(calls) if n > after and call[0] == name
+                 and (head is None or call[1] == head)), None)
+
+
+def _waited_then(calls, head: str, outcome: str, text: str) -> int:
+    """GitHub's tests for exactly this head first said they still ran, then turned `outcome`
+    ("check-green" or "check-red"); the place of that answer."""
+    pending, result = _marker(calls, "check-pending", head), _marker(calls, outcome, head)
+    assert None not in (pending, result) and pending < result, text
+    return result
+
+
+@pytest.mark.platform
+@pytest.mark.timeout(900)
+@pytest.mark.parametrize("variant", ["one", "two", "passes", "behind"])
+def test_3_a_failure_in_one_change_takes_it_out(train, monkeypatch, request, variant):
+    env = train
+    if variant != "one" and request.node.callspec.params["client"] == "adopted":
+        pytest.skip("new repos only")
+    _on_main(env, "src/base.py", "x = 0\n")
+    slugs, broken = (("aa", "bb"), "aa") if variant == "two" else (("aa", "bb", "cc"), "bb")
+    heads = _ready(env, monkeypatch, slugs, files={broken: {f"src/{broken}.py": f"print('{broken}')\n"}})
+    # passes: the change that left has a green check of its own. behind: GitHub's up-to-date rule could not
+    # be read, so once the others merged, close finds the change that left behind and brings main in.
+    _stub(env, red_train={"in": f"src/{broken}.py", "settle": variant != "two"},
+          logs={"21": _failed_log(f"src/{broken}.py"), "70": _failed_log(f"src/{broken}.py")},
+          fresh={"closed": list(heads.values()), "red": None if variant == "passes" else broken, "failing": "tests"},
+          rules="unreadable" if variant == "behind" else None, behind_listed=variant == "behind")
+    done = _all(env)
+    lines = done.stdout.splitlines()
+    text = done.stdout + done.stderr
+    others = [slug for slug in slugs if slug != broken]
+    leaves = (f"Train: the combined check failed in files of {broken}. {broken} leaves the train and merges "
+              "last, one at a time, with its own check.")
+    first = f"Train: testing {len(slugs)} ready changes together: {', '.join(slugs)}."
+    assert lines.index(first) < lines.index(leaves), text
+    calls = env.gh.calls()
+    # Every job finished before any log was read: the read that showed no job running came first.
+    if variant != "two":
+        pending, settled = calls.index(["settle-pending"]), calls.index(["settle-done"])
+        logged = next(n for n, call in enumerate(calls) if call[:2] == ["run", "view"] and "--log-failed" in call)
+        assert pending < settled < logged, text
+    created = [call for call in env.gh_calls("pr", "create") if _train_head(call)]
+    merges = _merge_heads(env)
+    if variant != "two":
+        assert lines.index(leaves) < lines.index("Train: testing 2 ready changes together: aa, cc."), text
+        assert len(created) == 2 and len(env.gh_calls("pr", "close")) == 2, text
+        assert "Train: the combined check passed. Forge merges 2 changes in order." in lines, text
+        assert [(n, h) for n, h in merges[:2]] == [(_number(f"fix/{slug}"), heads[slug]) for slug in others], text
+        assert not any(f"{slug}: Closing {slug}." in lines for slug in others), text  # no re-run of their own
+        assert lines.index("cc merged.") < lines.index(f"Starting {broken}."), text
+    else:
+        assert len(created) == 1 and len(env.gh_calls("pr", "close")) == 1, text
+        assert merges[:1] == [(_number("fix/bb"), heads["bb"])], text  # one member alone goes at once
+        assert "bb: Closing bb." in lines and lines.index("bb merged.") < lines.index("Starting aa."), text
+    # The change that left merges last, with its own check on a new head that holds main: GitHub's checks for
+    # exactly that head are waited for, and it merges once they are green or stops with the failure for you,
+    # never in a fix round of the worker. Without the up-to-date rule, merge brings main in; with it, close does.
+    assert not any("Fix round" in line for line in lines), text
+    if variant != "behind":
+        assert any(line.startswith(f"{broken}: ") and RERUN in line for line in lines), text
+    if variant == "passes":
+        pushed = next(call[1] for call in calls if call[0] == "check-green")  # only the change that left has new heads
+        green = _waited_then(calls, pushed, "check-green", text)
+        assert merges[len(others):] == [(_number(f"fix/{broken}"), pushed)], text
+        assert green < next(n for n, call in enumerate(calls) if call[:3] == ["pr", "merge", _number(f"fix/{broken}")]), text
+    else:
+        env.repo.git("fetch", "-q", "origin")
+        pushed = env.repo.git("rev-parse", f"origin/fix/{broken}")
+        _waited_then(calls, pushed, "check-red", text)
+        assert not env.gh_calls("pr", "merge", _number(f"fix/{broken}")), text
+    assert pushed != heads[broken], text
+    for slug in others:
+        env.repo.git("cat-file", "-e", f"{pushed}:{slug}.py")  # the new head holds what merged before it
+    if variant == "passes":
+        assert lines.index(f"{broken} merged.") > lines.index("cc merged."), text
+        assert done.returncode == 0 and lines[-1] == (
+            "Merged (3): aa, cc, bb · Ready to merge (0): none · Needs you (0): none"), text
+        return
+    assert done.returncode == 1, text
+    summary = next(line for line in lines if line.startswith("Merged ("))
+    assert summary == (f"Merged ({len(others)}): {', '.join(others)} · Ready to merge (0): none · "
+                       f"Needs you (1): {broken}"), text
+    assert f"- {broken}: Checks failed on the pull request: tests." in lines, text
+    if variant == "one":  # a second run takes bb into no train: its own check is red, so it is not ready
+        again = _all(env)
+        assert not any(line.startswith("Train:") and "bb" in line for line in again.stdout.splitlines()), again.stdout
+        assert len([call for call in env.gh_calls("pr", "create") if _train_head(call)]) == 2
+
+
+@pytest.mark.platform
+@pytest.mark.timeout(900)
+@pytest.mark.parametrize("variant", ["flake", "timeout", "still-red", "several"])
+def test_4_a_failure_naming_no_change_runs_again_once(train, monkeypatch, request, variant):
+    env = train
+    if variant != "flake" and request.node.callspec.params["client"] == "adopted":
+        pytest.skip("new repos only")
+    heads = _ready(env, monkeypatch, ("aa", "bb", "cc"))
+    logs = {"flake": "ConnectionResetError: the runner lost its network\n",
+            "timeout": "The job exceeded the maximum execution time\n", "still-red": "Process exited with code 1\n",
+            "several": _failed_log("aa.py", "bb.py")}[variant]
+    # A healed re-run still runs at first. A re-run that fails again has a second group still running. In
+    # the fallbacks, main has moved, so each change closes anew on a new head whose tests run at first;
+    # in several, bb's heads turn red.
+    red = {"flake": {"heal": "2", "slow": True}, "timeout": {"heal": "2", "slow": True, "conclusion": "timed_out"},
+           "still-red": {"settle": True}, "several": {}}[variant]
+    fallback = variant in ("still-red", "several")
+    _stub(env, red_train=red, logs={"21": logs}, moved=fallback,
+          fresh={"closed": list(heads.values()), "red": "bb" if variant == "several" else None} if fallback else None)
+    done = _all(env)
+    lines = done.stdout.splitlines()
+    text = done.stdout + done.stderr
+    one_by_one = "so each change merges one at a time with its own check."
+    reruns = env.gh_calls("run", "rerun")
+    calls = env.gh.calls()
+    if variant in ("flake", "timeout"):
+        assert done.returncode == 0, text
+        assert lines[-1] == "Merged (3): aa, bb, cc · Ready to merge (0): none · Needs you (0): none", text
+        assert "Train: the combined check failed in no change's files. Forge runs the failed jobs again once." in lines, text
+        assert reruns == [["run", "rerun", "2", "--failed"]], text
+        assert "Train: the combined check passed. Forge merges 3 changes in order." in lines, text
+        assert [(n, h) for n, h in _merge_heads(env)] == [(_number(f"fix/{slug}"), heads[slug])
+                                                        for slug in ("aa", "bb", "cc")], text
+        assert not any(f"{slug}: Closing {slug}." in lines for slug in ("aa", "bb", "cc")), text
+        # After the re-run the combined check said first that its jobs still ran: no merge came before it was green.
+        rerun = calls.index(["run", "rerun", "2", "--failed"])
+        pending = _marker(calls, "train-pending", after=rerun)
+        green = _marker(calls, "train-green", after=pending or rerun)
+        merge = next(n for n, call in enumerate(calls) if call[:2] == ["pr", "merge"])
+        assert None not in (pending, green) and rerun < pending < green < merge, text
+        return
+    assert not any("the combined check passed" in line for line in lines), text
+    if variant == "still-red":
+        assert "Train: the combined check failed in no change's files. Forge runs the failed jobs again once." in lines, text
+        assert reruns == [["run", "rerun", "2", "--failed"]], text
+        assert f"Train: the combined check failed again, {one_by_one}" in lines, text
+        # The re-run left a group running: Forge waited for it to finish before it closed the train's pull
+        # request and let any change start on its own.
+        rerun = calls.index(["run", "rerun", "2", "--failed"])
+        pending = _marker(calls, "settle-pending", after=rerun)
+        settled = _marker(calls, "settle-done", after=pending or rerun)
+        closing = next(n for n, call in enumerate(calls) if call[:2] == ["pr", "close"])
+        own = _marker(calls, "check-pending")  # the first answer for a change's own head
+        assert None not in (pending, settled, own) and rerun < pending < settled < closing < own, text
+    else:
+        assert f"Train: the combined check failed in files of aa and bb, {one_by_one}" in lines, text
+        assert not reruns, text
+    # Each change goes one at a time, closes on its own new head and waits for that head's tests: aa and cc
+    # merge once they are green, and bb, whose tests turn red in several, stops without a merge.
+    slugs = ("aa", "cc") if variant == "several" else ("aa", "bb", "cc")
+    _everyone_merges_alone(env, done, slugs, moved=slugs, held=True)
+    summary = next(line for line in lines if line.startswith("Merged ("))  # they finish in any order
+    merged, _, rest = summary.partition(" · ")
+    if variant == "several":
+        env.repo.git("fetch", "-q", "origin")
+        _waited_then(calls, env.repo.git("rev-parse", "origin/fix/bb"), "check-red", text)
+        assert not env.gh_calls("pr", "merge", _number("fix/bb")), text
+        assert done.returncode == 1 and "- bb: Checks failed on the pull request: lint." in lines, text
+        assert sorted(merged.removeprefix("Merged (2): ").split(", ")) == ["aa", "cc"], text
+        assert rest == "Ready to merge (0): none · Needs you (1): bb", text
+    else:
+        assert done.returncode == 0, text
+        assert sorted(merged.removeprefix("Merged (3): ").split(", ")) == ["aa", "bb", "cc"], text
+        assert rest == "Ready to merge (0): none · Needs you (0): none", text
 
 
 @pytest.mark.timeout(900)
