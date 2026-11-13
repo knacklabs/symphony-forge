@@ -4,12 +4,20 @@
   "done_when": "After a sync or an upgrade, a client repo's app-baseline skill keeps the screen on a background refresh and names the open tab of a detail page in its URL rule, in both its Claude and Codex copies, and a test pins that text.",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-13T04:53:08.625764+00:00",
       "step": "start"
     }
   ],
-  "why": "On a background refresh, client apps show the loading state again or rebuild the list, so the reader loses scroll position, open sections, selection, focus and typed text."
+  "stuck": {
+    "close": null,
+    "head": "a1a7c149fe14c9d6c28ff2d805d5102b761a74c3",
+    "keys": {},
+    "round": null
+  },
+  "why": "On a background refresh, client apps show the loading state again or rebuild the list, so the reader loses scroll position, open sections, selection, focus and typed text.",
+  "worker": "claude"
 }
