@@ -24,7 +24,7 @@
       "gain": 3,
       "harm": 3,
       "line": 104,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 1,
       "security": false,
@@ -37,7 +37,7 @@
       "gain": 3,
       "harm": 3,
       "line": 104,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 1,
       "security": false,
@@ -63,7 +63,7 @@
       "gain": 3,
       "harm": 3,
       "line": 37,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 1,
       "security": false,
@@ -89,7 +89,7 @@
       "gain": 4,
       "harm": 2,
       "line": 81,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 1,
       "security": false,
@@ -99,59 +99,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "bcc96fdea2c58f96e85424b4a4d9139ee4f3c5a3614e7cd19e872d01b183614b",
-    "changed": "381367492c06c422514bf71db039713459235f8e6b75fc60da2364e5910697ba",
-    "commit": "936c70f5f12805cfa7cbaf723c24c79cdd04df36",
+    "branch_diff": "78d41b5c51522506f9a07d7cef91a476c81c9ff6c48025cb5a287681f3213aae",
+    "changed": "c725ccc7ecedad9bda877f23545251fb515c2d49240aa63fa094f5ae8fb41457",
+    "commit": "c99c063da4ac032d59d0c623a2522bdda14c210c",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Not done - An older updating response can still clear a failed-rebuild warning.\nCase: normal use - A large board is refreshing while another update fails.\nThe changed-event handler can start a full read while a newer rebuild is running. board_server.py:164-176 can return the previous snapshot marked updating; if the rebuild's failed event arrives while that response is still transferring, this call clears the warning when the response finishes. The stream sends failed only on a transition, so continuing failures do not restore it. This is new evidence beyond the ruling: the response can have a newer version than the page holds and still precede the work that failed.",
-        "file": "src/forge/board_app/app.js",
-        "gain": 3,
-        "harm": 3,
-        "line": 167,
-        "priority": "P1",
-        "required_done_when": true,
-        "title": "Not done: An old updating snapshot clears the failed-read warning",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Not done - A successful read for a different item can clear the warning for an item that remains stale.\nCase: normal use - An open story's refresh fails, then the user opens one of its older completed parts.\nThe full story can contain parts omitted from the trimmed Now snapshot, so item.js:200-209 reads such a part when its drawer opens. Both that read and the failed story refresh use the same 'item' key at item.js:238. A successful part read therefore clears the story's failure here; the retry at app.js:92-94 then finds no failure to retry. Closing the drawer leaves the old story marked Live until another snapshot happens to refresh it.",
-        "file": "src/forge/board_app/app.js",
-        "gain": 3,
-        "harm": 3,
-        "line": 52,
-        "priority": "P1",
-        "required_done_when": true,
-        "title": "Not done: Page-specific read failures leave old data marked Live",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Test - The named proof can still pass without exercising failure notification on an already-open stream.\nCase: normal use - A background rebuild fails while a board page is open.\nThe test waits for Live, which only proves the initial snapshot loaded, and never waits for the events connection to open. This direct request also starts the failing rebuild through board_server.py:164-175. If the stream connects after that failure, app.js:203's open-time status probe can show the warning even with the failed-event handler broken. The test therefore does not establish that an already-connected page learns about the background failure without an extra read.",
-        "file": "tests/test_board_says_when_data_is_old.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 92,
-        "priority": "P1",
-        "title": "Gate: test_2_a_failed_read_says_the_work_could_not_be_read_and_goes_away_with_new_data",
-        "work": 2
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 2\nRaise: Gate - A Windows worker crash can leave this test's browser processes running without the suite detecting them.\nCase: normal use - A Windows CI worker crashes while the browser test is running.\nThe rule says tests must own and clean up every process they start, even after a crash, and detect leftovers when a worker crashes. The timer and finally block disappear with the worker, and this subprocess has no ownership marker. On Windows, tests/conftest.py:360-380 checks only recorded markers; its session-finish check therefore cannot find or stop this browser tree after the worker exits.\nAdds work: record and clean up the browser process tree after a worker crash; F 2 x H 2 = 4; 2 x C = 2.",
-        "file": "tests/test_board_says_when_data_is_old.py",
-        "gain": 4,
-        "harm": 2,
-        "line": 159,
-        "priority": "P1",
-        "title": "Standard: Tests own and clean up every process they start",
-        "work": 2
-      }
-    ],
-    "id": "fbd69038-8dd4-49b5-86c7-c1513082fa7a",
-    "status": "blocked"
+    "findings": [],
+    "id": "3eebf440-fce7-4446-95f7-5cdf648d5e2f",
+    "status": "clean"
   },
   "round": 4,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-13T04:52:42.920473+00:00",
@@ -163,6 +120,10 @@
     },
     {
       "at": "2026-11-13T06:18:48.573990+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-13T06:48:47.938497+00:00",
       "step": "review"
     }
   ],
