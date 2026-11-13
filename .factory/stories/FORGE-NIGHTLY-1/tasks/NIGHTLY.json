@@ -33,7 +33,7 @@
       "gain": 4,
       "harm": 3,
       "line": 473,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -43,49 +43,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "c6877720a6df4e51e0fce72d693dd73d54f058946bd095098ed4a635a3f4b6e6",
-    "changed": "37fd5ca99ff551b49887a0f5ab8454bb303ae480190679f81721f7f6e2b43b60",
-    "commit": "adac6ba17f96e86621648bf2108f2a3bc94fd1f4",
+    "branch_diff": "9509a9a8463352193ed5b0f762f16a318270b44c2c7a49f150146fc84dcab4bc",
+    "changed": "9fcad15063b63c11cb1c1ac875c340c2f5db26d55c0073845a4d78e542438e24",
+    "commit": "9bde77508394f727dc65f2ae4ad020a9c6aac61c",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Not done\nCase: normal use - A developer reruns an older failed nightly run after a newer run on the same main commit passed. GitHub reruns keep the run ID and original creation time, but the new attempt can finish later. The sort at line 455 and first-per-workflow selection at line 476 still prefer the newer-created run, so a failing latest attempt produces neither a board row nor a `Needs you` line. Conversely, a later successful attempt of the older run cannot clear a newer-created failure. The selection needs to compare the relevant finished attempts as well as the original runs. [GitHub rerun documentation](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/re-run-workflows-and-jobs)",
-        "file": "src/forge/board_facts.py",
-        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
-        "gain": 3,
-        "harm": 3,
-        "line": 473,
-        "priority": "P1",
-        "title": "Not done: A failed latest full test run on the main branch shows under Needs you on the board",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Not done\nCase: normal use - A repository's configured full-suite workflow runs every five minutes and cancels an overlapping run when the next one starts. If the suite takes longer than that interval, 100 newer cancelled or running runs accumulate in about eight hours. Both scheduled-run requests are limited to 100 results, so the earlier failure falls out of both lists and the row and `Needs you` line disappear without a pass. GitHub supports both the five-minute schedule and cancellation of overlapping runs. [GitHub workflow syntax](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax)",
-        "file": "src/forge/board_facts.py",
-        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
-        "gain": 3,
-        "harm": 3,
-        "line": 432,
-        "priority": "P1",
-        "title": "Not done: The row stays until a later full test run passes",
-        "work": 2
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Scale\nCase: normal use - A flaky nightly suite has 20 older runs whose reruns were cancelled, followed by a successful full run. The loop calls `finished()` for every older run even after it has selected the newer success, so each cache refresh makes at least 20 unnecessary serial attempt requests. At half a second per request, that adds about ten seconds to `forge next` and board rebuilds every ten minutes; transient API retries make the delay longer.\nAdds work: skip resolving attempts that cannot affect the latest result; F 2 x H 2 = 4; 2 x C = 2",
-        "file": "src/forge/board_facts.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 473,
-        "priority": "P1",
-        "title": "Scale: Avoid reading obsolete rerun attempts after the latest result is known",
-        "work": 2
-      }
-    ],
-    "id": "72295182-f335-44bd-ad2a-9de9786ae8f1",
-    "status": "blocked"
+    "findings": [],
+    "id": "279b74ce-27bf-4c0a-9287-a2b83d09d748",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-12T17:14:03.286501+00:00",
@@ -93,6 +60,10 @@
     },
     {
       "at": "2026-11-12T18:34:04.359434+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-13T02:17:25.560725+00:00",
       "step": "review"
     }
   ],
