@@ -642,6 +642,12 @@
       "title": "Show a failed full test run under Needs you",
       "status": "pending",
       "order": 121
+    },
+    {
+      "key": "FORGE-TRAIN-1",
+      "title": "Merge several ready items in one train",
+      "status": "pending",
+      "order": 122
     }
   ],
   "epics": [

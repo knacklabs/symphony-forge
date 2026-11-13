@@ -9,6 +9,7 @@ const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
 const FILES = 10; // files in the known issues rail, then "and N more"
 let everyFile = false; // the known issues rail shows every file
 let asked = 0; // the newest page read; an older answer that comes later is dropped
+let latest = null; // the newest answer drawn: a kept part of the page does not hold the one it was built from
 
 export function h(tag, attrs = {}, ...children) {
   const node = document.createElement(tag);
@@ -37,7 +38,8 @@ export function rows(view) {
 }
 
 // Reads the untrimmed board for `page` and draws it into main. The first read shows a loading line;
-// later reads keep the page on screen until the new answer arrives.
+// later reads keep the page on screen until the new answer arrives, and Board.show changes only what
+// differs, so the reader's open file and scroll stay.
 export async function load(Board, page, main, draw) {
   if (!document.querySelector('link[data-pages]')) {
     document.head.append(h('link', { rel: 'stylesheet', href: `pages.css${TOKEN}`, 'data-pages': '' }));
@@ -71,7 +73,7 @@ export async function load(Board, page, main, draw) {
   if (mine !== asked || Board.page !== page) return;
   const drawn = draw(view);
   drawn.dataset.page = page;
-  main.replaceChildren(drawn);
+  Board.show(drawn);
   main.setAttribute('aria-busy', 'false');
 }
 
@@ -144,7 +146,7 @@ function file([name, titles], most) {
 
 // The rail shows the files with the most kept problems; "and N more" opens all of them in its place,
 // as the Now screen does, and Escape or Close gives it back with focus on the button.
-function known(view) {
+function known(Board, view) {
   const body = [];
   let sorted = [];
   if (!Array.isArray(view.known_issues)) {
@@ -163,8 +165,8 @@ function known(view) {
   let section;
   const swap = (all, focus) => {
     everyFile = all;
-    const next = known(view);
-    section.replaceWith(next);
+    const next = known(Board, latest);
+    section.replaceWith(Board.keep(next));
     next.querySelector(focus).focus();
   };
   if (everyFile && sorted.length > FILES) {
@@ -194,6 +196,8 @@ function known(view) {
 }
 
 export function install(Board) {
-  Board.screens.releases = (main) => load(Board, 'releases', main, (view) =>
-    h('div', { class: 'releases' }, h('h1', { class: 'hidden' }, 'Releases'), h('div', {}, upcoming(view), past(view)), known(view)));
+  Board.screens.releases = (main) => load(Board, 'releases', main, (view) => {
+    latest = view;
+    return h('div', { class: 'releases' }, h('h1', { class: 'hidden' }, 'Releases'), h('div', {}, upcoming(view), past(view)), known(Board, view));
+  });
 }

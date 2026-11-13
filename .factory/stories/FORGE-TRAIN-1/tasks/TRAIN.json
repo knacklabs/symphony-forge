@@ -1,0 +1,226 @@
+{
+  "base": "1b01eeada9b832c7eb00ac07c12b79bc58341408",
+  "branch": "task/FORGE-TRAIN-1-TRAIN",
+  "known": [
+    {
+      "area": "merge() in src/forge/merge.py",
+      "file": "src/forge/merge.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 108,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Revalidate the tested default branch and head before each merge",
+      "work": 2
+    },
+    {
+      "area": "_queue() in src/forge/land.py",
+      "file": "src/forge/land.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 380,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Require an app-test check before forming a train",
+      "work": 1
+    },
+    {
+      "area": "_own_review() in src/forge/checks.py",
+      "file": "src/forge/checks.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 200,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Recognize the draft's own review check",
+      "work": 2
+    },
+    {
+      "area": "merge() in src/forge/merge.py",
+      "file": "src/forge/merge.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 161,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Keep the existing check gate for each train member",
+      "work": 1
+    },
+    {
+      "area": "tests/test_train_land_all.py",
+      "file": "tests/test_train_land_all.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 270,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_2_changes_that_cannot_join_stay_out",
+      "work": 1
+    },
+    {
+      "area": "test_5_the_default_branch_must_hold_what_the_train_tested() in tests/test_train_land_all.py",
+      "file": "tests/test_train_land_all.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 379,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_5_the_default_branch_must_hold_what_the_train_tested",
+      "work": 1
+    },
+    {
+      "area": "test_1_ready_changes_merge_after_one_combined_check() in tests/test_train_land_all.py",
+      "file": "tests/test_train_land_all.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 219,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_ready_changes_merge_after_one_combined_check",
+      "work": 1
+    },
+    {
+      "area": "_train() in src/forge/land.py",
+      "file": "src/forge/land.py",
+      "gain": 4,
+      "harm": 4,
+      "line": 585,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Keep an existing train branch that already points at the candidate",
+      "work": 1
+    },
+    {
+      "area": "_queue() in src/forge/land.py",
+      "file": "src/forge/land.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 382,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "A non-test check can still admit an untested train",
+      "work": 1
+    },
+    {
+      "area": "merge() in src/forge/merge.py",
+      "file": "src/forge/merge.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 110,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Keep the member check gate after a switch from local tests to CI",
+      "work": 1
+    },
+    {
+      "area": "land() in src/forge/land.py",
+      "file": "src/forge/land.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 69,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Refresh older ready evidence before using the train shortcut",
+      "work": 1
+    },
+    {
+      "area": "_everyone_merges_alone() in tests/test_train_land_all.py",
+      "file": "tests/test_train_land_all.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 185,
+      "outcome": "fixed in round 4",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Gate: prove each train fallback waits for its own CI",
+      "work": 1
+    },
+    {
+      "area": "_form_train() in src/forge/land.py",
+      "file": "src/forge/land.py",
+      "gain": 2,
+      "harm": 1,
+      "line": 549,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Follow-up: Report exclusions when fewer than two changes can join",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "cda4a9b78b06381c959f1297dbffc90ea4c02a8f739cb92746d3b494207a9c94",
+    "changed": "a683363aa6810508ab04af3bc5de93d556019b0d8eef8702753eca56f1b00b79",
+    "commit": "440fb078b6c75ffdfd2b1776299d68b6446b3ec3",
+    "dismissals": [],
+    "findings": [],
+    "id": "d9d6fa27-7c67-4ad5-9bb5-43d1f780ac61",
+    "status": "clean"
+  },
+  "round": 4,
+  "stacked_on": "FORGE-NIGHTLY-1/NIGHTLY",
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-13T02:39:41.218115+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-13T03:37:20.978459+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-13T04:50:03.728176+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-13T05:17:26.685393+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-13T05:54:44.586530+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-13T05:17:26.685672+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "tests/test_train_land_all.py",
+    "reason": "The owner chose one more round: prove that a fallback waits while its own check still runs",
+    "wait_id": "3eb65c5d-6f39-4062-9e81-406313709904",
+    "worker_round": 3
+  },
+  "stuck": {
+    "close": "3e1b97c2-0978-4f37-9c7c-15b5badffb70",
+    "head": "7445dd08dd2fa3df55abbd6a9033466caff6170b",
+    "keys": {},
+    "round": 3
+  },
+  "worker": "claude"
+}

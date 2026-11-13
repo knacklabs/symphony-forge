@@ -2441,7 +2441,23 @@ base to merge, including a base whose builder or another command still works on 
 stops, the stacked fix stops with it. A base outside the run must merge before the stacked fix
 can enter close. Among changes whose bases are ready, the oldest starts first. A change
 not yet ready that changes a file an older change in the run also changes waits until that one
-merges or stops; Forge's own `plans/spotted.json` and `.factory/` files never count. Only one run
+merges or stops; Forge's own `plans/spotted.json` and `.factory/` files never count. Where the agent
+merges and CI runs the tests (read from the newest default branch, with `tests` as a required check),
+two to five ready changes form a merge train: Forge tests them together once on a temporary draft
+pull request, then merges each in order with no new run of its own. Each change still needs its
+existing checks green. A change that clashes with the default branch or with a change in the train,
+builds on a change that has not merged, changes `forge.toml`, was ready before the default branch
+changed `forge.toml`, or has no ready record from its own close stays out, and Forge names it and
+why. Two changes that edit a file Forge merges with its own rule, such as the roadmap, count as a
+clash. Other changes in the run close at the same time but merge after the train ends. Forge
+closes the draft pull request and deletes its branch (`forge-merge-train/<code>`) when the train
+ends, but only a branch it made in this run: if that name already exists, even at the same commit,
+Forge runs no train and leaves the branch and its pull request alone. If the run itself stops,
+close that pull request by hand; it never merges. A red check, a moved default branch, a changed
+pull request or GitHub's rule that each pull request must be up to date sends the changes back to
+one at a time, as before, with a `Train:` line that says why. Forge checks this again at each
+merge: the default branch must hold what the train tested so far, and the pull request the tested
+commit. Only one run
 works in a repo at a time. When two closes in the run collide on git's ref lock while fetching,
 the run starts that change again once and says so. A failed CI check gets one fix round on
 that change's builder thread, then close runs again. Other worker or owner stops affect only
