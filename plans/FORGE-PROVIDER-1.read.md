@@ -1,18 +1,18 @@
 ---
 reader: codex (gpt-6.1-terra)
-read_at: 2026-11-12T17:31:42.459446+00:00
-seconds: 536.54
-read_hash: 802630fd5d9056bd0535d971971801b25e7c77a4
-round: 4
+read_at: 2026-11-13T02:19:30.233246+00:00
+seconds: 467.176
+read_hash: 0d11b395a8f2acc66d0ef295b7baa97e06ebb31d
+round: 5
 passed: no
-doc_seen: 802630fd5d9056bd0535d971971801b25e7c77a4
+doc_seen: 0d11b395a8f2acc66d0ef295b7baa97e06ebb31d
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 44eb8ddc1726ea0b5051051a3b7e9c5875145385
+notes_seen: e91176a0da4c46d3d6f340c684f002639395dfaf
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a1d08a-3b0f-7ba3-8056-a21706cc3701
 session:
-loop_choice: more
-loop_reason: The owner chose one more round with a simpler rule for how Forge knows its boxes
+loop_choice: accept
+loop_reason: The owner chose: accept, and correct the three notes in the builder notes
 ---
 # Cold read notes
 
@@ -284,3 +284,23 @@ Only a genuine trade-off goes to the human, as a question with options.
     Case: normal use - A developer copies an approved 150 KB settings file, within the plan’s 256 KB limit. [The writer](/plans/FORGE-PROVIDER-1.md:93) puts its roughly 200 KB base64 encoding in one command passed to `sh -c`. On Linux with 4 KB pages, [one argument is limited to 128 KB](https://man7.org/linux/man-pages/man2/execve.2.html), so the command cannot start even though it fits agent37’s HTTP request limit.  
     Gain 4, Work 1, Harm 3
     Disposition: cut - `write_file` now sends 48 KB parts (about 64 KB of base64 per command), under Linux's 128 KB limit for one argument; agent37's exec documents no standard input (its fields are `command`, `user`, `background`, `name`), so the data stays in the command; the fake refuses a command over 128 KB and `test_2` copies a 200 KB file.
+
+## Round 5
+
+42. Blocking: Data loss: a failed replacement can corrupt an approved file.  
+    Raise: Data loss  
+    Case: normal use - A developer replaces a 200 KB approved settings file. [The new writer](/plans/FORGE-PROVIDER-1.md:93) truncates the existing file for the first 48 KB, then appends the remaining parts in separate requests. If a later request fails, the old file is gone and the kept box contains only part of the replacement. Future copies can use that incomplete file.  
+    Gain 5, Work 2, Harm 4
+   Disposition: keep - The owner chose: accept, and correct the three notes in the builder notes
+
+43. Blocking: Not done: first setup fails before listing the file its installer needs.  
+    Raise: Not done  
+    Case: normal use - A repo needs an ignored `.npmrc` for `npm ci`, and its first setup includes `--install "npm ci"`. [Setup runs the install before listing ignored files](/plans/FORGE-PROVIDER-1.md:142), so it fails before the developer can see and approve `.npmrc`. The printed next step asks for another install command; the planned test already knows to supply `--copy .npmrc` after the failure.  
+    Gain 5, Work 2, Harm 3
+   Disposition: keep - The owner chose: accept, and correct the three notes in the builder notes
+
+44. Advisory: Not done: box tests discard existing test-runner options.  
+    Raise: Functional  
+    Case: normal use - A developer sets `PYTEST_PLUGINS` to load a repo’s test fixtures. [The laptop runner](/src/forge/review.py:424) preserves that value and appends Forge’s plugin, but [the box command](/plans/FORGE-PROVIDER-1.md:131) replaces it with only Forge’s plugin. Tests that pass locally can fail in the box because their fixtures are missing.  
+    Gain 3, Work 2, Harm 3
+   Disposition: keep - The owner chose: accept, and correct the three notes in the builder notes
