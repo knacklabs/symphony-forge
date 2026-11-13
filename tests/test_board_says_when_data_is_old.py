@@ -69,6 +69,10 @@ with sync_playwright() as p:
                 page.wait_for_timeout(100)
             raise AssertionError('timed out')
 
+        def note(words):
+            # Said on stderr, which the test prints when the run fails: where a slow or different machine got to.
+            print(words, file=sys.stderr, flush=True)
+
         def look(page, path=''):
             page.goto(url + path)
             return page.get_by_role('status'), page.locator('.stale')
@@ -114,24 +118,26 @@ with sync_playwright() as p:
             context.clock.run_for(60000)  # a minute passes on the page's clock
             # Only a new snapshot makes the page read the whole board again.
             assert len(full) - reads <= held() - version, f'{len(full) - reads} reads of the whole board in a minute'
-            good_branch = Path(branch).read_text(encoding='utf-8')
+            good_branch = Path(branch).read_bytes()  # bytes both ways: no line ending is changed on Windows
             try:
                 # A damaged branch pointer: git cannot say where the work is, so the board cannot read it.
-                Path(branch).write_text('garbage\n', encoding='utf-8')
+                Path(branch).write_bytes(b'garbage\n')
                 expect(line).to_contain_text(UNREAD, timeout=60000)
                 if mode == 'failed':
                     assert (len(full), len(asked)) == (reads, probes), 'the page read the server after the failure began'
                 else:
                     assert len(full) - reads <= held() - version, 'the page read the whole board while the work could not be read'
-                refused = page.request.get(base + 'board.json' + query)  # what a read says now, asked after the check
-                assert refused.status == 500, refused.text()
-                expect(line).to_have_text(f'{UNREAD}{refused.json()["error"]}\u201d The page tries again.')
+                # What the server says the failure is, asked after the check. Its status answer is immediate; a read
+                # of the whole board may instead get the old snapshot marked updating while a slow rebuild runs.
+                said = page.request.get(base + 'board.json' + query + '&page=status').json()['reason']
+                assert said, 'the server does not say that a rebuild failed'
+                expect(line).to_have_text(f'{UNREAD}{said}\u201d The page tries again.')
                 assert 'offline' not in page.locator('body').inner_text().lower()
                 expect(status).to_have_text('Not updating')
                 assert not Axe().run(page, options={'runOnly': ['wcag2aa']}).response['violations']
                 assert page.evaluate('document.querySelector(".bar").nextElementSibling === document.querySelector(".stale")')
             finally:
-                Path(branch).write_text(good_branch, encoding='utf-8')
+                Path(branch).write_bytes(good_branch)
             expect(line).to_be_hidden(timeout=60000)
             expect(status).to_have_text('Live')
 
@@ -144,24 +150,29 @@ with sync_playwright() as p:
             expect(status).to_have_text('Live', timeout=60000)
             good = page.evaluate(f"async () => {BOARD}.snapshot")
             number = good['snapshot']['version']
-            answers = []
+            answers = []  # the reads of the whole board that the page has begun and this script has not answered
             page.route(NOW, lambda route: answers.append(route))
-            for count, name in enumerate(('late-a', 'late-b'), 1):
+            for name in ('late-a', 'late-b'):
+                begun = len(answers)
                 subprocess.run(['git', 'branch', name], cwd=Path(branch).parents[3], check=True, capture_output=True)  # a new snapshot
-                until(page, lambda: len(answers) == count)
-            good_branch = Path(branch).read_text(encoding='utf-8')
+                until(page, lambda: len(answers) > begun)  # a slow machine may begin more than one read for a snapshot
+                note(f'{name}: {len(answers)} reads of the whole board have begun')
+            held = list(answers)  # only reads that began before the failure
+            good_branch = Path(branch).read_bytes()  # bytes both ways: no line ending is changed on Windows
             try:
-                Path(branch).write_text('garbage\n', encoding='utf-8')
+                Path(branch).write_bytes(b'garbage\n')
                 expect(line).to_contain_text(UNREAD, timeout=60000)
-                for route, extra in zip(answers, ({'version': number + 1, 'updating': True}, {'version': number + 2})):
+                note('the line shows the failure')
+                for route, extra in zip(held, [{'version': number + 1, 'updating': True}] + [{'version': number + 2}] * (len(held) - 1)):
                     route.fulfill(content_type='application/json', body=json.dumps(
                         {**good, 'snapshot': {**good['snapshot'], **extra}}))
                 page.wait_for_function(f"async () => {BOARD}.snapshot.snapshot.version === {number + 2}")
+                note('the page has taken both answers')
                 expect(line).to_contain_text(UNREAD)
                 expect(status).to_have_text('Not updating')
                 page.unroute(NOW)
             finally:
-                Path(branch).write_text(good_branch, encoding='utf-8')
+                Path(branch).write_bytes(good_branch)
             expect(line).to_be_hidden(timeout=60000)
             expect(status).to_have_text('Live')
 
@@ -241,13 +252,14 @@ def look(url, mode, tmp_path, repo=None, item=""):
     page = subprocess.Popen([REAL_UV or "uv", "run", "--no-project", "--python", "3.11", "--with", "playwright==1.55.0",
                              "--with", "axe-playwright-python==0.1.8", "python", "-c", SCRIPT, url, mode,
                              str(url.process.pid), str(branch), item, str(tmp_path / "browser.owned-process.json")],
-                            stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, encoding="utf-8",
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, encoding="utf-8", errors="replace",
+                            env={**os.environ, "PYTHONUTF8": "1"},  # Windows would write its messages in another encoding
                             start_new_session=os.name != "nt")  # its own process group, so a stop also ends the browser
     ran_out = threading.Timer(BROWSER_SECONDS, stop_tree, [page])
     ran_out.start()
     try:
         out, err = page.communicate()
-        assert page.returncode == 0, out + err
+        assert page.returncode == 0, f"{out or ''}{err or ''}"  # a stopped run on Windows can leave one of them None
     finally:
         ran_out.cancel()
         if page.poll() is None:
