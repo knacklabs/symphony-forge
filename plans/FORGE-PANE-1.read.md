@@ -11,8 +11,8 @@ notes_seen: 8312c2d05ca214500184d14576aae58aa8ac6053
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a1d3a1-e831-77b1-bb3d-127c2003a663
 session:
-loop_choice:
-loop_reason:
+loop_choice: more
+loop_reason: The owner chose the simple needs-you rule at the read limit; the plan is amended to it and needs a read before he can approve it
 ---
 # Cold read notes
 
