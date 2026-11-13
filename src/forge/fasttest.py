@@ -29,13 +29,11 @@ def git_files(command: str, *args: str) -> list[str]:
                           text=True).stdout.split("\0")[:-1]
 
 
-def source_root(path: Path) -> Path | None:
-    """The nearest folder above the file that holds a Python project file, if not the repo root."""
-    for folder in path.parents:
-        if folder != Path(".") and any((folder / name).is_file()
-                                       for name in ("pyproject.toml", "setup.py", "setup.cfg")):
-            return folder
-    return None
+def source_root(path: Path) -> Path:
+    """The nearest folder above the file that holds a Python project file, else the repo root."""
+    return next((folder for folder in path.parents if folder != Path(".") and any(
+        (folder / name).is_file() for name in ("pyproject.toml", "setup.py", "setup.cfg"))),
+        Path("."))
 
 
 def module_parts(path: Path) -> list[str]:
@@ -156,6 +154,12 @@ def mentions(file: Path, module: str, module_path: Path) -> bool:
     text = file.read_text("utf-8")
     # A bare word is not a module reference; qualified paths and imports are.
     path = module_path.as_posix().removeprefix("src/")
+    package = module_path.name == "__init__.py"
+
+    def imports(name: str) -> bool:
+        # An import of anything below a package runs its __init__.py.
+        return name == module or (package and name.startswith(module + "."))
+
     if "." in module and re.search(r"(?<![\w.])" + re.escape(module) + r"(?![\w])", text):
         return True
     if re.search(r"(?<![\w/])(?:src/)?" + re.escape(path) + r"(?![\w])", text):
@@ -165,13 +169,13 @@ def mentions(file: Path, module: str, module_path: Path) -> bool:
     except SyntaxError:
         return False  # pytest reports syntax errors in selected files.
     for node in ast.walk(tree):
-        if isinstance(node, ast.Import) and any(alias.name == module for alias in node.names):
+        if isinstance(node, ast.Import) and any(imports(alias.name) for alias in node.names):
             return True
         if isinstance(node, ast.ImportFrom):
             prefix = module_parts(file)[:-node.level] if node.level else []
             imported = ".".join(prefix + ([node.module] if node.module else []))
-            if imported == module or any(f"{imported}.{alias.name}" == module
-                                         for alias in node.names):
+            if imports(imported) or any(imports(f"{imported}.{alias.name}")
+                                        for alias in node.names):
                 return True
     return False
 
@@ -415,17 +419,17 @@ def related(base: str) -> tuple[list[str], list[str], bool, list[str]]:
         if parts[-1] == "__init__":
             parts.pop()
         if parts:
-            modules.append((".".join(parts), path, None))
+            modules.append((".".join(parts), path, Path(".")))
             root = source_root(path)
-            if root:  # Tests in a nested app import modules below its own root.
+            if root != Path("."):  # Tests in a nested app import modules below its own root.
                 below = module_parts(path.relative_to(root))
                 if below[-1] == "__init__":
                     below.pop()
                 if below:
                     modules.append((".".join(below), path, root))
 
-    def hits(test: Path, module: str, source: Path, root: Path | None) -> bool:
-        return (root is None or test.is_relative_to(root)) and mentions(test, module, source)
+    def hits(test: Path, module: str, source: Path, root: Path) -> bool:
+        return test.is_relative_to(root) and mentions(test, module, source)
 
     found = {source for module, source, root in modules
              if any(hits(path, module, source, root) for path in tests)}
@@ -445,7 +449,7 @@ def related(base: str) -> tuple[list[str], list[str], bool, list[str]]:
     inputs = {name for name in changed if Path(name).suffix != ".py"}
     picked |= {path for path in readers
                if docskip.reads_file_relative(path.read_text("utf-8-sig"), inputs)}
-    picked = docskip.test_readers(readers, picked)
+    picked = docskip.test_readers(readers, picked, source_root)  # Names match inside one app only.
     return sorted(path.as_posix() for path in picked if path in tests), everything, False, missed
 
 

@@ -23,6 +23,12 @@ GUIDE = (
     "A test that reaches the code over HTTP or by running a program is caught only by the full run, "
     "which stays nightly.",
 )
+# The picker now follows imports in an app that lives in a sub-folder, so this warning is gone.
+REMOVED = (
+    "Forge's Python picker does not yet follow imports in an app that lives in a sub-folder "
+    "(for example apps/api, where tests import app.core.config); for such a repo, list that app's "
+    "test folder in the fast test until the picker is repaired."
+)
 
 
 @pytest.mark.parametrize("repo_kind", ["new repo", "earlier-adopted repo after upgrade and sync"])
@@ -40,3 +46,4 @@ def test_1_the_guide_says_a_ci_fast_test_includes_tests_that_import_changed_file
         text = " ".join(skill.split())
         for sentence in GUIDE:
             assert sentence in text, sentence
+        assert REMOVED not in text
