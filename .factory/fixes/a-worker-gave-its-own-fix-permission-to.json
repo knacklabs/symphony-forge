@@ -1,0 +1,15 @@
+{
+  "base": "a081d814a233ba23bb691e1dd032c49fa10d2ff0",
+  "branch": "fix/a-worker-gave-its-own-fix-permission-to",
+  "done_when": "Running the allowance step inside a worker's round is refused with one line telling the worker to stop and report the refusal to the coordinator, and the worker brief says the same.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-13T04:12:07.085550+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "A worker gave its own fix permission to go past the five-file limit, but only the coordinator may record that after the owner agrees."
+}
