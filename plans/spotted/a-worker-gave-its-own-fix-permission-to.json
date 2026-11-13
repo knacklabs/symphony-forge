@@ -8,8 +8,8 @@
       "text": "Not done: Worker refusal is not one line and resumed briefs omit the rule",
       "from": "blocking",
       "item": "a-worker-gave-its-own-fix-permission-to",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "edge\tsrc/forge/templates/brief.md\tFollow-up: Finish handback after a five-file refusal",
