@@ -102,9 +102,10 @@ def merge(args: argparse.Namespace, *, refreshed: bool = False) -> int:
                                   cwd=worktree).split("\0")) - {""}
         moves = 0
         combined_tested = False
+        train = getattr(args, "train", False)  # a merge train tested this head on the combined default branch
         while True:
             checked_default = repo.git("rev-parse", f"origin/{default}", cwd=top)
-            retested = checked_default != base
+            retested = checked_default != base and not train
             overlap = False
             ci_retest = False
             if retested:
@@ -157,8 +158,8 @@ def merge(args: argparse.Namespace, *, refreshed: bool = False) -> int:
                     # Only the local test needs this merge. Keep GitHub's already checked head.
                     repo.git("reset", "--keep", head, cwd=worktree)
             try:
-                if (checks.required(worktree, default, head) is not None or
-                        config["test_place"] == "ci" and (not retested or overlap or ci_retest)):
+                if not train and (checks.required(worktree, default, head) is not None or
+                                  config["test_place"] == "ci" and (not retested or overlap or ci_retest)):
                     checks.wait(worktree, item, head, config["checks"],
                                 branch=branch, progress=getattr(args, "wait_for_progress", False),
                                 slot=getattr(args, "check_slot", None))

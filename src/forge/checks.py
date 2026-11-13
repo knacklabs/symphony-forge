@@ -68,8 +68,9 @@ def required(top: Path, default: str, head: str = "HEAD") -> list[str] | None:
 
 
 def wait(top: Path, item: str, sha: str, names: list[str], *, branch: str,
-         progress: bool = False, slot: Callable[[bool], None] | None = None) -> None:
-    """Wait for green checks on sha; land renews its deadline on observed check progress."""
+         progress: bool = False, slot: Callable[[bool], None] | None = None, train: bool = False) -> None:
+    """Wait for green checks on sha; land renews its deadline on observed check progress. A merge
+    train's draft pull request stays red on Forge's own review on purpose, so that check never counts."""
     shared = required(top, repo.default_branch(top), sha)
     if shared is not None:
         names = shared
@@ -87,7 +88,7 @@ def wait(top: Path, item: str, sha: str, names: list[str], *, branch: str,
     with repo.record_run(top, item, "ci", process=codex.identity(os.getpid())) as result:
         result.update(outcome="unknown", state="unknown")
         try:
-            _wait(top, item, sha, names, branch, progress, result, waiting)
+            _wait(top, item, sha, names, branch, progress, result, waiting, train)
         except repo.Refused as error:
             if error.entry is REFUSALS["red"]:
                 result["outcome"] = "failed"
@@ -105,7 +106,7 @@ def wait(top: Path, item: str, sha: str, names: list[str], *, branch: str,
 
 
 def _wait(top: Path, item: str, sha: str, names: list[str], branch: str, progress: bool,
-          result: dict[str, Any], waiting: Callable[[bool], None]) -> None:
+          result: dict[str, Any], waiting: Callable[[bool], None], train: bool = False) -> None:
     # ponytail: an env override is the whole wait seam (tests set 0 to look once).
     timeout = float(os.environ.get("FORGE_CHECKS_WAIT", "1800" if progress else "600"))
     deadline = time.monotonic() + timeout
@@ -121,6 +122,11 @@ def _wait(top: Path, item: str, sha: str, names: list[str], branch: str, progres
         running = False
         try:
             seen, snapshot, check_runs, pr = _status(top, item, sha, branch, cache, requested)
+            if train:  # keep every entry's place, so the timeout reader still lines up with the runs
+                own = _own_review(top, item, sha)
+                seen = [(name, PASS) if name == "forge-pr-check" or (
+                    index < len(check_runs) and check_runs[index].get("check_suite", {}).get("id") in own)
+                    else (name, state) for index, (name, state) in enumerate(seen)]
             running = any(state == PENDING for _, state in seen)
             result["state"] = ("running" if running
                                else "queued" if any(state == QUEUED for _, state in seen)
@@ -186,6 +192,14 @@ def _wait(top: Path, item: str, sha: str, names: list[str], branch: str, progres
         # Queued checks keep backpressure; running checks need no local close place.
         waiting(not queued)
         time.sleep(min(15, left))
+
+
+def _own_review(top: Path, item: str, sha: str) -> set[Any]:
+    """The check suites of Forge's own review run on sha: forge.yml's pull_request_target run."""
+    runs = _ask(top, item, ".workflow_runs", "repos/{owner}/{repo}/actions/runs", "--method", "GET",
+                "--raw-field", "per_page=100", "--raw-field", f"head_sha={sha}")
+    return {run.get("check_suite_id") for run in runs if run.get("event") == "pull_request_target"
+            and str(run.get("path", "")).partition("@")[0] == ".github/workflows/forge.yml"} - {None}
 
 
 def _status(top: Path, item: str, sha: str, branch: str, cache: Path | None,
