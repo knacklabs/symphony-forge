@@ -4,12 +4,20 @@
   "done_when": "When the page cannot get new data, one line under the header gives the reason and the next step, and a failed read while the server runs says the work could not be read instead of Offline.",
   "fix_kind": "ui",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-13T04:52:42.920473+00:00",
       "step": "start"
     }
   ],
-  "why": "The board looks live when its data is old: a stopped server, a failed read and a restart all leave only a small grey Offline word, and after a restart the old page stays Offline because the new board has a new address."
+  "stuck": {
+    "close": null,
+    "head": "97487749b112533741b745035856286e781de597",
+    "keys": {},
+    "round": null
+  },
+  "why": "The board looks live when its data is old: a stopped server, a failed read and a restart all leave only a small grey Offline word, and after a restart the old page stays Offline because the new board has a new address.",
+  "worker": "claude"
 }
