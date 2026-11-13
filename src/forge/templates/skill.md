@@ -1460,9 +1460,6 @@ keep existing settings until that fix changes them. An explicit `test_place` kee
    A fast test that runs in pull request CI must include the tests that import the changed source
    files, split across the test groups: for example `vitest related`, `vitest run --changed {base}`,
    `jest --findRelatedTests` or `jest --changedSince {base}`, or the Python picker.
-   Forge's Python picker does not yet follow imports in an app that lives in a sub-folder
-   (for example apps/api, where tests import app.core.config); for such a repo, list that app's
-   test folder in the fast test until the picker is repaired.
    A script that runs only the changed test files must not be the pull request check: unchanged
    tests that import a changed source file are skipped, fail on the main branch and block every
    other close.
@@ -2089,6 +2086,8 @@ count, so an upgrade fix needs no allowance. You may run `forge fix allow-large 
 yourself, without asking the human, when the fix corrects one kind of problem in every place it
 appears and changes no interface. Name that problem in the reason and record the allowance
 before editing beyond the limit. Anything else needs the human's allowance or a story.
+Run it when no round of that fix is running: Forge refuses it inside a worker's round, and a
+worker that meets the five-file refusal stops and reports it to you.
 
 For a follow-up to an unmerged item's findings, run `forge fix start` in that item's checkout.
 The fix starts there, and its size and interface checks count only its own changes, including
