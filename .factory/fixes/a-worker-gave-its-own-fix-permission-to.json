@@ -4,14 +4,106 @@
   "done_when": "Running the allowance step inside a worker's round is refused with one line telling the worker to stop and report the refusal to the coordinator, and the worker brief says the same.",
   "fix_kind": "backend",
   "kind": "fix",
+  "known": [
+    {
+      "area": "src/forge/task.py",
+      "file": "src/forge/task.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 45,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Worker refusal is not one line and resumed briefs omit the rule",
+      "work": 3
+    },
+    {
+      "area": "test_1_worker_cannot_record_its_own_fix_allowance() in tests/test_worker_cannot_record_fix_allowance.py",
+      "file": "tests/test_worker_cannot_record_fix_allowance.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 21,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_worker_cannot_record_its_own_fix_allowance",
+      "work": 3
+    },
+    {
+      "area": "src/forge/templates/brief.md",
+      "file": "src/forge/templates/brief.md",
+      "gain": 2,
+      "harm": 2,
+      "line": 222,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Follow-up: Finish handback after a five-file refusal",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "a3c46ec55c33f784a016355029fc044a71bedbafcfad719420e31addd494b0dc",
+    "changed": "55b79ef14d6be377c7b58e94b6685c03be8d753e46ec438ba339d2ab3477a8ca",
+    "commit": "c922c96a33e009a1a15c8b8f28ca79674f2e7190",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 3, Harm 3\nRaise: Not done\nCase: normal use - a worker attempts the allowance step, or an existing fix resumes after a Forge upgrade.\nDone-when: Running the allowance step inside a worker's round is refused with one line telling the worker to stop and report the refusal to the coordinator, and the worker brief says the same.\nThe refusal supplies `forge next` as a next step. `src/forge/repo.py:75` and `src/forge/cli.py:177` therefore print a second line, so the output is not the requested one-line refusal. Separately, the new instruction in `src/forge/templates/brief.md:222` is absent from continued briefs: `src/forge/worker.py:652` refers the worker to its earlier brief. A worker resumed after an upgrade may have received that earlier brief before this rule existed.",
+        "file": "src/forge/task.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 45,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: Worker refusal is not one line and resumed briefs omit the rule",
+        "work": 3
+      },
+      {
+        "body": "Gain 4, Work 3, Harm 3\nRaise: Test\nCase: normal use - a markerless session worker runs a fix, then the coordinator records an allowance after handback.\nThe named proof fabricates the run event and lock instead of starting a worker, and its coordinator case has no preceding completed round. It would still pass if real work stopped recording the run or ended runs continued blocking allowances. It also does not check that a refusal leaves the limit in force, does not inspect the new worker brief or coordinator guidance, and accepts the current extra output line through a substring assertion. Exercise the worker and handback through Forge's commands and check those observable results.",
+        "file": "tests/test_worker_cannot_record_fix_allowance.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 21,
+        "priority": "P1",
+        "title": "Gate: test_1_worker_cannot_record_its_own_fix_allowance",
+        "work": 3
+      },
+      {
+        "body": "Gain 2, Work 2, Harm 2\nCase: normal use - a worker has staged six code files when the commit hook refuses the fix and the worker reports the refusal.\n`src/forge/native.py:280` retains the round and asks the coordinator to send the worker a commit nudge; the SDK paths in `src/forge/worker.py:385` and `src/forge/worker.py:409` also send it. That nudge says to end only when nothing is uncommitted, but the six-file fix cannot be committed until the coordinator records an allowance between rounds. This forces an extra handback or worker turn before the coordinator can take that step.\nAdds work: recognize the five-file refusal before sending the commit nudge; F 2 x H 2 = 4; 2 x C = 4",
+        "file": "src/forge/templates/brief.md",
+        "gain": 2,
+        "harm": 2,
+        "line": 222,
+        "priority": "P2",
+        "title": "Follow-up: Finish handback after a five-file refusal",
+        "work": 2
+      }
+    ],
+    "id": "3eee17df-3f8e-4d1e-84fe-b45cc623ccc0",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-13T04:12:07.085550+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-13T04:23:49.560914+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-11-13T04:23:49.582132+00:00",
+    "file": "src/forge/task.py",
+    "wait_id": "8ba79377-613d-4c4e-a690-0c3716a0e7d4"
+  },
   "stuck": {
     "close": null,
     "head": "5c3dd4c2abf803ad2f09b839cbc251654cc82e29",
