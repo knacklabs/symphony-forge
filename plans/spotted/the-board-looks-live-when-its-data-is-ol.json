@@ -52,8 +52,8 @@
       "text": "Not done: Retry an item's first failed read",
       "from": "blocking",
       "item": "the-board-looks-live-when-its-data-is-ol",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/board_app/app.js\tNot done: Show failed reads of a story's plan\tthe-board-looks-live-when-its-data-is-ol",
@@ -63,8 +63,8 @@
       "text": "Not done: Show failed reads of a story's plan",
       "from": "blocking",
       "item": "the-board-looks-live-when-its-data-is-ol",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/board_app/tokens.css\tNot done: The item drawer covers the stale-data message\tthe-board-looks-live-when-its-data-is-ol",
@@ -85,8 +85,8 @@
       "text": "Not done: Update the reason when a rebuild fails for a different cause",
       "from": "blocking",
       "item": "the-board-looks-live-when-its-data-is-ol",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\ttests/test_board_says_when_data_is_old.py\tGate: test_2_a_failed_read_says_the_work_could_not_be_read_and_goes_away_with_new_data\tthe-board-looks-live-when-its-data-is-ol",
