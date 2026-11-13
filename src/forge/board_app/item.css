@@ -9,7 +9,7 @@
   right: 0;
   bottom: 0;
   z-index: 10;
-  width: 480px;
+  width: min(480px, 100%);
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -90,6 +90,9 @@
 
 .more {
   margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
   font-weight: 600;
   color: var(--moving);
   text-decoration: none;
@@ -237,7 +240,7 @@
   color: var(--ink-2);
 }
 
-.crumbs a { color: var(--ink-2); }
+.crumbs a { display: inline-flex; align-items: center; min-height: 24px; color: var(--ink-2); }
 .crumbs [aria-current] { color: var(--ink); }
 
 .item-grid {
@@ -263,6 +266,14 @@
   border: 1px solid var(--line);
   border-radius: var(--radius-card);
   background: var(--surface);
+}
+
+/* Half a screen (under about 1,100 pixels): the summary stacks above the sheet, so the plan keeps its width. */
+@media (max-width: 1099px) {
+  .item-grid { flex-direction: column; align-items: stretch; }
+  .summary { width: 100%; }
+  .sheet { flex: none; }
+  .panel { padding: var(--space-6) 20px; }
 }
 
 .tabs {
@@ -318,8 +329,7 @@
 /* The plan, as a readable document */
 
 .plan {
-  align-self: center;
-  width: min(640px, 100%);
+  width: 100%;
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
@@ -328,24 +338,26 @@
 }
 
 .plan :is(h2, h3, h4, h5, p, ul, ol) { margin: 0; }
+/* Text keeps a readable column in the middle; a table uses the whole sheet. */
+.plan :is(h2, h3, h4, h5, p, ul, ol, summary) { width: min(640px, 100%); align-self: center; }
 .plan h2 { font-size: var(--size-title); line-height: 32px; font-weight: 600; text-wrap: balance; }
 .plan :is(h3, h4, h5) { margin-top: var(--space-2); font-size: var(--size-region); font-weight: 600; }
+.plan :is(h4, h5) { font-size: inherit; }
 .plan :is(ul, ol) { padding-left: 22px; display: flex; flex-direction: column; gap: 6px; }
 .plan code { font-family: ui-monospace, monospace; font-size: 13px; }
+.plan td code { overflow-wrap: anywhere; }
 
 .plan .table { overflow-x: auto; }
-.plan table { border-collapse: collapse; font-size: 13px; line-height: 18px; }
+.plan table { width: 100%; border-collapse: collapse; font-size: 13px; line-height: 18px; }
 .plan :is(th, td) { border-bottom: 1px solid var(--line); padding: 6px var(--space-2); text-align: left; vertical-align: top; }
 
 .plan details {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
-  border-top: 1px solid var(--line);
-  padding-top: var(--space-3);
 }
 
 .plan details[open] > * + * { margin-top: var(--space-4); }
-.plan summary { font-size: var(--size-body); font-weight: 600; color: var(--ink-2); cursor: pointer; }
+.plan summary { border-top: 1px solid var(--line); padding-top: var(--space-3); font-size: var(--size-region); font-weight: 600; cursor: pointer; }
 
 }
