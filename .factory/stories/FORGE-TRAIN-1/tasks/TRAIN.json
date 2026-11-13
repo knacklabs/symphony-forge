@@ -1,0 +1,12 @@
+{
+  "base": "1b01eeada9b832c7eb00ac07c12b79bc58341408",
+  "branch": "task/FORGE-TRAIN-1-TRAIN",
+  "stacked_on": "FORGE-NIGHTLY-1/NIGHTLY",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-13T02:39:41.218115+00:00",
+      "step": "start"
+    }
+  ]
+}
