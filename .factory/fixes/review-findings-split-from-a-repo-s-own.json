@@ -1,0 +1,16 @@
+{
+  "base": "024bae4be3784dc0a8b0c3607c7c6573d6816079",
+  "branch": "fix/review-findings-split-from-a-repo-s-own",
+  "done_when": "A review no longer finds: Functional: The Python picker misses direct imports in nested apps (src/forge/templates/skill.md:1462)",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "stacked_on": "a-repo-s-own-fast-test-ran-only-the-chan",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-13T02:08:46.213465+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Review findings split from a-repo-s-own-fast-test-ran-only-the-chan: Functional: The Python picker misses direct imports in nested apps (src/forge/templates/skill.md:1462)"
+}
