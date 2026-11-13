@@ -195,7 +195,7 @@
   },
   "round": 3,
   "stacked_on": "FORGE-NIGHTLY-1/NIGHTLY",
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-13T02:39:41.218115+00:00",
@@ -216,8 +216,12 @@
   ],
   "stop": {
     "at": "2026-11-13T05:17:26.685672+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "tests/test_train_land_all.py",
-    "wait_id": "3eb65c5d-6f39-4062-9e81-406313709904"
+    "reason": "The owner chose one more round: prove that a fallback waits while its own check still runs",
+    "wait_id": "3eb65c5d-6f39-4062-9e81-406313709904",
+    "worker_round": 3
   },
   "stuck": {
     "close": "1475fc94-fcf7-4a51-9225-78d1f90ce161",
