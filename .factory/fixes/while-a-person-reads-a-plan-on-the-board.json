@@ -140,7 +140,7 @@
     "id": "17d8725b-1ed4-4f0a-b614-e9ed7e901b55",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -153,10 +153,12 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "3ff77985d54b4f412332ba5badd068c8daacbe5d",
-    "keys": {},
-    "round": null
+    "close": "9a0ee19b-eef6-4dbc-92bf-ff73cb80145b",
+    "head": "b1fdb49a1b8d5d491d04c4fb8892a46928c6fb79",
+    "keys": {
+      "the open P0 not done: refreshes can still discard the plan selection, the open releases file, and list scroll in src/forge/board_app/releases.js": 1
+    },
+    "round": 1
   },
   "why": "While a person reads a plan on the board, each refresh jumps the view to the top and closes the For the builders section again.",
   "worker": "claude"
