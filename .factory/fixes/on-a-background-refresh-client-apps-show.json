@@ -40,7 +40,7 @@
     "id": "1125937d-f767-4ef9-b7f1-db94f1ab598c",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -62,10 +62,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": null,
-    "head": "a1a7c149fe14c9d6c28ff2d805d5102b761a74c3",
+    "close": "30fa4d9e-3158-4246-ac2f-880ee8e22a85",
+    "head": "055c4c52bf904f004db50b8adfe6602b134b5d99",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "On a background refresh, client apps show the loading state again or rebuild the list, so the reader loses scroll position, open sections, selection, focus and typed text.",
   "worker": "claude"
