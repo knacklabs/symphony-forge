@@ -11,12 +11,20 @@
   "done_when": "At 768 pixels wide the five stages can be read, the plan is at least 600 pixels wide and the page has no sideways scroll; under about 1,000 pixels the summary stacks above the plan and the Stories rail goes under the stages; the plan's tasks table uses the full sheet width; a sub-section heading is smaller than a section heading; the For the builders line reads as a heading; and every control is at least 24 pixels high.",
   "fix_kind": "ui",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-13T08:01:34.889922+00:00",
       "step": "start"
     }
   ],
-  "why": "At half-screen width (768 pixels) the Forge board cannot be read: the five stage columns are too narrow, card titles are tiny, the plan is squeezed beside a fixed summary, the tasks table spills out of its box and loses its header, section and sub-section headings look the same, the \"For the builders\" line is small and grey, and three controls are under 24 pixels high."
+  "stuck": {
+    "close": null,
+    "head": "907dbe36d75ffc408fedaad54127f83bc3a93d57",
+    "keys": {},
+    "round": null
+  },
+  "why": "At half-screen width (768 pixels) the Forge board cannot be read: the five stage columns are too narrow, card titles are tiny, the plan is squeezed beside a fixed summary, the tasks table spills out of its box and loses its header, section and sub-section headings look the same, the \"For the builders\" line is small and grey, and three controls are under 24 pixels high.",
+  "worker": "claude"
 }
