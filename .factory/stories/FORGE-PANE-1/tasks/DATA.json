@@ -33,7 +33,7 @@
       "gain": 3,
       "harm": 3,
       "line": 531,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -59,7 +59,7 @@
       "gain": 4,
       "harm": 3,
       "line": 64,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -82,79 +82,37 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "2618221586177fb34cbe432de18f00d77f9763b7c05ec83e6f925de4284c43e4",
-    "changed": "a5a34117ab95bd37446aed27005bb3af4ce67a06cc9a03638cf94fde688b9805",
-    "commit": "47317087034db2560d165c23afed28e0ba21818a",
+    "branch_diff": "6bbb6a23573a940229ef98abba523fe4d8aa47afccb2c1121766c7e2218241c0",
+    "changed": "749d2078f34ab1d60082110eda2d50eb537f01be01b0b2dc00d9e1c19d1fdde1",
+    "commit": "cb95fb610e91293906dbc841fb4e537bc1137385",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 3, Work 1, Harm 3\nRaise: Not done. Case: normal use - A build started by an earlier Forge release receives a commit nudge. That release does not write `first_started_at` and overwrites `started_at` on each launch, so this fallback resets `elapsed` when the second launch starts. The earlier-release case in `tests/test_pane_data.py:155` changes only the version string while still running the new producer, so it cannot expose the reset.",
-        "file": "src/forge/machine.py",
-        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
-        "gain": 3,
-        "harm": 3,
-        "line": 523,
-        "priority": "P1",
-        "title": "Not done: each with its round and time",
-        "work": 1
-      },
-      {
-        "body": "Gain 3, Work 1, Harm 3\nRaise: Not done. Case: normal use - A worker asks a question and the person drops the fix while its checkout is retained, for example because it contains ignored local data. `forge fix drop` leaves the state marked `dropped` and preserves the thread record, but this scan does not exclude dropped states. The item therefore remains in `needs_you` even though it no longer waits for an answer.",
-        "file": "src/forge/machine.py",
-        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
-        "gain": 3,
-        "harm": 3,
-        "line": 491,
-        "priority": "P1",
-        "title": "Not done: starts with one line that says whether anything needs you",
-        "work": 1
-      },
-      {
-        "body": "Gain 3, Work 1, Harm 3\nRaise: Functional. Case: normal use - Available memory falls below Forge's admission floor while no run is queued. `_wait` at `src/forge/machine.py:272` will hold every new run, but this expression returns `busy: false`. Conversely, a test waiting only for a test-lane place makes it true even when a new build or review can start. This does not provide the machine-pressure flag specified for the pane's busy message.",
-        "file": "src/forge/machine.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 531,
-        "priority": "P1",
-        "title": "Report machine pressure in the busy field",
-        "work": 1
-      },
-      {
-        "body": "Gain 4, Work 1, Harm 3\nRaise: Gate. Case: normal use - The scheduled or manual Windows suite collects `tests` with `-m platform`. Python on Windows has no `resource` module, and pytest imports this file before applying the marker filter, so collection fails. After that is repaired, `tests/test_pane_data.py:192` also uses POSIX `shlex.join` for a command run through `cmd.exe`, so its platform-marked lending case cannot start the held test.",
+        "body": "Gain 4, Work 1, Harm 3\nRaise: Gate. Case: normal use - A Windows platform run reaches the pane-data test. The guarded import fixes collection, but `tests/test_pane_data.py:289` puts a literal newline in the held test command, which Forge executes with `shell=True` at `src/forge/fasttest.py:690`. Windows `cmd.exe` truncates a command at that newline, even inside quotes, as shown in this [cmd.exe reproduction](https://github.com/aaif-goose/goose/issues/11259). Python therefore receives only the imports and never waits for the gate. The question, review-stop and lending cases cannot reliably keep their test run active, so the Windows proof can time out or pass without checking the intended wait.",
         "file": "tests/test_pane_speed.py",
         "gain": 4,
         "harm": 3,
-        "line": 8,
+        "line": 20,
         "priority": "P1",
         "title": "Gate: Windows test collection and pane-data execution",
         "work": 1
       },
       {
-        "body": "Gain 4, Work 1, Harm 3\nRaise: Test. Case: normal use - The pane reads a remembered repo with 1,000 finished items and 50 active worktrees. The fixture creates those worktrees in the main repo, but registers only the ten other repos; their `fix/other` worktrees have no item state. `needs_you` consequently never scans the 50 active worktrees, so the timing and CPU assertions can pass even if scanning them exceeds the limits. The speed test also has no earlier-adopted repo case.",
-        "file": "tests/test_pane_speed.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 64,
-        "priority": "P1",
-        "title": "Gate: tests/test_pane_speed.py::test_4_forge_answers_the_pane_fast_small_and_cheap",
-        "work": 1
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Test. Case: normal use - A task worker asks a question, or the person runs tests while deciding how to answer a worker question. This proof creates worker questions only for fixes, and its concurrent test runs against a review stop rather than a question. Removing task-branch recognition or incorrectly hiding a question during its test run would leave the named proof passing.",
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Test. Case: normal use - A task worker asks a question. This case writes the expected internal thread record directly instead of making the worker ask through `forge work`; the worker normally records the question at `src/forge/worker.py:420`. The proof can therefore pass if task workers stop recording their questions and the pane consequently omits them. It also depends on the current private record format, so a behavior-preserving change to that format would break the test.",
         "file": "tests/test_pane_data.py",
         "gain": 3,
         "harm": 3,
-        "line": 68,
+        "line": 93,
         "priority": "P1",
         "title": "Gate: tests/test_pane_data.py::test_3 needs-you cases",
         "work": 2
       }
     ],
-    "id": "9a32d686-ab48-4e21-8297-7de588b47eb7",
+    "id": "9c2e17a6-c700-4744-a807-b8a781ead4ac",
     "status": "blocked"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-13T15:05:54.927030+00:00",
@@ -163,8 +121,17 @@
     {
       "at": "2026-11-13T15:59:32.509480+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-11-13T16:09:34.995978+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-11-13T16:09:34.996230+00:00",
+    "file": "tests/test_pane_speed.py",
+    "wait_id": "f500917e-0752-4dcb-abcb-1867e729eff5"
+  },
   "stuck": {
     "close": "24ef21cb-1e5d-4547-bd2a-adcebbc07162",
     "head": "8c442ace2b7357fe825add73f5baac039f85f336",
