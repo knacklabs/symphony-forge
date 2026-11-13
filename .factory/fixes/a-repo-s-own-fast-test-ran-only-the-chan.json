@@ -11,8 +11,8 @@
       "gain": 4,
       "harm": 3,
       "line": 1462,
-      "outcome": "open",
-      "reason": "",
+      "outcome": "follow-up",
+      "reason": "Split into follow-up fix review-findings-split-from-a-repo-s-own",
       "round": 1,
       "security": false,
       "title": "Functional: The Python picker misses direct imports in nested apps",
@@ -29,6 +29,7 @@
       {
         "body": "Gain 4, Work 1, Harm 3\nRaise: Functional\nCase: normal use - An adopted Python repo has its app under `apps/api` and uses the recommended picker in pull request CI.\nThe picker example does not cover this common layout. For example, `apps/api/tests/test_config.py` imports `app.core.config` (see `src/forge/templates/starter-python/apps/api/tests/test_config.py:5`), but `src/forge/fasttest.py:32` and `:379` derive the changed file's module as `apps.api.app.core.config`, so the import does not match and the test is skipped. CI can pass while an unchanged importing test fails nightly, recreating the reported problem. The coordinator's approved example did not account for this nested-source mismatch. The same unqualified example appears in both `.claude/skills/forge/SKILL.md` and `.codex/skills/forge/SKILL.md`.",
         "file": "src/forge/templates/skill.md",
+        "follow_up": "Split into follow-up fix review-findings-split-from-a-repo-s-own",
         "gain": 4,
         "harm": 3,
         "line": 1462,
@@ -38,10 +39,10 @@
       }
     ],
     "id": "da1a9f27-d182-451f-9f85-69b341a91712",
-    "status": "blocked"
+    "status": "clean"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-12T15:51:20.606328+00:00",
@@ -54,8 +55,15 @@
   ],
   "stop": {
     "at": "2026-11-12T17:26:05.057300+00:00",
+    "by": "owner",
+    "choice": "split",
     "file": "src/forge/templates/skill.md",
-    "wait_id": "ae9e9aa2-288a-4547-9eba-dedc41ca1ac1"
+    "fixes": [
+      "review-findings-split-from-a-repo-s-own"
+    ],
+    "reason": "The owner chose: split; the picker is repaired in a separate Forge fix, and this guide fix goes on with one honest sentence about the limit",
+    "wait_id": "ae9e9aa2-288a-4547-9eba-dedc41ca1ac1",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
