@@ -101,7 +101,7 @@
     "status": "blocked"
   },
   "round": 2,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-13T08:02:05.772982+00:00",
@@ -118,8 +118,12 @@
   ],
   "stop": {
     "at": "2026-11-13T10:45:33.433819+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "src/forge/board_app/item.js",
-    "wait_id": "fe44c92a-dc61-4bdb-9a2d-a96c17013075"
+    "reason": "The owner chose one more round: repair the keyboard focus after a refresh",
+    "wait_id": "fe44c92a-dc61-4bdb-9a2d-a96c17013075",
+    "worker_round": 2
   },
   "stuck": {
     "close": "e2985df1-4631-4130-8205-9bfba28de216",
