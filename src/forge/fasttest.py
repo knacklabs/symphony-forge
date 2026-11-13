@@ -29,6 +29,15 @@ def git_files(command: str, *args: str) -> list[str]:
                           text=True).stdout.split("\0")[:-1]
 
 
+def source_root(path: Path) -> Path | None:
+    """The nearest folder above the file that holds a Python project file, if not the repo root."""
+    for folder in path.parents:
+        if folder != Path(".") and any((folder / name).is_file()
+                                       for name in ("pyproject.toml", "setup.py", "setup.cfg")):
+            return folder
+    return None
+
+
 def module_parts(path: Path) -> list[str]:
     parts = list(path.with_suffix("").parts)
     return parts[1:] if parts[0] == "src" else parts
@@ -406,9 +415,22 @@ def related(base: str) -> tuple[list[str], list[str], bool, list[str]]:
         if parts[-1] == "__init__":
             parts.pop()
         if parts:
-            modules.append((".".join(parts), path))
-    missed = [source.as_posix() for module, source in modules
-              if not any(mentions(path, module, source) for path in tests)]
+            modules.append((".".join(parts), path, None))
+            root = source_root(path)
+            if root:  # Tests in a nested app import modules below its own root.
+                below = module_parts(path.relative_to(root))
+                if below[-1] == "__init__":
+                    below.pop()
+                if below:
+                    modules.append((".".join(below), path, root))
+
+    def hits(test: Path, module: str, source: Path, root: Path | None) -> bool:
+        return (root is None or test.is_relative_to(root)) and mentions(test, module, source)
+
+    found = {source for module, source, root in modules
+             if any(hits(path, module, source, root) for path in tests)}
+    missed = list(dict.fromkeys(source.as_posix() for _, source, _ in modules
+                                if source not in found))
     everything = [path.as_posix() for path in tests]
     if shared_changed:
         return everything, everything, True, missed
@@ -417,7 +439,7 @@ def related(base: str) -> tuple[list[str], list[str], bool, list[str]]:
                       or any(path.is_relative_to(folder) for folder in fixtures)
                       or any(path.is_relative_to(source.parent) or mentions(path, "", source)
                              for source in shared)
-                      or any(mentions(path, module, source) for module, source in modules)}
+                      or any(hits(path, module, source, root) for module, source, root in modules)}
     readers = tests + [Path(name) for name in files
                        if Path(name).name == "conftest.py" and Path(name).is_file()]
     inputs = {name for name in changed if Path(name).suffix != ".py"}

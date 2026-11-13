@@ -1460,9 +1460,6 @@ keep existing settings until that fix changes them. An explicit `test_place` kee
    A fast test that runs in pull request CI must include the tests that import the changed source
    files, split across the test groups: for example `vitest related`, `vitest run --changed {base}`,
    `jest --findRelatedTests` or `jest --changedSince {base}`, or the Python picker.
-   Forge's Python picker does not yet follow imports in an app that lives in a sub-folder
-   (for example apps/api, where tests import app.core.config); for such a repo, list that app's
-   test folder in the fast test until the picker is repaired.
    A script that runs only the changed test files must not be the pull request check: unchanged
    tests that import a changed source file are skipped, fail on the main branch and block every
    other close.
