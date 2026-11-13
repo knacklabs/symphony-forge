@@ -19,9 +19,14 @@ const status = document.querySelector('[role=status]');
 const stale = document.createElement('p');
 stale.className = 'stale';
 stale.setAttribute('aria-live', 'polite');
-document.querySelector('header').after(stale);
-// What sits fixed or sized to the window below the header (the drawer, the Releases page) reads the line's height here.
-new ResizeObserver(() => document.documentElement.style.setProperty('--stale-h', `${stale.offsetHeight}px`)).observe(stale);
+const header = document.querySelector('header');
+header.after(stale);
+// The header is 48 pixels tall until it wraps on a narrow window, and the line adds its own height. The item drawer
+// (fixed at 48px in item.css) and the Releases and Insights pages (the window less 96px) read the excess here.
+const sizes = new ResizeObserver(() => document.documentElement.style.setProperty(
+  '--below-bar', `${Math.max(0, header.offsetHeight + stale.offsetHeight - 48)}px`));
+sizes.observe(header);
+sizes.observe(stale);
 const OFFLINE = {
   state: 'offline',
   word: 'Offline',

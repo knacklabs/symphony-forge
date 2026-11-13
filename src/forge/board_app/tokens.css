@@ -186,10 +186,11 @@ body {
 
 .stale:empty { display: none; }
 
-/* The line pushes down what is fixed or sized to the window (app.js sets --stale-h to its height): the
-   item drawer starts below it, and the Releases and Insights pages (pages.css: the window less 96px) shrink by it. */
-.drawer { margin-top: var(--stale-h, 0px); }
-main > :is(.releases, .insights) { height: calc(100vh - 96px - var(--stale-h, 0px)); }
+/* What sits above main can be taller than 48 pixels (app.js sets --below-bar to the excess): the header wraps on a
+   narrow window, and the line shows when data is old. The item drawer starts below it, and the Releases and
+   Insights pages (pages.css: the window less 96px) shrink by it. */
+.drawer { margin-top: var(--below-bar, 0px); }
+main > :is(.releases, .insights) { height: calc(100vh - 96px - var(--below-bar, 0px)); }
 
 main {
   flex: 1;

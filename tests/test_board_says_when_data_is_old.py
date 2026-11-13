@@ -32,7 +32,7 @@ SCRIPT = r"""
 import json, os, re, signal, subprocess, sys, time
 from pathlib import Path
 from axe_playwright_python.sync_playwright import Axe
-from playwright.sync_api import expect, sync_playwright
+from playwright.sync_api import TimeoutError as PlaywrightTimeout, expect, sync_playwright
 url, mode, pid, branch, item, marker = sys.argv[1:]
 # The suite finds and ends a process that outlives a crashed worker by this record, which Windows needs.
 Path(marker + '.tmp').write_text(json.dumps({'pid': os.getpid(), 'at_ns': time.time_ns()}), encoding='utf-8')
@@ -216,10 +216,18 @@ with sync_playwright() as p:
             page.evaluate(OPEN, item)
             drawer = page.get_by_role('complementary')
             expect(drawer).to_be_visible()
-            line = page.locator('.stale').bounding_box()
-            assert drawer.bounding_box()['y'] >= line['y'] + line['height'] - 0.5, 'the drawer covers the line'
-            assert page.evaluate('([x, y]) => document.elementFromPoint(x, y).closest(".stale") !== null',
-                                 [line['x'] + line['width'] - 8, line['y'] + line['height'] / 2]), 'the drawer covers the line'
+            clear = '''() => document.querySelector('.drawer').getBoundingClientRect().top
+                >= document.querySelector('.stale').getBoundingClientRect().bottom - 0.5'''
+            # The drawer stays open as the window narrows: at 520 the header wraps to two rows and the line to more lines.
+            for width in (768, 520):
+                page.set_viewport_size({'width': width, 'height': 900})
+                try:  # the page sizes itself once it has laid out for this width: wait for that fact, not for a time
+                    page.wait_for_function(clear, polling=50, timeout=10000)
+                except PlaywrightTimeout:
+                    raise AssertionError(f'at {width} pixels the drawer covers the line')
+                line = page.locator('.stale').bounding_box()
+                assert page.evaluate('([x, y]) => document.elementFromPoint(x, y).closest(".stale") !== null',
+                                     [line['x'] + line['width'] - 8, line['y'] + line['height'] / 2]), f'at {width} pixels the drawer covers the line'
     finally:
         browser.close()
 """
