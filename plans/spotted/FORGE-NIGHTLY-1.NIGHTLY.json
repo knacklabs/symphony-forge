@@ -1,0 +1,48 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/board_facts.py\tScale: Avoid reading obsolete rerun attempts after the latest result is known\tFORGE-NIGHTLY-1/NIGHTLY",
+      "kind": "bug",
+      "path": "src/forge/board_facts.py",
+      "line": 473,
+      "text": "Scale: Avoid reading obsolete rerun attempts after the latest result is known",
+      "from": "blocking",
+      "item": "FORGE-NIGHTLY-1/NIGHTLY",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/board_facts.py\tNot done: A failed latest full test run on the main branch shows under Needs you on the board",
+      "kind": "edge",
+      "path": "src/forge/board_facts.py",
+      "line": 473,
+      "text": "Not done: A failed latest full test run on the main branch shows under Needs you on the board",
+      "from": "review",
+      "item": "FORGE-NIGHTLY-1/NIGHTLY",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/board_facts.py\tNot done: The row stays until a later full test run passes",
+      "kind": "edge",
+      "path": "src/forge/board_facts.py",
+      "line": 432,
+      "text": "Not done: The row stays until a later full test run passes",
+      "from": "review",
+      "item": "FORGE-NIGHTLY-1/NIGHTLY",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "improve\tsrc/forge/board_facts.py\tan unreadable GitHub is not cached, so next --json asks for the schedule lists twice.",
+      "kind": "improve",
+      "path": "src/forge/board_facts.py",
+      "line": 423,
+      "text": "an unreadable GitHub is not cached, so next --json asks for the schedule lists twice.",
+      "from": "worker",
+      "item": "FORGE-NIGHTLY-1/NIGHTLY",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
