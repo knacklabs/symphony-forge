@@ -2086,6 +2086,8 @@ count, so an upgrade fix needs no allowance. You may run `forge fix allow-large 
 yourself, without asking the human, when the fix corrects one kind of problem in every place it
 appears and changes no interface. Name that problem in the reason and record the allowance
 before editing beyond the limit. Anything else needs the human's allowance or a story.
+Run it when no round of that fix is running: Forge refuses it inside a worker's round, and a
+worker that meets the five-file refusal stops and reports it to you.
 
 For a follow-up to an unmerged item's findings, run `forge fix start` in that item's checkout.
 The fix starts there, and its size and interface checks count only its own changes, including
