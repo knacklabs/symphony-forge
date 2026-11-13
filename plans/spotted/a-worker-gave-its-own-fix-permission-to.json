@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/task.py\tNot done: Worker refusal is not one line and resumed briefs omit the rule\ta-worker-gave-its-own-fix-permission-to",
+      "kind": "bug",
+      "path": "src/forge/task.py",
+      "line": 45,
+      "text": "Not done: Worker refusal is not one line and resumed briefs omit the rule",
+      "from": "blocking",
+      "item": "a-worker-gave-its-own-fix-permission-to",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "edge\tsrc/forge/templates/brief.md\tFollow-up: Finish handback after a five-file refusal",
+      "kind": "edge",
+      "path": "src/forge/templates/brief.md",
+      "line": 222,
+      "text": "Follow-up: Finish handback after a five-file refusal",
+      "from": "review",
+      "item": "a-worker-gave-its-own-fix-permission-to",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
