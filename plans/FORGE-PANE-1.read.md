@@ -11,8 +11,8 @@ notes_seen: 2e6a708e9e267ec5f547373b2c2e3a9f6b934081
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a1d3a1-e831-77b1-bb3d-127c2003a663
 session:
-loop_choice:
-loop_reason:
+loop_choice: more
+loop_reason: The owner chose 'No rename' at the read limit; the plan is rewritten to that rule and needs a read before he can approve it
 ---
 # Cold read notes
 
