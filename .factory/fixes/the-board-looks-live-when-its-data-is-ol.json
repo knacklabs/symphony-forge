@@ -201,7 +201,7 @@
     "status": "blocked"
   },
   "round": 7,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-13T04:52:42.920473+00:00",
@@ -234,8 +234,12 @@
   ],
   "stop": {
     "at": "2026-11-13T15:31:35.628064+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "src/forge/board_server.py",
-    "wait_id": "e5ffa5c5-fd98-443c-ac98-046b70c46073"
+    "reason": "The owner chose one more round for both notes: the Insights chart at half width and error printing that cannot block",
+    "wait_id": "e5ffa5c5-fd98-443c-ac98-046b70c46073",
+    "worker_round": 7
   },
   "stuck": {
     "close": "53c88bd4-418e-4cb5-a077-595986e85c95",
