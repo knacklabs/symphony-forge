@@ -1,18 +1,18 @@
 ---
 reader: codex (gpt-6.1-terra)
-read_at: 2026-11-13T06:55:36.949279+00:00
-seconds: 972.642
-read_hash: ac95d27a4a38f3f9a607fb9430308719dce7d8b4
-round: 1
+read_at: 2026-11-13T07:17:10.165287+00:00
+seconds: 685.259
+read_hash: c1d2b2ad896b974cd342601609a9abc61666920d
+round: 2
 passed: no
-doc_seen: ac95d27a4a38f3f9a607fb9430308719dce7d8b4
+doc_seen: c1d2b2ad896b974cd342601609a9abc61666920d
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+notes_seen: 490e9a85d168ee9f916a3db7ef44e244fc8115cc
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a1d3a1-e831-77b1-bb3d-127c2003a663
 session:
-loop_choice:
-loop_reason:
+loop_choice: more
+loop_reason: The owner chose one more round: repair the three blocking notes and the small ones
 ---
 # Cold read notes
 
@@ -142,3 +142,57 @@ Only a genuine trade-off goes to the human, as a question with options.
     Raise: Plan gap. Case: normal use - The part is built and reviewed. [Its scope](/plans/FORGE-PANE-1.md:176) removes 982 production hook lines and adds about 330, over the plan’s roughly 400-line task limit even before other changes.
     Gain 4, Work 2, Harm 2
     Disposition: cut — PANE is split: PANE switches to the new mod (about 390 counted lines) and REMOVE deletes the unused hook files and forge next --json; the story has four parts in a chain, RENAME, DATA, PANE, REMOVE.
+
+## Round 2
+
+22. Blocking: The new guide path can overwrite a team’s existing skill.
+    Raise: Data loss. Case: normal use - An existing repo already has its own `.claude/skills/forge-guide/SKILL.md`. [RENAME](/plans/FORGE-PANE-1.md:131) ships a new file at that path, and [sync writes differing shipped files](/src/forge/sync.py:589) over their current contents. The preservation rule covers the old folder but not this destination.
+    Gain 5, Work 3, Harm 4
+
+23. Blocking: The old-file ownership check can still delete a team file.
+    Raise: Data loss. Case: normal use - A repo adopted on v1.2.2 has its own old-folder `run-reference.md` headed `# Run reference`. [That release did not ship the file](/tests/fixtures/forge-v1.2.2/src/forge/story.py:85), but [the revised rule](/plans/FORGE-PANE-1.md:131) treats that ordinary heading as Forge’s mark and deletes it. The proposed test uses a different heading, so finding 1 remains open.
+    Gain 5, Work 3, Harm 4
+
+24. Blocking: Split: REMOVE → delete the unused hooks in bounded parts.
+    Raise: Plan gap. Case: normal use - The cleanup part is built and reviewed. [The revised plan](/plans/FORGE-PANE-1.md:186) puts about 950 production lines of deletion in REMOVE; [the task-size rule](/.codex/skills/forge/SKILL.md:1685) counts removals and sets a limit of about 400. Finding 21 asked for the removals in bounded parts and remains open.
+    Gain 4, Work 2, Harm 2
+
+25. Advisory: Runs in another worktree of the same repo are labelled as foreign.
+    Raise: Not done. A session started in a story worktree has that worktree as [its session root](/tests/fixtures/claude-code-684800b206824dfd0cc8a876e8604b20f72c3617.d.ts:2363). For a run in a task worktree, neither the main `repo_root` nor the task’s `checkout_root` equals it, so [the new comparison](/plans/FORGE-PANE-1.md:117) adds the repo name. Waits have no `checkout_root` to compare at all.
+    Gain 3, Work 3, Harm 3
+   Disposition: keep - below the bar (follow-up)
+
+26. Advisory: Running tests can hide an unanswered worker question.
+    Raise: Not done. [The revised needs-you rule](/plans/FORGE-PANE-1.md:115) suppresses a question when *any* queue entry has the same item. A person can run tests while deciding how to answer; [the test run joins the queue with that item](/src/forge/review.py:390), although the question remains unanswered.
+    Gain 3, Work 3, Harm 3
+   Disposition: keep - below the bar (follow-up)
+
+27. Advisory: An answered question returns if the next worker round fails.
+    Raise: Not done. Forge [records the answer](/src/forge/worker.py:230), but [clears the question only after a completed result](/src/forge/worker.py:406). If the worker fails, its queue entry leaves and [the revised rule](/plans/FORGE-PANE-1.md:115) shows the already-answered question again.
+    Gain 3, Work 4, Harm 3
+   Disposition: keep - below the bar (follow-up)
+
+28. Advisory: The needs-you scan misses an item in a primary checkout.
+    Raise: Not done. A developer can clone or check out a `fix/` or `story/` branch as the primary checkout; [Forge’s existing worktree lookup includes it](/src/forge/story.py:799). [The revised scan](/plans/FORGE-PANE-1.md:115) reads only `.git/worktrees/*`, which lists linked worktrees, so a question or stopped read in that primary checkout is omitted.
+    Gain 3, Work 3, Harm 3
+   Disposition: keep - below the bar (follow-up)
+
+29. Advisory: A newly started run includes its time waiting for a place.
+    Raise: Not done. If a build waits 20 minutes and then starts, [the revised elapsed rule](/plans/FORGE-PANE-1.md:112) immediately shows 20 minutes. The owner-facing description says the row shows [how long the run has run](/plans/FORGE-PANE-1.md:8).
+    Gain 3, Work 4, Harm 3
+   Disposition: keep - below the bar (follow-up)
+
+30. Advisory: Always mode reads Forge when the narrow-window pane is closed.
+    Raise: Not done. At 80 columns, an unrequested pane is not placed, but [startup still calls `read()`](/plans/FORGE-PANE-1.md:118). That contradicts [the promise that a closed pane reads nothing](/plans/FORGE-PANE-1.md:16).
+    Gain 2, Work 1, Harm 1
+   Disposition: keep - below the bar (live with)
+
+31. Advisory: A stopped spec or decision read is absent from needs-you.
+    Raise: Not done. [Forge applies the same read-limit stop](/src/forge/story.py:198) to stories, specs and decisions, but [the scan](/plans/FORGE-PANE-1.md:115) checks read notes only for `story/` branches. A spec or decision read waiting for the person’s choice can therefore leave the line saying nothing needs them.
+    Gain 3, Work 4, Harm 3
+   Disposition: keep - below the bar (follow-up)
+
+32. Advisory: Always mode misses a session started inside a repo subfolder.
+    Raise: Not done. [Claude’s session root](/tests/fixtures/claude-code-684800b206824dfd0cc8a876e8604b20f72c3617.d.ts:2363) can be the directory where the session started. If that is `/repo/src`, [the startup check](/plans/FORGE-PANE-1.md:118) looks for `/repo/src/forge.toml`, so it does not open the pane even when `/repo/forge.toml` exists.
+    Gain 3, Work 3, Harm 3
+   Disposition: keep - below the bar (follow-up)
