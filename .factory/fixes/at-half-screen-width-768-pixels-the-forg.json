@@ -1,0 +1,111 @@
+{
+  "amendments": [
+    {
+      "at": "2026-11-13T08:01:38.046880+00:00",
+      "because": "The audit's own done-when for this fix is more exact than the first one",
+      "done_when": "At 768 pixels wide the board shows all five stages and the plan with no sideways scrolling of the page."
+    }
+  ],
+  "base": "6f59a2bc0698eea1c962260f1176be01582bb4b8",
+  "branch": "fix/at-half-screen-width-768-pixels-the-forg",
+  "done_when": "At 768 pixels wide the five stages can be read, the plan is at least 600 pixels wide and the page has no sideways scroll; under about 1,000 pixels the summary stacks above the plan and the Stories rail goes under the stages; the plan's tasks table uses the full sheet width; a sub-section heading is smaller than a section heading; the For the builders line reads as a heading; and every control is at least 24 pixels high.",
+  "fix_kind": "ui",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "src/forge/board_app/item.css",
+      "file": "src/forge/board_app/item.css",
+      "gain": 4,
+      "harm": 3,
+      "line": 348,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: the page has no sideways scroll",
+      "work": 1
+    },
+    {
+      "area": "src/forge/board_app/item.css",
+      "file": "src/forge/board_app/item.css",
+      "gain": 3,
+      "harm": 2,
+      "line": 243,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: every control is at least 24 pixels high",
+      "work": 2
+    },
+    {
+      "area": "tests/test_board_half_screen_width.py",
+      "file": "tests/test_board_half_screen_width.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 78,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: tests/test_board_half_screen_width.py::test_1_the_board_reads_at_half_a_screen",
+      "work": 2
+    },
+    {
+      "area": "src/forge/board_app/pages.css",
+      "file": "src/forge/board_app/pages.css",
+      "gain": 2,
+      "harm": 1,
+      "line": 130,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: UI check",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "cf4ca56542c491448c1b21e6106b0b4543fd53f7ac6f282a9333e75255cbf943",
+    "changed": "a09b6c71b68458b66cc84fd1c672edaeecc2d7b62627de580143d119ca8975ed",
+    "commit": "347d264e46d808e5eb1fa5f5bb483cdc67923fde",
+    "dismissals": [],
+    "findings": [],
+    "id": "fd63f291-898a-42c6-b13e-ed51ca3251e1",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-13T08:01:34.889922+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-13T08:34:32.362610+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-13T10:47:11.663469+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-13T08:34:32.382607+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "src/forge/board_app/item.css",
+    "reason": "The owner chose one more round: repair all four notes",
+    "wait_id": "bd4e441c-2d75-49ed-9519-f49c24345117",
+    "worker_round": 1
+  },
+  "stuck": {
+    "close": "c1111165-2844-407a-bc7f-ea182f4d21f4",
+    "head": "1beb23658b4ef42e057fa7c626764e87c8ac223e",
+    "keys": {},
+    "round": 1
+  },
+  "why": "At half-screen width (768 pixels) the Forge board cannot be read: the five stage columns are too narrow, card titles are tiny, the plan is squeezed beside a fixed summary, the tasks table spills out of its box and loses its header, section and sub-section headings look the same, the \"For the builders\" line is small and grey, and three controls are under 24 pixels high.",
+  "worker": "claude"
+}

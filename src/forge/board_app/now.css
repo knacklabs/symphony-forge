@@ -140,6 +140,7 @@ main:not([hidden]):has(> .now) {
   padding: var(--space-1) var(--space-2);
   background: none;
   color: var(--moving);
+  min-height: 24px;
   font-size: var(--size-label);
   font-weight: 600;
 }
@@ -389,4 +390,17 @@ main:not([hidden]):has(> .now) {
   .kinds button[aria-pressed="false"]:hover { color: var(--ink); }
 }
 
+/* Half a screen (under about 1,100 pixels): the stages wrap to a width that fits a title and the stories rail goes under them. */
+@media (max-width: 1099px) {
+  .work { flex-direction: column; }
+  .stages { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+  .rail, .list { width: auto; }
+  .now-figures { flex-wrap: wrap; gap: var(--space-2) var(--space-8); }
+}
+
+}
+
+/* The page scrolls here, since the stacked screen is taller than the window. */
+@media (max-width: 1099px) {
+  body:has(> main:not([hidden]) > .now) { height: auto; }
 }
