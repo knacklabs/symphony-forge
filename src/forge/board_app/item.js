@@ -11,7 +11,7 @@ const STAGES = {
 const TONE = { Building: 'moving', Review: 'moving', Ready: 'ready', Merged: 'ready', Planned: 'waiting' };
 
 let Board;
-let drawer = null; // { id, node, opener, seen }
+let drawer = null; // { id, node, opener, back, seen }
 let page = null; // { id, node, tab, row, whole, reading }
 const planFolds = new Map(); // story -> section open states, for this board session
 const plans = new Map(); // story -> its plan as last read: { text }, or { reason, alert } while none has been read
@@ -193,9 +193,10 @@ function closeIcon() {
 async function openDrawer(id) {
   let row = rows().find((one) => one.id === id);
   const opener = drawer?.opener || document.activeElement;
+  const back = drawer?.back || opener?.dataset?.focus; // a refresh can draw the opener again, so keep its key too
   // Moving between items keeps the open drawer, so it slides in only once.
   const node = drawer?.node || el('aside', { class: 'drawer', 'aria-labelledby': 'drawer-title' });
-  drawer = { id, node, opener, seen: '' };
+  drawer = { id, node, opener, back, seen: '' };
   if (!node.isConnected) document.body.append(node);
   if (!row) {
     node.append(el('p', { class: 'quiet' }, 'Reading this item…'));
@@ -220,9 +221,11 @@ function fillDrawer(row) {
 function closeDrawer(restore = true) {
   if (!drawer) return;
   drawer.node.remove();
-  const { opener } = drawer;
+  const { opener, back } = drawer;
   drawer = null;
-  if (restore && opener?.isConnected) opener.focus();
+  if (!restore) return;
+  const card = opener?.isConnected ? opener : back && document.querySelector(`[data-focus="${CSS.escape(back)}"]`);
+  card?.focus();
 }
 
 // The full page
@@ -242,9 +245,16 @@ function openItem(id) {
 }
 
 async function showPage() {
-  const id = location.hash.startsWith('#item/') ? decodeURIComponent(location.hash.slice(6)) : null;
+  const id = location.hash.startsWith('#item/') ? decodeURIComponent(location.hash.slice(6).split('?')[0]) : null;
   if (!id) return closePage();
-  if (page?.id === id) return;
+  if (page?.id === id) {
+    // Same item: Back, Forward or a link changed only the tab.
+    if (page.row && tabInAddress(page.row) !== page.tab) {
+      fillPage();
+      if (document.activeElement?.getAttribute('role') === 'tab') document.getElementById(tabId(page.tab)).focus();
+    }
+    return;
+  }
   closeDrawer(false);
   closePage();
   const main = document.querySelector('main:not(.item-page)');
@@ -303,13 +313,28 @@ function tabId(name) {
   return `tab-${name.replaceAll(' ', '-')}`;
 }
 
+function slug(name) {
+  return name.toLowerCase().replaceAll(' ', '-');
+}
+
+function tabsOf(row) {
+  return ['Overview', ...(row.kind === 'story' ? ['Plan'] : []), 'Rounds', 'Known issues'];
+}
+
+// The open tab is in the address, #item/<id>?tab=plan, so a reload, a link, Back and Forward keep it.
+// Overview has no tab in the address, and a tab the item does not have reads as Overview.
+function tabInAddress(row) {
+  const asked = new URLSearchParams(location.hash.split('?')[1]).get('tab');
+  return tabsOf(row).find((name) => slug(name) === asked) || 'Overview';
+}
+
 // The page's left summary and its row of tabs.
 function frame(row) {
-  const tabs = ['Overview', ...(row.kind === 'story' ? ['Plan'] : []), 'Rounds', 'Known issues'];
+  const tabs = tabsOf(row);
   const kept = issues(row);
   const tablist = el('div', { role: 'tablist', 'aria-label': row.title, class: 'tabs' }, tabs.map((name) => el('button', {
     type: 'button', role: 'tab', id: tabId(name), 'data-focus': tabId(name), 'aria-controls': 'tab-panel', 'aria-selected': String(name === page.tab),
-    onclick: () => { page.tab = name; fillPage(); document.getElementById(tabId(name)).focus(); },
+    onclick: () => { location.hash = `item/${page.id}${name === 'Overview' ? '' : `?tab=${slug(name)}`}`; },
   }, name === 'Known issues' ? `Known issues · ${kept.length}` : name)));
   const summary = el('div', { class: 'summary' },
     el('p', { class: 'kind' }, tag(row), el('span', {}, kind(row))),
@@ -334,6 +359,7 @@ function drawing(row) {
 // The page's first drawing, and the one after a tab is chosen: all of it is built again.
 function fillPage() {
   const { row, node } = page;
+  page.tab = tabInAddress(row);
   node.querySelector('.crumbs [aria-current]').textContent = row.title;
   replaceContent(node, node.firstChild, Board.keep(drawing(row)));
   if (page.tab === 'Plan') readPlan(page.id);
@@ -449,9 +475,7 @@ export function install(board) {
   Object.assign(Board, { select: openDrawer, openDrawer, openItem });
   addEventListener('hashchange', showPage);
   addEventListener('keydown', (event) => {
-    if (event.key !== 'Escape') return;
-    if (drawer) closeDrawer();
-    else if (page) Board.navigate('now');
+    if (event.key === 'Escape') closeDrawer(); // a full page stays; only the drawer closes
   });
   Board.onSnapshot(() => {
     const row = drawer && rows().find((one) => one.id === drawer.id);
