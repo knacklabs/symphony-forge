@@ -33,7 +33,7 @@
       "gain": 4,
       "harm": 2,
       "line": 646,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -46,7 +46,7 @@
       "gain": 4,
       "harm": 3,
       "line": 586,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -56,59 +56,34 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "f596f189308c5da2d9869da1091cff5f6967f3aba02ef9696eda527fdb4918b4",
-    "changed": "d3f16920c880048324194e1d0e96c5bca3b406b3ab5d697c3017f16be2979f7d",
-    "commit": "5e491dad05fb9d9a5cbe69794655239734c7ad5d",
-    "dismissals": [],
+    "branch_diff": "fa527eac4431758c42a527efe294e798e673dfa1a65fdf9b37fef569e19e8bd6",
+    "changed": "946c3e52bf5ab72d3c0870f46f955e2d212dadb421c126413bb23e204b7fd113",
+    "commit": "7b485ec828f9a9fe40d2e171245aacb19db99856",
+    "dismissals": [
+      {
+        "because": "known: Not done names no owner-approved Done-when item; builder details are guidance.",
+        "carried": true,
+        "finding": 1
+      }
+    ],
     "findings": [
       {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done\nCase: normal use - GitHub requires pull requests to be up to date, but Forge cannot read that rule when it forms the train. After another member merges, the named change's PR is behind. `close._merge_default` merges main into it (`src/forge/close.py:201`, `:754`), and its new head's CI fails with a readable log naming its file. This code only delays the named member; it starts the ordinary land path without marking it as the change that left the train. When the failure occurs during close, `land.py:110-143` sends it to a worker fix round instead of stopping with that check failure under Needs you. The existing test exercises a failure during merge, not this close path.",
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done\nCase: normal use - A generated test group reaches its configured timeout and GitHub reports it as cancelled; its available log names no change. Forge recognizes cancellations at the time limit as timeouts in src/forge/checks.py:272-295, but the [GitHub CLI](https://raw.githubusercontent.com/cli/cli/trunk/pkg/cmd/pr/checks/aggregate.go) classifies `CANCELLED` as `cancel`. This guard rejects that bucket, so Forge falls back to individual checks without rerunning the failed jobs. The repair test hardcodes a `fail` bucket for its timeout case at tests/test_train_land_all.py:79 and :649, so it misses this outcome.",
         "file": "src/forge/land.py",
         "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
         "gain": 4,
         "harm": 3,
-        "line": 474,
-        "priority": "P1",
-        "title": "Not done: that change merges last, one at a time, with its own check or stops with that check's failure for you",
-        "work": 2
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done\nCase: normal use - A generated CI test group times out, and its available log names none of the train's files. `checks._tests_timeout` raises the distinct timeout refusal (`src/forge/checks.py:268-309`), which this branch treats as a non-red error. Forge never reads the log or reruns the failed job; it immediately sends every change back to individual checks. GitHub CLI classifies a timed-out check in the fail bucket, so this is a failed combined check covered by the no-name rule ([CLI classification](https://github.com/cli/cli/blob/trunk/pkg/cmd/pr/checks/aggregate.go)).",
-        "file": "src/forge/land.py",
-        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
-        "gain": 4,
-        "harm": 3,
-        "line": 725,
+        "line": 290,
         "priority": "P1",
         "title": "Not done: When the combined check fails and names no change",
         "work": 2
-      },
-      {
-        "body": "Gain 4, Work 1, Harm 2\nRaise: Functional\nCase: normal use - Two failed jobs are rerun and one fails again while the other is still running. `checks.wait` reports the red job before pending jobs finish, but this return bypasses `_settled`. Forge closes the train PR and starts the individual checks while the combined run is still consuming CI, despite the promised wait for every job.\nAdds work: wait for the remaining jobs of a failed retry; F 2 x H 2 = 4; 2 x C = 2",
-        "file": "src/forge/land.py",
-        "gain": 4,
-        "harm": 2,
-        "line": 646,
-        "priority": "P1",
-        "title": "Wait for the remaining jobs when a train retry fails",
-        "work": 1
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Test\nCase: normal use - A retried train or an individual fallback check remains pending before eventually passing or failing. The flake stub changes directly to green when the rerun is requested, and the fallback variants supply no pending or red response for their new heads. `_everyone_merges_alone` therefore checks that a check was read but cannot establish that Forge waited for green or stopped on red. A regression that accepts a pending retry or merges a fallback with a red check can pass this proof test.",
-        "file": "tests/test_train_land_all.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 586,
-        "priority": "P1",
-        "title": "Gate: tests/test_train_land_all.py::test_4_a_failure_naming_no_change_runs_again_once",
-        "work": 2
       }
     ],
-    "id": "47403195-6233-430c-9be6-2aad974a3fee",
-    "status": "blocked"
+    "id": "de9149f5-e560-46ad-85ab-10149d18b95f",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-13T07:18:09.194958+00:00",
@@ -116,6 +91,10 @@
     },
     {
       "at": "2026-11-13T07:43:51.694935+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-13T09:04:35.330716+00:00",
       "step": "review"
     }
   ],
