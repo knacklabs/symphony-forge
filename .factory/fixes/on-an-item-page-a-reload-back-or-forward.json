@@ -1,7 +1,14 @@
 {
+  "amendments": [
+    {
+      "at": "2026-11-13T08:02:09.236338+00:00",
+      "because": "The audit's own done-when for this fix covers all three findings",
+      "done_when": "After a reload on an item's Plan tab, the Plan tab is still open, and a link to the Plan tab opens it."
+    }
+  ],
   "base": "6f59a2bc0698eea1c962260f1176be01582bb4b8",
   "branch": "fix/on-an-item-page-a-reload-back-or-forward",
-  "done_when": "After a reload on an item's Plan tab, the Plan tab is still open, and a link to the Plan tab opens it.",
+  "done_when": "A reload on an item's Plan tab shows the Plan tab, a link can open the Plan tab, and Back and Forward return to the tab that was open; Escape on a full item page does nothing and Escape closes only the drawer; and after a refresh, Escape on the drawer puts the keyboard focus back on the card it came from.",
   "fix_kind": "ui",
   "kind": "fix",
   "status": "started",
