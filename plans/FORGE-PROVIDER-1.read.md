@@ -1,18 +1,18 @@
 ---
 reader: codex (gpt-6.1-terra)
-read_at: 2026-11-12T17:16:32.047968+00:00
-seconds: 476.506
-read_hash: db278d6f81b19fcc028e15258d5b87cbe67f042a
-round: 3
+read_at: 2026-11-12T17:31:42.459446+00:00
+seconds: 536.54
+read_hash: 802630fd5d9056bd0535d971971801b25e7c77a4
+round: 4
 passed: no
-doc_seen: db278d6f81b19fcc028e15258d5b87cbe67f042a
+doc_seen: 802630fd5d9056bd0535d971971801b25e7c77a4
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: b5e3feaf99b41218ae21978e4ef4fe1662bcf9bf
+notes_seen: 44eb8ddc1726ea0b5051051a3b7e9c5875145385
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a1d08a-3b0f-7ba3-8056-a21706cc3701
 session:
 loop_choice: more
-loop_reason: The owner chose one more round
+loop_reason: The owner chose one more round with a simpler rule for how Forge knows its boxes
 ---
 # Cold read notes
 
@@ -246,3 +246,35 @@ Only a genuine trade-off goes to the human, as a question with options.
     Case: normal use - The install script contains the pinned version strings but fails before installing the tools. [The fake](/plans/FORGE-PROVIDER-1.md:147) records `forge-install-*` scripts without running them and supplies a `gh` stub separately. The planned setup and contract tests can therefore pass while the first real setup has no working installed tools.  
     Gain 3, Work 2, Harm 3
     Disposition: cut - the fake now serves the pinned `gh` and uv downloads, `FORGE_BOX_DOWNLOADS` points the real install script at them, and setup checks `gh`, `uv` and `forge` versions in the box after the install; `test_2` has a case whose `gh` download gives the wrong version and expects the install refusal.
+
+## Round 4
+
+36. **Blocking: Security: two repositories can share the same kept box.**  
+    Raise: Security  
+    Case: normal use - A developer uses `acme/payment_api` and `acme/payment-api`, both [valid GitHub repository names](https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-new-repository). [The new naming rule](/plans/FORGE-PROVIDER-1.md:80) gives both the same name. Setup for the second repo finds the first repo’s box, and its test copies receive the first repo’s approved files. Turning off boxes from the second repo can also delete the first repo’s box and copies.  
+    Gain 5, Work 2, Harm 4
+
+37. **Blocking: Security: changing the Git email leaves credentialed boxes behind.**  
+    Raise: Security  
+    Case: normal use - A developer changes `git config user.email` after setup, then turns boxes off. [Box names](/plans/FORGE-PROVIDER-1.md:79) now contain a different hash, so [turn-off](/plans/FORGE-PROVIDER-1.md:165) finds nothing, reports that there is nothing to delete, and removes the record. The original kept box and copies can remain at agent37 with the GitHub sign-in and approved files.  
+    Gain 5, Work 2, Harm 4
+
+38. **Blocking: Data loss: teammates with the same Git email can delete each other’s boxes.**  
+    Raise: Data loss  
+    Case: normal use - Two developers use the same team email as their Git author email in one repo. [The developer name](/plans/FORGE-PROVIDER-1.md:79) is derived only from that email, so both get the same provider names. One developer’s setup can reuse the other’s GitHub sign-in, and [turn-off](/plans/FORGE-PROVIDER-1.md:165) can delete the other developer’s kept box and copies.  
+    Gain 5, Work 2, Harm 4
+
+39. **Blocking: Not done: approved files are unavailable to the kept-box installer.**  
+    Raise: Not done  
+    Case: normal use - A repo needs an ignored `.npmrc` to install private packages. The developer approves it, then reruns setup with `--install "npm ci"`. [The file is stored outside the checkout](/plans/FORGE-PROVIDER-1.md:82), but [setup runs the installer in the checkout](/plans/FORGE-PROVIDER-1.md:141) without putting the approved file there. npm reads [project configuration from the project root](https://docs.npmjs.com/files/npmrc/), so installation fails even after approval. The planned test uses `true` as the install command.  
+    Gain 5, Work 2, Harm 3
+
+40. **Blocking: Not done: recovering a kept box loses its install command.**  
+    Raise: Not done  
+    Case: normal use - A developer sets up the same repo from a second clone after the default branch changes dependencies. That clone has no local record, but [setup finds the existing box](/plans/FORGE-PROVIDER-1.md:137). The provider list supplies the box type, but not the [recorded install command](/plans/FORGE-PROVIDER-1.md:73). Setup without `--install` can record the new commit without reinstalling; later runs at that commit then skip installation and can report results using old packages.  
+    Gain 5, Work 2, Harm 3
+
+41. **Advisory: Not done: large approved files exceed Linux’s shell argument limit.**  
+    Raise: Not done  
+    Case: normal use - A developer copies an approved 150 KB settings file, within the plan’s 256 KB limit. [The writer](/plans/FORGE-PROVIDER-1.md:93) puts its roughly 200 KB base64 encoding in one command passed to `sh -c`. On Linux with 4 KB pages, [one argument is limited to 128 KB](https://man7.org/linux/man-pages/man2/execve.2.html), so the command cannot start even though it fits agent37’s HTTP request limit.  
+    Gain 4, Work 1, Harm 3
