@@ -23,7 +23,7 @@ Image: desktop-running.png (440 by 1000)
 - Each run is a card: a filled dot, the title, the time on the right. Below: the round and the
   model as two small tags, and the current step in code type when Forge knows it.
 - A run from another repo adds "in <repo name>" after its title, in lighter text.
-- A test run shows a progress bar and "212 of 640 tests".
+- A test run shows its round as a tag, a progress bar and "212 of 640 tests".
 - The selected card has a dark border. It shows "LATEST OUTPUT" with the last three lines of the
   run's output, and the buttons "Open output" (primary) and "Stop run" (secondary).
 
@@ -33,7 +33,7 @@ Image: desktop-needs-you.png (440 by 1000)
 
 - A soft banner in place of the plain line: "2 items need you" and
   "First: Show late orders has a question for you."
-- A waiting run has a hollow dot and the line "Waiting for its tests" or
+- A waiting run has a hollow dot, its round as a tag, and the line "Waiting for its tests" or
   "Waiting for a free place".
 - Last line when the machine is busy: "The machine is busy. New runs wait."
 
@@ -53,7 +53,9 @@ Text, boxes and buttons only. No drawings, no meters, no tags, no output lines.
 Images: pane-running.png, pane-needs-you.png, pane-nothing-running.png,
 pane-forge-did-not-answer.png (460 wide)
 
-- Each run is two lines: the title, then "Round 3 · 21 min · editing land.py".
+- Each run is two lines: the title, then "Round 3 · 21 min · editing land.py". A waiting run
+  and a test run keep their round: "Round 1 · Waiting for a free place · 2 min" and
+  "Round 2 · 212 of 640 tests · 3 min".
 - The selected run has a filled background.
 - "Nothing is running." when no run exists.
 - The buttons "Open output" and "Stop run" sit at the bottom.
