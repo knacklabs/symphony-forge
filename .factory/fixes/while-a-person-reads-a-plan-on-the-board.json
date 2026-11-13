@@ -11,12 +11,20 @@
   "done_when": "With a plan open on the full item page, the For the builders section open, the view scrolled far down and text selected, three board refreshes leave the scroll position, the open section, the selection and the same page element; the loading line never shows over a plan that is already on screen; the Releases page keeps its open file and its scroll; the first screen keeps the scroll of its long list; and the full item page opens from the data the page already holds.",
   "fix_kind": "ui",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-13T04:00:53.113339+00:00",
       "step": "start"
     }
   ],
-  "why": "While a person reads a plan on the board, each refresh jumps the view to the top and closes the For the builders section again."
+  "stuck": {
+    "close": null,
+    "head": "3ff77985d54b4f412332ba5badd068c8daacbe5d",
+    "keys": {},
+    "round": null
+  },
+  "why": "While a person reads a plan on the board, each refresh jumps the view to the top and closes the For the builders section again.",
+  "worker": "claude"
 }
