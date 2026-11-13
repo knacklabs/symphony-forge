@@ -253,28 +253,34 @@ Only a genuine trade-off goes to the human, as a question with options.
     Raise: Security  
     Case: normal use - A developer uses `acme/payment_api` and `acme/payment-api`, both [valid GitHub repository names](https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-new-repository). [The new naming rule](/plans/FORGE-PROVIDER-1.md:80) gives both the same name. Setup for the second repo finds the first repo’s box, and its test copies receive the first repo’s approved files. Turning off boxes from the second repo can also delete the first repo’s box and copies.  
     Gain 5, Work 2, Harm 4
+    Disposition: cut - boxes are now known only by the id agent37 returned, kept in the clone's record; names are labels for people and never used to find a box, so two repos cannot share a kept box (Shared "Kept-box record" and "Labels and places").
 
 37. **Blocking: Security: changing the Git email leaves credentialed boxes behind.**  
     Raise: Security  
     Case: normal use - A developer changes `git config user.email` after setup, then turns boxes off. [Box names](/plans/FORGE-PROVIDER-1.md:79) now contain a different hash, so [turn-off](/plans/FORGE-PROVIDER-1.md:165) finds nothing, reports that there is nothing to delete, and removes the record. The original kept box and copies can remain at agent37 with the GitHub sign-in and approved files.  
     Gain 5, Work 2, Harm 4
+    Disposition: cut - the Git email no longer enters any name or identity; turn-off deletes the record's kept box id and the copies whose `metadata.forge_kept_box` is that id, so a changed email changes nothing.
 
 38. **Blocking: Data loss: teammates with the same Git email can delete each other’s boxes.**  
     Raise: Data loss  
     Case: normal use - Two developers use the same team email as their Git author email in one repo. [The developer name](/plans/FORGE-PROVIDER-1.md:79) is derived only from that email, so both get the same provider names. One developer’s setup can reuse the other’s GitHub sign-in, and [turn-off](/plans/FORGE-PROVIDER-1.md:165) can delete the other developer’s kept box and copies.  
     Gain 5, Work 2, Harm 4
+    Disposition: cut - no identity comes from the email; turn-off deletes only the record's kept box and copies that carry its id in `metadata`, and other Forge boxes are only listed, never deleted; `test_5` checks that another kept box and its copy stay.
 
 39. **Blocking: Not done: approved files are unavailable to the kept-box installer.**  
     Raise: Not done  
     Case: normal use - A repo needs an ignored `.npmrc` to install private packages. The developer approves it, then reruns setup with `--install "npm ci"`. [The file is stored outside the checkout](/plans/FORGE-PROVIDER-1.md:82), but [setup runs the installer in the checkout](/plans/FORGE-PROVIDER-1.md:141) without putting the approved file there. npm reads [project configuration from the project root](https://docs.npmjs.com/files/npmrc/), so installation fails even after approval. The planned test uses `true` as the install command.  
     Gain 5, Work 2, Harm 3
+    Disposition: cut - setup now copies the approved files from `FILES_DIR` into the checkout before the install, under the same rule as a run (not when the commit tracks that path); `test_2` uses `--install 'test -f .npmrc'`, fails before `--copy .npmrc` and passes after it.
 
 40. **Blocking: Not done: recovering a kept box loses its install command.**  
     Raise: Not done  
     Case: normal use - A developer sets up the same repo from a second clone after the default branch changes dependencies. That clone has no local record, but [setup finds the existing box](/plans/FORGE-PROVIDER-1.md:137). The provider list supplies the box type, but not the [recorded install command](/plans/FORGE-PROVIDER-1.md:73). Setup without `--install` can record the new commit without reinstalling; later runs at that commit then skip installation and can report results using old packages.  
     Gain 5, Work 2, Harm 3
+    Disposition: cut - setup never adopts a box: with no record it makes a new kept box and records its install command itself, then lists other Forge-labelled boxes for the developer to delete; `test_2` deletes the record and checks a new box is made and nothing is deleted.
 
 41. **Advisory: Not done: large approved files exceed Linux’s shell argument limit.**  
     Raise: Not done  
     Case: normal use - A developer copies an approved 150 KB settings file, within the plan’s 256 KB limit. [The writer](/plans/FORGE-PROVIDER-1.md:93) puts its roughly 200 KB base64 encoding in one command passed to `sh -c`. On Linux with 4 KB pages, [one argument is limited to 128 KB](https://man7.org/linux/man-pages/man2/execve.2.html), so the command cannot start even though it fits agent37’s HTTP request limit.  
     Gain 4, Work 1, Harm 3
+    Disposition: cut - `write_file` now sends 48 KB parts (about 64 KB of base64 per command), under Linux's 128 KB limit for one argument; agent37's exec documents no standard input (its fields are `command`, `user`, `background`, `name`), so the data stays in the command; the fake refuses a command over 128 KB and `test_2` copies a 200 KB file.
