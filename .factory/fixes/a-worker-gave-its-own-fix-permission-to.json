@@ -11,8 +11,8 @@
       "gain": 3,
       "harm": 3,
       "line": 45,
-      "outcome": "open",
-      "reason": "",
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: The owner accepts the three notes as follow-ups so that the gate ships in the next release",
       "round": 1,
       "security": false,
       "title": "Not done: Worker refusal is not one line and resumed briefs omit the rule",
@@ -25,7 +25,7 @@
       "harm": 3,
       "line": 21,
       "outcome": "follow-up",
-      "reason": "",
+      "reason": "Human accepted the remaining finding: The owner accepts the three notes as follow-ups so that the gate ships in the next release",
       "round": 1,
       "security": false,
       "title": "Gate: test_1_worker_cannot_record_its_own_fix_allowance",
@@ -37,8 +37,8 @@
       "gain": 2,
       "harm": 2,
       "line": 222,
-      "outcome": "lived with",
-      "reason": "",
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: The owner accepts the three notes as follow-ups so that the gate ships in the next release",
       "round": 1,
       "security": false,
       "title": "Follow-up: Finish handback after a five-file refusal",
@@ -50,7 +50,23 @@
     "branch_diff": "a3c46ec55c33f784a016355029fc044a71bedbafcfad719420e31addd494b0dc",
     "changed": "55b79ef14d6be377c7b58e94b6685c03be8d753e46ec438ba339d2ab3477a8ca",
     "commit": "c922c96a33e009a1a15c8b8f28ca79674f2e7190",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: The owner accepts the three notes as follow-ups so that the gate ships in the next release",
+        "finding": 1
+      },
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: The owner accepts the three notes as follow-ups so that the gate ships in the next release",
+        "finding": 2
+      },
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: The owner accepts the three notes as follow-ups so that the gate ships in the next release",
+        "finding": 3
+      }
+    ],
     "findings": [
       {
         "body": "Gain 3, Work 3, Harm 3\nRaise: Not done\nCase: normal use - a worker attempts the allowance step, or an existing fix resumes after a Forge upgrade.\nDone-when: Running the allowance step inside a worker's round is refused with one line telling the worker to stop and report the refusal to the coordinator, and the worker brief says the same.\nThe refusal supplies `forge next` as a next step. `src/forge/repo.py:75` and `src/forge/cli.py:177` therefore print a second line, so the output is not the requested one-line refusal. Separately, the new instruction in `src/forge/templates/brief.md:222` is absent from continued briefs: `src/forge/worker.py:652` refers the worker to its earlier brief. A worker resumed after an upgrade may have received that earlier brief before this rule existed.",
@@ -85,10 +101,10 @@
       }
     ],
     "id": "3eee17df-3f8e-4d1e-84fe-b45cc623ccc0",
-    "status": "blocked"
+    "status": "clean"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-13T04:12:07.085550+00:00",
@@ -101,8 +117,12 @@
   ],
   "stop": {
     "at": "2026-11-13T04:23:49.582132+00:00",
+    "by": "owner",
+    "choice": "accept",
     "file": "src/forge/task.py",
-    "wait_id": "8ba79377-613d-4c4e-a690-0c3716a0e7d4"
+    "reason": "The owner accepts the three notes as follow-ups so that the gate ships in the next release",
+    "wait_id": "8ba79377-613d-4c4e-a690-0c3716a0e7d4",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
