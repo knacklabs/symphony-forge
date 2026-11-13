@@ -52,7 +52,7 @@ export async function load(Board, page, main, draw) {
   const mine = ++asked;
   let view;
   try {
-    const answer = await fetch(`board.json${TOKEN}&page=${page}`, { cache: 'no-store' });
+    const answer = await Board.read(page, `board.json${TOKEN}&page=${page}`);
     const text = await answer.text();
     if (!answer.ok) {
       let reason = 'The board could not read the work. The terminal that runs it shows why.';

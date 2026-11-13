@@ -40,6 +40,10 @@ def client(repo, gh, tmp_path, request):
     return repo
 
 
+class Address(str):
+    """The page address; `process` is the running `forge board`, for a test that stops it."""
+
+
 @contextmanager
 def live(repo, **env):
     """Run `forge board` until the test ends, and give its page address. A request waits for its
@@ -55,7 +59,9 @@ def live(repo, **env):
             if found := re.search(r"http://127\.0\.0\.1:\d+/\?token=[\w-]+", line):
                 break
         assert line is not None, process.stderr.read()
-        yield found[0]
+        address = Address(found[0])
+        address.process = process
+        yield address
     finally:
         process.terminate()
         process.wait(timeout=30)
