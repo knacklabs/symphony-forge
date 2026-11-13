@@ -142,7 +142,7 @@ the next merge.
 | "Run everything in Codex" | Ask, then in a fix: set `tools = "codex"`, `workers = "codex"` in `forge.toml`, then `forge sync`, `forge close <fix>` |
 | "Use both" | Ask, then in a fix: set `tools = "both"` in `forge.toml`, `forge close <fix>` |
 | "Change who builds just for me" | Edit `forge.local.toml` beside `forge.toml` in the main checkout (not a worktree): only `tools`, `workers` and `[models.<kind>]` tables. Git ignores it, so no fix; every worktree of that clone uses it. `forge next` and `forge doctor` name what it sets |
-| "Close takes too long running every test" | In a local-test repo, ask, then in a fix: set `fast_test` in `forge.toml`, a command close runs instead of `test`, with `{base}` replaced by the merge base with the default branch (for example `npx vitest run --changed {base}` plus lint). In a CI-test repo, its pull request check runs related tests; the nightly full run covers the rest. Then `forge close <fix>` |
+| "Close takes too long running every test" | In a local-test repo, ask, then in a fix: set `fast_test` in `forge.toml`, a command close runs instead of `test`, with `{base}` replaced by the merge base with the default branch (for example `npx vitest run --changed {base}` plus lint). In a CI-test repo, its pull request check runs the tests that import the changed source files, not only the changed test files (see step 9 of 'Adopt a live app'); the nightly full run covers the rest. Then `forge close <fix>` |
 | "Upgrade Forge" | Ask which release, then `forge upgrade <release>`; Upgrade Forge, below |
 
 `forge doctor` lists started fixes with no work commits after more than seven days.
@@ -1457,6 +1457,18 @@ keep existing settings until that fix changes them. An explicit `test_place` kee
    default branch. Tell the owner that changed-only selection follows imports, so API tests
    that reach the code only through a URL run only in the full test run. Then ask the owner,
    and set it in `forge.toml` through a fix. Forge never changes the setting itself.
+   A fast test that runs in pull request CI must include the tests that import the changed source
+   files, split across the test groups: for example `vitest related`, `vitest run --changed {base}`,
+   `jest --findRelatedTests` or `jest --changedSince {base}`, or the Python picker.
+   Forge's Python picker does not yet follow imports in an app that lives in a sub-folder
+   (for example apps/api, where tests import app.core.config); for such a repo, list that app's
+   test folder in the fast test until the picker is repaired.
+   A script that runs only the changed test files must not be the pull request check: unchanged
+   tests that import a changed source file are skipped, fail on the main branch and block every
+   other close.
+   A local fast test may stay smaller, because a central file can select hundreds of tests.
+   A test that reaches the code over HTTP or by running a program is caught only by the full run,
+   which stays nightly.
 
 10. When the repo has a Dockerfile, write `services.toml` as the deploy paragraph at the top
     of this guide says, get the human's confirmation, and add it to the adoption fix.
