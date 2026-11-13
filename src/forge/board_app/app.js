@@ -27,7 +27,8 @@ const OFFLINE = {
   word: 'Offline',
   line: 'The board has stopped, so this page may be old. Start the board again from the terminal, then open its new link.',
 };
-const failed = new Map(); // read name -> its mark and line; the newest failed read is the one shown
+const failed = new Map(); // read name -> its mark, line and number; the newest failed read is the one shown
+let count = 0; // failures so far: a read that began before a failure cannot clear it
 let retry = null;
 
 export const Board = {
@@ -48,8 +49,9 @@ export const Board = {
   },
   // Every page's read of the server goes through here, so a failed one shows the line under the header.
   async read(name, url) {
+    const began = count;
     const answer = await read(name, url);
-    if (answer.status < 500) fresh(name);
+    if (answer.status < 500) fresh(name, began);
     return answer;
   },
   api: {
@@ -80,7 +82,7 @@ function show() {
 
 function lose(name, why) {
   failed.delete(name); // set again, so the newest failure is last
-  failed.set(name, why);
+  failed.set(name, { ...why, number: ++count });
   show();
   // A failed rebuild is told by the events stream. A page read has no such signal, so it is asked again here.
   if (name !== 'now') {
@@ -103,8 +105,10 @@ function unread(reason) {
   };
 }
 
-function fresh(name) {
-  failed.delete(name);
+// Clears a failure. `began` is the failure count when the read began: a read that began before the failure
+// says nothing about it. With no `began`, the server itself said the failure is over.
+function fresh(name, began = Infinity) {
+  if ((failed.get(name)?.number ?? 0) <= began) failed.delete(name);
   show();
 }
 
@@ -154,6 +158,7 @@ function render() {
 }
 
 async function refresh() {
+  const began = count;
   let answer;
   try {
     answer = await read('now', `board.json${TOKEN}`);
@@ -164,7 +169,10 @@ async function refresh() {
   const snapshot = JSON.parse(await answer.text());
   if (Board.snapshot && snapshot.snapshot.version < Board.snapshot.snapshot.version) return; // a slower, older read
   Board.snapshot = snapshot;
-  fresh('now');
+  // An answer marked updating is old data while a rebuild runs, so it never clears a failure. A final answer
+  // clears one only if its read began after the failure; the stream's "recovered" clears it too.
+  if (snapshot.snapshot.updating) show();
+  else fresh('now', began);
   document.querySelector('[data-repo]').textContent = snapshot.repo_root.split(/[\\/]/).pop();
   main.setAttribute('aria-busy', 'false');
   render();
@@ -174,6 +182,7 @@ async function refresh() {
 // The events stream is down or has just opened: ask the small status answer, and read the whole board
 // only when it says there is a new snapshot.
 async function probe() {
+  const began = count;
   let answer;
   try {
     answer = await read('now', `board.json${TOKEN}&page=status`);
@@ -184,7 +193,7 @@ async function probe() {
   const { version, reason } = await answer.json();
   if (reason) lose('now', unread(reason));
   else if (!Board.snapshot || version !== Board.snapshot.snapshot.version) await refresh();
-  else fresh('now');
+  else fresh('now', began);
 }
 
 function fail() {

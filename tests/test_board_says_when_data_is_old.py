@@ -8,15 +8,18 @@ after 10 seconds, so the test moves the page's clock on instead of waiting.
 """
 from __future__ import annotations
 
+import json
 import os
 import subprocess
 import threading
+from datetime import datetime, timedelta, timezone
 
 import pytest
 
 from conftest import REAL_UV
 from test_board_item_keyboard_refresh import stop_tree
-from test_board_server import client, fix, live  # noqa: F401
+from test_board import DOC
+from test_board_server import client, clone, fix, live, pushed  # noqa: F401
 
 pytestmark = pytest.mark.platform
 
@@ -26,16 +29,21 @@ STORY = "fix-the-board-looks-live-when-its-data-is-ol"
 BROWSER_SECONDS = 240
 
 SCRIPT = r"""
-import json, os, re, signal, sys
+import json, os, re, signal, subprocess, sys, time
 from pathlib import Path
 from axe_playwright_python.sync_playwright import Axe
 from playwright.sync_api import expect, sync_playwright
-url, mode, pid, branch, item = sys.argv[1:]
+url, mode, pid, branch, item, marker = sys.argv[1:]
+# The suite finds and ends a process that outlives a crashed worker by this record, which Windows needs.
+Path(marker + '.tmp').write_text(json.dumps({'pid': os.getpid(), 'at_ns': time.time_ns()}), encoding='utf-8')
+os.replace(marker + '.tmp', marker)
 base, query = url.split('?')
 query = '?' + query
 NOW = re.compile(r'/board\.json\?token=[\w-]+$')  # the Now read; the other pages add &page=
 STOPPED = 'The board has stopped, so this page may be old. Start the board again from the terminal, then open its new link.'
-OPEN = "async (id) => (await import(new URL('app.js' + location.search, location.href))).Board.openDrawer(id)"
+BOARD = "(await import(new URL('app.js' + location.search, location.href))).Board"
+OPEN = f"async (id) => {BOARD}.openDrawer(id)"
+UNREAD = 'The server could not read the work, so this page may be old. It said: \u201c'
 
 with sync_playwright() as p:
     browser = p.chromium.launch(channel='chrome', headless=True, args=['--no-sandbox'])
@@ -53,6 +61,14 @@ with sync_playwright() as p:
                     pass
             check()
 
+        def until(page, condition):
+            # Waits for something this script's own handlers do, without sleeping a fixed time.
+            for _ in range(600):
+                if condition():
+                    return
+                page.wait_for_timeout(100)
+            raise AssertionError('timed out')
+
         def look(page, path=''):
             page.goto(url + path)
             return page.get_by_role('status'), page.locator('.stale')
@@ -67,21 +83,34 @@ with sync_playwright() as p:
             os.kill(int(pid), signal.SIGTERM)
             expect(line).to_have_text(STOPPED, timeout=60000)
             expect(status).to_have_text('Offline')
-            assert context.pages[0].evaluate('document.documentElement.scrollWidth <= innerWidth')
+            assert context.pages[-1].evaluate('document.documentElement.scrollWidth <= innerWidth')
 
         elif mode in ('failed', 'down'):
             # 'failed': nothing is blocked. The page keeps its events stream, and the server waits for a rebuild
             # as long as it does for everyone. 'down': the stream cannot connect while the server runs.
             page = context.new_page()
-            full = []  # every read of the whole board, the first one included
-            page.on('request', lambda request: NOW.search(request.url) and full.append(request.url))
+            full, asked = [], []  # reads of the whole board (the first included) and of the small status answer
+
+            def counted(request):
+                if NOW.search(request.url):
+                    full.append(request.url)
+                elif 'page=status' in request.url:
+                    asked.append(request.url)
+
+            page.on('request', counted)
             if mode == 'down':
                 page.route(re.compile(r'/events'), lambda route: route.abort())
-            status, line = look(page)
+                with page.expect_response(re.compile(r'page=status')):
+                    status, line = look(page)
+            else:
+                # The page is connected, and the status answer that the stream's opening asks has come back,
+                # before anything fails: only a "failed" event can then tell the page.
+                with page.expect_response(re.compile(r'/events')), page.expect_response(re.compile(r'page=status')):
+                    status, line = look(page)
             expect(status).to_have_text('Live', timeout=60000)
             expect(line).to_be_hidden()
-            held = lambda: page.evaluate("async () => (await import(new URL('app.js' + location.search, location.href))).Board.snapshot.snapshot.version")
-            reads, version = len(full), held()
+            held = lambda: page.evaluate(f"async () => {BOARD}.snapshot.snapshot.version")
+            reads, probes, version = len(full), len(asked), held()
             context.clock.run_for(60000)  # a minute passes on the page's clock
             # Only a new snapshot makes the page read the whole board again.
             assert len(full) - reads <= held() - version, f'{len(full) - reads} reads of the whole board in a minute'
@@ -89,21 +118,65 @@ with sync_playwright() as p:
             try:
                 # A damaged branch pointer: git cannot say where the work is, so the board cannot read it.
                 Path(branch).write_text('garbage\n', encoding='utf-8')
-                refused = page.request.get(base + 'board.json' + query)
+                expect(line).to_contain_text(UNREAD, timeout=60000)
+                if mode == 'failed':
+                    assert (len(full), len(asked)) == (reads, probes), 'the page read the server after the failure began'
+                else:
+                    assert len(full) - reads <= held() - version, 'the page read the whole board while the work could not be read'
+                refused = page.request.get(base + 'board.json' + query)  # what a read says now, asked after the check
                 assert refused.status == 500, refused.text()
-                expected = ('The server could not read the work, so this page may be old. '
-                            f'It said: \u201c{refused.json()["error"]}\u201d The page tries again.')
-                expect(line).to_have_text(expected, timeout=60000)
+                expect(line).to_have_text(f'{UNREAD}{refused.json()["error"]}\u201d The page tries again.')
                 assert 'offline' not in page.locator('body').inner_text().lower()
                 expect(status).to_have_text('Not updating')
                 assert not Axe().run(page, options={'runOnly': ['wcag2aa']}).response['violations']
                 assert page.evaluate('document.querySelector(".bar").nextElementSibling === document.querySelector(".stale")')
-                if mode == 'down':
-                    assert len(full) - reads <= held() - version, 'the page read the whole board while the work could not be read'
             finally:
                 Path(branch).write_text(good_branch, encoding='utf-8')
             expect(line).to_be_hidden(timeout=60000)
             expect(status).to_have_text('Live')
+
+        elif mode == 'late':
+            # Two reads of the whole board begin, a rebuild then fails, and only afterwards the reads' answers
+            # arrive: an answer marked updating, and an answer that is final but began before the failure.
+            page = context.new_page()
+            with page.expect_response(re.compile(r'/events')), page.expect_response(re.compile(r'page=status')):
+                status, line = look(page)
+            expect(status).to_have_text('Live', timeout=60000)
+            good = page.evaluate(f"async () => {BOARD}.snapshot")
+            number = good['snapshot']['version']
+            answers = []
+            page.route(NOW, lambda route: answers.append(route))
+            for count, name in enumerate(('late-a', 'late-b'), 1):
+                subprocess.run(['git', 'branch', name], cwd=Path(branch).parents[3], check=True, capture_output=True)  # a new snapshot
+                until(page, lambda: len(answers) == count)
+            good_branch = Path(branch).read_text(encoding='utf-8')
+            try:
+                Path(branch).write_text('garbage\n', encoding='utf-8')
+                expect(line).to_contain_text(UNREAD, timeout=60000)
+                for route, extra in zip(answers, ({'version': number + 1, 'updating': True}, {'version': number + 2})):
+                    route.fulfill(content_type='application/json', body=json.dumps(
+                        {**good, 'snapshot': {**good['snapshot'], **extra}}))
+                page.wait_for_function(f"async () => {BOARD}.snapshot.snapshot.version === {number + 2}")
+                expect(line).to_contain_text(UNREAD)
+                expect(status).to_have_text('Not updating')
+                page.unroute(NOW)
+            finally:
+                Path(branch).write_text(good_branch, encoding='utf-8')
+            expect(line).to_be_hidden(timeout=60000)
+            expect(status).to_have_text('Live')
+
+        elif mode == 'items':
+            # A story's page cannot be read; opening an older part, which is read separately, works.
+            page = context.new_page()
+            status, line = look(page)
+            expect(status).to_have_text('Live', timeout=60000)
+            page.route(re.compile(r'page=item&id=SHOP'), refuse)
+            page.evaluate("location.hash = 'item/SHOP'")
+            expect(line).to_have_text(f'{UNREAD}The work could not be read.\u201d The page tries again.')
+            page.evaluate(OPEN, item)
+            expect(page.get_by_role('complementary').locator('h2')).to_be_visible(timeout=60000)
+            expect(line).to_contain_text(UNREAD)
+            expect(status).to_have_text('Not updating')
 
         elif mode == 'page':
             # The Now read is fine; only the Releases read is refused.
@@ -152,13 +225,14 @@ with sync_playwright() as p:
 """
 
 
-def look(url, mode, repo=None, item=""):
-    """Open the page in real Chrome and run one scenario. The browser and everything it starts stop with
-    the test, even when it fails or the run is too slow."""
+def look(url, mode, tmp_path, repo=None, item=""):
+    """Open the page in real Chrome and run one scenario. Every browser run goes through here: the browser and
+    everything it starts stop with the test, even when it fails or the run is too slow, and the script records
+    its process so the suite also ends it when a worker crashes."""
     branch = (repo.path / ".git/refs/heads/main") if repo else ""
     page = subprocess.Popen([REAL_UV or "uv", "run", "--no-project", "--python", "3.11", "--with", "playwright==1.55.0",
                              "--with", "axe-playwright-python==0.1.8", "python", "-c", SCRIPT, url, mode,
-                             str(url.process.pid), str(branch), item],
+                             str(url.process.pid), str(branch), item, str(tmp_path / "browser.owned-process.json")],
                             stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, encoding="utf-8",
                             start_new_session=os.name != "nt")  # its own process group, so a stop also ends the browser
     ran_out = threading.Timer(BROWSER_SECONDS, stop_tree, [page])
@@ -176,31 +250,54 @@ def look(url, mode, repo=None, item=""):
 
 
 @pytest.mark.timeout(BROWSER_SECONDS + 120)
-def test_1_a_stopped_board_says_it_stopped_and_how_to_open_it_again(client):
+def test_1_a_stopped_board_says_it_stopped_and_how_to_open_it_again(client, tmp_path):
     with live(client) as url:
-        look(url, "stopped")
+        look(url, "stopped", tmp_path)
 
 
 @pytest.mark.timeout(BROWSER_SECONDS + 120)
-def test_2_a_failed_read_says_the_work_could_not_be_read_and_goes_away_with_new_data(client):
+def test_2_a_failed_read_says_the_work_could_not_be_read_and_goes_away_with_new_data(client, tmp_path):
     with live(client, FORGE_BOARD_REBUILD_WAIT="0.5") as url:
-        look(url, "failed", client)
+        look(url, "failed", tmp_path, client)
 
 
 @pytest.mark.timeout(BROWSER_SECONDS + 120)
-def test_3_a_failed_read_on_another_page_shows_the_line_and_the_page_tries_again(client):
+def test_3_a_failed_read_on_another_page_shows_the_line_and_the_page_tries_again(client, tmp_path):
     with live(client) as url:
-        look(url, "page")
+        look(url, "page", tmp_path)
 
 
 @pytest.mark.timeout(BROWSER_SECONDS + 120)
-def test_4_the_line_fits_on_every_board_screen_and_stays_clear_of_the_drawer(client):
+def test_4_the_line_fits_on_every_board_screen_and_stays_clear_of_the_drawer(client, tmp_path):
     fix(client, "line-fits")
     with live(client) as url:
-        look(url, "fits", item="line-fits")
+        look(url, "fits", tmp_path, item="line-fits")
 
 
 @pytest.mark.timeout(BROWSER_SECONDS + 120)
-def test_5_a_failed_read_shows_the_line_when_the_events_stream_is_down(client):
+def test_5_a_failed_read_shows_the_line_when_the_events_stream_is_down(client, tmp_path):
     with live(client, FORGE_BOARD_REBUILD_WAIT="0.5") as url:
-        look(url, "down", client)
+        look(url, "down", tmp_path, client)
+
+
+@pytest.mark.timeout(BROWSER_SECONDS + 120)
+def test_6_a_successful_read_of_one_item_does_not_clear_the_failed_read_of_another(client, tmp_path, monkeypatch):
+    # A story, and a fix that finished 9 days ago: the Now snapshot leaves it out, so opening it reads it.
+    at = datetime.now(timezone.utc) - timedelta(days=9)
+    with monkeypatch.context() as dated:
+        dated.setenv("GIT_AUTHOR_DATE", at.isoformat())
+        dated.setenv("GIT_COMMITTER_DATE", at.isoformat())
+        pushed(clone(client, tmp_path), "Plan a basket and an old fix", {
+            "plans/SHOP.md": DOC, "plans/roadmap.json": json.dumps({"items": [{"key": "SHOP"}]}),
+            ".factory/fixes/old.json": json.dumps({"kind": "fix", "branch": "fix/old", "why": "Readers see old",
+                                                   "done_when": "Readers see it", "status": "merged"})})
+    client.git("fetch", "-q", "origin")
+    client.git("merge", "-q", "--ff-only", "origin/main")
+    with live(client) as url:
+        look(url, "items", tmp_path, item="old")
+
+
+@pytest.mark.timeout(BROWSER_SECONDS + 120)
+def test_7_an_answer_that_began_before_a_failure_does_not_clear_it(client, tmp_path):
+    with live(client, FORGE_BOARD_REBUILD_WAIT="0.5") as url:
+        look(url, "late", tmp_path, client)

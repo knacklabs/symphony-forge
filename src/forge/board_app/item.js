@@ -235,7 +235,7 @@ function closeDrawer(restore = true) {
 // The full page
 
 async function item(id) {
-  const answer = await Board.read('item', `board.json${TOKEN}&page=item&id=${encodeURIComponent(id)}`);
+  const answer = await Board.read(`item:${id}`, `board.json${TOKEN}&page=item&id=${encodeURIComponent(id)}`);
   let body = {};
   try {
     body = await answer.json();
