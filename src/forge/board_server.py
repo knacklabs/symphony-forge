@@ -19,7 +19,6 @@ import subprocess
 import sys
 import threading
 import time
-import traceback
 import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -40,6 +39,7 @@ CSP = ("default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' 
 WRITTEN = re.compile(r"(-cache\.json|^test-results-.*\.txt|prs-week-[\d-]+\.json|viewer-login\.json|known-issues\.json|board-snapshot\.json|"
                      r"\.guard|\.tmp|\.new)$")
 UNREADABLE = "The board could not read the work. The terminal that runs it shows why."
+SAY_LIMIT = 5  # lines of errors on the terminal in all; see Snapshots.say
 # ponytail: the tests' seams, like FORGE_CHECKS_WAIT
 FETCH_WAIT = float(os.environ.get("FORGE_BOARD_FETCH_WAIT", "60"))
 # How long a request waits for a rebuild before it gets the last snapshot marked as updating.
@@ -99,7 +99,7 @@ class Snapshots:
         self.forced, self.cache = False, {"rows": {}, "rebuilt": []}
         self.inputs: tuple[str, str] | None = None
         # When the newest finished rebuild began, and what stopped it, if anything.
-        self.finished, self.failed = 0.0, None
+        self.finished, self.failed, self.said = 0.0, None, 0
         self.version, self.body, self.updating = 0, b"", b""  # updating: the same snapshot, marked so
         self.pages: dict[str, Any] = {}  # the untrimmed derivation, for one refs fingerprint
         try:  # the last run's snapshot and rows, so a restart shows the board at once and rebuilds warm
@@ -197,12 +197,21 @@ class Snapshots:
                     self.forced = False
                     self.build(seen)
             except Exception as error:  # the waiting request shows it; this thread keeps building
-                if repr(error) != repr(self.failed):  # once for a failure that lasts, so a full error pipe cannot stop us
-                    traceback.print_exc()
+                if repr(error) != repr(self.failed):  # once for a failure that lasts
+                    self.say(error)
                 failed = error
             with self.done:
                 self.finished, self.failed = started, failed
                 self.done.notify_all()
+
+    def say(self, error: Exception) -> None:
+        """One short line on the terminal for a failure, and no more than SAY_LIMIT in all. The output can be a pipe
+        that nobody reads, which holds about four kilobytes on Windows: a print that waits for room would block the
+        builder for good, and the board would never recover. This much always fits."""
+        if self.said < SAY_LIMIT:
+            self.said += 1
+            line = " ".join(f"{type(error).__name__}: {error}".split())[:200]
+            print(f"The board could not read the work. {line}", file=sys.stderr, flush=True)
 
     def build(self, seen: tuple[str, str]) -> None:
         with self.lock:
@@ -279,8 +288,8 @@ def handler(snapshots: Snapshots, token: str) -> type[BaseHTTPRequestHandler]:
             except repo.Refused as refusal:
                 self.say(500, why(refusal))
             except Exception as error:
-                if error is not snapshots.failed:  # the builder has printed that one
-                    traceback.print_exc()
+                if error is not snapshots.failed:  # the builder has said that one
+                    snapshots.say(error)
                 self.say(500, UNREADABLE)
 
         def do_POST(self) -> None:

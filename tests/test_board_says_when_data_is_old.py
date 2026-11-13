@@ -176,6 +176,22 @@ with sync_playwright() as p:
             expect(line).to_be_hidden(timeout=60000)
             expect(status).to_have_text('Live')
 
+        elif mode == 'narrow':
+            # Half a screen, short window, no line showing: Releases and Insights are as tall as what they hold and the
+            # page scrolls, instead of keeping the height of a laptop window and squeezing their panels.
+            page = context.new_page()
+            page.set_viewport_size({'width': 768, 'height': 400})
+            for name, path in (('releases', '#releases'), ('insights', '#insights')):
+                status, line = look(page, path)
+                expect(status).to_have_text('Live', timeout=60000)
+                expect(line).to_be_hidden()
+                expect(page.locator('.' + name)).to_be_visible(timeout=60000)
+                held, height = page.evaluate(f'''() => {{ const page = document.querySelector('.{name}');
+                    return [page.scrollHeight, page.getBoundingClientRect().height]; }}''')
+                # Taller than its content leaves a gap, shorter squeezes the panels: the window is 400 pixels high.
+                assert abs(held - height) <= 1, f'{name} is {height} pixels tall and holds {held}'
+                assert page.evaluate('document.documentElement.scrollWidth <= innerWidth'), name + ' scrolls sideways'
+
         elif mode == 'items':
             # A story's page cannot be read; opening an older part, which is read separately, works.
             page = context.new_page()
@@ -323,20 +339,30 @@ def test_7_an_answer_that_began_before_a_failure_does_not_clear_it(client, tmp_p
         look(url, "late", tmp_path, client)
 
 
-def test_8_a_failure_that_lasts_prints_one_traceback_so_the_board_can_recover(client):
-    # A rebuild that fails again on every look must not fill the board's error output: when that output is a
-    # pipe nobody reads (an agent's, or a test's), the builder blocks on its next traceback, never rebuilds,
-    # and the page shows the failure for good. On Windows a pipe holds about four kilobytes: two tracebacks.
+@pytest.mark.timeout(300)
+def test_8_failures_that_come_and_go_cannot_fill_the_error_output_so_the_board_can_recover(client):
+    # The board's error output can be a pipe that nobody reads (an agent's, or a test's). A Windows pipe holds about
+    # four kilobytes. If printing a failure could fill it, the builder would block on its next failure, never rebuild,
+    # and the page would show the failure for good. Six different failures in a row, each after a rebuild that worked,
+    # must leave the output small and the board able to recover.
     branch = client.path / ".git/refs/heads/main"
     good = branch.read_bytes()
     with live(client) as url:
         assert get(url, "/board.json")[0] == 200
-        try:
-            branch.write_bytes(b"garbage\n")
-            assert [get(url, "/board.json")[0] for _ in range(4)] == [500] * 4  # four rebuilds, one failure
-        finally:
-            branch.write_bytes(good)
-        assert get(url, "/board.json")[0] == 200  # the board recovers
+        for _ in range(6):
+            try:
+                branch.write_bytes(b"garbage\n")
+                assert get(url, "/board.json")[0] == 500
+            finally:
+                branch.write_bytes(good)
+            assert get(url, "/board.json")[0] == 200  # the board recovers each time
         url.process.terminate()
         url.process.wait(timeout=30)
-        assert url.process.stderr.read().count("Traceback") == 1
+        said = url.process.stderr.read()
+        assert 0 < len(said) < 4096, f"the board wrote {len(said)} bytes of errors"
+
+
+@pytest.mark.timeout(BROWSER_SECONDS + 120)
+def test_9_half_a_screen_keeps_releases_and_insights_as_tall_as_what_they_hold(client, tmp_path):
+    with live(client) as url:
+        look(url, "narrow", tmp_path)
