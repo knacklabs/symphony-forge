@@ -1,18 +1,18 @@
 ---
 reader: codex (gpt-6.1-terra)
-read_at: 2026-11-12T17:15:45.737964+00:00
-seconds: 613.114
-read_hash: 817a2d4246490d144fcb90f33a2b14fcb59d8e10
-round: 1
+read_at: 2026-11-12T17:31:52.176530+00:00
+seconds: 484.965
+read_hash: 677a6c3b262e1376e2d8ddc4b5340c931d907be3
+round: 2
 passed: no
-doc_seen: 817a2d4246490d144fcb90f33a2b14fcb59d8e10
+doc_seen: 677a6c3b262e1376e2d8ddc4b5340c931d907be3
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+notes_seen: 3492a898fe5d10c76c718be8f057b66105bed603
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a1d0b8-c881-76f3-b5c7-ef3e26602e64
 session:
-loop_choice:
-loop_reason:
+loop_choice: accept
+loop_reason: The owner chose: accept, and correct the blocking note and the six small ones in the builder notes
 ---
 # Cold read notes
 
@@ -111,3 +111,47 @@ Only a genuine trade-off goes to the human, as a question with options.
     Case: normal use - A member has completed a worker round. The plan records its train wait from the main checkout, where that unmerged member’s state is absent, so the record gets round zero. The board filters activity by the member’s actual round and does not show the promised running CI step. The additional members’ records also default to a failed outcome. [Plan](/plans/FORGE-TRAIN-1.md:84), [repo.py](/src/forge/repo.py:504), [board.py](/src/forge/board.py:456)  
     Gain 2, Work 1, Harm 1
    Disposition: keep - below the bar (live with)
+
+## Round 2
+
+14. Blocking: A failed check with the same name as Forge’s review job can be ignored.
+    Raise: Functional  
+    Case: normal use - A repo has another CI job named `Review pull request` that passes on each member but fails on their combination. The plan ignores every check with that name, so the train can pass and merge the broken combination. GitHub permits the same job name in different workflows. [Plan](/plans/FORGE-TRAIN-1.md:78), [checks.py](/src/forge/checks.py:290), [GitHub’s status-check guidance](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches)  
+    Gain 5, Work 2, Harm 3
+   Disposition: keep - The owner chose: accept, and correct the blocking note and the six small ones in the builder notes
+
+15. Advisory: The new merge-rule exclusion misses a conflict already on the default branch.
+    Raise: Functional  
+    Case: normal use - A ready story part and the default branch both added roadmap entries after the part was closed. The new rule checks for shared merge-rule files only between train members. The initial merge against the default branch can use Forge’s local rule and appear clean even though GitHub cannot merge that pull request without another check. [Plan](/plans/FORGE-TRAIN-1.md:84), [merge rule](/src/forge/sync.py:385), [Git’s merge-tree documentation](https://git-scm.com/docs/git-merge-tree)  
+    Gain 3, Work 2, Harm 2
+   Disposition: keep - below the bar (follow-up)
+
+16. Advisory: The branch-ownership test does not exercise a branch-name collision.
+    Raise: Test  
+    Case: normal use - The exact branch name chosen for a train already exists. The test creates `forge-merge-train/keep`, but the train uses a different name. An implementation that force-pushes over its actual target would still leave `keep` untouched and pass the stated assertions. [Plan](/plans/FORGE-TRAIN-1.md:121)  
+    Gain 3, Work 1, Harm 2
+   Disposition: keep - below the bar (follow-up)
+
+17. Advisory: The stacked-part test cannot prove that an eligible stacked change joins.
+    Raise: Test  
+    Case: normal use - A ready change’s parent has already merged. The test requires the train to contain exactly `aa`, `bb`, `ff`, `gg` and `hh`, leaving `jj` outside the five places regardless of its merged parent. An implementation that still excludes every stacked change can pass. [Plan](/plans/FORGE-TRAIN-1.md:123), [merge.py](/src/forge/merge.py:54)  
+    Gain 3, Work 1, Harm 2
+   Disposition: keep - below the bar (follow-up)
+
+18. Advisory: Ready changes left out after selection cannot close during the train.
+    Raise: Functional  
+    Case: normal use - Six eligible changes are ready, so the sixth stays out of the five-place train. The plan puts all candidates in `training` before `_combine` chooses the members, and starts none of them until the thread ends. The sixth therefore cannot run close during the check, although the plan promises that ready changes left out can do so. [Plan](/plans/FORGE-TRAIN-1.md:82), [land.py](/src/forge/land.py:88)  
+    Gain 3, Work 2, Harm 2
+   Disposition: keep - below the bar (follow-up)
+
+19. Advisory: Repositories that cannot create draft pull requests never get a train.
+    Raise: Functional  
+    Case: normal use - A private repository on a GitHub plan without draft pull requests uses CI and agent merges. The planned draft creation fails on every run, so changes fall back to individual merges. Forge already handles this GitHub limitation for ordinary pull requests. [Plan](/plans/FORGE-TRAIN-1.md:85), [close.py](/src/forge/close.py:915), [GitHub’s pull-request documentation](https://docs.github.com/en/rest/pulls/pulls)  
+    Gain 3, Work 2, Harm 2
+   Disposition: keep - below the bar (follow-up)
+
+20. Advisory: Cleanup lacks a pull-request identifier when the read after creation fails.
+    Raise: Plan gap  
+    Case: normal use - GitHub creates the draft, but the following `gh pr view` fails during a network problem. The plan obtains the number and URL from that read, then requires cleanup and its failure message to use them. It does not specify how to close or identify the draft in this case. [Plan](/plans/FORGE-TRAIN-1.md:85), [close.py](/src/forge/close.py:899)  
+    Gain 3, Work 1, Harm 2
+   Disposition: keep - below the bar (follow-up)
