@@ -1,12 +1,33 @@
 {
+  "approval": {
+    "at": "2026-11-13T02:38:42.025727+00:00",
+    "by": "human-via-Claude",
+    "event": "toolu_01M4SgAga4FNtWKXkbe9Q3gh",
+    "hash": "629c4d9a27c63eb6d224213c3a7755a49559ee2fac85e33af9dcc28fa31a76aa",
+    "round": 2,
+    "runtime": "claude",
+    "session": "c01a489d-c76f-41c1-8371-d6f0052b027c"
+  },
   "doc": "plans/FORGE-TRAIN-1.md",
-  "status": "planning",
+  "status": "approved",
   "steps": [
     {
       "at": "2026-11-12T16:34:16.982253+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-12T17:15:45.752770+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-11-12T17:31:52.205431+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-11-13T02:38:42.026181+00:00",
+      "step": "approved"
     }
   ],
   "title": "Merge several ready items in one train",
-  "touches": 0
+  "touches": 1
 }
