@@ -142,7 +142,7 @@
     "status": "blocked"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-13T08:02:05.772982+00:00",
@@ -155,8 +155,12 @@
   ],
   "stop": {
     "at": "2026-11-13T08:34:24.219161+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "src/forge/board_app/item.js",
-    "wait_id": "7c2f8c83-4b88-4ca4-a62f-a0787f91cd9f"
+    "reason": "The owner chose one more round: repair all five notes",
+    "wait_id": "7c2f8c83-4b88-4ca4-a62f-a0787f91cd9f",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
