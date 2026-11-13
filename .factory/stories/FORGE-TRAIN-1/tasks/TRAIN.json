@@ -151,7 +151,7 @@
       "gain": 3,
       "harm": 3,
       "line": 185,
-      "outcome": "open",
+      "outcome": "fixed in round 4",
       "reason": "",
       "round": 2,
       "security": false,
@@ -174,28 +174,17 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "f9640eda91f900b018944862ef492337b6189ef59b723776818bd0c1bc963e95",
-    "changed": "48ba99a34a2031071e4c45362268884f147c5b289fb1fe979b04f057c59a19e6",
-    "commit": "2122733fe8f0ae42a65a78ab93cd7bf9318880bb",
+    "branch_diff": "cda4a9b78b06381c959f1297dbffc90ea4c02a8f739cb92746d3b494207a9c94",
+    "changed": "a683363aa6810508ab04af3bc5de93d556019b0d8eef8702753eca56f1b00b79",
+    "commit": "440fb078b6c75ffdfd2b1776299d68b6446b3ec3",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 3, Work 1, Harm 3\nRaise: Test\nCase: normal use - The default branch moves during a train, and a fallback member's newly published head has a pending check. This assertion proves only that Forge read the head's check runs once; a fallback that reads a pending result and merges immediately would still pass. The new red-check case does not prove otherwise: it marks every bb head red as soon as the train finishes, and the stub selects that result by branch rather than commit (tests/test_queue_land_all.py:70). Close can therefore stop on that red result before merge brings the moved default branch into bb (src/forge/close.py:201,465; src/forge/merge.py:125). Exercise a pending or failed check on the newly published fallback head and show that it blocks the merge.",
-        "file": "tests/test_train_land_all.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 194,
-        "priority": "P1",
-        "title": "Gate: prove each train fallback waits for its own CI",
-        "work": 1
-      }
-    ],
-    "id": "0ee0cdb8-daf6-4962-a3b7-cd79bffa4390",
-    "status": "blocked"
+    "findings": [],
+    "id": "d9d6fa27-7c67-4ad5-9bb5-43d1f780ac61",
+    "status": "clean"
   },
   "round": 4,
   "stacked_on": "FORGE-NIGHTLY-1/NIGHTLY",
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-13T02:39:41.218115+00:00",
@@ -211,6 +200,10 @@
     },
     {
       "at": "2026-11-13T05:17:26.685393+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-13T05:54:44.586530+00:00",
       "step": "review"
     }
   ],
