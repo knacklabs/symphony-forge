@@ -154,7 +154,7 @@
       "gain": null,
       "harm": null,
       "line": 200,
-      "outcome": "open",
+      "outcome": "fixed in round 7",
       "reason": "",
       "round": 6,
       "security": false,
@@ -177,31 +177,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "1387c1049490d8cbcaba50ba53ac92e8207976097a3042dfa019aba81cbe854a",
-    "changed": "7906a8a131e1b91104ce78063fc8857f00fe847d4266015e8a00037a52c5db9f",
-    "commit": "0355a6ccb60fa6c90ed5d8683488dbc237f50cf5",
+    "branch_diff": "22366fe8d9aee9b2aeb255e1f750c28f26183e3fce919a4272429f58952db4d5",
+    "changed": "5816db4f97f31e8c2b178e24b644fa08acf8f9b42c1465739efad9f807d5ebdd",
+    "commit": "e4227b9976c36c8e0b3805563f067f0c895be2e6",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "The traceback suppression lasts only while consecutive failures have the same representation. A successful rebuild resets `self.failed`, and a failure for a different story prints another traceback. When an agent runs the board with stderr captured in an unread pipe, successive conflicting plan edits can therefore fill the pipe; `print_exc()` then blocks the only rebuild thread before it records the failure. The board cannot publish fresh data or clear the warning even after the conflicts are resolved. The new test covers repeated occurrences of one error, not successive distinct failures.",
-        "file": "src/forge/board_server.py",
-        "line": 200,
-        "priority": "P1",
-        "title": "Keep rebuild logging from blocking recovery"
-      },
-      {
-        "body": "This selector overrides the narrow-screen `height: auto` rule in `pages.css:42-44` because it is more specific, even when the stale-data line is hidden. At a 768-pixel width, a populated People table can force the Insights chart panel, which has `min-height: 0` and `overflow: auto`, to collapse to its padding. On Releases, expanding a long known-issues list can similarly collapse the past-releases panel. Keep the narrow layout's automatic height so the stacked panels remain readable.",
-        "file": "src/forge/board_app/tokens.css",
-        "line": 193,
-        "priority": "P2",
-        "title": "Preserve auto-height on narrow board screens"
-      }
-    ],
-    "id": "c667e31f-9dc7-4055-a7fd-be090eccbb92",
-    "status": "blocked"
+    "findings": [],
+    "id": "20cb4c5d-d4fc-4b5f-b138-88df1b92ae32",
+    "status": "clean"
   },
   "round": 8,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-13T04:52:42.920473+00:00",
@@ -229,6 +214,10 @@
     },
     {
       "at": "2026-11-13T15:31:35.627507+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-13T16:08:12.048183+00:00",
       "step": "review"
     }
   ],
