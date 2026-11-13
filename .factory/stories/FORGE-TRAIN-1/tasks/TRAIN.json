@@ -1,13 +1,193 @@
 {
   "base": "1b01eeada9b832c7eb00ac07c12b79bc58341408",
   "branch": "task/FORGE-TRAIN-1-TRAIN",
+  "known": [
+    {
+      "area": "merge() in src/forge/merge.py",
+      "file": "src/forge/merge.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 108,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Revalidate the tested default branch and head before each merge",
+      "work": 2
+    },
+    {
+      "area": "_queue() in src/forge/land.py",
+      "file": "src/forge/land.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 380,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Require an app-test check before forming a train",
+      "work": 1
+    },
+    {
+      "area": "_own_review() in src/forge/checks.py",
+      "file": "src/forge/checks.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 200,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Recognize the draft's own review check",
+      "work": 2
+    },
+    {
+      "area": "merge() in src/forge/merge.py",
+      "file": "src/forge/merge.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 161,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Keep the existing check gate for each train member",
+      "work": 1
+    },
+    {
+      "area": "tests/test_train_land_all.py",
+      "file": "tests/test_train_land_all.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 270,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_2_changes_that_cannot_join_stay_out",
+      "work": 1
+    },
+    {
+      "area": "test_5_the_default_branch_must_hold_what_the_train_tested() in tests/test_train_land_all.py",
+      "file": "tests/test_train_land_all.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 379,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_5_the_default_branch_must_hold_what_the_train_tested",
+      "work": 1
+    },
+    {
+      "area": "test_1_ready_changes_merge_after_one_combined_check() in tests/test_train_land_all.py",
+      "file": "tests/test_train_land_all.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 219,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_ready_changes_merge_after_one_combined_check",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "2732e3e30a4afb6a37247d439b8126a1257f5726386edb890ca5350106b34200",
+    "changed": "6955a6a6c3d541f055ca2b63ad265a74d2542a8aa140dd2aba5b04a87a4e0e41",
+    "commit": "c9d49c3cdc4bbb8f3b26e5a17f41d0749ff977b4",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 5, Work 2, Harm 3\nRaise: Not done\nCase: normal use - Another pull request merges while a train member is being prepared. `land.py:620-637` checks the default tree and member head before starting a child, but passes only a boolean. If the child's fetch at `merge.py:53` or `merge.py:192` sees a newer default, `train` remains true and this line still suppresses the retest, allowing a merge against an untested tree. The same seam does not compare a newly accepted ready head with the head tested by the train. Carry the tested default and head into the merge and fall back when either differs.",
+        "file": "src/forge/merge.py",
+        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
+        "gain": 5,
+        "harm": 3,
+        "line": 108,
+        "priority": "P1",
+        "title": "Not done: Revalidate the tested default branch and head before each merge",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 1, Harm 3\nRaise: Functional\nCase: normal use - An existing repo sets `test_place = \"ci\"` but names only `forge-pr-check`, relying on other CI checks. This condition forms a train even though no app-test check is required. The generated workflow omits its test jobs in that configuration (`prcheck.py:261,425-428`), and `land.py:611-613` passes an empty required-check list. Before any other check reports, the wait can therefore succeed without testing the combination; train merges then skip the normal local retest. Require a non-review check before enabling the train.\nAdds work: require an app-test check before forming a train; F 1 x H 2 = 2; 2 x C = 2",
+        "file": "src/forge/land.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 380,
+        "priority": "P1",
+        "title": "Require an app-test check before forming a train",
+        "work": 1
+      },
+      {
+        "body": "Gain 5, Work 2, Harm 3\nRaise: Not done\nCase: normal use - A train uses Forge's generated GitHub Actions workflow. This query filters workflow runs by the candidate head SHA, but GitHub records a `pull_request_target` workflow run's `head_sha` as the default-branch SHA, as documented in [actions/checkout](https://github.com/actions/checkout/blob/main/src/unsafe-pr-checkout-helper.ts). The lookup therefore misses Forge's review suite; its deliberately failing `Review pull request` check remains red and sends the members through individual merges even when the combined tests pass. The stub at `tests/test_train_land_all.py:69-74` returns the target run for any requested head SHA, hiding the mismatch.",
+        "file": "src/forge/checks.py",
+        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
+        "gain": 5,
+        "harm": 3,
+        "line": 200,
+        "priority": "P1",
+        "title": "Not done: Recognize the draft's own review check",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 1, Harm 3\nRaise: Functional\nCase: normal use - A previously ready member has a non-required CI check rerun while the combined check is running, and that check fails on the member's pull request. `nextstep.py:901-904` permits a matching ready receipt while checks are running, but this condition skips `checks.wait` entirely for train members. GitHub need not block an unrequired failing check, so Forge can merge the red member even though ordinary merge checks every reported check. Waiting for the member's existing checks does not start another test run.\nAdds work: recheck each member's existing checks; F 2 x H 2 = 4; 2 x C = 2",
+        "file": "src/forge/merge.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 161,
+        "priority": "P1",
+        "title": "Keep the existing check gate for each train member",
+        "work": 1
+      },
+      {
+        "body": "Gain 3, Work 1, Harm 3\nRaise: Test\nCase: normal use - A run starts with two ready independent changes and a ready change built on an unmerged base, or with two ready changes under human-merge settings. This test covers a stacked change only after its base merges and has no human-merge variant. The existing queue tests at `test_land_respects_stack_order.py:12-32` and `test_queue_land_all.py:487-497` do not start with enough ready changes to form a train. Removing either train exclusion can therefore pass the current coverage. Exercise both cases through `forge land --all`.",
+        "file": "tests/test_train_land_all.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 270,
+        "priority": "P1",
+        "title": "Gate: test_2_changes_that_cannot_join_stay_out",
+        "work": 1
+      },
+      {
+        "body": "Gain 3, Work 1, Harm 3\nRaise: Test\nCase: normal use - A member changes or the default branch moves during the combined check. The `changed` case checks the warning and that the old head was not merged, but never checks that this member and the rest actually take the individual-check path; an implementation that abandons them passes. The `moved` case uses `_everyone_merges_alone`, which permits one member to merge without a rerun even though the default moved before all three. Assert the promised fallback for every affected member.",
+        "file": "tests/test_train_land_all.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 379,
+        "priority": "P1",
+        "title": "Gate: test_5_the_default_branch_must_hold_what_the_train_tested",
+        "work": 1
+      },
+      {
+        "body": "Gain 3, Work 1, Harm 3\nRaise: Test\nCase: normal use - A passing train starts a fresh CI run for each member on its unchanged head. This test checks the merge heads and absence of the merge-in message, but does not check whether individual workflows were rerun. Such an implementation would pass while losing the promised single-run saving. Assert at the GitHub boundary that no member's own workflow is restarted.",
+        "file": "tests/test_train_land_all.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 219,
+        "priority": "P1",
+        "title": "Gate: test_1_ready_changes_merge_after_one_combined_check",
+        "work": 1
+      }
+    ],
+    "id": "bb4d0005-2652-4889-9eb4-f6a1f77cd9fa",
+    "status": "blocked"
+  },
   "round": 1,
   "stacked_on": "FORGE-NIGHTLY-1/NIGHTLY",
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-13T02:39:41.218115+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-13T03:37:20.978459+00:00",
+      "step": "review"
     }
   ],
   "stuck": {

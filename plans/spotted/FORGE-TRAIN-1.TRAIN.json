@@ -1,0 +1,81 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/land.py\tRequire an app-test check before forming a train\tFORGE-TRAIN-1/TRAIN",
+      "kind": "bug",
+      "path": "src/forge/land.py",
+      "line": 380,
+      "text": "Require an app-test check before forming a train",
+      "from": "blocking",
+      "item": "FORGE-TRAIN-1/TRAIN",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/merge.py\tKeep the existing check gate for each train member\tFORGE-TRAIN-1/TRAIN",
+      "kind": "bug",
+      "path": "src/forge/merge.py",
+      "line": 161,
+      "text": "Keep the existing check gate for each train member",
+      "from": "blocking",
+      "item": "FORGE-TRAIN-1/TRAIN",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_train_land_all.py\tGate: test_1_ready_changes_merge_after_one_combined_check\tFORGE-TRAIN-1/TRAIN",
+      "kind": "bug",
+      "path": "tests/test_train_land_all.py",
+      "line": 219,
+      "text": "Gate: test_1_ready_changes_merge_after_one_combined_check",
+      "from": "blocking",
+      "item": "FORGE-TRAIN-1/TRAIN",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_train_land_all.py\tGate: test_2_changes_that_cannot_join_stay_out\tFORGE-TRAIN-1/TRAIN",
+      "kind": "bug",
+      "path": "tests/test_train_land_all.py",
+      "line": 270,
+      "text": "Gate: test_2_changes_that_cannot_join_stay_out",
+      "from": "blocking",
+      "item": "FORGE-TRAIN-1/TRAIN",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_train_land_all.py\tGate: test_5_the_default_branch_must_hold_what_the_train_tested\tFORGE-TRAIN-1/TRAIN",
+      "kind": "bug",
+      "path": "tests/test_train_land_all.py",
+      "line": 379,
+      "text": "Gate: test_5_the_default_branch_must_hold_what_the_train_tested",
+      "from": "blocking",
+      "item": "FORGE-TRAIN-1/TRAIN",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/checks.py\tNot done: Recognize the draft's own review check",
+      "kind": "edge",
+      "path": "src/forge/checks.py",
+      "line": 200,
+      "text": "Not done: Recognize the draft's own review check",
+      "from": "review",
+      "item": "FORGE-TRAIN-1/TRAIN",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/merge.py\tNot done: Revalidate the tested default branch and head before each merge",
+      "kind": "edge",
+      "path": "src/forge/merge.py",
+      "line": 108,
+      "text": "Not done: Revalidate the tested default branch and head before each merge",
+      "from": "review",
+      "item": "FORGE-TRAIN-1/TRAIN",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
