@@ -22,6 +22,8 @@ try:
 except ImportError:  # Windows has no resource module: its processor time is not measured
     resource = None
 
+pytestmark = pytest.mark.platform
+
 STORY = "FORGE-PANE-1"
 
 
