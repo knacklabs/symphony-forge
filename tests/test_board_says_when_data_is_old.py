@@ -19,7 +19,7 @@ import pytest
 from conftest import REAL_UV
 from test_board_item_keyboard_refresh import stop_tree
 from test_board import DOC
-from test_board_server import client, clone, fix, live, pushed  # noqa: F401
+from test_board_server import client, clone, fix, get, live, pushed  # noqa: F401
 
 pytestmark = pytest.mark.platform
 
@@ -321,3 +321,22 @@ def test_6_a_successful_read_of_one_item_does_not_clear_the_failed_read_of_anoth
 def test_7_an_answer_that_began_before_a_failure_does_not_clear_it(client, tmp_path):
     with live(client, FORGE_BOARD_REBUILD_WAIT="0.5") as url:
         look(url, "late", tmp_path, client)
+
+
+def test_8_a_failure_that_lasts_prints_one_traceback_so_the_board_can_recover(client):
+    # A rebuild that fails again on every look must not fill the board's error output: when that output is a
+    # pipe nobody reads (an agent's, or a test's), the builder blocks on its next traceback, never rebuilds,
+    # and the page shows the failure for good. On Windows a pipe holds about four kilobytes: two tracebacks.
+    branch = client.path / ".git/refs/heads/main"
+    good = branch.read_bytes()
+    with live(client) as url:
+        assert get(url, "/board.json")[0] == 200
+        try:
+            branch.write_bytes(b"garbage\n")
+            assert [get(url, "/board.json")[0] for _ in range(4)] == [500] * 4  # four rebuilds, one failure
+        finally:
+            branch.write_bytes(good)
+        assert get(url, "/board.json")[0] == 200  # the board recovers
+        url.process.terminate()
+        url.process.wait(timeout=30)
+        assert url.process.stderr.read().count("Traceback") == 1

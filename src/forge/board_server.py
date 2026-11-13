@@ -197,7 +197,8 @@ class Snapshots:
                     self.forced = False
                     self.build(seen)
             except Exception as error:  # the waiting request shows it; this thread keeps building
-                traceback.print_exc()
+                if repr(error) != repr(self.failed):  # once for a failure that lasts, so a full error pipe cannot stop us
+                    traceback.print_exc()
                 failed = error
             with self.done:
                 self.finished, self.failed = started, failed
@@ -277,8 +278,9 @@ def handler(snapshots: Snapshots, token: str) -> type[BaseHTTPRequestHandler]:
                 pass  # the page closed or reloaded
             except repo.Refused as refusal:
                 self.say(500, why(refusal))
-            except Exception:
-                traceback.print_exc()
+            except Exception as error:
+                if error is not snapshots.failed:  # the builder has printed that one
+                    traceback.print_exc()
                 self.say(500, UNREADABLE)
 
         def do_POST(self) -> None:
