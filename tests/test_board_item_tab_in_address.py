@@ -10,9 +10,11 @@ way: a teammate's commit on a part's own branch records the owner's choice, so t
 answers are fixtures. No production test seam.
 """
 import json
+from types import SimpleNamespace
 
 import pytest
 
+from test_board_counts import github
 from test_board_plan_stays_open import shop, shown
 from test_board_item_page import PLAN
 from test_board_server import client, live  # noqa: F401
@@ -81,7 +83,8 @@ FOUR = PLAN.replace("| SHOW |", "".join(
 
 def waiting_for_a_choice(client, gh, tmp_path):
     """The shop story, and four more parts under way that each stopped on a question for the owner. That is four
-    asks: Needs you shows three, and the fourth is behind its "and 1 more" list."""
+    asks: Needs you shows three, and the fourth is behind its "and 1 more" list. GitHub holds no pull request, so each
+    part's stage is the one its own branch records, and the shop's first part waits alone in Review."""
     teammate = shop(client, gh, tmp_path, FOUR)
     for number, part in enumerate("ABCD", 1):
         teammate.git("switch", "-qc", f"task/SHOP-{part}")
@@ -92,6 +95,7 @@ def waiting_for_a_choice(client, gh, tmp_path):
         teammate.git("commit", "-qm", f"Part {part}")
         teammate.git("push", "-q", "origin", f"task/SHOP-{part}")
         teammate.git("switch", "-q", "main")
+    github(SimpleNamespace(repo=client, gh=gh), [])
     client.git("fetch", "-q", "origin")
     return teammate
 
@@ -147,14 +151,14 @@ def test_2_escape_does_nothing_on_a_full_item_page_and_closes_only_the_drawer(cl
 
 
 FOCUS = r"""
-def advance(page, part):
-    # A real change: the owner's choice is recorded on the part's own branch, so its ask goes. The board reads
-    # it from the repo, and the page takes the new snapshot.
+def advance(page, part, **more):
+    # A real change on the part's own branch, which the board reads from the repo; the page takes the new snapshot.
+    # By default the owner's choice is recorded, so the part's ask goes.
     before = page.evaluate('window.__version')
     git(teammate, 'switch', '-q', 'task/SHOP-' + part)
     Path(teammate, '.factory/stories/SHOP/tasks/' + part + '.json').write_text(
-        json.dumps({'status': 'working', 'branch': 'task/SHOP-' + part,
-                    'stop': {'at': '2026-11-01T09:00:00+00:00', 'question': 'A choice', 'wait_id': part, 'choice': 'more'}}),
+        json.dumps({'status': 'working', 'branch': 'task/SHOP-' + part, **(more or {
+            'stop': {'at': '2026-11-01T09:00:00+00:00', 'question': 'A choice', 'wait_id': part, 'choice': 'more'}})}),
         encoding='utf-8')
     for args in (['add', '-A'], ['commit', '-qm', 'Work on ' + part], ['push', '-q', 'origin', 'task/SHOP-' + part]):
         git(teammate, *args)
@@ -199,6 +203,26 @@ with sync_playwright() as p:
         page.keyboard.press('Escape')
         expect(drawer).to_have_count(0)
         expect(dialog.locator(':focus')).to_have_count(1)
+        # A browser that does not focus a clicked button (Safari): the click still names the card the focus goes
+        # back to, not the old focus.
+        page.evaluate("addEventListener('mousedown', (e) => e.preventDefault(), true)")
+        building = page.get_by_role('region', name='Building')
+        building.get_by_role('button', name=re.compile('^Choose C')).click()
+        expect(drawer).to_be_visible()
+        page.keyboard.press('Escape')
+        expect(drawer).to_have_count(0)
+        expect(building.get_by_role('button', name=re.compile('^Choose C'))).to_be_focused()
+        # A card that is alone in its stage moves to Building, which already shows four cards, so it is no longer
+        # on the screen and its old stage is empty. Focus lands on a control, not on the page.
+        review = page.get_by_role('region', name='Review')
+        review.get_by_role('button', name=re.compile('^Save a basket')).click()
+        expect(drawer).to_be_visible()
+        advance(page, 'SAVE', stop=None)
+        expect(review).to_contain_text('None.')
+        expect(building.get_by_role('button', name=re.compile('^Save a basket'))).to_have_count(0)
+        page.keyboard.press('Escape')
+        expect(drawer).to_have_count(0)
+        expect(page.locator('main button:focus, main a:focus')).to_have_count(1)
     finally:
         browser.close()
 """

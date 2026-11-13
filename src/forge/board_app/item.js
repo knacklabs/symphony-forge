@@ -54,7 +54,8 @@ function placeOf(control) {
 }
 
 // The opener if it is still on the page, else its key in its place, else the control now nearest its old
-// spot in that place (the item left or moved, so the card is gone), else its key anywhere.
+// spot in that place (the item left or moved, so the card is gone), else its key anywhere, else the first
+// control on the screen: the card can have moved behind an "and N more" button, and focus must not drop to the page.
 function returnTarget({ opener, back }) {
   if (opener?.isConnected) return opener;
   if (!back) return null;
@@ -62,7 +63,8 @@ function returnTarget({ opener, back }) {
   const controls = area ? [...area.querySelectorAll(CONTROLS)] : [];
   return controls.find((one) => one.dataset.focus === back.key)
     || (controls.length ? controls[Math.min(Math.max(back.at, 0), controls.length - 1)] : null)
-    || document.querySelector(`[data-focus="${CSS.escape(back.key)}"]`);
+    || document.querySelector(`[data-focus="${CSS.escape(back.key)}"]`)
+    || document.querySelector(`main:not([hidden]) :is(${CONTROLS})`);
 }
 
 function replaceContent(node, ...children) {
@@ -216,10 +218,12 @@ function closeIcon() {
   return svg;
 }
 
+let pressed = null; // the control under a click while its handler runs
+
 async function openDrawer(id) {
   let row = rows().find((one) => one.id === id);
   // Moving between items inside the drawer keeps its opener; choosing a card outside it makes that card the opener.
-  const from = document.activeElement;
+  const from = pressed || document.activeElement; // Safari does not focus a clicked button, so the click names it
   const inside = drawer?.node.contains(from);
   const opener = inside ? drawer.opener : from;
   const back = inside ? drawer.back : placeOf(from);
@@ -502,6 +506,10 @@ export function install(board) {
   document.head.append(el('link', { rel: 'stylesheet', href: `item.css${TOKEN}` }));
   Object.assign(Board, { select: openDrawer, openDrawer, openItem });
   addEventListener('hashchange', showPage);
+  addEventListener('click', (event) => {
+    pressed = event.target.closest?.(CONTROLS);
+    setTimeout(() => { pressed = null; });
+  }, true);
   // One Escape closes one thing. A drawer sits over a list, so from the list the drawer closes first and the
   // list stays. Inside the drawer a control that closes itself (the assign form) goes first, and stops the event.
   addEventListener('keydown', (event) => {
