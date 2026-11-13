@@ -1,7 +1,14 @@
 {
+  "amendments": [
+    {
+      "at": "2026-11-13T04:50:52.587919+00:00",
+      "because": "An audit on screen found the real cause: every refresh rebuilds each view, and for an unfinished item the data always differs because it holds running time counters; the section itself closes only through a key press after the jump or a reload",
+      "done_when": "After a refresh, a person reading a plan or an item keeps their place and every section they opened, on the board, the full item page and the drawer."
+    }
+  ],
   "base": "a081d814a233ba23bb691e1dd032c49fa10d2ff0",
   "branch": "fix/while-a-person-reads-a-plan-on-the-board",
-  "done_when": "After a refresh, a person reading a plan or an item keeps their place and every section they opened, on the board, the full item page and the drawer.",
+  "done_when": "With a plan open on the full item page, the For the builders section open, the view scrolled far down and text selected, three board refreshes leave the scroll position, the open section, the selection and the same page element; the loading line never shows over a plan that is already on screen; the Releases page keeps its open file and its scroll; the first screen keeps the scroll of its long list; and the full item page opens from the data the page already holds.",
   "fix_kind": "ui",
   "kind": "fix",
   "status": "started",
