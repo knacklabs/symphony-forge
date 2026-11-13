@@ -125,11 +125,13 @@ function more(name, title, entries, shown) {
 }
 
 // A failed full test run has no item to open: its row says whether a fix is under way and opens the run on GitHub.
+// The run's address is in the row's drawing (data-url), so a newer failed run with the same words replaces the row.
 function ask(entry) {
   const verb = VERB[entry.reason] || 'Decide';
   const run = entry.kind === 'run';
   const place = run ? (entry.fixing ? 'Fix in progress' : 'Full test run') : entry.kind === 'fix' ? 'Fix' : key(entry.id);
   return el('button', { type: 'button', class: 'ask', 'data-focus': `ask:${entry.id}:${entry.reason}`,
+    'data-url': run && entry.url,
     onclick: run && entry.url ? () => window.open(entry.url, '_blank', 'noopener') : open(entry) },
     el('span', { class: 'ask-head' }, el('span', { class: 'verb' }, verb), el('span', { class: 'key' }, place)),
     el('span', { class: 'ask-title' }, entry.title));
@@ -223,8 +225,8 @@ function full(shown) {
   return panel;
 }
 
-function refocus(name) {
-  document.querySelector(`[data-focus="${CSS.escape(name)}"]`)?.focus();
+function refocus(name, options) {
+  document.querySelector(`[data-focus="${CSS.escape(name)}"]`)?.focus(options);
 }
 
 let last = [];
@@ -242,7 +244,7 @@ function render(main, snapshot) {
         el('div', { class: 'stages' }, STAGES.map((entry) => stage(entry, shown)))),
       full(shown) || rail(shown)),
     figures(shown));
-  if (!Board.show(screen)) return;
+  Board.show(screen);
   if (opening) refocus('list');
-  else if (focused) refocus(focused);
+  else if (focused && document.activeElement?.dataset?.focus !== focused) refocus(focused, { preventScroll: true }); // a redraw replaced it
 }
