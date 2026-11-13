@@ -102,8 +102,8 @@
       "gain": 3,
       "harm": 3,
       "line": 97,
-      "outcome": "open",
-      "reason": "",
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: The owner accepts the three notes as follow-ups: the promised line works; a failed plan read in the line, an immediate retry of an item's first failed read and a changed reason on a second failure become one small follow-up change",
       "round": 5,
       "security": false,
       "title": "Not done: Show failed reads of a story's plan",
@@ -115,8 +115,8 @@
       "gain": 3,
       "harm": 3,
       "line": 142,
-      "outcome": "open",
-      "reason": "",
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: The owner accepts the three notes as follow-ups: the promised line works; a failed plan read in the line, an immediate retry of an item's first failed read and a changed reason on a second failure become one small follow-up change",
       "round": 5,
       "security": false,
       "title": "Not done: Retry an item's first failed read",
@@ -128,8 +128,8 @@
       "gain": 3,
       "harm": 3,
       "line": 376,
-      "outcome": "open",
-      "reason": "",
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: The owner accepts the three notes as follow-ups: the promised line works; a failed plan read in the line, an immediate retry of an item's first failed read and a changed reason on a second failure become one small follow-up change",
       "round": 5,
       "security": false,
       "title": "Not done: Update the reason when a rebuild fails for a different cause",
@@ -141,8 +141,8 @@
       "gain": 2,
       "harm": 2,
       "line": 263,
-      "outcome": "lived with",
-      "reason": "",
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: The owner accepts the three notes as follow-ups: the promised line works; a failed plan read in the line, an immediate retry of an item's first failed read and a changed reason on a second failure become one small follow-up change",
       "round": 5,
       "security": false,
       "title": "Follow-up: Discard failures belonging to views that have been left",
@@ -154,7 +154,28 @@
     "branch_diff": "bdf781889b22716fb0c362f2062fefcd0df85565d69d724d774ae66ab47fba36",
     "changed": "929aa76e8ec545f73b186aee444bd1307d7754dd5603120b6c047f99eb40844d",
     "commit": "edb313d913cdf036b1fcc5ab1b1603a8e97846ae",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: The owner accepts the three notes as follow-ups: the promised line works; a failed plan read in the line, an immediate retry of an item's first failed read and a changed reason on a second failure become one small follow-up change",
+        "finding": 1
+      },
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: The owner accepts the three notes as follow-ups: the promised line works; a failed plan read in the line, an immediate retry of an item's first failed read and a changed reason on a second failure become one small follow-up change",
+        "finding": 2
+      },
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: The owner accepts the three notes as follow-ups: the promised line works; a failed plan read in the line, an immediate retry of an item's first failed read and a changed reason on a second failure become one small follow-up change",
+        "finding": 3
+      },
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: The owner accepts the three notes as follow-ups: the promised line works; a failed plan read in the line, an immediate retry of an item's first failed read and a changed reason on a second failure become one small follow-up change",
+        "finding": 4
+      }
+    ],
     "findings": [
       {
         "body": "Gain 3, Work 2, Harm 3\nRaise: Not done - A plan read can fail while its old contents remain marked Live with no explanation.\nCase: normal use - A person has opened a story's Plan tab, then a later plan request fails while the snapshot stream remains healthy. The plan request can fail independently, for example when local and published plan edits conflict (src/forge/story.py:624). The new read hook does not cover the direct fetch at src/forge/board_app/item.js:397, and item.js:409-410 silently retains the previously read plan. This is new evidence against the earlier assumption that this path always displays its error in place.",
@@ -201,10 +222,10 @@
       }
     ],
     "id": "500fff9d-c032-47ea-9fed-61313c94c76b",
-    "status": "blocked"
+    "status": "clean"
   },
   "round": 6,
-  "status": "hotspot",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-13T04:52:42.920473+00:00",
@@ -233,8 +254,12 @@
   ],
   "stop": {
     "at": "2026-11-13T09:08:13.748396+00:00",
+    "by": "owner",
+    "choice": "accept",
     "file": "src/forge/board_app/app.js",
-    "wait_id": "97ec7fde-c09d-49c6-96b9-05d014ce0647"
+    "reason": "The owner accepts the three notes as follow-ups: the promised line works; a failed plan read in the line, an immediate retry of an item's first failed read and a changed reason on a second failure become one small follow-up change",
+    "wait_id": "97ec7fde-c09d-49c6-96b9-05d014ce0647",
+    "worker_round": 6
   },
   "stuck": {
     "close": "0d14eba0-d4d8-4a3e-baf6-cdc5e33cd4ee",
