@@ -107,8 +107,8 @@
     "id": "202fbbbe-480c-4352-8cac-f5e1ca86fab7",
     "status": "clean"
   },
-  "round": 5,
-  "status": "waiting for checks",
+  "round": 6,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-13T04:52:42.920473+00:00",
@@ -141,10 +141,10 @@
     "worker_round": 3
   },
   "stuck": {
-    "close": "0e4f00f9-8b50-4b93-b990-b6f4d2c51da4",
-    "head": "8e5f49766f2680465d2a56e40df094e0aa4ca520",
+    "close": "0d14eba0-d4d8-4a3e-baf6-cdc5e33cd4ee",
+    "head": "259c1c5d57f28ef16dd72d3c2b2e9c54ad6dc77c",
     "keys": {},
-    "round": 4
+    "round": 5
   },
   "why": "The board looks live when its data is old: a stopped server, a failed read and a restart all leave only a small grey Offline word, and after a restart the old page stays Offline because the new board has a new address.",
   "worker": "claude"
