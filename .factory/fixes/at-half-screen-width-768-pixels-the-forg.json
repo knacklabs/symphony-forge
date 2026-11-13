@@ -1,0 +1,15 @@
+{
+  "base": "6f59a2bc0698eea1c962260f1176be01582bb4b8",
+  "branch": "fix/at-half-screen-width-768-pixels-the-forg",
+  "done_when": "At 768 pixels wide the board shows all five stages and the plan with no sideways scrolling of the page.",
+  "fix_kind": "ui",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-13T08:01:34.889922+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "At half-screen width (768 pixels) the Forge board cannot be read: the five stage columns are too narrow, card titles are tiny, the plan is squeezed beside a fixed summary, the tasks table spills out of its box and loses its header, section and sub-section headings look the same, the \"For the builders\" line is small and grey, and three controls are under 24 pixels high."
+}
