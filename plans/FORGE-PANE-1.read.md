@@ -1,18 +1,18 @@
 ---
 reader: codex (gpt-6.1-terra)
-read_at: 2026-11-13T08:14:19.876906+00:00
-seconds: 692.26
-read_hash: ba45440024c51ad1aba75cc1c54b393cc9a700ab
-round: 4
+read_at: 2026-11-13T08:31:12.497015+00:00
+seconds: 322.713
+read_hash: 39c153829eda2b7c843939e77ca324650ae4cb94
+round: 5
 passed: no
-doc_seen: ba45440024c51ad1aba75cc1c54b393cc9a700ab
+doc_seen: 39c153829eda2b7c843939e77ca324650ae4cb94
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 8312c2d05ca214500184d14576aae58aa8ac6053
+notes_seen: 2c817c66b4d534f401b3ff687c762c92d1b59385
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a1d3a1-e831-77b1-bb3d-127c2003a663
 session:
-loop_choice: more
-loop_reason: The owner chose the simple needs-you rule at the read limit; the plan is amended to it and needs a read before he can approve it
+loop_choice: accept
+loop_reason: The owner accepts it as a known issue: while a repo is being moved into Forge for the first time, the needs-you line does not see a question from that repo
 ---
 # Cold read notes
 
@@ -300,3 +300,11 @@ Only a genuine trade-off goes to the human, as a question with options.
     Raise: Not done. When Forge is installed from its source and the pane runs in an older worktree of that source, [the CLI runs that checkout’s code](/src/forge/cli.py:117). Its older `lanes` command can omit other releases and `needs_you`, yet [the pane stores its answer under the shared key](/plans/FORGE-PANE-1.md:119). Another session can initially show that incomplete answer.
     Gain 3, Work 3, Harm 3
     Disposition: cut — The pane stores only answers that carry needs_you (this release's shape); an older checkout's answer is shown but never stored.
+
+## Round 5
+
+52. Advisory: Needs-you misses a repo until its adoption or migration merges.
+    Raise: Not done. During [adoption](/src/forge/init.py:422) or [migration](/src/forge/migrate.py:218), `forge.toml` is in the new worktree while the main checkout remains unchanged. [The repo registry](/src/forge/machine.py:114) excludes a main checkout without that file, so the planned scan never reaches those worktrees. A question or stop there is omitted, despite the migration case in [the planned test](/plans/FORGE-PANE-1.md:147).
+    Adds work: remember repos with an adoption or migration worktree; F 1 x H 2 = 2; 2 x C = 2
+    Gain 3, Work 2, Harm 4
+   Disposition: keep - The owner accepts it as a known issue: while a repo is being moved into Forge for the first time, the needs-you line does not see a question from that repo
