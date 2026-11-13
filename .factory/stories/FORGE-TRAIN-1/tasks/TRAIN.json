@@ -1,12 +1,20 @@
 {
   "base": "1b01eeada9b832c7eb00ac07c12b79bc58341408",
   "branch": "task/FORGE-TRAIN-1-TRAIN",
+  "round": 1,
   "stacked_on": "FORGE-NIGHTLY-1/NIGHTLY",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-13T02:39:41.218115+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "33e086b56d5717d392376713cc50f5b2d9f890d6",
+    "keys": {},
+    "round": null
+  },
+  "worker": "claude"
 }
