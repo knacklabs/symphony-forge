@@ -141,7 +141,8 @@ reset password, accept invite, members and settings.
 
 - shadcn's data table (TanStack Table) with sorting, filters, pagination, column visibility, row
   actions and bulk select. Records are worked in lists.
-- Page, sort, filters and search live in the URL. A shared link or a refresh shows the same view.
+- Page, sort, filters, search and the open tab of a detail page live in the URL. A shared link or a
+  refresh shows the same view.
 
 ## 5. Forms
 
@@ -166,6 +167,10 @@ reset password, accept invite, members and settings.
 - Empty states that say what the screen is for and offer the next action as a button. A new user
   knows what to do first.
 - Errors that say what happened, in plain words, and offer retry. The client can recover alone.
+- A background refresh keeps the screen. Show the loading state only when there is no data yet.
+  On a refetch, keep the shown data, scroll position, open sections, selection, focus and typed
+  text, and change only what changed. A browser test scrolls, opens a section, lets two refetches
+  pass and checks both.
 
 ## 8. Everywhere
 
