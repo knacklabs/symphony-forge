@@ -133,6 +133,13 @@ main:not([hidden]):has(> .now) {
   font-weight: 600;
 }
 
+/* A card or a merged line shows its whole title: it wraps, and a word longer than the box breaks. */
+.chip-title, .done button {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-overflow: clip;
+}
+
 :scope .now-more {
   align-self: center;
   border: 0;
@@ -230,21 +237,22 @@ main:not([hidden]):has(> .now) {
 .chip[data-tone="ready"], .chip[data-tone="merged"] { border-left-color: var(--ready); }
 .chip[data-stage="checks failed"], .chip[data-stage="hotspot"] { border-color: var(--stuck); }
 
+/* A long key keeps all its letters: the tags drop to a second line before the key is cut. */
 .chip-meta {
   display: flex;
-  justify-content: space-between;
-  gap: var(--space-2);
+  flex-wrap: wrap;
+  gap: 0 var(--space-2);
   white-space: nowrap;
 }
 
-/* A long key gives way to the tag: it is cut to fit, never pushed out of the card. */
 .chip-meta .key {
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .chip-meta .now-tag { flex: none; }
+.chip-meta .key + .now-tag { margin-left: auto; }
 
 .now-tag {
   border-radius: var(--radius-tag);
@@ -252,7 +260,7 @@ main:not([hidden]):has(> .now) {
   border: 1px dashed var(--ink-2);
 }
 
-.now-tag[data-note="checks failed"] {
+.now-tag[data-note="checks failed"], .now-tag[data-note="idle"] {
   border: 0;
   color: var(--stuck);
   font-weight: 600;

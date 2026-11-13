@@ -93,11 +93,12 @@ with sync_playwright() as p:
     try:
         page = opened(browser.new_page(viewport={'width': 1440, 'height': 900}, color_scheme='light'), url, 'light')
         if mode == 'client':
-            # One laptop window, no scrolling, and about 120 words a reader sees: not numbers, not story
-            # keys, and not the hidden end of a title cut to one line.
+            # One laptop window, no scrolling, and about 140 words a reader sees: not numbers and not story
+            # keys. Cards wrap their whole titles and the rail says "No owner yet", so the count is higher
+            # than when titles were cut to one line and the rail said "unknown".
             assert page.evaluate('document.documentElement.scrollHeight <= innerHeight'), 'the page scrolls'
             words = page.evaluate(SEEN)
-            assert 100 <= len(words) <= 130, (len(words), ' '.join(words))
+            assert 100 <= len(words) <= 150, (len(words), ' '.join(words))
             # Every card keeps its title, key and tag inside its own box, and Merged counts one set:
             # the merged items of the last 7 days, shown and in its "and N more".
             needs = page.get_by_role('region', name='Needs you')

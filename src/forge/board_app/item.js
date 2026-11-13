@@ -144,10 +144,18 @@ function roundWhat(round) {
   return recordedWords(text, recordedWords(text.split(' — ')[0]));
 }
 
+// A story is reviewed through its parts, so its rounds are its parts' rounds, each named by its part.
+function roundsOf(row) {
+  if (row.rounds || row.kind !== 'story') return row.rounds;
+  const list = row.children.flatMap((part) => (part.rounds || []).map((round) => ({ ...round, part: part.id.split('/')[1] })));
+  return list.length ? list : undefined;
+}
+
 function figures(row) {
   const count = row.findings?.count;
+  const rounds = roundsOf(row);
   return el('dl', { class: 'figures' },
-    [['review rounds', row.rounds ? row.rounds.reduce((total, round) => total
+    [['review rounds', rounds ? rounds.reduce((total, round) => total
       + (round.first != null && round.last != null ? round.last - round.first + 1 : 1), 0) : row.round ?? 'unknown'],
      ['known issues kept', issues(row).length],
      ['open findings', typeof count === 'number' ? count : 'unknown']]
@@ -171,11 +179,11 @@ function timeBar(row) {
 }
 
 function roundList(row, limit) {
-  const list = (row.rounds || []).slice(-limit);
+  const list = (roundsOf(row) || []).slice(-limit);
   if (!list.length) return el('p', { class: 'quiet' }, 'No review rounds yet. They show here once the work is reviewed.');
   return el('ol', { class: 'rounds' }, list.map((round) => el('li', {},
     el('span', { class: `dot ${round.findings?.length || round.new_findings ? 'stuck' : 'moving'}`, 'aria-hidden': 'true' }),
-    el('span', { class: 'what' }, el('strong', {}, `${roundName(round)}: `), roundWhat(round)),
+    el('span', { class: 'what' }, el('strong', {}, `${round.part ? `${round.part}, ` : ''}${roundName(round)}: `), roundWhat(round)),
     el('span', { class: 'took' }, duration(roundSeconds(round))))));
 }
 
@@ -479,7 +487,7 @@ function roundsTab(row) {
       el('ol', { class: 'rounds' }, reads.map((read) => el('li', {},
         el('span', { class: 'dot waiting', 'aria-hidden': 'true' }),
         el('span', { class: 'what' }, el('strong', {}, `Read ${read.round}: `),
-          `${read.findings?.length ?? 'unknown'} notes`),
+          read.findings ? `${read.findings.length} ${read.findings.length === 1 ? 'note' : 'notes'}` : 'unknown notes'),
         el('span', { class: 'took' }, read.read_at ? day(read.read_at) : 'unknown'))))) : null,
   ].filter(Boolean);
 }

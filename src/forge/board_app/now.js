@@ -110,11 +110,13 @@ function open(item) {
 
 function card(row, focus = `card:${row.id}`) {
   const note = row.stage === 'Can start now' ? 'can start' : row.stage === 'checks failed' ? 'checks failed' : null;
+  const idle = row.stalled && typeof row.idle_seconds === 'number' ? `idle ${hours(row.idle_seconds)}` : null;
   return el('button', { type: 'button', class: 'chip', 'data-tone': STAGE_OF[row.stage] || 'planned',
     'data-stage': row.stage, 'data-focus': focus, onclick: open(row) },
-  el('span', { class: 'chip-title' }, row.title),
+  el('span', { class: 'chip-title', title: row.title }, row.title),
   el('span', { class: 'chip-meta' }, el('span', { class: 'key' }, row.kind === 'fix' ? 'Fix' : key(row.id)),
-    note && el('span', { class: 'now-tag', 'data-note': note }, note)));
+    note && el('span', { class: 'now-tag', 'data-note': note }, note),
+    idle && el('span', { class: 'now-tag', 'data-note': 'idle' }, idle)));
 }
 
 function more(name, title, entries, shown) {
@@ -169,7 +171,7 @@ function stage([name, title], shown) {
   if (name === 'merged') {
     return el('section', { class: 'stage', 'aria-label': title }, head,
       rows.length ? el('ul', { class: 'done' }, rows.slice(0, MERGED).map((row) => el('li', {},
-        el('button', { type: 'button', 'data-focus': `card:${row.id}`, onclick: open(row) }, row.title))))
+        el('button', { type: 'button', title: row.title, 'data-focus': `card:${row.id}`, onclick: open(row) }, row.title))))
         : el('p', { class: 'note' }, 'None.'),
       more(name, title, rows, MERGED));
   }
@@ -186,7 +188,7 @@ function story(map) {
       'aria-label': `${map.parts.filter((part) => part.status === 'Merged').length} of ${map.parts.length} parts merged` }, map.parts.map((part) =>
       el('span', { 'data-status': part.status }))),
     el('span', { class: 'chip-meta' }, el('span', { class: 'key' }, map.id),
-      el('span', { class: 'owner' }, map.owner ? `@${map.owner.replace(/^@/, '')}` : 'unknown'))));
+      el('span', { class: 'owner' }, map.owner ? `@${map.owner.replace(/^@/, '')}` : 'No owner yet'))));
 }
 
 function rail(shown) {
