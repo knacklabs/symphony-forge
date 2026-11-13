@@ -153,6 +153,17 @@
       "item": "FORGE-TRAIN-1/TRAIN",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/nextstep.py\tA pull request ready by a clean review record or an earlier release's state has no receipt that forge merge accepts, so a direct forge merge of it stops with no clean ready record.",
+      "kind": "edge",
+      "path": "src/forge/nextstep.py",
+      "line": 887,
+      "text": "A pull request ready by a clean review record or an earlier release's state has no receipt that forge merge accepts, so a direct forge merge of it stops with no clean ready record.",
+      "from": "worker",
+      "item": "FORGE-TRAIN-1/TRAIN",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
