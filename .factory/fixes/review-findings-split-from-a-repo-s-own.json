@@ -112,7 +112,7 @@
   },
   "round": 1,
   "stacked_on": "a-repo-s-own-fast-test-ran-only-the-chan",
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-13T02:08:46.213465+00:00",
@@ -125,8 +125,12 @@
   ],
   "stop": {
     "at": "2026-11-13T03:13:39.455986+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "src/forge/fasttest.py",
-    "wait_id": "9fd39b69-129f-4855-8ef0-a23ff5fe0468"
+    "reason": "The owner chose one more round: repair all four notes",
+    "wait_id": "9fd39b69-129f-4855-8ef0-a23ff5fe0468",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
