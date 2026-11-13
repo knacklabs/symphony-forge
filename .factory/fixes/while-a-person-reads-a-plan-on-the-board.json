@@ -31,7 +31,7 @@
       "gain": 4,
       "harm": 3,
       "line": 274,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -44,7 +44,7 @@
       "gain": 4,
       "harm": 3,
       "line": 33,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -57,7 +57,7 @@
       "gain": 3,
       "harm": 3,
       "line": 212,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -70,7 +70,7 @@
       "gain": 3,
       "harm": 3,
       "line": 245,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -80,68 +80,28 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "71fc09787659250a79fef3d745a21edfb0c7cc12ae23e3636192775db106c8e6",
-    "changed": "0cdc92a5af238302da9aa492c68506ea9fd5113a389b542f1e7985c10910e0e6",
-    "commit": "bdd72c1f933d1090a7a80829c298053640ae7ca4",
+    "branch_diff": "5df01ba8552a52999af445cf78bb74eb8ef3389ba2cab3277843ebaec332dece",
+    "changed": "943e26c4bbb3323e26b0a583017e2625ffc4ba5fc60f8cbd5616d13d38a9cb0f",
+    "commit": "f1f6fccb5cc08abf994770e74e340c90d96a70fe",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 5, Work 2, Harm 3\nRaise: Not done\nDone when: With a plan open on the full item page, the For the builders section open, the view scrolled far down and text selected, three board refreshes leave the scroll position, the open section, the selection and the same page element; the loading line never shows over a plan that is already on screen; the Releases page keeps its open file and its scroll; the first screen keeps the scroll of its long list; and the full item page opens from the data the page already holds.\nCase: normal use - A teammate pushes a commit while Releases is open. The untrimmed response includes volatile machine load and memory readings (src/forge/board.py:828 and src/forge/machine.py:487), so comparing the entire response treats invisible changes as page changes and replaces the page, closing the file and resetting its scroll. These volatile fields are new evidence not addressed by the ruling to compare response text.\nCase: normal use - A different card or count changes while the first screen's long list is open. src/forge/board_app/now.js:245 replaces the whole screen, resetting the list's scroll.\nCase: normal use - A teammate edits another part of the open plan. src/forge/board_app/item.js:389 replaces every plan child, removing the selected text nodes and the original open section element.",
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done\nCase: normal use - A teammate adds a paragraph before the open For the builders section while text inside it is selected. The plan renderer places that paragraph before the details element (src/forge/board_app/markdown.js:94\u2013107), but the positional patch at src/forge/board_app/app.js:40\u201348 replaces the old details element with the paragraph and appends a new details element. The selection and original section element are lost.\nCase: normal use - A merged fix adds a known issue for a file sorted before the open file. Releases sorts the rows at src/forge/board_app/releases.js:157\u2013176; the positional patch keeps the open details element at its old position but changes it to a different file, leaving the original file closed.\nCase: normal use - The last sign-off question is answered while a first-screen list is open. The optional sign-off section disappears (src/forge/nextstep.py:117\u2013135 and src/forge/board_app/now.js:239\u2013245), so positional matching replaces the work region containing the list and loses its scroll.",
         "file": "src/forge/board_app/releases.js",
-        "gain": 5,
+        "gain": 4,
         "harm": 3,
-        "line": 75,
+        "line": 76,
         "priority": "P1",
         "required_done_when": true,
         "title": "Not done: Refreshes can still discard the plan selection, the open Releases file, and list scroll",
         "work": 2
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - A story remains in progress for more than a week after one of its parts was merged. The held Now snapshot omits expired parts (src/forge/board.py:916 and :651), but showPage now uses that trimmed story directly. The full page consequently omits the older part from its Parts list. Previously it read the untrimmed item at src/forge/board_server.py:328. The new snapshot handler also replaces an initially untrimmed row with the trimmed one at item.js:445.",
-        "file": "src/forge/board_app/item.js",
-        "gain": 4,
-        "harm": 3,
-        "line": 274,
-        "priority": "P1",
-        "title": "Keep older parts in a story's full history",
-        "work": 2
-      },
-      {
-        "body": "Gain 4, Work 1, Harm 3\nRaise: Functional\nCase: normal use - A scheduled full test run fails again while the previous failure is still shown. Its workflow, branch, title, and displayed state remain the same, but the new run has a different URL. DOM equality does not compare event listeners, so this return keeps the old button and its captured URL from now.js:133. Clicking the row opens the previous failure rather than the latest one.",
-        "file": "src/forge/board_app/app.js",
-        "gain": 4,
-        "harm": 3,
-        "line": 33,
-        "priority": "P1",
-        "title": "Refresh the destination of a failed-run button",
-        "work": 1
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - A plan changes while a reader has text selected. After the real edit, test_2 omits both the selected words and the original fold from its assertions, and checks the owner in the summary rather than confirming the plan text changed. test_1 likewise checks the summary and an unchanged link at lines 49\u201350. Both can pass if the old plan remains on screen; test_2 also passes when replacement clears the selection.\nCase: normal use - Releases refreshes while other work is unfinished. test_4 creates a merged fix at lines 288\u2013291, while the test launcher freezes machine readings (tests/conftest.py:54\u201369). It therefore misses the changing response data that makes the implementation redraw the open file.\nCase: normal use - A different visible board region changes while the first-screen list is open. test_5 refreshes only an unrelated notes file at lines 319\u2013320, so it passes even though that visible change replaces the list and resets its scroll.",
-        "file": "tests/test_board_plan_stays_open.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 212,
-        "priority": "P1",
-        "title": "Gate: the plan, Releases and first-screen refresh tests",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Gate\nCase: normal use - A reader uses one of the changed board screens. The board has Playwright browser tests, but none lists the changed Now, item, Releases, or Insights screens with checkScreen, so the required rendered check does not inspect them. The shared Releases loader also affects Insights.\nAdds work: add rendered checks for the changed screens; F 3 x H 2 = 6; 2 x C = 4.",
-        "file": "src/forge/board_app/now.js",
-        "gain": 3,
-        "harm": 3,
-        "line": 245,
-        "priority": "P1",
-        "title": "Gate: rendered check",
-        "work": 2
       }
     ],
-    "id": "17d8725b-1ed4-4f0a-b614-e9ed7e901b55",
+    "id": "ef0b6ec5-e7fd-46db-964c-1c6d8bf0933e",
     "status": "blocked"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-13T04:00:53.113339+00:00",
@@ -150,8 +110,17 @@
     {
       "at": "2026-11-13T05:24:55.275725+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-11-13T06:31:39.309426+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-11-13T06:31:39.309682+00:00",
+    "file": "src/forge/board_app/releases.js",
+    "wait_id": "4ba18309-71b2-480b-9b35-adc972d20ec9"
+  },
   "stuck": {
     "close": "9a0ee19b-eef6-4dbc-92bf-ff73cb80145b",
     "head": "b1fdb49a1b8d5d491d04c4fb8892a46928c6fb79",
