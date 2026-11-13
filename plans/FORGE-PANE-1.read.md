@@ -1,18 +1,18 @@
 ---
 reader: codex (gpt-6.1-terra)
-read_at: 2026-11-13T07:17:10.165287+00:00
-seconds: 685.259
-read_hash: c1d2b2ad896b974cd342601609a9abc61666920d
-round: 2
+read_at: 2026-11-13T07:34:38.210206+00:00
+seconds: 577.217
+read_hash: dc2a7e3cc50e5e0a0b144d5874e5c701dd0ec0df
+round: 3
 passed: no
-doc_seen: c1d2b2ad896b974cd342601609a9abc61666920d
+doc_seen: dc2a7e3cc50e5e0a0b144d5874e5c701dd0ec0df
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 490e9a85d168ee9f916a3db7ef44e244fc8115cc
+notes_seen: 2e6a708e9e267ec5f547373b2c2e3a9f6b934081
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a1d3a1-e831-77b1-bb3d-127c2003a663
 session:
-loop_choice: more
-loop_reason: The owner chose one more round: repair the three blocking notes and the small ones
+loop_choice:
+loop_reason:
 ---
 # Cold read notes
 
@@ -199,3 +199,61 @@ Only a genuine trade-off goes to the human, as a question with options.
     Raise: Not done. [Claude’s session root](/tests/fixtures/claude-code-684800b206824dfd0cc8a876e8604b20f72c3617.d.ts:2363) can be the directory where the session started. If that is `/repo/src`, [the startup check](/plans/FORGE-PANE-1.md:118) looks for `/repo/src/forge.toml`, so it does not open the pane even when `/repo/forge.toml` exists.
     Gain 3, Work 3, Harm 3
     Disposition: cut — The pane walks up from the session root to the folder holding .git and looks for forge.toml there.
+
+## Round 3
+
+33. Blocking: The new guide folder can still overwrite a team file.
+    Raise: Data loss. Case: normal use - An existing repo has Forge’s old skill and a team-owned `.claude/skills/forge-guide/run-reference.md`, but no `SKILL.md` in the new folder. [The new guard](/plans/FORGE-PANE-1.md:136) does not refuse, and [sync overwrites the file](/src/forge/sync.py:589). Finding 22 remains open for files alongside the new skill.
+    Gain 5, Work 3, Harm 4
+
+34. Blocking: A refused sync can replace a team’s instruction link.
+    Raise: Data loss. Case: normal use - A repo has the conflicting guide skills and a `CLAUDE.md` symlink to `AGENTS.md`. [Sync replaces that link with a regular file](/src/forge/sync.py:577) before it calls the proposed refusal in `story.ships`. The link is lost even though [the plan promises no changes on refusal](/plans/FORGE-PANE-1.md:15).
+    Gain 4, Work 2, Harm 4
+
+35. Blocking: An exact guide copy can still be a file the team added.
+    Raise: Data loss. Case: normal use - A v1.2.2 repo’s team copied a later Forge `run-reference.md` into the old guide folder. [That release did not ship the file](/tests/fixtures/forge-v1.2.2/src/forge/story.py:85), but [the hash rule](/plans/FORGE-PANE-1.md:136) deletes it because its text matches a later release. Finding 23 remains open: matching content does not establish who added the file.
+    Gain 5, Work 3, Harm 4
+
+36. Blocking: A changed old skill leaves `/forge` owned after sync succeeds.
+    Raise: Functional. Case: normal use - A team has changed its old `forge/SKILL.md`. On its first upgrade, the new skill does not yet exist, so [the guard](/plans/FORGE-PANE-1.md:136) allows sync to create it while preserving the changed old skill. The old skill still owns `/forge`, so the pane cannot open after the reported successful sync.
+    Gain 5, Work 3, Harm 4
+
+37. Blocking: An answer can be marked handled before a worker receives it.
+    Raise: Data loss. Case: normal use - A person answers a question while the machine is busy, then cancels the queued work command. [The new rule](/plans/FORGE-PANE-1.md:120) records only the answered question’s ID before admission; [the answer text is committed only after admission](/src/forge/worker.py:299). The answer never reaches a worker, but the pane stops showing the question.
+    Adds work: retain the answer until a worker can receive it; F 2 x H 2 = 4; 2 x C = 4
+    Gain 3, Work 3, Harm 4
+    Disposition: cut — answered_id is written only by the round that carries the answer, right after its state commit holding Coordinator note and Answer, which comes after admission and before the worker starts; a cancelled queued command leaves the question shown.
+
+38. Blocking: Questions recorded by an earlier release disappear.
+    Raise: Not done. Case: normal use - A repo has an unanswered question from Forge v1.2.2. [That worker recorded the question without a question ID](/tests/fixtures/forge-v1.2.2/src/forge/worker.py:183). Under [the new comparison](/plans/FORGE-PANE-1.md:120), both IDs are absent and equal, so the pane says nothing needs the person.
+    Gain 3, Work 3, Harm 4
+    Disposition: cut — A question without a question_id (the v1.2.2 shape) always counts until a round clears it; only a present question_id equal to answered_id hides it.
+
+39. Blocking: An earlier release’s run clock can reset on its second launch.
+    Raise: Not done. Case: normal use - An older build remains running during an upgrade and receives the normal commit nudge. [The older worker resets `started_at`](/src/forge/machine.py:322), and [the revised rule falls back to that value](/plans/FORGE-PANE-1.md:125) for earlier releases. Finding 12 therefore remains open for those runs.
+    Gain 3, Work 2, Harm 3
+    Disposition: cut — An entry without first_started_at counts from joined_at, which earlier releases also set once per round, so a second launch never resets it.
+
+40. Blocking: Doctor can hold back an exact old guide that the plan says it repairs.
+    Raise: Not done. Case: normal use - A client committed a previous `forge sync` separately from its version-pin change. Even when the old guide matches the frozen hash list, [doctor’s existing ownership check](/src/forge/doctor.py:203) holds a file last changed by that ordinary commit back. This contradicts [the promised repair](/plans/FORGE-PANE-1.md:136) and can leave the old skill owning `/forge`.
+    Gain 4, Work 3, Harm 4
+
+41. Advisory: A build can appear to wait after its tests have returned its place.
+    Raise: Functional. [Returning from tests clears `started_at`](/src/forge/machine.py:345), and re-admission sets `admitted` without restoring it. [The planned rule](/plans/FORGE-PANE-1.md:117) therefore labels the resumed build as waiting.
+    Gain 3, Work 3, Harm 3
+    Disposition: cut — waiting is now place above 0 or machine._admitted false, so a build that got its place back is not waiting.
+
+42. Advisory: The review-output test can pass with an empty live log.
+    Raise: Test. [DATA’s test](/plans/FORGE-PANE-1.md:150) checks only that the review output path exists. A buffered writer that does not flush until the review ends passes that check, while a person opening the output during the review sees no lines.
+    Gain 3, Work 3, Harm 3
+    Disposition: cut — The review log is flushed after each line, and test_3 reads it while the stub reviewer still runs.
+
+43. Advisory: Queue order can differ from the promised start order.
+    Raise: Not done. [Forge prioritizes some later arrivals](/src/forge/machine.py:615), so they can start before an earlier waiting build. [The planned drawing](/plans/FORGE-PANE-1.md:128) sorts by join time instead of start time.
+    Gain 3, Work 3, Harm 3
+    Disposition: cut — One stated key, joined_at then id (the order Forge took the rows in); the owner text and done-when 3 now say that order instead of start order.
+
+44. Advisory: Changing repos during a session leaves the pane’s repo identity stale.
+    Raise: Not done. [Claude’s session root changes on `/cd`](/tests/fixtures/claude-code-684800b206824dfd0cc8a876e8604b20f72c3617.d.ts:2362), but [the plan finds the repo only at session start](/plans/FORGE-PANE-1.md:123). After moving to another repo, its rows and questions are labelled relative to the first one.
+    Gain 3, Work 3, Harm 3
+    Disposition: cut — The pane finds its repo again at each read and each /forge, so a /cd moves the labels with it.
