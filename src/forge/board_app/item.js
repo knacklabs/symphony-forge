@@ -11,7 +11,7 @@ const STAGES = {
 const TONE = { Building: 'moving', Review: 'moving', Ready: 'ready', Merged: 'ready', Planned: 'waiting' };
 
 let Board;
-let drawer = null; // { id, node, opener, seen }
+let drawer = null; // { id, node, opener, back, seen }: back is where the opener sat, see placeOf
 let page = null; // { id, node, tab, row, whole, reading }
 const planFolds = new Map(); // story -> section open states, for this board session
 const plans = new Map(); // story -> its plan as last read: { text }, or { reason, alert } while none has been read
@@ -37,6 +37,34 @@ function refocus(node, key) {
   if (!control) return;
   if (control.tagName !== 'SUMMARY') control.closest('details:not([open])')?.setAttribute('open', '');
   control.focus({ preventScroll: true });
+}
+
+// Where a control sits: its key, the labelled part of the screen around it, and its place among that part's
+// controls. The same item can show in two places (the Needs you strip and a full list), and a refresh can draw
+// the control again, so Escape finds it again in the place the drawer was opened from.
+const CONTROLS = 'a, button, summary, [tabindex]:not([tabindex="-1"])';
+
+function placeOf(control) {
+  const key = control?.dataset?.focus;
+  const area = control?.closest?.('section[aria-label], [role=dialog]');
+  if (!key) return null;
+  const label = area?.getAttribute('aria-label');
+  const where = !area ? null : label ? `section[aria-label="${CSS.escape(label)}"]` : '[role=dialog]';
+  return { key, where, at: area ? [...area.querySelectorAll(CONTROLS)].indexOf(control) : -1 };
+}
+
+// The opener if it is still on the page, else its key in its place, else the control now nearest its old
+// spot in that place (the item left or moved, so the card is gone), else its key anywhere, else the first
+// control on the screen: the card can have moved behind an "and N more" button, and focus must not drop to the page.
+function returnTarget({ opener, back }) {
+  if (opener?.isConnected) return opener;
+  if (!back) return null;
+  const area = back.where && document.querySelector(back.where);
+  const controls = area ? [...area.querySelectorAll(CONTROLS)] : [];
+  return controls.find((one) => one.dataset.focus === back.key)
+    || (controls.length ? controls[Math.min(Math.max(back.at, 0), controls.length - 1)] : null)
+    || document.querySelector(`[data-focus="${CSS.escape(back.key)}"]`)
+    || document.querySelector(`main:not([hidden]) :is(${CONTROLS})`);
 }
 
 function replaceContent(node, ...children) {
@@ -190,12 +218,18 @@ function closeIcon() {
   return svg;
 }
 
+let pressed = null; // the control under a click while its handler runs
+
 async function openDrawer(id) {
   let row = rows().find((one) => one.id === id);
-  const opener = drawer?.opener || document.activeElement;
+  // Moving between items inside the drawer keeps its opener; choosing a card outside it makes that card the opener.
+  const from = pressed || document.activeElement; // Safari does not focus a clicked button, so the click names it
+  const inside = drawer?.node.contains(from);
+  const opener = inside ? drawer.opener : from;
+  const back = inside ? drawer.back : placeOf(from);
   // Moving between items keeps the open drawer, so it slides in only once.
   const node = drawer?.node || el('aside', { class: 'drawer', 'aria-labelledby': 'drawer-title' });
-  drawer = { id, node, opener, seen: '' };
+  drawer = { id, node, opener, back, seen: '' };
   if (!node.isConnected) document.body.append(node);
   if (!row) {
     node.append(el('p', { class: 'quiet' }, 'Reading this item…'));
@@ -220,9 +254,10 @@ function fillDrawer(row) {
 function closeDrawer(restore = true) {
   if (!drawer) return;
   drawer.node.remove();
-  const { opener } = drawer;
+  const { opener, back } = drawer;
   drawer = null;
-  if (restore && opener?.isConnected) opener.focus();
+  if (!restore) return;
+  returnTarget({ opener, back })?.focus();
 }
 
 // The full page
@@ -242,9 +277,16 @@ function openItem(id) {
 }
 
 async function showPage() {
-  const id = location.hash.startsWith('#item/') ? decodeURIComponent(location.hash.slice(6)) : null;
+  const id = location.hash.startsWith('#item/') ? decodeURIComponent(location.hash.slice(6).split('?')[0]) : null;
   if (!id) return closePage();
-  if (page?.id === id) return;
+  if (page?.id === id) {
+    // Same item: Back, Forward or a link changed only the tab.
+    if (page.row && tabInAddress(page.row) !== page.tab) {
+      fillPage();
+      if (document.activeElement?.getAttribute('role') === 'tab') document.getElementById(tabId(page.tab)).focus();
+    }
+    return;
+  }
   closeDrawer(false);
   closePage();
   const main = document.querySelector('main:not(.item-page)');
@@ -303,13 +345,28 @@ function tabId(name) {
   return `tab-${name.replaceAll(' ', '-')}`;
 }
 
+function slug(name) {
+  return name.toLowerCase().replaceAll(' ', '-');
+}
+
+function tabsOf(row) {
+  return ['Overview', ...(row.kind === 'story' ? ['Plan'] : []), 'Rounds', 'Known issues'];
+}
+
+// The open tab is in the address, #item/<id>?tab=plan, so a reload, a link, Back and Forward keep it.
+// Overview has no tab in the address, and a tab the item does not have reads as Overview.
+function tabInAddress(row) {
+  const asked = new URLSearchParams(location.hash.split('?')[1]).get('tab');
+  return tabsOf(row).find((name) => slug(name) === asked) || 'Overview';
+}
+
 // The page's left summary and its row of tabs.
 function frame(row) {
-  const tabs = ['Overview', ...(row.kind === 'story' ? ['Plan'] : []), 'Rounds', 'Known issues'];
+  const tabs = tabsOf(row);
   const kept = issues(row);
   const tablist = el('div', { role: 'tablist', 'aria-label': row.title, class: 'tabs' }, tabs.map((name) => el('button', {
     type: 'button', role: 'tab', id: tabId(name), 'data-focus': tabId(name), 'aria-controls': 'tab-panel', 'aria-selected': String(name === page.tab),
-    onclick: () => { page.tab = name; fillPage(); document.getElementById(tabId(name)).focus(); },
+    onclick: () => { location.hash = `item/${page.id}${name === 'Overview' ? '' : `?tab=${slug(name)}`}`; },
   }, name === 'Known issues' ? `Known issues · ${kept.length}` : name)));
   const summary = el('div', { class: 'summary' },
     el('p', { class: 'kind' }, tag(row), el('span', {}, kind(row))),
@@ -334,6 +391,7 @@ function drawing(row) {
 // The page's first drawing, and the one after a tab is chosen: all of it is built again.
 function fillPage() {
   const { row, node } = page;
+  page.tab = tabInAddress(row);
   node.querySelector('.crumbs [aria-current]').textContent = row.title;
   replaceContent(node, node.firstChild, Board.keep(drawing(row)));
   if (page.tab === 'Plan') readPlan(page.id);
@@ -448,10 +506,20 @@ export function install(board) {
   document.head.append(el('link', { rel: 'stylesheet', href: `item.css${TOKEN}` }));
   Object.assign(Board, { select: openDrawer, openDrawer, openItem });
   addEventListener('hashchange', showPage);
+  addEventListener('click', (event) => {
+    pressed = event.target.closest?.(CONTROLS);
+    setTimeout(() => { pressed = null; });
+  }, true);
+  // One Escape closes one thing. A drawer sits over a list, so from the list the drawer closes first and the
+  // list stays. Inside the drawer a control that closes itself (the assign form) goes first, and stops the event.
   addEventListener('keydown', (event) => {
-    if (event.key !== 'Escape') return;
-    if (drawer) closeDrawer();
-    else if (page) Board.navigate('now');
+    if (event.key === 'Escape' && drawer && !drawer.node.contains(event.target)) {
+      event.stopPropagation();
+      closeDrawer();
+    }
+  }, true);
+  addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') closeDrawer(); // a full page stays; only the drawer closes
   });
   Board.onSnapshot(() => {
     const row = drawer && rows().find((one) => one.id === drawer.id);

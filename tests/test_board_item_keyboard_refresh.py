@@ -85,7 +85,9 @@ with sync_playwright() as p:
         update(page, full, full.get_by_role('button', name=re.compile('^Save a basket')))
         expect(page.get_by_role('complementary', name='Save a basket')).to_be_visible()
         page.keyboard.press('Escape')
-        page.keyboard.press('Escape')
+        page.keyboard.press('Escape')  # the first closes the drawer; a full page has no Escape
+        expect(page).to_have_url(re.compile(r'#item/SHOP$'))
+        page.get_by_role('navigation', name='Breadcrumb').get_by_role('link', name='Now').click()
         expect(page).to_have_url(re.compile(r'#now$'))
 
         page.evaluate("async () => " + BOARD + ".openDrawer('SHOP')")
