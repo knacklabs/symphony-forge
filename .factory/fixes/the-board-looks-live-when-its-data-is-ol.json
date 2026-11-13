@@ -4,12 +4,194 @@
   "done_when": "When the page cannot get new data, one line under the header gives the reason and the next step, and a failed read while the server runs says the work could not be read instead of Offline.",
   "fix_kind": "ui",
   "kind": "fix",
+  "known": [
+    {
+      "area": "src/forge/board_app/app.js",
+      "file": "src/forge/board_app/app.js",
+      "gain": 5,
+      "harm": 3,
+      "line": 95,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: An open board never sees failed background rebuilds",
+      "work": 2
+    },
+    {
+      "area": "src/forge/board_app/app.js",
+      "file": "src/forge/board_app/app.js",
+      "gain": 3,
+      "harm": 3,
+      "line": 104,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Page-specific read failures leave old data marked Live",
+      "work": 2
+    },
+    {
+      "area": "src/forge/board_app/app.js",
+      "file": "src/forge/board_app/app.js",
+      "gain": 3,
+      "harm": 3,
+      "line": 104,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: An old updating snapshot clears the failed-read warning",
+      "work": 2
+    },
+    {
+      "area": "src/forge/board_app/tokens.css",
+      "file": "src/forge/board_app/tokens.css",
+      "gain": 3,
+      "harm": 3,
+      "line": 178,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: The item drawer covers the stale-data message",
+      "work": 2
+    },
+    {
+      "area": "tests/test_board_says_when_data_is_old.py",
+      "file": "tests/test_board_says_when_data_is_old.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 37,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_2_a_failed_read_says_the_work_could_not_be_read_and_goes_away_with_new_data",
+      "work": 2
+    },
+    {
+      "area": "src/forge/board_app/app.js",
+      "file": "src/forge/board_app/app.js",
+      "gain": 4,
+      "harm": 3,
+      "line": 19,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: rendered check",
+      "work": 2
+    },
+    {
+      "area": "look() in tests/test_board_says_when_data_is_old.py",
+      "file": "tests/test_board_says_when_data_is_old.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 81,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Standard: Tests own and clean up every process they start",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "d7cbaf88b3de49080485c96a2d89d71eb343e00931e86690eff9574aa52644bb",
+    "changed": "d4670136632caf13ad65b127ac53a140c353bfae117cc7f8277f8ee9c0b3e509",
+    "commit": "58bcbe6f2b3cefcca55d4d253feb38a714bc375e",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 5, Work 2, Harm 3\nRaise: Not done - A failed rebuild can leave old data marked Live with no explanation.\nCase: normal use - The board remains open while the server fails to read the work.\nThe owner-approved item is: \u201cWhen the page cannot get new data, one line under the header gives the reason and the next step, and a failed read while the server runs says the work could not be read instead of Offline.\u201d The retry here is scheduled only after a request receives an error. With the events stream open, app.js requests data on a changed event, but board_server.py:176-180, 197-202 and 364-367 sends that event only when a new snapshot version is published. A failed rebuild publishes no version, so the page never makes the request that would show the warning. This is new evidence against the ruling that the damaged branch pointer itself blocks the stream: the named test explicitly aborts /events instead.",
+        "file": "src/forge/board_app/app.js",
+        "gain": 5,
+        "harm": 3,
+        "line": 95,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: An open board never sees failed background rebuilds",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Not done - A failed read on a board page can leave its old contents visible without the required line.\nCase: normal use - A fresh Now snapshot arrives, but the subsequent read for an already-open Releases, Insights or item page fails.\nThe owner-approved item is: \u201cWhen the page cannot get new data, one line under the header gives the reason and the next step, and a failed read while the server runs says the work could not be read instead of Offline.\u201d This line clears the warning based on the Now response alone. The other pages use separate reads: board_server.py:323-329 serves them from the untrimmed snapshot, releases.js:53-69 silently retains an already-shown page on failure, and item.js:382-386 ignores a failed item refresh. Those failures therefore leave the header Live and provide no reason or next step.",
+        "file": "src/forge/board_app/app.js",
+        "gain": 3,
+        "harm": 3,
+        "line": 104,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: Page-specific read failures leave old data marked Live",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Not done - The warning can disappear before the server has supplied fresh data.\nCase: normal use - A retry after a failed read encounters a rebuild taking longer than the server's half-second wait.\nThe owner-approved item is: \u201cWhen the page cannot get new data, one line under the header gives the reason and the next step, and a failed read while the server runs says the work could not be read instead of Offline.\u201d board_server.py:162-174 returns the previous snapshot with updating set when that wait expires. The equal version passes the check here, and this line clears the warning even though the response contains the same old data. The retry has also been cancelled; if the rebuild fails, it emits no changed event to restore the warning.",
+        "file": "src/forge/board_app/app.js",
+        "gain": 3,
+        "harm": 3,
+        "line": 104,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: An old updating snapshot clears the failed-read warning",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Not done - The new line's reason and next step are obscured while an item drawer is open.\nCase: normal use - A person has a drawer open at a 768-pixel window width when the board stops or a read fails.\nThe owner-approved item is: \u201cWhen the page cannot get new data, one line under the header gives the reason and the next step, and a failed read while the server runs says the work could not be read instead of Offline.\u201d The new line is directly below the header, while item.css:6-12 fixes the 480-pixel-wide drawer at top: 48px with z-index: 10. At that width the drawer covers the rightmost 480 pixels of the line, hiding much of its text, including the instruction to open the new link.",
+        "file": "src/forge/board_app/tokens.css",
+        "gain": 3,
+        "harm": 3,
+        "line": 178,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: The item drawer covers the stale-data message",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Test - The named proof bypasses the ordinary failure-notification path.\nCase: normal use - A read fails while the browser's events stream remains connected.\nThe test aborts Forge's own /events endpoint before loading the page, so polling forces the read; the shared live fixture also extends the rebuild wait to 120 seconds instead of the server's 0.5-second default. It can therefore pass while a normal connected page remains Live after a failed rebuild, or while an updating response clears the warning. Contrary to the recorded ruling, board_server.py:197-202 and 364-367 shows that a rebuild failure does not itself close the stream. The named behavior needs proof through the unmodified live path.",
+        "file": "tests/test_board_says_when_data_is_old.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 37,
+        "priority": "P1",
+        "title": "Gate: test_2_a_failed_read_says_the_work_could_not_be_read_and_goes_away_with_new_data",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Gate - The changed board screens are absent from the required rendered check.\nCase: normal use - A stale-data line appears on a board screen, including with an item drawer open.\nThe board has Playwright browser tests, including tests/test_board_now_screen.py and the new test, but none registers the Now, Releases, Insights or item screens with checkScreen. The new shell line changes all of those screens, so they are not on the render list required for changed screens; the drawer overlap is one consequence the current coverage misses.\nAdds work: register the changed board screens for rendered checks; F 2 x H 2 = 4; 2 x C = 4.",
+        "file": "src/forge/board_app/app.js",
+        "gain": 4,
+        "harm": 3,
+        "line": 19,
+        "priority": "P1",
+        "title": "Gate: rendered check",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 2\nRaise: Gate - A failing browser test can leave its Python and Chrome processes running.\nCase: normal use - The expected HTTP 500 assertion fails while the browser script is waiting for the next input.\nThe applicable rule says: \u201cTests own and clean up every process they start, even after a crash; detect and fail on leftover processes when a test worker crashes.\u201d This cleanup kills and waits only for the uv process, while its Python child can still be blocked in step() with Chrome open. The repository's existing browser test at tests/test_board_item_keyboard_refresh.py:116-120 and 140-145 uses a process tree specifically to stop those descendants. The new test also gives communicate a 240-second timeout, longer than the normal 150-second pytest timeout, so worker termination can bypass this cleanup.\nAdds work: stop the browser process tree on failure; F 2 x H 2 = 4; 2 x C = 2.",
+        "file": "tests/test_board_says_when_data_is_old.py",
+        "gain": 4,
+        "harm": 2,
+        "line": 81,
+        "priority": "P1",
+        "title": "Standard: Tests own and clean up every process they start",
+        "work": 2
+      }
+    ],
+    "id": "f8964790-7aad-4686-8845-b13640fbc131",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-13T04:52:42.920473+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-13T05:23:00.675661+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
