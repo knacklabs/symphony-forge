@@ -193,7 +193,7 @@
     "id": "0ee0cdb8-daf6-4962-a3b7-cd79bffa4390",
     "status": "blocked"
   },
-  "round": 3,
+  "round": 4,
   "stacked_on": "FORGE-NIGHTLY-1/NIGHTLY",
   "status": "fixing",
   "steps": [
@@ -224,12 +224,10 @@
     "worker_round": 3
   },
   "stuck": {
-    "close": "1475fc94-fcf7-4a51-9225-78d1f90ce161",
-    "head": "532f7e0c6d22c14374657c7a67b1b0ccdc9f1b2c",
-    "keys": {
-      "the open P0 keep an existing train branch that already points at the candidate in src/forge/land.py": 1
-    },
-    "round": 2
+    "close": "3e1b97c2-0978-4f37-9c7c-15b5badffb70",
+    "head": "7445dd08dd2fa3df55abbd6a9033466caff6170b",
+    "keys": {},
+    "round": 3
   },
   "worker": "claude"
 }
