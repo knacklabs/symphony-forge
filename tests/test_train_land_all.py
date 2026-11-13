@@ -23,7 +23,10 @@ from test_conflicting_pull_requests_stop_check_waits import _publish_default
 # request number whose merge also leaves a stray file on main), red (a member whose own "lint"
 # check turns red when the train's check passes) and late ("main" or "head": the first own check read
 # of a member after that moves main, or the member's branch). pending_again keeps the check
-# pending until its file ("path") no longer has its saved time ("mtime").
+# pending until its file ("path") no longer has its saved time ("mtime"). fresh answers for a head
+# that is not one of its "closed" ones, as a fallback publishes: the first read says the tests still
+# run, later reads say green, and a "red" member's heads fail. A ["check-pending", sha] or
+# ["check-green", sha, time] entry in the call log marks the answer that came, in order with the calls.
 TRAIN_GH = r'''
 cfg = json.loads((here / "train.json").read_text()) if (here / "train.json").exists() else {}
 endpoint = args[-1] if args else ""
@@ -73,6 +76,21 @@ if args[:1] == ["api"] and "/commits/" in endpoint and train_sha(sha_of(endpoint
         rows.append({**rows[1], "check_suite": {"id": 3}})
         rows.append({**rows[1], "name": "forge-pr-check", "check_suite": {"id": 3}})
     answer(lines(rows))
+fresh = cfg.get("fresh")
+if fresh and args[:4] == ["api", "--paginate", "--jq", ".check_runs[]"] and sha_of(endpoint) not in fresh["closed"]:
+    sha = sha_of(endpoint)
+    own = subprocess.run(["git", "branch", "--show-current"], capture_output=True, text=True).stdout.strip()
+    ok = {"name": "forge-pr-check", "status": "completed", "conclusion": "success"}
+    if own == "fix/%s" % fresh.get("red"):
+        answer(lines([{"name": "tests", "status": "completed", "conclusion": "success"}, ok,
+                      {"name": "lint", "status": "completed", "conclusion": "failure"}]))
+    if not (here / ("pending-" + sha)).exists():
+        (here / ("pending-" + sha)).touch()
+        append_json(here / "gh-calls.jsonl", ["check-pending", sha, str(time.time())])
+        answer(lines([{"name": "tests", "status": "in_progress", "conclusion": None}, ok]))
+    if not (here / ("green-" + sha)).exists():
+        (here / ("green-" + sha)).touch()
+        append_json(here / "gh-calls.jsonl", ["check-green", sha, str(time.time())])
 if cfg.get("late") and args[:4] == ["api", "--paginate", "--jq", ".check_runs[]"]:
     if (here / "acted").exists() and not (here / "late").exists():
         (here / "late").touch()
@@ -177,10 +195,12 @@ def _train_head(call) -> bool:
     return call[call.index("--head") + 1].startswith("forge-merge-train/")
 
 
-def _everyone_merges_alone(env, done, slugs, moved=()) -> None:
+def _everyone_merges_alone(env, done, slugs, moved=(), held=False) -> None:
     """Each goes through its own close and checks, which a train member never does, then merges. The
     ones in `moved` also find the default branch moved before their merge, which is certain only when
-    a merge came before they started; changes that start together race for it."""
+    a merge came before they started; changes that start together race for it. With `held`, the
+    stub said that the tests of each new head still ran at first: no merge may come before the
+    answer that turned green, which Forge only reads again after waiting."""
     lines = done.stdout.splitlines()
     for slug in slugs:
         assert f"{slug} merged." in lines and f"{slug}: Closing {slug}." in lines, done.stdout + done.stderr
@@ -192,6 +212,11 @@ def _everyone_merges_alone(env, done, slugs, moved=()) -> None:
         at = max(n for n, call in enumerate(calls) if call[:3] == ["pr", "merge", _number(f"fix/{slug}")])
         head = calls[at][calls[at].index("--match-head-commit") + 1]
         assert any(f"/commits/{head}/check-runs" in arg for call in calls[:at] for arg in call), (slug, done.stdout)
+        if held:
+            pending = next((n for n, call in enumerate(calls) if call[:2] == ["check-pending", head]), None)
+            green = next((n for n, call in enumerate(calls) if call[:2] == ["check-green", head]), None)
+            assert None not in (pending, green) and pending < green < at, (slug, done.stdout)  # it waited for green
+            assert float(calls[green][2]) - float(calls[pending][2]) >= 30, (slug, done.stdout)  # over several polls
 
 
 def _restarted(env) -> list[list[str]]:
@@ -454,8 +479,11 @@ def test_5_the_default_branch_must_hold_what_the_train_tested(train, monkeypatch
     heads = _ready(env, monkeypatch, ("aa", "bb", "cc"))
     # late-*: the move comes while the first member's own merge runs, after Forge looked at main and
     # the pull request, so only the merge itself can catch it.
-    # moved also turns bb's own CI red, to see that a fallback's own check can stop its merge.
-    _stub(env, moved=variant == "moved", changed=variant == "changed", red="bb" if variant == "moved" else None,
+    # moved and changed hold the tests of every head a fallback publishes at first, and moved also fails
+    # bb's new heads (not the heads closed before), so a fallback's own CI can hold and stop its merge.
+    fresh = {"closed": list(heads.values()), "red": "bb" if variant == "moved" else None}
+    _stub(env, moved=variant == "moved", changed=variant == "changed",
+          fresh=fresh if variant in ("moved", "changed") else None,
           late=variant.removeprefix("late-") if variant.startswith("late-") else None,
           stray=_number("fix/cc") if variant == "differs" else None)
     done = _all(env)
@@ -469,7 +497,7 @@ def test_5_the_default_branch_must_hold_what_the_train_tested(train, monkeypatch
         if variant == "late-main":
             _everyone_merges_alone(env, done, ("aa", "bb", "cc"), moved=("aa", "bb", "cc"))
         else:  # bb's new head has a red check, so bb stops on it while aa and cc merge
-            _everyone_merges_alone(env, done, ("aa", "cc"), moved=("aa", "cc"))
+            _everyone_merges_alone(env, done, ("aa", "cc"), moved=("aa", "cc"), held=True)
             assert "- bb: Checks failed on the pull request: lint." in lines, text
             assert not env.gh_calls("pr", "merge", _number("fix/bb")), text
     elif variant in ("changed", "late-head"):
@@ -486,7 +514,7 @@ def test_5_the_default_branch_must_hold_what_the_train_tested(train, monkeypatch
         # aa merged in the train before changed's others started, so they found main moved; late-head
         # starts all three together.
         _everyone_merges_alone(env, done, ("bb", "cc") if variant == "changed" else ("aa", "bb", "cc"),
-                               moved=("bb", "cc") if variant == "changed" else ())
+                               moved=("bb", "cc") if variant == "changed" else (), held=variant == "changed")
     else:
         note = ("Train: after the last merge, main does not match what the train tested. Check main: the next "
                 "pull request check or the nightly full run tests it.")
