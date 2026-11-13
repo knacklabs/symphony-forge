@@ -197,12 +197,17 @@ def _wait(top: Path, item: str, sha: str, names: list[str], branch: str, progres
         time.sleep(min(15, left))
 
 
-def _own_review(top: Path, item: str, sha: str) -> set[Any]:
-    """The check suites of Forge's own review run on sha: forge.yml's pull_request_target run."""
+def own_runs(top: Path, item: str, sha: str) -> list[dict[str, Any]]:
+    """Forge's own review runs on sha: forge.yml's pull_request_target run."""
     runs = _ask(top, item, ".workflow_runs", "repos/{owner}/{repo}/actions/runs", "--method", "GET",
                 "--raw-field", "per_page=100", "--raw-field", f"head_sha={sha}")
-    return {run.get("check_suite_id") for run in runs if run.get("event") == "pull_request_target"
-            and str(run.get("path", "")).partition("@")[0] == ".github/workflows/forge.yml"} - {None}
+    return [run for run in runs if run.get("event") == "pull_request_target"
+            and str(run.get("path", "")).partition("@")[0] == ".github/workflows/forge.yml"]
+
+
+def _own_review(top: Path, item: str, sha: str) -> set[Any]:
+    """The check suites of Forge's own review run on sha."""
+    return {run.get("check_suite_id") for run in own_runs(top, item, sha)} - {None}
 
 
 def _status(top: Path, item: str, sha: str, branch: str, cache: Path | None,

@@ -1,0 +1,48 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/land.py\tWait for the remaining jobs when a train retry fails\tFORGE-TRAIN-1/RED",
+      "kind": "bug",
+      "path": "src/forge/land.py",
+      "line": 646,
+      "text": "Wait for the remaining jobs when a train retry fails",
+      "from": "blocking",
+      "item": "FORGE-TRAIN-1/RED",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_train_land_all.py\tGate: tests/test_train_land_all.py::test_4_a_failure_naming_no_change_runs_again_once\tFORGE-TRAIN-1/RED",
+      "kind": "bug",
+      "path": "tests/test_train_land_all.py",
+      "line": 586,
+      "text": "Gate: tests/test_train_land_all.py::test_4_a_failure_naming_no_change_runs_again_once",
+      "from": "blocking",
+      "item": "FORGE-TRAIN-1/RED",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/land.py\tNot done: When the combined check fails and names no change",
+      "kind": "edge",
+      "path": "src/forge/land.py",
+      "line": 725,
+      "text": "Not done: When the combined check fails and names no change",
+      "from": "review",
+      "item": "FORGE-TRAIN-1/RED",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/land.py\tNot done: that change merges last, one at a time, with its own check or stops with that check's failure for you",
+      "kind": "edge",
+      "path": "src/forge/land.py",
+      "line": 474,
+      "text": "Not done: that change merges last, one at a time, with its own check or stops with that check's failure for you",
+      "from": "review",
+      "item": "FORGE-TRAIN-1/RED",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
