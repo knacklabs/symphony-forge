@@ -11,14 +11,153 @@
   "done_when": "A reload on an item's Plan tab shows the Plan tab, a link can open the Plan tab, and Back and Forward return to the tab that was open; Escape on a full item page does nothing and Escape closes only the drawer; and after a refresh, Escape on the drawer puts the keyboard focus back on the card it came from.",
   "fix_kind": "ui",
   "kind": "fix",
+  "known": [
+    {
+      "area": "src/forge/board_app/item.js",
+      "file": "src/forge/board_app/item.js",
+      "gain": 3,
+      "harm": 3,
+      "line": 227,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: after a refresh, Escape on the drawer puts the keyboard focus back on the card it came from.",
+      "work": 2
+    },
+    {
+      "area": "src/forge/board_app/item.js",
+      "file": "src/forge/board_app/item.js",
+      "gain": 3,
+      "harm": 3,
+      "line": 478,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Escape on a full item page does nothing and Escape closes only the drawer",
+      "work": 2
+    },
+    {
+      "area": "tests/test_board_item_tab_in_address.py",
+      "file": "tests/test_board_item_tab_in_address.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 136,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_3_after_a_refresh_escape_on_the_drawer_returns_focus_to_its_card",
+      "work": 1
+    },
+    {
+      "area": "tests/test_board_item_tab_in_address.py",
+      "file": "tests/test_board_item_tab_in_address.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 122,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Standard: Fake only third-party services at their edge",
+      "work": 2
+    },
+    {
+      "area": "tests/test_board_item_tab_in_address.py",
+      "file": "tests/test_board_item_tab_in_address.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 53,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_a_reload_a_link_back_and_forward_show_the_tab_the_address_names",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "cafaf5ace9142061442b99cb1fac6a31085dbfd52d9bbe084d68081670e7efd6",
+    "changed": "68cc3cfa568f20970e767be21a1a029183abefa0acc4a42f7002167ed422985e",
+    "commit": "d231b87fecea8e287590f74f300e38f8232d0602",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Not done.\nCase: normal use - A reader opens an item from the full Needs you list, then an earlier request resolves during a refresh. The old list button is replaced, but now.js:133, 146 and 222 give its replacement and the copy in the Needs you strip the same key. This document-wide query focuses the strip copy instead of the card in the list. If a card becomes the fifth item in a new stage, now.js:166\u2013179 omits it altogether, so Escape leaves focus on the page body. Also, selecting a different outside card while the drawer is open retains the first opener at item.js:195\u2013196.",
+        "file": "src/forge/board_app/item.js",
+        "gain": 3,
+        "harm": 3,
+        "line": 227,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: after a refresh, Escape on the drawer puts the keyboard focus back on the card it came from.",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Not done.\nCase: normal use - A reader opens a drawer from an \u201cand N more\u201d list, moves keyboard focus back to that list, and presses Escape. The list's handler at now.js:224 closes the list, then the same event bubbles to this handler and closes the drawer too. One Escape therefore closes both views.",
+        "file": "src/forge/board_app/item.js",
+        "gain": 3,
+        "harm": 3,
+        "line": 478,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: Escape on a full item page does nothing and Escape closes only the drawer",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 1, Harm 3\nRaise: Test.\nCase: normal use - A board refresh can preserve the existing card node while still keeping focus correct. This assertion fails whenever the original node remains connected, and line 127 also locates the card by its internal data-focus value. A behavior-preserving change to node reuse or focus keys therefore breaks the test instead of checking only the reader's focus.",
+        "file": "tests/test_board_item_tab_in_address.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 136,
+        "priority": "P1",
+        "title": "Gate: test_3_after_a_refresh_escape_on_the_drawer_returns_focus_to_its_card",
+        "work": 1
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Gate. The test rule says: \u201cFake only third-party services at their edge.\u201d\nCase: normal use - When an item's stage changes while its drawer is open, this proof replaces Forge's own board.json response with a fabricated stage. The refresh helper instead commits an unrelated notes file, so the test bypasses the real first-party path that supplies the changed card. Drive the update through the board's real data source.",
+        "file": "tests/test_board_item_tab_in_address.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 122,
+        "priority": "P1",
+        "title": "Standard: Fake only third-party services at their edge",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 1, Harm 3\nRaise: Test.\nCase: normal use - A reader opens a shared Plan link in a new browser tab. The test first selects Plan and reloads that same tab; its fresh links open Known issues or request Plan for a non-story. An implementation that restores a previously selected Plan from tab-local state but fails to open a fresh story Plan link could pass these assertions. The named proof needs a fresh navigation to the story's Plan address.",
+        "file": "tests/test_board_item_tab_in_address.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 53,
+        "priority": "P1",
+        "title": "Gate: test_1_a_reload_a_link_back_and_forward_show_the_tab_the_address_names",
+        "work": 1
+      }
+    ],
+    "id": "3ca8d344-707d-4ed5-923e-94e0c0a94374",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-13T08:02:05.772982+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-13T08:34:24.202873+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-11-13T08:34:24.219161+00:00",
+    "file": "src/forge/board_app/item.js",
+    "wait_id": "7c2f8c83-4b88-4ca4-a62f-a0787f91cd9f"
+  },
   "stuck": {
     "close": null,
     "head": "15abf2f028bde2bc774c72eaffd6b09535e5409d",
