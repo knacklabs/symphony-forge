@@ -1,18 +1,18 @@
 ---
 reader: codex (gpt-6.1-terra)
-read_at: 2026-11-13T07:34:38.210206+00:00
-seconds: 577.217
-read_hash: dc2a7e3cc50e5e0a0b144d5874e5c701dd0ec0df
-round: 3
+read_at: 2026-11-13T08:14:19.876906+00:00
+seconds: 692.26
+read_hash: ba45440024c51ad1aba75cc1c54b393cc9a700ab
+round: 4
 passed: no
-doc_seen: dc2a7e3cc50e5e0a0b144d5874e5c701dd0ec0df
+doc_seen: ba45440024c51ad1aba75cc1c54b393cc9a700ab
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 2e6a708e9e267ec5f547373b2c2e3a9f6b934081
+notes_seen: 8312c2d05ca214500184d14576aae58aa8ac6053
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a1d3a1-e831-77b1-bb3d-127c2003a663
 session:
-loop_choice: more
-loop_reason: The owner chose 'No rename' at the read limit; the plan is rewritten to that rule and needs a read before he can approve it
+loop_choice:
+loop_reason:
 ---
 # Cold read notes
 
@@ -262,3 +262,36 @@ Only a genuine trade-off goes to the human, as a question with options.
     Raise: Not done. [Claude’s session root changes on `/cd`](/tests/fixtures/claude-code-684800b206824dfd0cc8a876e8604b20f72c3617.d.ts:2362), but [the plan finds the repo only at session start](/plans/FORGE-PANE-1.md:123). After moving to another repo, its rows and questions are labelled relative to the first one.
     Gain 3, Work 3, Harm 3
     Disposition: cut — The pane finds its repo again at each read and each /forge, so a /cd moves the labels with it.
+
+## Round 4
+
+45. Blocking: Keeping the old guide path can overwrite a team file.
+    Raise: Data loss. Case: normal use - A v1.2.2 client added its own `.claude/skills/forge/run-reference.md`, which [that release did not ship](/tests/fixtures/forge-v1.2.2/src/forge/story.py:85). The new plan keeps that path and [changes the shipped reference](/plans/FORGE-PANE-1.md:153). On upgrade, [sync overwrites the differing file](/src/forge/sync.py:589). Finding 1 remains open through an overwrite instead of a deletion.
+    Gain 5, Work 3, Harm 4
+
+46. Blocking: A cancelled queued answer can still close the shared question.
+    Raise: Data loss. Case: normal use - An item has an open pull request. The person answers its question, then cancels while the run waits for a place. [The revision](/plans/FORGE-PANE-1.md:118) delays `answered_id`, but [the existing worker records and publishes the wait’s end before admission](/src/forge/worker.py:230). On a later attempt, [the worker clears the question from that published end](/src/forge/worker.py:174), although the answer was never committed or delivered. Finding 37 remains open.
+    Gain 3, Work 3, Harm 4
+
+47. Blocking: An answered question from an earlier release stays visible.
+    Raise: Not done. Case: normal use - A person answers a question written by v1.2.2, and the next worker round is running or fails. [That release recorded no question ID](/tests/fixtures/forge-v1.2.2/src/forge/worker.py:183), and [the revised rule](/plans/FORGE-PANE-1.md:118) always counts such a question until a round clears it. The pane therefore still shows the answered question, leaving finding 7 open for earlier releases.
+    Gain 3, Work 2, Harm 3
+
+48. Blocking: The older-release time rules still disagree.
+    Raise: Plan gap. Case: normal use - An older build receives a commit nudge and launches again. [The data contract](/plans/FORGE-PANE-1.md:115) falls back to `started_at`, which resets on launch; [the Time rule](/plans/FORGE-PANE-1.md:123) instead says to use `joined_at`. Following the contract still resets the clock, so finding 39 is not closed by the stated rules.
+    Gain 4, Work 1, Harm 3
+
+49. Advisory: A failed answered round can leave work blocked while the pane says nothing needs you.
+    Raise: Not done. For an item without a pull request, an answered round can fail after `answered_id` is recorded. [The pane hides the question](/plans/FORGE-PANE-1.md:118), but the retained question still makes [a plain `forge work` retry refuse](/src/forge/worker.py:201) and ask for the answer again.
+    Gain 3, Work 3, Harm 3
+   Disposition: keep - below the bar (follow-up)
+
+50. Advisory: The needs-you scan misses migration worktrees.
+    Raise: Not done. [The scan](/plans/FORGE-PANE-1.md:118) checks `task/`, `fix/` and `story/` branches, but migration uses [`forge/migrate-v1`](/src/forge/migrate.py:81), which [Forge treats as a fix branch](/src/forge/task.py:173). A worker question or stop there is omitted.
+    Adds work: include migration worktrees in the scan; F 1 x H 2 = 2; 2 x C = 2
+    Gain 3, Work 1, Harm 4 (floor: migration)
+
+51. Advisory: An older Forge source checkout can save an incomplete shared snapshot.
+    Raise: Not done. When Forge is installed from its source and the pane runs in an older worktree of that source, [the CLI runs that checkout’s code](/src/forge/cli.py:117). Its older `lanes` command can omit other releases and `needs_you`, yet [the pane stores its answer under the shared key](/plans/FORGE-PANE-1.md:119). Another session can initially show that incomplete answer.
+    Gain 3, Work 3, Harm 3
+   Disposition: keep - below the bar (follow-up)
