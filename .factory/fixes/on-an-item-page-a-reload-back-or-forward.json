@@ -100,7 +100,7 @@
     "id": "461f2b08-cfb9-4bba-8692-8e1059f87557",
     "status": "blocked"
   },
-  "round": 2,
+  "round": 3,
   "status": "fixing",
   "steps": [
     {
@@ -126,10 +126,10 @@
     "worker_round": 2
   },
   "stuck": {
-    "close": "e2985df1-4631-4130-8205-9bfba28de216",
-    "head": "8bbb859cd12da8fbf731a53d0b00e515ea385d37",
+    "close": "e9135051-efa0-4e7f-9cda-b253c139407e",
+    "head": "58b0e9e3ad50d80604b51a7edf04e7471d7ccaa0",
     "keys": {},
-    "round": 1
+    "round": 2
   },
   "why": "On an item page, a reload, Back or Forward returns the reader to the Overview tab, and no link can open the Plan tab. Escape on a full item page sends the reader to the Now screen instead of doing nothing, and after a reload Escape on the drawer leaves keyboard focus at the top of the page instead of on the card it came from.",
   "worker": "claude"
