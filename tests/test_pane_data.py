@@ -14,7 +14,7 @@ import pytest
 
 from conftest import ROOT, machine_cores
 from datetime import datetime, timezone
-from test_close import env  # noqa: F401
+from test_close import STORY_DOC, env  # noqa: F401
 from test_fix_agent_runs_wait_in_line import _other_repo, _until
 from test_hotspot_stop import rounds, seed
 from test_lanes_tests import shell
@@ -87,10 +87,10 @@ def test_3_lanes_say_who_needs_the_person_and_what_runs_now(env, tmp_path, monke
     assert tester.wait(timeout=60) == 0
 
     # A worker's question on a task lists the task by its plan's name.
-    _, task_folder = env.start_task()
-    record = Path(repo.git("rev-parse", "--path-format=absolute", "--git-common-dir")) / "forge/threads/task/SHOP/T1.json"
-    record.parent.mkdir(parents=True, exist_ok=True)
-    record.write_text(json.dumps({"question": "Question: May I reuse the basket parser?"}), "utf-8")
+    task, task_folder = env.start_approved_task(STORY_DOC)
+    monkeypatch.setenv("STUB_CLAUDE_RESULT", QUESTION)
+    assert repo.forge("work", task).returncode == 0
+    monkeypatch.delenv("STUB_CLAUDE_RESULT")
     assert {"title": "Save a basket", **mine_of(repo)} in lanes(env)["needs_you"]
     repo.git("worktree", "remove", "--force", str(task_folder))
     assert all(row["title"] != "Save a basket" for row in lanes(env)["needs_you"])
@@ -286,8 +286,11 @@ def step_gates(env):
 def hold_tests(env, folder, name):
     """The item's test command waits until the returned file exists."""
     gate = env.repo.bin / name
-    code = f"import pathlib, time\nwhile not pathlib.Path({gate.as_posix()!r}).exists(): time.sleep(0.05)"
-    command = json.dumps(shell([sys.executable, "-c", code]))
+    # A script file keeps the command on one line: cmd.exe cuts a command at a newline.
+    script = env.repo.bin / f"{name}.py"
+    script.write_text(f"import pathlib, time\nwhile not pathlib.Path({gate.as_posix()!r}).exists(): time.sleep(0.05)\n",
+                      "utf-8")
+    command = json.dumps(shell([sys.executable, str(script)]))
     config = "\n".join(line for line in (folder / "forge.toml").read_text("utf-8").splitlines()
                        if line.partition("=")[0].strip() not in ("test", "fast_test")) + "\n"
     env.commit(folder, "forge.toml", f"test = {command}\nfast_test = {command}\n" + config, "Hold the tests")
