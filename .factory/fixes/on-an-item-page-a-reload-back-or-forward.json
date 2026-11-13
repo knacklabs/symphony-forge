@@ -11,12 +11,20 @@
   "done_when": "A reload on an item's Plan tab shows the Plan tab, a link can open the Plan tab, and Back and Forward return to the tab that was open; Escape on a full item page does nothing and Escape closes only the drawer; and after a refresh, Escape on the drawer puts the keyboard focus back on the card it came from.",
   "fix_kind": "ui",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-13T08:02:05.772982+00:00",
       "step": "start"
     }
   ],
-  "why": "On an item page, a reload, Back or Forward returns the reader to the Overview tab, and no link can open the Plan tab. Escape on a full item page sends the reader to the Now screen instead of doing nothing, and after a reload Escape on the drawer leaves keyboard focus at the top of the page instead of on the card it came from."
+  "stuck": {
+    "close": null,
+    "head": "15abf2f028bde2bc774c72eaffd6b09535e5409d",
+    "keys": {},
+    "round": null
+  },
+  "why": "On an item page, a reload, Back or Forward returns the reader to the Overview tab, and no link can open the Plan tab. Escape on a full item page sends the reader to the Now screen instead of doing nothing, and after a reload Escape on the drawer leaves keyboard focus at the top of the page instead of on the card it came from.",
+  "worker": "claude"
 }
