@@ -1,0 +1,12 @@
+{
+  "doc": "plans/FORGE-PANE-1.md",
+  "status": "planning",
+  "steps": [
+    {
+      "at": "2026-11-13T05:38:17.364708+00:00",
+      "step": "start"
+    }
+  ],
+  "title": "/forge opens a small live pane of what is running on this laptop",
+  "touches": 0
+}

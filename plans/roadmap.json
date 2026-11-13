@@ -642,6 +642,12 @@
       "title": "Show a failed full test run under Needs you",
       "status": "pending",
       "order": 121
+    },
+    {
+      "key": "FORGE-PANE-1",
+      "title": "/forge opens a small live pane of what is running on this laptop",
+      "status": "pending",
+      "order": 122
     }
   ],
   "epics": [
