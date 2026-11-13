@@ -46,7 +46,7 @@
       "gain": 4,
       "harm": 3,
       "line": 8,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 1,
       "security": false,
@@ -72,7 +72,7 @@
       "gain": 3,
       "harm": 3,
       "line": 68,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 1,
       "security": false,
@@ -82,37 +82,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "6bbb6a23573a940229ef98abba523fe4d8aa47afccb2c1121766c7e2218241c0",
-    "changed": "749d2078f34ab1d60082110eda2d50eb537f01be01b0b2dc00d9e1c19d1fdde1",
-    "commit": "cb95fb610e91293906dbc841fb4e537bc1137385",
+    "branch_diff": "f769d8915a834287a82966d1cd22ccb79f48b42157039be02119a47ddc82ef94",
+    "changed": "4b0a273767b600e01129538a4891d2a2b62c8b6399b62e91bac2b56afbc949e6",
+    "commit": "a4b988b8fad156b4ff518e9a62f49185bfae10d4",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 1, Harm 3\nRaise: Gate. Case: normal use - A Windows platform run reaches the pane-data test. The guarded import fixes collection, but `tests/test_pane_data.py:289` puts a literal newline in the held test command, which Forge executes with `shell=True` at `src/forge/fasttest.py:690`. Windows `cmd.exe` truncates a command at that newline, even inside quotes, as shown in this [cmd.exe reproduction](https://github.com/aaif-goose/goose/issues/11259). Python therefore receives only the imports and never waits for the gate. The question, review-stop and lending cases cannot reliably keep their test run active, so the Windows proof can time out or pass without checking the intended wait.",
-        "file": "tests/test_pane_speed.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 20,
-        "priority": "P1",
-        "title": "Gate: Windows test collection and pane-data execution",
-        "work": 1
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Test. Case: normal use - A task worker asks a question. This case writes the expected internal thread record directly instead of making the worker ask through `forge work`; the worker normally records the question at `src/forge/worker.py:420`. The proof can therefore pass if task workers stop recording their questions and the pane consequently omits them. It also depends on the current private record format, so a behavior-preserving change to that format would break the test.",
-        "file": "tests/test_pane_data.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 93,
-        "priority": "P1",
-        "title": "Gate: tests/test_pane_data.py::test_3 needs-you cases",
-        "work": 2
-      }
-    ],
-    "id": "9c2e17a6-c700-4744-a807-b8a781ead4ac",
-    "status": "blocked"
+    "findings": [],
+    "id": "268f1830-fc06-49c2-b786-03f1b3ef4b75",
+    "status": "clean"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-13T15:05:54.927030+00:00",
@@ -124,6 +103,10 @@
     },
     {
       "at": "2026-11-13T16:09:34.995978+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-13T18:45:59.024187+00:00",
       "step": "review"
     }
   ],
