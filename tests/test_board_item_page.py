@@ -124,9 +124,9 @@ with sync_playwright() as p:
                 tabs.get_by_role('tab', name=re.compile('^' + name)).click()
                 expect(page.get_by_role('tabpanel')).to_be_visible()
                 own_words(page)
-            page.keyboard.press('Escape')
-            expect(page.get_by_role('tablist')).to_have_count(0)
-            assert page.url.endswith('#now'), page.url
+            page.keyboard.press('Escape')  # a full page has no Escape: it stays on its tab
+            expect(page.get_by_role('tablist')).to_have_count(1)
+            assert page.url.endswith('#item/SHOP?tab=known-issues'), page.url
 
             # A part's full page has no Plan tab; an unknown item says so in plain words.
             page.evaluate("async () => " + BOARD + ".openItem('SHOP/SAVE')")

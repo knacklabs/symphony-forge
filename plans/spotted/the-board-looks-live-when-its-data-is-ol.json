@@ -1,0 +1,191 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/board_app/app.js\tGate: rendered check\tthe-board-looks-live-when-its-data-is-ol",
+      "kind": "bug",
+      "path": "src/forge/board_app/app.js",
+      "line": 19,
+      "text": "Gate: rendered check",
+      "from": "blocking",
+      "item": "the-board-looks-live-when-its-data-is-ol",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board_app/app.js\tNot done: An old updating snapshot clears the failed-read warning\tthe-board-looks-live-when-its-data-is-ol",
+      "kind": "bug",
+      "path": "src/forge/board_app/app.js",
+      "line": 104,
+      "text": "Not done: An old updating snapshot clears the failed-read warning",
+      "from": "blocking",
+      "item": "the-board-looks-live-when-its-data-is-ol",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board_app/app.js\tNot done: An open board never sees failed background rebuilds\tthe-board-looks-live-when-its-data-is-ol",
+      "kind": "bug",
+      "path": "src/forge/board_app/app.js",
+      "line": 95,
+      "text": "Not done: An open board never sees failed background rebuilds",
+      "from": "blocking",
+      "item": "the-board-looks-live-when-its-data-is-ol",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board_app/app.js\tNot done: Page-specific read failures leave old data marked Live\tthe-board-looks-live-when-its-data-is-ol",
+      "kind": "bug",
+      "path": "src/forge/board_app/app.js",
+      "line": 104,
+      "text": "Not done: Page-specific read failures leave old data marked Live",
+      "from": "blocking",
+      "item": "the-board-looks-live-when-its-data-is-ol",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board_app/app.js\tNot done: Retry an item's first failed read\tthe-board-looks-live-when-its-data-is-ol",
+      "kind": "bug",
+      "path": "src/forge/board_app/app.js",
+      "line": 142,
+      "text": "Not done: Retry an item's first failed read",
+      "from": "blocking",
+      "item": "the-board-looks-live-when-its-data-is-ol",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/board_app/app.js\tNot done: Show failed reads of a story's plan\tthe-board-looks-live-when-its-data-is-ol",
+      "kind": "bug",
+      "path": "src/forge/board_app/app.js",
+      "line": 97,
+      "text": "Not done: Show failed reads of a story's plan",
+      "from": "blocking",
+      "item": "the-board-looks-live-when-its-data-is-ol",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/board_app/tokens.css\tNot done: The item drawer covers the stale-data message\tthe-board-looks-live-when-its-data-is-ol",
+      "kind": "bug",
+      "path": "src/forge/board_app/tokens.css",
+      "line": 178,
+      "text": "Not done: The item drawer covers the stale-data message",
+      "from": "blocking",
+      "item": "the-board-looks-live-when-its-data-is-ol",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board_server.py\tKeep rebuild logging from blocking recovery\tthe-board-looks-live-when-its-data-is-ol",
+      "kind": "bug",
+      "path": "src/forge/board_server.py",
+      "line": 200,
+      "text": "Keep rebuild logging from blocking recovery",
+      "from": "blocking",
+      "item": "the-board-looks-live-when-its-data-is-ol",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board_server.py\tNot done: Update the reason when a rebuild fails for a different cause\tthe-board-looks-live-when-its-data-is-ol",
+      "kind": "bug",
+      "path": "src/forge/board_server.py",
+      "line": 376,
+      "text": "Not done: Update the reason when a rebuild fails for a different cause",
+      "from": "blocking",
+      "item": "the-board-looks-live-when-its-data-is-ol",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\ttests/test_board_says_when_data_is_old.py\tGate: test_2_a_failed_read_says_the_work_could_not_be_read_and_goes_away_with_new_data\tthe-board-looks-live-when-its-data-is-ol",
+      "kind": "bug",
+      "path": "tests/test_board_says_when_data_is_old.py",
+      "line": 37,
+      "text": "Gate: test_2_a_failed_read_says_the_work_could_not_be_read_and_goes_away_with_new_data",
+      "from": "blocking",
+      "item": "the-board-looks-live-when-its-data-is-ol",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_board_says_when_data_is_old.py\tStandard: Tests own and clean up every process they start\tthe-board-looks-live-when-its-data-is-ol",
+      "kind": "bug",
+      "path": "tests/test_board_says_when_data_is_old.py",
+      "line": 81,
+      "text": "Standard: Tests own and clean up every process they start",
+      "from": "blocking",
+      "item": "the-board-looks-live-when-its-data-is-ol",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/board_app/app.js\tFollow-up: Discard failures belonging to views that have been left",
+      "kind": "edge",
+      "path": "src/forge/board_app/app.js",
+      "line": 263,
+      "text": "Follow-up: Discard failures belonging to views that have been left",
+      "from": "review",
+      "item": "the-board-looks-live-when-its-data-is-ol",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/board_app/tokens.css\tPreserve auto-height on narrow board screens",
+      "kind": "edge",
+      "path": "src/forge/board_app/tokens.css",
+      "line": 193,
+      "text": "Preserve auto-height on narrow board screens",
+      "from": "review",
+      "item": "the-board-looks-live-when-its-data-is-ol",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "improve\tsrc/forge/board_app/app.js\tWhen a rebuild fails, the events stream sends no signal, so a page that is open with a working stream does not learn of the failure until its next read.",
+      "kind": "improve",
+      "path": "src/forge/board_app/app.js",
+      "line": 116,
+      "text": "When a rebuild fails, the events stream sends no signal, so a page that is open with a working stream does not learn of the failure until its next read.",
+      "from": "worker",
+      "item": "the-board-looks-live-when-its-data-is-ol",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "improve\tsrc/forge/board_app/item.js\tA first read of an item that fails shows its own error and the line says the page tries again, but only the next new snapshot retries it.",
+      "kind": "improve",
+      "path": "src/forge/board_app/item.js",
+      "line": 262,
+      "text": "A first read of an item that fails shows its own error and the line says the page tries again, but only the next new snapshot retries it.",
+      "from": "worker",
+      "item": "the-board-looks-live-when-its-data-is-ol",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "improve\tsrc/forge/board_app/item.js\tA first read of an item that fails shows its own error, and the line says the page tries again, but only the next snapshot retries it.",
+      "kind": "improve",
+      "path": "src/forge/board_app/item.js",
+      "line": 262,
+      "text": "A first read of an item that fails shows its own error, and the line says the page tries again, but only the next snapshot retries it.",
+      "from": "worker",
+      "item": "the-board-looks-live-when-its-data-is-ol",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "improve\tsrc/forge/board_app/pages.css\tThe Releases and Insights pages use a height of 100vh less 96px, so the new line under the header may make them scroll by about 37px while it shows.",
+      "kind": "improve",
+      "path": "src/forge/board_app/pages.css",
+      "line": 32,
+      "text": "The Releases and Insights pages use a height of 100vh less 96px, so the new line under the header may make them scroll by about 37px while it shows.",
+      "from": "worker",
+      "item": "the-board-looks-live-when-its-data-is-ol",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

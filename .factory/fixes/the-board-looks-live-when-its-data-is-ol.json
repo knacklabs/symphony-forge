@@ -1,0 +1,241 @@
+{
+  "base": "5a4c64caf73e3cbf9ec8dfc20fefb12b5910ab58",
+  "branch": "fix/the-board-looks-live-when-its-data-is-ol",
+  "done_when": "When the page cannot get new data, one line under the header gives the reason and the next step, and a failed read while the server runs says the work could not be read instead of Offline.",
+  "fix_kind": "ui",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "src/forge/board_app/app.js",
+      "file": "src/forge/board_app/app.js",
+      "gain": 5,
+      "harm": 3,
+      "line": 95,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: An open board never sees failed background rebuilds",
+      "work": 2
+    },
+    {
+      "area": "src/forge/board_app/app.js",
+      "file": "src/forge/board_app/app.js",
+      "gain": 3,
+      "harm": 3,
+      "line": 104,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Page-specific read failures leave old data marked Live",
+      "work": 2
+    },
+    {
+      "area": "src/forge/board_app/app.js",
+      "file": "src/forge/board_app/app.js",
+      "gain": 3,
+      "harm": 3,
+      "line": 104,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: An old updating snapshot clears the failed-read warning",
+      "work": 2
+    },
+    {
+      "area": "src/forge/board_app/tokens.css",
+      "file": "src/forge/board_app/tokens.css",
+      "gain": 3,
+      "harm": 3,
+      "line": 178,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: The item drawer covers the stale-data message",
+      "work": 2
+    },
+    {
+      "area": "tests/test_board_says_when_data_is_old.py",
+      "file": "tests/test_board_says_when_data_is_old.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 37,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_2_a_failed_read_says_the_work_could_not_be_read_and_goes_away_with_new_data",
+      "work": 2
+    },
+    {
+      "area": "src/forge/board_app/app.js",
+      "file": "src/forge/board_app/app.js",
+      "gain": 4,
+      "harm": 3,
+      "line": 19,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: rendered check",
+      "work": 2
+    },
+    {
+      "area": "look() in tests/test_board_says_when_data_is_old.py",
+      "file": "tests/test_board_says_when_data_is_old.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 81,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Standard: Tests own and clean up every process they start",
+      "work": 2
+    },
+    {
+      "area": "src/forge/board_app/app.js",
+      "file": "src/forge/board_app/app.js",
+      "gain": 3,
+      "harm": 3,
+      "line": 97,
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: The owner accepts the three notes as follow-ups: the promised line works; a failed plan read in the line, an immediate retry of an item's first failed read and a changed reason on a second failure become one small follow-up change",
+      "round": 5,
+      "security": false,
+      "title": "Not done: Show failed reads of a story's plan",
+      "work": 2
+    },
+    {
+      "area": "src/forge/board_app/app.js",
+      "file": "src/forge/board_app/app.js",
+      "gain": 3,
+      "harm": 3,
+      "line": 142,
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: The owner accepts the three notes as follow-ups: the promised line works; a failed plan read in the line, an immediate retry of an item's first failed read and a changed reason on a second failure become one small follow-up change",
+      "round": 5,
+      "security": false,
+      "title": "Not done: Retry an item's first failed read",
+      "work": 2
+    },
+    {
+      "area": "handler.Handler.stream() in src/forge/board_server.py",
+      "file": "src/forge/board_server.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 376,
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: The owner accepts the three notes as follow-ups: the promised line works; a failed plan read in the line, an immediate retry of an item's first failed read and a changed reason on a second failure become one small follow-up change",
+      "round": 5,
+      "security": false,
+      "title": "Not done: Update the reason when a rebuild fails for a different cause",
+      "work": 2
+    },
+    {
+      "area": "src/forge/board_app/app.js",
+      "file": "src/forge/board_app/app.js",
+      "gain": 2,
+      "harm": 2,
+      "line": 263,
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: The owner accepts the three notes as follow-ups: the promised line works; a failed plan read in the line, an immediate retry of an item's first failed read and a changed reason on a second failure become one small follow-up change",
+      "round": 5,
+      "security": false,
+      "title": "Follow-up: Discard failures belonging to views that have been left",
+      "work": 2
+    },
+    {
+      "area": "Snapshots.keep_building() in src/forge/board_server.py",
+      "file": "src/forge/board_server.py",
+      "gain": null,
+      "harm": null,
+      "line": 200,
+      "outcome": "fixed in round 7",
+      "reason": "",
+      "round": 6,
+      "security": false,
+      "title": "Keep rebuild logging from blocking recovery",
+      "work": null
+    },
+    {
+      "area": "src/forge/board_app/tokens.css",
+      "file": "src/forge/board_app/tokens.css",
+      "gain": null,
+      "harm": null,
+      "line": 193,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 6,
+      "security": false,
+      "title": "Preserve auto-height on narrow board screens",
+      "work": null
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "90e9a0b42066bd48886dc9d74153bdf0e36d1dd2b207c2f818c7cb4db4cd1045",
+    "changed": "fc04c1fe692cc7ba1012d6f73a4440880d44817d4207213e9cd8bb8dafa73b0d",
+    "commit": "e4227b9976c36c8e0b3805563f067f0c895be2e6",
+    "dismissals": [],
+    "findings": [],
+    "id": "20cb4c5d-d4fc-4b5f-b138-88df1b92ae32",
+    "status": "clean"
+  },
+  "round": 8,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-13T04:52:42.920473+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-13T05:23:00.675661+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-13T06:18:48.573990+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-13T06:48:47.938497+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-13T07:21:12.961619+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-13T09:08:13.747957+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-13T15:31:35.627507+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-13T16:08:12.048183+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-13T15:31:35.628064+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "src/forge/board_server.py",
+    "reason": "The owner chose one more round for both notes: the Insights chart at half width and error printing that cannot block",
+    "wait_id": "e5ffa5c5-fd98-443c-ac98-046b70c46073",
+    "worker_round": 7
+  },
+  "stuck": {
+    "close": "63260065-d4c8-43cc-bf0b-b3079e4a84f8",
+    "head": "75db6d04b0c1d817e428101bd519c471d7defe7d",
+    "keys": {},
+    "round": 7
+  },
+  "why": "The board looks live when its data is old: a stopped server, a failed read and a restart all leave only a small grey Offline word, and after a restart the old page stays Offline because the new board has a new address.",
+  "worker": "claude"
+}
