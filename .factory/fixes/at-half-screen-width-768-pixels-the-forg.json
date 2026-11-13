@@ -118,7 +118,7 @@
     "id": "68cd4c5f-e374-4323-9b5e-b3ac038e816c",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -140,10 +140,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": null,
-    "head": "907dbe36d75ffc408fedaad54127f83bc3a93d57",
+    "close": "c1111165-2844-407a-bc7f-ea182f4d21f4",
+    "head": "1beb23658b4ef42e057fa7c626764e87c8ac223e",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "At half-screen width (768 pixels) the Forge board cannot be read: the five stage columns are too narrow, card titles are tiny, the plan is squeezed beside a fixed summary, the tasks table spills out of its box and loses its header, section and sub-section headings look the same, the \"For the builders\" line is small and grey, and three controls are under 24 pixels high.",
   "worker": "claude"
