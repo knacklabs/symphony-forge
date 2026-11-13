@@ -1,11 +1,168 @@
 {
   "branch": "task/FORGE-PANE-1-DATA",
+  "known": [
+    {
+      "area": "lanes() in src/forge/machine.py",
+      "file": "src/forge/machine.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 523,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: each with its round and time",
+      "work": 1
+    },
+    {
+      "area": "needs_you() in src/forge/machine.py",
+      "file": "src/forge/machine.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 491,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: starts with one line that says whether anything needs you",
+      "work": 1
+    },
+    {
+      "area": "lanes() in src/forge/machine.py",
+      "file": "src/forge/machine.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 531,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Report machine pressure in the busy field",
+      "work": 1
+    },
+    {
+      "area": "tests/test_pane_speed.py",
+      "file": "tests/test_pane_speed.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 8,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: Windows test collection and pane-data execution",
+      "work": 1
+    },
+    {
+      "area": "test_4_forge_answers_the_pane_fast_small_and_cheap() in tests/test_pane_speed.py",
+      "file": "tests/test_pane_speed.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 64,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: tests/test_pane_speed.py::test_4_forge_answers_the_pane_fast_small_and_cheap",
+      "work": 1
+    },
+    {
+      "area": "test_3_lanes_say_who_needs_the_person_and_what_runs_now() in tests/test_pane_data.py",
+      "file": "tests/test_pane_data.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 68,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: tests/test_pane_data.py::test_3 needs-you cases",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "2618221586177fb34cbe432de18f00d77f9763b7c05ec83e6f925de4284c43e4",
+    "changed": "a5a34117ab95bd37446aed27005bb3af4ce67a06cc9a03638cf94fde688b9805",
+    "commit": "47317087034db2560d165c23afed28e0ba21818a",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 1, Harm 3\nRaise: Not done. Case: normal use - A build started by an earlier Forge release receives a commit nudge. That release does not write `first_started_at` and overwrites `started_at` on each launch, so this fallback resets `elapsed` when the second launch starts. The earlier-release case in `tests/test_pane_data.py:155` changes only the version string while still running the new producer, so it cannot expose the reset.",
+        "file": "src/forge/machine.py",
+        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
+        "gain": 3,
+        "harm": 3,
+        "line": 523,
+        "priority": "P1",
+        "title": "Not done: each with its round and time",
+        "work": 1
+      },
+      {
+        "body": "Gain 3, Work 1, Harm 3\nRaise: Not done. Case: normal use - A worker asks a question and the person drops the fix while its checkout is retained, for example because it contains ignored local data. `forge fix drop` leaves the state marked `dropped` and preserves the thread record, but this scan does not exclude dropped states. The item therefore remains in `needs_you` even though it no longer waits for an answer.",
+        "file": "src/forge/machine.py",
+        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
+        "gain": 3,
+        "harm": 3,
+        "line": 491,
+        "priority": "P1",
+        "title": "Not done: starts with one line that says whether anything needs you",
+        "work": 1
+      },
+      {
+        "body": "Gain 3, Work 1, Harm 3\nRaise: Functional. Case: normal use - Available memory falls below Forge's admission floor while no run is queued. `_wait` at `src/forge/machine.py:272` will hold every new run, but this expression returns `busy: false`. Conversely, a test waiting only for a test-lane place makes it true even when a new build or review can start. This does not provide the machine-pressure flag specified for the pane's busy message.",
+        "file": "src/forge/machine.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 531,
+        "priority": "P1",
+        "title": "Report machine pressure in the busy field",
+        "work": 1
+      },
+      {
+        "body": "Gain 4, Work 1, Harm 3\nRaise: Gate. Case: normal use - The scheduled or manual Windows suite collects `tests` with `-m platform`. Python on Windows has no `resource` module, and pytest imports this file before applying the marker filter, so collection fails. After that is repaired, `tests/test_pane_data.py:192` also uses POSIX `shlex.join` for a command run through `cmd.exe`, so its platform-marked lending case cannot start the held test.",
+        "file": "tests/test_pane_speed.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 8,
+        "priority": "P1",
+        "title": "Gate: Windows test collection and pane-data execution",
+        "work": 1
+      },
+      {
+        "body": "Gain 4, Work 1, Harm 3\nRaise: Test. Case: normal use - The pane reads a remembered repo with 1,000 finished items and 50 active worktrees. The fixture creates those worktrees in the main repo, but registers only the ten other repos; their `fix/other` worktrees have no item state. `needs_you` consequently never scans the 50 active worktrees, so the timing and CPU assertions can pass even if scanning them exceeds the limits. The speed test also has no earlier-adopted repo case.",
+        "file": "tests/test_pane_speed.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 64,
+        "priority": "P1",
+        "title": "Gate: tests/test_pane_speed.py::test_4_forge_answers_the_pane_fast_small_and_cheap",
+        "work": 1
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Test. Case: normal use - A task worker asks a question, or the person runs tests while deciding how to answer a worker question. This proof creates worker questions only for fixes, and its concurrent test runs against a review stop rather than a question. Removing task-branch recognition or incorrectly hiding a question during its test run would leave the named proof passing.",
+        "file": "tests/test_pane_data.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 68,
+        "priority": "P1",
+        "title": "Gate: tests/test_pane_data.py::test_3 needs-you cases",
+        "work": 2
+      }
+    ],
+    "id": "9a32d686-ab48-4e21-8297-7de588b47eb7",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-13T15:05:54.927030+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-13T15:59:32.509480+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
