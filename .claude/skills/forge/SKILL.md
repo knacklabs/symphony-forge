@@ -1446,6 +1446,17 @@ keep existing settings until that fix changes them. An explicit `test_place` kee
    the changed-file flags. Go, Rust, Java, .NET
    and Ruby get no suggestion. Check the suggestion against the repo's setup before
    agreeing to it; other shell flows need the agent to adapt the command.
+   For a combined script, `forge doctor`, `forge upgrade` and adoption print one line
+   that names the script and suggest no command; you write the command. Keep every step the
+   tests need, in the order the script runs them, including any step that runs after the
+   tests. Limit only the unit-test steps to the changed code with the runner's own option and
+   `{base}`, for example `vitest run --changed {base}` or `jest --changedSince {base}`; npm
+   passes `--` options only to the last command of a script. Keep the browser-test steps,
+   because the pull request check runs `fast_test` too. Keep the setup a script runs before or
+   after itself (`pre` and `post` scripts). Run the command once with `{base}` set to the
+   default branch. Tell the owner that changed-only selection follows imports, so API tests
+   that reach the code only through a URL run only in the full test run. Then ask the owner,
+   and set it in `forge.toml` through a fix. Forge never changes the setting itself.
 
 10. When the repo has a Dockerfile, write `services.toml` as the deploy paragraph at the top
     of this guide says, get the human's confirmation, and add it to the adoption fix.
@@ -2216,8 +2227,9 @@ Setup steps such as `uv sync` and `npm ci` keep their arguments; no filenames ar
 Forge's initial optional-package Node command uses the same selection once an app adds
 `package.json`; with no package it still runs nothing.
 Go and other runners run the full test command. Compound npm scripts also keep their full
-command because arguments cannot select each runner inside them. Set `fast_test` for a different
-selection. Supported runners with no related tests run none locally. A red CI still sends
+command because arguments cannot select each runner inside them; `forge doctor`, `forge upgrade`
+and adoption name such a script, and step 9 of Adopt a live app says how to write the command.
+Set `fast_test` for a different selection. Supported runners with no related tests run none locally. A red CI still sends
 the item back to the worker.
 To include fast checks or a wider selection, set `fast_test` in `forge.toml` (in a fix), with
 `{base}` standing for the merge base with the default branch.
@@ -2264,6 +2276,7 @@ upgrade. Upgrade never rewrites their `test` or `fast_test` settings. Doctor rep
 in the project: it loads a temporary pytest hook to exclude unrelated files, including on pytest
 before 8.2. Test launchers must preserve `PYTHONPATH`, forward pytest arguments and expose xdist
 options in the command or pytest configuration.
+On Windows, a builder's own bare `forge test` run skips each separate Playwright or Cypress step (directly or through one script of the repo) and prints one line that says so. A step that reaches Playwright through another file still runs. A test setting that is one combined script, or a script with a pre or post script, runs whole. `forge test --change`, close, the pull request check and the full run still run browser steps; Mac and Linux do not change.
 Workers run tests only through bare `forge test`. It runs `fast_test`, or `test` when none is
 set (using pytest selection when supported), with `{base}` as the merge base with
 `origin/<default branch>`, in the same fair machine-wide test lane as close.

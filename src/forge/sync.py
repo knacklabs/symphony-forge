@@ -705,7 +705,7 @@ def install_merge_rules(top: Path) -> bool:
 
 
 def sync(args: argparse.Namespace) -> None:
-    from forge import codex
+    from forge import codex, quicktest
     top = repo.root()
     cfg = repo.config(top)
     raw_config = tomllib.loads((top / "forge.toml").read_text(encoding="utf-8"))
@@ -740,6 +740,7 @@ def sync(args: argparse.Namespace) -> None:
             missing = 'app test check' if cfg['checks'] else 'checks'
             print(f'Forge runs change tests on this machine because forge.toml names no {missing}. To '
                   'run them in CI, write test_place = "ci".')
+    quicktest.combined_note(top, cfg)  # upgrade runs the new release's sync, so this line comes from it
     codex.preserve_chats(top)  # after every file is written, so a chat problem only warns
 
 
