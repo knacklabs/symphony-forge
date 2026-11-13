@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Forge pane in the Claude desktop app when Forge did not answer</title>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 440px; height: 380px; box-sizing: border-box; padding: 24px 20px 20px; background: #faf9f5; color: #141413; font-family: Inter, system-ui, sans-serif; font-size: 14px; line-height: 20px; display: flex; flex-direction: column; gap: 20px">
+  <div style="display: flex; align-items: baseline; justify-content: space-between">
+    <span style="font-size: 17px; font-weight: 700; letter-spacing: -0.01em">Forge</span>
+    <span style="font-size: 13px; color: #5c5a52">this laptop</span>
+  </div>
+  <div style="font-size: 14px; color: #5c5a52">Nothing needs you.</div>
+  <div style="display: flex; flex-direction: column; gap: 8px">
+    <div style="font-size: 12px; font-weight: 600; letter-spacing: 0.06em; color: #5c5a52">BUILDING</div>
+    <div style="display: flex; flex-direction: column; gap: 6px; padding: 14px; background: #ffffff; border: 1px solid #e3e0d6; border-radius: 10px">
+      <div style="display: flex; gap: 10px; align-items: flex-start">
+        <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" style="flex-shrink: 0; margin-top: 5px"><circle cx="5" cy="5" r="5" fill="#1d4ed8"></circle></svg>
+        <div style="flex-grow: 1; font-weight: 600">One combined check for ready changes</div>
+        <div style="flex-shrink: 0; font-size: 13px; color: #5c5a52; font-variant-numeric: tabular-nums">23 min</div>
+      </div>
+      <div style="display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding-left: 20px; font-size: 12px">
+        <span style="padding: 2px 8px; background: #f0eee6; border-radius: 999px; color: #3d3b35">Round 3</span>
+        <span style="padding: 2px 8px; background: #f0eee6; border-radius: 999px; color: #3d3b35">Sonnet</span>
+        <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; color: #3d3b35">running pytest</span>
+      </div>
+    </div>
+  </div>
+  <div style="flex-grow: 1"></div>
+  <div style="padding: 10px 14px; background: #f0eee6; border-radius: 8px; font-size: 13px; color: #3d3b35">Last update 2 min ago. Forge did not answer.</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":440,"height":380}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

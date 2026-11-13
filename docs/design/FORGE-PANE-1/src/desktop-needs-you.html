@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Forge pane in the Claude desktop app when something needs you</title>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+button{font:inherit}
+button:focus-visible{outline:2px solid #1d4ed8;outline-offset:2px}
+</style>
+</helmet>
+<div style="width: 440px; height: 1000px; box-sizing: border-box; padding: 24px 20px 20px; background: #faf9f5; color: #141413; font-family: Inter, system-ui, sans-serif; font-size: 14px; line-height: 20px; display: flex; flex-direction: column; gap: 20px">
+  <div style="display: flex; align-items: baseline; justify-content: space-between">
+    <span style="font-size: 17px; font-weight: 700; letter-spacing: -0.01em">Forge</span>
+    <span style="font-size: 13px; color: #5c5a52">this laptop</span>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+    <div style="display: flex; flex-direction: column; gap: 6px; padding: 12px; background: #f0eee6; border-radius: 10px">
+      <div style="display: flex; justify-content: space-between; font-size: 12px; color: #3d3b35"><span>Builds and reviews</span><span style="font-variant-numeric: tabular-nums; font-weight: 600">1 of 4</span></div>
+      <svg width="176" height="8" viewBox="0 0 176 8" role="img" aria-label="1 of 4 places in use" style="display: block; max-width: 100%"><rect x="0" y="0" width="41" height="8" rx="2" fill="#1d4ed8"></rect><rect x="45" y="0" width="41" height="8" rx="2" fill="#d6d3c8"></rect><rect x="90" y="0" width="41" height="8" rx="2" fill="#d6d3c8"></rect><rect x="135" y="0" width="41" height="8" rx="2" fill="#d6d3c8"></rect></svg>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 6px; padding: 12px; background: #f0eee6; border-radius: 10px">
+      <div style="display: flex; justify-content: space-between; font-size: 12px; color: #3d3b35"><span>Tests</span><span style="font-variant-numeric: tabular-nums; font-weight: 600">1 of 4</span></div>
+      <svg width="176" height="8" viewBox="0 0 176 8" role="img" aria-label="1 of 4 places in use" style="display: block; max-width: 100%"><rect x="0" y="0" width="41" height="8" rx="2" fill="#1d4ed8"></rect><rect x="45" y="0" width="41" height="8" rx="2" fill="#d6d3c8"></rect><rect x="90" y="0" width="41" height="8" rx="2" fill="#d6d3c8"></rect><rect x="135" y="0" width="41" height="8" rx="2" fill="#d6d3c8"></rect></svg>
+    </div>
+  </div>
+  <div style="display: flex; flex-direction: column; gap: 4px; padding: 12px 14px; background: #fbe9d7; border: 1px solid #e8b98a; border-radius: 10px">
+    <div style="font-weight: 700; color: #7a3410">2 items need you</div>
+    <div style="color: #4a2a12">First: Show late orders has a question for you.</div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 8px">
+    <div style="font-size: 12px; font-weight: 600; letter-spacing: 0.06em; color: #5c5a52">BUILDING</div>
+    <div style="display: flex; flex-direction: column; gap: 6px; padding: 14px; background: #ffffff; border: 1px solid #e3e0d6; border-radius: 10px">
+      <div style="display: flex; gap: 10px; align-items: flex-start">
+        <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" style="flex-shrink: 0; margin-top: 5px"><circle cx="5" cy="5" r="4" fill="none" stroke="#5c5a52" stroke-width="2"></circle></svg>
+        <div style="flex-grow: 1; font-weight: 600">One combined check for ready changes</div>
+        <div style="flex-shrink: 0; font-size: 13px; color: #5c5a52; font-variant-numeric: tabular-nums">21 min</div>
+      </div>
+      <div style="padding-left: 20px; font-size: 13px; color: #5c5a52">Waiting for its tests</div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 6px; padding: 14px; background: #ffffff; border: 1px solid #e3e0d6; border-radius: 10px">
+      <div style="display: flex; gap: 10px; align-items: flex-start">
+        <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" style="flex-shrink: 0; margin-top: 5px"><circle cx="5" cy="5" r="4" fill="none" stroke="#5c5a52" stroke-width="2"></circle></svg>
+        <div style="flex-grow: 1; font-weight: 600">Export invoices as a spreadsheet <span style="font-weight: 400; color: #5c5a52">in shop-app</span></div>
+        <div style="flex-shrink: 0; font-size: 13px; color: #5c5a52; font-variant-numeric: tabular-nums">2 min</div>
+      </div>
+      <div style="padding-left: 20px; font-size: 13px; color: #5c5a52">Waiting for a free place</div>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 8px">
+    <div style="font-size: 12px; font-weight: 600; letter-spacing: 0.06em; color: #5c5a52">TESTS</div>
+    <div style="display: flex; flex-direction: column; gap: 10px; padding: 14px; background: #ffffff; border: 1.5px solid #141413; border-radius: 10px">
+      <div style="display: flex; gap: 10px; align-items: flex-start">
+        <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" style="flex-shrink: 0; margin-top: 5px"><circle cx="5" cy="5" r="5" fill="#1d4ed8"></circle></svg>
+        <div style="flex-grow: 1; font-weight: 600">One combined check for ready changes</div>
+        <div style="flex-shrink: 0; font-size: 13px; color: #5c5a52; font-variant-numeric: tabular-nums">1 h 4 min</div>
+      </div>
+      <div style="display: flex; flex-wrap: wrap; gap: 6px; padding-left: 20px; font-size: 12px">
+        <span style="padding: 2px 8px; background: #f0eee6; border-radius: 999px; color: #3d3b35">Round 3</span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 4px; margin-left: 20px; padding: 10px 12px; background: #f0eee6; border-radius: 8px">
+        <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.06em; color: #5c5a52">LATEST OUTPUT</div>
+        <div style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 12px; line-height: 18px; color: #3d3b35; white-space: pre-wrap">tests/test_queue_land_all.py 14 passed
+tests/test_train_land_all.py 9 of 28</div>
+      </div>
+      <div style="display: flex; gap: 8px; padding-left: 20px">
+        <button type="button" style="min-height: 44px; padding: 0 14px; background: #141413; color: #faf9f5; border: 1px solid #141413; border-radius: 8px; font-weight: 600; cursor: pointer">Open output</button>
+        <button type="button" style="min-height: 44px; padding: 0 14px; background: #ffffff; color: #141413; border: 1px solid #b8b5aa; border-radius: 8px; font-weight: 500; cursor: pointer">Stop run</button>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 8px">
+    <div style="font-size: 12px; font-weight: 600; letter-spacing: 0.06em; color: #5c5a52">REVIEW</div>
+    <div style="display: flex; flex-direction: column; gap: 6px; padding: 14px; background: #ffffff; border: 1px solid #e3e0d6; border-radius: 10px">
+      <div style="display: flex; gap: 10px; align-items: flex-start">
+        <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" style="flex-shrink: 0; margin-top: 5px"><circle cx="5" cy="5" r="5" fill="#1d4ed8"></circle></svg>
+        <div style="flex-grow: 1; font-weight: 600">A plan read</div>
+        <div style="flex-shrink: 0; font-size: 13px; color: #5c5a52; font-variant-numeric: tabular-nums">48 s</div>
+      </div>
+      <div style="display: flex; flex-wrap: wrap; gap: 6px; padding-left: 20px; font-size: 12px">
+        <span style="padding: 2px 8px; background: #f0eee6; border-radius: 999px; color: #3d3b35">Round 2</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="flex-grow: 1"></div>
+  <div style="font-size: 13px; color: #5c5a52">The machine is busy. New runs wait.</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":440,"height":1000}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>
