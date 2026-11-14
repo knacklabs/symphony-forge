@@ -60,14 +60,27 @@ def reads_file_relative(source: str, paths: set[str]) -> bool:
                         roots[target.id] = components(node.value)
         if len(roots) == before:
             break
+    def suffix_of(node: ast.AST) -> str:
+        parts = components(node)
+        return posixpath.normpath("/" + posixpath.join(*parts)).lstrip("/") if parts else ""
+
+    folders = set()  # Folders the test lists itself: path.iterdir(), glob, os.listdir(path) and the like.
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Call):
+            name = getattr(node.func, "id", getattr(node.func, "attr", ""))
+            listed = (node.func.value if name in {"iterdir", "glob", "rglob"}
+                      and isinstance(node.func, ast.Attribute)
+                      else node.args[0] if name in {"listdir", "scandir", "walk", "iglob", "glob"}
+                      and node.args else None)
+            if listed is not None and rooted(listed) and (suffix := suffix_of(listed)):
+                folders.add(suffix)
     for node in ast.walk(tree):
         if isinstance(node, (ast.BinOp, ast.Call)) and rooted(node):
-            parts = components(node)
-            suffix = posixpath.normpath("/" + posixpath.join(*parts)).lstrip("/") if parts else ""
-            if suffix and any(path == suffix or path.endswith("/" + suffix) or ("/" + posixpath.dirname(path)).endswith("/" + suffix)
-                              for path in paths):  # a folder read covers the files directly in it
+            suffix = suffix_of(node)
+            if suffix and any(path == suffix or path.endswith("/" + suffix) for path in paths):
                 return True
-    return False
+    return any(("/" + posixpath.dirname(path)).endswith("/" + folder)
+               for folder in folders for path in paths)
 
 
 def test_readers(files: list[Path], picked: set[Path], root=None) -> set[Path]:
