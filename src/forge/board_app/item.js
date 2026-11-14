@@ -366,7 +366,7 @@ function frame(row) {
   const kept = issues(row);
   const tablist = el('div', { role: 'tablist', 'aria-label': row.title, class: 'tabs' }, tabs.map((name) => el('button', {
     type: 'button', role: 'tab', id: tabId(name), 'data-focus': tabId(name), 'aria-controls': 'tab-panel', 'aria-selected': String(name === page.tab),
-    onclick: () => { location.hash = `item/${page.id}${name === 'Overview' ? '' : `?tab=${slug(name)}`}`; },
+    onclick: () => { location.hash = `item/${page.id}${name === 'Overview' ? '' : `?tab=${slug(name)}`}`; showPage(); }, // draw now; the hashchange after it finds the tab drawn
   }, name === 'Known issues' ? `Known issues · ${kept.length}` : name)));
   const summary = el('div', { class: 'summary' },
     el('p', { class: 'kind' }, tag(row), el('span', {}, kind(row))),
