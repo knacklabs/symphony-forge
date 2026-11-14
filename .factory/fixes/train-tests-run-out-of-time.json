@@ -1,0 +1,15 @@
+{
+  "base": "cac22c08cfea26bf443ed6553e6cede9fdc7b0f9",
+  "branch": "fix/train-tests-run-out-of-time",
+  "done_when": "tests/test_train_land_all.py passes 20 times in a row under machine load and each of its tests ends well inside the test time limit, with the cause repaired in the train or in the test, and not by a longer limit",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-14T17:48:25.592831+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The merge-train tests (tests/test_train_land_all.py test_3 and test_5) sometimes make a CI test group run out of time: forge land --all in the test sees a change as changed after the combined check, falls back to the slow one-at-a-time path, the test passes its 120 and 150 second limits, the group retries it and is cancelled at the job's time limit, on Linux at 45 minutes and most likely on Windows at 55 minutes (seen three times in one day)"
+}
