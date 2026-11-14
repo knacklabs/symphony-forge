@@ -449,7 +449,7 @@ def _live_steps(runs: list[dict[str, Any]]) -> dict[tuple[str, str], str]:
     found: dict[tuple[str, str], tuple[str, str]] = {}
     for root in {run["repo_root"] for run in runs if run["kind"] == "work" and run.get("item")}:
         try:
-            files = (repo.forge_dir(Path(root)) / "progress").glob("*.json")
+            files = (Path(root) / ".git" / "forge" / "progress").glob("*.json")
             for file in files:
                 event = json.loads(file.read_text(encoding="utf-8")).get("progress") or {}
                 step = event.get("step")
@@ -476,6 +476,21 @@ def _item_of(branch: str, path: Path) -> str | None:
     return None
 
 
+def _worktrees(root: Path) -> dict[str, Path]:
+    """Each checked-out branch and its folder, read from the repo's .git files: no process starts."""
+    found: dict[str, Path] = {}
+    heads = [(root / ".git" / "HEAD", root)]
+    for folder in (root / ".git" / "worktrees").glob("*"):
+        with contextlib.suppress(OSError):
+            heads.append((folder / "HEAD", Path((folder / "gitdir").read_text(encoding="utf-8").strip()).parent))
+    for head, path in heads:
+        with contextlib.suppress(OSError):
+            ref = head.read_text(encoding="utf-8").strip()
+            if ref.startswith("ref: refs/heads/") and path.is_dir():
+                found[ref.removeprefix("ref: refs/heads/")] = path
+    return found
+
+
 def needs_you(building: set[tuple[str, str]]) -> list[dict[str, str]]:
     """Items on this laptop that wait for a person: a worker's open question, a stop that waits
     for the owner's choice, or a cold read stopped at its round limit. An item with a build round
@@ -485,7 +500,7 @@ def needs_you(building: set[tuple[str, str]]) -> list[dict[str, str]]:
     found: dict[tuple[str, str], dict[str, str]] = {}
     for root in remembered():
         try:
-            for branch, path in story.worktrees(root).items():
+            for branch, path in _worktrees(root).items():
                 item = _item_of(branch, path)
                 state = repo.read_state(item, path) if item else None
                 if not item or not state or state.get("status") == "dropped" or (root.as_posix(), item) in building:
@@ -496,7 +511,7 @@ def needs_you(building: set[tuple[str, str]]) -> list[dict[str, str]]:
                     record, findings = story._record(notes.read_text(encoding="utf-8") if notes.is_file() else "")
                     waits = story.stopped(record, findings, repo.config(path)["cold_read_rounds"])
                 else:
-                    waits = bool(codex._json(codex._item_file(root, item, ".json", "Fix")).get("question")
+                    waits = bool(codex._json(root / ".git" / "forge" / "threads" / ("task" if "/" in item else "fix") / f"{item}.json").get("question")
                                  or stop and not stop.get("choice"))
                 if waits:
                     found[(root.as_posix(), item)] = {"title": _title(path, item, state, True) or item,
