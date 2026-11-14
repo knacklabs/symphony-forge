@@ -219,7 +219,8 @@ def _title(path: Path, item: str | None, state: dict[str, Any], read: bool = Fal
     return title
 
 
-def join(kind: str, repo: Path, item: str | None, model: str | None, effort: str | None) -> dict[str, Any]:
+def join(kind: str, repo: Path, item: str | None, model: str | None, effort: str | None,
+         read_round: int | None = None) -> dict[str, Any]:
     """Join a lane; finishing rounds and prerequisites go first, FIFO within each group.
 
     Reviews and plan reads take no place from anyone else, but every run
@@ -244,7 +245,7 @@ def join(kind: str, repo: Path, item: str | None, model: str | None, effort: str
              "checkout_root": repo.resolve().as_posix(),
              "repo_name": root.name, "item": item, "title": title, "model": model, "effort": effort,
              "joined_at": repository.now(), "started_at": None, "process": me, "forge": me,
-             "agent": None, "round": round_number, "unblocks": unblocks, "near_end": near_end,
+             "agent": None, "round": read_round or round_number, "unblocks": unblocks, "near_end": near_end,
              "output_path": None, "progress": None, "free": kind in ("read", "review")}
     if kind == "test":
         entry["processes"] = 0
@@ -391,10 +392,10 @@ def entries() -> list[dict[str, Any]]:
 
 @contextlib.contextmanager
 def agent_slot(top: Path, kind: str, item: str | None = None, model: str | None = None,
-               effort: str | None = None) -> Iterator[dict[str, Any]]:
+               effort: str | None = None, read_round: int | None = None) -> Iterator[dict[str, Any]]:
     """A single command has one active agent entry, shared by its model launches."""
     global _agent_entry
-    entry = _agent_entry = join(kind, top, item, model, effort)
+    entry = _agent_entry = join(kind, top, item, model, effort, read_round)
     try:
         yield entry
     finally:

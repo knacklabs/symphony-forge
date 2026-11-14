@@ -186,6 +186,9 @@ def _reload_and_open_installed_mod(folder, home, expected, install):
         until("/forge")
         output = ""
         os.write(master, b"\r")
+        # "Opened the Forge pane." is the reply only when Claude Code placed the pane; the text
+        # fallback has the same lines but not this one. Both must show.
+        until(re.escape("OpenedtheForgepane."))
         until(re.escape(re.sub(r"\s+", "", expected)))
     finally:
         try:

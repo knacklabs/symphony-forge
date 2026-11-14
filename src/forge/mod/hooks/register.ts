@@ -14,12 +14,14 @@ const BLUE = '#1d4ed8'
 const SOFT = '#7f7f7f1f'
 const TRACK = '#7f7f7f40'
 const GROUPS: Record<string, string> = { work: 'Building', test: 'Tests', review: 'Review', read: 'Review' }
+// A run Forge started with no item (a test run on the default branch) still shows, under a plain name.
+const PLAIN: Record<string, string> = { work: 'A build', test: 'A test run', review: 'A review', read: 'A plan read' }
 const MODELS = [/claude-([a-z]+)/, /gpt-[\d.]+-([a-z]+)/]
 
 type Run = {
   id: string; group: string; title: string; repoRoot: string; repoName: string; round: number | null
   model: string | null; step: string | null; seconds: number; progress: { done: number; total: number } | null
-  waiting: boolean; lent: boolean; native: boolean; joined: number; outputPath: string | null
+  waiting: boolean; lent: boolean; free: boolean; native: boolean; joined: number; outputPath: string | null
 }
 type Need = { title: string; repoRoot: string; repoName: string }
 type Places = { used: number; size: number }
@@ -31,6 +33,7 @@ const rec = (v: unknown): Record<string, unknown> => (v && typeof v === 'object'
 const str = (v: unknown) => (typeof v === 'string' && v ? v : null)
 const num = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? v : null)
 const norm = (path: string) => path.replace(/\\/g, '/').replace(/\/+$/, '')
+const up = (path: string) => (path.includes('/') ? path.slice(0, path.lastIndexOf('/')) : '')
 
 // Time in plain words. A run never shows as zero: its first second counts.
 const span = (seconds: number) => {
@@ -47,14 +50,14 @@ function parse(text: string): Lanes {
   const runs: Run[] = []
   for (const raw of [...agents.entries, ...tests.entries]) {
     const r = rec(raw), id = str(r.id), kind = str(r.kind), joined = Date.parse(str(r.joined_at) ?? '')
-    const title = str(r.title) ?? str(r.item)
+    const title = str(r.title) ?? str(r.item) ?? (kind ? PLAIN[kind] : null)
     if (!id || !kind || !GROUPS[kind] || !title || Number.isNaN(joined)) continue
     const progress = rec(r.progress), done = num(progress.done), total = num(progress.total)
     runs.push({
       id, group: GROUPS[kind]!, title, repoRoot: str(r.repo_root) ?? '', repoName: str(r.repo_name) ?? '',
       round: num(r.round), model: str(r.model), step: str(r.step), seconds: num(r.elapsed) ?? 0,
       progress: done !== null && total ? { done, total } : null, waiting: r.waiting === true,
-      lent: !!r.suspended_by, native: r.native === true, joined, outputPath: str(r.output_path),
+      lent: !!r.suspended_by, free: r.free === true, native: r.native === true, joined, outputPath: str(r.output_path),
     })
   }
   const places = (lane: Record<string, unknown>, inLane: (run: Run) => boolean): Places => ({
@@ -65,7 +68,7 @@ function parse(text: string): Lanes {
     runs: runs.sort((a, b) => a.joined - b.joined),
     needs: needs.flatMap(n => (str(n.title) ? [{ title: str(n.title)!, repoRoot: str(n.repo_root) ?? '', repoName: str(n.repo_name) ?? '' }] : [])),
     busy: root.busy === true,
-    agents: places(agents, run => run.group !== 'Tests'),
+    agents: places(agents, run => run.group !== 'Tests' && !run.free),
     tests: places(tests, run => run.group === 'Tests'),
   }
 }
@@ -94,7 +97,7 @@ type Ctx = {
   answer: Answer | undefined; failed: boolean; loaded: boolean; reading: boolean; lastRead: number
   selected: string; outputRun: string; note: string | null; ticker: Timer | undefined
   home: { root: string; main: string } | undefined; rich: boolean | undefined
-  peak: Map<string, number>; latest: Map<string, string[]>
+  peak: Map<string, { state: string; seconds: number }>; latest: Map<string, string[]>
 }
 // Claude Code reads a hook's source: only functions declared at the top of this file may take `$`.
 async function mainRoot(c: Ctx, $: CoreEngineInterface) {
@@ -103,9 +106,15 @@ async function mainRoot(c: Ctx, $: CoreEngineInterface) {
   if (c.home?.root === root) return c.home.main
   let main = root
   try {
-    if ((await $.fs.stat(`${root}/.git`, { resolve: false })).kind === 'file') {
+    // The session may start in a folder inside the repo: walk up to the folder that holds .git.
+    let top = root
+    for (let here = root; here; here = up(here)) {
+      if (await $.fs.exists(`${here}/.git`)) { top = here; break }
+    }
+    main = top
+    if ((await $.fs.stat(`${top}/.git`, { resolve: false })).kind === 'file') {
       // A worktree's .git file names the main checkout: gitdir: <main>/.git/worktrees/<name>
-      const pointer = norm(String(await $.fs.read(`${root}/.git`))).match(/gitdir:\s*(.+?)\/\.git\/worktrees\//)
+      const pointer = norm(String(await $.fs.read(`${top}/.git`))).match(/gitdir:\s*(.+?)\/\.git\/worktrees\//)
       if (pointer) main = pointer[1]!
     }
   } catch { /* a plain folder keeps its own name */ }
@@ -184,8 +193,10 @@ function rowsOf(c: Ctx, have: Answer, now: number, main: string): Row[] {
   return have.lanes.runs.map(run => {
     const repo = run.repoName && norm(run.repoRoot) !== main ? run.repoName : null
     // A time that has been shown never goes back, even when a read lands a little early.
-    const seconds = Math.max(c.peak.get(run.id) ?? 0, run.seconds + (now - have.at) / 1000)
-    c.peak.set(run.id, seconds)
+    // A run that starts after a wait counts from its first start, so the guard resets when its state changes.
+    const state = run.lent ? 'lent' : run.waiting ? 'waiting' : 'running', before = c.peak.get(run.id)
+    const seconds = Math.max(before?.state === state ? before.seconds : 0, run.seconds + (now - have.at) / 1000)
+    c.peak.set(run.id, { state, seconds })
     return {
       ...run, seconds, repo, label: repo ? `${run.title} in ${repo}` : run.title, tag: modelTag(run.model),
       wait: run.lent ? 'Waiting for its tests' : run.waiting ? 'Waiting for a free place' : null,
@@ -225,7 +236,7 @@ async function inForgeRepo(c: Ctx, $: CoreEngineInterface) {
   let folder = ''
   try { folder = norm(await $.session.root()) } catch { return false }
   // Walk up: the session may start in a folder inside the repo.
-  for (let here = folder; here; here = here.includes('/') ? here.slice(0, here.lastIndexOf('/')) : '') {
+  for (let here = folder; here; here = up(here)) {
     if (await $.fs.exists(`${here}/.git`) && await $.fs.exists(`${here}/forge.toml`)) return true
   }
   return false
@@ -301,7 +312,8 @@ export const register: Register = (on, options) => {
       $.ui.invalidate('ui.render')
     }
     const busy = v.busy ? [t.Text({ dimColor: true, children: 'The machine is busy. New runs wait.' })] : []
-    const empty = v.groups.length ? [] : [t.Text({ children: 'Nothing is running.' })]
+    // Before Forge has answered once, nothing is known: say only that it did not answer.
+    const empty = v.groups.length || !c.answer ? [] : [t.Text({ children: 'Nothing is running.' })]
 
     if (e.surface === 'desktop' && await isDesktop(c, $)) {
       const d = $.ui.resolve(e)
@@ -343,11 +355,22 @@ export const register: Register = (on, options) => {
 
     const needs = v.needs.length ? [t.Text({ wrap: 'wrap', ...(v.attention ? { color: 'warning' } : {}), children: v.needs.join(' ') })] : []
     const footer = [...(c.note ? [t.Text({ children: c.note })] : []), ...(v.failure ? [t.Text({ dimColor: true, children: v.failure })] : [])]
-    // Above the prompt there is room for one line a run.
+    const controls = row ? [t.Box({ flexDirection: 'row', gap: 1, children: buttons() })] : []
+    // Above the prompt there is room for one line a run. The title gives way, so the round and time stay.
     if (e.props.placement === 'inline') {
-      return t.Box({ flexDirection: 'column', children: [...needs, ...empty,
-        ...v.groups.flatMap(group => group.rows.map(r => t.Text({ wrap: 'truncate-end', children: `${group.name}  ${r.label} · ${detail(r).replace(/^Round/, 'round').replace(/ · Waiting/, ' · waiting')}` }))),
-        ...busy, ...footer] })
+      const lines = v.groups.flatMap(group => group.rows.map(r => {
+        const prefix = `${group.name}  `, tail = ` · ${detail(r).replace(/^Round/, 'round').replace(/ · Waiting/, ' · waiting')}`
+        const named = r.repo ? ` in ${r.repo}` : ''
+        const room = Math.max(4, e.props.bodyColumns - prefix.length - tail.length - named.length)
+        const shown = r.title.length > room ? `${r.title.slice(0, room - 1)}…` : r.title
+        return t.Box({ key: `row-${r.id}`, flexDirection: 'row', children: [
+          t.Text({ dimColor: true, children: prefix }),
+          t.Button({ key: `run-${r.id}`, plain: true, onPress: select(r.id), children: [r.id === row?.id ? t.Text({ inverse: true, children: shown }) : shown] }),
+          ...(named ? [t.Text({ dimColor: true, children: named })] : []),
+          t.Text({ dimColor: true, children: tail }),
+        ] })
+      }))
+      return t.Box({ flexDirection: 'column', children: [...needs, ...empty, ...lines, ...busy, ...footer, ...controls] })
     }
     const title = (r: Row) => t.Button({ key: `run-${r.id}`, plain: true, onPress: select(r.id), children: [r.id === row?.id ? t.Text({ inverse: true, children: r.title }) : r.title, ...(r.repo ? [t.Text({ dimColor: true, children: ` in ${r.repo}` })] : [])] })
     return t.Box({ flexDirection: 'column', gap: 1, children: [
@@ -356,8 +379,7 @@ export const register: Register = (on, options) => {
         t.Text({ bold: true, children: group.name.toUpperCase() }),
         ...group.rows.map(r => t.Box({ key: `row-${r.id}`, flexDirection: 'column', paddingLeft: 2, children: [title(r), t.Text({ dimColor: true, wrap: 'wrap', children: detail(r) })] })),
       ] })),
-      ...busy, ...footer,
-      ...(row ? [t.Box({ flexDirection: 'row', gap: 1, children: buttons() })] : []),
+      ...busy, ...footer, ...controls,
     ] })
   })
 }

@@ -314,7 +314,7 @@ def read(args: Any) -> int:
         if later and not why and not session:
             why = "Forge has no record of its Claude session on this machine"
         with codex.hold(top, target, "Grill"), machine.agent_slot(
-                top, "read", target, **repo.models(config, "grill", reader)):
+                top, "read", target, read_round=round_number, **repo.models(config, "grill", reader)):
             clock = time.monotonic()
             done = _sdk_read(top, target, models, prompt, fresh_prompt, session and session["id"],
                              why, round_number, remember_reader)
@@ -327,7 +327,7 @@ def read(args: Any) -> int:
             why = ""
         # One read per item, nothing left running, and one of the machine's agent slots.
         with codex.hold(top, target, "Grill"), machine.agent_slot(top, "read", target,
-                **repo.models(config, "grill", reader)):
+                read_round=round_number, **repo.models(config, "grill", reader)):
             name = f"Read · {target}"
             if len(name) > 60:
                 prefix = name[:59]

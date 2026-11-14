@@ -163,6 +163,8 @@ for (const surface of ['terminal', 'desktop'] as const) {
     expect(drawn).toContain('Forge did not answer.')
     expect(drawn).not.toContain('Loading')
     expect(drawn).not.toContain('Last update')
+    // Forge never said whether anything runs, so the pane does not say that nothing does.
+    expect(drawn).not.toContain('Nothing is running.')
   })
 }
 
@@ -217,7 +219,11 @@ test('3: the text reply, the terminal and the desktop say the same things in the
         // The desktop splits a row into a title, a time and tags; the words and their order by row stay.
         inOrder(drawn, ['Needs a choice needs you.', 'One combined check', 'Show late orders', 'shop-app', 'Lent build', 'One combined check', 'The board looks live', 'The machine is busy. New runs wait.'])
         for (const word of ['Round 3', '21 min', 'editing close.py', '1 h 4 min', 'Waiting for its tests', '212 of 640 tests', 'Waiting for a free place']) expect(drawn).toContain(word)
-      } else inOrder(drawn, placement === 'inline' ? SAID.map(word => word.replace('Round', 'round').replace('Waiting', 'waiting')) : SAID)
+      } else if (placement === 'inline') {
+        // One line a run: the title, the repo, then the round and time.
+        inOrder(drawn, ['Needs a choice needs you.', 'One combined check', 'round 3 · 21 min · editing close.py', 'Show late orders', 'in shop-app', 'round 1 · 1 h 4 min', 'Lent build',
+          'round 2 · waiting for its tests · 5 min', 'One combined check', 'round 2 · 212 of 640 tests · 3 min', 'The board looks live', 'round 1 · waiting for a free place · 2 min', 'The machine is busy. New runs wait.'])
+      } else inOrder(drawn, SAID)
       await ui.unmount()
     }
   }
@@ -339,4 +345,72 @@ test('3: the terminal draws no meters, tags or output lines', async ($, on) => {
   await clock.advance(1000)
   const drawn = JSON.stringify(await ui.drawn())
   for (const word of ['Builds and reviews', 'Sonnet', 'LATEST OUTPUT', 'secret line', 'Svg']) expect(drawn).not.toContain(word)
+})
+
+test('3: a long title gives way so the round and time stay at 80 columns, and the narrow pane keeps its buttons', async ($, on) => {
+  const world = machine(on)
+  const title = 'While a person reads a plan on the board, each refresh jumps the view to the top'
+  world.lanes = () => lanes([run({ id: 'a', title, round: 2, elapsed: 540, output_path: '/log/a' }), run({ id: 'q', title: 'Quiet', joined_at: '2026-11-14T05:02:00+00:00' })])
+  world.files = { '/log/a': 'one\ntwo\n' }
+  await $.session.start(started('terminal'))
+  await $.command.run(forgeCommand)
+  await world.clock.advance(1000)
+  const ui = await $.ui.mount(pane('terminal', 'inline'))
+  const drawn = JSON.stringify(await ui.drawn())
+  expect(drawn).toContain('round 2 · 9 min')
+  expect(drawn).toContain('…')
+  expect(drawn).not.toContain(title)
+  await ui.press({ key: 'run-q' })
+  await ui.press({ key: 'run-a' })
+  await ui.press({ key: 'open-output' })
+  expect(world.opened.at(-1)).toEqual({ id: 'forge-output', title: 'Run output', focus: true })
+  world.answers = 'Stop'
+  await ui.press({ key: 'stop-run' })
+  expect(world.calls.filter(argv => argv[1] === 'stop')).toEqual([['forge', 'stop', '--id', 'a']])
+})
+
+test('3: a run that starts after a wait shows its running time, not its wait', async ($, on) => {
+  const world = machine(on)
+  let waiting = true
+  world.lanes = () => lanes([run({ id: 'a', title: 'Queued build', waiting, elapsed: waiting ? 300 : 12 })])
+  await $.session.start(started('terminal'))
+  const ui = await $.ui.mount(pane('terminal'))
+  await world.clock.advance(1000)
+  expect(JSON.stringify(await ui.drawn())).toContain('Waiting for a free place · 5 min')
+  waiting = false
+  await world.clock.advance(3000)
+  const drawn = JSON.stringify(await ui.drawn())
+  expect(drawn).toContain('Round 1 · 12 s')
+  expect(drawn).not.toContain('5 min')
+})
+
+test('3: the desktop meter counts only places that are in use, and a run with no item still shows', async ($, on) => {
+  const world = machine(on, 'desktop')
+  world.lanes = () => ({ ...lanes([
+    run({ id: 'a', title: 'Build one' }), run({ id: 'b', title: 'Build two', joined_at: '2026-11-14T05:01:00+00:00' }),
+    run({ id: 'r', kind: 'review', title: 'Review one', free: true, joined_at: '2026-11-14T05:02:00+00:00' }),
+    run({ id: 'p', kind: 'read', title: null, item: null, free: true, round: 2, joined_at: '2026-11-14T05:03:00+00:00' }),
+  ], [run({ id: 't', kind: 'test', title: null, item: null, round: null, joined_at: '2026-11-14T05:04:00+00:00' })]), agents: { size: 2, entries: [
+    run({ id: 'a', title: 'Build one' }), run({ id: 'b', title: 'Build two', joined_at: '2026-11-14T05:01:00+00:00' }),
+    run({ id: 'r', kind: 'review', title: 'Review one', free: true, joined_at: '2026-11-14T05:02:00+00:00' }),
+    run({ id: 'p', kind: 'read', title: null, item: null, free: true, round: 2, joined_at: '2026-11-14T05:03:00+00:00' })] } })
+  await $.session.start(started('desktop'))
+  const ui = await $.ui.mount(pane('desktop'))
+  await world.clock.advance(1000)
+  const drawn = JSON.stringify(await ui.drawn())
+  expect(drawn).toContain('2 of 2')
+  expect(drawn).not.toContain('4 of 2')
+  for (const word of ['A plan read', 'Round 2', 'A test run']) expect(drawn).toContain(word)
+})
+
+test('3: a session that starts in a folder of the repo labels rows against the repo', async ($, on) => {
+  const world = machine(on)
+  world.root = '/repo/src'
+  world.files = { '/repo/.git': '' }
+  world.lanes = () => lanes([run({ id: 'a', title: 'Mine', repo_root: '/repo' })], [], { needs_you: [{ title: 'Asks', repo_name: 'repo', repo_root: '/repo' }] })
+  world.narrow = true
+  await $.session.start(started('terminal'))
+  const text = (await $.command.run(forgeCommand)).text as string
+  expect(text).toContain('Asks needs you.')
+  expect(text).toContain('  Mine\n')
 })

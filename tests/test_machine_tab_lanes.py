@@ -115,10 +115,10 @@ def test_6_machine_tab_lanes_report_release_rows_and_keep_other_release_admissio
                 ("SHOP", "Shoppers can save a basket"), ("BASKET/SAVE", "Save baskets")]
             for row in rows[1:]:
                 assert row["repo_root"] == foreign.path.resolve().as_posix()
-                # Admission records carry the known worker round; the reader's
-                # round and unavailable tool metadata stay unknown; Forge sees no step of a read or a task
-                # that waits.
-                assert row["round"] == (1 if row["item"] == "BASKET/SAVE" else None)
+                # Admission records carry the known worker round and the reader's round (the pane
+                # shows plan reads with it); unavailable tool metadata stays unknown; Forge sees no
+                # step of a read or a task that waits.
+                assert row["round"] == 1
                 assert "tool" not in row and row["step"] is None
         assert len({row["id"] for row in rows}) == len(rows)
         for row in ([rows[0], rows[2]] if scenario == "release" else rows[:1]):
