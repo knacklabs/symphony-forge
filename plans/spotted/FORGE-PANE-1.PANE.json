@@ -63,8 +63,8 @@
       "text": "Reject incomplete lane data from an older Forge",
       "from": "blocking",
       "item": "FORGE-PANE-1/PANE",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/mod/hooks/register.ts\tResolve the repository root when a session starts in a subfolder\tFORGE-PANE-1/PANE",
