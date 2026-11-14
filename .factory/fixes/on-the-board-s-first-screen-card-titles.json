@@ -142,7 +142,7 @@
     "status": "blocked"
   },
   "round": 4,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-13T18:42:55.913038+00:00",
@@ -167,8 +167,12 @@
   ],
   "stop": {
     "at": "2026-11-14T06:13:25.120055+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "src/forge/board_app/now.css",
-    "wait_id": "07c8abd7-6205-4b54-a0a9-7e8ae4826e0a"
+    "reason": "The owner chose one last round for the two small points; after it, any new note that is not a serious fault goes on the known-issues list",
+    "wait_id": "07c8abd7-6205-4b54-a0a9-7e8ae4826e0a",
+    "worker_round": 4
   },
   "stuck": {
     "close": "adaa7e19-8887-4784-a24f-f3beaa757a42",
