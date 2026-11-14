@@ -60,7 +60,7 @@
     "id": "b0fab7ca-657e-4108-8b11-7bc7f974f6f6",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "stacked_on": "FORGE-PANE-1/PANE",
   "status": "fixing",
   "steps": [
@@ -74,10 +74,10 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "bf71a5005b691cfcaddc9c7fe9ba788eec2d3e56",
+    "close": "9705d499-53e2-4cc7-9c27-9d2d88c7b820",
+    "head": "a45cb63a516debdaa685f2d732815436f55b77b1",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "worker": "claude"
 }
