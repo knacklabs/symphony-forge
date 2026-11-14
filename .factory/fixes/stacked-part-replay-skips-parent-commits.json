@@ -1,0 +1,109 @@
+{
+  "base": "cac22c08cfea26bf443ed6553e6cede9fdc7b0f9",
+  "branch": "fix/stacked-part-replay-skips-parent-commits",
+  "done_when": "After the parent part is squash-merged and the default branch has moved, forge close on the stacked part replays only the part's own work, does not stop on the parent's record files, and goes on to the review; a new client repo and a repo adopted on an earlier release both get this",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "_merge_default() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 5,
+      "harm": 5,
+      "line": 738,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Preserve uncommitted work when rebase fails",
+      "work": 2
+    },
+    {
+      "area": "_merge_default() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 733,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Parent work picked up by a stacked part is still treated as its own",
+      "work": 2
+    },
+    {
+      "area": "_merge_default() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 738,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Retain the proof list when collapsing a replay",
+      "work": 2
+    },
+    {
+      "area": "test_1_close_skips_parent_review_commits_the_part_picked_up() in tests/test_close_replays_after_parent_review_commits.py",
+      "file": "tests/test_close_replays_after_parent_review_commits.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 16,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: stacked-part replay proof",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "dd8a3388f517eebeebbc8666620ecbb04a09af7ab08a9f37199a37c7d5230b5c",
+    "changed": "dd877d1003a4cc2d6292882b00e24de5efae243d570b1d6a5e8027dae8ec3018",
+    "commit": "cd591f05e2dba4d9a68562978ec1354ae07e331c",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 5, Work 2, Harm 4\nRaise: Not done\nCase: normal use - Part B merges two successive review updates from parent A, whose record changes between them; A is then squash-merged and the default branch moves.\nThe new evidence is that adding both parent tips to the baseline does not make Git skip both merges. The rebase at src/forge/close.py:729 maps the latest common ancestor to the target, but [Git's sequencer](https://github.com/git/git/blob/v2.50.1/sequencer.c#L5486-L5491) recreates the earlier pickup using its original parent commit. Because the squash commit is not descended from that parent, the differing versions of A's record are competing additions. Close aborts on the parent record before review, even though the whole-change trial is clean. The new proof merges the parent only once.",
+        "file": "src/forge/close.py",
+        "gain": 5,
+        "harm": 4,
+        "line": 719,
+        "priority": "P0",
+        "required_done_when": true,
+        "title": "Not done: Parent work picked up by a stacked part is still treated as its own",
+        "work": 2
+      }
+    ],
+    "id": "a7a52e73-9044-41c4-b1d0-1a00db30f72d",
+    "status": "blocked"
+  },
+  "round": 2,
+  "status": "fixing",
+  "steps": [
+    {
+      "at": "2026-11-14T17:43:49.242610+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-14T17:55:31.692460+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-14T18:26:56.402121+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "e63dbb4a-21d2-4ea3-957c-2ea818236331",
+    "head": "b5065baf470c0c734f251bc58d38cb11dbf90ad7",
+    "keys": {
+      "the open P0 preserve uncommitted work when rebase fails in src/forge/close.py": 1
+    },
+    "round": 1
+  },
+  "why": "A story part that was started on its parent part's unmerged branch cannot close after the parent is squash-merged: when the default branch has moved, close replays every commit since the part's recorded start, and that includes the parent's later review commits that the part picked up, so the replay conflicts in the parent's record file under .factory even though the file is the same as on the default branch (reported from client work)",
+  "worker": "claude"
+}
