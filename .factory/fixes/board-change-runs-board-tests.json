@@ -1,0 +1,15 @@
+{
+  "base": "ed79732da0ce8cc65352154d0ee5a2c776d3d510",
+  "branch": "fix/board-change-runs-board-tests",
+  "done_when": "A pull request that changes a file under src/forge/board_app runs the board's browser tests in its check, in Forge's own repo; and the change says what a new and an existing client repo each get",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-14T01:55:09.164456+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The pull-request check picks tests by the Python files that changed, so a change to the board's script or style files (src/forge/board_app) merges with the board's browser tests not run; the tab-in-address fix made the default branch red this way"
+}
