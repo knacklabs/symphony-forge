@@ -105,7 +105,7 @@ os.execv({json.dumps(REAL_CLAUDE)}, [{json.dumps(REAL_CLAUDE)}, *sys.argv[1:]])
         assert entry["version"] == version
         claude("plugin", "validate", "--strict", entry["installPath"])
 
-    _reload_and_open_installed_mod(repo.path, home, "Nothing in progress.", install)
+    _reload_and_open_installed_mod(repo.path, home, "Nothing is running.", install)
     claude("plugin", "uninstall", "forge@forge", "--scope", "user")
     assert not json.loads(claude("plugin", "list", "--json"))
     old_bin = tmp_path / "old-bin"
@@ -115,8 +115,7 @@ os.execv({json.dumps(REAL_CLAUDE)}, [{json.dumps(REAL_CLAUDE)}, *sys.argv[1:]])
     patient(lambda: old_repo.mkdir())
     repo.git("init", "-q", "-b", "main", str(old_repo))
     monkeypatch.setenv("PATH", f"{old_bin}{os.pathsep}{current_path}")
-    _reload_and_open_installed_mod(old_repo, home,
-                                  "This repo's Forge is too old for the pane: upgrade Forge here.", install)
+    _reload_and_open_installed_mod(old_repo, home, "Forge did not answer.", install)
 
 
 def _reload_and_open_installed_mod(folder, home, expected, install):
@@ -169,7 +168,7 @@ def _reload_and_open_installed_mod(folder, home, expected, install):
         until("Notloggedin|APIUsageBilling")
         until("effort:medium.*?/effort")
         until("Watching for changes in setting files.*" + re.escape(str(home / ".claude/settings.json")))
-        assert "Nothing in progress." not in output and "upgrade Forge here." not in output
+        assert "Nothing is running." not in output and "Forge did not answer." not in output
         output = ""
         install()
         # Claude debounces its settings watcher. Wait for the real running
@@ -181,9 +180,13 @@ def _reload_and_open_installed_mod(folder, home, expected, install):
         output = ""
         os.write(master, b"\r")
         until(r"reload(?:ed|ing).*plugin|plugin.*reload(?:ed|ing)")
-        # No /forge command is sent: its independent text reply cannot satisfy
-        # this check. The wide terminal must draw the native Board pane itself.
-        until(re.escape(re.sub(r"\s+", "", expected)) + r"✕")
+        # The person types /forge; the wide terminal then draws the pane itself.
+        output = ""
+        os.write(master, b"/forge")
+        until("/forge")
+        output = ""
+        os.write(master, b"\r")
+        until(re.escape(re.sub(r"\s+", "", expected)))
     finally:
         try:
             os.killpg(process.pid, signal.SIGTERM)
@@ -208,46 +211,3 @@ sys.path.insert(0, {json.dumps(str(old / 'src'))})
 from forge.cli import main
 sys.exit(main())
 ''')
-
-
-def mod_reads_real_old_forge_refusal_and_spaced_working_directory(repo, tmp_path, monkeypatch):
-    from test_mod_plugin import HOST, node_run
-
-    _old_forge(repo.bin, tmp_path, "old-forge")
-    folder = tmp_path / "Windows repo with spaces"
-    patient(lambda: folder.mkdir())
-    repo.git("init", "-q", "-b", "main", str(folder))
-    refusal = subprocess.run([sys.executable, str(repo.bin / "old-forge"), "board", "--json"],
-                             cwd=folder, capture_output=True, text=True, encoding="utf-8", timeout=30)
-    assert refusal.returncode != 0 and "unrecognized arguments: --json" in refusal.stderr
-    # The host is only Claude's API transport. Both the old-version refusal and
-    # the ordinary refresh failure come from Forge's real command entry points.
-    answers = node_run(tmp_path, HOST + f'''
-const mod = await import({json.dumps((ROOT / 'src/forge/mod/hooks/register.ts').as_uri())});
-let old = true;
-const api = {{
-  session: {{cwd: async () => {json.dumps(str(folder))}}},
-  clock: {{now: async () => 0, every: () => ({{cancel(){{}}}})}},
-  command: {{register: async () => {{}}}},
-  ui: {{invalidate() {{}}, open: async () => ({{isPlaced: false}})}},
-  process: {{run: async (argv, init) => {{
-    assert.deepEqual(argv, ['forge', argv[1], '--json']);
-    assert.equal(init.cwd, {json.dumps(str(folder))});
-    try {{
-      return {{exitCode: 0, stderr: '', stdout: execFileSync({json.dumps(sys.executable)},
-        [old ? {json.dumps(str(repo.bin / 'old-forge'))} : {json.dumps(str(repo.bin / 'forge'))}, ...argv.slice(1)],
-        {{cwd: init.cwd, encoding: 'utf8', timeout: init.timeoutMs}})}};
-    }} catch (e) {{return {{exitCode: e.status ?? 1, stdout: String(e.stdout ?? ''), stderr: String(e.stderr ?? '')}}}}
-  }}}},
-}};
-mod.register(on);
-await fire('session.start', {{cwd: {json.dumps(str(folder))}, surface: null, isInteractive: false}}, api);
-const before = (await fire('command.run', {{command: 'forge'}}, api)).text;
-old = false;
-await fire('session.start', {{cwd: {json.dumps(str(folder))}, surface: null, isInteractive: false}}, api);
-const after = (await fire('command.run', {{command: 'forge'}}, api)).text;
-console.log(JSON.stringify({{before, after}}));
-''')
-    too_old = "This repo's Forge is too old for the pane: upgrade Forge here."
-    assert too_old in answers["before"]
-    assert too_old not in answers["after"] and "Couldn't refresh:" in answers["after"]

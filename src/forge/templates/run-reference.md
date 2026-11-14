@@ -45,16 +45,15 @@ round can start even when the coordinating session stays open.
 This applies to runs Forge launched. A handed-out native run has no process tree, so
 `forge stop` frees its hold and the coordinator stops the subagent in its session.
 
-In Claude Code's Forge pane, the Machine tab shows this release's agents and test lane across
-repos, who waits next, local item gates, and machine load when the OS provides it. Desktop draws
-an agent tree; narrow terminals use a list. Select a run, press `o` for its last 200 output lines
-or `s` to ask the person whether to stop that exact run. A run that ends or is replaced during
-confirmation is not stopped. Press `l` to show or hide recent events. The spinner names this
-session's place in line. `/forge` includes the machine summary where panes cannot draw.
 Lanes record each item's title when it joins, so other repos' stories and tasks keep their
-plain names in rows, selectors and stop confirmation. Only this repo's board adds tool,
-round, current step and gates.
-`forge lanes --json` supplies the Machine tab and the pane. Its rows show every release's runs;
+plain names in rows and in the stop confirmation.
+In Claude Code, `/forge` opens a live pane of this laptop's runs: builds, tests and reviews in
+the order Forge took them in, each with its round and time. A line above them says if an item
+needs the person. The pane has two buttons for the selected run: `Open output`, and `Stop run`,
+which asks the person first and is not offered for a build that runs as a subagent of the
+session. The desktop app (Claude Code 2.1.299 or later) draws meters, cards and the last three
+output lines; the terminal draws plain lines. Where no pane can show, `/forge` answers with the same lines as text.
+`forge lanes --json` is the one read the pane makes, every 3 seconds while it is open. Its rows show every release's runs;
 an entry that an old release wrote with no start or item is left out. Each row has `step`
 (`editing <file name>` for a build whose step Forge knows), `waiting` (true until the run holds
 its place; a build that lent its place to its tests waits), `first_started_at` and `elapsed`.
@@ -65,8 +64,8 @@ review tool's lines while it runs. The top level adds `busy` (a run waits for a 
 remembered repo, that wait for the person (a worker question, a stop that waits for the owner's
 choice, or a cold read stopped at its round limit) and have no build round that runs or
 waits. It reads only files on this laptop. New repos receive the mod on setup; existing repos receive it on
-upgrade and `forge sync`. An unreadable output or a failed refresh is explained in the pane;
-failed refreshes keep the last rows. The mod adds no background work or dependencies.
+upgrade and `forge sync`. When Forge does not answer in time (0.3 s; 0.6 s on Windows), the pane keeps
+its last rows and adds a line that says how old they are. The mod adds no background work or dependencies.
 
 `forge board` opens the board as a live page on this computer: a server on 127.0.0.1 at a free
 port, with a per-run token in the page address that every request must carry, so no other computer

@@ -26,7 +26,7 @@ def run_native_plugin_checks(tmp_path):
         ["test", "src/forge/mod"],
     ):
         checked = subprocess.run(
-            [npm, "exec", "--yes", "--package=@anthropic-ai/claude-code@2.1.291", "--",
+            [npm, "exec", "--yes", "--package=@anthropic-ai/claude-code@2.1.322", "--",
              "claude", "plugin", *args],
             cwd=ROOT, env=environment, capture_output=True, encoding="utf-8", timeout=120)
         assert checked.returncode == 0, checked.stdout + checked.stderr

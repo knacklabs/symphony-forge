@@ -489,40 +489,17 @@ The page's events stream keeps it live. Ctrl-C stops it at once.
 `forge next --json`. Both views add `team` for the team's summary.
 The run reference explains the board fields and page behaviour.
 
-## Events
+## The Forge pane
 
-The mod starts a session turn for new review findings, failed checks, a pull request
-ready to merge, worker questions and finished runs. Progress only updates the pane:
-starting a run or running checks never asks the agent for a status turn.
-Each event line names the plain item title, what happened and that item's own next command,
-or `forge next` when there is no runnable command. When the turn arrives, act on it
-straight away through Forge's commands: resolve findings with evidence or send a
-worker round, follow a failed check's next step, close finished work, and merge ready
-work only when allowed. Answer a worker question with
-`forge work <item> --note "<answer>"`; a choice the human owns still goes to them.
-Do not build another polling or watcher loop for an interactive mod session.
-
-Forge's occurrence ids distinguish events, never their text: review results, run
-ends and questions get fresh ids; CI completions use the workflow id and head commit.
-Failed checks outside a workflow use GitHub's id and completion time,
-failed commit statuses use their own id, and readiness uses the review id and head commit.
-The same question in another round or a check failing again after a later completion
-therefore gets another turn, even if its wording is unchanged. A run that starts
-and finishes between refreshes still has its completion occurrence.
-
-Seen ids are stored for the repo root and session id together, so two sessions
-consume events independently. At session start or reload the current ids become
-seen without starting a turn. Several changes, including those found while Claude
-is busy, are combined in one turn after the current turn ends, one line per event.
-At delivery, each line uses the item's current next command. Events for items that
-have since merged are dropped. A CI completion names the workflow and its result,
-once per workflow and commit.
-A failed submission leaves them unseen for the next refresh to retry; a successful
-one is not repeated. Only interactive sessions on terminal or Desktop receive
-event turns, and only for their own repo. Forge-started workers, readers and
-reviewers have `FORGE_WORKER=1` and never act on events. Headless sessions receive
-no event turns. Codex and sessions without the mod keep using `forge next` and the
-existing command flow.
+`/forge` opens a small live pane in Claude Code, in the terminal and in the desktop app. It shows
+the builds, tests and reviews that run on this laptop, with the round and the time of each, and
+one line at the top that says if anything needs the person. When the pane cannot show, `/forge`
+answers with the same lines as text. The pane starts no agent turn and shows no next command: use
+`forge next` for the next step. It reads `forge lanes --json` every 3 seconds while it is open
+and nothing while it is closed. The person chooses when it opens in Claude Code's settings (`/config`,
+"When the Forge pane opens"): "typed" (the default) opens it when they type `/forge`; "always" also
+opens it when a session starts in a Forge repo, in a wide window. This guide stays a skill, and you
+still load it yourself whenever you need it.
 
 ## Handoff
 
