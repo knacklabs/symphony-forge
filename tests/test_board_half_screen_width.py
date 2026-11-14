@@ -63,9 +63,11 @@ def pressed(page, button, where):
 
 def story_page(page, where, width):
     page.goto(url + '#item/SHOP')
-    summary_above = lambda: box(page, '.summary')['bottom'] <= box(page, '.sheet')['top']
+    # One evaluation, so a redraw or scroll between two reads cannot make the two rectangles incomparable.
+    summary_above = lambda: page.evaluate("document.querySelector('.summary').getBoundingClientRect().bottom <= document.querySelector('.sheet').getBoundingClientRect().top")
     for tab in ('Overview', 'Plan', 'Rounds', 'Known issues'):
         page.get_by_role('tab', name=re.compile('^' + tab)).click()
+        expect(page.get_by_role('tab', name=re.compile('^' + tab))).to_have_attribute('aria-selected', 'true')
         expect(page.get_by_role('tabpanel')).to_be_visible()
         if tab == 'Plan':
             plan = page.locator('article.plan')
