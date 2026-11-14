@@ -726,7 +726,7 @@ def _merge_default(top: Path, item: str, branch: str, default: str,
                 top, tree=tree, files=files, ours=original, incoming=target)):
             repo.refuse(REFUSALS["replay_conflict"], default=default, files=", ".join(files),
                         item=item)
-        done = repo.run("git", "rebase", "--rebase-merges=rebase-cousins", "--onto", target,
+        done = repo.run("git", "rebase", "--onto", target,
                         baseline, cwd=top)
         if done.returncode and not merge_timings.resolve(
                 top, replay=True, ours=":3", incoming=":2"):

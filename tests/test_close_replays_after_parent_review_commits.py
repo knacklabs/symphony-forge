@@ -27,22 +27,32 @@ Proof list:
 Functional check: ran the part and read its own value."""
 
 
-def parent_commits(env, folder, record=0, app=""):
-    """What a parent's close leaves after a review: a change to its record and maybe to a file."""
+def parent_commits(env, folder, record, files):
+    """What a parent's close leaves after a review: a change to its record, and maybe to files."""
     if record:
         state = json.loads((folder / RECORD).read_text("utf-8"))
         state["round"] = record
         env.commit(folder, RECORD, json.dumps(state, indent=2) + "\n", f"Review of STACK/A: round {record}")
-    if app:
-        env.commit(folder, "app.py", app, "Change the parent's file")
+    for path, text in files.items():
+        env.commit(folder, path, text, f"Change the parent's {path}")
     env.repo.git("push", "-q", "origin", "task/STACK-A", cwd=folder)
 
 
-# What the parent does after the part picked up its review commits and a draft edit of app.py.
-AFTER = {"record": {"record": 3}, "draft taken out": {"app": "A_VALUE = 1\n"}, "nothing": {}}
+# Each step is one review of the parent: its record round, its file edits, and whether the
+# part merges the parent's branch right after it. The test file exists before the parent starts.
+EARLIER = "tests/test_work.py"
+SAVED = "def test_value():\n    assert 1 == 1\n"
+DRAFT = {EARLIER: SAVED + "\n\ndef test_draft():\n    assert True\n"}
+SCENARIOS = {
+    "one-pickup": [(2, DRAFT, True)],
+    "record-changes-again": [(2, DRAFT, True), (3, {}, False)],
+    "two-pickups": [(2, DRAFT, True), (3, {}, True)],
+    "two-pickups-then-record-changes": [(2, DRAFT, True), (3, {}, True), (4, {}, False)],
+    "draft-taken-out": [(2, DRAFT, True), (0, {EARLIER: SAVED}, False)],
+}
 
 
-def parent_merged_after_part_picked_up_its_review_commits(env, previous, after):
+def parent_merged_after_part_picked_up_its_review_commits(env, previous, scenario):
     repo = configured(env, previous)
     parent, _ = start(repo, "A")
     env.commit(parent, "app.py", "A_VALUE = 1\n", "Build the base part")
@@ -50,10 +60,11 @@ def parent_merged_after_part_picked_up_its_review_commits(env, previous, after):
     assert closed.returncode == 0, closed.stdout + closed.stderr
     part, _ = start(repo, "B")
     env.commit(part, "use.py", "B_VALUE = 1\n", OWN_WORK)
-    parent_commits(env, parent, 2, "A_VALUE = 1\nA_DRAFT = 1\n")
-    repo.git("fetch", "-q", "origin")
-    repo.git("merge", "-q", "--no-edit", "origin/task/STACK-A", cwd=part)
-    parent_commits(env, parent, **AFTER[after])
+    for record, files, picked in SCENARIOS[scenario]:
+        parent_commits(env, parent, record, files)
+        if picked:
+            repo.git("fetch", "-q", "origin")
+            repo.git("merge", "-q", "--no-edit", "origin/task/STACK-A", cwd=part)
     writer = repo.path.parent / "default-writer"
     repo.git("clone", "-q", repo.git("remote", "get-url", "origin"), str(writer))
     repo.git("fetch", "-q", "origin", "task/STACK-A", cwd=writer)
@@ -65,21 +76,21 @@ def parent_merged_after_part_picked_up_its_review_commits(env, previous, after):
     return repo, part
 
 
-@pytest.mark.parametrize("previous,after", [(False, "record"), (False, "draft taken out"), (True, "record")],
-                         ids=["new-record", "new-draft-taken-out", "previously-adopted-record"])
-def test_1_close_replays_only_the_parts_own_work_after_the_parent_merges(env, previous, after):
-    repo, part = parent_merged_after_part_picked_up_its_review_commits(env, previous, after)
+@pytest.mark.parametrize("previous", [False, True], ids=["new", "previously-adopted"])
+@pytest.mark.parametrize("scenario", list(SCENARIOS))
+def test_1_close_replays_only_the_parts_own_work_after_the_parent_merges(env, previous, scenario):
+    repo, part = parent_merged_after_part_picked_up_its_review_commits(env, previous, scenario)
     before = len(env.review_calls())
 
     closed = env.close("STACK/B")
     assert closed.returncode == 0, closed.stdout + closed.stderr
     assert "conflicts in" not in closed.stderr
-    # The parent's record and file stay as the default branch has them; the draft does not return.
-    for path in (RECORD, "app.py", "default_note.py"):
+    # The parent's files stay as the default branch has them; a draft it took out does not return.
+    for path in (RECORD, "app.py", EARLIER, "default_note.py"):
         assert (part / path).read_text("utf-8").rstrip("\n") == repo.git("show", f"origin/main:{path}")
     assert (part / "use.py").read_text("utf-8") == "B_VALUE = 1\n"
     own = repo.git("diff", "--name-only", "origin/main", "HEAD", cwd=part).splitlines()
-    assert "use.py" in own and not {RECORD, "app.py"} & set(own)
+    assert "use.py" in own and not {RECORD, "app.py", EARLIER} & set(own)
     # The review ran after the replay and found the worker's evidence, which the replay kept.
     assert len(env.review_calls()) == before + 1
     assert "the part's own value is read" in env.prompt()
@@ -92,7 +103,7 @@ def test_1_close_replays_only_the_parts_own_work_after_the_parent_merges(env, pr
 
 @pytest.mark.parametrize("previous", [False, True], ids=["new", "previously-adopted"])
 def test_2_close_keeps_uncommitted_edits_when_the_replay_cannot_start(env, previous):
-    repo, part = parent_merged_after_part_picked_up_its_review_commits(env, previous, "nothing")
+    repo, part = parent_merged_after_part_picked_up_its_review_commits(env, previous, "one-pickup")
     head, before = repo.git("rev-parse", "HEAD", cwd=part), len(env.review_calls())
     (part / "use.py").write_text("B_VALUE = 2\n", "utf-8")
 
