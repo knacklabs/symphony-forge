@@ -157,7 +157,7 @@
     "status": "blocked"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-14T01:55:09.164456+00:00",
@@ -170,8 +170,12 @@
   ],
   "stop": {
     "at": "2026-11-14T02:12:29.033943+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": ".forge/review-tests.py",
-    "wait_id": "0a579e71-a0b8-4cf8-a78e-036993dbd749"
+    "reason": "The owner chose one more round with a narrow rule: only a test that lists a folder's files itself is related to the files in that folder",
+    "wait_id": "0a579e71-a0b8-4cf8-a78e-036993dbd749",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
