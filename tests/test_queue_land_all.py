@@ -97,7 +97,7 @@ if args[:2] == ["run", "view"] and "attempt" in args:
     answer(json.dumps({"attempt": 2 if (here / ("rerun-" + args[2])).exists() else 1}))
 if args[:2] == ["pr", "create"]:
     branch = args[args.index("--head") + 1]
-    number = zlib.crc32(branch.encode()) % 9000 + 100
+    number = zlib.crc32(branch.encode()) % 9000 + 100 + 10000 * branch.startswith("forge-merge-train/")
     url = "https://github.com/acme/shop/pull/%d" % number
     save({"number": number, "headRefName": branch, "baseRefName": "main", "title": "Change " + branch,
           "isDraft": "--draft" in args, "body": "", "url": url})
@@ -269,7 +269,9 @@ def _reviews(env, slug: str) -> int:
 
 
 def _number(branch: str) -> str:
-    return str(zlib.crc32(branch.encode()) % 9000 + 100)
+    """The stub's pull request number. A merge train's number is never one of a fix's: two files of one
+    number would take a change's pull request away when the train closes its own."""
+    return str(zlib.crc32(branch.encode()) % 9000 + 100 + 10000 * branch.startswith("forge-merge-train/"))
 
 
 def _first(env, *prefix: str, contains: str = "") -> int:

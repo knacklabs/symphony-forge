@@ -175,7 +175,7 @@ if args[:2] == ["pr", "create"] and args[args.index("--head") + 1].startswith("f
         answer("", 1)
     if cfg.get("no_create_output"):
         branch = args[args.index("--head") + 1]
-        number = zlib.crc32(branch.encode()) % 9000 + 100
+        number = zlib.crc32(branch.encode()) % 9000 + 10100  # a train's, never a fix's, as in test_queue_land_all
         save({"number": number, "headRefName": branch, "baseRefName": "main", "title": "Train",
               "isDraft": True, "body": "", "url": "https://github.com/acme/shop/pull/%d" % number})
         answer("")
@@ -198,13 +198,38 @@ RERUN = "main moved; Forge will merge it into this branch and run the related te
 LATER = "so the ready changes merge one at a time, each with its own check."
 
 
+def _fast_polls(repo) -> None:
+    """The wait loops' 15-second polls last 1 second in every Forge and gh process, and the monotonic
+    clock shows the 15: a first answer of "still running" is read again after four polls, when the
+    60-second status snapshot ends, not after a minute. Another process still has time to act between two
+    polls, which the train waits for. Every other pause stays real."""
+    startup = repo.bin / "sitecustomize.py"
+    startup.write_text((startup.read_text("utf-8") if startup.exists() else "") + """
+import time
+_skipped, _sleep, _monotonic = 0.0, time.sleep, time.monotonic
+
+
+def _poll(seconds):
+    global _skipped
+    if seconds == 15:
+        _skipped += 14
+        _sleep(1)
+    else:
+        _sleep(seconds)
+
+
+time.sleep, time.monotonic = _poll, lambda: _monotonic() + _skipped
+""", "utf-8")
+
+
 @pytest.fixture
 def train(client, monkeypatch):
     env = client
     gh = env.repo.bin / "gh"
     gh.write_text(gh.read_text("utf-8").replace(MARKER, TRAIN_GH + MARKER, 1), "utf-8")
     machine_cores(env.repo, 20)  # ten agent places, so no change waits for a place
-    monkeypatch.setenv("FORGE_CHECKS_WAIT", "300")
+    _fast_polls(env.repo)
+    monkeypatch.setenv("FORGE_CHECKS_WAIT", "4500")  # 300 s of the shortened polls
     env.remote = Path(env.repo.git("remote", "get-url", "origin")).as_posix()
     env.common = Path(env.repo.git("rev-parse", "--path-format=absolute", "--git-common-dir"))
     return env
@@ -280,7 +305,7 @@ def _everyone_merges_alone(env, done, slugs, moved=(), held=False) -> None:
             pending = next((n for n, call in enumerate(calls) if call[:2] == ["check-pending", head]), None)
             green = next((n for n, call in enumerate(calls) if call[:2] == ["check-green", head]), None)
             assert None not in (pending, green) and pending < green < at, (slug, done.stdout)  # it waited for green
-            assert float(calls[green][2]) - float(calls[pending][2]) >= 30, (slug, done.stdout)  # over several polls
+            assert float(calls[green][2]) - float(calls[pending][2]) >= 3, (slug, done.stdout)  # over several polls
 
 
 def _restarted(env) -> list[list[str]]:
