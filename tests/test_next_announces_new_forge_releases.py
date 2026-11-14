@@ -42,7 +42,10 @@ def test_1_next_announces_new_releases_with_a_shared_daily_cache(repo, gh, tmp_p
     first = repo.forge("next", cwd=client)
     assert first.returncode == 0, first.stderr
     assert first.stdout.splitlines().count(notice) == 1
-    assert any(line != notice and not line.startswith("Step ") for line in first.stdout.splitlines())
+    # The release line must not hide the current work state or its next step.
+    lines = first.stdout.splitlines()
+    assert "No story or fix is in progress." in lines
+    assert 'Next: forge start "<idea>"' in lines
     assert repo.git("status", "--porcelain", cwd=client) == before
     assert [call for call in gh.calls() if call == list(QUERY)] == [list(QUERY)]
 

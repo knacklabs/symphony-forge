@@ -283,7 +283,7 @@ def test_12_exited_worker_run_does_not_hide_idle_time_or_stopped_worker(
 
 
 @pytest.mark.parametrize("client,command", [
-    ("new", "board"), ("adopted-v1.2.2", "board"),
+    ("new", "board"), ("new", "next"), ("adopted-v1.2.2", "board"),
 ], indirect=["client"])
 def test_14_event_history_is_read_once_per_command_and_refreshes_between_calls(
         client, tmp_path, monkeypatch, command):
@@ -312,11 +312,12 @@ def test_14_event_history_is_read_once_per_command_and_refreshes_between_calls(
     monkeypatch.setenv("PYTHONPATH", str(observer) + os.pathsep + os.environ.get("PYTHONPATH", ""))
     for active in (True, False):
         reads.write_text("", encoding="utf-8")
-        shown = client.forge(command, "--json")
+        shown = client.forge(command, *(["--json"] if command == "board" else []))
         assert shown.returncode == 0, shown.stdout + shown.stderr
         assert reads.read_text("utf-8").splitlines() == ["read"]
-        row = _row(json.loads(shown.stdout), "basket-0")
-        assert (row["worker"] is not None) == active
+        if command == "board":
+            row = _row(json.loads(shown.stdout), "basket-0")
+            assert (row["worker"] is not None) == active
         if active:
             events.append({"event": "run end", "id": "basket-end", "run_id": "basket-work", "item": "basket-0",
                            "kind": "work", "round": 1, "at": NOW})

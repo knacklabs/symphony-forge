@@ -13,7 +13,7 @@ STORY = "the-pane-s-refresh-runs-forge-next-and-f"
 
 
 @pytest.mark.parametrize("history", ["new", "adopted-v1.2.2"])
-@pytest.mark.parametrize("command", ["board"])
+@pytest.mark.parametrize("command", ["board", "next"])
 def test_1_machine_views_share_plan_reads(repo, gh, monkeypatch, tmp_path, history, command):
     # Contract: a board-sized story does not repeat expensive Git reconciliation
     # for every child. Real Git supplies both the merge and the work measurement.
@@ -46,12 +46,13 @@ def test_1_machine_views_share_plan_reads(repo, gh, monkeypatch, tmp_path, histo
     (worktree / "plans/SHARED.md").write_text(doc + "\nLocal note.\n", encoding="utf-8")
     trace = tmp_path / "git.jsonl"
     monkeypatch.setenv("GIT_TRACE2_EVENT", trace.as_posix())
-    result = repo.forge(command, "--json")
+    args = ["--json"] if command == "board" else []
+    result = repo.forge(command, *args)
     assert result.returncode == 0, result.stderr
-    view = json.loads(result.stdout)
-    shared = next(row for row in view["items"] if row["id"] == "SHARED")
-    assert len(shared["children"]) == 14
-    assert shared["title"] == "Shared plan"
+    if command == "board":
+        shared = next(row for row in json.loads(result.stdout)["items"] if row["id"] == "SHARED")
+        assert len(shared["children"]) == 14
+        assert shared["title"] == "Shared plan"
     calls = [json.loads(line) for line in trace.read_text("utf-8").splitlines()]
     merges = [row["argv"] for row in calls if row.get("event") == "start"
               and "merge-file" in row.get("argv", [])]
@@ -59,7 +60,8 @@ def test_1_machine_views_share_plan_reads(repo, gh, monkeypatch, tmp_path, histo
     # A new invocation must see edits; the optimization cannot cache across reads.
     (worktree / "plans/SHARED.md").write_text(
         doc.replace("| Part 11 |", "| Revised part |") + "\nLocal note.\n", encoding="utf-8")
-    refreshed = repo.forge(command, "--json")
+    refreshed = repo.forge(command, *args)
     assert refreshed.returncode == 0, refreshed.stderr
-    shared = next(row for row in json.loads(refreshed.stdout)["items"] if row["id"] == "SHARED")
-    assert next(child for child in shared["children"] if child["id"] == "SHARED/PART-11")["title"] == "Revised part"
+    if command == "board":
+        shared = next(row for row in json.loads(refreshed.stdout)["items"] if row["id"] == "SHARED")
+        assert next(child for child in shared["children"] if child["id"] == "SHARED/PART-11")["title"] == "Revised part"
