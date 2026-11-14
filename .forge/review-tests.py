@@ -82,17 +82,14 @@ def reads_file_relative(source: str, paths: set[str]) -> bool:
     return False
 
 
-def test_readers(files: list[Path], picked: set[Path], root=None) -> set[Path]:
-    """Keep every text reference, including plugin strings and scoped conftest users. With a
-    `root` function, a name counts only in files under the folder it gives for the file that has
-    it; without one, a name counts in every file."""
+def test_readers(files: list[Path], picked: set[Path]) -> set[Path]:
+    """Keep every text reference, including plugin strings and scoped conftest users."""
     texts = {path: path.read_text("utf-8-sig") for path in files}
     while True:
-        names = {(path.stem, root(path) if root else None) for path in picked}
+        names = {path.stem for path in picked}
         fixtures = [path.parent for path in picked if path.name == "conftest.py"]
         expanded = picked | {path for path, text in texts.items()
-                             if any(name in text for name, folder in names
-                                    if folder is None or path.is_relative_to(folder))
+                             if any(name in text for name in names)
                              or any(path.is_relative_to(folder) for folder in fixtures)}
         if expanded == picked:
             return picked
