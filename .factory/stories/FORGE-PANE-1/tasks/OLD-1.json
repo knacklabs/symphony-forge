@@ -1,0 +1,66 @@
+{
+  "base": "9ac9aa6997c728cf022070fa0837772e6a246fc5",
+  "branch": "task/FORGE-PANE-1-OLD-1",
+  "known": [
+    {
+      "area": "src/forge/mod/hooks/events.ts",
+      "file": "src/forge/mod/hooks/events.ts",
+      "gain": 4,
+      "harm": 1,
+      "line": 138,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: proof list",
+      "work": 1
+    },
+    {
+      "area": "src/forge/mod/hooks/machine.ts",
+      "file": "src/forge/mod/hooks/machine.ts",
+      "gain": 1,
+      "harm": 1,
+      "line": 79,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Simpler: undocumented deletion \u2192 record the three-line approach",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "898338b9545d2307b86df043c33b2a488436fdbac122b031d214734ba7df01e3",
+    "changed": "e3684b51df1b676c610b060a0922b0af16b293ebaf6789b0217dc2540dae0e2f",
+    "commit": "59c4980645d3116009a7df24964443d96fbc5d8b",
+    "dismissals": [],
+    "findings": [],
+    "id": "8de7f0f8-bad6-4b92-894b-f6824747c9e9",
+    "status": "clean"
+  },
+  "round": 2,
+  "stacked_on": "FORGE-PANE-1/PANE",
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-14T07:20:28.887604+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-14T07:28:30.932804+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-14T07:31:12.097487+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "9705d499-53e2-4cc7-9c27-9d2d88c7b820",
+    "head": "a45cb63a516debdaa685f2d732815436f55b77b1",
+    "keys": {},
+    "round": 1
+  },
+  "worker": "claude"
+}
