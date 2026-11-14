@@ -1,0 +1,12 @@
+{
+  "base": "9ac9aa6997c728cf022070fa0837772e6a246fc5",
+  "branch": "task/FORGE-PANE-1-OLD-1",
+  "stacked_on": "FORGE-PANE-1/PANE",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-14T07:20:28.887604+00:00",
+      "step": "start"
+    }
+  ]
+}
