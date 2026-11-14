@@ -277,48 +277,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "f5ba835b52167ba982379792f53ed71cd781d441765564e5b6492183b0912c22",
-    "changed": "7b434731ba891f4093c01e7d49d15e306e2dc61c0c02c8f4219bea5f1013ed10",
-    "commit": "db54610ab3ee0e02dd2f22a9a70133d59de4fe5d",
-    "dismissals": [
-      {
-        "accepted": true,
-        "because": "Human accepted the remaining finding: The owner chose 'one last round, then merge': the two notes left are not serious and become follow-ups. With a Forge from before the pane, a run that waits for memory can show as running, while the pane already says that this Forge is older; a decision read by its short name shows its file name",
-        "finding": 1
-      },
-      {
-        "accepted": true,
-        "because": "Human accepted the remaining finding: The owner chose 'one last round, then merge': the two notes left are not serious and become follow-ups. With a Forge from before the pane, a run that waits for memory can show as running, while the pane already says that this Forge is older; a decision read by its short name shows its file name",
-        "finding": 2
-      }
-    ],
-    "findings": [
-      {
-        "body": "Gain 3, Work 1, Harm 3\nRaise: Functional. Case: normal use - A run waits for memory or CPU load while Forge 1.2.38 is on PATH. That release's `src/forge/machine.py:182-198,260-289,427-440` can report `place: 0` for an unadmitted run and does not provide `waiting`. This fallback therefore displays the waiting run as running and can count its place as occupied. The new test covers a waiter with `place: 1`, so this part of the previous finding remains.",
-        "file": "src/forge/mod/hooks/register.ts",
-        "gain": 3,
-        "harm": 3,
-        "line": 60,
-        "priority": "P1",
-        "title": "Reject incomplete lane data from an older Forge",
-        "work": 1
-      },
-      {
-        "body": "Gain 2, Work 1, Harm 1\nRaise: Functional. Case: normal use - A person uses the documented `forge read pane-decision` form. `src/forge/records.py:797-821` resolves it to a numbered file such as `docs/decisions/0045-pane-decision.md`, but `src/forge/machine.py:214-216` looks for `docs/decisions/pane-decision.md`. The resulting null title makes this fallback show the slug instead of the decision heading. The new test uses the numbered form, so the previous decision-title issue remains for the documented unnumbered form.",
-        "file": "src/forge/mod/hooks/register.ts",
-        "gain": 2,
-        "harm": 1,
-        "line": 54,
-        "priority": "P2",
-        "title": "Show decision titles for active reads",
-        "work": 1
-      }
-    ],
-    "id": "7997fdce-8bbb-43f5-81f1-a0a46a11fde5",
+    "branch_diff": "41ba08aff1fa643b9382a36c3308c86be1e8b6484fec355e3666de7a2c583136",
+    "changed": "f24358a89133c7023627380e64eb074552550fd8a89ec86cd729e44a335a1b2f",
+    "commit": "17b84369c8714b06f90e619c17dcba631a476d47",
+    "dismissals": [],
+    "findings": [],
+    "id": "c0733969-3394-49da-9163-f5fc1bdc59e5",
     "status": "clean"
   },
   "round": 6,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-14T05:13:08.629027+00:00",
@@ -342,6 +310,10 @@
     },
     {
       "at": "2026-11-14T09:41:32.599706+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-14T10:01:44.687596+00:00",
       "step": "review"
     }
   ],
