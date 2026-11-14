@@ -136,7 +136,7 @@ function ask(entry) {
     'data-url': run && entry.url,
     onclick: run && entry.url ? () => window.open(entry.url, '_blank', 'noopener') : open(entry) },
     el('span', { class: 'ask-head' }, el('span', { class: 'verb' }, verb), el('span', { class: 'key' }, place)),
-    el('span', { class: 'ask-title' }, entry.title));
+    el('span', { class: 'ask-title', title: entry.title }, entry.title));
 }
 
 function strip(shown) {
