@@ -157,7 +157,7 @@
     "id": "e30a4a0b-4864-4614-a834-a882bc0bdb2a",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -179,10 +179,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": null,
-    "head": "2a6389e8368287fd380bc0b119b07066074a8ec6",
+    "close": "61977199-9eaf-4d7a-b87c-17d2fb17fa11",
+    "head": "90ca0b77edbcba10ecc6e3e4163b06fa72129530",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "On the board's first screen, card titles are cut off so two cards look the same, a stalled part has no idle time on its card, 74 stories show the placeholder \"A story with missing state\" even though their plan files have real titles, and the Stories rail shows \"unknown\" where no owner is set.",
   "worker": "claude"
