@@ -283,7 +283,7 @@ def test_12_exited_worker_run_does_not_hide_idle_time_or_stopped_worker(
 
 
 @pytest.mark.parametrize("client,command", [
-    ("new", "board"), ("new", "next"), ("adopted-v1.2.2", "board"),
+    ("new", "board"), ("adopted-v1.2.2", "board"),
 ], indirect=["client"])
 def test_14_event_history_is_read_once_per_command_and_refreshes_between_calls(
         client, tmp_path, monkeypatch, command):
@@ -339,7 +339,7 @@ def test_4_running_worker_or_review_overrides_old_needs_fixes(client, tmp_path, 
     assert "running" in row["status"].lower() and "10 minutes" in row["status"]
     assert "Needs fixes" not in row["status"]
     assert not row["stalled"]
-    next_json = client.forge("next", "--json")
+    next_json = client.forge("board", "--json")
     assert next_json.returncode == 0, next_json.stderr
     current = _row(json.loads(next_json.stdout), "correct-state")
     assert current["activity"]["status"] == "running"
@@ -395,7 +395,7 @@ def test_6_live_plan_read_is_planning_then_clean_read_waits_for_approval(client,
     row = _row(data, "SHOP")
     assert row["stage"] == "planning" and "running" in row["status"].lower()
     assert row["worker"]["round"] == 2 and row["worker"]["elapsed"] == 600
-    next_json = client.forge("next", "--json")
+    next_json = client.forge("board", "--json")
     assert next_json.returncode == 0, next_json.stderr
     current = _row(json.loads(next_json.stdout), "SHOP")
     assert current["stage"] == "planning" and current["worker"]["round"] == 2

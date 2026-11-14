@@ -485,8 +485,8 @@ new builds pause above twice the test lane capacity and resume at capacity or be
 `forge board` opens a live page on 127.0.0.1 with a per-run token and refreshes by itself;
 it stops after 30 minutes with no page open and does not fetch or rebuild while no page is open.
 The page's events stream keeps it live. Ctrl-C stops it at once.
-`--out <path>` writes JSON instead. The JSON views are `forge board --json` and
-`forge next --json`. Both views add `team` for the team's summary.
+`--out <path>` writes JSON instead. The JSON view is `forge board --json`.
+It adds `team` for the team's summary.
 The run reference explains the board fields and page behaviour.
 
 ## The Forge pane
@@ -1772,8 +1772,7 @@ three shared files, and says "merge one first". It ignores `.factory/`, `plans/`
 get this advice on this release. `forge sync` updates the guide in existing repos.
 The comparison includes the old and new paths of a renamed file. It skips branches that
 the default branch contains, and fixes whose records are already on the default branch.
-`forge next --json` keeps its next state first in `next.line`, then adds all overlap advice
-on separate lines. Its next command and step stay the same.
+`forge next` prints all overlap advice on separate lines after its next state. Its next command and step stay the same.
 `forge next` lists a part only when `forge task start` would accept it, and names the reason when it would not.
 
 ## Cold read findings

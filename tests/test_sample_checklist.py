@@ -108,9 +108,9 @@ def test_6_signoff_status_and_open_items_show_in_next_and_on_the_board(repo, gh,
     assert board() == {"line": "", "open": []}
     assert "Sign-off:" not in repo.forge("next", cwd=client).stdout
 
-    # No settings file at all: the board and forge next --json still work, with an empty list.
+    # No settings file at all: the board and forge next still work, with an empty list.
     config.unlink()
-    for command in (("board", "--json"), ("next", "--json")):
-        shown = repo.forge(*command, cwd=client)
-        assert shown.returncode == 0, shown.stdout + shown.stderr
-        assert json.loads(shown.stdout)["signoff"] == {"line": "", "open": []}
+    shown = repo.forge("board", "--json", cwd=client)
+    assert shown.returncode == 0, shown.stdout + shown.stderr
+    assert json.loads(shown.stdout)["signoff"] == {"line": "", "open": []}
+    assert repo.forge("next", cwd=client).returncode == 0

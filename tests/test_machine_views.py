@@ -7,6 +7,7 @@ Owns src/forge/board.py and src/forge/nextstep.py's machine output contract.
 import copy
 import json
 import os
+import re
 import shutil
 import socket
 import subprocess
@@ -162,9 +163,9 @@ def _board_exposes_produced_questions_reviews_run_ends_and_readiness(env, priori
     assert previous_review not in {o["id"] for o in row["occurrences"]}
     assert ready["id"] == result["id"] + ":" + repo.git("rev-parse", "HEAD", cwd=folder)
     # Successful close under human ownership advertises readiness with no runnable merge.
-    following = view(repo, "next")["next"]
-    assert following["command"] is None
-    assert "ready to merge" in following["line"]
+    step, text = plain_next(repo)
+    assert step is None or not step.startswith("forge merge")
+    assert "ready to merge" in text
 
 
 def _next_rejects_the_first_placeholder_before_a_later_runnable_step(repo, gh):
@@ -192,9 +193,7 @@ def _next_rejects_the_first_placeholder_before_a_later_runnable_step(repo, gh):
     # Outcome advice now refreshes remote merges before the command reads them.
     assert steps[0] == 'Next: git fetch origin, then forge story done BOARD "<outcome sentence>"'
     assert "Next: forge work polish" in steps[1:]
-    following = view(repo, "next")["next"]
-    assert following["command"] is None
-    assert "record its outcome" in following["line"]
+    assert "record its outcome" in plain.stdout
     rows = {r["id"]: r for r in view(repo, "board")["items"]}
     assert rows["BOARD"]["next"]["command"] is None
     assert "record its outcome" in rows["BOARD"]["next"]["line"]
@@ -205,6 +204,15 @@ def view(repo, command, cwd=None):
     result = repo.forge(command, "--json", cwd=cwd)
     assert result.returncode == 0, result.stderr
     return json.loads(result.stdout)
+
+
+def plain_next(repo, cwd=None):
+    """The plain `forge next` text and its first "Next: " command, or None when that step is not one forge command."""
+    shown = repo.forge("next", cwd=cwd)
+    assert shown.returncode == 0, shown.stderr
+    step = next((line[6:].split("  # ")[0] for line in shown.stdout.splitlines() if line.startswith("Next: ")), None)
+    runnable = step and step.startswith("forge ") and not re.search(r" then | or |[<>;&|$`]", step)
+    return step if runnable else None, shown.stdout
 
 
 def snapshot(board):
@@ -264,10 +272,10 @@ def test_1_board_shows_stories_workers_checks_and_findings(repo, gh, request, co
     repo.git("commit", "-qm", "Choose build model")
     story(repo)
     repo.git("worktree", "add", str(repo.path.parent / "repo-BOARD"), "story/BOARD")
-    assert view(repo, "next")["next"]["command"] == "forge task start BOARD/PAGE"
+    assert plain_next(repo)[0] == "forge task start BOARD/PAGE"
     assert repo.forge("task", "start", "BOARD/PAGE").returncode == 0
     folder = worktree(repo, "task/BOARD-PAGE")
-    assert view(repo, "next")["next"]["command"] == "forge work BOARD/PAGE"
+    assert plain_next(repo)[0] == "forge work BOARD/PAGE"
     made = repo.forge("fix", "start", "Polish the guide", "--done", "The guide reads clearly", "--slug", "polish")
     assert made.returncode == 0, made.stderr
     file = folder / ".factory/stories/BOARD/tasks/PAGE.json"
@@ -412,7 +420,7 @@ def _successful_checks_do_not_replace_close_receipts(repo, gh, context):
         for row in (rows["polish"], rows["BOARD"]["children"][0]):
             assert "ready to merge" not in row["next"]["line"]
             assert "checks passed" not in row["next"]["line"]
-        assert "ready to merge" not in view(repo, "next")["next"]["line"]
+        assert "ready to merge" not in plain_next(repo)[1]
 
 
 def _skipped_checks_fail_only_when_required(repo, gh, conclusion, required):
@@ -464,10 +472,10 @@ def test_2_next_and_board_share_the_mod_contract(repo, gh, request, status, merg
     state(folder / ".factory/fixes/polish.json", status=status)
     github(gh, [])
     plain = repo.forge("next").stdout
-    result = view(repo, "next")
-    assert result["next"]["command"] == command
-    assert result["next"]["line"] in plain.splitlines()
-    assert not result["next"]["line"].startswith("Next: ")
+    assert plain_next(repo)[0] == command
+    # The pane no longer reads `forge next --json`: the option is refused.
+    refused = repo.forge("next", "--json")
+    assert refused.returncode != 0 and "--json" in refused.stderr
     row = view(repo, "board")["items"][0]
     # A saved ready label alone no longer grants readiness; the real close receipts
     # and owner-specific merge steps are exercised by the client lifecycle contract.
@@ -502,7 +510,6 @@ def test_2_next_and_board_share_the_mod_contract(repo, gh, request, status, merg
                     contract(value, example[0])
         elif example is not None:
             assert isinstance(actual, type(example))
-    contract(result, fixture["next"])
     contract(view(repo, "board"), fixture["board"])
     contract(waiting_row, fixture["board"]["items"][1])
     assert snapshot(view(repo, "board", folder)) == snapshot(view(repo, "board", waiting))
@@ -652,7 +659,7 @@ def test_4_client_machine_views_follow_the_last_task_merge(env, history, phase):
     # Approval is a gate; the visible stage follows the current next-step derivation.
     assert row["stage"] == "building"
     assert row["children"][0]["next"]["command"] == "forge work SHOP/T1"
-    assert view(repo, "next")["next"]["command"] == "forge work SHOP/T1"
+    assert plain_next(repo)[0] == "forge work SHOP/T1"
     # The shipped views consume the same real run producers on new and upgraded clients.
     from test_worker import install_claude
     install_claude(repo)
@@ -667,7 +674,7 @@ def test_4_client_machine_views_follow_the_last_task_merge(env, history, phase):
     # Close leaves saved state waiting for checks; the reviewed-head receipt makes it ready.
     child = next(r for r in view(repo, "board")["items"] if r["id"] == "SHOP")["children"][0]
     # Live status ships through the same commands after init and earlier adoption.
-    for command in ("board", "next"):
+    for command in ("board",):
         live = view(repo, command)
         current = next(r for r in live["items"] if r["id"] == "SHOP")["children"][0]
         assert current["activity"] == {"status": "idle"}
@@ -713,9 +720,6 @@ def test_4_client_machine_views_follow_the_last_task_merge(env, history, phase):
             for current, result in ((item, rows["SHOP"]["children"][0]), (fix, rows[fix])):
                 assert result["stage"] == ("checks failed" if conclusion == "FAILURE" else "ready")
                 assert result["next"]["command"] == f"forge {'work' if conclusion == 'FAILURE' else 'merge'} {current}"
-            following = view(repo, "next")["next"]
-            assert following["command"] == f"forge {'work' if conclusion == 'FAILURE' else 'merge'} {item}"
-            assert ("checks failed" in following["line"]) == (conclusion == "FAILURE")
         return
     if phase == "offline":
         # A later commit invalidates that receipt; a machine view must not advertise stale readiness.
@@ -759,4 +763,5 @@ def test_4_client_machine_views_follow_the_last_task_merge(env, history, phase):
     assert row["stage"] == "done"
     assert row["children"][0]["stage"] == "merged"
     assert row["next"] == {"command": None, "line": "Shoppers can save a basket is finished.", "step": None}
-    assert "record the outcome" not in view(repo, "next")["next"]["line"]
+    assert "record the outcome" not in plain_next(repo)[1]
+

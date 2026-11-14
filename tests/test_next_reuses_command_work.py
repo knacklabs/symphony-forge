@@ -88,7 +88,7 @@ sys.exit(subprocess.run([{json.dumps(real_git)}, *sys.argv[1:]]).returncode)
 ''')
     before = len(gh.calls())
     started = time.monotonic()
-    result = repo.forge("next", "--json", timeout=120)
+    result = repo.forge("board", "--json", timeout=120)
     elapsed = time.monotonic() - started
     assert result.returncode == 0, result.stderr
     shown = json.loads(result.stdout)

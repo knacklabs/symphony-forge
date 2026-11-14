@@ -643,7 +643,7 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
                     ended_at=merged_dates.get(branch)).items()
                     if k not in ("events", "timings", "state", "ended_at", "seen", "known", "summary")}
                    if kind != "story" or time_records.view_body((pr or {}).get("body") or "") else {}),
-                "stages": stages, "occurrences": events, "next": nextstep.machine_next(lines),
+                "stages": stages, "occurrences": events, "next": board_facts.machine_next(lines),
                 "children": []}
 
     items, children = {}, {}
@@ -694,7 +694,7 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
             if ((task.developer(spec) or owners.get(key)) and repo.state_path(f"{key}/{tid}") not in history["expired"]
                     and not any(child["id"] == f"{key}/{tid}" for child in item["children"])):
                 child = row(f"{key}/{tid}", "task", spec.get("Name") or tid, {}, landed)
-                child.update(stage="unstarted", next=nextstep.machine_next(["Next: forge next"]))
+                child.update(stage="unstarted", next=board_facts.machine_next(["Next: forge next"]))
                 item["children"].append(child)
     older_parts: dict[str, list[Item]] = {}
     older = [(rel, state, match["key"], match["task"], state.get("branch") or f"task/{match['key']}-{match['task']}")
