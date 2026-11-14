@@ -1,11 +1,74 @@
 {
   "branch": "task/FORGE-PANE-1-NEXTJSON",
+  "known": [
+    {
+      "area": "test_1_next_announces_new_releases_with_a_shared_daily_cache() in tests/test_next_announces_new_forge_releases.py",
+      "file": "tests/test_next_announces_new_forge_releases.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 45,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_next_announces_new_releases_with_a_shared_daily_cache",
+      "work": 1
+    },
+    {
+      "area": "test_1_next_reuses_work_within_a_command() in tests/test_next_reuses_command_work.py",
+      "file": "tests/test_next_reuses_command_work.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 91,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_next_reuses_work_within_a_command",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "865da20397ea73166513b8cb0d53d5d1eefbf7b89fcc7203e16a549127c73595",
+    "changed": "d1c6cc4e2b39a55db0b1e55182a98cd5243805a0a43a417a3546b76dcb46114b",
+    "commit": "52fec43d99d532064ff221761ed7975776107f3e",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 1, Harm 3\nRaise: Test\nCase: normal use - a coordinator runs forge next when a new Forge release is available. The replacement assertion is satisfied by the release notice's own `Next: forge upgrade v99.10.0` line, which `src/forge/upgrade.py:268` always emits with the announcement. It therefore passes even if the command omits the actual current work state and its next step. The previous assertion checked that state against the report; retain a check for a known current state alongside the announcement.\nAdds work: restore the current-state assertion; F 2 x H 2 = 4; 2 x C = 2",
+        "file": "tests/test_next_announces_new_forge_releases.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 45,
+        "priority": "P1",
+        "title": "Gate: test_1_next_announces_new_releases_with_a_shared_daily_cache",
+        "work": 1
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - a repository has several active stories and accumulated finished work. This test now runs only `forge board --json`, so its Git, GitHub and elapsed-time bounds no longer cover `forge next`, which has its own report and network-read path. The shared-plan and event-history checks were likewise reduced to board-only cases in `tests/test_board_shares_diverged_plans.py:16` and `tests/test_board_status_and_times.py:285`. A next-only regression that repeats branch or GitHub reads for each of the 12 active stories can pass these checks; the remaining next-specific process ceiling uses a much smaller fixture. Keep the applicable bounds on plain `forge next` for the existing workloads.\nAdds work: retain the next-command performance checks; F 2 x H 2 = 4; 2 x C = 4",
+        "file": "tests/test_next_reuses_command_work.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 91,
+        "priority": "P1",
+        "title": "Gate: test_1_next_reuses_work_within_a_command",
+        "work": 2
+      }
+    ],
+    "id": "48e15e27-559d-47f7-a8d4-04ed63306d1f",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-14T14:48:59.089025+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-14T16:50:25.507073+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
