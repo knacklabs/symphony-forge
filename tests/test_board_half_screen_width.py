@@ -172,7 +172,8 @@ def test_1_the_board_reads_at_half_a_screen(client, gh, tmp_path):
     with live(client, FORGE_BOARD_FETCH_WAIT="3600") as url:
         shown = subprocess.Popen([REAL_UV or "uv", "run", "--no-project", "--python", "3.11", "--with",
                                   "playwright==1.55.0", "python", "-c", SCRIPT, url],
-                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, encoding="utf-8",
+                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, encoding="utf-8", errors="replace",
+                                 env={**os.environ, "PYTHONUTF8": "1"},  # Windows would write its messages in another encoding
                                  start_new_session=os.name != "nt")
         try:
             out, err = shown.communicate(timeout=360)
@@ -180,4 +181,4 @@ def test_1_the_board_reads_at_half_a_screen(client, gh, tmp_path):
             if shown.poll() is None:
                 stop_tree(shown)
                 shown.communicate(timeout=30)
-        assert shown.returncode == 0, out + err
+        assert shown.returncode == 0, f"{out or ''}{err or ''}"
