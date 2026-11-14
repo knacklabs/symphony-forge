@@ -64,7 +64,7 @@
     "status": "blocked"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-13T19:03:20.153718+00:00",
@@ -77,8 +77,12 @@
   ],
   "stop": {
     "at": "2026-11-13T19:18:04.164641+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "src/forge/board_app/item.js",
-    "wait_id": "ba3af92e-db58-4d83-b601-654732291dd6"
+    "reason": "The owner chose: one more round repairs the test's timing here; the pull-request check that does not run the board's browser tests for board file changes becomes a separate fix",
+    "wait_id": "ba3af92e-db58-4d83-b601-654732291dd6",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
