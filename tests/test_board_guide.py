@@ -35,5 +35,5 @@ def test_14_synced_guides_explain_upgrade_time_backfill(repo):
                             "opens the board", "reports what is still missing"):
             assert instruction in upgrade, (adopted, host, instruction)
         assert "nothing extra to type" in upgrade
-        assert "Both views add `team`" in skill
+        assert "It adds `team` for the team's summary." in skill
         assert "stage_counts" not in skill

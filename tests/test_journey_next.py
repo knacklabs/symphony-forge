@@ -81,9 +81,6 @@ def test_3_forge_next_names_the_journey_step(repo, gh, tmp_path):
     assert initialized.returncode == 0, initialized.stdout + initialized.stderr
     assert _step(repo, client, 1, "ideas and client notes")
 
-    machine = repo.forge("next", "--json", cwd=client)
-    assert machine.returncode == 0, machine.stderr
-    assert not json.loads(machine.stdout)["next"]["line"].startswith("Step ")
     context = repo.forge("hook", "context", cwd=client)
     assert context.returncode == 0, context.stderr
     assert context.stdout.splitlines()[0] == "Step 1 of 7: ideas and client notes."
@@ -217,9 +214,9 @@ def test_4_forge_next_says_what_each_running_item_waits_on(
     review_index = output.index(review_status)
     assert output[review_index + 1] == (
         "Review round 1: 2 problems found (A; B). The worker is fixing them, 6 minutes so far.")
-    machine = repo.forge("next", "--json")
+    machine = repo.forge("next")
     assert machine.returncode == 0, machine.stderr
-    assert json.loads(machine.stdout)["next"]["line"] == review_status
+    assert review_status in machine.stdout.splitlines()
 
     _fix(repo, slug="b-worker", status="working", round=1)
     _records(repo, "events.jsonl", [

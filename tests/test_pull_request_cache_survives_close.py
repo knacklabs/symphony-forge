@@ -46,7 +46,7 @@ def test_1_close_from_a_worktree_keeps_cached_lists_until_the_minute_expires(env
         _accept_build_decision(env.repo)
     item, where = env.start_fix()
     git_calls = count_git(env.repo)
-    warmed = env.repo.forge("next", "--json")
+    warmed = env.repo.forge("board", "--json")
     assert warmed.returncode == 0, warmed.stderr
     assert len(lists(env)) == 8
     assert row(json.loads(warmed.stdout), item)["pr"]["number"] is None
@@ -63,7 +63,7 @@ def test_1_close_from_a_worktree_keeps_cached_lists_until_the_minute_expires(env
         closed = env.close(item)
         assert closed.returncode == 0, closed.stdout + closed.stderr
         assert env.gh_calls("pr", "edit")
-        shown = env.repo.forge("next", "--json", cwd=where if existing else env.repo.path)
+        shown = env.repo.forge("board", "--json", cwd=where if existing else env.repo.path)
         elapsed = time.monotonic() - started
         assert shown.returncode == 0, shown.stderr
         assert row(json.loads(shown.stdout), item)["pr"]["number"] is None
@@ -79,7 +79,7 @@ def test_1_close_from_a_worktree_keeps_cached_lists_until_the_minute_expires(env
         "number": 7, "headRefName": f"fix/{item}", "state": "OPEN", "title": "Published greeting",
         "body": "", "isDraft": False, "url": "https://github.com/acme/shop/pull/7"}]))
     monkeypatch.setenv("FORGE_NOW", (NOW + timedelta(seconds=60)).isoformat())
-    refreshed = env.repo.forge("next", "--json")
+    refreshed = env.repo.forge("board", "--json")
     assert refreshed.returncode == 0, refreshed.stderr
     # The six past weeks stay cached for a day. At one minute, only the open
     # list and this week's merged list refill: eight initial calls plus two.

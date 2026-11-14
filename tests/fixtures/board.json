@@ -4,24 +4,6 @@
     "check_run": {"__typename": "CheckRun", "databaseId": 111371488290, "name": "forge-pr-check", "status": "COMPLETED", "conclusion": "FAILURE", "completedAt": "2026-10-04T05:41:48Z"},
     "commit_status": {"__typename": "StatusContext", "id": "SC_kwDNIULPAAAADOrMkdw", "context": "buildkite/docs-preview", "state": "FAILURE", "createdAt": "2026-10-02T19:32:15Z"}
   },
-  "next": {
-    "version": "1.2.3",
-    "repo_root": "/example/repo",
-    "next": {"command": null, "line": "The fix polish is ready to merge.", "step": "merge its pull request, then forge next"},
-    "team": {
-      "sentence": null,
-      "counts": {
-        "stories": {"done": 0, "building": 0, "approved, not started": 0, "waiting for approval": 0, "planning": 1, "no plan yet": 0},
-        "parts": {"done": 0, "ready to merge": 0, "in progress": 0, "to do": 0},
-        "fixes": {"done": 0, "ready to merge": 1, "in progress": 0, "to do": 0},
-        "finished_last_7_days": {"parts": 0, "fixes": 0}
-      },
-      "needs_you": null, "in_progress": null, "blocked": null,
-      "pace": null, "go_live": null, "trends": null, "around_forge": null
-    },
-    "items": [],
-    "events": []
-  },
   "board": {
     "version": "1.2.3",
     "repo_root": "/example/repo",

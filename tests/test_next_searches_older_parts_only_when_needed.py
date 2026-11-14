@@ -35,7 +35,7 @@ def test_1_next_json_searches_older_merges_only_for_unfinished_older_parts(
             "headRefName": "task/LIVE-SAVE", "mergedAt": "2026-11-01T12:00:00+00:00",
             "state": "MERGED", "body": "", "title": "Save baskets"}]))
     before = len(lists(gh))
-    shown = repo.forge("next", "--json")
+    shown = repo.forge("board", "--json")
     assert shown.returncode == 0, shown.stderr
     assert "items" in json.loads(shown.stdout)
     calls = lists(gh)[before:]

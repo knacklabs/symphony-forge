@@ -76,11 +76,11 @@ only the rows whose inputs changed and fetches from GitHub at most once a minute
 `--out <path>` writes every item's facts as JSON instead,
 finished ones included.
 
-`forge board --json` and `forge next --json` print JSON for the Claude Code mod and
-other readers. The usual commands still print text. Both views
-include `version` (the running Forge release) and `repo_root` (the resolved main
+`forge board --json` prints JSON for the Claude Code mod and
+other readers. The usual commands still print text. The view
+includes `version` (the running Forge release) and `repo_root` (the resolved main
 worktree path, shared by the repo's worktrees).
-`forge next --json` uses the same 60-second GitHub cache as `forge board --json`, while text
+`forge board --json` uses a 60-second GitHub cache, while text
 `forge next` reads GitHub live.
 Pull request creates, edits and draft changes keep this shared cache. They show within a minute.
 Merges clear it at once. Each command fetches the default branch's settings at most once.
@@ -278,7 +278,7 @@ Use each board row's next step for that item, never another
 item's step. Machine views do not grant approval or permission to merge.
 
 The shared mod contract fixture is `tests/fixtures/board.json`; command coverage
-in `tests/test_machine_views.py` checks both views against it.
+in `tests/test_machine_views.py` checks the board view against it.
 
 ## Claude Code plugin core
 
