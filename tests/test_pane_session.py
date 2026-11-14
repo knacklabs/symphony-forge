@@ -116,6 +116,7 @@ def test_2_real_lane_rows_reach_the_real_pane_and_a_late_forge_keeps_them(env, t
             log = tmp_path / f"pane-{count}.log"
             done = _claude(repo, home, repo.path, "/forge", log, MOD, first=first)
             if "Loaded inline plugin from path: forge" not in log.read_text("utf-8", errors="replace"):
+                finish(repo, [builder])  # the held build must not outlive the skipped test
                 pytest.skip("This Claude Code did not load the plugin folder under `claude -p`; the by-hand steps are the proof.")
             assert done.returncode == 0, done.stdout + done.stderr
             shown = done.stdout.split("forge: ", 1)[-1]
@@ -130,6 +131,15 @@ def test_2_real_lane_rows_reach_the_real_pane_and_a_late_forge_keeps_them(env, t
     building = lines.index("BUILDING")
     assert lines[building + 1] == "Builds the thing"
     assert re.fullmatch(r"Round \d+ · \d+ (?:s|min) · editing land\.py", lines[building + 2]), lines[building + 2]
+    # A read of a decision shows the decision's heading, not its file name.
+    host_item, host_name = make_work(repo, "Hosts the decision read")
+    host = worktree(repo, "fix/" + host_item)
+    decision = host / "docs/decisions/0045-pane-decision.md"
+    decision.parent.mkdir(parents=True, exist_ok=True)
+    decision.write_text("---\nstatus: proposed\n---\n\n# Show decision titles in the pane\n\nWhy: a read names its decision.\n", encoding="utf-8")
+    reader, _ = start(host, tmp_path / "decision", repo, "read", "0045-pane-decision")
+    _until(lambda: any(row["kind"] == "read" for row in env_lanes(env)["agents"]["entries"]), "the decision read")
+    assert "Show decision titles in the pane" in "\n".join(pane())
     # A test run of another item and a review join.
     tested, _ = make_work(repo, "Tests the thing")
     tests_folder = worktree(repo, "fix/" + tested)
@@ -147,10 +157,11 @@ def test_2_real_lane_rows_reach_the_real_pane_and_a_late_forge_keeps_them(env, t
         assert heading in lines
     assert lines[lines.index("BUILDING") + 1] == "Builds the thing"
     assert "Tests the thing" in lines[lines.index("TESTS") + 1:lines.index("REVIEW")]
-    assert re.fullmatch(r"Round \d+ · \d+ (?:s|min)", lines[lines.index("REVIEW") + 2]), lines
+    assert "Show decision titles in the pane" in lines[lines.index("REVIEW") + 1:]
+    assert any(re.fullmatch(r"Round \d+ · \d+ (?:s|min)", line) for line in lines[lines.index("REVIEW") + 1:]), lines
     gate.touch()
     (repo.bin / "go-review").touch()
-    finish(repo, [builder, reviewer])
+    finish(repo, [builder, reviewer, reader])
     tester.wait(timeout=60)
 
     # Forge goes missing after a good answer: the rows stay, with how old they are.
@@ -158,6 +169,7 @@ def test_2_real_lane_rows_reach_the_real_pane_and_a_late_forge_keeps_them(env, t
     patient(lambda: broken.mkdir())
     (broken / "forge").write_text("#!/bin/sh\nexit 1\n", encoding="utf-8")
     (broken / "forge").chmod(0o755)
+    (broken / "forge.cmd").write_text("@exit /b 1\r\n", encoding="utf-8")  # Windows finds this launcher first
     kept = "\n".join(pane(first=broken))
     assert "Builds the thing" in kept and "Asks about parsers needs you." in kept
     assert re.search(r"Last update \d+ (?:s|min) ago\. Forge did not answer\.", kept), kept

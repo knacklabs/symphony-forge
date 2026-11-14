@@ -210,8 +210,10 @@ def _title(path: Path, item: str | None, state: dict[str, Any], read: bool = Fal
     if match["task"] or (not title and read):
         from forge import task
 
+        # A read can also be of a decision: its heading is its name.
         doc = (path / "plans" / f"{match['key']}.md" if match["key"] else
-               path / "docs" / "specs" / f"{item}.md")
+               next((d for d in (path / "docs" / folder / f"{item}.md" for folder in ("specs", "decisions"))
+                     if d.is_file()), path / "docs" / "specs" / f"{item}.md"))
         if doc.is_file():
             sections = task.sections(doc.read_text(encoding="utf-8"))
             title = (task.rows(sections).get(match["task"], {}).get("Name")

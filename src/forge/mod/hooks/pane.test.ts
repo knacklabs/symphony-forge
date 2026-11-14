@@ -414,3 +414,33 @@ test('3: a session that starts in a folder of the repo labels rows against the r
   expect(text).toContain('Asks needs you.')
   expect(text).toContain('  Mine\n')
 })
+
+test('3: a Forge from before the pane says so, shows the rows it can and does not count a waiting run as running', async ($, on) => {
+  const world = machine(on)
+  const { waiting: _a, ...first } = run({ id: 'a', title: 'Running build', place: 0 })
+  const { waiting: _b, ...second } = run({ id: 'b', title: 'Queued build', place: 1, joined_at: '2026-11-14T05:01:00+00:00' })
+  const { needs_you: _n, busy: _y, ...older } = lanes([first, second])
+  world.lanes = () => older
+  world.narrow = true
+  await $.session.start(started('terminal'))
+  const text = (await $.command.run(forgeCommand)).text as string
+  expect(text).toContain("This laptop's Forge is older than the pane. Update Forge to see what needs you.")
+  expect(text).not.toContain('Nothing needs you.')
+  expect(text).toContain('  Running build\n  Round 1 · 1 min')
+  expect(text).toContain('  Queued build\n  Round 1 · Waiting for a free place · 1 min')
+})
+
+test('3: the open output stays when its run ends', async ($, on) => {
+  const world = machine(on)
+  let listed = [run({ id: 'a', title: 'Ends soon', output_path: '/log/a' })]
+  world.lanes = () => lanes(listed)
+  world.files = { '/log/a': 'last words\n' }
+  await $.session.start(started('terminal'))
+  const ui = await $.ui.mount(pane('terminal'))
+  await world.clock.advance(1000)
+  await ui.press({ key: 'open-output' })
+  listed = []
+  await world.clock.advance(3000)
+  const output = await $.ui.mount(pane('terminal', 'dock', 'forge-output'))
+  expect(JSON.stringify(await output.drawn())).toContain('last words')
+})

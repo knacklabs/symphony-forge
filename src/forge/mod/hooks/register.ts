@@ -16,6 +16,7 @@ const TRACK = '#7f7f7f40'
 const GROUPS: Record<string, string> = { work: 'Building', test: 'Tests', review: 'Review', read: 'Review' }
 // A run Forge started with no item (a test run on the default branch) still shows, under a plain name.
 const PLAIN: Record<string, string> = { work: 'A build', test: 'A test run', review: 'A review', read: 'A plan read' }
+const OLDER = "This laptop's Forge is older than the pane. Update Forge to see what needs you."
 const MODELS = [/claude-([a-z]+)/, /gpt-[\d.]+-([a-z]+)/]
 
 type Run = {
@@ -25,7 +26,7 @@ type Run = {
 }
 type Need = { title: string; repoRoot: string; repoName: string }
 type Places = { used: number; size: number }
-type Lanes = { runs: Run[]; needs: Need[]; busy: boolean; agents: Places; tests: Places }
+type Lanes = { runs: Run[]; needs: Need[]; busy: boolean; agents: Places; tests: Places; older?: boolean }
 type Answer = { at: number; lanes: Lanes }
 type Row = Run & { label: string; repo: string | null; tag: string | null; wait: string | null }
 
@@ -56,7 +57,7 @@ function parse(text: string): Lanes {
     runs.push({
       id, group: GROUPS[kind]!, title, repoRoot: str(r.repo_root) ?? '', repoName: str(r.repo_name) ?? '',
       round: num(r.round), model: str(r.model), step: str(r.step), seconds: num(r.elapsed) ?? 0,
-      progress: done !== null && total ? { done, total } : null, waiting: r.waiting === true,
+      progress: done !== null && total ? { done, total } : null, waiting: r.waiting === true || (r.waiting === undefined && (num(r.place) ?? 0) > 0),
       lent: !!r.suspended_by, free: r.free === true, native: r.native === true, joined, outputPath: str(r.output_path),
     })
   }
@@ -68,6 +69,8 @@ function parse(text: string): Lanes {
     runs: runs.sort((a, b) => a.joined - b.joined),
     needs: needs.flatMap(n => (str(n.title) ? [{ title: str(n.title)!, repoRoot: str(n.repo_root) ?? '', repoName: str(n.repo_name) ?? '' }] : [])),
     busy: root.busy === true,
+    // A Forge from before the pane's data has no needs_you list: it cannot say what needs the person.
+    older: !Array.isArray(root.needs_you),
     agents: places(agents, run => run.group !== 'Tests' && !run.free),
     tests: places(tests, run => run.group === 'Tests'),
   }
@@ -95,7 +98,7 @@ const meter = ({ used, size }: Places) => (size > 8
 
 type Ctx = {
   answer: Answer | undefined; failed: boolean; loaded: boolean; reading: boolean; lastRead: number
-  selected: string; outputRun: string; note: string | null; ticker: Timer | undefined
+  selected: string; outputPath: string | null; note: string | null; ticker: Timer | undefined
   home: { root: string; main: string } | undefined; rich: boolean | undefined
   peak: Map<string, { state: string; seconds: number }>; latest: Map<string, string[]>
 }
@@ -209,8 +212,8 @@ function view(c: Ctx, now: number, main: string) {
   const rows = c.answer ? rowsOf(c, c.answer, now, main) : []
   const groups = ['Building', 'Tests', 'Review'].map(name => ({ name, rows: rows.filter(row => row.group === name) })).filter(group => group.rows.length)
   return {
-    rows, groups, busy: c.answer?.lanes.busy === true, loading: !c.answer && !c.failed, attention: needs.length > 0,
-    needs: !c.answer ? [] : !needs.length ? ['Nothing needs you.'] : needs.length === 1 ? [`${needs[0]} needs you.`] : [`${needs.length} items need you.`, `First: ${needs[0]}.`],
+    rows, groups, busy: c.answer?.lanes.busy === true, loading: !c.answer && !c.failed, attention: needs.length > 0 && !c.answer?.lanes.older,
+    needs: !c.answer ? [] : c.answer.lanes.older ? [OLDER] : !needs.length ? ['Nothing needs you.'] : needs.length === 1 ? [`${needs[0]} needs you.`] : [`${needs.length} items need you.`, `First: ${needs[0]}.`],
     failure: !c.failed ? null : c.answer ? `Last update ${span((now - c.answer.at) / 1000)} ago. Forge did not answer.` : 'Forge did not answer.',
   }
 }
@@ -244,7 +247,7 @@ async function inForgeRepo(c: Ctx, $: CoreEngineInterface) {
 
 
 export const register: Register = (on, options) => {
-  const c: Ctx = { answer: undefined, failed: false, loaded: false, reading: false, lastRead: -Infinity, selected: '', outputRun: '', note: null, ticker: undefined, home: undefined, rich: undefined, peak: new Map(), latest: new Map() }
+  const c: Ctx = { answer: undefined, failed: false, loaded: false, reading: false, lastRead: -Infinity, selected: '', outputPath: null, note: null, ticker: undefined, home: undefined, rich: undefined, peak: new Map(), latest: new Map() }
   on('session.start', async ($, e, next) => {
     // The guide skill may already own the name /forge: Claude Code then refuses it. The
     // command.run hook below answers the typed command either way.
@@ -276,7 +279,7 @@ export const register: Register = (on, options) => {
     const now = await $.clock.now(), main = await mainRoot(c, $)
     const t = $.ui.resolve(e)
     if (e.requestId === OUTPUT) {
-      const path = c.answer?.lanes.runs.find(r => r.id === c.outputRun)?.outputPath ?? null
+      const path = c.outputPath
       const shown = (await lastLines(c, $, path)).slice(-Math.max(5, (e.viewport?.rows ?? 30) - 4))
       return t.Box({ flexDirection: 'column', children: shown.length ? shown.map(line => t.Text({ wrap: 'truncate-end', children: line })) : [t.Text({ children: 'This run has no output to show.' })] })
     }
@@ -285,7 +288,8 @@ export const register: Register = (on, options) => {
     const row = v.rows.find(r => r.id === c.selected) ?? v.rows[0]
     if (row) c.selected = row.id
 
-    const open = () => { c.outputRun = row!.id; c.note = null; void $.ui.open({ id: OUTPUT, title: 'Run output', focus: true }) }
+    // The log path is kept, so the open output stays when its run ends.
+    const open = () => { c.outputPath = row!.outputPath; c.note = null; void $.ui.open({ id: OUTPUT, title: 'Run output', focus: true }) }
     const stop = async () => {
       const target = row!
       c.note = null
