@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Forge pane when something needs you</title>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+button{font:inherit}
+button:focus-visible{outline:2px solid #9ec1ff;outline-offset:2px}
+</style>
+</helmet>
+<div style="width: 460px; height: 680px; box-sizing: border-box; padding: 20px; background: #15171c; color: #e7e9ee; font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace; font-size: 14px; line-height: 22px; display: flex; flex-direction: column; gap: 18px">
+  <div style="display: flex; align-items: center; justify-content: space-between; padding-bottom: 12px; border-bottom: 1px solid #2c313a">
+    <span style="font-weight: 700; font-size: 15px">Forge</span>
+    <span style="color: #a4abb8; font-size: 12px">this laptop</span>
+  </div>
+  <div style="color: #f2b866; font-weight: 500">2 items need you. First: Show late orders.</div>
+  <div style="display: flex; flex-direction: column; gap: 8px">
+    <div style="color: #c5cbd6; font-size: 12px; font-weight: 700; letter-spacing: 0.08em">BUILDING</div>
+    <button type="button" style="display: flex; flex-direction: column; gap: 2px; text-align: left; min-height: 44px; padding: 8px 10px; background: #252a33; color: #e7e9ee; border: 1px solid #3a414d; border-radius: 4px; cursor: pointer">
+      <span>One combined check for ready changes</span>
+      <span style="color: #a4abb8">Round 3 · Waiting for its tests · 21 min</span>
+    </button>
+    <button type="button" style="display: flex; flex-direction: column; gap: 2px; text-align: left; min-height: 44px; padding: 8px 10px; background: transparent; color: #e7e9ee; border: 1px solid transparent; border-radius: 4px; cursor: pointer">
+      <span>Export invoices as a spreadsheet in shop-app</span>
+      <span style="color: #a4abb8">Round 1 · Waiting for a free place · 2 min</span>
+    </button>
+  </div>
+  <div style="display: flex; flex-direction: column; gap: 8px">
+    <div style="color: #c5cbd6; font-size: 12px; font-weight: 700; letter-spacing: 0.08em">TESTS</div>
+    <button type="button" style="display: flex; flex-direction: column; gap: 2px; text-align: left; min-height: 44px; padding: 8px 10px; background: transparent; color: #e7e9ee; border: 1px solid transparent; border-radius: 4px; cursor: pointer">
+      <span>One combined check for ready changes</span>
+      <span style="color: #a4abb8">Round 3 · 1 h 4 min</span>
+    </button>
+  </div>
+  <div style="display: flex; flex-direction: column; gap: 8px">
+    <div style="color: #c5cbd6; font-size: 12px; font-weight: 700; letter-spacing: 0.08em">REVIEW</div>
+    <button type="button" style="display: flex; flex-direction: column; gap: 2px; text-align: left; min-height: 44px; padding: 8px 10px; background: transparent; color: #e7e9ee; border: 1px solid transparent; border-radius: 4px; cursor: pointer">
+      <span>A plan read</span>
+      <span style="color: #a4abb8">Round 2 · 48 s</span>
+    </button>
+  </div>
+  <div style="flex-grow: 1"></div>
+  <div style="color: #a4abb8">The machine is busy. New runs wait.</div>
+  <div style="display: flex; gap: 10px; padding-top: 14px; border-top: 1px solid #2c313a">
+    <button type="button" style="min-height: 44px; padding: 0 14px; background: transparent; color: #e7e9ee; border: 1px solid #5a6373; border-radius: 4px; cursor: pointer">Open output</button>
+    <button type="button" style="min-height: 44px; padding: 0 14px; background: transparent; color: #e7e9ee; border: 1px solid #5a6373; border-radius: 4px; cursor: pointer">Stop run</button>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":460,"height":680}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Forge lines as a text reply</title>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 1000px; height: 300px; box-sizing: border-box; padding: 20px; background: #15171c; color: #e7e9ee; font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace; font-size: 14px; line-height: 22px; display: flex; flex-direction: column; gap: 10px">
+  <div style="display: flex; gap: 10px"><span>&gt;</span><span>/forge</span></div>
+  <div style="display: flex; flex-direction: column">
+    <div style="color: #a4abb8">Nothing needs you.</div>
+    <div style="color: #c5cbd6; font-weight: 700; margin-top: 8px">BUILDING</div>
+    <div style="padding-left: 18px">One combined check for ready changes</div>
+    <div style="padding-left: 18px; color: #a4abb8">Round 3 · 21 min · editing land.py</div>
+    <div style="color: #c5cbd6; font-weight: 700; margin-top: 8px">TESTS</div>
+    <div style="padding-left: 18px">Show late orders in shop-app</div>
+    <div style="padding-left: 18px; color: #a4abb8">Round 2 · 212 of 640 tests · 3 min</div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1000,"height":300}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

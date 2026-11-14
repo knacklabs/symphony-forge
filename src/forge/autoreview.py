@@ -54,7 +54,9 @@ def attempt(argv: list[str], cwd: Path, out: Path,
     proc = subprocess.Popen(argv, cwd=cwd, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
                             stderr=subprocess.STDOUT, env={**os.environ, "FORGE_WORKER": "1"},
                             **codex.GROUP)
-    with proc, machine.agent_process(proc):
+    # The run's output file: what a person sees when they open the run from the pane.
+    log = repo.forge_dir(top) / f"review-{run_id}.log"
+    with proc, log.open("wb") as saved, machine.agent_process(proc, log):
         last = ""
         pending = b""
         for line in proc.stdout or []:  # streamed as bytes: its progress is how a person watches it
@@ -68,6 +70,8 @@ def attempt(argv: list[str], cwd: Path, out: Path,
                 continue
             sys.stderr.buffer.write(line)
             sys.stderr.flush()
+            saved.write(line)
+            saved.flush()
             last = line.decode("utf-8", "replace").strip() or last
             if match := re.fullmatch(r"(model|thinking): (.*)", last):
                 selected[{"model": "model", "thinking": "effort"}[match[1]]] = match[2]

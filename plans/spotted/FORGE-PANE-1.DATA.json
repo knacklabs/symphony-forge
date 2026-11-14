@@ -1,0 +1,70 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/machine.py\tReport machine pressure in the busy field\tFORGE-PANE-1/DATA",
+      "kind": "bug",
+      "path": "src/forge/machine.py",
+      "line": 531,
+      "text": "Report machine pressure in the busy field",
+      "from": "blocking",
+      "item": "FORGE-PANE-1/DATA",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_pane_data.py\tGate: tests/test_pane_data.py::test_3 needs-you cases\tFORGE-PANE-1/DATA",
+      "kind": "bug",
+      "path": "tests/test_pane_data.py",
+      "line": 68,
+      "text": "Gate: tests/test_pane_data.py::test_3 needs-you cases",
+      "from": "blocking",
+      "item": "FORGE-PANE-1/DATA",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_pane_speed.py\tGate: Windows test collection and pane-data execution\tFORGE-PANE-1/DATA",
+      "kind": "bug",
+      "path": "tests/test_pane_speed.py",
+      "line": 8,
+      "text": "Gate: Windows test collection and pane-data execution",
+      "from": "blocking",
+      "item": "FORGE-PANE-1/DATA",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_pane_speed.py\tGate: tests/test_pane_speed.py::test_4_forge_answers_the_pane_fast_small_and_cheap\tFORGE-PANE-1/DATA",
+      "kind": "bug",
+      "path": "tests/test_pane_speed.py",
+      "line": 64,
+      "text": "Gate: tests/test_pane_speed.py::test_4_forge_answers_the_pane_fast_small_and_cheap",
+      "from": "blocking",
+      "item": "FORGE-PANE-1/DATA",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/machine.py\tNot done: each with its round and time",
+      "kind": "edge",
+      "path": "src/forge/machine.py",
+      "line": 523,
+      "text": "Not done: each with its round and time",
+      "from": "review",
+      "item": "FORGE-PANE-1/DATA",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/machine.py\tNot done: starts with one line that says whether anything needs you",
+      "kind": "edge",
+      "path": "src/forge/machine.py",
+      "line": 491,
+      "text": "Not done: starts with one line that says whether anything needs you",
+      "from": "review",
+      "item": "FORGE-PANE-1/DATA",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

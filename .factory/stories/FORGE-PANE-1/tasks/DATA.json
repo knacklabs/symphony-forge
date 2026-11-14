@@ -1,0 +1,145 @@
+{
+  "branch": "task/FORGE-PANE-1-DATA",
+  "known": [
+    {
+      "area": "lanes() in src/forge/machine.py",
+      "file": "src/forge/machine.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 523,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: each with its round and time",
+      "work": 1
+    },
+    {
+      "area": "needs_you() in src/forge/machine.py",
+      "file": "src/forge/machine.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 491,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: starts with one line that says whether anything needs you",
+      "work": 1
+    },
+    {
+      "area": "lanes() in src/forge/machine.py",
+      "file": "src/forge/machine.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 531,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Report machine pressure in the busy field",
+      "work": 1
+    },
+    {
+      "area": "tests/test_pane_speed.py",
+      "file": "tests/test_pane_speed.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 8,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: Windows test collection and pane-data execution",
+      "work": 1
+    },
+    {
+      "area": "test_4_forge_answers_the_pane_fast_small_and_cheap() in tests/test_pane_speed.py",
+      "file": "tests/test_pane_speed.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 64,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: tests/test_pane_speed.py::test_4_forge_answers_the_pane_fast_small_and_cheap",
+      "work": 1
+    },
+    {
+      "area": "test_3_lanes_say_who_needs_the_person_and_what_runs_now() in tests/test_pane_data.py",
+      "file": "tests/test_pane_data.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 68,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: tests/test_pane_data.py::test_3 needs-you cases",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "24dd948ec8b575f85d0f166d02db41ebf5dee8627c074fc9c6dcb5956c11404d",
+    "changed": "59c9e64b307fda71a9bbddc72e5821a3bbb9b8ed039ffad411734859237b0612",
+    "commit": "8bb59e63474d8e3d7e950cf47cb422445ddbae56",
+    "dismissals": [],
+    "findings": [],
+    "id": "cd521847-2b9e-49d9-97d6-a4724de14257",
+    "status": "clean"
+  },
+  "round": 7,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-13T15:05:54.927030+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-13T15:59:32.509480+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-13T16:09:34.995978+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-13T18:45:59.024187+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-13T19:07:58.824457+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-14T02:03:58.576768+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-14T02:58:56.866865+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-14T03:29:36.276379+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-13T16:09:34.996230+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "tests/test_pane_speed.py",
+    "reason": "The owner chose one more round: repair both tests",
+    "wait_id": "f500917e-0752-4dcb-abcb-1867e729eff5",
+    "worker_round": 2
+  },
+  "stuck": {
+    "close": "a0b5f03a-41a1-44fc-bcfa-813541d21328",
+    "head": "e5afb6c0770b13a1bf460aec34bda54165aaded4",
+    "keys": {},
+    "round": 6
+  },
+  "worker": "claude"
+}

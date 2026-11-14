@@ -1,0 +1,147 @@
+{
+  "base": "ed79732da0ce8cc65352154d0ee5a2c776d3d510",
+  "branch": "fix/board-change-runs-board-tests",
+  "done_when": "A pull request that changes a file under src/forge/board_app runs the board's browser tests in its check, in Forge's own repo; and the change says what a new and an existing client repo each get",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "test_readers() in .forge/review-tests.py",
+      "file": ".forge/review-tests.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 85,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Regenerate the checked-in CI classifier from the changed source",
+      "work": 1
+    },
+    {
+      "area": "reads_file_relative() in src/forge/docskip.py",
+      "file": "src/forge/docskip.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 67,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Do not treat every file path's intermediate directory as a folder read",
+      "work": 2
+    },
+    {
+      "area": "reads_file_relative() in src/forge/docskip.py",
+      "file": "src/forge/docskip.py",
+      "gain": 2,
+      "harm": 3,
+      "line": 67,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: A pull request that changes a file under src/forge/board_app runs the board's browser tests in its check",
+      "work": 2
+    },
+    {
+      "area": "selected_after_change() in tests/test_fast_test_selects_tests_that_read_a_changed_folder.py",
+      "file": "tests/test_fast_test_selects_tests_that_read_a_changed_folder.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 23,
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: The owner accepts the proof note: the coordinator reads this pull request's own check log and merges only if it shows that the board's browser tests ran",
+      "round": 1,
+      "security": false,
+      "title": "Gate: prove the pull request check runs the board browser tests",
+      "work": 2
+    },
+    {
+      "area": "test_1_a_test_that_reads_a_folder_is_selected_when_a_file_in_it_changes() in tests/test_fast_test_selects_tests_that_read_a_changed_folder.py",
+      "file": "tests/test_fast_test_selects_tests_that_read_a_changed_folder.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 40,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: cover the folder picker in new and earlier-adopted client repos",
+      "work": 2
+    },
+    {
+      "area": "selected_after_change() in tests/test_fast_test_selects_tests_that_read_a_changed_folder.py",
+      "file": "tests/test_fast_test_selects_tests_that_read_a_changed_folder.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 23,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Quote the test executable for Windows paths containing spaces",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "82728fcf91055d83beaf9093f438f427dbfff7ee95447555e5c7496420acd386",
+    "changed": "220e51514ced1286b493d435213a0f5c41b4597ada002eb74bd928d3e435df97",
+    "commit": "639ad2401dd6a6b8a8bef6376589e4ecc848c98e",
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: The owner accepts the proof note: the coordinator reads this pull request's own check log and merges only if it shows that the board's browser tests ran",
+        "finding": 1
+      }
+    ],
+    "findings": [
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - a pull request changes a board script or stylesheet.\nThe board-specific test still uses `--collect-only` and invokes `forge test --pytest`, then checks printed file names. The new `forge test --change` test runs a synthetic client folder reader, not Forge\u2019s board tests. Forge\u2019s actual pull-request workflow runs `forge test --change` at `.github/workflows/forge.yml:88`. For example, a platform-test filter in Forge\u2019s `forge.toml` could skip `tests/test_board_item_tab_in_address.py` in that check while both new tests still pass. The requested proof of browser-test execution remains missing.",
+        "file": "tests/test_fast_test_selects_tests_that_read_a_changed_folder.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 89,
+        "priority": "P1",
+        "title": "Gate: prove the pull request check runs the board browser tests",
+        "work": 2
+      }
+    ],
+    "id": "96dcddc6-de0f-40ff-8262-aa4757af5398",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-14T01:55:09.164456+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-14T02:12:29.019717+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-14T02:22:03.844755+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-14T02:22:03.845035+00:00",
+    "by": "owner",
+    "choice": "accept",
+    "file": "tests/test_fast_test_selects_tests_that_read_a_changed_folder.py",
+    "reason": "The owner accepts the proof note: the coordinator reads this pull request's own check log and merges only if it shows that the board's browser tests ran",
+    "wait_id": "65c4f05d-50b9-48f8-a88a-75bf075cc87a",
+    "worker_round": 2
+  },
+  "stuck": {
+    "close": "240cc3a4-a7b7-4048-934e-1f1829030e5c",
+    "head": "bcbf1c4473d3027af576b7a343049d746f86df1e",
+    "keys": {},
+    "round": 1
+  },
+  "why": "The pull-request check picks tests by the Python files that changed, so a change to the board's script or style files (src/forge/board_app) merges with the board's browser tests not run; the tab-in-address fix made the default branch red this way",
+  "worker": "claude"
+}

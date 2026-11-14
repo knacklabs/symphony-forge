@@ -20,6 +20,7 @@ import time
 import urllib.error
 import urllib.request
 from contextlib import contextmanager
+from pathlib import Path
 from urllib.parse import urlsplit
 
 import pytest
@@ -330,3 +331,12 @@ def test_8_board_requests_stay_fast(client):
             commit(alpha, f"alpha-{n}.txt")
             changed.append(timed())
         assert statistics.median(changed) < 1.0, changed
+
+
+def test_90_board_serves_every_script_and_style_file_of_its_page(client):
+    # The page's files live in this folder; a change to one reruns the browser tests that share this server.
+    folder = Path(__file__).resolve().parents[1] / "src" / "forge" / "board_app"
+    with live(client) as url:
+        for file in sorted(folder.glob("*.js")) + sorted(folder.glob("*.css")):
+            status, _, body = get(url, "/" + file.name)
+            assert status == 200 and body == file.read_bytes(), file.name
