@@ -1,0 +1,33 @@
+{
+  "branch": "task/FORGE-PANE-1-OLD-2",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "3ab8f15077ca5e72f66452a5656c613a1825486e73ccf3668743cb94ccebdd2b",
+    "changed": "d37e5f49fd385fcf52757f403f46d1773359927b2108fc8fd35998ebdd13de9a",
+    "commit": "4034e62bf8af8cdf32d4ac128d5904e08a4bcf29",
+    "dismissals": [],
+    "findings": [],
+    "id": "7b2d04fa-1810-46f0-be89-567cba1ee917",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-14T14:13:11.747222+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-14T14:18:08.519741+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "bcab5bb6e030fc1f0192b026e966e9aa8ef5449c",
+    "keys": {},
+    "round": null
+  },
+  "worker": "claude"
+}
