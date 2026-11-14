@@ -96,8 +96,8 @@
       "text": "Gate: functional check",
       "from": "blocking",
       "item": "FORGE-PANE-1/PANE",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "edge\tsrc/forge/mod/hooks/register.ts\tNot done: The pane lists every build, test and review that runs on this laptop",
