@@ -45,13 +45,17 @@ BOTTOM = "els => Math.max(...els.map(e => e.getBoundingClientRect().bottom))"
 with sync_playwright() as p:
     browser = p.chromium.launch(channel='chrome', headless=True, args=['--no-sandbox'])
     try:
-        for width, scheme in ((768, 'dark'), (1100, 'light'), (1150, 'dark'), (1280, 'light'), (1440, 'dark')):
-            where = (width, scheme)
+        # The last two run at 110% zoom: larger text on any font must not push a region into the figures.
+        for width, scheme, zoom in ((768, 'dark', 1), (1100, 'light', 1), (1150, 'dark', 1), (1280, 'light', 1), (1440, 'dark', 1),
+                                    (1280, 'dark', 1.1), (1440, 'light', 1.1)):
+            where = (width, scheme, zoom)
             page = browser.new_page(viewport={'width': width, 'height': 900}, color_scheme=scheme)
             page.set_default_timeout(30000)
             page.goto(url)
             expect(page.get_by_role('status')).to_have_text('Live')
             expect(page.get_by_role('region', name='In flight')).to_be_visible()
+            if zoom != 1:
+                page.evaluate('z => { document.documentElement.style.zoom = z; }', zoom)
             # Each title is found inside its own region: the Needs you card, a card in Building, the Stories rail.
             for region, titles in expected['titles']:
                 for title in titles:
@@ -63,13 +67,17 @@ with sync_playwright() as p:
                     assert seen['hover'] == title, (where, region, 'no full title on hover', title, seen)
                     assert not seen['covered'], (where, region, 'another region covers a title', title, seen)
             page.evaluate('window.scrollTo(0, 0)')
-            if width == 1440:
+            if width == 1440 and zoom == 1:
                 assert page.evaluate('document.documentElement.scrollHeight <= innerHeight'), (where, 'the first screen scrolls')
-            # No card of the stages or the rail reaches into the figures below them.
+            # No region of the stages or the rail reaches into the figures, and no card is painted over them.
             figures = page.get_by_role('region', name='Figures').bounding_box()
-            for region in ('In flight', 'Stories'):
-                cards = page.get_by_role('region', name=region).get_by_role('button')
-                assert cards.evaluate_all(BOTTOM) <= figures['y'] + 0.5, (where, region, 'reaches into the figures')
+            for region in ('In flight', 'Stories', 'Planned', 'Building', 'Review', 'Ready', 'Merged'):
+                box = page.get_by_role('region', name=region, exact=True).bounding_box()
+                assert box['y'] + box['height'] <= figures['y'] + 0.5, (where, region, 'reaches into the figures', box, figures)
+            for share in (0.1, 0.5, 0.9):
+                on_top = page.evaluate('([x, y]) => document.elementFromPoint(x, y)?.closest("button")?.textContent',
+                                       [figures['x'] + share * figures['width'], figures['y'] + 2])
+                assert on_top is None, (where, 'a card is painted over the figures', on_top)
             # A fix and a story part idle for six days say so on their cards; a fresh fix does not.
             expect(page.get_by_role('button', name=re.compile(expected['idle_fix'] + '.*idle 6 d'))).to_have_count(1)
             expect(page.get_by_role('button', name=re.compile(expected['idle_part'] + '.*idle 6 d'))).to_have_count(1)

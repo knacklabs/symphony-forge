@@ -290,6 +290,8 @@ main:not([hidden]):has(> .now) {
   background: var(--surface);
 }
 
+.rail { min-height: 0; overflow-y: auto; } /* a long rail scrolls inside itself, never into the figures */
+
 .rail h2, .list h2 { font-size: var(--size-region); }
 
 .stories, .runs {
