@@ -86,7 +86,9 @@ def test_4_forge_answers_the_pane_fast_small_and_cheap(env, tmp_path, monkeypatc
             ["Finished fix busy-7"] if case != "new" else [])
         assert data["busy"] is False
         assert len(data["agents"]["entries"]) == len(processes)
-        assert seconds < 0.3, f"one read took {seconds:.2f} seconds"
+        # Owner's decision, 14 Nov 2026: 0.6 s on Windows only (measured 0.31 and 0.37 s; starting a program is slower there).
+        limit = 0.6 if os.name == "nt" else 0.3
+        assert seconds < limit, f"one read took {seconds:.2f} seconds"
         assert size < 20_000, f"one read printed {size} bytes"
         # One read every 3 seconds for 10 minutes: under 10% of one core means under 0.3 s a read.
         assert cpu is None or cpu < 0.3, f"one read used {cpu:.2f} seconds of processor time"
