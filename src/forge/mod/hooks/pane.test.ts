@@ -46,9 +46,17 @@ function machine(on: On, surface: RenderSurface = 'terminal') {
     return { value: world.narrow ? { isPlaced: false, reason: 'narrow' } : { isPlaced: true } }
   })
   on('ui.panes', () => ({ value: world.placed ? placed : [{ ...placed[0]!, isPlaced: false }] }))
-  on('fs.exists', (_$, e) => ({ value: e.path in world.files }))
-  on('fs.stat', (_$, e) => ({ value: { kind: world.folders.includes(e.path) ? 'dir' : 'file', size: (world.files[e.path] ?? '').length, mtimeMs: 0, isLink: false } }))
-  on('fs.read', (_$, e) => ({ value: world.files[e.path] ?? '' }))
+  // The fake files are keyed as POSIX paths. A path reaches a hook as the engine spells it, and on Windows
+  // that can be another spelling (backslashes, a drive letter), so the key drops both.
+  // A system that does not know the drive letter joins the path to the plugin's folder: drop that too.
+  const key = (path: string) => {
+    const posix = path.replace(/\\/g, '/'), drive = /^(?:.*\/)?[A-Za-z]:(?=\/|$)/
+    // A drive is not case-sensitive, so a path on one is compared in lower case.
+    return drive.test(posix) ? posix.replace(drive, '').toLowerCase() : posix
+  }
+  on('fs.exists', (_$, e) => ({ value: key(e.path) in world.files }))
+  on('fs.stat', (_$, e) => ({ value: { kind: world.folders.includes(key(e.path)) ? 'dir' : 'file', size: (world.files[key(e.path)] ?? '').length, mtimeMs: 0, isLink: false } }))
+  on('fs.read', (_$, e) => ({ value: world.files[key(e.path)] ?? '' }))
   on('store.get', () => ({ value: world.stored }))
   on('store.set', () => ({ value: undefined }))
   on('tool.call', { tool: 'AskUserQuestion' }, (_$, e) => {
@@ -443,4 +451,49 @@ test('3: the open output stays when its run ends', async ($, on) => {
   await world.clock.advance(3000)
   const output = await $.ui.mount(pane('terminal', 'dock', 'forge-output'))
   expect(JSON.stringify(await output.drawn())).toContain('last words')
+})
+
+// Claude Code, Forge and git can each spell the same folder differently on Windows. Feed those spellings on any system.
+for (const [root, repoRoot, log] of [
+  ['C:\\repo\\src', 'c:/repo', 'C:/logs/a.log'],
+  ['c:/repo/src', 'C:\\repo', 'c:\\logs\\a.log'],
+  ['C:\\Repo\\SRC', 'c:/repo', 'C:\\logs/a.log'],
+] as const) {
+  test(`3: Windows paths ${root} and ${repoRoot} name one repo, and the log at ${log} is read`, async ($, on) => {
+    const world = machine(on)
+    world.root = root
+    world.files = { '/repo/.git': '', '/repo/forge.toml': '', '/logs/a.log': 'one\ntwo\n' }
+    world.lanes = () => lanes([run({ id: 'a', title: 'Mine', repo_root: repoRoot, output_path: log })], [], { needs_you: [{ title: 'Asks', repo_name: 'repo', repo_root: repoRoot }] })
+    world.narrow = true
+    await $.session.start(started('terminal'))
+    const text = (await $.command.run(forgeCommand)).text as string
+    expect(text).toContain('Asks needs you.')
+    expect(text).toContain('  Mine\n')
+    world.narrow = false
+    const ui = await $.ui.mount(pane('terminal'))
+    await world.clock.advance(1000)
+    await ui.press({ key: 'open-output' })
+    const output = await $.ui.mount(pane('terminal', 'dock', 'forge-output'))
+    expect(JSON.stringify(await output.drawn())).toContain('two')
+  })
+}
+
+test('3: a worktree on a drive finds its main checkout through git\'s forward-slash path', async ($, on) => {
+  const world = machine(on)
+  world.root = 'C:\\repo-folder'
+  world.files = { '/repo-folder/.git': 'gitdir: C:/repo/.git/worktrees/tree\n' }
+  world.lanes = () => lanes([run({ id: 'a', title: 'Mine', repo_root: 'c:/repo' }), run({ id: 'b', title: 'Other', repo_root: 'D:/shop', repo_name: 'shop-app', joined_at: '2026-11-14T05:01:00+00:00' })])
+  world.narrow = true
+  await $.session.start(started('terminal'))
+  const text = (await $.command.run(forgeCommand)).text as string
+  expect(text).toContain('  Mine\n')
+  expect(text).toContain('  Other in shop-app\n')
+})
+
+test('1: the option opens the pane for a session that starts in a folder on a drive', { options: { pane: 'always' } }, async ($, on) => {
+  const world = machine(on)
+  world.root = 'C:\\repo\\src'
+  world.files = { '/repo/.git': '', '/repo/forge.toml': '' }
+  await $.session.start(started('terminal'))
+  expect(world.opened).toEqual([{ id: 'forge', title: 'Forge' }])
 })

@@ -33,7 +33,13 @@ type Row = Run & { label: string; repo: string | null; tag: string | null; wait:
 const rec = (v: unknown): Record<string, unknown> => (v && typeof v === 'object' && !Array.isArray(v) ? v as Record<string, unknown> : {})
 const str = (v: unknown) => (typeof v === 'string' && v ? v : null)
 const num = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? v : null)
+// Paths from Claude Code, from Forge and from git's files read the same on every system:
+// forward slashes, no trailing slash. A drive letter's case does not matter, and on a drive nor does the path's.
 const norm = (path: string) => path.replace(/\\/g, '/').replace(/\/+$/, '')
+const same = (a: string, b: string) => {
+  const [x, y] = [norm(a), norm(b)]
+  return /^[a-z]:/i.test(x) || /^[a-z]:/i.test(y) ? x.toLowerCase() === y.toLowerCase() : x === y
+}
 const up = (path: string) => (path.includes('/') ? path.slice(0, path.lastIndexOf('/')) : '')
 
 // Time in plain words. A run never shows as zero: its first second counts.
@@ -194,7 +200,7 @@ async function remembered(c: Ctx, $: CoreEngineInterface) {
 
 function rowsOf(c: Ctx, have: Answer, now: number, main: string): Row[] {
   return have.lanes.runs.map(run => {
-    const repo = run.repoName && norm(run.repoRoot) !== main ? run.repoName : null
+    const repo = run.repoName && !same(run.repoRoot, main) ? run.repoName : null
     // A time that has been shown never goes back, even when a read lands a little early.
     // A run that starts after a wait counts from its first start, so the guard resets when its state changes.
     const state = run.lent ? 'lent' : run.waiting ? 'waiting' : 'running', before = c.peak.get(run.id)
@@ -208,7 +214,7 @@ function rowsOf(c: Ctx, have: Answer, now: number, main: string): Row[] {
 }
 
 function view(c: Ctx, now: number, main: string) {
-  const needs = (c.answer?.lanes.needs ?? []).map(n => (n.repoName && norm(n.repoRoot) !== main ? `${n.title} in ${n.repoName}` : n.title))
+  const needs = (c.answer?.lanes.needs ?? []).map(n => (n.repoName && !same(n.repoRoot, main) ? `${n.title} in ${n.repoName}` : n.title))
   const rows = c.answer ? rowsOf(c, c.answer, now, main) : []
   const groups = ['Building', 'Tests', 'Review'].map(name => ({ name, rows: rows.filter(row => row.group === name) })).filter(group => group.rows.length)
   return {
