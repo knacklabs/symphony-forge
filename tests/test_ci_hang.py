@@ -17,9 +17,9 @@ def test_1_every_ci_pytest_dumps_stacks_after_two_minutes():
         for command in re.findall(r"pytest (?:tests|@testFiles)[^\n\"]*", text):
             seen += 1
             assert "-o faulthandler_timeout=120" in command, f"{name}: {command}"
-    # The installer job was removed; plugin and platform jobs still call pytest directly.
+    # The installer job was removed; plugin (two lines) and platform jobs still call pytest directly.
     # The generated PR job delegates to Forge's configured test command.
-    assert seen == 2
+    assert seen == 3
     settings = tomllib.loads((Path(__file__).resolve().parents[1] / "forge.toml").read_text("utf-8"))
     assert "-o faulthandler_timeout=120" in settings["test"]
     workflow = (WORKFLOWS / "forge.yml").read_text(encoding="utf-8")
@@ -38,7 +38,7 @@ def test_2_every_ci_pytest_times_out_a_hung_test_before_the_job_cap():
             assert "--group" not in uv_args and "--with" not in uv_args, f"{name}: {command}"
             assert "--timeout=150 --timeout-method=thread" in command, f"{name}: {command}"
     # The installer test now runs inside the platform job, without a separate command.
-    assert seen == 2
+    assert seen == 3
     settings = tomllib.loads((Path(__file__).resolve().parents[1] / "forge.toml").read_text("utf-8"))
     assert "--timeout=150 --timeout-method=thread" in settings["test"]
 

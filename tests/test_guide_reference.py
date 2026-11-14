@@ -19,6 +19,7 @@ def test_1_run_details_are_linked_and_deploy_permission_stays_in_the_guide(guide
         assert "Use Mainline Deploy only when the user explicitly requests deployment" in shipped
         reference = (path.parent / "run-reference.md").read_text(encoding="utf-8")
         for heading in ("Machine views", "Claude Code plugin core", "Installing the mod",
-                        "Approving with the pane", "The pane and strip"):
+                        "Approving with the pane"):
             assert f"## {heading}\n" in reference
+        assert "## The pane and strip" not in reference  # the old Board tab and strip text is gone
         assert "Mainline" not in reference

@@ -71,7 +71,7 @@ jobs:
         run: uv run --frozen --python 3.11 pytest tests/test_mod_sync.py -q -k 'native-plugin-checks or real-local-install' -o faulthandler_timeout=120 --timeout=150 --timeout-method=thread
       - name: Check that a real Claude Code session answers /forge
         if: steps.parent-tests.outputs.reuse != 'true'
-        run: uv run --frozen --python 3.11 pytest tests/test_pane_session.py -q
+        run: uv run --frozen --python 3.11 pytest tests/test_pane_session.py -q -o faulthandler_timeout=120 --timeout=150 --timeout-method=thread
 
   tests:
     needs: selection
