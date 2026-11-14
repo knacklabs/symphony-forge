@@ -11,7 +11,7 @@
       "gain": 4,
       "harm": 3,
       "line": 369,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -24,7 +24,7 @@
       "gain": 4,
       "harm": 3,
       "line": 369,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -34,37 +34,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "10bfc1ca8b48befb9701d83e172fdc37755790d26f558c370488a1d35dbc3bbf",
-    "changed": "630110eba22fc0fbfe567e5f2da00232b0e688b49b1375a10ec7172863a1bf0f",
-    "commit": "50d50870e4ed87a5592d8b1386d1072dd10ada99",
+    "branch_diff": "45713d68641be53026cedf4f83455cf980cfc437567d670a3d3eddc94e334174",
+    "changed": "9d1111f6164757022f6725d079ec6e5d9a38647f7bf2f1e430f991ffbf3c72aa",
+    "commit": "d9f15e29378e9807864475cf16e6b0735431da40",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Test\nCase: normal use - closing this pull request after changing the item tabs.\nThe pull-request check does not select either named browser proof. `.github/workflows/forge.yml:88` runs `forge test --change`, which uses the Python picker configured in `forge.toml:7`. The picker selects changed Python tests and file readers (`src/forge/fasttest.py:413-452`), but neither browser test names the changed `item.js`, and neither is in `.forge/always-tests.txt`. The required check can therefore pass without running the half-screen test or checking tab-address behavior. Include both tests in the pull-request check.",
-        "file": "src/forge/board_app/item.js",
-        "gain": 4,
-        "harm": 3,
-        "line": 369,
-        "priority": "P1",
-        "title": "Gate: tests/test_board_half_screen_width.py and tests/test_board_item_tab_in_address.py",
-        "work": 2
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Test\nCase: normal use - switching from a long Plan to Rounds at 768 pixels.\nThe test accepts the already-visible tabpanel after a click and measures the summary bottom and sheet top in separate browser calls (`tests/test_board_half_screen_width.py:43-45, 64-69`). A redraw or scroll between those calls makes the coordinates incomparable. The drawing at `item.js:386-388` and the media rule at `item.css:276-280` already place the summary before the sheet, so the reported default-branch failure can occur with the correct layout. Drawing synchronously suppresses one trigger but leaves the proof dependent on timing. Wait for the chosen tab and measure both rectangles in one browser evaluation.",
-        "file": "src/forge/board_app/item.js",
-        "gain": 4,
-        "harm": 3,
-        "line": 369,
-        "priority": "P1",
-        "title": "Gate: tests/test_board_half_screen_width.py::test_1_the_board_reads_at_half_a_screen",
-        "work": 2
-      }
-    ],
-    "id": "4c40f0a9-9709-4490-a82e-9ff3db394bcf",
-    "status": "blocked"
+    "findings": [],
+    "id": "c7272fd1-3a59-4820-ac7d-7bf354e40c1d",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-13T19:03:20.153718+00:00",
@@ -72,6 +51,10 @@
     },
     {
       "at": "2026-11-13T19:18:04.154982+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-14T01:58:20.665230+00:00",
       "step": "review"
     }
   ],
