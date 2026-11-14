@@ -8,7 +8,7 @@
       "gain": 4,
       "harm": 1,
       "line": 138,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -31,38 +31,17 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "c3d805e6e8ba8b6d5d284298a9d926131d37855885c6be5e5e2cda158a19fdc0",
+    "branch_diff": "898338b9545d2307b86df043c33b2a488436fdbac122b031d214734ba7df01e3",
     "changed": "e3684b51df1b676c610b060a0922b0af16b293ebaf6789b0217dc2540dae0e2f",
-    "commit": "23764297aa95163d4388396a62b4f825db76d945",
+    "commit": "2f7af666fd2556bd49bab63788f53d2e9244f387",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 1, Harm 1\nRaise: Gate\nCase: normal use - reviewing the hook-removal change.\nThe supplied proof list is `missing`, and the code commit has no `Proof list:` mapping for the covered Done-when item. Record the deletion checks and the existing real-session hook check so the required evidence can be audited.",
-        "file": "src/forge/mod/hooks/events.ts",
-        "gain": 4,
-        "harm": 1,
-        "line": 138,
-        "priority": "P1",
-        "title": "Gate: proof list",
-        "work": 1
-      },
-      {
-        "body": "Gain 1, Work 1, Harm 1\nThe branch history has no before-coding `Need`, `Simplest option`, or `Existing code reused` lines for the hook removal. Record the rationale so it can be reviewed alongside the change.\nAdds work: record the deletion approach; F 1 x H 1 = 1; 2 x C = 2",
-        "file": "src/forge/mod/hooks/machine.ts",
-        "gain": 1,
-        "harm": 1,
-        "line": 79,
-        "priority": "P2",
-        "title": "Simpler: undocumented deletion \u2192 record the three-line approach",
-        "work": 1
-      }
-    ],
-    "id": "b0fab7ca-657e-4108-8b11-7bc7f974f6f6",
-    "status": "blocked"
+    "findings": [],
+    "id": "8de7f0f8-bad6-4b92-894b-f6824747c9e9",
+    "status": "clean"
   },
   "round": 2,
   "stacked_on": "FORGE-PANE-1/PANE",
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-14T07:20:28.887604+00:00",
@@ -70,6 +49,10 @@
     },
     {
       "at": "2026-11-14T07:28:30.932804+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-14T07:31:12.097487+00:00",
       "step": "review"
     }
   ],
