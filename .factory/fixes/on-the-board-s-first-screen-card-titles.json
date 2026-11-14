@@ -4,14 +4,176 @@
   "done_when": "On the first screen every card shows its whole title (wrapped, with the full title on hover), each stalled part shows how long it has been idle, each placeholder story takes its title from its plan file, and the Stories rail says \"No owner yet\" when no owner is set.",
   "fix_kind": "ui",
   "kind": "fix",
+  "known": [
+    {
+      "area": "src/forge/board_app/now.css",
+      "file": "src/forge/board_app/now.css",
+      "gain": 4,
+      "harm": 3,
+      "line": 137,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: On the first screen every card shows its whole title (wrapped, with the full title on hover)",
+      "work": 1
+    },
+    {
+      "area": "machine_board() in src/forge/board.py",
+      "file": "src/forge/board.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 679,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Each placeholder story takes its title from its plan file",
+      "work": 2
+    },
+    {
+      "area": "src/forge/board_app/now.css",
+      "file": "src/forge/board_app/now.css",
+      "gain": 4,
+      "harm": 3,
+      "line": 137,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Wrapped cards overflow the stage at ordinary laptop widths",
+      "work": 2
+    },
+    {
+      "area": "src/forge/board_app/item.js",
+      "file": "src/forge/board_app/item.js",
+      "gain": 4,
+      "harm": 3,
+      "line": 149,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Include all part rounds in the story drawer",
+      "work": 2
+    },
+    {
+      "area": "test_1_the_first_screen_shows_whole_titles_idle_time_owners_and_rounds() in tests/test_board_first_screen_reads_whole.py",
+      "file": "tests/test_board_first_screen_reads_whole.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 88,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: tests/test_board_first_screen_reads_whole.py",
+      "work": 2
+    },
+    {
+      "area": "src/forge/board_app/item.js",
+      "file": "src/forge/board_app/item.js",
+      "gain": 2,
+      "harm": 1,
+      "line": 150,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Follow-up: Label story rounds with the part's name",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "7ebf7449c7442cfbbc91c3bf2e3ac1141c81c55ca5e00f5bbeae0ceba88a7a96",
+    "changed": "1e3ebe68fd38bfd1f3223f94c7904bfeb0d8569cb130f704e6579294d62d7f40",
+    "commit": "1f3d72139258868ec4841b25fcbd12545bd1ce5c",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 1, Harm 3\nRaise: Not done. Case: normal use - An approval or decision has a title longer than its Needs you card. The new wrapping rule excludes `.ask-title`, which still has `white-space: nowrap` and an ellipsis at now.css:129\u2013132; `ask()` also supplies no hover title at now.js:135\u2013139. These are attention cards under plans/FORGE-BOARD-4.md:94\u201395, so their titles remain cut off and cannot be read on hover.",
+        "file": "src/forge/board_app/now.css",
+        "gain": 4,
+        "harm": 3,
+        "line": 137,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: On the first screen every card shows its whole title (wrapped, with the full title on hover)",
+        "work": 1
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 2\nRaise: Not done. Case: normal use - A legacy story has no story record, while its active part and plan are present on the part's branch but the plan has not landed. The part lookup at board.py:660\u2013663 can read that branch, but this fallback reads only a local story worktree or the landed branch. The parent therefore remains `A story with missing state` despite its plan being available.",
+        "file": "src/forge/board.py",
+        "gain": 3,
+        "harm": 2,
+        "line": 679,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: Each placeholder story takes its title from its plan file",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional. Case: normal use - At a window around 1,100\u20131,150 pixels wide, four building cards with ordinary 60-character titles wrap into several lines each. The five-column grid remains active above 1,099 pixels, while the stage has a constrained height and no scrolling or overflow handling. The taller cards extend into the figures below, obscuring content and making the first screen scroll. The new test measures each title's own box, so it does not detect overlap with other screen regions.",
+        "file": "src/forge/board_app/now.css",
+        "gain": 4,
+        "harm": 3,
+        "line": 137,
+        "priority": "P1",
+        "title": "Wrapped cards overflow the stage at ordinary laptop widths",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional. Case: normal use - An ongoing story has a recently reviewed part and an older merged part outside the fetched history. The Now snapshot omits the older child, and the drawer uses that snapshot without fetching the full story, so this aggregation presents the recent count as the total and omits the older rounds. If all reviewed parts are omitted, it still says there are no review rounds. Separately, a story with its own stored PR time record can have `rounds: []` from board.py:641\u2013645; the empty array is truthy here, so even the full page skips its children's rounds.",
+        "file": "src/forge/board_app/item.js",
+        "gain": 4,
+        "harm": 3,
+        "line": 149,
+        "priority": "P1",
+        "title": "Include all part rounds in the story drawer",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 2\nRaise: Test. Case: normal use - The promised idle-time proof creates two fixes at lines 88\u201389, never a stalled story part, so it passes if idle time works only for fixes. Its title check at line 31 excludes Needs you attention cards and checks element bounds without checking whether other regions cover them. The placeholder-title assertion checks only the JSON snapshot at lines 105\u2013108; the browser never checks the missing-state story's displayed title. The title check also depends on the private `.chip-title` class, so a behavior-preserving class rename breaks it.",
+        "file": "tests/test_board_first_screen_reads_whole.py",
+        "gain": 4,
+        "harm": 2,
+        "line": 88,
+        "priority": "P1",
+        "title": "Gate: tests/test_board_first_screen_reads_whole.py",
+        "work": 2
+      },
+      {
+        "body": "Gain 2, Work 1, Harm 1\nThe new round labels use the part ID, such as `SVCLIST`, instead of its readable title. PRODUCT.md:69 permits a story key but otherwise excludes IDs from the board, and these labels make it harder to identify which part a round belongs to.",
+        "file": "src/forge/board_app/item.js",
+        "gain": 2,
+        "harm": 1,
+        "line": 150,
+        "priority": "P2",
+        "title": "Follow-up: Label story rounds with the part's name",
+        "work": 1
+      }
+    ],
+    "id": "e30a4a0b-4864-4614-a834-a882bc0bdb2a",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-13T18:42:55.913038+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-14T03:39:10.692410+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-11-14T03:39:10.709681+00:00",
+    "file": "src/forge/board_app/now.css",
+    "wait_id": "8026aa04-8850-4e36-8a08-da1e8324d3cf"
+  },
   "stuck": {
     "close": null,
     "head": "2a6389e8368287fd380bc0b119b07066074a8ec6",
