@@ -2073,7 +2073,9 @@ without changing the checkout. If it is clean, close keeps the branch's commits 
 the pull request needs it. A clean merge needs no force-push. If the merge conflicts after the
 underlying item lands, close replays only the follow-up's own commits from its recorded start
 onto the current default branch and publishes with a lease. It preserves earlier merge edits,
-leaves unknown remote commits alone, and stops if the fix's own changes conflict. Close names
+leaves unknown remote commits alone, and stops if the fix's own changes conflict. When the whole
+change merges clean but a parent commit that the follow-up picked up conflicts on its own, close
+keeps the clean result as one commit. Close names
 `forge work <item>` to merge the default branch, then `forge close <item>`.
 Otherwise it starts from the default branch and close keeps merging default updates.
 Follow-up replay and merging default-branch updates before the underlying item lands need Git

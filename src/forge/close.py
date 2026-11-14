@@ -732,12 +732,10 @@ def _merge_default(top: Path, item: str, branch: str, default: str,
                         baseline, cwd=top)
         if done.returncode and not merge_timings.resolve(
                 top, replay=True, ours=":3", incoming=":2"):
-            files = repo.git("diff", "--name-only", "--diff-filter=U", cwd=top).splitlines() or files
+            # The whole-change merge above is clean, so only a picked-up parent commit conflicts
+            # one by one. Keep the clean tree as one commit below instead of replaying each.
             repo.run("git", "rebase", "--abort", cwd=top)
-            if not files:
-                done.check_returncode()
-            repo.refuse(REFUSALS["replay_conflict"], default=default, files=", ".join(files),
-                        item=item)
+            repo.git("reset", "-q", "--hard", target, cwd=top)
         if repo.git("rev-parse", "HEAD^{tree}", cwd=top) != tree:
             evidence = (review.commit_paragraph(top, baseline, "Functional check:", original) or
                         review.commit_paragraph(top, baseline, "Proof list:", original))
