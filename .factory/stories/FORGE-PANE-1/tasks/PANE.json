@@ -202,7 +202,7 @@
       "gain": null,
       "harm": null,
       "line": 297,
-      "outcome": "open",
+      "outcome": "fixed in round 5",
       "reason": "",
       "round": 4,
       "security": false,
@@ -277,66 +277,37 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "708a93b5b629a787d0387d741613745d6ab2fd32a74f54c11d4bdbf15b5a519a",
-    "changed": "ae5910fc22691a6dea0f249845e795fe734b255613c46ec219b2150701528b2c",
-    "commit": "5f7d41f6f12fdeef51554b6756a923e213732326",
+    "branch_diff": "f5ba835b52167ba982379792f53ed71cd781d441765564e5b6492183b0912c22",
+    "changed": "7b434731ba891f4093c01e7d49d15e306e2dc61c0c02c8f4219bea5f1013ed10",
+    "commit": "db54610ab3ee0e02dd2f22a9a70133d59de4fe5d",
     "dismissals": [],
     "findings": [
       {
-        "body": "chunk 1/3:\n\nAn existing Forge 1.2.38 installation can update the user-scoped plugin through `forge sync` without updating the `forge` executable on PATH (`src/forge/sync.py:747-773`). That release's `lanes --json` returns both entry arrays but omits `needs_you` and `waiting`, and filters out runs from other releases. This parser accepts the response, treats the missing needs list as empty, and treats waiting runs as running. The pane can therefore say \u201cNothing needs you\u201d and omit active work instead of identifying the data as incompatible.",
+        "body": "Gain 3, Work 1, Harm 3\nRaise: Functional. Case: normal use - A run waits for memory or CPU load while Forge 1.2.38 is on PATH. That release's `src/forge/machine.py:182-198,260-289,427-440` can report `place: 0` for an unadmitted run and does not provide `waiting`. This fallback therefore displays the waiting run as running and can count its place as occupied. The new test covers a waiter with `place: 1`, so this part of the previous finding remains.",
         "file": "src/forge/mod/hooks/register.ts",
-        "line": 66,
+        "gain": 3,
+        "harm": 3,
+        "line": 60,
         "priority": "P1",
-        "title": "Reject incomplete lane data from an older Forge"
+        "title": "Reject incomplete lane data from an older Forge",
+        "work": 1
       },
       {
-        "body": "chunk 1/3:\n\nA queued session-owned run is initially published without `native`; that flag is set after admission (`src/forge/native.py:79-80`). While the stop confirmation is open, another session can admit the run and start its subagent. The fresh read still finds the same ID, so this code invokes `forge stop` without checking its new native status. That command clears the pending handback and lane but does not stop the subagent (`src/forge/native.py:189-199`); its later handback is refused, and the pane discards the command's warning. Enforce stoppability when the stop is issued.",
+        "body": "Gain 2, Work 1, Harm 1\nRaise: Functional. Case: normal use - A person uses the documented `forge read pane-decision` form. `src/forge/records.py:797-821` resolves it to a numbered file such as `docs/decisions/0045-pane-decision.md`, but `src/forge/machine.py:214-216` looks for `docs/decisions/pane-decision.md`. The resulting null title makes this fallback show the slug instead of the decision heading. The new test uses the numbered form, so the previous decision-title issue remains for the documented unnumbered form.",
         "file": "src/forge/mod/hooks/register.ts",
-        "line": 297,
-        "priority": "P1",
-        "title": "Recheck whether a queued run became a session subagent before stopping it"
-      },
-      {
-        "body": "chunk 1/3:\n\nIf a person opens output while a build, test, or review is running, the next successful refresh after it finishes removes the run from `c.answer.lanes.runs`. This lookup then loses its log path and replaces the open output pane with \u201cThis run has no output to show,\u201d even when the log still exists. The person cannot read the final output at the moment it becomes most useful.",
-        "file": "src/forge/mod/hooks/register.ts",
-        "line": 279,
+        "gain": 2,
+        "harm": 1,
+        "line": 54,
         "priority": "P2",
-        "title": "Keep the output pane's path after the run finishes"
-      },
-      {
-        "body": "chunk 1/3:\n\nA standalone `forge test --pytest <base>` produces a displayed test row, but `src/forge/fasttest.py:384-387` creates its lane entry without an output path and lines 825-831 stream the test output only to stdout. Consequently, Open output always reports that this run has no output, even while the test is printing. The pane needs access to that run's output for this supported test path.",
-        "file": "src/forge/mod/hooks/register.ts",
-        "line": 279,
-        "priority": "P2",
-        "title": "Make standalone test output available to the output pane"
-      },
-      {
-        "body": "chunk 1/3:\n\nFor a decision read such as `forge read 0045-conflict-free-story-state`, `src/forge/records.py:797-805` resolves the document under `docs/decisions`, but `src/forge/machine.py:202-219` looks only under `docs/specs` for its title. The resulting null title makes this fallback display the numbered slug instead of the decision heading in the pane and text reply. This exposes an internal identifier where the run's readable title is required.",
-        "file": "src/forge/mod/hooks/register.ts",
-        "line": 53,
-        "priority": "P2",
-        "title": "Show decision titles for active reads"
-      },
-      {
-        "body": "chunk 3/3:\n\nWhen Claude Code cannot load the plugin in a headless session, this branch calls `pytest.skip` after starting a build that is held at a gate. The cleanup at lines 151\u2013154 is never reached. The autouse process check in `tests/conftest.py` then kills the build and fails the test during teardown, so the documented skip case makes the plugin CI job fail instead.",
-        "file": "tests/test_pane_session.py",
-        "line": 119,
-        "priority": "P2",
-        "title": "Clean up the held build before skipping the session test"
-      },
-      {
-        "body": "chunk 3/3:\n\nOn Windows, a full test run with Claude Code installed can reach this failure check after successfully using the `repo.bin/forge.cmd` shim. The new `broken-bin` directory contains only an extensionless POSIX shell script, so it does not shadow that Windows launcher. The final read can run the working Forge shim and replace the cached rows, making the retained-rows assertions fail even when the pane behaves correctly.",
-        "file": "tests/test_pane_session.py",
-        "line": 159,
-        "priority": "P2",
-        "title": "Provide a Windows launcher for the failing Forge stub"
+        "title": "Show decision titles for active reads",
+        "work": 1
       }
     ],
-    "id": "9e2a599a-01e5-4ecc-be3e-9980df0f98ab",
+    "id": "7997fdce-8bbb-43f5-81f1-a0a46a11fde5",
     "status": "blocked"
   },
   "round": 5,
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-14T05:13:08.629027+00:00",
@@ -357,16 +328,16 @@
     {
       "at": "2026-11-14T09:21:02.712423+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-11-14T09:41:32.599706+00:00",
+      "step": "review"
     }
   ],
   "stop": {
-    "at": "2026-11-14T09:21:02.712760+00:00",
-    "by": "owner",
-    "choice": "more",
+    "at": "2026-11-14T09:41:32.600006+00:00",
     "file": "src/forge/mod/hooks/register.ts",
-    "reason": "The owner chose one last round: repair the older-Forge case and the cheap small points; the rare Stop race and anything costly become follow-ups; then merge",
-    "wait_id": "5bb8833f-2442-456d-aee1-6a1c5becacef",
-    "worker_round": 4
+    "wait_id": "c621799d-f628-436b-b1c5-9caadf6c19c4"
   },
   "stuck": {
     "close": "aca11e0d-baca-44ae-a1f2-9351afabf0de",
