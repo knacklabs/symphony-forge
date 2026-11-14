@@ -1,0 +1,15 @@
+{
+  "base": "cac22c08cfea26bf443ed6553e6cede9fdc7b0f9",
+  "branch": "fix/stacked-part-replay-skips-parent-commits",
+  "done_when": "After the parent part is squash-merged and the default branch has moved, forge close on the stacked part replays only the part's own work, does not stop on the parent's record files, and goes on to the review; a new client repo and a repo adopted on an earlier release both get this",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-14T17:43:49.242610+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "A story part that was started on its parent part's unmerged branch cannot close after the parent is squash-merged: when the default branch has moved, close replays every commit since the part's recorded start, and that includes the parent's later review commits that the part picked up, so the replay conflicts in the parent's record file under .factory even though the file is the same as on the default branch (reported from client work)"
+}
