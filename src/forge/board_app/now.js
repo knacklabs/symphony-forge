@@ -193,13 +193,13 @@ function story(map) {
 
 function rail(shown) {
   if (shown.viewer !== null) {
-    return el('section', { class: 'rail', 'aria-label': 'Live' }, el('h2', {}, 'Live'),
+    return el('section', { class: 'rail', 'aria-label': 'Live', tabindex: '0', 'data-focus': 'rail' }, el('h2', {}, 'Live'),
       shown.runs.length ? el('ul', { class: 'runs' }, shown.runs.map((run) => el('li', {},
         el('span', { class: 'story-title', title: run.title }, run.title || 'unknown'),
         el('span', { class: 'chip-meta' }, RUN[run.kind] || 'Running'))))
         : el('p', { class: 'note' }, 'Nothing runs on this laptop now.'));
   }
-  return el('section', { class: 'rail', 'aria-label': 'Stories' }, el('h2', {}, 'Stories'),
+  return el('section', { class: 'rail', 'aria-label': 'Stories', tabindex: '0', 'data-focus': 'rail' }, el('h2', {}, 'Stories'),
     shown.stories.length ? el('ul', { class: 'stories' }, shown.stories.slice(0, STORIES).map(story))
       : el('p', { class: 'note' }, 'No story is building. A story shows here once it is approved.'),
     more('stories', 'Stories', shown.stories, STORIES));

@@ -40,7 +40,25 @@ WHOLE = '''(e) => {
       && getComputedStyle(e).textOverflow !== 'ellipsis',
     hover: e.title || e.closest('[title]')?.title, covered: covered.length };
 }'''
-BOTTOM = "els => Math.max(...els.map(e => e.getBoundingClientRect().bottom))"
+# Every button's box, cut to the scrolling boxes around it, against the figures box [left, top, right, bottom].
+OVER = '''([left, top, right, bottom]) => [...document.querySelectorAll('main button')].filter((button) => {
+  let box = button.getBoundingClientRect(), [l, t, r, b] = [box.left, box.top, box.right, box.bottom];
+  for (let at = button.parentElement; at && at !== document.body; at = at.parentElement) {
+    if (getComputedStyle(at).overflowY === 'visible') continue;
+    const clip = at.getBoundingClientRect();
+    [l, t, r, b] = [Math.max(l, clip.left), Math.max(t, clip.top), Math.min(r, clip.right), Math.min(b, clip.bottom)];
+  }
+  return r > l && b > t && r > left && l < right && b > top + 0.5 && t < bottom;
+}).map((button) => button.textContent)'''
+
+def reach(page, name, where):
+    # A keyboard-only person can focus the named region (it scrolls), and sees a focus ring on it.
+    for _ in range(150):
+        page.keyboard.press('Tab')
+        if page.evaluate('document.activeElement.getAttribute("aria-label")') == name:
+            assert page.evaluate('getComputedStyle(document.activeElement).outlineStyle') != 'none', (where, name, 'no focus ring')
+            return
+    raise AssertionError((where, 'Tab never reached the region', name))
 
 with sync_playwright() as p:
     browser = p.chromium.launch(channel='chrome', headless=True, args=['--no-sandbox'])
@@ -74,10 +92,9 @@ with sync_playwright() as p:
             for region in ('In flight', 'Stories', 'Planned', 'Building', 'Review', 'Ready', 'Merged'):
                 box = page.get_by_role('region', name=region, exact=True).bounding_box()
                 assert box['y'] + box['height'] <= figures['y'] + 0.5, (where, region, 'reaches into the figures', box, figures)
-            for share in (0.1, 0.5, 0.9):
-                on_top = page.evaluate('([x, y]) => document.elementFromPoint(x, y)?.closest("button")?.textContent',
-                                       [figures['x'] + share * figures['width'], figures['y'] + 2])
-                assert on_top is None, (where, 'a card is painted over the figures', on_top)
+            # The visible part of every card (clipped by any scrolling box around it) stays out of the figures.
+            over = page.evaluate(OVER, [figures['x'], figures['y'], figures['x'] + figures['width'], figures['y'] + figures['height']])
+            assert over == [], (where, 'a card reaches into the figures', over)
             # A fix and a story part idle for six days say so on their cards; a fresh fix does not.
             expect(page.get_by_role('button', name=re.compile(expected['idle_fix'] + '.*idle 6 d'))).to_have_count(1)
             expect(page.get_by_role('button', name=re.compile(expected['idle_part'] + '.*idle 6 d'))).to_have_count(1)
@@ -95,6 +112,13 @@ with sync_playwright() as p:
             panel = page.get_by_role('tabpanel')
             expect(panel).to_contain_text('1 note')
             expect(panel).not_to_contain_text('1 notes')
+            if width == 1440 and zoom == 1:
+                page.goto(url)
+                expect(page.get_by_role('region', name='Stories')).to_be_visible()
+                reach(page, 'Stories', where)
+                page.get_by_role('button', name='Me', exact=True).click()
+                expect(page.get_by_role('region', name='Live')).to_be_visible()
+                reach(page, 'Live', where)
             page.close()
     finally:
         browser.close()
