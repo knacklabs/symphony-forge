@@ -85,6 +85,7 @@ def test_1_a_real_session_answers_slash_forge_with_or_without_the_guide_skill(re
         assert "$.command.register (forge): /forge listed" in text
 
 
+@pytest.mark.platform
 def test_2_real_lane_rows_reach_the_real_pane_and_a_late_forge_keeps_them(env, tmp_path, monkeypatch):
     if not REAL_CLAUDE:
         pytest.skip("Real Claude Code is not installed; the plugin CI job installs its pinned version.")
