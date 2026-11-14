@@ -110,11 +110,13 @@ function open(item) {
 
 function card(row, focus = `card:${row.id}`) {
   const note = row.stage === 'Can start now' ? 'can start' : row.stage === 'checks failed' ? 'checks failed' : null;
+  const idle = row.stalled && typeof row.idle_seconds === 'number' ? `idle ${hours(row.idle_seconds)}` : null;
   return el('button', { type: 'button', class: 'chip', 'data-tone': STAGE_OF[row.stage] || 'planned',
     'data-stage': row.stage, 'data-focus': focus, onclick: open(row) },
-  el('span', { class: 'chip-title' }, row.title),
+  el('span', { class: 'chip-title', title: row.title }, row.title),
   el('span', { class: 'chip-meta' }, el('span', { class: 'key' }, row.kind === 'fix' ? 'Fix' : key(row.id)),
-    note && el('span', { class: 'now-tag', 'data-note': note }, note)));
+    note && el('span', { class: 'now-tag', 'data-note': note }, note),
+    idle && el('span', { class: 'now-tag', 'data-note': 'idle' }, idle)));
 }
 
 function more(name, title, entries, shown) {
@@ -134,7 +136,7 @@ function ask(entry) {
     'data-url': run && entry.url,
     onclick: run && entry.url ? () => window.open(entry.url, '_blank', 'noopener') : open(entry) },
     el('span', { class: 'ask-head' }, el('span', { class: 'verb' }, verb), el('span', { class: 'key' }, place)),
-    el('span', { class: 'ask-title' }, entry.title));
+    el('span', { class: 'ask-title', title: entry.title }, entry.title));
 }
 
 function strip(shown) {
@@ -169,7 +171,7 @@ function stage([name, title], shown) {
   if (name === 'merged') {
     return el('section', { class: 'stage', 'aria-label': title }, head,
       rows.length ? el('ul', { class: 'done' }, rows.slice(0, MERGED).map((row) => el('li', {},
-        el('button', { type: 'button', 'data-focus': `card:${row.id}`, onclick: open(row) }, row.title))))
+        el('button', { type: 'button', title: row.title, 'data-focus': `card:${row.id}`, onclick: open(row) }, row.title))))
         : el('p', { class: 'note' }, 'None.'),
       more(name, title, rows, MERGED));
   }
@@ -181,23 +183,23 @@ function stage([name, title], shown) {
 
 function story(map) {
   return el('li', {}, el('button', { type: 'button', class: 'story', 'data-focus': `story:${map.id}`, onclick: open(map) },
-    el('span', { class: 'story-title' }, map.title),
+    el('span', { class: 'story-title', title: map.title }, map.title),
     el('span', { class: 'parts', role: 'img',
       'aria-label': `${map.parts.filter((part) => part.status === 'Merged').length} of ${map.parts.length} parts merged` }, map.parts.map((part) =>
       el('span', { 'data-status': part.status }))),
     el('span', { class: 'chip-meta' }, el('span', { class: 'key' }, map.id),
-      el('span', { class: 'owner' }, map.owner ? `@${map.owner.replace(/^@/, '')}` : 'unknown'))));
+      el('span', { class: 'owner' }, map.owner ? `@${map.owner.replace(/^@/, '')}` : 'No owner yet'))));
 }
 
 function rail(shown) {
   if (shown.viewer !== null) {
-    return el('section', { class: 'rail', 'aria-label': 'Live' }, el('h2', {}, 'Live'),
+    return el('section', { class: 'rail', 'aria-label': 'Live', tabindex: '0', 'data-focus': 'rail' }, el('h2', {}, 'Live'),
       shown.runs.length ? el('ul', { class: 'runs' }, shown.runs.map((run) => el('li', {},
-        el('span', { class: 'story-title' }, run.title || 'unknown'),
+        el('span', { class: 'story-title', title: run.title }, run.title || 'unknown'),
         el('span', { class: 'chip-meta' }, RUN[run.kind] || 'Running'))))
         : el('p', { class: 'note' }, 'Nothing runs on this laptop now.'));
   }
-  return el('section', { class: 'rail', 'aria-label': 'Stories' }, el('h2', {}, 'Stories'),
+  return el('section', { class: 'rail', 'aria-label': 'Stories', tabindex: '0', 'data-focus': 'rail' }, el('h2', {}, 'Stories'),
     shown.stories.length ? el('ul', { class: 'stories' }, shown.stories.slice(0, STORIES).map(story))
       : el('p', { class: 'note' }, 'No story is building. A story shows here once it is approved.'),
     more('stories', 'Stories', shown.stories, STORIES));

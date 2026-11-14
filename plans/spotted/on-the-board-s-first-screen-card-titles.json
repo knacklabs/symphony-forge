@@ -1,0 +1,103 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/board.py\tNot done: Each placeholder story takes its title from its plan file\ton-the-board-s-first-screen-card-titles",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 679,
+      "text": "Not done: Each placeholder story takes its title from its plan file",
+      "from": "blocking",
+      "item": "on-the-board-s-first-screen-card-titles",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board_app/item.js\tInclude all part rounds in the story drawer\ton-the-board-s-first-screen-card-titles",
+      "kind": "bug",
+      "path": "src/forge/board_app/item.js",
+      "line": 149,
+      "text": "Include all part rounds in the story drawer",
+      "from": "blocking",
+      "item": "on-the-board-s-first-screen-card-titles",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board_app/now.css\tMake the Live rail keyboard-scrollable\ton-the-board-s-first-screen-card-titles",
+      "kind": "bug",
+      "path": "src/forge/board_app/now.css",
+      "line": 293,
+      "text": "Make the Live rail keyboard-scrollable",
+      "from": "blocking",
+      "item": "on-the-board-s-first-screen-card-titles",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board_app/now.css\tNot done: On the first screen every card shows its whole title (wrapped, with the full title on hover)\ton-the-board-s-first-screen-card-titles",
+      "kind": "bug",
+      "path": "src/forge/board_app/now.css",
+      "line": 137,
+      "text": "Not done: On the first screen every card shows its whole title (wrapped, with the full title on hover)",
+      "from": "blocking",
+      "item": "on-the-board-s-first-screen-card-titles",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board_app/now.css\tWrapped cards overflow the stage at ordinary laptop widths\ton-the-board-s-first-screen-card-titles",
+      "kind": "bug",
+      "path": "src/forge/board_app/now.css",
+      "line": 137,
+      "text": "Wrapped cards overflow the stage at ordinary laptop widths",
+      "from": "blocking",
+      "item": "on-the-board-s-first-screen-card-titles",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_board_first_screen_reads_whole.py\tGate: tests/test_board_first_screen_reads_whole.py\ton-the-board-s-first-screen-card-titles",
+      "kind": "bug",
+      "path": "tests/test_board_first_screen_reads_whole.py",
+      "line": 88,
+      "text": "Gate: tests/test_board_first_screen_reads_whole.py",
+      "from": "blocking",
+      "item": "on-the-board-s-first-screen-card-titles",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_board_first_screen_reads_whole.py\tGate: tests/test_board_first_screen_reads_whole.py (card overlap)\ton-the-board-s-first-screen-card-titles",
+      "kind": "bug",
+      "path": "tests/test_board_first_screen_reads_whole.py",
+      "line": 77,
+      "text": "Gate: tests/test_board_first_screen_reads_whole.py (card overlap)",
+      "from": "blocking",
+      "item": "on-the-board-s-first-screen-card-titles",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_board_half_screen_width.py\tthe summary-above-plan check fails on the default branch too after a tab click at half-screen widths.",
+      "kind": "bug",
+      "path": "tests/test_board_half_screen_width.py",
+      "line": 53,
+      "text": "the summary-above-plan check fails on the default branch too after a tab click at half-screen widths.",
+      "from": "worker",
+      "item": "on-the-board-s-first-screen-card-titles",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/board_app/item.js\tFollow-up: Label story rounds with the part's name",
+      "kind": "edge",
+      "path": "src/forge/board_app/item.js",
+      "line": 150,
+      "text": "Follow-up: Label story rounds with the part's name",
+      "from": "review",
+      "item": "on-the-board-s-first-screen-card-titles",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

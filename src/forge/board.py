@@ -676,7 +676,7 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
             items[key] = row(key, "story", title, state, where)
     for key, parts in children.items():
         if key not in items:
-            items[key] = row(key, "story", "A story with missing state", {}, landed)
+            items[key] = row(key, "story", next((s[2:] for s in _read(top, trees.get(f"story/{key}", landed), f"plans/{key}.md", history).splitlines() if s.startswith("# ")), "A story with missing state"), {}, landed)
         items[key]["children"] = parts
         running = next((part for part in parts if part["activity"]["status"] == "running"
                         or part["gates"]["ci"]["status"] == "running"), None)

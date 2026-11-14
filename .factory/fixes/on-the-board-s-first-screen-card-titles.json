@@ -1,0 +1,168 @@
+{
+  "base": "ed79732da0ce8cc65352154d0ee5a2c776d3d510",
+  "branch": "fix/on-the-board-s-first-screen-card-titles",
+  "done_when": "On the first screen every card shows its whole title (wrapped, with the full title on hover), each stalled part shows how long it has been idle, each placeholder story takes its title from its plan file, and the Stories rail says \"No owner yet\" when no owner is set.",
+  "fix_kind": "ui",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "src/forge/board_app/now.css",
+      "file": "src/forge/board_app/now.css",
+      "gain": 4,
+      "harm": 3,
+      "line": 137,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: On the first screen every card shows its whole title (wrapped, with the full title on hover)",
+      "work": 1
+    },
+    {
+      "area": "machine_board() in src/forge/board.py",
+      "file": "src/forge/board.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 679,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Each placeholder story takes its title from its plan file",
+      "work": 2
+    },
+    {
+      "area": "src/forge/board_app/now.css",
+      "file": "src/forge/board_app/now.css",
+      "gain": 4,
+      "harm": 3,
+      "line": 137,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Wrapped cards overflow the stage at ordinary laptop widths",
+      "work": 2
+    },
+    {
+      "area": "src/forge/board_app/item.js",
+      "file": "src/forge/board_app/item.js",
+      "gain": 4,
+      "harm": 3,
+      "line": 149,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Include all part rounds in the story drawer",
+      "work": 2
+    },
+    {
+      "area": "test_1_the_first_screen_shows_whole_titles_idle_time_owners_and_rounds() in tests/test_board_first_screen_reads_whole.py",
+      "file": "tests/test_board_first_screen_reads_whole.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 88,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: tests/test_board_first_screen_reads_whole.py",
+      "work": 2
+    },
+    {
+      "area": "src/forge/board_app/item.js",
+      "file": "src/forge/board_app/item.js",
+      "gain": 2,
+      "harm": 1,
+      "line": 150,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Follow-up: Label story rounds with the part's name",
+      "work": 1
+    },
+    {
+      "area": "src/forge/board_app/now.css",
+      "file": "src/forge/board_app/now.css",
+      "gain": 4,
+      "harm": 3,
+      "line": 293,
+      "outcome": "fixed in round 5",
+      "reason": "",
+      "round": 4,
+      "security": false,
+      "title": "Make the Live rail keyboard-scrollable",
+      "work": 1
+    },
+    {
+      "area": "tests/test_board_first_screen_reads_whole.py",
+      "file": "tests/test_board_first_screen_reads_whole.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 77,
+      "outcome": "fixed in round 5",
+      "reason": "",
+      "round": 4,
+      "security": false,
+      "title": "Gate: tests/test_board_first_screen_reads_whole.py (card overlap)",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "e32c5c99cedefb557d9da356396388818043cead0c2eb3540c23da7c25bf3bd8",
+    "changed": "d929c78010f5edef97890a1691d80c4cb53498d9f21e7e999285920b9d933540",
+    "commit": "c23d5735119c989556c88b08cbb0ee82c985a961",
+    "dismissals": [],
+    "findings": [],
+    "id": "60fbef40-e934-4027-98dc-c81f76d5da13",
+    "status": "clean"
+  },
+  "round": 5,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-13T18:42:55.913038+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-14T03:39:10.692410+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-14T05:24:54.044680+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-14T05:43:36.882856+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-14T06:13:25.119775+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-14T06:20:32.629994+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-14T06:13:25.120055+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "src/forge/board_app/now.css",
+    "reason": "The owner chose one last round for the two small points; after it, any new note that is not a serious fault goes on the known-issues list",
+    "wait_id": "07c8abd7-6205-4b54-a0a9-7e8ae4826e0a",
+    "worker_round": 4
+  },
+  "stuck": {
+    "close": "e59a478c-71e8-46e6-a6e2-9a885450a99e",
+    "head": "b981fe8059ff7a88cfc6c932b9d2f438875c73a7",
+    "keys": {},
+    "round": 4
+  },
+  "why": "On the board's first screen, card titles are cut off so two cards look the same, a stalled part has no idle time on its card, 74 stories show the placeholder \"A story with missing state\" even though their plan files have real titles, and the Stories rail shows \"unknown\" where no owner is set.",
+  "worker": "claude"
+}
