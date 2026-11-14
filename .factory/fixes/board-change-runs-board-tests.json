@@ -156,7 +156,7 @@
     "id": "f6f4e6a7-99b0-4786-8373-6d029e68d553",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -178,10 +178,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": null,
-    "head": "636b914e7fbb4086790c8c1ad573b7361c2b83a4",
+    "close": "240cc3a4-a7b7-4048-934e-1f1829030e5c",
+    "head": "bcbf1c4473d3027af576b7a343049d746f86df1e",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "The pull-request check picks tests by the Python files that changed, so a change to the board's script or style files (src/forge/board_app) merges with the board's browser tests not run; the tab-in-address fix made the default branch red this way",
   "worker": "claude"
