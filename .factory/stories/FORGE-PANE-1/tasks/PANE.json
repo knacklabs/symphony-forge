@@ -137,8 +137,8 @@
       "gain": 3,
       "harm": 3,
       "line": 61,
-      "outcome": "open",
-      "reason": "",
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: The owner accepts the walkthrough note: the coordinator keeps one real terminal session open with the pane while runs change and Forge fails, at 80 and 200 columns, and merges only if the screen is right; the owner looks at the desktop app before the release",
       "round": 1,
       "security": false,
       "title": "Gate: functional check",
@@ -189,7 +189,13 @@
     "branch_diff": "2f8e6f15760c457c9ff9c4ded8e57616d383ce042b67e7e471a3033cad63fda4",
     "changed": "60e326b569ec5c441ce07433e3fa2444321c456d1dfd645b4865ddd394eb331d",
     "commit": "201cc25c0351954cf68140255d28b494edd37ee6",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: The owner accepts the walkthrough note: the coordinator keeps one real terminal session open with the pane while runs change and Forge fails, at 80 and 200 columns, and merges only if the screen is right; the owner looks at the desktop app before the release",
+        "finding": 1
+      }
+    ],
     "findings": [
       {
         "body": "Gain 3, Work 2, Harm 3\nRaise: Gate. Case: normal use - A person keeps `/forge` open while runs change and Forge later fails. The recorded live-row walkthrough uses `claude -p /forge`, and this helper starts a fresh headless process for each observation. Those observations exercise text replies, not a mounted pane refreshing in one session. The real-terminal check in `tests/test_mod_install.py:108` exercises an idle pane. A broken live refresh or retained-row display can therefore remain unexercised by the required user-facing walkthrough.",
@@ -203,10 +209,10 @@
       }
     ],
     "id": "a4ebdc96-7b5e-4032-8c1c-ae3eac450477",
-    "status": "blocked"
+    "status": "clean"
   },
   "round": 2,
-  "status": "hotspot",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-14T05:13:08.629027+00:00",
@@ -223,8 +229,12 @@
   ],
   "stop": {
     "at": "2026-11-14T06:28:18.358555+00:00",
+    "by": "owner",
+    "choice": "accept",
     "file": "tests/test_pane_session.py",
-    "wait_id": "de9fdc1a-d9f3-4632-adf8-c639795076d1"
+    "reason": "The owner accepts the walkthrough note: the coordinator keeps one real terminal session open with the pane while runs change and Forge fails, at 80 and 200 columns, and merges only if the screen is right; the owner looks at the desktop app before the release",
+    "wait_id": "de9fdc1a-d9f3-4632-adf8-c639795076d1",
+    "worker_round": 2
   },
   "stuck": {
     "close": "c9155326-6f0d-4033-8631-fccfc48605ae",
