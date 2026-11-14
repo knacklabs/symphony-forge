@@ -189,8 +189,8 @@
       "gain": null,
       "harm": null,
       "line": 66,
-      "outcome": "open",
-      "reason": "",
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: The owner chose 'one last round, then merge': the two notes left are not serious and become follow-ups. With a Forge from before the pane, a run that waits for memory can show as running, while the pane already says that this Forge is older; a decision read by its short name shows its file name",
       "round": 4,
       "security": false,
       "title": "Reject incomplete lane data from an older Forge",
@@ -241,8 +241,8 @@
       "gain": null,
       "harm": null,
       "line": 53,
-      "outcome": "lived with",
-      "reason": "",
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: The owner chose 'one last round, then merge': the two notes left are not serious and become follow-ups. With a Forge from before the pane, a run that waits for memory can show as running, while the pane already says that this Forge is older; a decision read by its short name shows its file name",
       "round": 4,
       "security": false,
       "title": "Show decision titles for active reads",
@@ -280,7 +280,18 @@
     "branch_diff": "f5ba835b52167ba982379792f53ed71cd781d441765564e5b6492183b0912c22",
     "changed": "7b434731ba891f4093c01e7d49d15e306e2dc61c0c02c8f4219bea5f1013ed10",
     "commit": "db54610ab3ee0e02dd2f22a9a70133d59de4fe5d",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: The owner chose 'one last round, then merge': the two notes left are not serious and become follow-ups. With a Forge from before the pane, a run that waits for memory can show as running, while the pane already says that this Forge is older; a decision read by its short name shows its file name",
+        "finding": 1
+      },
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: The owner chose 'one last round, then merge': the two notes left are not serious and become follow-ups. With a Forge from before the pane, a run that waits for memory can show as running, while the pane already says that this Forge is older; a decision read by its short name shows its file name",
+        "finding": 2
+      }
+    ],
     "findings": [
       {
         "body": "Gain 3, Work 1, Harm 3\nRaise: Functional. Case: normal use - A run waits for memory or CPU load while Forge 1.2.38 is on PATH. That release's `src/forge/machine.py:182-198,260-289,427-440` can report `place: 0` for an unadmitted run and does not provide `waiting`. This fallback therefore displays the waiting run as running and can count its place as occupied. The new test covers a waiter with `place: 1`, so this part of the previous finding remains.",
@@ -304,10 +315,10 @@
       }
     ],
     "id": "7997fdce-8bbb-43f5-81f1-a0a46a11fde5",
-    "status": "blocked"
+    "status": "clean"
   },
   "round": 5,
-  "status": "hotspot",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-14T05:13:08.629027+00:00",
@@ -336,8 +347,12 @@
   ],
   "stop": {
     "at": "2026-11-14T09:41:32.600006+00:00",
+    "by": "owner",
+    "choice": "accept",
     "file": "src/forge/mod/hooks/register.ts",
-    "wait_id": "c621799d-f628-436b-b1c5-9caadf6c19c4"
+    "reason": "The owner chose 'one last round, then merge': the two notes left are not serious and become follow-ups. With a Forge from before the pane, a run that waits for memory can show as running, while the pane already says that this Forge is older; a decision read by its short name shows its file name",
+    "wait_id": "c621799d-f628-436b-b1c5-9caadf6c19c4",
+    "worker_round": 5
   },
   "stuck": {
     "close": "aca11e0d-baca-44ae-a1f2-9351afabf0de",
