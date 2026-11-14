@@ -479,7 +479,7 @@ function roundsTab(row) {
       el('ol', { class: 'rounds' }, reads.map((read) => el('li', {},
         el('span', { class: 'dot waiting', 'aria-hidden': 'true' }),
         el('span', { class: 'what' }, el('strong', {}, `Read ${read.round}: `),
-          `${read.findings?.length ?? 'unknown'} notes`),
+          read.findings ? `${read.findings.length} ${read.findings.length === 1 ? 'note' : 'notes'}` : 'unknown notes'),
         el('span', { class: 'took' }, read.read_at ? day(read.read_at) : 'unknown'))))) : null,
   ].filter(Boolean);
 }
