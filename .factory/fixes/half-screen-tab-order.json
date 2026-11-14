@@ -1,0 +1,82 @@
+{
+  "base": "ed79732da0ce8cc65352154d0ee5a2c776d3d510",
+  "branch": "fix/half-screen-tab-order",
+  "done_when": "At widths from 600 to 768 pixels, a story page keeps its summary above its plan after a click on each tab, and tests/test_board_half_screen_width.py passes on the default branch",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "src/forge/board_app/item.js",
+      "file": "src/forge/board_app/item.js",
+      "gain": 4,
+      "harm": 3,
+      "line": 369,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: tests/test_board_half_screen_width.py and tests/test_board_item_tab_in_address.py",
+      "work": 2
+    },
+    {
+      "area": "src/forge/board_app/item.js",
+      "file": "src/forge/board_app/item.js",
+      "gain": 4,
+      "harm": 3,
+      "line": 369,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: tests/test_board_half_screen_width.py::test_1_the_board_reads_at_half_a_screen",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "b2dbdb829e38938761ffde2818638c026c859f7d474d0048490fa810ca2a64a4",
+    "changed": "8376eb18abccabb928e9d156835da2a8ca63cce906c4171349f8cbcb2bb09383",
+    "commit": "452e42a70046c2a0d80cd2a445f33dbf7e663926",
+    "dismissals": [],
+    "findings": [],
+    "id": "8fb65c04-b54c-40f9-9079-83be3adf36fc",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-13T19:03:20.153718+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-13T19:18:04.154982+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-14T01:58:20.665230+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-14T02:59:34.094625+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-13T19:18:04.164641+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "src/forge/board_app/item.js",
+    "reason": "The owner chose: one more round repairs the test's timing here; the pull-request check that does not run the board's browser tests for board file changes becomes a separate fix",
+    "wait_id": "ba3af92e-db58-4d83-b601-654732291dd6",
+    "worker_round": 1
+  },
+  "stuck": {
+    "close": "409cc5e8-2164-46bc-862c-8f30984997fe",
+    "head": "2c406c95697eb9189a3c4f439734e6b758961e6a",
+    "keys": {},
+    "round": 2
+  },
+  "why": "The default branch is red: after the tab-in-address fix merged on top of the half-screen fix, tests/test_board_half_screen_width.py::test_1 fails at 768 pixels: after a click on the Rounds tab of a story page, the summary and the plan are in the wrong places",
+  "worker": "claude"
+}
