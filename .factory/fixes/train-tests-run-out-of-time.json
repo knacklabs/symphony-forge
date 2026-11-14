@@ -4,7 +4,7 @@
   "done_when": "tests/test_train_land_all.py passes 20 times in a row under machine load and each of its tests ends well inside the test time limit, with the cause repaired in the train or in the test, and not by a longer limit",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "round": 1,
+  "round": 2,
   "status": "working",
   "steps": [
     {
