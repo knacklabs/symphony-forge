@@ -45,6 +45,28 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/mod/hooks/register.ts\tRecheck whether a queued run became a session subagent before stopping it\tFORGE-PANE-1/PANE",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/register.ts",
+      "line": 297,
+      "text": "Recheck whether a queued run became a session subagent before stopping it",
+      "from": "blocking",
+      "item": "FORGE-PANE-1/PANE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/mod/hooks/register.ts\tReject incomplete lane data from an older Forge\tFORGE-PANE-1/PANE",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/register.ts",
+      "line": 66,
+      "text": "Reject incomplete lane data from an older Forge",
+      "from": "blocking",
+      "item": "FORGE-PANE-1/PANE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/mod/hooks/register.ts\tResolve the repository root when a session starts in a subfolder\tFORGE-PANE-1/PANE",
       "kind": "bug",
       "path": "src/forge/mod/hooks/register.ts",
@@ -100,6 +122,28 @@
       "closed_by": "dismissed"
     },
     {
+      "key": "edge\tsrc/forge/mod/hooks/register.ts\tKeep the output pane's path after the run finishes",
+      "kind": "edge",
+      "path": "src/forge/mod/hooks/register.ts",
+      "line": 279,
+      "text": "Keep the output pane's path after the run finishes",
+      "from": "review",
+      "item": "FORGE-PANE-1/PANE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/mod/hooks/register.ts\tMake standalone test output available to the output pane",
+      "kind": "edge",
+      "path": "src/forge/mod/hooks/register.ts",
+      "line": 279,
+      "text": "Make standalone test output available to the output pane",
+      "from": "review",
+      "item": "FORGE-PANE-1/PANE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/mod/hooks/register.ts\tNot done: The pane lists every build, test and review that runs on this laptop",
       "kind": "edge",
       "path": "src/forge/mod/hooks/register.ts",
@@ -127,6 +171,39 @@
       "path": "src/forge/mod/hooks/register.ts",
       "line": 208,
       "text": "Not done: each with its round and time during a plan read",
+      "from": "review",
+      "item": "FORGE-PANE-1/PANE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/mod/hooks/register.ts\tShow decision titles for active reads",
+      "kind": "edge",
+      "path": "src/forge/mod/hooks/register.ts",
+      "line": 53,
+      "text": "Show decision titles for active reads",
+      "from": "review",
+      "item": "FORGE-PANE-1/PANE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\ttests/test_pane_session.py\tClean up the held build before skipping the session test",
+      "kind": "edge",
+      "path": "tests/test_pane_session.py",
+      "line": 119,
+      "text": "Clean up the held build before skipping the session test",
+      "from": "review",
+      "item": "FORGE-PANE-1/PANE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\ttests/test_pane_session.py\tProvide a Windows launcher for the failing Forge stub",
+      "kind": "edge",
+      "path": "tests/test_pane_session.py",
+      "line": 159,
+      "text": "Provide a Windows launcher for the failing Forge stub",
       "from": "review",
       "item": "FORGE-PANE-1/PANE",
       "status": "open",
