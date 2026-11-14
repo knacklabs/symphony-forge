@@ -4,12 +4,122 @@
   "done_when": "After the parent part is squash-merged and the default branch has moved, forge close on the stacked part replays only the part's own work, does not stop on the parent's record files, and goes on to the review; a new client repo and a repo adopted on an earlier release both get this",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [
+    {
+      "area": "_merge_default() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 5,
+      "harm": 5,
+      "line": 738,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Preserve uncommitted work when rebase fails",
+      "work": 2
+    },
+    {
+      "area": "_merge_default() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 733,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Parent work picked up by a stacked part is still treated as its own",
+      "work": 2
+    },
+    {
+      "area": "_merge_default() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 738,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Retain the proof list when collapsing a replay",
+      "work": 2
+    },
+    {
+      "area": "test_1_close_skips_parent_review_commits_the_part_picked_up() in tests/test_close_replays_after_parent_review_commits.py",
+      "file": "tests/test_close_replays_after_parent_review_commits.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 16,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: stacked-part replay proof",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "b2063b8960ca94da63c93250ff253239644451e80701eb5d5959a2e1e897a9b1",
+    "changed": "ccbb79fcaf751609db137445601543e2ccd3138f01083b2182eaa89dec7f4413",
+    "commit": "e8110c1e2bbc8c53087198e9ce5de68d2a8d9065",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 5, Work 2, Harm 5\nRaise: Data loss\nCase: normal use - A coordinator closes a stacked part after its parent lands while the part\u2019s checkout has uncommitted tracked edits.\nGit refuses to start the rebase because the checkout is dirty. The new fallback treats that failure as a commit conflict, ignores the failed abort, and hard-resets to the default branch, permanently discarding the edits. Close does not check that the worktree is clean first; the worker can explicitly leave uncommitted changes with a warning at src/forge/worker.py:432.\nAdds work: refuse non-conflict rebase failures before resetting; F 1 x H 1 = 1; 2 x C = 2",
+        "file": "src/forge/close.py",
+        "gain": 5,
+        "harm": 5,
+        "line": 738,
+        "priority": "P1",
+        "title": "Preserve uncommitted work when rebase fails",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done\nCase: normal use - Part B picks up an intermediate revision of parent A before A finishes review and is squash-merged.\nThe unmet item is: \u201cAfter the parent part is squash-merged and the default branch has moved, forge close on the stacked part replays only the part's own work, does not stop on the parent's record files, and goes on to the review; a new client repo and a repo adopted on an earlier release both get this\u201d.\nNew evidence beyond the ruling: if A changes a file after B starts, B picks up that change, and A reverts it before landing, the tree calculated at src/forge/close.py:719\u2013726 treats A\u2019s reverted edit as B\u2019s work and can reintroduce it. Alternatively, if A updates the same review-record field again before landing, src/forge/close.py:727\u2013730 can refuse on that parent record before the new fallback runs. B need not have edited either file.",
+        "file": "src/forge/close.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 733,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: Parent work picked up by a stacked part is still treated as its own",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - A user-facing stacked part has a proof list followed by the required final Functional check paragraph.\nThe fallback removes the worker\u2019s commits, but src/forge/close.py:740\u2013743 copies only the Functional check when it exists. The earlier Proof list is therefore absent from the replacement commit. src/forge/review.py:305\u2013306 reads the list from the remaining history, so the subsequent review sees it as missing and can block with Gate: proof list even though the worker supplied it.",
+        "file": "src/forge/close.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 738,
+        "priority": "P1",
+        "title": "Retain the proof list when collapsing a replay",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Test\nCase: normal use - A story part picks up its parent\u2019s later review records, then closes after the parent is squash-merged.\nThe named proof calls stacked(), which starts both items with forge fix start, as shown in tests/test_close_replays_followup_after_squash_merge.py:17\u201325 and tests/test_stacked_fixes_count_only_their_own_changes.py:36\u201339. It changes src/review_note.py rather than the parent\u2019s .factory record and does not assert that review ran. Both new and previously adopted parameters can therefore pass if the story-part-specific path or the promised review is broken. The existing story-part tests do not exercise these later parent-review commits.",
+        "file": "tests/test_close_replays_after_parent_review_commits.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 16,
+        "priority": "P1",
+        "title": "Gate: stacked-part replay proof",
+        "work": 2
+      }
+    ],
+    "id": "5ec5ba25-0b8e-4287-84f4-ba42d3c46fbc",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-14T17:43:49.242610+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-14T17:55:31.692460+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
