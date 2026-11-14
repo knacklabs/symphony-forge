@@ -110,7 +110,7 @@
     "id": "5ec5ba25-0b8e-4287-84f4-ba42d3c46fbc",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -123,10 +123,12 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "81c916e85c0155c66a66134409a102ce07eb8de6",
-    "keys": {},
-    "round": null
+    "close": "e63dbb4a-21d2-4ea3-957c-2ea818236331",
+    "head": "b5065baf470c0c734f251bc58d38cb11dbf90ad7",
+    "keys": {
+      "the open P0 preserve uncommitted work when rebase fails in src/forge/close.py": 1
+    },
+    "round": 1
   },
   "why": "A story part that was started on its parent part's unmerged branch cannot close after the parent is squash-merged: when the default branch has moved, close replays every commit since the part's recorded start, and that includes the parent's later review commits that the part picked up, so the replay conflicts in the parent's record file under .factory even though the file is the same as on the default branch (reported from client work)",
   "worker": "claude"
