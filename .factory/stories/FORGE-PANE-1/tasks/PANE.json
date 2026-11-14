@@ -20,7 +20,7 @@
       "gain": 4,
       "harm": 3,
       "line": 348,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -59,7 +59,7 @@
       "gain": 3,
       "harm": 3,
       "line": 187,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -72,7 +72,7 @@
       "gain": 3,
       "harm": 3,
       "line": 304,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -85,7 +85,7 @@
       "gain": 3,
       "harm": 3,
       "line": 61,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -98,7 +98,7 @@
       "gain": 3,
       "harm": 3,
       "line": 106,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -111,7 +111,7 @@
       "gain": 3,
       "harm": 3,
       "line": 67,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -150,7 +150,7 @@
       "gain": 4,
       "harm": 3,
       "line": 1,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -163,7 +163,7 @@
       "gain": 3,
       "harm": 3,
       "line": 149,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -176,7 +176,7 @@
       "gain": 3,
       "harm": 3,
       "line": 189,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -186,160 +186,27 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "405235f3e6541ff04cc0d0f25132d857f0cb075e505cfec6aef0b5fc4d74a248",
-    "changed": "7e36f7fd1885e63e330080d88900a515c8dac81a1435716c327c9b45585f892c",
-    "commit": "0c10710a61f7277247b994b0440d6495ed5e628f",
+    "branch_diff": "2f8e6f15760c457c9ff9c4ded8e57616d383ce042b67e7e471a3033cad63fda4",
+    "changed": "60e326b569ec5c441ce07433e3fa2444321c456d1dfd645b4865ddd394eb331d",
+    "commit": "201cc25c0351954cf68140255d28b494edd37ee6",
     "dismissals": [],
     "findings": [
       {
-        "body": "chunk 1/2:\n\nGain 4, Work 2, Harm 3\nRaise: Not done. Case: normal use - A developer runs `forge test --pytest <base>` on the main branch. `src/forge/fasttest.py:384-385` joins the test lane without an item, so `src/forge/machine.py:242-246` gives it neither a title nor an item. This parser discards that live test, and the pane can say nothing is running while it consumes a test place.",
-        "file": "src/forge/mod/hooks/register.ts",
-        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
-        "gain": 4,
-        "harm": 3,
-        "line": 51,
-        "priority": "P1",
-        "title": "Not done: The pane lists every build, test and review that runs on this laptop",
-        "work": 2
-      },
-      {
-        "body": "chunk 1/2:\n\nGain 4, Work 2, Harm 3\nRaise: Functional. Case: normal use - At a narrow terminal width, the pane uses the inline branch, which renders every run as plain text and returns without selection controls, Open output, or Stop run. The person cannot use either promised action or choose a different run. Adds work: expose the run actions in the inline pane; F 3 x H 2 = 6; 2 x C = 4.",
-        "file": "src/forge/mod/hooks/register.ts",
-        "gain": 4,
-        "harm": 3,
-        "line": 348,
-        "priority": "P1",
-        "title": "Keep run controls available in the narrow pane",
-        "work": 2
-      },
-      {
-        "body": "chunk 1/2:\n\nGain 3, Work 2, Harm 3\nRaise: Not done. Case: normal use - A run with a long title is displayed in an 80-column terminal. The inline renderer puts the title before the round and time in one `truncate-end` text element, so the required details disappear beyond the right edge. The approved example title about a plan on the board is already long enough to trigger this.",
-        "file": "src/forge/mod/hooks/register.ts",
-        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
-        "gain": 3,
-        "harm": 3,
-        "line": 349,
-        "priority": "P1",
-        "title": "Not done: each with its round and time at 80 columns",
-        "work": 2
-      },
-      {
-        "body": "chunk 1/2:\n\nGain 3, Work 2, Harm 3\nRaise: Not done. Case: normal use - A non-native `forge read` is running. Story state initially has no `round` (`src/forge/story.py:152`), and although the reader calculates its round at `src/forge/story.py:264`, its lane is created without that value at line 316. The lane therefore has a null round and this renderer omits it from every surface, despite plan reads appearing under Review.",
-        "file": "src/forge/mod/hooks/register.ts",
-        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
-        "gain": 3,
-        "harm": 3,
-        "line": 208,
-        "priority": "P1",
-        "title": "Not done: each with its round and time during a plan read",
-        "work": 2
-      },
-      {
-        "body": "chunk 1/2:\n\nGain 3, Work 2, Harm 3\nRaise: Functional. Case: normal use - A build waits five minutes for capacity and then starts. `src/forge/machine.py:548-550` changes elapsed time from the wait duration to time since first start, but this maximum preserves the five-minute waiting value. The displayed running time stays frozen at that value until the build has run for at least five minutes, rather than showing its current elapsed time.",
-        "file": "src/forge/mod/hooks/register.ts",
-        "gain": 3,
-        "harm": 3,
-        "line": 187,
-        "priority": "P1",
-        "title": "Keep the elapsed clock accurate after a queued run starts",
-        "work": 2
-      },
-      {
-        "body": "chunk 1/2:\n\nGain 3, Work 1, Harm 3\nRaise: Functional. Case: normal use - A new user opens the terminal pane with no saved snapshot while Forge is missing or too old. After the first read fails, this unconditional empty state displays `Nothing is running.` alongside `Forge did not answer.`, although Forge never established whether runs exist. The text reply and rich desktop branch avoid making that claim.",
-        "file": "src/forge/mod/hooks/register.ts",
-        "gain": 3,
-        "harm": 3,
-        "line": 304,
-        "priority": "P1",
-        "title": "Do not claim nothing is running when the first read fails",
-        "work": 1
-      },
-      {
-        "body": "chunk 1/2:\n\nGain 3, Work 1, Harm 3\nRaise: Functional. Case: normal use - Builds and reviews run together on the laptop. The fallback counts every non-waiting review and plan read as occupying an agent place, but `src/forge/machine.py:225-226` and `:280-284` make those runs free of the agent-place budget. For example, two builds and two reviews on a two-place lane produce `4 of 2`. Adds work: count only occupied places; F 2 x H 2 = 4; 2 x C = 2.",
-        "file": "src/forge/mod/hooks/register.ts",
-        "gain": 3,
-        "harm": 3,
-        "line": 61,
-        "priority": "P1",
-        "title": "Count occupied places correctly in the desktop meter",
-        "work": 1
-      },
-      {
-        "body": "chunk 1/2:\n\nGain 3, Work 2, Harm 3\nRaise: Functional. Case: normal use - Claude Code starts in `/repo/src`. This function checks only `/repo/src/.git` and keeps `/repo/src` as the main checkout when it is absent. Rows and needs-you items from `/repo` are consequently labelled `in repo` as though they came from another repository; the startup check already recognizes this subfolder layout by walking upward.",
-        "file": "src/forge/mod/hooks/register.ts",
-        "gain": 3,
-        "harm": 3,
-        "line": 106,
-        "priority": "P1",
-        "title": "Resolve the repository root when a session starts in a subfolder",
-        "work": 2
-      },
-      {
-        "body": "chunk 1/2:\n\nGain 3, Work 1, Harm 3\nRaise: Gate. Case: normal use - An agent follows the skill's instruction to read the run reference for a stopped run. The new overview says the pane reads lanes every three seconds, but the same shipped reference still describes a ten-second `forge next --json` refresh at `src/forge/templates/run-reference.md:287-302`, and its old Board tab, strip, and next-command controls at lines 336-389. Those instructions describe controls and behaviour this change removed. The generated Claude and Codex copies retain the same text.",
-        "file": "src/forge/templates/run-reference.md",
-        "gain": 3,
-        "harm": 3,
-        "line": 67,
-        "priority": "P1",
-        "title": "Standard: Replacing behaviour deletes the old path, its tests and its docs in the same change",
-        "work": 1
-      },
-      {
-        "body": "chunk 1/2:\n\nGain 3, Work 3, Harm 3\nRaise: Test. Case: normal use - A real lane payload contains an itemless test or a plan read without a round. The pane tests supply mocked, fully populated rows, while the real-session test checks only an idle response; the separate data test never renders that payload in the pane. Also, this test waits one second on a mock clock, and `tests/test_pane_speed.py` times only the Forge command, so neither checks the pane's 300 ms first-content requirement. A broken integration or slower rendering can pass the named proof.",
-        "file": "src/forge/mod/hooks/pane.test.ts",
-        "gain": 3,
-        "harm": 3,
-        "line": 129,
-        "priority": "P1",
-        "title": "Gate: real-session pane content and timing",
-        "work": 3
-      },
-      {
-        "body": "chunk 1/2:\n\nGain 3, Work 2, Harm 3\nRaise: Gate. Case: normal use - The recorded functional check exercises an idle real session and an initial failure from an old Forge, but does not record a real walkthrough with active builds, tests, reviews, or needs-you, or a failure after a successful snapshot. It therefore does not walk the live-row and retained-content behaviour covered by items 2 and 3.",
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Gate. Case: normal use - A person keeps `/forge` open while runs change and Forge later fails. The recorded live-row walkthrough uses `claude -p /forge`, and this helper starts a fresh headless process for each observation. Those observations exercise text replies, not a mounted pane refreshing in one session. The real-terminal check in `tests/test_mod_install.py:108` exercises an idle pane. A broken live refresh or retained-row display can therefore remain unexercised by the required user-facing walkthrough.",
         "file": "tests/test_pane_session.py",
         "gain": 3,
         "harm": 3,
-        "line": 61,
+        "line": 117,
         "priority": "P1",
         "title": "Gate: functional check",
         "work": 2
-      },
-      {
-        "body": "chunk 2/2:\n\nGain 4, Work 1, Harm 3\nRaise: Test. Case: normal use - running the full Linux or nightly Windows suite. Deleting this file leaves `tests/test_windows_suite_retries.py:84-90` unconditionally opening it to inspect its timeout decorator. That test now raises `FileNotFoundError`, so the full suite cannot pass. Update the timeout audit when removing its target.",
-        "file": "tests/test_board_pane_lines.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 1,
-        "priority": "P1",
-        "title": "Gate: keep the full-suite timeout audit runnable",
-        "work": 1
-      },
-      {
-        "body": "chunk 2/2:\n\nGain 3, Work 2, Harm 3\nRaise: Test. Case: normal use - a build or test is running when someone opens `/forge`. The removed call was the check that passed real `forge lanes --json` output to the packaged pane. The new session test checks only an idle reply, while the native pane tests supply invented lane data. For example, an active fix losing its `title` in the real lane output would make the pane display its item slug, yet the remaining active-fix assertions and mocked pane tests would pass. Exercise real running rows through the pane.",
-        "file": "tests/test_machine_tab_lanes.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 149,
-        "priority": "P1",
-        "title": "Gate: verify live rows through the packaged pane",
-        "work": 2
-      },
-      {
-        "body": "chunk 2/2:\n\nGain 3, Work 1, Harm 3\nRaise: Test. Case: normal use - a person types `/forge` in the installed plugin's wide terminal. This assertion now accepts the expected words anywhere in the terminal output. If the real host reports the pane unplaced, `register.ts:250-259` returns those same words as a chat reply, so this check passes even though no pane opened. The native tests mock pane placement; the installed-plugin check needs to distinguish a drawn pane from the text fallback.",
-        "file": "tests/test_mod_install.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 189,
-        "priority": "P1",
-        "title": "Gate: verify that the real terminal displays a pane",
-        "work": 1
       }
     ],
-    "id": "f2aee429-e8dd-4c88-ad2b-a32221aad079",
+    "id": "a4ebdc96-7b5e-4032-8c1c-ae3eac450477",
     "status": "blocked"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-14T05:13:08.629027+00:00",
@@ -348,8 +215,17 @@
     {
       "at": "2026-11-14T05:54:56.280200+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-11-14T06:28:18.358297+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-11-14T06:28:18.358555+00:00",
+    "file": "tests/test_pane_session.py",
+    "wait_id": "de9fdc1a-d9f3-4632-adf8-c639795076d1"
+  },
   "stuck": {
     "close": "c9155326-6f0d-4033-8631-fccfc48605ae",
     "head": "1a9f3c3d0c16a832618c785dd1fe129a1af51280",

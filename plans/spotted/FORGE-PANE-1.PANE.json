@@ -142,6 +142,17 @@
       "item": "FORGE-PANE-1/PANE",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "improve\tsrc/forge/templates/run-reference.md\tthe line about `forge next --json` still names the mod; NEXTJSON removes it.",
+      "kind": "improve",
+      "path": "src/forge/templates/run-reference.md",
+      "line": 79,
+      "text": "the line about `forge next --json` still names the mod; NEXTJSON removes it.",
+      "from": "worker",
+      "item": "FORGE-PANE-1/PANE",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
