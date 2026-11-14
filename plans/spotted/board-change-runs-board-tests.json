@@ -52,8 +52,8 @@
       "text": "Gate: prove the pull request check runs the board browser tests",
       "from": "blocking",
       "item": "board-change-runs-board-tests",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\ttests/test_fast_test_selects_tests_that_read_a_changed_folder.py\tQuote the test executable for Windows paths containing spaces\tboard-change-runs-board-tests",
