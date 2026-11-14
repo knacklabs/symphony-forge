@@ -158,7 +158,7 @@
     "status": "blocked"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-13T18:42:55.913038+00:00",
@@ -171,8 +171,12 @@
   ],
   "stop": {
     "at": "2026-11-14T03:39:10.709681+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "src/forge/board_app/now.css",
-    "wait_id": "8026aa04-8850-4e36-8a08-da1e8324d3cf"
+    "reason": "The owner chose one more round: repair the Needs you titles, the overflow near 1,100 pixels and the test; take the review-rounds extra out; the extra and the plan-on-a-branch title become follow-ups",
+    "wait_id": "8026aa04-8850-4e36-8a08-da1e8324d3cf",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
