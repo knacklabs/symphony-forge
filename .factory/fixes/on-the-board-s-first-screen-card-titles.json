@@ -106,7 +106,7 @@
     "status": "blocked"
   },
   "round": 2,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-13T18:42:55.913038+00:00",
@@ -123,8 +123,12 @@
   ],
   "stop": {
     "at": "2026-11-14T05:24:54.044987+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "tests/test_board_first_screen_reads_whole.py",
-    "wait_id": "193e5dd0-5243-4897-a9e6-84a0f025acc7"
+    "reason": "The owner chose one more round: the test must look at the Needs you card itself, and the Stories rail titles must wrap whole at every width",
+    "wait_id": "193e5dd0-5243-4897-a9e6-84a0f025acc7",
+    "worker_round": 2
   },
   "stuck": {
     "close": "61977199-9eaf-4d7a-b87c-17d2fb17fa11",
