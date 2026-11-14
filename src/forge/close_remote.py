@@ -18,6 +18,24 @@ def save_replay(top: Path, branch: str, original: str, lease: str) -> None:
     temporary.replace(path)
 
 
+def replay_baseline(top: Path, item: str, base: str, target: str, original: str) -> str:
+    """A commit with the default branch's tree that counts as already holding what is not the
+    part's own work: its start, the default branch, and every commit that a merge on the part's
+    line took from its parent's unmerged branch. Such a commit descends from the start and
+    lacks the part's own state file, which its first commit adds. Replay and merge skip all of them."""
+    def has(old: str, new: str) -> bool:
+        return repo.run("git", "merge-base", "--is-ancestor", old, new, cwd=top).returncode == 0
+
+    merged = repo.git("log", "--first-parent", "--merges", "--format=%P", f"{base}..{original}", cwd=top)
+    taken = [commit for line in merged.splitlines() for commit in line.split()[1:]
+             if has(base, commit) and not has(commit, target)
+             and repo.run("git", "cat-file", "-e", f"{commit}:{repo.state_path(item)}", cwd=top).returncode]
+    parents = dict.fromkeys((base, target, *taken))
+    return repo.git("-c", "user.name=Forge", "-c", "user.email=forge@localhost",
+                    "commit-tree", f"{target}^{{tree}}", *(arg for parent in parents for arg in ("-p", parent)),
+                    "-m", "Follow-up replay baseline", cwd=top)
+
+
 def push_replay(top: Path, branch: str, tags: list[str]) -> bool:
     path = replay_file(top, branch)
     if not path.exists():
