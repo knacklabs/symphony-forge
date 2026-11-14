@@ -4,14 +4,175 @@
   "done_when": "A pull request that changes a file under src/forge/board_app runs the board's browser tests in its check, in Forge's own repo; and the change says what a new and an existing client repo each get",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [
+    {
+      "area": "test_readers() in .forge/review-tests.py",
+      "file": ".forge/review-tests.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 85,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Regenerate the checked-in CI classifier from the changed source",
+      "work": 1
+    },
+    {
+      "area": "reads_file_relative() in src/forge/docskip.py",
+      "file": "src/forge/docskip.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 67,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Do not treat every file path's intermediate directory as a folder read",
+      "work": 2
+    },
+    {
+      "area": "reads_file_relative() in src/forge/docskip.py",
+      "file": "src/forge/docskip.py",
+      "gain": 2,
+      "harm": 3,
+      "line": 67,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: A pull request that changes a file under src/forge/board_app runs the board's browser tests in its check",
+      "work": 2
+    },
+    {
+      "area": "selected_after_change() in tests/test_fast_test_selects_tests_that_read_a_changed_folder.py",
+      "file": "tests/test_fast_test_selects_tests_that_read_a_changed_folder.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 23,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: prove the pull request check runs the board browser tests",
+      "work": 2
+    },
+    {
+      "area": "test_1_a_test_that_reads_a_folder_is_selected_when_a_file_in_it_changes() in tests/test_fast_test_selects_tests_that_read_a_changed_folder.py",
+      "file": "tests/test_fast_test_selects_tests_that_read_a_changed_folder.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 40,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: cover the folder picker in new and earlier-adopted client repos",
+      "work": 2
+    },
+    {
+      "area": "selected_after_change() in tests/test_fast_test_selects_tests_that_read_a_changed_folder.py",
+      "file": "tests/test_fast_test_selects_tests_that_read_a_changed_folder.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 23,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Quote the test executable for Windows paths containing spaces",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "885b6633599beafadc7ffb5594664dd95a3ff3448d82135856d591438f3177e2",
+    "changed": "feed55bb3a6d9b057d971230d5768cce04ad9c563d377011c4e6574b3d230bc3",
+    "commit": "87d02d65cfc87edcfe5c58e8d5d52bd089a42bc8",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 1, Harm 3\nRaise: Functional\nCase: normal use - running Forge's release consistency test or syncing its checkout.\nThe checked-in classifier still has the old folder-matching rule and an outdated `test_readers` implementation. Sync embeds the current `src/forge/docskip.py` into this file, as shown at `src/forge/prcheck.py:431`. Consequently, `tests/test_release_version.py:48` reports `.forge/review-tests.py` as stale and fails. Regenerate it using the current checkout.",
+        "file": ".forge/review-tests.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 85,
+        "priority": "P1",
+        "title": "Regenerate the checked-in CI classifier from the changed source",
+        "work": 1
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - separate tests read different files in the same directory.\nThe AST walker also visits intermediate expressions, so a test that reads `docs/unrelated.md` now matches a change to `docs/guide.md` through its intermediate `... / 'docs'` expression. This selects the deliberately failing unrelated test in `tests/test_file_relative_docs_run_tests.py:53`; the existing `forge test --change` assertion at line 80 then fails. It also expands client test runs for unrelated files.",
+        "file": "src/forge/docskip.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 67,
+        "priority": "P1",
+        "title": "Do not treat every file path's intermediate directory as a folder read",
+        "work": 2
+      },
+      {
+        "body": "Gain 2, Work 2, Harm 3\nRaise: Not done\nCase: rare - a board asset is edited in a subdirectory, or a Python file is added directly under `board_app`.\nThe full Done-when item is: A pull request that changes a file under src/forge/board_app runs the board's browser tests in its check, in Forge's own repo; and the change says what a new and an existing client repo each get.\nThe new match only recognizes files whose immediate parent is the referenced folder. For example, a change to `src/forge/board_app/item-controls/view.js` does not match the `board_app` reference in `tests/test_board_server.py:338`. Separately, `src/forge/fasttest.py:449` excludes Python files from this folder-reader rule. Neither case selects the board browser tests solely because the file is under `board_app`, as the item requires.",
+        "file": "src/forge/docskip.py",
+        "gain": 2,
+        "harm": 3,
+        "line": 67,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: A pull request that changes a file under src/forge/board_app runs the board's browser tests in its check",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - a pull request changes a board script or stylesheet.\nThe named proof replaces the repo's test command with `--collect-only`, invokes `forge test --pytest` directly, and checks only the printed names of two test files. It does not establish that the pull request's `forge test --change` check executes the browser tests. It would still pass if the check excluded platform tests or if other board browser files, such as `tests/test_board_shell.py`, stopped being selected.",
+        "file": "tests/test_fast_test_selects_tests_that_read_a_changed_folder.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 23,
+        "priority": "P1",
+        "title": "Gate: prove the pull request check runs the board browser tests",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - initializing a client repo or upgrading one adopted on an earlier release.\nThe named proof uses a bare temporary Git repo and writes a new `forge.toml` itself; it never initializes a client or upgrades an earlier-adopted client. The new and adopted cases in `tests/test_board_server.py` exercise asset serving, not picker selection. The promised picker behavior and lack of a required settings change therefore have no test at either client boundary.",
+        "file": "tests/test_fast_test_selects_tests_that_read_a_changed_folder.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 40,
+        "priority": "P1",
+        "title": "Gate: cover the folder picker in new and earlier-adopted client repos",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 1, Harm 3\nRaise: Functional\nCase: normal use - running the suite on Windows from a checkout whose virtual-environment path contains spaces.\n`shlex.join` surrounds that executable path with POSIX single quotes. The picker runs the configured command through the Windows shell (`src/forge/fasttest.py:825`), where those quotes do not protect spaces, so both new platform tests fail before pytest starts.",
+        "file": "tests/test_fast_test_selects_tests_that_read_a_changed_folder.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 23,
+        "priority": "P1",
+        "title": "Quote the test executable for Windows paths containing spaces",
+        "work": 1
+      }
+    ],
+    "id": "f6f4e6a7-99b0-4786-8373-6d029e68d553",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-14T01:55:09.164456+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-14T02:12:29.019717+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-11-14T02:12:29.033943+00:00",
+    "file": ".forge/review-tests.py",
+    "wait_id": "0a579e71-a0b8-4cf8-a78e-036993dbd749"
+  },
   "stuck": {
     "close": null,
     "head": "636b914e7fbb4086790c8c1ad573b7361c2b83a4",

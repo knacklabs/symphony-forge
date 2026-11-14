@@ -1,0 +1,70 @@
+{
+  "items": [
+    {
+      "key": "bug\t.forge/review-tests.py\tRegenerate the checked-in CI classifier from the changed source\tboard-change-runs-board-tests",
+      "kind": "bug",
+      "path": ".forge/review-tests.py",
+      "line": 85,
+      "text": "Regenerate the checked-in CI classifier from the changed source",
+      "from": "blocking",
+      "item": "board-change-runs-board-tests",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/docskip.py\tDo not treat every file path's intermediate directory as a folder read\tboard-change-runs-board-tests",
+      "kind": "bug",
+      "path": "src/forge/docskip.py",
+      "line": 67,
+      "text": "Do not treat every file path's intermediate directory as a folder read",
+      "from": "blocking",
+      "item": "board-change-runs-board-tests",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/docskip.py\tNot done: A pull request that changes a file under src/forge/board_app runs the board's browser tests in its check\tboard-change-runs-board-tests",
+      "kind": "bug",
+      "path": "src/forge/docskip.py",
+      "line": 67,
+      "text": "Not done: A pull request that changes a file under src/forge/board_app runs the board's browser tests in its check",
+      "from": "blocking",
+      "item": "board-change-runs-board-tests",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_fast_test_selects_tests_that_read_a_changed_folder.py\tGate: cover the folder picker in new and earlier-adopted client repos\tboard-change-runs-board-tests",
+      "kind": "bug",
+      "path": "tests/test_fast_test_selects_tests_that_read_a_changed_folder.py",
+      "line": 40,
+      "text": "Gate: cover the folder picker in new and earlier-adopted client repos",
+      "from": "blocking",
+      "item": "board-change-runs-board-tests",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_fast_test_selects_tests_that_read_a_changed_folder.py\tGate: prove the pull request check runs the board browser tests\tboard-change-runs-board-tests",
+      "kind": "bug",
+      "path": "tests/test_fast_test_selects_tests_that_read_a_changed_folder.py",
+      "line": 23,
+      "text": "Gate: prove the pull request check runs the board browser tests",
+      "from": "blocking",
+      "item": "board-change-runs-board-tests",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_fast_test_selects_tests_that_read_a_changed_folder.py\tQuote the test executable for Windows paths containing spaces\tboard-change-runs-board-tests",
+      "kind": "bug",
+      "path": "tests/test_fast_test_selects_tests_that_read_a_changed_folder.py",
+      "line": 23,
+      "text": "Quote the test executable for Windows paths containing spaces",
+      "from": "blocking",
+      "item": "board-change-runs-board-tests",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
