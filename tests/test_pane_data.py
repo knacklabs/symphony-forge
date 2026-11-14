@@ -233,9 +233,12 @@ def test_3_lanes_say_who_needs_the_person_and_what_runs_now(env, tmp_path, monke
     helper.write_text(helper.read_text("utf-8").replace(
         '.touch()\n', '.touch()\nprint("Reviewing the change", flush=True)\n', 1), "utf-8")
     item, folder = env.start_fix({"README.md": "Reviewed while the pane looks\n"})
+    # finish() opened a go file for every marker an earlier review left: close both, or this review would not hold.
     (repo.bin / "started-review").unlink(missing_ok=True)
+    (repo.bin / "go-review").unlink(missing_ok=True)
     reviewer, _ = start(folder, tmp_path / "review", repo, "close", item)
     _until(lambda: (repo.bin / "started-review").exists(), "the review")
+    _until(lambda: any(row["kind"] == "review" for row in lanes(env)["agents"]["entries"]), "the review's row")
     review = next(row for row in lanes(env)["agents"]["entries"] if row["kind"] == "review")
     _until(lambda: "Reviewing the change" in Path(review["output_path"]).read_text("utf-8"), "its first line")
     (repo.bin / "go-review").touch()
