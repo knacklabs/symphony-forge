@@ -64,7 +64,8 @@ def reads_file_relative(source: str, paths: set[str]) -> bool:
         if isinstance(node, (ast.BinOp, ast.Call)) and rooted(node):
             parts = components(node)
             suffix = posixpath.normpath("/" + posixpath.join(*parts)).lstrip("/") if parts else ""
-            if suffix and any(path == suffix or path.endswith("/" + suffix) for path in paths):
+            if suffix and any(path == suffix or path.endswith("/" + suffix) or ("/" + posixpath.dirname(path)).endswith("/" + suffix)
+                              for path in paths):  # a folder read covers the files directly in it
                 return True
     return False
 
