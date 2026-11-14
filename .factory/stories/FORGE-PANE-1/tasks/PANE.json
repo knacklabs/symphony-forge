@@ -336,7 +336,7 @@
     "status": "blocked"
   },
   "round": 4,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-14T05:13:08.629027+00:00",
@@ -361,8 +361,12 @@
   ],
   "stop": {
     "at": "2026-11-14T09:21:02.712760+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "src/forge/mod/hooks/register.ts",
-    "wait_id": "5bb8833f-2442-456d-aee1-6a1c5becacef"
+    "reason": "The owner chose one last round: repair the older-Forge case and the cheap small points; the rare Stop race and anything costly become follow-ups; then merge",
+    "wait_id": "5bb8833f-2442-456d-aee1-6a1c5becacef",
+    "worker_round": 4
   },
   "stuck": {
     "close": "ed0f7126-f126-45ca-8cc0-9d314937ac02",
