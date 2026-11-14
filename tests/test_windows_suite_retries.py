@@ -84,7 +84,6 @@ def test_1_only_the_windows_full_suite_retries_once_and_keeps_second_failures(tm
 def test_2_known_slow_tests_get_more_time_only_on_windows():
     targets = [
         ("test_queue_land_all.py", "test_3_a_failed_check_naming_none_of_the_files_runs_again_once"),
-        ("test_board_pane_lines.py", "test_9_the_pane_opens_with_the_boards_first_screen_lines"),
     ]
     for file, name in targets:
         tree = ast.parse((ROOT / "tests" / file).read_text(encoding="utf-8"))

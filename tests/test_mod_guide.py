@@ -41,7 +41,7 @@ def section(guide, heading):
 
 def test_1_new_and_previously_adopted_repos_receive_the_mod_guide_sections(guide):
     template = (ROOT / "src/forge/templates/skill.md").read_text(encoding="utf-8")
-    for heading in ("Events", "Save decisions and ideas", "Planning a story"):
+    for heading in ("The Forge pane", "Save decisions and ideas", "Planning a story"):
         expected = section(template, heading)
         assert expected, heading
         for shipped in guide:

@@ -1,0 +1,340 @@
+{
+  "branch": "task/FORGE-PANE-1-PANE",
+  "known": [
+    {
+      "area": "src/forge/mod/hooks/register.ts",
+      "file": "src/forge/mod/hooks/register.ts",
+      "gain": 4,
+      "harm": 3,
+      "line": 51,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: The pane lists every build, test and review that runs on this laptop",
+      "work": 2
+    },
+    {
+      "area": "src/forge/mod/hooks/register.ts",
+      "file": "src/forge/mod/hooks/register.ts",
+      "gain": 4,
+      "harm": 3,
+      "line": 348,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Keep run controls available in the narrow pane",
+      "work": 2
+    },
+    {
+      "area": "src/forge/mod/hooks/register.ts",
+      "file": "src/forge/mod/hooks/register.ts",
+      "gain": 3,
+      "harm": 3,
+      "line": 349,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: each with its round and time at 80 columns",
+      "work": 2
+    },
+    {
+      "area": "src/forge/mod/hooks/register.ts",
+      "file": "src/forge/mod/hooks/register.ts",
+      "gain": 3,
+      "harm": 3,
+      "line": 208,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: each with its round and time during a plan read",
+      "work": 2
+    },
+    {
+      "area": "src/forge/mod/hooks/register.ts",
+      "file": "src/forge/mod/hooks/register.ts",
+      "gain": 3,
+      "harm": 3,
+      "line": 187,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Keep the elapsed clock accurate after a queued run starts",
+      "work": 2
+    },
+    {
+      "area": "src/forge/mod/hooks/register.ts",
+      "file": "src/forge/mod/hooks/register.ts",
+      "gain": 3,
+      "harm": 3,
+      "line": 304,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Do not claim nothing is running when the first read fails",
+      "work": 1
+    },
+    {
+      "area": "src/forge/mod/hooks/register.ts",
+      "file": "src/forge/mod/hooks/register.ts",
+      "gain": 3,
+      "harm": 3,
+      "line": 61,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Count occupied places correctly in the desktop meter",
+      "work": 1
+    },
+    {
+      "area": "src/forge/mod/hooks/register.ts",
+      "file": "src/forge/mod/hooks/register.ts",
+      "gain": 3,
+      "harm": 3,
+      "line": 106,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Resolve the repository root when a session starts in a subfolder",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/run-reference.md",
+      "file": "src/forge/templates/run-reference.md",
+      "gain": 3,
+      "harm": 3,
+      "line": 67,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Standard: Replacing behaviour deletes the old path, its tests and its docs in the same change",
+      "work": 1
+    },
+    {
+      "area": "src/forge/mod/hooks/pane.test.ts",
+      "file": "src/forge/mod/hooks/pane.test.ts",
+      "gain": 3,
+      "harm": 3,
+      "line": 129,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: real-session pane content and timing",
+      "work": 3
+    },
+    {
+      "area": "test_1_a_real_session_answers_slash_forge_with_or_without_the_guide_skill() in tests/test_pane_session.py",
+      "file": "tests/test_pane_session.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 61,
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: The owner accepts the walkthrough note: the coordinator keeps one real terminal session open with the pane while runs change and Forge fails, at 80 and 200 columns, and merges only if the screen is right; the owner looks at the desktop app before the release",
+      "round": 1,
+      "security": false,
+      "title": "Gate: functional check",
+      "work": 2
+    },
+    {
+      "area": "tests/test_board_pane_lines.py",
+      "file": "tests/test_board_pane_lines.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 1,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: keep the full-suite timeout audit runnable",
+      "work": 1
+    },
+    {
+      "area": "test_6_machine_tab_lanes_report_release_rows_and_keep_other_release_admission() in tests/test_machine_tab_lanes.py",
+      "file": "tests/test_machine_tab_lanes.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 149,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: verify live rows through the packaged pane",
+      "work": 2
+    },
+    {
+      "area": "_reload_and_open_installed_mod() in tests/test_mod_install.py",
+      "file": "tests/test_mod_install.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 189,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: verify that the real terminal displays a pane",
+      "work": 1
+    },
+    {
+      "area": "src/forge/mod/hooks/register.ts",
+      "file": "src/forge/mod/hooks/register.ts",
+      "gain": null,
+      "harm": null,
+      "line": 66,
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: The owner chose 'one last round, then merge': the two notes left are not serious and become follow-ups. With a Forge from before the pane, a run that waits for memory can show as running, while the pane already says that this Forge is older; a decision read by its short name shows its file name",
+      "round": 4,
+      "security": false,
+      "title": "Reject incomplete lane data from an older Forge",
+      "work": null
+    },
+    {
+      "area": "src/forge/mod/hooks/register.ts",
+      "file": "src/forge/mod/hooks/register.ts",
+      "gain": null,
+      "harm": null,
+      "line": 297,
+      "outcome": "fixed in round 5",
+      "reason": "",
+      "round": 4,
+      "security": false,
+      "title": "Recheck whether a queued run became a session subagent before stopping it",
+      "work": null
+    },
+    {
+      "area": "src/forge/mod/hooks/register.ts",
+      "file": "src/forge/mod/hooks/register.ts",
+      "gain": null,
+      "harm": null,
+      "line": 279,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 4,
+      "security": false,
+      "title": "Keep the output pane's path after the run finishes",
+      "work": null
+    },
+    {
+      "area": "src/forge/mod/hooks/register.ts",
+      "file": "src/forge/mod/hooks/register.ts",
+      "gain": null,
+      "harm": null,
+      "line": 279,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 4,
+      "security": false,
+      "title": "Make standalone test output available to the output pane",
+      "work": null
+    },
+    {
+      "area": "src/forge/mod/hooks/register.ts",
+      "file": "src/forge/mod/hooks/register.ts",
+      "gain": null,
+      "harm": null,
+      "line": 53,
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: The owner chose 'one last round, then merge': the two notes left are not serious and become follow-ups. With a Forge from before the pane, a run that waits for memory can show as running, while the pane already says that this Forge is older; a decision read by its short name shows its file name",
+      "round": 4,
+      "security": false,
+      "title": "Show decision titles for active reads",
+      "work": null
+    },
+    {
+      "area": "test_2_real_lane_rows_reach_the_real_pane_and_a_late_forge_keeps_them.pane() in tests/test_pane_session.py",
+      "file": "tests/test_pane_session.py",
+      "gain": null,
+      "harm": null,
+      "line": 119,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 4,
+      "security": false,
+      "title": "Clean up the held build before skipping the session test",
+      "work": null
+    },
+    {
+      "area": "test_2_real_lane_rows_reach_the_real_pane_and_a_late_forge_keeps_them() in tests/test_pane_session.py",
+      "file": "tests/test_pane_session.py",
+      "gain": null,
+      "harm": null,
+      "line": 159,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 4,
+      "security": false,
+      "title": "Provide a Windows launcher for the failing Forge stub",
+      "work": null
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "c4aa6ddeb98ba1183164eeec0f2581f8b926a14f27bf6ccb150e421744d6d97e",
+    "changed": "5cdc294c97904fab306019f21eff1f6db780a1cead938c395a517d81fc3f3bd4",
+    "commit": "017b7753c5f6b38f8ce47f26ad48647c53624e8c",
+    "dismissals": [],
+    "findings": [],
+    "id": "f40789a7-8875-4ca5-8ceb-625c4e2ab35a",
+    "status": "clean"
+  },
+  "round": 7,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-14T05:13:08.629027+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-14T05:54:56.280200+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-14T06:28:18.358297+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-14T07:12:05.422121+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-14T09:21:02.712423+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-14T09:41:32.599706+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-14T10:01:44.687596+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-14T10:58:55.609625+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-14T09:41:32.600006+00:00",
+    "by": "owner",
+    "choice": "accept",
+    "file": "src/forge/mod/hooks/register.ts",
+    "reason": "The owner chose 'one last round, then merge': the two notes left are not serious and become follow-ups. With a Forge from before the pane, a run that waits for memory can show as running, while the pane already says that this Forge is older; a decision read by its short name shows its file name",
+    "wait_id": "c621799d-f628-436b-b1c5-9caadf6c19c4",
+    "worker_round": 5
+  },
+  "stuck": {
+    "close": "cca7cd70-a9aa-4f57-a553-55ad43b27614",
+    "head": "7d48b333846d9812e35fe8c0f392ac90a338044b",
+    "keys": {},
+    "round": 6
+  },
+  "worker": "claude"
+}

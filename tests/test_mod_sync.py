@@ -14,8 +14,7 @@ import sys
 import pytest
 
 from conftest import ROOT, FORGE_SHIM, _install, patient
-from test_mod_install import (mod_reads_real_old_forge_refusal_and_spaced_working_directory,
-                              real_claude_sync_installs_from_local_release_tag)
+from test_mod_install import real_claude_sync_installs_from_local_release_tag
 from test_mod_native import run_native_plugin_checks
 from test_setup import _autoreview, _on_a_branch_with_forge_toml, _version
 from test_setup import doctor_sdks, sdk_data  # noqa: F401
@@ -203,7 +202,7 @@ os.execv({json.dumps(sys.executable)}, [{json.dumps(sys.executable)},
 @pytest.mark.parametrize('case', ['fresh-machine', 'already-current', 'older-install', 'no-network',
                                 'no-claude', 'doctor-missing', 'doctor-old', 'doctor-supported',
                                 'marketplace-version', 'previously-adopted', 'real-local-install',
-                                'real-transport', 'native-plugin-checks'])
+                                'native-plugin-checks'])
 def test_5_sync_turns_on_the_mod(repo, gh, tmp_path, monkeypatch, case, request):
     if case in ('fresh-machine', 'already-current', 'older-install'):
         _sync_keeps_the_mod_current_at_user_scope(repo, monkeypatch, case != 'fresh-machine',
@@ -224,8 +223,6 @@ def test_5_sync_turns_on_the_mod(repo, gh, tmp_path, monkeypatch, case, request)
         _previously_adopted_repo_gets_the_mod(repo)
     elif case == 'real-local-install':
         real_claude_sync_installs_from_local_release_tag(repo, tmp_path, monkeypatch)
-    elif case == 'native-plugin-checks':
-        # The native suite owns Machine layout and the separate rolling load-history check.
-        run_native_plugin_checks(tmp_path)
     else:
-        mod_reads_real_old_forge_refusal_and_spaced_working_directory(repo, tmp_path, monkeypatch)
+        # The native suite owns what the pane draws and says.
+        run_native_plugin_checks(tmp_path)

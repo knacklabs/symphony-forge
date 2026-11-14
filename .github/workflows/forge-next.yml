@@ -62,13 +62,16 @@ jobs:
         if: steps.parent-tests.outputs.reuse != 'true'
         with:
           node-version: '24'
-      - run: npm install --global @anthropic-ai/claude-code@2.1.291
+      - run: npm install --global @anthropic-ai/claude-code@2.1.322
         if: steps.parent-tests.outputs.reuse != 'true'
       - uses: astral-sh/setup-uv@v6
         if: steps.parent-tests.outputs.reuse != 'true'
       - name: Check and reload the plugin through the repository test entry
         if: steps.parent-tests.outputs.reuse != 'true'
         run: uv run --frozen --python 3.11 pytest tests/test_mod_sync.py -q -k 'native-plugin-checks or real-local-install' -o faulthandler_timeout=120 --timeout=150 --timeout-method=thread
+      - name: Check that a real Claude Code session answers /forge
+        if: steps.parent-tests.outputs.reuse != 'true'
+        run: uv run --frozen --python 3.11 pytest tests/test_pane_session.py -q -o faulthandler_timeout=120 --timeout=150 --timeout-method=thread
 
   tests:
     needs: selection

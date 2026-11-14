@@ -1,0 +1,5 @@
+{
+  "name": "pane-skill-probe",
+  "version": "0.0.1",
+  "description": "Test only: loads the forge skill the way the model does, to prove /forge's pane leaves the skill alone."
+}

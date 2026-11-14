@@ -1,6 +1,20 @@
 {
   "name": "forge",
   "version": "1.2.38",
-  "author": {"name": "Knack Labs"},
-  "description": "Forge's board and machine views inside Claude Code."
+  "author": {
+    "name": "Knack Labs"
+  },
+  "description": "Forge's live pane in Claude Code: what runs now on this laptop.",
+  "userConfig": {
+    "pane": {
+      "type": "string",
+      "title": "When the Forge pane opens",
+      "description": "typed: the pane opens when you type /forge. always: it also opens by itself when a session starts in a Forge repo, in a wide window.",
+      "options": [
+        "typed",
+        "always"
+      ],
+      "default": "typed"
+    }
+  }
 }

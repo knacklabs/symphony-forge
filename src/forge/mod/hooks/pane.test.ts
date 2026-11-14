@@ -1,377 +1,499 @@
 import { expect, mock, test } from 'claude-code/testing'
-import type { CoreEngineInterface, On, RenderElement, RenderInput } from 'claude-code'
-import { addItemAction, addTab, registerPane } from './pane.ts'
-import { createCore } from './forge.ts'
+import type { On, RenderSurface } from 'claude-code'
 
-const pane = { title: 'Forge', isFocused: true, bodyColumns: 80, placement: 'inline', scroll: { offset: 0, bodyRows: 40 }, view: {} } as const
-const band = { hasSurvey: false, isWorking: false, maxRows: 3, bodyColumns: 120, scroll: { offset: 0, bodyRows: 3 }, view: {} }
-const stages = [
-  { name: 'Build', status: 'pass', seconds: 4 }, { name: 'Tests', status: 'fail', seconds: 5 },
-  { name: 'Review', status: 'running', started_at: '1970-01-01T00:00:00Z' },
-  { name: 'CI', status: null }, { name: 'Merge', status: 'skipped' },
-]
-const row = {
-  id: 'guide', kind: 'fix', title: 'Polish the guide', stage: 'building', round: 2, total_seconds: 9, stages,
-  activity: { status: 'running', action: 'review' },
-  worker: { kind: 'build', tool: 'codex', model: 'sol', effort: 'medium', round: 2, started_at: '1970-01-01T00:00:00Z', step: 'editing the guide' },
-  tests: { done: 3, total: 9 },
-  pr: { number: 7, checks: 'fail', failures: [{ job: 'Windows', cause: 'timeout' }, { job: 'Linux', cause: 'failed' }] },
-  findings: { count: 2, titles: ['Clarify setup', 'Explain upgrade'], items: [{ priority: 'P1', title: 'Clarify setup' }, { priority: 'P2', title: 'Explain upgrade' }], dismissed: 1 },
-  gates: { plan_read: { status: 'passed' }, review: { status: 'blocked', count: 2 }, ci: { status: 'red' } },
-}
-const story = { id: 'story', kind: 'story', title: 'A better board', stage: 'planning', activity: { status: 'idle' }, idle_since: '1969-12-30T00:00:00Z', stalled: true, children: [row], stages: stages.map(s => ({ name: s.name, status: null })) }
-const board = { version: '1.2.5', repo_root: '/repo', items: [story] }
-const following = { ...board, next: { command: 'forge close guide', line: 'Close the guide.' } }
-const lanes = { version: '1.2.5', agents: { size: 4, entries: [{ started_at: '1970-01-01T00:00:00Z', item: 'other', repo_root: '/other' }, { started_at: null }] }, tests: { size: 1, entries: [{ started_at: '1970-01-01T00:00:00Z', item: 'guide', repo_root: '/repo' }, { started_at: null }] } }
+// The shipped hooks run for real. Only what lies outside Claude Code is played here: Forge's
+// answer, the files, the clock, and the pane's seat.
+const placed = [{ id: 'forge', title: 'Forge', isShown: true, isFocused: true, isPlaced: true }]
+const REFUSED = new Error('forge: $.command.register: "/forge" refused: it is the user\'s /forge')
+const WORDS = /unknown|undefined|null|NaN|\b0 ?s\b|[0-9a-f]{8}-[0-9a-f]{4}|[0-9a-f]{12,}|\p{Extended_Pictographic}/u
+const props = (placement: 'dock' | 'inline') => ({ title: 'Forge', isFocused: true, bodyColumns: 80, placement, scroll: { offset: 0, bodyRows: 40 }, view: {} }) as const
+const pane = (surface: 'terminal' | 'desktop' | 'vscode' | 'mobile', placement: 'dock' | 'inline' = 'dock', requestId = 'forge') =>
+  ({ plugin: 'forge', surface, component: 'Pane', requestId, props: props(placement) }) as const
 
-// The shipped registration and mounted surfaces decide behavior; only the host
-// process, clock and prompt boundaries are fake.
-for (const surface of ['terminal', 'desktop'] as const) {
-  test(`1, 7: ${surface} pane and text show live details and retain good rows on failure`, async ($, on) => {
-    const clock = mock.clock(on)
-    let mode = 'good'
-    // Review started 59 s before the clock, so short advances cross minutes.
-    const early = { ...story, children: [{ ...row, stages: stages.map(s => s.status === 'running' ? { ...s, started_at: '1969-12-31T23:59:01Z' } : s) }] }
-    const opens: unknown[] = []
-    mock.store(on)
-    mock.env(on, {})
-    on('session.start', () => ({ cwd: '/repo' }))
-    on('session.id', () => ({ value: 'pane' }))
-    on('session.cwd', () => ({ value: '/repo' }))
-    on('session.repo', () => ({ value: { root: '/repo', remote: null, internal: false, name: null } }))
-    on('session.surfaces', () => ({ value: [surface] }))
-    on('session.end', (_$, e) => ({ sessionId: e.sessionId }))
-    on('command.register', () => ({ value: { command: 'forge' } }))
-    on('ui.open', (_$, e) => { opens.push(e); return { value: undefined } })
-    on('process.run', (_$, e) => {
-      if (mode === 'bad' && e.argv[1] === 'next') return { value: { exitCode: 0, stdout: '{"items":[{}]}', stderr: '' } }
-      const value = e.argv[1] === 'lanes' ? lanes : { ...following, items: mode === 'empty' ? [] : mode === 'missing' ? [{ title: 'Lost state' }] : mode === 'queued' ? [{ ...row, worker: null, activity: { status: 'queued', lane: 'agents', place: 2 } }] : [early] }
-      return { value: { exitCode: 0, stdout: JSON.stringify(value), stderr: '' } }
-    })
-    await $.session.start({ cwd: '/repo', surface, isInteractive: true })
-    expect(opens[0]).toEqual({ id: 'forge', title: 'Forge' })
-    const ui = await $.ui.mount({ plugin: 'forge', surface, component: 'Pane', requestId: 'forge', props: pane })
-    let drawn = JSON.stringify(await ui.drawn())
-    for (const shown of ['MOVING', 'Polish the guide', '  story', 'Review running · round 2 · Codex sol medium · 59s', '2 open findings · 1 dismissed']) expect(drawn).toContain(shown)
-    for (const hidden of ['unknown', 'P1', 'idle since', 'Review ● 0s']) expect(drawn).not.toContain(hidden)
-    await clock.advance(5000)
-    drawn = JSON.stringify(await ui.drawn())
-    expect(drawn).toContain('Review running · round 2 · Codex sol medium · 1m 4s')
-    const reply = await $.command.run({ command: 'forge', args: '', origin: { kind: 'sdk' }, presentation: { isFullscreen: false, columns: 80 } })
-    expect(reply.text).toBe('MOVING\n  Polish the guide  story\n    Review running · round 2 · Codex sol medium · 1m 4s\n\n    Build ✓ 4s → Tests ✗ 5s → Review ● 1m 4s → CI → Merge –\n    Total 1m 13s\n\n    Plan read  passed\n    Review     blocked\n    CI         failed: Windows, Linux (PR #7)\n    2 open findings · 1 dismissed')
-    expect(opens.at(-1)).toEqual({ id: 'forge', title: 'Forge', focus: true })
-    for (const [reason, time, step] of [['clear', '1m 34s', 30000], ['resume', '2m 34s', 60000]] as const) {
-      await $.session.end({ reason, sessionId: 'previous', resume: { id: 'previous' } })
-      await clock.advance(step)
-      expect(JSON.stringify(await ui.drawn())).toContain(time)
-    }
-    mode = 'bad'; await clock.advance(10000)
-    drawn = JSON.stringify(await ui.drawn())
-    expect(drawn).toContain('Polish the guide')
-    expect(drawn).toContain("Couldn't refresh: Malformed forge next output")
-    mode = 'empty'; await clock.advance(10000)
-    expect(JSON.stringify(await ui.drawn())).toContain('Nothing in progress.')
-    mode = 'missing'; await clock.advance(10000)
-    expect(JSON.stringify(await ui.drawn())).toContain('Show waiting or not started (1)')
-    mode = 'queued'; await clock.advance(10000)
-    expect(JSON.stringify(await ui.drawn())).not.toContain('Polish the guide')
-    await ui.press({ key: 'waiting' })
-    drawn = JSON.stringify(await ui.drawn())
-    expect(drawn).toContain('Hide waiting or not started (1)')
-    expect(drawn).toContain('Polish the guide')
-  })
+const run = (o: Record<string, unknown>) => ({
+  id: 'run', kind: 'work', repo_root: '/repo', repo_name: 'repo', item: 'item', title: 'Title', model: 'claude-sonnet-5-5',
+  joined_at: '2026-11-14T05:00:00+00:00', round: 1, waiting: false, step: null, elapsed: 60, native: false,
+  output_path: null, progress: null, ...o,
+})
+const lanes = (agents: object[], tests: object[] = [], more: object = {}) => ({
+  version: '1.2.38', needs_you: [], busy: false, agents: { size: 4, entries: agents }, tests: { size: 4, used: tests.length, entries: tests }, ...more,
+})
+const answer = (value: unknown) => ({ value: { exitCode: 0, stdout: JSON.stringify(value), stderr: '' } })
+const inOrder = (drawn: string, words: string[]) => words.reduce((from, word) => {
+  const at = drawn.indexOf(word, from)
+  expect(at, `${word} after position ${from}`).toBeGreaterThanOrEqual(0)
+  return at + word.length
+}, 0)
 
-  test(`2: ${surface} strip rechecks the exact command and handles stale, busy and failed actions`, async ($, on) => {
-    mock.clock(on)
-    let command: string | null = following.next.command
-    let failRead = false, failSubmit = false
-    const submitted: string[] = [], toasts: string[] = []
-    const origins: unknown[] = []
-    mock.store(on)
-    mock.env(on, {})
-    on('session.start', () => ({ cwd: '/repo' }))
-    on('session.id', () => ({ value: 'pane' }))
-    on('session.cwd', () => ({ value: '/repo' }))
-    on('session.repo', () => ({ value: { root: '/repo', remote: null, internal: false, name: null } }))
-    on('session.surfaces', () => ({ value: [surface] }))
-    on('command.register', () => ({ value: { command: 'forge' } }))
-    on('ui.open', () => ({ value: undefined }))
-    on('ui.toast', (_$, e) => { toasts.push(e.text); return { value: undefined } })
-    on('prompt.submit', (_$, e) => { if (failSubmit) return { drop: 'Prompt unavailable' }; submitted.push(e.text); origins.push(e.origin); return { text: e.text, origin: e.origin } })
-    on('process.run', (_$, e) => {
-      if (failRead && e.argv[1] === 'next') return { value: { exitCode: 1, stdout: '', stderr: 'offline' } }
-      const value = e.argv[1] === 'next' ? { ...following, next: { ...following.next, command } } : lanes
-      return { value: { exitCode: 0, stdout: JSON.stringify(value), stderr: '' } }
-    })
-    await $.session.start({ cwd: '/repo', surface, isInteractive: true })
-    const ui = await $.ui.mount({ plugin: 'forge', surface, component: 'AbovePrompt', props: band })
-    expect(JSON.stringify(await ui.drawn())).toContain('Agents 1/4 (1 waiting)')
-    expect((await ui.find({ key: 'next-step' }))?.props.hotkey).toBe('1')
-    await ui.press({ key: 'next-step' }); expect(submitted).toEqual(['forge close guide'])
-    // asUser changes attribution; the SDK still attests the originating plugin.
-    expect(origins[0]).toMatchObject({ kind: 'plugin', name: 'forge', asUser: true })
-    command = 'forge work guide'
-    await ui.press({ key: 'next-step' }); expect(submitted.length).toBe(1)
-    expect(JSON.stringify(await ui.drawn())).toContain('forge work guide')
-    failRead = true; await ui.press({ key: 'next-step' })
-    expect(toasts.at(-1)).toContain("Couldn't check the next step: offline")
-    expect(submitted.length).toBe(1)
-    failRead = false; failSubmit = true; await ui.press({ key: 'next-step' })
-    expect(toasts.at(-1)).toContain('Prompt unavailable')
-    await ui.redraw({ ...band, isWorking: true })
-    expect(await ui.find({ key: 'next-step' })).toBeUndefined()
-    command = null
-    await ui.redraw(band)
-    failSubmit = false; await ui.press({ key: 'next-step' })
-    expect(await ui.find({ key: 'next-step' })).toBeUndefined()
-    expect(submitted.length).toBe(1)
-  })
-
-  test(`2: ${surface} strip fits two items, overflow and narrow or older sessions`, async ($, on) => {
-    const clock = mock.clock(on)
-    let extra = false, old = false, long = false, inactive = false
-    const submissions: string[] = []
-    let nextCommand: string | null = following.next.command
-    mock.store(on)
-    mock.env(on, {})
-    on('session.start', () => ({ cwd: '/repo' }))
-    on('session.id', () => ({ value: 'pane' }))
-    on('session.cwd', () => ({ value: '/repo' }))
-    on('session.repo', () => ({ value: { root: '/repo', remote: null, internal: false, name: null } }))
-    on('session.surfaces', () => ({ value: [surface] }))
-    on('command.register', () => ({ value: { command: 'forge' } }))
-    on('ui.open', () => ({ value: undefined }))
-    on('prompt.submit', (_$, e) => { submissions.push(e.text); return { text: e.text } })
-    on('process.run', (_$, e) => {
-      if (old && e.argv[1] === 'lanes') return { value: { exitCode: 2, stdout: '', stderr: "invalid choice: 'lanes'" } }
-      const items = inactive ? [] : [long ? { ...row, title: 'A very long guide title that must never displace worker details or elapsed time', total_seconds: 360009, stages: stages.map(s => s.status === 'running' || s.status == null || s.status === 'skipped' ? s : { ...s, seconds: 360000 }) } : row, { ...row, id: 'another', title: 'Another fix' }, ...(extra ? [{ ...row, id: 'third', title: 'Third fix' }] : [])]
-      const value = e.argv[1] === 'next' ? { ...following, items, next: { ...following.next, command: nextCommand } } : lanes
-      return { value: { exitCode: 0, stdout: JSON.stringify(value), stderr: '' } }
-    })
-    await $.session.start({ cwd: '/repo', surface, isInteractive: true })
-    const ui = await $.ui.mount({ plugin: 'forge', surface, component: 'AbovePrompt', props: band })
-    let drawn = JSON.stringify(await ui.drawn())
-    const itemRows = await ui.findAll({ type: 'Box' })
-    expect(itemRows.some(b => b.text.includes('Another fix · Review running · round 2 · Codex sol medium'))).toBe(true)
-    expect(itemRows.some(b => b.text.includes('Polish the guide · Review running · round 2 · Codex sol medium'))).toBe(true)
-    expect(drawn).toContain('Tests 1/1 (1 waiting)')
-    expect(drawn).toContain('Polish the guide · ')
-    expect(drawn).toContain('editing the guide')
-    expect(drawn).toContain('Review running · round 2 · Codex sol medium')
-    expect((await ui.findAll({ type: 'Text' })).some(t => t.text.includes('Build ✓ 4s → Tests ✗ 5s'))).toBe(false)
-    // A mounted description does not paint clipping. Check the allocated cells:
-    // the status block must fit without shrinking; only the title may truncate.
-    for (const bodyColumns of [80, 100]) {
-      await ui.redraw({ ...band, bodyColumns })
-      const blocks = (await ui.findAll({ type: 'Box' })).filter(b => b.props.flexShrink === 0 && b.text.includes('Review running · round 2 · Codex sol medium'))
-      const titles = (await ui.findAll({ type: 'Box' })).filter(b => b.props.minWidth === 0 && b.text.endsWith(' · ') && b.props.width === bodyColumns - blocks[0]!.text.length)
-      expect(blocks.length).toBe(2)
-      expect(titles.length).toBe(2)
-      expect(Number(titles[0]?.props.width) + Number(blocks[0]?.props.width)).toBe(bodyColumns)
-      for (const block of blocks) {
-        expect(Number(block.props.width)).toBe(block.text.length)
-        expect(block.text.length < bodyColumns).toBe(true)
-        for (const fact of ['Review running', 'round 2', 'Codex sol medium']) expect(block.text).toContain(fact)
-      }
-    }
-    await ui.redraw(band)
-    extra = true; await clock.advance(10000)
-    drawn = JSON.stringify(await ui.drawn())
-    expect(drawn).toContain('+2 more · /forge for all')
-    expect(drawn).not.toContain('Third fix · ')
-    await ui.redraw({ ...band, bodyColumns: 79 })
-    drawn = JSON.stringify(await ui.drawn())
-    expect(drawn).toContain('2 running, 1+1 waiting')
-    expect(drawn).toContain('Review ● 10s (19s)')
-    expect(drawn).toContain('editing the guide')
-    expect(drawn).not.toContain('+2 more')
-    old = true; await clock.advance(10000)
-    await ui.redraw(band)
-    drawn = JSON.stringify(await ui.drawn())
-    expect(drawn).not.toContain('Agents ')
-    expect((await ui.find({ key: 'next-step' }))?.props.hotkey).toBe('1')
-    await ui.press({ key: 'next-step' })
-    expect(submissions.at(-1)).toBe('forge close guide')
-    await ui.redraw({ ...band, bodyColumns: 79 })
-    expect(JSON.stringify(await ui.drawn())).not.toContain('Polish the guide · Review running')
-    expect((await ui.find({ key: 'next-step' }))?.props.hotkey).toBe('1')
-    await ui.press({ key: 'next-step' })
-    expect(submissions).toEqual(['forge close guide', 'forge close guide'])
-    old = false; extra = false; long = true; await clock.advance(10000)
-    await ui.redraw({ ...band, bodyColumns: 80 })
-    const protectedTime = (await ui.findAll({ type: 'Box' })).find(b => b.props.flexShrink === 0 && b.text.includes('Review running · round 2 · Codex sol medium · 30s'))!
-    expect(Number(protectedTime.props.width)).toBe(protectedTime.text.length)
-    expect(protectedTime.text.length < 80).toBe(true)
-    for (const fact of ['Review running', 'round 2', 'Codex sol medium', '30s']) expect(protectedTime.text).toContain(fact)
-    // Compact rows need the same cell-budget proof, including the no-button path.
-    for (const state of ['ready', 'long command', 'busy', 'null']) {
-      if (state === 'long command') {
-        nextCommand = 'forge work a-very-long-item-name-that-cannot-fit-beside-the-current-stage'
-        await ui.press({ key: 'next-step' })
-      }
-      if (state === 'null') {
-        await ui.redraw({ ...band, bodyColumns: 79 })
-        nextCommand = null
-        await ui.press({ key: 'next-step' })
-      }
-      for (const bodyColumns of [79, 120]) {
-        await ui.redraw({ ...band, bodyColumns, maxRows: bodyColumns < 80 ? band.maxRows : 1, isWorking: state === 'busy' })
-        const boxes = await ui.findAll({ type: 'Box' })
-        const timing = boxes.find(b => b.props.flexShrink === 0 && b.text === ' · Review ● 30s (4d) · ')!
-        expect(timing).toBeDefined()
-        expect(timing.props.width).toBe(timing.text.length)
-        const cells = boxes.filter(b => typeof b.props.width === 'number' && b.props.width !== bodyColumns)
-        expect(cells.reduce((sum, b) => sum + Number(b.props.width), 0)).toBe(bodyColumns)
-        const title = boxes.find(b => b.props.minWidth === 0)!
-        expect(Number(title.props.width) < title.text.length).toBe(true)
-        expect((await ui.find({ key: 'next-step' })) !== undefined).toBe(state === 'ready' || state === 'long command')
-      }
-    }
-    nextCommand = following.next.command; await clock.advance(10000)
-    // Counts are now reserved before the test title, rather than hidden after it.
-    for (const state of ['ready', 'busy', 'null']) {
-      if (state === 'null') {
-        await ui.redraw(band)
-        nextCommand = null
-        await ui.press({ key: 'next-step' })
-      }
-      for (const bodyColumns of [80, 120]) {
-        await ui.redraw({ ...band, bodyColumns, isWorking: state === 'busy' })
-        const boxes = await ui.findAll({ type: 'Box' })
-        const counts = boxes.find(b => b.props.flexShrink === 0 && b.text.includes('Agents 1/4 (1 waiting)') && b.text.includes('Tests 1/1 (1 waiting)'))!
-        expect(counts).toBeDefined()
-        expect(counts.props.width).toBe(counts.text.length)
-        const tree = await ui.drawn()
-        if (tree.type !== 'Box') throw new Error('Expected the strip container')
-        const row = tree.children?.[0]
-        if (typeof row !== 'object' || row === null || row.type !== 'Box') throw new Error('Expected the summary row')
-        expect((row.children ?? []).reduce((sum, b) => sum + (typeof b === 'object' && b !== null && b.type === 'Box' ? Number(b.props?.width) : NaN), 0)).toBe(bodyColumns)
-      }
-    }
-    inactive = true
-    nextCommand = 'forge work a-very-long-item-name-that-cannot-fit-beside-the-current-stage'
-    await clock.advance(10000)
-    await ui.redraw({ ...band, bodyColumns: 79 })
-    const boxes = await ui.findAll({ type: 'Box' })
-    const counts = boxes.find(b => b.props.flexShrink === 0 && b.text === '2 running, 1+1 waiting · Tests 1/1 · ')!
-    expect(counts).toBeDefined()
-    expect(counts.props.width).toBe(counts.text.length)
-    expect(boxes.filter(b => typeof b.props.width === 'number' && b.props.width !== 79).reduce((sum, b) => sum + Number(b.props.width), 0)).toBe(79)
-    expect(await ui.find({ text: /Review ●/ })).toBeUndefined()
-  })
-}
-
-test('1: story action seam and tab host draw through the pane', async () => {
-  const { data } = createCore()
-  // A story with parts is shown through its parts; this one stands alone.
-  data.board = { ...board, items: [{ ...story, children: [] }] }
-  type Draw = (host: CoreEngineInterface, e: RenderInput<'Pane'>) => Promise<RenderElement>
-  let draw: Draw | undefined
-  // Test-kit inline plugins cannot import sibling modules. Route this instance
-  // through the public registrar in this realm so the real extension shares it.
-  const capture = ((name: string, matcher: unknown, hook?: unknown) => {
-    if (name === 'ui.render' && (matcher as { component?: string }).component === 'Pane') draw = hook as Draw
-    return { catch() {} }
-  }) as On
-  addItemAction('story', (item, e) => ({ type: 'Text', props: {}, children: [`Action for ${item.title} on ${e.surface}`] }))
-  addTab('Machine', () => 'Machine lane')
-  registerPane(capture, data)
-  for (const surface of ['terminal', 'desktop'] as const) {
-    const presses = new Map<string, () => void>()
-    const element = (type: string) => (props: Record<string, unknown>) => {
-      if (typeof props.onPress === 'function') presses.set(String(props.key), props.onPress as () => void)
-      const { children, onPress: _press, ...values } = props
-      return { type, props: values, children: Array.isArray(children) ? children : children == null ? [] : [children] }
-    }
-    const table = Object.fromEntries(['Box', 'Text', 'Button', 'Markdown', 'Svg'].map(type => [type, element(type)]))
-    const host = { ui: { resolve: () => table, invalidate() {} }, clock: { now: async () => 0 } } as unknown as CoreEngineInterface
-    const event: RenderInput<'Pane'> = { surface, component: 'Pane', requestId: 'forge', props: pane }
-    const first = await draw!(host, event)
-    presses.get('tab-Board')!()
-    expect(JSON.stringify(await draw!(host, event))).toContain('Action for A better board')
-    expect(JSON.stringify(first)).toContain('tab-Machine')
-    presses.get('tab-Machine')!()
-    expect(JSON.stringify(await draw!(host, event))).toContain('Machine lane')
+// Hooks that stand for the engine and the machine under the pane. Each answer reads `world`,
+// so a test changes what the machine says without registering a hook twice.
+function machine(on: On, surface: RenderSurface = 'terminal') {
+  const clock = mock.clock(on)
+  const world = {
+    lanes: (): unknown => lanes([]), run: undefined as undefined | ((argv: readonly string[]) => unknown), placed: true, root: '/repo', version: '2.1.322',
+    files: {} as Record<string, string>, folders: [] as string[], refuse: false, openFails: false, narrow: false, stored: undefined as unknown, answers: 'Keep running',
+    calls: [] as string[][], opened: [] as unknown[], asked: [] as string[], clock,
   }
+  mock.env(on, {})
+  on('session.start', (_$, e) => ({ cwd: e.cwd }))
+  on('session.root', () => ({ value: world.root }))
+  on('session.version', () => ({ value: { version: world.version } }))
+  on('session.surfaces', () => ({ value: [surface] }))
+  on('command.register', () => { if (world.refuse) throw REFUSED; return { value: { command: 'forge' } } })
+  on('ui.open', (_$, e) => {
+    world.opened.push(e)
+    if (world.openFails) throw new Error('no pane')
+    return { value: world.narrow ? { isPlaced: false, reason: 'narrow' } : { isPlaced: true } }
+  })
+  on('ui.panes', () => ({ value: world.placed ? placed : [{ ...placed[0]!, isPlaced: false }] }))
+  // The fake files are keyed as POSIX paths. A path reaches a hook as the engine spells it, and on Windows
+  // that can be another spelling (backslashes, a drive letter), so the key drops both.
+  // A system that does not know the drive letter joins the path to the plugin's folder: drop that too.
+  const key = (path: string) => {
+    const posix = path.replace(/\\/g, '/'), drive = /^(?:.*\/)?[A-Za-z]:(?=\/|$)/
+    // A drive is not case-sensitive, so a path on one is compared in lower case.
+    return drive.test(posix) ? posix.replace(drive, '').toLowerCase() : posix
+  }
+  on('fs.exists', (_$, e) => ({ value: key(e.path) in world.files }))
+  on('fs.stat', (_$, e) => ({ value: { kind: world.folders.includes(key(e.path)) ? 'dir' : 'file', size: (world.files[key(e.path)] ?? '').length, mtimeMs: 0, isLink: false } }))
+  on('fs.read', (_$, e) => ({ value: world.files[key(e.path)] ?? '' }))
+  on('store.get', () => ({ value: world.stored }))
+  on('store.set', () => ({ value: undefined }))
+  on('tool.call', { tool: 'AskUserQuestion' }, (_$, e) => {
+    const question = String((e as { questions?: { question: string }[] }).questions?.[0]?.question)
+    world.asked.push(question)
+    return { result: { questions: [], answers: { [question]: world.answers } } }
+  })
+  on('process.run', (_$, e) => {
+    world.calls.push([...e.argv])
+    const out = world.run ? world.run(e.argv) : answer(world.lanes())
+    return out instanceof Promise ? out : (out as never)
+  })
+  return world
+}
+
+const forgeCommand = { command: 'forge', args: '', origin: { kind: 'sdk' }, presentation: { isFullscreen: false, columns: 80 } } as const
+const started = (surface: RenderSurface, interactive = true) => ({ cwd: '/repo', surface, isInteractive: interactive }) as const
+
+for (const guide of [true, false]) {
+  test(`1: /forge opens the pane ${guide ? 'with' : 'without'} the guide skill`, async ($, on) => {
+    const world = machine(on)
+    world.refuse = guide
+    let guideAnswers = 0
+    on('command.run', () => { guideAnswers++; return { text: 'the guide' } })
+    await $.session.start(started('terminal'))
+    for (let n = 0; n < 3; n++) expect((await $.command.run(forgeCommand)).text).toBe('Opened the Forge pane.')
+    expect(world.opened).toEqual(Array(3).fill({ id: 'forge', title: 'Forge', focus: true }))
+    expect(guideAnswers).toBe(0)
+  })
+}
+
+test('1: when the pane cannot open, the guide answers', async ($, on) => {
+  const world = machine(on)
+  world.openFails = true
+  on('command.run', () => ({ text: 'the guide' }))
+  await $.session.start(started('terminal'))
+  expect((await $.command.run(forgeCommand)).text).toBe('the guide')
 })
 
-// A board like `forge board --json` gives: team facts and one row for each group.
-const plain = { stage: 'building', state: 'in progress', activity: { status: 'idle' }, stalled: false, needs_person: false, findings: { count: 0, titles: [] }, children: [] }
-const grouped = {
-  version: '1.2.5', repo_root: '/repo',
-  team: { counts: { parts: { 'in progress': 2 }, fixes: { 'in progress': 1 } }, needs_you: null, blocked: null, go_live: { status: 'about', earliest: '1970-01-20' } },
-  items: [
-    { ...plain, id: 'ASK', kind: 'story', title: 'Ask story', children: [{ ...plain, id: 'ASK/PERIOD', kind: 'task', title: 'Ask asks for the period', needs_person: true, findings: { count: 3, titles: [] }, next: { command: null, line: 'Close stopped.', step: 'forge close ASK/PERIOD --resolve <narrow|split>' } }] },
-    { ...plain, id: 'late', kind: 'fix', title: 'Budget answers', stalled: true, idle_since: '1969-12-24T00:00:00Z', next: { command: 'forge work late', line: 'Build it.', step: 'forge work late' } },
-    { ...plain, id: 'counts', kind: 'fix', title: 'Board counts', activity: { status: 'running', action: 'review' }, stages: [{ name: 'Review', status: 'running', started_at: '1969-12-31T23:48:00Z' }], next: { command: null, line: 'Review is running.', step: 'wait for the review, then forge close counts' } },
-    { ...plain, id: 'trust', kind: 'fix', title: 'Codex trust fix', stage: 'ready', state: 'ready to merge', pr: { number: 9, checks: 'pass' }, next: { command: null, line: 'Ready.', step: 'merge its pull request, then forge next' } },
-    { ...plain, id: 'later', kind: 'fix', title: 'Later fix', state: 'to do' },
-  ],
-}
-// Boards whose only active work is ready to merge, or only in planning, still get a summary line.
-const quiet = { stories: { planning: 0 }, parts: { 'ready to merge': 0, 'in progress': 0 }, fixes: { 'ready to merge': 0, 'in progress': 0 } }
-const readyOnly = {
-  ...grouped, team: { ...grouped.team, counts: { ...quiet, parts: { 'ready to merge': 1, 'in progress': 0 }, fixes: { 'ready to merge': 1, 'in progress': 0 } }, go_live: null },
-  items: [grouped.items[3], { ...grouped.items[3], id: 'polish', title: 'Polish the guide' }],
-}
-const planningOnly = {
-  ...grouped, team: { ...grouped.team, counts: { ...quiet, stories: { planning: 3 } }, go_live: null },
-  items: ['A', 'B', 'C'].map(id => ({ ...plain, id, kind: 'story', title: `Plan ${id}`, stage: 'planning', state: 'planning' })),
-}
-
-function host(on: On, surface: 'terminal' | 'desktop', run: (argv: readonly string[]) => unknown) {
-  mock.store(on)
-  mock.env(on, {})
-  on('session.start', () => ({ cwd: '/repo' }))
-  on('session.id', () => ({ value: 'pane' }))
-  on('session.cwd', () => ({ value: '/repo' }))
-  on('session.repo', () => ({ value: { root: '/repo', remote: null, internal: false, name: null } }))
-  on('session.surfaces', () => ({ value: [surface] }))
-  on('command.register', () => ({ value: { command: 'forge' } }))
-  on('ui.open', () => ({ value: undefined }))
-  on('process.run', async (_$, e) => run(e.argv) as never)
+for (const [name, option, interactive, seated] of [
+  ['always opens a placed pane and reads at once', 'always', true, true],
+  ['always waits for a seat before it reads', 'always', true, false],
+  ['typed opens nothing at start', 'typed', true, true],
+  ['a session with no screen opens nothing', 'always', false, true],
+] as const) {
+  test(`1: the option ${name}`, { options: { pane: option } }, async ($, on) => {
+    const world = machine(on)
+    const { clock } = world
+    world.root = '/repo/src'
+    world.files = { '/repo/.git': '', '/repo/forge.toml': '' }
+    world.narrow = !seated
+    world.placed = false
+    await $.session.start(started('terminal', interactive))
+    const opens = option === 'always' && interactive
+    expect(world.opened).toEqual(opens ? [{ id: 'forge', title: 'Forge' }] : [])
+    await clock.advance(0)
+    expect(world.calls.length).toBe(opens && seated ? 1 : 0)
+    // The seat comes later: the first tick that finds the pane placed reads.
+    world.placed = true
+    await clock.advance(1000)
+    expect(world.calls.length).toBe(opens && seated ? 1 : 1)
+  })
 }
 
 for (const surface of ['terminal', 'desktop'] as const) {
-  test(`${surface} Board tab draws the summary and all four groups with their steps`, async ($, on) => {
-    mock.clock(on)
-    let shown: object = grouped
-    host(on, surface, argv => ({ value: { exitCode: 0, stderr: '', stdout: JSON.stringify(argv[1] === 'next' ? { ...following, ...shown } : lanes) } }))
-    await $.session.start({ cwd: '/repo', surface, isInteractive: true })
-    const ui = await $.ui.mount({ plugin: 'forge', surface, component: 'Pane', requestId: 'forge', props: pane })
-    const drawn = JSON.stringify(await ui.drawn())
-    const order = ['3 in progress · 1 needs you · 1 stuck · go-live about Jan 20', 'NEEDS YOU', 'Ask asks for the period', 'Review found 3 problems. The builder is stuck.',
-      'Next: decide: forge close ASK/PERIOD --resolve <narrow|split>', 'STUCK (no progress 8 days)', 'Budget answers', 'Building · last activity Dec 24', 'Next: forge work late',
-      'MOVING', 'Board counts', 'Review running · 12m', 'Next: wait for the review, then forge close counts', 'READY TO MERGE', 'Codex trust fix', 'checks green', 'Next: merge its pull request, then forge next',
-      'Show waiting or not started (1)']
-    const at = order.map(text => drawn.indexOf(text))
-    expect(at.every(n => n >= 0)).toBe(true)
-    expect([...at].sort((a, b) => a - b)).toEqual(at)
-    expect(drawn).toContain('  ASK')
-    expect(drawn).not.toContain('Later fix')
-    // A live plan read keeps the story in planning, but its running row draws under MOVING.
-    const reading = { ...planningOnly, items: [{ ...planningOnly.items[0], activity: { status: 'running', action: 'read' } }] }
-    // A newly approved story is building with every part still to do.
-    const approved = { ...planningOnly, items: [{ ...plain, id: 'NEW', kind: 'story', title: 'New story', children: ['ONE', 'TWO'].map(id => ({ ...plain, id: `NEW/${id}`, kind: 'task', title: `Part ${id}`, state: 'to do' })) }] }
-    for (const [board, line] of [[readyOnly, '2 ready to merge'], [planningOnly, '3 waiting'], [reading, '1 moving'], [approved, '2 waiting']] as const) {
-      shown = board
-      await $.session.start({ cwd: '/repo', surface, isInteractive: true })
-      expect(JSON.stringify(await ui.drawn())).toContain(line)
+  test(`2: ${surface}: the pane keeps its last rows when Forge does not answer, and never shows Loading after content`, async ($, on) => {
+    const world = machine(on, surface)
+    const { clock } = world
+    let mode = 'rows', elapsed = 178
+    world.run = () => {
+      if (mode === 'exit') return { value: { exitCode: 1, stdout: '', stderr: 'boom' } }
+      if (mode === 'throw') throw new Error('gone')
+      return answer(lanes(mode === 'empty' ? [] : [run({ title: 'Polish the guide', elapsed })]))
     }
+    await $.session.start(started(surface))
+    const ui = await $.ui.mount(pane(surface))
+    expect(JSON.stringify(await ui.drawn())).toContain('Loading Forge…')
+    await clock.advance(1000)
+    let drawn = JSON.stringify(await ui.drawn())
+    expect(drawn).toContain('Polish the guide')
+    expect(drawn).not.toContain('Loading')
+    // A time that was shown never goes back, even when a later answer is a little behind.
+    await clock.advance(2000)
+    elapsed = 177
+    await clock.advance(1000)
+    drawn = JSON.stringify(await ui.drawn())
+    expect(drawn).toContain('3 min')
+    expect(drawn).not.toContain('2 min')
+    mode = 'exit'
+    await clock.advance(3000)
+    drawn = JSON.stringify(await ui.drawn())
+    expect(drawn).toContain('Polish the guide')
+    expect(drawn).toContain('Last update 3 s ago. Forge did not answer.')
+    mode = 'empty'
+    await clock.advance(3000)
+    mode = 'throw'
+    await clock.advance(3000)
+    drawn = JSON.stringify(await ui.drawn())
+    expect(drawn).toContain('Nothing is running.')
+    expect(drawn).toContain('Last update 3 s ago. Forge did not answer.')
+    expect(drawn).not.toContain('Loading')
   })
 
-  test(`${surface} Board tab shows the error when the very first refresh times out`, async ($, on) => {
-    const clock = mock.clock(on)
-    host(on, surface, async () => { await clock.sleep(60001); return { deny: 'Refresh took over 60 seconds' } })
-    const starting = $.session.start({ cwd: '/repo', surface, isInteractive: true })
-    const ui = await $.ui.mount({ plugin: 'forge', surface, component: 'Pane', requestId: 'forge', props: pane })
-    expect(JSON.stringify(await ui.drawn())).toContain('Loading Forge…')
-    await clock.advance(60001)
-    await clock.settle()
-    await starting
+  test(`2: ${surface}: with no answer yet, a failure says only that Forge did not answer`, async ($, on) => {
+    const world = machine(on, surface)
+    const { clock } = world
+    world.run = () => { throw new Error('gone') }
+    await $.session.start(started(surface))
+    const ui = await $.ui.mount(pane(surface))
+    await clock.advance(1000)
     const drawn = JSON.stringify(await ui.drawn())
-    expect(drawn).toContain("Couldn't refresh:")
-    expect(drawn).toContain('Refresh took over 60 seconds')
-    expect(drawn).not.toContain('Loading Forge…')
+    expect(drawn).toContain('Forge did not answer.')
+    expect(drawn).not.toContain('Loading')
+    expect(drawn).not.toContain('Last update')
+    // Forge never said whether anything runs, so the pane does not say that nothing does.
+    expect(drawn).not.toContain('Nothing is running.')
   })
 }
+
+test('2: a stored answer draws before Forge answers, and a closed pane reads nothing', async ($, on) => {
+  const world = machine(on)
+  const { clock } = world
+  world.placed = false
+  world.stored = { at: 0, lanes: { runs: [{ id: 'a', group: 'Building', title: 'Kept row', repoRoot: '/repo', repoName: 'repo', round: 2, model: null, step: null, seconds: 5, progress: null, waiting: false, lent: false, native: false, joined: 1, outputPath: null }], needs: [], busy: false, agents: { used: 1, size: 4 }, tests: { used: 0, size: 4 } } }
+  world.run = () => new Promise(() => {})
+  await $.session.start(started('terminal'))
+  await clock.advance(30000)
+  expect(world.calls.length).toBe(0)
+  const ui = await $.ui.mount(pane('terminal'))
+  const drawn = JSON.stringify(await ui.drawn())
+  expect(drawn).toContain('Kept row')
+  expect(drawn).not.toContain('Loading')
+})
+
+const rows = lanes([
+  run({ id: 'a', title: 'One combined check', round: 3, step: 'editing close.py', elapsed: 1260, joined_at: '2026-11-14T05:00:00+00:00' }),
+  run({ id: 'c', title: 'Show late orders', repo_root: '/shop', repo_name: 'shop-app', round: 1, elapsed: 3840, joined_at: '2026-11-14T05:01:00+00:00' }),
+  run({ id: 'b', kind: 'review', title: 'The board looks live', round: 1, waiting: true, elapsed: 120, joined_at: '2026-11-14T05:02:00+00:00' }),
+  run({ id: 'd', title: 'Lent build', round: 2, suspended_by: 't', elapsed: 300, joined_at: '2026-11-14T05:03:00+00:00' }),
+], [
+  run({ id: 't', kind: 'test', title: 'One combined check', round: 2, elapsed: 180, progress: { done: 212, total: 640 }, joined_at: '2026-11-14T05:04:00+00:00' }),
+], { busy: true, needs_you: [{ title: 'Needs a choice', repo_name: 'repo', repo_root: '/repo' }] })
+
+const SAID = [
+  'Needs a choice needs you.', 'One combined check', 'Round 3 · 21 min · editing close.py', 'Show late orders in shop-app', 'Round 1 · 1 h 4 min', 'Lent build',
+  'Round 2 · Waiting for its tests · 5 min', 'One combined check', 'Round 2 · 212 of 640 tests · 3 min', 'The board looks live',
+  'Round 1 · Waiting for a free place · 2 min', 'The machine is busy. New runs wait.',
+]
+
+test('3: the text reply, the terminal and the desktop say the same things in the same order', async ($, on) => {
+  const world = machine(on)
+  const { clock } = world
+  world.lanes = () => rows
+  world.narrow = true
+  await $.session.start(started('terminal'))
+  const text = (await $.command.run(forgeCommand)).text as string
+  expect(text).toBe([
+    'Needs a choice needs you.', '', 'BUILDING', '  One combined check', '  Round 3 · 21 min · editing close.py', '  Show late orders in shop-app', '  Round 1 · 1 h 4 min',
+    '  Lent build', '  Round 2 · Waiting for its tests · 5 min', '', 'TESTS', '  One combined check', '  Round 2 · 212 of 640 tests · 3 min', '',
+    'REVIEW', '  The board looks live', '  Round 1 · Waiting for a free place · 2 min', '', 'The machine is busy. New runs wait.',
+  ].join('\n'))
+  expect(text).not.toMatch(WORDS)
+  for (const surface of ['terminal', 'desktop', 'vscode', 'mobile'] as const) {
+    for (const placement of ['dock', 'inline'] as const) {
+      const ui = await $.ui.mount(pane(surface, placement))
+      const drawn = JSON.stringify(await ui.drawn())
+      if (surface === 'desktop') {
+        // The desktop splits a row into a title, a time and tags; the words and their order by row stay.
+        inOrder(drawn, ['Needs a choice needs you.', 'One combined check', 'Show late orders', 'shop-app', 'Lent build', 'One combined check', 'The board looks live', 'The machine is busy. New runs wait.'])
+        for (const word of ['Round 3', '21 min', 'editing close.py', '1 h 4 min', 'Waiting for its tests', '212 of 640 tests', 'Waiting for a free place']) expect(drawn).toContain(word)
+      } else if (placement === 'inline') {
+        // One line a run: the title, the repo, then the round and time.
+        inOrder(drawn, ['Needs a choice needs you.', 'One combined check', 'round 3 · 21 min · editing close.py', 'Show late orders', 'in shop-app', 'round 1 · 1 h 4 min', 'Lent build',
+          'round 2 · waiting for its tests · 5 min', 'One combined check', 'round 2 · 212 of 640 tests · 3 min', 'The board looks live', 'round 1 · waiting for a free place · 2 min', 'The machine is busy. New runs wait.'])
+      } else inOrder(drawn, SAID)
+      await ui.unmount()
+    }
+  }
+  // A row leaves and a newer one joins; the rows that stay keep their order.
+  world.lanes = () => lanes([
+    run({ id: 'c', title: 'Show late orders', repo_root: '/shop', repo_name: 'shop-app', elapsed: 3845, joined_at: '2026-11-14T05:01:00+00:00' }),
+    run({ id: 'n', title: 'Newer build', joined_at: '2026-11-14T05:09:00+00:00', started_at: '2026-11-14T04:00:00+00:00' }),
+    run({ id: 'a', title: 'One combined check', round: 3, elapsed: 1265, joined_at: '2026-11-14T05:00:00+00:00' }),
+  ])
+  const ui = await $.ui.mount(pane('terminal'))
+  await clock.advance(3000)
+  const drawn = JSON.stringify(await ui.drawn())
+  inOrder(drawn, ['One combined check', 'Show late orders in shop-app', 'Newer build'])
+  expect(drawn).not.toContain('Lent build')
+})
+
+test('3: a worktree of the repo shows no repo name, and a new repo labels against itself', async ($, on) => {
+  const world = machine(on)
+  world.root = '/repo-folder'
+  world.files = { '/repo-folder/.git': 'gitdir: /repo/.git/worktrees/tree\n' }
+  world.lanes = () => lanes([run({ id: 'a', title: 'Mine', repo_root: '/repo' }), run({ id: 'b', title: 'Other', repo_root: '/shop', repo_name: 'shop-app', joined_at: '2026-11-14T05:01:00+00:00' })])
+  world.narrow = true
+  await $.session.start(started('terminal'))
+  let text = (await $.command.run(forgeCommand)).text as string
+  expect(text).toContain('  Mine\n')
+  expect(text).toContain('  Other in shop-app\n')
+  world.root = '/shop'
+  text = (await $.command.run(forgeCommand)).text as string
+  expect(text).toContain('  Mine in repo\n')
+  expect(text).toContain('  Other\n')
+})
+
+test('3: buttons: a row is selected by its title; Open output and Stop run work', async ($, on) => {
+  const world = machine(on)
+  const { clock } = world
+  let listed = [
+    run({ id: 'a', title: 'First', output_path: '/log/a' }),
+    run({ id: 'n', title: 'Native', native: true, joined_at: '2026-11-14T05:01:00+00:00' }),
+    run({ id: 'q', title: 'Quiet', joined_at: '2026-11-14T05:02:00+00:00' }),
+  ]
+  world.lanes = () => lanes(listed)
+  world.files = { '/log/a': 'one\ntwo\n' }
+  await $.session.start(started('terminal'))
+  const ui = await $.ui.mount(pane('terminal'))
+  await clock.advance(1000)
+  expect(await ui.find({ key: 'stop-run' })).toBeTruthy()
+  await ui.press({ key: 'run-n' })
+  expect(await ui.find({ key: 'stop-run' })).toBeFalsy()
+  await ui.press({ key: 'run-a' })
+  await ui.press({ key: 'open-output' })
+  expect(world.opened.at(-1)).toEqual({ id: 'forge-output', title: 'Run output', focus: true })
+  let output = await $.ui.mount(pane('terminal', 'dock', 'forge-output'))
+  expect(JSON.stringify(await output.drawn())).toContain('two')
+  await output.unmount()
+  await ui.press({ key: 'run-q' })
+  await ui.press({ key: 'open-output' })
+  output = await $.ui.mount(pane('terminal', 'dock', 'forge-output'))
+  expect(JSON.stringify(await output.drawn())).toContain('This run has no output to show.')
+  await ui.press({ key: 'run-a' })
+  const stops = () => world.calls.filter(argv => argv[1] === 'stop')
+  await ui.press({ key: 'stop-run' })
+  expect(world.asked).toEqual(['Stop the run "First"?'])
+  expect(stops()).toEqual([])
+  world.answers = 'Stop'
+  await ui.press({ key: 'stop-run' })
+  expect(stops()).toEqual([['forge', 'stop', '--id', 'a']])
+  listed = listed.filter(row => row.id !== 'a')
+  await ui.press({ key: 'run-q' })
+  await ui.press({ key: 'run-a' })
+  await ui.press({ key: 'stop-run' })
+  expect(stops().length).toBe(1)
+  expect(JSON.stringify(await ui.drawn())).toContain('That run has ended.')
+})
+
+test('3: the desktop draws more: meters, tags, progress and the latest output', async ($, on) => {
+  const world = machine(on, 'desktop')
+  const { clock } = world
+  const log = `first\n\u001b[32mgreen\u001b[0m line\n${'x'.repeat(300)}\nlast\n`
+  world.lanes = () => lanes([run({ id: 'a', title: 'Build one', round: 3, output_path: '/log/a', step: 'editing land.py', elapsed: 90 }), run({ id: 'b', title: 'B', joined_at: '2026-11-14T05:01:00+00:00' }), run({ id: 'c', title: 'C', joined_at: '2026-11-14T05:02:00+00:00' })],
+    [run({ id: 't', kind: 'test', title: 'T', progress: { done: 212, total: 640 }, joined_at: '2026-11-14T05:03:00+00:00' })])
+  world.files = { '/log/a': log }
+  await $.session.start(started('desktop'))
+  const ui = await $.ui.mount(pane('desktop'))
+  await clock.advance(1000)
+  const drawn = JSON.stringify(await ui.drawn())
+  for (const word of ['Builds and reviews', '3 of 4', 'Tests', '1 of 4', 'Round 3', 'Sonnet', 'LATEST OUTPUT', '212 of 640 tests', 'Open output', 'Stop run', 'this laptop']) expect(drawn).toContain(word)
+  for (const line of ['green line', `${'x'.repeat(119)}…`, 'last']) expect(drawn).toContain(line)
+  expect(drawn).not.toContain('first')
+  expect(drawn).not.toContain('\\u001b')
+  expect(drawn.match(/Builds and reviews: 3 of 4 places in use/g)?.length).toBe(1)
+  // Selecting another card moves the output box and the buttons to it at once.
+  await ui.press({ key: 'run-b' })
+  expect(JSON.stringify(await ui.drawn())).not.toContain('LATEST OUTPUT')
+  await ui.press({ key: 'run-a' })
+  expect(JSON.stringify(await ui.drawn())).toContain('LATEST OUTPUT')
+})
+
+test('3: an older desktop app gets the plain lines', async ($, on) => {
+  const world = machine(on, 'desktop')
+  const { clock } = world
+  world.version = '2.1.298'
+  world.lanes = () => lanes([run({ title: 'Build one', output_path: '/log/a' })])
+  world.files = { '/log/a': 'secret line\n' }
+  await $.session.start(started('desktop'))
+  const ui = await $.ui.mount(pane('desktop'))
+  await clock.advance(1000)
+  const drawn = JSON.stringify(await ui.drawn())
+  expect(drawn).toContain('Build one')
+  for (const word of ['Builds and reviews', 'LATEST OUTPUT', 'secret line']) expect(drawn).not.toContain(word)
+})
+
+test('3: the terminal draws no meters, tags or output lines', async ($, on) => {
+  const world = machine(on)
+  const { clock } = world
+  world.lanes = () => lanes([run({ id: 'a', title: 'Build one', output_path: '/log/a' })])
+  world.files = { '/log/a': 'secret line\n' }
+  await $.session.start(started('terminal'))
+  const ui = await $.ui.mount(pane('terminal'))
+  await clock.advance(1000)
+  const drawn = JSON.stringify(await ui.drawn())
+  for (const word of ['Builds and reviews', 'Sonnet', 'LATEST OUTPUT', 'secret line', 'Svg']) expect(drawn).not.toContain(word)
+})
+
+test('3: a long title gives way so the round and time stay at 80 columns, and the narrow pane keeps its buttons', async ($, on) => {
+  const world = machine(on)
+  const title = 'While a person reads a plan on the board, each refresh jumps the view to the top'
+  world.lanes = () => lanes([run({ id: 'a', title, round: 2, elapsed: 540, output_path: '/log/a' }), run({ id: 'q', title: 'Quiet', joined_at: '2026-11-14T05:02:00+00:00' })])
+  world.files = { '/log/a': 'one\ntwo\n' }
+  await $.session.start(started('terminal'))
+  await $.command.run(forgeCommand)
+  await world.clock.advance(1000)
+  const ui = await $.ui.mount(pane('terminal', 'inline'))
+  const drawn = JSON.stringify(await ui.drawn())
+  expect(drawn).toContain('round 2 · 9 min')
+  expect(drawn).toContain('…')
+  expect(drawn).not.toContain(title)
+  await ui.press({ key: 'run-q' })
+  await ui.press({ key: 'run-a' })
+  await ui.press({ key: 'open-output' })
+  expect(world.opened.at(-1)).toEqual({ id: 'forge-output', title: 'Run output', focus: true })
+  world.answers = 'Stop'
+  await ui.press({ key: 'stop-run' })
+  expect(world.calls.filter(argv => argv[1] === 'stop')).toEqual([['forge', 'stop', '--id', 'a']])
+})
+
+test('3: a run that starts after a wait shows its running time, not its wait', async ($, on) => {
+  const world = machine(on)
+  let waiting = true
+  world.lanes = () => lanes([run({ id: 'a', title: 'Queued build', waiting, elapsed: waiting ? 300 : 12 })])
+  await $.session.start(started('terminal'))
+  const ui = await $.ui.mount(pane('terminal'))
+  await world.clock.advance(1000)
+  expect(JSON.stringify(await ui.drawn())).toContain('Waiting for a free place · 5 min')
+  waiting = false
+  await world.clock.advance(3000)
+  const drawn = JSON.stringify(await ui.drawn())
+  expect(drawn).toContain('Round 1 · 12 s')
+  expect(drawn).not.toContain('5 min')
+})
+
+test('3: the desktop meter counts only places that are in use, and a run with no item still shows', async ($, on) => {
+  const world = machine(on, 'desktop')
+  world.lanes = () => ({ ...lanes([
+    run({ id: 'a', title: 'Build one' }), run({ id: 'b', title: 'Build two', joined_at: '2026-11-14T05:01:00+00:00' }),
+    run({ id: 'r', kind: 'review', title: 'Review one', free: true, joined_at: '2026-11-14T05:02:00+00:00' }),
+    run({ id: 'p', kind: 'read', title: null, item: null, free: true, round: 2, joined_at: '2026-11-14T05:03:00+00:00' }),
+  ], [run({ id: 't', kind: 'test', title: null, item: null, round: null, joined_at: '2026-11-14T05:04:00+00:00' })]), agents: { size: 2, entries: [
+    run({ id: 'a', title: 'Build one' }), run({ id: 'b', title: 'Build two', joined_at: '2026-11-14T05:01:00+00:00' }),
+    run({ id: 'r', kind: 'review', title: 'Review one', free: true, joined_at: '2026-11-14T05:02:00+00:00' }),
+    run({ id: 'p', kind: 'read', title: null, item: null, free: true, round: 2, joined_at: '2026-11-14T05:03:00+00:00' })] } })
+  await $.session.start(started('desktop'))
+  const ui = await $.ui.mount(pane('desktop'))
+  await world.clock.advance(1000)
+  const drawn = JSON.stringify(await ui.drawn())
+  expect(drawn).toContain('2 of 2')
+  expect(drawn).not.toContain('4 of 2')
+  for (const word of ['A plan read', 'Round 2', 'A test run']) expect(drawn).toContain(word)
+})
+
+test('3: a session that starts in a folder of the repo labels rows against the repo', async ($, on) => {
+  const world = machine(on)
+  world.root = '/repo/src'
+  world.files = { '/repo/.git': '' }
+  world.lanes = () => lanes([run({ id: 'a', title: 'Mine', repo_root: '/repo' })], [], { needs_you: [{ title: 'Asks', repo_name: 'repo', repo_root: '/repo' }] })
+  world.narrow = true
+  await $.session.start(started('terminal'))
+  const text = (await $.command.run(forgeCommand)).text as string
+  expect(text).toContain('Asks needs you.')
+  expect(text).toContain('  Mine\n')
+})
+
+test('3: a Forge from before the pane says so, shows the rows it can and does not count a waiting run as running', async ($, on) => {
+  const world = machine(on)
+  const { waiting: _a, ...first } = run({ id: 'a', title: 'Running build', place: 0 })
+  const { waiting: _b, ...second } = run({ id: 'b', title: 'Queued build', place: 1, joined_at: '2026-11-14T05:01:00+00:00' })
+  const { needs_you: _n, busy: _y, ...older } = lanes([first, second])
+  world.lanes = () => older
+  world.narrow = true
+  await $.session.start(started('terminal'))
+  const text = (await $.command.run(forgeCommand)).text as string
+  expect(text).toContain("This laptop's Forge is older than the pane. Update Forge to see what needs you.")
+  expect(text).not.toContain('Nothing needs you.')
+  expect(text).toContain('  Running build\n  Round 1 · 1 min')
+  expect(text).toContain('  Queued build\n  Round 1 · Waiting for a free place · 1 min')
+})
+
+test('3: the open output stays when its run ends', async ($, on) => {
+  const world = machine(on)
+  let listed = [run({ id: 'a', title: 'Ends soon', output_path: '/log/a' })]
+  world.lanes = () => lanes(listed)
+  world.files = { '/log/a': 'last words\n' }
+  await $.session.start(started('terminal'))
+  const ui = await $.ui.mount(pane('terminal'))
+  await world.clock.advance(1000)
+  await ui.press({ key: 'open-output' })
+  listed = []
+  await world.clock.advance(3000)
+  const output = await $.ui.mount(pane('terminal', 'dock', 'forge-output'))
+  expect(JSON.stringify(await output.drawn())).toContain('last words')
+})
+
+// Claude Code, Forge and git can each spell the same folder differently on Windows. Feed those spellings on any system.
+for (const [root, repoRoot, log] of [
+  ['C:\\repo\\src', 'c:/repo', 'C:/logs/a.log'],
+  ['c:/repo/src', 'C:\\repo', 'c:\\logs\\a.log'],
+  ['C:\\Repo\\SRC', 'c:/repo', 'C:\\logs/a.log'],
+] as const) {
+  test(`3: Windows paths ${root} and ${repoRoot} name one repo, and the log at ${log} is read`, async ($, on) => {
+    const world = machine(on)
+    world.root = root
+    world.files = { '/repo/.git': '', '/repo/forge.toml': '', '/logs/a.log': 'one\ntwo\n' }
+    world.lanes = () => lanes([run({ id: 'a', title: 'Mine', repo_root: repoRoot, output_path: log })], [], { needs_you: [{ title: 'Asks', repo_name: 'repo', repo_root: repoRoot }] })
+    world.narrow = true
+    await $.session.start(started('terminal'))
+    const text = (await $.command.run(forgeCommand)).text as string
+    expect(text).toContain('Asks needs you.')
+    expect(text).toContain('  Mine\n')
+    world.narrow = false
+    const ui = await $.ui.mount(pane('terminal'))
+    await world.clock.advance(1000)
+    await ui.press({ key: 'open-output' })
+    const output = await $.ui.mount(pane('terminal', 'dock', 'forge-output'))
+    expect(JSON.stringify(await output.drawn())).toContain('two')
+  })
+}
+
+test('3: a worktree on a drive finds its main checkout through git\'s forward-slash path', async ($, on) => {
+  const world = machine(on)
+  world.root = 'C:\\repo-folder'
+  world.files = { '/repo-folder/.git': 'gitdir: C:/repo/.git/worktrees/tree\n' }
+  world.lanes = () => lanes([run({ id: 'a', title: 'Mine', repo_root: 'c:/repo' }), run({ id: 'b', title: 'Other', repo_root: 'D:/shop', repo_name: 'shop-app', joined_at: '2026-11-14T05:01:00+00:00' })])
+  world.narrow = true
+  await $.session.start(started('terminal'))
+  const text = (await $.command.run(forgeCommand)).text as string
+  expect(text).toContain('  Mine\n')
+  expect(text).toContain('  Other in shop-app\n')
+})
+
+test('1: the option opens the pane for a session that starts in a folder on a drive', { options: { pane: 'always' } }, async ($, on) => {
+  const world = machine(on)
+  world.root = 'C:\\repo\\src'
+  world.files = { '/repo/.git': '', '/repo/forge.toml': '' }
+  await $.session.start(started('terminal'))
+  expect(world.opened).toEqual([{ id: 'forge', title: 'Forge' }])
+})

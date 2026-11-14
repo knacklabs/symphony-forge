@@ -1,0 +1,235 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/mod/hooks/register.ts\tCount occupied places correctly in the desktop meter\tFORGE-PANE-1/PANE",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/register.ts",
+      "line": 61,
+      "text": "Count occupied places correctly in the desktop meter",
+      "from": "blocking",
+      "item": "FORGE-PANE-1/PANE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/mod/hooks/register.ts\tDo not claim nothing is running when the first read fails\tFORGE-PANE-1/PANE",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/register.ts",
+      "line": 304,
+      "text": "Do not claim nothing is running when the first read fails",
+      "from": "blocking",
+      "item": "FORGE-PANE-1/PANE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/mod/hooks/register.ts\tKeep run controls available in the narrow pane\tFORGE-PANE-1/PANE",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/register.ts",
+      "line": 348,
+      "text": "Keep run controls available in the narrow pane",
+      "from": "blocking",
+      "item": "FORGE-PANE-1/PANE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/mod/hooks/register.ts\tKeep the elapsed clock accurate after a queued run starts\tFORGE-PANE-1/PANE",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/register.ts",
+      "line": 187,
+      "text": "Keep the elapsed clock accurate after a queued run starts",
+      "from": "blocking",
+      "item": "FORGE-PANE-1/PANE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/mod/hooks/register.ts\tRecheck whether a queued run became a session subagent before stopping it\tFORGE-PANE-1/PANE",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/register.ts",
+      "line": 297,
+      "text": "Recheck whether a queued run became a session subagent before stopping it",
+      "from": "blocking",
+      "item": "FORGE-PANE-1/PANE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/mod/hooks/register.ts\tReject incomplete lane data from an older Forge\tFORGE-PANE-1/PANE",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/register.ts",
+      "line": 66,
+      "text": "Reject incomplete lane data from an older Forge",
+      "from": "blocking",
+      "item": "FORGE-PANE-1/PANE",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/mod/hooks/register.ts\tResolve the repository root when a session starts in a subfolder\tFORGE-PANE-1/PANE",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/register.ts",
+      "line": 106,
+      "text": "Resolve the repository root when a session starts in a subfolder",
+      "from": "blocking",
+      "item": "FORGE-PANE-1/PANE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/run-reference.md\tStandard: Replacing behaviour deletes the old path, its tests and its docs in the same change\tFORGE-PANE-1/PANE",
+      "kind": "bug",
+      "path": "src/forge/templates/run-reference.md",
+      "line": 67,
+      "text": "Standard: Replacing behaviour deletes the old path, its tests and its docs in the same change",
+      "from": "blocking",
+      "item": "FORGE-PANE-1/PANE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_machine_tab_lanes.py\tGate: verify live rows through the packaged pane\tFORGE-PANE-1/PANE",
+      "kind": "bug",
+      "path": "tests/test_machine_tab_lanes.py",
+      "line": 149,
+      "text": "Gate: verify live rows through the packaged pane",
+      "from": "blocking",
+      "item": "FORGE-PANE-1/PANE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_mod_install.py\tGate: verify that the real terminal displays a pane\tFORGE-PANE-1/PANE",
+      "kind": "bug",
+      "path": "tests/test_mod_install.py",
+      "line": 189,
+      "text": "Gate: verify that the real terminal displays a pane",
+      "from": "blocking",
+      "item": "FORGE-PANE-1/PANE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_pane_session.py\tGate: functional check\tFORGE-PANE-1/PANE",
+      "kind": "bug",
+      "path": "tests/test_pane_session.py",
+      "line": 61,
+      "text": "Gate: functional check",
+      "from": "blocking",
+      "item": "FORGE-PANE-1/PANE",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "edge\tsrc/forge/mod/hooks/register.ts\tKeep the output pane's path after the run finishes",
+      "kind": "edge",
+      "path": "src/forge/mod/hooks/register.ts",
+      "line": 279,
+      "text": "Keep the output pane's path after the run finishes",
+      "from": "review",
+      "item": "FORGE-PANE-1/PANE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/mod/hooks/register.ts\tMake standalone test output available to the output pane",
+      "kind": "edge",
+      "path": "src/forge/mod/hooks/register.ts",
+      "line": 279,
+      "text": "Make standalone test output available to the output pane",
+      "from": "review",
+      "item": "FORGE-PANE-1/PANE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/mod/hooks/register.ts\tNot done: The pane lists every build, test and review that runs on this laptop",
+      "kind": "edge",
+      "path": "src/forge/mod/hooks/register.ts",
+      "line": 51,
+      "text": "Not done: The pane lists every build, test and review that runs on this laptop",
+      "from": "review",
+      "item": "FORGE-PANE-1/PANE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/mod/hooks/register.ts\tNot done: each with its round and time at 80 columns",
+      "kind": "edge",
+      "path": "src/forge/mod/hooks/register.ts",
+      "line": 349,
+      "text": "Not done: each with its round and time at 80 columns",
+      "from": "review",
+      "item": "FORGE-PANE-1/PANE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/mod/hooks/register.ts\tNot done: each with its round and time during a plan read",
+      "kind": "edge",
+      "path": "src/forge/mod/hooks/register.ts",
+      "line": 208,
+      "text": "Not done: each with its round and time during a plan read",
+      "from": "review",
+      "item": "FORGE-PANE-1/PANE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/mod/hooks/register.ts\tShow decision titles for active reads",
+      "kind": "edge",
+      "path": "src/forge/mod/hooks/register.ts",
+      "line": 53,
+      "text": "Show decision titles for active reads",
+      "from": "review",
+      "item": "FORGE-PANE-1/PANE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\ttests/test_pane_session.py\tClean up the held build before skipping the session test",
+      "kind": "edge",
+      "path": "tests/test_pane_session.py",
+      "line": 119,
+      "text": "Clean up the held build before skipping the session test",
+      "from": "review",
+      "item": "FORGE-PANE-1/PANE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\ttests/test_pane_session.py\tProvide a Windows launcher for the failing Forge stub",
+      "kind": "edge",
+      "path": "tests/test_pane_session.py",
+      "line": 159,
+      "text": "Provide a Windows launcher for the failing Forge stub",
+      "from": "review",
+      "item": "FORGE-PANE-1/PANE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "improve\tsrc/forge/mod/hooks/register.ts\tthe old hook files and their test fixture stay until OLD-1, OLD-2 and NEXTJSON remove them.",
+      "kind": "improve",
+      "path": "src/forge/mod/hooks/register.ts",
+      "line": 1,
+      "text": "the old hook files and their test fixture stay until OLD-1, OLD-2 and NEXTJSON remove them.",
+      "from": "worker",
+      "item": "FORGE-PANE-1/PANE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "improve\tsrc/forge/templates/run-reference.md\tthe line about `forge next --json` still names the mod; NEXTJSON removes it.",
+      "kind": "improve",
+      "path": "src/forge/templates/run-reference.md",
+      "line": 79,
+      "text": "the line about `forge next --json` still names the mod; NEXTJSON removes it.",
+      "from": "worker",
+      "item": "FORGE-PANE-1/PANE",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

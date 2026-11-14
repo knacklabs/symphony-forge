@@ -193,6 +193,8 @@ def test_1_half_the_cores_admit_work_rounds_while_reads_and_reviews_skip_the_lin
             return json.loads(board.stdout)["lanes"]["agents"]["entries"]
         rows = entries()
         admitted = next(e for e in rows if e["item"] == first)
+        # A plan read carries its round, so the Claude Code pane can show it.
+        assert next(e for e in rows if e["kind"] == "read")["round"] == 1
         if legacy:
             old_review = next(e for e in rows if e["kind"] == "review")
             assert os.getpgid(old_review["process"]["pid"]) != old_review["process"]["pid"]
