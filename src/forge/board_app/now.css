@@ -133,8 +133,8 @@ main:not([hidden]):has(> .now) {
   font-weight: 600;
 }
 
-/* A card, a Needs you card or a merged line shows its whole title: it wraps, and a word longer than the box breaks. */
-.ask-title, .chip-title, .done button {
+/* A card, a Needs you card, a story in the rail or a merged line shows its whole title: it wraps, and a word longer than the box breaks. */
+.ask-title, .chip-title, .story-title, .done button {
   white-space: normal;
   overflow-wrap: anywhere;
   text-overflow: clip;

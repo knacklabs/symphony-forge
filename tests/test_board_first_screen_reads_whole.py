@@ -1,10 +1,10 @@
 """The board's first screen shows what the data knows, on a new and an earlier-adopted repo, in real Chrome
-at half a screen and at 1,100, 1,150, 1,280 and 1,440 pixels wide. Every card, a Needs you card too, shows
-its whole title, wrapped, with the full title on hover, and no other region covers a title or a card, even
-when four cards have 60-character titles. A fix and a story part idle for days each say how long on their
-card. A story whose own record is gone shows the title of its plan file. The Stories rail says "No owner yet"
-where no owner is set, and one plan note reads "1 note". The real command, server and browser run; only
-GitHub is a stub."""
+at half a screen and at 1,100, 1,150, 1,280 and 1,440 pixels wide. Every card, a Needs you card and a story
+in the Stories rail too, shows its whole title, wrapped, with the full title on hover. No other region covers
+any corner of a title, even when four cards have 60-character titles, and the 1,440 by 900 screen still fits
+without scrolling. A fix and a story part idle for days each say how long on their card. A story whose own
+record is gone shows the title of its plan file. The Stories rail says "No owner yet" where no owner is set,
+and one plan note reads "1 note". The real command, server and browser run; only GitHub is a stub."""
 import json
 import os
 import subprocess
@@ -23,6 +23,7 @@ pytestmark = pytest.mark.platform
 
 LONG = "Readers see the exact basket total after a refund in {} parts"  # 60 characters
 PART = "Share a saved basket with a friend by email or message"
+STORY_TITLE = "Forge v1: a lean rebuild that both coordinators and workers can follow end to end"
 
 SCRIPT = r"""
 import json, re, sys
@@ -30,12 +31,14 @@ from playwright.sync_api import expect, sync_playwright
 url, expected = sys.argv[1], json.loads(sys.argv[2])
 
 # A title is whole when its text fits its own box with no ellipsis, it is on hover too, and no other
-# element covers its middle.
+# element covers any of the four corners of its box.
 WHOLE = '''(e) => {
-  const box = e.getBoundingClientRect(), top = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2);
+  const box = e.getBoundingClientRect();
+  const corners = [[box.left + 1, box.top + 1], [box.right - 1, box.top + 1], [box.left + 1, box.bottom - 1], [box.right - 1, box.bottom - 1]];
+  const covered = corners.filter(([x, y]) => { const top = document.elementFromPoint(x, y); return !(top && (e.contains(top) || top.contains(e))); });
   return { whole: e.scrollWidth <= e.clientWidth + 1 && e.scrollHeight <= e.clientHeight + 1
       && getComputedStyle(e).textOverflow !== 'ellipsis',
-    hover: e.title || e.closest('[title]')?.title, covered: !(top && (e.contains(top) || top.contains(e))) };
+    hover: e.title || e.closest('[title]')?.title, covered: covered.length };
 }'''
 BOTTOM = "els => Math.max(...els.map(e => e.getBoundingClientRect().bottom))"
 
@@ -49,15 +52,19 @@ with sync_playwright() as p:
             page.goto(url)
             expect(page.get_by_role('status')).to_have_text('Live')
             expect(page.get_by_role('region', name='In flight')).to_be_visible()
-            for title in expected['titles']:
-                found = page.get_by_text(title, exact=True)
-                assert found.count() >= 1, (where, 'no card shows', title)
-                for n in range(found.count()):
-                    found.nth(n).scroll_into_view_if_needed()
-                    seen = found.nth(n).evaluate(WHOLE)
-                    assert seen['whole'], (where, 'a title is cut', title)
-                    assert seen['hover'] == title, (where, 'no full title on hover', title, seen)
-                    assert not seen['covered'], (where, 'another region covers a title', title)
+            # Each title is found inside its own region: the Needs you card, a card in Building, the Stories rail.
+            for region, titles in expected['titles']:
+                for title in titles:
+                    found = page.get_by_role('region', name=region, exact=True).get_by_text(title, exact=True)
+                    assert found.count() == 1, (where, region, 'does not show exactly one', title, found.count())
+                    found.scroll_into_view_if_needed()
+                    seen = found.evaluate(WHOLE)
+                    assert seen['whole'], (where, region, 'a title is cut', title)
+                    assert seen['hover'] == title, (where, region, 'no full title on hover', title, seen)
+                    assert not seen['covered'], (where, region, 'another region covers a title', title, seen)
+            page.evaluate('window.scrollTo(0, 0)')
+            if width == 1440:
+                assert page.evaluate('document.documentElement.scrollHeight <= innerHeight'), (where, 'the first screen scrolls')
             # No card of the stages or the rail reaches into the figures below them.
             figures = page.get_by_role('region', name='Figures').bounding_box()
             for region in ('In flight', 'Stories'):
@@ -131,12 +138,15 @@ def test_1_the_first_screen_shows_whole_titles_idle_time_owners_and_plan_titles(
         "plans/SHOP.read.md": "## Round 1\n\n1. The plan is too long. Disposition: keep because it is clear\n",
         ".factory/stories/SHOP/story.json": json.dumps({"doc": "plans/SHOP.md", "title": "Shoppers can save a basket",
                                                         "status": "approved"}),
+        "plans/LEAN.md": DOC.replace("# Shoppers can save a basket", f"# {STORY_TITLE}", 1),
+        ".factory/stories/LEAN/story.json": json.dumps({"doc": "plans/LEAN.md", "title": STORY_TITLE, "status": "approved"}),
         "plans/LOST.md": DOC.replace("# Shoppers can save a basket", "# Couriers book slots", 1).replace("| SAVE |", "| ONE |", 1),
         ".factory/stories/LOST/tasks/ONE.json": part})
     client.git("fetch", "-q", "origin")
     client.git("merge", "-q", "--ff-only", "origin/main")
     _part(client, tmp_path, six_days)
-    expected = {"titles": [LONG.format(word) for word in ("two", "three", "four")] + [PART],
+    expected = {"titles": [["Needs you", [LONG.format("four")]], ["Stories", [STORY_TITLE]],
+                           ["Building", [LONG.format(word) for word in ("two", "three", "four")] + [PART]]],
                 "idle_fix": "in two parts", "idle_part": "Share a saved basket", "fresh": "in three parts"}
     with live(client, FORGE_BOARD_FETCH_WAIT="3600") as url:
         shown = subprocess.Popen([REAL_UV or "uv", "run", "--no-project", "--python", "3.11", "--with",

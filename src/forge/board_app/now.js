@@ -183,7 +183,7 @@ function stage([name, title], shown) {
 
 function story(map) {
   return el('li', {}, el('button', { type: 'button', class: 'story', 'data-focus': `story:${map.id}`, onclick: open(map) },
-    el('span', { class: 'story-title' }, map.title),
+    el('span', { class: 'story-title', title: map.title }, map.title),
     el('span', { class: 'parts', role: 'img',
       'aria-label': `${map.parts.filter((part) => part.status === 'Merged').length} of ${map.parts.length} parts merged` }, map.parts.map((part) =>
       el('span', { 'data-status': part.status }))),
@@ -195,7 +195,7 @@ function rail(shown) {
   if (shown.viewer !== null) {
     return el('section', { class: 'rail', 'aria-label': 'Live' }, el('h2', {}, 'Live'),
       shown.runs.length ? el('ul', { class: 'runs' }, shown.runs.map((run) => el('li', {},
-        el('span', { class: 'story-title' }, run.title || 'unknown'),
+        el('span', { class: 'story-title', title: run.title }, run.title || 'unknown'),
         el('span', { class: 'chip-meta' }, RUN[run.kind] || 'Running'))))
         : el('p', { class: 'note' }, 'Nothing runs on this laptop now.'));
   }
