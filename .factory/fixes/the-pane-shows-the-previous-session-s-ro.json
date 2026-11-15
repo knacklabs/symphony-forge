@@ -4,12 +4,20 @@
   "done_when": "In the /forge pane, a new session whose first read fails shows only \"Forge did not answer.\", and each decision row shows its heading and each plain test run row opens an output file.",
   "fix_kind": "ui",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-15T10:15:52.655187+00:00",
       "step": "start"
     }
   ],
-  "why": "The pane shows the previous session's rows with their age when a new session's first read fails, shows a decision by its file name, and has no output to open for a plain test run."
+  "stuck": {
+    "close": null,
+    "head": "3e8e4e38ea3abb1adb23e629af651121a7570e9e",
+    "keys": {},
+    "round": null
+  },
+  "why": "The pane shows the previous session's rows with their age when a new session's first read fails, shows a decision by its file name, and has no output to open for a plain test run.",
+  "worker": "claude"
 }
