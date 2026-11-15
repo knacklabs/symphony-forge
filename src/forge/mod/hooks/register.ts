@@ -7,8 +7,8 @@ import type { CoreEngineInterface, Register, RenderNode, Timer } from 'claude-co
 const PANE = 'forge'
 const OUTPUT = 'forge-output'
 const READ_EVERY_MS = 3000
-// ponytail: a log is read whole (the API has no range read), so one over 32 MiB shows nothing; only its end is drawn.
-const MAX_OUTPUT_BYTES = 32 * 1024 * 1024
+// $.fs.read rejects a file over 4 MiB (the API has no range read): such a log is named by its path instead of read.
+const MAX_OUTPUT_BYTES = 4 * 1024 * 1024
 const TAIL_CHARS = 64 * 1024
 const CUT = 120
 const BLUE = '#1d4ed8'
@@ -150,10 +150,14 @@ async function read(c: Ctx, $: CoreEngineInterface): Promise<Lanes> {
   return parse(done.stdout)
 }
 
+async function tooLarge($: CoreEngineInterface, path: string | null) {
+  try { return !!path && (await $.fs.stat(path, { resolve: false })).size > MAX_OUTPUT_BYTES } catch { return false }
+}
+
 async function lastLines(c: Ctx, $: CoreEngineInterface, path: string | null) {
   if (!path) return []
   try {
-    if ((await $.fs.stat(path, { resolve: false })).size > MAX_OUTPUT_BYTES) return []
+    if (await tooLarge($, path)) return []
     const text = String(await $.fs.read(path))
     // A long log shows its end: start at the first whole line of its last stretch.
     return cleanLines(text.length > TAIL_CHARS ? text.slice(text.indexOf('\n', text.length - TAIL_CHARS) + 1) : text)
@@ -287,7 +291,9 @@ export const register: Register = (on, options) => {
     if (e.requestId === OUTPUT) {
       const path = c.outputPath
       const shown = (await lastLines(c, $, path)).slice(-Math.max(5, (e.viewport?.rows ?? 30) - 4))
-      return t.Box({ flexDirection: 'column', children: shown.length ? shown.map(line => t.Text({ wrap: 'truncate-end', children: line })) : [t.Text({ children: 'This run has no output to show.' })] })
+      // Output the pane cannot read is still output: say where it is, as Forge gave the path.
+      const words = shown.length ? null : await tooLarge($, path) ? `This output is too large to show here. It is in ${path}.` : 'This run has no output to show.'
+      return t.Box({ flexDirection: 'column', children: words ? [t.Text({ wrap: 'wrap', children: words })] : shown.map(line => t.Text({ wrap: 'truncate-end', children: line })) })
     }
     const v = view(c, now, main)
     if (v.loading) return t.Text({ children: 'Loading Forge…' })

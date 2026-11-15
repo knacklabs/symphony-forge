@@ -56,7 +56,12 @@ function machine(on: On, surface: RenderSurface = 'terminal') {
   }
   on('fs.exists', (_$, e) => ({ value: key(e.path) in world.files }))
   on('fs.stat', (_$, e) => ({ value: { kind: world.folders.includes(key(e.path)) ? 'dir' : 'file', size: (world.files[key(e.path)] ?? '').length, mtimeMs: 0, isLink: false } }))
-  on('fs.read', (_$, e) => ({ value: world.files[key(e.path)] ?? '' }))
+  // The API's own limit: a read over 4 MiB rejects.
+  on('fs.read', (_$, e) => {
+    const text = world.files[key(e.path)] ?? ''
+    if (text.length > 4 * 1024 * 1024) throw new Error('fs.read: the file is over 4 MiB')
+    return { value: text }
+  })
   on('session.end', (_$, e) => ({ sessionId: e.sessionId }))
   on('store.get', () => ({ value: world.stored }))
   on('store.set', () => ({ value: undefined }))
@@ -235,6 +240,22 @@ test('3: a log far over 1 MiB shows its last lines in Open output', async ($, on
   expect(drawn).not.toContain('no output to show')
   expect(drawn).not.toContain('line 0"')
 })
+
+for (const log of ['/log/huge', 'C:\\logs\\huge.log']) {
+  test(`3: output over 4 MiB, which the API cannot read, says where it is: ${log}`, async ($, on) => {
+    const world = machine(on)
+    const { clock } = world
+    world.lanes = () => lanes([run({ id: 'a', title: 'Huge', output_path: log })])
+    world.files = { [log.replace(/\\/g, '/').replace(/^[A-Za-z]:/, '').toLowerCase()]: 'x'.repeat(4 * 1024 * 1024 + 1) }
+    await $.session.start(started('terminal'))
+    const ui = await $.ui.mount(pane('terminal'))
+    await clock.advance(1000)
+    await ui.press({ key: 'open-output' })
+    const drawn = JSON.stringify(await (await $.ui.mount(pane('terminal', 'dock', 'forge-output'))).drawn())
+    expect(drawn).toContain(JSON.stringify(`This output is too large to show here. It is in ${log}.`).slice(1, -1))
+    expect(drawn).not.toContain('no output to show')
+  })
+}
 
 const rows = lanes([
   run({ id: 'a', title: 'One combined check', round: 3, step: 'editing close.py', elapsed: 1260, joined_at: '2026-11-14T05:00:00+00:00' }),
