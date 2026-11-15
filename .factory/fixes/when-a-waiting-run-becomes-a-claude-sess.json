@@ -1,0 +1,15 @@
+{
+  "base": "6bd0bfe1a12a402287e91623f63d3b085bc394df",
+  "branch": "fix/when-a-waiting-run-becomes-a-claude-sess",
+  "done_when": "After the owner confirms Stop on such a run, the pane does not stop it and shows a note that the agent of that session must stop it.",
+  "fix_kind": "ui",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-15T14:15:21.965978+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "When a waiting run becomes a Claude session subagent while the Stop question is open, pressing Stop clears Forge's record of it, but the subagent keeps running and the warning Forge prints is dropped."
+}
