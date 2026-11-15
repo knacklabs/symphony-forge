@@ -4,12 +4,20 @@
   "done_when": "The first screen's Needs you count and list include every part or fix with failed checks idle for a day or more, each with a plain reason such as \"checks failed, no activity for 7 days\".",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-15T13:11:11.104132+00:00",
       "step": "start"
     }
   ],
-  "why": "A part or fix with failed checks and no activity for a day or more sits under Building, so a manager reads \"0 need you\" and thinks nothing needs doing."
+  "stuck": {
+    "close": null,
+    "head": "f8c21db02358e4848f6c5ad68362c4685bf6028a",
+    "keys": {},
+    "round": null
+  },
+  "why": "A part or fix with failed checks and no activity for a day or more sits under Building, so a manager reads \"0 need you\" and thinks nothing needs doing.",
+  "worker": "claude"
 }
