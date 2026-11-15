@@ -4,14 +4,152 @@
   "done_when": "The first screen's Needs you count and list include every part or fix with failed checks idle for a day or more, each with a plain reason such as \"checks failed, no activity for 7 days\".",
   "fix_kind": "backend",
   "kind": "fix",
+  "known": [
+    {
+      "area": "needs_you() in src/forge/board_facts.py",
+      "file": "src/forge/board_facts.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 558,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Needs you includes every part or fix with failed checks idle for a day or more",
+      "work": 3
+    },
+    {
+      "area": "needs_you() in src/forge/board_facts.py",
+      "file": "src/forge/board_facts.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 558,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Do not report an idle failure while its checks are running",
+      "work": 2
+    },
+    {
+      "area": "needs_you() in src/forge/board_facts.py",
+      "file": "src/forge/board_facts.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 559,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Keep the item detail's Needs you status consistent with the list",
+      "work": 2
+    },
+    {
+      "area": "test_1_failed_checks_idle_for_a_day_need_you() in tests/test_board_needs_you_failed_checks.py",
+      "file": "tests/test_board_needs_you_failed_checks.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 42,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_failed_checks_idle_for_a_day_need_you",
+      "work": 2
+    },
+    {
+      "area": "tests/test_board_needs_you_failed_checks.py",
+      "file": "tests/test_board_needs_you_failed_checks.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 52,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_2_five_idle_failed_fixes_fit_the_first_screen",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "88cde87276b13c07e16075719fe136b1b8d33412e3483f6215f23cdfb18fa1d6",
+    "changed": "d5a4b3cf67943298f95f16cbd5c3a5d08e367a44ddafb3202e14e69bc4f9bff3",
+    "commit": "87fb7d9d009b365ad8afa6479284581dc535c552",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 3, Harm 3\nRaise: Not done. Case: normal use - an idle part or fix has red checks after its review reaches the stop limit. The promised item is: The first screen's Needs you count and list include every part or fix with failed checks idle for a day or more, each with a plain reason such as \"checks failed, no activity for 7 days\". `nextstep.py:892-899` preserves the `hotspot` stage even when checks fail, so this predicate does not add the failed-checks reason. Separately, when a repository has more than 25 open pull requests, `board_facts.py:70-74` fetches checks only for the newest 25; `board.py:230-232` leaves older checks unknown, so an older idle red item is omitted entirely.",
+        "file": "src/forge/board_facts.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 558,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: Needs you includes every part or fix with failed checks idle for a day or more",
+        "work": 3
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional. Case: normal use - someone reruns a GitHub Actions matrix on an old failed pull request while one job still has a failure and another is running. `board.py:146-148` gives failure precedence over running checks, while `board.py:472-491` derives idleness from Forge's local runs and branch activity. With no local run event, this condition reports the item as needing attention with no activity for days even though its checks are running. The coordinator's ruling excludes a run in progress.",
+        "file": "src/forge/board_facts.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 558,
+        "priority": "P1",
+        "title": "Do not report an idle failure while its checks are running",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional. Case: normal use - a manager opens an idle failed-checks item from Needs you. This new rule adds it to the team list without updating the item's `needs_person` flag, which `board.py:623-624` still derives only from `nextstep.person_waits`. Consequently, `item.js:106-112` labels the same item Building instead of Needs you. The documented contract in `src/forge/templates/run-reference.md:156-157` says the flag uses the same decision as the list.",
+        "file": "src/forge/board_facts.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 559,
+        "priority": "P1",
+        "title": "Keep the item detail's Needs you status consistent with the list",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Test. Case: normal use - a failed item becomes idle for one day, or the item is a story part. The test checks at two hours and seven days, so an implementation that waits seven days would pass despite missing the one-day requirement. It also creates only fixes at line 26; the browser proof likewise creates only fixes, so both tests would pass if failed story parts were omitted. Exercise the one-day boundary and a part through the board.",
+        "file": "tests/test_board_needs_you_failed_checks.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 42,
+        "priority": "P1",
+        "title": "Gate: test_1_failed_checks_idle_for_a_day_need_you",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Gate. Case: normal use - run the checked-in proof on a machine with the repository's pinned Playwright 1.55 and system Chrome, but no matching Playwright Chromium binary. The proof list records that this was the worker's local situation; `launch()` requires Playwright's version-specific browser, and the reported local run used 1.58 instead. The other board browser tests use the installed Chrome channel, while `.github/workflows/forge.yml:59-88` does not install this binary. See the [Playwright browser contract](https://playwright.dev/python/docs/browsers). The proof also checks only `.first` at lines 59-60 and never opens the overflow list or checks Me, so it can pass while other items or their reasons are unreachable.",
+        "file": "tests/test_board_needs_you_failed_checks.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 52,
+        "priority": "P1",
+        "title": "Gate: test_2_five_idle_failed_fixes_fit_the_first_screen",
+        "work": 2
+      }
+    ],
+    "id": "6ece6401-9748-4a0e-b261-5cbcef23b739",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-15T13:11:11.104132+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-15T13:28:06.334972+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-11-15T13:28:06.345370+00:00",
+    "file": "src/forge/board_facts.py",
+    "wait_id": "c9b770ac-6c5a-4a4e-9519-7327900e70e5"
+  },
   "stuck": {
     "close": null,
     "head": "f8c21db02358e4848f6c5ad68362c4685bf6028a",

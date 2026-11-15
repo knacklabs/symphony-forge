@@ -1,0 +1,59 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/board_facts.py\tDo not report an idle failure while its checks are running\ta-part-or-fix-with-failed-checks-and-no",
+      "kind": "bug",
+      "path": "src/forge/board_facts.py",
+      "line": 558,
+      "text": "Do not report an idle failure while its checks are running",
+      "from": "blocking",
+      "item": "a-part-or-fix-with-failed-checks-and-no",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board_facts.py\tKeep the item detail's Needs you status consistent with the list\ta-part-or-fix-with-failed-checks-and-no",
+      "kind": "bug",
+      "path": "src/forge/board_facts.py",
+      "line": 559,
+      "text": "Keep the item detail's Needs you status consistent with the list",
+      "from": "blocking",
+      "item": "a-part-or-fix-with-failed-checks-and-no",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board_facts.py\tNot done: Needs you includes every part or fix with failed checks idle for a day or more\ta-part-or-fix-with-failed-checks-and-no",
+      "kind": "bug",
+      "path": "src/forge/board_facts.py",
+      "line": 558,
+      "text": "Not done: Needs you includes every part or fix with failed checks idle for a day or more",
+      "from": "blocking",
+      "item": "a-part-or-fix-with-failed-checks-and-no",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_board_needs_you_failed_checks.py\tGate: test_1_failed_checks_idle_for_a_day_need_you\ta-part-or-fix-with-failed-checks-and-no",
+      "kind": "bug",
+      "path": "tests/test_board_needs_you_failed_checks.py",
+      "line": 42,
+      "text": "Gate: test_1_failed_checks_idle_for_a_day_need_you",
+      "from": "blocking",
+      "item": "a-part-or-fix-with-failed-checks-and-no",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_board_needs_you_failed_checks.py\tGate: test_2_five_idle_failed_fixes_fit_the_first_screen\ta-part-or-fix-with-failed-checks-and-no",
+      "kind": "bug",
+      "path": "tests/test_board_needs_you_failed_checks.py",
+      "line": 52,
+      "text": "Gate: test_2_five_idle_failed_fixes_fit_the_first_screen",
+      "from": "blocking",
+      "item": "a-part-or-fix-with-failed-checks-and-no",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
