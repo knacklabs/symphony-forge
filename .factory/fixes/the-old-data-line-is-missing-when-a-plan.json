@@ -87,7 +87,7 @@
     "status": "blocked"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-15T14:15:04.809510+00:00",
@@ -100,8 +100,12 @@
   ],
   "stop": {
     "at": "2026-11-15T14:42:01.492125+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "tests/test_board_says_when_data_is_old.py",
-    "wait_id": "478d57e9-abfc-4e59-84f1-c32decfeb9aa"
+    "reason": "The owner chose one more round: make the real board server fail in the tests and prove that the retry is at once",
+    "wait_id": "478d57e9-abfc-4e59-84f1-c32decfeb9aa",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
