@@ -307,7 +307,17 @@ function closeDrawer(restore = true) {
 // The full page
 
 async function item(id) {
-  const answer = await Board.read(`item:${id}`, `board.json${TOKEN}&page=item&id=${encodeURIComponent(id)}`);
+  // A read the server refuses or cannot answer is asked once more at once; the next snapshot asks again after that.
+  let answer;
+  for (let again = false; ; again = true) {
+    try {
+      answer = await Board.read(`item:${id}`, `board.json${TOKEN}&page=item&id=${encodeURIComponent(id)}`);
+    } catch (error) {
+      if (again) throw error;
+      continue;
+    }
+    if (answer.status < 500 || again) break;
+  }
   let body = {};
   try {
     body = await answer.json();
@@ -351,6 +361,7 @@ async function showPage() {
     row = await item(id);
   } catch (error) {
     if (page?.node !== node) return;
+    page.failed = true; // the page asks again when the board next asks
     node.replaceChildren(node.firstChild, el('p', { role: 'alert', class: 'problem' }, `${error.message} Go back to Now to pick another.`));
     return;
   }
@@ -496,7 +507,7 @@ function plan(row) {
 async function readPlan(id) {
   let read;
   try {
-    const answer = await fetch(`plan/${encodeURIComponent(id)}${TOKEN}`, { cache: 'no-store' });
+    const answer = await Board.read(`plan:${id}`, `plan/${encodeURIComponent(id)}${TOKEN}`); // a failed read shows the old-data line
     const text = await answer.text();
     if (answer.ok) read = { text };
     else {
@@ -569,9 +580,12 @@ export function install(board) {
     const row = drawer && rows().find((one) => one.id === drawer.id);
     if (row && JSON.stringify(row) !== drawer.seen) fillDrawer(row);
     if (row) readDrawerWhole(row);
-    const held = page?.row && rows().find((one) => one.id === page.id);
-    if (held) {
-      page.row = withOlder(held, page.whole);
+    if (page?.failed) { // an item the snapshot leaves out could not be read: read it again
+      closePage();
+      showPage();
+    } else if (page?.row) {
+      const held = rows().find((one) => one.id === page.id);
+      if (held) page.row = withOlder(held, page.whole);
       refreshPage();
       readWhole();
     }

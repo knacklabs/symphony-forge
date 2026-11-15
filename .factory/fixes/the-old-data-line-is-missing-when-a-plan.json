@@ -1,0 +1,91 @@
+{
+  "base": "6bd0bfe1a12a402287e91623f63d3b085bc394df",
+  "branch": "fix/the-old-data-line-is-missing-when-a-plan",
+  "done_when": "The board shows the old-data line for a failed plan read, retries an item's first failed read straight away, and shows the newest failure reason.",
+  "fix_kind": "ui",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "tests/test_board_says_when_data_is_old.py",
+      "file": "tests/test_board_says_when_data_is_old.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 228,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Standard: Fake only third-party services at their edge",
+      "work": 2
+    },
+    {
+      "area": "tests/test_board_says_when_data_is_old.py",
+      "file": "tests/test_board_says_when_data_is_old.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 252,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: tests/test_board_old_data_line_gaps.py::test_2_an_items_first_failed_read_is_asked_again_at_once_and_only_once",
+      "work": 1
+    },
+    {
+      "area": "src/forge/board_app/item.js",
+      "file": "src/forge/board_app/item.js",
+      "gain": 2,
+      "harm": 2,
+      "line": 465,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Follow-up: Retry reads for items absent from the Now snapshot",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "7a02221b9acd240e13b33123a0d4f3be35483e237c91391d689431ad0b4a273d",
+    "changed": "73cf70a304cadbcd1251a65035b3b659dfa00580f84104d73f5789bfd440a5d4",
+    "commit": "1558d5ec9f89c4a0703d0eda6b6eac1a696e606c",
+    "dismissals": [],
+    "findings": [],
+    "id": "b37efdbc-6b89-4ead-b163-4432b726e063",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-15T14:15:04.809510+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-15T14:42:01.481826+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-15T15:08:54.840095+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-15T14:42:01.492125+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "tests/test_board_says_when_data_is_old.py",
+    "reason": "The owner chose one more round: make the real board server fail in the tests and prove that the retry is at once",
+    "wait_id": "478d57e9-abfc-4e59-84f1-c32decfeb9aa",
+    "worker_round": 1
+  },
+  "stuck": {
+    "close": "00d5dd33-89ba-410e-becd-32fe0cfce2a1",
+    "head": "936e861aca257cc80d3b38c043ad621bc72470ac",
+    "keys": {},
+    "round": 1
+  },
+  "why": "The old-data line is missing when a plan read fails, a first failed item read waits for the next snapshot instead of retrying at once, and a second failure with another reason keeps the first reason on the line.",
+  "worker": "claude"
+}
