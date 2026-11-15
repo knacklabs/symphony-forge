@@ -1,4 +1,5 @@
 {
+  "allow_large": "A release bump changes the version in every file that records it",
   "base": "12460a98eedd86a05e3243158245dfd8b6ee623f",
   "branch": "fix/release-1-2-39",
   "done_when": "forge.toml, the package and every pinned reference say v1.2.39, and tests/test_release_version.py passes",
