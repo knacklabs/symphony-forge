@@ -110,7 +110,7 @@
     "id": "f370c14c-558d-4f1c-911d-838805a24b81",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -132,10 +132,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": null,
-    "head": "b253608e8bc2d8189d46150037744589933526d5",
+    "close": "c127ff29-6d8c-4f8f-bf8d-9f3bd7a175d0",
+    "head": "523868b3c53ce83d0139aebfe5b7e9fbf08dad6a",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "When a waiting run becomes a Claude session subagent while the Stop question is open, pressing Stop clears Forge's record of it, but the subagent keeps running and the warning Forge prints is dropped.",
   "worker": "claude"
