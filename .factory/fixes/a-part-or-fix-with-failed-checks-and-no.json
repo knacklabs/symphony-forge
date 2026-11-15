@@ -103,7 +103,7 @@
     "status": "blocked"
   },
   "round": 2,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-15T13:11:11.104132+00:00",
@@ -120,8 +120,12 @@
   ],
   "stop": {
     "at": "2026-11-15T13:41:00.799657+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "src/forge/board_facts.py",
-    "wait_id": "2e211cf6-08b7-498a-a989-8989c929e57b"
+    "reason": "The owner chose: repair the test only; the more-than-100-checks edge is an accepted known issue",
+    "wait_id": "2e211cf6-08b7-498a-a989-8989c929e57b",
+    "worker_round": 2
   },
   "stuck": {
     "close": "a945ae4c-5887-4916-ac96-7367f80622ae",
