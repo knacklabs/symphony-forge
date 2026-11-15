@@ -156,8 +156,7 @@ def test_1_machine_views_omit_old_finished_items_without_more_git_calls(
     assert "LIVE/SAVE" not in rows["LIVE"]["next"]["line"]
     assert rows["LIVE"]["next"]["line"] == "1 part of Live story can start now."
     assert rows["LIVE"]["next"]["command"] == "forge task start LIVE/PENDING"
-    next_view, _ = traced(repo, monkeypatch, "next", tmp_path / "trace.jsonl")
-    assert "LIVE/SAVE" not in next_view["next"]["line"]
+    assert "LIVE/SAVE" not in repo.forge("next").stdout
     repo.git("switch", "-q", "main")
     added = {}
     task_lines = []
@@ -287,10 +286,9 @@ def test_2_machine_next_preserves_due_spec_guidance_with_crlf(
         ".factory/stories/DUE/story.json": finished_story("DUE", OLD),
         "plans/roadmap.json": {"items": [{"key": "DUE", "spec": "docs/specs/crlf-result.md"}]},
     })
-    shown, _ = traced(repo, monkeypatch, "next", tmp_path / "trace.jsonl")
-    assert shown["next"]["line"] == (
-        "Every story from the Measured work DUE spec is done and its check date has passed; "
-        "measure completed jobs per week.")
-    assert shown["next"]["command"] == (
-        'forge fix start "Record the crlf-result success result" '
-        '--done "The crlf-result spec records its result" --kind mechanical')
+    shown = repo.forge("next")
+    assert shown.returncode == 0, shown.stderr
+    assert ("Every story from the Measured work DUE spec is done and its check date has passed; "
+            "measure completed jobs per week.") in shown.stdout.splitlines()
+    assert ('Next: forge fix start "Record the crlf-result success result" '
+            '--done "The crlf-result spec records its result" --kind mechanical') in shown.stdout

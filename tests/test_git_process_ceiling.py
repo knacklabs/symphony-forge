@@ -55,7 +55,7 @@ from json_log import append_json
 append_json(pathlib.Path({json.dumps(log.as_posix())}), sys.argv[1:])
 sys.exit(subprocess.run([{json.dumps(real_git)}, *sys.argv[1:]]).returncode)
 ''')
-    result = env.repo.forge(command, *(["--json"] if command == "next" else [item]))
+    result = env.repo.forge(command, *([] if command == "next" else [item]))
     # Read the log before verification starts any additional git processes.
     calls = [json.loads(line) for line in log.read_text("utf-8").splitlines()]
     if os.name == "nt":
@@ -68,10 +68,8 @@ sys.exit(subprocess.run([{json.dumps(real_git)}, *sys.argv[1:]]).returncode)
           f"{len(batches)} batches, {len(individual)} individual file reads")
     assert result.returncode == 0, result.stdout + result.stderr
     if command == "next":
-        shown = json.loads(result.stdout)
-        row = next(row for row in shown["items"] if row["id"] == item)
         # The worker committed its changes and exited, so close is the next action.
-        assert row["next"]["command"] == f"forge close {item}"
+        assert f"Next: forge close {item}" in result.stdout.splitlines()
     else:
         ready = f"Ready: {item} has a clean review and green checks."
         assert result.stdout.splitlines()[-1] == (

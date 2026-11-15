@@ -1,0 +1,37 @@
+{
+  "items": [
+    {
+      "key": "bug\ttests/test_next_announces_new_forge_releases.py\tGate: test_1_next_announces_new_releases_with_a_shared_daily_cache\tFORGE-PANE-1/NEXTJSON",
+      "kind": "bug",
+      "path": "tests/test_next_announces_new_forge_releases.py",
+      "line": 45,
+      "text": "Gate: test_1_next_announces_new_releases_with_a_shared_daily_cache",
+      "from": "blocking",
+      "item": "FORGE-PANE-1/NEXTJSON",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_next_reuses_command_work.py\tGate: test_1_next_reuses_work_within_a_command\tFORGE-PANE-1/NEXTJSON",
+      "kind": "bug",
+      "path": "tests/test_next_reuses_command_work.py",
+      "line": 91,
+      "text": "Gate: test_1_next_reuses_work_within_a_command",
+      "from": "blocking",
+      "item": "FORGE-PANE-1/NEXTJSON",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "improve\tsrc/forge/board.py\tthe per-row occurrences and next fields on board rows may now have no reader",
+      "kind": "improve",
+      "path": "src/forge/board.py",
+      "line": 646,
+      "text": "the per-row occurrences and next fields on board rows may now have no reader",
+      "from": "worker",
+      "item": "FORGE-PANE-1/NEXTJSON",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

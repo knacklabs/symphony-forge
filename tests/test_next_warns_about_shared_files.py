@@ -84,13 +84,6 @@ def test_1_next_names_shared_changed_files_and_suggests_merge_order(repo, gh, hi
     starts = [call["argv"] for call in calls if call.get("event") == "start"]
     # Count every git process, regardless of its command or argument order.
     assert len(starts) <= 100, starts
-    machine = repo.forge("next", "--json")
-    assert machine.returncode == 0, machine.stderr
-    following = json.loads(machine.stdout)["next"]
-    state, *machine_warnings = following["line"].splitlines()
-    assert state == next(line for line in shown.stdout.splitlines()[1:]
-                         if line not in warnings and not line.startswith("Next: "))
-    assert machine_warnings == warnings
     # The same warning remains when the part exists only on the remote.
     repo.git("push", "-q", "origin", "task/SHOP-SHOW")
     repo.git("worktree", "remove", str(folder))
@@ -131,21 +124,11 @@ def test_2_next_warns_when_renames_share_the_original_path(repo, gh, other_chang
             record = repo.path / ".git/forge/threads/fix/first.json"
             record.parent.mkdir(parents=True, exist_ok=True)
             record.write_text(json.dumps({"question": "Which name do you want?"}), encoding="utf-8")
-            before = repo.forge("next", "--json")
-            assert before.returncode == 0, before.stderr
     shown = repo.forge("next")
     assert shown.returncode == 0, shown.stderr
     assert ("The fix first and The fix second change the same files: "
             "src/original.py. Please merge one first.") in shown.stdout
-    machine = repo.forge("next", "--json")
-    assert machine.returncode == 0, machine.stderr
-    following = json.loads(machine.stdout)["next"]
-    previous = json.loads(before.stdout)["next"]
-    state, *warnings = following["line"].splitlines()
-    assert state == previous["line"]
-    assert following["step"] == previous["step"]
-    assert "asked a question" in following["line"]
-    assert len(warnings) == 1 and "merge one first" in warnings[0]
+    assert "asked a question" in shown.stdout
 
 
 def test_3_overlapping_fixes_can_close_and_merge(env):

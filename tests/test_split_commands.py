@@ -227,13 +227,12 @@ HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
             '\n'
             'options:\n'
             '  -h, --help  show this help message and exit\n',
- 'next': 'usage: forge next [-h] [--json]\n'
+ 'next': 'usage: forge next [-h]\n'
          '\n'
          'Say where things stand and give the exact next command\n'
          '\n'
          'options:\n'
-         '  -h, --help  show this help message and exit\n'
-         '  --json      Print the machine view\n',
+         '  -h, --help  show this help message and exit\n',
  'board': 'usage: forge board [-h] [--json] [--out PATH]\n'
           '\n'
           'Open the live board page on this computer\n'

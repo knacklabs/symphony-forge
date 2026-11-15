@@ -29,7 +29,7 @@ def failed_attempt(gh, attempt, test):
 
 @pytest.mark.platform
 @pytest.mark.parametrize("history,command", [
-    ("new", "next"), ("new", "next-json"), ("new", "board"), ("adopted-v1.2.2", "board")])
+    ("new", "next"), ("new", "board"), ("adopted-v1.2.2", "board")])
 def test_1_busy_views_finish_within_five_seconds(repo, gh, monkeypatch, history, command):
     client(repo, gh, history)
     monkeypatch.setenv("FORGE_NOW", NOW)

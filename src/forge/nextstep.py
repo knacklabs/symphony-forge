@@ -19,7 +19,6 @@ from typing import Any
 
 from forge import (__version__, approval, board, board_facts, close, codex, gaps, githooks, machine, migration_warnings,
                    journey, native, records, repo, review, spotted, story, score, task, time_records, upgrade)
-from forge.board_facts import machine_next
 from forge.task import _merged, _started, can_start, developer, github_login, owner, sections, start_base, unbuilt_fix, waits_for
 from forge.task import rows as task_rows
 
@@ -27,7 +26,7 @@ COMMANDS = [
     {
         "words": "next", "run": "next_step", "changes_state": False,
         "help": "Say where things stand and give the exact next command",
-        "args": [(('--json',), {"action": "store_true", "help": "Print the machine view"})], "position": 50,
+        "args": [], "position": 50,
         "listing": "| `forge next` | Says where things stand and gives the exact next command |",
     },
     {
@@ -152,7 +151,7 @@ def next_step(args: Any) -> int:
         except repo.Refused as refusal:
             if refusal.entry == repo.REFUSALS["added_work_min_gain"]:
                 raise
-    notice = upgrade.release_notice(top) + fullrun.notices(top) if not args.json else []
+    notice = upgrade.release_notice(top) + fullrun.notices(top)
     # Populate shared facts before concurrent readers can race on their first lookup.
     repo.forge_dir(top)
     repo.default_branch(top)
@@ -160,13 +159,12 @@ def next_step(args: Any) -> int:
     # Independent network reads overlap each other and the bulk local history.
     with ThreadPoolExecutor(max_workers=6) as pool:
         open_fields = "headRefName,headRefOid,body,url,isDraft"
-        open_read = (pool.submit(board_facts._listing, top, "open", fields=open_fields)
-                     if not args.json else None)
-        github_read = pool.submit(board_facts.prs, top, fresh=not args.json,
+        open_read = pool.submit(board_facts._listing, top, "open", fields=open_fields)
+        github_read = pool.submit(board_facts.prs, top, fresh=True,
                                   merged_fields="headRefName",
                                   open_fields=open_fields, open_read=open_read)
         def checks():
-            if open_read is not None and open_read.result() == []:
+            if open_read.result() == []:
                 return []  # A complete empty inventory has no open PR checks to read.
             return board._machine_prs(top)
         pending = {"alerts": pool.submit(_failed_schedules, top),
@@ -178,11 +176,10 @@ def next_step(args: Any) -> int:
         activity.result()
         facts = {name: future.result() for name, future in pending.items()}
     lines = warnings + _report(
-        top, history, schedules=True, numbers=not args.json, facts=facts)[0]
+        top, history, schedules=True, numbers=True, facts=facts)[0]
     step = ([journey.step_line(top, _report_config(top, {}), history, idle=_idle(top)[0] in lines)]
-            if not args.json and (top / "forge.toml").is_file() else [])
-    print(json.dumps({**board.machine_board(top, history), "next": machine_next(lines)})
-          if args.json else "\n".join(step + notice + lines))
+            if (top / "forge.toml").is_file() else [])
+    print("\n".join(step + notice + lines))
     return 0
 
 

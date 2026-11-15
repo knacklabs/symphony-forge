@@ -1,5 +1,4 @@
-"""Board and next JSON make no more git calls when more fixes and stories were added, and next reads
-GitHub's pull request lists from the board's copy, kept a minute.
+"""The board JSON makes no more git calls when more fixes and stories were added.
 
 Git Trace2 counts command starts and the stub gh logs its calls; there is no wall-clock assertion.
 """
@@ -69,7 +68,7 @@ def progress(repo, tmp_path, names):
 
 
 @pytest.mark.parametrize("history", ["new", "adopted-v1.2.2"])
-@pytest.mark.parametrize("command", ["board", "next"])
+@pytest.mark.parametrize("command", ["board"])
 def test_1_machine_views_cost_no_git_calls_per_finished_item(repo, gh, monkeypatch, tmp_path, history, command):
     client(repo, gh, history)
     monkeypatch.setenv("FORGE_NOW", NOW)
@@ -87,11 +86,11 @@ def test_1_machine_views_cost_no_git_calls_per_finished_item(repo, gh, monkeypat
     assert lists(gh)[asked:] == [], "a second view within the minute asked GitHub again"
 
 
-PER_ITEM = 26  # git commands one more fix and diverged story in progress may cost; measured 17 (board), 24 to 26 (next)
+PER_ITEM = 26  # git commands one more fix and diverged story in progress may cost; measured 17
 
 
 @pytest.mark.parametrize("history", ["new", "adopted-v1.2.2"])
-@pytest.mark.parametrize("command", ["board", "next"])
+@pytest.mark.parametrize("command", ["board"])
 def test_2_machine_views_cost_a_small_fixed_number_of_git_calls_per_item_in_progress(
         repo, gh, monkeypatch, tmp_path, history, command):
     client(repo, gh, history)
@@ -114,13 +113,3 @@ def test_2_machine_views_cost_a_small_fixed_number_of_git_calls_per_item_in_prog
     # The first read fills six past weeks; later reads refresh only open PRs and this week.
     assert asked == {4: 8, 8: 2, 12: 2}, f"GitHub calls grew with the items in progress: {asked}"
 
-
-@pytest.mark.parametrize("history", ["new", "adopted-v1.2.2"])
-def test_3_next_json_shares_the_boards_github_cache(repo, gh, monkeypatch, tmp_path, history):
-    client(repo, gh, history)
-    monkeypatch.setenv("FORGE_NOW", NOW)
-    traced(repo, monkeypatch, "board", tmp_path / "trace.jsonl")
-    assert lists(gh), "the board asked GitHub nothing"
-    asked = len(lists(gh))
-    traced(repo, monkeypatch, "next", tmp_path / "trace.jsonl")
-    assert lists(gh)[asked:] == [], "next --json asked GitHub for lists the board had just read"

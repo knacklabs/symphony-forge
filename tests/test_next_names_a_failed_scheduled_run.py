@@ -125,8 +125,7 @@ def test_1_next_names_a_failed_scheduled_run_and_offers_its_fix(repo, gh, tmp_pa
     assert lines[3].startswith(f"The fix {fix} ")
     assert lines.count(lines[3]) == 1
     assert "forge fix start" not in still.stdout
-    machine = repo.forge("next", "--json", cwd=client)
-    assert json.loads(machine.stdout)["next"]["command"] == f"forge work {fix}"
+    assert f"Next: forge work {fix}" in repo.forge("next", cwd=client).stdout.splitlines()
 
     # The fix started on another machine: only its pushed branch is here.
     tree = next(line.removeprefix("worktree ") for line in repo.git(

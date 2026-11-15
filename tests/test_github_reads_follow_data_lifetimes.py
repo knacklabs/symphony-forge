@@ -36,7 +36,7 @@ def setup(repo, gh, monkeypatch, history):
 
 
 def read(repo):
-    shown = repo.forge("next", "--json")
+    shown = repo.forge("board", "--json")
     assert shown.returncode == 0, shown.stdout + shown.stderr
     data = json.loads(shown.stdout)
     assert "LIVE" in {row["id"] for row in data["items"]}

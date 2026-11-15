@@ -79,7 +79,7 @@ def test_4_doctor_and_board_show_the_machine_split_and_agent_entries(env, tmp_pa
                        f"    pointer._obj.total = {total}\n    pointer._obj.available = {available}\n"
                        "    return 1\nctypes.windll.kernel32.GlobalMemoryStatusEx = memory_status\n")
         shim.write_text(native_source.replace("from forge.cli import main", native + "from forge.cli import main"), "utf-8")
-        for command in ("board", "next"):
+        for command in ("board",):
             result = repo.forge(command, "--json")
             assert result.returncode == 0, result.stderr
             assert json.loads(result.stdout)["machine"] == {

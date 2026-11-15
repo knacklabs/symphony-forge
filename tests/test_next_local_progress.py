@@ -126,12 +126,8 @@ def test_4_failed_checks_override_next_only_for_the_current_pull_request_head(re
     assert plain.returncode == 0, plain.stderr
     assert "Next: forge close page" in plain.stdout
     assert "Next: forge work page" not in plain.stdout
-    machine = repo.forge("next", "--json")
-    assert machine.returncode == 0, machine.stderr
-    following = json.loads(machine.stdout)
-    assert following["next"]["command"] == "forge close page"
     board, _, full = _board(repo, tmp_path)
-    for data in (board, following):
+    for data in (board,):
         row = _row(data, "page")
         assert row["stage"] == "waiting for checks"
         assert row["pr"]["checks"] == "unknown" and not row["pr"]["failures"]
@@ -154,7 +150,7 @@ def test_4_failed_checks_override_next_only_for_the_current_pull_request_head(re
             # The earlier calls deliberately retained the cached failed push.
             (receipt.parent / "checks-cache.json").unlink()
         board, _, full = _board(repo, tmp_path)
-        machine = repo.forge("next", "--json")
+        machine = repo.forge("board", "--json")
         assert machine.returncode == 0, machine.stderr
         for data in (board, json.loads(machine.stdout)):
             row = _row(data, "page")
@@ -199,7 +195,7 @@ def test_7_current_remote_failures_survive_missing_or_behind_local_branch(
     github(gh, [failed])
 
     board, _, full = _board(repo, tmp_path)
-    machine = repo.forge("next", "--json")
+    machine = repo.forge("board", "--json")
     assert machine.returncode == 0, machine.stderr
     for data in (board, json.loads(machine.stdout)):
         row = _row(data, "page")

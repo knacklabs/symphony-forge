@@ -25,11 +25,9 @@ STORY = "FORGE-MOD-1"
 
 
 def row(repo, item):
-    boards = [view(repo, command) for command in ("board", "next")]
-    assert boards[0]["items"] == boards[1]["items"]
-    assert boards[0]["events"] == boards[1]["events"]
-    rows = [r for parent in boards[0]["items"] for r in [parent, *parent["children"]]]
-    return next(r for r in rows if r["id"] == item), boards[0]
+    board = view(repo, "board")
+    rows = [r for parent in board["items"] for r in [parent, *parent["children"]]]
+    return next(r for r in rows if r["id"] == item), board
 
 
 # ponytail: each case runs several forge commands; a busy machine needs more than the 150 s default.
