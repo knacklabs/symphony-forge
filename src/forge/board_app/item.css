@@ -152,6 +152,18 @@
   gap: var(--space-2);
 }
 
+.round-parts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.part-name {
+  margin: 0 0 var(--space-1);
+  font-size: var(--size-label);
+  color: var(--ink-2);
+}
+
 .rounds li {
   display: grid;
   grid-template-columns: 14px 1fr auto;
