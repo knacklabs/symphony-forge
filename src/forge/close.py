@@ -20,7 +20,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any
 
-from forge.close_remote import push_replay, reconcile, save_replay
+from forge.close_remote import push_replay, reconcile, replay_baseline, save_replay
 from forge import __version__, app_baseline, checks, codex, design, githooks, init, merge_review, merge_timings, migration_warnings, repo, review, review_skip, score, spotted, story, sync, task, time_records
 
 REFUSALS = {
@@ -716,9 +716,7 @@ def _merge_default(top: Path, item: str, branch: str, default: str,
         lease = remote.split()[0] if remote else ""
         if lease and repo.run("git", "merge-base", "--is-ancestor", lease, original, cwd=top).returncode:
             repo.refuse(REFUSALS["replay_remote"], branch=branch, item=item)
-        baseline = repo.git("-c", "user.name=Forge", "-c", "user.email=forge@localhost",
-                            "commit-tree", f"{target}^{{tree}}", "-p", base, "-p", target,
-                            "-m", "Follow-up replay baseline", cwd=top)
+        baseline = replay_baseline(top, item, base, target, original)
         merged = repo.run("git", "merge-tree", "--write-tree", "--name-only", "-z",
                           "--no-messages", baseline, original, cwd=top)
         if merged.returncode not in (0, 1):
@@ -728,8 +726,10 @@ def _merge_default(top: Path, item: str, branch: str, default: str,
                 top, tree=tree, files=files, ours=original, incoming=target)):
             repo.refuse(REFUSALS["replay_conflict"], default=default, files=", ".join(files),
                         item=item)
-        done = repo.run("git", "rebase", "--rebase-merges=rebase-cousins", "--onto", target,
-                        baseline, cwd=top)
+        # Pin the rebase against the developer's Git settings: no recreated merges, the engine that
+        # keeps empty commits, no autostash and no moving of other branches.
+        done = repo.run("git", "rebase", "--merge", "--no-rebase-merges", "--no-autostash",
+                        "--no-update-refs", "--onto", target, baseline, cwd=top)
         if done.returncode and not merge_timings.resolve(
                 top, replay=True, ours=":3", incoming=":2"):
             files = repo.git("diff", "--name-only", "--diff-filter=U", cwd=top).splitlines() or files
