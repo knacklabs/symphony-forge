@@ -1,0 +1,15 @@
+{
+  "base": "42b9854290aab1eacbb665281c9c7361aed23d4e",
+  "branch": "fix/the-pane-shows-the-previous-session-s-ro",
+  "done_when": "In the /forge pane, a new session whose first read fails shows only \"Forge did not answer.\", and each decision row shows its heading and each plain test run row opens an output file.",
+  "fix_kind": "ui",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-15T10:15:52.655187+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The pane shows the previous session's rows with their age when a new session's first read fails, shows a decision by its file name, and has no output to open for a plain test run."
+}
