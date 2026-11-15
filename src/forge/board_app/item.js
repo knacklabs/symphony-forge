@@ -317,6 +317,7 @@ async function showPage() {
     row = await item(id);
   } catch (error) {
     if (page?.node !== node) return;
+    page.failed = true; // the page asks again when the board next asks
     node.replaceChildren(node.firstChild, el('p', { role: 'alert', class: 'problem' }, `${error.message} Go back to Now to pick another.`));
     return;
   }
@@ -534,9 +535,12 @@ export function install(board) {
   Board.onSnapshot(() => {
     const row = drawer && rows().find((one) => one.id === drawer.id);
     if (row && JSON.stringify(row) !== drawer.seen) fillDrawer(row);
-    const held = page?.row && rows().find((one) => one.id === page.id);
-    if (held) {
-      page.row = withOlder(held);
+    if (page?.failed) { // an item the snapshot leaves out could not be read: read it again
+      closePage();
+      showPage();
+    } else if (page?.row) {
+      const held = rows().find((one) => one.id === page.id);
+      if (held) page.row = withOlder(held);
       refreshPage();
       readWhole();
     }
