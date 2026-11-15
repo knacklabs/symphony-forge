@@ -144,11 +144,31 @@ function roundWhat(round) {
   return recordedWords(text, recordedWords(text.split(' — ')[0]));
 }
 
+// A round is a review, not a worker turn that was never reviewed; a summary from an older release has only reviews.
+const reviewed = (rounds) => (rounds || []).filter((round) => round.reviewed !== false);
+
+// A story's review rounds sit on its parts, so its groups are its own rounds, then each part's under the part's title.
+// A merged part with no review in the data has its own group: its history is not on this machine.
+function roundGroups(row) {
+  const parts = row.kind === 'story' ? row.children.map((part) => ({ id: part.id, title: part.title,
+    rounds: reviewed(part.rounds), missing: STAGES[part.stage] === 'Merged' && !reviewed(part.rounds).length })) : [];
+  const groups = [{ id: row.id, title: null, rounds: reviewed(row.rounds) }, ...parts]
+    .filter((group) => group.rounds.length || group.missing);
+  return groups.map((group) => ({ ...group, title: group.title || (groups.length > 1 ? 'The story itself' : null) }));
+}
+
 function figures(row) {
   const count = row.findings?.count;
+  const groups = roundGroups(row);
+  const total = groups.flatMap((group) => group.rounds).reduce((sum, round) => sum + (round.reviews
+    ?? (round.first != null && round.last != null ? round.last - round.first + 1 : 1)), 0);
+  // A story's parts that merged long ago come only with its full history, so until it is read the total is not known.
+  // A merged part with no history here leaves only a floor.
+  const gaps = groups.some((group) => group.missing);
+  const rounds = row.kind !== 'story' ? (row.rounds ? total : row.round ?? 'unknown')
+    : !row.full ? 'unknown' : !gaps ? total : total ? `at least ${total}` : 'unknown';
   return el('dl', { class: 'figures' },
-    [['review rounds', row.rounds ? row.rounds.reduce((total, round) => total
-      + (round.first != null && round.last != null ? round.last - round.first + 1 : 1), 0) : row.round ?? 'unknown'],
+    [['review rounds', rounds],
      ['known issues kept', issues(row).length],
      ['open findings', typeof count === 'number' ? count : 'unknown']]
       .map(([label, value]) => el('div', {}, el('dt', {}, label), el('dd', {}, String(value)))));
@@ -171,12 +191,18 @@ function timeBar(row) {
 }
 
 function roundList(row, limit) {
-  const list = (row.rounds || []).slice(-limit);
-  if (!list.length) return el('p', { class: 'quiet' }, 'No review rounds yet. They show here once the work is reviewed.');
-  return el('ol', { class: 'rounds' }, list.map((round) => el('li', {},
-    el('span', { class: `dot ${round.findings?.length || round.new_findings ? 'stuck' : 'moving'}`, 'aria-hidden': 'true' }),
-    el('span', { class: 'what' }, el('strong', {}, `${roundName(round)}: `), roundWhat(round)),
-    el('span', { class: 'took' }, duration(roundSeconds(round))))));
+  if (row.kind === 'story' && !row.full) return el('p', { class: 'quiet' }, 'Reading the full history…');
+  const groups = roundGroups(row);
+  if (!groups.length) return el('p', { class: 'quiet' }, 'No review rounds yet. They show here once the work is reviewed.');
+  const list = (group) => el('ol', { class: 'rounds', ...(group.title ? { 'aria-labelledby': `rounds-${group.id}` } : {}) },
+    group.rounds.slice(-limit).map((round) => el('li', {},
+      el('span', { class: `dot ${round.findings?.length || round.new_findings ? 'stuck' : 'moving'}`, 'aria-hidden': 'true' }),
+      el('span', { class: 'what' }, el('strong', {}, `${roundName(round)}: `), roundWhat(round)),
+      el('span', { class: 'took' }, duration(roundSeconds(round))))));
+  if (groups.length === 1 && !groups[0].title) return list(groups[0]);
+  return el('div', { class: 'round-parts' }, groups.map((group) => el('div', { class: 'round-part' },
+    el('p', { class: 'part-name', id: `rounds-${group.id}` }, group.title),
+    group.rounds.length ? list(group) : el('p', { class: 'quiet' }, 'Its review history is not on this laptop.'))));
 }
 
 function partList(parts, current) {
@@ -242,13 +268,31 @@ async function openDrawer(id) {
       return;
     }
   }
+  drawer.whole = row.full ? row : null;
   fillDrawer(row);
   node.querySelector('h2').focus();
+  readDrawerWhole(row);
 }
 
 function fillDrawer(row) {
   drawer.seen = JSON.stringify(row);
-  replaceContent(drawer.node, ...drawerBody(row));
+  replaceContent(drawer.node, ...drawerBody(withOlder(row, drawer.whole)));
+}
+
+// Like the full page, the drawer reads a story's whole history once: the board's snapshot leaves out its older parts.
+async function readDrawerWhole(row) {
+  const mine = drawer;
+  if (mine.whole || mine.reading || row.kind !== 'story') return;
+  mine.reading = true;
+  let whole = null;
+  try {
+    whole = await item(mine.id);
+  } catch {} // the drawer shows that it is reading, and the next snapshot reads again
+  if (drawer !== mine) return;
+  mine.reading = false;
+  if (!whole) return;
+  mine.whole = whole;
+  fillDrawer(rows().find((one) => one.id === mine.id) || whole);
 }
 
 function closeDrawer(restore = true) {
@@ -279,7 +323,7 @@ async function item(id) {
     body = await answer.json();
   } catch {}
   if (!answer.ok) throw new Error(body.error || 'The board could not read this item. Open it again in a moment.');
-  return body.item;
+  return { ...body.item, full: true };
 }
 
 function openItem(id) {
@@ -341,15 +385,15 @@ async function readWhole() {
   page.reading = false;
   if (!whole) return;
   page.whole = whole;
-  page.row = withOlder(page.row);
+  page.row = withOlder(page.row, page.whole);
   drawPage();
 }
 
-function withOlder(row) {
-  const older = row.kind === 'story' && page.whole?.children;
+function withOlder(row, whole) {
+  const older = row.kind === 'story' && whole?.children;
   if (!older) return row;
   const now = new Map(row.children.map((part) => [part.id, part]));
-  return { ...row, children: [...older.map((part) => now.get(part.id) || part), ...row.children.filter((part) => !older.some((one) => one.id === part.id))] };
+  return { ...row, full: true, children: [...older.map((part) => now.get(part.id) || part), ...row.children.filter((part) => !older.some((one) => one.id === part.id))] };
 }
 
 function tabId(name) {
@@ -535,12 +579,13 @@ export function install(board) {
   Board.onSnapshot(() => {
     const row = drawer && rows().find((one) => one.id === drawer.id);
     if (row && JSON.stringify(row) !== drawer.seen) fillDrawer(row);
+    if (row) readDrawerWhole(row);
     if (page?.failed) { // an item the snapshot leaves out could not be read: read it again
       closePage();
       showPage();
     } else if (page?.row) {
       const held = rows().find((one) => one.id === page.id);
-      if (held) page.row = withOlder(held);
+      if (held) page.row = withOlder(held, page.whole);
       refreshPage();
       readWhole();
     }

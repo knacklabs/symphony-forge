@@ -1,0 +1,99 @@
+{
+  "base": "de01ac46000938a0cd5f0d43df991d2b1cd05a10",
+  "branch": "fix/a-story-whose-parts-have-merged-says-no",
+  "done_when": "On the board, a story with merged parts lists each part's review rounds under the part's plain title, from its full history, and counts them in the story's review rounds figure.",
+  "fix_kind": "ui",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "src/forge/board_app/item.js",
+      "file": "src/forge/board_app/item.js",
+      "gain": 4,
+      "harm": 3,
+      "line": 279,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Show merged parts' review rounds from published full history",
+      "work": 3
+    },
+    {
+      "area": "src/forge/board_app/item.js",
+      "file": "src/forge/board_app/item.js",
+      "gain": 4,
+      "harm": 3,
+      "line": 157,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "The story count includes work that has not been reviewed",
+      "work": 2
+    },
+    {
+      "area": "test_1_a_story_whose_parts_merged_lists_their_rounds_and_counts_them() in tests/test_board_story_rounds_from_parts.py",
+      "file": "tests/test_board_story_rounds_from_parts.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 98,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: tests/test_board_story_rounds_from_parts.py::test_1_a_story_whose_parts_merged_lists_their_rounds_and_counts_them",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "725ab5dcbd6ed46438a823cba693d36e485af1ef3f12396b14c6c97fbe81478b",
+    "changed": "8da431f8f8003af58eccda03e1cba5ca4c2ea670d4fb663bda1e456f7f90838f",
+    "commit": "09b3587069b1702536bdc0289d47c6eeb2e63e20",
+    "dismissals": [],
+    "findings": [],
+    "id": "109dd95c-6ca5-45e6-bb6a-7c1679b79985",
+    "status": "clean"
+  },
+  "round": 4,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-15T14:24:36.912002+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-15T14:41:39.728633+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-15T15:05:58.709614+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-15T15:29:42.037819+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-15T16:10:58.175194+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-15T15:05:58.709883+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "src/forge/board_app/item.js",
+    "reason": "The owner chose: repair the fold; the total keeps the word 'unknown' when no review is known and a part's history is missing",
+    "wait_id": "d6e17f94-5dac-4418-8ee2-e558219230e9",
+    "worker_round": 2
+  },
+  "stuck": {
+    "close": "aeb3c54b-3662-40e5-b903-e93e5c3ab274",
+    "head": "9b3b0c27cedb256cda5960f3d0a2a871d4fae148",
+    "keys": {},
+    "round": 3
+  },
+  "why": "A story whose parts have merged says \"No review rounds yet\" and shows an unknown review round count, even though its review rounds sit on its parts.",
+  "worker": "claude"
+}

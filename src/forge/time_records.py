@@ -38,6 +38,16 @@ def _short(entry: dict[str, Any]) -> dict[str, Any]:
     return {**entry, "line": line, "findings": None, "seconds_known": False}
 
 
+def _reviews(entry: dict[str, Any]) -> int:
+    """How many review rounds a summarised entry stands for; a worker turn with no review stands for none."""
+    if entry.get("reviewed") is False:
+        return 0
+    if "reviews" in entry:
+        return entry["reviews"]
+    first, last = entry.get("first"), entry.get("last")
+    return last - first + 1 if first is not None and last is not None else 1
+
+
 def _fold(a: dict[str, Any], b: dict[str, Any]) -> dict[str, Any]:
     seconds = {c: round(a["seconds"].get(c, 0) + b["seconds"].get(c, 0), 3)
                for c in CATEGORIES if c in a["seconds"] or c in b["seconds"]}
@@ -50,7 +60,8 @@ def _fold(a: dict[str, Any], b: dict[str, Any]) -> dict[str, Any]:
             + "".join(f"{label} {duration(seconds[c])}; " for c, label in zip(CATEGORIES, LABELS) if c in seconds)
             + "findings: " + " new, ".join("unknown" if n is None else str(n) for n in counts) + " repeated")
     return {"round": None, "worker_round": None, "line": line, "findings": None, "new_findings": counts[0],
-            "repeat_findings": counts[1], "seconds": seconds, "first": first, "last": last}
+            "repeat_findings": counts[1], "seconds": seconds, "first": first, "last": last,
+            "reviewed": bool(reviews := _reviews(a) + _reviews(b)), "reviews": reviews}
 
 
 def checkpoint(rows: list[dict[str, Any]]) -> list[Any]:
@@ -391,6 +402,7 @@ def item(top: Path, key: str, state: dict[str, Any], *,
         steps.append(f"findings: {fresh if fresh is not None else 'unknown'} new, {repeats if repeats is not None else 'unknown'} repeated"
                      + (f" — {titles}" if titles else ""))
         rounds.append({"round": number, "worker_round": worker_round,
+                       "reviewed": bool(result or current["review_timings"]),
                        "line": f"Round {number if number is not None else 'unknown'}: " + "; ".join(steps),
                        "findings": findings, "new_findings": fresh, "repeat_findings": repeats,
                        "seconds": {c: round(v, 3) for c, v in per_attempt.get(index, {}).items()},
