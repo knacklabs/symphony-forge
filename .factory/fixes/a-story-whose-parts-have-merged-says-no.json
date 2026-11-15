@@ -87,7 +87,7 @@
     "id": "b9b93b1e-eb8d-43fa-918f-4da6e2b000f3",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -109,10 +109,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": null,
-    "head": "ab4bc4c36caf19c07ba5612f12120f0e07ce205d",
+    "close": "4bda8a45-726c-481b-8e35-89ef6dd7115a",
+    "head": "c712e80d7b3e8215974e4a47db50bf8e2df88a69",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "A story whose parts have merged says \"No review rounds yet\" and shows an unknown review round count, even though its review rounds sit on its parts.",
   "worker": "claude"
