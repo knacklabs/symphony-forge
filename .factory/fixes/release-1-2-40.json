@@ -12,8 +12,8 @@
       "gain": 3,
       "harm": 3,
       "line": 1,
-      "outcome": "open",
-      "reason": "",
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: The owner accepts the note: the guide test passed on the laptop, and the full Linux run on the release commit runs every test before the release is published",
       "round": 1,
       "security": false,
       "title": "Gate: tests/test_guides_agree.py",
@@ -25,7 +25,13 @@
     "branch_diff": "25733e9918b41104f331a4489d80692b6472868754c393f3f5e8c03366ff5cde",
     "changed": "eeb044da9a5ee4f5ff37358c075ad986b98082d8aa4e455f686e4c59de24d408",
     "commit": "a7b2ba87000dee9b11669d3fbeccb3fcba9dae8c",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: The owner accepts the note: the guide test passed on the laptop, and the full Linux run on the release commit runs every test before the release is published",
+        "finding": 1
+      }
+    ],
     "findings": [
       {
         "body": "Gain 3, Work 1, Harm 3\nRaise: Test\nCase: normal use - The release pull request runs its configured CI checks.\nThe proof list names `tests/test_guides_agree.py`, but `.github/workflows/forge.yml:88` runs `forge test --change`. The picker at `src/forge/fasttest.py:392` selects changed and related tests plus the entries in `.forge/always-tests.txt`; this diff does not select the guide suite, and it is not on that list. The separate plugin PR job runs other tests. The release can therefore pass its checks without running this named proof. Include the guide suite in the pull-request run.\nAdds work: run the listed guide suite in PR CI; F 1 x H 2 = 2; 2 x C = 2",
@@ -39,10 +45,10 @@
       }
     ],
     "id": "125e3d00-02d2-4666-ba96-6616d02f5e87",
-    "status": "blocked"
+    "status": "clean"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-15T13:09:44.634439+00:00",
@@ -55,8 +61,12 @@
   ],
   "stop": {
     "at": "2026-11-15T13:24:15.652010+00:00",
+    "by": "owner",
+    "choice": "accept",
     "file": ".github/workflows/forge.yml",
-    "wait_id": "cac300f6-f573-43f3-a0b8-91b3387e5046"
+    "reason": "The owner accepts the note: the guide test passed on the laptop, and the full Linux run on the release commit runs every test before the release is published",
+    "wait_id": "cac300f6-f573-43f3-a0b8-91b3387e5046",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
