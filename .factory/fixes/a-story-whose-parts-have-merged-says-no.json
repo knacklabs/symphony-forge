@@ -88,7 +88,7 @@
     "status": "blocked"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-15T14:24:36.912002+00:00",
@@ -101,8 +101,12 @@
   ],
   "stop": {
     "at": "2026-11-15T14:41:39.738795+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "src/forge/board_app/item.js",
-    "wait_id": "feed9cb3-cbc4-44c0-9ad3-359614e9e8ac"
+    "reason": "The owner chose: repair the count and the test; for an old part with no history on this laptop show a true line and 'at least N'; no extra GitHub calls",
+    "wait_id": "feed9cb3-cbc4-44c0-9ad3-359614e9e8ac",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
