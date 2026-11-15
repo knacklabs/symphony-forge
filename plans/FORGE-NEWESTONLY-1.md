@@ -4,40 +4,19 @@
 
 ## What changes for you
 
-<What the people who use this will notice, in plain English. No IDs, codes or jargon. End each
-item with its source in plain words, such as (Source: the client's note on late orders, 12 Oct),
-or with the sourced item that needs it, such as (Needed by: the Customers screen). A source is a
-client note, a brief answer, a decision, a screen marked Build now at sign-off, a fixed rule of
-the app, or the owner's own request with its date. Name each screen, field, endpoint, tool and
-setting that the plan adds in one of these items.>
-
-<!-- For user-facing parts: run impeccable init if PRODUCT.md is absent. Design the screens
-in a Claude Design artifact made with the client's design system (link in
-docs/design/design-system.md); on a Codex-only host without artifact tools, use HTML artboards.
-Save each screen and its images in docs/design/<KEY>/. Copy .forge/design/support.js beside
-the HTML screens and run it for a 1440 by 900 PNG per screen. Commit the folder. Use its git tree
-id (git rev-parse HEAD:docs/design/<KEY>) in the last line below. For small changes to existing
-screens that add no screen and change no flow, use Design: none (<why>) instead.
-Remove this comment and omit
-the Design line for a backend-only story. Cold read follows the design; one plan approval binds
-these exact files. A folder edit needs its new tree id and a new plan approval.
-The rule starts with the next plan read and approval. Plans approved without a Design line
-before this rule keep their existing approval. -->
-Design: docs/design/<KEY>/ (<tree id>)
+- Repos pinned to the release just before the newest one can upgrade directly; repos pinned to any older release are refused with one line telling them to upgrade through each release in order.
+- Repos on an older pin get one line on every command except upgrade telling them to upgrade, and the shared lanes and the /forge pane read only the current data format.
+- Forge's own tests check each rule on a new repo, plus one test of the upgrade from the release before and one test of the refusal on an older pin for the whole suite. The earlier-adopted test cases and old-release fixtures are removed (470 of 832 test files), and the review rule in AGENTS.md and the standards are rewritten to match.
+- forge migrate for a copied-in old Forge stays one more release with a notice that it will be removed, then it is deleted.
 
 ## Why
 
-Forge supports only its newest release
-
-
+Forge keeps working for repos pinned to many older releases, so each rule is tested against old repos too and that test load grows with every release.
 
 ## Done when
 
-<!-- One bold plain sentence per result, which the owner approves: no code names, file paths or
-test names. Its evidence, edge cases and proving tests go under the same number in Done-when
-details. -->
-
-1. **Something anyone can observe once this is done.**
+1. **Older pins are refused with the upgrade-in-order line, and the test suite keeps only new-repo cases plus one upgrade test and one refusal test in all.**
+2. **The release that makes the cut ships only after the one client repo in daily use is on v1.2.40, the last release that upgrades from any older one.**
 
 ## Risks
 
