@@ -4,12 +4,20 @@
   "done_when": "After the owner confirms Stop on such a run, the pane does not stop it and shows a note that the agent of that session must stop it.",
   "fix_kind": "ui",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-15T14:15:21.965978+00:00",
       "step": "start"
     }
   ],
-  "why": "When a waiting run becomes a Claude session subagent while the Stop question is open, pressing Stop clears Forge's record of it, but the subagent keeps running and the warning Forge prints is dropped."
+  "stuck": {
+    "close": null,
+    "head": "b253608e8bc2d8189d46150037744589933526d5",
+    "keys": {},
+    "round": null
+  },
+  "why": "When a waiting run becomes a Claude session subagent while the Stop question is open, pressing Stop clears Forge's record of it, but the subagent keeps running and the warning Forge prints is dropped.",
+  "worker": "claude"
 }
