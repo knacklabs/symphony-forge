@@ -542,7 +542,7 @@ def failed_runs(top: Path, items: dict[str, Item], best: dict[str, Any], now: da
 def needs_you(top: Path, rows: list[Item], readiness: dict[str, Item], person_waits: dict[str, list[Item]],
               now: datetime, runs: list[Item]) -> list[Item]:
     """Every item waiting on a person, oldest first, as `nextstep.person_waits` decides it: the
-    waits each part's and fix's row worked out, each story's plan approval or blocking problem,
+    waits each part's and fix's row worked out, failed checks idle a day or more, each story's plan approval or blocking problem,
     and the failed full test run."""
     from forge import nextstep  # nextstep imports this module
 
@@ -554,7 +554,10 @@ def needs_you(top: Path, rows: list[Item], readiness: dict[str, Item], person_wa
             if blocker or row.get("state") == "waiting for approval":
                 waits = nextstep.person_waits(top, row["id"], {}, row["state"], blocker=blocker)
         elif row.get("state") in ("in progress", "ready to merge"):
-            waits = person_waits.get(row["id"], [])
+            waits = list(person_waits.get(row["id"], []))
+            if row["stage"] == "checks failed" and (row["idle_seconds"] or 0) >= 86400:  # as `blocked` counts idle
+                waits.append({"reason": "checks failed", "since": row["idle_since"],
+                              "detail": f"Checks failed, no activity for {time_records.plain(row['idle_seconds'])}"})
         found += [_entry(row, wait["reason"], wait["detail"], wait["since"], now) for wait in waits]
     found += runs
     for entry in found:
