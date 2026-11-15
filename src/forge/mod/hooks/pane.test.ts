@@ -57,6 +57,7 @@ function machine(on: On, surface: RenderSurface = 'terminal') {
   on('fs.exists', (_$, e) => ({ value: key(e.path) in world.files }))
   on('fs.stat', (_$, e) => ({ value: { kind: world.folders.includes(key(e.path)) ? 'dir' : 'file', size: (world.files[key(e.path)] ?? '').length, mtimeMs: 0, isLink: false } }))
   on('fs.read', (_$, e) => ({ value: world.files[key(e.path)] ?? '' }))
+  on('session.end', (_$, e) => ({ sessionId: e.sessionId }))
   on('store.get', () => ({ value: world.stored }))
   on('store.set', () => ({ value: undefined }))
   on('tool.call', { tool: 'AskUserQuestion' }, (_$, e) => {
@@ -198,6 +199,42 @@ for (const surface of ['terminal', 'desktop'] as const) {
     for (const earlier of ['Kept row', 'Last update', 'Nothing is running.', 'Loading']) expect(drawn).not.toContain(earlier)
   })
 }
+
+// /clear starts a new session inside the same loaded mod: session.start does not fire, session.end does.
+for (const surface of ['terminal', 'desktop'] as const) {
+  test(`2: ${surface}: after /clear the pane shows no row from the cleared session, and says only that Forge did not answer`, async ($, on) => {
+    const world = machine(on, surface)
+    const { clock } = world
+    let fails = false
+    world.run = () => { if (fails) throw new Error('gone'); return answer(lanes([run({ title: 'Polish the guide' })])) }
+    await $.session.start(started(surface))
+    const ui = await $.ui.mount(pane(surface))
+    await clock.advance(1000)
+    expect(JSON.stringify(await ui.drawn())).toContain('Polish the guide')
+    fails = true
+    await $.session.end({ reason: 'clear', sessionId: 'old', resume: { id: 'old' } })
+    await clock.advance(1000)
+    const drawn = JSON.stringify(await ui.drawn())
+    expect(drawn).toContain('Forge did not answer.')
+    for (const earlier of ['Polish the guide', 'Last update', 'Nothing is running.', 'Loading']) expect(drawn).not.toContain(earlier)
+  })
+}
+
+test('3: a log far over 1 MiB shows its last lines in Open output', async ($, on) => {
+  const world = machine(on)
+  const { clock } = world
+  world.lanes = () => lanes([run({ id: 'a', title: 'Big', output_path: '/log/big' })])
+  world.files = { '/log/big': Array.from({ length: 200000 }, (_, i) => `line ${i}`).join('\n') + '\nthe very last line\n' }
+  await $.session.start(started('terminal'))
+  const ui = await $.ui.mount(pane('terminal'))
+  await clock.advance(1000)
+  await ui.press({ key: 'open-output' })
+  const output = await $.ui.mount(pane('terminal', 'dock', 'forge-output'))
+  const drawn = JSON.stringify(await output.drawn())
+  expect(drawn).toContain('the very last line')
+  expect(drawn).not.toContain('no output to show')
+  expect(drawn).not.toContain('line 0"')
+})
 
 const rows = lanes([
   run({ id: 'a', title: 'One combined check', round: 3, step: 'editing close.py', elapsed: 1260, joined_at: '2026-11-14T05:00:00+00:00' }),

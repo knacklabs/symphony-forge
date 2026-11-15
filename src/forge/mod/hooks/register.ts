@@ -7,7 +7,9 @@ import type { CoreEngineInterface, Register, RenderNode, Timer } from 'claude-co
 const PANE = 'forge'
 const OUTPUT = 'forge-output'
 const READ_EVERY_MS = 3000
-const MAX_OUTPUT_BYTES = 1024 * 1024
+// ponytail: a log is read whole (the API has no range read), so one over 32 MiB shows nothing; only its end is drawn.
+const MAX_OUTPUT_BYTES = 32 * 1024 * 1024
+const TAIL_CHARS = 64 * 1024
 const CUT = 120
 const BLUE = '#1d4ed8'
 const SOFT = '#7f7f7f1f'
@@ -152,7 +154,9 @@ async function lastLines(c: Ctx, $: CoreEngineInterface, path: string | null) {
   if (!path) return []
   try {
     if ((await $.fs.stat(path, { resolve: false })).size > MAX_OUTPUT_BYTES) return []
-    return cleanLines(String(await $.fs.read(path)))
+    const text = String(await $.fs.read(path))
+    // A long log shows its end: start at the first whole line of its last stretch.
+    return cleanLines(text.length > TAIL_CHARS ? text.slice(text.indexOf('\n', text.length - TAIL_CHARS) + 1) : text)
   } catch { return [] }
 }
 
@@ -252,6 +256,15 @@ export const register: Register = (on, options) => {
     if (options.pane === 'always' && e.isInteractive && await inForgeRepo(c, $)) {
       try { if ((await $.ui.open({ id: PANE, title: 'Forge' })).isPlaced) void refresh(c, $) } catch { /* typing /forge still works */ }
     }
+    return next(e)
+  })
+
+  // /clear starts a new session in the same process and runs no session.start: forget the earlier session's answer,
+  // so its first read, if it fails, shows only that Forge did not answer.
+  on('session.end', ($, e, next) => {
+    Object.assign(c, { answer: undefined, failed: false, note: null, selected: '', outputPath: null, lastRead: -Infinity })
+    c.peak.clear()
+    c.latest.clear()
     return next(e)
   })
 

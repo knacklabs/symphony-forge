@@ -199,15 +199,18 @@ def _place(run: dict[str, Any], lane: list[dict[str, Any]], size: int) -> int:
     return 1 + sum(not _admitted(row) for row in lane[:lane.index(run)])
 
 
-def _title(path: Path, item: str | None, state: dict[str, Any], read: bool = False) -> str | None:
-    """An item's plain name: a fix's why, a story's title, a part's name from its plan."""
+def _title(path: Path, item: str | None, state: dict[str, Any], read: bool = False, target: bool = False) -> str | None:
+    """An item's plain name: a fix's why, a story's title, a part's name from its plan.
+    A read's `target` that is a decision or spec read by name takes the document's heading, even
+    when a fix has the same short name."""
     from forge import repo as repository
 
     match = repository.ITEM.fullmatch(item) if item else None
     if not match:
         return None
     title = state.get("why") if match["fix"] else state.get("title")
-    if match["task"] or (not title and read):
+    named = target and not match["key"]
+    if named or match["task"] or (not title and read):
         from forge import task
 
         # A read can also be of a decision: its heading is its name.
@@ -220,8 +223,9 @@ def _title(path: Path, item: str | None, state: dict[str, Any], read: bool = Fal
                 doc = records.read_path(path, item)
         if doc.is_file():
             sections = task.sections(doc.read_text(encoding="utf-8"))
-            title = (task.rows(sections).get(match["task"], {}).get("Name")
-                     if match["task"] else sections.get("#"))
+            heading = (task.rows(sections).get(match["task"], {}).get("Name")
+                       if match["task"] else sections.get("#"))
+            title = heading or title if named else heading
     return title
 
 
@@ -246,7 +250,7 @@ def join(kind: str, repo: Path, item: str | None, model: str | None, effort: str
             round_number = (round_number + 1 if isinstance(round_number, int)
                             else 1 if state.get("status") == "started" else None)
             near_end = bool(state.get("tests") or (round_number and round_number > 1))
-    title = _title(repo, item, state, kind == "read")
+    title = _title(repo, item, state, kind == "read", kind == "read")
     entry = {"id": str(uuid.uuid4()), "version": __version__, "kind": kind, "repo_root": root.as_posix(),
              "checkout_root": repo.resolve().as_posix(),
              "repo_name": root.name, "item": item, "title": title, "model": model, "effort": effort,
@@ -255,6 +259,8 @@ def join(kind: str, repo: Path, item: str | None, model: str | None, effort: str
              "output_path": None, "progress": None, "free": kind in ("read", "review")}
     if kind == "test":
         entry["processes"] = 0
+        # A test run's output goes here once it starts; the pane's Open output reads it.
+        entry["output_path"] = (repository.forge_dir(repo) / f"test-{entry['id']}.log").as_posix()
     with _queue() as runs:
         runs.append(entry)
         if kind == "test":

@@ -741,6 +741,28 @@ def test_process(top, item, command, env, entry, ran, log):
     return done
 
 
+def run_logged(command: str, environment: dict, entry: dict | None) -> int:
+    """Run a command. A run in the lane also writes its output to its log, which the pane's Open output reads."""
+    if entry is None:
+        return subprocess.run(command, shell=True, env=environment).returncode
+    from forge import codex
+
+    with Path(entry["output_path"]).open("w", encoding="utf-8") as sink, subprocess.Popen(
+            command, shell=True, env=environment, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+            text=True, encoding="utf-8", errors="replace", **codex.GROUP) as process:
+        try:
+            machine.started(entry, process.pid)
+            for chunk in test_output(process, lines=False):
+                print(chunk, end="", flush=True)
+                sink.write(chunk)
+                sink.flush()
+            return process.wait()
+        except BaseException:
+            codex._stop(codex.identity(process.pid) or {"pid": process.pid}, True)
+            process.wait()
+            raise
+
+
 def pytest_tests(base: str, command: str, entry: dict | None = None) -> int:
     if os.environ.get("FORGE_WORKER_TESTS") == "1":
         command = skip_browser(Path.cwd(), command)
@@ -799,7 +821,7 @@ def pytest_tests(base: str, command: str, entry: dict | None = None) -> int:
         if not picked and not always and not named:
             print("No tests ran: no changed or module-related test files were selected.")
             checks = " && ".join(part for kind, part, _ in parts if kind != "python")
-            return subprocess.run(checks, shell=True, env=environment).returncode if checks else 0
+            return run_logged(checks, environment, entry) if checks else 0
         # Keep shell setup, test roots and pytest settings in the repo's full command.
         listed = {entry.split("::")[0] for entry in always + named}
         excluded = [path for path in tests if path not in picked and path not in listed]
@@ -817,26 +839,4 @@ def pytest_tests(base: str, command: str, entry: dict | None = None) -> int:
         environment["PYTHONPATH"] = os.pathsep.join(
             [folder, environment.get("PYTHONPATH", "")])
         arguments = always + list(dict.fromkeys(name.split("::", 1)[0] for name in named))
-        if entry is None:
-            return subprocess.run(narrow_command(command, excluded, workers, arguments), shell=True,
-                                  env=environment).returncode
-        from forge import codex
-
-        # The pane's Open output reads this file, as it reads a review's.
-        log = repo.forge_dir(Path.cwd()) / f"test-{entry['id']}.log"
-        entry.update(output_path=log.as_posix())
-        with log.open("w", encoding="utf-8") as sink, subprocess.Popen(
-                narrow_command(command, excluded, workers, arguments), shell=True,
-                env=environment, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                text=True, encoding="utf-8", errors="replace", **codex.GROUP) as process:
-            try:
-                machine.started(entry, process.pid)
-                for chunk in test_output(process, lines=False):
-                    print(chunk, end="", flush=True)
-                    sink.write(chunk)
-                    sink.flush()
-                return process.wait()
-            except BaseException:
-                codex._stop(codex.identity(process.pid) or {"pid": process.pid}, True)
-                process.wait()
-                raise
+        return run_logged(narrow_command(command, excluded, workers, arguments), environment, entry)

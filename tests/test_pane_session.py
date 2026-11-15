@@ -69,7 +69,7 @@ def test_1_a_real_session_answers_slash_forge_with_or_without_the_guide_skill(re
     assert done.returncode == 0, done.stdout + done.stderr
     assert done.stdout.strip().splitlines()[-1] == "Nothing is running."
     assert "forge (user) answered command.run without next()" in text
-    assert re.search(r"hooks module forge@inline loaded .*events: session\.start,command\.run,ui\.render\s*$", text, re.M)
+    assert re.search(r"hooks module forge@inline loaded .*events: session\.start,session\.end,command\.run,ui\.render\s*$", text, re.M)
     # The start step adds almost nothing to the start of the session.
     assert float(re.search(r"hooks module forge@inline session\.start settled in ([\d.]+)ms", text)[1]) < 50
     assert "forge: session.start hook skipped" not in text
