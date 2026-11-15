@@ -57,7 +57,7 @@
       "gain": 3,
       "harm": 3,
       "line": 14,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 1,
       "security": false,
@@ -80,27 +80,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "b99153bc15380312241ef33676f93222757df245e9db2d54a7a3fed6a8af3876",
-    "changed": "62fb8427145325220fc96c3055fde0442efd629441156b9d6c7cf8fa98215b2b",
-    "commit": "e8fd01738378b892ba95ec5991028194ae4e694c",
+    "branch_diff": "c1f884573be206160aee5dfa8e3231e91e0a1c8cd6dadd692fa79ba186f0e470",
+    "changed": "84229a0de1e91880bb6de061041d55ab249fc027313a4d65758297629d4cc717",
+    "commit": "98b008fdc0be7b1869d90715f47f9e91cdeb2711",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Gate\nCase: normal use - a reviewer checks proof that a merged fix\u2019s long title is shown whole. The supplied proof list still has no entry for the Merged list and refers to a test in this deleted file. The new browser assertion at tests/test_board_first_screen_reads_whole.py:188 is not named in the list. As src/forge/review.py:754 and 783\u2013788 show, close annotates only tests in the worker\u2019s mapping, so it cannot report this proof\u2019s result. Update the proof list to name the browser test for the Merged-list requirement.",
-        "file": "tests/test_board_titles_stay_whole.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 14,
-        "priority": "P1",
-        "title": "Gate: proof list",
-        "work": 2
-      }
-    ],
-    "id": "3603494a-2656-43d0-ba4b-14f5ca7d0bc1",
-    "status": "blocked"
+    "findings": [],
+    "id": "ccf1783b-38ac-4bbb-b132-6a1221230932",
+    "status": "clean"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-15T10:15:19.708547+00:00",
@@ -112,6 +101,10 @@
     },
     {
       "at": "2026-11-15T10:53:04.121068+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-15T11:01:20.858646+00:00",
       "step": "review"
     }
   ],
