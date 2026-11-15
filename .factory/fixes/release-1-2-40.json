@@ -1,0 +1,79 @@
+{
+  "allow_large": "A release bump changes the version in every file that records it",
+  "base": "6a0a3d4bab750c44bd948d1e794d019c7a224c3c",
+  "branch": "fix/release-1-2-40",
+  "done_when": "forge.toml, the package and every pinned reference say v1.2.40, and tests/test_release_version.py passes",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": ".github/workflows/forge.yml",
+      "file": ".github/workflows/forge.yml",
+      "gain": 3,
+      "harm": 3,
+      "line": 1,
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: The owner accepts the note: the guide test passed on the laptop, and the full Linux run on the release commit runs every test before the release is published",
+      "round": 1,
+      "security": false,
+      "title": "Gate: tests/test_guides_agree.py",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "25733e9918b41104f331a4489d80692b6472868754c393f3f5e8c03366ff5cde",
+    "changed": "eeb044da9a5ee4f5ff37358c075ad986b98082d8aa4e455f686e4c59de24d408",
+    "commit": "a7b2ba87000dee9b11669d3fbeccb3fcba9dae8c",
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: The owner accepts the note: the guide test passed on the laptop, and the full Linux run on the release commit runs every test before the release is published",
+        "finding": 1
+      }
+    ],
+    "findings": [
+      {
+        "body": "Gain 3, Work 1, Harm 3\nRaise: Test\nCase: normal use - The release pull request runs its configured CI checks.\nThe proof list names `tests/test_guides_agree.py`, but `.github/workflows/forge.yml:88` runs `forge test --change`. The picker at `src/forge/fasttest.py:392` selects changed and related tests plus the entries in `.forge/always-tests.txt`; this diff does not select the guide suite, and it is not on that list. The separate plugin PR job runs other tests. The release can therefore pass its checks without running this named proof. Include the guide suite in the pull-request run.\nAdds work: run the listed guide suite in PR CI; F 1 x H 2 = 2; 2 x C = 2",
+        "file": ".github/workflows/forge.yml",
+        "gain": 3,
+        "harm": 3,
+        "line": 1,
+        "priority": "P1",
+        "title": "Gate: tests/test_guides_agree.py",
+        "work": 1
+      }
+    ],
+    "id": "125e3d00-02d2-4666-ba96-6616d02f5e87",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-15T13:09:44.634439+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-15T13:24:15.641414+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-15T13:24:15.652010+00:00",
+    "by": "owner",
+    "choice": "accept",
+    "file": ".github/workflows/forge.yml",
+    "reason": "The owner accepts the note: the guide test passed on the laptop, and the full Linux run on the release commit runs every test before the release is published",
+    "wait_id": "cac300f6-f573-43f3-a0b8-91b3387e5046",
+    "worker_round": 1
+  },
+  "stuck": {
+    "close": null,
+    "head": "34d86c466a9d882aed4de1da7ac4ef106957d5a0",
+    "keys": {},
+    "round": null
+  },
+  "why": "Release v1.2.40: publish what merged since v1.2.39",
+  "worker": "claude"
+}
