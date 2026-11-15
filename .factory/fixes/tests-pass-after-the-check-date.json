@@ -4,14 +4,60 @@
   "done_when": "Those tests pass on any date: each one finds the lines it checks by their text, or runs with a fixed clock, and the full suite passes on the default branch",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [
+    {
+      "area": "_gates_wait_for_a_pass() in tests/test_readloop_gates.py",
+      "file": "tests/test_readloop_gates.py",
+      "gain": 4,
+      "harm": 1,
+      "line": 155,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Those tests pass on any date: each one finds the lines it checks by their text, or runs with a fixed clock",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "eca503eeee91041f73b7a03746af5b8a824e53dcdc1fc061ea4a57a38debada9",
+    "changed": "56f386f9bdc03c3478053411782315130a41c44a60a65c34767476cce6b40934",
+    "commit": "4afcf86823363e808aed8f18b617d9f3891a0eed",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 1, Harm 1\nRaise: Not done\nCase: normal use - running the affected cases against the forge next report.\nThe approved item is: \u201cThose tests pass on any date: each one finds the lines it checks by their text, or runs with a fixed clock, and the full suite passes on the default branch\u201d. The assertions remove the factory-numbers line by its text, but still select the advice they check by position, and their clocks are not fixed. The same coupling remains at test_readloop_gates.py:270, :308 and :317, test_builders_edits_need_no_new_read.py:52, and test_merge_command.py:254. A change to the unrelated numbers-line wording or another report footer can therefore break these tests while the checked advice remains correct.",
+        "file": "tests/test_readloop_gates.py",
+        "gain": 4,
+        "harm": 1,
+        "line": 155,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: Those tests pass on any date: each one finds the lines it checks by their text, or runs with a fixed clock",
+        "work": 1
+      }
+    ],
+    "id": "26b3d42a-93da-415f-a78c-67843f3484ef",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-15T03:52:26.508030+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-15T06:11:22.671269+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-11-15T06:11:22.683943+00:00",
+    "file": "tests/test_readloop_gates.py",
+    "wait_id": "f74b1ee8-65fb-4d4b-8b32-49196f6c30a6"
+  },
   "stuck": {
     "close": null,
     "head": "1d58b7b62d3b9392511cc679c10160d48073d5d7",
