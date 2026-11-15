@@ -1,0 +1,37 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/board_app/item.js\tNot done: Show merged parts' review rounds from published full history\ta-story-whose-parts-have-merged-says-no",
+      "kind": "bug",
+      "path": "src/forge/board_app/item.js",
+      "line": 279,
+      "text": "Not done: Show merged parts' review rounds from published full history",
+      "from": "blocking",
+      "item": "a-story-whose-parts-have-merged-says-no",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board_app/item.js\tThe story count includes work that has not been reviewed\ta-story-whose-parts-have-merged-says-no",
+      "kind": "bug",
+      "path": "src/forge/board_app/item.js",
+      "line": 157,
+      "text": "The story count includes work that has not been reviewed",
+      "from": "blocking",
+      "item": "a-story-whose-parts-have-merged-says-no",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_board_story_rounds_from_parts.py\tGate: tests/test_board_story_rounds_from_parts.py::test_1_a_story_whose_parts_merged_lists_their_rounds_and_counts_them\ta-story-whose-parts-have-merged-says-no",
+      "kind": "bug",
+      "path": "tests/test_board_story_rounds_from_parts.py",
+      "line": 98,
+      "text": "Gate: tests/test_board_story_rounds_from_parts.py::test_1_a_story_whose_parts_merged_lists_their_rounds_and_counts_them",
+      "from": "blocking",
+      "item": "a-story-whose-parts-have-merged-says-no",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
