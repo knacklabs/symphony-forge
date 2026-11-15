@@ -1,0 +1,15 @@
+{
+  "base": "2f9736c68186611788c92b5c12c55452628833be",
+  "branch": "fix/tests-pass-after-the-check-date",
+  "done_when": "Those tests pass on any date: each one finds the lines it checks by their text, or runs with a fixed clock, and the full suite passes on the default branch",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-15T03:52:26.508030+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "From 15 Nov 2026 forge next prints the three success numbers in one line near its end (the rebuild's check date in the code has come), and six tests that read the report's last lines by position fail on the default branch: tests/test_readloop_gates.py (three cases of test_2), tests/test_builders_edits_need_no_new_read.py test_2, tests/test_merge_command.py test_5 dirty and tests/test_contracts.py test_8_plain_english"
+}
