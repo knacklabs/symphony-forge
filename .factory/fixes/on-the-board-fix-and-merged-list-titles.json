@@ -141,7 +141,7 @@
     "status": "blocked"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-15T10:15:19.708547+00:00",
@@ -154,8 +154,12 @@
   ],
   "stop": {
     "at": "2026-11-15T10:31:36.077525+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "tests/test_board_status_and_times.py",
-    "wait_id": "d0e32cf2-1fc2-410b-a6b6-9fd4af3c9d11"
+    "reason": "The owner chose: whole titles only, one more round; the part's-branch plan title leaves this fix",
+    "wait_id": "d0e32cf2-1fc2-410b-a6b6-9fd4af3c9d11",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
