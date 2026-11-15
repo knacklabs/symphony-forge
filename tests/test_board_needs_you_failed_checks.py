@@ -1,5 +1,6 @@
-"""A fix with failed checks and no activity for a day or more is in Needs you with a plain reason;
-the same fix that was active in the last day, or whose checks pass, is not."""
+"""A fix or story part with settled failed checks and no activity for a day or more is in Needs you
+with a plain reason, on the list, the count and the item's own flag; checks that run, a day not yet
+over, and passing checks are not."""
 import json
 import subprocess
 from datetime import datetime, timedelta, timezone
@@ -7,13 +8,22 @@ from datetime import datetime, timedelta, timezone
 import pytest
 
 from conftest import REAL_UV
-from test_board_counts import board, clock, github
-from test_board_server import client as board_client, fix, live  # noqa: F401
+from test_board_counts import ONE_PART, board, clock
 from test_board_needs_you import FIX, published, share
-from test_close import CLEAN, env  # noqa: F401
+from test_board_server import client as board_client, fix, live  # noqa: F401
+from test_close import CLEAN, STORY_DOC, env  # noqa: F401
 from test_close_keeps_reviews_for_unchanged_branch_diffs import client
 
 STORY = "FIX-FAILED-CHECKS-NEED-YOU"
+DAY = timedelta(days=1)
+
+
+def checks(head, *outcomes):
+    """The pull request's last commit with one check run per outcome ('RUNNING' is not finished)."""
+    nodes = [{"name": f"job-{n}", "status": "IN_PROGRESS", "conclusion": None} if o == "RUNNING"
+             else {"name": f"job-{n}", "status": "COMPLETED", "conclusion": o} for n, o in enumerate(outcomes)]
+    return {"nodes": [{"commit": {"oid": head, "statusCheckRollup": {"contexts": {
+        "pageInfo": {"hasNextPage": False}, "nodes": nodes}}}}]}
 
 
 @pytest.mark.parametrize("previous", [False, True], ids=["new-client", "earlier-adoption"])
@@ -23,44 +33,63 @@ def test_1_failed_checks_idle_for_a_day_need_you(env, monkeypatch, previous):
     clock(monkeypatch, now)
     prs = {}
     env.reviews(CLEAN)
-    for name, outcome in (("red", "FAILURE"), ("green", "SUCCESS")):
-        env.start(name, f"fix/{name}", f".factory/fixes/{name}.json", {**FIX, "why": name}, {f"{name}.py": "x\n"})
-        assert env.close(name).returncode == 0
-        share(env, prs, name, len(prs) + 1)
-        head = prs[name]["headRefOid"]
-        prs[name]["commits"] = {"nodes": [{"commit": {"oid": head, "statusCheckRollup": {"contexts": {
-            "pageInfo": {"hasNextPage": False}, "nodes": [{"name": "tests", "status": "COMPLETED",
-                                                            "conclusion": outcome}]}}}}]}
+    item, _ = env.start_approved_task(STORY_DOC, changes={"app.py": "x = 1\n"})
+    cases = [("part", item, "task/SHOP-T1", ("FAILURE",)),
+             ("red", "red", "fix/red", ("FAILURE",)),
+             ("mixed", "mixed", "fix/mixed", ("FAILURE", "RUNNING")),
+             ("green", "green", "fix/green", ("SUCCESS",))]
+    for number, (name, ident, branch, outcomes) in enumerate(cases, 1):
+        if name not in ("part",):
+            env.start(ident, branch, f".factory/fixes/{ident}.json", {**FIX, "why": name}, {f"{name}.py": "x\n"})
+        assert env.close(ident).returncode == 0
+        share(env, prs, ident, number, branch=branch)
+        prs[ident]["commits"] = checks(prs[ident]["headRefOid"], *outcomes)
         published(env, prs)
 
-    def asks():
-        team = board(env.repo)["team"]
-        return [(e["id"], e["reason"], e["detail"]) for e in team["needs_you"] if e["id"] in prs and e["reason"] != "merge"], team["sentence"]
+    def listed():
+        data = board(env.repo)
+        flags = {row["id"]: row["needs_person"] for parent in data["items"] for row in (parent, *parent["children"])}
+        found = {e["id"]: (e["reason"], e["detail"]) for e in data["team"]["needs_you"]
+                 if e["id"] in prs and e["reason"] == "checks failed"}
+        assert all(flags[key] for key in found), (found, flags)  # the item's page agrees with the list
+        return found, data["team"]["sentence"], flags
 
     clock(monkeypatch, now + timedelta(hours=2))
-    assert asks()[0] == []  # failed, but active within the day
-    clock(monkeypatch, now + timedelta(days=7))
-    found, sentence = asks()
-    assert found == [("red", "checks failed", "Checks failed, no activity for 7 days")], found
-    assert "2 need you" in sentence  # the red fix and the green fix's merge
+    assert listed()[0] == {}  # failed, but active within the day
+    clock(monkeypatch, now + DAY - timedelta(minutes=5))
+    assert listed()[0] == {}  # not yet a day
+    clock(monkeypatch, now + 7 * DAY)
+    found, _, flags = listed()
+    reason = ("checks failed", "Checks failed, no activity for 7 days")
+    assert found == {item: reason, "red": reason}, found  # the mixed one runs; the green one passes
+    assert not flags["mixed"]  # running checks are not an idle failure
+    clock(monkeypatch, now + DAY + timedelta(minutes=5))  # just over a day
+    assert set(listed()[0]) == {item, "red"}
 
 
 BROWSER = r"""
 import sys
 from playwright.sync_api import expect, sync_playwright
 with sync_playwright() as p:
-    browser = p.chromium.launch()
+    browser = p.chromium.launch(channel='chrome', headless=True, args=['--no-sandbox'])
     try:
         for width, height in ((1440, 900), (768, 900)):
             page = browser.new_page(viewport={'width': width, 'height': height})
             page.goto(sys.argv[1])
             needs = page.get_by_role('region', name='Needs you')
             expect(needs).to_contain_text('5 need you')
-            expect(needs.get_by_role('button', name='Fix Fix').first).to_be_visible()
             expect(needs.get_by_text('Checks failed, no activity for 7 days').first).to_be_visible()
             assert page.evaluate('document.documentElement.scrollWidth <= innerWidth'), f'{width}: sideways scroll'
             if width == 1440:
                 assert page.evaluate('document.documentElement.scrollHeight <= innerHeight'), 'the page scrolls'
+            needs.get_by_role('button', name='and 2 more').click()
+            full = page.get_by_role('dialog', name='Needs you, all 5')
+            expect(full.get_by_role('button', name='Fix')).to_have_count(5)
+            expect(full.get_by_text('Checks failed, no activity for 7 days')).to_have_count(5)
+            page.keyboard.press('Escape')
+            page.get_by_role('button', name='Me', exact=True).click()
+            expect(page.get_by_role('region', name='Needs you')).to_contain_text('@asha')
+            expect(page.get_by_role('region', name='Needs you')).to_contain_text('5 need you')
     finally:
         browser.close()
 """
@@ -68,21 +97,21 @@ with sync_playwright() as p:
 
 def test_2_five_idle_failed_fixes_fit_the_first_screen(board_client, gh):
     client = board_client
+
     def opened(slug):
         head = client.git("rev-parse", f"fix/{slug}")
-        return {"number": len(slug) + hash(slug) % 50, "headRefName": f"fix/{slug}", "headRefOid": head,
+        return {"number": 10 + len(slug), "headRefName": f"fix/{slug}", "headRefOid": head,
                 "state": "OPEN", "title": f"Readers see {slug}", "body": "", "isDraft": False,
                 "author": {"login": "asha"}, "url": f"https://github.com/acme/shop/pull/{slug}",
-                "commits": {"nodes": [{"commit": {"oid": head, "statusCheckRollup": {"contexts": {
-                    "pageInfo": {"hasNextPage": False}, "nodes": [
-                        {"name": "tests", "status": "COMPLETED", "conclusion": "FAILURE"}]}}}}]}}
+                "commits": checks(head, "FAILURE")}
 
     slugs = [f"red-{n}" for n in range(5)]
     for slug in slugs:
         fix(client, slug)
     gh.respond("api", "graphql", stdout=json.dumps({"data": {"repository": {"pullRequests": {"nodes": [
-        opened(slug) for slug in slugs]}}}}))
-    week = (datetime.now(timezone.utc) + timedelta(days=7)).isoformat()
+        {**opened(slug), "number": 20 + n} for n, slug in enumerate(slugs)]}}}}))
+    gh.respond("api", "user", stdout="asha\n")
+    week = (datetime.now(timezone.utc) + 7 * DAY).isoformat()
     with live(client, FORGE_NOW=week) as url:
         shown = subprocess.run([REAL_UV or "uv", "run", "--no-project", "--python", "3.11", "--with",
                                 "playwright==1.55.0", "python", "-c", BROWSER, url],

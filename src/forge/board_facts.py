@@ -539,6 +539,12 @@ def failed_runs(top: Path, items: dict[str, Item], best: dict[str, Any], now: da
             for run in failed_schedules(top) if run["full_run"]]
 
 
+def busy(check: Item) -> bool:
+    """A check run that has not finished."""
+    return (check.get("status") in ("QUEUED", "IN_PROGRESS", "WAITING", "PENDING", "REQUESTED")
+            or check.get("state") in ("PENDING", "EXPECTED"))
+
+
 def needs_you(top: Path, rows: list[Item], readiness: dict[str, Item], person_waits: dict[str, list[Item]],
               now: datetime, runs: list[Item]) -> list[Item]:
     """Every item waiting on a person, oldest first, as `nextstep.person_waits` decides it: the
@@ -555,7 +561,9 @@ def needs_you(top: Path, rows: list[Item], readiness: dict[str, Item], person_wa
                 waits = nextstep.person_waits(top, row["id"], {}, row["state"], blocker=blocker)
         elif row.get("state") in ("in progress", "ready to merge"):
             waits = list(person_waits.get(row["id"], []))
-            if row["stage"] == "checks failed" and (row["idle_seconds"] or 0) >= 86400:  # as `blocked` counts idle
+            ci = row["gates"]["ci"]  # red whatever the stage; idle and settled, as `blocked` counts idle
+            if ci["status"] == "red" and not ci.get("running") and (row["idle_seconds"] or 0) >= 86400:
+                row["needs_person"] = True  # the item page agrees with this list
                 waits.append({"reason": "checks failed", "since": row["idle_since"],
                               "detail": f"Checks failed, no activity for {time_records.plain(row['idle_seconds'])}"})
         found += [_entry(row, wait["reason"], wait["detail"], wait["since"], now) for wait in waits]
