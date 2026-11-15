@@ -50,6 +50,10 @@ SCENARIOS = {
     "two-pickups-then-record-changes": [(2, DRAFT, True), (3, {}, True), (4, {}, False)],
     "draft-taken-out": [(2, DRAFT, True), (0, {EARLIER: SAVED}, False)],
 }
+# A developer's own Git settings must not change the replay: recreate merges, the old rebase
+# engine (it stops on the worker's empty planning commit), and move other branches.
+SCENARIOS["two-pickups-with-git-settings"] = SCENARIOS["two-pickups"]
+GIT_SETTINGS = {"rebase.rebaseMerges": "rebase-cousins", "rebase.backend": "apply", "rebase.updateRefs": "true"}
 
 
 def parent_merged_after_part_picked_up_its_review_commits(env, previous, scenario):
@@ -59,7 +63,13 @@ def parent_merged_after_part_picked_up_its_review_commits(env, previous, scenari
     closed = env.close("STACK/A")
     assert closed.returncode == 0, closed.stdout + closed.stderr
     part, _ = start(repo, "B")
+    if scenario.endswith("git-settings"):  # the worker records its plan in an empty commit
+        repo.git("commit", "--allow-empty", "-qm", OWN_WORK.split("\n\nProof list:")[0], cwd=part)
     env.commit(part, "use.py", "B_VALUE = 1\n", OWN_WORK)
+    if scenario.endswith("git-settings"):  # another branch points into the part's own commits
+        repo.git("branch", "spare-note", cwd=part)
+        for key, value in GIT_SETTINGS.items():
+            repo.git("config", key, value)
     for record, files, picked in SCENARIOS[scenario]:
         parent_commits(env, parent, record, files)
         if picked:
@@ -81,10 +91,12 @@ def parent_merged_after_part_picked_up_its_review_commits(env, previous, scenari
 def test_1_close_replays_only_the_parts_own_work_after_the_parent_merges(env, previous, scenario):
     repo, part = parent_merged_after_part_picked_up_its_review_commits(env, previous, scenario)
     before = len(env.review_calls())
+    spare = repo.git("rev-parse", "spare-note", cwd=part) if scenario.endswith("git-settings") else ""
 
     closed = env.close("STACK/B")
     assert closed.returncode == 0, closed.stdout + closed.stderr
     assert "conflicts in" not in closed.stderr
+    assert not spare or repo.git("rev-parse", "spare-note", cwd=part) == spare
     # The parent's files stay as the default branch has them; a draft it took out does not return.
     for path in (RECORD, "app.py", EARLIER, "default_note.py"):
         assert (part / path).read_text("utf-8").rstrip("\n") == repo.git("show", f"origin/main:{path}")
@@ -105,6 +117,7 @@ def test_1_close_replays_only_the_parts_own_work_after_the_parent_merges(env, pr
 def test_2_close_keeps_uncommitted_edits_when_the_replay_cannot_start(env, previous):
     repo, part = parent_merged_after_part_picked_up_its_review_commits(env, previous, "one-pickup")
     head, before = repo.git("rev-parse", "HEAD", cwd=part), len(env.review_calls())
+    repo.git("config", "rebase.autoStash", "true")  # Git would stash the edit and rebase anyway
     (part / "use.py").write_text("B_VALUE = 2\n", "utf-8")
 
     closed = env.close("STACK/B")

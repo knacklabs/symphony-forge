@@ -726,8 +726,10 @@ def _merge_default(top: Path, item: str, branch: str, default: str,
                 top, tree=tree, files=files, ours=original, incoming=target)):
             repo.refuse(REFUSALS["replay_conflict"], default=default, files=", ".join(files),
                         item=item)
-        done = repo.run("git", "rebase", "--onto", target,
-                        baseline, cwd=top)
+        # Pin the rebase against the developer's Git settings: no recreated merges, the engine that
+        # keeps empty commits, no autostash and no moving of other branches.
+        done = repo.run("git", "rebase", "--merge", "--no-rebase-merges", "--no-autostash",
+                        "--no-update-refs", "--onto", target, baseline, cwd=top)
         if done.returncode and not merge_timings.resolve(
                 top, replay=True, ours=":3", incoming=":2"):
             files = repo.git("diff", "--name-only", "--diff-filter=U", cwd=top).splitlines() or files
