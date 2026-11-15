@@ -1,0 +1,48 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/mod/hooks/pane.test.ts\tGate: End-to-end Stop after a waiting run becomes a session subagent\twhen-a-waiting-run-becomes-a-claude-sess",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/pane.test.ts",
+      "line": 379,
+      "text": "Gate: End-to-end Stop after a waiting run becomes a session subagent",
+      "from": "blocking",
+      "item": "when-a-waiting-run-becomes-a-claude-sess",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/mod/hooks/register.ts\tNot done: After the owner confirms Stop on such a run, the pane does not stop it and shows a note that the agent of that session must stop 4\twhen-a-waiting-run-becomes-a-claude-sess",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/register.ts",
+      "line": 316,
+      "text": "Not done: After the owner confirms Stop on such a run, the pane does not stop it and shows a note that the agent of that session must stop 4",
+      "from": "blocking",
+      "item": "when-a-waiting-run-becomes-a-claude-sess",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/mod/hooks/register.ts\tFollow-up: Name the owning session correctly for Codex subagents",
+      "kind": "edge",
+      "path": "src/forge/mod/hooks/register.ts",
+      "line": 316,
+      "text": "Follow-up: Name the owning session correctly for Codex subagents",
+      "from": "review",
+      "item": "when-a-waiting-run-becomes-a-claude-sess",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/mod/hooks/register.ts\tFollow-up: Preserve the stop result when stderr also contains a diagnostic",
+      "kind": "edge",
+      "path": "src/forge/mod/hooks/register.ts",
+      "line": 324,
+      "text": "Follow-up: Preserve the stop result when stderr also contains a diagnostic",
+      "from": "review",
+      "item": "when-a-waiting-run-becomes-a-claude-sess",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
