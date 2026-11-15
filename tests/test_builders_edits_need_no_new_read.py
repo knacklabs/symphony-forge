@@ -6,6 +6,7 @@ the reader is the stub `claude` from test_story.
 
 import json
 
+from conftest import assert_next_follows
 from test_readloop_gates import pr_check
 from test_story import DOC, claude_plan, hook, new_story, setup, worktree
 
@@ -49,10 +50,11 @@ def test_2_a_top_part_edit_after_a_pass_needs_a_round_on_the_diff(repo, claude_p
                    encoding="utf-8")
     edited = TOP.replace("come back to it later.", "come back to it within a week.")
     # The plan's advice precedes next's final build-count summary.
-    assert repo.forge("next").stdout.splitlines()[-3:-1] == [
+    assert_next_follows(
+        repo.forge("next").stdout,
         "Planning Shoppers can save a basket: plans/SHOP.md changed after round 1 of its cold read, "
         "so round 2 is next.",
-        "Next: forge read SHOP"]
+        "Next: forge read SHOP")
     refused = hook(repo, claude_plan(claude_payload, edited))
     assert (refused.returncode, refused.stderr) == (1, (
         "plans/SHOP.md changed after its last round of cold read.\nNext: forge read SHOP\n"))
