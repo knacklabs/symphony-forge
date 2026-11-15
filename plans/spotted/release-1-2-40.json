@@ -8,8 +8,8 @@
       "text": "Gate: tests/test_guides_agree.py",
       "from": "blocking",
       "item": "release-1-2-40",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     }
   ]
 }
