@@ -1,0 +1,78 @@
+{
+  "base": "cac22c08cfea26bf443ed6553e6cede9fdc7b0f9",
+  "branch": "fix/train-tests-run-out-of-time",
+  "done_when": "tests/test_train_land_all.py passes 20 times in a row under machine load and each of its tests ends well inside the test time limit, with the cause repaired in the train or in the test, and not by a longer limit",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "train() in tests/test_train_land_all.py",
+      "file": "tests/test_train_land_all.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 231,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: tests/test_train_land_all.py passes 20 times in a row under machine load",
+      "work": 2
+    },
+    {
+      "area": "tests/test_queue_land_all.py",
+      "file": "tests/test_queue_land_all.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 100,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: force the train and change pull-request number collision",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "3e2a72de2999d41c208ca033019241b5f66577af23ef9bd950fa041723f9c7d8",
+    "changed": "c87887b52807453e1d69613037694bfc341e338eeabb1fe978673a9fcacecbc8",
+    "commit": "8d7aaa9889eb275a9609885c1c2d29147fd7cb34",
+    "dismissals": [],
+    "findings": [],
+    "id": "52f10573-b085-4d3a-a6eb-3106055148a8",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-14T17:48:25.592831+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-15T03:06:19.146857+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-15T05:41:31.719572+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-15T03:06:19.157885+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "tests/test_train_land_all.py",
+    "reason": "The owner chose one more round: write the 20-run result into the evidence and keep one test that forces the same pull-request number",
+    "wait_id": "be03083e-2c71-44c9-8aaa-d5c870c6ffa4",
+    "worker_round": 2
+  },
+  "stuck": {
+    "close": "fb722616-022a-4858-b2c5-a0c7d48c54fc",
+    "head": "00d2f8eb074485ebb45988ff14ee54a8264baa65",
+    "keys": {},
+    "round": 2
+  },
+  "why": "The merge-train tests (tests/test_train_land_all.py test_3 and test_5) sometimes make a CI test group run out of time: forge land --all in the test sees a change as changed after the combined check, falls back to the slow one-at-a-time path, the test passes its 120 and 150 second limits, the group retries it and is cancelled at the job's time limit, on Linux at 45 minutes and most likely on Windows at 55 minutes (seen three times in one day)",
+  "worker": "claude"
+}
