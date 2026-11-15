@@ -65,7 +65,7 @@
     "status": "blocked"
   },
   "round": 2,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-14T17:48:25.592831+00:00",
@@ -78,8 +78,12 @@
   ],
   "stop": {
     "at": "2026-11-15T03:06:19.157885+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "tests/test_train_land_all.py",
-    "wait_id": "be03083e-2c71-44c9-8aaa-d5c870c6ffa4"
+    "reason": "The owner chose one more round: write the 20-run result into the evidence and keep one test that forces the same pull-request number",
+    "wait_id": "be03083e-2c71-44c9-8aaa-d5c870c6ffa4",
+    "worker_round": 2
   },
   "stuck": {
     "close": null,
