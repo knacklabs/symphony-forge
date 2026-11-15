@@ -98,7 +98,7 @@ main:not([hidden]):has(> .now) {
 
 .signoff li { display: flex; flex-direction: column; }
 .signoff-item { font-weight: 600; }
-.signoff-say { font-size: var(--size-label); color: var(--ink-2); }
+.signoff-say, .ask-why { font-size: var(--size-label); color: var(--ink-2); }
 
 .ask {
   width: 300px;
