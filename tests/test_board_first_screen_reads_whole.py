@@ -1,7 +1,7 @@
 """The board's first screen shows what the data knows, on a new and an earlier-adopted repo, in real Chrome
 at half a screen and at 1,100, 1,150, 1,280 and 1,440 pixels wide. Every card, a Needs you card and a story
-in the Stories rail too, shows its whole title, wrapped, with the full title on hover. No other region covers
-any corner of a title, even when four cards have 60-character titles, and the 1,440 by 900 screen still fits
+in the Stories rail too, shows its whole title, wrapped, with the full title on hover, and so does a merged fix
+in the Merged list, even at 97 characters. No other region covers any corner of a title, even when four cards have 60-character titles, and the 1,440 by 900 screen still fits
 without scrolling. A fix and a story part idle for days each say how long on their card. A story whose own
 record is gone shows the title of its plan file. The Stories rail says "No owner yet" where no owner is set,
 and one plan note reads "1 note". The real command, server and browser run; only GitHub is a stub."""
@@ -22,6 +22,7 @@ STORY = "FIX-BOARD-FIRST-SCREEN-READS-WHOLE"
 pytestmark = pytest.mark.platform
 
 LONG = "Readers see the exact basket total after a refund in {} parts"  # 60 characters
+MERGED_TITLE = "Readers can follow the progress of their improvement without contradictory information everywhere"  # 97 characters
 PART = "Share a saved basket with a friend by email or message"
 STORY_TITLE = "Forge v1: a lean rebuild that both coordinators and workers can follow end to end"
 
@@ -173,12 +174,18 @@ def test_1_the_first_screen_shows_whole_titles_idle_time_owners_and_plan_titles(
         "plans/LEAN.md": DOC.replace("# Shoppers can save a basket", f"# {STORY_TITLE}", 1),
         ".factory/stories/LEAN/story.json": json.dumps({"doc": "plans/LEAN.md", "title": STORY_TITLE, "status": "approved"}),
         "plans/LOST.md": DOC.replace("# Shoppers can save a basket", "# Couriers book slots", 1).replace("| SAVE |", "| ONE |", 1),
-        ".factory/stories/LOST/tasks/ONE.json": part})
+        ".factory/stories/LOST/tasks/ONE.json": part,
+        ".factory/fixes/long-done.json": json.dumps({"kind": "fix", "branch": "fix/long-done", "status": "merged",
+                                                     "why": MERGED_TITLE, "done_when": "It shows",
+                                                     "steps": [{"step": "start", "at": six_days}]})})
     client.git("fetch", "-q", "origin")
     client.git("merge", "-q", "--ff-only", "origin/main")
+    with (client.path / ".git/forge/events.jsonl").open("a", encoding="utf-8") as log:
+        log.write(json.dumps({"id": "end-long", "item": "long-done", "event": "item finished", "at": now.isoformat()}) + "\n")
     _part(client, tmp_path, six_days)
     expected = {"titles": [["Needs you", [LONG.format("four")]], ["Stories", [STORY_TITLE]],
-                           ["Building", [LONG.format(word) for word in ("two", "three", "four")] + [PART]]],
+                           ["Building", [LONG.format(word) for word in ("two", "three", "four")] + [PART]],
+                           ["Merged", [MERGED_TITLE]]],
                 "idle_fix": "in two parts", "idle_part": "Share a saved basket", "fresh": "in three parts"}
     with live(client, FORGE_BOARD_FETCH_WAIT="3600") as url:
         shown = subprocess.Popen([REAL_UV or "uv", "run", "--no-project", "--python", "3.11", "--with",

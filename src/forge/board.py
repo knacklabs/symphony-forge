@@ -21,7 +21,6 @@ import sys
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from textwrap import shorten
 from typing import Any
 
 from forge import __version__, approval, board_facts, board_graph, codex, machine, native, repo, review_skip, story, task
@@ -383,8 +382,6 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
             state = {**state, **completed[item], "status": "done"}
         elif kind == "task" and item.split("/")[0] in completed:
             state = {**state, "status": "merged"}
-        if kind == "fix":
-            title = shorten(title, width=70, placeholder="…")
         if kind != "story" and repo.state_path(item) in merged:
             state = {**state, "status": "merged"}
         branch = state.get("branch") or (f"task/{item.replace('/', '-')}" if kind == "task"

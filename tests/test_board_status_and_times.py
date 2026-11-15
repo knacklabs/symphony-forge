@@ -4,7 +4,6 @@ import json
 import os
 import subprocess
 import sys
-import textwrap
 from pathlib import Path
 
 import pytest
@@ -437,12 +436,11 @@ def test_7_prose_and_timeline_use_recorded_stage_durations(client, tmp_path, gh)
     assert not any("3 hours" in took or "50 minutes" in took for took in row["took"])
 
 
-def test_8_header_separates_stories_and_fixes_and_titles_end_at_a_word(client, tmp_path):
+def test_8_header_separates_stories_and_fixes_and_titles_stay_whole(client, tmp_path):
     title = "Readers can follow the progress of their improvement without contradictory information everywhere"
     _fix(client, title)
     data, _, _ = _board(client, tmp_path)
-    shortened = textwrap.shorten(title, width=70, placeholder="…")
-    assert _row(data, "correct-state")["title"] == shortened
+    assert _row(data, "correct-state")["title"] == title
     assert set(data["team"]["counts"]) == {"stories", "parts", "fixes", "finished_last_7_days"}
     assert data["team"]["counts"]["fixes"]["in progress"] == 1
 

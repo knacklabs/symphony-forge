@@ -1,0 +1,48 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/board.py\tNot done: The board shows full titles for fixes and the Merged list, and a story whose plan is only on a part's branch shows its real title.\ton-the-board-fix-and-merged-list-titles",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 665,
+      "text": "Not done: The board shows full titles for fixes and the Merged list, and a story whose plan is only on a part's branch shows its real title.",
+      "from": "blocking",
+      "item": "on-the-board-fix-and-merged-list-titles",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board.py\tRefresh the board when a part-branch plan changes\ton-the-board-fix-and-merged-list-titles",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 677,
+      "text": "Refresh the board when a part-branch plan changes",
+      "from": "blocking",
+      "item": "on-the-board-fix-and-merged-list-titles",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_board_status_and_times.py\tUpdate the timing inventory for the renamed test\ton-the-board-fix-and-merged-list-titles",
+      "kind": "bug",
+      "path": "tests/test_board_status_and_times.py",
+      "line": 439,
+      "text": "Update the timing inventory for the renamed test",
+      "from": "blocking",
+      "item": "on-the-board-fix-and-merged-list-titles",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_board_titles_stay_whole.py\tGate: proof list\ton-the-board-fix-and-merged-list-titles",
+      "kind": "bug",
+      "path": "tests/test_board_titles_stay_whole.py",
+      "line": 14,
+      "text": "Gate: proof list",
+      "from": "blocking",
+      "item": "on-the-board-fix-and-merged-list-titles",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
