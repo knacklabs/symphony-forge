@@ -4,14 +4,152 @@
   "done_when": "The board shows full titles for fixes and the Merged list, and a story whose plan is only on a part's branch shows that plan's real title.",
   "fix_kind": "backend",
   "kind": "fix",
+  "known": [
+    {
+      "area": "test_8_header_separates_stories_and_fixes_and_titles_stay_whole() in tests/test_board_status_and_times.py",
+      "file": "tests/test_board_status_and_times.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 439,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Update the timing inventory for the renamed test",
+      "work": 1
+    },
+    {
+      "area": "machine_board() in src/forge/board.py",
+      "file": "src/forge/board.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 665,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: The board shows full titles for fixes and the Merged list, and a story whose plan is only on a part's branch shows its real title.",
+      "work": 2
+    },
+    {
+      "area": "machine_board() in src/forge/board.py",
+      "file": "src/forge/board.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 677,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Refresh the board when a part-branch plan changes",
+      "work": 2
+    },
+    {
+      "area": "test_1_a_fix_shows_its_whole_title() in tests/test_board_titles_stay_whole.py",
+      "file": "tests/test_board_titles_stay_whole.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 14,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: proof list",
+      "work": 2
+    },
+    {
+      "area": "test_1_a_fix_shows_its_whole_title() in tests/test_board_titles_stay_whole.py",
+      "file": "tests/test_board_titles_stay_whole.py",
+      "gain": 2,
+      "harm": 1,
+      "line": 11,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_a_fix_shows_its_whole_title",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "242ee1a2d80d9d8000388fabf54ea8624acabba16516f16b132b9fcd4afa2b88",
+    "changed": "efcbcdd8f749af1cc82220bd9c5f80fc5592dc2b6b3b60eec0a809fec6299ded",
+    "commit": "505ec5ed9710fde2b65ed7d55051ee3f943588b3",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 1, Harm 3\nRaise: Functional\nCase: normal use - the full test suite runs before a release. The renamed test no longer produces the two old node IDs still recorded in .test_durations:287\u2013288. tests/test_ci_timing_inventory.py:25\u201327 rejects those obsolete entries, so the full suite fails even if the related pull request tests pass.",
+        "file": "tests/test_board_status_and_times.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 439,
+        "priority": "P1",
+        "title": "Update the timing inventory for the renamed test",
+        "work": 1
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Not done\nCase: normal use - a teammate publishes a plan on a part branch while another checkout of that branch is behind and its part state is unchanged. The Done-when line is: \u201cThe board shows full titles for fixes and the Merged list, and a story whose plan is only on a part's branch shows that plan's real title.\u201d board.py:224\u2013229 selects the local worktree on a state tie, and this line saves only that location for the fallback. Consequently, even after fetching the remote branch, the board never reads its plan and still shows \u201cA story with missing state.\u201d The same loss can occur when identical part states are deduplicated across remote branches at board.py:1013\u20131019.",
+        "file": "src/forge/board.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 665,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: The board shows full titles for fixes and the Merged list, and a story whose plan is only on a part's branch shows its real title.",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional\nCase: normal use - a worker creates or edits the plan in a part worktree while the board is open. This lookup now reads that file, but board_server.py:153\u2013155 watches only part state files for task branches. The live board therefore keeps the previous title until the periodic fetch or another watched change. Its untrimmed view, used by Releases and item requests, is cached by refs alone at board_server.py:231\u2013238 and can remain stale until a ref moves.",
+        "file": "src/forge/board.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 677,
+        "priority": "P1",
+        "title": "Refresh the board when a part-branch plan changes",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Gate\nCase: normal use - a reader checks a merged fix with a title longer than 70 characters. The proof list has no entry for the Merged-list title, and both named fix-title tests create an unmerged fix and assert only JSON. The existing browser test checks the Merged count rather than its titles (tests/test_board_now_screen.py:114\u2013119); its whole-title test uses approximately 60-character fixes (tests/test_board_first_screen_reads_whole.py:162\u2013165). A truncated Merged-list title can therefore pass the listed proof.",
+        "file": "tests/test_board_titles_stay_whole.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 14,
+        "priority": "P1",
+        "title": "Gate: proof list",
+        "work": 2
+      },
+      {
+        "body": "Gain 2, Work 1, Harm 1\nRaise: Gate\nThis new test repeats the same title, fixtures, helpers and JSON assertion as tests/test_board_status_and_times.py:439\u2013443, including both client variants. It protects no independent contract, so it matches the test-audit gate's duplicate-invocation pattern; one owner can retain the title assertion.",
+        "file": "tests/test_board_titles_stay_whole.py",
+        "gain": 2,
+        "harm": 1,
+        "line": 11,
+        "priority": "P1",
+        "title": "Gate: test_1_a_fix_shows_its_whole_title",
+        "work": 1
+      }
+    ],
+    "id": "81e2b695-9b88-4c6e-b3a1-ba5a8210a828",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-15T10:15:19.708547+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-15T10:31:36.058448+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-11-15T10:31:36.077525+00:00",
+    "file": "tests/test_board_status_and_times.py",
+    "wait_id": "d0e32cf2-1fc2-410b-a6b6-9fd4af3c9d11"
+  },
   "stuck": {
     "close": null,
     "head": "a946a3f82e23bdb9efa5035f61757026b3025d93",
