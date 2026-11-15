@@ -215,34 +215,40 @@ Only a genuine trade-off goes to the human, as a question with options.
     Case: normal use - One teammate upgrades the default branch while another has an unfinished branch and a local Claude chat started on v1.2.2.  
     The [v1.2.2 worker](/tests/fixtures/forge-v1.2.2/src/forge/worker.py:115) did not record which worker ran. The first teammate’s upgrade cannot move a chat stored on the second laptop. When that branch later runs under the new release, the planned removal of the fallback makes [worker.py](/src/forge/worker.py:253) clear the saved session binding and start a replacement. The release hold checks the repo pin, not those local branches; the old binding does not stay on disk as Risks says.  
     Gain 4, Work 2, Harm 4
+    Disposition: cut: CODE left this story (owner, 15 Nov 2026: "Tests only in this story"); worker.py and the old chat fallback do not change, so no chat binding can be lost.
 
 27. Advisory: Gate: Removing hook trust changes the Codex worker flow.
     Raise: Gate  
     Case: normal use - A repo on v1.2.2 starts a Codex worker while its upgrade waits to merge and Codex has not trusted its old hook.  
     [CODE](/plans/FORGE-NEWESTONLY-1.md:78) removes recognition of that hook. [codex_turn.py](/src/forge/codex_turn.py:191) then refuses the turn and requires a person to review the hook. This is a changed flow even though the amended plan says `Design: none`; the refusal also contradicts Risks’ claim that no command fails with an error.  
     Gain 4, Work 2, Harm 2
+    Disposition: cut: CODE left this story; codex.EARLIER_COMMANDS stays, so the Codex worker flow does not change.
 
 28. Advisory: Functional: Adopting an existing app can put a self-reference in its instructions.
     Raise: Functional  
     Case: normal use - An existing app has a `CLAUDE.md` that imports its `AGENTS.md`.  
     The plan deletes the entire old-line list, including `@AGENTS.md`. [sync.py](/src/forge/sync.py:189) currently excludes that line when moving instructions into `AGENTS.md`; without it, the file gains a reference to itself. The existing [sync test](/tests/test_sync_moves_claude_md_into_agents_md.py:19) checks this current-client behavior.  
     Gain 3, Work 2, Harm 3
+    Disposition: cut: CODE left this story; sync.EARLIER stays, with its @AGENTS.md line.
 
 29. Advisory: Functional: Installing the new release can change the status shown for an unupgraded repo.
     Raise: Functional  
     Case: normal use - A laptop has another repo pinned before v1.2.11 with a ready pull request.  
     Read-only commands skip the pin check in [cli.py](/src/forge/cli.py:147), so the installed release supplies the board even in that older repo. Removing the old ready-record reader in [nextstep.py](/src/forge/nextstep.py:886) can show its ready pull request as waiting for checks. The plan describes this effect only after an upgrade.  
     Gain 3, Work 2, Harm 3
+    Disposition: cut: CODE left this story; the old ready-record reader in nextstep.py stays.
 
 30. Advisory: Unproven: item 1: The kept upgrade test does not use the initialized repo the plan describes.
     Raise: Test  
     The designated [upgrade test](/tests/test_upgrade_to_installed_release.py:25) uses a fixture that writes a small `forge.toml` by hand and runs sync; it never runs `forge init`. The fixture in [test_close.py](/tests/test_close.py:264) omits settings a real init writes, so the designated test can pass while an upgrade loses one of those settings.  
     Gain 3, Work 2, Harm 3
+    Disposition: cut: the plan now describes the kept upgrade test as it is (its repo comes from the test's own setup, a hand-written forge.toml and forge sync, not forge init) and says what it does not prove.
 
 31. Advisory: Disputed keep 25: The retained fixtures make the stated deletion proof fail.
     Raise: Plan gap  
     The plan keeps both fixture folders and requires a search under `tests` to find no old-folder names. The retained [README](/tests/fixtures/before-test-runner/README.md:3) and [picker replay data](/tests/fixtures/release-v1.2.6-picker/changes.json:71) contain those names, so the proof remains red after the five scheduled folders are deleted.  
     Gain 4, Work 1, Harm 2
+    Disposition: cut: no proof greps for folder names now; the proof uses collected test ids and whether each folder exists.
 
 32. Advisory: Test: An earlier-adopted lane case is invisible to the deletion proof.
     Raise: Test  
@@ -254,11 +260,13 @@ Only a genuine trade-off goes to the human, as a question with options.
     Raise: Plan gap  
     CODE removes the chat-migration paragraph, but the retained `new-init` case in [test_worker_and_reader_chats_survive_rounds.py](/tests/test_worker_and_reader_chats_survive_rounds.py:359) asserts that paragraph is present. It does not feed a deleted reader, so the plan’s instruction to delete tests that do so does not account for this failure.  
     Gain 4, Work 1, Harm 4 (floor: migration)
+    Disposition: cut: CODE left this story; the guide paragraph and its test stay.
 
 34. Advisory: Test: Deleting an old-chat test also removes current-client sync coverage.
     Raise: Test  
     The `new-client` cases in [test_sync_not_blocked_by_other_runs.py](/tests/test_sync_not_blocked_by_other_runs.py:24) check that sync writes its files while another item’s worker or land command holds a lock. They also assert old-chat migration behavior that CODE removes. Deleting the whole failing test would leave that current sync rule without this command-level proof.  
     Gain 3, Work 2, Harm 4 (floor: migration)
+    Disposition: cut: CODE left this story; test_sync_not_blocked_by_other_runs.py stays whole.
 
 35. Advisory: Not done: The stated model cost conflicts with the planned re-review.
     Raise: Not done  
