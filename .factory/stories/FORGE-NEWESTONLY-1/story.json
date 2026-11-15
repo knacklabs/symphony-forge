@@ -1,0 +1,12 @@
+{
+  "doc": "plans/FORGE-NEWESTONLY-1.md",
+  "status": "planning",
+  "steps": [
+    {
+      "at": "2026-11-15T14:52:40.390916+00:00",
+      "step": "start"
+    }
+  ],
+  "title": "Forge supports only its newest release",
+  "touches": 0
+}
