@@ -152,7 +152,7 @@ def _gates_wait_for_a_pass(repo, claude_payload, monkeypatch, tmp_path,
     # next task can't start, whether the edit is committed or not.
     doc.write_text(TASKS, encoding="utf-8")
     # The final line reports build capacity, after the story's advice.
-    assert repo.forge("next").stdout.splitlines()[-3:-1] == [
+    assert [l for l in repo.forge("next").stdout.splitlines() if not l.startswith("How the factory is doing:")][-3:-1] == [
         "Planning Shoppers can save a basket: plans/SHOP.md changed after round 2 of its cold read, "
         "so round 3 is next.",
         "Next: forge read SHOP"]
@@ -267,7 +267,7 @@ def _later_task_after_squash(repo, claude_payload, monkeypatch, tmp_path,
     doc.write_text(TASKS.replace("come back to it later", "come back to it any day"), encoding="utf-8")
     repo.git("commit", "-q", "-am", "Rename a task", cwd=shop)
     repo.git("worktree", "remove", str(shop))
-    assert repo.forge("next").stdout.splitlines()[-3:-1] == [
+    assert [l for l in repo.forge("next").stdout.splitlines() if not l.startswith("How the factory is doing:")][-3:-1] == [
         "Planning Shoppers can save a basket: plans/SHOP.md changed after round 2 of its cold read, "
         "so round 3 is next.",
         "Next: forge read SHOP"]
@@ -305,7 +305,7 @@ def _old_story_keeps_todays_rules(repo, claude_payload, monkeypatch, tmp_path,
     monkeypatch.setenv("GIT_COMMITTER_DATE", "2030-01-01T00:00:00")
     repo.git("commit", "-q", "-am", "Rename a task")
     repo.git("push", "-q", "origin", "main")
-    assert repo.forge("next").stdout.splitlines()[-2].startswith(
+    assert [l for l in repo.forge("next").stdout.splitlines() if not l.startswith("How the factory is doing:")][-2].startswith(
         "The default branch has changes to plans/SHOP.md that story/SHOP lacks")
     repo.git("checkout", "-q", "story/SHOP")
     repo.write("plans/SHOP.md", TASKS)
@@ -314,8 +314,9 @@ def _old_story_keeps_todays_rules(repo, claude_payload, monkeypatch, tmp_path,
     monkeypatch.delenv("GIT_COMMITTER_DATE")
     repo.git("checkout", "-q", "main")
 
-    assert (repo.forge("next").stdout.splitlines()[-2] ==
-            "Next: forge task start SHOP/SHOW  # Codex builds it")
+    assert [line for line in repo.forge("next").stdout.splitlines()
+            if not line.startswith("How the factory is doing:")][-2] == (
+        "Next: forge task start SHOP/SHOW  # Codex builds it")
     started = repo.forge("task", "start", "SHOP/SHOW")
     assert started.returncode == 0, started.stderr
     assert repo.git("rev-parse", "task/SHOP-SHOW~1") == repo.git("rev-parse", "origin/main")

@@ -466,7 +466,7 @@ def _not_plain(text: str) -> list[str]:
         if re.search(rf"(?<![\w-]){re.escape(name)}(?![\w-])", text)]
 
 
-def test_8_plain_english(env):
+def test_8_plain_english(env, monkeypatch):
     repo, gh = env.repo, env.gh
     env.commit(repo.path, "forge.toml", with_models(
         (repo.path / "forge.toml").read_text("utf-8") + 'repo = "forge-source"\n'))
@@ -498,6 +498,8 @@ def test_8_plain_english(env):
          "title": call[call.index("--title") + 1], "body": body(call),
          "mergedAt": "2026-09-25T10:00:00Z", "files": [], "statusCheckRollup": []}
         for call in creates]))
+    # The merged pull requests are from 25 September 2026; the board lists a window of recent weeks.
+    monkeypatch.setenv("FORGE_NOW", "2026-09-26T00:00:00+00:00")
     data = _facts(env)
     rows = _rows(data)
     assert rows["SHOP/T1"]["title"] == "Save a basket"
