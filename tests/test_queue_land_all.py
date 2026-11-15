@@ -97,7 +97,10 @@ if args[:2] == ["run", "view"] and "attempt" in args:
     answer(json.dumps({"attempt": 2 if (here / ("rerun-" + args[2])).exists() else 1}))
 if args[:2] == ["pr", "create"]:
     branch = args[args.index("--head") + 1]
-    number = zlib.crc32(branch.encode()) % 9000 + 100 + 10000 * branch.startswith("forge-merge-train/")
+    named = branch  # a test can make a train's raw number the one of another branch: the file names it
+    if branch.startswith("forge-merge-train/") and (here / "train-crc-of").exists():
+        named = (here / "train-crc-of").read_text()
+    number = zlib.crc32(named.encode()) % 9000 + 100 + 10000 * branch.startswith("forge-merge-train/")
     url = "https://github.com/acme/shop/pull/%d" % number
     save({"number": number, "headRefName": branch, "baseRefName": "main", "title": "Change " + branch,
           "isDraft": "--draft" in args, "body": "", "url": url})
