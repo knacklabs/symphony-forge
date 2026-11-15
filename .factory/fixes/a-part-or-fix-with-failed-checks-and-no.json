@@ -134,7 +134,7 @@
     "status": "blocked"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-15T13:11:11.104132+00:00",
@@ -147,8 +147,12 @@
   ],
   "stop": {
     "at": "2026-11-15T13:28:06.345370+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "src/forge/board_facts.py",
-    "wait_id": "c9b770ac-6c5a-4a4e-9519-7327900e70e5"
+    "reason": "The owner chose one more round for the real gaps; the more-than-25-open-pull-requests case stays as a known issue",
+    "wait_id": "c9b770ac-6c5a-4a4e-9519-7327900e70e5",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
