@@ -81,7 +81,7 @@
     "status": "blocked"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-14T17:43:49.242610+00:00",
@@ -100,6 +100,11 @@
       "step": "review"
     }
   ],
+  "stop": {
+    "question": "A story part that was started on its parent part's unmerged branch is stuck. It should deliver: After the parent part is squash-merged and the default branch has moved, forge close on the stacked part replays only the part's own work, does not stop on the parent's record files, and goes on to the review; a new client repo and a repo adopted on an earlier release both get this\nTwo rounds in a row left the open P0 not done: parent work picked up by a stacked part is still treated as its own in src/forge/close.py.\nThe worker tried: Replay a stacked part with two or more parent pickups.\nChoose one: switch this item to Codex; keep Claude for one more round; or narrow or split it.",
+    "tool": "claude",
+    "wait_id": "261d1296-42c0-4c5d-b53a-0fadd045f12f"
+  },
   "stuck": {
     "close": "1b88ad81-7877-4654-bae6-23a441069dec",
     "head": "4f562bb55510c275b2e5aff6f79038cea3f77396",
