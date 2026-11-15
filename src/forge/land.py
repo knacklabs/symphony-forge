@@ -425,7 +425,8 @@ def _queue(top: Path) -> int:
     changes.sort(key=lambda change: order[change[1]])
     running: dict[str, tuple[subprocess.Popen, threading.Thread, list[str]]] = {}
     slots: dict[str, str] = {}
-    finished, waiting, retried, merged, ready_prs = set(), set(), set(), [], []
+    finished, waiting, merged, ready_prs = set(), set(), [], []
+    collided: dict[str, int] = {}  # how often an item met another change's git lock
     # Two to five ready changes get one combined check; the others close meanwhile and merge after it.
     # forge.yml runs the app's tests only where "tests" is a required check (prcheck.py's ci_tests), so
     # that is the check that must report the combined run; any other check name proves no test ran.
@@ -525,10 +526,11 @@ def _queue(top: Path) -> int:
             reader.join()
             slots.pop(item)
             child.stdin.close()
-            # Two closes fetching at the same moment can collide on git's lock of a shared ref.
-            if child.returncode and item not in retried and any("cannot lock ref" in line for line in lines):
-                retried.add(item)
-                say(f"{item} met another change's git lock; starting it again once.")
+            # Two closes fetching at the same moment can collide on git's lock of a shared ref, and the
+            # retry can collide again, so an item starts again up to twice.
+            if child.returncode and collided.get(item, 0) < 2 and any("cannot lock ref" in line for line in lines):
+                collided[item] = collided.get(item, 0) + 1
+                say(f"{item} met another change's git lock; starting it again.")
                 running[item] = spawn(item)
                 continue
             finished.add(item)
