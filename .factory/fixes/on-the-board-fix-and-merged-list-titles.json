@@ -100,7 +100,7 @@
     "status": "blocked"
   },
   "round": 2,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-15T10:15:19.708547+00:00",
@@ -117,8 +117,12 @@
   ],
   "stop": {
     "at": "2026-11-15T10:53:04.121417+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "tests/test_board_titles_stay_whole.py",
-    "wait_id": "1e994bad-a76d-47c6-aa6a-2349f2e75ea2"
+    "reason": "The owner chose: correct the evidence list, no code change",
+    "wait_id": "1e994bad-a76d-47c6-aa6a-2349f2e75ea2",
+    "worker_round": 2
   },
   "stuck": {
     "close": "bd350273-7522-4a05-8c53-6aa3b5973bc3",
