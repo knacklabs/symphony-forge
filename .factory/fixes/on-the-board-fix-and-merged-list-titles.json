@@ -1,0 +1,128 @@
+{
+  "amendments": [
+    {
+      "at": "2026-11-15T10:46:39.603891+00:00",
+      "because": "The owner chose whole titles only: the title of a story whose plan is only on a part's branch is a rare case that keeps the placeholder, as today",
+      "done_when": "The board shows full titles for fixes and the Merged list, and a story whose plan is only on a part's branch shows that plan's real title."
+    }
+  ],
+  "base": "42b9854290aab1eacbb665281c9c7361aed23d4e",
+  "branch": "fix/on-the-board-fix-and-merged-list-titles",
+  "done_when": "The board shows whole titles for fixes and for the Merged list",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "test_8_header_separates_stories_and_fixes_and_titles_stay_whole() in tests/test_board_status_and_times.py",
+      "file": "tests/test_board_status_and_times.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 439,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Update the timing inventory for the renamed test",
+      "work": 1
+    },
+    {
+      "area": "machine_board() in src/forge/board.py",
+      "file": "src/forge/board.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 665,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: The board shows full titles for fixes and the Merged list, and a story whose plan is only on a part's branch shows its real title.",
+      "work": 2
+    },
+    {
+      "area": "machine_board() in src/forge/board.py",
+      "file": "src/forge/board.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 677,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Refresh the board when a part-branch plan changes",
+      "work": 2
+    },
+    {
+      "area": "test_1_a_fix_shows_its_whole_title() in tests/test_board_titles_stay_whole.py",
+      "file": "tests/test_board_titles_stay_whole.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 14,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: proof list",
+      "work": 2
+    },
+    {
+      "area": "test_1_a_fix_shows_its_whole_title() in tests/test_board_titles_stay_whole.py",
+      "file": "tests/test_board_titles_stay_whole.py",
+      "gain": 2,
+      "harm": 1,
+      "line": 11,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_a_fix_shows_its_whole_title",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "c1f884573be206160aee5dfa8e3231e91e0a1c8cd6dadd692fa79ba186f0e470",
+    "changed": "84229a0de1e91880bb6de061041d55ab249fc027313a4d65758297629d4cc717",
+    "commit": "98b008fdc0be7b1869d90715f47f9e91cdeb2711",
+    "dismissals": [],
+    "findings": [],
+    "id": "ccf1783b-38ac-4bbb-b132-6a1221230932",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-15T10:15:19.708547+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-15T10:31:36.058448+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-15T10:53:04.121068+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-15T11:01:20.858646+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-15T10:53:04.121417+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "tests/test_board_titles_stay_whole.py",
+    "reason": "The owner chose: correct the evidence list, no code change",
+    "wait_id": "1e994bad-a76d-47c6-aa6a-2349f2e75ea2",
+    "worker_round": 2
+  },
+  "stuck": {
+    "close": "18641c1b-20f8-4847-a5dc-8f253ac0f09c",
+    "head": "c615c3004a14eeaf55e77467d01047ba354e9053",
+    "keys": {},
+    "round": 2
+  },
+  "why": "On the board, fix and Merged-list titles end in dots because they are cut at 70 characters, and a story whose plan is only on a part's branch shows \"A story with missing state\".",
+  "worker": "claude"
+}
