@@ -822,13 +822,19 @@ def pytest_tests(base: str, command: str, entry: dict | None = None) -> int:
                                   env=environment).returncode
         from forge import codex
 
-        with subprocess.Popen(narrow_command(command, excluded, workers, arguments), shell=True,
-                              env=environment, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                              text=True, encoding="utf-8", errors="replace", **codex.GROUP) as process:
+        # The pane's Open output reads this file, as it reads a review's.
+        log = repo.forge_dir(Path.cwd()) / f"test-{entry['id']}.log"
+        entry.update(output_path=log.as_posix())
+        with log.open("w", encoding="utf-8") as sink, subprocess.Popen(
+                narrow_command(command, excluded, workers, arguments), shell=True,
+                env=environment, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                text=True, encoding="utf-8", errors="replace", **codex.GROUP) as process:
             try:
                 machine.started(entry, process.pid)
                 for chunk in test_output(process, lines=False):
                     print(chunk, end="", flush=True)
+                    sink.write(chunk)
+                    sink.flush()
                 return process.wait()
             except BaseException:
                 codex._stop(codex.identity(process.pid) or {"pid": process.pid}, True)

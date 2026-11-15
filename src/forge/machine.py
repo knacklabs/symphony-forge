@@ -211,9 +211,13 @@ def _title(path: Path, item: str | None, state: dict[str, Any], read: bool = Fal
         from forge import task
 
         # A read can also be of a decision: its heading is its name.
-        doc = (path / "plans" / f"{match['key']}.md" if match["key"] else
-               next((d for d in (path / "docs" / folder / f"{item}.md" for folder in ("specs", "decisions"))
-                     if d.is_file()), path / "docs" / "specs" / f"{item}.md"))
+        doc = path / "plans" / f"{match['key']}.md" if match["key"] else path / "docs" / "specs" / f"{item}.md"
+        if not match["key"]:
+            from forge import records
+
+            # A short decision name reads its numbered file, so the title looks there too.
+            with contextlib.suppress(repository.Refused):
+                doc = records.read_path(path, item)
         if doc.is_file():
             sections = task.sections(doc.read_text(encoding="utf-8"))
             title = (task.rows(sections).get(match["task"], {}).get("Name")

@@ -176,20 +176,28 @@ for (const surface of ['terminal', 'desktop'] as const) {
   })
 }
 
-test('2: a stored answer draws before Forge answers, and a closed pane reads nothing', async ($, on) => {
-  const world = machine(on)
-  const { clock } = world
-  world.placed = false
-  world.stored = { at: 0, lanes: { runs: [{ id: 'a', group: 'Building', title: 'Kept row', repoRoot: '/repo', repoName: 'repo', round: 2, model: null, step: null, seconds: 5, progress: null, waiting: false, lent: false, native: false, joined: 1, outputPath: null }], needs: [], busy: false, agents: { used: 1, size: 4 }, tests: { used: 0, size: 4 } } }
-  world.run = () => new Promise(() => {})
-  await $.session.start(started('terminal'))
-  await clock.advance(30000)
-  expect(world.calls.length).toBe(0)
-  const ui = await $.ui.mount(pane('terminal'))
-  const drawn = JSON.stringify(await ui.drawn())
-  expect(drawn).toContain('Kept row')
-  expect(drawn).not.toContain('Loading')
-})
+// Contract change (this fix): the pane no longer keeps its answer across sessions. It used to draw the earlier
+// session's rows at once, and when the new session's first read failed it showed them with their age.
+for (const surface of ['terminal', 'desktop'] as const) {
+  test(`2: ${surface}: a new session shows no row from an earlier session, and a closed pane reads nothing`, async ($, on) => {
+    const world = machine(on, surface)
+    const { clock } = world
+    world.stored = { at: 0, lanes: { runs: [{ id: 'a', group: 'Building', title: 'Kept row', repoRoot: '/repo', repoName: 'repo', round: 2, model: null, step: null, seconds: 5, progress: null, waiting: false, lent: false, native: false, joined: 1, outputPath: null }], needs: [], busy: false, agents: { used: 1, size: 4 }, tests: { used: 0, size: 4 } } }
+    world.placed = false
+    world.run = () => new Promise(() => {})
+    await $.session.start(started(surface))
+    await clock.advance(30000)
+    expect(world.calls.length).toBe(0)
+    world.placed = true
+    world.run = () => { throw new Error('gone') }
+    const ui = await $.ui.mount(pane(surface))
+    expect(JSON.stringify(await ui.drawn())).not.toContain('Kept row')
+    await clock.advance(1000)
+    const drawn = JSON.stringify(await ui.drawn())
+    expect(drawn).toContain('Forge did not answer.')
+    for (const earlier of ['Kept row', 'Last update', 'Nothing is running.', 'Loading']) expect(drawn).not.toContain(earlier)
+  })
+}
 
 const rows = lanes([
   run({ id: 'a', title: 'One combined check', round: 3, step: 'editing close.py', elapsed: 1260, joined_at: '2026-11-14T05:00:00+00:00' }),

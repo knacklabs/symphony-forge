@@ -6,7 +6,6 @@ import type { CoreEngineInterface, Register, RenderNode, Timer } from 'claude-co
 
 const PANE = 'forge'
 const OUTPUT = 'forge-output'
-const STORE = 'forge-pane'
 const READ_EVERY_MS = 3000
 const MAX_OUTPUT_BYTES = 1024 * 1024
 const CUT = 120
@@ -103,7 +102,7 @@ const meter = ({ used, size }: Places) => (size > 8
   : svg(Array.from({ length: size }, (_, i) => bar((100 / size) * i + 0.5, 100 / size - 1, i < used ? BLUE : TRACK)).join('')))
 
 type Ctx = {
-  answer: Answer | undefined; failed: boolean; loaded: boolean; reading: boolean; lastRead: number
+  answer: Answer | undefined; failed: boolean; reading: boolean; lastRead: number
   selected: string; outputPath: string | null; note: string | null; ticker: Timer | undefined
   home: { root: string; main: string } | undefined; rich: boolean | undefined
   peak: Map<string, { state: string; seconds: number }>; latest: Map<string, string[]>
@@ -157,11 +156,11 @@ async function lastLines(c: Ctx, $: CoreEngineInterface, path: string | null) {
   } catch { return [] }
 }
 
-async function take(c: Ctx, $: CoreEngineInterface, lanes: Lanes, at: number) {
+// The answer lives for this session only: a new session shows no row from an earlier one until Forge answers.
+function take(c: Ctx, lanes: Lanes, at: number) {
   c.answer = { at, lanes }
   c.failed = false
   for (const map of [c.peak, c.latest]) for (const id of [...map.keys()]) if (!lanes.runs.some(run => run.id === id)) map.delete(id)
-  try { await $.store.set(STORE, { at, lanes }) } catch { /* the pane works without its memory */ }
 }
 
 async function refresh(c: Ctx, $: CoreEngineInterface) {
@@ -169,7 +168,7 @@ async function refresh(c: Ctx, $: CoreEngineInterface) {
   c.reading = true
   try {
     c.lastRead = await $.clock.now()
-    await take(c, $, await read(c, $), await $.clock.now())
+    take(c, await read(c, $), await $.clock.now())
     c.note = null
     if ((await $.session.surfaces()).includes('desktop') && await isDesktop(c, $)) {
       const rows = rowsOf(c, c.answer!, c.answer!.at, await mainRoot(c, $))
@@ -186,16 +185,6 @@ async function tick(c: Ctx, $: CoreEngineInterface) {
   if (!(await $.ui.panes()).some(pane => pane.id === PANE && pane.isPlaced)) return
   if ((await $.clock.now()) - c.lastRead >= READ_EVERY_MS) await refresh(c, $)
   else $.ui.invalidate('ui.render')
-}
-
-// The last answer is kept across sessions, so a new pane has rows before its first read ends.
-async function remembered(c: Ctx, $: CoreEngineInterface) {
-  if (c.loaded) return
-  c.loaded = true
-  const stored = rec(await $.store.get(STORE).catch(() => undefined)), lanes = rec(stored.lanes)
-  if (!c.answer && num(stored.at) !== null && Array.isArray(lanes.runs) && Array.isArray(lanes.needs)) {
-    c.answer = { at: stored.at as number, lanes: lanes as unknown as Lanes }
-  }
 }
 
 function rowsOf(c: Ctx, have: Answer, now: number, main: string): Row[] {
@@ -253,7 +242,7 @@ async function inForgeRepo(c: Ctx, $: CoreEngineInterface) {
 
 
 export const register: Register = (on, options) => {
-  const c: Ctx = { answer: undefined, failed: false, loaded: false, reading: false, lastRead: -Infinity, selected: '', outputPath: null, note: null, ticker: undefined, home: undefined, rich: undefined, peak: new Map(), latest: new Map() }
+  const c: Ctx = { answer: undefined, failed: false, reading: false, lastRead: -Infinity, selected: '', outputPath: null, note: null, ticker: undefined, home: undefined, rich: undefined, peak: new Map(), latest: new Map() }
   on('session.start', async ($, e, next) => {
     // The guide skill may already own the name /forge: Claude Code then refuses it. The
     // command.run hook below answers the typed command either way.
@@ -274,14 +263,12 @@ export const register: Register = (on, options) => {
       return { text: 'Opened the Forge pane.' }
     }
     // No pane can show, so answer with the lines themselves.
-    await remembered(c, $)
     await refresh(c, $)
     return { text: lines(c, view(c, await $.clock.now(), await mainRoot(c, $))) }
   }).catch(($, e, next) => next(e))
 
   on('ui.render', { component: 'Pane' }, async ($, e, next) => {
     if (e.requestId !== PANE && e.requestId !== OUTPUT) return next(e)
-    await remembered(c, $)
     const now = await $.clock.now(), main = await mainRoot(c, $)
     const t = $.ui.resolve(e)
     if (e.requestId === OUTPUT) {
@@ -304,7 +291,7 @@ export const register: Register = (on, options) => {
       } catch { return }
       try {
         const fresh = await read(c, $)
-        if (!fresh.runs.some(r => r.id === target.id)) { c.note = 'That run has ended.'; await take(c, $, fresh, await $.clock.now()); return }
+        if (!fresh.runs.some(r => r.id === target.id)) { c.note = 'That run has ended.'; take(c, fresh, await $.clock.now()); return }
         const cwd = await $.session.root().catch(() => undefined)
         const done = await $.process.run(['forge', 'stop', '--id', target.id], { cwd, timeoutMs: 20000 })
         if (done.exitCode !== 0) c.note = 'Forge could not stop the run.'

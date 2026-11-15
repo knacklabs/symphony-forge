@@ -86,7 +86,7 @@ def test_1_a_real_session_answers_slash_forge_with_or_without_the_guide_skill(re
 
 
 @pytest.mark.platform
-def test_2_real_lane_rows_reach_the_real_pane_and_a_late_forge_keeps_them(env, tmp_path, monkeypatch):
+def test_2_real_lane_rows_reach_the_real_pane_and_a_new_session_with_no_forge_shows_none_of_them(env, tmp_path, monkeypatch):
     if not REAL_CLAUDE:
         pytest.skip("Real Claude Code is not installed; the plugin CI job installs its pinned version.")
     client(env, False)
@@ -165,16 +165,15 @@ def test_2_real_lane_rows_reach_the_real_pane_and_a_late_forge_keeps_them(env, t
     finish(repo, [builder, reviewer, reader])
     tester.wait(timeout=60)
 
-    # Forge goes missing after a good answer: the rows stay, with how old they are.
+    # Forge goes missing in a new session: no row from the earlier session shows, only that Forge did not answer.
+    # (Within one session the last rows stay, with how old they are: the mod's own test holds that.)
     broken = tmp_path / "broken-bin"
     patient(lambda: broken.mkdir())
     (broken / "forge").write_text("#!/bin/sh\nexit 1\n", encoding="utf-8")
     (broken / "forge").chmod(0o755)
     (broken / "forge.cmd").write_text("@exit /b 1\r\n", encoding="utf-8")  # Windows finds this launcher first
-    kept = "\n".join(pane(first=broken))
-    assert "Builds the thing" in kept and "Asks about parsers needs you." in kept
-    assert re.search(r"Last update \d+ (?:s|min) ago\. Forge did not answer\.", kept), kept
-    assert "Loading" not in kept
+    missing = "\n".join(pane(first=broken))
+    assert missing.strip() == "Forge did not answer.", missing
 
 
 def env_lanes(env):
