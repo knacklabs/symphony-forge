@@ -4,14 +4,83 @@
   "done_when": "tests/test_train_land_all.py passes 20 times in a row under machine load and each of its tests ends well inside the test time limit, with the cause repaired in the train or in the test, and not by a longer limit",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [
+    {
+      "area": "train() in tests/test_train_land_all.py",
+      "file": "tests/test_train_land_all.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 231,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: tests/test_train_land_all.py passes 20 times in a row under machine load",
+      "work": 2
+    },
+    {
+      "area": "tests/test_queue_land_all.py",
+      "file": "tests/test_queue_land_all.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 100,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: force the train and change pull-request number collision",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "302e684d1aa324490bd911718e94c57996e7cb85a4a48c9e61ffe2899afa0127",
+    "changed": "ecb693366e2ae9968fe0e76960d635f4223f00c63724b058b856d36cdea4c9fe",
+    "commit": "696a3050ad327a5aedc72022b50df698d928e473",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done\nCase: normal use - CI runs the merge-train test group under load.\nThe full Done-when item is: tests/test_train_land_all.py passes 20 times in a row under machine load and each of its tests ends well inside the test time limit, with the cause repaired in the train or in the test, and not by a longer limit.\nThe proof list reports one complete passing run, with a slowest case of 53 seconds. The final commit describes nine loaded runs before its retry change, two of which failed, but reports no 20 consecutive passing loaded runs on the final change. A pull-request check that runs the suite once cannot establish the required repetition and per-test timing.",
+        "file": "tests/test_train_land_all.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 231,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: tests/test_train_land_all.py passes 20 times in a row under machine load",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - CI validates a change to the fake GitHub pull-request allocator.\nAdds work: a forced-collision command-level case; F 1 x H 2 = 2; 2 x C = 2.\nThe reported forced-collision reproduction was temporary, and no committed test forces a train's raw CRC to match an existing change. If the offsets in this stub, `_number`, and the no-create-output stub are removed together, their expected numbers still agree and the suite will usually pass, even though closing the train can again remove the change's pull request and trigger the slow fallback. Retain an end-to-end case that forces the raw collision and verifies the merge result.",
+        "file": "tests/test_queue_land_all.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 100,
+        "priority": "P1",
+        "title": "Gate: force the train and change pull-request number collision",
+        "work": 2
+      }
+    ],
+    "id": "7e2a378c-d9e2-46b7-8dc6-12926de2f9b6",
+    "status": "blocked"
+  },
   "round": 2,
-  "status": "working",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-14T17:48:25.592831+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-15T03:06:19.146857+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-11-15T03:06:19.157885+00:00",
+    "file": "tests/test_train_land_all.py",
+    "wait_id": "be03083e-2c71-44c9-8aaa-d5c870c6ffa4"
+  },
   "stuck": {
     "close": null,
     "head": "18e060fe97e240c079b1b952f0c4dcaa9f6137c2",
