@@ -4,12 +4,20 @@
   "done_when": "The board shows full titles for fixes and the Merged list, and a story whose plan is only on a part's branch shows that plan's real title.",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-15T10:15:19.708547+00:00",
       "step": "start"
     }
   ],
-  "why": "On the board, fix and Merged-list titles end in dots because they are cut at 70 characters, and a story whose plan is only on a part's branch shows \"A story with missing state\"."
+  "stuck": {
+    "close": null,
+    "head": "a946a3f82e23bdb9efa5035f61757026b3025d93",
+    "keys": {},
+    "round": null
+  },
+  "why": "On the board, fix and Merged-list titles end in dots because they are cut at 70 characters, and a story whose plan is only on a part's branch shows \"A story with missing state\".",
+  "worker": "claude"
 }
