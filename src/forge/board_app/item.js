@@ -160,8 +160,8 @@ function roundGroups(row) {
 function figures(row) {
   const count = row.findings?.count;
   const groups = roundGroups(row);
-  const total = groups.flatMap((group) => group.rounds).reduce((sum, round) => sum
-    + (round.first != null && round.last != null ? round.last - round.first + 1 : 1), 0);
+  const total = groups.flatMap((group) => group.rounds).reduce((sum, round) => sum + (round.reviews
+    ?? (round.first != null && round.last != null ? round.last - round.first + 1 : 1)), 0);
   // A story's parts that merged long ago come only with its full history, so until it is read the total is not known.
   // A merged part with no history here leaves only a floor.
   const gaps = groups.some((group) => group.missing);

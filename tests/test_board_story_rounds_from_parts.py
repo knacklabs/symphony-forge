@@ -26,7 +26,8 @@ SCRIPT = r"""
 import re, sys
 from axe_playwright_python.sync_playwright import Axe
 from playwright.sync_api import expect, sync_playwright
-url, total, gap = sys.argv[1], sys.argv[2], sys.argv[3] == 'gap'
+url, total, mode = sys.argv[1], sys.argv[2], sys.argv[3]
+gap = mode == 'gap'
 axe = Axe()
 NOTE = 'Its review history is not on this laptop.'
 
@@ -55,6 +56,11 @@ with sync_playwright() as p:
             page.get_by_role('button', name=re.compile('Shoppers can save a basket')).first.click()
             drawer = page.get_by_role('complementary', name='Shoppers can save a basket')
             expect(drawer).to_be_visible()
+            if mode == 'nothing':  # three merged parts and no review known anywhere: the total is unknown, not "at least 0"
+                expect(drawer.get_by_text('review rounds', exact=True).locator('..')).to_have_text(re.compile('review rounds\\s*unknown$'))
+                expect(drawer.get_by_text(NOTE)).to_have_count(3)
+                page.close()
+                continue
             shows(drawer, drawer)
             if gap:  # the note sits under the part it is about
                 expect(drawer.get_by_text('Show when it was saved').locator('..').get_by_text(NOTE)).to_be_visible()
@@ -76,7 +82,7 @@ def event(item, round, at, title):
             "at": at, "outcome": "findings", "findings": [{"priority": "P2", "file": "basket.py", "title": title}]}
 
 
-def story_with_rounds(client, gh, tmp_path, monkeypatch, merged_without_history):
+def story_with_rounds(client, gh, tmp_path, monkeypatch, merged_without_history, reviews=True):
     """SAVE merged in October with two reviews; SHARE merged last week with one review and an unreviewed
     worker turn; the story has one review of its own. SHOW merged in October with no record here, or is not started."""
     teammate = clone(client, tmp_path)
@@ -101,7 +107,7 @@ def story_with_rounds(client, gh, tmp_path, monkeypatch, merged_without_history)
         "isDraft": False, "body": "<!-- forge:begin -->\n<!-- forge:time-record " + json.dumps({"events": [], "timings": []})
         + " -->\n<!-- forge:end -->"}])
     with (client.path / ".git/forge/events.jsonl").open("a", encoding="utf-8") as log:
-        for row in (event("SHOP", 1, "2026-10-02T10:00:00+00:00", "Plan wording is unclear"),
+        for row in () if not reviews else (event("SHOP", 1, "2026-10-02T10:00:00+00:00", "Plan wording is unclear"),
                     event("SHOP/SAVE", 1, "2026-10-01T10:00:00+00:00", "Basket total is off by one"),
                     event("SHOP/SAVE", 2, "2026-10-01T11:00:00+00:00", "Basket total is off by one"),
                     event("SHOP/SHARE", 1, "2026-11-13T10:00:00+00:00", "Shared link shows no basket"),
@@ -134,3 +140,12 @@ def test_2_a_story_lists_each_reviewed_round_under_its_part_and_counts_only_revi
     story_with_rounds(client, gh, tmp_path, monkeypatch, merged_without_history=False)
     with live(client, FORGE_BOARD_FETCH_WAIT="3600", FORGE_NOW="2026-11-14T12:00:00+00:00") as url:
         check(client, url, "4", False)
+
+
+def test_3_a_story_whose_merged_parts_have_no_known_review_says_unknown(client, gh, tmp_path, monkeypatch):
+    story_with_rounds(client, gh, tmp_path, monkeypatch, merged_without_history=True, reviews=False)
+    with live(client, FORGE_BOARD_FETCH_WAIT="3600", FORGE_NOW="2026-11-14T12:00:00+00:00") as url:
+        shown = subprocess.run([REAL_UV or "uv", "run", "--no-project", "--python", "3.11", "--with",
+                                "playwright==1.55.0", "--with", "axe-playwright-python==0.1.4", "python", "-c", SCRIPT,
+                                url, "", "nothing"], capture_output=True, text=True, encoding="utf-8", timeout=300)
+        assert shown.returncode == 0, shown.stdout + shown.stderr
