@@ -84,7 +84,7 @@ def test_2_unfinished_worker_waits_only_while_a_process_or_lock_is_live(
     if not alive:
         assert "stopped" in row["next"]["line"].lower()
         assert not any(stage["status"] == "running" for stage in row["stages"])
-    next_json = client.forge("next", "--json")
+    next_json = client.forge("board", "--json")
     assert next_json.returncode == 0, next_json.stderr
     following = _row(json.loads(next_json.stdout), "correct-state")
     assert following["worker"] == row["worker"]

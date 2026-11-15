@@ -1,0 +1,39 @@
+{
+  "allow_large": "A release bump changes the version in every file that records it",
+  "base": "12460a98eedd86a05e3243158245dfd8b6ee623f",
+  "branch": "fix/release-1-2-39",
+  "done_when": "forge.toml, the package and every pinned reference say v1.2.39, and tests/test_release_version.py passes",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "ca87a4d57c1c223eff6ed7620b738800a140e0262513537ce9c8a6a91a6cc430",
+    "changed": "9ef896ffc4e497047290edf655e155a6e3c9dba02007dc0f1515850c39fde233",
+    "commit": "a0ef2781f062dd733ec759c645bd39d8934e3486",
+    "dismissals": [],
+    "findings": [],
+    "id": "9759ea8a-db96-4c85-8493-4398a8878215",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-15T02:57:43.983002+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-15T03:08:34.614222+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "665694130ecfa3fe365addde43693e9a7f87a561",
+    "keys": {},
+    "round": null
+  },
+  "why": "Release v1.2.39: publish what merged since v1.2.38",
+  "worker": "claude"
+}

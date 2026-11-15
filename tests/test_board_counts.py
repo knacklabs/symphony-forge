@@ -230,7 +230,7 @@ def test_1_every_item_has_one_state_and_the_same_counts_on_every_machine(env, mo
     assert "The fix keep has no checkout on this machine." in following.stdout
     assert "Next: forge work SHOP/T3" in following.stdout
     assert "Next: forge work keep" in following.stdout
-    there = rows(json.loads(env.repo.forge("next", "--json").stdout))
+    there = rows(board(env.repo))
     assert there["SHOP/T3"]["next"]["command"] == "forge work SHOP/T3"
     assert there["keep"]["next"]["command"] == "forge work keep"
 
@@ -245,8 +245,7 @@ def test_1_every_item_has_one_state_and_the_same_counts_on_every_machine(env, mo
     # Machine A without its receipt closes again to write one.
     env.repo.path = machine_a
     (machine_a / ".git/forge/ready/SHOP/T2.json").unlink()
-    machine = env.repo.forge("next", "--json")
-    assert rows(json.loads(machine.stdout))["SHOP/T2"]["next"]["command"] == "forge close SHOP/T2"
+    assert rows(board(env.repo))["SHOP/T2"]["next"]["command"] == "forge close SHOP/T2"
     again = env.close("SHOP/T2")
     assert again.returncode == 0, again.stdout + again.stderr
     assert (machine_a / ".git/forge/ready/SHOP/T2.json").is_file()
@@ -285,9 +284,7 @@ def newer_push(env, monkeypatch, previous):
     clock(monkeypatch, now := now + timedelta(minutes=2))
     for where in (machine_a, machine_b):
         env.repo.path = where
-        data, machine = board(env.repo), env.repo.forge("next", "--json")
-        assert rows(data)["SHOP/T2"]["state"] == "in progress", where
-        assert rows(json.loads(machine.stdout))["SHOP/T2"]["state"] == "in progress", where
+        assert rows(board(env.repo))["SHOP/T2"]["state"] == "in progress", where
 
     # A closes the newer commit clean; after a fetch both machines see it ready again.
     env.repo.path = machine_a

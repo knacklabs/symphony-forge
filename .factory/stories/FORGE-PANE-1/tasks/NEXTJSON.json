@@ -1,0 +1,64 @@
+{
+  "branch": "task/FORGE-PANE-1-NEXTJSON",
+  "known": [
+    {
+      "area": "test_1_next_announces_new_releases_with_a_shared_daily_cache() in tests/test_next_announces_new_forge_releases.py",
+      "file": "tests/test_next_announces_new_forge_releases.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 45,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_next_announces_new_releases_with_a_shared_daily_cache",
+      "work": 1
+    },
+    {
+      "area": "test_1_next_reuses_work_within_a_command() in tests/test_next_reuses_command_work.py",
+      "file": "tests/test_next_reuses_command_work.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 91,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_next_reuses_work_within_a_command",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "5e76c8d3c95eca0672e44c7a0fb1e1d68576deff7735427aaa02e294a1246afc",
+    "changed": "78449db8731796dc76db66d159b2c723630e28b6b8ce584d5e3b655fed5e1a17",
+    "commit": "57b0d2068a265780cd8f94cedbaa28fb197eccc7",
+    "dismissals": [],
+    "findings": [],
+    "id": "21fa6ba1-a011-4e31-b505-d7dbf97fda00",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-14T14:48:59.089025+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-14T16:50:25.507073+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-14T16:59:19.576017+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "15c29f29-99cd-4f7b-b6e3-b179b08623f9",
+    "head": "7193ccbaf335eab51659098f6696989a6135dfde",
+    "keys": {},
+    "round": 1
+  },
+  "worker": "claude"
+}

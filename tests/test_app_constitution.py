@@ -136,8 +136,7 @@ def test_1_a_new_story_waits_for_the_approved_constitution(repo, gh, tmp_path, m
                              "The owner approved docs/product/CONSTITUTION.md", "--kind", "mechanical")
     assert fix_started.returncode == 0, fix_started.stdout + fix_started.stderr
     work_line = next(line for line in fix_started.stdout.splitlines() if line.startswith("Next: "))
-    machine_next = json.loads(repo.forge("next", "--json").stdout)
-    assert machine_next["next"]["command"] == work_line.removeprefix("Next: ")
+    assert work_line in repo.forge("next").stdout.splitlines()
     assert "Before its next story, this app needs its approved constitution." in repo.forge("next").stdout
     fix = Path(re.search(r" in (.+)\n", fix_started.stdout)[1])
     promoted = repo.forge("story", "new", "SHOP", "Shoppers can save a basket",

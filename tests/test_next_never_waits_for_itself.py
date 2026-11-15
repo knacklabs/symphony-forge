@@ -11,8 +11,8 @@ STORY = "next-no-self-wait"
 
 
 def _waits(repo):
-    """Each part's waits_for in forge next --json's dependency map."""
-    board = json.loads(repo.forge("next", "--json").stdout)
+    """Each part's waits_for in forge board --json's dependency map."""
+    board = json.loads(repo.forge("board", "--json").stdout)
     return {part["id"]: part["waits_for"] for story in board["dependency_maps"] for part in story["parts"]}
 
 
@@ -33,7 +33,7 @@ def test_1_a_part_started_here_and_not_pushed_waits_for_nothing(
     repo.git("push", "-q", "origin", "--delete", "task/SHOP-SAVE")
 
     shown = repo.forge("next").stdout
-    board = repo.forge("next", "--json").stdout
+    board = repo.forge("board", "--json").stdout
     assert "SHOP/SAVE waits for SHOP/SAVE" not in shown + board, shown + board
     assert "SHOP/SAVE was started by" in shown, shown
     # A dependent part needs published, reviewed changes. Its advice must not
