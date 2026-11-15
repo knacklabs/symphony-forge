@@ -566,10 +566,10 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
         plan_read, assignments = story_read(read_key) if read_key else ("none", {})
         ci = {"status": {"pass": "green", "fail": "red", "running": "running"}.get(checks, "none")}
         if checks == "running":
-            starts = [c.get("startedAt") for c in _rollup(pr or {}) if _when(c.get("startedAt"))
-                      and (c.get("status") in ("QUEUED", "IN_PROGRESS", "WAITING", "PENDING", "REQUESTED")
-                           or c.get("state") in ("PENDING", "EXPECTED"))]
+            starts = [c.get("startedAt") for c in _rollup(pr or {}) if _when(c.get("startedAt")) and board_facts.busy(c)]
             ci["elapsed"] = elapsed(min(starts, key=_when)) if starts else None
+        if checks == "fail" and any(board_facts.busy(c) for c in _rollup(pr or {})):
+            ci["running"] = True  # a failed job beside a running one: the checks are not settled
         elif checks == "unknown" and any(e.get("kind") == "ci" for e in active):
             ci = {"status": "running", "elapsed": elapsed(next(e["at"] for e in active if e.get("kind") == "ci"))}
         status = ({"done": "Finished", "merged": "Finished", "planning": "Planning",

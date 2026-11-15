@@ -1,0 +1,121 @@
+{
+  "base": "6a0a3d4bab750c44bd948d1e794d019c7a224c3c",
+  "branch": "fix/a-part-or-fix-with-failed-checks-and-no",
+  "done_when": "The first screen's Needs you count and list include every part or fix with failed checks idle for a day or more, each with a plain reason such as \"checks failed, no activity for 7 days\".",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "needs_you() in src/forge/board_facts.py",
+      "file": "src/forge/board_facts.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 558,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Needs you includes every part or fix with failed checks idle for a day or more",
+      "work": 3
+    },
+    {
+      "area": "needs_you() in src/forge/board_facts.py",
+      "file": "src/forge/board_facts.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 558,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Do not report an idle failure while its checks are running",
+      "work": 2
+    },
+    {
+      "area": "needs_you() in src/forge/board_facts.py",
+      "file": "src/forge/board_facts.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 559,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Keep the item detail's Needs you status consistent with the list",
+      "work": 2
+    },
+    {
+      "area": "test_1_failed_checks_idle_for_a_day_need_you() in tests/test_board_needs_you_failed_checks.py",
+      "file": "tests/test_board_needs_you_failed_checks.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 42,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_failed_checks_idle_for_a_day_need_you",
+      "work": 2
+    },
+    {
+      "area": "tests/test_board_needs_you_failed_checks.py",
+      "file": "tests/test_board_needs_you_failed_checks.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 52,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_2_five_idle_failed_fixes_fit_the_first_screen",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "4ec18f3f01a6aa742ab3ceb088bb1f51b71ccfd676a6456d2ede323b6342fab3",
+    "changed": "966b901ff8577ebb1287de24b148c26000f2c262df0934a1a440350de93755c8",
+    "commit": "fa35b834c7cc7dab7d73f2ab85fa8cf9524578af",
+    "dismissals": [],
+    "findings": [],
+    "id": "c59e8d41-6509-407b-8c14-de800010bb90",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-15T13:11:11.104132+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-15T13:28:06.334972+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-15T13:41:00.799420+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-15T13:45:51.468998+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-15T13:41:00.799657+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "src/forge/board_facts.py",
+    "reason": "The owner chose: repair the test only; the more-than-100-checks edge is an accepted known issue",
+    "wait_id": "2e211cf6-08b7-498a-a989-8989c929e57b",
+    "worker_round": 2
+  },
+  "stuck": {
+    "close": "2cf3a815-adc2-43f2-bd95-46484ad69eaa",
+    "head": "321cc68fdb6804758c4a7b0ed13e8fe0b0514709",
+    "keys": {},
+    "round": 2
+  },
+  "why": "A part or fix with failed checks and no activity for a day or more sits under Building, so a manager reads \"0 need you\" and thinks nothing needs doing.",
+  "worker": "claude"
+}

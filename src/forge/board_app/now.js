@@ -10,7 +10,7 @@ const STAGE_OF = {
   reviewing: 'review', 'waiting for checks': 'review', hotspot: 'review',
   ready: 'ready', merged: 'merged', done: 'merged',
 };
-const VERB = { approval: 'Approve', 'worker question': 'Answer', merge: 'Merge', 'failed run': 'Fix' }; // every other wait: Decide
+const VERB = { approval: 'Approve', 'worker question': 'Answer', merge: 'Merge', 'failed run': 'Fix', 'checks failed': 'Fix' }; // every other wait: Decide
 const KINDS = [['all', 'All'], ['task', 'Story parts'], ['fix', 'Fixes']];
 const RUN = { work: 'Building', worker: 'Building', review: 'Reviewing', read: 'Reading the plan', test: 'Testing' };
 const CARDS = 4; // per stage, then "and N more"
@@ -136,7 +136,8 @@ function ask(entry) {
     'data-url': run && entry.url,
     onclick: run && entry.url ? () => window.open(entry.url, '_blank', 'noopener') : open(entry) },
     el('span', { class: 'ask-head' }, el('span', { class: 'verb' }, verb), el('span', { class: 'key' }, place)),
-    el('span', { class: 'ask-title', title: entry.title }, entry.title));
+    el('span', { class: 'ask-title', title: entry.title }, entry.title),
+    entry.reason === 'checks failed' && el('span', { class: 'ask-why' }, entry.detail));
 }
 
 function strip(shown) {
