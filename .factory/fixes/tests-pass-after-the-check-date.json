@@ -41,7 +41,7 @@
     "id": "26b3d42a-93da-415f-a78c-67843f3484ef",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -63,10 +63,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": null,
-    "head": "1d58b7b62d3b9392511cc679c10160d48073d5d7",
+    "close": "95d0c09a-ac17-4d21-b2b3-ddd36ba18697",
+    "head": "bb22e528e44b7ec4ac9ee6224eb83147842a5a2d",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "From 15 Nov 2026 forge next prints the three success numbers in one line near its end (the rebuild's check date in the code has come), and six tests that read the report's last lines by position fail on the default branch: tests/test_readloop_gates.py (three cases of test_2), tests/test_builders_edits_need_no_new_read.py test_2, tests/test_merge_command.py test_5 dirty and tests/test_contracts.py test_8_plain_english",
   "worker": "claude"
