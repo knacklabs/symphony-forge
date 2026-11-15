@@ -99,7 +99,7 @@
     "id": "3603494a-2656-43d0-ba4b-14f5ca7d0bc1",
     "status": "blocked"
   },
-  "round": 2,
+  "round": 3,
   "status": "fixing",
   "steps": [
     {
@@ -125,10 +125,10 @@
     "worker_round": 2
   },
   "stuck": {
-    "close": "bd350273-7522-4a05-8c53-6aa3b5973bc3",
-    "head": "15e1ba3bac9f79d4054196164f72ba0e2fa0397c",
+    "close": "18641c1b-20f8-4847-a5dc-8f253ac0f09c",
+    "head": "c615c3004a14eeaf55e77467d01047ba354e9053",
     "keys": {},
-    "round": 1
+    "round": 2
   },
   "why": "On the board, fix and Merged-list titles end in dots because they are cut at 70 characters, and a story whose plan is only on a part's branch shows \"A story with missing state\".",
   "worker": "claude"
