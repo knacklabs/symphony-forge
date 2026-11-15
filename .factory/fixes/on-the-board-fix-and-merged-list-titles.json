@@ -1,7 +1,14 @@
 {
+  "amendments": [
+    {
+      "at": "2026-11-15T10:46:39.603891+00:00",
+      "because": "The owner chose whole titles only: the title of a story whose plan is only on a part's branch is a rare case that keeps the placeholder, as today",
+      "done_when": "The board shows full titles for fixes and the Merged list, and a story whose plan is only on a part's branch shows that plan's real title."
+    }
+  ],
   "base": "42b9854290aab1eacbb665281c9c7361aed23d4e",
   "branch": "fix/on-the-board-fix-and-merged-list-titles",
-  "done_when": "The board shows full titles for fixes and the Merged list, and a story whose plan is only on a part's branch shows that plan's real title.",
+  "done_when": "The board shows whole titles for fixes and for the Merged list",
   "fix_kind": "backend",
   "kind": "fix",
   "known": [
