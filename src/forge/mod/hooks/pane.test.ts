@@ -384,8 +384,15 @@ test('3: Stop does not stop a run that became a session subagent while the quest
   world.answers = 'Stop'
   await ui.press({ key: 'stop-run' })
   expect(stops()).toEqual([])
-  expect(JSON.stringify(await ui.drawn())).toContain('This run is now a subagent of a Claude session. Ask that session\'s agent to stop it.')
+  expect(JSON.stringify(await ui.drawn())).toContain('This run is now a subagent of an agent session. Ask that session\'s agent to stop it.')
   expect(await ui.find({ key: 'stop-run' })).toBeFalsy()
+  // The note follows the person's action: it stays through every refresh until the person acts again.
+  for (let n = 0; n < 3; n++) {
+    await clock.advance(5000)
+    expect(JSON.stringify(await ui.drawn())).toContain('now a subagent of an agent session')
+  }
+  await ui.press({ key: 'run-a' })
+  expect(JSON.stringify(await ui.drawn())).not.toContain('now a subagent of an agent session')
 })
 
 test('3: Stop shows the first line Forge prints when it stops a run', async ($, on) => {
@@ -393,7 +400,7 @@ test('3: Stop shows the first line Forge prints when it stops a run', async ($, 
   const { clock } = world
   world.lanes = () => lanes([run({ id: 'a', title: 'First' })])
   world.run = argv => (argv[1] === 'stop'
-    ? { value: { exitCode: 0, stdout: 'Stopped Forge\'s hold; stop the subagent in your session too.\nMore.\n', stderr: '' } }
+    ? { value: { exitCode: 0, stdout: 'Stopped Forge\'s hold; stop the subagent in your session too.\nMore.\n', stderr: 'warning: a diagnostic\n' } }
     : answer(lanes([run({ id: 'a', title: 'First' })])))
   await $.session.start(started('terminal'))
   const ui = await $.ui.mount(pane('terminal'))
@@ -403,6 +410,9 @@ test('3: Stop shows the first line Forge prints when it stops a run', async ($, 
   const drawn = JSON.stringify(await ui.drawn())
   expect(drawn).toContain('Stopped Forge\'s hold; stop the subagent in your session too.')
   expect(drawn).not.toContain('More.')
+  expect(drawn).not.toContain('a diagnostic')
+  await clock.advance(5000)
+  expect(JSON.stringify(await ui.drawn())).toContain('Stopped Forge\'s hold; stop the subagent in your session too.')
 })
 
 test('3: the desktop draws more: meters, tags, progress and the latest output', async ($, on) => {

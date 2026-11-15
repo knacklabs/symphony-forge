@@ -176,8 +176,8 @@ async function refresh(c: Ctx, $: CoreEngineInterface) {
   c.reading = true
   try {
     c.lastRead = await $.clock.now()
+    // A note follows a person's action: it stays through refreshes until the person acts again.
     take(c, await read(c, $), await $.clock.now())
-    c.note = null
     if ((await $.session.surfaces()).includes('desktop') && await isDesktop(c, $)) {
       const rows = rowsOf(c, c.answer!, c.answer!.at, await mainRoot(c, $))
       const row = rows.find(r => r.id === c.selected) ?? rows[0]
@@ -274,6 +274,7 @@ export const register: Register = (on, options) => {
 
   // A fault here hands the command on to the guide skill.
   on('command.run', { command: 'forge' }, async $ => {
+    c.note = null
     const opened = await $.ui.open({ id: PANE, title: 'Forge', focus: true })
     if (opened.isPlaced) {
       void refresh(c, $)
@@ -313,15 +314,18 @@ export const register: Register = (on, options) => {
         const now = fresh.runs.find(r => r.id === target.id)
         // A run that joined a Claude session while the question was open: forge stop would clear Forge's record but not the subagent.
         if (!now || now.native) {
-          c.note = now ? 'This run is now a subagent of a Claude session. Ask that session\'s agent to stop it.' : 'That run has ended.'
+          c.note = now ? 'This run is now a subagent of an agent session. Ask that session\'s agent to stop it.' : 'That run has ended.'
           take(c, fresh, await $.clock.now())
           return
         }
         const cwd = await $.session.root().catch(() => undefined)
         const done = await $.process.run(['forge', 'stop', '--id', target.id], { cwd, timeoutMs: 20000 })
         if (done.exitCode !== 0) c.note = 'Forge could not stop the run.'
-        // Forge's own warning stays visible: its first line. The plain result needs no note.
-        else c.note = (done.stderr || done.stdout).split('\n').map(line => line.trim()).find(line => line && line !== 'Stopped the run.') ?? null
+        // Forge's own words stay visible: the first line of the stop result, else of stderr. The plain result needs no note.
+        else {
+          const said = (text: string) => text.split('\n').map(line => line.trim()).filter(Boolean)
+          c.note = (said(done.stdout).length ? said(done.stdout).find(line => line !== 'Stopped the run.') : said(done.stderr)[0]) ?? null
+        }
       } catch { c.note = 'Forge did not answer.' } finally { $.ui.invalidate('ui.render') }
     }
     const buttons = (): RenderNode[] => (row ? [
