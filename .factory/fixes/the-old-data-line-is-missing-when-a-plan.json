@@ -4,14 +4,105 @@
   "done_when": "The board shows the old-data line for a failed plan read, retries an item's first failed read straight away, and shows the newest failure reason.",
   "fix_kind": "ui",
   "kind": "fix",
+  "known": [
+    {
+      "area": "tests/test_board_says_when_data_is_old.py",
+      "file": "tests/test_board_says_when_data_is_old.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 228,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Standard: Fake only third-party services at their edge",
+      "work": 2
+    },
+    {
+      "area": "tests/test_board_says_when_data_is_old.py",
+      "file": "tests/test_board_says_when_data_is_old.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 252,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: tests/test_board_old_data_line_gaps.py::test_2_an_items_first_failed_read_is_asked_again_at_once_and_only_once",
+      "work": 1
+    },
+    {
+      "area": "src/forge/board_app/item.js",
+      "file": "src/forge/board_app/item.js",
+      "gain": 2,
+      "harm": 2,
+      "line": 465,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Follow-up: Retry reads for items absent from the Now snapshot",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "10395ada60528e370087afe83d551a6c0033e2c7b05d2c9a687c6f5bf924cbb1",
+    "changed": "bf72c0baa15553238298120e672feb34a7a2840b59ce4b81b03acc412034fdd9",
+    "commit": "b52956501e8a9761e4fc5ae95264caeb4f0066ab",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Gate. Case: normal use - a plan or item read fails in the running board server. The standard says, \u201cFake only third-party services at their edge.\u201d The plan scenario replaces the board's own `/plan/SHOP` response with a fabricated 500, and the item scenarios do the same for `/board.json?page=item` at lines 250 and 257. These tests would still pass if the real server returned a non-5xx response for those failures, which would prevent `Board.read` from reporting or retrying them. Exercise the failures through the running server so the named proofs cover the complete path.",
+        "file": "tests/test_board_says_when_data_is_old.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 228,
+        "priority": "P1",
+        "title": "Standard: Fake only third-party services at their edge",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 1, Harm 3\nRaise: Test. Case: normal use - an item's first read fails and its retry succeeds. The test waits up to 60 seconds for the heading before checking that two requests occurred; it never establishes that the second request happened immediately. The installed clock is left running ([Playwright clock documentation](https://playwright.dev/python/docs/api/class-clock#clock-pause-at)), so an implementation that waits 10 seconds before retrying would still satisfy these assertions. The proof needs to distinguish an immediate retry from the delayed behavior the fix replaces.",
+        "file": "tests/test_board_says_when_data_is_old.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 252,
+        "priority": "P1",
+        "title": "Gate: tests/test_board_old_data_line_gaps.py::test_2_an_items_first_failed_read_is_asked_again_at_once_and_only_once",
+        "work": 1
+      },
+      {
+        "body": "Gain 2, Work 2, Harm 2\nCase: normal use - someone opens an older item that the seven-day Now snapshot omits. After a plan read fails, this new `Board.read` records the failure, but the retry callback at `item.js:534-541` only rereads a page whose item is present in that snapshot. The plan and old-data line therefore remain in their failed state after the server recovers. The same condition leaves an older item's page or drawer in error if both immediate item reads fail (`item.js:234-243` and `315-321`).\nAdds work: retry failed reads for open items outside the snapshot; F 1 x H 2 = 2; 2 x C = 4.",
+        "file": "src/forge/board_app/item.js",
+        "gain": 2,
+        "harm": 2,
+        "line": 465,
+        "priority": "P2",
+        "title": "Follow-up: Retry reads for items absent from the Now snapshot",
+        "work": 2
+      }
+    ],
+    "id": "43951444-a0e3-4dda-bb97-a5eedb6f483a",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-15T14:15:04.809510+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-15T14:42:01.481826+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-11-15T14:42:01.492125+00:00",
+    "file": "tests/test_board_says_when_data_is_old.py",
+    "wait_id": "478d57e9-abfc-4e59-84f1-c32decfeb9aa"
+  },
   "stuck": {
     "close": null,
     "head": "355bf3c0248b8ea61bf3b6ce826a4a30b0cad777",
