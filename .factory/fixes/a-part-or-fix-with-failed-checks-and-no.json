@@ -102,7 +102,7 @@
     "id": "a4a21d4f-7720-4183-98e9-5b5e66fc87df",
     "status": "blocked"
   },
-  "round": 2,
+  "round": 3,
   "status": "fixing",
   "steps": [
     {
@@ -128,10 +128,10 @@
     "worker_round": 2
   },
   "stuck": {
-    "close": "a945ae4c-5887-4916-ac96-7367f80622ae",
-    "head": "56772a4c4524251734d75d2818485862235a376c",
+    "close": "2cf3a815-adc2-43f2-bd95-46484ad69eaa",
+    "head": "321cc68fdb6804758c4a7b0ed13e8fe0b0514709",
     "keys": {},
-    "round": 1
+    "round": 2
   },
   "why": "A part or fix with failed checks and no activity for a day or more sits under Building, so a manager reads \"0 need you\" and thinks nothing needs doing.",
   "worker": "claude"
