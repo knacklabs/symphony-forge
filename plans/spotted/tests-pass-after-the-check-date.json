@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\ttests/test_readloop_gates.py\tNot done: Those tests pass on any date: each one finds the lines it checks by their text, or runs with a fixed clock\ttests-pass-after-the-check-date",
+      "kind": "bug",
+      "path": "tests/test_readloop_gates.py",
+      "line": 155,
+      "text": "Not done: Those tests pass on any date: each one finds the lines it checks by their text, or runs with a fixed clock",
+      "from": "blocking",
+      "item": "tests-pass-after-the-check-date",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
