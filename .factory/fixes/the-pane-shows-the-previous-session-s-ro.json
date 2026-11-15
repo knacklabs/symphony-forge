@@ -135,7 +135,7 @@
     "id": "4300c4cc-96c7-4668-a3e2-5d98b974cbe3",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -148,10 +148,12 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "3e8e4e38ea3abb1adb23e629af651121a7570e9e",
-    "keys": {},
-    "round": null
+    "close": "53a31b1a-3495-4c31-bac6-79957d9a387e",
+    "head": "0b4f602c170763959d809e6e9afb235893eb9c9a",
+    "keys": {
+      "the open P0 not done: new sessions retain earlier rows after /clear in src/forge/mod/hooks/register.ts": 1
+    },
+    "round": 1
   },
   "why": "The pane shows the previous session's rows with their age when a new session's first read fails, shows a decision by its file name, and has no output to open for a plain test run.",
   "worker": "claude"
