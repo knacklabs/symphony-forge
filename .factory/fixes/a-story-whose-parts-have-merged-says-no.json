@@ -78,7 +78,7 @@
     "status": "blocked"
   },
   "round": 2,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-15T14:24:36.912002+00:00",
@@ -95,8 +95,12 @@
   ],
   "stop": {
     "at": "2026-11-15T15:05:58.709883+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "src/forge/board_app/item.js",
-    "wait_id": "d6e17f94-5dac-4418-8ee2-e558219230e9"
+    "reason": "The owner chose: repair the fold; the total keeps the word 'unknown' when no review is known and a part's history is missing",
+    "wait_id": "d6e17f94-5dac-4418-8ee2-e558219230e9",
+    "worker_round": 2
   },
   "stuck": {
     "close": "4bda8a45-726c-481b-8e35-89ef6dd7115a",
