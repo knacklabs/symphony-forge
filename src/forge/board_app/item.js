@@ -144,20 +144,29 @@ function roundWhat(round) {
   return recordedWords(text, recordedWords(text.split(' — ')[0]));
 }
 
+// A round is a review, not a worker turn that was never reviewed; a summary from an older release has only reviews.
+const reviewed = (rounds) => (rounds || []).filter((round) => round.reviewed !== false);
+
 // A story's review rounds sit on its parts, so its groups are its own rounds, then each part's under the part's title.
-// An empty list is a list with no rounds, so a group counts only when it has some.
+// A merged part with no review in the data has its own group: its history is not on this machine.
 function roundGroups(row) {
-  const parts = row.kind === 'story' ? row.children.map((part) => ({ id: part.id, title: part.title, rounds: part.rounds || [] })) : [];
-  const groups = [{ id: row.id, title: null, rounds: row.rounds || [] }, ...parts].filter((group) => group.rounds.length);
+  const parts = row.kind === 'story' ? row.children.map((part) => ({ id: part.id, title: part.title,
+    rounds: reviewed(part.rounds), missing: STAGES[part.stage] === 'Merged' && !reviewed(part.rounds).length })) : [];
+  const groups = [{ id: row.id, title: null, rounds: reviewed(row.rounds) }, ...parts]
+    .filter((group) => group.rounds.length || group.missing);
   return groups.map((group) => ({ ...group, title: group.title || (groups.length > 1 ? 'The story itself' : null) }));
 }
 
 function figures(row) {
   const count = row.findings?.count;
-  const total = roundGroups(row).flatMap((group) => group.rounds).reduce((sum, round) => sum
+  const groups = roundGroups(row);
+  const total = groups.flatMap((group) => group.rounds).reduce((sum, round) => sum
     + (round.first != null && round.last != null ? round.last - round.first + 1 : 1), 0);
   // A story's parts that merged long ago come only with its full history, so until it is read the total is not known.
-  const rounds = row.kind === 'story' ? (row.full ? total : 'unknown') : row.rounds ? total : row.round ?? 'unknown';
+  // A merged part with no history here leaves only a floor.
+  const gaps = groups.some((group) => group.missing);
+  const rounds = row.kind !== 'story' ? (row.rounds ? total : row.round ?? 'unknown')
+    : !row.full ? 'unknown' : !gaps ? total : total ? `at least ${total}` : 'unknown';
   return el('dl', { class: 'figures' },
     [['review rounds', rounds],
      ['known issues kept', issues(row).length],
@@ -192,7 +201,8 @@ function roundList(row, limit) {
       el('span', { class: 'took' }, duration(roundSeconds(round))))));
   if (groups.length === 1 && !groups[0].title) return list(groups[0]);
   return el('div', { class: 'round-parts' }, groups.map((group) => el('div', { class: 'round-part' },
-    el('p', { class: 'part-name', id: `rounds-${group.id}` }, group.title), list(group))));
+    el('p', { class: 'part-name', id: `rounds-${group.id}` }, group.title),
+    group.rounds.length ? list(group) : el('p', { class: 'quiet' }, 'Its review history is not on this laptop.'))));
 }
 
 function partList(parts, current) {

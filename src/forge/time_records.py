@@ -391,6 +391,7 @@ def item(top: Path, key: str, state: dict[str, Any], *,
         steps.append(f"findings: {fresh if fresh is not None else 'unknown'} new, {repeats if repeats is not None else 'unknown'} repeated"
                      + (f" — {titles}" if titles else ""))
         rounds.append({"round": number, "worker_round": worker_round,
+                       "reviewed": bool(result or current["review_timings"]),
                        "line": f"Round {number if number is not None else 'unknown'}: " + "; ".join(steps),
                        "findings": findings, "new_findings": fresh, "repeat_findings": repeats,
                        "seconds": {c: round(v, 3) for c, v in per_attempt.get(index, {}).items()},
