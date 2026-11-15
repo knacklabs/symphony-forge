@@ -24,7 +24,7 @@
       "gain": 4,
       "harm": 3,
       "line": 826,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 1,
       "security": false,
@@ -63,7 +63,7 @@
       "gain": 3,
       "harm": 3,
       "line": 53,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 1,
       "security": false,
@@ -73,38 +73,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "11f291bc6ce5773b99b9c4f3ae98b89e6a0bb05dc1fc9662455fcd8e55d5889e",
-    "changed": "31f0c140483b9709470e69610f9e83eaffc333eac98e492450624e33946b1ab4",
-    "commit": "9fc102d05f69e569aa00542f3125ea8d92f062cf",
+    "branch_diff": "e27d3e780b7c154949cf426700bdd25f5b9dfd5f75365355cef4f2cbd04095d3",
+    "changed": "d579eb91593be05c6b8c309775c845d42a0cc096d2cee2b95d5dc932155ace3e",
+    "commit": "8bf275378b93e9e33f80eb863b2a3a6748711015",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done\nCase: normal use - a plain test run writes a 5 MiB log. This writer lets the log grow, but register.ts:156-160 reads the entire file through `$.fs.read`. The [pinned Claude Code API](https://github.com/anthropics/claude-code/blob/v2.1.322/mods/types/claude-code.d.ts#L2677-L2691) rejects reads over 4 MiB, so the pane catches the rejection and says there is no output. The 32 MiB ruling did not account for this lower API limit; logs between 4 and 32 MiB still fail to open.",
-        "file": "src/forge/fasttest.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 757,
-        "priority": "P1",
-        "required_done_when": true,
-        "title": "Not done: Some plain test rows still have no usable output",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - a pull request runs the repository's test checks without a globally installed Claude executable. `pane_draws` skips both real-data pane tests in that environment. The PR test job in .github/workflows/forge.yml:58-89 does not install Claude; the separate job that installs it in .github/workflows/forge-next.yml:65-74 does not run this test file. A green PR check therefore does not prove either behavior through the pane. Even when run locally, tests/fixtures/pane-real-data.test.ts:23-24 replaces `fs.read` with a fake and the generated log is only about 1.5 MiB, so the proof passes despite the real API rejecting a 5 MiB log.",
-        "file": "tests/test_pane_decision_and_test_output.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 38,
-        "priority": "P1",
-        "title": "Gate: decision heading and plain test output pane proofs",
-        "work": 2
-      }
-    ],
-    "id": "7cd57019-7b4a-4d8f-82fe-af7d4b29d42f",
-    "status": "blocked"
+    "findings": [],
+    "id": "84a28331-f586-450e-86c9-0b44d6161891",
+    "status": "clean"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-15T10:15:52.655187+00:00",
@@ -116,6 +94,10 @@
     },
     {
       "at": "2026-11-15T11:05:45.448694+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-15T11:38:18.705349+00:00",
       "step": "review"
     }
   ],
