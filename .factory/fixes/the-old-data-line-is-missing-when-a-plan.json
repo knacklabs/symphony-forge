@@ -1,0 +1,15 @@
+{
+  "base": "6bd0bfe1a12a402287e91623f63d3b085bc394df",
+  "branch": "fix/the-old-data-line-is-missing-when-a-plan",
+  "done_when": "The board shows the old-data line for a failed plan read, retries an item's first failed read straight away, and shows the newest failure reason.",
+  "fix_kind": "ui",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-15T14:15:04.809510+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The old-data line is missing when a plan read fails, a first failed item read waits for the next snapshot instead of retrying at once, and a second failure with another reason keeps the first reason on the line."
+}
