@@ -4,14 +4,129 @@
   "done_when": "After the owner confirms Stop on such a run, the pane does not stop it and shows a note that the agent of that session must stop it.",
   "fix_kind": "ui",
   "kind": "fix",
+  "known": [
+    {
+      "area": "src/forge/mod/hooks/register.ts",
+      "file": "src/forge/mod/hooks/register.ts",
+      "gain": 4,
+      "harm": 3,
+      "line": 316,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: After the owner confirms Stop on such a run, the pane does not stop it and shows a note that the agent of that session must stop 4",
+      "work": 2
+    },
+    {
+      "area": "src/forge/mod/hooks/pane.test.ts",
+      "file": "src/forge/mod/hooks/pane.test.ts",
+      "gain": 3,
+      "harm": 3,
+      "line": 379,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: End-to-end Stop after a waiting run becomes a session subagent",
+      "work": 2
+    },
+    {
+      "area": "src/forge/mod/hooks/register.ts",
+      "file": "src/forge/mod/hooks/register.ts",
+      "gain": 2,
+      "harm": 2,
+      "line": 324,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Follow-up: Preserve the stop result when stderr also contains a diagnostic",
+      "work": 1
+    },
+    {
+      "area": "src/forge/mod/hooks/register.ts",
+      "file": "src/forge/mod/hooks/register.ts",
+      "gain": 2,
+      "harm": 2,
+      "line": 316,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Follow-up: Name the owning session correctly for Codex subagents",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "d162f354913d4431baf20ba0949d513851bdf1e65520d245e1c0a65b84193067",
+    "changed": "d9087eef79ec6be27c700fee89e6cf01431b6b1eb1a020ae189b2ec1dd310e99",
+    "commit": "dd04ed08235be483c144f0cbf5ea022a3b505470",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done\nCase: normal use - The owner confirms Stop and looks for the explanation in the pane. The new note is cleared on the next successful automatic refresh, normally within three seconds, by src/forge/mod/hooks/register.ts:174 and :180. It can therefore disappear before the owner has read it, leaving a still-running subagent with no visible explanation of how to stop it. The warning assigned at line 324 is cleared the same way. The new test checks the drawing immediately and does not advance through a refresh.",
+        "file": "src/forge/mod/hooks/register.ts",
+        "gain": 4,
+        "harm": 3,
+        "line": 316,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: After the owner confirms Stop on such a run, the pane does not stop it and shows a note that the agent of that session must stop 4",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - A queued run is admitted while the Stop question is open. Both new pane tests replace Forge's process results: pane.test.ts:73 stubs every process call, line 379 invents the native transition, and line 395 invents the stop output. They would pass if real Forge failed to publish the native flag for a formerly queued run, causing the pane to clear its handback. The real-pane test at tests/test_pane_session.py:89 reads real lanes but does not press Stop. No test proves this flow with real Forge in either a new or an earlier-adopted repo, as the review contract requires.",
+        "file": "src/forge/mod/hooks/pane.test.ts",
+        "gain": 3,
+        "harm": 3,
+        "line": 379,
+        "priority": "P1",
+        "title": "Gate: End-to-end Stop after a waiting run becomes a session subagent",
+        "work": 2
+      },
+      {
+        "body": "Gain 2, Work 1, Harm 2\nAdds work: select the stop result when both output streams contain text; F 1 x H 2 = 2; 2 x C = 2\nCase: normal use - A developer stops a run from a Forge source checkout or worktree using a local installation. src/forge/cli.py:131 writes a checkout diagnostic to stderr even on success, while src/forge/machine.py:657 writes the stop result to stdout. This line always prefers stderr, so the pane shows the diagnostic instead of the result and would also drop a native-hold warning. The recorded ruling says a plain successful stop gets no note; the tests use empty stderr and do not cover this supported checkout path.",
+        "file": "src/forge/mod/hooks/register.ts",
+        "gain": 2,
+        "harm": 2,
+        "line": 324,
+        "priority": "P2",
+        "title": "Follow-up: Preserve the stop result when stderr also contains a diagnostic",
+        "work": 1
+      },
+      {
+        "body": "Gain 2, Work 1, Harm 2\nAdds work: use session-neutral wording or identify the owning tool; F 1 x H 2 = 2; 2 x C = 2\nCase: normal use - A developer monitors runs from both Claude and Codex on the same laptop and a waiting Codex run is admitted while Stop is open. The machine-wide pane treats every native run as a Claude subagent and directs the owner to a Claude session. src/forge/native.py:24 also creates native runs for Codex, so this instruction sends the owner to the wrong session to stop the agent.",
+        "file": "src/forge/mod/hooks/register.ts",
+        "gain": 2,
+        "harm": 2,
+        "line": 316,
+        "priority": "P2",
+        "title": "Follow-up: Name the owning session correctly for Codex subagents",
+        "work": 1
+      }
+    ],
+    "id": "f370c14c-558d-4f1c-911d-838805a24b81",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-15T14:15:21.965978+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-15T14:24:05.417701+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-11-15T14:24:05.427687+00:00",
+    "file": "src/forge/mod/hooks/register.ts",
+    "wait_id": "dbbde453-6a2f-4eeb-beb7-cba2781308e7"
+  },
   "stuck": {
     "close": null,
     "head": "b253608e8bc2d8189d46150037744589933526d5",
