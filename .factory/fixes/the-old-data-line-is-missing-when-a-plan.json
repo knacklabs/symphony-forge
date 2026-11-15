@@ -11,7 +11,7 @@
       "gain": 4,
       "harm": 3,
       "line": 228,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -24,7 +24,7 @@
       "gain": 3,
       "harm": 3,
       "line": 252,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -47,47 +47,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "10395ada60528e370087afe83d551a6c0033e2c7b05d2c9a687c6f5bf924cbb1",
-    "changed": "bf72c0baa15553238298120e672feb34a7a2840b59ce4b81b03acc412034fdd9",
-    "commit": "b52956501e8a9761e4fc5ae95264caeb4f0066ab",
+    "branch_diff": "7a02221b9acd240e13b33123a0d4f3be35483e237c91391d689431ad0b4a273d",
+    "changed": "73cf70a304cadbcd1251a65035b3b659dfa00580f84104d73f5789bfd440a5d4",
+    "commit": "1558d5ec9f89c4a0703d0eda6b6eac1a696e606c",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Gate. Case: normal use - a plan or item read fails in the running board server. The standard says, \u201cFake only third-party services at their edge.\u201d The plan scenario replaces the board's own `/plan/SHOP` response with a fabricated 500, and the item scenarios do the same for `/board.json?page=item` at lines 250 and 257. These tests would still pass if the real server returned a non-5xx response for those failures, which would prevent `Board.read` from reporting or retrying them. Exercise the failures through the running server so the named proofs cover the complete path.",
-        "file": "tests/test_board_says_when_data_is_old.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 228,
-        "priority": "P1",
-        "title": "Standard: Fake only third-party services at their edge",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 1, Harm 3\nRaise: Test. Case: normal use - an item's first read fails and its retry succeeds. The test waits up to 60 seconds for the heading before checking that two requests occurred; it never establishes that the second request happened immediately. The installed clock is left running ([Playwright clock documentation](https://playwright.dev/python/docs/api/class-clock#clock-pause-at)), so an implementation that waits 10 seconds before retrying would still satisfy these assertions. The proof needs to distinguish an immediate retry from the delayed behavior the fix replaces.",
-        "file": "tests/test_board_says_when_data_is_old.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 252,
-        "priority": "P1",
-        "title": "Gate: tests/test_board_old_data_line_gaps.py::test_2_an_items_first_failed_read_is_asked_again_at_once_and_only_once",
-        "work": 1
-      },
-      {
-        "body": "Gain 2, Work 2, Harm 2\nCase: normal use - someone opens an older item that the seven-day Now snapshot omits. After a plan read fails, this new `Board.read` records the failure, but the retry callback at `item.js:534-541` only rereads a page whose item is present in that snapshot. The plan and old-data line therefore remain in their failed state after the server recovers. The same condition leaves an older item's page or drawer in error if both immediate item reads fail (`item.js:234-243` and `315-321`).\nAdds work: retry failed reads for open items outside the snapshot; F 1 x H 2 = 2; 2 x C = 4.",
-        "file": "src/forge/board_app/item.js",
-        "gain": 2,
-        "harm": 2,
-        "line": 465,
-        "priority": "P2",
-        "title": "Follow-up: Retry reads for items absent from the Now snapshot",
-        "work": 2
-      }
-    ],
-    "id": "43951444-a0e3-4dda-bb97-a5eedb6f483a",
-    "status": "blocked"
+    "findings": [],
+    "id": "b37efdbc-6b89-4ead-b163-4432b726e063",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-15T14:15:04.809510+00:00",
@@ -95,6 +64,10 @@
     },
     {
       "at": "2026-11-15T14:42:01.481826+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-15T15:08:54.840095+00:00",
       "step": "review"
     }
   ],

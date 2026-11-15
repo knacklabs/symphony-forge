@@ -43,6 +43,17 @@
       "item": "the-old-data-line-is-missing-when-a-plan",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/board_server.py\tthe minute fetch starts git by name outside repo.run, so a server that loses git for a minute ends that thread with an error.",
+      "kind": "edge",
+      "path": "src/forge/board_server.py",
+      "line": 252,
+      "text": "the minute fetch starts git by name outside repo.run, so a server that loses git for a minute ends that thread with an error.",
+      "from": "worker",
+      "item": "the-old-data-line-is-missing-when-a-plan",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
