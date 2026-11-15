@@ -37,7 +37,7 @@
       "gain": 3,
       "harm": 3,
       "line": 98,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -47,48 +47,38 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "87f22f936a9859ef5974dc47de485470ee39fda1044fc09913f804dd8b219fd9",
-    "changed": "a6634d2e6f796f0fbd55dd8b8277deb201d405ef71db8b8d72d7cda2daa6b930",
-    "commit": "165ef38a896286255c057cb88eacdd12afef4365",
+    "branch_diff": "4cecaa0fb2b1d33c3e3f174f507371aceabca7def9361cc5e9dc32664676d659",
+    "changed": "bf24d9d596a757882af6f794860bb65bb19018018a06fe11ee883483c7b2f59d",
+    "commit": "d321bf289cb23fdcf4fdc22a88c5ed8b3b9d2042",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 4, Work 3, Harm 3\nRaise: Not done\nCase: normal use - an engineer opens a story on a fresh teammate clone after a part merged more than six weeks ago, with its review history stored in its pull request.\nDone when: On the board, a story with merged parts lists each part's review rounds under the part's plain title, from its full history, and counts them in the story's review rounds figure.\nThe item read is not complete in this case: src/forge/board.py:218 clears the expired set for the untrimmed view, so the older-PR body lookup at src/forge/board.py:696-703 is skipped. The ordinary PR search covers only six full weeks (src/forge/board_facts.py:216-220). Without local events or an earlier backfill cache, the part has an empty rounds list, so both the drawer and full page omit its reviews and show a count that is too low.",
+        "body": "Gain 4, Work 1, Harm 3\nRaise: Not done\nCase: normal use - a teammate opens a story whose merged part has no review history on this laptop and whose story and other parts have no known reviews.\nWhen `gaps` is true and the known total is zero, this branch displays `unknown` rather than `at least 0`. The owner's repair ruling requires an `at least N` total whenever a merged part's history is absent. The new missing-history test always supplies four known reviews, so it does not exercise this case.",
         "file": "src/forge/board_app/item.js",
         "gain": 4,
         "harm": 3,
-        "line": 279,
+        "line": 169,
         "priority": "P1",
         "required_done_when": true,
         "title": "Not done: Show merged parts' review rounds from published full history",
-        "work": 3
+        "work": 1
       },
       {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - a story has one reviewed, merged part and another part whose first worker turn is still being built.\nThe new total counts every entry in each child's rounds array as a review. However, src/forge/time_records.py:200-225 creates an attempt for a worker turn even when it has no review result or review timing, and lines 325-393 put that attempt in rounds. The story therefore lists the unreviewed work as a review round and reports two reviews when only one occurred.",
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional\nCase: normal use - a part has two worker turns without reviews, then its published history grows past the 20,000-byte limit and those turns are folded together.\nThe new filter accepts any entry without a `reviewed` flag. Current-version summaries can lose that flag too: `src/forge/time_records.py:638-639` folds summary entries using `_fold`, whose return at lines 52-53 omits `reviewed`. Two unreviewed turns can therefore become an unflagged range that the story counts as two reviews. This is new evidence beyond the ruling that an unflagged summary from an older release counts as reviewed.",
         "file": "src/forge/board_app/item.js",
-        "gain": 4,
+        "gain": 3,
         "harm": 3,
-        "line": 157,
+        "line": 148,
         "priority": "P1",
         "title": "The story count includes work that has not been reviewed",
         "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - a teammate reads a part's history from its pull request, or a story has its own review rounds alongside its parts' rounds.\nThe sole proof puts every part's review events in the board machine's local log and gives the story an empty rounds list. It would still pass if older PR-only rounds were omitted, the story's own rounds were ignored, or an unreviewed worker turn were counted. It also calls Board.openDrawer directly at line 43 and selects the count through the .figures div structure at line 53, so a behaviour-preserving UI refactor can break the test. Exercise the story through the board and assert the displayed facts for those cases.",
-        "file": "tests/test_board_story_rounds_from_parts.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 98,
-        "priority": "P1",
-        "title": "Gate: tests/test_board_story_rounds_from_parts.py::test_1_a_story_whose_parts_merged_lists_their_rounds_and_counts_them",
-        "work": 2
       }
     ],
-    "id": "b9b93b1e-eb8d-43fa-918f-4da6e2b000f3",
+    "id": "38e78b17-d6c1-42ea-b42c-9fae10134f0c",
     "status": "blocked"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-15T14:24:36.912002+00:00",
@@ -97,16 +87,16 @@
     {
       "at": "2026-11-15T14:41:39.728633+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-11-15T15:05:58.709614+00:00",
+      "step": "review"
     }
   ],
   "stop": {
-    "at": "2026-11-15T14:41:39.738795+00:00",
-    "by": "owner",
-    "choice": "more",
+    "at": "2026-11-15T15:05:58.709883+00:00",
     "file": "src/forge/board_app/item.js",
-    "reason": "The owner chose: repair the count and the test; for an old part with no history on this laptop show a true line and 'at least N'; no extra GitHub calls",
-    "wait_id": "feed9cb3-cbc4-44c0-9ad3-359614e9e8ac",
-    "worker_round": 1
+    "wait_id": "d6e17f94-5dac-4418-8ee2-e558219230e9"
   },
   "stuck": {
     "close": "4bda8a45-726c-481b-8e35-89ef6dd7115a",
