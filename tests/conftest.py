@@ -650,3 +650,11 @@ def codex_payload(repo: Repo) -> Builder:
             payload["turn_id"] = uuid.uuid4().hex
         return payload
     return build
+
+
+def assert_next_follows(report: str, advice: str, next_line: str) -> None:
+    """The report has the advice line, with the Next line right after it; position in the report is free."""
+    lines = report.splitlines()
+    at = [i for i, line in enumerate(lines) if line == advice]
+    assert at, report
+    assert lines[at[0] + 1:at[0] + 2] == [next_line], report

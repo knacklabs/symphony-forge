@@ -1,0 +1,65 @@
+{
+  "base": "2f9736c68186611788c92b5c12c55452628833be",
+  "branch": "fix/tests-pass-after-the-check-date",
+  "done_when": "Those tests pass on any date: each one finds the lines it checks by their text, or runs with a fixed clock, and the full suite passes on the default branch",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "_gates_wait_for_a_pass() in tests/test_readloop_gates.py",
+      "file": "tests/test_readloop_gates.py",
+      "gain": 4,
+      "harm": 1,
+      "line": 155,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Those tests pass on any date: each one finds the lines it checks by their text, or runs with a fixed clock",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "3a3e93ad2e5c9bcab3c611fcfc499d0e7c994436beb45a772b2d8059a1b72ee8",
+    "changed": "41db7e3b0d212e079601ebe60f9784c165b70c064ca32d0d066a600ac72d3056",
+    "commit": "4d8ef4d9fdd4b375bc54be573a4b422c85822da5",
+    "dismissals": [],
+    "findings": [],
+    "id": "d4b9103c-afff-481d-a233-9d5ca6cd25b3",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-15T03:52:26.508030+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-15T06:11:22.671269+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-15T06:15:57.822400+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-15T06:11:22.683943+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "tests/test_readloop_gates.py",
+    "reason": "The owner chose one more round: each test finds its lines by their text",
+    "wait_id": "f74b1ee8-65fb-4d4b-8b32-49196f6c30a6",
+    "worker_round": 1
+  },
+  "stuck": {
+    "close": "95d0c09a-ac17-4d21-b2b3-ddd36ba18697",
+    "head": "bb22e528e44b7ec4ac9ee6224eb83147842a5a2d",
+    "keys": {},
+    "round": 1
+  },
+  "why": "From 15 Nov 2026 forge next prints the three success numbers in one line near its end (the rebuild's check date in the code has come), and six tests that read the report's last lines by position fail on the default branch: tests/test_readloop_gates.py (three cases of test_2), tests/test_builders_edits_need_no_new_read.py test_2, tests/test_merge_command.py test_5 dirty and tests/test_contracts.py test_8_plain_english",
+  "worker": "claude"
+}
