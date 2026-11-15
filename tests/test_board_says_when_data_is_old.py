@@ -220,6 +220,69 @@ with sync_playwright() as p:
             expect(page.locator('.releases')).to_be_visible()
             expect(status).to_have_text('Live')
 
+        elif mode == 'plan':
+            # The Plan tab reads the story's plan on its own; a refused read shows the line like any other.
+            page = context.new_page()
+            status, line = look(page)
+            expect(status).to_have_text('Live', timeout=60000)
+            page.route(re.compile(r'/plan/SHOP'), refuse)
+            page.evaluate("location.hash = 'item/SHOP?tab=plan'")
+            expect(line).to_have_text(f'{UNREAD}The work could not be read.” The page tries again.')
+            expect(status).to_have_text('Not updating')
+            page.unroute(re.compile(r'/plan/SHOP'))
+            later(lambda: expect(line).to_be_hidden(timeout=2000))
+            expect(page.locator('article.plan')).to_contain_text('Shoppers can save a basket')
+            expect(status).to_have_text('Live')
+
+        elif mode == 'retry':
+            # 'old' is left out of the snapshot, so opening it is its first read, and the first one is refused.
+            # The page asks again at once. SHOP is on the board, so its page opens and the read of the whole
+            # story follows; when both of its reads are refused, it asks only once more, and the next snapshot asks again.
+            page = context.new_page()
+            status, line = look(page)
+            expect(status).to_have_text('Live', timeout=60000)
+            seen = []
+
+            def first_fails(route):
+                seen.append(route.request.url)
+                refuse(route) if len(seen) == 1 else route.continue_()
+
+            page.route(re.compile(r'page=item&id=old'), first_fails)
+            page.evaluate("location.hash = 'item/old'")
+            expect(page.locator('.item-page h1')).to_be_visible(timeout=60000)
+            expect(line).to_be_hidden()
+            assert len(seen) == 2, f'{len(seen)} reads of the item'
+            page.evaluate("location.hash = 'now'")
+            tried = []
+            page.route(re.compile(r'page=item&id=SHOP'), lambda route: (tried.append(route.request.url), refuse(route)))
+            page.evaluate("location.hash = 'item/SHOP'")
+            expect(line).to_contain_text(UNREAD)
+            until(page, lambda: len(tried) >= 2)
+            context.clock.run_for(5000)  # less than the 10 seconds after which a failed read is asked again
+            assert len(tried) == 2, f'{len(tried)} reads of the story'
+
+        elif mode == 'newest':
+            # The page stays connected while the server fails twice with different reasons, and never recovers
+            # in between: the second reason is the one on the line. `item` is the link that gives the server git.
+            link = Path(item)
+            real_git = os.readlink(link)
+            page = context.new_page()
+            with page.expect_response(re.compile(r'/events')), page.expect_response(re.compile(r'page=status')):
+                status, line = look(page)
+            expect(status).to_have_text('Live', timeout=60000)
+            good_branch = Path(branch).read_bytes()
+            try:
+                Path(branch).write_bytes(b'garbage\n')
+                expect(line).to_contain_text('The terminal that runs it shows why.', timeout=60000)
+                link.unlink()  # git is now missing: the next rebuild fails for another reason
+                expect(line).to_contain_text('git is not installed or not on PATH.', timeout=60000)
+                expect(line).not_to_contain_text('The terminal that runs it shows why.')
+            finally:
+                os.symlink(real_git, link)
+                Path(branch).write_bytes(good_branch)
+            expect(line).to_be_hidden(timeout=60000)
+            expect(status).to_have_text('Live')
+
         else:  # 'fits': each changed screen with the line showing, and the drawer open at a narrow window
             screens = {'now': '', 'releases': '#releases', 'insights': '#insights', 'item': '#item/' + item}
             pages = {}
@@ -285,6 +348,20 @@ def look(url, mode, tmp_path, repo=None, item=""):
         page.stderr.close()
 
 
+def shop_and_old_fix(client, tmp_path, monkeypatch):
+    """A story with a plan, and a fix that finished 9 days ago: the Now snapshot leaves the fix out, so opening it reads it."""
+    at = datetime.now(timezone.utc) - timedelta(days=9)
+    with monkeypatch.context() as dated:
+        dated.setenv("GIT_AUTHOR_DATE", at.isoformat())
+        dated.setenv("GIT_COMMITTER_DATE", at.isoformat())
+        pushed(clone(client, tmp_path), "Plan a basket and an old fix", {
+            "plans/SHOP.md": DOC, "plans/roadmap.json": json.dumps({"items": [{"key": "SHOP"}]}),
+            ".factory/fixes/old.json": json.dumps({"kind": "fix", "branch": "fix/old", "why": "Readers see old",
+                                                   "done_when": "Readers see it", "status": "merged"})})
+    client.git("fetch", "-q", "origin")
+    client.git("merge", "-q", "--ff-only", "origin/main")
+
+
 @pytest.mark.timeout(BROWSER_SECONDS + 120)
 def test_1_a_stopped_board_says_it_stopped_and_how_to_open_it_again(client, tmp_path):
     with live(client) as url:
@@ -318,17 +395,7 @@ def test_5_a_failed_read_shows_the_line_when_the_events_stream_is_down(client, t
 
 @pytest.mark.timeout(BROWSER_SECONDS + 120)
 def test_6_a_successful_read_of_one_item_does_not_clear_the_failed_read_of_another(client, tmp_path, monkeypatch):
-    # A story, and a fix that finished 9 days ago: the Now snapshot leaves it out, so opening it reads it.
-    at = datetime.now(timezone.utc) - timedelta(days=9)
-    with monkeypatch.context() as dated:
-        dated.setenv("GIT_AUTHOR_DATE", at.isoformat())
-        dated.setenv("GIT_COMMITTER_DATE", at.isoformat())
-        pushed(clone(client, tmp_path), "Plan a basket and an old fix", {
-            "plans/SHOP.md": DOC, "plans/roadmap.json": json.dumps({"items": [{"key": "SHOP"}]}),
-            ".factory/fixes/old.json": json.dumps({"kind": "fix", "branch": "fix/old", "why": "Readers see old",
-                                                   "done_when": "Readers see it", "status": "merged"})})
-    client.git("fetch", "-q", "origin")
-    client.git("merge", "-q", "--ff-only", "origin/main")
+    shop_and_old_fix(client, tmp_path, monkeypatch)
     with live(client) as url:
         look(url, "items", tmp_path, item="old")
 
