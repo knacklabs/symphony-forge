@@ -42,7 +42,7 @@
     "status": "blocked"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-15T03:52:26.508030+00:00",
@@ -55,8 +55,12 @@
   ],
   "stop": {
     "at": "2026-11-15T06:11:22.683943+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "tests/test_readloop_gates.py",
-    "wait_id": "f74b1ee8-65fb-4d4b-8b32-49196f6c30a6"
+    "reason": "The owner chose one more round: each test finds its lines by their text",
+    "wait_id": "f74b1ee8-65fb-4d4b-8b32-49196f6c30a6",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
