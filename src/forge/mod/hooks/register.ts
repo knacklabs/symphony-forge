@@ -310,10 +310,18 @@ export const register: Register = (on, options) => {
       } catch { return }
       try {
         const fresh = await read(c, $)
-        if (!fresh.runs.some(r => r.id === target.id)) { c.note = 'That run has ended.'; take(c, fresh, await $.clock.now()); return }
+        const now = fresh.runs.find(r => r.id === target.id)
+        // A run that joined a Claude session while the question was open: forge stop would clear Forge's record but not the subagent.
+        if (!now || now.native) {
+          c.note = now ? 'This run is now a subagent of a Claude session. Ask that session\'s agent to stop it.' : 'That run has ended.'
+          take(c, fresh, await $.clock.now())
+          return
+        }
         const cwd = await $.session.root().catch(() => undefined)
         const done = await $.process.run(['forge', 'stop', '--id', target.id], { cwd, timeoutMs: 20000 })
         if (done.exitCode !== 0) c.note = 'Forge could not stop the run.'
+        // Forge's own warning stays visible: its first line. The plain result needs no note.
+        else c.note = (done.stderr || done.stdout).split('\n').map(line => line.trim()).find(line => line && line !== 'Stopped the run.') ?? null
       } catch { c.note = 'Forge did not answer.' } finally { $.ui.invalidate('ui.render') }
     }
     const buttons = (): RenderNode[] => (row ? [
