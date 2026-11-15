@@ -64,7 +64,7 @@
     "id": "7e2a378c-d9e2-46b7-8dc6-12926de2f9b6",
     "status": "blocked"
   },
-  "round": 2,
+  "round": 3,
   "status": "fixing",
   "steps": [
     {
@@ -86,10 +86,10 @@
     "worker_round": 2
   },
   "stuck": {
-    "close": null,
-    "head": "18e060fe97e240c079b1b952f0c4dcaa9f6137c2",
+    "close": "fb722616-022a-4858-b2c5-a0c7d48c54fc",
+    "head": "00d2f8eb074485ebb45988ff14ee54a8264baa65",
     "keys": {},
-    "round": null
+    "round": 2
   },
   "why": "The merge-train tests (tests/test_train_land_all.py test_3 and test_5) sometimes make a CI test group run out of time: forge land --all in the test sees a change as changed after the combined check, falls back to the slow one-at-a-time path, the test passes its 120 and 150 second limits, the group retries it and is cancelled at the job's time limit, on Linux at 45 minutes and most likely on Windows at 55 minutes (seen three times in one day)",
   "worker": "claude"
