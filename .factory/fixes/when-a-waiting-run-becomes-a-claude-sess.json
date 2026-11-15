@@ -111,7 +111,7 @@
     "status": "blocked"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-15T14:15:21.965978+00:00",
@@ -124,8 +124,12 @@
   ],
   "stop": {
     "at": "2026-11-15T14:24:05.427687+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "src/forge/mod/hooks/register.ts",
-    "wait_id": "dbbde453-6a2f-4eeb-beb7-cba2781308e7"
+    "reason": "The owner chose: keep the note on screen until the person acts; the end-to-end test with the real Forge is left out as an accepted known issue",
+    "wait_id": "dbbde453-6a2f-4eeb-beb7-cba2781308e7",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
