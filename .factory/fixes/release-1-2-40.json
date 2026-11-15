@@ -5,12 +5,20 @@
   "done_when": "forge.toml, the package and every pinned reference say v1.2.40, and tests/test_release_version.py passes",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-15T13:09:44.634439+00:00",
       "step": "start"
     }
   ],
-  "why": "Release v1.2.40: publish what merged since v1.2.39"
+  "stuck": {
+    "close": null,
+    "head": "34d86c466a9d882aed4de1da7ac4ef106957d5a0",
+    "keys": {},
+    "round": null
+  },
+  "why": "Release v1.2.40: publish what merged since v1.2.39",
+  "worker": "claude"
 }
