@@ -10,7 +10,7 @@ import pytest
 from conftest import REAL_UV
 from test_board_counts import ONE_PART, board, clock
 from test_board_needs_you import FIX, published, share
-from test_board_server import client as board_client, fix, live  # noqa: F401
+from test_board_server import client as board_client, live  # noqa: F401
 from test_close import CLEAN, STORY_DOC, env  # noqa: F401
 from test_close_keeps_reviews_for_unchanged_branch_diffs import client
 
@@ -68,52 +68,65 @@ def test_1_failed_checks_idle_for_a_day_need_you(env, monkeypatch, previous):
 
 
 BROWSER = r"""
-import sys
+import json, sys
 from playwright.sync_api import expect, sync_playwright
+url, mine, theirs = sys.argv[1], json.loads(sys.argv[2]), sys.argv[3]
+REASON = 'Checks failed, no activity for 7 days'
 with sync_playwright() as p:
     browser = p.chromium.launch(channel='chrome', headless=True, args=['--no-sandbox'])
     try:
         for width, height in ((1440, 900), (768, 900)):
             page = browser.new_page(viewport={'width': width, 'height': height})
-            page.goto(sys.argv[1])
+            page.goto(url)
             needs = page.get_by_role('region', name='Needs you')
-            expect(needs).to_contain_text('5 need you')
-            expect(needs.get_by_text('Checks failed, no activity for 7 days').first).to_be_visible()
+            expect(needs).to_contain_text('6 need you')
+            expect(needs.get_by_text(REASON).first).to_be_visible()
             assert page.evaluate('document.documentElement.scrollWidth <= innerWidth'), f'{width}: sideways scroll'
             if width == 1440:
                 assert page.evaluate('document.documentElement.scrollHeight <= innerHeight'), 'the page scrolls'
-            needs.get_by_role('button', name='and 2 more').click()
-            full = page.get_by_role('dialog', name='Needs you, all 5')
-            expect(full.get_by_role('button', name='Fix')).to_have_count(5)
-            expect(full.get_by_text('Checks failed, no activity for 7 days')).to_have_count(5)
+            needs.get_by_role('button', name='and 3 more').click()
+            full = page.get_by_role('dialog', name='Needs you, all 6')
+            expect(full.get_by_role('button', name='Fix')).to_have_count(6)
+            for title in [*mine, theirs]:  # each title once, each with its reason
+                entry = full.get_by_role('button').filter(has=page.get_by_text(title, exact=True))
+                expect(entry).to_have_count(1)
+                expect(entry).to_contain_text(REASON)
             page.keyboard.press('Escape')
             page.get_by_role('button', name='Me', exact=True).click()
-            expect(page.get_by_role('region', name='Needs you')).to_contain_text('@asha')
-            expect(page.get_by_role('region', name='Needs you')).to_contain_text('5 need you')
+            me = page.get_by_role('region', name='Needs you')
+            expect(me).to_contain_text('@asha')
+            expect(me).to_contain_text('5 need you')
+            me.get_by_role('button', name='and 2 more').click()
+            full = page.get_by_role('dialog', name='Needs you, all 5')
+            for title in mine:
+                expect(full.get_by_text(title, exact=True)).to_have_count(1)
+            expect(page.get_by_text(theirs, exact=True)).to_have_count(0)  # another person's item stays out
     finally:
         browser.close()
 """
 
 
-def test_2_five_idle_failed_fixes_fit_the_first_screen(board_client, gh):
+def test_2_six_idle_failed_fixes_fit_the_first_screen_and_me_shows_only_the_viewers(board_client, gh):
     client = board_client
+    titles = ["Basket totals", "Delivery slots", "Saved baskets", "Courier map", "Receipt emails", "Refund page"]
+    slugs = [f"red-{n}" for n in range(6)]
+    for slug, title in zip(slugs, titles):
+        started = client.forge("fix", "start", title, "--done", "The board agrees", "--slug", slug, "--kind", "backend")
+        assert started.returncode == 0, started.stderr
 
-    def opened(slug):
+    def opened(n, slug, title):
         head = client.git("rev-parse", f"fix/{slug}")
-        return {"number": 10 + len(slug), "headRefName": f"fix/{slug}", "headRefOid": head,
-                "state": "OPEN", "title": f"Readers see {slug}", "body": "", "isDraft": False,
-                "author": {"login": "asha"}, "url": f"https://github.com/acme/shop/pull/{slug}",
-                "commits": checks(head, "FAILURE")}
+        return {"number": 20 + n, "headRefName": f"fix/{slug}", "headRefOid": head, "state": "OPEN",
+                "title": title, "body": "", "isDraft": False,
+                "author": {"login": "ben" if n == 5 else "asha"},  # the last one is another person's
+                "url": f"https://github.com/acme/shop/pull/{20 + n}", "commits": checks(head, "FAILURE")}
 
-    slugs = [f"red-{n}" for n in range(5)]
-    for slug in slugs:
-        fix(client, slug)
     gh.respond("api", "graphql", stdout=json.dumps({"data": {"repository": {"pullRequests": {"nodes": [
-        {**opened(slug), "number": 20 + n} for n, slug in enumerate(slugs)]}}}}))
+        opened(n, slug, title) for n, (slug, title) in enumerate(zip(slugs, titles))]}}}}))
     gh.respond("api", "user", stdout="asha\n")
     week = (datetime.now(timezone.utc) + 7 * DAY).isoformat()
     with live(client, FORGE_NOW=week) as url:
         shown = subprocess.run([REAL_UV or "uv", "run", "--no-project", "--python", "3.11", "--with",
-                                "playwright==1.55.0", "python", "-c", BROWSER, url],
-                               capture_output=True, text=True, encoding="utf-8", timeout=300)
+                                "playwright==1.55.0", "python", "-c", BROWSER, url, json.dumps(titles[:5]),
+                                titles[5]], capture_output=True, text=True, encoding="utf-8", timeout=300)
         assert shown.returncode == 0, shown.stdout + shown.stderr
