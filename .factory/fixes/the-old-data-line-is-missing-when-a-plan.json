@@ -4,12 +4,20 @@
   "done_when": "The board shows the old-data line for a failed plan read, retries an item's first failed read straight away, and shows the newest failure reason.",
   "fix_kind": "ui",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-15T14:15:04.809510+00:00",
       "step": "start"
     }
   ],
-  "why": "The old-data line is missing when a plan read fails, a first failed item read waits for the next snapshot instead of retrying at once, and a second failure with another reason keeps the first reason on the line."
+  "stuck": {
+    "close": null,
+    "head": "355bf3c0248b8ea61bf3b6ce826a4a30b0cad777",
+    "keys": {},
+    "round": null
+  },
+  "why": "The old-data line is missing when a plan read fails, a first failed item read waits for the next snapshot instead of retrying at once, and a second failure with another reason keeps the first reason on the line.",
+  "worker": "claude"
 }
