@@ -24,7 +24,7 @@
       "gain": 3,
       "harm": 3,
       "line": 558,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 1,
       "security": false,
@@ -63,7 +63,7 @@
       "gain": 4,
       "harm": 3,
       "line": 52,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 1,
       "security": false,
@@ -73,37 +73,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "209218e8b33608d94b3419e67253d676612589344e2d1138e230229ca0984df9",
-    "changed": "a93ac5e5866dc867fca6186357b7a51e434cf59788457c0e7c60f73c4069a67c",
-    "commit": "e52fbfd368035e3451d9da0f40218c3aca6821e9",
+    "branch_diff": "4ec18f3f01a6aa742ab3ceb088bb1f51b71ccfd676a6456d2ede323b6342fab3",
+    "changed": "966b901ff8577ebb1287de24b148c26000f2c262df0934a1a440350de93755c8",
+    "commit": "fa35b834c7cc7dab7d73f2ab85fa8cf9524578af",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional. Case: normal use - an old pull request reruns a 120-job CI matrix, with a failure among the first 100 checks and a later job still running. GitHub permits [up to 256 matrix jobs](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax). `board_facts.py:75` requests only the first 100 contexts, `board.py:146-148` reports failure even when `hasNextPage` is true, and `board.py:571` looks for running checks only in that first page. The item is therefore still added to Needs you while a check runs, contrary to the owner's ruling.",
-        "file": "src/forge/board_facts.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 565,
-        "priority": "P1",
-        "title": "Do not report an idle failure while its checks are running",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Test. Case: normal use - a manager opens the overflow list for five failed fixes. The revised test counts five generic Fix buttons and five identical reason strings, but never checks that they represent five distinct fixes. A renderer that repeats the first fix five times would pass while the other four remain unreachable. All five fixtures also belong to the viewer, so the Me assertions pass if Needs you incorrectly shows the unfiltered Team list.",
-        "file": "tests/test_board_needs_you_failed_checks.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 87,
-        "priority": "P1",
-        "title": "Gate: test_2_five_idle_failed_fixes_fit_the_first_screen",
-        "work": 2
-      }
-    ],
-    "id": "a4a21d4f-7720-4183-98e9-5b5e66fc87df",
-    "status": "blocked"
+    "findings": [],
+    "id": "c59e8d41-6509-407b-8c14-de800010bb90",
+    "status": "clean"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-15T13:11:11.104132+00:00",
@@ -115,6 +94,10 @@
     },
     {
       "at": "2026-11-15T13:41:00.799420+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-15T13:45:51.468998+00:00",
       "step": "review"
     }
   ],
