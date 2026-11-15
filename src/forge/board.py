@@ -643,7 +643,7 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
                 "stages": stages, "occurrences": events, "next": board_facts.machine_next(lines),
                 "children": []}
 
-    items, children, part_trees = {}, {}, {}
+    items, children = {}, {}
     for rel, (state, where) in best.items():
         if rel in history["expired"]:
             continue
@@ -662,7 +662,6 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
             specs = {cell.strip("` "): spec for cell, spec in specs.items()}
             title = (specs.get(tid) or {}).get("Name") or "A part with no name yet"
             children.setdefault(key, []).append(row(f"{key}/{tid}", "task", title, state, where))
-            part_trees.setdefault(key, []).append(where)
         else:
             key = match["key"]
             completion = history["stories"].get(key, {})
@@ -674,9 +673,7 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
             items[key] = row(key, "story", title, state, where)
     for key, parts in children.items():
         if key not in items:
-            heads = (_read(top, w, f"plans/{key}.md", history) for w in (trees.get(f"story/{key}", landed), *part_trees[key]))
-            title = next((s[2:] for t in heads for s in t.splitlines() if s.startswith("# ")), "A story with missing state")
-            items[key] = row(key, "story", title, {}, landed)
+            items[key] = row(key, "story", next((s[2:] for s in _read(top, trees.get(f"story/{key}", landed), f"plans/{key}.md", history).splitlines() if s.startswith("# ")), "A story with missing state"), {}, landed)
         items[key]["children"] = parts
         running = next((part for part in parts if part["activity"]["status"] == "running"
                         or part["gates"]["ci"]["status"] == "running"), None)
