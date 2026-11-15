@@ -1,0 +1,121 @@
+{
+  "base": "42b9854290aab1eacbb665281c9c7361aed23d4e",
+  "branch": "fix/the-pane-shows-the-previous-session-s-ro",
+  "done_when": "In the /forge pane, a new session whose first read fails shows only \"Forge did not answer.\", and each decision row shows its heading and each plain test run row opens an output file.",
+  "fix_kind": "ui",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "src/forge/mod/hooks/register.ts",
+      "file": "src/forge/mod/hooks/register.ts",
+      "gain": 5,
+      "harm": 3,
+      "line": 245,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: New sessions retain earlier rows after /clear",
+      "work": 2
+    },
+    {
+      "area": "pytest_tests() in src/forge/fasttest.py",
+      "file": "src/forge/fasttest.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 826,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Some plain test rows still have no usable output",
+      "work": 2
+    },
+    {
+      "area": "_title() in src/forge/machine.py",
+      "file": "src/forge/machine.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 220,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: A decision read can show a fix's title",
+      "work": 1
+    },
+    {
+      "area": "test_2_real_lane_rows_reach_the_real_pane_and_a_new_session_with_no_forge_shows_none_of_them() in tests/test_pane_session.py",
+      "file": "tests/test_pane_session.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 175,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_2_real_lane_rows_reach_the_real_pane_and_a_new_session_with_no_forge_shows_none_of_them",
+      "work": 2
+    },
+    {
+      "area": "test_2_a_plain_test_run_has_an_output_file_to_open() in tests/test_pane_decision_and_test_output.py",
+      "file": "tests/test_pane_decision_and_test_output.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 53,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: decision heading and plain test output pane proofs",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "e27d3e780b7c154949cf426700bdd25f5b9dfd5f75365355cef4f2cbd04095d3",
+    "changed": "d579eb91593be05c6b8c309775c845d42a0cc096d2cee2b95d5dc932155ace3e",
+    "commit": "8bf275378b93e9e33f80eb863b2a3a6748711015",
+    "dismissals": [],
+    "findings": [],
+    "id": "84a28331-f586-450e-86c9-0b44d6161891",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-15T10:15:52.655187+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-15T10:40:24.853484+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-15T11:05:45.448694+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-15T11:38:18.705349+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-15T11:05:45.448963+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "src/forge/fasttest.py",
+    "reason": "The owner chose one more round: a true line with the file's path for output over 4 MB, and the test file in the CI job that has Claude Code",
+    "wait_id": "e572d0ea-f814-43f7-b887-8a53c8e02feb",
+    "worker_round": 2
+  },
+  "stuck": {
+    "close": "ef82a88c-4c57-4686-bbf7-d6d4f7580ceb",
+    "head": "8438a0a8cc1cd04b9c03bda8bd00c1f7e6d1847d",
+    "keys": {},
+    "round": 2
+  },
+  "why": "The pane shows the previous session's rows with their age when a new session's first read fails, shows a decision by its file name, and has no output to open for a plain test run.",
+  "worker": "claude"
+}

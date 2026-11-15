@@ -1,0 +1,59 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tNot done: Some plain test rows still have no usable output\tthe-pane-shows-the-previous-session-s-ro",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 826,
+      "text": "Not done: Some plain test rows still have no usable output",
+      "from": "blocking",
+      "item": "the-pane-shows-the-previous-session-s-ro",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/machine.py\tNot done: A decision read can show a fix's title\tthe-pane-shows-the-previous-session-s-ro",
+      "kind": "bug",
+      "path": "src/forge/machine.py",
+      "line": 220,
+      "text": "Not done: A decision read can show a fix's title",
+      "from": "blocking",
+      "item": "the-pane-shows-the-previous-session-s-ro",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/mod/hooks/register.ts\tNot done: New sessions retain earlier rows after /clear\tthe-pane-shows-the-previous-session-s-ro",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/register.ts",
+      "line": 245,
+      "text": "Not done: New sessions retain earlier rows after /clear",
+      "from": "blocking",
+      "item": "the-pane-shows-the-previous-session-s-ro",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_pane_decision_and_test_output.py\tGate: decision heading and plain test output pane proofs\tthe-pane-shows-the-previous-session-s-ro",
+      "kind": "bug",
+      "path": "tests/test_pane_decision_and_test_output.py",
+      "line": 53,
+      "text": "Gate: decision heading and plain test output pane proofs",
+      "from": "blocking",
+      "item": "the-pane-shows-the-previous-session-s-ro",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_pane_session.py\tGate: test_2_real_lane_rows_reach_the_real_pane_and_a_new_session_with_no_forge_shows_none_of_them\tthe-pane-shows-the-previous-session-s-ro",
+      "kind": "bug",
+      "path": "tests/test_pane_session.py",
+      "line": 175,
+      "text": "Gate: test_2_real_lane_rows_reach_the_real_pane_and_a_new_session_with_no_forge_shows_none_of_them",
+      "from": "blocking",
+      "item": "the-pane-shows-the-previous-session-s-ro",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

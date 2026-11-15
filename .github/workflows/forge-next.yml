@@ -72,6 +72,9 @@ jobs:
       - name: Check that a real Claude Code session answers /forge
         if: steps.parent-tests.outputs.reuse != 'true'
         run: uv run --frozen --python 3.11 pytest tests/test_pane_session.py -q -o faulthandler_timeout=120 --timeout=150 --timeout-method=thread
+      - name: Check that the pane draws real Forge data, including a large test log
+        if: steps.parent-tests.outputs.reuse != 'true'
+        run: uv run --frozen --python 3.11 pytest tests/test_pane_decision_and_test_output.py -q -o faulthandler_timeout=120 --timeout=150 --timeout-method=thread
 
   tests:
     needs: selection

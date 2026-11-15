@@ -56,7 +56,13 @@ function machine(on: On, surface: RenderSurface = 'terminal') {
   }
   on('fs.exists', (_$, e) => ({ value: key(e.path) in world.files }))
   on('fs.stat', (_$, e) => ({ value: { kind: world.folders.includes(key(e.path)) ? 'dir' : 'file', size: (world.files[key(e.path)] ?? '').length, mtimeMs: 0, isLink: false } }))
-  on('fs.read', (_$, e) => ({ value: world.files[key(e.path)] ?? '' }))
+  // The API's own limit: a read over 4 MiB rejects.
+  on('fs.read', (_$, e) => {
+    const text = world.files[key(e.path)] ?? ''
+    if (text.length > 4 * 1024 * 1024) throw new Error('fs.read: the file is over 4 MiB')
+    return { value: text }
+  })
+  on('session.end', (_$, e) => ({ sessionId: e.sessionId }))
   on('store.get', () => ({ value: world.stored }))
   on('store.set', () => ({ value: undefined }))
   on('tool.call', { tool: 'AskUserQuestion' }, (_$, e) => {
@@ -176,20 +182,80 @@ for (const surface of ['terminal', 'desktop'] as const) {
   })
 }
 
-test('2: a stored answer draws before Forge answers, and a closed pane reads nothing', async ($, on) => {
+// Contract change (this fix): the pane no longer keeps its answer across sessions. It used to draw the earlier
+// session's rows at once, and when the new session's first read failed it showed them with their age.
+for (const surface of ['terminal', 'desktop'] as const) {
+  test(`2: ${surface}: a new session shows no row from an earlier session, and a closed pane reads nothing`, async ($, on) => {
+    const world = machine(on, surface)
+    const { clock } = world
+    world.stored = { at: 0, lanes: { runs: [{ id: 'a', group: 'Building', title: 'Kept row', repoRoot: '/repo', repoName: 'repo', round: 2, model: null, step: null, seconds: 5, progress: null, waiting: false, lent: false, native: false, joined: 1, outputPath: null }], needs: [], busy: false, agents: { used: 1, size: 4 }, tests: { used: 0, size: 4 } } }
+    world.placed = false
+    world.run = () => new Promise(() => {})
+    await $.session.start(started(surface))
+    await clock.advance(30000)
+    expect(world.calls.length).toBe(0)
+    world.placed = true
+    world.run = () => { throw new Error('gone') }
+    const ui = await $.ui.mount(pane(surface))
+    expect(JSON.stringify(await ui.drawn())).not.toContain('Kept row')
+    await clock.advance(1000)
+    const drawn = JSON.stringify(await ui.drawn())
+    expect(drawn).toContain('Forge did not answer.')
+    for (const earlier of ['Kept row', 'Last update', 'Nothing is running.', 'Loading']) expect(drawn).not.toContain(earlier)
+  })
+}
+
+// /clear starts a new session inside the same loaded mod: session.start does not fire, session.end does.
+for (const surface of ['terminal', 'desktop'] as const) {
+  test(`2: ${surface}: after /clear the pane shows no row from the cleared session, and says only that Forge did not answer`, async ($, on) => {
+    const world = machine(on, surface)
+    const { clock } = world
+    let fails = false
+    world.run = () => { if (fails) throw new Error('gone'); return answer(lanes([run({ title: 'Polish the guide' })])) }
+    await $.session.start(started(surface))
+    const ui = await $.ui.mount(pane(surface))
+    await clock.advance(1000)
+    expect(JSON.stringify(await ui.drawn())).toContain('Polish the guide')
+    fails = true
+    await $.session.end({ reason: 'clear', sessionId: 'old', resume: { id: 'old' } })
+    await clock.advance(1000)
+    const drawn = JSON.stringify(await ui.drawn())
+    expect(drawn).toContain('Forge did not answer.')
+    for (const earlier of ['Polish the guide', 'Last update', 'Nothing is running.', 'Loading']) expect(drawn).not.toContain(earlier)
+  })
+}
+
+test('3: a log far over 1 MiB shows its last lines in Open output', async ($, on) => {
   const world = machine(on)
   const { clock } = world
-  world.placed = false
-  world.stored = { at: 0, lanes: { runs: [{ id: 'a', group: 'Building', title: 'Kept row', repoRoot: '/repo', repoName: 'repo', round: 2, model: null, step: null, seconds: 5, progress: null, waiting: false, lent: false, native: false, joined: 1, outputPath: null }], needs: [], busy: false, agents: { used: 1, size: 4 }, tests: { used: 0, size: 4 } } }
-  world.run = () => new Promise(() => {})
+  world.lanes = () => lanes([run({ id: 'a', title: 'Big', output_path: '/log/big' })])
+  world.files = { '/log/big': Array.from({ length: 200000 }, (_, i) => `line ${i}`).join('\n') + '\nthe very last line\n' }
   await $.session.start(started('terminal'))
-  await clock.advance(30000)
-  expect(world.calls.length).toBe(0)
   const ui = await $.ui.mount(pane('terminal'))
-  const drawn = JSON.stringify(await ui.drawn())
-  expect(drawn).toContain('Kept row')
-  expect(drawn).not.toContain('Loading')
+  await clock.advance(1000)
+  await ui.press({ key: 'open-output' })
+  const output = await $.ui.mount(pane('terminal', 'dock', 'forge-output'))
+  const drawn = JSON.stringify(await output.drawn())
+  expect(drawn).toContain('the very last line')
+  expect(drawn).not.toContain('no output to show')
+  expect(drawn).not.toContain('line 0"')
 })
+
+for (const log of ['/log/huge', 'C:\\logs\\huge.log']) {
+  test(`3: output over 4 MiB, which the API cannot read, says where it is: ${log}`, async ($, on) => {
+    const world = machine(on)
+    const { clock } = world
+    world.lanes = () => lanes([run({ id: 'a', title: 'Huge', output_path: log })])
+    world.files = { [log.replace(/\\/g, '/').replace(/^[A-Za-z]:/, '').toLowerCase()]: 'x'.repeat(4 * 1024 * 1024 + 1) }
+    await $.session.start(started('terminal'))
+    const ui = await $.ui.mount(pane('terminal'))
+    await clock.advance(1000)
+    await ui.press({ key: 'open-output' })
+    const drawn = JSON.stringify(await (await $.ui.mount(pane('terminal', 'dock', 'forge-output'))).drawn())
+    expect(drawn).toContain(JSON.stringify(`This output is too large to show here. It is in ${log}.`).slice(1, -1))
+    expect(drawn).not.toContain('no output to show')
+  })
+}
 
 const rows = lanes([
   run({ id: 'a', title: 'One combined check', round: 3, step: 'editing close.py', elapsed: 1260, joined_at: '2026-11-14T05:00:00+00:00' }),
