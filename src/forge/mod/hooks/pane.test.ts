@@ -16,7 +16,7 @@ const run = (o: Record<string, unknown>) => ({
   output_path: null, progress: null, ...o,
 })
 const lanes = (agents: object[], tests: object[] = [], more: object = {}) => ({
-  version: '1.2.38', needs_you: [], busy: false, agents: { size: 4, entries: agents }, tests: { size: 4, used: tests.length, entries: tests }, ...more,
+  version: '1.2.39', needs_you: [], busy: false, agents: { size: 4, entries: agents }, tests: { size: 4, used: tests.length, entries: tests }, ...more,
 })
 const answer = (value: unknown) => ({ value: { exitCode: 0, stdout: JSON.stringify(value), stderr: '' } })
 const inOrder = (drawn: string, words: string[]) => words.reduce((from, word) => {
