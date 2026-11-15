@@ -1,0 +1,15 @@
+{
+  "base": "de01ac46000938a0cd5f0d43df991d2b1cd05a10",
+  "branch": "fix/a-story-whose-parts-have-merged-says-no",
+  "done_when": "On the board, a story with merged parts lists each part's review rounds under the part's plain title, from its full history, and counts them in the story's review rounds figure.",
+  "fix_kind": "ui",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-15T14:24:36.912002+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "A story whose parts have merged says \"No review rounds yet\" and shows an unknown review round count, even though its review rounds sit on its parts."
+}
