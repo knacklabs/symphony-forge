@@ -4,14 +4,83 @@
   "done_when": "tests/test_aha_review.py passes on the default branch, and a clean review still passes forge-pr-check when the event's base is older than the default branch the change merged",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [
+    {
+      "area": "pr_check() in src/forge/prcheck.py",
+      "file": "src/forge/prcheck.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 487,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: a clean review still passes forge-pr-check when the event's base is older than the default branch the change merged",
+      "work": 2
+    },
+    {
+      "area": "pr_check() in src/forge/prcheck.py",
+      "file": "src/forge/prcheck.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 488,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: tests/test_pr_check_base_older_than_merged_default.py",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "22acb69a348ee3d94f2f44b32e1a64146dece345aa445577b799e3632111f741",
+    "changed": "94febb8098cc56f0029f5e07a6c4634c3b4f6b4a9452f8aacbac8729b99cc237",
+    "commit": "8b2b9735707e295a7b3d4ba3863ebe270484bfc4",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done\nCase: normal use - A documentation-only change merges a newer default-branch commit that changed code, and its check receives the older event base.\nClose records a light review against the merged default, but this call passes the older event base to `blocking_level` as well as to the fingerprint. `src/forge/review.py:172` and `src/forge/docskip.py:113` consequently include the unrelated default-branch code in the docs-only classification. The check treats the light review as no longer allowed and rejects it as out of date. Full reviews can also be rejected: `src/forge/review.py:163` reads the functional-check paragraph from the older base, so a newer default-branch commit can replace the worker's paragraph in the fingerprint.\nThe unmet Done-when line is: tests/test_aha_review.py passes on the default branch, and a clean review still passes forge-pr-check when the event's base is older than the default branch the change merged.",
+        "file": "src/forge/prcheck.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 487,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: a clean review still passes forge-pr-check when the event's base is older than the default branch the change merged",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - A documentation-only change has a clean light review after merging an unrelated code change from the default branch.\nThe named older-base proof changes `app.py` at `tests/test_pr_check_base_older_than_merged_default.py:9-12`, so it exercises a full review and can pass while the light-review case is rejected. The light-review test at `tests/test_docs_and_assets_get_light_checks.py:103-117` checks against the current base instead. The command-level proof needs to cover their interaction.",
+        "file": "src/forge/prcheck.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 488,
+        "priority": "P1",
+        "title": "Gate: tests/test_pr_check_base_older_than_merged_default.py",
+        "work": 2
+      }
+    ],
+    "id": "c751cb66-ed55-4d3a-84f2-1d5b11e806cb",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-16T09:03:38.835291+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-16T09:25:44.359309+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-11-16T09:25:44.372131+00:00",
+    "file": "src/forge/prcheck.py",
+    "wait_id": "61c9b0de-d38e-481b-84e1-a0cd3be89448"
+  },
   "stuck": {
     "close": null,
     "head": "ab7680d48d3d8af8c5a1d58a3d9bb76f6465d2bc",
