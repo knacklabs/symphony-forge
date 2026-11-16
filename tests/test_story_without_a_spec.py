@@ -273,6 +273,7 @@ def test_5_promotion_keeps_its_existing_roadmap_route(client, roadmap_location):
             assert "then forge story new BASKET --from-fix keep-baskets" in promoted.stderr
         else:
             assert "The fix keep-baskets has no roadmap entry for BASKET." in promoted.stderr
+            assert "the story is made from the fix's branch" in promoted.stderr
             assert "add BASKET to plans/roadmap.json" in promoted.stderr
             assert "commit it, then forge story new BASKET --from-fix keep-baskets" in promoted.stderr
         assert repo.git("branch", "--list") == branches
