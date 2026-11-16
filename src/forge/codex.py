@@ -678,6 +678,10 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                     selected = True
                 elif "speed" in said:
                     started.update(said["speed"])
+                    if ran.get("run_id") and said["speed"].get("effort") != ran.get("effort"):
+                        repo.record_progress(checkout, item, ran["run_id"],
+                                             effort=said["speed"]["effort"])
+                        ran.update(effort=said["speed"]["effort"])
                     repo.record_event(checkout, item, "codex speed", run_id=ran.get("run_id"),
                                       **said["speed"])
                     text = ""

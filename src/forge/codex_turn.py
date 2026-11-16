@@ -69,6 +69,7 @@ class Client(CodexClient):
     waits on initialize, so Forge has it on record even when Codex never answers."""
 
     received_tier: str | None = None
+    received_effort: str | None = None
     speed_thread: str = ""
 
     def _coerce_notification(self, method, params):
@@ -82,6 +83,8 @@ class Client(CodexClient):
         if (method == "thread/settings/updated" and isinstance(params, dict)
                 and self.speed_thread and params.get("threadId") == self.speed_thread):
             settings = params.get("threadSettings")
+            if isinstance(settings, dict) and isinstance(settings.get("effort"), str):
+                self.received_effort = settings["effort"] or None
             if isinstance(settings, dict) and "serviceTier" in settings:
                 value = settings["serviceTier"]
                 self.received_tier = ((value or "default")
@@ -205,9 +208,9 @@ def main() -> int:
         # The SDK's high-level Thread discards these settings; null effort follows the model.
         request_raw = client._request_raw
         tier = "default"  # The protocol's standard-speed override also clears inherited Fast.
-        selection = {}
+        selection, sent = {}, {}
         def selected_request(method, params=None):
-            nonlocal tier, selection
+            nonlocal tier, selection, sent
             if sandbox is Sandbox.full_access and method in ("thread/start", "thread/resume", "turn/start"):
                 params = {**params, "approvalPolicy": "on-request", "approvalsReviewer": "user"}
             if method == "turn/start":
@@ -216,6 +219,13 @@ def main() -> int:
                 if client.received_tier != tier:
                     client.received_tier = None
                 params = {**params, "serviceTier": tier, "serviceTierForTurn": tier}
+                # A resume ignores the config's model and effort; the turn is the documented
+                # place. A null effort follows the model, so none is sent.
+                sent = {key: request["config"][name] for key, name in
+                        (("model", "model"), ("effort", "model_reasoning_effort"))
+                        if request["config"].get(name)}
+                client.received_effort = None
+                params = {**params, **sent}
             response = request_raw(method, params)
             if method in ("thread/start", "thread/resume"):
                 effort, cursor = response.get("reasoningEffort"), None
@@ -295,7 +305,9 @@ def main() -> int:
                     error = payload.turn.error
                     busy = payload.turn.status.value == "failed" and overloaded(
                         params["turn"].get("error") or {})
-                    emit(speed={**selection, "turn": turn.id, "requested_tier": tier,
+                    emit(speed={**selection, **({"effort": client.received_effort or sent["effort"]}
+                                                if client.received_effort or "effort" in sent else {}),
+                                "turn": turn.id, "requested_tier": tier,
                                 "tier": client.received_tier})
                     # The same final text as the SDK's TurnResult.final_response.
                     emit(status=payload.turn.status.value, error=error and error.message,
