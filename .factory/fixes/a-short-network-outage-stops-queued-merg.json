@@ -93,7 +93,7 @@
     "id": "c1d64105-90fd-49b7-80c0-c860f06eb5c0",
     "status": "blocked"
   },
-  "round": 2,
+  "round": 3,
   "status": "fixing",
   "steps": [
     {
@@ -109,22 +109,13 @@
       "step": "review"
     }
   ],
-  "stop": {
-    "by": "owner",
-    "choice": "same",
-    "question": "A short network outage stops queued merges with no retry, so one brief is stuck. It should deliver: A queued merge that hits a short network outage starts again on its own and merges once the connection is back.\nTwo rounds in a row left the open P0 not done: a queued merge that hits a short network outage starts again on its own and merges once the connection is back. in src/forge/land.py.\nThe worker tried: A queued merge waits and starts again after a short network outage.\nChoose one: switch this item to Codex; keep Claude for one more round; or narrow or split it.",
-    "reason": "One more round with the same builder (owner): also retry on GitHub did not answer",
-    "tool": "claude",
-    "wait_id": "e8bb26cb-64fe-4599-ad13-76ff4e51c793",
-    "worker_round": 2
-  },
   "stuck": {
-    "close": "48dc595e-937b-47fb-807b-fefbfb244fdc",
-    "head": "07ba06d39b1ccdb10f436d02b1703da95b9f8a73",
+    "close": "d8748045-6cdf-4d95-8f4e-812561588334",
+    "head": "4277c81287b4f95b9cc5bef303ab3ea3ac27f64d",
     "keys": {
-      "the open P0 not done: a queued merge that hits a short network outage starts again on its own and merges once the connection is back. in src/forge/land.py": 1
+      "the open P0 not done: a queued merge that hits a short network outage starts again on its own and merges once the connection is back. in src/forge/land.py": 2
     },
-    "round": 1
+    "round": 2
   },
   "why": "A short network outage stops queued merges with no retry, so one brief connection problem stops the merge.",
   "worker": "claude"
