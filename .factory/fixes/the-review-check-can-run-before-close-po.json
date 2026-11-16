@@ -4,12 +4,20 @@
   "done_when": "After close posts an updated review, the review check no longer fails from that race, and no one reruns it by hand.",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-16T05:14:05.770169+00:00",
       "step": "start"
     }
   ],
-  "why": "The review check can run before close posts its updated review, find the old review out of date, and fail a clean review, so a person has to rerun it by hand."
+  "stuck": {
+    "close": null,
+    "head": "fcfb021ac1beb2555689f73db40b1e8661d3e42c",
+    "keys": {},
+    "round": null
+  },
+  "why": "The review check can run before close posts its updated review, find the old review out of date, and fail a clean review, so a person has to rerun it by hand.",
+  "worker": "claude"
 }
