@@ -1,0 +1,15 @@
+{
+  "base": "52d8e5ebdc701418ee14d99a7ad86d031c3ad2bd",
+  "branch": "fix/the-upgrade-check-renders-the-generated",
+  "done_when": "After forge sync and a pure upgrade of a client repo whose only pnpm lockfile is in a subfolder, the generated workflow keeps the pnpm setup step with the right version, and the upgrade fix closes without a model review.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-16T21:32:36.104258+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The upgrade check renders the generated workflow from a snapshot folder with no git repo, so a client repo whose only pnpm lockfile is in a subfolder gets a render without the pnpm setup step, the render differs from the committed workflow, and a pure upgrade then gets a model review."
+}
