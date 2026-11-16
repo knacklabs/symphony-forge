@@ -4,12 +4,27 @@
   "done_when": "tests/test_release_version.py passes on the default branch",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "df16bb3383b77ad774d4dd42549ce80bcaf218ec9b76fa0dd6e711489b898a31",
+    "changed": "03677f97d84d2bd8f2a10c3147140fbcc4ab9dec8fa93267a74eb949d6705423",
+    "commit": "5e0baec532343ef1278055aa047b851b34549cb2",
+    "dismissals": [],
+    "findings": [],
+    "id": "ab39429a-1890-4afc-be2d-3cf5d7c54ce9",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-16T12:00:50.043215+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-16T12:06:18.622498+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
