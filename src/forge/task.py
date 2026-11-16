@@ -747,6 +747,12 @@ def require_fix_changes(item: str, state: dict, top: Path, files: list[str]) -> 
         return
     untracked = repo.git("ls-files", "--others", "--exclude-standard", cwd=top)
     detail = f"\nUntracked files in the worktree: {untracked}" if untracked else ""
+    own = repo.git("log", "--no-merges", "--name-only", "--format=", f"origin/{repo.default_branch(top)}..HEAD",
+                   cwd=top).split()
+    if any(not path.startswith((".factory/", "plans/spotted")) for path in own):  # the fix did commit work, so a merge of the default branch took it back
+        raise repo.Refused("After merging the default branch, this fix has no change left: the default branch "
+                           f"already has it or replaced it. Make the change again, then commit.{detail}",
+                           f"forge work {item}")
     raise repo.Refused(f"The build round did not finish. This fix changes only Forge's records.{detail}",
                        f"forge work {item}")
 
