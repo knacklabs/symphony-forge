@@ -4,12 +4,20 @@
   "done_when": "When the review check fails to start on GitHub, close stops at once, says the review check failed to start on GitHub, and gives a step that starts it again (a new commit or reopening the pull request) instead of forge close.",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-16T21:29:56.542047+00:00",
       "step": "start"
     }
   ],
-  "why": "When GitHub fails to start the pull request's review check, forge close keeps saying the review check has not reported and gives forge close again as the next step, so the same wait repeats and nothing starts the check."
+  "stuck": {
+    "close": null,
+    "head": "797dd869298b1309f9c10fb0f595270e3617507c",
+    "keys": {},
+    "round": null
+  },
+  "why": "When GitHub fails to start the pull request's review check, forge close keeps saying the review check has not reported and gives forge close again as the next step, so the same wait repeats and nothing starts the check.",
+  "worker": "claude"
 }
