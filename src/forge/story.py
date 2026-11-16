@@ -34,7 +34,8 @@ REFUSALS = {
     "no_title": ("A new story needs a plain-English title.", 'forge story new {key} "<title>"'),
     "no_fix": ("There is no fix named {fix} in a worktree here.", "forge next"),
     "fix_roadmap": ("The fix {fix} has no roadmap entry for {key}. A story needs a roadmap entry before it "
-                    "can start, and the story is made from the fix's branch, so the entry goes there.",
+                    "can start. The entry goes on the fix's branch, because that branch becomes the story's "
+                    "first task.",
                     "add {key} to plans/roadmap.json in {path}, commit it, then "
                     "forge story new {key} --from-fix {fix}"),
     "uncommitted_roadmap": ("The roadmap in fix {fix} has uncommitted changes.",
