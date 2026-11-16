@@ -1,0 +1,15 @@
+{
+  "base": "63d634eb6da4eec90725061ea09ae4747dc49fc6",
+  "branch": "fix/move-effort-note-out-of-plans",
+  "done_when": "The experiment note lives outside plans/ and tests/test_fix_old_forge_records.py passes on the default branch",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-16T05:31:51.986901+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The experiment note merged at plans/notes/claude-continued-effort.md breaks tests/test_fix_old_forge_records.py on the default branch, which allows only story plans and Forge's lists under plans/; every pull request's combined test run now fails test group 4"
+}
