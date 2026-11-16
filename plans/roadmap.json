@@ -654,6 +654,12 @@
       "title": "Merge several ready items in one train",
       "status": "pending",
       "order": 122
+    },
+    {
+      "key": "FORGE-NEWESTONLY-1",
+      "title": "Forge tests each rule on a new repo only",
+      "status": "pending",
+      "order": 123
     }
   ],
   "epics": [

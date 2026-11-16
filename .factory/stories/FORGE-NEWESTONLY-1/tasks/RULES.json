@@ -1,0 +1,33 @@
+{
+  "branch": "task/FORGE-NEWESTONLY-1-RULES",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "8e2282c33cd1fa6f8fa355d1dadfa21dc2b6d859c1cbc5c49cea0b4a2769ba7c",
+    "changed": "492c31924adabc4c5433e46b8f8b6063ef5a0dc891b22ade9722f4f6fca489a5",
+    "commit": "217b5aed7cabd37e48fb9d0bf85a1c53a5d57876",
+    "dismissals": [],
+    "findings": [],
+    "id": "c9f6bf3f-5b77-417f-a7b4-cb25f5e1594f",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-16T02:30:29.120277+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-16T02:36:03.442715+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "70fbfed9b20ceb0ece31d3b600a14b0ceeec08c0",
+    "keys": {},
+    "round": null
+  },
+  "worker": "claude"
+}

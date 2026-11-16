@@ -115,13 +115,16 @@ change is dogfooded on Forge itself before clients get it.
 ## Review rules
 
 - Report as P1 any screen, page, route table or app shell that a change adds under `src/forge/templates/starter` or `src/forge/templates/starter-python`.
-- A change to Forge says what a new client repo (init or adoption) and an existing client repo (on
-  upgrade to the new release) each get. Each rule keeps its full cases on a new repo plus at least
-  one case on an existing repo adopted on an earlier release. Keep more existing-repo cases only
-  where Forge takes a different path for it. Report a change that covers only one side, or only
-  Forge's own repo, as P1. Report extra existing-repo cases that repeat the new-repo path as a
-  deletion candidate, not a gap. A release's version bump changes no behaviour and needs no new
-  upgrade test.
+- A change to Forge says what a new client repo (init or adoption of a live app) and an existing
+  client repo (on upgrade to the new release) each get. Each ordinary rule is tested on a new repo
+  only; do not add a second case on a repo adopted on an earlier release. Tests whose subject is
+  behaviour that exists only for older releases (old record readers and movers, the run of a pinned
+  release, repairs of older releases' files, forge migrate) stay with that behaviour. The suite keeps
+  one test of the upgrade from an earlier release to the installed release
+  (`tests/test_upgrade_to_installed_release.py`); a change that must convert a record during the
+  upgrade extends that test. Report as P1 a change that does not say what each repo gets. Report a
+  new earlier-adopted case of an ordinary rule as a deletion candidate. A release's version bump
+  changes no behaviour and needs no new upgrade test.
 - A change to what a coordinator or worker should do or can use (a command, an option, a setting,
   a step in the flow) updates `src/forge/templates/skill.md` or the worker brief
   (`src/forge/templates/brief.md`) in the same change. Report a missing update as P1.
@@ -168,9 +171,8 @@ These govern Forge itself. Each has a check: an acceptance criterion, a CI check
   This step also applies in CI test mode. Fix failures in the same round, rerun
   the failed checks, and commit the repairs. These existing checks cover duplicate
   rule labels, tests with no rule, and files over 1,200 lines.
-- Each rule keeps its full cases on a new repo plus at least one earlier-adopted repo case.
-  Keep more adopted-repo cases only where Forge takes a different path for it. In a test audit,
-  report extra adopted-repo cases that repeat the new-repo path as deletion candidates, not gaps.
+- Each ordinary rule is tested on a new repo. Tests of older-release behaviour stay with that
+  behaviour. The suite has one upgrade test, from an earlier release to the installed release.
 - Tests run the forge command and never import forge.
 - A test that calls a real Codex model runs only when FORGE_LIVE_CODEX=1 (the codex-smoke workflow
   sets it); don't set it in local runs.

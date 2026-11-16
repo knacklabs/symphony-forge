@@ -1,0 +1,41 @@
+{
+  "approval": {
+    "at": "2026-11-16T02:29:44.137120+00:00",
+    "by": "human-via-Claude",
+    "event": "toolu_01DrwxyLx5g84RLt1UKU6mjM",
+    "hash": "42c00a8c8a6ad3925f271af0bae8de12f11dc4803c113982863a1c2d1137d2b9",
+    "round": 4,
+    "runtime": "claude",
+    "session": "c01a489d-c76f-41c1-8371-d6f0052b027c"
+  },
+  "doc": "plans/FORGE-NEWESTONLY-1.md",
+  "status": "approved",
+  "steps": [
+    {
+      "at": "2026-11-15T14:52:40.390916+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-15T15:29:58.553656+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-11-15T15:51:01.045123+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-11-15T16:16:13.124157+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-11-15T16:29:49.068867+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-11-16T02:29:44.137530+00:00",
+      "step": "approved"
+    }
+  ],
+  "title": "Forge tests each rule on a new repo only",
+  "touches": 1
+}
