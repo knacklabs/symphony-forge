@@ -10,7 +10,7 @@ STORY = "FORGE-ASSIST-1"
 
 @pytest.mark.platform
 @pytest.mark.timeout(1800)
-@pytest.mark.parametrize("starter", ["typescript", "earlier adopted"])
+@pytest.mark.parametrize("starter", ["typescript"])
 def test_3_history_shows_the_agent(repo, gh, tmp_path, starter, tmp_path_factory):
     # Audit: init/sync own delivery and preservation; the real API/database case owns
     # list and CSV attribution. Existing agent-ready tests prove storage only.

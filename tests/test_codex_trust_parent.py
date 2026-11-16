@@ -17,7 +17,7 @@ def _fix(folder, config):
             f'[projects.{json.dumps(str(folder))}] in {config}')
 
 
-@pytest.mark.parametrize("history", ["new", "adopted"])
+@pytest.mark.parametrize("history", ["new"])
 def test_1_trust_follows_codex_rule(repo, gh, tmp_path, monkeypatch, history):
     if history == "new":  # a client repo made by forge init
         client, init = _fresh_client(repo, gh, tmp_path)

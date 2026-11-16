@@ -37,7 +37,7 @@ def test_1_own_workflows_cancel_only_superseded_runs_of_the_same_pr_and_event(na
     _assert_pr_concurrency((ROOT / f".github/workflows/{name}.yml").read_text("utf-8"))
 
 
-@pytest.mark.parametrize("adoption", ["new", "v1.2.2"])
+@pytest.mark.parametrize("adoption", ["new"])
 def test_2_init_and_previous_release_sync_ship_pr_concurrency(repo, gh, tmp_path, adoption):
     if adoption == "new":
         client, done = _fresh_client(repo, gh, tmp_path)

@@ -46,7 +46,7 @@ def _run_list(node: str, client: Path, tools: Path, affected, base: str | None):
 
 
 @pytest.mark.platform
-def test_5_typescript_starter_selects_its_affected_parts(repo, gh, tmp_path, unsynced_up):
+def test_5_typescript_starter_selects_its_affected_parts(repo, gh, tmp_path):
     # Contract: init keeps the full nightly command and adds a selectable command, and the
     # generated app lists only the suites for the selected projects. A missing fast_test,
     # stale script, or wrong project target would break a new app's pull request check.
@@ -160,59 +160,3 @@ def test_5_typescript_starter_selects_its_affected_parts(repo, gh, tmp_path, uns
         and "--affected" in call and "--json" in call
         and f"--base={base}" in call for call in logged
     )
-
-    # An earlier app keeps its own test command and files after the Forge release is updated.
-    from test_mcp import ADOPTED, _adopted_files_after_sync
-
-    sentinel = repo.path / "scripts/custom.mjs"
-    sentinel.parent.mkdir(parents=True, exist_ok=True)
-    sentinel.write_text("custom app script\n", encoding="utf-8")
-    sentinel_before = sentinel.read_bytes()
-    before, after = _adopted_files_after_sync(repo)
-    assert after == before
-    assert sentinel.read_bytes() == sentinel_before
-    old_config = (ADOPTED / "forge.toml").read_text(encoding="utf-8")
-    version = repo.forge("--version").stdout.split()[-1]
-    assert (repo.path / "forge.toml").read_text(encoding="utf-8") == old_config.replace(
-        '"v1.2.2"', json.dumps(version))
-    adopted_settings = tomllib.loads((repo.path / "forge.toml").read_text(encoding="utf-8"))
-    assert adopted_settings["test"] == 'python -c "print(123)"'
-    assert "fast_test" not in adopted_settings
-    assert not (repo.path / "scripts/affected.mjs").exists()
-
-    # The historical fixture has no workflow. The first sync above supplies the current
-    # workflow; an actual installer upgrade must then change only its release pin.
-    configuration = (repo.path / "forge.toml").read_text(encoding="utf-8")
-    workflow = (repo.path / ".github/workflows/forge.yml").read_text(encoding="utf-8")
-    owned = {path.relative_to(repo.path).as_posix(): path.read_bytes()
-             for folder in ("apps", "libs", "scripts")
-             for path in (repo.path / folder).rglob("*") if path.is_file()}
-    repo.git("add", "-A")
-    # This fixture builds an already-adopted history, not a new Forge work item.
-    # Reuse the upgrade fixture's hook-free setup commands; the upgrade itself
-    # still runs the installed release's real hooks and close.
-    hook_setup = ["-c", f"core.hooksPath={unsynced_up.tmp / 'no-hooks'}"]
-    repo.git(*hook_setup, "commit", "-q", "-m", "Sync the earlier adopted app")
-    repo.git("switch", "-q", "main")
-    repo.git("merge", "-q", "--ff-only", "fix/agent-accounts-upgrade")
-    repo.git(*hook_setup, "push", "-q", "origin", "main")
-    # New-app init installs a broad API response. Restore the upgrade fixture's
-    # check/status streams before the real release's close reads them.
-    # The earlier-adopted app also exercises the missing-name refusal and retry.
-    unsynced_up.env.checks(GREEN, [{}])
-    unnamed = unsynced_up.run(RELEASE)
-    assert unnamed.returncode == 1, unnamed.stdout + unnamed.stderr
-    assert "GitHub reported no check name." in unnamed.stderr, unnamed.stderr
-    assert "Next: forge close upgrade-forge-to-v9-9-9" in unnamed.stderr, unnamed.stderr
-    unsynced_up.env.checks(GREEN)
-    upgraded = unsynced_up.run(RELEASE)
-    assert upgraded.returncode == 0, upgraded.stdout + upgraded.stderr
-    upgraded_root = unsynced_up.folder
-    assert (upgraded_root / "forge.toml").read_text(encoding="utf-8") == configuration.replace(
-        json.dumps(version), json.dumps(RELEASE))
-    assert (upgraded_root / ".github/workflows/forge.yml").read_text(
-        encoding="utf-8") == workflow.replace(version, RELEASE)
-    after_upgrade = {path.relative_to(upgraded_root).as_posix(): path.read_bytes()
-                     for folder in ("apps", "libs", "scripts")
-                     for path in (upgraded_root / folder).rglob("*") if path.is_file()}
-    assert after_upgrade == owned

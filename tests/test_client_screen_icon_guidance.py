@@ -36,8 +36,8 @@ PROTOTYPE_ICON_RULE = (
 )
 
 
-@pytest.mark.parametrize("adopted,prototype", [(False, False), (True, False), (False, True)],
-                         ids=["new-client", "adopted-v1.2.2", "unsigned-prototype"])
+@pytest.mark.parametrize("adopted,prototype", [(False, False), (False, True)],
+                         ids=["new-client", "unsigned-prototype"])
 def test_1_workers_and_reviews_receive_the_client_screen_icon_rule(env, tmp_path, adopted, prototype):
     setup_client(env, tmp_path, adopted)
     if prototype:

@@ -35,7 +35,7 @@ def assert_not_ancestor(repo, commit, where):
     assert result.returncode == 1, result.stdout + result.stderr
 
 
-@pytest.mark.parametrize("previous", [False, True], ids=["new", "previously-adopted"])
+@pytest.mark.parametrize("previous", [False], ids=["new"])
 def test_1_close_replays_only_followup_commits_after_parent_squash_merges(env, previous):
     repo, parent, parent_head, fix, where, own = stacked(env, previous)
     # A follow-up may already have merged an earlier default-branch update.
@@ -66,7 +66,7 @@ def test_1_close_replays_only_followup_commits_after_parent_squash_merges(env, p
     assert repo.git("status", "--porcelain", cwd=where) == ""
 
 
-@pytest.mark.parametrize("previous", [False, True], ids=["new", "previously-adopted"])
+@pytest.mark.parametrize("previous", [False], ids=["new"])
 def test_2_close_aborts_replay_when_followups_own_commit_conflicts(env, previous):
     repo, parent, _, fix, where, own = stacked(env, previous)
     repo.git("push", "-q", "origin", f"fix/{fix}", cwd=where)
@@ -140,7 +140,7 @@ def test_4_leased_replay_push_preserves_work_arriving_after_lease_is_captured(en
         f"Next: check the remote branch and reconcile fix/{fix}, then forge close {fix}"]
 
 
-@pytest.mark.parametrize("previous", [False, True], ids=["new", "previously-adopted"])
+@pytest.mark.parametrize("previous", [False], ids=["new"])
 def test_5_fix_started_on_default_keeps_its_commits_without_merging_unrelated_default_changes(env, previous):
     repo = configured(env, previous)
     fix, where = started(repo, "Repair an ordinary problem")

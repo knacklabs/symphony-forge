@@ -11,8 +11,7 @@ STORY = "lazy-forwarding-imports"
 @pytest.mark.parametrize("adopted,words", [
     (False, ["--version"]),
     (False, ["hook", "pre-push"]),
-    (True, ["hook", "pre-push"]),
-], ids=["new-command", "new-hook", "adopted-v1.2.2-hook"])
+], ids=["new-command", "new-hook"])
 @pytest.mark.platform
 def test_1_client_startup_skips_release_lookup(repo, monkeypatch, adopted, words):
     if adopted:

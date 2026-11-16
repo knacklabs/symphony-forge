@@ -22,7 +22,7 @@ def assigned_doc():
         "| no |", "| no | Ada |").replace("| yes |", "| yes | Ada |")
 
 
-@pytest.mark.parametrize("history", ["new", "adopted-v1.2.2"])
+@pytest.mark.parametrize("history", ["new"])
 def test_3_merged_assignment_older_than_seven_days_is_never_unstarted(
         repo, gh, monkeypatch, tmp_path, history):
     client(repo, gh, history)
@@ -41,7 +41,7 @@ def test_3_merged_assignment_older_than_seven_days_is_never_unstarted(
     assert (story["state"], story["status"]) == ("building", "In progress: 1 of 3 parts finished")
 
 
-@pytest.mark.parametrize("history", ["new", "adopted-v1.2.2"])
+@pytest.mark.parametrize("history", ["new"])
 def test_4_backticked_task_ids_render_on_both_boards(repo, gh, monkeypatch, tmp_path, history):
     client(repo, gh, history)
     monkeypatch.setenv("FORGE_NOW", NOW)

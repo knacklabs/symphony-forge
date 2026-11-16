@@ -13,7 +13,7 @@ STORY = "review-current-head"
 
 
 @pytest.mark.platform
-@pytest.mark.parametrize("previous", [False, True], ids=["init", "earlier-adoption"])
+@pytest.mark.parametrize("previous", [False], ids=["init"])
 @pytest.mark.parametrize("command", ["close", "land"])
 def test_1_close_and_land_review_the_repaired_head_before_reusing_blocking_findings(
         env, tmp_path, monkeypatch, previous, command):

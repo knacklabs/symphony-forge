@@ -14,9 +14,8 @@ STORY = "when-forge-close-merges-the-default-bran"
 
 
 @pytest.mark.platform
-@pytest.mark.parametrize("kind", ["new", "adopted", "source", "source CRLF", "code conflict",
-                                  "new code conflict", "adopted code conflict",
-                                  "source code conflict"])
+@pytest.mark.parametrize("kind", ["new", "source", "source CRLF", "code conflict",
+                                  "new code conflict", "source code conflict"])
 def test_1_close_merges_sync_output_and_stops_on_code_conflicts(env, kind, tmp_path):
     repo = env.repo
     config = (repo.path / "forge.toml").read_text()
@@ -27,10 +26,6 @@ def test_1_close_merges_sync_output_and_stops_on_code_conflicts(env, kind, tmp_p
         repo.write("forge.toml", config)
         env.checks(GREEN)
     remote = Path(repo.git("remote", "get-url", "origin"))
-    if kind.startswith("adopted"):
-        shutil.copytree(conftest.ROOT / "tests/fixtures/adopted-v1.2.2/client", repo.path,
-                        dirs_exist_ok=True)
-        repo.write("forge.toml", repo.git("show", "HEAD:forge.toml") + '\nrepo = "client"\n')
     if kind.startswith("source"):
         shutil.copytree(conftest.ROOT / "src", repo.path / "src",
                         ignore=shutil.ignore_patterns("__pycache__"))

@@ -15,7 +15,7 @@ STORY = "canvas-phone-check-on-windows"
 pytestmark = pytest.mark.platform
 
 
-@pytest.mark.parametrize("adopted", [False, True], ids=["new", "earlier-adopted"])
+@pytest.mark.parametrize("adopted", [False], ids=["new"])
 def test_1_phone_canvas_with_a_wider_browser_window(repo, tmp_path, adopted):
     # Test audit: protects real phone layout, screenshot size and overflow refusal.
     # Existing coverage does not force a wider window, so cannot catch window clamping on Mac.

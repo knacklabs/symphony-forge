@@ -16,7 +16,7 @@ STORY = "FIX-CLOSE-PUSHES-ONCE"
 
 
 @pytest.mark.platform
-@pytest.mark.parametrize("previous", [False, True], ids=["new", "previously-adopted"])
+@pytest.mark.parametrize("previous", [False], ids=["new"])
 @pytest.mark.parametrize("replay", [False, True, "interrupted"],
                          ids=["ordinary", "replayed-followup", "resumed-replay"])
 def test_1_close_publishes_once_after_saving_review(env, previous, replay):
@@ -57,7 +57,7 @@ def test_1_close_publishes_once_after_saving_review(env, previous, replay):
 
 
 @pytest.mark.platform
-@pytest.mark.parametrize("previous", [False, True], ids=["new", "previously-adopted"])
+@pytest.mark.parametrize("previous", [False], ids=["new"])
 def test_2_close_requires_another_round_after_remote_work_arrives_during_review(env, previous):
     client(env, previous)
     repo = env.repo

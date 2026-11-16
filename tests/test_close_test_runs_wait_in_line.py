@@ -99,7 +99,7 @@ TWO = "2 Forge test processes already run on this machine, so this one waits its
 THREE = "2 Forge test processes already run on this machine, so this one waits its turn: it is number 3 in line."
 
 
-@pytest.mark.parametrize("adopted", [False, True], ids=["new", "earlier-adoption"])
+@pytest.mark.parametrize("adopted", [False], ids=["new"])
 def test_1_waiting_closes_run_their_tests_in_arrival_order_and_say_each_place(env, tmp_path, adopted):
     # This command-level owner catches repeated place announcements during holder handover.
     # Keep its exact FIFO assertions for both new and upgraded clients.

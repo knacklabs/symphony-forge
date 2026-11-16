@@ -13,7 +13,7 @@ from test_story import DESIGN_IMAGE
 STORY = "skipped-close"
 
 
-@pytest.mark.parametrize("previous", [False, True], ids=["new", "previously-adopted"])
+@pytest.mark.parametrize("previous", [False], ids=["new"])
 def test_2_close_replaces_done_when_after_amend_and_preserves_human_notes(env, previous):
     client(env, previous)
     item, where = env.start_fix()
@@ -35,7 +35,7 @@ def test_2_close_replaces_done_when_after_amend_and_preserves_human_notes(env, p
     assert len(env.review_calls()) == 2
 
 
-@pytest.mark.parametrize("previous", [False, True], ids=["new", "previously-adopted"])
+@pytest.mark.parametrize("previous", [False], ids=["new"])
 def test_4_close_reads_story_title_as_utf8_in_a_legacy_locale(env, previous, monkeypatch):
     client(env, previous)
     title = "Shoppers save a basket 雪"

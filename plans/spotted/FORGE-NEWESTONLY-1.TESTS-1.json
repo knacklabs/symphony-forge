@@ -1,0 +1,59 @@
+{
+  "items": [
+    {
+      "key": "bug\ttests/test_close_refuses_binary_test_fixtures.py\tGate: proof list\tFORGE-NEWESTONLY-1/TESTS-1",
+      "kind": "bug",
+      "path": "tests/test_close_refuses_binary_test_fixtures.py",
+      "line": 41,
+      "text": "Gate: proof list",
+      "from": "blocking",
+      "item": "FORGE-NEWESTONLY-1/TESTS-1",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\ttests/test_agents_review.py\tNot done: Forge's own tests check each ordinary rule on a new repo only",
+      "kind": "edge",
+      "path": "tests/test_agents_review.py",
+      "line": 22,
+      "text": "Not done: Forge's own tests check each ordinary rule on a new repo only",
+      "from": "review",
+      "item": "FORGE-NEWESTONLY-1/TESTS-1",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\ttests/test_board_needs_you.py\tNot done: every test whose subject is older-release behaviour stays",
+      "kind": "edge",
+      "path": "tests/test_board_needs_you.py",
+      "line": 62,
+      "text": "Not done: every test whose subject is older-release behaviour stays",
+      "from": "review",
+      "item": "FORGE-NEWESTONLY-1/TESTS-1",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\ttests/test_close_sync_conflicts.py\tNot done: No test case remains that checks an ordinary rule a second time on a repo adopted on an earlier release",
+      "kind": "edge",
+      "path": "tests/test_close_sync_conflicts.py",
+      "line": 17,
+      "text": "Not done: No test case remains that checks an ordinary rule a second time on a repo adopted on an earlier release",
+      "from": "review",
+      "item": "FORGE-NEWESTONLY-1/TESTS-1",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "simplify\ttests/test_agents_review.py\tthe first round left unused adopted branches and imports in about 50 test functions, such as the adopted flag here.",
+      "kind": "simplify",
+      "path": "tests/test_agents_review.py",
+      "line": 31,
+      "text": "the first round left unused adopted branches and imports in about 50 test functions, such as the adopted flag here.",
+      "from": "worker",
+      "item": "FORGE-NEWESTONLY-1/TESTS-1",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

@@ -34,7 +34,7 @@ def test_1_init_only_gives_node_repos_node_deploy_files(repo, gh, tmp_path, mark
         assert "FROM node:" in (client / "Dockerfile").read_text()
 
 
-@pytest.fixture(params=["new init", "previous release"])
+@pytest.fixture(params=["new init"])
 def client_templates(repo, gh, tmp_path, monkeypatch, request):
     main = _adopted_client(repo, gh, tmp_path, monkeypatch, request.param)
     client = _start_fix(repo, main, "Use client templates")

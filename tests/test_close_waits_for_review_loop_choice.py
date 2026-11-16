@@ -203,7 +203,7 @@ def test_6_live_story_changes_allow_owner_accept_and_keep_earlier_acceptance(env
         assert f"Human accepted the remaining finding: {reason}" in env.prompt()
 
 
-@pytest.mark.parametrize("previous", [False, True], ids=["init", "upgrade-sync"])
+@pytest.mark.parametrize("previous", [False], ids=["init"])
 def test_4_clients_receive_the_human_choice_instructions(repo, gh, tmp_path, previous):
     if previous:
         shutil.copytree(Path(__file__).parent / "fixtures/adopted-v1.2.2/client",

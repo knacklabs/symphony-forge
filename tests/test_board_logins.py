@@ -24,7 +24,7 @@ from test_story import worktree
 STORY = "FORGE-BOARD-3"
 
 
-@pytest.mark.parametrize("previous", [False, True], ids=["new-client", "earlier-adoption"])
+@pytest.mark.parametrize("previous", [False], ids=["new-client"])
 def test_9_login_only_pull_request_keeps_the_recorded_starter_name(env, previous):
     client(env, previous)
     repo = env.repo
@@ -42,7 +42,7 @@ def test_9_login_only_pull_request_keeps_the_recorded_starter_name(env, previous
     assert (shown["started_by"], shown["started_by_login"]) == ("Recorded Starter", "starter-dev")
 
 
-@pytest.mark.parametrize("previous", [False, True], ids=["new-client", "earlier-adoption"])
+@pytest.mark.parametrize("previous", [False], ids=["new-client"])
 def test_7_started_item_shows_its_own_starter_before_a_pull_request(env, previous):
     client(env, previous)
     repo = env.repo

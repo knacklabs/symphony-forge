@@ -56,7 +56,7 @@ def client(repo, gh, tmp_path, adoption):
 
 
 @pytest.mark.platform
-@pytest.mark.parametrize("adoption", ["new init", "earlier adopted"])
+@pytest.mark.parametrize("adoption", ["new init"])
 def test_1_new_and_existing_repos_get_the_agents_skill(client):
     # Audit: delivery and the approved guidance are the contract. Missing shipping or rule
     # text breaks it; database coverage cannot see either. Real init/sync needs no new seam.
@@ -84,7 +84,7 @@ def test_1_new_and_existing_repos_get_the_agents_skill(client):
 
 
 @pytest.mark.platform
-@pytest.mark.parametrize("adoption", ["new init", "earlier adopted"])
+@pytest.mark.parametrize("adoption", ["new init"])
 def test_2_the_brief_and_the_coordinator_name_the_skill(repo, client, adoption):
     # Audit: the worker's actual prompt and both delivered guides must name the skill.
     # A missing prompt paragraph is invisible to the delivery test. Only the host is faked.

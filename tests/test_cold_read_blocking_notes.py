@@ -18,7 +18,7 @@ pytestmark = pytest.mark.platform
 STORY = "FIX-READ-BLOCKING-ONLY"
 
 
-@pytest.mark.parametrize("previous", [False, True], ids=["init", "earlier-adoption-upgrade-sync"])
+@pytest.mark.parametrize("previous", [False], ids=["init"])
 @pytest.mark.parametrize("blocking", [None, "Blocking: ", ""],
                          ids=["advisory-only", "mixed-blocking", "unmarked-blocking"])
 def test_1_only_blocking_notes_need_another_round(

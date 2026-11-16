@@ -8,7 +8,7 @@ from test_machine_views_recent_finished_items import client, traced, NOW
 STORY = "board-json-under-5s"
 
 
-@pytest.mark.parametrize("history", ["new", "adopted-v1.2.2"])
+@pytest.mark.parametrize("history", ["new"])
 def test_1_board_refresh_shares_facts_between_rows(repo, gh, monkeypatch, tmp_path, history):
     # Trace native Git, not a fake whose answer decides the performance assertion.
     # Previous coverage bounds old, omitted rows; these rows remain on the board.

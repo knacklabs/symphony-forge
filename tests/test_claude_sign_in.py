@@ -18,7 +18,7 @@ STORY = "claude-sign-in"
 pytestmark = pytest.mark.platform
 
 
-@pytest.fixture(params=["new", "earlier-release"])
+@pytest.fixture(params=["new"])
 def client(env, request):
     repo = env.repo
     repo.git("checkout", "-q", "-b", "fix/select-claude")

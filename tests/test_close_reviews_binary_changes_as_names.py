@@ -10,7 +10,7 @@ from test_setup import _fresh_client
 STORY = "review-image-deletes"
 
 
-@pytest.mark.parametrize("adopted", [False, True], ids=["init", "earlier-adoption-upgrade"])
+@pytest.mark.parametrize("adopted", [False], ids=["init"])
 def test_1_close_reviews_deleted_and_changed_images_as_names_only(env, adopted):
     if adopted:
         adopt_earlier(env)

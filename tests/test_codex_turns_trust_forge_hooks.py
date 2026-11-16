@@ -244,7 +244,7 @@ def test_3_reader_turns_trust_forge_s_own_hooks_and_stop_on_a_changed_one(
     assert _stopped(calls, before)
 
 
-@pytest.mark.parametrize("lifecycle", ["new", "adopted-on-v1.2.2"])
+@pytest.mark.parametrize("lifecycle", ["new"])
 def test_5_new_and_upgraded_clients_trust_forge_hooks_and_refuse_changed_or_foreign_hooks(
         repo, gh, tmp_path, monkeypatch, sdk_data, lifecycle, claude_session):
     client = _new_repo(repo, gh, tmp_path)

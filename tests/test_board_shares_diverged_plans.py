@@ -12,7 +12,7 @@ from test_story import DOC
 STORY = "the-pane-s-refresh-runs-forge-next-and-f"
 
 
-@pytest.mark.parametrize("history", ["new", "adopted-v1.2.2"])
+@pytest.mark.parametrize("history", ["new"])
 @pytest.mark.parametrize("command", ["board", "next"])
 def test_1_machine_views_share_plan_reads(repo, gh, monkeypatch, tmp_path, history, command):
     # Contract: a board-sized story does not repeat expensive Git reconciliation

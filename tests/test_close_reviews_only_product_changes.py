@@ -11,7 +11,7 @@ STORY = "FIX-RECORDS-ONLY-REVIEW"
 
 
 @pytest.mark.parametrize(("history", "planning_record"), [
-    ("new", False), ("new", True), ("adopted-v1.2.2", True)])
+    ("new", False), ("new", True)])
 def test_1_close_refuses_a_fix_when_main_already_has_the_product_change(
         env, tmp_path, history, planning_record):
     # Audit: real close and git merge. Only GitHub and Autoreview are fake.
@@ -45,7 +45,7 @@ def test_1_close_refuses_a_fix_when_main_already_has_the_product_change(
 
 @pytest.mark.parametrize(("history", "change", "retry_report"), [
     ("new", "README.md", True), ("new", "app.py", True),
-    ("new", "app.py", False), ("adopted-v1.2.2", "README.md", True)])
+    ("new", "app.py", False)])
 def test_2_close_shows_preserved_output_for_unreadable_findings(
         env, tmp_path, history, change, retry_report):
     # Audit: docs and code both need review. The external tool alone supplies malformed
