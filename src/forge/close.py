@@ -395,7 +395,7 @@ def close(args: argparse.Namespace) -> int:
         _save(top, item, state, f"Tests of {item}: {'failed' if failed else 'passed'}")
     for finding, because, from_base in requested:
         number = next((n for n, current in enumerate(result["findings"], 1)
-                       if score.identity(current["file"], current["title"]) == score.identity(finding["file"], finding["title"])), 0)
+                       if score.identity(current["file"], current["title"]) == score.identity(finding["file"], finding["title"]) and score.priority(current) >= score.priority(finding)), 0)
         if not number:
             continue  # The repair review no longer reports this earlier finding.
         result["dismissals"] = [d for d in result["dismissals"] if d["finding"] != number]
