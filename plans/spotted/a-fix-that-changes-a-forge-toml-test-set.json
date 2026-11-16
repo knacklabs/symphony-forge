@@ -34,6 +34,17 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/close.py\tClose counts every plans/ file as records and skips review, while a fix may ship plans docs as its work.",
+      "kind": "edge",
+      "path": "src/forge/close.py",
+      "line": 299,
+      "text": "Close counts every plans/ file as records and skips review, while a fix may ship plans docs as its work.",
+      "from": "worker",
+      "item": "a-fix-that-changes-a-forge-toml-test-set",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/close.py\tTasks (not fixes) can still print \"nothing to review\" and reach Ready when a merge removed their change.",
       "kind": "edge",
       "path": "src/forge/close.py",
