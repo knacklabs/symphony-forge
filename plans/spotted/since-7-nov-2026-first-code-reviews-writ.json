@@ -67,6 +67,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/review.py\tPreserve distinct findings that share a title and file\tsince-7-nov-2026-first-code-reviews-writ",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 1045,
+      "text": "Preserve distinct findings that share a title and file",
+      "from": "blocking",
+      "item": "since-7-nov-2026-first-code-reviews-writ",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_since_7_nov_review_noise.py\tGate: tests/test_since_7_nov_review_noise.py::test_1_builder_detail_not_done_and_duplicates_are_dropped\tsince-7-nov-2026-first-code-reviews-writ",
       "kind": "bug",
       "path": "tests/test_since_7_nov_review_noise.py",
