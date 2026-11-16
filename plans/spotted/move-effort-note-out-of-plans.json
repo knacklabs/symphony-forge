@@ -1,0 +1,59 @@
+{
+  "items": [
+    {
+      "key": "bug\tdocs/notes/claude-continued-effort.md\tGate: proof list\tmove-effort-note-out-of-plans",
+      "kind": "bug",
+      "path": "docs/notes/claude-continued-effort.md",
+      "line": 1,
+      "text": "Gate: proof list",
+      "from": "blocking",
+      "item": "move-effort-note-out-of-plans",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\ttests/test_fix_old_forge_records.py\tThe plan path check rejects the current ideas file.",
+      "kind": "bug",
+      "path": "tests/test_fix_old_forge_records.py",
+      "line": 22,
+      "text": "The plan path check rejects the current ideas file.",
+      "from": "worker",
+      "item": "merge-retest-main-only",
+      "status": "done",
+      "closed_by": "move-effort-note-out-of-plans"
+    },
+    {
+      "key": "bug\ttests/test_fix_old_forge_records.py\tThe plan-file allowlist rejects the existing ideas file and fails CI.",
+      "kind": "bug",
+      "path": "tests/test_fix_old_forge_records.py",
+      "line": 22,
+      "text": "The plan-file allowlist rejects the existing ideas file and fails CI.",
+      "from": "worker",
+      "item": "FORGE-STACK-1/CLOSE",
+      "status": "done",
+      "closed_by": "move-effort-note-out-of-plans"
+    },
+    {
+      "key": "bug\ttests/test_fix_old_forge_records.py\tThe records allowlist rejects the current ideas file.",
+      "kind": "bug",
+      "path": "tests/test_fix_old_forge_records.py",
+      "line": 22,
+      "text": "The records allowlist rejects the current ideas file.",
+      "from": "worker",
+      "item": "many-land-runs-each-poll-github-for-chec",
+      "status": "done",
+      "closed_by": "move-effort-note-out-of-plans"
+    },
+    {
+      "key": "bug\ttests/test_fix_old_forge_records.py\tThe records check rejects the current idea list on the default branch.",
+      "kind": "bug",
+      "path": "tests/test_fix_old_forge_records.py",
+      "line": 22,
+      "text": "The records check rejects the current idea list on the default branch.",
+      "from": "worker",
+      "item": "FORGE-TOOLS-1/SDKREAD",
+      "status": "done",
+      "closed_by": "move-effort-note-out-of-plans"
+    }
+  ]
+}
