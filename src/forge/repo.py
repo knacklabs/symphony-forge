@@ -341,6 +341,11 @@ def resolve_commit(top: Path, ref: str) -> str:
         "rev-parse", "--verify", f"{ref}~0", cwd=top)
 
 
+# Short network outages, as git and gh print them; the queue (land.py) starts a change again on them too.
+NETWORK = ("Could not resolve host", "i/o timeout", "Connection timed out", "Connection reset",
+           "error connecting to")
+
+
 def _github_read(args: tuple[str, ...], execute) -> subprocess.CompletedProcess[str]:
     """Retry reads only: replaying a write after an unreadable receipt could duplicate it."""
     api = args[1:2] == ("api",)
@@ -385,7 +390,8 @@ def _github_read(args: tuple[str, ...], execute) -> subprocess.CompletedProcess[
             re.search(r"\bHTTP\s+5\d\d\b", said, re.I)
             or re.search(r"\bunexpected EOF\b|\binvalid character\b", said, re.I)
             or "looking for beginning of value" in said
-            or "unexpected end of JSON input" in said))
+            or "unexpected end of JSON input" in said
+            or any(text in said for text in NETWORK)))
         if not transient:
             return done
         if pause is None:
