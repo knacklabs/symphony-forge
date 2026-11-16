@@ -132,7 +132,7 @@
     "status": "blocked"
   },
   "round": 4,
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-16T04:57:19.194210+00:00",
@@ -151,6 +151,11 @@
       "step": "review"
     }
   ],
+  "stop": {
+    "question": "Since 7 Nov 2026 first code reviews write about twice as many notes is stuck. It should deliver: A first review's \"Not done\" notes on builder guidance and its duplicate notes do not reach the builder or count as blocking.\nTwo rounds in a row left the open P0 preserve distinct findings that share a title and file in src/forge/review.py.\nThe worker tried: no new commits.\nChoose one: switch this item to Codex; keep Claude for one more round; or narrow or split it.",
+    "tool": "claude",
+    "wait_id": "2a63ca77-4dc0-4044-bc84-5b8c15282877"
+  },
   "stuck": {
     "close": "fe0a4d74-6502-488f-871e-b45e3df5461f",
     "head": "0f5741bf491956385ac3dacd8a35477ff62c9a1d",
