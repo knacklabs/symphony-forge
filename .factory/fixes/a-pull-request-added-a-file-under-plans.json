@@ -60,64 +60,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "b880de4e8c3c36e120a0d243bb903a030b326ccf4c67a2cdbbe9c9b3d72d872f",
-    "changed": "38969304087e5a3602d5cf0455d32f5df331d9bbdae1d0b57cf7f3e8b070466e",
-    "commit": "99e693661ce03479ed752099d163007f5e4b58b4",
-    "dismissals": [
-      {
-        "accepted": true,
-        "because": "Human accepted the remaining finding: Accept (owner): the real gap is closed and proven; the rare str(...) pattern and extra proof cases become known issues",
-        "finding": 1
-      },
-      {
-        "accepted": true,
-        "because": "Human accepted the remaining finding: Accept (owner): the real gap is closed and proven; the rare str(...) pattern and extra proof cases become known issues",
-        "finding": 2
-      },
-      {
-        "accepted": true,
-        "because": "Human accepted the remaining finding: Accept (owner): the real gap is closed and proven; the rare str(...) pattern and extra proof cases become known issues",
-        "finding": 3
-      }
-    ],
-    "findings": [
-      {
-        "body": "Gain 4, Work 3, Harm 3\nRaise: Not done\nCase: normal use - a test uses `glob.glob` with a pathlib path to scan nested plan files.\nThe repair checks the argument to `glob.glob`, but `rooted()` does not recognize a `str(...)` call. Consequently, a reader such as `glob.glob(str(ROOT / 'plans' / '**' / '*.md'), recursive=True)` is not picked when `plans/notes/n.md` changes. The docs-only classifier uses the same helper and can skip that reader too. This is the recursive `glob.glob` coverage raised in the previous review.",
-        "file": "src/forge/docskip.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 76,
-        "priority": "P1",
-        "required_done_when": true,
-        "title": "Not done: A change to any file inside a folder tree that a test scans picks that test.",
-        "work": 3
-      },
-      {
-        "body": "Gain 3, Work 1, Harm 3\nRaise: Test\nCase: normal use - a changed Python template is covered by a test that recursively scans the templates tree.\nThe revised proof distinguishes the deep and shallow readers, but both proof cases change only `plans/notes/n.md`. Restoring the previous Python-file exclusion in `src/forge/fasttest.py:449` would leave them green while again dropping a reader such as `tests/test_client_templates_select_starter_proofs.py:20-21`. The recursive `glob.glob` change likewise has no command-boundary coverage. The previous finding called for proof of the missed behavior as well as identifying which test ran.",
-        "file": "tests/test_fix_a_pull_request_added_a_file_under_plans.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 35,
-        "priority": "P1",
-        "title": "Gate: test_1_recursive_scan_is_picked_for_a_deeper_file_and_direct_listing_is_not",
-        "work": 1
-      },
-      {
-        "body": "Gain 4, Work 1, Harm 2\nRaise: Gate\nCase: normal use - a coordinator consults the shipped picker instructions in a new or upgraded client repository.\nThe repair commit now states what new and existing repositories receive, but it does not update the coordinator skill or worker brief. `src/forge/templates/skill.md:2236-2240` still says changed non-Python inputs do not select tests, although this change selects recursive readers for nested Markdown files. The repository's review rules require the shipped instructions to be updated when coordinator or worker command behavior changes.\nAdds work: update the shipped picker instructions; F 2 x H 2 = 4; 2 x C = 2",
-        "file": "src/forge/docskip.py",
-        "gain": 4,
-        "harm": 2,
-        "line": 77,
-        "priority": "P1",
-        "title": "Gate: Document the picker change for new and existing repositories",
-        "work": 1
-      }
-    ],
-    "id": "7e0945aa-98de-432b-a016-a61ab952adcb",
+    "branch_diff": "7d01607f5506942122327239593bd4fd2210a75d69c5ee203ee65573f83c8bd4",
+    "changed": "d71581eb7d87958c127a7a65ee3a627f4a346c8d707dcbd13cfb485e1f49cdb4",
+    "commit": "266647d3eb383d710845387929f34d9d977c043e",
+    "dismissals": [],
+    "findings": [],
+    "id": "3c39a224-433b-4e08-8f0a-0345eb5368a7",
     "status": "clean"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-16T07:10:25.644769+00:00",
@@ -129,6 +81,10 @@
     },
     {
       "at": "2026-11-16T07:29:16.435903+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-16T17:52:23.272600+00:00",
       "step": "review"
     }
   ],
