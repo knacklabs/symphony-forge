@@ -139,7 +139,7 @@
     "status": "blocked"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-16T04:57:19.194210+00:00",
@@ -154,6 +154,11 @@
       "step": "review"
     }
   ],
+  "stop": {
+    "question": "Since 7 Nov 2026 first code reviews write about twice as many notes is stuck. It should deliver: A first review's \"Not done\" notes on builder guidance and its duplicate notes do not reach the builder or count as blocking.\nTwo rounds in a row left the open P0 preserve security findings when filtering not done notes in src/forge/noise.py.\nTwo rounds in a row left the open P0 preserve distinct findings that share a title and file in src/forge/noise.py.\nThe worker tried: Keep security notes, distinct repeats and sign-off findings when dropping review noise.\nChoose one: switch this item to Codex; keep Claude for one more round; or narrow or split it.",
+    "tool": "claude",
+    "wait_id": "8d0808b9-d83b-468c-b13b-d45f58f9ad9d"
+  },
   "stuck": {
     "close": "4571dbc6-a423-498b-a027-8b828277d49b",
     "head": "1b636300d48414ed3a06d8ace5c49ac8552d1132",
