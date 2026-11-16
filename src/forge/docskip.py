@@ -68,15 +68,17 @@ def reads_file_relative(source: str, paths: set[str]) -> bool:
     for node in ast.walk(tree):
         if isinstance(node, ast.Call):
             name = getattr(node.func, "id", getattr(node.func, "attr", ""))
-            listed = (node.func.value if name in {"iterdir", "glob", "rglob"}
-                      and isinstance(node.func, ast.Attribute)
-                      else node.args[0] if name in {"listdir", "scandir", "walk", "iglob", "glob"}
-                      and node.args else None)
-            if listed is not None and rooted(listed) and (suffix := suffix_of(listed)):
-                folders.add(suffix)
-                if name in {"rglob", "walk"} or any(
-                        isinstance(arg, ast.Constant) and "**" in str(arg.value) for arg in node.args):
-                    deep.add(suffix)
+            listed = [node.func.value] if name in {"iterdir", "glob", "rglob"} \
+                and isinstance(node.func, ast.Attribute) else []
+            listed += node.args[:1] if name in {"listdir", "scandir", "walk", "iglob", "glob"} else []
+            pattern = any(isinstance(arg, ast.Constant) and "**" in str(arg.value) for arg in node.args)
+            for item in listed:
+                if rooted(item) and (suffix := suffix_of(item)):
+                    # A glob(path/**/x) argument names its folder before the `**`.
+                    folder, star, _ = suffix.partition("/**")
+                    folders.add(folder)
+                    if name in {"rglob", "walk"} or pattern or star:
+                        deep.add(folder)
     for node in ast.walk(tree):
         if isinstance(node, (ast.BinOp, ast.Call)) and rooted(node):
             suffix = suffix_of(node)
@@ -143,6 +145,15 @@ def only_docs(top: Path, base: str, excludes: list[str], *, allow_settings: bool
         quoted = r'''(?:'[^'\r\n]*'|"[^"\r\n]*"|`[^`\r\n]*`)'''
         joined = re.compile(rf"\b(?:Path|join)\(\s*(?:__dirname\s*,\s*)?{quoted}"
                             rf"(?:\s*,\s*{quoted})*\s*\)(?:\s*/\s*{quoted})*")
+        scanners = subprocess.run([shutil.which("git") or "git", "grep", "-I", "-l", "-z", "-E",
+                                   r"rglob|walk\(|\*\*", head, "--", "*.py", *excludes],
+                                  cwd=top, capture_output=True, text=True, encoding="utf-8")
+        if scanners.returncode not in (0, 1):
+            return False
+        for scanner in filter(None, scanners.stdout.split("\0")):
+            # A test that scans a folder tree reads every changed file inside it.
+            if reads_file_relative(git("show", scanner), set(changed)):
+                return False
         for consumer in filter(None, found.stdout.split("\0")):
             folder = posixpath.dirname(consumer.partition(":")[2])
             roots = ("", top.as_posix(), posixpath.join(top.as_posix(), folder))

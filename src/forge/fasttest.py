@@ -446,7 +446,7 @@ def related(base: str) -> tuple[list[str], list[str], bool, list[str]]:
                       or any(hits(path, module, source, root) for module, source, root in modules)}
     readers = tests + [Path(name) for name in files
                        if Path(name).name == "conftest.py" and Path(name).is_file()]
-    inputs = {name for name in changed if Path(name).suffix != ".py"}
+    inputs = set(changed)
     picked |= {path for path in readers
                if docskip.reads_file_relative(path.read_text("utf-8-sig"), inputs)}
     picked = docskip.test_readers(readers, picked, source_root)  # Names match inside one app only.
