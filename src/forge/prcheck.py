@@ -238,11 +238,13 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
     dev_manager = package.get("devEngines", {}).get("packageManager")
     dev_manager = next((m for m in (dev_manager if isinstance(dev_manager, list) else [dev_manager])
                         if isinstance(m, dict) and m.get("name") == "pnpm"), None)
+    # The root lockfile is read from the folder, not from git: sync's pure-upgrade check renders
+    # this from a plain snapshot folder with no git index, so git would miss it there.
     listing = repo.run("git", "ls-files", "-co", "--exclude-standard", "-z", cwd=top).stdout.split("\0")
     # Forge's own repo ships starter lockfiles it never builds with pnpm.
     nested = cfg.get("repo") != "forge-source"
-    lockfile = next((name for name in listing
-                     if name == "pnpm-lock.yaml" or (nested and name.endswith("/pnpm-lock.yaml"))), None)
+    lockfile = "pnpm-lock.yaml" if (top / "pnpm-lock.yaml").is_file() else next(
+        (name for name in listing if nested and name.endswith("/pnpm-lock.yaml")), None)
     pnpm = (isinstance(manager, str) and manager.startswith("pnpm@")) or dev_manager or lockfile
     node = ""
     if pnpm:
