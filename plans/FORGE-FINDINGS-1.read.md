@@ -1,13 +1,13 @@
 ---
 reader: codex (gpt-6.1-terra)
-read_at: 2026-11-16T05:32:19.827029+00:00
-seconds: 609.152
-read_hash: 00cc48a65ad726ddfd229bea0153789467e51cac
-round: 1
-passed: no
-doc_seen: 00cc48a65ad726ddfd229bea0153789467e51cac
+read_at: 2026-11-16T05:41:01.001589+00:00
+seconds: 263.967
+read_hash: d8170db0419c785540f8f9fcc8a9b4a14259094f
+round: 2
+passed: yes
+doc_seen: d8170db0419c785540f8f9fcc8a9b4a14259094f
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+notes_seen: 3a3340f899a819380c944302187c3eb5cb6dbf47
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a1e2ce-498c-74b0-81e0-bf84165e7e4d
 session:
@@ -95,3 +95,26 @@ Only a genuine trade-off goes to the human, as a question with options.
    [The plan](/plans/FORGE-FINDINGS-1.md:74) says a dismissed finding is not printed. But [close.py](/src/forge/close.py:438) prints advisory findings without filtering dismissals; the existing [close test](/tests/test_close.py:634) shows that such a dismissal occurs.
    Gain 3, Work 1, Harm 1
    Disposition: cut
+
+## Round 2
+
+10. Advisory: Plan gap: The fix test cannot reach its dismissal assertion.
+   Raise: Plan gap
+   Case: normal use - The test runs its fix variant with the specified blocking P1 finding.
+   [The plan](/plans/FORGE-FINDINGS-1.md:88) immediately tries to dismiss the finding. But [close.py](/src/forge/close.py:412) stops a fix after its first blocking review, and the next close refuses before processing the dismissal. The cited [dismissal test](/tests/test_close_dismiss_open_findings.py:26) uses P0 findings instead.
+   Gain 3, Work 2, Harm 2
+   Disposition: keep - below the bar (follow-up)
+
+11. Advisory: Functional: An open finding can be labeled as a follow-up when no follow-up fix exists.
+   Raise: Functional
+   Case: normal use - A review raises a “Not done” finding about builder guidance rather than an approved acceptance item.
+   [review.py](/src/forge/review.py:1108) uses `follow_up` to hold the reason that finding does not block; it does not create a fix. The [planned printer](/plans/FORGE-FINDINGS-1.md:72) treats every such value as a follow-up, although the promised states describe follow-ups as findings moved to a fix.
+   Gain 3, Work 2, Harm 2
+   Disposition: keep - below the bar (follow-up)
+
+12. Advisory: Plan gap: The guide conflicts with the handover instruction.
+   Raise: Plan gap
+   Case: normal use - An agent needs findings from a teammate’s later close.
+   [The plan](/plans/FORGE-FINDINGS-1.md:10) says to run close locally first, while its [guide row](/plans/FORGE-FINDINGS-1.md:76) says never to run close again only to read findings. Local close is the path that [reconciles the published branch](/src/forge/close_remote.py:58).
+   Gain 3, Work 1, Harm 1
+   Disposition: keep - below the bar (follow-up)
