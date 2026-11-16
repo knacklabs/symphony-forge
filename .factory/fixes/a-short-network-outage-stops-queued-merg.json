@@ -4,12 +4,145 @@
   "done_when": "A queued merge that hits a short network outage starts again on its own and merges once the connection is back.",
   "fix_kind": "backend",
   "kind": "fix",
+  "known": [
+    {
+      "area": "_queue() in src/forge/land.py",
+      "file": "src/forge/land.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 533,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: A queued merge that hits a short network outage starts again on its own and merges once the connection is back.",
+      "work": 2
+    },
+    {
+      "area": "_queue() in src/forge/land.py",
+      "file": "src/forge/land.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 535,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Retry failures outside the ordinary queue child loop",
+      "work": 2
+    },
+    {
+      "area": "_queue() in src/forge/land.py",
+      "file": "src/forge/land.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 539,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Avoid exhausting retries while the outage is still active",
+      "work": 2
+    },
+    {
+      "area": "tests/test_fix_a_short_network_outage_stops_queued_merg.py",
+      "file": "tests/test_fix_a_short_network_outage_stops_queued_merg.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 15,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_a_change_that_meets_a_network_outage_starts_again_and_merges",
+      "work": 2
+    },
+    {
+      "area": "test_1_a_change_that_meets_a_network_outage_starts_again_and_merges() in tests/test_fix_a_short_network_outage_stops_queued_merg.py",
+      "file": "tests/test_fix_a_short_network_outage_stops_queued_merg.py",
+      "gain": 2,
+      "harm": 1,
+      "line": 23,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Simpler: earlier-adopted retry case \u2192 cut",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "cf00b9b3ab44dd33109956ccb876e6fcbe35b7c0ef9fdf993bbd318a9b7ab9d6",
+    "changed": "aa47d1b0317cf406de3cf0351e34bcadf84caf459aaf32dde1e8fbd04890a04a",
+    "commit": "51808fef175fc016afbe1144c2926fe1920ff63b",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 5, Work 2, Harm 3\nRaise: Not done\nCase: normal use - a queued change's GitHub request encounters a temporary DNS failure.\nThe new matcher recognizes Git-style diagnostics but not GitHub CLI's usual DNS output, which says `error connecting to api.github.com` and asks the user to check the connection. [GitHub CLI's DNS handler](https://github.com/cli/cli/blob/trunk/internal/ghcmd/cmd.go#L262-L269) emits that output when debug logging is off. A queued child calls `close._pull_request` at `src/forge/land.py:82`; the GitHub read retry in `src/forge/repo.py:383` does not recognize this diagnostic either. Consequently, even a one-call outage stops the change instead of restarting it. This is new evidence beyond the coordinator's proposed message matches.",
+        "file": "src/forge/land.py",
+        "gain": 5,
+        "harm": 3,
+        "line": 533,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: A queued merge that hits a short network outage starts again on its own and merges once the connection is back.",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - a network outage occurs while the queue starts or while a CI merge train merges ready changes.\nThe new retry only examines children in `running`. The initial fetch at `src/forge/land.py:369` happens before any child exists and its failure ends the queue. A train instead starts its own child at `src/forge/land.py:764` and records a failed member as stopped at lines 768\u2013774. If that child's fetch fails once and the following `_stale` fetch succeeds, the member is still marked as needing attention rather than retried. These separate paths are new evidence not covered by the coordinator's proposed widening of the ordinary child match.",
+        "file": "src/forge/land.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 535,
+        "priority": "P1",
+        "title": "Functional: Retry failures outside the ordinary queue child loop",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - a brief DNS outage lasts longer than two fast-failing retries.\nEach matching failure starts the next child immediately; the half-second loop sleep at `src/forge/land.py:553` happens after that child has started. Both retries can therefore finish while a several-second outage is still active, after which the item is marked stopped and nothing restarts it when the connection returns. The coordinator specified reusing the retry count, but the existing retry's lack of a recovery wait and its effect on an outage lasting across attempts were not addressed; the new test makes the next fetch succeed immediately.",
+        "file": "src/forge/land.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 539,
+        "priority": "P1",
+        "title": "Functional: Avoid exhausting retries while the outage is still active",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - a queued GitHub request fails once with a DNS error and then succeeds.\nThe coordinator specifically required a command-level test with the fake `gh` failing once. This test instead fails only `git fetch -q origin main`; its GitHub calls remain successful. It can therefore pass while the GitHub DNS failure described above stops the queue, leaving the requested proof of that behaviour absent.",
+        "file": "tests/test_fix_a_short_network_outage_stops_queued_merg.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 15,
+        "priority": "P1",
+        "title": "Gate: test_1_a_change_that_meets_a_network_outage_starts_again_and_merges",
+        "work": 2
+      },
+      {
+        "body": "Gain 2, Work 1, Harm 1\nThe imported `client` fixture is parametrized for both new and earlier-adopted repositories in `tests/test_queue_land_all.py:161`. This new ordinary retry test consequently adds an earlier-adopted run, although the repository's review rule calls for ordinary rules to be tested on a new repo only.",
+        "file": "tests/test_fix_a_short_network_outage_stops_queued_merg.py",
+        "gain": 2,
+        "harm": 1,
+        "line": 23,
+        "priority": "P2",
+        "title": "Simpler: earlier-adopted retry case \u2192 cut",
+        "work": 1
+      }
+    ],
+    "id": "a3f3cc6b-7162-499c-ac07-e65901ebff07",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-16T05:13:44.010228+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-16T05:30:58.512004+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
