@@ -528,9 +528,14 @@ def _queue(top: Path) -> int:
             child.stdin.close()
             # Two closes fetching at the same moment can collide on git's lock of a shared ref, and the
             # retry can collide again, so an item starts again up to twice.
-            if child.returncode and collided.get(item, 0) < 2 and any("cannot lock ref" in line for line in lines):
+            # A short network outage is retried the same way.
+            lock = any("cannot lock ref" in line for line in lines)
+            net = any(m in line for line in lines for m in (
+                "Could not resolve host", "i/o timeout", "Connection timed out", "Connection reset"))
+            if child.returncode and collided.get(item, 0) < 2 and (lock or net):
                 collided[item] = collided.get(item, 0) + 1
-                say(f"{item} met another change's git lock; starting it again.")
+                say(f"{item} met " + ("another change's git lock" if lock else "a short network problem")
+                    + "; starting it again.")
                 running[item] = spawn(item)
                 continue
             finished.add(item)
