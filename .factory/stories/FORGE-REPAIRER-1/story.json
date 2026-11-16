@@ -1,0 +1,12 @@
+{
+  "doc": "plans/FORGE-REPAIRER-1.md",
+  "status": "planning",
+  "steps": [
+    {
+      "at": "2026-11-16T04:35:10.220726+00:00",
+      "step": "start"
+    }
+  ],
+  "title": "Each item gets a builder and a repairer",
+  "touches": 0
+}

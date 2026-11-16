@@ -660,6 +660,12 @@
       "title": "Forge tests each rule on a new repo only",
       "status": "pending",
       "order": 123
+    },
+    {
+      "key": "FORGE-REPAIRER-1",
+      "title": "Each item gets a builder and a repairer",
+      "status": "pending",
+      "order": 124
     }
   ],
   "epics": [
