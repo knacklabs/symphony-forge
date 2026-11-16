@@ -1,0 +1,15 @@
+{
+  "base": "a7295f334a225f95fa55738cc41b8e0543789ad1",
+  "branch": "fix/prcheck-base-after-race-fix",
+  "done_when": "tests/test_aha_review.py passes on the default branch, and a clean review still passes forge-pr-check when the event's base is older than the default branch the change merged",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-16T09:03:38.835291+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Main is red again: tests/test_aha_review.py::test_7_prototype_fix_close_uses_light_review_only_before_signoff[False-Prototype before sign-off-P1-True-checks0-None] fails since the review-race fix merged (479d29d99, prcheck now fingerprints against merge-base(head, origin/<default>)); it passes on 03141b64c just before. It fails with 'forge-pr-check passed for fix/tidy-readme', where the test expects the check to fail."
+}
