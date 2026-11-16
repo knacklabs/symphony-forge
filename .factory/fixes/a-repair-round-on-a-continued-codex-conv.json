@@ -2,14 +2,24 @@
   "base": "490590979b67d79bb5a677af40080eaad6b4fb9b",
   "branch": "fix/a-repair-round-on-a-continued-codex-conv",
   "done_when": "Each continued Codex round sends its model and effort with its turn, and its run record and board show the effort Codex reports for that turn.",
+  "drop": {
+    "at": "2026-11-16T04:43:46.894314+00:00",
+    "because": "The owner: Forge already applies a repair round's effort to a continued Codex conversation, so this fix is not needed",
+    "by": "vrknetha <vrknetha@gmail.com> 1794804226 +0530",
+    "status": "working"
+  },
   "fix_kind": "backend",
   "kind": "fix",
   "round": 1,
-  "status": "working",
+  "status": "dropped",
   "steps": [
     {
       "at": "2026-11-16T04:25:33.594608+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-16T04:43:46.894357+00:00",
+      "step": "drop"
     }
   ],
   "stuck": {
