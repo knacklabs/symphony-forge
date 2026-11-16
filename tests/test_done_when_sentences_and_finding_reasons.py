@@ -38,21 +38,19 @@ def test_1_any_done_when_sentence_blocks_close(env, adopted, missing, ending):
 @pytest.mark.parametrize("adopted", [False, True], ids=["new", "earlier-adopted"])
 def test_2_each_non_blocking_finding_has_its_reason_and_scores(env, adopted):
     setup_client(env, adopted)
-    # A task can still have an unrelated Not-done follow-up; a fix cannot.
+    # A task's unrelated Not-done note is dropped before it is recorded.
     item, _ = env.start_task(changes={"README.md": "Hello readers\n"})
-    detail = finding("P1", "Not done: The greeting uses a separate formatter")
     below = finding("P2", "Shorten the greeting")
     light = finding("P1", "Correct a spelling error")
     rare = finding("P1", "Support an unusual reader")
     rare["body"] += "\nCase: rare - a reader uses an obsolete terminal."
-    env.reviews(blocked(detail, below, light, rare))
+    env.reviews(blocked(below, light, rare))
 
     closed = env.close(item)
 
     assert closed.returncode == 0, closed.stdout + closed.stderr
     assert "Review: clean." in closed.stdout
-    reasons = ["Not done names no owner-approved Done-when item; builder details are guidance.",
-               "Below the review bar", "Light review holds only P0 findings", "Rare case outside normal use"]
-    for number, (note, reason) in enumerate(zip([detail, below, light, rare], reasons), 1):
+    reasons = ["Below the review bar", "Light review holds only P0 findings", "Rare case outside normal use"]
+    for number, (note, reason) in enumerate(zip([below, light, rare], reasons), 1):
         assert (f"{number}. {note['title']} (app.py:1)\n"
                 f"Does not block: {reason.rstrip('.')}.\n{note['body']}\n") in closed.stdout

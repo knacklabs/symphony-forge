@@ -15,11 +15,12 @@ def test_1_clean_review_labels_non_blocking_p1_findings(env, adopted):
     client(env, adopted)
     env.commit(env.repo.path, "forge.toml", config, "Use the test checks")
     env.repo.git("push", "-q", "origin", "main")
-    # Unrelated Not-done findings are follow-ups only for story tasks.
     item, _ = env.start_task()
-    detail = "Not done: The greeting uses a separate formatter"
+    detail = "Support an unusual reader"
     advice = "Simpler: shorten the greeting"
-    env.reviews(blocked(finding("P1", detail), finding("P2", advice)))
+    rare = finding("P1", detail)
+    rare["body"] += "\nCase: rare - a reader uses an obsolete terminal."
+    env.reviews(blocked(rare, finding("P2", advice)))
 
     closed = env.close(item)
     assert closed.returncode == 0, closed.stdout + closed.stderr
