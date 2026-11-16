@@ -1,0 +1,15 @@
+{
+  "base": "c7d6e40da22a65c6fbed318acba04252413e9ebb",
+  "branch": "fix/a-fix-that-changes-a-forge-toml-test-set",
+  "done_when": "A fix that changes a forge.toml setting other than merge keeps that change through close and review, or close refuses with a clear reason instead of reporting ready.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-16T08:55:58.393011+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "A fix that changes a forge.toml test setting (other than merge) loses that change before close, and close still reports the pull request ready with no real change."
+}
