@@ -15,8 +15,8 @@
     "id": "ab39429a-1890-4afc-be2d-3cf5d7c54ce9",
     "status": "clean"
   },
-  "round": 1,
-  "status": "waiting for checks",
+  "round": 2,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-16T12:00:50.043215+00:00",
@@ -28,10 +28,10 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "7f2af93ca5a1c5c9a9bf33b33a17bd37324456d2",
+    "close": "ec688c15-87eb-4140-b228-cf1f0f91eb30",
+    "head": "637d6995d6d95c520e4301be422400400bca3bd6",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "Main is red a fourth time: tests/test_release_version.py::test_2_release_checkout_generated_files_match_sync fails because this repo's own .github/workflows/forge.yml no longer matches what forge sync writes after src/forge/prcheck.py changed (the review-race fix and its repair embed prcheck code in the generated workflow).",
   "worker": "claude"
