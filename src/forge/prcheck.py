@@ -250,6 +250,10 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
                 and (top / "package-lock.json").is_file()):
             node += ("          cache: npm\n"
                      "          cache-dependency-path: package-lock.json\n")
+        if (top / "pnpm-lock.yaml").is_file():
+            # Node 25+ ships no corepack; corepack then picks the client's packageManager pnpm.
+            node += ("      - run: npm install -g corepack && corepack enable\n"
+                     "        if: steps.parent-tests.outputs.reuse != 'true'\n")
     source = cfg.get("repo") == "forge-source"
     configured_groups = cfg.get("groups")
     change_command = quicktest.group_command(cfg)
