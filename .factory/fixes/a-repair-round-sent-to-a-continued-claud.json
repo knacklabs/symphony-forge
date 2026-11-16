@@ -4,12 +4,20 @@
   "done_when": "A short written note, with the effort numbers from a real test run, that says whether a continued Claude builder's effort can be raised through the plug-in hook.",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-16T04:23:29.572150+00:00",
       "step": "start"
     }
   ],
-  "why": "A repair round sent to a continued Claude builder keeps its starting low effort, so a failed round gets no more thought than the first attempt."
+  "stuck": {
+    "close": null,
+    "head": "0148be28fc1467cd967b9f769c7329fefafd6e6c",
+    "keys": {},
+    "round": null
+  },
+  "why": "A repair round sent to a continued Claude builder keeps its starting low effort, so a failed round gets no more thought than the first attempt.",
+  "worker": "claude"
 }
