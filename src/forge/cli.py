@@ -144,7 +144,7 @@ def _run(argv: list[str] | None, holding: contextlib.ExitStack) -> int:
         # The user-scoped mod follows installed Forge; repo adapters follow its pin.
         from forge.sync import install_mod
         install_mod(repo.root())
-    if args.words == "close" and args.show:  # reads the saved review only, so no pin check
+    if args.words == "close" and getattr(args, "show", False):  # reads the saved review only, so no pin check
         from forge import review_skip
         return review_skip.show(args)
     if args.changes and not args.words.startswith("hook "):
