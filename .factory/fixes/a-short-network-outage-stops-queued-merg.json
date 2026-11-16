@@ -1,0 +1,15 @@
+{
+  "base": "63d634eb6da4eec90725061ea09ae4747dc49fc6",
+  "branch": "fix/a-short-network-outage-stops-queued-merg",
+  "done_when": "A queued merge that hits a short network outage starts again on its own and merges once the connection is back.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-16T05:13:44.010228+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "A short network outage stops queued merges with no retry, so one brief connection problem stops the merge."
+}
