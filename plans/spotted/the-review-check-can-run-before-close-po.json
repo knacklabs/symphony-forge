@@ -19,8 +19,8 @@
       "text": "Gate: tests/test_close_reruns_stale_review_check.py::test_1_close_reruns_the_review_check_that_saw_the_old_review",
       "from": "blocking",
       "item": "the-review-check-can-run-before-close-po",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     }
   ]
 }
