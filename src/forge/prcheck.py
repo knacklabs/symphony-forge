@@ -484,7 +484,8 @@ def pr_check(args: argparse.Namespace) -> int:
         problem = "missing"
     elif not _on_branch(top, str(result.get("commit", "")), head):
         problem = "for a commit that isn't part of this branch"
-    elif result.get("changed") != review.fingerprint(head, item, top, state, _review_base(top, head, base)):
+    elif result.get("changed") != review.fingerprint(head, item, top, state, base,
+                                                           diff_base=_review_base(top, head, base)):
         problem = "out of date: the product files or what the change must do changed after it"
     elif review.blocking(result):
         problem = "blocked by serious findings no one fixed or dismissed"
