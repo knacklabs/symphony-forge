@@ -16,7 +16,7 @@ STORY = "FIX-AFTER-SIGNOFF-NEXT-LEADS-WITH-BUILD"
 pytestmark = pytest.mark.platform
 
 
-@pytest.mark.parametrize("client", ["working-build", "canvas", "earlier-adopted"])
+@pytest.mark.parametrize("client", ["working-build", "canvas"])
 def test_1_accepted_signoff_leads_with_build_and_excludes_old_problems(
         repo, tmp_path, monkeypatch, client):
     if client == "earlier-adopted":

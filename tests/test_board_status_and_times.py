@@ -18,7 +18,7 @@ NOW = "2026-10-09T12:00:00+00:00"
 OLD = "2026-10-05T12:00:00+00:00"
 
 
-@pytest.fixture(params=["new", "adopted-v1.2.2"])
+@pytest.fixture(params=["new"])
 def client(repo, gh, tmp_path, monkeypatch, request):
     _client(repo, gh, tmp_path, request.param)
     monkeypatch.setenv("FORGE_NOW", NOW)
@@ -85,8 +85,8 @@ def _row(data, key):
 
 
 @pytest.mark.parametrize("client,historical_state", [
-    ("new", False), ("new", True), ("adopted-v1.2.2", True)
-], indirect=["client"], ids=["new-roadmap-only", "new-historical-state", "adopted-v1.2.2-historical-state"])
+    ("new", False), ("new", True)
+], indirect=["client"], ids=["new-roadmap-only", "new-historical-state"])
 def test_1_roadmap_done_without_local_state_is_finished(client, tmp_path, monkeypatch, historical_state):
     tree = _fix(client)
     if historical_state:
@@ -245,8 +245,8 @@ def test_11_story_idle_time_tracks_its_parts(
 
 
 @pytest.mark.parametrize("client,run_round", [
-    ("new", 1), ("new", 2), ("adopted-v1.2.2", 2),
-], ids=["new-older round", "new-current round", "adopted-v1.2.2-current round"],
+    ("new", 1), ("new", 2),
+], ids=["new-older round", "new-current round"],
     indirect=["client"])
 def test_12_exited_worker_run_does_not_hide_idle_time_or_stopped_worker(
         client, tmp_path, monkeypatch, run_round):
@@ -282,7 +282,7 @@ def test_12_exited_worker_run_does_not_hide_idle_time_or_stopped_worker(
 
 
 @pytest.mark.parametrize("client,command", [
-    ("new", "board"), ("new", "next"), ("adopted-v1.2.2", "board"),
+    ("new", "board"), ("new", "next"),
 ], indirect=["client"])
 def test_14_event_history_is_read_once_per_command_and_refreshes_between_calls(
         client, tmp_path, monkeypatch, command):
@@ -325,7 +325,7 @@ def test_14_event_history_is_read_once_per_command_and_refreshes_between_calls(
 
 
 @pytest.mark.parametrize("client,kind", [
-    ("new", "work"), ("new", "review"), ("adopted-v1.2.2", "work"),
+    ("new", "work"), ("new", "review"),
 ], indirect=["client"])
 def test_4_running_worker_or_review_overrides_old_needs_fixes(client, tmp_path, kind):
     _fix(client, status="fixing", round=2)

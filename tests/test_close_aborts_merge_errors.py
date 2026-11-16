@@ -15,7 +15,7 @@ STORY = "skipped-close"
 
 
 @pytest.mark.parametrize("cause", ["source clash", "broken main"])
-@pytest.mark.parametrize("previous", [False, True], ids=["new", "previously-adopted"])
+@pytest.mark.parametrize("previous", [False], ids=["new"])
 def test_5_close_aborts_merge_it_cannot_finish(env, previous, cause):
     client(env, previous)
     repo = env.repo

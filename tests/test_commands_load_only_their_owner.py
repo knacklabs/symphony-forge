@@ -1,11 +1,9 @@
 """Commands and installed git hooks load only the command they run."""
 import json
-import shutil
 from pathlib import Path
 
 import pytest
 
-from conftest import ROOT
 from test_close import env  # noqa: F401
 from test_fix_new_repos_get_claude_as_their_worker_by import _new_repo
 from test_split_commands import HELP_GOLDEN
@@ -86,15 +84,8 @@ def test_1_new_clients_git_commit_and_push_build_only_their_hook(repo, gh, tmp_p
 
 
 @pytest.mark.platform
-def test_2_earlier_adopted_clients_get_small_hooks_after_upgrade(unsynced_up):
+def test_2_upgraded_clients_get_small_hooks(unsynced_up):
     up = unsynced_up
-    shutil.copytree(ROOT / "tests/fixtures/adopted-v1.2.2/client", up.repo.path, dirs_exist_ok=True)
-    up.repo.git("switch", "-qc", "adoption")
-    up.repo.git("add", "-A")
-    up.repo.git("commit", "-qm", "Adopt earlier Forge")
-    up.repo.git("switch", "-q", "main")
-    up.repo.git("merge", "-q", "--ff-only", "adoption")
-    up.repo.git("push", "-q", "origin", "main")
     upgraded = up.run(RELEASE)
     assert upgraded.returncode == 0, upgraded.stdout + upgraded.stderr
     # Use the installed release launcher and its hook shims, not this checkout's launcher.

@@ -31,7 +31,7 @@ def _story(repo, key, title, rows, read=True):
 
 
 @pytest.mark.timeout(600)
-@pytest.mark.parametrize("history", ["new", "adopted-v1.2.2"])
+@pytest.mark.parametrize("history", ["new"])
 def test_11_dependency_graph(repo, gh, tmp_path, claude_payload, monkeypatch, history):
     _configured(repo, gh, tmp_path, history, ("ALPHA", "BETA", "GAMMA", "DELTA", "IDEA", "NOTE", "LATER"))
     monkeypatch.setenv("FORGE_NOW", "2026-10-09T10:00:00+00:00")

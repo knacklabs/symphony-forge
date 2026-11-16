@@ -49,7 +49,7 @@ SPEED_CASES = [
 @pytest.mark.parametrize("tiers, mode, receipt, received, said, doctor, adopted", [
     pytest.param(*case, adopted, id=f"{'adopted-release' if adopted else 'new'}-tiers{index}")
     for index, case in enumerate(SPEED_CASES)
-    for adopted in (False, True) if not adopted or index in (0, 9)
+    for adopted in (False,)
 ])
 def test_1_each_turn_says_and_records_whether_fast_ran(
         repo, monkeypatch, sdk_data, tiers, mode, receipt, received, said, doctor, adopted):

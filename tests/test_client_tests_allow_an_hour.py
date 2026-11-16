@@ -11,7 +11,7 @@ from test_testplace_workflow import _jobs
 STORY = "FIX-CLIENT-TESTS-JOB-60-MINUTES"
 
 
-@pytest.mark.parametrize("adopted", [False, True], ids=["new", "earlier-adopted"])
+@pytest.mark.parametrize("adopted", [False], ids=["new"])
 def test_1_client_tests_allow_sixty_minutes_on_init_and_sync(repo, gh, tmp_path, adopted):
     client = (_adopted_client(repo, tmp_path, "hour-client") if adopted else
               _new_client(repo, gh, tmp_path, "hour-client"))

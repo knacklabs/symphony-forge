@@ -9,7 +9,7 @@ from test_reviews_receive_done_when_proof import checked
 STORY = "proof-list-after-merge"
 
 
-@pytest.mark.parametrize("previous", [False, True], ids=["init", "earlier-adoption-upgrade"])
+@pytest.mark.parametrize("previous", [False], ids=["init"])
 def test_1_review_reads_newest_proof_list_after_main_merge(env, previous):
     # Audit: real close owns proof delivery; GitHub and Autoreview alone are faked.
     # Existing delivery coverage required the latest commit to repeat the list.

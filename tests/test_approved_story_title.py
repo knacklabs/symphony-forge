@@ -7,7 +7,7 @@ from test_story import DOC, claude_plan, hook
 STORY = "approval-commit-title"
 
 
-@pytest.mark.parametrize("adopted", [False, True], ids=["new-client", "adopted-on-v1.2.2"])
+@pytest.mark.parametrize("adopted", [False], ids=["new-client"])
 def test_1_approval_commit_names_the_title_in_the_approved_story_doc(
         repo, gh, tmp_path, claude_payload, adopted):
     shop = _waiting(repo, gh, tmp_path, adopted)

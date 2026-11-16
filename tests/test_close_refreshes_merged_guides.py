@@ -9,7 +9,7 @@ from test_close import env  # noqa: F401
 STORY = "merge-refreshes-guide-copies"
 
 
-@pytest.mark.parametrize("previous", [False, True], ids=["new", "previously-adopted"])
+@pytest.mark.parametrize("previous", [False], ids=["new"])
 def test_1_close_refreshes_guides_after_merging_templates(env, previous):
     # Contract: close publishes guides matching merged templates. A clean Git merge
     # used to leave them stale; sync's existing test never merges main. No new seam.

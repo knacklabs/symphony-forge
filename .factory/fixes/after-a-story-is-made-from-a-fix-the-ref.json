@@ -1,0 +1,78 @@
+{
+  "base": "63d634eb6da4eec90725061ea09ae4747dc49fc6",
+  "branch": "fix/after-a-story-is-made-from-a-fix-the-ref",
+  "done_when": "The refusal explains that the roadmap entry is needed for the story to be created from the fix, and that it goes on the fix's own branch.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "src/forge/story.py",
+      "file": "src/forge/story.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 37,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Refusal gives the wrong reason for using the fix branch",
+      "work": 1
+    },
+    {
+      "area": "test_5_promotion_keeps_its_existing_roadmap_route() in tests/test_story_without_a_spec.py",
+      "file": "tests/test_story_without_a_spec.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 276,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: tests/test_story_without_a_spec.py::test_5_promotion_keeps_its_existing_roadmap_route",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "ce16fc2224ab75fa474f21877ca090419447c248902a0052d53fe3c766e54a76",
+    "changed": "681925d195e788518195457fbd953a19bd399983a0517769000d126519fb3a32",
+    "commit": "40d921fddff4b1b045cde57648106c7b9e8709bd",
+    "dismissals": [],
+    "findings": [],
+    "id": "587e9a86-286a-4a16-a299-4bc9ff41e40d",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-16T05:13:27.627200+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-16T05:23:47.887448+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-16T05:36:03.457859+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-16T05:23:47.898473+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "src/forge/story.py",
+    "reason": "One more round (owner): the reason in the sentence came from the coordinator's wrong note",
+    "wait_id": "4718da55-ecc1-4f6b-b987-4c753313e59f",
+    "worker_round": 1
+  },
+  "stuck": {
+    "close": "6c1ec7de-37e2-4b2e-b84b-9716168069ce",
+    "head": "abbb4745d7dcd55a39fb4424f74d6fe8d90f0fa9",
+    "keys": {},
+    "round": 1
+  },
+  "why": "After a story is made from a fix, the refusal for a missing roadmap entry asks for the entry to be committed on the fix's branch without saying why, so people expect to add it on the default branch.",
+  "worker": "claude"
+}

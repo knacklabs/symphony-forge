@@ -116,6 +116,7 @@ the next merge.
 | "Tell the worker this round" | `forge work <item> --note "<text>"` |
 | "Ask about this code" | Hand the question to the session's `explorer` subagent role |
 | "Close it" or "Is it ready?" | `forge close <item>` |
+| "What were the review findings?" after a close | `forge close <item> --show` in the item's checkout prints the latest saved review in full, with each finding's state; never close again just to read it |
 | "A person asks to skip the model review" | For a task or fix, run `forge close <item> --no-review --by "<name>" --reason "<why>"` only when a person asks |
 | "Land it" | `forge land <item>`, run in the background and watched like `forge work` |
 | "Land everything that's ready" | `forge land --all`, run in the background; never a hand-made merge lane |

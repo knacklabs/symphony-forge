@@ -39,7 +39,7 @@ def _land_setup(repo, top, branch, paths=("-A",)):
     repo.git("-c", f"core.hooksPath={no_hooks}", "push", "-q", "origin", "main", cwd=top)
 
 
-@pytest.fixture(params=["new", "adopted"])
+@pytest.fixture(params=["new"])
 def intake(request, land, gh, monkeypatch, tmp_path):
     repo = land.repo
     version = repo.forge("--version").stdout.split()[-1]

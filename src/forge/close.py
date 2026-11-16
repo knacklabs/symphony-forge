@@ -395,7 +395,7 @@ def close(args: argparse.Namespace) -> int:
         _save(top, item, state, f"Tests of {item}: {'failed' if failed else 'passed'}")
     for finding, because, from_base in requested:
         number = next((n for n, current in enumerate(result["findings"], 1)
-                       if score.identity(current["file"], current["title"]) == score.identity(finding["file"], finding["title"])), 0)
+                       if score.identity(current["file"], current["title"]) == score.identity(finding["file"], finding["title"]) and score.priority(current) >= score.priority(finding)), 0)
         if not number:
             continue  # The repair review no longer reports this earlier finding.
         result["dismissals"] = [d for d in result["dismissals"] if d["finding"] != number]
@@ -1190,11 +1190,11 @@ def _merged(top: Path, item: str) -> int:
 COMMANDS = [{
     "words": "close", "run": "close", "changes_state": True,
     "help": "Close a task or fix by the close rule",
-    "args": [(('--no-review',), {"action": "store_true"}), (('--by',), {"metavar": "NAME"}),
+    "args": [(('--show',), {"action": "store_true"}), (('--no-review',), {"action": "store_true"}), (('--by',), {"metavar": "NAME"}),
              (('item',), {}), (('--dismiss',), {"type": int, "action": "append", "metavar": "N"}),
              (('--because',), {"action": "append", "metavar": "FILE:LINE_REASON"}),
              (('--resolve',), {"choices": ["more", "narrow", "split", "accept", "switch", "same"]}),
              (('--reason',), {"help": "The person's reason for a skip or choice after a review loop stop"})],
     "position": 150,
-    "listing": "| `forge close <item>` | Closes a task or fix; `--no-review --by \"<name>\" --reason \"<why>\"` skips only the model review when a person asks, unless an earlier review blocked the item; a fix gets one review round and a part two; open findings below P0 at the limit wait for `--resolve more`, `split` or `accept` with `--reason \"<human's choice>\"`; an open P0 returns to the worker, and the same P0 after two worker rounds stops for the owner; docs-only changes skip local and generated CI tests, and the required tests check passes with a docs-only note |",
+    "listing": "| `forge close <item>` | Closes a task or fix; `--show` prints the latest saved review in full, with each finding's open, dismissed or follow-up state, and runs no tests or review; `--no-review --by \"<name>\" --reason \"<why>\"` skips only the model review when a person asks, unless an earlier review blocked the item; a fix gets one review round and a part two; open findings below P0 at the limit wait for `--resolve more`, `split` or `accept` with `--reason \"<human's choice>\"`; an open P0 returns to the worker, and the same P0 after two worker rounds stops for the owner; docs-only changes skip local and generated CI tests, and the required tests check passes with a docs-only note |",
 }]

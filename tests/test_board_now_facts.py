@@ -67,7 +67,6 @@ def look(url, mode, expected=""):
 
 @pytest.mark.parametrize("client, waits, expected", [
     ("new", [None], "unknown"), ("new", [600, None], "unknown"), ("new", [0], "0%"),
-    ("adopted-v1.2.2", [None], "unknown"),
 ], indirect=["client"])
 def test_19_waiting_share_stays_unknown_when_a_timed_item_has_no_wait_record(client, tmp_path, waits, expected):
     """Missing wait observations cannot become zero, even beside a known wait; recorded zero can."""

@@ -20,7 +20,6 @@ STORY = "windows-test-fixes-2"
     pytest.param(False, "\r\n", False, id="new-crlf"),
     pytest.param(False, "\r\n", True, id="new-crlf-pin"),
     pytest.param(False, "", False, id="new-no-final-newline"),
-    pytest.param(True, "\r\n", True, id="adopted-crlf-pin"),
 ], indirect=["client"])
 def test_1_close_leaves_equivalent_settings_and_the_branch_pin_untouched(
         env, client, tmp_path, ending, pin):

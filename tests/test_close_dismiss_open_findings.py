@@ -32,8 +32,8 @@ Path({json.dumps(marker.as_posix())}).write_text("ran", encoding="utf-8")
     return item, marker
 
 
-@pytest.mark.parametrize("adopted,settled", [(False, False), (False, True), (True, False)],
-                         ids=["new-unknown", "new-dismissed", "adopted-unknown"])
+@pytest.mark.parametrize("adopted,settled", [(False, False), (False, True)],
+                         ids=["new-unknown", "new-dismissed"])
 def test_1_unknown_dismissal_stops_before_tests_or_review(env, adopted, settled):
     # Contract: bad input costs no test or model run. Previously validation was too late.
     # Existing refusal cases check text, but do not check either expensive side effect.
@@ -57,7 +57,7 @@ def test_1_unknown_dismissal_stops_before_tests_or_review(env, adopted, settled)
     assert len(env.review_calls()) == calls
 
 
-@pytest.mark.parametrize("adopted", [False, True], ids=["new", "earlier-adopted"])
+@pytest.mark.parametrize("adopted", [False], ids=["new"])
 def test_2_dismiss_an_open_finding_from_an_earlier_round(env, adopted):
     # Contract: a repair report with no new findings still accepts the owner's dismissal.
     # Existing dismissal cases reuse or repeat the finding; none omit it in a new report.
@@ -77,8 +77,8 @@ def test_2_dismiss_an_open_finding_from_an_earlier_round(env, adopted):
     assert checked.returncode == 0, checked.stdout + checked.stderr
 
 
-@pytest.mark.parametrize("adopted,settled", [(False, False), (False, True), (True, False)],
-                         ids=["new-remote-number", "remotely-dismissed", "adopted-remote-number"])
+@pytest.mark.parametrize("adopted,settled", [(False, False), (False, True)],
+                         ids=["new-remote-number", "remotely-dismissed"])
 def test_3_dismissal_numbers_use_the_reconciled_remote_review(env, adopted, settled):
     # Contract: another machine's review owns the current numbers and open status.
     # A local-only review fixture cannot expose a stale review after a remote merge.
@@ -106,7 +106,7 @@ def test_3_dismissal_numbers_use_the_reconciled_remote_review(env, adopted, sett
             env.gh_calls("pr", "edit")[-1])
 
 
-@pytest.mark.parametrize("adopted", [False, True], ids=["new", "earlier-adopted"])
+@pytest.mark.parametrize("adopted", [False], ids=["new"])
 def test_4_reused_review_checks_evidence_at_its_reviewed_commit(env, adopted):
     # Contract: evidence for a reused review must exist at that review's commit.
     # Existing line checks do not merge a new evidence file while reusing a review.

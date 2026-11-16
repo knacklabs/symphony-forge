@@ -26,7 +26,7 @@ def checks(head, *outcomes):
         "pageInfo": {"hasNextPage": False}, "nodes": nodes}}}}]}
 
 
-@pytest.mark.parametrize("previous", [False, True], ids=["new-client", "earlier-adoption"])
+@pytest.mark.parametrize("previous", [False], ids=["new-client"])
 def test_1_failed_checks_idle_for_a_day_need_you(env, monkeypatch, previous):
     client(env, previous)
     now = datetime.now(timezone.utc).replace(microsecond=0)

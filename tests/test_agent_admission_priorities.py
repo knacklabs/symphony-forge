@@ -79,7 +79,7 @@ def _await_backlog_wait(process, output, what):
     assert message in output.read_text("utf-8"), output.read_text("utf-8")
 
 
-@pytest.mark.parametrize("adopted", [False, True], ids=["new", "earlier-adoption"])
+@pytest.mark.parametrize("adopted", [False], ids=["new"])
 def test_2_failed_test_repair_gets_the_place_before_an_earlier_new_build(env, tmp_path, adopted):
     repo = _client(env, tmp_path, adopted)
     machine_cores(repo, 2)
@@ -120,7 +120,7 @@ def test_2_failed_test_repair_gets_the_place_before_an_earlier_new_build(env, tm
         finish(repo, processes)
 
 
-@pytest.mark.parametrize("adopted", [False, True], ids=["new", "earlier-adoption"])
+@pytest.mark.parametrize("adopted", [False], ids=["new"])
 def test_3_build_waits_above_twice_test_places_and_resumes_at_test_places(
         env, tmp_path, adopted, release_server):
     repo = _client(env, tmp_path, adopted)

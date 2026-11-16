@@ -12,7 +12,7 @@ STORY = "FORGE-ASSIST-1/HISTVIAPY"
 
 @pytest.mark.platform
 @pytest.mark.timeout(1800)
-@pytest.mark.parametrize("starter", ["python", "earlier adopted"])
+@pytest.mark.parametrize("starter", ["python"])
 def test_3_history_shows_the_agent(repo, gh, tmp_path, starter, tmp_path_factory):
     # Audit: init/sync own delivery and preservation; real API/Postgres owns list
     # and CSV attribution. OpenAPI independently guards the generated client

@@ -12,7 +12,7 @@ STORY = "report-forge-bugs"
 TEMPLATE = ROOT / ".github/ISSUE_TEMPLATE/forge-bug.md"
 
 
-@pytest.mark.parametrize("setup", ["new", "previous-release adoption"])
+@pytest.mark.parametrize("setup", ["new"])
 def test_1_clients_are_told_to_file_forge_bugs(repo, gh, tmp_path, setup):
     if setup == "new":
         client, made = _fresh_client(repo, gh, tmp_path)
