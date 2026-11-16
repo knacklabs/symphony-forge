@@ -126,33 +126,51 @@ def _remove_gh(env, monkeypatch):
     assert shutil.which("gh") is None
 
 
-@pytest.mark.parametrize("case", ["gh-absent", "github-unreachable"])
-def test_1_board_people_keep_loaded_names_and_logins(env, monkeypatch, case):
-    client(env, False)
-    repo = env.repo
-    now = datetime.now(timezone.utc)
-    monkeypatch.setenv("FORGE_NOW", now.isoformat())
-    repo.git("config", "user.name", "Git Builder")
-    repo.git("config", "user.email", "builder@example.test")
-    item, _ = env.start_fix()
-    repo.git("merge", "-q", "--no-edit", "fix/tidy-readme")
-    repo.git("push", "-q", "origin", "main")
-    author, author_login = "Git Builder", "builder-dev"
-    merger = merger_login = "merge-owner"
-    merged = pr(21, "fix/tidy-readme", {"name": author, "login": author_login}, now)
-    merged["mergedBy"] = {"login": merger_login}
-    older = pr(22, "manual-change", {"name": "Previous Builder", "login": author_login},
-               now - timedelta(days=7))
-    github(env, [merged, older])
+@pytest.mark.parametrize("case", ["gh-absent", "github-unreachable", "adopted-upgrade"])
+def test_1_board_people_keep_loaded_names_and_logins(env, monkeypatch, unsynced_up, case):
+    if case == "adopted-upgrade":
+        history = History(unsynced_up, monkeypatch)
+        history.story()
+        plan = (history.repo.path / "plans/SHOP.md").read_text("utf-8")
+        history.commit(history.repo.path, "plans/SHOP.md",
+                       plan + "\n## For the builders\n\nOwner: plan-owner\n",
+                       "Assign the plan owner", NOW - timedelta(days=20))
+        history.repo.git("merge", "-q", "--ff-only", "main", cwd=worktree(history.repo, "story/SHOP"))
+        history.repo.git("push", "-q", "origin", "story/SHOP")
+        history.item("recorded-people", 21, 10)
+        history.publish()
+        upgraded = unsynced_up.run(RELEASE)
+        assert upgraded.returncode == 0, upgraded.stdout + upgraded.stderr
+        env, repo, item = history.env, history.repo, "recorded-people"
+        now, author, merger = NOW, "Original Starter", "Human Merger"
+        author_login, merger_login = "starter", "merger"
+    else:
+        client(env, False)
+        repo = env.repo
+        now = datetime.now(timezone.utc)
+        monkeypatch.setenv("FORGE_NOW", now.isoformat())
+        repo.git("config", "user.name", "Git Builder")
+        repo.git("config", "user.email", "builder@example.test")
+        item, _ = env.start_fix()
+        repo.git("merge", "-q", "--no-edit", "fix/tidy-readme")
+        repo.git("push", "-q", "origin", "main")
+        author, author_login = "Git Builder", "builder-dev"
+        merger = merger_login = "merge-owner"
+        merged = pr(21, "fix/tidy-readme", {"name": author, "login": author_login}, now)
+        merged["mergedBy"] = {"login": merger_login}
+        older = pr(22, "manual-change", {"name": "Previous Builder", "login": author_login},
+                   now - timedelta(days=7))
+        github(env, [merged, older])
     env.gh.respond("api", "user", stdout="viewer-dev\n")
     before = len(env.gh.calls())
     warm_board = board(repo)  # Populate the real command's last-known records.
     warm = rows(warm_board)[item]
     assert warm["started_by_login"] == author_login
     assert warm["merged_by"]["login"] == merger_login
-    [trend_person] = [person for person in warm_board["team"]["trends"]["people"]
-                      if person["login"] == author_login]
-    assert trend_person["name"] == warm["started_by"] == author
+    if case != "adopted-upgrade":
+        [trend_person] = [person for person in warm_board["team"]["trends"]["people"]
+                          if person["login"] == author_login]
+        assert trend_person["name"] == warm["started_by"] == author
 
     if case == "github-unreachable":
         env.gh.respond("pr", "list", exit=1, stderr="GitHub is unreachable\n")
@@ -167,6 +185,9 @@ def test_1_board_people_keep_loaded_names_and_logins(env, monkeypatch, case):
         assert (person["started_by"], person["started_by_login"]) == (author, author_login)
         assert person["merged_by"] == {"name": merger, "login": merger_login}
         assert shown["viewer"] == "viewer-dev"
+        if case == "adopted-upgrade":
+            plan_owner = rows(shown)["SHOP"]
+            assert (plan_owner["developer"], plan_owner["developer_login"]) == ("plan-owner", "plan-owner")
     assert not [call for call in env.gh.calls()[before:] if call[:1] == ["api"] and (
         any("object(oid:" in arg for arg in call)
         or any(arg.startswith("repos/{owner}/{repo}/commits/") and "/check-runs" not in arg
