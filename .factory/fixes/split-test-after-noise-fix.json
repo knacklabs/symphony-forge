@@ -24,8 +24,8 @@
       "gain": 4,
       "harm": 3,
       "line": 1045,
-      "outcome": "open",
-      "reason": "",
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: Accept (owner): merge so main is green; the test-picking gap and the split-history question become one follow-up fix",
       "round": 1,
       "security": false,
       "title": "Not done: tests/test_split_keeps_review_findings.py passes on the default branch, with the review-noise behaviour kept",
@@ -37,8 +37,8 @@
       "gain": 4,
       "harm": 2,
       "line": 1045,
-      "outcome": "open",
-      "reason": "",
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: Accept (owner): merge so main is green; the test-picking gap and the split-history question become one follow-up fix",
       "round": 1,
       "security": false,
       "title": "Preserve split decisions through review classification and history",
@@ -50,7 +50,18 @@
     "branch_diff": "0c5af55fc88a2e21c3dcb99f0cb98df196ac2466817d68ec5d392230e79c15b5",
     "changed": "5f22d6e016dad2be7c0d77749ef3e9ca047bf8dccc952de426bc842d480dc44c",
     "commit": "914c863a52c2e4f2f45cc51fe0977026f3980e0f",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Accept (owner): merge so main is green; the test-picking gap and the split-history question become one follow-up fix",
+        "finding": 1
+      },
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Accept (owner): merge so main is green; the test-picking gap and the split-history question become one follow-up fix",
+        "finding": 2
+      }
+    ],
     "findings": [
       {
         "body": "Gain 4, Work 1, Harm 3\nRaise: Not done\nCase: normal use - the pull request's required tests check runs for this change. `.github/workflows/forge.yml:88` invokes `forge test --change`, but the selector at `src/forge/fasttest.py:441` does not select the split regression test or the review-noise test for this diff, and neither is in `.forge/always-tests.txt`. The check can therefore pass without establishing either part of the Done-when.",
@@ -75,10 +86,10 @@
       }
     ],
     "id": "be84eaf2-f1ec-4014-9c80-687f159b9a65",
-    "status": "blocked"
+    "status": "clean"
   },
   "round": 2,
-  "status": "hotspot",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-16T07:29:19.507528+00:00",
@@ -95,8 +106,12 @@
   ],
   "stop": {
     "at": "2026-11-16T08:52:15.434830+00:00",
+    "by": "owner",
+    "choice": "accept",
     "file": "src/forge/review.py",
-    "wait_id": "4810ea28-de0a-48e2-a452-52d9f2d918f8"
+    "reason": "Accept (owner): merge so main is green; the test-picking gap and the split-history question become one follow-up fix",
+    "wait_id": "4810ea28-de0a-48e2-a452-52d9f2d918f8",
+    "worker_round": 2
   },
   "stuck": {
     "close": "3c0b1ece-43c9-4823-ad69-be4c9ab6bbbf",
