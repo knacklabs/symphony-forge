@@ -1,0 +1,177 @@
+{
+  "base": "63d634eb6da4eec90725061ea09ae4747dc49fc6",
+  "branch": "fix/since-7-nov-2026-first-code-reviews-writ",
+  "done_when": "A first review's \"Not done\" notes on builder guidance and its duplicate notes do not reach the builder or count as blocking.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "drop() in src/forge/noise.py",
+      "file": "src/forge/noise.py",
+      "gain": 5,
+      "harm": 4,
+      "line": 30,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": true,
+      "title": "Preserve security findings when filtering Not done notes",
+      "work": 2
+    },
+    {
+      "area": "drop() in src/forge/noise.py",
+      "file": "src/forge/noise.py",
+      "gain": 5,
+      "harm": 4,
+      "line": 32,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": true,
+      "title": "Preserve distinct findings that share a title and file",
+      "work": 2
+    },
+    {
+      "area": "drop() in src/forge/noise.py",
+      "file": "src/forge/noise.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 29,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: A first review's \"Not done\" notes on builder guidance and its duplicate notes do not reach the builder or count as blocking.",
+      "work": 2
+    },
+    {
+      "area": "drop() in src/forge/noise.py",
+      "file": "src/forge/noise.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 30,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Keep findings that quote an approved sentence within a numbered item",
+      "work": 2
+    },
+    {
+      "area": "test_1_builder_detail_not_done_and_duplicates_are_dropped() in tests/test_since_7_nov_review_noise.py",
+      "file": "tests/test_since_7_nov_review_noise.py",
+      "gain": 4,
+      "harm": 1,
+      "line": 19,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: tests/test_since_7_nov_review_noise.py::test_1_builder_detail_not_done_and_duplicates_are_dropped",
+      "work": 2
+    },
+    {
+      "area": "drop() in src/forge/noise.py",
+      "file": "src/forge/noise.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 31,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: update the remaining review tests for dropped notes",
+      "work": 1
+    },
+    {
+      "area": "run() in src/forge/review.py",
+      "file": "src/forge/review.py",
+      "gain": 4,
+      "harm": 1,
+      "line": 1036,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: state delivery for new and existing client repositories",
+      "work": 1
+    },
+    {
+      "area": "run() in src/forge/review.py",
+      "file": "src/forge/review.py",
+      "gain": 5,
+      "harm": 4,
+      "line": 1045,
+      "outcome": "follow-up",
+      "reason": "Split into follow-up fix review-findings-split-from-since-7-nov-2",
+      "round": 3,
+      "security": true,
+      "title": "Preserve distinct findings that share a title and file",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "2ec0d6cd8d6f76e04409cdaec9deac924f8637e1b37fa69c63981ed32fa8bfca",
+    "changed": "4f4d36e5a3547ba6ab2124eaf1dee06d254645b68a3fbc743d740a85c660b573",
+    "commit": "f12fac3e84717316d04f9c9a001a57cb874a08ed",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 5, Work 2, Harm 4\nRaise: Security\nCase: normal use - a task review reports a false positive on a demo handler and a P0 authorization flaw on a different handler in the same file, using the same title. A coordinator dismisses the demo note citing its unchanged line; `_settled` still keys dismissals by file and title (`src/forge/review.py:640`), and this change bypasses only `known:` settlements. The repair review's P0 therefore receives the demo dismissal and is omitted from blocking findings and the worker brief. The same collision can discard a finding as previously fixed at `src/forge/review.py:1036`; `src/forge/close.py:396` can also apply a requested dismissal to the first same-title finding rather than the selected one. Settlements and dismissals need to distinguish the finding's line or body, as the coordinator required.",
+        "file": "src/forge/review.py",
+        "follow_up": "Split into follow-up fix review-findings-split-from-since-7-nov-2",
+        "gain": 5,
+        "harm": 4,
+        "line": 1045,
+        "priority": "P1",
+        "title": "Preserve distinct findings that share a title and file",
+        "work": 2
+      }
+    ],
+    "id": "aca66706-2213-406e-adfa-9b14db95e98c",
+    "status": "clean"
+  },
+  "round": 4,
+  "status": "fixing",
+  "steps": [
+    {
+      "at": "2026-11-16T04:57:19.194210+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-16T05:18:01.395196+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-16T05:33:05.233297+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-16T06:50:38.364928+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "by": "owner",
+    "choice": "split",
+    "fixes": [
+      "review-findings-split-from-since-7-nov-2"
+    ],
+    "question": "Since 7 Nov 2026 first code reviews write about twice as many notes is stuck. It should deliver: A first review's \"Not done\" notes on builder guidance and its duplicate notes do not reach the builder or count as blocking.\nTwo rounds in a row left the open P0 preserve distinct findings that share a title and file in src/forge/review.py.\nThe worker tried: no new commits.\nChoose one: switch this item to Codex; keep Claude for one more round; or narrow or split it.",
+    "reason": "Split (owner): merge what is done; how settled notes match (file and title only) moves to the fix settled-review-findings-are-matched-by-f",
+    "tool": "claude",
+    "wait_id": "2a63ca77-4dc0-4044-bc84-5b8c15282877",
+    "worker_round": 4
+  },
+  "stuck": {
+    "close": "fe0a4d74-6502-488f-871e-b45e3df5461f",
+    "head": "0f5741bf491956385ac3dacd8a35477ff62c9a1d",
+    "keys": {
+      "the open P0 preserve distinct findings that share a title and file in src/forge/review.py": 1
+    },
+    "round": 3
+  },
+  "why": "Since 7 Nov 2026 first code reviews write about twice as many notes, and about half of them need no change. Two kinds are noise that the builder still gets: \"Not done\" notes on builder guidance, which the review rules say can never block, and duplicate notes in the same round.",
+  "worker": "claude"
+}

@@ -48,8 +48,7 @@ def test_1_fixes_block_every_not_done_and_tasks_keep_matching(env, adopted, kind
     if not blocks:
         assert closed.returncode == 0, closed.stdout + closed.stderr
         assert "Review: clean." in closed.stdout
-        assert "Follow-ups:" in published and note["title"] in published
-        assert "blocks the merge" not in published
+        assert note["title"] not in published  # a note naming no approved item is dropped
     else:
         assert closed.returncode == 1, closed.stdout + closed.stderr
         assert "Review: blocked." in closed.stdout
