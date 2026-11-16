@@ -25,7 +25,7 @@ def test_1_new_client_reuses_packages_and_dependency_layers(repo, gh, tmp_path, 
     for job in (workflow.split("\n  tests:\n")[1].split("\n  forge-pr-check:\n")[0],
                 workflow.split("\n  full-suite:\n")[1].split("\n  full-suite-result:\n")[0]):
         assert "actions/cache@v4" in job
-        assert "pnpm/action-setup@" not in job
+        assert "pnpm/action-setup@v4" in job
         assert "cache: pnpm" not in job
         assert "hashFiles('pnpm-lock.yaml')" in job
         for store in ("~/.local/share/pnpm/store", "~/Library/pnpm/store",
@@ -93,7 +93,7 @@ def test_2_new_client_sync_adds_cache_and_keeps_app_dockerfile(repo, gh, tmp_pat
         assert "cache-dependency-path: package-lock.json" in workflow
     else:
         assert "packageManager" not in json.loads((client / "package.json").read_text("utf-8"))
-        assert "pnpm/action-setup@" not in workflow
+        assert "pnpm/action-setup@v4" in workflow
         assert "actions/cache@v4" in workflow
         assert "hashFiles('pnpm-lock.yaml')" in workflow
         assert "~/AppData/Local/pnpm/store" in workflow

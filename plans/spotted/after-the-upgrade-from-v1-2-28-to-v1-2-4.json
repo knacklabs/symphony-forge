@@ -1,0 +1,81 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/prcheck.py\tAvoid the Corepack installation conflict on Windows runners\tafter-the-upgrade-from-v1-2-28-to-v1-2-4",
+      "kind": "bug",
+      "path": "src/forge/prcheck.py",
+      "line": 255,
+      "text": "Avoid the Corepack installation conflict on Windows runners",
+      "from": "blocking",
+      "item": "after-the-upgrade-from-v1-2-28-to-v1-2-4",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/prcheck.py\tNot done: Detect pnpm clients without a root pnpm-lock.yaml\tafter-the-upgrade-from-v1-2-28-to-v1-2-4",
+      "kind": "bug",
+      "path": "src/forge/prcheck.py",
+      "line": 253,
+      "text": "Not done: Detect pnpm clients without a root pnpm-lock.yaml",
+      "from": "blocking",
+      "item": "after-the-upgrade-from-v1-2-28-to-v1-2-4",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/prcheck.py\tRespect the pnpm version of lockfile-only clients\tafter-the-upgrade-from-v1-2-28-to-v1-2-4",
+      "kind": "bug",
+      "path": "src/forge/prcheck.py",
+      "line": 255,
+      "text": "Respect the pnpm version of lockfile-only clients",
+      "from": "blocking",
+      "item": "after-the-upgrade-from-v1-2-28-to-v1-2-4",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_pnpm_ready_in_ci.py\tGate: pnpm availability after sync\tafter-the-upgrade-from-v1-2-28-to-v1-2-4",
+      "kind": "bug",
+      "path": "tests/test_pnpm_ready_in_ci.py",
+      "line": 24,
+      "text": "Gate: pnpm availability after sync",
+      "from": "blocking",
+      "item": "after-the-upgrade-from-v1-2-28-to-v1-2-4",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\ttests/test_pnpm_ready_in_ci.py\tGate: proof list\tafter-the-upgrade-from-v1-2-28-to-v1-2-4",
+      "kind": "bug",
+      "path": "tests/test_pnpm_ready_in_ci.py",
+      "line": 19,
+      "text": "Gate: proof list",
+      "from": "blocking",
+      "item": "after-the-upgrade-from-v1-2-28-to-v1-2-4",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "simplify\tsrc/forge/prcheck.py\tSimpler: missing approach record \u2192 state the need, choice and reuse",
+      "kind": "simplify",
+      "path": "src/forge/prcheck.py",
+      "line": 253,
+      "text": "Simpler: missing approach record \u2192 state the need, choice and reuse",
+      "from": "review",
+      "item": "after-the-upgrade-from-v1-2-28-to-v1-2-4",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "simplify\ttests/test_pnpm_ready_in_ci.py\tSimpler: earlier-adopted npm fixture \u2192 a new client",
+      "kind": "simplify",
+      "path": "tests/test_pnpm_ready_in_ci.py",
+      "line": 29,
+      "text": "Simpler: earlier-adopted npm fixture \u2192 a new client",
+      "from": "review",
+      "item": "after-the-upgrade-from-v1-2-28-to-v1-2-4",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

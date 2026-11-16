@@ -1,0 +1,42 @@
+{
+  "base": "d2bbe572396715eab7422eb3d07dd798a12f9263",
+  "branch": "fix/regenerate-forge-workflow",
+  "done_when": "tests/test_release_version.py passes on the default branch",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "01c01e5324519c412e5fb0f01fb283a1a6d4462e45080a98712d65aad7f4cc5c",
+    "changed": "f13aa1fa641d289ce0c9e88a76c9e54e3dc26664a1f5eb144bb6898155914689",
+    "commit": "f64bdbcb7df3877d766f5c610c93da28f0e583a0",
+    "dismissals": [],
+    "findings": [],
+    "id": "5c971a5c-75f5-4cb2-88c7-78566036e73f",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-16T12:00:50.043215+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-16T12:06:18.622498+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-16T13:54:25.905421+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "ec688c15-87eb-4140-b228-cf1f0f91eb30",
+    "head": "637d6995d6d95c520e4301be422400400bca3bd6",
+    "keys": {},
+    "round": 1
+  },
+  "why": "Main is red a fourth time: tests/test_release_version.py::test_2_release_checkout_generated_files_match_sync fails because this repo's own .github/workflows/forge.yml no longer matches what forge sync writes after src/forge/prcheck.py changed (the review-race fix and its repair embed prcheck code in the generated workflow).",
+  "worker": "claude"
+}

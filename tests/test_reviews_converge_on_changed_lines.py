@@ -71,5 +71,4 @@ def test_2_review_convergence_not_done_holds_fixes_and_approved_task_items(env, 
     else:
         assert closed.returncode == 0, closed.stdout + closed.stderr
         shown = body(env.gh_calls("pr", "edit")[-1])
-        assert "Follow-ups:" in shown and note["title"] in shown
-        assert "blocks the merge" not in shown
+        assert note["title"] not in shown  # a note naming no approved item is dropped

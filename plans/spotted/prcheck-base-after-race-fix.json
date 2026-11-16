@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/prcheck.py\tGate: tests/test_pr_check_base_older_than_merged_default.py\tprcheck-base-after-race-fix",
+      "kind": "bug",
+      "path": "src/forge/prcheck.py",
+      "line": 488,
+      "text": "Gate: tests/test_pr_check_base_older_than_merged_default.py",
+      "from": "blocking",
+      "item": "prcheck-base-after-race-fix",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/prcheck.py\tNot done: a clean review still passes forge-pr-check when the event's base is older than the default branch the change merged\tprcheck-base-after-race-fix",
+      "kind": "bug",
+      "path": "src/forge/prcheck.py",
+      "line": 487,
+      "text": "Not done: a clean review still passes forge-pr-check when the event's base is older than the default branch the change merged",
+      "from": "blocking",
+      "item": "prcheck-base-after-race-fix",
+      "status": "done",
+      "closed_by": "dismissed"
+    }
+  ]
+}

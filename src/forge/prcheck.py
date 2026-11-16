@@ -9,6 +9,7 @@ import argparse
 import json
 import os
 import re
+import subprocess
 from fnmatch import fnmatch
 from pathlib import Path
 from typing import Any
@@ -232,16 +233,39 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
 
     if repo.sample_data(top, cfg):
         return {}
+    package = json.loads(sync.read(top / "package.json") or "{}")
+    manager = package.get("packageManager")
+    dev_manager = package.get("devEngines", {}).get("packageManager")
+    dev_manager = next((m for m in (dev_manager if isinstance(dev_manager, list) else [dev_manager])
+                        if isinstance(m, dict) and m.get("name") == "pnpm"), None)
+    # The root lockfile is read from the folder, not from git: sync's pure-upgrade check renders
+    # this from a plain snapshot folder with no git index, so git would miss it there.
+    listing = repo.run("git", "ls-files", "-co", "--exclude-standard", "-z", cwd=top).stdout.split("\0")
+    # Forge's own repo ships starter lockfiles it never builds with pnpm.
+    nested = cfg.get("repo") != "forge-source"
+    lockfile = "pnpm-lock.yaml" if (top / "pnpm-lock.yaml").is_file() else next(
+        (name for name in listing if nested and name.endswith("/pnpm-lock.yaml")), None)
+    pnpm = (isinstance(manager, str) and manager.startswith("pnpm@")) or dev_manager or lockfile
     node = ""
-    if (top / "package.json").is_file() or re.search(r"\b(?:npm|npx|pnpm|yarn|node)\b", cfg["test"]):
-        node = ("      - uses: actions/setup-node@v7\n"
-                "        if: steps.parent-tests.outputs.reuse != 'true'\n")
+    if pnpm:
+        node = "      - uses: pnpm/action-setup@v4\n        if: steps.parent-tests.outputs.reuse != 'true'\n"
+        if not (isinstance(manager, str) and manager.startswith("pnpm@")):
+            # The action reads packageManager itself; otherwise name a version: engines.pnpm, then
+            # devEngines, then the lockfile's format (9.x is written by pnpm 9 and 10: take 10; 6 -> 8).
+            version = package.get("engines", {}).get("pnpm") or (dev_manager or {}).get("version")
+            if not isinstance(version, str) or not version.strip():
+                head = sync.read(top / lockfile) if lockfile else ""
+                match = re.search(r"lockfileVersion: '?(\d+)", head or "")
+                version = {"5": "7", "6": "8", "9": "10"}.get(match.group(1) if match else "", "10")
+            node += f"        with:\n          version: {json.dumps(version)}\n"
+    if pnpm or (top / "package.json").is_file() or re.search(r"\b(?:npm|npx|pnpm|yarn|node)\b", cfg["test"]):
+        node += ("      - uses: actions/setup-node@v7\n"
+                 "        if: steps.parent-tests.outputs.reuse != 'true'\n")
         version_file = next((name for name in (".nvmrc", ".node-version")
                              if (top / name).is_file()), None)
         if version_file:
             node += f"        with:\n          node-version-file: {version_file}\n"
         else:
-            package = json.loads(sync.read(top / "package.json") or "{}")
             version = package.get("engines", {}).get("node")
             version = version if isinstance(version, str) and version.strip() else "22"
             node += f"        with:\n          node-version: {json.dumps(version)}\n"
@@ -483,7 +507,8 @@ def pr_check(args: argparse.Namespace) -> int:
         problem = "missing"
     elif not _on_branch(top, str(result.get("commit", "")), head):
         problem = "for a commit that isn't part of this branch"
-    elif result.get("changed") != review.fingerprint(head, item, top, state, base):
+    elif result.get("changed") != review.fingerprint(head, item, top, state, base,
+                                                           diff_base=_review_base(top, head, base)):
         problem = "out of date: the product files or what the change must do changed after it"
     elif review.blocking(result):
         problem = "blocked by serious findings no one fixed or dismissed"
@@ -493,6 +518,15 @@ def pr_check(args: argparse.Namespace) -> int:
         print(f"forge-pr-check passed for {branch}.")
         return 0
     repo.refuse(REFUSALS["not_reviewed"], branch=branch, problem=problem, item=item)
+
+
+def _review_base(top: Path, head: str, event_base: str) -> str:
+    """The base close reviewed against: the newest default-branch commit the head contains. The
+    event's base can be older than a default-branch commit the branch already merged."""
+    try:
+        return repo.git("merge-base", head, f"origin/{repo.default_branch(top)}", cwd=top)
+    except subprocess.CalledProcessError:
+        return event_base
 
 
 def _check_specs(top: Path, head: str, changed: list[str]) -> None:
