@@ -8,8 +8,8 @@
       "text": "Gate: proof list",
       "from": "blocking",
       "item": "move-effort-note-out-of-plans",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\ttests/test_fix_old_forge_records.py\tThe plan path check rejects the current ideas file.",
