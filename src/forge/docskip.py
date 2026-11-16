@@ -64,7 +64,7 @@ def reads_file_relative(source: str, paths: set[str]) -> bool:
         parts = components(node)
         return posixpath.normpath("/" + posixpath.join(*parts)).lstrip("/") if parts else ""
 
-    folders = set()  # Folders the test lists itself: path.iterdir(), glob, os.listdir(path) and the like.
+    folders, deep = set(), set()  # Folders the test lists itself; `deep` ones it scans recursively.
     for node in ast.walk(tree):
         if isinstance(node, ast.Call):
             name = getattr(node.func, "id", getattr(node.func, "attr", ""))
@@ -74,12 +74,16 @@ def reads_file_relative(source: str, paths: set[str]) -> bool:
                       and node.args else None)
             if listed is not None and rooted(listed) and (suffix := suffix_of(listed)):
                 folders.add(suffix)
+                if name in {"rglob", "walk"} or any(
+                        isinstance(arg, ast.Constant) and "**" in str(arg.value) for arg in node.args):
+                    deep.add(suffix)
     for node in ast.walk(tree):
         if isinstance(node, (ast.BinOp, ast.Call)) and rooted(node):
             suffix = suffix_of(node)
             if suffix and any(path == suffix or path.endswith("/" + suffix) for path in paths):
                 return True
     return any(("/" + posixpath.dirname(path)).endswith("/" + folder)
+               or (folder in deep and ("/" + path).find("/" + folder + "/") >= 0)
                for folder in folders for path in paths)
 
 
