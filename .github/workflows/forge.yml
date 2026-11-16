@@ -83,6 +83,14 @@ jobs:
         with:
           path: ~/.npm
           key: npm-jest-30.2.0-vitest-3.2.4
+      - uses: pnpm/action-setup@v4
+        if: steps.parent-tests.outputs.reuse != 'true'
+        with:
+          version: "10"
+      - uses: actions/setup-node@v7
+        if: steps.parent-tests.outputs.reuse != 'true'
+        with:
+          node-version: "22"
       - run: uv tool install .
         if: steps.parent-tests.outputs.reuse != 'true'
       - run: "forge test --change"
@@ -232,6 +240,12 @@ jobs:
         with:
           path: ~/.npm
           key: npm-jest-30.2.0-vitest-3.2.4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: "10"
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
       - run: uv tool install .
       - run: forge test --full
         env:
