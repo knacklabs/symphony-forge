@@ -87,6 +87,17 @@
       "item": "since-7-nov-2026-first-code-reviews-writ",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/review.py\tPreserve distinct findings that share a title and file",
+      "kind": "edge",
+      "path": "src/forge/review.py",
+      "line": 1045,
+      "text": "Preserve distinct findings that share a title and file",
+      "from": "review",
+      "item": "since-7-nov-2026-first-code-reviews-writ",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
