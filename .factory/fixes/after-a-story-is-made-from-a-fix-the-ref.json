@@ -4,12 +4,20 @@
   "done_when": "The refusal explains that the roadmap entry is needed for the story to be created from the fix, and that it goes on the fix's own branch.",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-16T05:13:27.627200+00:00",
       "step": "start"
     }
   ],
-  "why": "After a story is made from a fix, the refusal for a missing roadmap entry asks for the entry to be committed on the fix's branch without saying why, so people expect to add it on the default branch."
+  "stuck": {
+    "close": null,
+    "head": "c814fd4ae438be00b3a171795403e907b740fdc2",
+    "keys": {},
+    "round": null
+  },
+  "why": "After a story is made from a fix, the refusal for a missing roadmap entry asks for the entry to be committed on the fix's branch without saying why, so people expect to add it on the default branch.",
+  "worker": "claude"
 }
