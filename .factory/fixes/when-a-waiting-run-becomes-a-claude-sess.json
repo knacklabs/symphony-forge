@@ -1,0 +1,104 @@
+{
+  "base": "6bd0bfe1a12a402287e91623f63d3b085bc394df",
+  "branch": "fix/when-a-waiting-run-becomes-a-claude-sess",
+  "done_when": "After the owner confirms Stop on such a run, the pane does not stop it and shows a note that the agent of that session must stop it.",
+  "fix_kind": "ui",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "src/forge/mod/hooks/register.ts",
+      "file": "src/forge/mod/hooks/register.ts",
+      "gain": 4,
+      "harm": 3,
+      "line": 316,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: After the owner confirms Stop on such a run, the pane does not stop it and shows a note that the agent of that session must stop 4",
+      "work": 2
+    },
+    {
+      "area": "src/forge/mod/hooks/pane.test.ts",
+      "file": "src/forge/mod/hooks/pane.test.ts",
+      "gain": 3,
+      "harm": 3,
+      "line": 379,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: End-to-end Stop after a waiting run becomes a session subagent",
+      "work": 2
+    },
+    {
+      "area": "src/forge/mod/hooks/register.ts",
+      "file": "src/forge/mod/hooks/register.ts",
+      "gain": 2,
+      "harm": 2,
+      "line": 324,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Follow-up: Preserve the stop result when stderr also contains a diagnostic",
+      "work": 1
+    },
+    {
+      "area": "src/forge/mod/hooks/register.ts",
+      "file": "src/forge/mod/hooks/register.ts",
+      "gain": 2,
+      "harm": 2,
+      "line": 316,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Follow-up: Name the owning session correctly for Codex subagents",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "c69d000a14b284d054ebe34034147d6bb7a4a6565a1147d173ba9d365613db6a",
+    "changed": "99663bff24fa2fa399c1d43cb137c6a09726a3e780d6e805253dfa33bf15c353",
+    "commit": "fce1f93cef2f3edd49464bb9045ddbb1b5812f7f",
+    "dismissals": [],
+    "findings": [],
+    "id": "3aff613d-6a4e-4eb2-a7f4-e317bfbf0b95",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-15T14:15:21.965978+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-15T14:24:05.417701+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-15T14:29:13.309297+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-15T14:24:05.427687+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "src/forge/mod/hooks/register.ts",
+    "reason": "The owner chose: keep the note on screen until the person acts; the end-to-end test with the real Forge is left out as an accepted known issue",
+    "wait_id": "dbbde453-6a2f-4eeb-beb7-cba2781308e7",
+    "worker_round": 1
+  },
+  "stuck": {
+    "close": "c127ff29-6d8c-4f8f-bf8d-9f3bd7a175d0",
+    "head": "523868b3c53ce83d0139aebfe5b7e9fbf08dad6a",
+    "keys": {},
+    "round": 1
+  },
+  "why": "When a waiting run becomes a Claude session subagent while the Stop question is open, pressing Stop clears Forge's record of it, but the subagent keeps running and the warning Forge prints is dropped.",
+  "worker": "claude"
+}

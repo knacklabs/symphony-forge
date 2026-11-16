@@ -30,10 +30,12 @@ BROWSER_SECONDS = 240
 
 SCRIPT = r"""
 import json, os, re, signal, subprocess, sys, time
+from datetime import datetime, timedelta
 from pathlib import Path
 from axe_playwright_python.sync_playwright import Axe
 from playwright.sync_api import TimeoutError as PlaywrightTimeout, expect, sync_playwright
-url, mode, pid, branch, item, marker = sys.argv[1:]
+url, mode, pid, branch, item, marker, link = sys.argv[1:]
+link = Path(link)  # the link that gives the server its git, when a scenario takes git away
 # The suite finds and ends a process that outlives a crashed worker by this record, which Windows needs.
 Path(marker + '.tmp').write_text(json.dumps({'pid': os.getpid(), 'at_ns': time.time_ns()}), encoding='utf-8')
 os.replace(marker + '.tmp', marker)
@@ -220,6 +222,100 @@ with sync_playwright() as p:
             expect(page.locator('.releases')).to_be_visible()
             expect(status).to_have_text('Live')
 
+        elif mode == 'plan':
+            # The server cannot reach git, so its plan read is refused for real. The board's own snapshot and the
+            # item's read are answered from what the Releases page read before, so only the plan read fails.
+            page = context.new_page()
+            status, line = look(page)
+            expect(status).to_have_text('Live', timeout=60000)
+            page.get_by_role('link', name='Releases').click()
+            expect(page.locator('.releases')).to_be_visible(timeout=60000)
+            real_git = os.readlink(link)
+            os.unlink(link)
+            try:
+                page.evaluate("location.hash = 'item/SHOP?tab=plan'")
+                expect(line).to_have_text(f'{UNREAD}git is not installed or not on PATH.” The page tries again.')
+                expect(status).to_have_text('Not updating')
+            finally:
+                os.symlink(real_git, link)
+            later(lambda: expect(line).to_be_hidden(timeout=2000))
+            expect(page.locator('article.plan')).to_contain_text('Shoppers can save a basket')
+            expect(status).to_have_text('Live')
+
+        elif mode == 'retry':
+            # The server cannot reach git, so each item read is refused for real. The page clock is paused, so the page's
+            # own 10 second ask cannot run: only an immediate second try can answer. SHOP is on the board: both of its
+            # reads fail and the page asks no third time. 'old' is left out of the snapshot: its first read fails, git
+            # comes back before its second, and the page opens without any time passing.
+            page = context.new_page()
+            status, line = look(page)
+            expect(status).to_have_text('Live', timeout=60000)
+            context.clock.pause_at(datetime.now() + timedelta(seconds=5))
+            real_git = os.readlink(link)
+            os.unlink(link)
+            try:
+                tried = []
+                page.on('request', lambda request: tried.append(request.url) if 'page=item&id=SHOP' in request.url else None)
+                page.evaluate("location.hash = 'item/SHOP'")
+                expect(line).to_contain_text('git is not installed or not on PATH.', timeout=60000)
+                until(page, lambda: len(tried) >= 2)
+                context.clock.run_for(5000)  # less than the 10 seconds after which a failed read is asked again
+                assert len(tried) == 2, f'{len(tried)} reads of the story'
+                page.evaluate("location.hash = 'now'")
+                seen = []
+
+                def git_returns(route):
+                    seen.append(route.request.url)
+                    if len(seen) == 2:
+                        os.symlink(real_git, link)
+                    route.continue_()
+
+                page.route(re.compile(r'page=item&id=old'), git_returns)
+                page.evaluate("location.hash = 'item/old'")
+                expect(page.locator('.item-page h1')).to_be_visible(timeout=60000)
+            finally:
+                if not os.path.lexists(link):
+                    os.symlink(real_git, link)
+            assert len(seen) == 2, f'{len(seen)} reads of the item'
+            expect(line).to_be_hidden()
+
+        elif mode == 'recover':
+            # An item the snapshot leaves out cannot be read twice running; when the server can read it again, the
+            # page's next ask opens it without a reload.
+            page = context.new_page()
+            status, line = look(page)
+            expect(status).to_have_text('Live', timeout=60000)
+            real_git = os.readlink(link)
+            os.unlink(link)
+            try:
+                page.evaluate("location.hash = 'item/old'")
+                expect(page.get_by_role('alert')).to_be_visible(timeout=60000)
+            finally:
+                os.symlink(real_git, link)
+            later(lambda: expect(page.locator('.item-page h1')).to_be_visible(timeout=2000))
+            expect(line).to_be_hidden()
+
+        elif mode == 'newest':
+            # The page stays connected while the server fails twice with different reasons, and never recovers
+            # in between: the second reason is the one on the line. Removing the link gives git a different failure.
+            real_git = os.readlink(link)
+            page = context.new_page()
+            with page.expect_response(re.compile(r'/events')), page.expect_response(re.compile(r'page=status')):
+                status, line = look(page)
+            expect(status).to_have_text('Live', timeout=60000)
+            good_branch = Path(branch).read_bytes()
+            try:
+                Path(branch).write_bytes(b'garbage\n')
+                expect(line).to_contain_text('The terminal that runs it shows why.', timeout=60000)
+                os.unlink(link)  # git is now missing: the next rebuild fails for another reason
+                expect(line).to_contain_text('git is not installed or not on PATH.', timeout=60000)
+                expect(line).not_to_contain_text('The terminal that runs it shows why.')
+            finally:
+                os.symlink(real_git, link)
+                Path(branch).write_bytes(good_branch)
+            expect(line).to_be_hidden(timeout=60000)
+            expect(status).to_have_text('Live')
+
         else:  # 'fits': each changed screen with the line showing, and the drawer open at a narrow window
             screens = {'now': '', 'releases': '#releases', 'insights': '#insights', 'item': '#item/' + item}
             pages = {}
@@ -260,14 +356,14 @@ with sync_playwright() as p:
 """
 
 
-def look(url, mode, tmp_path, repo=None, item=""):
+def look(url, mode, tmp_path, repo=None, item="", link=""):
     """Open the page in real Chrome and run one scenario. Every browser run goes through here: the browser and
     everything it starts stop with the test, even when it fails or the run is too slow, and the script records
     its process so the suite also ends it when a worker crashes."""
     branch = (repo.path / ".git/refs/heads/main") if repo else ""
     page = subprocess.Popen([REAL_UV or "uv", "run", "--no-project", "--python", "3.11", "--with", "playwright==1.55.0",
                              "--with", "axe-playwright-python==0.1.8", "python", "-c", SCRIPT, url, mode,
-                             str(url.process.pid), str(branch), item, str(tmp_path / "browser.owned-process.json")],
+                             str(url.process.pid), str(branch), item, str(tmp_path / "browser.owned-process.json"), str(link)],
                             stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, encoding="utf-8", errors="replace",
                             env={**os.environ, "PYTHONUTF8": "1"},  # Windows would write its messages in another encoding
                             start_new_session=os.name != "nt")  # its own process group, so a stop also ends the browser
@@ -283,6 +379,20 @@ def look(url, mode, tmp_path, repo=None, item=""):
             page.wait(timeout=30)
         page.stdout.close()
         page.stderr.close()
+
+
+def shop_and_old_fix(client, tmp_path, monkeypatch):
+    """A story with a plan, and a fix that finished 9 days ago: the Now snapshot leaves the fix out, so opening it reads it."""
+    at = datetime.now(timezone.utc) - timedelta(days=9)
+    with monkeypatch.context() as dated:
+        dated.setenv("GIT_AUTHOR_DATE", at.isoformat())
+        dated.setenv("GIT_COMMITTER_DATE", at.isoformat())
+        pushed(clone(client, tmp_path), "Plan a basket and an old fix", {
+            "plans/SHOP.md": DOC, "plans/roadmap.json": json.dumps({"items": [{"key": "SHOP"}]}),
+            ".factory/fixes/old.json": json.dumps({"kind": "fix", "branch": "fix/old", "why": "Readers see old",
+                                                   "done_when": "Readers see it", "status": "merged"})})
+    client.git("fetch", "-q", "origin")
+    client.git("merge", "-q", "--ff-only", "origin/main")
 
 
 @pytest.mark.timeout(BROWSER_SECONDS + 120)
@@ -318,17 +428,7 @@ def test_5_a_failed_read_shows_the_line_when_the_events_stream_is_down(client, t
 
 @pytest.mark.timeout(BROWSER_SECONDS + 120)
 def test_6_a_successful_read_of_one_item_does_not_clear_the_failed_read_of_another(client, tmp_path, monkeypatch):
-    # A story, and a fix that finished 9 days ago: the Now snapshot leaves it out, so opening it reads it.
-    at = datetime.now(timezone.utc) - timedelta(days=9)
-    with monkeypatch.context() as dated:
-        dated.setenv("GIT_AUTHOR_DATE", at.isoformat())
-        dated.setenv("GIT_COMMITTER_DATE", at.isoformat())
-        pushed(clone(client, tmp_path), "Plan a basket and an old fix", {
-            "plans/SHOP.md": DOC, "plans/roadmap.json": json.dumps({"items": [{"key": "SHOP"}]}),
-            ".factory/fixes/old.json": json.dumps({"kind": "fix", "branch": "fix/old", "why": "Readers see old",
-                                                   "done_when": "Readers see it", "status": "merged"})})
-    client.git("fetch", "-q", "origin")
-    client.git("merge", "-q", "--ff-only", "origin/main")
+    shop_and_old_fix(client, tmp_path, monkeypatch)
     with live(client) as url:
         look(url, "items", tmp_path, item="old")
 

@@ -371,7 +371,7 @@ def handler(snapshots: Snapshots, token: str) -> type[BaseHTTPRequestHandler]:
                                 ("X-Content-Type-Options", "nosniff")):
                 self.send_header(name, value)
             self.end_headers()
-            sent, quiet, told = snapshots.changed(), 0.0, None  # told: the failure the page was last sent
+            sent, quiet, told = snapshots.changed(), 0.0, None  # told: the failure's reason the page was last sent
             self.wfile.write(b"retry: 10000\n\n")
             self.wfile.flush()
             while True:
@@ -380,14 +380,15 @@ def handler(snapshots: Snapshots, token: str) -> type[BaseHTTPRequestHandler]:
                 if select.select([self.connection], [], [], TICK)[0]:
                     return
                 version, error = snapshots.changed(), snapshots.failed
+                reason = None if error is None else why(error)
                 quiet += TICK
-                if version != sent or (error is None) != (told is None):
+                if version != sent or reason != told:  # a failure with another reason is told again
                     if version != sent:
                         self.wfile.write(f"event: changed\ndata: {version}\n\n".encode())
-                    if (error is None) != (told is None):
-                        self.wfile.write(b"event: recovered\ndata: ok\n\n" if error is None
-                                         else f"event: failed\ndata: {why(error)}\n\n".encode())
-                    sent, told, quiet = version, error, 0.0
+                    if reason != told:
+                        self.wfile.write(b"event: recovered\ndata: ok\n\n" if reason is None
+                                         else f"event: failed\ndata: {reason}\n\n".encode())
+                    sent, told, quiet = version, reason, 0.0
                 elif quiet >= 15:  # a comment line, so a closed page ends this thread
                     self.wfile.write(b": still here\n\n")
                     quiet = 0.0

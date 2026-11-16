@@ -1,0 +1,59 @@
+{
+  "items": [
+    {
+      "key": "bug\ttests/test_board_says_when_data_is_old.py\tGate: tests/test_board_old_data_line_gaps.py::test_2_an_items_first_failed_read_is_asked_again_at_once_and_only_once\tthe-old-data-line-is-missing-when-a-plan",
+      "kind": "bug",
+      "path": "tests/test_board_says_when_data_is_old.py",
+      "line": 252,
+      "text": "Gate: tests/test_board_old_data_line_gaps.py::test_2_an_items_first_failed_read_is_asked_again_at_once_and_only_once",
+      "from": "blocking",
+      "item": "the-old-data-line-is-missing-when-a-plan",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_board_says_when_data_is_old.py\tStandard: Fake only third-party services at their edge\tthe-old-data-line-is-missing-when-a-plan",
+      "kind": "bug",
+      "path": "tests/test_board_says_when_data_is_old.py",
+      "line": 228,
+      "text": "Standard: Fake only third-party services at their edge",
+      "from": "blocking",
+      "item": "the-old-data-line-is-missing-when-a-plan",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/board_app/app.js\taskAgain asks again only for a failed page read that has a snapshot hook; an item page that has no row (not on the board) has no hook, so only the first immediate retry covers it.",
+      "kind": "edge",
+      "path": "src/forge/board_app/app.js",
+      "line": 140,
+      "text": "askAgain asks again only for a failed page read that has a snapshot hook; an item page that has no row (not on the board) has no hook, so only the first immediate retry covers it.",
+      "from": "worker",
+      "item": "the-old-data-line-is-missing-when-a-plan",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/board_app/item.js\tFollow-up: Retry reads for items absent from the Now snapshot",
+      "kind": "edge",
+      "path": "src/forge/board_app/item.js",
+      "line": 465,
+      "text": "Follow-up: Retry reads for items absent from the Now snapshot",
+      "from": "review",
+      "item": "the-old-data-line-is-missing-when-a-plan",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/board_server.py\tthe minute fetch starts git by name outside repo.run, so a server that loses git for a minute ends that thread with an error.",
+      "kind": "edge",
+      "path": "src/forge/board_server.py",
+      "line": 252,
+      "text": "the minute fetch starts git by name outside repo.run, so a server that loses git for a minute ends that thread with an error.",
+      "from": "worker",
+      "item": "the-old-data-line-is-missing-when-a-plan",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
