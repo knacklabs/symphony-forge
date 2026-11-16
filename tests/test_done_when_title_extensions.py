@@ -1,4 +1,4 @@
-"""Close holds approved outcomes with extra title words, but keeps details as advice."""
+"""Close holds approved outcomes with extra title words, but drops details."""
 import pytest
 
 from test_close import blocked, body, env, finding  # noqa: F401
@@ -33,5 +33,5 @@ def test_1_extended_done_when_title_blocks_but_builder_details_stay_follow_ups(e
     else:
         assert closed.returncode == 0, closed.stdout + closed.stderr
         assert "Review: clean." in closed.stdout
-        assert "Follow-ups:" in published and title in published
+        assert title not in published
         assert "blocks the merge" not in published
