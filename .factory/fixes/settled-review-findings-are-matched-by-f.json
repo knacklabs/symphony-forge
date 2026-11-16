@@ -1,0 +1,15 @@
+{
+  "base": "03141b64c18b1eecf63874f06e2a34a5b922aedb",
+  "branch": "fix/settled-review-findings-are-matched-by-f",
+  "done_when": "A different serious finding with the same title and file blocks the review and reaches the builder's brief, while a settled finding whose lines only moved stays settled.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-16T07:11:08.430714+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Settled review findings are matched by file and title alone, so a dismissal of a false positive on one handler can settle a different serious finding with the same title in the same file during a repair review, which then neither blocks nor reaches the builder's brief."
+}
