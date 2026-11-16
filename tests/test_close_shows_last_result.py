@@ -9,11 +9,17 @@ from test_close import blocked, env, finding  # noqa: F401
 STORY = "FORGE-FINDINGS-1"
 
 
-def _git_facts(env, where):
-    fetch = env.repo.path / ".git" / "FETCH_HEAD"
+def _facts(env, where, branch):
+    # The item's own checkout has its own FETCH_HEAD; the remote branch head moves on any push.
+    fetch = (where / env.repo.git("rev-parse", "--git-path", "FETCH_HEAD", cwd=where))
     return (len(env.review_calls()), len(env.gh.calls()), env.repo.git("rev-parse", "HEAD", cwd=where),
             env.repo.git("status", "--porcelain", cwd=where),
-            fetch.stat().st_mtime_ns if fetch.exists() else None)
+            fetch.stat().st_mtime_ns if fetch.exists() else None,
+            env.repo.git("ls-remote", "origin", branch, cwd=where))
+
+
+def _block(number, priority, title, state, body):
+    return f"{number}. {priority} {title} (app.py:1)\n{state}\n{body}"
 
 
 @pytest.mark.parametrize("kind", ["task", "fix"])
@@ -43,19 +49,26 @@ with open({json.dumps(marker.as_posix())}, "a", encoding="utf-8") as out:
     env.reviews(blocked(p1, p2))
     assert env.close(item).returncode == 1
 
+    # A later local commit: a push by --show would move the remote branch past its last close.
+    env.commit(where, "later.py", "value = 1\n")
+    branch = env.repo.git("branch", "--show-current", cwd=where)
     lines = marker.read_text("utf-8").count("\n")
-    before = _git_facts(env, where)
+    before = _facts(env, where, branch)
+    first = _block(1, top, p1["title"], "Open: blocks the merge.", p1["body"])
+    second = _block(2, "P2", p2["title"], "Open: does not block the merge.", p2["body"])
     shown = env.repo.forge("close", item, "--show", cwd=where)
     assert shown.returncode == 0, shown.stdout + shown.stderr
-    for text in ("Review: blocked.", f"1. {top} The greeting is missing (app.py:1)", "Open: blocks the merge.",
-                 p1["body"], "2. P2 The greeting is plain (app.py:1)", "Open: does not block the merge."):
-        assert text in shown.stdout, text
+    assert shown.stdout.startswith("Review: blocked.\n")
+    assert first in shown.stdout and second in shown.stdout
+    assert shown.stdout.index(first) < shown.stdout.index(second)
     assert marker.read_text("utf-8").count("\n") == lines
-    assert _git_facts(env, where) == before
+    assert _facts(env, where, branch) == before
 
-    env.commit(where, "other.py", "value = 1\n")  # a repair, so close reviews again
     dismissed = env.close(item, "--dismiss", "1", "--because", "app.py:1 the greeting exists")
     assert dismissed.returncode in (0, 1), dismissed.stdout + dismissed.stderr
     shown = env.repo.forge("close", item, "--show", cwd=where)
-    assert "Dismissed: app.py:1 the greeting exists." in shown.stdout
-    assert p1["body"] in shown.stdout
+    done = _block(1, top, p1["title"], "Dismissed: app.py:1 the greeting exists.", p1["body"])
+    # The clean review then records the advice as lived with; the state is shown with its own body.
+    later = _block(2, "P2", p2["title"], "Dismissed: known: below the bar (live with).", p2["body"])
+    assert shown.stdout.startswith("Review: clean.\n")
+    assert done in shown.stdout and later in shown.stdout
