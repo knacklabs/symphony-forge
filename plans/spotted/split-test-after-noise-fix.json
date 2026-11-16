@@ -19,8 +19,8 @@
       "text": "Not done: tests/test_split_keeps_review_findings.py passes on the default branch, with the review-noise behaviour kept",
       "from": "blocking",
       "item": "split-test-after-noise-fix",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/review.py\tPreserve split decisions through review classification and history\tsplit-test-after-noise-fix",
@@ -30,8 +30,8 @@
       "text": "Preserve split decisions through review classification and history",
       "from": "blocking",
       "item": "split-test-after-noise-fix",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     }
   ]
 }
