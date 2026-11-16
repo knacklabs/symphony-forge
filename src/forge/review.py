@@ -169,7 +169,9 @@ def fingerprint(commit: str, item: str, top: Path, state: dict[str, Any], base: 
     if saved_level == "P0":
         parts.append("P0-only prototype review")
         # Full reviews remain sufficient; only a light review can lose its allowance.
-        if blocking_level(top, item, state, base, commit) != saved_level:
+        # The diff base, not the event base, so default-branch code the head merged stays out.
+        if blocking_level(top, item, state, repo.resolve_commit(top, diff_base) if diff_base else base,
+                          commit) != saved_level:
             parts.append("The recorded review level is no longer allowed")
     for part in parts:
         digest.update(b"\0" + part.encode("utf-8"))
