@@ -24,13 +24,14 @@ def test_1_close_keeps_the_fix_test_setting_after_main_moves_the_pin(env, unsync
     env.commit(folder, "forge.toml", base.replace('"echo ok"', '"echo fix"'), "Change the test command")
     main.on_main("forge.toml", base.replace(f'version = "{version}"', 'version = "v9.9.9"'))  # main moves the pin
     client.git("fetch", "-q", "origin", "main", cwd=folder)
-    client.git("merge", "-q", "--no-edit", "origin/main", cwd=folder)  # what `forge work` does first
-    closed = client.forge("close", "correct-spelling")
+    env.gh.respond("pr", "list", "--head", stdout=  # a behind pull request makes close merge main itself
+                   '[{"number":7,"state":"OPEN","body":"","isDraft":false,"mergeStateStatus":"BEHIND"}]')
+    closed = client.forge("close", "correct-spelling", cwd=folder)
     assert closed.returncode == 0, closed.stdout + closed.stderr
     assert "Ready:" in closed.stdout
     assert "nothing to review" not in closed.stdout
     text = (folder / "forge.toml").read_text("utf-8")
-    assert 'test = "echo fix"' in text and 'version = "v9.9.9"' in text
+    assert 'test = "echo fix"' in text and 'version = "v9.9.9"' in text  # merged by close
     sent = env.review_calls()[-1]["args"]  # the review reads the branch against this base
     assert "echo fix" in client.git("diff", sent[sent.index("--base") + 1], "HEAD", "--", "forge.toml", cwd=folder)
     assert client.git("diff", "origin/main...HEAD", "--", "forge.toml", cwd=folder)

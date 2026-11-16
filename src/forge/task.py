@@ -753,17 +753,11 @@ def require_fix_changes(item: str, state: dict, top: Path, files: list[str]) -> 
     default = repo.default_branch(top)
     own = repo.git("log", "--no-merges", "--name-only", "--format=", f"origin/{default}..HEAD", cwd=top).split()
     if any(not record(path) for path in own):
-        # The fix did commit work, so a merge of the default branch took it back or already has it.
-        # Delivered: the default branch holds exactly what the fix's last commit wrote to each file.
-        pending = [path for path in set(own) if not record(path)
-                   and show(repo.git("log", "-1", "--full-history", "--no-merges", "--format=%H", f"origin/{default}..HEAD", "--",
-                                     path, cwd=top), path, top) != show(f"origin/{default}", path, top)]
-        if not pending:
-            raise repo.Refused("The default branch already has this fix's change, so nothing is left to merge."
-                               f"{detail}", f"forge fix drop {item} --because \"The default branch already has it\"")
+        # The fix did commit work, so after the merge the default branch has it or replaced it.
         raise repo.Refused("After merging the default branch, this fix has no change left: the default branch "
-                           f"replaced its own change. Make the change again, then commit.{detail}",
-                           f"forge work {item}")
+                           "already has it or replaced it. If it replaced the change, run "
+                           f"forge work {item} and make the change again.{detail}",
+                           f'forge fix drop {item} --because "<why>"')
     raise repo.Refused(f"The build round did not finish. This fix changes only Forge's records.{detail}",
                        f"forge work {item}")
 
