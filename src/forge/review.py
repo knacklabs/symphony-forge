@@ -1042,7 +1042,8 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                 for number, finding in enumerate(findings, 1)
                 if (settlement := settled.get(key := score.identity(finding["file"], finding["title"]), ""))
                 and not (settlement.startswith("dismissed because ") and _cited_changed(top, history, key, head))
-                and not (settlement.startswith("known:") and score.holds(finding, result["blocking_level"]))])
+                and not (settlement.startswith("known:") and not settlement.startswith("known: Split into")
+                         and score.holds(finding, result["blocking_level"]))])
             if not signoff_prompt:
                 bound_review(top, item, state, result)
         serious = blocking(result)
