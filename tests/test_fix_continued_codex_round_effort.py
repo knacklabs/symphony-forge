@@ -8,7 +8,7 @@ from conftest import _install
 from test_codex_resume import RESUMING, _resuming
 from test_codex_worker import _lines, _sent, sdk_data  # noqa: F401
 
-STORY = "FORGE-WARM-1"
+STORY = "a-repair-round-on-a-continued-codex-conv"
 
 REPORT = '''            send(method="thread/settings/updated", params={"threadId": id, "threadSettings": {
                 "effort": os.environ["STUB_REPORTED_EFFORT"]}})

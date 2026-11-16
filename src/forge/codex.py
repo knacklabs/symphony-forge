@@ -667,23 +667,19 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                 elif "fresh" in said:  # Codex couldn't resume the conversation
                     fresh, text = said["fresh"], ""
                 elif "selection" in said:
-                    if ran.get("run_id"):
-                        repo.record_progress(checkout, item, ran["run_id"],
-                                             model=said["selection"]["model"],
-                                             effort=said["selection"]["effort"])
-                        ran.update(model=said["selection"]["model"], effort=said["selection"]["effort"])
+                    ran.update({key: said["selection"][key] for key in ("model", "effort")})
+                    ran.get("run_id") and repo.record_progress(
+                        checkout, item, ran["run_id"], model=ran["model"], effort=ran["effort"])
                     text = "\n".join(filter(None, [fast_said(said["selection"]),
                                                   *before_selection]))
                     before_selection.clear()
                     selected = True
                 elif "speed" in said:
                     started.update(said["speed"])
-                    if ran.get("run_id") and said["speed"].get("effort") != ran.get("effort"):
-                        repo.record_progress(checkout, item, ran["run_id"],
-                                             effort=said["speed"]["effort"])
-                        ran.update(effort=said["speed"]["effort"])
-                    repo.record_event(checkout, item, "codex speed", run_id=ran.get("run_id"),
-                                      **said["speed"])
+                    ran.update(effort=said["speed"]["effort"])
+                    ran.get("run_id") and repo.record_progress(
+                        checkout, item, ran["run_id"], effort=ran["effort"])
+                    repo.record_event(checkout, item, "codex speed", run_id=ran.get("run_id"), **said["speed"])
                     text = ""
                 elif "thread" in said:
                     result["conversation"] = said["thread"]
