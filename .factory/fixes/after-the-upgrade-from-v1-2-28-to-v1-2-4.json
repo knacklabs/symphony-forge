@@ -1,0 +1,147 @@
+{
+  "base": "c7d6e40da22a65c6fbed318acba04252413e9ebb",
+  "branch": "fix/after-the-upgrade-from-v1-2-28-to-v1-2-4",
+  "done_when": "After forge sync, a pnpm client's generated workflow sets up pnpm before its tests run, so the tests check no longer fails with pnpm not found.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "ships() in src/forge/prcheck.py",
+      "file": "src/forge/prcheck.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 253,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Detect pnpm clients without a root pnpm-lock.yaml",
+      "work": 2
+    },
+    {
+      "area": "ships() in src/forge/prcheck.py",
+      "file": "src/forge/prcheck.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 255,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Avoid the Corepack installation conflict on Windows runners",
+      "work": 2
+    },
+    {
+      "area": "ships() in src/forge/prcheck.py",
+      "file": "src/forge/prcheck.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 255,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Respect the pnpm version of lockfile-only clients",
+      "work": 2
+    },
+    {
+      "area": "test_1_new_pnpm_client_enables_pnpm_before_tests() in tests/test_pnpm_ready_in_ci.py",
+      "file": "tests/test_pnpm_ready_in_ci.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 24,
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: Accept (owner): the change has no open fault; the run-condition test check becomes a known issue",
+      "round": 1,
+      "security": false,
+      "title": "Gate: pnpm availability after sync",
+      "work": 2
+    },
+    {
+      "area": "test_1_new_pnpm_client_enables_pnpm_before_tests() in tests/test_pnpm_ready_in_ci.py",
+      "file": "tests/test_pnpm_ready_in_ci.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 19,
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: Accept (owner): the change has no open fault; the run-condition test check becomes a known issue",
+      "round": 1,
+      "security": false,
+      "title": "Gate: proof list",
+      "work": 1
+    },
+    {
+      "area": "test_2_npm_client_has_no_pnpm_setup() in tests/test_pnpm_ready_in_ci.py",
+      "file": "tests/test_pnpm_ready_in_ci.py",
+      "gain": 1,
+      "harm": 1,
+      "line": 29,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Simpler: earlier-adopted npm fixture \u2192 a new client",
+      "work": 1
+    },
+    {
+      "area": "ships() in src/forge/prcheck.py",
+      "file": "src/forge/prcheck.py",
+      "gain": 1,
+      "harm": 1,
+      "line": 253,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Simpler: missing approach record \u2192 state the need, choice and reuse",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "86419ea087f7cf723ce5f28a1e4a4093b555bbc58e712877162d2ae8230ea73a",
+    "changed": "86a689195b3bddedf027f090736b76f71fed1140d19ce6bad8e9157dc14bc0dd",
+    "commit": "23316c7c548282fc7f741a45d61c2451d6149baa",
+    "dismissals": [],
+    "findings": [],
+    "id": "9523b2ec-d4db-40f0-8c64-13fd51ef2761",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-16T08:56:45.016842+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-16T09:15:54.338464+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-16T11:16:50.801045+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-16T11:24:32.180938+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-16T11:16:50.801308+00:00",
+    "by": "owner",
+    "choice": "accept",
+    "file": "tests/test_pnpm_ready_in_ci.py",
+    "reason": "Accept (owner): the change has no open fault; the run-condition test check becomes a known issue",
+    "wait_id": "ad677301-d70e-41c3-a649-61050b1454f4",
+    "worker_round": 2
+  },
+  "stuck": {
+    "close": "71a02f79-f06a-463d-aa25-46c2b9b55bc3",
+    "head": "e1feae4edc52c26cef8ecee0295264728f683876",
+    "keys": {},
+    "round": 2
+  },
+  "why": "After the upgrade from v1.2.28 to v1.2.40, the generated .github/workflows/forge.yml has no pnpm setup, so a pnpm workspace repo's tests check fails with pnpm not found (exit 127).",
+  "worker": "claude"
+}

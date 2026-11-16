@@ -25,7 +25,7 @@ from fnmatch import fnmatch
 from pathlib import Path
 from typing import Any
 
-from forge import autoreview, docskip, machine, repo, score, spotted
+from forge import autoreview, docskip, machine, noise, repo, score, spotted
 from forge.task import branch_item, sections
 
 # The helper Forge runs: the upstream commit its installer stamps in the skill's .upstream-sha.
@@ -111,13 +111,14 @@ def task(top: Path, item: str, commit: str | None = None) -> tuple[str, dict[str
 
 def fingerprint(commit: str, item: str, top: Path, state: dict[str, Any], base: str,
                 reviewed_level: str | None = None, findings: list[Any] | None = None, *,
-                branch_diff: bool = False) -> str:
+                branch_diff: bool = False, diff_base: str | None = None) -> str:
     """What a clean review covers: changed product files, every file the review's findings cite
     (the recorded review's unless findings is given), the item's story doc and roadmap entry, its
     fix contract when applicable, and the worker's functional check. Read through git so a pull
-    request's head is only ever data."""
+    request's head is only ever data. The review level is read at base; diff_base, when given, sets
+    where the diff starts."""
     base, commit = repo.resolve_commit(top, base), repo.resolve_commit(top, commit)
-    ancestor = repo.git("merge-base", base, commit, cwd=top)
+    ancestor = repo.git("merge-base", repo.resolve_commit(top, diff_base) if diff_base else base, commit, cwd=top)
     changed = repo.git("diff", "--name-only", "-z", "--no-renames", ancestor, commit,
                        cwd=top).split("\0")
     named = str(state.get("done_when", ""))  # a file the Done-when names is never bookkeeping
@@ -1035,6 +1036,8 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                         settled.pop(score.identity(finding["file"], finding["title"]), None)
             findings = [finding for finding in findings if not settled.get(
                 score.identity(finding["file"], finding["title"]), "").startswith("fixed:")]
+            if not signoff_prompt:
+                findings = noise.drop(top, item, findings)
             result.update(findings=findings, dismissals=[
                 {"finding": number, "because": settlement.removeprefix("dismissed because "), "carried": True}
                 for number, finding in enumerate(findings, 1)
@@ -1071,33 +1074,23 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
 def bound_review(top: Path, item: str, state: dict[str, Any], result: dict[str, Any],
                  commit: str | None = None) -> bool:
     """Classify new and saved findings against the item's approved work."""
-    from forge import story
-
     findings = result.get("findings", [])
     if not findings:
         return False
 
-    def sentence(text: str) -> str:
-        text = re.sub(r"^\d+[.)]\s*", "", text.replace("**", "").replace("`", "").strip())
-        return " ".join(text.casefold().split()).rstrip(".").strip('"\u201c\u201d\u2018\u2019\'').rstrip(".")
-
-    approved = set()
-    if "/" in item:
-        text, _, row = task(top, item, commit)
-        doc = story.parse(text)
-        covers = {int(n) for n in re.findall(r"\d+", row.get("covers", ""))}
-        approved = {sentence(doc["done"][n]) for n in covers if n in doc["done"]}
+    approved = noise.approved(top, item, commit)
     changed = False
     settings = repo.review_settings(top)
     kinds = {kind.strip().casefold() for kind in settings.get("always_block", [])}
     minimum = settings.get("added_work_min_gain", 3)
     for finding in findings:
-        title = re.sub(r"^\[P[0-3]\]\s*", "", finding["title"])
+        title = re.sub(r"^\[P[0-3]\]\s*", "", finding["title"].strip())
         missed = re.match(r"Not done\s*:\s*(.*)", title, re.I)
         approved_missed = missed and ("/" not in item or any(
-            item and sentence(missed[1]).startswith(item) for item in approved))
+            item and noise.sentence(missed[1]).startswith(item) for item in approved))
         must = score.MUST.match(title)
-        if approved_missed or (must and must[1].strip().casefold() in kinds):
+        raised = missed and any(p.search(finding["body"]) for p, _ in score.FLOORS[:2])
+        if approved_missed or raised or (must and must[1].strip().casefold() in kinds):
             if not finding.get("required_done_when") or finding.get("follow_up"):
                 finding["required_done_when"] = True
                 finding.pop("follow_up", None)

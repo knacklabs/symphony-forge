@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/land.py\tNot done: After close posts an updated review, the review check no longer fails from that race, and no one reruns it by hand.\tthe-review-check-can-run-before-close-po",
+      "kind": "bug",
+      "path": "src/forge/land.py",
+      "line": 227,
+      "text": "Not done: After close posts an updated review, the review check no longer fails from that race, and no one reruns it by hand.",
+      "from": "blocking",
+      "item": "the-review-check-can-run-before-close-po",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_close_reruns_stale_review_check.py\tGate: tests/test_close_reruns_stale_review_check.py::test_1_close_reruns_the_review_check_that_saw_the_old_review\tthe-review-check-can-run-before-close-po",
+      "kind": "bug",
+      "path": "tests/test_close_reruns_stale_review_check.py",
+      "line": 16,
+      "text": "Gate: tests/test_close_reruns_stale_review_check.py::test_1_close_reruns_the_review_check_that_saw_the_old_review",
+      "from": "blocking",
+      "item": "the-review-check-can-run-before-close-po",
+      "status": "done",
+      "closed_by": "dismissed"
+    }
+  ]
+}
