@@ -1,0 +1,59 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/land.py\tFunctional: Avoid exhausting retries while the outage is still active\ta-short-network-outage-stops-queued-merg",
+      "kind": "bug",
+      "path": "src/forge/land.py",
+      "line": 539,
+      "text": "Functional: Avoid exhausting retries while the outage is still active",
+      "from": "blocking",
+      "item": "a-short-network-outage-stops-queued-merg",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/land.py\tFunctional: Retry failures outside the ordinary queue child loop\ta-short-network-outage-stops-queued-merg",
+      "kind": "bug",
+      "path": "src/forge/land.py",
+      "line": 535,
+      "text": "Functional: Retry failures outside the ordinary queue child loop",
+      "from": "blocking",
+      "item": "a-short-network-outage-stops-queued-merg",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/land.py\tNot done: A queued merge that hits a short network outage starts again on its own and merges once the connection is back.\ta-short-network-outage-stops-queued-merg",
+      "kind": "bug",
+      "path": "src/forge/land.py",
+      "line": 533,
+      "text": "Not done: A queued merge that hits a short network outage starts again on its own and merges once the connection is back.",
+      "from": "blocking",
+      "item": "a-short-network-outage-stops-queued-merg",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_fix_a_short_network_outage_stops_queued_merg.py\tGate: test_1_a_change_that_meets_a_network_outage_starts_again_and_merges\ta-short-network-outage-stops-queued-merg",
+      "kind": "bug",
+      "path": "tests/test_fix_a_short_network_outage_stops_queued_merg.py",
+      "line": 15,
+      "text": "Gate: test_1_a_change_that_meets_a_network_outage_starts_again_and_merges",
+      "from": "blocking",
+      "item": "a-short-network-outage-stops-queued-merg",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "simplify\ttests/test_fix_a_short_network_outage_stops_queued_merg.py\tSimpler: earlier-adopted retry case \u2192 cut",
+      "kind": "simplify",
+      "path": "tests/test_fix_a_short_network_outage_stops_queued_merg.py",
+      "line": 23,
+      "text": "Simpler: earlier-adopted retry case \u2192 cut",
+      "from": "review",
+      "item": "a-short-network-outage-stops-queued-merg",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
