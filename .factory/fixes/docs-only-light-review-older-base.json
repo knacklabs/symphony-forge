@@ -4,12 +4,20 @@
   "done_when": "A docs-only change with a clean light review passes forge-pr-check when its event base is older than the default branch it merged, while a sign-off merged to the default branch after the review still makes a light prototype review stale",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-16T10:53:33.864967+00:00",
       "step": "start"
     }
   ],
-  "why": "forge-pr-check can still call a clean light review out of date for a docs-only change that merged a newer default-branch commit with code changes, when the check's event base is older: prcheck passes the older event base to blocking_level (src/forge/review.py about 172, src/forge/docskip.py about 113), so the unrelated default-branch code counts in the docs-only classification and the light review looks no longer allowed. Part of client issue #1594, left by the owner's accept on 16 Nov 2026."
+  "stuck": {
+    "close": null,
+    "head": "118de5f1508208d64aa61d66b97229cab2561751",
+    "keys": {},
+    "round": null
+  },
+  "why": "forge-pr-check can still call a clean light review out of date for a docs-only change that merged a newer default-branch commit with code changes, when the check's event base is older: prcheck passes the older event base to blocking_level (src/forge/review.py about 172, src/forge/docskip.py about 113), so the unrelated default-branch code counts in the docs-only classification and the light review looks no longer allowed. Part of client issue #1594, left by the owner's accept on 16 Nov 2026.",
+  "worker": "claude"
 }
