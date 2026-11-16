@@ -1,6 +1,11 @@
 {
   "doc": "plans/FORGE-REPAIRER-1.md",
-  "status": "planning",
+  "drop": {
+    "at": "2026-11-16T04:43:50.480154+00:00",
+    "because": "The owner: Codex and the SDK path already raise the effort, and Claude Code subagents are left to the builder",
+    "by": "vrknetha <vrknetha@gmail.com> 1794804230 +0530"
+  },
+  "status": "dropped",
   "steps": [
     {
       "at": "2026-11-16T04:35:10.220726+00:00",
