@@ -1,0 +1,38 @@
+{
+  "base": "490590979b67d79bb5a677af40080eaad6b4fb9b",
+  "branch": "fix/a-repair-round-sent-to-a-continued-claud",
+  "done_when": "A short written note, with the effort numbers from a real test run, that says whether a continued Claude builder's effort can be raised through the plug-in hook.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "branch_diff": "e80cd81a4bc26cc8350b9992d229e429ca474095ccf9ac60acaf8b6afd1575e1",
+    "changed": "e80cd81a4bc26cc8350b9992d229e429ca474095ccf9ac60acaf8b6afd1575e1",
+    "commit": "a79a03c92ffe3c2197b02d01c3d5983539d9dffa",
+    "dismissals": [],
+    "findings": [],
+    "id": "422246fb-e946-4383-b9d6-4c4e154b6dbf",
+    "mechanical": true,
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-16T04:23:29.572150+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-16T04:29:02.096338+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "0148be28fc1467cd967b9f769c7329fefafd6e6c",
+    "keys": {},
+    "round": null
+  },
+  "why": "A repair round sent to a continued Claude builder keeps its starting low effort, so a failed round gets no more thought than the first attempt.",
+  "worker": "claude"
+}
