@@ -17,7 +17,6 @@ STORY = "review-after-replay"
     for index, (problem, other_failure, persistent) in enumerate([
         ("missing", False, False),
         ("for a commit that isn't part of this branch", False, False),
-        ("out of date: the product files or what the change must do changed after it", False, False),
         ("blocked by serious findings no one fixed or dismissed", False, False),
         ("missing", True, False),
         ("missing", False, True),

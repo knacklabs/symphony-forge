@@ -462,10 +462,10 @@ def close(args: argparse.Namespace) -> int:
     # forge-pr-check runs from the base branch, which has no Forge until migrate's or adopt's PR merges.
     try:
         if (not local_tests or checks.required(top, default, head) is not None) and not stacked_waiting:
-            checks.wait(top, item, head, [name for name in cfg["checks"]
-                                         if not (migrating and name == "forge-pr-check")],
-                        branch=branch, progress=getattr(args, "wait_for_progress", False),
-                        slot=getattr(args, "check_slot", None))
+            from forge import land  # land imports close
+            land.wait_rerunning_stale_review(top, item, head, [n for n in cfg["checks"] if not (
+                migrating and n == "forge-pr-check")], branch=branch, slot=getattr(args, "check_slot", None),
+                progress=getattr(args, "wait_for_progress", False))
     except BaseException:
         _publish(top, item, state, branch, default, pr, result, evidence)
         raise
