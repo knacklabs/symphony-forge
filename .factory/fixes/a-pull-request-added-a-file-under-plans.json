@@ -110,7 +110,7 @@
     "id": "dc54b10e-a516-43d7-bd11-36426eca36b3",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -123,10 +123,12 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "b9540daf7792891f7f7b68eab83411775a31d3d6",
-    "keys": {},
-    "round": null
+    "close": "31c8bf8e-6aef-476e-9f70-5c0e97ec1204",
+    "head": "9ef51e85ab39a7ddd45dded9f0adeae2b6f2644d",
+    "keys": {
+      "the open P0 functional: check recursive readers before skipping docs-only tests in src/forge/docskip.py": 1
+    },
+    "round": 1
   },
   "why": "A pull request added a file under plans/notes/, passed its own check, and then broke tests/test_fix_old_forge_records.py for every later pull request, because that test scans plans/ and .factory/ recursively and was not picked for the deeper change.",
   "worker": "claude"
