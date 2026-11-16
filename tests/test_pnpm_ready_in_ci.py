@@ -1,36 +1,59 @@
-"""A pnpm client's generated workflow makes pnpm available before its tests run."""
+"""After forge sync, a pnpm client's generated workflow sets up pnpm before its tests run."""
 import json
 import shutil
 
 import pytest
 
 from conftest import ROOT
-from test_setup import _fresh_client
 
 STORY = "FIX-AFTER-THE-UPGRADE-FROM-V1-2-28-TO-V1-2-4"
 pytestmark = pytest.mark.platform
 
 
-def _jobs(workflow):
+def _sync(repo, files):
+    shutil.copytree(ROOT / "tests/fixtures/adopted-v1.2.2/client", repo.path, dirs_exist_ok=True)
+    repo.git("checkout", "-qb", "fix/pnpm")
+    current = repo.forge("--version").stdout.split()[-1]
+    repo.write("forge.toml", (repo.path / "forge.toml").read_text("utf-8").replace("v1.2.2", current))
+    for name, text in files.items():
+        repo.write(name, text)
+    result = repo.forge("sync")
+    assert result.returncode == 0, result.stdout + result.stderr
+    workflow = (repo.path / ".github/workflows/forge.yml").read_text("utf-8")
     return (workflow.split("\n  tests:\n")[1].split("\n  forge-pr-check:\n")[0],
             workflow.split("\n  full-suite:\n")[1].split("\n  full-suite-result:\n")[0])
 
 
-def test_1_new_pnpm_client_enables_pnpm_before_tests(repo, gh, tmp_path):
-    client, result = _fresh_client(repo, gh, tmp_path, "--starter")
-    assert result.returncode == 0, result.stdout + result.stderr
-    workflow = (client / ".github/workflows/forge.yml").read_text("utf-8")
-    for job in _jobs(workflow):
-        assert "corepack enable" in job
-        assert job.index("corepack enable") < job.index("forge test")
+def _assert_setup(job, version):
+    assert "pnpm/action-setup@v4" in job
+    assert job.index("pnpm/action-setup@v4") < job.index("forge test")
+    assert "corepack" not in job
+    assert ("version:" in job.split("pnpm/action-setup@v4")[1].split("setup-node")[0]) == bool(version)
+    if version:
+        assert f"version: {json.dumps(version)}" in job
 
 
-def test_2_npm_client_has_no_pnpm_setup(repo):
-    shutil.copytree(ROOT / "tests/fixtures/adopted-v1.2.2/client", repo.path, dirs_exist_ok=True)
-    repo.git("checkout", "-qb", "fix/npm")
-    current = repo.forge("--version").stdout.split()[-1]
-    repo.write("forge.toml", (repo.path / "forge.toml").read_text("utf-8").replace("v1.2.2", current))
-    repo.write("package.json", json.dumps({"scripts": {"test": "npm test"}}))
-    repo.write("package-lock.json", "{}\n")
-    assert repo.forge("sync").returncode == 0
-    assert "corepack" not in (repo.path / ".github/workflows/forge.yml").read_text("utf-8")
+def test_1_package_manager_field_sets_up_pnpm_without_a_version(repo):
+    jobs = _sync(repo, {"package.json": json.dumps({"packageManager": "pnpm@10.20.0"})})
+    for job in jobs:
+        _assert_setup(job, None)
+
+
+def test_2_lockfile_under_web_only_sets_up_pnpm_from_lockfile_format(repo):
+    jobs = _sync(repo, {"web/pnpm-lock.yaml": "lockfileVersion: '9.0'\n"})
+    for job in jobs:
+        _assert_setup(job, "10")
+
+
+def test_3_engines_pnpm_without_package_manager_passes_that_version(repo):
+    jobs = _sync(repo, {"package.json": json.dumps({"engines": {"pnpm": "^10.33.0"}}),
+                        "pnpm-lock.yaml": "lockfileVersion: '9.0'\n"})
+    for job in jobs:
+        _assert_setup(job, "^10.33.0")
+
+
+def test_4_npm_client_has_no_pnpm_setup(repo):
+    jobs = _sync(repo, {"package.json": json.dumps({"scripts": {"test": "npm test"}}),
+                        "package-lock.json": "{}\n"})
+    for job in jobs:
+        assert "pnpm" not in job.replace("pnpm-", "")
