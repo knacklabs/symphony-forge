@@ -101,7 +101,7 @@
     "status": "blocked"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-16T08:55:58.393011+00:00",
@@ -116,6 +116,11 @@
       "step": "review"
     }
   ],
+  "stop": {
+    "question": "A fix that changes a forge.toml test setting (other than merge) loses is stuck. It should deliver: A fix that changes a forge.toml setting other than merge keeps that change through close and review, or close refuses with a clear reason instead of reporting ready.\nTwo rounds in a row left the open P0 not done: a settings fix can reach ready after its change is lost in src/forge/task.py.\nThe worker tried: Review of a-fix-that-changes-a-forge-toml-test-set: blocked; Close and land treat a carried idea list as no fix change, and say how to finish a delivered fix.\nChoose one: switch this item to Codex; keep Claude for one more round; or narrow or split it.",
+    "tool": "claude",
+    "wait_id": "8d5979f5-d6f3-4443-a844-de28cc7a84f0"
+  },
   "stuck": {
     "close": "a0fcb37c-50d0-4aba-837e-8d9b36008075",
     "head": "d38a66a92c888dce5f889299c8008b595a609269",
