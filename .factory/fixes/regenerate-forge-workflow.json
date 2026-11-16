@@ -1,0 +1,15 @@
+{
+  "base": "d2bbe572396715eab7422eb3d07dd798a12f9263",
+  "branch": "fix/regenerate-forge-workflow",
+  "done_when": "tests/test_release_version.py passes on the default branch",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-16T12:00:50.043215+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Main is red a fourth time: tests/test_release_version.py::test_2_release_checkout_generated_files_match_sync fails because this repo's own .github/workflows/forge.yml no longer matches what forge sync writes after src/forge/prcheck.py changed (the review-race fix and its repair embed prcheck code in the generated workflow)."
+}
