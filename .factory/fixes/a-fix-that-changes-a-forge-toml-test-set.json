@@ -110,7 +110,7 @@
     "id": "a89e5b15-679f-4884-95c7-94b650267883",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -123,10 +123,12 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "d6ea94c087cd212a07d0d0da786aa639da579878",
-    "keys": {},
-    "round": null
+    "close": "a0fcb37c-50d0-4aba-837e-8d9b36008075",
+    "head": "d38a66a92c888dce5f889299c8008b595a609269",
+    "keys": {
+      "the open P0 not done: a settings fix can reach ready after its change is lost in src/forge/task.py": 1
+    },
+    "round": 1
   },
   "why": "A fix that changes a forge.toml test setting (other than merge) loses that change before close, and close still reports the pull request ready with no real change.",
   "worker": "claude"
