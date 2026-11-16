@@ -68,8 +68,8 @@
     "id": "3c39a224-433b-4e08-8f0a-0345eb5368a7",
     "status": "clean"
   },
-  "round": 3,
-  "status": "waiting for checks",
+  "round": 4,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-16T07:10:25.644769+00:00",
@@ -98,10 +98,10 @@
     "worker_round": 2
   },
   "stuck": {
-    "close": "ef20c3bb-57f3-487a-8802-03eddb13ef0d",
-    "head": "3ca0e476133976632ef930dd7e98d5e6408ee6eb",
+    "close": "8618a88e-479b-4995-a9cf-0c04f0208219",
+    "head": "9a1ea8d48504451c579d39e936fba869cf9874e0",
     "keys": {},
-    "round": 2
+    "round": 3
   },
   "why": "A pull request added a file under plans/notes/, passed its own check, and then broke tests/test_fix_old_forge_records.py for every later pull request, because that test scans plans/ and .factory/ recursively and was not picked for the deeper change.",
   "worker": "claude"
