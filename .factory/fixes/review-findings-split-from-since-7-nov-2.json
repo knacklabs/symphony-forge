@@ -4,13 +4,21 @@
   "done_when": "A review no longer finds: Preserve distinct findings that share a title and file (src/forge/review.py:1045)",
   "fix_kind": "backend",
   "kind": "fix",
+  "round": 1,
   "stacked_on": "since-7-nov-2026-first-code-reviews-writ",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-16T07:12:36.821343+00:00",
       "step": "start"
     }
   ],
-  "why": "Review findings split from since-7-nov-2026-first-code-reviews-writ: Preserve distinct findings that share a title and file (src/forge/review.py:1045)"
+  "stuck": {
+    "close": null,
+    "head": "3d782b5808e6d585cfb560f09bf09bfb1c2614d4",
+    "keys": {},
+    "round": null
+  },
+  "why": "Review findings split from since-7-nov-2026-first-code-reviews-writ: Preserve distinct findings that share a title and file (src/forge/review.py:1045)",
+  "worker": "claude"
 }
