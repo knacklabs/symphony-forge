@@ -239,8 +239,10 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
     dev_manager = next((m for m in (dev_manager if isinstance(dev_manager, list) else [dev_manager])
                         if isinstance(m, dict) and m.get("name") == "pnpm"), None)
     listing = repo.run("git", "ls-files", "-co", "--exclude-standard", "-z", cwd=top).stdout.split("\0")
+    # Forge's own repo ships starter lockfiles it never builds with pnpm.
+    nested = cfg.get("repo") != "forge-source"
     lockfile = next((name for name in listing
-                     if name == "pnpm-lock.yaml" or name.endswith("/pnpm-lock.yaml")), None)
+                     if name == "pnpm-lock.yaml" or (nested and name.endswith("/pnpm-lock.yaml"))), None)
     pnpm = (isinstance(manager, str) and manager.startswith("pnpm@")) or dev_manager or lockfile
     node = ""
     if pnpm:
