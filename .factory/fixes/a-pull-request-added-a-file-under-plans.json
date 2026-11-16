@@ -1,0 +1,112 @@
+{
+  "base": "03141b64c18b1eecf63874f06e2a34a5b922aedb",
+  "branch": "fix/a-pull-request-added-a-file-under-plans",
+  "done_when": "A change to any file inside a folder tree that a test scans picks that test.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "reads_file_relative() in src/forge/docskip.py",
+      "file": "src/forge/docskip.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 77,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Check recursive readers before skipping docs-only tests",
+      "work": 2
+    },
+    {
+      "area": "reads_file_relative() in src/forge/docskip.py",
+      "file": "src/forge/docskip.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 77,
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: Accept (owner): the real gap is closed and proven; the rare str(...) pattern and extra proof cases become known issues",
+      "round": 1,
+      "security": false,
+      "title": "Not done: A change to any file inside a folder tree that a test scans picks that test.",
+      "work": 3
+    },
+    {
+      "area": "test_1_recursive_scan_is_picked_for_a_deeper_file_and_direct_listing_is_not() in tests/test_fix_a_pull_request_added_a_file_under_plans.py",
+      "file": "tests/test_fix_a_pull_request_added_a_file_under_plans.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 28,
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: Accept (owner): the real gap is closed and proven; the rare str(...) pattern and extra proof cases become known issues",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_recursive_scan_is_picked_for_a_deeper_file_and_direct_listing_is_not",
+      "work": 1
+    },
+    {
+      "area": "reads_file_relative() in src/forge/docskip.py",
+      "file": "src/forge/docskip.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 77,
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: Accept (owner): the real gap is closed and proven; the rare str(...) pattern and extra proof cases become known issues",
+      "round": 1,
+      "security": false,
+      "title": "Gate: Document the picker change for new and existing repositories",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "6483e4efa8ee01941cf3c1efd3acfca62fc18427ea6fe159ee7d1ca472c0159a",
+    "changed": "70f23c6083849ee37b0a56130798b77ed78fd192e02440e0a62e80596b572918",
+    "commit": "f350fd1f01f75d16ad201f62a7a2d8fda33cfa29",
+    "dismissals": [],
+    "findings": [],
+    "id": "4ec616db-1665-4a0d-9547-b8cbb59eefdc",
+    "status": "clean"
+  },
+  "round": 4,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-16T07:10:25.644769+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-16T07:20:23.776350+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-16T07:29:16.435903+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-16T17:52:23.272600+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-16T19:49:14.134287+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-16T07:29:16.436142+00:00",
+    "by": "owner",
+    "choice": "accept",
+    "file": "src/forge/docskip.py",
+    "reason": "Accept (owner): the real gap is closed and proven; the rare str(...) pattern and extra proof cases become known issues",
+    "wait_id": "fce85b1d-9f2d-4a4d-bb86-7b49668b5795",
+    "worker_round": 2
+  },
+  "stuck": {
+    "close": "8618a88e-479b-4995-a9cf-0c04f0208219",
+    "head": "9a1ea8d48504451c579d39e936fba869cf9874e0",
+    "keys": {},
+    "round": 3
+  },
+  "why": "A pull request added a file under plans/notes/, passed its own check, and then broke tests/test_fix_old_forge_records.py for every later pull request, because that test scans plans/ and .factory/ recursively and was not picked for the deeper change.",
+  "worker": "claude"
+}
