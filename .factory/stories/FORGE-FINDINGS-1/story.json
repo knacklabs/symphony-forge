@@ -1,0 +1,12 @@
+{
+  "doc": "plans/FORGE-FINDINGS-1.md",
+  "status": "planning",
+  "steps": [
+    {
+      "at": "2026-11-16T05:14:51.258823+00:00",
+      "step": "start"
+    }
+  ],
+  "title": "Show the full text of the last close's findings without running close again",
+  "touches": 0
+}
