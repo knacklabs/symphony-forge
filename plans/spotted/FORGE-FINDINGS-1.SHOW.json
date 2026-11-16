@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "bug\ttests/test_close_shows_last_result.py\tGate: tests/test_close_shows_last_result.py::test_1_close_show_prints_saved_findings_in_full_and_runs_nothing\tFORGE-FINDINGS-1/SHOW",
+      "kind": "bug",
+      "path": "tests/test_close_shows_last_result.py",
+      "line": 13,
+      "text": "Gate: tests/test_close_shows_last_result.py::test_1_close_show_prints_saved_findings_in_full_and_runs_nothing",
+      "from": "blocking",
+      "item": "FORGE-FINDINGS-1/SHOW",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/review_skip.py\tNot done: prints every finding of the latest saved review in full (title, file and line, priority, whole text) with its current state",
+      "kind": "edge",
+      "path": "src/forge/review_skip.py",
+      "line": 57,
+      "text": "Not done: prints every finding of the latest saved review in full (title, file and line, priority, whole text) with its current state",
+      "from": "review",
+      "item": "FORGE-FINDINGS-1/SHOW",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

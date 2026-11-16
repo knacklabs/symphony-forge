@@ -1,0 +1,72 @@
+{
+  "branch": "task/FORGE-FINDINGS-1-SHOW",
+  "known": [
+    {
+      "area": "show() in src/forge/review_skip.py",
+      "file": "src/forge/review_skip.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 57,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: prints every finding of the latest saved review in full (title, file and line, priority, whole text) with its current state",
+      "work": 2
+    },
+    {
+      "area": "_git_facts() in tests/test_close_shows_last_result.py",
+      "file": "tests/test_close_shows_last_result.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 13,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: tests/test_close_shows_last_result.py::test_1_close_show_prints_saved_findings_in_full_and_runs_nothing",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "f33ec1d2008cb4d8b3303d0bd268d6d72a42664409a58417e21a08267c6bc232",
+    "changed": "9dbbeccc7f56d39986b8206aaa2116662db9ad0645d2ae4b4c882404a45d272d",
+    "commit": "b3486e5be0b83b846dfd293afef22c8561e2b874",
+    "dismissals": [],
+    "findings": [],
+    "id": "30237eb9-3a67-40e9-82a2-8587fa1e7d43",
+    "status": "clean"
+  },
+  "round": 4,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-16T07:09:28.686088+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-16T07:30:45.853270+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-16T08:02:13.889272+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-16T16:50:06.337730+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-16T19:13:32.475075+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "b983e43a-9b51-4760-97fd-3596825fd0b6",
+    "head": "315c6abb451e2d2d074084278db5deb24c9ae4f9",
+    "keys": {},
+    "round": 3
+  },
+  "worker": "claude"
+}
