@@ -4,12 +4,20 @@
   "done_when": "After forge sync, a pnpm client's generated workflow sets up pnpm before its tests run, so the tests check no longer fails with pnpm not found.",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-16T08:56:45.016842+00:00",
       "step": "start"
     }
   ],
-  "why": "After the upgrade from v1.2.28 to v1.2.40, the generated .github/workflows/forge.yml has no pnpm setup, so a pnpm workspace repo's tests check fails with pnpm not found (exit 127)."
+  "stuck": {
+    "close": null,
+    "head": "2fcbe185de33fe03da29cbcdd41fea9abdf56788",
+    "keys": {},
+    "round": null
+  },
+  "why": "After the upgrade from v1.2.28 to v1.2.40, the generated .github/workflows/forge.yml has no pnpm setup, so a pnpm workspace repo's tests check fails with pnpm not found (exit 127).",
+  "worker": "claude"
 }
