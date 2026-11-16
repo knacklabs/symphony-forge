@@ -1,0 +1,78 @@
+{
+  "base": "63d634eb6da4eec90725061ea09ae4747dc49fc6",
+  "branch": "fix/move-effort-note-out-of-plans",
+  "done_when": "The experiment note lives outside plans/ and tests/test_fix_old_forge_records.py passes on the default branch",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "docs/notes/claude-continued-effort.md",
+      "file": "docs/notes/claude-continued-effort.md",
+      "gain": 3,
+      "harm": 3,
+      "line": 1,
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: Accept (owner): merge the pure move so main is green; the picker gap becomes its own fix",
+      "round": 1,
+      "security": false,
+      "title": "Gate: proof list",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "6d16c33f850bce86cde09f8ab133b24c472114cc8995eb6c59603ce86b954376",
+    "changed": "e0b7f5cd14e76eb3e1f385b235855d91c96468799a7cadf72fe6b1f2ee7b3e7c",
+    "commit": "1b8f691747661e5447be6316855f7ca4f2a42916",
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Accept (owner): merge the pure move so main is green; the picker gap becomes its own fix",
+        "finding": 1
+      }
+    ],
+    "findings": [
+      {
+        "body": "Gain 3, Work 1, Harm 3\nRaise: Gate\nCase: normal use - closing this fix relies on the pull request's test check.\nThe commit that moves the note has no Proof list, so no passing run of `tests/test_fix_old_forge_records.py` is recorded. The PR runs `forge test --change` (`.github/workflows/forge.yml:86-89`), but the picker matches only the immediate parent of a listed folder (`src/forge/docskip.py:67-83`). The test recursively scans `plans` and `.factory` (`tests/test_fix_old_forge_records.py:13-24`), while the changed files are nested beneath those folders; it is also absent from `.forge/always-tests.txt`. A green PR check therefore does not establish that the named test passed. Run the test and record its result in a Proof list.",
+        "file": "docs/notes/claude-continued-effort.md",
+        "gain": 3,
+        "harm": 3,
+        "line": 1,
+        "priority": "P1",
+        "title": "Gate: proof list",
+        "work": 1
+      }
+    ],
+    "id": "0b08d930-985b-40ff-9609-38d6f429d84d",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-16T05:31:51.986901+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-16T05:38:05.660319+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-16T05:38:05.672057+00:00",
+    "by": "owner",
+    "choice": "accept",
+    "file": "docs/notes/claude-continued-effort.md",
+    "reason": "Accept (owner): merge the pure move so main is green; the picker gap becomes its own fix",
+    "wait_id": "cc181f47-9786-4e80-9ebb-7943c51ae37c",
+    "worker_round": 1
+  },
+  "stuck": {
+    "close": null,
+    "head": "c03573589a4602475aec400195cb9d6a4c8945ea",
+    "keys": {},
+    "round": null
+  },
+  "why": "The experiment note merged at plans/notes/claude-continued-effort.md breaks tests/test_fix_old_forge_records.py on the default branch, which allows only story plans and Forge's lists under plans/; every pull request's combined test run now fails test group 4",
+  "worker": "claude"
+}
