@@ -131,7 +131,7 @@
     "id": "aca66706-2213-406e-adfa-9b14db95e98c",
     "status": "blocked"
   },
-  "round": 3,
+  "round": 4,
   "status": "fixing",
   "steps": [
     {
@@ -152,13 +152,12 @@
     }
   ],
   "stuck": {
-    "close": "b7c97ec2-2aea-41c0-9d35-672f08c35ee0",
-    "head": "b5ecdcf25d4f04002f451a06f332feebd7b5f95d",
+    "close": "fe0a4d74-6502-488f-871e-b45e3df5461f",
+    "head": "0f5741bf491956385ac3dacd8a35477ff62c9a1d",
     "keys": {
-      "the open P0 preserve distinct findings that share a title and file in src/forge/noise.py": 2,
-      "the open P0 preserve security findings when filtering not done notes in src/forge/noise.py": 2
+      "the open P0 preserve distinct findings that share a title and file in src/forge/review.py": 1
     },
-    "round": 2
+    "round": 3
   },
   "why": "Since 7 Nov 2026 first code reviews write about twice as many notes, and about half of them need no change. Two kinds are noise that the builder still gets: \"Not done\" notes on builder guidance, which the review rules say can never block, and duplicate notes in the same round.",
   "worker": "claude"
