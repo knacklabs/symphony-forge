@@ -657,7 +657,7 @@
     },
     {
       "key": "FORGE-NEWESTONLY-1",
-      "title": "Forge supports only its newest release",
+      "title": "Forge tests each rule on a new repo only",
       "status": "pending",
       "order": 123
     }

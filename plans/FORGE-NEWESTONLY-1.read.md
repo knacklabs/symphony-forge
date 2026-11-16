@@ -1,18 +1,18 @@
 ---
 reader: codex (gpt-6.1-terra)
-read_at: 2026-11-15T16:16:13.109666+00:00
-seconds: 1089.134
-read_hash: 40217721cacd29fdda2ca0a3e2dd043798cc9482
-round: 3
+read_at: 2026-11-15T16:29:49.054547+00:00
+seconds: 465.246
+read_hash: 52695986bc6a796b9478ed445f11a0cdae876769
+round: 4
 passed: no
-doc_seen: 40217721cacd29fdda2ca0a3e2dd043798cc9482
+doc_seen: 52695986bc6a796b9478ed445f11a0cdae876769
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 65099c6b19aa6d8e910dc64f250b1b54b66a435b
+notes_seen: 2f5bdb99ae6170f4526ab990bf81c539f4b671bc
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a1dfc9-6fd4-72e0-98be-17f45f7dc257
 session:
-loop_choice: more
-loop_reason: The owner chose: tests only in this story. It removes the earlier-adopted test cases and the old-release test data and rewrites the test rule; no product code changes; the old-format code moves to the second story
+loop_choice:
+loop_reason:
 ---
 # Cold read notes
 
@@ -273,3 +273,23 @@ Only a genuine trade-off goes to the human, as a question with options.
     The plan says model cost does not change, but also says an item reviewed before v1.2.5 is reviewed again. For an ordinary code change, [close.py](/src/forge/close.py:354) runs a model review when the previous review is no longer reusable, adding a model call in that named case.  
     Gain 2, Work 1, Harm 2
    Disposition: keep - below the bar (live with)
+
+## Round 4
+
+36. Advisory: Plan gap: The deletion proof rejects a test the plan keeps.
+    Raise: Plan gap  
+    The proof requires rule 1 to match no collected case beyond the exceptions named in rule 2. The retained [old-hook test](/tests/test_codex_trusts_earlier_forge_hooks.py:36) has a `[v1.2.2]` case that matches rule 1 and is absent from those exceptions.  
+    Gain 4, Work 1, Harm 2
+    Disposition: keep - handed to the builders: the plan's builders' part names this case as an exception (rule from round 4, note 36), as the owner accepted on 16 Nov 2026.
+
+37. Advisory: Plan gap: The keep rule conflicts with the scheduled fixture deletion.
+    Raise: Plan gap  
+    The plan says to keep a selected case when it reaches a listed old-release path, including `codex.preserve_chats`. Every successful [sync](/src/forge/sync.py:707) calls that function, including the [previous-release fixture case](/tests/test_close_refuses_binary_test_fixtures.py:43) that TESTS-1 explicitly deletes.  
+    Gain 4, Work 1, Harm 2
+    Disposition: keep - handed to the builders: the plan's builders' part says a case is kept only when older-release behaviour is the subject of its assertions (rule from round 4, note 37), as the owner accepted on 16 Nov 2026.
+
+38. Advisory: Disputed keep 32: Rule 4 misses cases that import an old-repo helper.
+    Raise: Test  
+    [test_fast_test_ignores_own_package_version.py](/tests/test_fast_test_ignores_own_package_version.py:92) checks the same rule on a new client and an earlier-adopted client. The latter has no parameter ID for rules 1–3, and its file does not name an old fixture folder for rule 4: it imports a helper that [copies the fixture](/tests/test_upgrade_command.py:499). The proof can pass with that second run still present.  
+    Gain 3, Work 2, Harm 2
+   Disposition: keep - below the bar (follow-up)
