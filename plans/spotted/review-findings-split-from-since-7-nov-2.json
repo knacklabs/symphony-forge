@@ -177,6 +177,17 @@
       "closed_by": "review-findings-split-from-since-7-nov-2"
     },
     {
+      "key": "bug\tsrc/forge/review.py\tDisputed keep Preserve distinct findings that share a title and file: a split advisory hides a P0\tsplit-test-after-noise-fix",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 1045,
+      "text": "Disputed keep Preserve distinct findings that share a title and file: a split advisory hides a P0",
+      "from": "blocking",
+      "item": "split-test-after-noise-fix",
+      "status": "done",
+      "closed_by": "review-findings-split-from-since-7-nov-2"
+    },
+    {
       "key": "bug\tsrc/forge/review.py\tDisputed keep comparing earlier findings: An open P0 inherits a P1 dismissal\treview-findings-split-from-since-7-nov-2",
       "kind": "bug",
       "path": "src/forge/review.py",
@@ -755,6 +766,17 @@
       "line": 25,
       "text": "Gate: test_dismissal_never_covers_higher_priority_finding.py and test_dismissals_carry_forward.py",
       "from": "blocking",
+      "item": "review-findings-split-from-since-7-nov-2",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_split_keeps_review_findings.py\tred on main before this change (noise.drop); its repair was not yet on origin/main",
+      "kind": "bug",
+      "path": "tests/test_split_keeps_review_findings.py",
+      "line": 1,
+      "text": "red on main before this change (noise.drop); its repair was not yet on origin/main",
+      "from": "worker",
       "item": "review-findings-split-from-since-7-nov-2",
       "status": "open",
       "closed_by": null

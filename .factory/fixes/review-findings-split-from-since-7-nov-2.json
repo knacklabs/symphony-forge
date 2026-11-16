@@ -11,7 +11,7 @@
       "gain": 4,
       "harm": 4,
       "line": 1020,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -37,7 +37,7 @@
       "gain": 4,
       "harm": 2,
       "line": 1021,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -63,7 +63,7 @@
       "gain": 4,
       "harm": 1,
       "line": 1018,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -73,69 +73,38 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "c97f63dcf49819393d6bb6cbd87caccaccd08046603a8ac627cd7b099df6b497",
-    "changed": "3e787141270eec3234ab386282678e03f473c7479949bbb2ac98a64f05187d81",
-    "commit": "d50a276faa7418cf85c58fcf6a626fed864149e6",
+    "branch_diff": "aa5e740c03c90d6e62c16060f0d6496489e6e60b7b065d570a6c0995d463f670",
+    "changed": "1965436ace3d50f2c132d3dc5cde48d3dd348bb612c5055ddbf61dd241222909",
+    "commit": "6a567d4a6fa79276388ef557e66cf4b7ea4de12f",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 4, Work 2, Harm 4\nRaise: Not done\nCase: normal use - a dismissed P1 is followed by a more serious finding with the same title and file.\nThe comparison uses raw reviewer priorities. `src/forge/autoreview.py:136-139` retains a raw P1 even when a security finding receives a Harm floor, while `src/forge/score.py:83-90,140-142` treats that finding as P0. It therefore compares equal to the dismissed P1, and `src/forge/review.py:1048-1053` carries the old dismissal, so the serious finding neither blocks nor reaches the brief. A second path bypasses this check even for a raw P0: when `forge close --dismiss` triggers a new review after a branch change, `src/forge/close.py:396-403` reapplies the requested P1 dismissal to the first result with the same title and file.",
-        "file": "src/forge/review.py",
-        "gain": 4,
-        "harm": 4,
-        "line": 1020,
-        "priority": "P1",
-        "required_done_when": true,
-        "title": "Not done: A review no longer finds: Preserve distinct findings that share a title and file (src/forge/review.py:1045)",
-        "work": 2
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done\nCase: normal use - one review reports a P0 and a P1 with the same title and file, and the P1 alone is dismissed.\nThe ruling does not address an earlier finding that is still open: the ceiling includes every historical finding, including the undismissed P0. On a subsequent review, that P0 sets the ceiling, so a repeated P0 is not considered higher priority and receives the P1's dismissal. Close can then mark the review clean even though nobody settled the P0.",
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done\nCase: normal use - a story review has an open P0 Not done finding and a dismissed P1 with the same title and file.\nAn owner-approved Not done finding blocks regardless of its scores: review.py:189-195 checks required_done_when separately. If the open P0 has a below-bar score, however, score.holds(e) is false, so this condition still adds the undismissed P0 to the settlement ceiling. A repeated P0 then passes the ceiling check and inherits the P1's dismissal. The ordinary dismissal survives bound_review, allowing close to mark the review clean without settling the P0.",
         "file": "src/forge/review.py",
         "gain": 4,
         "harm": 3,
-        "line": 1018,
+        "line": 1019,
         "priority": "P1",
         "title": "Disputed keep comparing earlier findings: An open P0 inherits a P1 dismissal",
         "work": 2
       },
       {
-        "body": "Gain 4, Work 2, Harm 2\nRaise: Functional\nCase: normal use - a review repeats a dismissed P1 whose lines moved and also reports a different P0 with the same title and file.\nThe P0 removes the settlement for the shared identity from the whole map. The later dismissal pass therefore also reopens the repeated P1, even though its cited evidence is unchanged. It blocks and reaches the builder's brief again, contrary to the requirement that a finding whose lines only moved stay settled.",
-        "file": "src/forge/review.py",
-        "gain": 4,
-        "harm": 2,
-        "line": 1021,
-        "priority": "P1",
-        "title": "Functional: Keep a dismissed finding settled when a sibling is more serious",
-        "work": 2
-      },
-      {
-        "body": "Gain 4, Work 1, Harm 2\nRaise: Test\nCase: normal use - a repair review finds a serious issue, or re-reports a dismissed issue after its lines move.\nThe new test checks the close exit code and PR text but never runs `forge work` or checks that the serious finding reaches the builder's brief. It would pass if close blocked while the brief omitted the finding. The listed test at `tests/test_dismissals_carry_forward.py:21-35` moves the original line 3 to line 4 but reuses a finding pinned to line 3; it would pass if a line-based match incorrectly reopened a finding re-reported at line 4. These are both details of the promised behavior.",
+        "body": "Gain 4, Work 1, Harm 2\nRaise: Test\nCase: normal use - a repair review reports a serious finding beside the moved, dismissed finding.\nThe changed test now checks the moved line, close's result and the pull request text, but it still never runs forge work or checks the builder's brief. It would pass if close blocked correctly while the worker omitted the serious same-title finding from the brief, leaving that promised behavior unproved.",
         "file": "tests/test_dismissal_never_covers_higher_priority_finding.py",
         "gain": 4,
         "harm": 2,
-        "line": 25,
+        "line": 31,
         "priority": "P1",
         "title": "Gate: test_dismissal_never_covers_higher_priority_finding.py and test_dismissals_carry_forward.py",
         "work": 1
-      },
-      {
-        "body": "Gain 4, Work 1, Harm 1\nRaise: Gate\nCase: normal use - a team upgrades an existing Forge repo.\nThe fix's post-merge commit messages do not state what a newly initialized or adopted repo receives and what an existing repo receives on upgrade. The supplied repository review rule requires the change to say what each receives, and the coordinator specifically requested that statement in the commit.",
-        "file": "src/forge/review.py",
-        "gain": 4,
-        "harm": 1,
-        "line": 1018,
-        "priority": "P1",
-        "title": "Gate: State what new and existing client repos receive",
-        "work": 1
       }
     ],
-    "id": "0a88da9c-0881-4202-be9f-58132182b432",
+    "id": "0d903742-2ad3-42b5-8bd0-719fa253db29",
     "status": "blocked"
   },
   "round": 3,
   "stacked_on": "since-7-nov-2026-first-code-reviews-writ",
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-16T07:12:36.821343+00:00",
@@ -144,8 +113,17 @@
     {
       "at": "2026-11-16T07:29:52.698353+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-11-16T09:25:11.653022+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-11-16T09:25:11.653444+00:00",
+    "file": "src/forge/review.py",
+    "wait_id": "8bc7d481-9e4a-4e6a-ad36-52b79ae26255"
+  },
   "stuck": {
     "close": "507116ca-e378-45a2-86fd-cc54f82dd621",
     "head": "5e2f39b632fa3652cef6f8eeb58a098309e3ac30",
