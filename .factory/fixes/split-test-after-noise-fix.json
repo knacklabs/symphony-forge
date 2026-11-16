@@ -88,8 +88,8 @@
     "id": "be84eaf2-f1ec-4014-9c80-687f159b9a65",
     "status": "clean"
   },
-  "round": 2,
-  "status": "waiting for checks",
+  "round": 3,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-16T07:29:19.507528+00:00",
@@ -114,12 +114,10 @@
     "worker_round": 2
   },
   "stuck": {
-    "close": "3c0b1ece-43c9-4823-ad69-be4c9ab6bbbf",
-    "head": "de0a55d8757077777a5f3fadbdf6d4ce7199ef82",
-    "keys": {
-      "the open P0 disputed keep preserve distinct findings that share a title and file: a split advisory hides a p0 in src/forge/review.py": 1
-    },
-    "round": 1
+    "close": "d42690cd-ee78-48d4-a96b-08b671792ea7",
+    "head": "2b7d69f1b25a5e03eb8d4fccd7a613e8ff3f9253",
+    "keys": {},
+    "round": 2
   },
   "why": "Main is red: tests/test_split_keeps_review_findings.py::test_1_split_moves_every_open_finding_to_one_linked_fix fails on main since the review-noise fix merged (c7d6e40da); it passes on 479d29d99 just before. The split at the round limit returns 1 and asks the human again instead of moving every open finding to one linked fix.",
   "worker": "claude"
