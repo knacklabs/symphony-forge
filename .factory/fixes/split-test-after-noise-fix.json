@@ -1,0 +1,15 @@
+{
+  "base": "c7d6e40da22a65c6fbed318acba04252413e9ebb",
+  "branch": "fix/split-test-after-noise-fix",
+  "done_when": "tests/test_split_keeps_review_findings.py passes on the default branch, with the review-noise behaviour kept",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-16T07:29:19.507528+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Main is red: tests/test_split_keeps_review_findings.py::test_1_split_moves_every_open_finding_to_one_linked_fix fails on main since the review-noise fix merged (c7d6e40da); it passes on 479d29d99 just before. The split at the round limit returns 1 and asks the human again instead of moving every open finding to one linked fix."
+}
