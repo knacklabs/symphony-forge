@@ -1,7 +1,14 @@
 {
+  "amendments": [
+    {
+      "at": "2026-11-16T21:22:37.930623+00:00",
+      "because": "The owner accepted the fix and keeps rarer lost-change cases as known issues",
+      "done_when": "A fix that changes a forge.toml setting other than merge keeps that change through close and review, or close refuses with a clear reason instead of reporting ready."
+    }
+  ],
   "base": "c7d6e40da22a65c6fbed318acba04252413e9ebb",
   "branch": "fix/a-fix-that-changes-a-forge-toml-test-set",
-  "done_when": "A fix that changes a forge.toml setting other than merge keeps that change through close and review, or close refuses with a clear reason instead of reporting ready.",
+  "done_when": "When main moves after a fix changes a forge.toml setting other than merge, close keeps the fix's change, or refuses with a clear reason and a usable next step when the merge left the fix with no change.",
   "fix_kind": "backend",
   "kind": "fix",
   "known": [
