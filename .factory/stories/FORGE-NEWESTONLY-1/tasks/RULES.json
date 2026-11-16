@@ -1,10 +1,18 @@
 {
   "branch": "task/FORGE-NEWESTONLY-1-RULES",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-16T02:30:29.120277+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "70fbfed9b20ceb0ece31d3b600a14b0ceeec08c0",
+    "keys": {},
+    "round": null
+  },
+  "worker": "claude"
 }
