@@ -530,7 +530,8 @@ def _queue(top: Path) -> int:
             # retry can collide again, so an item starts again up to twice.
             # A short network outage is retried the same way.
             lock = any("cannot lock ref" in line for line in lines)
-            net = any(m in line for line in lines for m in repo.NETWORK)
+            # Forge's own words after the gh read retries ran out count too.
+            net = any(m in line for line in lines for m in (*repo.NETWORK, repo.REFUSALS["no_github"][0]))
             if child.returncode and collided.get(item, 0) < 2 and (lock or net):
                 if not lock:  # wait 10 s, then 30 s, so the two tries span a short outage
                     time.sleep(float(os.environ.get("FORGE_NETWORK_RETRY_WAIT", "10")) * 3 ** collided.get(item, 0))

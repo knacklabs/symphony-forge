@@ -25,12 +25,16 @@ if sys.argv[1:] == ["fetch", "-q", "origin", "main"]:
 sys.exit(subprocess.call([{real!r}, *sys.argv[1:]]))
 '''
 
-# gh: the first pull request read fails with gh's own DNS message.
+# gh: after the pull request exists, its first four list calls fail with gh's own DNS message, more than the read retries make.
 GH = '''#!{python}
 import pathlib, subprocess, sys
 done = pathlib.Path({done!r})
-if sys.argv[1:3] in (["pr", "view"], ["pr", "list"]) and not done.exists():
-    done.write_text("1")
+created = done.with_name("created")
+if sys.argv[1:3] == ["pr", "create"]:
+    created.write_text("1")
+seen = int(done.read_text()) if done.exists() else 0
+if sys.argv[1:3] == ["pr", "list"] and seen < 4 and created.exists():
+    done.write_text(str(seen + 1))
     sys.stderr.write("error connecting to api.github.com\\ncheck your internet connection\\n")
     sys.exit(1)
 sys.exit(subprocess.call([{real!r}, *sys.argv[1:]]))
@@ -58,4 +62,4 @@ def test_1_a_change_that_meets_a_network_outage_waits_starts_again_and_merges(cl
     assert "aa met a short network problem; starting it again." in lines, text
     first, second = map(float, log.read_text().split()[:2])
     assert second - first >= WAIT, text
-    assert (env.tmp / "gh-done").exists(), text
+    assert (env.tmp / "gh-done").read_text() == "4", text
