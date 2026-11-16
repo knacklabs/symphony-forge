@@ -94,7 +94,7 @@
     "status": "blocked"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-16T05:13:44.010228+00:00",
@@ -109,6 +109,11 @@
       "step": "review"
     }
   ],
+  "stop": {
+    "question": "A short network outage stops queued merges with no retry, so one brief is stuck. It should deliver: A queued merge that hits a short network outage starts again on its own and merges once the connection is back.\nTwo rounds in a row left the open P0 not done: a queued merge that hits a short network outage starts again on its own and merges once the connection is back. in src/forge/land.py.\nThe worker tried: A queued merge waits and starts again after a short network outage.\nChoose one: switch this item to Codex; keep Claude for one more round; or narrow or split it.",
+    "tool": "claude",
+    "wait_id": "e8bb26cb-64fe-4599-ad13-76ff4e51c793"
+  },
   "stuck": {
     "close": "48dc595e-937b-47fb-807b-fefbfb244fdc",
     "head": "07ba06d39b1ccdb10f436d02b1703da95b9f8a73",
