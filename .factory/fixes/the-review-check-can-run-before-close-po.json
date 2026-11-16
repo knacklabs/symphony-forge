@@ -4,12 +4,76 @@
   "done_when": "After close posts an updated review, the review check no longer fails from that race, and no one reruns it by hand.",
   "fix_kind": "backend",
   "kind": "fix",
+  "known": [
+    {
+      "area": "wait_rerunning_stale_review() in src/forge/land.py",
+      "file": "src/forge/land.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 227,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: After close posts an updated review, the review check no longer fails from that race, and no one reruns it by hand.",
+      "work": 2
+    },
+    {
+      "area": "test_1_close_reruns_the_review_check_that_saw_the_old_review() in tests/test_close_reruns_stale_review_check.py",
+      "file": "tests/test_close_reruns_stale_review_check.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 16,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: tests/test_close_reruns_stale_review_check.py::test_1_close_reruns_the_review_check_that_saw_the_old_review",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "541a0007abb2f4ca5a2fad85b09d7d576adb671749e2f52ac5dcb6aceedf2ade",
+    "changed": "743ec190e265e4fa07b8bf6a65a534b86f5701a7d7f7ab65c52cdacaa324dfdc",
+    "commit": "6bcbc8f9c3e27c1f39689d093371b2761c0079bc",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 5, Work 2, Harm 3\nRaise: Not done\nCase: normal use - the failed review check is rerun but the new job is still queued or starting. The coordinator's suggested rerun did not account for the old commit status remaining failed until the new attempt reports its result. `_restart` waits only for the attempt number to increase (`src/forge/land.py:328-342`), and the second `checks.wait` immediately rejects the old red status (`src/forge/checks.py:322-331`). Close therefore exits before the rerun finishes instead of reaching Ready. Even if it waited, the check reads the review from the event's fixed head (`src/forge/prcheck.py:445` and `:486`), while [GitHub reruns reuse the original event](https://github.blog/changelog/2019-09-30-github-actions-deterministic-re-runs-for-workflows/); a rerun of the old review commit cannot check a review committed on a new head.",
+        "file": "src/forge/land.py",
+        "gain": 5,
+        "harm": 3,
+        "line": 227,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: After close posts an updated review, the review check no longer fails from that race, and no one reruns it by hand.",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Test\nCase: normal use - GitHub continues to report the failed review status while the rerun starts. The fake returns `GREEN` on the second check read regardless of whether the correct rerun has completed, and represents `forge-pr-check` as a check run rather than the separate commit status posted by `src/forge/prcheck.py:171-190`. The fixture also starts without a prior review (`tests/test_land.py:121-126`) and supplies the stale diagnostic as a fixed string. Thus the test passes with the production failure above and does not demonstrate that an updated review changes the check result or that close reaches Ready.",
+        "file": "tests/test_close_reruns_stale_review_check.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 16,
+        "priority": "P1",
+        "title": "Gate: tests/test_close_reruns_stale_review_check.py::test_1_close_reruns_the_review_check_that_saw_the_old_review",
+        "work": 2
+      }
+    ],
+    "id": "ed4f0715-d8f9-4dc8-be4d-c9828a560300",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-16T05:14:05.770169+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-16T05:33:43.473806+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
