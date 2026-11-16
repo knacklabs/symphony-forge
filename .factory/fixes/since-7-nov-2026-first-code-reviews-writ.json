@@ -138,7 +138,7 @@
     "id": "864b0567-8509-4c01-a67f-bc5562aa8d58",
     "status": "blocked"
   },
-  "round": 2,
+  "round": 3,
   "status": "fixing",
   "steps": [
     {
@@ -154,23 +154,14 @@
       "step": "review"
     }
   ],
-  "stop": {
-    "by": "owner",
-    "choice": "same",
-    "question": "Since 7 Nov 2026 first code reviews write about twice as many notes is stuck. It should deliver: A first review's \"Not done\" notes on builder guidance and its duplicate notes do not reach the builder or count as blocking.\nTwo rounds in a row left the open P0 preserve security findings when filtering not done notes in src/forge/noise.py.\nTwo rounds in a row left the open P0 preserve distinct findings that share a title and file in src/forge/noise.py.\nThe worker tried: Keep security notes, distinct repeats and sign-off findings when dropping review noise.\nChoose one: switch this item to Codex; keep Claude for one more round; or narrow or split it.",
-    "reason": "One more round with the same builder (owner): repair the two older faults here too",
-    "tool": "claude",
-    "wait_id": "8d0808b9-d83b-468c-b13b-d45f58f9ad9d",
-    "worker_round": 2
-  },
   "stuck": {
-    "close": "4571dbc6-a423-498b-a027-8b828277d49b",
-    "head": "1b636300d48414ed3a06d8ace5c49ac8552d1132",
+    "close": "b7c97ec2-2aea-41c0-9d35-672f08c35ee0",
+    "head": "b5ecdcf25d4f04002f451a06f332feebd7b5f95d",
     "keys": {
-      "the open P0 preserve distinct findings that share a title and file in src/forge/noise.py": 1,
-      "the open P0 preserve security findings when filtering not done notes in src/forge/noise.py": 1
+      "the open P0 preserve distinct findings that share a title and file in src/forge/noise.py": 2,
+      "the open P0 preserve security findings when filtering not done notes in src/forge/noise.py": 2
     },
-    "round": 1
+    "round": 2
   },
   "why": "Since 7 Nov 2026 first code reviews write about twice as many notes, and about half of them need no change. Two kinds are noise that the builder still gets: \"Not done\" notes on builder guidance, which the review rules say can never block, and duplicate notes in the same round.",
   "worker": "claude"
