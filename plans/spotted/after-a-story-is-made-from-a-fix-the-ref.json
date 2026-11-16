@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/story.py\tRefusal gives the wrong reason for using the fix branch\tafter-a-story-is-made-from-a-fix-the-ref",
+      "kind": "bug",
+      "path": "src/forge/story.py",
+      "line": 37,
+      "text": "Refusal gives the wrong reason for using the fix branch",
+      "from": "blocking",
+      "item": "after-a-story-is-made-from-a-fix-the-ref",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_story_without_a_spec.py\tGate: tests/test_story_without_a_spec.py::test_5_promotion_keeps_its_existing_roadmap_route\tafter-a-story-is-made-from-a-fix-the-ref",
+      "kind": "bug",
+      "path": "tests/test_story_without_a_spec.py",
+      "line": 276,
+      "text": "Gate: tests/test_story_without_a_spec.py::test_5_promotion_keeps_its_existing_roadmap_route",
+      "from": "blocking",
+      "item": "after-a-story-is-made-from-a-fix-the-ref",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

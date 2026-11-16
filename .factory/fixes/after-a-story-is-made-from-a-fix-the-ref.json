@@ -4,14 +4,82 @@
   "done_when": "The refusal explains that the roadmap entry is needed for the story to be created from the fix, and that it goes on the fix's own branch.",
   "fix_kind": "backend",
   "kind": "fix",
+  "known": [
+    {
+      "area": "src/forge/story.py",
+      "file": "src/forge/story.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 37,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Refusal gives the wrong reason for using the fix branch",
+      "work": 1
+    },
+    {
+      "area": "test_5_promotion_keeps_its_existing_roadmap_route() in tests/test_story_without_a_spec.py",
+      "file": "tests/test_story_without_a_spec.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 276,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: tests/test_story_without_a_spec.py::test_5_promotion_keeps_its_existing_roadmap_route",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "59e2cebdc442af8b5b8118fac18d980486cf69b158424f7fe6f6a8a78b068483",
+    "changed": "63c07dd758464d313f61d3ae96e4b394a64c8f1c2761a33850006c51fc816b6d",
+    "commit": "0768535e06b5b6d6179005e62b83b309b796cbd3",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 1, Harm 3\nRaise: Functional\nCase: normal use - A fix has unmerged changes and its roadmap entry is added only on the fix branch.\nThe refusal says the story is made from the fix's branch, so a reader can expect those changes and the entry in the new story worktree. The coordinator note specifies this explanation, but does not account for `story.py:145-146`, which starts the story branch from the default branch, and `story.py:1141-1144`, which renames the fix branch into the first task instead. The refusal should explain that the task carries the entry.",
+        "file": "src/forge/story.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 37,
+        "priority": "P1",
+        "title": "Refusal gives the wrong reason for using the fix branch",
+        "work": 1
+      },
+      {
+        "body": "Gain 3, Work 1, Harm 3\nRaise: Test\nCase: normal use - Promotion is refused because the fix has no roadmap entry.\nThe new assertion checks only that the output says the story is made from the fix's branch. The test would still pass if the refusal omitted that an entry is needed before the story can start, or directed the entry to the default worktree: its other assertions do not check either statement. Extend this command-level test to cover both required details.",
+        "file": "tests/test_story_without_a_spec.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 276,
+        "priority": "P1",
+        "title": "Gate: tests/test_story_without_a_spec.py::test_5_promotion_keeps_its_existing_roadmap_route",
+        "work": 1
+      }
+    ],
+    "id": "50e7173f-2f99-4f73-b611-44a5786173b0",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-16T05:13:27.627200+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-16T05:23:47.887448+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-11-16T05:23:47.898473+00:00",
+    "file": "src/forge/story.py",
+    "wait_id": "4718da55-ecc1-4f6b-b987-4c753313e59f"
+  },
   "stuck": {
     "close": null,
     "head": "c814fd4ae438be00b3a171795403e907b740fdc2",
