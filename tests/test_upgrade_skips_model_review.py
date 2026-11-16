@@ -62,11 +62,13 @@ def test_1_pure_upgrade_skips_review_and_extra_edit_gets_one(unsynced_up, adopte
     assert len(up.env.review_calls()) == 1, closed.stdout + closed.stderr
 
 
-@pytest.mark.parametrize("case", ["starter-pnpm", "new-client-npm", "adopted-pnpm"])
+@pytest.mark.parametrize("case", ["starter-pnpm", "new-client-npm", "adopted-pnpm", "adopted-nested-pnpm"])
 def test_2_pure_upgrade_in_a_repo_with_a_lockfile_skips_review(unsynced_up, case):
     # The workflow Forge writes caches by the lockfile, so the check must render it the same way.
     up = _ready(unsynced_up, case.startswith("adopted"), *(["--starter"] if "starter" in case else []))
-    if "npm" in case:
+    if "nested" in case:
+        up.on_main("web/pnpm-lock.yaml", "lockfileVersion: '9.0'\n")
+    elif "npm" in case:
         up.on_main("package.json", '{"name": "app", "version": "1.0.0"}\n')
         up.on_main("package-lock.json", '{"lockfileVersion": 3}\n')
     elif "adopted" in case:
@@ -77,8 +79,11 @@ def test_2_pure_upgrade_in_a_repo_with_a_lockfile_skips_review(unsynced_up, case
     upgraded = up.run(RELEASE)
 
     assert upgraded.returncode == 0, upgraded.stdout + upgraded.stderr
-    assert re.search(r"pnpm-lock\.yaml|cache-dependency-path: package-lock\.json",
-                     up.show(".github/workflows/forge.yml"))
+    if "nested" in case:
+        assert 'version: "10"' in up.show(".github/workflows/forge.yml")
+    else:
+        assert re.search(r"pnpm-lock\.yaml|cache-dependency-path: package-lock\.json",
+                         up.show(".github/workflows/forge.yml"))
     assert up.env.review_calls() == []
 
 
