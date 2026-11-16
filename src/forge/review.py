@@ -1012,6 +1012,13 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
             history = state["signoff_history"] if signoff_prompt else _history(top, item, base, previous, state=state)
             settled = {score.identity(*key): reason for key, reason in
                        _settled(history).items()}
+            # A settlement never covers a finding more serious than the settled ones (by scored priority).
+            ceiling = {}
+            for old in history:
+                gone = {d["finding"] for d in old.get("dismissals", [])}
+                for n, e in enumerate(old.get("findings", []), 1):
+                    if n in gone or e.get("follow_up") or not score.holds(e):
+                        ceiling[key] = min(ceiling.get(key := score.identity(e["file"], e["title"]), "P9"), score.priority(e))
             if item == "client-signoff":
                 # The owner accepts the limitation in this version of the file,
                 # independent of the next reviewer's wording. Edits reopen it.
@@ -1042,6 +1049,7 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                 {"finding": number, "because": settlement.removeprefix("dismissed because "), "carried": True}
                 for number, finding in enumerate(findings, 1)
                 if (settlement := settled.get(key := score.identity(finding["file"], finding["title"]), ""))
+                and score.priority(finding) >= ceiling.get(key, "")
                 and not (settlement.startswith("dismissed because ") and _cited_changed(top, history, key, head))])
             if not signoff_prompt:
                 bound_review(top, item, state, result)
