@@ -4,12 +4,20 @@
   "done_when": "A change to review code runs the split and review-noise tests in its related-test check, a split's decisions survive a later review, and the missing-tool review-choice skip test passes.",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-16T08:53:57.093893+00:00",
       "step": "start"
     }
   ],
-  "why": "A change to review code can pass its own related-test check while the split and review-noise tests fail, which turned main red twice on 16 Nov 2026; a split's decisions may also be lost when a later review runs, and one review-choice skip test fails before these changes."
+  "stuck": {
+    "close": null,
+    "head": "d734382962e582180fcc7d22519211bf0a3c03a0",
+    "keys": {},
+    "round": null
+  },
+  "why": "A change to review code can pass its own related-test check while the split and review-noise tests fail, which turned main red twice on 16 Nov 2026; a split's decisions may also be lost when a later review runs, and one review-choice skip test fails before these changes.",
+  "worker": "claude"
 }
