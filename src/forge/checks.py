@@ -29,6 +29,8 @@ REFUSALS = {
     "not_green": ("The checks are not green yet: {reason}.", "forge close {item}"),
     "wait_ended": ("The check wait ended: {reason}. No decision is needed. "
                    "Run forge land again to resume without restarting checks.", "forge land {item}"),
+    "no_start": ("The review check failed to start on GitHub.",
+                 "push a new commit or reopen the pull request on GitHub, so the check starts again"),
     "conflict": ("GitHub reports this pull request clashes with the default branch, so it runs no checks on it.",
                  "forge close {item}, which brings the default branch in"),
 }
@@ -145,6 +147,9 @@ def _wait(top: Path, item: str, sha: str, names: list[str], branch: str, progres
                 repo.refuse(REFUSALS["conflict"], item=item)
             _tests_timeout(top, item, sha, names, check_runs, seen)
             reason = _pending(item, names, seen)
+            if "has not reported" in reason and any(
+                    run.get("conclusion") == "startup_failure" for run in own_runs(top, item, sha)):
+                repo.refuse(REFUSALS["no_start"])
             if mergeable == "UNKNOWN":
                 reason = reason or "GitHub has not determined whether this pull request can merge"
             queued = any(state == QUEUED for _, state in seen)
