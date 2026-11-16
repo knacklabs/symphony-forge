@@ -43,6 +43,17 @@
       "item": "FORGE-NEWESTONLY-1/TESTS-1",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "simplify\ttests/test_agents_review.py\tthe first round left unused adopted branches and imports in about 50 test functions, such as the adopted flag here.",
+      "kind": "simplify",
+      "path": "tests/test_agents_review.py",
+      "line": 31,
+      "text": "the first round left unused adopted branches and imports in about 50 test functions, such as the adopted flag here.",
+      "from": "worker",
+      "item": "FORGE-NEWESTONLY-1/TESTS-1",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
