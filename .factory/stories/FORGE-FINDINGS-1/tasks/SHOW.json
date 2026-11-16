@@ -1,10 +1,18 @@
 {
   "branch": "task/FORGE-FINDINGS-1-SHOW",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-16T07:09:28.686088+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "5b6225ab1fb2927e7080e38d34e90ea31427e520",
+    "keys": {},
+    "round": null
+  },
+  "worker": "claude"
 }
