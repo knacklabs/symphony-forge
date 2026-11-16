@@ -111,13 +111,14 @@ def task(top: Path, item: str, commit: str | None = None) -> tuple[str, dict[str
 
 def fingerprint(commit: str, item: str, top: Path, state: dict[str, Any], base: str,
                 reviewed_level: str | None = None, findings: list[Any] | None = None, *,
-                branch_diff: bool = False) -> str:
+                branch_diff: bool = False, diff_base: str | None = None) -> str:
     """What a clean review covers: changed product files, every file the review's findings cite
     (the recorded review's unless findings is given), the item's story doc and roadmap entry, its
     fix contract when applicable, and the worker's functional check. Read through git so a pull
-    request's head is only ever data."""
+    request's head is only ever data. The review level is read at base; diff_base, when given, sets
+    where the diff starts."""
     base, commit = repo.resolve_commit(top, base), repo.resolve_commit(top, commit)
-    ancestor = repo.git("merge-base", base, commit, cwd=top)
+    ancestor = repo.git("merge-base", repo.resolve_commit(top, diff_base) if diff_base else base, commit, cwd=top)
     changed = repo.git("diff", "--name-only", "-z", "--no-renames", ancestor, commit,
                        cwd=top).split("\0")
     named = str(state.get("done_when", ""))  # a file the Done-when names is never bookkeeping
@@ -1041,8 +1042,7 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                 {"finding": number, "because": settlement.removeprefix("dismissed because "), "carried": True}
                 for number, finding in enumerate(findings, 1)
                 if (settlement := settled.get(key := score.identity(finding["file"], finding["title"]), ""))
-                and not (settlement.startswith("dismissed because ") and _cited_changed(top, history, key, head))
-                and not (settlement.startswith("known:") and score.holds(finding, result["blocking_level"]))])
+                and not (settlement.startswith("dismissed because ") and _cited_changed(top, history, key, head))])
             if not signoff_prompt:
                 bound_review(top, item, state, result)
         serious = blocking(result)
