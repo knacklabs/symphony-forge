@@ -9,6 +9,7 @@ import argparse
 import json
 import os
 import re
+import subprocess
 from fnmatch import fnmatch
 from pathlib import Path
 from typing import Any
@@ -483,7 +484,7 @@ def pr_check(args: argparse.Namespace) -> int:
         problem = "missing"
     elif not _on_branch(top, str(result.get("commit", "")), head):
         problem = "for a commit that isn't part of this branch"
-    elif result.get("changed") != review.fingerprint(head, item, top, state, base):
+    elif result.get("changed") != review.fingerprint(head, item, top, state, _review_base(top, head, base)):
         problem = "out of date: the product files or what the change must do changed after it"
     elif review.blocking(result):
         problem = "blocked by serious findings no one fixed or dismissed"
@@ -493,6 +494,15 @@ def pr_check(args: argparse.Namespace) -> int:
         print(f"forge-pr-check passed for {branch}.")
         return 0
     repo.refuse(REFUSALS["not_reviewed"], branch=branch, problem=problem, item=item)
+
+
+def _review_base(top: Path, head: str, event_base: str) -> str:
+    """The base close reviewed against: the newest default-branch commit the head contains. The
+    event's base can be older than a default-branch commit the branch already merged."""
+    try:
+        return repo.git("merge-base", head, f"origin/{repo.default_branch(top)}", cwd=top)
+    except subprocess.CalledProcessError:
+        return event_base
 
 
 def _check_specs(top: Path, head: str, changed: list[str]) -> None:

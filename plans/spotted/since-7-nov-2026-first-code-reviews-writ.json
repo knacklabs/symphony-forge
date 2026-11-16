@@ -1,0 +1,103 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/noise.py\tGate: update the remaining review tests for dropped notes\tsince-7-nov-2026-first-code-reviews-writ",
+      "kind": "bug",
+      "path": "src/forge/noise.py",
+      "line": 31,
+      "text": "Gate: update the remaining review tests for dropped notes",
+      "from": "blocking",
+      "item": "since-7-nov-2026-first-code-reviews-writ",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/noise.py\tKeep findings that quote an approved sentence within a numbered item\tsince-7-nov-2026-first-code-reviews-writ",
+      "kind": "bug",
+      "path": "src/forge/noise.py",
+      "line": 30,
+      "text": "Keep findings that quote an approved sentence within a numbered item",
+      "from": "blocking",
+      "item": "since-7-nov-2026-first-code-reviews-writ",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/noise.py\tNot done: A first review's \"Not done\" notes on builder guidance and its duplicate notes do not reach the builder or count as blocking.\tsince-7-nov-2026-first-code-reviews-writ",
+      "kind": "bug",
+      "path": "src/forge/noise.py",
+      "line": 29,
+      "text": "Not done: A first review's \"Not done\" notes on builder guidance and its duplicate notes do not reach the builder or count as blocking.",
+      "from": "blocking",
+      "item": "since-7-nov-2026-first-code-reviews-writ",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/noise.py\tPreserve distinct findings that share a title and file\tsince-7-nov-2026-first-code-reviews-writ",
+      "kind": "bug",
+      "path": "src/forge/noise.py",
+      "line": 32,
+      "text": "Preserve distinct findings that share a title and file",
+      "from": "blocking",
+      "item": "since-7-nov-2026-first-code-reviews-writ",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/noise.py\tPreserve security findings when filtering Not done notes\tsince-7-nov-2026-first-code-reviews-writ",
+      "kind": "bug",
+      "path": "src/forge/noise.py",
+      "line": 30,
+      "text": "Preserve security findings when filtering Not done notes",
+      "from": "blocking",
+      "item": "since-7-nov-2026-first-code-reviews-writ",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tGate: state delivery for new and existing client repositories\tsince-7-nov-2026-first-code-reviews-writ",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 1036,
+      "text": "Gate: state delivery for new and existing client repositories",
+      "from": "blocking",
+      "item": "since-7-nov-2026-first-code-reviews-writ",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tPreserve distinct findings that share a title and file\tsince-7-nov-2026-first-code-reviews-writ",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 1045,
+      "text": "Preserve distinct findings that share a title and file",
+      "from": "blocking",
+      "item": "since-7-nov-2026-first-code-reviews-writ",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_since_7_nov_review_noise.py\tGate: tests/test_since_7_nov_review_noise.py::test_1_builder_detail_not_done_and_duplicates_are_dropped\tsince-7-nov-2026-first-code-reviews-writ",
+      "kind": "bug",
+      "path": "tests/test_since_7_nov_review_noise.py",
+      "line": 19,
+      "text": "Gate: tests/test_since_7_nov_review_noise.py::test_1_builder_detail_not_done_and_duplicates_are_dropped",
+      "from": "blocking",
+      "item": "since-7-nov-2026-first-code-reviews-writ",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/review.py\tPreserve distinct findings that share a title and file",
+      "kind": "edge",
+      "path": "src/forge/review.py",
+      "line": 1045,
+      "text": "Preserve distinct findings that share a title and file",
+      "from": "review",
+      "item": "since-7-nov-2026-first-code-reviews-writ",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
