@@ -24,8 +24,8 @@
       "gain": 4,
       "harm": 3,
       "line": 16,
-      "outcome": "open",
-      "reason": "",
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: Accept (owner): the repair matches the client's log and its test proves the cause",
       "round": 1,
       "security": false,
       "title": "Gate: tests/test_close_reruns_stale_review_check.py::test_1_close_reruns_the_review_check_that_saw_the_old_review",
@@ -37,7 +37,13 @@
     "branch_diff": "2dca09013bdec0ddd13d3765335a38092f19f973de7a34f38c1e7e145248f0e5",
     "changed": "b59b1e8debce989173b28aeae2d100212b1bda8d305a8874822470ba9dfc0db0",
     "commit": "46663e2e275313bb0e7dd5ff6b82be95f90ef757",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Accept (owner): the repair matches the client's log and its test proves the cause",
+        "finding": 1
+      }
+    ],
     "findings": [
       {
         "body": "Gain 4, Work 2, Harm 3\nRaise: Test\nCase: normal use - a prior review is stale while the check for close's updated review is still pending.\nThe previously flagged test was deleted without an equivalent end-to-end proof. The replacement at tests/test_pr_check_base_older_than_merged_default.py:16-21 closes a fix with no prior review using the fixture's already-green check runs, then invokes pr-check separately. It never models the old failed commit status or the new head's pending and successful status, so a failure specific to refreshing an existing stale review can still pass the proof. The old-head test at tests/test_fix_close_pushes_its_review_commit_while_the.py:16-34 supplies check runs and expects close to stop; it does not show close reaching Ready after the new status succeeds without a rerun.",
@@ -51,10 +57,10 @@
       }
     ],
     "id": "9967908b-3b76-4b4b-9c56-4ec30102e232",
-    "status": "blocked"
+    "status": "clean"
   },
   "round": 2,
-  "status": "hotspot",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-16T05:14:05.770169+00:00",
@@ -71,8 +77,12 @@
   ],
   "stop": {
     "at": "2026-11-16T06:45:02.828808+00:00",
+    "by": "owner",
+    "choice": "accept",
     "file": "tests/test_close_reruns_stale_review_check.py",
-    "wait_id": "111e264e-fba4-40ed-9a95-dac1cc73e9dc"
+    "reason": "Accept (owner): the repair matches the client's log and its test proves the cause",
+    "wait_id": "111e264e-fba4-40ed-9a95-dac1cc73e9dc",
+    "worker_round": 2
   },
   "stuck": {
     "close": "fed418b4-b2d5-45b9-be6c-34dad745b620",
