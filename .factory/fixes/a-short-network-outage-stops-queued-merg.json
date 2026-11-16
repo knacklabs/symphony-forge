@@ -4,12 +4,20 @@
   "done_when": "A queued merge that hits a short network outage starts again on its own and merges once the connection is back.",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-16T05:13:44.010228+00:00",
       "step": "start"
     }
   ],
-  "why": "A short network outage stops queued merges with no retry, so one brief connection problem stops the merge."
+  "stuck": {
+    "close": null,
+    "head": "b40e278296ccb1f96778b6420eda53360e6b05e9",
+    "keys": {},
+    "round": null
+  },
+  "why": "A short network outage stops queued merges with no retry, so one brief connection problem stops the merge.",
+  "worker": "claude"
 }
