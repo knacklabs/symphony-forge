@@ -179,7 +179,7 @@
     "id": "76ee9a37-58cf-48da-bbed-b335a56e6d52",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -201,10 +201,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": null,
-    "head": "2fcbe185de33fe03da29cbcdd41fea9abdf56788",
+    "close": "ee464438-1e2c-48f2-b57a-8f743e01f9c9",
+    "head": "fd18ae79a04e74cd5775b02a59e1965246953aba",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "After the upgrade from v1.2.28 to v1.2.40, the generated .github/workflows/forge.yml has no pnpm setup, so a pnpm workspace repo's tests check fails with pnpm not found (exit 127).",
   "worker": "claude"
