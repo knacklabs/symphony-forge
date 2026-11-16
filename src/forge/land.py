@@ -217,29 +217,6 @@ def _problems(top: Path, item: str) -> None:
             say(f"- {name}\n{tail}")
 
 
-def wait_rerunning_stale_review(top: Path, item: str, head: str, names: list[str], **wait) -> None:
-    """checks.wait; the review check can run before close posts the review, so rerun it once."""
-    try:
-        checks.wait(top, item, head, names, **wait)
-    except repo.Refused as error:
-        if error.entry is not checks.REFUSALS["red"] or not rerun_stale_review(top, wait["branch"]):
-            raise
-        checks.wait(top, item, head, names, **wait)
-
-
-def rerun_stale_review(top: Path, branch: str) -> bool:
-    """Run forge-pr-check's job again once, when it is the only failing check and failed before the
-    review it reads was posted. True when the rerun started."""
-    failing = worker._failing(branch)
-    if not (len(failing) == 1 and failing[0][0] == "forge-pr-check" and
-            "out of date:" in failing[0][1]):
-        return False
-    link = next((check.get("link") or "" for check in _listed(top, branch) or []
-                 if check.get("name") == "forge-pr-check"), "")
-    run = re.search(r"/runs/(\d+)/", link)
-    return bool(run) and _attempt(top, run[1]) == 1 and not _restart(top, [run[1]])
-
-
 def _rerun(top: Path, item: str, branch: str) -> bool:
     """Re-run the pull request's failed checks once per pushed head, when every failure is a job
     whose first attempt's log names none of the change's files. Laptop repos never wait for
