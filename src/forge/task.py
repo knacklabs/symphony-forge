@@ -742,9 +742,8 @@ def require_fix_changes(item: str, state: dict, top: Path, files: list[str]) -> 
     """Close and land cannot publish an interrupted fix's bookkeeping as its result."""
     if state.get("kind") != "fix":
         return
-    # Records Forge carries into a fix itself: state, spotted lines, the idea list, sign-off decisions.
     def record(path: str) -> bool:
-        return path.startswith((".factory/", "plans/spotted")) or path == "plans/ideas.md" or bool(repo.SIGNOFF.fullmatch(path))
+        return path.startswith((".factory/", "plans/spotted"))
 
     if any(path and not record(path) for path in files):
         return

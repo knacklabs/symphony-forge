@@ -51,7 +51,6 @@ def test_2_close_refuses_when_the_merge_left_the_fix_no_change(env, client, tmp_
     main.on_main("forge.toml", base.replace('"echo ok"', '"echo main"'))
     client.git("fetch", "-q", "origin", "main", cwd=folder)
     client.git("merge", "-q", "-X", "theirs", "-m", "Merge main", "origin/main", cwd=folder)  # takes main's value
-    env.commit(folder, "plans/ideas.md", "- 2026-11-16: an idea Forge carried in\n", "Carry the idea")
     closed = client.forge("close", "correct-spelling")
     assert closed.returncode == 1, closed.stdout + closed.stderr
     assert "Ready:" not in closed.stdout
