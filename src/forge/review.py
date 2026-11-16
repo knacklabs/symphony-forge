@@ -169,7 +169,7 @@ def fingerprint(commit: str, item: str, top: Path, state: dict[str, Any], base: 
     if saved_level == "P0":
         parts.append("P0-only prototype review")
         # Only a light review can lose its allowance (judged on the diff base).
-        if blocking_level(top, item, state, diff_base or base, commit) != saved_level:
+        if blocking_level(top, item, state, base, commit, diff_base) != saved_level:
             parts.append("The recorded review level is no longer allowed")
     for part in parts:
         digest.update(b"\0" + part.encode("utf-8"))
@@ -177,9 +177,9 @@ def fingerprint(commit: str, item: str, top: Path, state: dict[str, Any], base: 
 
 
 def blocking_level(top: Path, item: str, state: dict[str, Any], base: str,
-                   commit: str = "HEAD") -> str:
+                   commit: str = "HEAD", docs_base: str | None = None) -> str:
     """Docs/assets and unsigned client prototype fixes get a light review."""
-    if docskip.only_docs(top, base, DOC_EXCLUDES, head=commit):
+    if docskip.only_docs(top, docs_base or base, DOC_EXCLUDES, head=commit):
         return "P0"
     if ("/" in item or state.get("kind") != "fix" or
             state.get("allow_large") != "Prototype before sign-off"):
