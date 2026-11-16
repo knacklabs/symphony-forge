@@ -4,12 +4,20 @@
   "done_when": "Each continued Codex round sends its model and effort with its turn, and its run record and board show the effort Codex reports for that turn.",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-16T04:25:33.594608+00:00",
       "step": "start"
     }
   ],
-  "why": "A repair round on a continued Codex conversation may silently run at the first attempt's effort, while the board and round record show the higher one."
+  "stuck": {
+    "close": null,
+    "head": "66dfd40006f91eea414bf294de4385bfc582e027",
+    "keys": {},
+    "round": null
+  },
+  "why": "A repair round on a continued Codex conversation may silently run at the first attempt's effort, while the board and round record show the higher one.",
+  "worker": "claude"
 }
