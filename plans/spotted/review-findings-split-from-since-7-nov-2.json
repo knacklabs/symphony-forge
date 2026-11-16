@@ -195,8 +195,8 @@
       "text": "Disputed keep comparing earlier findings: An open P0 inherits a P1 dismissal",
       "from": "blocking",
       "item": "review-findings-split-from-since-7-nov-2",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/review.py\tDisputed keep settled-context carry-forward: same-commit rereviews lose earlier accepted findings\tFORGE-SCORE-1/BAR",
@@ -767,8 +767,8 @@
       "text": "Gate: test_dismissal_never_covers_higher_priority_finding.py and test_dismissals_carry_forward.py",
       "from": "blocking",
       "item": "review-findings-split-from-since-7-nov-2",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\ttests/test_split_keeps_review_findings.py\tred on main before this change (noise.drop); its repair was not yet on origin/main",
