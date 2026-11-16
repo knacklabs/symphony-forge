@@ -37,7 +37,7 @@
       "gain": 3,
       "harm": 2,
       "line": 29,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -50,7 +50,7 @@
       "gain": 4,
       "harm": 3,
       "line": 30,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -76,7 +76,7 @@
       "gain": 4,
       "harm": 2,
       "line": 31,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -89,7 +89,7 @@
       "gain": 4,
       "harm": 1,
       "line": 1036,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -99,84 +99,43 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "3dcfd94dea361befca6a3759ae0db528414de2c75d2be4af7cc4aa3eb46dad26",
-    "changed": "61686a9a7233c85658a3a139e8ce3b5958db418a8696882902a9cbb4d0f6a6eb",
-    "commit": "436723dfd7b7c362f91a1938dacfd6f0b39d85d0",
+    "branch_diff": "80db14fbe240759dfd8cb499a44004178239a75096f55a3867b944e9e6dcd6b3",
+    "changed": "5d3ef35c488622d14c2b79a7eac223de921552560e1e2322f2226de1b5156dbc",
+    "commit": "b4ba37e7f8516fc79e07cedb481e6cd4901e4b51",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 5, Work 2, Harm 4\nRaise: Security\nCase: normal use - a reviewer reports an authorization defect in a story task with a title such as `Not done: Orders are scoped to their owner` and marks it as security-related. The filter discards every unmatched `Not done` title without checking its body, category, or severity. `src/forge/autoreview.py:133` preserves the security classification in the body, but this filter removes the finding before it reaches the event, pull request, or builder. The finding is lost even though security defects are independently reportable and are not merely builder guidance.",
+        "body": "Gain 5, Work 2, Harm 4\nRaise: Security\nCase: normal use - a task review reports an authorization defect as `Not done: Orders are scoped to their owner` with a security category or raise. The new exception retains the finding, but `src/forge/review.py:1102` still marks it as a follow-up because its title does not match a covered item. `src/forge/score.py:132` then prevents it from blocking, and `src/forge/worker.py:545` excludes it from the builder's brief. A review containing only this security finding can therefore be reported clean; the new test misses this because another finding blocks the close.",
         "file": "src/forge/noise.py",
         "gain": 5,
         "harm": 4,
-        "line": 30,
+        "line": 35,
         "priority": "P1",
         "title": "Preserve security findings when filtering Not done notes",
         "work": 2
       },
       {
-        "body": "Gain 5, Work 2, Harm 4\nRaise: Security\nCase: normal use - a review reports the same generic authorization title for two handlers in one file, with an advisory about a demo handler first and a P0 about a real user-data handler second. The key ignores the line, body, and severity, so it discards the second finding. This filter also runs for client sign-off (`src/forge/review.py:1036`); `src/forge/records.py:563` then sees only the advisory, allowing sign-off without the reported P0. Distinct evidence and the stronger finding must not be lost when titles collide.",
+        "body": "Gain 5, Work 2, Harm 4\nRaise: Security\nCase: normal use - a task review reports a low-score advisory on one handler and a P0 authorization defect on another handler in the same file, both with the same title; the repair review repeats the P0. This key now retains both findings, but `src/forge/review.py:632` records the advisory as known using only the file and title. The carried dismissal at `src/forge/review.py:1040` then applies that settlement to the distinct P0 as well. The unfixed security finding no longer blocks the repair review or reaches the next builder.",
         "file": "src/forge/noise.py",
         "gain": 5,
         "harm": 4,
-        "line": 32,
+        "line": 37,
         "priority": "P1",
         "title": "Preserve distinct findings that share a title and file",
         "work": 2
       },
       {
-        "body": "Gain 3, Work 2, Harm 2\nRaise: Not done\nCase: normal use - a reviewer returns a builder-guidance title with leading whitespace, such as ` Not done: Use a separate formatter`. `src/forge/autoreview.py:130` retains that whitespace, so the anchored match here misses the note; `bound_review` also misses it, allowing a scored P1 to block and reach the builder. Separately, the key at line 32 only matches identical normalized titles: near-duplicates such as `Windows fixtures miss a drive letter` and `Windows fixtures miss the drive letter` both survive, are recorded, and can both reach the builder.",
-        "file": "src/forge/noise.py",
-        "gain": 3,
-        "harm": 2,
-        "line": 29,
-        "priority": "P1",
-        "required_done_when": true,
-        "title": "Not done: A first review's \"Not done\" notes on builder guidance and its duplicate notes do not reach the builder or count as blocking.",
-        "work": 2
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - a story's numbered Done-when item contains several sentences and the reviewer quotes the specific missing sentence. For example, `plans/FORGE-AFTERDEMO-1.md:22` includes `The count drops when the action is done.` as an approved sentence. `approved()` stores the entire numbered item, so a `Not done` title quoting just that sentence fails the prefix check and is deleted. The existing classifier already failed to make this partial quote blocking, but this change also removes the finding from the pull request and builder instead of leaving it visible as a follow-up.",
-        "file": "src/forge/noise.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 30,
-        "priority": "P1",
-        "title": "Keep findings that quote an approved sentence within a numbered item",
-        "work": 2
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 1\nRaise: Test\nCase: normal use - a first review has a real blocking finding alongside a builder-guidance note and a duplicate blocking finding. The named proof never starts the worker or inspects its brief or the review event; it checks only the pull request body. Its duplicated finding is P3, which would not reach the worker even without deduplication. An implementation that filters only the published body while leaving duplicate P1 findings in the event and brief would pass this test, so it does not prove the required boundary.",
+        "body": "Gain 4, Work 2, Harm 1\nRaise: Test\nCase: normal use - a first review contains a real blocking finding, a duplicate, and a builder-guidance note. The revised proof checks the saved state and review event, but it still never runs `forge work` or inspects the brief sent to the worker. A regression that reintroduces the duplicate or guidance while assembling that brief would pass this test, so the named proof still does not check the required builder-facing boundary.",
         "file": "tests/test_since_7_nov_review_noise.py",
         "gain": 4,
         "harm": 1,
-        "line": 19,
+        "line": 24,
         "priority": "P1",
         "title": "Gate: tests/test_since_7_nov_review_noise.py::test_1_builder_detail_not_done_and_duplicates_are_dropped",
         "work": 2
-      },
-      {
-        "body": "Gain 4, Work 1, Harm 2\nRaise: Gate\nCase: normal use - a developer or the nightly job runs the repository's full test command in `forge.toml:6`. The new filter removes the task findings that `tests/test_done_when_small_word_changes.py:51` and `tests/test_reviews_converge_on_changed_lines.py:74` still require in the pull request's Follow-ups section. Those unchanged cases therefore fail under the new behavior and need to be updated along with the other affected tests.",
-        "file": "src/forge/noise.py",
-        "gain": 4,
-        "harm": 2,
-        "line": 31,
-        "priority": "P1",
-        "title": "Gate: update the remaining review tests for dropped notes",
-        "work": 1
-      },
-      {
-        "body": "Gain 4, Work 1, Harm 1\nRaise: Gate\nCase: normal use - a team initializes or adopts a client repository, or upgrades an existing one. The implementation commit and changed files do not state what either group receives. This repository's review rules explicitly require every Forge change to say what new and existing client repositories get, and the coordinator repeated that requirement for this fix.",
-        "file": "src/forge/review.py",
-        "gain": 4,
-        "harm": 1,
-        "line": 1036,
-        "priority": "P1",
-        "title": "Gate: state delivery for new and existing client repositories",
-        "work": 1
       }
     ],
-    "id": "78412911-e42d-48a5-824d-b92d3c89cf4a",
+    "id": "864b0567-8509-4c01-a67f-bc5562aa8d58",
     "status": "blocked"
   },
   "round": 2,
@@ -188,6 +147,10 @@
     },
     {
       "at": "2026-11-16T05:18:01.395196+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-16T05:33:05.233297+00:00",
       "step": "review"
     }
   ],
