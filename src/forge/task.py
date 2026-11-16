@@ -742,16 +742,27 @@ def require_fix_changes(item: str, state: dict, top: Path, files: list[str]) -> 
     """Close and land cannot publish an interrupted fix's bookkeeping as its result."""
     if state.get("kind") != "fix":
         return
-    if any(path and not path.startswith((".factory/", "plans/spotted/"))
-           and path != "plans/spotted.json" for path in files):
+    # Records Forge carries into a fix itself: state, spotted lines, the idea list, sign-off decisions.
+    def record(path: str) -> bool:
+        return path.startswith((".factory/", "plans/spotted")) or path == "plans/ideas.md" or bool(repo.SIGNOFF.fullmatch(path))
+
+    if any(path and not record(path) for path in files):
         return
     untracked = repo.git("ls-files", "--others", "--exclude-standard", cwd=top)
     detail = f"\nUntracked files in the worktree: {untracked}" if untracked else ""
-    own = repo.git("log", "--no-merges", "--name-only", "--format=", f"origin/{repo.default_branch(top)}..HEAD",
-                   cwd=top).split()
-    if any(not path.startswith((".factory/", "plans/spotted")) for path in own):  # the fix did commit work, so a merge of the default branch took it back
+    default = repo.default_branch(top)
+    own = repo.git("log", "--no-merges", "--name-only", "--format=", f"origin/{default}..HEAD", cwd=top).split()
+    if any(not record(path) for path in own):
+        # The fix did commit work, so a merge of the default branch took it back or already has it.
+        # Delivered: the default branch holds exactly what the fix's last commit wrote to each file.
+        pending = [path for path in set(own) if not record(path)
+                   and show(repo.git("log", "-1", "--full-history", "--no-merges", "--format=%H", f"origin/{default}..HEAD", "--",
+                                     path, cwd=top), path, top) != show(f"origin/{default}", path, top)]
+        if not pending:
+            raise repo.Refused("The default branch already has this fix's change, so nothing is left to merge."
+                               f"{detail}", f"forge fix drop {item} --because \"The default branch already has it\"")
         raise repo.Refused("After merging the default branch, this fix has no change left: the default branch "
-                           f"already has it or replaced it. Make the change again, then commit.{detail}",
+                           f"replaced its own change. Make the change again, then commit.{detail}",
                            f"forge work {item}")
     raise repo.Refused(f"The build round did not finish. This fix changes only Forge's records.{detail}",
                        f"forge work {item}")

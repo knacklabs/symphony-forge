@@ -33,8 +33,8 @@ def test_1_close_refuses_a_fix_when_main_already_has_the_product_change(
 
     closed = env.close(item)
 
-    assert "this fix has no change left" in closed.stderr
-    assert f"forge work {item}" in closed.stderr
+    assert "already has this fix's change" in closed.stderr
+    assert f"forge fix drop {item}" in closed.stderr
     assert not env.review_calls()
     assert closed.returncode != 0
     expected = [".factory/fixes/tidy-readme.json"]
