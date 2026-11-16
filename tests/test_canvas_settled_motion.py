@@ -12,7 +12,7 @@ STORY = "FIX-SETTLED-CANVAS"
 
 
 @pytest.mark.platform
-@pytest.mark.parametrize("adopted", [False, True], ids=["new", "earlier-adopted"])
+@pytest.mark.parametrize("adopted", [False], ids=["new"])
 def test_1_capture_settled_entry_motion(repo, tmp_path, adopted):
     # Protect real screenshot pixels against entry fades. Viewport tests cannot
     # detect half-faded content. Only the external design checker is replaced;

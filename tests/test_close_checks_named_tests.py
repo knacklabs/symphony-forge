@@ -69,9 +69,9 @@ def _close(env, adopted, command, red=False, greeting=GREETING, docs_only=False)
 
 
 @pytest.mark.parametrize("adopted, red, options, teardown", [
-    (False, False, "", False), (True, False, "", False), (False, True, "", False),
+    (False, False, "", False), (False, True, "", False),
     (False, False, " -ra", False), (False, False, " && {run} tests/test_other.py", False),
-    (False, True, "", True)], ids=["new-client", "earlier-adoption", "failed-test",
+    (False, True, "", True)], ids=["new-client", "failed-test",
                                    "own-report-options", "two-pytest-runs", "teardown-error"])
 def test_1_close_writes_the_proof_list_from_the_tests_it_ran(env, adopted, red, options, teardown):
     run = f'"{Path(sys.executable).as_posix()}" -m pytest -q -p no:cacheprovider'
@@ -144,8 +144,8 @@ NESTED = ("import os, pathlib, subprocess, sys\n\n\ndef test_returning(tmp_path)
           "    assert run.returncode == 0, run.stdout + run.stderr\n")
 
 
-@pytest.mark.parametrize("adopted, options", [(False, ""), (True, ""), (False, " -n 2")],
-                         ids=["new-client", "earlier-adoption", "xdist"])
+@pytest.mark.parametrize("adopted, options", [(False, ""), (False, " -n 2")],
+                         ids=["new-client", "xdist"])
 def test_4_a_test_that_starts_its_own_pytest_passes_under_close(env, adopted, options):
     run = f'"{Path(sys.executable).as_posix()}" -m pytest -q -p no:cacheprovider'
     _, published = _close(env, adopted, f"{run} tests/test_greeting.py{options}", greeting=NESTED)

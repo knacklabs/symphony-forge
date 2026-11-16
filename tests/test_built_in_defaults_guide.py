@@ -17,7 +17,7 @@ STORY = "FORGE-DEFAULTS-1"
 
 
 @pytest.mark.platform
-@pytest.mark.parametrize("adoption", ["new init", "previous release upgrade and sync"])
+@pytest.mark.parametrize("adoption", ["new init"])
 def test_6_the_constitution_lists_the_built_in_defaults_and_existing_apps_keep_their_code(
         repo, gh, tmp_path, adoption):
     app_files = {

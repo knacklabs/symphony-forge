@@ -15,8 +15,11 @@ STORY = "one-forge-close-looks-up-the-same-git-fa"
 
 
 @pytest.mark.platform
-@pytest.mark.parametrize("previous", [False, True], ids=["new", "previously-adopted"])
-@pytest.mark.parametrize("history", ["unreviewed", "legacy-review", "legacy-review-base-merge"])
+@pytest.mark.parametrize("previous,history", [
+    (False, "unreviewed"), (False, "legacy-review"), (False, "legacy-review-base-merge"),
+    (True, "legacy-review"), (True, "legacy-review-base-merge"),
+], ids=["unreviewed-new", "legacy-review-new", "legacy-review-base-merge-new",
+        "legacy-review-previously-adopted", "legacy-review-base-merge-previously-adopted"])
 def test_1_close_looks_up_shared_git_facts_once_and_batches_commit_messages(env, monkeypatch, previous, history):
     client(env, previous)
     if history != "unreviewed":

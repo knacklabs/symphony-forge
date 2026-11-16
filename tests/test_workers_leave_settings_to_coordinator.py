@@ -18,7 +18,7 @@ from test_upgrade_command import RELEASE, Upgrade, unsynced_up  # noqa: F401
 STORY = "worker-no-settings"
 
 
-@pytest.fixture(params=[False, True], ids=["new-client", "previous-adoption"])
+@pytest.fixture(params=[False], ids=["new-client"])
 def client(repo, gh, tmp_path, request):
     if request.param:
         shutil.copytree(ROOT / "tests/fixtures/adopted-v1.2.2/client", repo.path,

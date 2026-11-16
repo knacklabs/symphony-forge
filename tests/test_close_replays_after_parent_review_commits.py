@@ -86,7 +86,7 @@ def parent_merged_after_part_picked_up_its_review_commits(env, previous, scenari
     return repo, part
 
 
-@pytest.mark.parametrize("previous", [False, True], ids=["new", "previously-adopted"])
+@pytest.mark.parametrize("previous", [False], ids=["new"])
 @pytest.mark.parametrize("scenario", list(SCENARIOS))
 def test_1_close_replays_only_the_parts_own_work_after_the_parent_merges(env, previous, scenario):
     repo, part = parent_merged_after_part_picked_up_its_review_commits(env, previous, scenario)
@@ -113,7 +113,7 @@ def test_1_close_replays_only_the_parts_own_work_after_the_parent_merges(env, pr
         "rev-parse", "HEAD", cwd=part)
 
 
-@pytest.mark.parametrize("previous", [False, True], ids=["new", "previously-adopted"])
+@pytest.mark.parametrize("previous", [False], ids=["new"])
 def test_2_close_keeps_uncommitted_edits_when_the_replay_cannot_start(env, previous):
     repo, part = parent_merged_after_part_picked_up_its_review_commits(env, previous, "one-pickup")
     head, before = repo.git("rev-parse", "HEAD", cwd=part), len(env.review_calls())

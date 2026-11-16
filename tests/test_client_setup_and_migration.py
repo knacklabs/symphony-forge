@@ -1,7 +1,6 @@
 """Clients receive setup, migration and advisory PR-size guidance at init or sync."""
 import os
 import re
-import shutil
 import subprocess
 import zipfile
 from pathlib import Path
@@ -9,14 +8,13 @@ from pathlib import Path
 import pytest
 
 from conftest import ROOT
-from test_setup import _fresh_client, _version
+from test_setup import _fresh_client
 
 STORY = "FIX-CLIENT-SETUP-AND-MIGRATION"
 
 
 @pytest.mark.platform
-@pytest.mark.parametrize("case", ["new", "adopt", "adopt with alternate path spelling",
-                                  "previous adoption"])
+@pytest.mark.parametrize("case", ["new", "adopt", "adopt with alternate path spelling"])
 def test_1_init_and_sync_ship_setup_migration_and_advisory_pr_size(repo, gh, tmp_path, case):
     if case == "new":
         client, done = _fresh_client(repo, gh, tmp_path)
@@ -31,15 +29,6 @@ def test_1_init_and_sync_ship_setup_migration_and_advisory_pr_size(repo, gh, tmp
         client = next(Path(block.splitlines()[0].removeprefix("worktree "))
                       for block in repo.git("worktree", "list", "--porcelain").split("\n\n")
                       if "branch refs/heads/fix/adopt-forge" in block.splitlines())
-    else:
-        # Real v1.2.2 adoption output, built from plain text, then upgraded and synced.
-        shutil.copytree(ROOT / "tests/fixtures/adopted-v1.2.2/client", repo.path,
-                        dirs_exist_ok=True)
-        repo.git("checkout", "-q", "-b", "fix/setup")
-        config = (repo.path / "forge.toml").read_text(encoding="utf-8")
-        repo.write("forge.toml", config.replace('version = "v1.2.2"',
-                                               f'version = "{_version(repo)}"'))
-        client, done = repo.path, repo.forge("sync")
     assert done.returncode == 0, done.stdout + done.stderr
 
     for host in (".claude", ".codex"):

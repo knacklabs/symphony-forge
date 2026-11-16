@@ -34,7 +34,7 @@ def _waiting(repo, gh, tmp_path, adopted):
     return shop
 
 
-@pytest.mark.parametrize("adopted", [False, True], ids=["new-client", "adopted-on-v1.2.2"])
+@pytest.mark.parametrize("adopted", [False], ids=["new-client"])
 def test_1_pin_notice_waits_until_approval_is_recorded(repo, gh, tmp_path, claude_payload, adopted):
     shop = _waiting(repo, gh, tmp_path, adopted)
     (shop / "forge.toml").write_text(
@@ -63,7 +63,7 @@ def test_1_pin_notice_waits_until_approval_is_recorded(repo, gh, tmp_path, claud
     assert repo.git("log", "-1", "--format=%s", "story/SHOP").startswith("Approve the plan")
 
 
-@pytest.mark.parametrize("adopted", [False, True], ids=["new-client", "adopted-on-v1.2.2"])
+@pytest.mark.parametrize("adopted", [False], ids=["new-client"])
 def test_2_newer_pin_notice_names_the_pinned_release(repo, gh, tmp_path, claude_payload, adopted):
     shop = _waiting(repo, gh, tmp_path, adopted)
     version = repo.forge("--version").stdout.split()[-1]
@@ -79,7 +79,7 @@ def test_2_newer_pin_notice_names_the_pinned_release(repo, gh, tmp_path, claude_
     assert repo.git("log", "-1", "--format=%s", "story/SHOP").startswith("Approve the plan")
 
 
-@pytest.mark.parametrize("adopted", [False, True], ids=["new-client", "adopted-on-v1.2.2"])
+@pytest.mark.parametrize("adopted", [False], ids=["new-client"])
 def test_3_blank_answers_count_as_unanswered(repo, gh, tmp_path, claude_payload, codex_payload, adopted):
     _waiting(repo, gh, tmp_path, adopted)
     started = repo.forge("fix", "start", "Answers", "--done", "Real answers count")

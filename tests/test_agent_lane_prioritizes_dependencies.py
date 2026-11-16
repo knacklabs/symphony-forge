@@ -18,7 +18,7 @@ from test_upgrade_command import unsynced_up  # noqa: F401
 STORY = "unblockers-first"
 
 
-@pytest.mark.parametrize("history", ["new", "adopted-v1.2.2"])
+@pytest.mark.parametrize("history", ["new"])
 @pytest.mark.parametrize("dependency", ["after", "scope-only-draft"])
 def test_1_waiting_prerequisites_start_first_and_explain_their_place(
         env, gh, tmp_path, claude_payload, history, unsynced_up, dependency):

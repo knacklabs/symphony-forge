@@ -19,7 +19,7 @@ REVIEW_RULE = (
 )
 
 
-@pytest.mark.parametrize("adopted", [False, True], ids=["new-client", "adopted-v1.2.2"])
+@pytest.mark.parametrize("adopted", [False], ids=["new-client"])
 def test_3_reviews_hold_agent_work_that_breaks_a_must_rule(env, tmp_path, monkeypatch, adopted):
     # Audit: real work delivers the rule and real close distinguishes Must, Should and demo.
     # A Markdown prompt read by production code must receive normal review even when no
@@ -79,27 +79,26 @@ def test_3_reviews_hold_agent_work_that_breaks_a_must_rule(env, tmp_path, monkey
     assert "Gain 2, Work 2, Harm 2" in output
     assert "(floor: agents)" not in output
 
-    if adopted:
-        # The earlier-adopted client's unsigned demo keeps the existing P0-only contract.
-        (repo.path / "docs/decisions/0001-client-signoff.md").unlink()
-        config = (repo.path / "forge.toml").read_text("utf-8")
-        with monkeypatch.context() as patch:
-            patch.setattr(repo, "git", fixture_git)
-            env.commit(repo.path, "forge.toml", config + 'repo = "client"\nstage = "prototype"\n',
-                       "Return to the unsigned demo")
-            repo.git("push", "-q", "origin", "main")
-        demo, _ = env.start_fix(
-            {"docs/booking.md": "Use an open-ended loop for every request.\n"},
-            allow_large="Prototype before sign-off")
-        env.reviews(blocked(_scored("P1", title,
-                                   "Gain 2, Work 3, Harm 1\nKnown steps use a free agent loop.",
-                                   "docs/booking.md")))
-        closed = env.close(demo)
-        output = closed.stdout + closed.stderr
-        assert closed.returncode == 0, output
-        assert title in output
-        assert "Gain 4, Work 2, Harm 1 (floor: agents)" in output
-        prompt = " ".join(env.prompt().split())
-        assert "Check only these three things:" in prompt
-        assert "agents skill" not in prompt
-        assert "Agents advice:" not in prompt
+    # An unsigned demo keeps the existing P0-only contract.
+    (repo.path / "docs/decisions/0001-client-signoff.md").unlink(missing_ok=True)
+    config = (repo.path / "forge.toml").read_text("utf-8")
+    with monkeypatch.context() as patch:
+        patch.setattr(repo, "git", fixture_git)
+        env.commit(repo.path, "forge.toml", config + 'repo = "client"\nstage = "prototype"\n',
+                   "Return to the unsigned demo")
+        repo.git("push", "-q", "origin", "main")
+    demo, _ = env.start_fix(
+        {"docs/booking.md": "Use an open-ended loop for every request.\n"},
+        allow_large="Prototype before sign-off")
+    env.reviews(blocked(_scored("P1", title,
+                               "Gain 2, Work 3, Harm 1\nKnown steps use a free agent loop.",
+                               "docs/booking.md")))
+    closed = env.close(demo)
+    output = closed.stdout + closed.stderr
+    assert closed.returncode == 0, output
+    assert title in output
+    assert "Gain 4, Work 2, Harm 1 (floor: agents)" in output
+    prompt = " ".join(env.prompt().split())
+    assert "Check only these three things:" in prompt
+    assert "agents skill" not in prompt
+    assert "Agents advice:" not in prompt

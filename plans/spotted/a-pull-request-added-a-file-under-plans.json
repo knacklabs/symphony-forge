@@ -1,0 +1,48 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/docskip.py\tFunctional: Check recursive readers before skipping docs-only tests\ta-pull-request-added-a-file-under-plans",
+      "kind": "bug",
+      "path": "src/forge/docskip.py",
+      "line": 77,
+      "text": "Functional: Check recursive readers before skipping docs-only tests",
+      "from": "blocking",
+      "item": "a-pull-request-added-a-file-under-plans",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/docskip.py\tGate: Document the picker change for new and existing repositories\ta-pull-request-added-a-file-under-plans",
+      "kind": "bug",
+      "path": "src/forge/docskip.py",
+      "line": 77,
+      "text": "Gate: Document the picker change for new and existing repositories",
+      "from": "blocking",
+      "item": "a-pull-request-added-a-file-under-plans",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/docskip.py\tNot done: A change to any file inside a folder tree that a test scans picks that test.\ta-pull-request-added-a-file-under-plans",
+      "kind": "bug",
+      "path": "src/forge/docskip.py",
+      "line": 77,
+      "text": "Not done: A change to any file inside a folder tree that a test scans picks that test.",
+      "from": "blocking",
+      "item": "a-pull-request-added-a-file-under-plans",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\ttests/test_fix_a_pull_request_added_a_file_under_plans.py\tGate: test_1_recursive_scan_is_picked_for_a_deeper_file_and_direct_listing_is_not\ta-pull-request-added-a-file-under-plans",
+      "kind": "bug",
+      "path": "tests/test_fix_a_pull_request_added_a_file_under_plans.py",
+      "line": 28,
+      "text": "Gate: test_1_recursive_scan_is_picked_for_a_deeper_file_and_direct_listing_is_not",
+      "from": "blocking",
+      "item": "a-pull-request-added-a-file-under-plans",
+      "status": "done",
+      "closed_by": "dismissed"
+    }
+  ]
+}

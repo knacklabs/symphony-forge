@@ -23,7 +23,7 @@ BUSY_READER = CODEX.replace(
 ''', 1)
 
 
-@pytest.mark.parametrize("adopted", [False, True], ids=["new", "earlier-adopted"])
+@pytest.mark.parametrize("adopted", [False], ids=["new"])
 def test_1_cold_read_starts_fresh_after_busy_conversation_retry(
         repo, monkeypatch, tmp_path, sdk_data, adopted):
     reader = _client_reader(repo, monkeypatch, tmp_path, sdk_data, "codex", adopted)

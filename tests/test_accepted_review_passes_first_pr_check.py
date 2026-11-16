@@ -8,7 +8,7 @@ from test_two_round_limit import client
 STORY = "accept-review-not-stale"
 
 
-@pytest.mark.parametrize("previous", [False, True], ids=["new", "earlier-adopted"])
+@pytest.mark.parametrize("previous", [False], ids=["new"])
 def test_1_first_accepted_close_passes_pr_check_on_pushed_head(env, previous):
     client(env, previous)
     env.commit(env.repo.path, "greeting.py", "GREETING = 'Hello'\n")

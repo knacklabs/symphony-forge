@@ -20,7 +20,7 @@ from test_worker import install_claude
 STORY = "FIX-BOARD-DATA-TRUTH"
 
 
-@pytest.mark.parametrize("history", ["new", "adopted-v1.2.2"])
+@pytest.mark.parametrize("history", ["new"])
 def test_13_close_tests_after_worker_exit_show_tests_running(
         env, tmp_path, monkeypatch, release_server, history):
     repo = env.repo

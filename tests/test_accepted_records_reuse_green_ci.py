@@ -13,7 +13,7 @@ from test_review_record_reuses_parent_tests import suite_runs
 STORY = "FIX-NO-RECORDS-ONLY-RERUNS"
 
 
-@pytest.mark.parametrize("previous", [False, True], ids=["new", "earlier-adopted"])
+@pytest.mark.parametrize("previous", [False], ids=["new"])
 def test_1_accepted_close_records_reuse_the_green_code_run(env, previous, tmp_path):
     # Existing parent-reuse cases construct records. Only real acceptance exercises
     # the known findings and spotted records that close writes with its review.

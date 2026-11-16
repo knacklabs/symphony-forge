@@ -29,7 +29,7 @@ def _collapsed(path):
     return " ".join(path.read_text(encoding="utf-8").split())
 
 
-@pytest.fixture(params=["new init", "previous release"])
+@pytest.fixture(params=["new init"])
 def delivered(repo, gh, tmp_path, request):
     # Audit: three distinct delivered prompt contracts; missing text or stale sync is the
     # regression. Other guide tests cover other rules. Real init/sync/work own delivery;

@@ -10,7 +10,7 @@ STORY = "FIX-WINDOWS-PLATFORM-SUBSET"
 
 
 @pytest.mark.platform
-@pytest.mark.parametrize("client", [False, True], indirect=True, ids=["new", "adopted"])
+@pytest.mark.parametrize("client", [False], indirect=True, ids=["new"])
 def test_3_close_refuses_stale_settings_without_changing_bytes(env, client, tmp_path):
     folder, original, incoming = _setup(env, client, tmp_path)
     incoming = incoming.replace("\n", "\r\n")

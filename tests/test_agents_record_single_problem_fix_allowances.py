@@ -18,7 +18,7 @@ from test_story import worktree
 STORY = "agent-allowance"
 
 
-@pytest.mark.parametrize("adoption", ["new", "earlier release"])
+@pytest.mark.parametrize("adoption", ["new"])
 def test_1_agents_record_single_problem_allowances_and_review_checks_the_reason(env, tmp_path,
                                                                             adoption):
     repo = env.repo

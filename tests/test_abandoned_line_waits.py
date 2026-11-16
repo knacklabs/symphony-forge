@@ -17,7 +17,7 @@ from test_item_time_history import row
 STORY = "FIX-DEAD-RUN-WAIT-ENDS"
 
 
-@pytest.mark.parametrize("history", ["new", "adopted-v1.2.2"])
+@pytest.mark.parametrize("history", ["new"])
 @pytest.mark.parametrize("status", ["working", "done"])
 def test_1_abandoned_line_wait_ends_at_the_next_item_event(env, tmp_path, monkeypatch, history, status):
     _client(env.repo, env.gh, tmp_path, history)

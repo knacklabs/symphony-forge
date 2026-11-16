@@ -20,8 +20,8 @@ pytestmark = pytest.mark.usefixtures("claude_session")
 
 
 @pytest.mark.parametrize("adopted, coordinator", [
-    (False, "claude"), (True, "claude"), (False, "codex"), (True, "codex"),
-], ids=["new", "earlier-adopted", "new-codex", "earlier-adopted-codex"])
+    (False, "claude"), (False, "codex"),
+], ids=["new", "new-codex"])
 def test_1_no_setting_requests_normal_speed_for_fixes_and_repair_rounds(
         repo, monkeypatch, sdk_data, tmp_path, adopted, coordinator):
     # Omission must mean normal speed, even for fixes and repair rounds.

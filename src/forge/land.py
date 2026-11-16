@@ -528,9 +528,16 @@ def _queue(top: Path) -> int:
             child.stdin.close()
             # Two closes fetching at the same moment can collide on git's lock of a shared ref, and the
             # retry can collide again, so an item starts again up to twice.
-            if child.returncode and collided.get(item, 0) < 2 and any("cannot lock ref" in line for line in lines):
+            # A short network outage is retried the same way.
+            lock = any("cannot lock ref" in line for line in lines)
+            # Forge's own words after the gh read retries ran out count too.
+            net = any(m in line for line in lines for m in (*repo.NETWORK, repo.REFUSALS["no_github"][0]))
+            if child.returncode and collided.get(item, 0) < 2 and (lock or net):
+                if not lock:  # wait 10 s, then 30 s, so the two tries span a short outage
+                    time.sleep(float(os.environ.get("FORGE_NETWORK_RETRY_WAIT", "10")) * 3 ** collided.get(item, 0))
                 collided[item] = collided.get(item, 0) + 1
-                say(f"{item} met another change's git lock; starting it again.")
+                say(f"{item} met " + ("another change's git lock" if lock else "a short network problem")
+                    + "; starting it again.")
                 running[item] = spawn(item)
                 continue
             finished.add(item)

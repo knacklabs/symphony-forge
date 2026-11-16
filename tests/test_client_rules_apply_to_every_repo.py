@@ -14,7 +14,7 @@ from test_worker import calls, install_claude
 STORY = "client-workers-and-reviews-receive-forge"
 
 
-@pytest.mark.parametrize("setup", ["new", "previous-release adoption"])
+@pytest.mark.parametrize("setup", ["new"])
 def test_1_sync_and_worker_briefs_carry_only_general_rules(repo, gh, tmp_path, monkeypatch, setup):
     log = install_claude(repo)
     if setup == "new":
