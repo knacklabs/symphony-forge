@@ -4,12 +4,122 @@
   "done_when": "A change to any file inside a folder tree that a test scans picks that test.",
   "fix_kind": "backend",
   "kind": "fix",
+  "known": [
+    {
+      "area": "reads_file_relative() in src/forge/docskip.py",
+      "file": "src/forge/docskip.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 77,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Check recursive readers before skipping docs-only tests",
+      "work": 2
+    },
+    {
+      "area": "reads_file_relative() in src/forge/docskip.py",
+      "file": "src/forge/docskip.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 77,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: A change to any file inside a folder tree that a test scans picks that test.",
+      "work": 3
+    },
+    {
+      "area": "test_1_recursive_scan_is_picked_for_a_deeper_file_and_direct_listing_is_not() in tests/test_fix_a_pull_request_added_a_file_under_plans.py",
+      "file": "tests/test_fix_a_pull_request_added_a_file_under_plans.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 28,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_recursive_scan_is_picked_for_a_deeper_file_and_direct_listing_is_not",
+      "work": 1
+    },
+    {
+      "area": "reads_file_relative() in src/forge/docskip.py",
+      "file": "src/forge/docskip.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 77,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: Document the picker change for new and existing repositories",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "acc8fab4f577aa2b47561928931a53cbe6d46004caa8cb947e174b2295e3ff0c",
+    "changed": "3e8febc7e45ee6079a04a7dbb32f11ef5ccaf6972310f477b9396dd3413209ec",
+    "commit": "9a34d84dc9a91bd138521d60bc9e77cc0686229d",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 5, Work 2, Harm 3\nRaise: Functional\nCase: normal use - a client without an always-tests list adds `plans/notes/n.md` while a test scans `(ROOT / 'plans').rglob('*.md')`.\nThe docs-only classifier searches for changed basenames before calling the new scanner logic (`src/forge/docskip.py:133-152`). The test need not contain `n.md`, so it is never examined. Close then skips the tests (`src/forge/review.py:406`), and the generated CI classifier makes the same decision (`src/forge/templates/review-tests.py:147-150`). The picker is never reached, allowing an invalid nested plan to pass its pull request check.",
+        "file": "src/forge/docskip.py",
+        "gain": 5,
+        "harm": 3,
+        "line": 77,
+        "priority": "P1",
+        "title": "Functional: Check recursive readers before skipping docs-only tests",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 3, Harm 3\nRaise: Not done\nCase: normal use - changing a Python template or a starter file covered by a repository-wide rule.\nThe new recursive matching is not applied to Python files: `src/forge/fasttest.py:449-451` filters them out. For example, changing `src/forge/templates/starter-python/apps/api/app/main.py` does not select `tests/test_client_templates_select_starter_proofs.py`, which scans the templates tree at lines 20-24. The helper also rejects imported roots (`src/forge/docskip.py:20`; `tests/test_no_plugin.py:6,35`) and cannot resolve the loop variable used by `tests/test_react_starter.py:23-31`. Recursive `glob.glob(...)` calls are also missed because `src/forge/docskip.py:71-75` treats the module as the listed path. These tests can fail on a change while remaining outside its related-test run.",
+        "file": "src/forge/docskip.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 77,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: A change to any file inside a folder tree that a test scans picks that test.",
+        "work": 3
+      },
+      {
+        "body": "Gain 3, Work 1, Harm 3\nRaise: Test\nCase: normal use - reviewing a change to the picker that selects the wrong test.\nBoth fixture tests pass because `plans/a.md` exists, and the proof asserts only `1 passed`. A picker that skips `test_deep` and selects only `test_shallow` therefore passes this proof. The proof also remains green for the Python-file and imported-root cases that the current picker misses. Assert which test ran and cover the missed behavior at the command boundary.",
+        "file": "tests/test_fix_a_pull_request_added_a_file_under_plans.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 28,
+        "priority": "P1",
+        "title": "Gate: test_1_recursive_scan_is_picked_for_a_deeper_file_and_direct_listing_is_not",
+        "work": 1
+      },
+      {
+        "body": "Gain 4, Work 1, Harm 2\nRaise: Gate\nCase: normal use - a coordinator uses the picker in a new or upgraded client repository.\nThe change does not say what either class of repository receives, and it updates neither the coordinator skill nor the worker brief. The shipped skill still says that changed non-Python inputs do not select tests (`src/forge/templates/skill.md:2236-2240`), although this change selects tests for nested Markdown inputs. The repository's review rules require the changed command behavior and its availability to both kinds of repository to be documented.\nAdds work: document the selection behavior and availability; F 2 x H 2 = 4; 2 x C = 2",
+        "file": "src/forge/docskip.py",
+        "gain": 4,
+        "harm": 2,
+        "line": 77,
+        "priority": "P1",
+        "title": "Gate: Document the picker change for new and existing repositories",
+        "work": 1
+      }
+    ],
+    "id": "dc54b10e-a516-43d7-bd11-36426eca36b3",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-16T07:10:25.644769+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-16T07:20:23.776350+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
