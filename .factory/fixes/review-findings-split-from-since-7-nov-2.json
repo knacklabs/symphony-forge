@@ -133,7 +133,7 @@
     "id": "0a88da9c-0881-4202-be9f-58132182b432",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "stacked_on": "since-7-nov-2026-first-code-reviews-writ",
   "status": "fixing",
   "steps": [
@@ -147,10 +147,12 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "3d782b5808e6d585cfb560f09bf09bfb1c2614d4",
-    "keys": {},
-    "round": null
+    "close": "507116ca-e378-45a2-86fd-cc54f82dd621",
+    "head": "5e2f39b632fa3652cef6f8eeb58a098309e3ac30",
+    "keys": {
+      "the open P0 not done: a review no longer finds: preserve distinct findings that share a title and file (src/forge/review.py:1045) in src/forge/review.py": 1
+    },
+    "round": 1
   },
   "why": "Review findings split from since-7-nov-2026-first-code-reviews-writ: Preserve distinct findings that share a title and file (src/forge/review.py:1045)",
   "worker": "claude"
