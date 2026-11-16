@@ -1011,6 +1011,16 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
             history = state["signoff_history"] if signoff_prompt else _history(top, item, base, previous, state=state)
             settled = {score.identity(*key): reason for key, reason in
                        _settled(history).items()}
+            # A settlement never covers a finding more serious than the ones it settled.
+            ceiling = {}
+            for old in history:
+                for earlier in old.get("findings", []):
+                    key = score.identity(earlier["file"], earlier["title"])
+                    ceiling[key] = min(ceiling.get(key, "P9"), earlier["priority"])
+            for finding in findings:
+                key = score.identity(finding["file"], finding["title"])
+                if finding["priority"] < ceiling.get(key, "P9"):
+                    settled.pop(key, None)
             if item == "client-signoff":
                 # The owner accepts the limitation in this version of the file,
                 # independent of the next reviewer's wording. Edits reopen it.
