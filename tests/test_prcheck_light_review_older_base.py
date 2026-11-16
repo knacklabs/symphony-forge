@@ -3,6 +3,8 @@ from __future__ import annotations
 
 from test_close import env  # noqa: F401 (env is the shared fixture)
 
+STORY = "FIX-DOCS-ONLY-LIGHT-REVIEW-OLDER-BASE"
+
 
 def test_1_docs_only_light_review_passes_with_older_event_base(env):
     item, where = env.start_fix({"README.md": "Hello\n"})
