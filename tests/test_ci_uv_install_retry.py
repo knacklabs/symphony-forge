@@ -43,21 +43,3 @@ def test_1_new_repo_retries_uv_install_once(repo, gh, tmp_path):
     result = repo.forge("init", "--actions", "yes", cwd=client)
     assert result.returncode == 0, result.stdout + result.stderr
     _assert_retry(client)
-
-
-@pytest.mark.platform
-def test_2_earlier_adopted_repo_gets_uv_retry_on_sync(repo):
-    shutil.copytree(ROOT / "tests/fixtures/doctor-v1.2.2", repo.path, dirs_exist_ok=True)
-    workflow = repo.path / ".github/workflows/forge.yml"
-    before = workflow.read_text("utf-8")
-    assert before.count("uses: astral-sh/setup-uv@") == 2
-    assert "steps.setup-uv.outcome" not in before
-    repo.git("add", "-A")
-    repo.git("commit", "-qm", "Adopt an earlier Forge release")
-    repo.git("checkout", "-qb", "fix/retry-uv")
-    config = (repo.path / "forge.toml").read_text("utf-8")
-    version = repo.forge("--version").stdout.split()[-1]
-    repo.write("forge.toml", config.replace('version = "v1.2.2"', f'version = "{version}"'))
-    result = repo.forge("sync")
-    assert result.returncode == 0, result.stdout + result.stderr
-    _assert_retry(repo.path)

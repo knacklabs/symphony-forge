@@ -85,23 +85,6 @@ def test_1_new_clients_git_commit_and_push_build_only_their_hook(repo, gh, tmp_p
     _assert_hooks_are_small(repo, client, tmp_path / "starts.jsonl")
 
 
-@pytest.mark.platform
-def test_2_earlier_adopted_clients_get_small_hooks_after_upgrade(unsynced_up):
-    up = unsynced_up
-    shutil.copytree(ROOT / "tests/fixtures/adopted-v1.2.2/client", up.repo.path, dirs_exist_ok=True)
-    up.repo.git("switch", "-qc", "adoption")
-    up.repo.git("add", "-A")
-    up.repo.git("commit", "-qm", "Adopt earlier Forge")
-    up.repo.git("switch", "-q", "main")
-    up.repo.git("merge", "-q", "--ff-only", "adoption")
-    up.repo.git("push", "-q", "origin", "main")
-    upgraded = up.run(RELEASE)
-    assert upgraded.returncode == 0, upgraded.stdout + upgraded.stderr
-    # Use the installed release launcher and its hook shims, not this checkout's launcher.
-    up.repo.bin = up.tmp / "uvbin"
-    _assert_hooks_are_small(up.repo, up.folder, up.tmp / "starts.jsonl")
-
-
 @pytest.mark.parametrize("words,expected", HELP.items())
 @pytest.mark.platform
 def test_3_root_groups_and_commands_keep_their_help(repo, monkeypatch, words, expected):

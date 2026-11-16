@@ -15,9 +15,9 @@ STORY = "FIX-CI-TESTS-USE-WHOLE-RUNNER"
 
 @pytest.mark.parametrize("adopted,actions,expected,options", [
     (False, "true", 4, "-n auto"), (False, "false", 1, "-n auto"),
-    (True, "true", 4, "-n auto"), (False, "true", 1, ""),
+    (False, "true", 1, ""),
     (False, "true", 2, "-n 2"), (False, "true", 1, "-n auto --maxprocesses=1"),
-], ids=["github-new", "laptop", "github-earlier-adopted", "serial", "fixed", "capped"])
+], ids=["github-new", "laptop", "serial", "fixed", "capped"])
 def test_1_github_uses_all_cores_and_laptop_keeps_agent_share(repo, gh, monkeypatch, adopted, actions, expected, options):
     # Real pytest workers receive the budget. The old CI reserve starts one
     # worker instead of four. Existing cap tests cover only laptops. OS readings

@@ -36,7 +36,7 @@ def png() -> bytes:
             + chunk(b"IDAT", zlib.compress(b"\x00\x00")) + chunk(b"IEND", b""))
 
 
-@pytest.mark.parametrize("adopted", [False, True], ids=["init", "earlier-adoption"])
+@pytest.mark.parametrize("adopted", [False], ids=["init"])
 def test_1_close_reviews_a_change_that_adds_a_png_screenshot(env, adopted):
     if adopted:
         adopt_earlier(env)

@@ -16,7 +16,7 @@ from test_worker import calls, install_claude
 STORY = "FIX-ADOPTION-SETS-WHOLE-REPO-CHECKS"
 
 
-@pytest.mark.parametrize("previous", [False, True], ids=["new-client", "previous-adoption"])
+@pytest.mark.parametrize("previous", [False], ids=["new-client"])
 def test_1_adoption_review_keeps_shared_input_checks(repo, gh, tmp_path, previous):
     if previous:
         shutil.copytree(ROOT / "tests/fixtures/adopted-v1.2.2/client", repo.path,

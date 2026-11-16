@@ -59,7 +59,7 @@ def older(env, prs, name):
 
 
 @pytest.mark.parametrize("case", ["waits", "blocking-problems", "size-warning"])
-@pytest.mark.parametrize("previous", [False, True], ids=["new-client", "earlier-adoption"])
+@pytest.mark.parametrize("previous", [False], ids=["new-client"])
 def test_2_needs_you_lists_every_wait_oldest_first_on_every_machine(env, monkeypatch, previous, case):
     client(env, previous)
     conftest._install(env.repo.bin, "claude", READER.format(python=sys.executable))

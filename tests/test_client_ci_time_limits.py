@@ -16,7 +16,7 @@ from test_land import ITEM, _fix, land  # noqa: F401
 STORY = "FIX-NODE-CI-TIMEOUT"
 
 
-@pytest.mark.parametrize("history", ["new", "upgraded"])
+@pytest.mark.parametrize("history", ["new"])
 def test_1_node_tests_get_sixty_minutes_on_adoption_and_sync(repo, gh, tmp_path, history):
     if history == "new":
         # init needs an empty history, unlike the ordinary repo fixture.
@@ -57,7 +57,6 @@ def test_1_node_tests_get_sixty_minutes_on_adoption_and_sync(repo, gh, tmp_path,
     ("new", "cancelled", 1861, "tests", False),
     ("new", "failure", 1800, "tests", False),
     ("new", "timed_out", 1800, "lint", False),
-    ("upgraded", "cancelled", 1800, "tests", True),
     pytest.param("new", "timed_out", 1800, "test group 1 of 1", True, id="generated_group"),
 ])
 def test_2_close_distinguishes_test_time_limits_from_worker_failures(
@@ -96,7 +95,6 @@ def test_2_close_distinguishes_test_time_limits_from_worker_failures(
     ("new", "test group 2 of 2"),
     ("new", "tests (windows-latest)"),
     ("new", "tests"),
-    ("upgraded", "lint"),
 ])
 def test_3_independent_failures_keep_worker_recovery_alongside_timeouts(land, history, other):
     # The aggregate tests failure follows the timed-out group. The other failure

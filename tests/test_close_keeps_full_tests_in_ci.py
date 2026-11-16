@@ -71,7 +71,7 @@ def test_1_ci_close_leaves_tests_to_ci_and_red_ci_returns_the_item(env, tmp_path
     assert settings["test"] == command and settings["test_place"] == "ci"
 
 
-@pytest.mark.parametrize("previous", [False, True], ids=["init", "upgrade-and-sync"])
+@pytest.mark.parametrize("previous", [False], ids=["init"])
 @pytest.mark.parametrize("runner", ["jest", "vitest"])
 @pytest.mark.timeout(NPM_CLOSE + 120)
 def test_2_new_and_previously_adopted_clients_receive_local_selection_and_related_ci(

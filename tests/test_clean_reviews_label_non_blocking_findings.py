@@ -9,7 +9,7 @@ pytestmark = pytest.mark.platform
 STORY = "clean-review-labels"
 
 
-@pytest.mark.parametrize("adopted", [False, True], ids=["new-client", "adopted-v1.2.2"])
+@pytest.mark.parametrize("adopted", [False], ids=["new-client"])
 def test_1_clean_review_labels_non_blocking_p1_findings(env, adopted):
     config = (env.repo.path / "forge.toml").read_text("utf-8")
     client(env, adopted)

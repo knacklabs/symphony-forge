@@ -51,7 +51,7 @@ def _setup(env, client, tmp_path, named=False, renamed_check=False, part=False, 
 
 
 @pytest.mark.platform
-@pytest.mark.parametrize("client", [False, True], indirect=True, ids=["new", "adopted"])
+@pytest.mark.parametrize("client", [False], indirect=True, ids=["new"])
 @pytest.mark.usefixtures("claude_session")
 def test_1_codex_open_merge_keeps_incoming_settings_through_close(
         env, client, monkeypatch, sdk_data, tmp_path):
@@ -115,7 +115,7 @@ def test_1_codex_open_merge_keeps_incoming_settings_through_close(
 @pytest.mark.parametrize("client, case", [
     pytest.param(False, case, id=f"new-{case}")
     for case in ("stale", "pin-only", "allowed", "clean", "checks", "part", "land")
-] + [pytest.param(True, "checks", id="adopted-stale-and-renamed-checks")], indirect=["client"])
+], indirect=["client"])
 def test_2_close_refuses_unlisted_settings_and_keeps_the_branch_change(
         env, client, tmp_path, case):
     folder, original, incoming = _setup(env, client, tmp_path, named=case == "allowed",

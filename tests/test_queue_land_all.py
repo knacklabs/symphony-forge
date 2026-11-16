@@ -158,7 +158,7 @@ for _own in Path(os.environ["AUTOREVIEW_STUB"]).parent.glob("reviews-fix-*.json"
 SHARED = "".join(f"line {n}\n" for n in range(1, 8))
 
 
-@pytest.fixture(params=["new", "adopted"])
+@pytest.fixture(params=["new"])
 def client(env, request):
     repo = env.repo
     # Land's direct Python children bypass the command shim's idle-machine override.

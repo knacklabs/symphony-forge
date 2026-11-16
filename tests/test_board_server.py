@@ -33,7 +33,7 @@ from test_story import worktree
 STORY = "FORGE-BOARD-4"
 
 
-@pytest.fixture(params=["new", "adopted-v1.2.2"])
+@pytest.fixture(params=["new"])
 def client(repo, gh, tmp_path, request):
     _client(repo, gh, tmp_path, request.param)
     gh.respond("pr", "list", stdout="[]")

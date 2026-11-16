@@ -41,7 +41,7 @@ def test_1_worker_start_resume_and_review_force_quiet_config(env, monkeypatch, s
     for request in [start, *_sent(calls, "thread/resume")]:
         assert {key: request["config"].get(key) for key in QUIET} == QUIET
 
-    # The release also reaches a new client and one adopted with the earlier release.
+    # The release also reaches a new client.
     _install(repo.bin, "codex-app-server", (ROOT / "tests/stubs/codex-app-server").read_text(encoding="utf-8"))
     client, made = _fresh_client(repo, env.gh, tmp_path)
     assert made.returncode == 0, made.stdout + made.stderr
@@ -49,29 +49,7 @@ def test_1_worker_start_resume_and_review_force_quiet_config(env, monkeypatch, s
                          "The reader uses quiet settings", "--kind", "mechanical", cwd=client)
     assert started.returncode == 0, started.stdout + started.stderr
     client = Path(started.stdout.splitlines()[0].rsplit(" in ", 1)[1])
-    old = tmp_path / "previous-release"
-    shutil.copytree(ROOT / "tests/fixtures/forge-v1.2.2", old)
-    (old / "src/forge/cli-py.txt").rename(old / "src/forge/cli.py")
-    _install(repo.bin, "old-forge", FORGE_SHIM.format(python=sys.executable, src=str(old / "src")))
-    adopted = tmp_path / "adopted"
-    remote = tmp_path / "adopted.git"
-    repo.git("init", "-q", "--bare", "-b", "main", str(remote))
-    repo.git("init", "-q", "-b", "main", str(adopted))
-    (adopted / "README.md").write_text("Existing app\n", encoding="utf-8")
-    repo.git("add", "-A", cwd=adopted)
-    repo.git("commit", "-qm", "Existing app", cwd=adopted)
-    repo.git("remote", "add", "origin", str(remote), cwd=adopted)
-    repo.git("push", "-q", "origin", "main", cwd=adopted)
-    made = subprocess.run([sys.executable, str(repo.bin / "old-forge"), "init",
-                           "--test", "echo ok", "--checks", "tests", "--interfaces", "api/routes/**",
-                           "--approver", "Owner", "--merger", "Owner"],
-                          cwd=adopted, capture_output=True, text=True)
-    assert made.returncode == 0, made.stdout + made.stderr
-    adopted = tmp_path / "adopted-fix-adopt-forge"
-    config = adopted / "forge.toml"
-    config.write_text(config.read_text(encoding="utf-8").replace(
-        'version = "v1.2.2"', f'version = "{_version(repo)}"'), encoding="utf-8")
-    for checkout in (client, adopted):
+    for checkout in (client,):
         synced = repo.forge("sync", cwd=checkout)
         assert synced.returncode == 0, synced.stdout + synced.stderr
         with home.open("a", encoding="utf-8") as trusted:

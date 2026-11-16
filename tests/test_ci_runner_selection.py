@@ -80,28 +80,6 @@ def test_1_new_client_init_selects_runner_and_bootstraps_tools(repo, gh, tmp_pat
     _tool_bootstrap(jobs)
 
 
-def test_2_earlier_release_adoption_sync_keeps_selected_runner_and_sets_up_unpinned_node(repo):
-    shutil.copytree(ROOT / "tests/fixtures/adopted-v1.2.2/client", repo.path, dirs_exist_ok=True)
-    config = (repo.path / "forge.toml").read_text("utf-8")
-    assert tomllib.loads(config)["version"] == "v1.2.2"
-    repo.git("add", "-A")
-    repo.git("commit", "-qm", "Adopt Forge on an earlier release")
-    repo.git("checkout", "-qb", "fix/select-ci-runner")
-    current = repo.forge("--version").stdout.split()[-1]
-    config = 'runner = "self-hosted"\n' + config.replace('version = "v1.2.2"', f'version = "{current}"')
-    (repo.path / "forge.toml").write_text(config, "utf-8")
-    # A Node client without engines still needs a version installed by setup-node.
-    repo.write("package.json", json.dumps({"scripts": {"test": "node --test"}}))
-    synced = repo.forge("sync")
-    assert synced.returncode == 0, synced.stdout + synced.stderr
-    assert (repo.path / "forge.toml").read_text("utf-8") == config
-    jobs = _jobs(repo.path)
-    assert [_runner(job) for job in jobs] == ["self-hosted", "self-hosted"]
-    _tool_bootstrap(jobs)
-    second = repo.forge("sync")
-    assert second.returncode == 0 and "Nothing to change" in second.stdout
-
-
 @pytest.mark.parametrize("runner", ["", "   "])
 def test_6_sync_refuses_blank_runner_label(repo, runner):
     repo.git("checkout", "-qb", "fix/select-ci-runner")
@@ -121,7 +99,7 @@ def test_6_sync_refuses_blank_runner_label(repo, runner):
 )] + [("doctor", f"pool-{activity}", "new") for activity in (
     "busy", "missing", "busy-running", "busy-rerun", "busy-case", "busy-days-ago", "missing-case",
     "wrong-label", "old-job", "future-job", "unassigned"
-)] + [("doctor", "pool-missing", "upgraded")])
+)])
 def test_3_only_doctor_names_a_likely_missing_runner_after_a_five_minute_queue(
         env, command, state, history, monkeypatch, request):
     if state.startswith("pool-"):

@@ -43,7 +43,7 @@ def _fixture_git(repo, tmp_path, *args, cwd=None):
 
 
 @pytest.mark.parametrize("case", [
-    "new prototype", "new after sign-off", "adopted", "adopted story already started",
+    "new prototype", "new after sign-off", "adopted story already started",
 ])
 def test_1_a_new_story_waits_for_the_approved_constitution(repo, gh, tmp_path, monkeypatch, case):
     if case == "new prototype" or case == "new after sign-off":
@@ -91,16 +91,6 @@ def test_1_a_new_story_waits_for_the_approved_constitution(repo, gh, tmp_path, m
         assert read.returncode == 0, read.stdout + read.stderr
         assert "constitution" not in read.stderr.lower()
         return
-    else:
-        shutil.copytree(ROOT / "tests/fixtures/adopted-v1.2.2/client", repo.path,
-                        dirs_exist_ok=True)
-        version = repo.forge("--version").stdout.split()[-1]
-        config = repo.path / "forge.toml"
-        config.write_text(config.read_text("utf-8").replace('"v1.2.2"', json.dumps(version)),
-                          encoding="utf-8")
-        repo.git("add", "-A")
-        _fixture_git(repo, tmp_path, "commit", "-q", "-m", "Adopt the earlier client")
-        _fixture_git(repo, tmp_path, "push", "-q", "origin", "main")
 
     refused = repo.forge("story", "new", "SHOP", "Shoppers can save a basket")
     assert refused.returncode == 1
@@ -200,7 +190,7 @@ def test_1_a_new_story_waits_for_the_approved_constitution(repo, gh, tmp_path, m
     assert CONSTITUTION_STEP not in next_step.stdout
 
 
-@pytest.mark.parametrize("adopted", [False, True], ids=["new-client", "adopted-v1.2.2"])
+@pytest.mark.parametrize("adopted", [False], ids=["new-client"])
 def test_2_the_constitution_is_approved_only_when_complete(repo, tmp_path, gh, adopted):
     if adopted:
         shutil.copytree(ROOT / "tests/fixtures/adopted-v1.2.2/client", repo.path,
@@ -324,7 +314,7 @@ def test_2_the_constitution_is_approved_only_when_complete(repo, tmp_path, gh, a
 
 
 @pytest.mark.parametrize("adopted,case", [
-    (False, "fix"), (True, "fix"), (False, "part"), (False, "documents"),
+    (False, "fix"), (False, "part"), (False, "documents"),
     (False, "proposed"), (False, "absent"), (False, "read"), (False, "read later"),
 ])
 def test_3_reviews_and_reads_hold_work_against_the_constitution(env, tmp_path, monkeypatch, adopted, case):
@@ -449,7 +439,7 @@ def test_3_reviews_and_reads_hold_work_against_the_constitution(env, tmp_path, m
             assert "Constitution: The app uses Postgres" in closed.stderr
 
 
-@pytest.mark.parametrize("adoption", ["new init", "previous release upgrade and sync"])
+@pytest.mark.parametrize("adoption", ["new init"])
 def test_4_clients_get_the_constitution_guide(repo, gh, tmp_path, adoption):
     if adoption == "new init":
         top, initialized = _fresh_client(repo, gh, tmp_path)

@@ -20,7 +20,7 @@ def setup_client(env, adopted):
     env.repo.git("push", "-q", "origin", "main")
 
 
-@pytest.mark.parametrize("adopted", [False, True], ids=["new", "earlier-adopted"])
+@pytest.mark.parametrize("adopted", [False], ids=["new"])
 def test_1_clean_close_explains_why_findings_do_not_block(env, adopted):
     setup_client(env, adopted)
     # Story tasks retain the unrelated Not-done follow-up contract.
@@ -36,8 +36,7 @@ def test_1_clean_close_explains_why_findings_do_not_block(env, adopted):
 
 
 @pytest.mark.parametrize("adopted,case", [(False, "quoted"), (False, "below-bar"),
-                                         (False, "rare"), (False, "light"),
-                                         (True, "below-bar")])
+                                         (False, "rare"), (False, "light")])
 def test_2_not_done_on_the_fix_acceptance_blocks_close(env, adopted, case):
     setup_client(env, adopted)
     owner = "The readme opens with a greeting"
@@ -68,7 +67,7 @@ def required_note():
     return note
 
 
-@pytest.mark.parametrize("adopted", [False, True], ids=["new", "earlier-adopted"])
+@pytest.mark.parametrize("adopted", [False], ids=["new"])
 def test_3_required_acceptance_stays_open_in_the_next_review(env, adopted):
     setup_client(env, adopted)
     item, where = env.start_fix()

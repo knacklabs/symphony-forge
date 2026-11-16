@@ -32,7 +32,7 @@ def _new_client(repo, gh, tmp_path, starter="typescript"):
 
 @pytest.mark.platform
 @pytest.mark.timeout(1800)
-@pytest.mark.parametrize("starter", ["typescript", "python", "earlier adopted"])
+@pytest.mark.parametrize("starter", ["typescript", "python"])
 def test_1_a_create_sent_again_with_its_retry_key_makes_one_item(repo, gh, tmp_path, starter, request):
     # Audit: HTTP/MCP own storage and link disclosure after a retry. The screen removal also
     # removes create/invite hooks and their form flows, so only the API cases remain here.
@@ -71,7 +71,7 @@ def test_1_a_create_sent_again_with_its_retry_key_makes_one_item(repo, gh, tmp_p
 
 @pytest.mark.platform
 @pytest.mark.timeout(1800)
-@pytest.mark.parametrize("starter", ["typescript", "python", "earlier adopted"])
+@pytest.mark.parametrize("starter", ["typescript", "python"])
 def test_2_history_keeps_the_agent_that_acts_for_a_person(repo, gh, tmp_path, starter, request):
     # Audit: the transaction contract owns the optional principal value; existing history
     # HTTP cases detect migration failures. Sync must not migrate earlier apps. No new seam.

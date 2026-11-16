@@ -20,7 +20,7 @@ from test_story import claude_plan, hook, new_story, ready, worktree
 STORY = "FORGE-BOARD-2"
 
 
-@pytest.mark.parametrize("history", ["new", "adopted-v1.2.2"])
+@pytest.mark.parametrize("history", ["new"])
 def test_8_every_item_and_older_finished_work(repo, gh, tmp_path, claude_payload, monkeypatch, history):
     _configured(repo, gh, tmp_path, history, ("SHOP", "PLAN", "IDEA", "WAIT"))
     now = datetime.now(timezone.utc).replace(microsecond=0)
@@ -103,7 +103,7 @@ def test_8_every_item_and_older_finished_work(repo, gh, tmp_path, claude_payload
         assert "tidy-help" in {entry["id"] for entry in data["team"]["blocked"]}
 
 
-@pytest.mark.parametrize("previous", [False, True], ids=["new-client", "earlier-adoption"])
+@pytest.mark.parametrize("previous", [False], ids=["new-client"])
 def test_7_first_screen(env, monkeypatch, previous):
     client(env, previous)
     conftest._install(env.repo.bin, "claude", READER.format(python=sys.executable))

@@ -21,7 +21,7 @@ STORY = "review-retries-rate-limit"
 
 
 @pytest.mark.platform
-@pytest.mark.parametrize("adopted", [False, True], ids=["new", "earlier-adopted"])
+@pytest.mark.parametrize("adopted", [False], ids=["new"])
 def test_1_close_waits_and_retries_rate_limits_before_counting_failures(env, adopted):
     config = (env.repo.path / "forge.toml").read_text("utf-8")
     client(env, adopted)

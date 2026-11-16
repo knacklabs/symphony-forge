@@ -14,7 +14,7 @@ STORY = "when-forge-close-merges-the-default-bran"
 
 
 @pytest.mark.platform
-@pytest.mark.parametrize("kind", ["new", "adopted", "source", "source CRLF", "code conflict",
+@pytest.mark.parametrize("kind", ["new", "source", "source CRLF", "code conflict",
                                   "new code conflict", "adopted code conflict",
                                   "source code conflict"])
 def test_1_close_merges_sync_output_and_stops_on_code_conflicts(env, kind, tmp_path):

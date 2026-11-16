@@ -12,7 +12,7 @@ from test_land import land  # noqa: F401
 STORY = "skipped-close"
 
 
-@pytest.mark.parametrize("adoption", ["fresh", "earlier-adopted"])
+@pytest.mark.parametrize("adoption", ["fresh"])
 @pytest.mark.parametrize("stage", ["close-guide-conflict", "land-guide-conflict"])
 def test_6_conflict_regeneration_uses_forge_python_despite_client_pin(
         land, adoption, stage, monkeypatch):

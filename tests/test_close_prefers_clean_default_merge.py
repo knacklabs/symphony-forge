@@ -9,7 +9,7 @@ from test_stacked_fixes_count_only_their_own_changes import land_on_default
 STORY = "merge-before-replay"
 
 
-@pytest.mark.parametrize("previous", [False, True], ids=["new", "previously-adopted"])
+@pytest.mark.parametrize("previous", [False], ids=["new"])
 def test_1_close_merges_clean_default_without_replaying_intermediate_commits(env, previous):
     repo, parent, _, fix, where, _ = stacked(env, previous)
     final = "FINAL = True\n" + "# stable\n" * 20

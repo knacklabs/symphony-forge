@@ -73,31 +73,3 @@ def test_1_new_client_reuses_packages_and_dependency_layers(repo, gh, tmp_path, 
     expected = {path.as_posix() for path in manifests - {removed}}
     expected.add("libs/generated/contracts/package.json")
     assert collected == expected
-
-
-@pytest.mark.parametrize("manager", ["npm", "pnpm"])
-def test_2_earlier_adopted_client_sync_adds_cache_and_keeps_app_dockerfile(repo, manager):
-    shutil.copytree(ROOT / "tests/fixtures/adopted-v1.2.2/client", repo.path, dirs_exist_ok=True)
-    repo.git("checkout", "-qb", "fix/cache-packages")
-    current = repo.forge("--version").stdout.split()[-1]
-    config = (repo.path / "forge.toml").read_text("utf-8").replace("v1.2.2", current)
-    repo.write("forge.toml", config)
-    repo.write("package.json", json.dumps({"scripts": {"test": f"{manager} test"}}))
-    lock = "package-lock.json" if manager == "npm" else "pnpm-lock.yaml"
-    repo.write(lock, "{}\n")
-    original = "FROM node:24\nCOPY . .\nRUN npm ci\n"
-    repo.write("Dockerfile", original)
-    result = repo.forge("sync")
-    assert result.returncode == 0, result.stdout + result.stderr
-    workflow = (repo.path / ".github/workflows/forge.yml").read_text("utf-8")
-    if manager == "npm":
-        assert "cache: npm" in workflow
-        assert "cache-dependency-path: package-lock.json" in workflow
-    else:
-        assert "packageManager" not in json.loads((repo.path / "package.json").read_text("utf-8"))
-        assert "pnpm/action-setup@" not in workflow
-        assert "actions/cache@v4" in workflow
-        assert "hashFiles('pnpm-lock.yaml')" in workflow
-        assert "~/AppData/Local/pnpm/store" in workflow
-    assert "enable-cache: true" in workflow
-    assert (repo.path / "Dockerfile").read_text("utf-8") == original

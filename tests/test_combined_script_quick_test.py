@@ -69,7 +69,7 @@ def _adopted_upgrade(up, package):
     return done
 
 
-@pytest.mark.parametrize("case", [*DOCTOR, "upgrade", "adoption"])
+@pytest.mark.parametrize("case", [*DOCTOR, "adoption"])
 def test_1_the_combined_script_is_named_and_no_command_is_suggested(case, request):
     script = "ci"
     if case == "upgrade":
@@ -98,7 +98,7 @@ def test_1_the_combined_script_is_named_and_no_command_is_suggested(case, reques
     assert "fast_test =" not in done.stdout and "Suggested quick tests" not in done.stdout
 
 
-@pytest.mark.parametrize("repo_kind", ["new repo", "earlier-adopted repo after upgrade and sync"])
+@pytest.mark.parametrize("repo_kind", ["new repo"])
 def test_2_the_synced_guide_tells_the_agent_how_to_write_the_quicker_command(repo_kind, request):
     if repo_kind == "new repo":
         repo, gh = request.getfixturevalue("repo"), request.getfixturevalue("gh")

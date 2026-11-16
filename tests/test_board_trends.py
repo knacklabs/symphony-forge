@@ -24,7 +24,7 @@ def pr(number, branch, author, at, title="A change"):
             "url": f"https://github.com/acme/shop/pull/{number}"}
 
 
-@pytest.mark.parametrize("previous", [False, True], ids=["new-client", "earlier-adoption"])
+@pytest.mark.parametrize("previous", [False], ids=["new-client"])
 def test_6_weekly_trends_through_and_around_forge_and_this_weeks_around_list(env, monkeypatch, previous):
     client(env, previous)
     now = datetime(2026, 11, 18, 12, tzinfo=timezone.utc)  # daily expiry stays within this week

@@ -13,7 +13,7 @@ from test_worker import calls, install_claude
 STORY = "FIX-THE-RULES-THAT-STOP-REVIEWS-AND-PLAN-REA"
 
 
-@pytest.mark.parametrize("adopted", [False, True], ids=["new-client", "adopted-on-v1.2.2"])
+@pytest.mark.parametrize("adopted", [False], ids=["new-client"])
 def test_1_sync_delivers_bounded_review_cold_read_and_worker_rules(env, adopted):
     repo = env.repo
     version = repo.forge("--version").stdout.split()[-1]

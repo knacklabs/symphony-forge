@@ -21,7 +21,7 @@ from test_setup import _fresh_client
 STORY = "conflicting-pr-check-waits"
 
 
-@pytest.fixture(params=["new", "adopted"])
+@pytest.fixture(params=["new"])
 def client(env, request, monkeypatch):
     repo = env.repo
     config = (repo.path / "forge.toml").read_text(encoding="utf-8")

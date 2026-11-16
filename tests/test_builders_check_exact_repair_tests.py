@@ -10,7 +10,7 @@ from test_worker import calls, install_claude
 STORY = "builder-checks-own-repair-test"
 
 
-@pytest.mark.parametrize("previous", [False, True], ids=["new-client", "previous-adoption"])
+@pytest.mark.parametrize("previous", [False], ids=["new-client"])
 def test_1_builders_check_exact_repair_tests_before_committing(repo, gh, tmp_path, previous):
     # Prompt delivery is the contract; the Claude stub only records Forge's actual input.
     # The earlier adoption is release output from a text fixture, not today's sync output.

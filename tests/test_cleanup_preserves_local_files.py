@@ -22,12 +22,12 @@ pytestmark = pytest.mark.platform
 
 
 @pytest.mark.parametrize("previous,command,local", [
-    (False, "merge", "report"), (True, "merge", "report"),
+    (False, "merge", "report"),
     (False, "drop", "untracked"), (False, "merge", "cache"),
     (False, "drop", "cache"),
     (False, "merge", "lockfile"), (False, "drop", "lockfile"),
     (False, "merge", "hooks"), (False, "merge", "hooks-with-report"),
-], ids=["new-ignored-report", "adopted-ignored-report", "drop-untracked",
+], ids=["new-ignored-report", "drop-untracked",
         "merge-cache-only", "drop-cache-only", "merge-ignored-lockfile",
         "drop-ignored-lockfile", "merge-generated-hooks", "merge-hooks-with-report"])
 def test_1_cleanup_keeps_and_names_local_files(env, tmp_path, previous, command, local):

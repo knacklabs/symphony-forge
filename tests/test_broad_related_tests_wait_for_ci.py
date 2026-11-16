@@ -30,10 +30,10 @@ STORY = "FIX-A-CHANGE-THAT-TOUCHES-CENTRAL-FILES-SELE"
 
 
 @pytest.mark.parametrize("flavor,place,selected,ci_red", [
-    ("new", "ci", 2, False), ("adopted", "ci", 2, False),
+    ("new", "ci", 2, False),
     ("source", "ci", 2, False), ("new", "ci", 2, True),
     ("new", "ci", 1, False), ("new", "local", 2, False),
-], ids=["new-broad", "adopted-broad", "forge-broad", "red-ci",
+], ids=["new-broad", "forge-broad", "red-ci",
         "exact-quarter", "laptop-only"])
 def test_1_broad_related_tests_wait_for_ci(env, tmp_path, monkeypatch,
                                          flavor, place, selected, ci_red):

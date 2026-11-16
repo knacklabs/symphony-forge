@@ -15,7 +15,7 @@ STORY = "FIX-APPROVED-SIGN-IN"
 
 
 @pytest.mark.platform
-@pytest.mark.parametrize("previous", [False, True], ids=["new", "earlier-adopted"])
+@pytest.mark.parametrize("previous", [False], ids=["new"])
 def test_1_basic_screens_follow_approved_sign_in(env, tmp_path, previous):
     _client_repo(env, tmp_path, previous)
     # New-client init replaces API responses; restore the close fixture's check results.

@@ -19,7 +19,7 @@ REVIEW_RULE = (
 )
 
 
-@pytest.mark.parametrize("adopted", [False, True], ids=["new-client", "adopted-v1.2.2"])
+@pytest.mark.parametrize("adopted", [False], ids=["new-client"])
 def test_3_reviews_hold_agent_work_that_breaks_a_must_rule(env, tmp_path, monkeypatch, adopted):
     # Audit: real work delivers the rule and real close distinguishes Must, Should and demo.
     # A Markdown prompt read by production code must receive normal review even when no

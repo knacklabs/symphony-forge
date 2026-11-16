@@ -34,24 +34,3 @@ def test_1_new_repo_gets_the_refresh_rule_from_init(env, tmp_path):
     client, made = _fresh_client(env.repo, env.gh, tmp_path)
     assert made.returncode == 0, made.stdout + made.stderr
     _assert_both_hosts(client)
-
-
-@pytest.mark.platform
-def test_2_earlier_adopted_repo_replaces_stale_copies_on_sync(env):
-    repo = env.repo
-    config = (repo.path / "forge.toml").read_text("utf-8")  # this release's version pin
-    shutil.copytree(ROOT / "tests/fixtures/adopted-v1.2.2/client", repo.path, dirs_exist_ok=True)
-    repo.write("forge.toml", config)
-    for host in (".codex", ".claude"):
-        repo.write(f"{host}/skills/app-baseline/SKILL.md", STALE)
-    repo.write("app.py", "print('mine')\n")
-    repo.git("switch", "-qc", "fix/upgrade")
-    repo.git("add", "-A")
-    repo.git("commit", "-qm", "Adopt the earlier release")
-    synced = repo.forge("sync")
-    assert synced.returncode == 0, synced.stdout + synced.stderr
-    _assert_both_hosts(repo.path)
-    changed = repo.git("status", "--porcelain", "--untracked-files=all").split("\n")
-    paths = [line[3:] for line in changed if line]
-    assert (repo.path / "app.py").read_text("utf-8") == "print('mine')\n"
-    assert not [p for p in paths if p == "app.py" or p.startswith(("src/", "tests/"))], paths

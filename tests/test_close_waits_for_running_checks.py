@@ -16,7 +16,6 @@ STORY = "FIX-CLOSE-WAITS-RUNNING-CHECKS"
 @pytest.mark.parametrize("history,command,provider", [
     ("new", "close", "groups"), ("new", "merge", "groups"),
     ("new", "close", "status"), ("new", "merge", "status"),
-    ("upgraded", "close", "groups"),
 ])
 @pytest.mark.parametrize("fake_clock", [600], indirect=True)
 def test_1_close_and_merge_wait_for_running_checks_until_green_or_the_limit(

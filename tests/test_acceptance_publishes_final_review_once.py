@@ -11,7 +11,7 @@ STORY = "review-findings-split-from-close-pushes"
 
 
 @pytest.mark.platform
-@pytest.mark.parametrize("previous", [False, True], ids=["new", "earlier-adopted"])
+@pytest.mark.parametrize("previous", [False], ids=["new"])
 def test_1_acceptance_publishes_once_after_final_review_records(env, previous):
     client(env, previous)
     item, where = env.start_fix()

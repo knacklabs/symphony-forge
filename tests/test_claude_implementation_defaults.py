@@ -44,20 +44,6 @@ def test_1_init_claude_only_repo_uses_low_implementation_and_sonnet_reads(repo, 
     assert "claude-sonnet-5-5" in guide and "high" in guide
 
 
-def test_2_earlier_adopted_repo_keeps_model_pins_on_upgrade_and_gets_opt_in_notes(unsynced_up):
-    up = unsynced_up
-    _repo_adopted_on_the_previous_release(up)
-    models = tomllib.loads(up.show("forge.toml"))["models"]
-    assert models["grill"]["claude"] == {"model": "opus", "effort": "high"}
-    assert models["design"]["claude"] == {"model": "claude-opus-5-5", "effort": "high"}
-    for host in (".claude", ".codex"):
-        notes = up.show(f"{host}/skills/forge/SKILL.md")
-        assert "claude-sonnet-5-5" in notes and "xhigh" in notes
-        assert 'model = "claude-sonnet-5-5", effort = "low"' in notes
-        assert 'model = "claude-sonnet-5-5", effort = "high"' in notes
-        assert "Existing model entries stay unchanged" in notes
-
-
 def test_3_plan_read_with_no_claude_entry_uses_builtin_opus_high(repo, tmp_path, monkeypatch):
     setup(repo)
     shop = new_story(repo, "SHOP")

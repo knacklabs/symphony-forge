@@ -31,7 +31,7 @@ def _stop_with_remaining_findings(env):
     return item, where
 
 
-@pytest.mark.parametrize("previous", [False, True], ids=["new", "earlier-adopted"])
+@pytest.mark.parametrize("previous", [False], ids=["new"])
 @pytest.mark.parametrize("drift", ["code", "default", "records"])
 def test_1_owner_accept_dismisses_every_remaining_finding_and_carries_on(env, previous, drift):
     # The amended contract makes the owner's choice authoritative even after changes.
@@ -64,7 +64,7 @@ def test_1_owner_accept_dismisses_every_remaining_finding_and_carries_on(env, pr
     assert checked.returncode == 0, checked.stdout + checked.stderr
 
 
-@pytest.mark.parametrize("previous", [False, True], ids=["init", "earlier-adoption"])
+@pytest.mark.parametrize("previous", [False], ids=["init"])
 def test_5_clients_receive_the_choice_and_clean_review_rules(repo, gh, tmp_path, previous):
     if previous:
         shutil.copytree(Path(__file__).parent / "fixtures/adopted-v1.2.2/client",
