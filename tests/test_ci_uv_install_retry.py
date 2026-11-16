@@ -6,7 +6,6 @@ Omitting, relocating or restricting the retry, or allowing its error, breaks thi
 Existing bootstrap tests only check tool presence. These command tests need no new seam.
 """
 import re
-import shutil
 
 import pytest
 
@@ -42,4 +41,22 @@ def test_1_new_repo_retries_uv_install_once(repo, gh, tmp_path):
     client = _new_repo(repo, gh, tmp_path)
     result = repo.forge("init", "--actions", "yes", cwd=client)
     assert result.returncode == 0, result.stdout + result.stderr
+    _assert_retry(client)
+
+
+@pytest.mark.platform
+def test_2_sync_replaces_a_workflow_that_has_no_retry(repo, gh, tmp_path):
+    client = _new_repo(repo, gh, tmp_path)
+    result = repo.forge("init", "--actions", "yes", cwd=client)
+    assert result.returncode == 0, result.stdout + result.stderr
+    stale = (ROOT / "tests/fixtures/doctor-v1.2.2/.github/workflows/forge.yml").read_text("utf-8")
+    assert stale.count("uses: astral-sh/setup-uv@") == 2
+    assert "steps.setup-uv.outcome" not in stale
+    (client / ".github/workflows/forge.yml").write_text(stale, "utf-8")
+    repo.git("checkout", "-qb", "fix/retry-uv", cwd=client)
+    repo.git("add", "-A", cwd=client)
+    repo.git("-c", f"core.hooksPath={tmp_path / 'no-hooks'}", "commit", "-qm", "Keep a workflow with no retry",
+             cwd=client)
+    synced = repo.forge("sync", cwd=client)
+    assert synced.returncode == 0, synced.stdout + synced.stderr
     _assert_retry(client)

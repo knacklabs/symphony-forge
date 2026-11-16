@@ -69,11 +69,22 @@ def _adopted_upgrade(up, package):
     return done
 
 
-@pytest.mark.parametrize("case", [*DOCTOR, "adoption"])
+def _upgrade(up, package):
+    _inputs(up.repo.path, "combined", TEST, package)
+    up.on_main("forge.toml", (up.repo.path / "forge.toml").read_text("utf-8"), "Set the test command")
+    up.on_main("package.json", json.dumps(package), "Add the package file")
+    _install(up.repo.bin, "npm", f"#!{sys.executable}\nimport sys\nsys.exit(0)\n")  # the third-party edge
+    done = up.run(RELEASE)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "fast_test" not in tomllib.loads(up.toml())
+    return done
+
+
+@pytest.mark.parametrize("case", [*DOCTOR, "upgrade", "adoption"])
 def test_1_the_combined_script_is_named_and_no_command_is_suggested(case, request):
     script = "ci"
     if case == "upgrade":
-        done = _adopted_upgrade(request.getfixturevalue("unsynced_up"), COMBINED)
+        done = _upgrade(request.getfixturevalue("unsynced_up"), COMBINED)
         # The new release's sync prints it, not the release that was installed before the upgrade.
         sync = f"Running Forge {RELEASE}'s forge sync in the fix's folder."
         assert done.stdout.index(sync) < done.stdout.index(_line(script)), done.stdout
@@ -100,15 +111,10 @@ def test_1_the_combined_script_is_named_and_no_command_is_suggested(case, reques
 
 @pytest.mark.parametrize("repo_kind", ["new repo"])
 def test_2_the_synced_guide_tells_the_agent_how_to_write_the_quicker_command(repo_kind, request):
-    if repo_kind == "new repo":
-        repo, gh = request.getfixturevalue("repo"), request.getfixturevalue("gh")
-        client = _new_repo(repo, gh, request.getfixturevalue("tmp_path"))
-        assert repo.forge("init", "--actions", "yes", cwd=client).returncode == 0
-        skills = [(client / host / "skills/forge/SKILL.md").read_text("utf-8") for host in (".claude", ".codex")]
-    else:
-        up = request.getfixturevalue("unsynced_up")
-        _adopted_upgrade(up, COMBINED)
-        skills = [up.show(f"{host}/skills/forge/SKILL.md") for host in (".claude", ".codex")]
+    repo, gh = request.getfixturevalue("repo"), request.getfixturevalue("gh")
+    client = _new_repo(repo, gh, request.getfixturevalue("tmp_path"))
+    assert repo.forge("init", "--actions", "yes", cwd=client).returncode == 0
+    skills = [(client / host / "skills/forge/SKILL.md").read_text("utf-8") for host in (".claude", ".codex")]
     for skill in skills:
         text = " ".join(skill.split())
         for sentence in GUIDE:

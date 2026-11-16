@@ -1,11 +1,9 @@
 """Commands and installed git hooks load only the command they run."""
 import json
-import shutil
 from pathlib import Path
 
 import pytest
 
-from conftest import ROOT
 from test_close import env  # noqa: F401
 from test_fix_new_repos_get_claude_as_their_worker_by import _new_repo
 from test_split_commands import HELP_GOLDEN
@@ -83,6 +81,16 @@ def test_1_new_clients_git_commit_and_push_build_only_their_hook(repo, gh, tmp_p
     initialized = repo.forge("init", "--actions", "yes", cwd=client)
     assert initialized.returncode == 0, initialized.stdout + initialized.stderr
     _assert_hooks_are_small(repo, client, tmp_path / "starts.jsonl")
+
+
+@pytest.mark.platform
+def test_2_upgraded_clients_get_small_hooks(unsynced_up):
+    up = unsynced_up
+    upgraded = up.run(RELEASE)
+    assert upgraded.returncode == 0, upgraded.stdout + upgraded.stderr
+    # Use the installed release launcher and its hook shims, not this checkout's launcher.
+    up.repo.bin = up.tmp / "uvbin"
+    _assert_hooks_are_small(up.repo, up.folder, up.tmp / "starts.jsonl")
 
 
 @pytest.mark.parametrize("words,expected", HELP.items())

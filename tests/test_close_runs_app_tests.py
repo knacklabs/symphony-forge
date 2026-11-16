@@ -40,6 +40,10 @@ def test_1_close_runs_app_tests_unless_a_required_check_does(env, adopted, check
     else:
         assert receipt.read_text("utf-8") == "run\n"
         assert "tests passed on this machine" in closed.stdout
+        # With no test_place written, sync says why change tests run on this machine.
+        synced = env.repo.forge("sync", cwd=where)
+        assert synced.returncode == 0, synced.stdout + synced.stderr
+        assert "forge.toml names no app test check" in synced.stdout
 
 
 @pytest.mark.platform

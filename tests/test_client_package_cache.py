@@ -10,7 +10,6 @@ import subprocess
 
 import pytest
 
-from conftest import ROOT
 from test_setup import _fresh_client
 
 STORY = "FIX-EVERY-CLIENT-CI-RUN-DOWNLOADS-PACKAGES-A"
@@ -73,3 +72,30 @@ def test_1_new_client_reuses_packages_and_dependency_layers(repo, gh, tmp_path, 
     expected = {path.as_posix() for path in manifests - {removed}}
     expected.add("libs/generated/contracts/package.json")
     assert collected == expected
+
+
+@pytest.mark.parametrize("manager", ["npm", "pnpm"])
+def test_2_new_client_sync_adds_cache_and_keeps_app_dockerfile(repo, gh, tmp_path, manager):
+    client, made = _fresh_client(repo, gh, tmp_path)
+    assert made.returncode == 0, made.stdout + made.stderr
+    repo.git("checkout", "-qb", "fix/cache-packages", cwd=client)
+    (client / "package.json").write_text(
+        json.dumps({"scripts": {"test": f"{manager} test"}}), encoding="utf-8")
+    lock = "package-lock.json" if manager == "npm" else "pnpm-lock.yaml"
+    (client / lock).write_text("{}\n", encoding="utf-8")
+    original = "FROM node:24\nCOPY . .\nRUN npm ci\n"
+    (client / "Dockerfile").write_text(original, encoding="utf-8")
+    result = repo.forge("sync", cwd=client)
+    assert result.returncode == 0, result.stdout + result.stderr
+    workflow = (client / ".github/workflows/forge.yml").read_text("utf-8")
+    if manager == "npm":
+        assert "cache: npm" in workflow
+        assert "cache-dependency-path: package-lock.json" in workflow
+    else:
+        assert "packageManager" not in json.loads((client / "package.json").read_text("utf-8"))
+        assert "pnpm/action-setup@" not in workflow
+        assert "actions/cache@v4" in workflow
+        assert "hashFiles('pnpm-lock.yaml')" in workflow
+        assert "~/AppData/Local/pnpm/store" in workflow
+    assert "enable-cache: true" in workflow
+    assert (client / "Dockerfile").read_text("utf-8") == original

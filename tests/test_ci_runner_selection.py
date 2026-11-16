@@ -3,14 +3,12 @@ from __future__ import annotations
 
 import json
 import re
-import shutil
 import tomllib
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
 
-from conftest import ROOT
 from test_close import GREEN, env, run  # noqa: F401
 from test_ci_waits_for_busy_runners import _runner_activity, clock, land  # noqa: F401
 from test_fix_new_repos_get_claude_as_their_worker_by import _new_repo
@@ -78,6 +76,24 @@ def test_1_new_client_init_selects_runner_and_bootstraps_tools(repo, gh, tmp_pat
     # Include the two nightly jobs as well as the pull-request jobs.
     assert _runners(client) == [selected] * 4
     _tool_bootstrap(jobs)
+
+
+def test_2_sync_keeps_selected_runner_and_sets_up_unpinned_node(repo, gh, tmp_path):
+    client = _new_repo(repo, gh, tmp_path)
+    initialized = repo.forge("init", "--actions", "yes", "--runner", "self-hosted", cwd=client)
+    assert initialized.returncode == 0, initialized.stdout + initialized.stderr
+    repo.git("checkout", "-qb", "fix/select-ci-runner", cwd=client)
+    # A Node client without engines still needs a version installed by setup-node.
+    (client / "package.json").write_text(json.dumps({"scripts": {"test": "node --test"}}), "utf-8")
+    config = (client / "forge.toml").read_text("utf-8")
+    synced = repo.forge("sync", cwd=client)
+    assert synced.returncode == 0, synced.stdout + synced.stderr
+    assert (client / "forge.toml").read_text("utf-8") == config
+    jobs = _jobs(client)
+    assert [_runner(job) for job in jobs] == ["self-hosted", "self-hosted"]
+    _tool_bootstrap(jobs)
+    second = repo.forge("sync", cwd=client)
+    assert second.returncode == 0 and "Nothing to change" in second.stdout
 
 
 @pytest.mark.parametrize("runner", ["", "   "])
