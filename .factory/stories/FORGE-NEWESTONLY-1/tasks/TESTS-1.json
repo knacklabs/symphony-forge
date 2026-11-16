@@ -1,10 +1,18 @@
 {
   "branch": "task/FORGE-NEWESTONLY-1-TESTS-1",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-16T02:39:37.809081+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "5691125eab96613ae348e6f9c209c06b5476e8d6",
+    "keys": {},
+    "round": null
+  },
+  "worker": "claude"
 }
