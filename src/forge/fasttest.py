@@ -446,9 +446,11 @@ def related(base: str) -> tuple[list[str], list[str], bool, list[str]]:
                       or any(hits(path, module, source, root) for module, source, root in modules)}
     readers = tests + [Path(name) for name in files
                        if Path(name).name == "conftest.py" and Path(name).is_file()]
-    inputs = set(changed)
+    inputs = {name for name in changed if Path(name).suffix != ".py"}
+    added = set(git_files("diff", "--no-renames", "--name-only", "--diff-filter=A", base)
+                + git_files("ls-files", "--others", "--exclude-standard"))
     picked |= {path for path in readers
-               if docskip.reads_file_relative(path.read_text("utf-8-sig"), inputs)}
+               if docskip.reads_file_relative(path.read_text("utf-8-sig"), inputs, added)}
     picked = docskip.test_readers(readers, picked, source_root)  # Names match inside one app only.
     return sorted(path.as_posix() for path in picked if path in tests), everything, False, missed
 

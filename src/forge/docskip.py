@@ -15,8 +15,9 @@ def required_tests(top: Path) -> list[str]:
     return [line.strip() for line in listing.read_text("utf-8").splitlines() if line.strip()] if listing.is_file() else []
 
 
-def reads_file_relative(source: str, paths: set[str]) -> bool:
-    """Match literals in file-relative paths, not unrelated content assertions."""
+def reads_file_relative(source: str, paths: set[str], added: set[str] = frozenset()) -> bool:
+    """Match literals in file-relative paths, not unrelated content assertions. A test that
+    scans a folder tree recursively also reads a file `added` anywhere inside it."""
     if not paths or not re.search(r"\b__file__\b", source):
         return False
     try:
@@ -85,8 +86,8 @@ def reads_file_relative(source: str, paths: set[str]) -> bool:
             if suffix and any(path == suffix or path.endswith("/" + suffix) for path in paths):
                 return True
     return any(("/" + posixpath.dirname(path)).endswith("/" + folder)
-               or (folder in deep and ("/" + path).find("/" + folder + "/") >= 0)
-               for folder in folders for path in paths)
+               or (folder in deep and ("/" + path).find("/" + folder + "/") >= 0 and path in added)
+               for folder in folders for path in paths | added)
 
 
 def test_readers(files: list[Path], picked: set[Path], root=None) -> set[Path]:
@@ -145,6 +146,7 @@ def only_docs(top: Path, base: str, excludes: list[str], *, allow_settings: bool
         quoted = r'''(?:'[^'\r\n]*'|"[^"\r\n]*"|`[^`\r\n]*`)'''
         joined = re.compile(rf"\b(?:Path|join)\(\s*(?:__dirname\s*,\s*)?{quoted}"
                             rf"(?:\s*,\s*{quoted})*\s*\)(?:\s*/\s*{quoted})*")
+        added = set(git(*diff, "--diff-filter=A").strip("\0").split("\0"))
         scanners = subprocess.run([shutil.which("git") or "git", "grep", "-I", "-l", "-z", "-E",
                                    r"rglob|walk\(|\*\*", head, "--", "*.py", *excludes],
                                   cwd=top, capture_output=True, text=True, encoding="utf-8")
@@ -152,7 +154,7 @@ def only_docs(top: Path, base: str, excludes: list[str], *, allow_settings: bool
             return False
         for scanner in filter(None, scanners.stdout.split("\0")):
             # A test that scans a folder tree reads every changed file inside it.
-            if reads_file_relative(git("show", scanner), set(changed)):
+            if reads_file_relative(git("show", scanner), set(changed), added):
                 return False
         for consumer in filter(None, found.stdout.split("\0")):
             folder = posixpath.dirname(consumer.partition(":")[2])
