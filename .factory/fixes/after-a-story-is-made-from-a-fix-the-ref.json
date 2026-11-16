@@ -64,7 +64,7 @@
     "status": "blocked"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-16T05:13:27.627200+00:00",
@@ -77,8 +77,12 @@
   ],
   "stop": {
     "at": "2026-11-16T05:23:47.898473+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "src/forge/story.py",
-    "wait_id": "4718da55-ecc1-4f6b-b987-4c753313e59f"
+    "reason": "One more round (owner): the reason in the sentence came from the coordinator's wrong note",
+    "wait_id": "4718da55-ecc1-4f6b-b987-4c753313e59f",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
