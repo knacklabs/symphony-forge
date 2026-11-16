@@ -1,0 +1,114 @@
+{
+  "base": "63d634eb6da4eec90725061ea09ae4747dc49fc6",
+  "branch": "fix/a-short-network-outage-stops-queued-merg",
+  "done_when": "A queued merge that hits a short network outage starts again on its own and merges once the connection is back.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "_queue() in src/forge/land.py",
+      "file": "src/forge/land.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 533,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: A queued merge that hits a short network outage starts again on its own and merges once the connection is back.",
+      "work": 2
+    },
+    {
+      "area": "_queue() in src/forge/land.py",
+      "file": "src/forge/land.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 535,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Retry failures outside the ordinary queue child loop",
+      "work": 2
+    },
+    {
+      "area": "_queue() in src/forge/land.py",
+      "file": "src/forge/land.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 539,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Avoid exhausting retries while the outage is still active",
+      "work": 2
+    },
+    {
+      "area": "tests/test_fix_a_short_network_outage_stops_queued_merg.py",
+      "file": "tests/test_fix_a_short_network_outage_stops_queued_merg.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 15,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_a_change_that_meets_a_network_outage_starts_again_and_merges",
+      "work": 2
+    },
+    {
+      "area": "test_1_a_change_that_meets_a_network_outage_starts_again_and_merges() in tests/test_fix_a_short_network_outage_stops_queued_merg.py",
+      "file": "tests/test_fix_a_short_network_outage_stops_queued_merg.py",
+      "gain": 2,
+      "harm": 1,
+      "line": 23,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Simpler: earlier-adopted retry case \u2192 cut",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "5ae0604c034ba82b0a2f2a7f78822cfc8c42d646d2c93e9cdfb980a1f6ae5d0e",
+    "changed": "bc0e60209b614910321980061aedc8735a53cafc05037510994ca470a7218346",
+    "commit": "93e173b66e825f51913a74c5852b5aa7381c26bd",
+    "dismissals": [],
+    "findings": [],
+    "id": "515ce19d-0895-4c4c-ac1a-feb56b6de012",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-16T05:13:44.010228+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-16T05:30:58.512004+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-16T05:41:59.965969+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-16T07:13:24.303016+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "d8748045-6cdf-4d95-8f4e-812561588334",
+    "head": "4277c81287b4f95b9cc5bef303ab3ea3ac27f64d",
+    "keys": {
+      "the open P0 not done: a queued merge that hits a short network outage starts again on its own and merges once the connection is back. in src/forge/land.py": 2
+    },
+    "round": 2
+  },
+  "why": "A short network outage stops queued merges with no retry, so one brief connection problem stops the merge.",
+  "worker": "claude"
+}
