@@ -63,7 +63,7 @@
     "id": "50e7173f-2f99-4f73-b611-44a5786173b0",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -85,10 +85,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": null,
-    "head": "c814fd4ae438be00b3a171795403e907b740fdc2",
+    "close": "6c1ec7de-37e2-4b2e-b84b-9716168069ce",
+    "head": "abbb4745d7dcd55a39fb4424f74d6fe8d90f0fa9",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "After a story is made from a fix, the refusal for a missing roadmap entry asks for the entry to be committed on the fix's branch without saying why, so people expect to add it on the default branch.",
   "worker": "claude"
