@@ -75,8 +75,8 @@
     "id": "c751cb66-ed55-4d3a-84f2-1d5b11e806cb",
     "status": "clean"
   },
-  "round": 1,
-  "status": "waiting for checks",
+  "round": 2,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-16T09:03:38.835291+00:00",
@@ -97,10 +97,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": null,
-    "head": "ab7680d48d3d8af8c5a1d58a3d9bb76f6465d2bc",
+    "close": "7511aa0f-0aea-45de-a00a-44fc7ae310e4",
+    "head": "3f8b12b87b2e881c8ad8efe31bf697ee1b07328a",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "Main is red again: tests/test_aha_review.py::test_7_prototype_fix_close_uses_light_review_only_before_signoff[False-Prototype before sign-off-P1-True-checks0-None] fails since the review-race fix merged (479d29d99, prcheck now fingerprints against merge-base(head, origin/<default>)); it passes on 03141b64c just before. It fails with 'forge-pr-check passed for fix/tidy-readme', where the test expects the check to fail.",
   "worker": "claude"
