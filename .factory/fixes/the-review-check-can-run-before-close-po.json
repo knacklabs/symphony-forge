@@ -1,0 +1,15 @@
+{
+  "base": "63d634eb6da4eec90725061ea09ae4747dc49fc6",
+  "branch": "fix/the-review-check-can-run-before-close-po",
+  "done_when": "After close posts an updated review, the review check no longer fails from that race, and no one reruns it by hand.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-16T05:14:05.770169+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The review check can run before close posts its updated review, find the old review out of date, and fail a clean review, so a person has to rerun it by hand."
+}
