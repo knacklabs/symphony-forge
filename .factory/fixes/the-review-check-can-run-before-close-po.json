@@ -64,7 +64,7 @@
     "id": "ed4f0715-d8f9-4dc8-be4d-c9828a560300",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -77,10 +77,12 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "fcfb021ac1beb2555689f73db40b1e8661d3e42c",
-    "keys": {},
-    "round": null
+    "close": "fed418b4-b2d5-45b9-be6c-34dad745b620",
+    "head": "1e9f17da1e00050af5b93892adde307a3dd82dc6",
+    "keys": {
+      "the open P0 not done: after close posts an updated review, the review check no longer fails from that race, and no one reruns it by hand. in src/forge/land.py": 1
+    },
+    "round": 1
   },
   "why": "The review check can run before close posts its updated review, find the old review out of date, and fail a clean review, so a person has to rerun it by hand.",
   "worker": "claude"
