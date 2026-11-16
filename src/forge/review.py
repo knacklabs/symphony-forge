@@ -1041,7 +1041,8 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                 {"finding": number, "because": settlement.removeprefix("dismissed because "), "carried": True}
                 for number, finding in enumerate(findings, 1)
                 if (settlement := settled.get(key := score.identity(finding["file"], finding["title"]), ""))
-                and not (settlement.startswith("dismissed because ") and _cited_changed(top, history, key, head))])
+                and not (settlement.startswith("dismissed because ") and _cited_changed(top, history, key, head))
+                and not (settlement.startswith("known:") and score.holds(finding, result["blocking_level"]))])
             if not signoff_prompt:
                 bound_review(top, item, state, result)
         serious = blocking(result)
@@ -1088,7 +1089,8 @@ def bound_review(top: Path, item: str, state: dict[str, Any], result: dict[str, 
         approved_missed = missed and ("/" not in item or any(
             item and noise.sentence(missed[1]).startswith(item) for item in approved))
         must = score.MUST.match(title)
-        if approved_missed or (must and must[1].strip().casefold() in kinds):
+        raised = missed and any(p.search(finding["body"]) for p, _ in score.FLOORS[:2])
+        if approved_missed or raised or (must and must[1].strip().casefold() in kinds):
             if not finding.get("required_done_when") or finding.get("follow_up"):
                 finding["required_done_when"] = True
                 finding.pop("follow_up", None)
