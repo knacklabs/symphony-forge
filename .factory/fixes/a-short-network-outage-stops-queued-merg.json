@@ -11,7 +11,7 @@
       "gain": 5,
       "harm": 3,
       "line": 533,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 1,
       "security": false,
@@ -73,28 +73,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "b3dda7e81cb526d5d77298d0fb437f7ebf88439eb7ac057465a2aa75273595d4",
-    "changed": "dcc3674eb20248cf04fd483b6f0f1265ce56ce6fea26ec9f2bcafcee1ccd9768",
-    "commit": "d5f863fbdf287d0b8bf450b1cf551d3882a9d9ea",
+    "branch_diff": "5ae0604c034ba82b0a2f2a7f78822cfc8c42d646d2c93e9cdfb980a1f6ae5d0e",
+    "changed": "bc0e60209b614910321980061aedc8735a53cafc05037510994ca470a7218346",
+    "commit": "93e173b66e825f51913a74c5852b5aa7381c26bd",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 5, Work 2, Harm 3\nRaise: Not done\nCase: normal use - a roughly ten-second DNS outage causes fast failures while a queued child reads a pull request.\nThe shared GitHub read retries with waits totaling seven seconds, then replaces the DNS diagnostic with `GitHub did not answer. Rerun the command.` (`src/forge/repo.py:367` and `src/forge/repo.py:397`). `close._gh` turns that result into a refusal (`src/forge/close.py:908`), so this matcher never sees `error connecting to`. The queue marks the child stopped and does not restart it when the connection returns. The discarded diagnostic is evidence beyond the coordinator's instruction to match the GitHub CLI message.",
-        "file": "src/forge/land.py",
-        "gain": 5,
-        "harm": 3,
-        "line": 533,
-        "priority": "P1",
-        "required_done_when": true,
-        "title": "Not done: A queued merge that hits a short network outage starts again on its own and merges once the connection is back.",
-        "work": 2
-      }
-    ],
-    "id": "c1d64105-90fd-49b7-80c0-c860f06eb5c0",
-    "status": "blocked"
+    "findings": [],
+    "id": "515ce19d-0895-4c4c-ac1a-feb56b6de012",
+    "status": "clean"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-16T05:13:44.010228+00:00",
@@ -106,6 +94,10 @@
     },
     {
       "at": "2026-11-16T05:41:59.965969+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-16T07:13:24.303016+00:00",
       "step": "review"
     }
   ],
