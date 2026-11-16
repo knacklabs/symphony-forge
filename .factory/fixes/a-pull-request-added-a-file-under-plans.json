@@ -1,0 +1,15 @@
+{
+  "base": "03141b64c18b1eecf63874f06e2a34a5b922aedb",
+  "branch": "fix/a-pull-request-added-a-file-under-plans",
+  "done_when": "A change to any file inside a folder tree that a test scans picks that test.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-16T07:10:25.644769+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "A pull request added a file under plans/notes/, passed its own check, and then broke tests/test_fix_old_forge_records.py for every later pull request, because that test scans plans/ and .factory/ recursively and was not picked for the deeper change."
+}
