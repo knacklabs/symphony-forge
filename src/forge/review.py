@@ -1033,8 +1033,10 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                         settled[score.identity(finding["file"], finding["title"])] = accepted_reason
                     elif finding["priority"] == "P0":
                         settled.pop(score.identity(finding["file"], finding["title"]), None)
-            findings = noise.drop(top, item, [finding for finding in findings if not settled.get(
-                score.identity(finding["file"], finding["title"]), "").startswith("fixed:")])
+            findings = [finding for finding in findings if not settled.get(
+                score.identity(finding["file"], finding["title"]), "").startswith("fixed:")]
+            if not signoff_prompt:
+                findings = noise.drop(top, item, findings)
             result.update(findings=findings, dismissals=[
                 {"finding": number, "because": settlement.removeprefix("dismissed because "), "carried": True}
                 for number, finding in enumerate(findings, 1)
@@ -1081,7 +1083,7 @@ def bound_review(top: Path, item: str, state: dict[str, Any], result: dict[str, 
     kinds = {kind.strip().casefold() for kind in settings.get("always_block", [])}
     minimum = settings.get("added_work_min_gain", 3)
     for finding in findings:
-        title = re.sub(r"^\[P[0-3]\]\s*", "", finding["title"])
+        title = re.sub(r"^\[P[0-3]\]\s*", "", finding["title"].strip())
         missed = re.match(r"Not done\s*:\s*(.*)", title, re.I)
         approved_missed = missed and ("/" not in item or any(
             item and noise.sentence(missed[1]).startswith(item) for item in approved))

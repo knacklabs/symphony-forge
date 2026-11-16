@@ -22,15 +22,19 @@ def approved(top: Path, item: str, commit: str | None = None) -> set[str]:
 
 
 def drop(top: Path, item: str, findings: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Drop a story task's `Not done` note on builder guidance and repeats of a title in one round."""
-    owned, seen, kept = approved(top, item), set(), []
+    """Drop a story task's `Not done` note on builder guidance (never a security or data-loss one)
+    and exact repeats in one round, keeping the higher priority of two repeats."""
+    from forge import score
+
+    owned, kept = approved(top, item), {}
     for finding in findings:
-        title = re.sub(r"^\[P[0-3]\]\s*", "", finding["title"])
+        title = re.sub(r"^\[P[0-3]\]\s*", "", finding["title"].strip())
         missed = re.match(r"Not done\s*:\s*(.*)", title, re.I)
-        if "/" in item and missed and not any(sentence(missed[1]).startswith(a) for a in owned):
+        said = sentence(missed[1]) if missed else ""
+        if ("/" in item and missed and not any(said in a or a in said for a in owned if a)
+                and not any(p.search(finding["body"]) for p, _ in score.FLOORS[:2])):
             continue
-        key = (finding["file"], sentence(title))
-        if key not in seen:
-            seen.add(key)
-            kept.append(finding)
-    return kept
+        key = tuple(str(finding.get(k, "")).strip() for k in ("title", "file", "line", "body"))
+        if key not in kept or finding["priority"] < kept[key]["priority"]:
+            kept[key] = finding
+    return list(kept.values())
