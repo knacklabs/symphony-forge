@@ -1014,12 +1014,10 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
             # A settlement never covers a finding more serious than the ones it settled.
             ceiling = {}
             for old in history:
-                for earlier in old.get("findings", []):
-                    key = score.identity(earlier["file"], earlier["title"])
-                    ceiling[key] = min(ceiling.get(key, "P9"), earlier["priority"])
-            for finding in findings:
-                key = score.identity(finding["file"], finding["title"])
-                if finding["priority"] < ceiling.get(key, "P9"):
+                for e in old.get("findings", []):
+                    ceiling[key] = min(ceiling.get(key := score.identity(e["file"], e["title"]), "P9"), e["priority"])
+            for f in findings:
+                if f["priority"] < ceiling.get(key := score.identity(f["file"], f["title"]), "P9"):
                     settled.pop(key, None)
             if item == "client-signoff":
                 # The owner accepts the limitation in this version of the file,

@@ -3,6 +3,8 @@
 from test_close import blocked, body, env, finding  # noqa: F401
 from test_close_keeps_reviews_for_unchanged_branch_diffs import client
 
+STORY = "review-findings-split-from-since-7-nov-2"
+
 
 def test_1_dismissed_p1_does_not_settle_a_p0_with_the_same_title_and_file(env):
     client(env, False)
