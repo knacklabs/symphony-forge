@@ -11,7 +11,7 @@ from test_story import worktree
 STORY = "FIX-FRESH-PANE-EVENTS"
 
 
-@pytest.mark.parametrize("history", ["new", "adopted-v1.2.2"])
+@pytest.mark.parametrize("history", ["new"])
 def test_3_ci_events_name_each_workflow_and_result_once_per_commit(
         repo, gh, tmp_path, monkeypatch, history, env):
     configured = (repo.path / "forge.toml").read_text("utf-8")

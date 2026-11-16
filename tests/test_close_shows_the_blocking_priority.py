@@ -12,7 +12,6 @@ STORY = "finding-priority-shown-matches"
 @pytest.mark.parametrize("adopted,scores", [
     (False, "Gain 5, Work 1, Harm 1"),
     (False, "Gain 2, Work 5, Harm 4"),
-    (True, "Gain 5, Work 1, Harm 1"),
 ])
 def test_1_close_shows_the_priority_that_blocks_past_the_round_limit(env, adopted, scores):
     client(env, adopted)

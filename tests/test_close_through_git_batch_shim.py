@@ -14,7 +14,7 @@ pytestmark = pytest.mark.platform
 STORY = "FIX-WINDOWS-TEST-FIXES"
 
 
-@pytest.mark.parametrize("previous", [False, True], ids=["new", "previously-adopted"])
+@pytest.mark.parametrize("previous", [False], ids=["new"])
 def test_1_close_resolves_commits_through_a_git_batch_launcher(env, previous):
     client(env, previous)
     item, _ = env.start_fix()

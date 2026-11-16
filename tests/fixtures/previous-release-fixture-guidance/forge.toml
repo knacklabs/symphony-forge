@@ -1,3 +1,0 @@
-version = "v1.2.2"
-workers = "claude"
-checks = ["tests", "forge-pr-check"]

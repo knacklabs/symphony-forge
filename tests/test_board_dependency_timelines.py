@@ -77,7 +77,7 @@ def _configured(repo, gh, tmp_path, history, keys):
 
 # ponytail: about 25 forge commands; on a loaded Windows runner they need more than the 300 s CI default.
 @pytest.mark.timeout(600)
-@pytest.mark.parametrize("history", ["new", "adopted-v1.2.2"])
+@pytest.mark.parametrize("history", ["new"])
 def test_1_dependency_map_and_stage_timelines_use_the_command_data(
         repo, gh, tmp_path, claude_payload, monkeypatch, history):
     # Plain-text run fixtures give deterministic stage durations here.

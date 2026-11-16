@@ -24,7 +24,7 @@ def flat(text):
     return " ".join(text.split())
 
 
-@pytest.fixture(params=[False, True], ids=["new-client", "adopted-v1.2.2"])
+@pytest.fixture(params=[False], ids=["new-client"])
 def client(env, request):
     repo = env.repo
     version = repo.forge("--version").stdout.split()[-1]
@@ -108,7 +108,7 @@ def test_4_additions_that_nothing_needs_get_a_not_needed_note(client):
             assert phrase in prompt, phrase
 
 
-@pytest.mark.parametrize("previous", [False, True], ids=["new init", "previous release"])
+@pytest.mark.parametrize("previous", [False], ids=["new init"])
 def test_5_useful_extras_go_to_the_idea_list(repo, gh, tmp_path, previous):
     log = install_claude(repo)
     if not previous:

@@ -1,0 +1,150 @@
+{
+  "base": "d2358f7279fc3f0ccae0dcc66c80a94444a7c2ad",
+  "branch": "fix/review-findings-split-from-since-7-nov-2",
+  "done_when": "A review no longer finds: Preserve distinct findings that share a title and file (src/forge/review.py:1045)",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "run() in src/forge/review.py",
+      "file": "src/forge/review.py",
+      "gain": 4,
+      "harm": 4,
+      "line": 1020,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: A review no longer finds: Preserve distinct findings that share a title and file (src/forge/review.py:1045)",
+      "work": 2
+    },
+    {
+      "area": "run() in src/forge/review.py",
+      "file": "src/forge/review.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 1018,
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: Accept (owner): the main case is fixed and proven; the low-score Not done case and the brief check become a known issue",
+      "round": 1,
+      "security": false,
+      "title": "Disputed keep comparing earlier findings: An open P0 inherits a P1 dismissal",
+      "work": 2
+    },
+    {
+      "area": "run() in src/forge/review.py",
+      "file": "src/forge/review.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 1021,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Keep a dismissed finding settled when a sibling is more serious",
+      "work": 2
+    },
+    {
+      "area": "test_1_dismissed_p1_does_not_settle_a_p0_with_the_same_title_and_file() in tests/test_dismissal_never_covers_higher_priority_finding.py",
+      "file": "tests/test_dismissal_never_covers_higher_priority_finding.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 25,
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: Accept (owner): the main case is fixed and proven; the low-score Not done case and the brief check become a known issue",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_dismissal_never_covers_higher_priority_finding.py and test_dismissals_carry_forward.py",
+      "work": 1
+    },
+    {
+      "area": "run() in src/forge/review.py",
+      "file": "src/forge/review.py",
+      "gain": 4,
+      "harm": 1,
+      "line": 1018,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: State what new and existing client repos receive",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "576c5c91dba4b172489191061f7a35cfc323b19e9225703d5ba75ff16ead0af2",
+    "changed": "104cf36afb413bfe38ce640e11206a434355a4df2adda94dfa081834b8e7288a",
+    "commit": "6a567d4a6fa79276388ef557e66cf4b7ea4de12f",
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Accept (owner): the main case is fixed and proven; the low-score Not done case and the brief check become a known issue",
+        "finding": 1
+      },
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Accept (owner): the main case is fixed and proven; the low-score Not done case and the brief check become a known issue",
+        "finding": 2
+      }
+    ],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done\nCase: normal use - a story review has an open P0 Not done finding and a dismissed P1 with the same title and file.\nAn owner-approved Not done finding blocks regardless of its scores: review.py:189-195 checks required_done_when separately. If the open P0 has a below-bar score, however, score.holds(e) is false, so this condition still adds the undismissed P0 to the settlement ceiling. A repeated P0 then passes the ceiling check and inherits the P1's dismissal. The ordinary dismissal survives bound_review, allowing close to mark the review clean without settling the P0.",
+        "file": "src/forge/review.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 1019,
+        "priority": "P1",
+        "title": "Disputed keep comparing earlier findings: An open P0 inherits a P1 dismissal",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 1, Harm 2\nRaise: Test\nCase: normal use - a repair review reports a serious finding beside the moved, dismissed finding.\nThe changed test now checks the moved line, close's result and the pull request text, but it still never runs forge work or checks the builder's brief. It would pass if close blocked correctly while the worker omitted the serious same-title finding from the brief, leaving that promised behavior unproved.",
+        "file": "tests/test_dismissal_never_covers_higher_priority_finding.py",
+        "gain": 4,
+        "harm": 2,
+        "line": 31,
+        "priority": "P1",
+        "title": "Gate: test_dismissal_never_covers_higher_priority_finding.py and test_dismissals_carry_forward.py",
+        "work": 1
+      }
+    ],
+    "id": "0d903742-2ad3-42b5-8bd0-719fa253db29",
+    "status": "clean"
+  },
+  "round": 4,
+  "stacked_on": "since-7-nov-2026-first-code-reviews-writ",
+  "status": "fixing",
+  "steps": [
+    {
+      "at": "2026-11-16T07:12:36.821343+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-16T07:29:52.698353+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-16T09:25:11.653022+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-16T09:25:11.653444+00:00",
+    "by": "owner",
+    "choice": "accept",
+    "file": "src/forge/review.py",
+    "reason": "Accept (owner): the main case is fixed and proven; the low-score Not done case and the brief check become a known issue",
+    "wait_id": "8bc7d481-9e4a-4e6a-ad36-52b79ae26255",
+    "worker_round": 3
+  },
+  "stuck": {
+    "close": "153a23a7-19a1-41b9-b4e2-f3db9d6a7f2d",
+    "head": "e137042b108ef9947a6ba918f4ba78477171d64b",
+    "keys": {},
+    "round": 3
+  },
+  "why": "Review findings split from since-7-nov-2026-first-code-reviews-writ: Preserve distinct findings that share a title and file (src/forge/review.py:1045)",
+  "worker": "claude"
+}

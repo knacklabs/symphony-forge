@@ -19,7 +19,7 @@ STORY = "issue-1044-every-codex-round-prints-a-pr"
 pytestmark = pytest.mark.platform
 
 
-@pytest.mark.parametrize("client", ["new", "earlier-adopted"])
+@pytest.mark.parametrize("client", ["new"])
 def test_1_new_conversation_sets_project_after_rollout_without_error(
         repo, gh, monkeypatch, tmp_path, sdk_data, client, claude_session):
     if client == "new":

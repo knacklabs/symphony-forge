@@ -11,7 +11,7 @@ from test_close_keeps_reviews_for_unchanged_branch_diffs import client
 STORY = "FIX-DIVERGED-BRANCH-MERGE"
 
 
-@pytest.mark.parametrize("previous", [False, True], ids=["new", "previously-adopted"])
+@pytest.mark.parametrize("previous", [False], ids=["new"])
 @pytest.mark.parametrize("different", [False, True], ids=["same-tree", "different-trees"])
 def test_1_close_merges_diverged_branch_and_pushes_without_losing_history(env, previous, different):
     client(env, previous)

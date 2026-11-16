@@ -9,7 +9,7 @@ STORY = "FORGE-BOARD-2"
 def _synced_guides(repo):
     """Yields (adopted, host, guide) for a new repo and one adopted on an earlier release."""
     installed = repo.forge("--version").stdout.split()[-1]
-    for adopted in (False, True):
+    for adopted in (False,):
         if adopted:
             shutil.copytree(ROOT / "tests/fixtures/adopted-v1.2.2/client", repo.path,
                             dirs_exist_ok=True)

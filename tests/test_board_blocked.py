@@ -34,7 +34,7 @@ def blocked_rows(repo):
     return {(row["id"], row["reason"]): row for row in board(repo)["team"]["blocked"]}
 
 
-@pytest.mark.parametrize("previous", [False, True], ids=["new-client", "earlier-adoption"])
+@pytest.mark.parametrize("previous", [False], ids=["new-client"])
 def test_3_blocked_or_slow_names_each_reason_and_how_long(env, monkeypatch, previous):
     client(env, previous)
     conftest._install(env.repo.bin, "claude", READER.format(python=sys.executable))

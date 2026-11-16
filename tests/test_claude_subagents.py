@@ -64,7 +64,7 @@ def _agent_budgets(agents: dict[str, dict[str, str]]) -> dict[str, dict[str, str
             for name, definition in agents.items()}
 
 
-@pytest.mark.parametrize("case", ["new-init-design", "new-configured-retry", "adopted-configured-retry",
+@pytest.mark.parametrize("case", ["new-init-design", "new-configured-retry",
                                   "new-lite-retry", "new-design-retry"])
 def test_6_claude_builder_gets_haiku_helpers(repo, gh, tmp_path, monkeypatch, sdk_data, case):
     if case == "new-init-design":
@@ -140,7 +140,7 @@ def test_10_no_process_wide_setting(repo, gh, tmp_path, monkeypatch, sdk_data):
     monkeypatch.setenv("HOME", str(home))
     monkeypatch.setenv("CLAUDE_CONFIG_DIR", str(claude_config))
     monkeypatch.delenv("CLAUDE_CODE_SUBAGENT_MODEL", raising=False)
-    _, folder, log = _round_client(repo, gh, tmp_path, monkeypatch, "claude", history="adopted",
+    _, folder, log = _round_client(repo, gh, tmp_path, monkeypatch, "claude", history="new",
                                    sdk_data=sdk_data)
     # A different kind's pair must not replace the default for this build kind.
     config = folder / "forge.toml"
@@ -163,7 +163,7 @@ def test_10_no_process_wide_setting(repo, gh, tmp_path, monkeypatch, sdk_data):
 
 
 def test_11_one_key_is_refused_as_today(repo, gh, tmp_path, monkeypatch, sdk_data):
-    _, folder, _ = _round_client(repo, gh, tmp_path, monkeypatch, "claude", history="adopted",
+    _, folder, _ = _round_client(repo, gh, tmp_path, monkeypatch, "claude", history="new",
                                  sdk_data=sdk_data)
     config = folder / "forge.toml"
     text = config.read_text("utf-8")

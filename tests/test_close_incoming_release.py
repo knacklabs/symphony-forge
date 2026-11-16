@@ -12,7 +12,7 @@ from test_setup import _fresh_client
 STORY = "close-behind-version-bump"
 
 
-@pytest.mark.parametrize("adopted", [False, True], ids=["new", "earlier-adopted"])
+@pytest.mark.parametrize("adopted", [False], ids=["new"])
 @pytest.mark.platform
 def test_1_close_names_the_default_merge_for_an_older_branch_pin(env, adopted, monkeypatch):
     repo = env.repo

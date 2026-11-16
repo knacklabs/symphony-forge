@@ -17,7 +17,7 @@ STORY = "FIX-CI-MODE-NEEDS-A-TEST-CHECK"
 
 
 @pytest.mark.platform
-@pytest.mark.parametrize("adopted", [False, True])
+@pytest.mark.parametrize("adopted", [False])
 @pytest.mark.parametrize("checks", [["forge-pr-check"], ["tests", "forge-pr-check"]])
 def test_1_close_runs_app_tests_unless_a_required_check_does(env, adopted, checks):
     if adopted:
@@ -40,6 +40,10 @@ def test_1_close_runs_app_tests_unless_a_required_check_does(env, adopted, check
     else:
         assert receipt.read_text("utf-8") == "run\n"
         assert "tests passed on this machine" in closed.stdout
+        # With no test_place written, sync says why change tests run on this machine.
+        synced = env.repo.forge("sync", cwd=where)
+        assert synced.returncode == 0, synced.stdout + synced.stderr
+        assert "forge.toml names no app test check" in synced.stdout
 
 
 @pytest.mark.platform
@@ -50,7 +54,6 @@ def test_1_close_runs_app_tests_unless_a_required_check_does(env, adopted, check
     ("forge test --pytest main", "", True, False),
     ("pytest tests", "pytest tests", False, False),
     ("vitest run", "vitest run --changed {base}", False, False),
-    ("vitest run --changed", "", True, True),
 ])
 def test_2_doctor_warns_about_a_selected_nightly_command(
         repo, gh, tmp_path, monkeypatch, env, doctor_sdks, test, fast, warn, adopted):

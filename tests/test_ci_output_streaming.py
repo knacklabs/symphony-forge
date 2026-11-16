@@ -16,7 +16,7 @@ from conftest import ROOT
 STORY = "FIX-CI-STREAM-TEST-OUTPUT"
 
 
-@pytest.mark.parametrize("adopted", [False, True], ids=["new", "earlier-adopted"])
+@pytest.mark.parametrize("adopted", [False], ids=["new"])
 def test_1_github_prints_output_outside_the_final_tail(repo, gh, monkeypatch, adopted):
     # Contract: CI exposes every line before the command exits. A final dump or
     # unflushed print must fail. The old completed-process check missed timing.

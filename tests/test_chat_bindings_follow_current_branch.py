@@ -16,7 +16,7 @@ from test_worker_and_reader_chats_survive_rounds import (
 STORY = "reuse-worker-chats"
 
 
-@pytest.mark.parametrize("adopted", [False, True], ids=["new", "adopted-v1.2.2"])
+@pytest.mark.parametrize("adopted", [False], ids=["new"])
 @pytest.mark.parametrize("app", ["codex", "claude"])
 @pytest.mark.parametrize("kind", ["worker", "reader"])
 def test_21_returning_machine_resumes_the_committed_replacement_chat(

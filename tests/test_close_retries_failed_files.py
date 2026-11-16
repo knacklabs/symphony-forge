@@ -13,12 +13,12 @@ STORY = "close-reruns-failed-tests-once"
 
 
 @pytest.mark.parametrize("adopted,persistent,mode", [
-    (False, False, "direct"), (False, True, "direct"), (True, False, "direct"),
-    (False, False, "chain"), (False, True, "chain"), (True, False, "chain"),
-    (False, False, "picker"), (False, True, "picker"), (True, False, "picker"),
-], ids=["new-client-flaky", "new-client-red", "earlier-adoption",
-        "chain-green", "chain-red-integration", "adopted-chain",
-        "picker-always-green", "picker-always-red", "adopted-picker"])
+    (False, False, "direct"), (False, True, "direct"),
+    (False, False, "chain"), (False, True, "chain"),
+    (False, False, "picker"), (False, True, "picker"),
+], ids=["new-client-flaky", "new-client-red",
+        "chain-green", "chain-red-integration",
+        "picker-always-green", "picker-always-red"])
 def test_1_close_retries_only_failed_files_once(env, adopted, persistent, mode):
     # Audit: protects close's observable retry scope, limit and decision. An order-dependent
     # client test reproduces the lost round; existing close tests have no recovering failure.

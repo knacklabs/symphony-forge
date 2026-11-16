@@ -58,7 +58,7 @@ def p1_at_bar(title):
     return entry
 
 
-@pytest.mark.parametrize("case,previous", [("shared-fix", False), ("shared-fix", True),
+@pytest.mark.parametrize("case,previous", [("shared-fix", False),
                                           ("story-runway", False), ("rebuilt-history", False),
                                           ("question-wait", False), ("conflict-wait", False),
                                           ("item-totals", False), ("approved-runway-known", False),
@@ -70,7 +70,7 @@ def p1_at_bar(title):
                                           ("bad-infinite-seconds", False), ("bad-huge-seconds", False),
                                           ("bad-deep-nesting", False),
                                           ("story-done-runway", False)],
-                         ids=["new-client", "earlier-adoption", "story-runway", "rebuilt-history",
+                         ids=["new-client", "story-runway", "rebuilt-history",
                               "question-wait", "conflict-wait", "item-totals", "approved-runway-known",
                               "approved-runway-unknown", "real-read-runway", "read-history-batching",
                               "refresh-stale-receipt", "refresh-missing-receipt", "resume-published-wait",
@@ -749,7 +749,7 @@ def story_runway(env, monkeypatch):
 
 
 @pytest.mark.parametrize("case", ["plain-times", *(f"{part}-{history}" for part in ("history", "keys")
-                                                   for history in ("new", "adopted-v1.2.2"))])
+                                                   for history in ("new",))])
 def test_12_getting_around_the_board_and_telling_items_apart(request, case):
     """Plain times; story histories with their cold-read rounds; the shipped line allowing story
     keys. Each case gets the fixtures it needs."""

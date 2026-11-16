@@ -18,6 +18,7 @@ REFUSALS = {
                     'the person runs forge close {item} --no-review --by "<name>" --reason "<why>"'),
     "skip_blocked": ("A review already blocked {item}, so the model review cannot be skipped.",
                      "forge work {item}, then forge close {item} the normal way"),
+    "show_none": ("This checkout has no saved review of {item}.", "forge close {item}"),
 }
 
 
@@ -40,6 +41,24 @@ def requested(args: argparse.Namespace, top: Path, item: str,
     if any(review.blocking({**result, "dismissals": []}) for result in history):
         repo.refuse(REFUSALS["skip_blocked"], item=item)
     return {"by": " ".join(by.split())[:200], "reason": " ".join(reason.split())[:200]}
+
+
+def show(args: argparse.Namespace) -> int:
+    """Print this checkout's saved review of the item in full. Reads one file; changes nothing."""
+    from forge import score
+
+    result = (repo.read_state(args.item) or {}).get("review")
+    if not result:
+        repo.refuse(REFUSALS["show_none"], item=args.item)
+    dismissed = {d["finding"]: d["because"] for d in result["dismissals"]}
+    holding = {n for n, _ in review.blocking(result)}
+    print(f"Review: {label(result)}.")
+    for n, f in enumerate(result["findings"], 1):
+        state = (f"Dismissed: {dismissed[n]}." if n in dismissed else
+                 f"Follow-up: {f['follow_up']}." if f.get("follow_up") else
+                 "Open: blocks the merge." if n in holding else "Open: does not block the merge.")
+        print(f"\n{n}. {score.priority(f)} {f['title']} ({f['file']}:{f['line']})\n{state}\n{f['body']}")
+    return 0
 
 
 def label(result: dict[str, Any], *, reason: bool = False) -> str:

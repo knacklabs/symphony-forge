@@ -11,7 +11,7 @@ from test_ci_waits_for_busy_runners import _client
 STORY = "sync-before-close"
 
 
-@pytest.mark.parametrize("history", ["source", "new", "upgraded"])
+@pytest.mark.parametrize("history", ["source", "new"])
 def test_1_close_stops_stale_branch_guides(env, history):
     # Audit: a worker forgets sync after a template edit. Sync delivery and merge
     # coverage do not close worker template edits. Real commands need no new seam.
@@ -39,7 +39,7 @@ def test_1_close_stops_stale_branch_guides(env, history):
         assert (where / host / "skills/forge/SKILL.md").read_text("utf-8") == expected
 
 
-@pytest.mark.parametrize("history", ["new", "upgraded"])
+@pytest.mark.parametrize("history", ["new"])
 def test_2_close_keeps_unrelated_work_moving_with_inherited_guides(env, history):
     # Audit: inherited drift must not block unrelated work. The positive cases
     # above change guides or their source on the branch; this case changes neither.

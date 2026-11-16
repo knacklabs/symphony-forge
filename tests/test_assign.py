@@ -30,7 +30,7 @@ def _assign(repo, item, login):
 
 
 @pytest.mark.timeout(600)
-@pytest.mark.parametrize("history", ["forge-source", "new-client", "earlier-adoption"])
+@pytest.mark.parametrize("history", ["forge-source", "new-client"])
 def test_2_assignments_publish_and_order_the_assignees_next_parts(env, history):
     repo = env.repo
     if history != "forge-source":

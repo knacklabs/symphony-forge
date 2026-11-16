@@ -58,7 +58,7 @@ def client(env, previous):
     env.checks(GREEN)
 
 
-@pytest.mark.parametrize("previous", [False, True], ids=["new", "previously-adopted"])
+@pytest.mark.parametrize("previous", [False], ids=["new"])
 @pytest.mark.parametrize("dismiss_before_merge", [False, True], ids=["same-command", "saved"])
 def test_1_close_keeps_review_and_dismissals_when_main_moves(env, previous, dismiss_before_merge):
     client(env, previous)

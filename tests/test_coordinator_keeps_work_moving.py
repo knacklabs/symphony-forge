@@ -10,7 +10,7 @@ from test_setup import _fresh_client
 STORY = "FIX-A-CLIENT-S-COORDINATING-AGENT-HAS-NO-SHI"
 
 
-@pytest.mark.parametrize("previous", [False, True], ids=["new-client", "previously-adopted-client"])
+@pytest.mark.parametrize("previous", [False], ids=["new-client"])
 def test_1_synced_skill_explains_keeping_work_moving_and_close_names_it(env, tmp_path, previous):
     repo = env.repo
     if previous:

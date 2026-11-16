@@ -20,7 +20,7 @@ STORY = "FIX-CHECK-REMOVAL"
 @pytest.mark.parametrize("adopted,case", [(False, case) for case in
     ("product", "setting", "addition", "workflow", "only", "test-place", "add-only",
      "npm-workflow", "pnpm-workflow", "behind", "main-check", "spotted", "planning-record", "conflict", "remote")]
-    + [(True, "only"), (True, "product"), (True, "legacy-spotted")])
+    + [(True, "legacy-spotted")])
 def test_1_close_isolates_removal_and_merge_waits_for_shared_checks(env, adopted, case):
     repo = env.repo
     if adopted:

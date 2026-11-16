@@ -660,6 +660,12 @@
       "title": "Forge tests each rule on a new repo only",
       "status": "pending",
       "order": 123
+    },
+    {
+      "key": "FORGE-FINDINGS-1",
+      "title": "Show the full text of the last close's findings without running close again",
+      "status": "pending",
+      "order": 124
     }
   ],
   "epics": [

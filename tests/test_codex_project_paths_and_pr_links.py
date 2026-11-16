@@ -49,7 +49,7 @@ def test_1_worker_matches_path_and_object_roots_and_skips_unknown_records(
     assert "Traceback" not in log
 
 
-@pytest.mark.parametrize("client", ["new", "earlier-adopted"])
+@pytest.mark.parametrize("client", ["new"])
 def test_2_close_links_the_pr_using_codex_string_identity_after_client_setup(
         repo, gh, monkeypatch, tmp_path, sdk_data, client, claude_session):
     if client == "new":

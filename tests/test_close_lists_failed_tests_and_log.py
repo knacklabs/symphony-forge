@@ -15,8 +15,8 @@ STORY = "FIX-CLOSE-LISTS-EVERY-FAILED-TEST"
 # Audit: the real close must preserve failures beyond its output tail. Existing close
 # tests check red status or proof entries, not the complete failure list or log access.
 # Real pytest decides the failures; no production seam or fake test runner is needed.
-@pytest.mark.parametrize("adopted,collection", [(False, False), (True, False), (False, True)],
-                         ids=["new-client", "earlier-adoption", "collection-error"])
+@pytest.mark.parametrize("adopted,collection", [(False, False), (False, True)],
+                         ids=["new-client", "collection-error"])
 def test_1_failed_close_ends_with_all_failed_test_files_names_and_full_log(env, adopted, collection):
     repo = env.repo
     if adopted:

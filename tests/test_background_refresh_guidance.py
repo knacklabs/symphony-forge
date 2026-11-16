@@ -5,11 +5,8 @@ or a sync that leaves an older copy in place, recreates the bug; the package has
 bytes and deletes the copies first. No production seam is needed.
 """
 
-import shutil
-
 import pytest
 
-from conftest import ROOT
 from test_close import env  # noqa: F401 (env is a fixture)
 from test_setup import _fresh_client
 
@@ -37,21 +34,21 @@ def test_1_new_repo_gets_the_refresh_rule_from_init(env, tmp_path):
 
 
 @pytest.mark.platform
-def test_2_earlier_adopted_repo_replaces_stale_copies_on_sync(env):
+def test_2_sync_replaces_stale_copies_in_a_new_repo(env, tmp_path):
+    client, made = _fresh_client(env.repo, env.gh, tmp_path)
+    assert made.returncode == 0, made.stdout + made.stderr
     repo = env.repo
-    config = (repo.path / "forge.toml").read_text("utf-8")  # this release's version pin
-    shutil.copytree(ROOT / "tests/fixtures/adopted-v1.2.2/client", repo.path, dirs_exist_ok=True)
-    repo.write("forge.toml", config)
     for host in (".codex", ".claude"):
-        repo.write(f"{host}/skills/app-baseline/SKILL.md", STALE)
-    repo.write("app.py", "print('mine')\n")
-    repo.git("switch", "-qc", "fix/upgrade")
-    repo.git("add", "-A")
-    repo.git("commit", "-qm", "Adopt the earlier release")
-    synced = repo.forge("sync")
+        (client / host / "skills/app-baseline/SKILL.md").write_text(STALE, "utf-8")
+    (client / "app.py").write_text("print('mine')\n", "utf-8")
+    repo.git("switch", "-qc", "fix/refresh-baseline", cwd=client)
+    repo.git("add", "-A", cwd=client)
+    repo.git("-c", f"core.hooksPath={tmp_path / 'no-hooks'}", "commit", "-qm", "Keep stale copies",
+             cwd=client)
+    synced = repo.forge("sync", cwd=client)
     assert synced.returncode == 0, synced.stdout + synced.stderr
-    _assert_both_hosts(repo.path)
-    changed = repo.git("status", "--porcelain", "--untracked-files=all").split("\n")
+    _assert_both_hosts(client)
+    changed = repo.git("status", "--porcelain", "--untracked-files=all", cwd=client).split("\n")
     paths = [line[3:] for line in changed if line]
-    assert (repo.path / "app.py").read_text("utf-8") == "print('mine')\n"
+    assert (client / "app.py").read_text("utf-8") == "print('mine')\n"
     assert not [p for p in paths if p == "app.py" or p.startswith(("src/", "tests/"))], paths

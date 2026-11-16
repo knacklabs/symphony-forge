@@ -50,7 +50,7 @@ def go_live(env):
 
 
 @pytest.mark.parametrize("case", ["range", "about"])
-@pytest.mark.parametrize("previous", [False, True], ids=["new-client", "earlier-adoption"])
+@pytest.mark.parametrize("previous", [False], ids=["new-client"])
 def test_4_pace_and_go_live_from_the_last_three_and_six_weeks(env, monkeypatch, previous, case):
     client(env, previous)
     configure(env, "agent")

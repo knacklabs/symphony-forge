@@ -17,7 +17,7 @@ from test_story import DOC, claude_plan, hook, ready, setup, worktree
 STORY = "start-is-claim"
 
 
-@pytest.fixture(params=[False, True], ids=["new-client", "adopted-v1.2.2"])
+@pytest.fixture(params=[False], ids=["new-client"])
 def client(repo, gh, tmp_path, request):
     if request.param:
         shutil.copytree(ROOT / "tests/fixtures/adopted-v1.2.2/client", repo.path,

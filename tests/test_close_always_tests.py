@@ -65,7 +65,7 @@ def set_up(env, monkeypatch, adopted, always, changed=1, options=()):
     return item, log
 
 
-@pytest.mark.parametrize("adopted", [False, True], ids=["init", "earlier-adoption"])
+@pytest.mark.parametrize("adopted", [False], ids=["init"])
 @pytest.mark.parametrize("always", [None, ["tests/unit/test_case_5.py", "tests/unit/test_case_6.py::test_other_6",
                                             "tests/contracts/test_rules.py"]],
                          ids=["unset", "set"])

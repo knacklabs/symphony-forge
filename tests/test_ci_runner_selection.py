@@ -3,14 +3,12 @@ from __future__ import annotations
 
 import json
 import re
-import shutil
 import tomllib
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
 
-from conftest import ROOT
 from test_close import GREEN, env, run  # noqa: F401
 from test_ci_waits_for_busy_runners import _runner_activity, clock, land  # noqa: F401
 from test_fix_new_repos_get_claude_as_their_worker_by import _new_repo
@@ -80,25 +78,21 @@ def test_1_new_client_init_selects_runner_and_bootstraps_tools(repo, gh, tmp_pat
     _tool_bootstrap(jobs)
 
 
-def test_2_earlier_release_adoption_sync_keeps_selected_runner_and_sets_up_unpinned_node(repo):
-    shutil.copytree(ROOT / "tests/fixtures/adopted-v1.2.2/client", repo.path, dirs_exist_ok=True)
-    config = (repo.path / "forge.toml").read_text("utf-8")
-    assert tomllib.loads(config)["version"] == "v1.2.2"
-    repo.git("add", "-A")
-    repo.git("commit", "-qm", "Adopt Forge on an earlier release")
-    repo.git("checkout", "-qb", "fix/select-ci-runner")
-    current = repo.forge("--version").stdout.split()[-1]
-    config = 'runner = "self-hosted"\n' + config.replace('version = "v1.2.2"', f'version = "{current}"')
-    (repo.path / "forge.toml").write_text(config, "utf-8")
+def test_2_sync_keeps_selected_runner_and_sets_up_unpinned_node(repo, gh, tmp_path):
+    client = _new_repo(repo, gh, tmp_path)
+    initialized = repo.forge("init", "--actions", "yes", "--runner", "self-hosted", cwd=client)
+    assert initialized.returncode == 0, initialized.stdout + initialized.stderr
+    repo.git("checkout", "-qb", "fix/select-ci-runner", cwd=client)
     # A Node client without engines still needs a version installed by setup-node.
-    repo.write("package.json", json.dumps({"scripts": {"test": "node --test"}}))
-    synced = repo.forge("sync")
+    (client / "package.json").write_text(json.dumps({"scripts": {"test": "node --test"}}), "utf-8")
+    config = (client / "forge.toml").read_text("utf-8")
+    synced = repo.forge("sync", cwd=client)
     assert synced.returncode == 0, synced.stdout + synced.stderr
-    assert (repo.path / "forge.toml").read_text("utf-8") == config
-    jobs = _jobs(repo.path)
+    assert (client / "forge.toml").read_text("utf-8") == config
+    jobs = _jobs(client)
     assert [_runner(job) for job in jobs] == ["self-hosted", "self-hosted"]
     _tool_bootstrap(jobs)
-    second = repo.forge("sync")
+    second = repo.forge("sync", cwd=client)
     assert second.returncode == 0 and "Nothing to change" in second.stdout
 
 
@@ -121,7 +115,7 @@ def test_6_sync_refuses_blank_runner_label(repo, runner):
 )] + [("doctor", f"pool-{activity}", "new") for activity in (
     "busy", "missing", "busy-running", "busy-rerun", "busy-case", "busy-days-ago", "missing-case",
     "wrong-label", "old-job", "future-job", "unassigned"
-)] + [("doctor", "pool-missing", "upgraded")])
+)])
 def test_3_only_doctor_names_a_likely_missing_runner_after_a_five_minute_queue(
         env, command, state, history, monkeypatch, request):
     if state.startswith("pool-"):

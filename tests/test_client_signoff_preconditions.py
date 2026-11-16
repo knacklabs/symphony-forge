@@ -16,7 +16,7 @@ from test_proto_signoff import _adopted_client, _client, _decision, _request_bui
 STORY = "FIX-AFTER-THE-UPGRADE-TO-V1-2-22-CLIENT-SIGN"
 
 
-@pytest.mark.parametrize("adopted", [False, True], ids=["new-client", "earlier-release"])
+@pytest.mark.parametrize("adopted", [False], ids=["new-client"])
 def test_1_signoff_passes_without_ritual_records(repo, tmp_path, monkeypatch, adopted):
     make = _adopted_client if adopted else _client
     fix, answers, queue = make(repo, tmp_path, monkeypatch)
@@ -38,12 +38,14 @@ def test_1_signoff_passes_without_ritual_records(repo, tmp_path, monkeypatch, ad
     assert len(calls) == 1
 
 
-@pytest.mark.parametrize("adopted", [False, True], ids=["new-client", "earlier-release"])
-def test_2_signoff_lists_every_missing_precondition(repo, tmp_path, monkeypatch, adopted):
-    make = _adopted_client if adopted else _client
-    fix, answers, queue = make(repo, tmp_path, monkeypatch)
-    if adopted:
-        _request_build(repo, fix)
+@pytest.mark.parametrize("tests_in_ci", [False, True], ids=["new-client", "new-client-tests-in-ci"])
+def test_2_signoff_lists_every_missing_precondition(repo, tmp_path, monkeypatch, tests_in_ci):
+    fix, answers, queue = _client(repo, tmp_path, monkeypatch)
+    if tests_in_ci:
+        # A required "tests" check puts the full run in CI, so sign-off names the workflow run.
+        config = fix / "forge.toml"
+        config.write_text(config.read_text("utf-8") + 'checks = ["tests", "forge-pr-check"]\n',
+                          encoding="utf-8")
     page = _decision(fix, answers, customer="", proof="")
     head = repo.git("rev-parse", "origin/main", cwd=fix)
     StubGh(repo.bin).respond("api", f"repos/{{owner}}/{{repo}}/commits/{head}/statuses", stdout="[]")
@@ -56,7 +58,7 @@ def test_2_signoff_lists_every_missing_precondition(repo, tmp_path, monkeypatch,
     for gap in ("green full test run", "customer name", "Proof section",
                 "prototype differs from the reviewed commit"):
         assert gap in refused.stderr, refused.stderr
-    run_action = "gh workflow run forge.yml" if adopted else "forge test --full"
+    run_action = "gh workflow run forge.yml" if tests_in_ci else "forge test --full"
     for action in (run_action, "write the signer's name", "fill in", "commit the changes"):
         assert action in refused.stderr, refused.stderr
     assert "status: proposed" in page.read_text("utf-8")

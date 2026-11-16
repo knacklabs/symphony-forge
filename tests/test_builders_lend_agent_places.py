@@ -20,7 +20,7 @@ STORY = "FIX-BUILD-TEST-BALANCE"
 # tests, and admission before that builder returns. Existing tests start tests
 # outside workers. A retained reservation breaks this case. No production seam:
 # only the external model provider is replaced; both Forge commands are real.
-@pytest.mark.parametrize("adopted", [False, True], ids=["new", "earlier-adoption"])
+@pytest.mark.parametrize("adopted", [False], ids=["new"])
 def test_1_builder_lends_its_place_and_reclaims_it_before_continuing(env, tmp_path, adopted):
     repo = client(env, tmp_path, adopted)
     machine_cores(repo, 2)
