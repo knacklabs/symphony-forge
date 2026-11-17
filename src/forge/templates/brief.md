@@ -97,6 +97,8 @@ Land waits up to 90 minutes while a check is in progress, even without a status 
 Checks that never start have a 30-minute no-progress limit. At either limit,
 no decision is needed. Run `forge land <item>` again to resume without restarting checks.
 `FORGE_CHECKS_WAIT` keeps its explicit no-progress wait instead of the longer running-check wait.
+If GitHub fails to start the review check, close stops at once and says so. It does not wait again.
+Push a new commit or reopen the pull request on GitHub, then run `forge close <item>`.
 
 When the owner narrows or splits a stopped story part, close writes the choice into that part's
 builder details and merges the plan into the task branch. The next worker round gets those details.

@@ -146,10 +146,15 @@ def _wait(top: Path, item: str, sha: str, names: list[str], branch: str, progres
             if mergeable == "CONFLICTING":
                 repo.refuse(REFUSALS["conflict"], item=item)
             _tests_timeout(top, item, sha, names, check_runs, seen)
-            reason = _pending(item, names, seen)
-            if "has not reported" in reason and any(
-                    run.get("conclusion") == "startup_failure" for run in own_runs(top, item, sha)):
-                repo.refuse(REFUSALS["no_start"])
+            unstarted = not any(name in ("Review pull request", "forge-pr-check") for name, _ in seen)
+            try:
+                reason = _pending(item, names, seen)
+            except repo.Refused:
+                if unstarted:  # a red test must not hide a review check that never started
+                    _no_start(top, item, sha, branch)
+                raise
+            if reason and unstarted:
+                _no_start(top, item, sha, branch)
             if mergeable == "UNKNOWN":
                 reason = reason or "GitHub has not determined whether this pull request can merge"
             queued = any(state == QUEUED for _, state in seen)
@@ -208,6 +213,24 @@ def own_runs(top: Path, item: str, sha: str) -> list[dict[str, Any]]:
                 "--raw-field", "per_page=100", "--raw-field", f"head_sha={sha}")
     return [run for run in runs if run.get("event") == "pull_request_target"
             and str(run.get("path", "")).partition("@")[0] == ".github/workflows/forge.yml"]
+
+
+def _no_start(top: Path, item: str, sha: str, branch: str) -> None:
+    """Stop when GitHub could not start Forge's review run for this push. A pull_request_target run
+    belongs to the base commit, so find it by branch and match by time: the newest one, made after sha."""
+    try:
+        runs = _ask(top, item, ".workflow_runs", "repos/{owner}/{repo}/actions/runs", "--method", "GET",
+                    "--raw-field", "per_page=100", "--raw-field", "event=pull_request_target",
+                    "--raw-field", f"branch={branch}")
+    except repo.Refused:
+        return  # A failed side lookup must not end the wait; the check status itself still decides.
+    runs = sorted((run for run in runs if str(run.get("path", "")).partition("@")[0]
+                   == ".github/workflows/forge.yml"), key=lambda run: str(run.get("created_at", "")))
+    pushed = repo.git("show", "-s", "--format=%cI", sha, cwd=top)
+    if runs and runs[-1].get("conclusion") == "startup_failure" and (
+            datetime.fromisoformat(runs[-1]["created_at"].replace("Z", "+00:00"))
+            >= datetime.fromisoformat(pushed)):
+        repo.refuse(REFUSALS["no_start"])
 
 
 def _own_review(top: Path, item: str, sha: str) -> set[Any]:
