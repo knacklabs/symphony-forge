@@ -96,7 +96,7 @@
       "gain": 3,
       "harm": 2,
       "line": 631,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "Split into follow-up fix review-findings-split-from-a-change-to-r",
       "round": 2,
       "security": false,
@@ -119,40 +119,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "a54c4dbe9285b96c373ccd0b6d1fbec42b6d31568f76483a1fd576e304c87000",
-    "changed": "975b92482057aa9a502adb34ea34187dc57cf95d03f7c90ac5828e31f350280d",
-    "commit": "89ba238bb82b84e5f1ee4e08706fb51e624908fe",
+    "branch_diff": "b2bab2dc8bc12712c7b7583e7adfca26f231f215a38051d06dcd4eeba0450e39",
+    "changed": "0cd88b10ad077ec4ba375b3f07301d04260102eb20a9ebd1926401ad501c67c2",
+    "commit": "87fae06f60efae6961563e57705f31b0a3715633",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 3, Work 2, Harm 2\nRaise: Not done\nCase: normal use - the owner splits a P1 Not done finding scored Gain 3, Work 2, Harm 2, and a later review reports it again.\nThe split finding now reaches `_settled`, but lines 633\u2013637 record `known: below the bar` before the split reason and use `setdefault` for both. A later review therefore carries the below-bar dismissal, which `bound_review` removes at lines 1122\u20131125 because the finding is required. The finding blocks again despite the split. The previous finding had these same scores; the new test at tests/test_split_keeps_review_findings.py:102 uses Gain 4 and misses this case. The previous report cited .forge/always-tests.txt:5.",
-        "file": "src/forge/review.py",
-        "follow_up": "Split into follow-up fix review-findings-split-from-a-change-to-r",
-        "gain": 3,
-        "harm": 2,
-        "line": 631,
-        "priority": "P1",
-        "required_done_when": true,
-        "title": "Not done: A split's decisions survive a later review",
-        "work": 2
-      },
-      {
-        "body": "Gain 4, Work 1, Harm 2\nRaise: Gate\nCase: normal use - reviewing the evidence for this fix.\nThe latest worker commit labels its mapping `Proof:`, but src/forge/review.py:699\u2013707 and :755 look for `Proof list:`. Consequently the supplied review prompt still says the proof list is missing, and close cannot attach test results to the mapping. The previous report cited .forge/always-tests.txt:5.",
-        "file": "tests/test_required_repo_rules.py",
-        "follow_up": "Split into follow-up fix review-findings-split-from-a-change-to-r",
-        "gain": 4,
-        "harm": 2,
-        "line": 42,
-        "priority": "P1",
-        "title": "Gate: proof list",
-        "work": 1
-      }
-    ],
-    "id": "d4aac417-9644-4b79-936a-fa22e8a8e110",
+    "findings": [],
+    "id": "baa81447-78b8-4a58-800d-16eff6dd2c5d",
     "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-16T08:53:57.093893+00:00",
@@ -164,6 +140,10 @@
     },
     {
       "at": "2026-11-17T01:24:59.605009+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-17T02:11:52.658806+00:00",
       "step": "review"
     }
   ],
