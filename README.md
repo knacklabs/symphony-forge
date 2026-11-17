@@ -55,9 +55,10 @@ up the computer for you.
 
 1. **The builder and the reviewer can be different models.** A Claude Code session can build
    with its own Claude helpers, or hand the build to Codex. A Codex session can do the same the
-   other way round. When both tools are installed, code reviews run on Codex and plan reads run
-   on the other tool by default. A new repo with both tools uses Codex `gpt-6.1-terra` at max
-   effort for these. A Claude-only repo uses Claude Sonnet 5.5 at high effort.
+   other way round. In a new repo with both tools, code reviews run on Codex `gpt-6.1-terra` at
+   max effort. A plan read runs on the tool that is not the session's: Codex `gpt-6.1-terra` at
+   max effort from a Claude session, or Claude Sonnet 5.5 at high effort from a Codex session.
+   A Claude-only repo uses Claude Sonnet 5.5 at high effort for both.
 2. **Each change starts small.** In a new repo, the first build or fix round runs at low
    effort: Claude Sonnet 5.5 or Codex `gpt-6.1-sol`. User-facing work uses the design settings,
    which start higher. After a failed test, a blocking review finding or a failed
