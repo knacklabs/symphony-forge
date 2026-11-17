@@ -1,0 +1,37 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/land.py\tNot done: Land lists an item under Merged only when its pull request is merged; otherwise the item stops under Needs you with the reason.\tland-shows-an-item-under-merged-when-its",
+      "kind": "bug",
+      "path": "src/forge/land.py",
+      "line": 555,
+      "text": "Not done: Land lists an item under Merged only when its pull request is merged; otherwise the item stops under Needs you with the reason.",
+      "from": "blocking",
+      "item": "land-shows-an-item-under-merged-when-its",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_land_merged_means_merged.py\tGate: tests/test_land_merged_means_merged.py::test_1_a_merge_github_did_not_do_never_lists_a_change_as_merged\tland-shows-an-item-under-merged-when-its",
+      "kind": "bug",
+      "path": "tests/test_land_merged_means_merged.py",
+      "line": 15,
+      "text": "Gate: tests/test_land_merged_means_merged.py::test_1_a_merge_github_did_not_do_never_lists_a_change_as_merged",
+      "from": "blocking",
+      "item": "land-shows-an-item-under-merged-when-its",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_land_merged_means_merged.py\tGate: tests/test_land_merged_means_merged.py::test_2_a_fix_round_handed_to_a_session_subagent_is_not_a_merge\tland-shows-an-item-under-merged-when-its",
+      "kind": "bug",
+      "path": "tests/test_land_merged_means_merged.py",
+      "line": 36,
+      "text": "Gate: tests/test_land_merged_means_merged.py::test_2_a_fix_round_handed_to_a_session_subagent_is_not_a_merge",
+      "from": "blocking",
+      "item": "land-shows-an-item-under-merged-when-its",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
