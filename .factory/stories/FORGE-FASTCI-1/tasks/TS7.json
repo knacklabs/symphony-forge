@@ -1,11 +1,51 @@
 {
   "branch": "task/FORGE-FASTCI-1-TS7",
+  "known": [
+    {
+      "area": "_run_live_starter() in tests/test_starter_tree.py",
+      "file": "tests/test_starter_tree.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 255,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_the_starter_is_a_runnable_stack",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "596f1970f9aee424e34d5befe5a951c0fd6c7ed287ca0a3ebbf9e2f890e5620b",
+    "changed": "5ad5cead5459523cb33acbaf89ced26ada0c1b82e0904d70a5c1559c21dfd183",
+    "commit": "e973de887754acd9a8b566635fa7f9dbf8f6fc4c",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 5, Work 2, Harm 3\nRaise: Test. Case: normal use - The required proof can pass while a new Python app runs its main type check with TypeScript 6. If its `typecheck` script at `src/forge/templates/starter-python/package.json:12` invokes `tsc6`, the live run executes that script, but this separate `tsc --version` call still reports 7 because both binaries remain installed. The same gap applies to the TypeScript starter's Nx typecheck targets. The non-live proof also checks alias presence only in the TypeScript starter: `tests/test_python_starter.py:119-123` compares dependencies that exist but does not require either Python alias to exist. Extend the proof to verify the compiler used by both apps' actual checks and require both Python aliases.",
+        "file": "tests/test_starter_tree.py",
+        "gain": 5,
+        "harm": 3,
+        "line": 255,
+        "priority": "P1",
+        "title": "Gate: test_1_the_starter_is_a_runnable_stack",
+        "work": 2
+      }
+    ],
+    "id": "7eb49e31-da01-42dc-9a1d-9fe3d6c5efa0",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-17T13:48:26.078156+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-17T14:52:34.553677+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
