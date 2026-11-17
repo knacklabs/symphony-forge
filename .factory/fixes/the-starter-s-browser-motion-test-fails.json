@@ -1,0 +1,15 @@
+{
+  "base": "856e51ad4798de0f0741155f462e0e4d4eb55242",
+  "branch": "fix/the-starter-s-browser-motion-test-fails",
+  "done_when": "The Starter smoke workflow passes on main, and the reduced-motion slide and zoom checks still require the transform to end at none.",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-17T14:48:51.222727+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The starter's browser motion test fails on main and on macOS, so the Starter smoke workflow is red. It expects a panel's transform to be none under reduced motion, but reads a translate value instead."
+}
