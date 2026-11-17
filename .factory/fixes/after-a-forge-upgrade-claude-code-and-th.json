@@ -4,12 +4,20 @@
   "done_when": "After the upgrade, Claude Code and the Codex CLI are at their latest versions, and the upgrade says which version each one installed.",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-17T18:34:07.514746+00:00",
       "step": "start"
     }
   ],
-  "why": "After a Forge upgrade, Claude Code and the Codex CLI on the machine stay on old versions, because nothing updates them."
+  "stuck": {
+    "close": null,
+    "head": "98b6c0d666b82cc777104c57a22310bc500a172f",
+    "keys": {},
+    "round": null
+  },
+  "why": "After a Forge upgrade, Claude Code and the Codex CLI on the machine stay on old versions, because nothing updates them.",
+  "worker": "claude"
 }
