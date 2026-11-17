@@ -4,12 +4,122 @@
   "done_when": "The Windows speed test for the hook's generated-file check passes with a median under 0.4 seconds.",
   "fix_kind": "backend",
   "kind": "fix",
+  "known": [
+    {
+      "area": "test_2_generated_file_check_is_fast_and_checks_the_whole_fix.measure() in tests/test_hook_generated_check_speed.py",
+      "file": "tests/test_hook_generated_check_speed.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 97,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: The Windows speed test for the hook's generated-file check passes with a median under 0.4 seconds.",
+      "work": 1
+    },
+    {
+      "area": "ships() in src/forge/prcheck.py",
+      "file": "src/forge/prcheck.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 246,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Preserve nested pnpm version detection when devEngines has no version",
+      "work": 2
+    },
+    {
+      "area": "test_2_generated_file_check_is_fast_and_checks_the_whole_fix.measure() in tests/test_hook_generated_check_speed.py",
+      "file": "tests/test_hook_generated_check_speed.py",
+      "gain": 2,
+      "harm": 2,
+      "line": 97,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Follow-up: Cover whole-tree listings in client hook checks",
+      "work": 2
+    },
+    {
+      "area": "ships() in src/forge/prcheck.py",
+      "file": "src/forge/prcheck.py",
+      "gain": 2,
+      "harm": 1,
+      "line": 246,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Follow-up: Run the listed compatibility proofs for this diff",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "d78be2c3be0f8ec53c5b74a0c25eb4c8ff8c8df9c9244c61fd6f2b03942cc5ae",
+    "changed": "afed252d056422456b4f6bdefe813793542b3a18bd346b2b84b6767837184e90",
+    "commit": "233cf6e41eeba342afbb589364780f7a27e2ba26",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 5, Work 1, Harm 3\nRaise: Not done\nCase: normal use - closing this fix before release.\nNo passing Windows result is supplied, and the pull request checks cannot provide one: `.github/workflows/forge.yml:49` runs the related tests on Ubuntu, while `.github/workflows/forge-next.yml:79-81` runs Windows only on scheduled or manually dispatched runs. The test applies the 0.4-second limit only on Windows (`tests/test_hook_generated_check_speed.py:93`). Run the named test on Windows and provide its passing result; the pending Linux check does not establish the requested median.",
+        "file": "tests/test_hook_generated_check_speed.py",
+        "gain": 5,
+        "harm": 3,
+        "line": 97,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: The Windows speed test for the hook's generated-file check passes with a median under 0.4 seconds.",
+        "work": 1
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - syncing a repository whose root declares pnpm in `devEngines` and whose web project uses pnpm 8.\nA `devEngines.packageManager` object can name pnpm without specifying a version ([npm documentation](https://docs.npmjs.com/cli/v11/configuring-npm/package-json/#devengines)). This condition treats that object as a complete decision and skips the tracked nested lockfile. Consequently, the version selection at lines 260-266 cannot read `web/package.json` or its version-6 lockfile and defaults to pnpm 10 instead of pnpm 8. A `web` manifest requiring `engines.pnpm: ^8` then fails when CI installs its dependencies; pnpm enforces the project engine requirement ([pnpm documentation](https://pnpm.io/10.x/package_json#engines)).\nAdds work: retain nested version lookup when the root has no pnpm version; F 2 x H 2 = 4; 2 x C = 2",
+        "file": "src/forge/prcheck.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 246,
+        "priority": "P1",
+        "title": "Preserve nested pnpm version detection when devEngines has no version",
+        "work": 2
+      },
+      {
+        "body": "Gain 2, Work 2, Harm 2\nCase: normal use - checking a fix in a client repository with tens of thousands of files.\nThe new assertion rejects only the literal `--exclude-standard` option, so an unrestricted listing using other options passes it. Every speed-test variant calls `hooked(repo)`, which sets `repo = \"forge-source\"` (`tests/test_githooks.py:20`), so the new client lockfile search is skipped in all of them. The generated-file check also still lists every base-tree path through `git ls-tree -rz --name-only` (`src/forge/sync.py:485-489`). Thus the listed proof of no whole-tree Git listing is not established. Exercise the client path on a representative tree and address the remaining listing.\nAdds work: cover the client hook on a large tree; F 2 x H 2 = 4; 2 x C = 4",
+        "file": "tests/test_hook_generated_check_speed.py",
+        "gain": 2,
+        "harm": 2,
+        "line": 97,
+        "priority": "P2",
+        "title": "Follow-up: Cover whole-tree listings in client hook checks",
+        "work": 2
+      },
+      {
+        "body": "Gain 2, Work 1, Harm 1\nCase: normal use - opening the pull request for this fix.\nThe pull request job runs `forge test --change` (`.github/workflows/forge.yml:88`). Its picker selects changed tests, tests naming changed modules, and their readers (`src/forge/fasttest.py:392-455`). The four listed files `tests/test_upgrade_skips_model_review.py`, `tests/test_client_package_cache.py`, `tests/test_fix_gate_on_split_checks.py`, and `tests/test_release_version.py` are neither selected by those relationships for this diff nor listed in `.forge/always-tests.txt`. The PR check therefore will not provide their results, including the nested-lockfile upgrade and generated-file compatibility checks. Run those named proofs as requested.\nAdds work: run the four listed compatibility checks; F 2 x H 2 = 4; 2 x C = 2",
+        "file": "src/forge/prcheck.py",
+        "gain": 2,
+        "harm": 1,
+        "line": 246,
+        "priority": "P2",
+        "title": "Follow-up: Run the listed compatibility proofs for this diff",
+        "work": 1
+      }
+    ],
+    "id": "36ef03be-0a75-4e27-994f-8b4fed1f35c2",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-17T06:41:43.774749+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-17T06:57:48.976202+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
