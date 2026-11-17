@@ -1,0 +1,48 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/prcheck.py\tPreserve nested pnpm version detection when devEngines has no version\tthe-commit-hook-s-generated-file-check-n",
+      "kind": "bug",
+      "path": "src/forge/prcheck.py",
+      "line": 246,
+      "text": "Preserve nested pnpm version detection when devEngines has no version",
+      "from": "blocking",
+      "item": "the-commit-hook-s-generated-file-check-n",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_hook_generated_check_speed.py\tNot done: The Windows speed test for the hook's generated-file check passes with a median under 0.4 seconds.\tthe-commit-hook-s-generated-file-check-n",
+      "kind": "bug",
+      "path": "tests/test_hook_generated_check_speed.py",
+      "line": 97,
+      "text": "Not done: The Windows speed test for the hook's generated-file check passes with a median under 0.4 seconds.",
+      "from": "blocking",
+      "item": "the-commit-hook-s-generated-file-check-n",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/prcheck.py\tFollow-up: Run the listed compatibility proofs for this diff",
+      "kind": "edge",
+      "path": "src/forge/prcheck.py",
+      "line": 246,
+      "text": "Follow-up: Run the listed compatibility proofs for this diff",
+      "from": "review",
+      "item": "the-commit-hook-s-generated-file-check-n",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\ttests/test_hook_generated_check_speed.py\tFollow-up: Cover whole-tree listings in client hook checks",
+      "kind": "edge",
+      "path": "tests/test_hook_generated_check_speed.py",
+      "line": 97,
+      "text": "Follow-up: Cover whole-tree listings in client hook checks",
+      "from": "review",
+      "item": "the-commit-hook-s-generated-file-check-n",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

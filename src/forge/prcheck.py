@@ -240,13 +240,17 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
                         if isinstance(m, dict) and m.get("name") == "pnpm"), None)
     # The root lockfile is read from the folder, not from git: sync's pure-upgrade check renders
     # this from a plain snapshot folder with no git index, so git would miss it there.
-    found = repo.run("git", "ls-files", "-co", "--exclude-standard", "-z", cwd=top)
-    listing = found.stdout.split("\0") if found.returncode == 0 else [
-        path.relative_to(top).as_posix() for path in top.rglob("pnpm-lock.yaml")]
     # Forge's own repo ships starter lockfiles it never builds with pnpm.
-    nested = cfg.get("repo") != "forge-source"
-    lockfile = "pnpm-lock.yaml" if (top / "pnpm-lock.yaml").is_file() else next(
-        (name for name in listing if nested and name.endswith("/pnpm-lock.yaml")), None)
+    lockfile = "pnpm-lock.yaml" if (top / "pnpm-lock.yaml").is_file() else None
+    named = (dev_manager or {}).get("version") or package.get("engines", {}).get("pnpm")
+    root_decides = lockfile or (isinstance(manager, str) and manager.startswith("pnpm@")) or (
+        isinstance(named, str) and named.strip())
+    if not root_decides and cfg.get("repo") != "forge-source":
+        # Only tracked lockfiles are listed: a whole-tree listing is slow on Windows.
+        found = repo.run("git", "ls-files", "-z", "--", ":(glob)**/pnpm-lock.yaml", cwd=top)
+        listing = found.stdout.split("\0") if found.returncode == 0 else [
+            path.relative_to(top).as_posix() for path in top.rglob("pnpm-lock.yaml")]
+        lockfile = next((name for name in listing if name.endswith("/pnpm-lock.yaml")), None)
     pnpm = (isinstance(manager, str) and manager.startswith("pnpm@")) or dev_manager or lockfile
     node = ""
     if pnpm:

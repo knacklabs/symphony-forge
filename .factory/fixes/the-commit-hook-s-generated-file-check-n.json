@@ -1,0 +1,97 @@
+{
+  "base": "d7667b82c31d997ea75abe901ec24c720dc9ceb7",
+  "branch": "fix/the-commit-hook-s-generated-file-check-n",
+  "done_when": "The Windows speed test for the hook's generated-file check passes with a median under 0.4 seconds.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "test_2_generated_file_check_is_fast_and_checks_the_whole_fix.measure() in tests/test_hook_generated_check_speed.py",
+      "file": "tests/test_hook_generated_check_speed.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 97,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: The Windows speed test for the hook's generated-file check passes with a median under 0.4 seconds.",
+      "work": 1
+    },
+    {
+      "area": "ships() in src/forge/prcheck.py",
+      "file": "src/forge/prcheck.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 246,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Preserve nested pnpm version detection when devEngines has no version",
+      "work": 2
+    },
+    {
+      "area": "test_2_generated_file_check_is_fast_and_checks_the_whole_fix.measure() in tests/test_hook_generated_check_speed.py",
+      "file": "tests/test_hook_generated_check_speed.py",
+      "gain": 2,
+      "harm": 2,
+      "line": 97,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Follow-up: Cover whole-tree listings in client hook checks",
+      "work": 2
+    },
+    {
+      "area": "ships() in src/forge/prcheck.py",
+      "file": "src/forge/prcheck.py",
+      "gain": 2,
+      "harm": 1,
+      "line": 246,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Follow-up: Run the listed compatibility proofs for this diff",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "993723cea929b76d2777c18b859404187c4a56a471aea2e5c80ea638cf92b1be",
+    "changed": "03dedf8cc669ed4639cc29dddbc561e0d54cd351e1c85c925a47c6bd74ec1207",
+    "commit": "1102e2b14c08fe3080456ff05ee66a217868c386",
+    "dismissals": [],
+    "findings": [],
+    "id": "95991617-ceaf-4395-a90f-3500874a6799",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-17T06:41:43.774749+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-17T06:57:48.976202+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-17T07:31:56.784099+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "d1fbe3a7-d8d2-4dd6-b834-fc3ebb0f01ee",
+    "head": "fae655f0bf94d7a5511595dc677e28b7aae9616c",
+    "keys": {
+      "the open P0 not done: the windows speed test for the hook's generated-file check passes with a median under 0.4 seconds. in tests/test_hook_generated_check_speed.py": 1
+    },
+    "round": 1
+  },
+  "why": "The commit hook's generated-file check now lists every file in the repo to look for a nested pnpm lockfile, which makes the hook slower and fails the Windows speed test, blocking the v1.2.41 release.",
+  "worker": "claude"
+}

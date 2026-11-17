@@ -17,6 +17,8 @@ def _sync(repo, files):
     repo.write("forge.toml", (repo.path / "forge.toml").read_text("utf-8").replace("v1.2.2", current))
     for name, text in files.items():
         repo.write(name, text)
+    # The nested lockfile search lists tracked files only, so stage what the client would commit.
+    repo.git("add", "-A")
     result = repo.forge("sync")
     assert result.returncode == 0, result.stdout + result.stderr
     workflow = (repo.path / ".github/workflows/forge.yml").read_text("utf-8")
@@ -43,6 +45,13 @@ def test_2_lockfile_under_web_only_sets_up_pnpm_from_lockfile_format(repo):
     jobs = _sync(repo, {"web/pnpm-lock.yaml": "lockfileVersion: '9.0'\n"})
     for job in jobs:
         _assert_setup(job, "10")
+
+
+def test_5_dev_engines_without_version_reads_nested_lockfile_format(repo):
+    dev = {"devEngines": {"packageManager": {"name": "pnpm"}}}
+    jobs = _sync(repo, {"package.json": json.dumps(dev), "web/pnpm-lock.yaml": "lockfileVersion: '6.0'\n"})
+    for job in jobs:
+        _assert_setup(job, "8")
 
 
 def test_3_engines_pnpm_without_package_manager_passes_that_version(repo):
