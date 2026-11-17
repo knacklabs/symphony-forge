@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\t.github/workflows/forge.yml\tGate: tests/test_guides_agree.py\trelease-1-2-41",
+      "kind": "bug",
+      "path": ".github/workflows/forge.yml",
+      "line": 1,
+      "text": "Gate: tests/test_guides_agree.py",
+      "from": "blocking",
+      "item": "release-1-2-41",
+      "status": "done",
+      "closed_by": "dismissed"
+    }
+  ]
+}
