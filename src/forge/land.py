@@ -546,9 +546,16 @@ def _queue(top: Path) -> int:
             if child.returncode == 0 and url:
                 ready_prs.append((order[item], f"{item} {url}"))
                 say(f"{item} is ready for a human merge.")
-            elif child.returncode == 0:
+            elif child.returncode == 0 and _merged(top, branches[item]):
                 merged.append(item)
                 say(f"{item} merged.")
+            elif child.returncode == 0:  # exit 0 is not a merge: GitHub must say so
+                after = next((line[len("Next: "):] for line in reversed(lines) if line.startswith("Next: ")),
+                             f"forge land {item}")  # a subagent handoff names its own next step
+                why = next((line.split(": ", 1)[1].rstrip(".") for line in lines if line.startswith("Fix round ")),
+                           "its builder has the round")
+                needs[item] = (age, f"{why}, so its pull request is not merged yet.", after)
+                say(f"{item} stopped: {needs[item][1]}")
             else:
                 needs[item] = _stop(item, age, lines, child.returncode)
                 say(f"{item} stopped: {needs[item][1]}")
@@ -776,6 +783,10 @@ def _train(top: Path, default: str, plan: dict, merged: list[str], needs: dict, 
                 say(f"{item} stopped: {needs[item][1]}")
                 return handled
             handled.add(item)
+            if not _merged(top, member_branch):
+                needs[item] = (age, "its pull request is not merged on GitHub.", f"forge land {item}")
+                say(f"{item} stopped: {needs[item][1]}")
+                return handled
             merged.append(item)
             say(f"{item} merged.")
         repo.git("fetch", "-q", "origin", default, cwd=top)

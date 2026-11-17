@@ -1,0 +1,37 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/templates/starter/apps/web/e2e/motion.spec.ts\tGate: State what new and upgraded client repos receive\tthe-starter-s-browser-motion-test-fails",
+      "kind": "bug",
+      "path": "src/forge/templates/starter/apps/web/e2e/motion.spec.ts",
+      "line": 42,
+      "text": "Gate: State what new and upgraded client repos receive",
+      "from": "blocking",
+      "item": "the-starter-s-browser-motion-test-fails",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/starter/apps/web/e2e/motion.spec.ts\tGate: proof list\tthe-starter-s-browser-motion-test-fails",
+      "kind": "bug",
+      "path": "src/forge/templates/starter/apps/web/e2e/motion.spec.ts",
+      "line": 42,
+      "text": "Gate: proof list",
+      "from": "blocking",
+      "item": "the-starter-s-browser-motion-test-fails",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "simplify\tsrc/forge/templates/starter/apps/web/e2e/motion.spec.ts\tSimpler: Missing approach \u2192 record the need, simplest option and reuse",
+      "kind": "simplify",
+      "path": "src/forge/templates/starter/apps/web/e2e/motion.spec.ts",
+      "line": 42,
+      "text": "Simpler: Missing approach \u2192 record the need, simplest option and reuse",
+      "from": "review",
+      "item": "the-starter-s-browser-motion-test-fails",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
