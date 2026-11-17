@@ -1,0 +1,114 @@
+{
+  "base": "52d8e5ebdc701418ee14d99a7ad86d031c3ad2bd",
+  "branch": "fix/when-github-fails-to-start-the-pull-requ",
+  "done_when": "When the review check fails to start on GitHub, close stops at once, says the review check failed to start on GitHub, and gives a step that starts it again (a new commit or reopening the pull request) instead of forge close.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "_wait() in src/forge/checks.py",
+      "file": "src/forge/checks.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 151,
+      "outcome": "fixed in round 4",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Close misses review-check startup failures on GitHub",
+      "work": 2
+    },
+    {
+      "area": "test_1_close_says_the_review_check_failed_to_start() in tests/test_review_check_start_failure_stops_close.py",
+      "file": "tests/test_review_check_start_failure_stops_close.py",
+      "gain": 3,
+      "harm": 1,
+      "line": 10,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: Review-check startup-failure command test",
+      "work": 2
+    },
+    {
+      "area": "test_1_close_says_the_review_check_failed_to_start() in tests/test_review_check_start_failure_stops_close.py",
+      "file": "tests/test_review_check_start_failure_stops_close.py",
+      "gain": 4,
+      "harm": 1,
+      "line": 7,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: proof list",
+      "work": 1
+    },
+    {
+      "area": "src/forge/checks.py",
+      "file": "src/forge/checks.py",
+      "gain": 4,
+      "harm": 1,
+      "line": 33,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: Update the shipped recovery instructions",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "6ef3b3a51892eda5f3dfac648fe2c7182a758d622a24bc64926da86358c36c9c",
+    "changed": "a270c28ad14078e78fb25ae851e9a56247a23e909b7052ff99e13c965c84aaa9",
+    "commit": "83197cbc1df457edc85814e1457c106b52f9b8d5",
+    "dismissals": [],
+    "findings": [],
+    "id": "e9c8fa00-170c-4e3e-9e6e-7c508842022f",
+    "status": "clean"
+  },
+  "round": 4,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-16T21:29:56.542047+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-16T23:47:05.464847+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-17T01:55:58.753401+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-17T02:37:52.154493+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-17T03:36:52.912258+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-17T01:55:58.753851+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "src/forge/checks.py",
+    "reason": "The owner chose one more round",
+    "wait_id": "952216ec-2c6b-4907-a223-d3d3e47d6267",
+    "worker_round": 2
+  },
+  "stuck": {
+    "close": "b77c813e-8975-4758-9e84-8b4a2d45d4fc",
+    "head": "01cb3ee9389f3dd764c47977e8785f6bce0379cd",
+    "keys": {
+      "the open P0 not done: close misses review-check startup failures on github in src/forge/checks.py": 1
+    },
+    "round": 3
+  },
+  "why": "When GitHub fails to start the pull request's review check, forge close keeps saying the review check has not reported and gives forge close again as the next step, so the same wait repeats and nothing starts the check.",
+  "worker": "claude"
+}
