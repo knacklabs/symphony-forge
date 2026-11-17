@@ -164,7 +164,7 @@
     "id": "b7eb8bab-cd92-4629-a663-11c495c48670",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -177,10 +177,12 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "70cd1d52912a04729d86da4c1b444a3117e8fd14",
-    "keys": {},
-    "round": null
+    "close": "55c189de-d56c-4649-8ff1-4d39904be793",
+    "head": "e5b326e5b417e5585df43fe633d5c4990345da24",
+    "keys": {
+      "the open P0 not done: codex 0.169.0 rejects forge's own unapproved hooks in src/forge/codex.py": 1
+    },
+    "round": 1
   },
   "why": "OpenAI released GPT-6.2 Sol and Astra on 17 Nov 2026, and Codex 0.169.0 lists gpt-6.2-sol. Forge's Codex build, fix and lite defaults still name gpt-6.1-sol, and Forge pins the Codex SDK at 0.159.2. Owner decisions: move the Codex default from gpt-6.1-sol to gpt-6.2-sol, move the Codex SDK pin to 0.169.0, keep reviews and cold reads on gpt-6.1-terra at max, and keep gpt-6-luna for Codex helpers. Existing client repos keep their model settings; they are told of the new default (no automatic model migration). Forge's own forge.toml moves to gpt-6.2-sol.",
   "worker": "claude"
