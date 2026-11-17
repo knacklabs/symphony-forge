@@ -1,0 +1,10 @@
+{
+  "branch": "task/REMOTE-1-HOST",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-17T13:39:44.494005+00:00",
+      "step": "start"
+    }
+  ]
+}
