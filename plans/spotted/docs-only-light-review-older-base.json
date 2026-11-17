@@ -19,8 +19,8 @@
       "text": "Not done: A sign-off merged to the default branch after the review still makes a light prototype review stale",
       "from": "blocking",
       "item": "docs-only-light-review-older-base",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     }
   ]
 }
