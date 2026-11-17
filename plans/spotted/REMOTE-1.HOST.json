@@ -45,6 +45,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/box_ssh.py\tFunctional: Turn-off fails on hosts with translated process errors\tREMOTE-1/HOST",
+      "kind": "bug",
+      "path": "src/forge/box_ssh.py",
+      "line": 145,
+      "text": "Functional: Turn-off fails on hosts with translated process errors",
+      "from": "blocking",
+      "item": "REMOTE-1/HOST",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/box_ssh.py\tSecurity: Install the pre-commit check in the hook path Git uses\tREMOTE-1/HOST",
       "kind": "bug",
       "path": "src/forge/box_ssh.py",
