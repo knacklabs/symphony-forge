@@ -37,7 +37,7 @@
       "gain": 4,
       "harm": 1,
       "line": 7,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -50,7 +50,7 @@
       "gain": 4,
       "harm": 1,
       "line": 33,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -60,58 +60,28 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "cef3b1493f709d930407fe85855f963c65c7a699f181dae9fcd6c02fe0df95e3",
-    "changed": "c6d173973f14fad9eb9941e1a7dc605f8575e459413214692ce9091680d9f9c8",
-    "commit": "1e16c24de517d57ce9879a2fc75d368b38458213",
+    "branch_diff": "255e8a6a127479d78a62eeb2bbb31e13241e13695268d9bf10d47ef410dccb59",
+    "changed": "c5563684087a417fb6ffb2bd40783a87d448ceaa874d640889af149a13994c5b",
+    "commit": "c65b1ad4ae49ccc5d5e7f74acef94d5b7094e963",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 5, Work 2, Harm 3\nRaise: Not done\nCase: normal use - GitHub fails to start the review workflow for a pull request.\nDone when: When the review check fails to start on GitHub, close stops at once, says the review check failed to start on GitHub, and gives a step that starts it again (a new commit or reopening the pull request) instead of forge close.\nThe new call uses `own_runs`, which filters workflow runs by the PR head SHA at `src/forge/checks.py:205\u2013210`. GitHub can record a `pull_request_target` run against the base SHA, so that filter misses the failed run and close continues to the existing wait and retry message. [GitHub's checkout implementation](https://github.com/actions/checkout/blob/f9e715a95fcd1f9253f77dd28f11e88d2d6460c7/src/unsafe-pr-checkout-helper.ts) documents this distinction. Separately, `_pending` at `src/forge/checks.py:327\u2013336` refuses on a red test check before the new detection runs, so a simultaneous test failure also hides the startup failure.",
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Not done\nCase: normal use - A user reruns close on an existing pull request whose tests timed out and whose review workflow failed to start.\nThe new startup-failure handling begins after `_tests_timeout` at `src/forge/checks.py:148`. When a test job has timed out, `_tests_timeout` refuses at line 337 before `_no_start` can run. Close therefore reports the test timeout and recommends rerunning tests and `forge close`, without reporting the review startup failure or saying how to restart it.",
         "file": "src/forge/checks.py",
-        "gain": 5,
+        "gain": 3,
         "harm": 3,
-        "line": 151,
+        "line": 149,
         "priority": "P1",
         "required_done_when": true,
         "title": "Not done: Close misses review-check startup failures on GitHub",
         "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 1\nRaise: Test\nCase: normal use - GitHub fails to start the review workflow.\nThe fake returns its workflow run for any matching command prefix (`tests/conftest.py:341\u2013345`), regardless of the requested SHA, so this test passes when the real API lookup cannot find the run. The shared fixture also sets `FORGE_CHECKS_WAIT=0` (`tests/test_close.py:272`), so the one-request assertion passes even if the diagnosis is delayed until the ordinary wait expires. The test therefore does not prove the real lookup or the promised immediate stop.",
-        "file": "tests/test_review_check_start_failure_stops_close.py",
-        "gain": 3,
-        "harm": 1,
-        "line": 10,
-        "priority": "P1",
-        "title": "Gate: Review-check startup-failure command test",
-        "work": 2
-      },
-      {
-        "body": "Gain 4, Work 1, Harm 1\nRaise: Gate\nCase: normal use - closing this fix for review.\nThe supplied proof list is explicitly missing. Although the branch adds a command test, no list maps the Done-when behavior to its proof and the close run, as the review gate requires.",
-        "file": "tests/test_review_check_start_failure_stops_close.py",
-        "gain": 4,
-        "harm": 1,
-        "line": 7,
-        "priority": "P1",
-        "title": "Gate: proof list",
-        "work": 1
-      },
-      {
-        "body": "Gain 4, Work 1, Harm 1\nRaise: Gate\nCase: normal use - a coordinator or worker recovers a review check that failed to start.\nThe change introduces a new recovery step, but neither `src/forge/templates/skill.md` nor `src/forge/templates/brief.md` is updated. The shipped skill still tells agents to retry close after a check name is missing (`src/forge/templates/skill.md:1412\u20131413`). The repository's review rule requires a template or brief update when the flow changes.",
-        "file": "src/forge/checks.py",
-        "gain": 4,
-        "harm": 1,
-        "line": 33,
-        "priority": "P1",
-        "title": "Gate: Update the shipped recovery instructions",
-        "work": 1
       }
     ],
-    "id": "2b0717b6-1587-46cc-a542-b03e297d65ee",
+    "id": "b9a5e43b-5ba8-4ac5-8107-8d6e3f2b6e6b",
     "status": "blocked"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-16T21:29:56.542047+00:00",
@@ -120,8 +90,17 @@
     {
       "at": "2026-11-16T23:47:05.464847+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-11-17T01:55:58.753401+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-11-17T01:55:58.753851+00:00",
+    "file": "src/forge/checks.py",
+    "wait_id": "952216ec-2c6b-4907-a223-d3d3e47d6267"
+  },
   "stuck": {
     "close": "99d22c63-2dfb-4a19-b8c3-cfbef3ba3f08",
     "head": "ec4a954b09e0cf700d676d953ad0734808b7c880",
