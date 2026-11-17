@@ -1,0 +1,70 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/codex.py\tNot done: Codex 0.169.0 rejects Forge's own unapproved hooks\topenai-released-gpt-6-2-sol-and-astra-on",
+      "kind": "bug",
+      "path": "src/forge/codex.py",
+      "line": 34,
+      "text": "Not done: Codex 0.169.0 rejects Forge's own unapproved hooks",
+      "from": "blocking",
+      "item": "openai-released-gpt-6-2-sol-and-astra-on",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/skill.md\tTell upgrading users about the new Codex default\topenai-released-gpt-6-2-sol-and-astra-on",
+      "kind": "bug",
+      "path": "src/forge/templates/skill.md",
+      "line": 1870,
+      "text": "Tell upgrading users about the new Codex default",
+      "from": "blocking",
+      "item": "openai-released-gpt-6-2-sol-and-astra-on",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/stubs/codex-app-server\tGate: Codex 0.169.0 hook-trust regression test\topenai-released-gpt-6-2-sol-and-astra-on",
+      "kind": "bug",
+      "path": "tests/stubs/codex-app-server",
+      "line": 26,
+      "text": "Gate: Codex 0.169.0 hook-trust regression test",
+      "from": "blocking",
+      "item": "openai-released-gpt-6-2-sol-and-astra-on",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_codex_smoke.py\tGate: Codex SDK smoke test\topenai-released-gpt-6-2-sol-and-astra-on",
+      "kind": "bug",
+      "path": "tests/test_codex_smoke.py",
+      "line": 25,
+      "text": "Gate: Codex SDK smoke test",
+      "from": "blocking",
+      "item": "openai-released-gpt-6-2-sol-and-astra-on",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_fix_gpt_6_2_sol_default.py\tGate: proof list\topenai-released-gpt-6-2-sol-and-astra-on",
+      "kind": "bug",
+      "path": "tests/test_fix_gpt_6_2_sol_default.py",
+      "line": 13,
+      "text": "Gate: proof list",
+      "from": "blocking",
+      "item": "openai-released-gpt-6-2-sol-and-astra-on",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "simplify\tsrc/forge/codex.py\tSimpler: Record the missing approach \u2192 explain the minimal choice and reuse",
+      "kind": "simplify",
+      "path": "src/forge/codex.py",
+      "line": 34,
+      "text": "Simpler: Record the missing approach \u2192 explain the minimal choice and reuse",
+      "from": "review",
+      "item": "openai-released-gpt-6-2-sol-and-astra-on",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
