@@ -140,42 +140,49 @@ Only a genuine trade-off goes to the human, as a question with options.
     Raise: Data loss  
     Case: normal use - The laptop checkout is named `project(2)`. [The plan](/plans/REMOTE-1.md:93) puts that name in the remote path and passes it to `pgrep -f` as a pattern. Parentheses have special meaning in that pattern, so it does not match the literal driver path. [The turn-off check](/plans/REMOTE-1.md:146) can consequently delete the folder while the worker is already running. [The pgrep manual](https://github.com/procps-ng/procps/blob/master/man/pgrep.1) specifies that the pattern is a regular expression.  
     Gain 4, Work 2, Harm 4
+    Disposition: cut - name matching is gone: each round writes its process id and start time to its own `.pid` file, and Forge reads exactly those files; no pattern holds a checkout or item name.
 
 18. Blocking: Plan gap: the running-worker check can find its own inspection shell.
     Raise: Plan gap  
     Case: normal use - A round finishes and Forge sends the specified `pgrep -f` command over SSH to check it. The remote shell’s command line contains the path being searched for, so `pgrep` can match that shell and report that the finished worker still runs. [The plan](/plans/REMOTE-1.md:137) then refuses instead of bringing the commits back. [The pgrep manual](https://github.com/procps-ng/procps/blob/master/man/pgrep.1) describes matching full command lines and the separate option for excluding ancestors.  
     Gain 5, Work 2, Harm 3
+    Disposition: cut - no pgrep: a round runs only while `ps -o lstart= -p <id>` prints the saved start time, so the checking shell can never match.
 
 19. Blocking: Security: the suggested stop command can stop another item’s worker.
     Raise: Security  
     Case: normal use - Tasks `BOARD/UI` and `BOARD/UI-FORM` run on the same machine. The planned pattern for `BOARD/UI` ends in `BOARD-UI-`, which also matches the other task’s driver path. Following [the suggested `pkill` command](/plans/REMOTE-1.md:138) can therefore stop work the developer did not choose to stop. Both task names are accepted by [the item-name rule](/src/forge/repo.py:1113).  
     Adds work: identify the requested item’s process separately from other items; F 2 x H 2 = 4; 2 x C = 4.  
     Gain 3, Work 2, Harm 4
+    Disposition: cut - runs live in `runs/<item>/` (the item's `/` is a folder level), Forge lists only that folder, and the printed stop line is `kill -TERM -- -<id>` for that one recorded id; test_4 checks that a running round of `<item>-FORM` does not affect `<item>`.
 
 20. Blocking: Data loss: a task can merge while its remote commits remain stranded.
     Raise: Data loss  
     Case: normal use - A remote round commits work, its connection breaks, and the next round runs on the laptop while the machine is unreachable. [The plan](/plans/REMOTE-1.md:142) allows that round to proceed without the remote work, but adds recovery only to `forge work`. [Close](/src/forge/close.py:81) can then publish the laptop branch without those commits; after merge, [work refuses the finished item](/src/forge/worker.py:104), so the planned recovery step no longer works.  
     Adds work: prevent unfinished remote work from being bypassed at close; F 2 x H 2 = 4; 2 x C = 4.  
     Gain 4, Work 2, Harm 4
+    Disposition: cut - `close.close` (and land through it) and `merge.merge` refuse while the item's record names a host, with `forge work <item>` as the next step; no ssh call; test_4 checks close after a cut-off round.
 
 21. Blocking: Security: the commit-reminder turn skips the remote trust recheck.
     Raise: Security  
     Case: normal use - A developer revokes trust while the first remote turn is running, and that turn leaves uncommitted changes. [The new check](/plans/REMOTE-1.md:114) runs when choosing the machine, but [the reminder](/plans/REMOTE-1.md:118) starts a second turn without another check. [The driver](/src/forge/codex_turn.py:187) can then run without the project hooks.  
     Adds work: check remote trust before the reminder turn; F 1 x H 2 = 2; 2 x C = 2.  
     Gain 3, Work 2, Harm 4
+    Disposition: cut - `box_ssh.trusted(where)` runs before every turn on the machine, the commit reminder included; when trust is gone Forge starts no turn there and refuses; test_4 has a trust case.
 
 22. Advisory: Not done: setup’s retry instruction omits the required machine name.
     Raise: Not done  
     Case: normal use - First setup asks the developer to add the trust entry. [Its next step](/plans/REMOTE-1.md:109) says to rerun setup without `--host`, but [the record is saved only after trust passes](/plans/REMOTE-1.md:110). The retry therefore asks for the machine name instead of completing setup.  
     Gain 4, Work 1, Harm 2
+    Disposition: cut - every setup refusal after step 1 names `--host {host}` in its Next line until the record has the name.
 
 23. Advisory: Plan gap: finish cannot both refuse and return the uncommitted-file warning.
     Raise: Plan gap  
     Case: normal use - The worker and its reminder both leave an uncommitted file. [Finish](/plans/REMOTE-1.md:119) calls bring-back and expects its file list, but [bring-back](/plans/REMOTE-1.md:139) refuses on that file. The warning required by the amended test is therefore not produced as specified.  
     Gain 3, Work 1, Harm 2
-   Disposition: keep - below the bar (follow-up)
+    Disposition: cut - finish calls the bring-back without its two refusals and returns the uncommitted files for the warning, keeping the folder.
 
 24. Advisory: Not done: turning off can leave fetched work outside its task branch.
     Raise: Not done  
     Case: normal use - Bring-back fetches a remote commit but its merge conflicts and is aborted. The commit is now in the laptop’s separate recovery reference, but not its task branch. [Turn-off](/plans/REMOTE-1.md:146) checks only whether the commit is in the clone, and [the next bring-back](/plans/REMOTE-1.md:137) clears the item’s host when the box record is gone. The next round can miss that commit.  
     Gain 4, Work 2, Harm 3
+    Disposition: cut - turn-off counts a branch's commit as back only when it is an ancestor of the clone's branch of the same name, so a commit only fetched to refs/forge-host after a refused merge blocks turn-off.
