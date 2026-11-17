@@ -1,0 +1,15 @@
+{
+  "base": "d7667b82c31d997ea75abe901ec24c720dc9ceb7",
+  "branch": "fix/the-commit-hook-s-generated-file-check-n",
+  "done_when": "The Windows speed test for the hook's generated-file check passes with a median under 0.4 seconds.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-17T06:41:43.774749+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The commit hook's generated-file check now lists every file in the repo to look for a nested pnpm lockfile, which makes the hook slower and fails the Windows speed test, blocking the v1.2.41 release."
+}
