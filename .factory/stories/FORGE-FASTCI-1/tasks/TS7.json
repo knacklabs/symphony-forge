@@ -1,0 +1,53 @@
+{
+  "branch": "task/FORGE-FASTCI-1-TS7",
+  "known": [
+    {
+      "area": "_run_live_starter() in tests/test_starter_tree.py",
+      "file": "tests/test_starter_tree.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 255,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_the_starter_is_a_runnable_stack",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "aae9effbc4f8eef4d58db9d7bef2b6bd040b23386ff9c5eac197e4913f9630fc",
+    "changed": "a8bcf4522a7a05ea7d88503e2d1966ac1965b24bb03543d2cf7e1155e72a9394",
+    "commit": "fa4fb6b944fa156e05dcabb87af50f7f98b67850",
+    "dismissals": [],
+    "findings": [],
+    "id": "87b37b5d-8bc7-4d8d-b7b9-a1650868b35b",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-17T13:48:26.078156+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-17T14:52:34.553677+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-17T15:53:40.886391+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "8940c991-5d7a-46cb-aef8-870e65ac43d3",
+    "head": "f1fcbc0247a0166265e10a8faf3684307505b4ed",
+    "keys": {
+      "the open P0 gate: test_1_the_starter_is_a_runnable_stack in tests/test_starter_tree.py": 1
+    },
+    "round": 1
+  },
+  "worker": "claude"
+}

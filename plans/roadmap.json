@@ -672,6 +672,12 @@
       "title": "Codex build rounds run on a machine you own",
       "status": "pending",
       "order": 125
+    },
+    {
+      "key": "FORGE-FASTCI-1",
+      "title": "Faster checks and CI for client repos",
+      "status": "pending",
+      "order": 125
     }
   ],
   "epics": [

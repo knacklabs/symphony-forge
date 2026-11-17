@@ -32,7 +32,13 @@ BROWSER_FLOWS = (
     "the motion rules hold and reduced motion stops pulses, slides and zooms",
     "a pressed shared control shrinks, by mouse and by keyboard",
 )
+# TypeScript 7 is the app's compiler; TypeScript 6 stays under the name `typescript` for Nx and Vite.
+TS_ALIASES = {
+    "typescript": "npm:@typescript/typescript6@6.0.2",
+    "@typescript/native": "npm:typescript@7.0.2",
+}
 PINNED_PACKAGES = {
+    **TS_ALIASES,
     "@nestjs/core": "11.2.7",
     "@nx/eslint-plugin": "22.0.1",
     "@playwright/test": "1.64.0",
@@ -246,6 +252,9 @@ def _run_live_starter(tmp_path_factory, sources, required_output=(), after=None)
         assert process.returncode == 0, output
         for message in required_output:
             assert message in output, output
+        checker = subprocess.run(["corepack", "pnpm", "exec", "tsc", "--version"], cwd=copy, env=env,
+                                 capture_output=True, text=True, timeout=120)
+        assert checker.stdout.strip() == "Version 7.0.2", checker.stdout + checker.stderr
 
         if (copy / "nx.json").is_file():
             projects = (
@@ -511,7 +520,7 @@ def test_1_the_starter_is_a_runnable_stack(request):
     assert package.get("scripts", {}).get("test")
     for group in ("dependencies", "devDependencies", "optionalDependencies"):
         for name, version in package.get(group, {}).items():
-            assert isinstance(version, str) and PIN.fullmatch(version), (name, version)
+            assert isinstance(version, str) and (PIN.fullmatch(version) or TS_ALIASES.get(name) == version), (name, version)
     dependencies = package.get("dependencies", {}) | package.get("devDependencies", {})
     for name, version in PINNED_PACKAGES.items():
         assert dependencies.get(name) == version, (name, dependencies.get(name), version)
@@ -528,7 +537,14 @@ def test_1_the_starter_is_a_runnable_stack(request):
         locked = next(lock_importer[group][name]["version"] for group in
                       ("dependencies", "devDependencies", "optionalDependencies")
                       if name in lock_importer.get(group, {}))
+        version = version.removeprefix("npm:")
         assert locked == version or locked.startswith(version + "("), (name, locked, version)
+    for tsconfig in (*STARTER.rglob("tsconfig*.json"), *(ROOT / "src/forge/templates/starter-python").rglob("tsconfig*.json")):
+        assert "baseUrl" not in tsconfig.read_text(encoding="utf-8"), tsconfig
+    # `tsc` is TypeScript 7 only while no script or Nx target calls the TypeScript 6 binary `tsc6`.
+    for root in (STARTER, ROOT / "src/forge/templates/starter-python"):
+        for config in (*root.rglob("package.json"), *root.rglob("project.json")):
+            assert "tsc6" not in config.read_text(encoding="utf-8"), config
     assert re.search(r"(?m)^\s+['\"]?playwright-core@" +
                      re.escape(dependencies["@playwright/test"]) + r"(?:\(|:|['\"]?:)",
                      lock_text), "playwright-core is not pinned to @playwright/test's version"
