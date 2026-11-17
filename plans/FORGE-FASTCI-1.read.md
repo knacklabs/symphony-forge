@@ -1,13 +1,13 @@
 ---
 reader: codex (gpt-6.1-terra)
-read_at: 2026-11-17T13:27:21.258431+00:00
-seconds: 727.551
-read_hash: bf5edb08a1e8b3662fbf24f6620b37d4d86d5991
-round: 1
-passed: no
-doc_seen: bf5edb08a1e8b3662fbf24f6620b37d4d86d5991
+read_at: 2026-11-17T13:44:37.837949+00:00
+seconds: 859.103
+read_hash: f227639f9434c06b68db289bf83095b80013cbf7
+round: 2
+passed: yes
+doc_seen: f227639f9434c06b68db289bf83095b80013cbf7
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+notes_seen: 5de3d342ca7dfe2dce7ea6b31d0add199352fac4
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a1e9a5-ba42-7df2-a8f1-79526a848260
 session:
@@ -80,5 +80,34 @@ Only a genuine trade-off goes to the human, as a question with options.
 
 10. Advisory: The public guide will describe the old starter checks.
     Raise: Functional. A developer reading the guide after this change will see that the Python starter uses ESLint and that the workflow has one tests job. The plan updates the shipped agent guide but leaves this page outside the tasks’ scopes. [Public guide](/docs/guide.md:541), [tasks](/plans/FORGE-FASTCI-1.md:149).
+    Gain 2, Work 1, Harm 1
+   Disposition: keep - below the bar (live with)
+
+## Round 2
+
+11. Advisory: Not done: The TypeScript build check runs lint again for shared changes.
+    Raise: Not done. A change to `package.json` selects the full build path. The plan runs `scripts/test-build.mjs` there, but that script runs lint after its builds. The separate lint check therefore does not remove lint from the build check’s critical path. The proposed `--list` test sees the wrapper command, not the lint inside it. [Plan](/plans/FORGE-FASTCI-1.md:108), [build script](/src/forge/templates/starter/scripts/test-build.mjs:18).
+    Gain 3, Work 2, Harm 2
+   Disposition: keep - below the bar (follow-up)
+
+12. Advisory: Plan gap: The React plugin is both global and limited to web overrides.
+    Raise: Plan gap. The settings list `react` among the root plugins, while the custom-rule instructions say to enable it only in web-source overrides. Root plugins also apply outside those overrides, so a builder cannot follow both instructions as written. [Plan](/plans/FORGE-FASTCI-1.md:118), [Oxlint configuration reference](https://oxc.rs/docs/guide/usage/linter/config-file-reference.html).
+    Gain 3, Work 1, Harm 2
+   Disposition: keep - below the bar (follow-up)
+
+13. Advisory: A repo already using TypeScript 7 can receive the older-compiler suggestion.
+    Raise: Functional. The amended rule treats `>=5` as an older TypeScript version, but that range also permits version 7. A repo using version 7 directly, without `@typescript/native`, would be told to replace its compiler. [Plan](/plans/FORGE-FASTCI-1.md:111), [npm version ranges](https://github.com/npm/node-semver#ranges).
+    Adds work: check the resolved compiler for open-ended ranges; F 2 x H 1 = 2; 2 x C = 4.
+    Gain 2, Work 2, Harm 1
+   Disposition: keep - below the bar (live with)
+
+14. Advisory: Not done: The separate-check suggestion can be suppressed while CI still uses one job.
+    Raise: Not done. If `test` contains `{step}` but `fast_test` does not, the planned suggestion is suppressed. Pull requests use `fast_test` when it exists, so the workflow still has no step jobs. [Suggestion rule](/plans/FORGE-FASTCI-1.md:113), [pull-request command selection](/src/forge/quicktest.py:13).
+    Gain 3, Work 1, Harm 2
+   Disposition: keep - below the bar (follow-up)
+
+15. Advisory: Unproven: item 3: A starter switched to local tests can retain a CI documentation job.
+    Raise: Test. With `{step}` and one group, the plan keeps the multi-job template. The current local-test removal chooses where to start deleting by the group count, so it would leave `docs-check` behind. The existing local-workflow test has no `{step}`, and the new step test uses CI tests. [Plan](/plans/FORGE-FASTCI-1.md:105), [removal logic](/src/forge/prcheck.py:458), [existing test](/tests/test_testplace_workflow.py:113).
+    Adds work: cover a starter switched from CI to local tests; F 2 x H 1 = 2; 2 x C = 2.
     Gain 2, Work 1, Harm 1
    Disposition: keep - below the bar (live with)

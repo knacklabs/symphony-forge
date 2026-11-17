@@ -1,10 +1,18 @@
 {
   "doc": "plans/FORGE-FASTCI-1.md",
-  "status": "planning",
+  "status": "read",
   "steps": [
     {
       "at": "2026-11-17T12:41:46.289933+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-17T13:27:21.302399+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-11-17T13:44:37.865262+00:00",
+      "step": "read"
     }
   ],
   "title": "Faster checks and CI for client repos",
