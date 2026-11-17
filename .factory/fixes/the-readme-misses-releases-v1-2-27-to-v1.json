@@ -1,0 +1,15 @@
+{
+  "base": "a512238b63015714e7f59305c3b839d01074dc77",
+  "branch": "fix/the-readme-misses-releases-v1-2-27-to-v1",
+  "done_when": "README.md is about 1,000 words and names only commands that exist in the installed release.",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-17T17:22:44.821888+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The README misses releases v1.2.27 to v1.2.41, names a command that does not exist, and gives wrong statements about who builds, what must be installed and how many plan reads run."
+}
