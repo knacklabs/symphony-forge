@@ -4,40 +4,21 @@
 
 ## What changes for you
 
-<What the people who use this will notice, in plain English. No IDs, codes or jargon. End each
-item with its source in plain words, such as (Source: the client's note on late orders, 12 Oct),
-or with the sourced item that needs it, such as (Needed by: the Customers screen). A source is a
-client note, a brief answer, a decision, a screen marked Build now at sign-off, a fixed rule of
-the app, or the owner's own request with its date. Name each screen, field, endpoint, tool and
-setting that the plan adds in one of these items.>
-
-<!-- For user-facing parts: run impeccable init if PRODUCT.md is absent. Design the screens
-in a Claude Design artifact made with the client's design system (link in
-docs/design/design-system.md); on a Codex-only host without artifact tools, use HTML artboards.
-Save each screen and its images in docs/design/<KEY>/. Copy .forge/design/support.js beside
-the HTML screens and run it for a 1440 by 900 PNG per screen. Commit the folder. Use its git tree
-id (git rev-parse HEAD:docs/design/<KEY>) in the last line below. For small changes to existing
-screens that add no screen and change no flow, use Design: none (<why>) instead.
-Remove this comment and omit
-the Design line for a backend-only story. Cold read follows the design; one plan approval binds
-these exact files. A folder edit needs its new tree id and a new plan approval.
-The rule starts with the next plan read and approval. Plans approved without a Design line
-before this rule keep their existing approval. -->
-Design: docs/design/<KEY>/ (<tree id>)
+- A coordinator can send Codex and Claude work rounds to a Linux machine listed in forge.toml, with a slot count for each host.
+- The remote machine builds, tests, commits and pushes. Threads, locks, round records and handbacks stay in the coordinator's checkout, and the result comes back like a normal round end or handback.
+- A remote round refuses to start, with a plain message, when its clone or branch is behind or has local changes, so two machines never write the same item.
+- A remote round is counted only against that host's own slots. The Mac's load limit of 1.5 per core no longer holds it.
 
 ## Why
 
-Run work rounds on a second Linux machine
-
-
+Every work round runs on the coordinator's Mac, and new rounds wait once load passes 1.5 per core, while CI machines sit idle. There is no supported way to run a round's worker on another host that has its own clone, signed-in Claude Code and Codex, and the round's branch.
 
 ## Done when
 
-<!-- One bold plain sentence per result, which the owner approves: no code names, file paths or
-test names. Its evidence, edge cases and proving tests go under the same number in Done-when
-details. -->
-
-1. **Something anyone can observe once this is done.**
+1. **The owner can list a Linux host with a slot count in forge.toml, and a round sent there runs on that host while its state stays in the coordinator's checkout.**
+2. **The result of that round (round end or handback) appears on the board the same way a local round's result does.**
+3. **A round sent to a host whose clone or branch is behind or dirty is refused before any work starts, with a plain reason.**
+4. **While the Mac is at its load limit, a round sent to a listed remote host still starts when that host has a free slot.**
 
 ## Risks
 
