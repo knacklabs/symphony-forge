@@ -1,11 +1,212 @@
 {
   "branch": "task/REMOTE-1-HOST",
+  "known": [
+    {
+      "area": "setup() in src/forge/box_ssh.py",
+      "file": "src/forge/box_ssh.py",
+      "gain": 4,
+      "harm": 4,
+      "line": 62,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": true,
+      "title": "Security: Quote the checkout name in the remote shell command",
+      "work": 1
+    },
+    {
+      "area": "_holds() in src/forge/box_ssh.py",
+      "file": "src/forge/box_ssh.py",
+      "gain": 4,
+      "harm": 5,
+      "line": 127,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Data loss: Do not treat an unverified process identity as finished",
+      "work": 2
+    },
+    {
+      "area": "_holds() in src/forge/box_ssh.py",
+      "file": "src/forge/box_ssh.py",
+      "gain": 5,
+      "harm": 5,
+      "line": 130,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Data loss: Refuse turn-off when the remote work cannot be inspected",
+      "work": 2
+    },
+    {
+      "area": "setup() in src/forge/box_ssh.py",
+      "file": "src/forge/box_ssh.py",
+      "gain": 4,
+      "harm": 4,
+      "line": 95,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": true,
+      "title": "Security: Install the pre-commit check in the hook path Git uses",
+      "work": 2
+    },
+    {
+      "area": "_holds() in src/forge/box_ssh.py",
+      "file": "src/forge/box_ssh.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 125,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Ignore application PID files inside run worktrees",
+      "work": 2
+    },
+    {
+      "area": "setup() in src/forge/box_ssh.py",
+      "file": "src/forge/box_ssh.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 81,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Report SSH failures throughout setup",
+      "work": 1
+    },
+    {
+      "area": "test_5_rounds_on_a_machine_are_off_until_turned_on_and_off_deletes_forges_folder() in tests/test_host_setup.py",
+      "file": "tests/test_host_setup.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 90,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_5_rounds_on_a_machine_are_off_until_turned_on_and_off_deletes_forges_folder",
+      "work": 2
+    },
+    {
+      "area": "test_1_setup_checks_the_machine_and_says_what_is_missing() in tests/test_host_setup.py",
+      "file": "tests/test_host_setup.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 38,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_setup_checks_the_machine_and_says_what_is_missing",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "b1e26cccabcb1070dbe193d71178e031f6e1e45a12f306d14bec4f9413219886",
+    "changed": "63e218837ce4c80f120fcad63c42326fe9c6ffdb80256ebc5eb5b43e470c7770",
+    "commit": "6bf11cb306d356403f74e92d0e0ffa449262503a",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 1, Harm 4\nRaise: Security\nCase: normal use - A developer sets up a checkout whose directory name contains shell syntax, such as `$(id)`. `_folder()` incorporates that name into `folder`, and this interpolation places it inside double quotes in the remote shell script, where command substitution still runs. A crafted checkout name can therefore execute commands as the SSH user on the remote machine during setup.",
+        "file": "src/forge/box_ssh.py",
+        "gain": 4,
+        "harm": 4,
+        "line": 62,
+        "priority": "P1",
+        "title": "Security: Quote the checkout name in the remote shell command",
+        "work": 1
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 5\nRaise: Data loss\nCase: normal use - A remote round is still running when process inspection fails or its locale differs from the locale used to record its start time. This check treats `ps` exit status 1 as an ended process, although procps also uses that status for fatal lookup errors; it also treats a different `lstart` string as proof of a different process, although that string is locale-sensitive. Turn-off can then delete the active round's folder. The [procps implementation](https://gitlab.com/procps-ng/procps/-/raw/master/src/ps/display.c) and [ps documentation](https://man7.org/linux/man-pages/man1/ps.1.html) describe these behaviours.",
+        "file": "src/forge/box_ssh.py",
+        "gain": 4,
+        "harm": 5,
+        "line": 127,
+        "priority": "P1",
+        "title": "Data loss: Do not treat an unverified process identity as finished",
+        "work": 2
+      },
+      {
+        "body": "Gain 5, Work 2, Harm 5\nRaise: Data loss\nCase: normal use - Git was removed from the remote machine after setup, or a worktree's `git status` fails. The status, stash and branch commands are piped into commands whose success masks the Git failures, and `_holds()` ignores the captured stderr. Forge can report that nothing remains and then delete unlisted files, stashes and commits with `--yes`.",
+        "file": "src/forge/box_ssh.py",
+        "gain": 5,
+        "harm": 5,
+        "line": 130,
+        "priority": "P1",
+        "title": "Data loss: Refuse turn-off when the remote work cannot be inspected",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 4\nRaise: Security\nCase: normal use - The remote account has a global `core.hooksPath`, for example for shared Git hooks. Setup writes Forge's hook under `.git/hooks`, but [Git uses the configured hook path](https://git-scm.com/docs/githooks) instead. Setup still succeeds, and remote commits bypass Forge's branch and worker-settings checks in `src/forge/githooks.py:122`. The ruling about the shim text does not address Git's hook-path configuration.",
+        "file": "src/forge/box_ssh.py",
+        "gain": 4,
+        "harm": 4,
+        "line": 95,
+        "priority": "P1",
+        "title": "Security: Install the pre-commit check in the hook path Git uses",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - A round runs an application that leaves `tmp/pids/server.pid` in its worktree. The recursive search treats that application file as a Forge round's PID file; a normal PID-only file has no saved start time, so turn-off refuses even after the Forge round ended and suggests a kill command for the application's PID. Both preview and confirmed turn-off are blocked.",
+        "file": "src/forge/box_ssh.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 125,
+        "priority": "P1",
+        "title": "Functional: Ignore application PID files inside run worktrees",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 1, Harm 3\nRaise: Functional\nCase: normal use - The connection drops during the roughly 300 MB Codex kit install. `ssh()` raises `ProviderError` on exit 255, but only the initial facts call is caught; the install call here and the folder-creation call at line 98 let it escape. `src/forge/cli.py:180` catches only `repo.Refused`, so setup ends with a traceback and no next step.",
+        "file": "src/forge/box_ssh.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 81,
+        "priority": "P1",
+        "title": "Functional: Report SSH failures throughout setup",
+        "work": 1
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Test\nCase: normal use - A newly initialized repo has no `boxes` setting. This proof explicitly writes `boxes = \"off\"` before testing the refusal, so it would pass if the default became `\"ssh\"`. It also checks the contents list only for the preview call, not for `--yes`, so it would pass if an immediate confirmed turn-off deleted the folder without listing its contents.",
+        "file": "tests/test_host_setup.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 90,
+        "priority": "P1",
+        "title": "Gate: test_5_rounds_on_a_machine_are_off_until_turned_on_and_off_deletes_forges_folder",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - A reachable machine does not have Git. The named setup proof always runs with Git available, so it would still pass if the Git prerequisite check were removed and setup failed later without naming the missing tool and its next step. The owner-approved setup behaviour explicitly includes checking Git.",
+        "file": "tests/test_host_setup.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 38,
+        "priority": "P1",
+        "title": "Gate: test_1_setup_checks_the_machine_and_says_what_is_missing",
+        "work": 2
+      }
+    ],
+    "id": "5bddf5bb-66be-47b6-aa55-a80e38056049",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-17T13:39:44.494005+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-17T14:08:03.424258+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
