@@ -125,7 +125,7 @@ def test_1_running_command_continues_under_the_pin_merged_from_upgraded_default(
     original = (env.repo.path / "forge.toml").read_text("utf-8")
     original = re.sub(r'version = "[^"]+"', 'version = "v1.2.2"', original)
     original = original.replace('workers = "codex"', 'workers = "claude"')
-    original = original.replace('model = "gpt-6.1-sol"', 'model = "opus"')
+    original = original.replace('model = "gpt-6.2-sol"', 'model = "opus"')
     original = re.sub(r'^subagents = .*\n|^subagent_effort = .*\n', '', original, flags=re.M)
     if stage == "land-fix":
         # A fix's first P1 is now a follow-up. A real failed test still needs a repair round.

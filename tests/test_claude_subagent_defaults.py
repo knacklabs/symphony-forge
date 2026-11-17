@@ -10,7 +10,7 @@ STORY = "FIX-CLAUDE-SONNET-DEFAULT"
 
 CODEX_MODELS = """
 [models.build.codex]
-model = "gpt-6.1-sol"
+model = "gpt-6.2-sol"
 effort = "medium"
 [models.lite.codex]
 model = "gpt-6-luna"
@@ -19,7 +19,7 @@ effort = "max"
 model = "gpt-6-sol"
 effort = "xhigh"
 [models.review.codex]
-model = "gpt-6.1-sol"
+model = "gpt-6.2-sol"
 effort = "high"
 """
 CLAUDE_MODELS = """
@@ -87,10 +87,10 @@ def test_5_init_and_sync_write_claude_role_defaults_and_preserve_codex_settings(
 
     if models is not None:
         for name in ("worker", "coder", "tester", "refactorer"):
-            assert _settings(repo.path, name)[0] == ("gpt-6.1-sol", "medium"), name
+            assert _settings(repo.path, name)[0] == ("gpt-6.2-sol", "medium"), name
         assert _settings(repo.path, "explorer")[0] == ("gpt-6-luna", "max")
         # The frontend role builds on the design entry, as planning does here.
         for name in ("frontend", "planner", "architect"):
             assert _settings(repo.path, name)[0] == ("gpt-6-sol", "xhigh"), name
         for name in ("debugger", "security", "performance"):
-            assert _settings(repo.path, name)[0] == ("gpt-6.1-sol", "high"), name
+            assert _settings(repo.path, name)[0] == ("gpt-6.2-sol", "high"), name

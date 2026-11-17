@@ -62,7 +62,7 @@ def send(**message):
 
 
 def thread(id, saved):
-    return {"id": id, "cliVersion": "0.159.2", "createdAt": 0, "updatedAt": 0, "cwd": saved["cwd"],
+    return {"id": id, "cliVersion": "0.169.0", "createdAt": 0, "updatedAt": 0, "cwd": saved["cwd"],
             "ephemeral": False, "modelProvider": "openai", "preview": "", "sessionId": "stub",
             "source": "appServer", "status": {"type": "idle"}, "turns": [],
             "gitInfo": saved.get("gitInfo")}
@@ -70,7 +70,7 @@ def thread(id, saved):
 
 def main():
     if sys.argv[1:] == ["--version"]:
-        print("codex-cli 0.159.2")
+        print("codex-cli 0.169.0")
         return
     for line in sys.stdin:
         message = json.loads(line)
@@ -79,8 +79,8 @@ def main():
         if method is None or "id" not in message:
             continue
         if method == "initialize":
-            send(id=message["id"], result={"userAgent": "codex_app_server/0.159.2",
-                                           "serverInfo": {"name": "codex", "version": "0.159.2"}})
+            send(id=message["id"], result={"userAgent": "codex_app_server/0.169.0",
+                                           "serverInfo": {"name": "codex", "version": "0.169.0"}})
             continue
         if method in ("hooks/list", "model/list"):  # no pending hooks or model metadata here
             send(id=message["id"], result={"data": []})

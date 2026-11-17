@@ -109,11 +109,11 @@ def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
             else:
                 # Codex reports a null configured effort. Its matching model's default
                 # is on the second catalog page, after a different model's high default.
-                stub.write_text(stub.read_text("utf-8").replace('"stub-model"', '"gpt-6.1-sol"'), "utf-8")
+                stub.write_text(stub.read_text("utf-8").replace('"stub-model"', '"gpt-6.2-sol"'), "utf-8")
             monkeypatch.setenv("STUB_SAY", "No findings.")
             model = "gpt-6-sol"
         if "default" in case:
-            model, effort = ("gpt-6.1-sol", "medium") if case.endswith("codex") else ("claude-opus-5-5", "high")
+            model, effort = ("gpt-6.2-sol", "medium") if case.endswith("codex") else ("claude-opus-5-5", "high")
         assert repo.forge("read", item).returncode == 0
         (folder / "plans/SHOP.md").write_text(DOC.replace("come back", "return"), "utf-8")
     elif case == "codex":
@@ -265,9 +265,9 @@ def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
                 selections = {f"model: {reported}": (reported, effort),
                               "thinking: medium": (reported, "medium")}
                 if "fallback" in case:
-                    changed = ("codex model gpt-6-sol is unavailable for this account; retrying with gpt-6.1-sol"
+                    changed = ("codex model gpt-6-sol is unavailable for this account; retrying with gpt-6.2-sol"
                                if case.endswith("codex") else "model: sonnet")
-                    reported = "gpt-6.1-sol" if case.endswith("codex") else "sonnet"
+                    reported = "gpt-6.2-sol" if case.endswith("codex") else "sonnet"
                     selections[changed] = (reported, "medium")
                     selections["thinking: high"] = (reported, "high")
                 expected_steps = [*selections, *expected_steps]

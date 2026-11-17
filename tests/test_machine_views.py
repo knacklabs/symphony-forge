@@ -266,7 +266,7 @@ def test_1_board_shows_stories_workers_checks_and_findings(repo, gh, request, co
     monkeypatch.setenv("FORGE_NOW", checked_at)
     setup(repo)
     repo.write("forge.toml", (repo.path / "forge.toml").read_text() +
-               'models.build = { model = "gpt-6.1-sol", effort = "medium" }\n'
+               'models.build = { model = "gpt-6.2-sol", effort = "medium" }\n'
                'models.fix = { model = "gpt-6-luna", effort = "high" }\n')
     repo.git("add", "forge.toml")
     repo.git("commit", "-qm", "Choose build model")
@@ -317,7 +317,7 @@ def test_1_board_shows_stories_workers_checks_and_findings(repo, gh, request, co
                                  "items": [{"title": "Missing empty state", "priority": "P1"}],
                                  "dismissed": 1}
     if os.name != "nt":
-        assert child["worker"] == {"kind": "build", "model": "gpt-6.1-sol", "started_at": None,
+        assert child["worker"] == {"kind": "build", "model": "gpt-6.2-sol", "started_at": None,
                                    "elapsed": None}
     assert child["round"] is None
     assert all(s["started_at"] is None for s in child["stages"])

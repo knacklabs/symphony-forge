@@ -22,7 +22,7 @@ from conftest import REAL_CODEX_HOME
 pytestmark = pytest.mark.platform
 
 STORY = "FORGE-WARM-1"
-PIN = "0.159.2"
+PIN = "0.169.0"
 ROOT = Path(__file__).resolve().parents[1]
 TURN = ROOT / "src" / "forge" / "codex_turn.py"
 # Where forge doctor --fix installs the SDK, marked ready once the install finished.

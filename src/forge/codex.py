@@ -31,7 +31,7 @@ else:
 
 # The one SDK version Forge drives. Moving it is a deliberate change that reruns the contract and
 # smoke tests.
-SDK_PIN = "0.159.2"
+SDK_PIN = "0.169.0"
 # Written last by the install, so a half-finished install never looks ready.
 READY = "forge-sdk-ready"
 # Loads the SDK and makes its client, which starts no server, to see it has the approval handler

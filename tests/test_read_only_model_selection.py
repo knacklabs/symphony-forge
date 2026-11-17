@@ -60,10 +60,10 @@ def test_1_init_gives_read_only_work_explore_defaults(repo, gh, tmp_path):
     assert models["explore"]["claude"] == {"model": "claude-haiku-5-5", "effort": "high"}
     # Low implementation defaults do not change the fixed explore effort or helpers.
     assert models["explore"]["codex"] == {
-        "model": "gpt-6.1-sol", "effort": "medium",
+        "model": "gpt-6.2-sol", "effort": "medium",
         "subagents": "gpt-6-luna", "subagent_effort": "max"}
     assert _settings(client, "explorer") == (
-        ("gpt-6.1-sol", "medium"), ("claude-haiku-5-5", "high"))
+        ("gpt-6.2-sol", "medium"), ("claude-haiku-5-5", "high"))
 
 
 def test_2_sync_writes_explorer_from_explore_for_both_hosts(repo):
@@ -74,10 +74,10 @@ def test_2_sync_writes_explorer_from_explore_for_both_hosts(repo):
     # Changing only read-only settings reaches both roles on the next sync.
     toml = repo.path / "forge.toml"
     repo.write("forge.toml", toml.read_text("utf-8").replace(
-        '"gpt-6-luna"', '"gpt-6.1-sol"').replace('"claude-haiku-5-5"', '"haiku"'))
+        '"gpt-6-luna"', '"gpt-6.2-sol"').replace('"claude-haiku-5-5"', '"haiku"'))
     again = repo.forge("sync")
     assert again.returncode == 0, again.stdout + again.stderr
-    assert _settings(repo.path, "explorer") == (("gpt-6.1-sol", "high"), ("haiku", "high"))
+    assert _settings(repo.path, "explorer") == (("gpt-6.2-sol", "high"), ("haiku", "high"))
 
 
 def test_4_earlier_adopted_repo_without_explore_keeps_lite_after_upgrade(

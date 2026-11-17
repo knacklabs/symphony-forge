@@ -67,7 +67,7 @@ def test_1_each_turn_says_and_records_whether_fast_ran(
                                  config.read_text("utf-8"), flags=re.M), "utf-8")
         repo.git("commit", "-qam", "Pin current Forge")
         repo.git("push", "-q", "origin", "main")
-        said, doctor = (text.replace("gpt-6-sol", "gpt-6.1-sol") for text in (said, doctor))
+        said, doctor = (text.replace("gpt-6-sol", "gpt-6.2-sol") for text in (said, doctor))
     _tiers(repo, tiers, receipt)
     monkeypatch.setenv("STUB_CODEX_OVERLOADED", "1")
     monkeypatch.setenv("FORGE_CODEX_RETRY_WAIT", "0")

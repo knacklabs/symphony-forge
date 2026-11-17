@@ -176,17 +176,17 @@ def test_10_the_cold_read_runs_on_the_other_family(repo, gh, monkeypatch, sdk_da
     assert "model" not in written
     # Lite keeps first fix rounds; explore now owns read-only work with separate host defaults.
     assert written["models"] == {
-        "build": {"codex": {"model": "gpt-6.1-sol", "effort": "low"},
+        "build": {"codex": {"model": "gpt-6.2-sol", "effort": "low"},
                   "claude": {"model": "claude-sonnet-5-5", "effort": "low",
                              "subagents": "claude-haiku-5-5", "subagent_effort": "high"}},
-        "fix": {"codex": {"model": "gpt-6.1-sol", "effort": "low"},
+        "fix": {"codex": {"model": "gpt-6.2-sol", "effort": "low"},
                 "claude": {"model": "claude-sonnet-5-5", "effort": "low",
                            "subagents": "claude-haiku-5-5", "subagent_effort": "high"}},
-        "lite": {"codex": {"model": "gpt-6.1-sol", "effort": "low",
+        "lite": {"codex": {"model": "gpt-6.2-sol", "effort": "low",
                            "subagents": "gpt-6-luna", "subagent_effort": "max"},
                  "claude": {"model": "claude-sonnet-5-5", "effort": "low",
                             "subagents": "claude-haiku-5-5", "subagent_effort": "high"}},
-        "explore": {"codex": {"model": "gpt-6.1-sol", "effort": "medium",
+        "explore": {"codex": {"model": "gpt-6.2-sol", "effort": "medium",
                               "subagents": "gpt-6-luna", "subagent_effort": "max"},
                     "claude": {"model": "claude-haiku-5-5", "effort": "high"}},
         "grill": {"codex": {"model": "gpt-6.1-terra", "effort": "max"},
@@ -195,7 +195,7 @@ def test_10_the_cold_read_runs_on_the_other_family(repo, gh, monkeypatch, sdk_da
                    "claude": {"model": "claude-sonnet-5-5", "effort": "high"}},
         "light_review": {"codex": {"model": "gpt-6.1-terra", "effort": "max"}},
         "design": {"claude": {"model": "claude-sonnet-5-5", "effort": "xhigh"},
-                   "codex": {"model": "gpt-6.1-sol", "effort": "high"}},
+                   "codex": {"model": "gpt-6.2-sol", "effort": "high"}},
     }
     toml.write_text(f'version = "{version}"\nmodel = "opus"\n', encoding="utf-8")
     old = repo.forge("doctor", cwd=shop)

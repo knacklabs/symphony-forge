@@ -24,7 +24,7 @@ pytestmark = pytest.mark.platform
 
 STORY = "FORGE-PROTO-1"
 PIN = "ce14dcca09b3affb922ddcca11465619e67f5114"
-SOL_HIGH = "model: gpt-6.1-sol\nthinking: high\nautoreview done"
+SOL_HIGH = "model: gpt-6.2-sol\nthinking: high\nautoreview done"
 MUST = ("Sign-off person", "Demo workflow", "Users and roles", "Existing systems",
         "Sign-in", "Personal data", "Production host")
 
@@ -277,7 +277,7 @@ def test_7_review_guards_client_signoff(repo, tmp_path, monkeypatch):
     page = _decision(fix, answers, proof="The order flow passes. Check automatic model fallback.")
 
     queue.write_text(json.dumps([{"say": SOL_HIGH + "\n"
-                                   "codex model gpt-6.1-sol is unavailable for this account; "
+                                   "codex model gpt-6.2-sol is unavailable for this account; "
                                    "retrying with gpt-6-astra",
                                   "report": {"review_status": "scoped-clean", "findings": []}}]))
     fallback = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
@@ -285,7 +285,7 @@ def test_7_review_guards_client_signoff(repo, tmp_path, monkeypatch):
     assert "status: accepted" in page.read_text()
     page = _decision(fix, answers, proof="The order flow passes. Check alternate effort.")
 
-    queue.write_text(json.dumps([{"say": "model: gpt-6.1-sol\nthinking: xhigh",
+    queue.write_text(json.dumps([{"say": "model: gpt-6.2-sol\nthinking: xhigh",
                                   "report": {"review_status": "scoped-clean", "findings": []}}]))
     other_effort = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
     assert other_effort.returncode == 0, other_effort.stderr

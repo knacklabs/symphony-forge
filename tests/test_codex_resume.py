@@ -68,14 +68,14 @@ def send(**message):
 
 def thread(id, saved):
     turns = [{"id": turn, "items": [], "status": status} for turn, status in saved["turns"].items()]
-    return {"id": id, "cliVersion": "0.159.2", "createdAt": 0, "updatedAt": 0, "cwd": saved["cwd"],
+    return {"id": id, "cliVersion": "0.169.0", "createdAt": 0, "updatedAt": 0, "cwd": saved["cwd"],
             "ephemeral": False, "modelProvider": "openai", "preview": "", "sessionId": "stub",
             "source": "appServer", "status": {"type": "idle"}, "turns": turns}
 
 
 def main():
     if sys.argv[1:] == ["--version"]:
-        print("codex-cli 0.159.2")
+        print("codex-cli 0.169.0")
         return
     log(pid=os.getpid(), args=sys.argv[1:])
     for line in sys.stdin:
@@ -85,8 +85,8 @@ def main():
         if method is None or "id" not in message:
             continue
         if method == "initialize":
-            send(id=message["id"], result={"userAgent": "codex_app_server/0.159.2",
-                                           "serverInfo": {"name": "codex", "version": "0.159.2"}})
+            send(id=message["id"], result={"userAgent": "codex_app_server/0.169.0",
+                                           "serverInfo": {"name": "codex", "version": "0.169.0"}})
             continue
         if method == "hooks/list":  # no project hook waits for trust here
             send(id=message["id"], result={"data": []})

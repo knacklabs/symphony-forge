@@ -31,7 +31,7 @@ def test_5_guide_explains_design_models_and_fallback():
     assert "[models.design.claude]" in models and "[models.design.codex]" in models
     assert "claude-sonnet-5-5` at xhigh effort" in models
     # The guide names the current default; decision 0097 keeps the model it was decided with.
-    assert "gpt-6.1-sol` at high effort" in models
+    assert "gpt-6.2-sol` at high effort" in models
     assert "User-facing" in models and "Prototype before sign-off" in models
     # Tools now selects the design family; workers controls routing only with both tools.
     assert ("uses its selected tool's design entry: `[models.design.codex]` on Codex and "

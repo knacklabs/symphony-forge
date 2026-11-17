@@ -1867,7 +1867,7 @@ Each kind in `forge.toml`'s `[models]` table may have a codex and a claude entry
 `[models.build.codex]` and `[models.build.claude]`; a single entry counts only for its own model's
 tool (a gpt model is Codex's, any other Claude's). Workers use their selected tool's entry,
 and explorers use their host's entry. Workers and Claude plan readers with no entry use Forge's defaults.
-Codex build, fix and lite default to `gpt-6.1-sol` at low effort; design uses its design default.
+Codex build, fix and lite default to `gpt-6.2-sol` at low effort; design uses its design default.
 New repos pin Codex reviews, including working-prototype reviews, and cold reads to
 `gpt-6.1-terra` at max effort. Upgrade and sync keep existing model settings unchanged.
 Claude build, fix and lite accept a `subagents` and `subagent_effort` pair, or use
@@ -1975,7 +1975,7 @@ and Claude diagnosing always uses Opus high.
 
 The explorer role uses the read-only `explore` kind; `lite` keeps a fix's first
 build round. New repos get `[models.explore.claude]` with `claude-haiku-5-5` at high effort and
-`[models.explore.codex]` with `gpt-6.1-sol` at medium effort. Existing repos
+`[models.explore.codex]` with `gpt-6.2-sol` at medium effort. Existing repos
 without explore keep using lite for read-only work after upgrading and syncing. To choose
 separate read-only settings there, add the explore entries in a fix and run `forge sync`.
 

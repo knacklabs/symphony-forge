@@ -70,7 +70,7 @@ def test_24_resumed_earlier_worker_attaches_real_admission_wait_to_its_new_turn(
     earlier = (ROOT / "tests/fixtures/adopted-v1.2.2/client/forge.toml").read_text("utf-8")
     earlier = re.sub(r"^subagents = .*\n|^subagent_effort = .*\n", "", earlier, flags=re.M)
     env.commit(env.repo.path, "forge.toml", earlier.replace('workers = "codex"', 'workers = "claude"')
-               .replace('model = "gpt-6.1-sol"', 'model = "opus"'),
+               .replace('model = "gpt-6.2-sol"', 'model = "opus"'),
                "Use earlier Forge")
     env.repo.git("push", "-q", "origin", "main")
     install_claude(env.repo)

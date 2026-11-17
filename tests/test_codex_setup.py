@@ -21,7 +21,7 @@ import pytest
 pytestmark = pytest.mark.platform
 
 STORY = "FORGE-WARM-1"
-PIN = "0.159.2"
+PIN = "0.169.0"
 UNTRUSTED = "- Codex doesn't trust this project"
 APPROVE = "- Note: when Codex asks you to approve Forge's hooks, approve them"
 

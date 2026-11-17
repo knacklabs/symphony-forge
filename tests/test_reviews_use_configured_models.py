@@ -16,8 +16,8 @@ STORY = "FIX-HONOUR-REVIEW-MODEL"
 @pytest.mark.parametrize("family,entry,model,effort", [
     ("codex", "", "", ""),
     ("codex", "review", "gpt-6-astra", "max"),
-    ("codex", "review", "gpt-6.1-sol", ""),
-    ("codex", "review.codex", "gpt-6.1-sol", "high"),
+    ("codex", "review", "gpt-6.2-sol", ""),
+    ("codex", "review.codex", "gpt-6.2-sol", "high"),
     ("claude", "review.claude", "claude-sonnet-5-5", "low"),
 ])
 def test_1_reviews_use_configured_model_and_effort_or_tool_defaults(

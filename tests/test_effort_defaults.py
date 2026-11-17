@@ -22,7 +22,7 @@ def _new_repos_start_low(env, tmp_path):
     # Old defaults were medium for Codex and xhigh for Claude. Only these three
     # implementation kinds now start low; read and review pins are explicit.
     for kind in ("build", "fix", "lite"):
-        for family, model in (("codex", "gpt-6.1-sol"), ("claude", "claude-sonnet-5-5")):
+        for family, model in (("codex", "gpt-6.2-sol"), ("claude", "claude-sonnet-5-5")):
             assert models[kind][family]["model"] == model
             assert models[kind][family]["effort"] == "low"
     for kind in ("grill", "review"):

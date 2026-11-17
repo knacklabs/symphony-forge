@@ -51,7 +51,7 @@ def test_2_sync_uses_build_subagents_then_lite_and_unsets_missing_defaults(repo,
     repo.git("checkout", "-q", "-b", "fix/subagent-budget")
     version = repo.forge("--version").stdout.split()[-1]
     build = ('[models.build.codex]\nmodel = "gpt-6-astra"\neffort = "high"\n')
-    lite = ('[models.lite.codex]\nmodel = "gpt-6.1-sol"\neffort = "medium"\n')
+    lite = ('[models.lite.codex]\nmodel = "gpt-6.2-sol"\neffort = "medium"\n')
     budget = 'subagents = "gpt-6-luna"\nsubagent_effort = "max"\n'
     models = (build + budget + lite + 'subagents = "gpt-6-sol"\nsubagent_effort = "low"\n'
               if source == "build" else build + lite + budget if source == "lite" else

@@ -623,9 +623,9 @@ SUBAGENTS = ("subagents", "subagent_effort")
 FAMILIES = ("codex", "claude")
 # A worker's models when forge.toml has no entry for its family, so Forge always names them.
 WORKER_DEFAULTS = {"claude": {"model": "claude-sonnet-5-5", "effort": "low"},
-                   "codex": {"model": "gpt-6.1-sol", "effort": "low"}}
+                   "codex": {"model": "gpt-6.2-sol", "effort": "low"}}
 DESIGN_DEFAULTS = {"claude": {"model": "claude-sonnet-5-5", "effort": "xhigh"},
-                   "codex": {"model": "gpt-6.1-sol", "effort": "high"}}
+                   "codex": {"model": "gpt-6.2-sol", "effort": "high"}}
 CLAUDE_GRILL_DEFAULT = {"model": "claude-opus-5-5", "effort": "high"}
 TOP_EFFORT = {"codex": "high", "claude": "xhigh"}
 SUBAGENT_DEFAULT = {"model": "claude-haiku-5-5", "effort": "high"}

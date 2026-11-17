@@ -25,7 +25,7 @@ STORY = "the-owner-moved-this-repo-s-workers-from"
 # roles accepted by doctor. The owner changed the Claude contract on 2026-10-28;
 # retain literal expectations so a model regression cannot validate itself.
 # No new test, duplicate boundary coverage or production seam is needed.
-SOL = {"model": "gpt-6.1-sol", "effort": "low"}
+SOL = {"model": "gpt-6.2-sol", "effort": "low"}
 SONNET = {"model": "claude-sonnet-5-5", "effort": "low"}
 CLAUDE_BUILD = {**SONNET, "subagents": "claude-haiku-5-5", "subagent_effort": "high"}
 
@@ -57,7 +57,7 @@ def test_1_this_repo_works_on_claude_low_and_reviews_on_codex(repo):
     for kind in ("design", "grill"):
         assert config["models"][kind] == {
             "codex": ({"model": "gpt-6.1-terra", "effort": "max"} if kind == "grill" else
-                      {"model": "gpt-6.1-sol", "effort": "high"}),
+                      {"model": "gpt-6.2-sol", "effort": "high"}),
             "claude": {**SONNET, "effort": "high"}}
     assert config["models"]["review"] == {"model": "gpt-6.1-terra", "effort": "max"}
     assert "stage" not in config and "signoff" not in config
@@ -96,7 +96,7 @@ def test_2_forge_doctor_passes_on_this_repos_forge_toml(repo, gh, tmp_path, monk
             ("claude-sonnet-5-5", "high" if name == "frontend" else "low")), name
     # Explorer uses read-only explore settings; implementation roles use Sonnet.
     assert _settings(repo.path, "explorer") == (
-        ("gpt-6.1-sol", "medium"), ("claude-haiku-5-5", "high"))
+        ("gpt-6.2-sol", "medium"), ("claude-haiku-5-5", "high"))
     # Codex replaces the Claude executable and UI skills prerequisites with the pinned SDK.
     gh.respond("auth", "status")
     _autoreview(tmp_path, monkeypatch)

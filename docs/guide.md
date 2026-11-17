@@ -407,7 +407,7 @@ build, fix or lite kind has no Claude entry, Forge uses `claude-sonnet-5-5` at l
 Claude plan reads default to `claude-opus-5-5` at high effort, including when Claude is the only
 installed tool. Claude planner and architect roles use that plan-read entry; debugger,
 security and performance use Opus 5.5 at high effort. Codex build, fix and lite workers with
-no entry use Forge's `gpt-6.1-sol` at low effort; Codex design uses its design default.
+no entry use Forge's `gpt-6.2-sol` at low effort; Codex design uses its design default.
 Ask your agent to change these settings in a fix.
 
 `forge init` writes low effort for Codex and Claude build, fix and lite.
@@ -455,7 +455,7 @@ uses its selected tool's design entry: `[models.design.codex]` on Codex and
 `claude-sonnet-5-5` at xhigh effort. With `tools = "both"` and `workers = "split"`, the
 fallback applies only to Claude design rounds run through its kit. If the `claude` command
 is missing, or Claude fails before changing the checkout,
-Forge uses `[models.design.codex]` instead: `gpt-6.1-sol` at high effort by default. Forge prints
+Forge uses `[models.design.codex]` instead: `gpt-6.2-sol` at high effort by default. Forge prints
 and logs the fallback reason. If Claude changed the checkout before failing, Forge reports the
 failure without a Codex retry. When Claude Code coordinates without the SDK, design work runs as
 its native `frontend` subagent; a failed native round gets no automatic Codex retry.

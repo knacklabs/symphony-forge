@@ -23,7 +23,7 @@ import pathlib
 import sys
 import time
 
-VERSION = "0.159.2"
+VERSION = "0.169.0"
 THREAD, TURN = "thr-stub-1", "turn-stub-1"
 DECLINE = {"decision": "decline"}
 LOG = pathlib.Path(__file__).resolve().parent / "codex-app-server.jsonl"
@@ -81,7 +81,7 @@ def finish_turn(config, status, overloaded=False):
 
 
 def hooks(cwd):
-    """Project hooks from the main checkout, as Codex 0.159.2 loads linked worktrees."""
+    """Project hooks from the main checkout, as Codex 0.169.0 loads linked worktrees."""
     import hashlib
     import re
 

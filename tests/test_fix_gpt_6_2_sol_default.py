@@ -10,7 +10,7 @@ from conftest import ROOT
 from test_setup import _fresh_client
 
 STORY = "FIX-GPT-6-1-SOL-IS-OUT-AND-ABOUT-40-CHEAPER"
-NEW = "gpt-6.1-sol"
+NEW = "gpt-6.2-sol"
 REVIEW = {"model": "gpt-6.1-terra", "effort": "max"}
 HELPERS = {"subagents": "gpt-6-luna", "subagent_effort": "max"}
 

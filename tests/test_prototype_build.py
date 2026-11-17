@@ -182,7 +182,7 @@ def test_32_adopted_prototype_with_merged_app_code_closes_without_a_new_decision
 
 
 @pytest.mark.parametrize(("setting", "model", "effort"), [
-    ("", "gpt-6.1-sol", "medium"),
+    ("", "gpt-6.2-sol", "medium"),
     ('models.light_review = { model = "gpt-6-astra", effort = "high"}',
      "gpt-6-astra", "high"),
     ('models.light_review = { model = "gpt-6-astra"}', "gpt-6-astra", "medium"),
@@ -191,11 +191,11 @@ def test_32_adopted_prototype_with_merged_app_code_closes_without_a_new_decision
 ], ids=["review-model-at-medium", "light-review-setting", "light-model-at-medium", "codex-entry"])
 def test_33_light_review_checks_only_demo_risks_and_uses_light_review_settings(
         env, setting: str, model: str, effort: str):
-    demo_steps = model == "gpt-6.1-sol"
+    demo_steps = model == "gpt-6.2-sol"
     test_command = (f'{json.dumps(Path(sys.executable).as_posix())} -m pytest -q tests/test_demo_steps.py'
                     if demo_steps else "")
     _prototype(env, existing_app=True,
-               model_settings='models.review = { model = "gpt-6.1-sol", effort = "high"}\n'
+               model_settings='models.review = { model = "gpt-6.2-sol", effort = "high"}\n'
                               + setting,
                test_command=test_command)
     _accept_build_decision(env.repo)

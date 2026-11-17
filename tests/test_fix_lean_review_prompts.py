@@ -29,7 +29,7 @@ def test_1_review_and_cold_read_weigh_likelihood(env, adopted):
         config = (repo.path / "forge.toml").read_text("utf-8")
         config = config.replace('version = "v1.2.2"', f'version = "{version}"')
         config = config.replace('workers = "codex"', 'workers = "claude"')
-        config = config.replace('[models.lite]\nmodel = "gpt-6.1-sol"',
+        config = config.replace('[models.lite]\nmodel = "gpt-6.2-sol"',
                                 '[models.lite]\nmodel = "sonnet"')
         config = config.replace('subagents = "gpt-6-luna"\nsubagent_effort = "max"\n', "")
     else:

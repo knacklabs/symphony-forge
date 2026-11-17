@@ -23,7 +23,7 @@ def check_previous_release_upgrade_keeps_settings_and_runs_both_lanes(env, tmp_p
     path = repo.path / "forge.toml"
     old = path.read_text("utf-8").replace('version = "v1.2.2"', 'version = "v1.2.5"')
     old = old.replace('workers = "codex"', 'workers = "claude"').replace(
-        'model = "gpt-6.1-sol"', 'model = "opus"')
+        'model = "gpt-6.2-sol"', 'model = "opus"')
     old = old.replace('subagents = "gpt-6-luna"\nsubagent_effort = "max"\n', '')
     command = '"' + Path(sys.executable).as_posix() + '" lane-test.py'
     old = old.replace('test = "python -c \\"print(123)\\""', 'test = ' + json.dumps(command))

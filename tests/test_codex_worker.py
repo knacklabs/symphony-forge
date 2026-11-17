@@ -24,7 +24,7 @@ from test_worker import calls as claude_calls, install_claude
 pytestmark = pytest.mark.platform
 
 STORY = "FORGE-WARM-1"
-PIN = "0.159.2"
+PIN = "0.169.0"
 ROOT = Path(__file__).resolve().parents[1]
 NOW = "2026-09-26T10:00:00+00:00"
 ACCEPT = {"decision": "accept"}

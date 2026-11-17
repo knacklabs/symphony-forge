@@ -76,7 +76,7 @@ NODE_TEST = "[ ! -f package.json ] || (npm ci && npm test)"
 # Implementation, cold-read and review models for each host.
 MODELS = """
 [models.build.codex]
-model = "gpt-6.1-sol"
+model = "gpt-6.2-sol"
 effort = "low"
 
 [models.build.claude]
@@ -86,7 +86,7 @@ subagents = "claude-haiku-5-5"
 subagent_effort = "high"
 
 [models.fix.codex]
-model = "gpt-6.1-sol"
+model = "gpt-6.2-sol"
 effort = "low"
 
 [models.fix.claude]
@@ -96,7 +96,7 @@ subagents = "claude-haiku-5-5"
 subagent_effort = "high"
 
 [models.lite.codex]
-model = "gpt-6.1-sol"
+model = "gpt-6.2-sol"
 effort = "low"
 subagents = "gpt-6-luna"
 subagent_effort = "max"
@@ -108,7 +108,7 @@ subagents = "claude-haiku-5-5"
 subagent_effort = "high"
 
 [models.explore.codex]
-model = "gpt-6.1-sol"
+model = "gpt-6.2-sol"
 effort = "medium"
 subagents = "gpt-6-luna"
 subagent_effort = "max"
@@ -142,7 +142,7 @@ model = "claude-sonnet-5-5"
 effort = "xhigh"
 
 [models.design.codex]
-model = "gpt-6.1-sol"
+model = "gpt-6.2-sol"
 effort = "high"
 
 """

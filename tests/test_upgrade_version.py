@@ -21,7 +21,7 @@ TOML = (
     b'effort = "medium"\r\n'
     b'\r\n'
     b'[models.review.codex]\r\n'
-    b"model = 'gpt-6.1-sol'\r\n"
+    b"model = 'gpt-6.2-sol'\r\n"
 )
 
 

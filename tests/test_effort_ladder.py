@@ -39,7 +39,7 @@ def _round_client(repo, gh, tmp_path, monkeypatch, mode, effort="low", task="HEL
     env = close_env.__wrapped__(repo, gh, tmp_path, monkeypatch)
     version = repo.forge("--version").stdout.split()[-1]
     family = "claude" if mode == "claude" else "codex"
-    model = "claude-sonnet-5-5" if family == "claude" else "gpt-6.1-sol"
+    model = "claude-sonnet-5-5" if family == "claude" else "gpt-6.2-sol"
     helpers = ', subagents = "gpt-6-luna", subagent_effort = "max"' if family == "codex" else ""
     pairs = {kind: (f', subagents = "{helper_budgets[kind][0]}", '
                     f'subagent_effort = "{helper_budgets[kind][1]}"' if helper_budgets else helpers)
@@ -51,9 +51,9 @@ def _round_client(repo, gh, tmp_path, monkeypatch, mode, effort="low", task="HEL
                 "".join(f'models.{kind} = {{ model = "{model}", effort = "{effort}"{pairs[kind]} }}\n'
                         for kind in ("build", "fix", "lite")))
     if fixed:
-        settings += ('models.review.codex = { model = "gpt-6.1-sol", effort = "medium" }\n'
+        settings += ('models.review.codex = { model = "gpt-6.2-sol", effort = "medium" }\n'
                      'models.grill.claude = { model = "claude-sonnet-5-5", effort = "medium" }\n'
-                     'models.design.codex = { model = "gpt-6.1-sol", effort = "medium" }\n'
+                     'models.design.codex = { model = "gpt-6.2-sol", effort = "medium" }\n'
                      'models.design.claude = { model = "claude-sonnet-5-5", effort = "medium" }\n')
     if history == "new":
         client = tmp_path / "client"
@@ -128,7 +128,7 @@ def test_1_a_failed_round_runs_at_top_effort_in_the_same_thread(
         monkeypatch.setenv("CODEX_THREAD_ID", "coordinator")
         monkeypatch.delenv("CLAUDECODE", raising=False)
     settings_before = (folder / "forge.toml").read_bytes()
-    model = "claude-sonnet-5-5" if family == "claude" else "gpt-6.1-sol"
+    model = "claude-sonnet-5-5" if family == "claude" else "gpt-6.2-sol"
     commit_env = "STUB_CLAUDE_COMMIT_FROM" if family == "claude" else "STUB_CODEX_COMMIT_FROM"
     monkeypatch.setenv(commit_env, "1")
     (folder / "web/help.py").parent.mkdir(parents=True, exist_ok=True)
@@ -230,7 +230,7 @@ def test_3_reviews_reads_and_design_keep_their_effort(
         page = _decision(folder, answers)
         settings = (folder / "forge.toml").read_text("utf-8")
         (folder / "forge.toml").write_text(settings +
-            '\n[models.review.codex]\nmodel = "gpt-6.1-sol"\neffort = "medium"\n',
+            '\n[models.review.codex]\nmodel = "gpt-6.2-sol"\neffort = "medium"\n',
             encoding="utf-8")
         record = folder / ".factory/fixes/record-client-approval.json"
         state = json.loads(record.read_text("utf-8"))
@@ -238,7 +238,7 @@ def test_3_reviews_reads_and_design_keep_their_effort(
                           encoding="utf-8")
         repo.git("add", "-A", cwd=folder)
         repo.git("commit", "-qm", "Keep the fixed sign-off settings", cwd=folder)
-        queue.write_text(json.dumps([{"say": "model: gpt-6.1-sol\nthinking: medium\nautoreview done",
+        queue.write_text(json.dumps([{"say": "model: gpt-6.2-sol\nthinking: medium\nautoreview done",
                                       "report": {"review_status": "scoped-clean", "findings": []}}]),
                          encoding="utf-8")
         accepted = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=folder)
@@ -384,7 +384,7 @@ def test_8_native_round_names_the_requested_effort(
     else:
         monkeypatch.delenv("CLAUDECODE", raising=False)
         monkeypatch.setenv("CODEX_THREAD_ID", "codex-thread")
-        model, raised = "gpt-6.1-sol", "high"
+        model, raised = "gpt-6.2-sol", "high"
         host_name = "codex-session"
 
     (folder / "web").mkdir(exist_ok=True)
