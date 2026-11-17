@@ -156,7 +156,7 @@
     "id": "8c1ba6da-8df2-41af-99ff-ddab77044e92",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -178,10 +178,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": null,
-    "head": "d734382962e582180fcc7d22519211bf0a3c03a0",
+    "close": "a6b89fc6-5c56-4481-a15d-81ed42e3eb45",
+    "head": "6e91f45af55f6a1fd4e7c7400d424b97cd346d49",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "A change to review code can pass its own related-test check while the split and review-noise tests fail, which turned main red twice on 16 Nov 2026; a split's decisions may also be lost when a later review runs, and one review-choice skip test fails before these changes.",
   "worker": "claude"
