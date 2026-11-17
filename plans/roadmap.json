@@ -666,6 +666,12 @@
       "title": "Show the full text of the last close's findings without running close again",
       "status": "pending",
       "order": 124
+    },
+    {
+      "key": "FORGE-MODELS-1",
+      "title": "Short model names pick the newest model at each run",
+      "status": "pending",
+      "order": 125
     }
   ],
   "epics": [

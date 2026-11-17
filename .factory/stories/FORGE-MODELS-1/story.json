@@ -1,0 +1,12 @@
+{
+  "doc": "plans/FORGE-MODELS-1.md",
+  "status": "planning",
+  "steps": [
+    {
+      "at": "2026-11-17T18:34:32.675080+00:00",
+      "step": "start"
+    }
+  ],
+  "title": "Short model names pick the newest model at each run",
+  "touches": 0
+}
