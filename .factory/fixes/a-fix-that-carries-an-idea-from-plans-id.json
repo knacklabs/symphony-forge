@@ -4,14 +4,106 @@
   "done_when": "A fix whose only change is an edit to plans/ideas.md is not treated as built, so land runs the build step and close refuses it until real code changes exist.",
   "fix_kind": "backend",
   "kind": "fix",
+  "known": [
+    {
+      "area": "unbuilt_fix() in src/forge/task.py",
+      "file": "src/forge/task.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 776,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: A fix whose only change is an edit to plans/ideas.md is not treated as built, so land runs the build step",
+      "work": 2
+    },
+    {
+      "area": "test_1_a_fix_that_only_carries_an_idea_is_built_before_it_merges() in tests/test_fix_with_only_an_idea_is_unbuilt.py",
+      "file": "tests/test_fix_with_only_an_idea_is_unbuilt.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 21,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: proof list",
+      "work": 2
+    },
+    {
+      "area": "unbuilt_fix() in src/forge/task.py",
+      "file": "src/forge/task.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 776,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: update the shipped guidance for the changed fix flow",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "b6767315a771ea884edd3dac55703d100110ee44e97d70155be33a33b36d66a7",
+    "changed": "9eb02b5e3cd1841471a5d3826b3ea7e9240d239d15f24beaf37776baf5ef5d59",
+    "commit": "b5a32c4c709371cb91b72432e3ec2cdcd3430576",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Not done\nCase: normal use - retrying land after a worker runs out of model quota before making product changes.\nThe worker brief requires an empty Before coding commit before editing code (src/forge/templates/brief.md:518). If the worker stops after that commit on an ideas-only branch, `not files` counts the empty commit as work. On retry, `forge land` skips the build (src/forge/land.py:93) and close refuses the branch instead of restarting the worker. This misses the Done-when: \u201cA fix whose only change is an edit to plans/ideas.md is not treated as built, so land runs the build step and close refuses it until real code changes exist.\u201d",
+        "file": "src/forge/task.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 776,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: A fix whose only change is an edit to plans/ideas.md is not treated as built, so land runs the build step",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Gate\nCase: normal use - a coordinator closes an ideas-only fix or lands it with agent merging enabled.\nThe proof list has no test of close refusing the ideas-only diff. The new test runs land, whose worker fixture commits a product file before close (tests/test_land.py:82), and the related close tests do not change plans/ideas.md. Removing only the new close exclusion would therefore leave the named tests passing. The new test also checks the build and close messages but never checks that a merge occurred, so it would pass if an ideas-bearing fix returned ready without merging. Extend the command-level proof to cover both outcomes.",
+        "file": "tests/test_fix_with_only_an_idea_is_unbuilt.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 21,
+        "priority": "P1",
+        "title": "Gate: proof list",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 1, Harm 2\nRaise: Gate\nCase: normal use - a coordinator follows the shipped guide for a fix carrying an idea.\nThe change makes land build an ideas-only fix, but src/forge/templates/skill.md:2406 still says a branch with commits after its start goes straight to close. Neither shipped guide is updated to describe the new behavior, and the change does not state what new and upgraded repositories receive. The repository review rules require both the guidance update for a changed flow and the new-versus-existing-repository statement.",
+        "file": "src/forge/task.py",
+        "gain": 4,
+        "harm": 2,
+        "line": 776,
+        "priority": "P1",
+        "title": "Gate: update the shipped guidance for the changed fix flow",
+        "work": 1
+      }
+    ],
+    "id": "8aac73c8-d76a-4409-9ae1-d8a62245dfb5",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-17T02:18:13.567706+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-17T03:47:48.023157+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-11-17T03:47:48.036470+00:00",
+    "file": "src/forge/task.py",
+    "wait_id": "8ccd6963-f969-4993-b6b3-46f5de0d6746"
+  },
   "stuck": {
     "close": null,
     "head": "c1a49695e63c56c27ce14e0b83c9537535c96fac",
