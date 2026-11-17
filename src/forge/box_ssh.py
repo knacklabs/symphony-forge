@@ -10,6 +10,9 @@ from typing import Any, NoReturn
 from forge import box, codex, githooks, machine, repo, sync, task
 
 FOLDER = "forge-host"
+# A round's own remote command writes runs/<item>/<entry>.done after its driver exits; a round
+# entry (runs/<item>/<entry>.py beside its <entry>/ worktree) with no such file counts as running.
+DONE = ".done"
 SSH = ["ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=10", "-o", "ServerAliveInterval=30",
        "-o", "ServerAliveCountMax=4"]
 NAME = re.compile(r"[A-Za-z0-9_.@:%\[\]-]+")
@@ -66,7 +69,7 @@ def setup(top: Path, args: Any) -> int:
         facts = ssh(host, f'''echo "GIT $(git --version 2>/dev/null)"; echo "FORGE $(forge --version 2>/dev/null)"
 codex login status >/dev/null 2>&1; echo "CODEX $?"
 echo "PROBE $({KIT}/bin/python -c {shlex.quote(codex.PROBE)} 2>&1 | tail -n 1)"
-echo "PS $(LC_ALL=C ps -o lstart= -p $$ 2>/dev/null)"; echo "CORES $(getconf _NPROCESSORS_ONLN)"
+echo "CORES $(getconf _NPROCESSORS_ONLN)"
 echo "HOME $HOME"; test -d {home}/clone/.git && echo "CLONE yes"
 echo "CONFIG $(echo {CONFIG})"; cat {CONFIG} 2>/dev/null; true''')
     except box.ProviderError as error:
@@ -117,10 +120,6 @@ echo "CONFIG $(echo {CONFIG})"; cat {CONFIG} 2>/dev/null; true''')
     if not trusted:
         _refuse(f"Codex on {host} does not trust {clone}, so it would skip Forge's checks there.",
                 f'on {host}, add [projects."{clone}"] with trust_level = "trusted" to {config_path}, then {again}')
-    if not got.get("PS"):
-        _refuse(f"{host}'s ps cannot show a process's start time (ps -o lstart), which Forge needs to tell "
-                "whether a round still runs there.",
-                f"on {host}, install procps (BusyBox ps lacks it), then forge lanes --box setup --host {host}")
     box.save(top, {"provider": "ssh", "host": host, "clone": clone})
     print(f"{host} is set up for this repo ({got.get('CORES', '?')} processors). Codex build rounds start there "
           "while it has room, and on this laptop when it has none.")
@@ -133,23 +132,15 @@ def _holds(top: Path, saved: dict[str, Any]) -> dict[str, Any]:
     out = ssh(saved["host"], f'''F={shlex.quote(posixpath.dirname(saved["clone"]))}; C="$F/clone"
 [ -d "$F" ] || exit 0
 cd "$F" || {{ echo "ERR cannot open $F"; exit 0; }}
-LC_ALL=C; export LC_ALL
 known=""; while read s; do git -C "$C" cat-file -e "$s^{{commit}}" 2>/dev/null && known="$known $s"; done
 git --version >/dev/null 2>&1 || echo "ERR git does not run"
-# Forge's own rounds only: runs/<item>/<entry>.pid beside its <entry>.py and its <entry>/ worktree
-# (a .git file), never an app's pid file inside a worktree. Exit codes only, whatever the locale.
-pids=$(find runs -mindepth 2 -maxdepth 3 -name '*.pid' 2>&1) || echo "ERR find: $pids"
-for p in $(echo "$pids" | sort); do
-  [ -f "${{p%.pid}}.py" ] && [ -f "${{p%.pid}}/.git" ] || continue
-  id=""; start=""
-  # A round has ended only when its process is gone (no /proc entry on a machine with /proc) or ps shows another start time; any doubt reads as running.
-  if ! read id start < "$p" 2>/dev/null || [ -z "$id" ] || [ -z "$start" ]; then r=1; id=unreadable
-  else
-    now=$(ps -o lstart= -p "$id" 2>/dev/null); rc=$?
-    if [ $rc -eq 0 ] && [ -n "$now" ]; then [ "$(echo $now)" = "$(echo $start)" ] && r=1 || r=0
-    elif [ -d /proc ] && [ ! -e "/proc/$id" ]; then r=0; else r=1; fi
-  fi
-  echo "PID $(dirname "${{p#runs/}}") $id $r"; done
+# Forge's own rounds only: runs/<item>/<entry>.py beside its <entry>/ worktree (a .git file), never an
+# app's script inside a worktree. A round has ended only when its <entry>.done file exists.
+pys=$(find runs -mindepth 2 -maxdepth 3 -name '*.py' 2>&1) || echo "ERR find: $pys"
+for p in $(echo "$pys" | sort); do
+  [ -f "${{p%.py}}/.git" ] || continue
+  if [ -f "${{p%.py}}{DONE}" ]; then r=0; else r=1; fi
+  echo "RUN ${{p%.py}} $r"; done
 gits=$(find runs -name .git -type f 2>&1) || echo "ERR find: $gits"
 for g in $gits; do d=$(dirname "$g")
   st=$(git -C "$d" status --porcelain -uall --ignored 2>&1) || {{ echo "ERR status of $d: $st"; continue; }}
@@ -167,9 +158,8 @@ exit 0''', input=tips + "\n")
     found: dict[str, Any] = {"running": None, "files": {}, "stash": [], "branches": []}
     for line in out.stdout.splitlines():
         kind, _, rest = line.partition(" ")
-        if kind == "PID" and rest.endswith(" 1") and not found["running"]:
-            item, pid, _ = rest.rsplit(" ", 2)
-            found["running"] = (item, pid)
+        if kind == "RUN" and rest.endswith(" 1") and not found["running"]:
+            found["running"] = rest[:-2]
         elif kind == "FILE":
             where, _, entry = rest.partition(" ")
             path = entry[3:].strip('"')
@@ -188,13 +178,11 @@ def off(top: Path, saved: dict[str, Any], yes: bool) -> int:
         found = _holds(top, saved)
     except box.ProviderError as error:
         _refuse(f"Could not {'delete' if yes and error.code == 'ssh' else 'read'} {folder} on {host}: {error.message}.", "forge lanes --box off")
-    if found["running"] and found["running"][1] == "unreadable":
-        _refuse(f"A round of {found['running'][0]} may still run on {host}: its process file cannot be read.",
-                f"check the files under {folder}/runs/{found['running'][0]} on {host}, then forge lanes --box off")
     if found["running"]:
-        item, pid = found["running"]
-        _refuse(f"A round of {item} still runs on {host} (process {pid}); turn off after it ends.",
-                f"wait, or on {host} run kill -TERM -- -{pid} to stop it, then forge lanes --box off")
+        entry = f"{folder}/{found['running']}"
+        _refuse(f"A round on {host} has no {DONE} file, so it may still run: {entry}.",
+                f"check on {host} that nothing of it runs, then run touch {shlex.quote(entry + DONE)} there and "
+                "forge lanes --box off")
     print(f"Turning off deletes Forge's folder {folder} on {host}, with everything in it:")
     for where, files in found["files"].items():
         print(f"  {posixpath.join(folder, where)}: {', '.join(files)}")
