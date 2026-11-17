@@ -11,8 +11,8 @@
       "gain": 3,
       "harm": 3,
       "line": 776,
-      "outcome": "open",
-      "reason": "",
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: The owner accepted: the native-worker quota retry case stays a known issue",
       "round": 1,
       "security": false,
       "title": "Not done: A fix whose only change is an edit to plans/ideas.md is not treated as built, so land runs the build step",
@@ -50,7 +50,13 @@
     "branch_diff": "49984f41d07945d32e4323be81d3bd4b0d44ecba209abe7d21a9ee894b69e71b",
     "changed": "c4e35d95bf2d535d268ad99b13eb38cac31688f8a5ba325896c1a7cb5bb0e2a2",
     "commit": "2ccdc3fbfcd30a2b0effb675b3201686732aff87",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: The owner accepted: the native-worker quota retry case stays a known issue",
+        "finding": 1
+      }
+    ],
     "findings": [
       {
         "body": "Gain 3, Work 2, Harm 3\nRaise: Not done\nCase: normal use - retrying land after a native worker exhausts its model quota after the empty Before coding commit.\nThis previously reported retry still fails when the coordinator hands back the worker's quota-error message. `src/forge/native.py:286` records every handback as completed at the current HEAD, and `src/forge/land.py:93` suppresses another build when that record matches HEAD. Thus, even though this change ignores the empty commit, land goes straight to close, which refuses the ideas-only fix instead of restarting the worker.",
@@ -65,10 +71,10 @@
       }
     ],
     "id": "066a5a85-e9c7-4f54-a3b3-2b759ff8cd9a",
-    "status": "blocked"
+    "status": "clean"
   },
   "round": 2,
-  "status": "hotspot",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-17T02:18:13.567706+00:00",
@@ -85,8 +91,12 @@
   ],
   "stop": {
     "at": "2026-11-17T04:07:32.124433+00:00",
+    "by": "owner",
+    "choice": "accept",
     "file": "src/forge/task.py",
-    "wait_id": "c35338f0-f01b-4077-8994-634d8e8c156a"
+    "reason": "The owner accepted: the native-worker quota retry case stays a known issue",
+    "wait_id": "c35338f0-f01b-4077-8994-634d8e8c156a",
+    "worker_round": 2
   },
   "stuck": {
     "close": "dc58a595-d80f-4095-866a-12330da95fbc",
