@@ -156,7 +156,7 @@
     "status": "blocked"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-17T17:22:44.821888+00:00",
@@ -169,8 +169,12 @@
   ],
   "stop": {
     "at": "2026-11-17T18:42:17.934370+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "README.md",
-    "wait_id": "03b73975-ecb2-4e22-bfb6-e2b9c53e443d"
+    "reason": "Owner chose one more round: fix all six review findings",
+    "wait_id": "03b73975-ecb2-4e22-bfb6-e2b9c53e443d",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
