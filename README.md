@@ -15,7 +15,7 @@ You do three things:
 
 - **Approve** the plan of a larger change.
 - **Choose** when the agent gives you options.
-- **Merge** the finished pull request, or let the agent merge it.
+- **Merge** the finished pull request yourself, or switch on agent merges once and let the agent merge it.
 
 The agent does the rest. It writes the plan, has a second agent read it, builds each part in
 its own branch, runs the tests, gets a code review and fixes what the review finds.
@@ -76,8 +76,11 @@ project.
    other's way. A Claude or Codex worker writes the code and the tests.
 5. **Review and tests.** A separate code review reads the change, and the tests must pass. A
    serious finding goes back to the worker. Only then is the pull request ready.
-6. **Merge.** You merge the pull request, or you tell the agent that it may merge ready
-   pull requests for you.
+6. **Merge.** You merge the pull request. Or you switch on agent merges yourself, once: run
+   `forge merge enable` in your own terminal, outside Claude Code or Codex, and merge the pull
+   request it opens ([merging](docs/guide.md#merging-a-ready-item)). After that, the agent merges
+   ready pull requests. In a client repo before the client's sign-off is accepted, the agent
+   merges ready changes by itself.
 
 Forge picks one of two sizes for each change:
 
