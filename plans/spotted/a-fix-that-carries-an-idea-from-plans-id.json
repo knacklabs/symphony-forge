@@ -19,8 +19,8 @@
       "text": "Not done: A fix whose only change is an edit to plans/ideas.md is not treated as built, so land runs the build step",
       "from": "blocking",
       "item": "a-fix-that-carries-an-idea-from-plans-id",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\ttests/test_fix_with_only_an_idea_is_unbuilt.py\tGate: proof list\ta-fix-that-carries-an-idea-from-plans-id",
