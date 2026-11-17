@@ -94,7 +94,7 @@
     "id": "db36b890-e10e-4d96-a1c2-798610bddc1b",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -116,10 +116,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": null,
-    "head": "e5388dd07dba4baa2f0ce1776a01431f6ff85441",
+    "close": "601b22b4-2bf2-416b-ba39-80d96f077eed",
+    "head": "562a8258e1c0616a851f9d5daff1f018000d9353",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "Land shows an item under Merged when its pull request is still open, so the owner sees a merge that did not happen.",
   "worker": "claude"
