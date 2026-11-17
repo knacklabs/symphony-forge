@@ -1,7 +1,14 @@
 {
+  "amendments": [
+    {
+      "at": "2026-11-17T02:08:36.830171+00:00",
+      "because": "The owner split the remaining split-decision case into its own fix",
+      "done_when": "A change to review code runs the split and review-noise tests in its related-test check, a split's decisions survive a later review, and the missing-tool review-choice skip test passes."
+    }
+  ],
   "base": "c7d6e40da22a65c6fbed318acba04252413e9ebb",
   "branch": "fix/a-change-to-review-code-can-pass-its-own",
-  "done_when": "A change to review code runs the split and review-noise tests in its related-test check, a split's decisions survive a later review, and the missing-tool review-choice skip test passes.",
+  "done_when": "A change to review code runs the split and review-noise tests in its related-test check, a split Not done finding stays settled in a later review, and the missing-tool review-choice skip test passes.",
   "fix_kind": "backend",
   "kind": "fix",
   "known": [
@@ -89,8 +96,8 @@
       "gain": 3,
       "harm": 2,
       "line": 631,
-      "outcome": "open",
-      "reason": "",
+      "outcome": "fixed in round 3",
+      "reason": "Split into follow-up fix review-findings-split-from-a-change-to-r",
       "round": 2,
       "security": false,
       "title": "Not done: A split's decisions survive a later review",
@@ -102,8 +109,8 @@
       "gain": 4,
       "harm": 2,
       "line": 42,
-      "outcome": "open",
-      "reason": "",
+      "outcome": "follow-up",
+      "reason": "Split into follow-up fix review-findings-split-from-a-change-to-r",
       "round": 2,
       "security": false,
       "title": "Gate: proof list",
@@ -112,38 +119,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "a54c4dbe9285b96c373ccd0b6d1fbec42b6d31568f76483a1fd576e304c87000",
-    "changed": "975b92482057aa9a502adb34ea34187dc57cf95d03f7c90ac5828e31f350280d",
-    "commit": "89ba238bb82b84e5f1ee4e08706fb51e624908fe",
+    "branch_diff": "6ad71c2bf918d839e00394fe068a2f14d837c980fc52e39e901454d132c3a409",
+    "changed": "b11575a6048416d8bb91d4eb7a990d02a10a0bc4361f5356a2636f9533882584",
+    "commit": "1d2ecd98ede68d0364f64a7ad568e28de5ba22df",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 3, Work 2, Harm 2\nRaise: Not done\nCase: normal use - the owner splits a P1 Not done finding scored Gain 3, Work 2, Harm 2, and a later review reports it again.\nThe split finding now reaches `_settled`, but lines 633\u2013637 record `known: below the bar` before the split reason and use `setdefault` for both. A later review therefore carries the below-bar dismissal, which `bound_review` removes at lines 1122\u20131125 because the finding is required. The finding blocks again despite the split. The previous finding had these same scores; the new test at tests/test_split_keeps_review_findings.py:102 uses Gain 4 and misses this case. The previous report cited .forge/always-tests.txt:5.",
-        "file": "src/forge/review.py",
-        "gain": 3,
-        "harm": 2,
-        "line": 631,
-        "priority": "P1",
-        "required_done_when": true,
-        "title": "Not done: A split's decisions survive a later review",
-        "work": 2
-      },
-      {
-        "body": "Gain 4, Work 1, Harm 2\nRaise: Gate\nCase: normal use - reviewing the evidence for this fix.\nThe latest worker commit labels its mapping `Proof:`, but src/forge/review.py:699\u2013707 and :755 look for `Proof list:`. Consequently the supplied review prompt still says the proof list is missing, and close cannot attach test results to the mapping. The previous report cited .forge/always-tests.txt:5.",
-        "file": "tests/test_required_repo_rules.py",
-        "gain": 4,
-        "harm": 2,
-        "line": 42,
-        "priority": "P1",
-        "title": "Gate: proof list",
-        "work": 1
-      }
-    ],
-    "id": "d4aac417-9644-4b79-936a-fa22e8a8e110",
-    "status": "blocked"
+    "findings": [],
+    "id": "5b971c2f-22c3-4f25-9b4c-a5f2edd54f18",
+    "status": "clean"
   },
-  "round": 2,
-  "status": "hotspot",
+  "round": 3,
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-16T08:53:57.093893+00:00",
@@ -156,18 +141,33 @@
     {
       "at": "2026-11-17T01:24:59.605009+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-11-17T02:11:52.658806+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-17T03:22:41.959844+00:00",
+      "step": "review"
     }
   ],
   "stop": {
     "at": "2026-11-17T01:24:59.605534+00:00",
+    "by": "owner",
+    "choice": "split",
     "file": "src/forge/review.py",
-    "wait_id": "0803c1e6-2423-4036-893f-a6f32cd07962"
+    "fixes": [
+      "review-findings-split-from-a-change-to-r"
+    ],
+    "reason": "The owner chose split: merge now, the remaining split-decision case becomes its own fix",
+    "wait_id": "0803c1e6-2423-4036-893f-a6f32cd07962",
+    "worker_round": 2
   },
   "stuck": {
-    "close": "a6b89fc6-5c56-4481-a15d-81ed42e3eb45",
-    "head": "6e91f45af55f6a1fd4e7c7400d424b97cd346d49",
+    "close": "41a6d653-06f4-4be6-a94e-e776208fb425",
+    "head": "2071447682ba89ebfb7199adf8240f66fe0d1ec6",
     "keys": {},
-    "round": 1
+    "round": 2
   },
   "why": "A change to review code can pass its own related-test check while the split and review-noise tests fail, which turned main red twice on 16 Nov 2026; a split's decisions may also be lost when a later review runs, and one review-choice skip test fails before these changes.",
   "worker": "claude"

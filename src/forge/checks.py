@@ -29,6 +29,8 @@ REFUSALS = {
     "not_green": ("The checks are not green yet: {reason}.", "forge close {item}"),
     "wait_ended": ("The check wait ended: {reason}. No decision is needed. "
                    "Run forge land again to resume without restarting checks.", "forge land {item}"),
+    "no_start": ("The review check failed to start on GitHub.",
+                 "push a new commit or reopen the pull request on GitHub, so the check starts again"),
     "conflict": ("GitHub reports this pull request clashes with the default branch, so it runs no checks on it.",
                  "forge close {item}, which brings the default branch in"),
 }
@@ -143,6 +145,9 @@ def _wait(top: Path, item: str, sha: str, names: list[str], branch: str, progres
             mergeable = pr.get("mergeable") if pr.get("headRefOid") == sha else None
             if mergeable == "CONFLICTING":
                 repo.refuse(REFUSALS["conflict"], item=item)
+            if not any(name == "forge-pr-check" or name == "Review pull request" and state != SKIPPED
+                       for name, state in seen):  # the pull_request workflow skips its own job of that name
+                _no_start(top, item, sha, branch)  # before a red or timed-out test can hide it
             _tests_timeout(top, item, sha, names, check_runs, seen)
             reason = _pending(item, names, seen)
             if mergeable == "UNKNOWN":
@@ -203,6 +208,20 @@ def own_runs(top: Path, item: str, sha: str) -> list[dict[str, Any]]:
                 "--raw-field", "per_page=100", "--raw-field", f"head_sha={sha}")
     return [run for run in runs if run.get("event") == "pull_request_target"
             and str(run.get("path", "")).partition("@")[0] == ".github/workflows/forge.yml"]
+
+
+def _no_start(top: Path, item: str, sha: str, branch: str) -> None:
+    """Stop when GitHub could not start Forge's review run for this branch's head commit."""
+    try:
+        runs = _ask(top, item, ".workflow_runs", "repos/{owner}/{repo}/actions/runs", "--method", "GET",
+                    "--raw-field", "per_page=100", "--raw-field", "event=pull_request_target",
+                    "--raw-field", f"branch={branch}")
+    except repo.Refused:
+        return  # A failed side lookup must not end the wait; the check status itself still decides.
+    if any(run.get("conclusion") == "startup_failure" and run.get("head_sha") == sha
+           and str(run.get("path", "")).partition("@")[0] == ".github/workflows/forge.yml"
+           for run in runs):
+        repo.refuse(REFUSALS["no_start"])
 
 
 def _own_review(top: Path, item: str, sha: str) -> set[Any]:

@@ -14,6 +14,8 @@ from typing import Any
 from forge import repo
 from forge.repo import git, refuse, run
 
+IDEAS = "plans/ideas.md"  # a carried idea is not work
+
 REFUSALS = {
     "bad_task": ("{item!r} is not a task; a task is named KEY/TASK.", "forge next"),
     "no_doc": ("Story {key} has no story doc on {default} or on story/{key}.",
@@ -742,11 +744,21 @@ def require_fix_changes(item: str, state: dict, top: Path, files: list[str]) -> 
     """Close and land cannot publish an interrupted fix's bookkeeping as its result."""
     if state.get("kind") != "fix":
         return
-    if any(path and not path.startswith((".factory/", "plans/spotted/"))
-           and path != "plans/spotted.json" for path in files):
+    def record(path: str) -> bool:
+        return path.startswith((".factory/", "plans/spotted", IDEAS))
+
+    if any(path and not record(path) for path in files):
         return
     untracked = repo.git("ls-files", "--others", "--exclude-standard", cwd=top)
     detail = f"\nUntracked files in the worktree: {untracked}" if untracked else ""
+    default = repo.default_branch(top)
+    own = repo.git("log", "--no-merges", "--name-only", "--format=", f"origin/{default}..HEAD", cwd=top).split()
+    if any(not record(path) for path in own):
+        # The fix did commit work, so after the merge the default branch has it or replaced it.
+        raise repo.Refused("After merging the default branch, this fix has no change left: the default branch "
+                           "already has it or replaced it. If it replaced the change, run "
+                           f"forge work {item} and make the change again.{detail}",
+                           f'forge fix drop {item} --because "<why>"')
     raise repo.Refused(f"The build round did not finish. This fix changes only Forge's records.{detail}",
                        f"forge work {item}")
 
@@ -761,7 +773,7 @@ def unbuilt_fix(item: str, state: dict, top: Path) -> bool:
         return False
     own = set(repo.git("rev-list", "--no-merges", "HEAD", "--not", start,
                        f"origin/{repo.default_branch(top)}", cwd=top).splitlines())
-    return not any(sha in own and (not files or any(file != path for file in files))
+    return not any(sha in own and any(file not in (path, IDEAS) for file in files)
                    for sha, _, files in repo.commit_log(top, start))
 
 

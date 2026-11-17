@@ -1,0 +1,109 @@
+{
+  "base": "2cfc90b5fc12b92d06a171c9ffffd668eeacf7c8",
+  "branch": "fix/a-fix-that-carries-an-idea-from-plans-id",
+  "done_when": "A fix whose only change is an edit to plans/ideas.md is not treated as built, so land runs the build step and close refuses it until real code changes exist.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "unbuilt_fix() in src/forge/task.py",
+      "file": "src/forge/task.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 776,
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: The owner accepted: the native-worker quota retry case stays a known issue",
+      "round": 1,
+      "security": false,
+      "title": "Not done: A fix whose only change is an edit to plans/ideas.md is not treated as built, so land runs the build step",
+      "work": 2
+    },
+    {
+      "area": "test_1_a_fix_that_only_carries_an_idea_is_built_before_it_merges() in tests/test_fix_with_only_an_idea_is_unbuilt.py",
+      "file": "tests/test_fix_with_only_an_idea_is_unbuilt.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 21,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: proof list",
+      "work": 2
+    },
+    {
+      "area": "unbuilt_fix() in src/forge/task.py",
+      "file": "src/forge/task.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 776,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: update the shipped guidance for the changed fix flow",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "d8ca22fe914265a1a19845bf0e3b44035311c4158b3ca8e7438aea2b4ab619e6",
+    "changed": "99cfbefc950a79b63ff60c701e6f2d5ec17076be9dd5f1758aae40b7b220e635",
+    "commit": "2ccdc3fbfcd30a2b0effb675b3201686732aff87",
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: The owner accepted: the native-worker quota retry case stays a known issue",
+        "finding": 1
+      }
+    ],
+    "findings": [
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Not done\nCase: normal use - retrying land after a native worker exhausts its model quota after the empty Before coding commit.\nThis previously reported retry still fails when the coordinator hands back the worker's quota-error message. `src/forge/native.py:286` records every handback as completed at the current HEAD, and `src/forge/land.py:93` suppresses another build when that record matches HEAD. Thus, even though this change ignores the empty commit, land goes straight to close, which refuses the ideas-only fix instead of restarting the worker.",
+        "file": "src/forge/task.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 776,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: A fix whose only change is an edit to plans/ideas.md is not treated as built, so land runs the build step",
+        "work": 2
+      }
+    ],
+    "id": "066a5a85-e9c7-4f54-a3b3-2b759ff8cd9a",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-17T02:18:13.567706+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-17T03:47:48.023157+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-17T04:07:32.124166+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-17T04:07:32.124433+00:00",
+    "by": "owner",
+    "choice": "accept",
+    "file": "src/forge/task.py",
+    "reason": "The owner accepted: the native-worker quota retry case stays a known issue",
+    "wait_id": "c35338f0-f01b-4077-8994-634d8e8c156a",
+    "worker_round": 2
+  },
+  "stuck": {
+    "close": "dc58a595-d80f-4095-866a-12330da95fbc",
+    "head": "2d71ea87e9367fb2266cbd2b62b51a59871f2ff8",
+    "keys": {},
+    "round": 1
+  },
+  "why": "A fix that carries an idea from plans/ideas.md can count as already built, so forge land skips the build step and close reviews only records.",
+  "worker": "claude"
+}
