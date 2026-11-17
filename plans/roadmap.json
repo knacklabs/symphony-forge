@@ -666,6 +666,12 @@
       "title": "Show the full text of the last close's findings without running close again",
       "status": "pending",
       "order": 124
+    },
+    {
+      "key": "REMOTE-1",
+      "title": "Run work rounds on a second Linux machine",
+      "status": "pending",
+      "order": 125
     }
   ],
   "epics": [

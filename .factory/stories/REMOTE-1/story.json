@@ -1,0 +1,12 @@
+{
+  "doc": "plans/REMOTE-1.md",
+  "status": "planning",
+  "steps": [
+    {
+      "at": "2026-11-17T10:43:55.316934+00:00",
+      "step": "start"
+    }
+  ],
+  "title": "Run work rounds on a second Linux machine",
+  "touches": 0
+}
