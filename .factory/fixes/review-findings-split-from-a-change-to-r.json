@@ -2,15 +2,25 @@
   "base": "05070dba48c746799690c03091d70271fdf1a93e",
   "branch": "fix/review-findings-split-from-a-change-to-r",
   "done_when": "A review no longer finds: Not done: A split's decisions survive a later review (src/forge/review.py:631); Gate: proof list (tests/test_required_repo_rules.py:42)",
+  "drop": {
+    "at": "2026-11-17T10:42:50.155600+00:00",
+    "because": "Main already has this change: the fix merged before v1.2.41 keeps a split finding settled in later reviews, and its tests pass",
+    "by": "vrknetha <vrknetha@gmail.com> 1794912170 +0530",
+    "status": "working"
+  },
   "fix_kind": "backend",
   "kind": "fix",
   "round": 1,
   "stacked_on": "a-change-to-review-code-can-pass-its-own",
-  "status": "working",
+  "status": "dropped",
   "steps": [
     {
       "at": "2026-11-17T02:07:38.013068+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-17T10:42:50.163125+00:00",
+      "step": "drop"
     }
   ],
   "stuck": {
