@@ -1,18 +1,18 @@
 ---
 reader: codex (gpt-6.1-terra)
-read_at: 2026-11-17T12:16:47.499089+00:00
-seconds: 743.998
-read_hash: e1224145830b90ee6fd10b28a55b471d6b6c6ab9
-round: 1
+read_at: 2026-11-17T12:48:32.955908+00:00
+seconds: 628.102
+read_hash: 3ea38e25db4cc1144e703b6a39621ef327e612e8
+round: 2
 passed: no
-doc_seen: e1224145830b90ee6fd10b28a55b471d6b6c6ab9
+doc_seen: 3ea38e25db4cc1144e703b6a39621ef327e612e8
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+notes_seen: b7a4fb47a6e3ccab6eb6404d7bf64e30e4d12f91
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a1e964-e202-7e63-964c-f3f99effee22
 session:
-loop_choice:
-loop_reason:
+loop_choice: more
+loop_reason: Owner chose one more round: fix all five (a process-number file in place of name matching, close refuses while work is still on the machine, trust check before every turn)
 ---
 # Cold read notes
 
@@ -133,3 +133,49 @@ Only a genuine trade-off goes to the human, as a question with options.
     Adds work: preserve commands on older pinned branches after adding the local setting; F 2 x H 2 = 4; 2 x C = 4.  
     Gain 4, Work 3, Harm 3
    Disposition: cut - by the owner's answer of 17 Nov 2026 the name goes with `forge lanes --box setup --host <name>` and lives in Forge's record; forge.local.toml gets no new key, so earlier pinned releases are unaffected.
+
+## Round 2
+
+17. Blocking: Data loss: a checkout name can hide a running worker from turn-off.
+    Raise: Data loss  
+    Case: normal use - The laptop checkout is named `project(2)`. [The plan](/plans/REMOTE-1.md:93) puts that name in the remote path and passes it to `pgrep -f` as a pattern. Parentheses have special meaning in that pattern, so it does not match the literal driver path. [The turn-off check](/plans/REMOTE-1.md:146) can consequently delete the folder while the worker is already running. [The pgrep manual](https://github.com/procps-ng/procps/blob/master/man/pgrep.1) specifies that the pattern is a regular expression.  
+    Gain 4, Work 2, Harm 4
+
+18. Blocking: Plan gap: the running-worker check can find its own inspection shell.
+    Raise: Plan gap  
+    Case: normal use - A round finishes and Forge sends the specified `pgrep -f` command over SSH to check it. The remote shell’s command line contains the path being searched for, so `pgrep` can match that shell and report that the finished worker still runs. [The plan](/plans/REMOTE-1.md:137) then refuses instead of bringing the commits back. [The pgrep manual](https://github.com/procps-ng/procps/blob/master/man/pgrep.1) describes matching full command lines and the separate option for excluding ancestors.  
+    Gain 5, Work 2, Harm 3
+
+19. Blocking: Security: the suggested stop command can stop another item’s worker.
+    Raise: Security  
+    Case: normal use - Tasks `BOARD/UI` and `BOARD/UI-FORM` run on the same machine. The planned pattern for `BOARD/UI` ends in `BOARD-UI-`, which also matches the other task’s driver path. Following [the suggested `pkill` command](/plans/REMOTE-1.md:138) can therefore stop work the developer did not choose to stop. Both task names are accepted by [the item-name rule](/src/forge/repo.py:1113).  
+    Adds work: identify the requested item’s process separately from other items; F 2 x H 2 = 4; 2 x C = 4.  
+    Gain 3, Work 2, Harm 4
+
+20. Blocking: Data loss: a task can merge while its remote commits remain stranded.
+    Raise: Data loss  
+    Case: normal use - A remote round commits work, its connection breaks, and the next round runs on the laptop while the machine is unreachable. [The plan](/plans/REMOTE-1.md:142) allows that round to proceed without the remote work, but adds recovery only to `forge work`. [Close](/src/forge/close.py:81) can then publish the laptop branch without those commits; after merge, [work refuses the finished item](/src/forge/worker.py:104), so the planned recovery step no longer works.  
+    Adds work: prevent unfinished remote work from being bypassed at close; F 2 x H 2 = 4; 2 x C = 4.  
+    Gain 4, Work 2, Harm 4
+
+21. Blocking: Security: the commit-reminder turn skips the remote trust recheck.
+    Raise: Security  
+    Case: normal use - A developer revokes trust while the first remote turn is running, and that turn leaves uncommitted changes. [The new check](/plans/REMOTE-1.md:114) runs when choosing the machine, but [the reminder](/plans/REMOTE-1.md:118) starts a second turn without another check. [The driver](/src/forge/codex_turn.py:187) can then run without the project hooks.  
+    Adds work: check remote trust before the reminder turn; F 1 x H 2 = 2; 2 x C = 2.  
+    Gain 3, Work 2, Harm 4
+
+22. Advisory: Not done: setup’s retry instruction omits the required machine name.
+    Raise: Not done  
+    Case: normal use - First setup asks the developer to add the trust entry. [Its next step](/plans/REMOTE-1.md:109) says to rerun setup without `--host`, but [the record is saved only after trust passes](/plans/REMOTE-1.md:110). The retry therefore asks for the machine name instead of completing setup.  
+    Gain 4, Work 1, Harm 2
+
+23. Advisory: Plan gap: finish cannot both refuse and return the uncommitted-file warning.
+    Raise: Plan gap  
+    Case: normal use - The worker and its reminder both leave an uncommitted file. [Finish](/plans/REMOTE-1.md:119) calls bring-back and expects its file list, but [bring-back](/plans/REMOTE-1.md:139) refuses on that file. The warning required by the amended test is therefore not produced as specified.  
+    Gain 3, Work 1, Harm 2
+   Disposition: keep - below the bar (follow-up)
+
+24. Advisory: Not done: turning off can leave fetched work outside its task branch.
+    Raise: Not done  
+    Case: normal use - Bring-back fetches a remote commit but its merge conflicts and is aborted. The commit is now in the laptop’s separate recovery reference, but not its task branch. [Turn-off](/plans/REMOTE-1.md:146) checks only whether the commit is in the clone, and [the next bring-back](/plans/REMOTE-1.md:137) clears the item’s host when the box record is gone. The next round can miss that commit.  
+    Gain 4, Work 2, Harm 3
