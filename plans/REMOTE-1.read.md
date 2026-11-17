@@ -1,18 +1,18 @@
 ---
 reader: codex (gpt-6.1-terra)
-read_at: 2026-11-17T13:15:37.739372+00:00
-seconds: 849.86
-read_hash: 575b3804a798db354e88a910198bf26afcae546f
-round: 3
+read_at: 2026-11-17T13:33:31.948771+00:00
+seconds: 839.897
+read_hash: 3dc285e04fafe845247aa1f35b6e55703cd8e691
+round: 4
 passed: no
-doc_seen: 575b3804a798db354e88a910198bf26afcae546f
+doc_seen: 3dc285e04fafe845247aa1f35b6e55703cd8e691
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: df881956a55bc4cd37902b06a8ef6a2c4710b543
+notes_seen: 11195c7c18264cee6f18f0135e3e0ceaa3155b4a
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a1e964-e202-7e63-964c-f3f99effee22
 session:
-loop_choice: more
-loop_reason: Owner chose to simplify and run one more round: Forge never deletes run folders on the machine by itself; only turn-off deletes them, after the developer agrees to a list of what is there; fix the worker marker on the remote driver; keep the teammate-closes-from-another-clone case as a known issue
+loop_choice:
+loop_reason:
 ---
 # Cold read notes
 
@@ -235,3 +235,52 @@ Only a genuine trade-off goes to the human, as a question with options.
     Case: normal use - A repo’s build uses code in a Git submodule. [The planned transfer](/plans/REMOTE-1.md:117) pushes the main repository and creates a worktree, but does not transfer or initialize the submodule. A main-repository commit contains a reference to the submodule commit, not its files. [Git submodule documentation](https://git-scm.com/docs/gitsubmodules). The [planned round test](/plans/REMOTE-1.md:132) has no submodule and can pass.  
     Gain 3, Work 4, Harm 2
     Disposition: cut - a repo with a .gitmodules file keeps its rounds on the laptop with the reason `this repo has git submodules, which do not reach the machine yet`; test_4 has the case.
+
+## Round 4
+
+32. Blocking: Data loss: turn-off can delete work without first showing it.
+
+    Raise: Data loss  
+    Case: normal use - A developer runs `forge lanes --box off --yes` directly. [The plan](/plans/REMOTE-1.md:150) reads the folder but deletes it without printing its contents or requiring an earlier preview. The developer can therefore agree to deletion without seeing uncommitted files, stashes, or commits that will be lost.  
+    Not done: item 5: list the work before the developer agrees to delete it.  
+    Gain 4, Work 2, Harm 4
+    Disposition: cut - turn-off prints the full list of what the folder holds before it deletes, also when `--yes` is given at once (For the builders, item 5).
+
+33. Blocking: Data loss: a commit made in a kept folder escapes the close guard.
+
+    Raise: Data loss  
+    Case: normal use - A remote round leaves an uncommitted file. Forge keeps its folder, detaches it, and [clears the item’s host record](/plans/REMOTE-1.md:145). The developer returns to that folder, checks out the task branch, and commits the file. From the same laptop, close now passes [the host-record guard](/plans/REMOTE-1.md:123) and can merge without that commit. This does not require the separate-clone case accepted in finding 28.  
+    Adds work: detect commits added to kept folders before close; F 2 x H 3 = 6; 2 x C = 4.  
+    Gain 4, Work 3, Harm 4
+    Disposition: keep - by the owner's answer, a known issue in Accepted limits: a commit made by hand in a kept round folder after its round ended is not seen by close.
+
+34. Blocking: Data loss: a failed process lookup can leave a running round unprotected.
+
+    Raise: Data loss  
+    Case: normal use - A Linux machine has BusyBox `ps`, which [does not support the planned options](https://busybox.net/BusyBox.html). [The launch command](/plans/REMOTE-1.md:119) still starts the driver because `echo` succeeds, but its process file has no usable start time. [Turn-off](/plans/REMOTE-1.md:150) has no required refusal for that failed lookup, so it can treat the running round as ended and delete its work. The existing [process identity check](/src/forge/codex.py:895) treats an unreadable identity as potentially running.  
+    Adds work: refuse deletion when the remote process identity cannot be read; F 2 x H 3 = 6; 2 x C = 4.  
+    Gain 3, Work 2, Harm 4
+    Disposition: cut - setup refuses a machine whose `ps -o lstart` shows no start time (BusyBox), with one line naming procps; a `.pid` file Forge cannot read counts as running, so nothing is deleted on a guess.
+
+35. Blocking: Not done: a conflicted run cannot release its task branch for the next round.
+
+    Raise: Functional  
+    Case: normal use - A worker is asked to resolve a default-branch merge and ends with conflicts still in its remote folder. [The new bring-back step](/plans/REMOTE-1.md:145) runs `git checkout --detach` there, but [Git refuses that checkout while the index has unresolved conflicts](https://github.com/git/git/blob/master/builtin/checkout.c). The branch remains checked out, so the next remote round cannot start in a fresh folder as planned.  
+    Adds work: handle a kept folder whose unresolved conflicts prevent detachment; F 2 x H 2 = 4; 2 x C = 4.  
+    Gain 5, Work 2, Harm 3
+    Disposition: cut - a folder that cannot be detached stays as it is with one line; each round pushes a new refs/forge-runs/<id> ref, checks the machine's branch is an ancestor of it, and makes its folder with `worktree add -f -B`, so the next round starts in a new folder.
+
+36. Advisory: Unproven: turn-off cannot compare branches whose commits exist on different machines.
+
+    Raise: Test  
+    Case: normal use - A cut-off remote round leaves a commit that never reached the laptop; while the machine is unreachable, a laptop round makes a different commit. Neither machine has both branch tips, so [the planned `git merge-base` check](/plans/REMOTE-1.md:150) cannot compare them without transferring history. The planned test pushes a laptop commit to the machine, so both sides already have it and the test can pass without covering this case.  
+    Not done: item 5: list commits that have not come back.  
+    Gain 3, Work 2, Harm 2
+    Disposition: keep - below the bar (follow-up)
+
+37. Advisory: Gate: the new turn-off flow is marked as needing no design.
+
+    Raise: Gate  
+    Case: normal use - The agent presents a list of work, asks the developer to agree to deletion, and then runs the confirmed turn-off command. [The plan](/plans/REMOTE-1.md:30) gives “no screen” as its reason for `Design: none`, but the cold-read rule also requires a design when a part changes a flow.  
+    Gain 3, Work 4, Harm 2
+    Disposition: keep - below the bar (follow-up)
