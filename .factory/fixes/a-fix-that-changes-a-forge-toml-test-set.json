@@ -99,7 +99,7 @@
     "id": "52e3afcf-4de5-4488-b6a5-ac3b9828b5af",
     "status": "blocked"
   },
-  "round": 4,
+  "round": 5,
   "status": "fixing",
   "steps": [
     {
@@ -124,10 +124,12 @@
     }
   ],
   "stuck": {
-    "close": "35c66b82-8093-41de-b600-86220d5265ad",
-    "head": "a2e596214f3a5394d2ea2bbc80501dbafd58842d",
-    "keys": {},
-    "round": 3
+    "close": "327d4214-a581-49af-83d0-17b233eeb76a",
+    "head": "c75a59f2a68ece54a753ac5b3e8883a05a90a461",
+    "keys": {
+      "the open P0 a carried idea lets forge land skip building the next fix in src/forge/task.py": 1
+    },
+    "round": 4
   },
   "why": "A fix that changes a forge.toml test setting (other than merge) loses that change before close, and close still reports the pull request ready with no real change.",
   "worker": "claude"
