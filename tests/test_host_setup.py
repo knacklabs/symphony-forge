@@ -9,7 +9,7 @@ from conftest import ROOT, _install
 from ssh_host import machine
 from test_codex_worker import PIN, sdk_data  # noqa: F401
 
-pytestmark = pytest.mark.skipif(os.name == "nt", reason="the test machine runs shell scripts")
+pytestmark = [pytest.mark.platform, pytest.mark.skipif(os.name == "nt", reason="the test machine runs shell scripts")]
 
 STORY = "REMOTE-1"
 
