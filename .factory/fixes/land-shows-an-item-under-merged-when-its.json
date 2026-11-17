@@ -1,0 +1,15 @@
+{
+  "base": "856e51ad4798de0f0741155f462e0e4d4eb55242",
+  "branch": "fix/land-shows-an-item-under-merged-when-its",
+  "done_when": "Land lists an item under Merged only when its pull request is merged; otherwise the item stops under Needs you with the reason.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-17T14:42:07.047845+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Land shows an item under Merged when its pull request is still open, so the owner sees a merge that did not happen."
+}
