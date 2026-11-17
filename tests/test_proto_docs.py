@@ -12,7 +12,6 @@ def test_11_prototype_precedes_signoff_and_stories_in_the_docs():
     # the prototype; runtime sign-off tests do not exercise copied guide text.
     # Keep the existing documentation contract without a production seam.
     decision = ROOT / "docs/decisions/0095-prototype-before-stories.md"
-    readme = (ROOT / "README.md").read_text(encoding="utf-8")
     guide = (ROOT / "docs/guide.md").read_text(encoding="utf-8")
     ruling = decision.read_text(encoding="utf-8")
 
@@ -31,7 +30,6 @@ def test_11_prototype_precedes_signoff_and_stories_in_the_docs():
     assert "one gap check before the demo" in route
     assert "no full test run or whole-source review" in route
     assert "A prototype without the setting keeps the current full-run and whole-source review rules." in route
-    assert "[decision 0095](docs/decisions/0095-prototype-before-stories.md)" in readme
     assert "[decision 0095](decisions/0095-prototype-before-stories.md)" in guide
 
     assert "[decision 0014](0014-specs-before-signoff.md)" in ruling

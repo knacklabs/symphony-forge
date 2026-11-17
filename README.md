@@ -24,8 +24,10 @@ its own branch, runs the tests, gets a code review and fixes what the review fin
 ## Quick start
 
 You need [git](https://git-scm.com/), the [GitHub CLI](https://cli.github.com/) signed in,
-[uv](https://docs.astral.sh/uv/), and Claude Code or Codex. Forge runs on macOS, Linux and
-Windows.
+[uv](https://docs.astral.sh/uv/), and Claude Code or Codex. Code reviews also need the
+Autoreview skill from [openclaw/agent-skills](https://github.com/openclaw/agent-skills), at the
+version Forge pins. When you ask your agent to set up Forge, its setup check names that version
+and where to install it. Forge runs on macOS, Linux and Windows.
 
 1. Install Forge. This is the only command you type:
 
@@ -54,9 +56,11 @@ up the computer for you.
 1. **The builder and the reviewer can be different models.** A Claude Code session can build
    with its own Claude helpers, or hand the build to Codex. A Codex session can do the same the
    other way round. When both tools are installed, code reviews run on Codex and plan reads run
-   on the other tool by default. New repos use Codex `gpt-6.1-terra` at max effort for both.
-2. **Each change starts small.** The first build or fix round runs at low effort: Claude Sonnet
-   5.5 or Codex `gpt-6.1-sol`. After a failed test, a blocking review finding or a failed
+   on the other tool by default. A new repo with both tools uses Codex `gpt-6.1-terra` at max
+   effort for these. A Claude-only repo uses Claude Sonnet 5.5 at high effort.
+2. **Each change starts small.** In a new repo, the first build or fix round runs at low
+   effort: Claude Sonnet 5.5 or Codex `gpt-6.1-sol`. User-facing work uses the design settings,
+   which start higher. After a failed test, a blocking review finding or a failed
    required check, the same builder continues at higher effort: high on Codex, xhigh on Claude.
    The board shows "built at <effort>" for each round.
 3. **Only what matters gets fixed.** The review stops the work only for findings worth their

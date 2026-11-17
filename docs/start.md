@@ -19,7 +19,7 @@ Keep the company and developer details in the project's notes after setup.
 Explain each step in one short sentence. Ask the person only for a choice or a sign-in you cannot complete.
 
 Check each installed tool before you install it. Use the computer's tools where possible.
-Install only git, GitHub CLI (`gh`), uv, Forge, and Node.js with npm for the browser-only web app.
+Install only git, GitHub CLI (`gh`), uv, Forge, Node.js with npm for the browser-only web app, and the Autoreview skill at the version and place that `forge doctor` names. Code reviews need it.
 Forge supplies the design skills.
 Do not install Docker, a test browser, Codex, a server, or a database for this first step.
 

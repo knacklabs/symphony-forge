@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 def test_5_salesperson_can_follow_the_checklist_in_order():
     checklist = (ROOT / "docs/start-a-prototype.md").read_text(encoding="utf-8")
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
-    assert "[Start a prototype](docs/start-a-prototype.md)" in readme
+    assert "[prototype checklist](docs/start-a-prototype.md)" in readme
     steps = (
         "GitHub seat and repo",
         "Set up your laptop",

@@ -239,9 +239,9 @@ developer can take over using the discovery notes and answers page. To start one
 6. **Deploy on Mainline.** When you ask, the agent sets up Mainline and deploys dev, and a person presses Promote in Mainline for production. You can say: "Deploy this on Mainline".
 7. **Run and improve.** People use the app, and each new request or problem goes back to step 5. You can say: "Users asked for <request>" or "This is broken: <problem>".
 
-**The cold read loop.** A reader who did not write the plan reads it cold and lists its gaps. The agent fixes the plan, and the reader reads it again. After two rounds that still have open notes, Forge stops and you choose: accept, read again, or split. It exists because a gap found in the plan costs minutes, but the same gap found in the code costs a build round.
+**The cold read loop.** A reader who did not write the plan reads it cold and lists its gaps. The agent fixes the plan, and the reader reads it again. At the round limit (two by default, set by `cold_read_rounds`) with notes still open, Forge stops and you choose: accept, read again, or split. It exists because a gap found in the plan costs minutes, but the same gap found in the code costs a build round.
 
-**The build and review loop.** A worker builds the part and its tests, then a separate review checks the change. A serious problem goes back to the worker for another round. A task gets two review rounds and a fix gets one. At the limit Forge stops and asks you, but a P0 problem keeps the loop going. It exists because a reviewer sees problems that the worker cannot see in its own work.
+**The build and review loop.** A worker builds the part and its tests, then a separate review checks the change. A serious problem goes back to the worker for another round. A fix gets one review round. A task gets two by default, set by `task_review_rounds`. At the limit Forge stops and asks you, but a P0 problem keeps the loop going. It exists because a reviewer sees problems that the worker cannot see in its own work.
 
 **The CI checks.** GitHub runs the repo's checks on the pull request. Close waits while they are queued or running, and a red check goes back to the worker. They exist because the checks run the tests on a clean machine, the same way for every change.
 
@@ -650,8 +650,9 @@ Parts that already started on another part keep their base.
 ## Merging a ready item
 
 The human merges by default: omitting `merge` from `forge.toml` is the same as
-`merge = "human"`. Ask your agent to set `merge = "agent"` in a fix if you want it to merge ready
-pull requests. Only the setting on the default branch counts. A change to the setting on an item
+`merge = "human"`. To let the agent merge ready pull requests, the owner runs `forge merge enable`
+in a terminal outside Claude Code or Codex, once. It opens a pull request that sets
+`merge = "agent"`, and the owner merges it. The agent never changes this setting itself. Only the setting on the default branch counts. A change to the setting on an item
 branch cannot grant itself permission, and turning it off on the default branch takes effect at
 once. `forge close` and `forge next` tell the agent when to run `forge merge <item>`.
 

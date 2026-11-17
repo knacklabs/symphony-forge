@@ -132,8 +132,8 @@ def test_6_saved_unscored_notes_hold_until_scored_and_the_readme_explains_the_ba
     assert closed.returncode == 0, closed.stdout + closed.stderr
     assert "Ready:" in closed.stdout
 
-    readme = (ROOT / "README.md").read_text("utf-8").split("## How Forge weighs a note", 1)[1]
-    readme = readme.split("\n## ", 1)[0]
+    # The scoring rules moved from the README to their own page.
+    readme = (ROOT / "docs/review-rules.md").read_text("utf-8").split("# How Forge weighs a note", 1)[1]
     for text in ("**Gain**", "**Work**", "**Harm**", "| Harm 4 or 5, or Gain 5 |",
                  "| Gain 4, or Gain 3 with Harm 3, and Work 1 or 2 |",
                  "| Gain 4, or Gain 3 with Harm 3, and Work 3 or more |",

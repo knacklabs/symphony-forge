@@ -71,7 +71,7 @@ Review rules and recorded owner decisions settle a question for later readers an
 
 ## When a loop stops
 
-By default a fix gets one review round and a story part gets two; `forge.toml` can change both. At the limit, open findings below P0 stop the change.
+A fix gets one review round. A story part gets two by default; `task_review_rounds` in `forge.toml` changes that number. At the limit, open findings below P0 stop the change.
 Forge asks: "One more round, split or accept?" Close, land and work show the same question until you answer.
 
 One more round gives the worker one more attempt. Split moves the open findings to a follow-up fix.
@@ -87,7 +87,7 @@ or checks still need a worker, land stops. A review stop exits with status 3 and
 question. Record the choice with `forge close <item> --resolve <more|split|accept> --reason
 "<human's choice>"`, then run land again.
 
-A cold read stops after round two when notes below P0 are still open, or when P0 notes are open
+A cold read stops at its round limit (two by default; `cold_read_rounds` in `forge.toml` changes it) when notes below P0 are still open, or when P0 notes are open
 in two rounds in a row. Forge asks: "One more round, split or accept?"
 Forge waits for your choice and never starts a third round by itself. Record your choice with
 `forge read <KEY or spec or decision> --resolve <accept|more|split> --reason "<human's choice>"`.
