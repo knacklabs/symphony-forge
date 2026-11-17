@@ -254,7 +254,10 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
         if not (isinstance(manager, str) and manager.startswith("pnpm@")):
             # The action reads packageManager itself; otherwise name a version: engines.pnpm, then
             # devEngines, then the lockfile's format (9.x is written by pnpm 9 and 10: take 10; 6 -> 8).
-            version = package.get("engines", {}).get("pnpm") or (dev_manager or {}).get("version")
+            # A nested project's own manifest names its pnpm range when the root has none.
+            inner = json.loads(sync.read(top / Path(lockfile).parent / "package.json") or "{}") if lockfile else {}
+            version = (package.get("engines", {}).get("pnpm") or (dev_manager or {}).get("version")
+                       or inner.get("engines", {}).get("pnpm"))
             if not isinstance(version, str) or not version.strip():
                 head = sync.read(top / lockfile) if lockfile else ""
                 match = re.search(r"lockfileVersion: '?(\d+)", head or "")
