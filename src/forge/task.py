@@ -742,11 +742,21 @@ def require_fix_changes(item: str, state: dict, top: Path, files: list[str]) -> 
     """Close and land cannot publish an interrupted fix's bookkeeping as its result."""
     if state.get("kind") != "fix":
         return
-    if any(path and not path.startswith((".factory/", "plans/spotted/"))
-           and path != "plans/spotted.json" for path in files):
+    def record(path: str) -> bool:
+        return path.startswith((".factory/", "plans/spotted"))
+
+    if any(path and not record(path) for path in files):
         return
     untracked = repo.git("ls-files", "--others", "--exclude-standard", cwd=top)
     detail = f"\nUntracked files in the worktree: {untracked}" if untracked else ""
+    default = repo.default_branch(top)
+    own = repo.git("log", "--no-merges", "--name-only", "--format=", f"origin/{default}..HEAD", cwd=top).split()
+    if any(not record(path) for path in own):
+        # The fix did commit work, so after the merge the default branch has it or replaced it.
+        raise repo.Refused("After merging the default branch, this fix has no change left: the default branch "
+                           "already has it or replaced it. If it replaced the change, run "
+                           f"forge work {item} and make the change again.{detail}",
+                           f'forge fix drop {item} --because "<why>"')
     raise repo.Refused(f"The build round did not finish. This fix changes only Forge's records.{detail}",
                        f"forge work {item}")
 
