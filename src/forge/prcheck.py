@@ -240,7 +240,9 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
                         if isinstance(m, dict) and m.get("name") == "pnpm"), None)
     # The root lockfile is read from the folder, not from git: sync's pure-upgrade check renders
     # this from a plain snapshot folder with no git index, so git would miss it there.
-    listing = repo.run("git", "ls-files", "-co", "--exclude-standard", "-z", cwd=top).stdout.split("\0")
+    found = repo.run("git", "ls-files", "-co", "--exclude-standard", "-z", cwd=top)
+    listing = found.stdout.split("\0") if found.returncode == 0 else [
+        path.relative_to(top).as_posix() for path in top.rglob("pnpm-lock.yaml")]
     # Forge's own repo ships starter lockfiles it never builds with pnpm.
     nested = cfg.get("repo") != "forge-source"
     lockfile = "pnpm-lock.yaml" if (top / "pnpm-lock.yaml").is_file() else next(
@@ -252,7 +254,10 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
         if not (isinstance(manager, str) and manager.startswith("pnpm@")):
             # The action reads packageManager itself; otherwise name a version: engines.pnpm, then
             # devEngines, then the lockfile's format (9.x is written by pnpm 9 and 10: take 10; 6 -> 8).
-            version = package.get("engines", {}).get("pnpm") or (dev_manager or {}).get("version")
+            # A nested project's own manifest names its pnpm range when the root has none.
+            inner = json.loads(sync.read(top / Path(lockfile).parent / "package.json") or "{}") if lockfile else {}
+            version = (package.get("engines", {}).get("pnpm") or (dev_manager or {}).get("version")
+                       or inner.get("engines", {}).get("pnpm"))
             if not isinstance(version, str) or not version.strip():
                 head = sync.read(top / lockfile) if lockfile else ""
                 match = re.search(r"lockfileVersion: '?(\d+)", head or "")

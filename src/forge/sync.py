@@ -481,6 +481,12 @@ def synced(top: Path, cfg: dict[str, Any], base: str, head: str, paths: list[str
     if hooks:
         inputs.update((hooks.relative_to(top) / name).as_posix()
                       for name in ("pre-commit", "pre-push"))
+    # A nested pnpm lockfile decides the workflow's pnpm step, so the snapshot needs it too.
+    for name in subprocess.run(
+            ["git", "ls-tree", "-rz", "--name-only", base], cwd=top, capture_output=True, check=True,
+    ).stdout.decode("utf-8").split("\0"):
+        if name.endswith("/pnpm-lock.yaml"):
+            inputs.update((name, name.removesuffix("pnpm-lock.yaml") + "package.json"))
     # Read the root tree and the renderer inputs through one Git process. A tree
     # entry is mode/name, NUL, then a binary object ID (20 or 32 bytes).
     with subprocess.Popen(["git", "cat-file", "--batch", "--follow-symlinks"], cwd=top,
