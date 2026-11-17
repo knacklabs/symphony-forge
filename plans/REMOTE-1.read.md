@@ -1,18 +1,18 @@
 ---
 reader: codex (gpt-6.1-terra)
-read_at: 2026-11-17T12:48:32.955908+00:00
-seconds: 628.102
-read_hash: 3ea38e25db4cc1144e703b6a39621ef327e612e8
-round: 2
+read_at: 2026-11-17T13:15:37.739372+00:00
+seconds: 849.86
+read_hash: 575b3804a798db354e88a910198bf26afcae546f
+round: 3
 passed: no
-doc_seen: 3ea38e25db4cc1144e703b6a39621ef327e612e8
+doc_seen: 575b3804a798db354e88a910198bf26afcae546f
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: b7a4fb47a6e3ccab6eb6404d7bf64e30e4d12f91
+notes_seen: df881956a55bc4cd37902b06a8ef6a2c4710b543
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a1e964-e202-7e63-964c-f3f99effee22
 session:
 loop_choice: more
-loop_reason: Owner chose one more round: fix all five (a process-number file in place of name matching, close refuses while work is still on the machine, trust check before every turn)
+loop_reason: Owner chose to simplify and run one more round: Forge never deletes run folders on the machine by itself; only turn-off deletes them, after the developer agrees to a list of what is there; fix the worker marker on the remote driver; keep the teammate-closes-from-another-clone case as a known issue
 ---
 # Cold read notes
 
@@ -186,3 +186,47 @@ Only a genuine trade-off goes to the human, as a question with options.
     Case: normal use - Bring-back fetches a remote commit but its merge conflicts and is aborted. The commit is now in the laptop’s separate recovery reference, but not its task branch. [Turn-off](/plans/REMOTE-1.md:146) checks only whether the commit is in the clone, and [the next bring-back](/plans/REMOTE-1.md:137) clears the item’s host when the box record is gone. The next round can miss that commit.  
     Gain 4, Work 2, Harm 3
     Disposition: cut - turn-off counts a branch's commit as back only when it is an ancestor of the clone's branch of the same name, so a commit only fetched to refs/forge-host after a refused merge blocks turn-off.
+
+## Round 3
+
+25. Blocking: Security: the remote worker loses Forge’s worker restrictions.
+    Raise: Security  
+    Case: normal use - A remote worker encounters the fix-size limit and runs `forge fix allow-large`. In [the launch command](/plans/REMOTE-1.md:117), `FORGE_WORKER=1` applies to `echo`, not the subsequent driver; SSH does not normally forward the laptop’s environment. The remote worker can therefore pass [the person-only allowance check](/src/forge/task.py:733). The [test machine](/plans/REMOTE-1.md:153) inherits the laptop’s environment and can hide the defect. [Bash environment rules](https://www.gnu.org/software/bash/manual/bash.html), [OpenSSH environment rules](https://man.openbsd.org/ssh_config#SendEnv).  
+    Adds work: pass and test the worker marker on the remote driver; F 3 x H 2 = 6; 2 x C = 2.  
+    Gain 4, Work 2, Harm 4
+
+26. Blocking: Data loss: finish can remove a folder while its remote worker still runs.
+    Raise: Data loss  
+    Case: normal use - An SSH connection breaks and the laptop reconnects while the remote turn is still running. [Finish](/plans/REMOTE-1.md:120) assumes the driver has ended and bypasses the running-process refusal, although [the plan](/plans/REMOTE-1.md:23) says the turn can continue after a break. If the checkout is clean when inspected, cleanup can remove it while the worker is still using it.  
+    Not done: item 4: keep the remote work until the running round has ended.  
+    Gain 4, Work 2, Harm 4
+
+27. Blocking: Data loss: cleanup deletes ignored non-cache files left by a worker.
+    Raise: Data loss  
+    Case: normal use - A worker leaves useful local notes in an ignored file. [The bring-back check](/plans/REMOTE-1.md:139) uses `git status` without ignored files, then removes the apparently clean folder. Git’s [worktree removal code](https://github.com/git/git/blob/master/builtin/worktree.c) uses a similar status check before deleting the directory. The existing [cleanup rule](/src/forge/task.py:817) keeps ignored data outside recognized caches.  
+    Not done: item 5: retain ignored non-cache work that has not come back.  
+    Gain 3, Work 2, Harm 4
+
+28. Blocking: Data loss: close on another clone cannot see the unfinished-work guard.
+    Raise: Data loss  
+    Case: normal use - A developer’s remote round is cut off, and a teammate picks up an existing pull request from another clone and closes it. [The new guard](/plans/REMOTE-1.md:121) checks the first clone’s unshared item record; [the second clone can pick up the published branch](/src/forge/task.py:239) without that record. It can publish and merge without the remote commits, after which [work refuses the merged item](/src/forge/worker.py:104).  
+    Adds work: make the unfinished-work check visible across clones; F 2 x H 3 = 6; 2 x C = 6.  
+    Gain 4, Work 4, Harm 4
+
+29. Blocking: Data loss: turn-off deletes stashed remote work.
+    Raise: Data loss  
+    Case: normal use - A worker stashes edits while resolving a merge and leaves the stash behind. [Finish](/plans/REMOTE-1.md:139) checks the worktree and branch, and [turn-off](/plans/REMOTE-1.md:148) checks branches but not stashes. Git keeps a stash under `refs/stash`, outside those branches, so deleting the remote clone deletes that work. [Git stash documentation](https://git-scm.com/docs/git-stash).  
+    Not done: item 5: retain remote stashes whose work has not come back.  
+    Gain 3, Work 2, Harm 4
+
+30. Advisory: Not done: setup names the wrong trust file when `CODEX_HOME` is set.
+    Raise: Not done  
+    Case: normal use - The remote user configures a custom Codex home. [Setup](/plans/REMOTE-1.md:104) reads its `config.toml`, but [the refusal](/plans/REMOTE-1.md:110) tells the developer to edit `~/.codex/config.toml`. Following that step leaves the checked file unchanged, so setup refuses again. [Forge’s existing doctor](/src/forge/doctor.py:479) also supports `CODEX_HOME`.  
+    Gain 3, Work 1, Harm 2
+   Disposition: keep - below the bar (follow-up)
+
+31. Advisory: Not done: committed submodule code does not reach the remote checkout.
+    Raise: Not done  
+    Case: normal use - A repo’s build uses code in a Git submodule. [The planned transfer](/plans/REMOTE-1.md:117) pushes the main repository and creates a worktree, but does not transfer or initialize the submodule. A main-repository commit contains a reference to the submodule commit, not its files. [Git submodule documentation](https://git-scm.com/docs/gitsubmodules). The [planned round test](/plans/REMOTE-1.md:132) has no submodule and can pass.  
+    Gain 3, Work 4, Harm 2
+   Disposition: keep - below the bar (follow-up)
