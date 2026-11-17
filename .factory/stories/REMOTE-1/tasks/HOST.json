@@ -121,13 +121,13 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "52a04dfeba42e31a37003dcca5664a1b1c144943518ee710156a7cb2b5687029",
-    "changed": "cd10828da32192963c9af6c01f4103fbdbfcf8a679112e3b6ca079db7a01f659",
-    "commit": "88faf93cb28e5d996f4791dc36d3b048ad7d24bf",
+    "branch_diff": "5b0c22283c849bd4ebb381fb5a501101f7d78ebabe1f427b49e4d7382740f782",
+    "changed": "b1d0308390658f994b5ae68a15929160a95a1fd049d9cca8a3a19e0099529272",
+    "commit": "4f4bd4b4bc23a9d5078557329f70ba786348f738",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 4, Work 2, Harm 5\nRaise: Data loss\nCase: normal use - A host\u2019s process access policy prevents both `ps` and `kill -0` from inspecting a still-running worker. This fallback treats every `kill -0` failure as proof that the process has ended, but [Linux kill(2)](https://man7.org/linux/man-pages/man2/kill.2.html) also reports failure when permission is denied. Confirmed turn-off can therefore delete the active worker\u2019s folder. The previous code treated a permission failure as still running, so the earlier process-identity finding remains open.",
+        "body": "Gain 4, Work 2, Harm 5\nRaise: Data loss\nCase: normal use - On a Linux host with `hidepid=ptraceable`, a process-access policy can prevent the SSH session from inspecting a still-running worker. Linux then hides its `/proc/<pid>` entry as well as preventing `ps` from reading it. The [kernel documentation](https://docs.kernel.org/filesystems/proc.html) describes this visibility rule. The negated existence test treats the hidden entry as proof that the worker ended, so `--box off --yes` can delete its live worktree. The new test leaves the worker's `/proc` entry visible and therefore does not cover this case.",
         "file": "src/forge/box_ssh.py",
         "gain": 4,
         "harm": 5,
@@ -137,7 +137,7 @@
         "work": 2
       }
     ],
-    "id": "a6396f98-7ade-477f-b149-43edd1c98fa1",
+    "id": "01884d1c-e586-4ab6-8b31-d41751334102",
     "status": "blocked"
   },
   "round": 4,
@@ -157,6 +157,10 @@
     },
     {
       "at": "2026-11-17T14:38:32.139406+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-17T14:50:11.674261+00:00",
       "step": "review"
     }
   ],
