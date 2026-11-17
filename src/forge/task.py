@@ -14,6 +14,8 @@ from typing import Any
 from forge import repo
 from forge.repo import git, refuse, run
 
+IDEAS = "plans/ideas.md"  # a carried idea is not work
+
 REFUSALS = {
     "bad_task": ("{item!r} is not a task; a task is named KEY/TASK.", "forge next"),
     "no_doc": ("Story {key} has no story doc on {default} or on story/{key}.",
@@ -743,7 +745,7 @@ def require_fix_changes(item: str, state: dict, top: Path, files: list[str]) -> 
     if state.get("kind") != "fix":
         return
     def record(path: str) -> bool:
-        return path.startswith((".factory/", "plans/spotted"))
+        return path.startswith((".factory/", "plans/spotted", IDEAS))
 
     if any(path and not record(path) for path in files):
         return
@@ -771,7 +773,7 @@ def unbuilt_fix(item: str, state: dict, top: Path) -> bool:
         return False
     own = set(repo.git("rev-list", "--no-merges", "HEAD", "--not", start,
                        f"origin/{repo.default_branch(top)}", cwd=top).splitlines())
-    return not any(sha in own and (not files or any(file != path for file in files))
+    return not any(sha in own and (not files or any(file not in (path, IDEAS) for file in files))
                    for sha, _, files in repo.commit_log(top, start))
 
 
