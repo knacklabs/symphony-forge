@@ -11,7 +11,7 @@
       "gain": 5,
       "harm": 3,
       "line": 151,
-      "outcome": "open",
+      "outcome": "fixed in round 4",
       "reason": "",
       "round": 1,
       "security": false,
@@ -60,28 +60,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "d226b36454da63f7f9a366122a70d6172bf54427767b7d91e64241de25297418",
-    "changed": "2e032b5998fc5e0568b7d8ebe3e776a743c559b7d655c31e2f9d6022c6896dd9",
-    "commit": "2bfcf9bd54f181ac887fc0d9e0c24c8c60179675",
+    "branch_diff": "6ef3b3a51892eda5f3dfac648fe2c7182a758d622a24bc64926da86358c36c9c",
+    "changed": "a270c28ad14078e78fb25ae851e9a56247a23e909b7052ff99e13c965c84aaa9",
+    "commit": "83197cbc1df457edc85814e1457c106b52f9b8d5",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 5, Work 2, Harm 4\nRaise: Not done\nCase: normal use - GitHub fails to start the review workflow while the separate pull-request test workflow runs.\nThe guard treats a skipped `Review pull request` job as evidence that the review started, so it never calls `_no_start`. New evidence from [the owner's actual failed run](https://github.com/knacklabs/symphony-forge/actions/runs/43905959995) shows that its head's [check runs](https://api.github.com/repos/knacklabs/symphony-forge/commits/c536b13d4196ebab40a9b706c79a183c7c8f57f6/check-runs?per_page=100) include a skipped `Review pull request` job from the separate test workflow. `_seen` includes that job, although the required `forge-pr-check` status is absent. Close therefore repeats the missing-check wait and recommends `forge close`. If a test also times out, `_tests_timeout` still reports the timeout instead, so the previous finding remains open.",
-        "file": "src/forge/checks.py",
-        "gain": 5,
-        "harm": 4,
-        "line": 148,
-        "priority": "P0",
-        "required_done_when": true,
-        "title": "Not done: Close misses review-check startup failures on GitHub",
-        "work": 2
-      }
-    ],
-    "id": "ffa00971-de91-493a-b06d-becafc94ccf4",
-    "status": "blocked"
+    "findings": [],
+    "id": "e9c8fa00-170c-4e3e-9e6e-7c508842022f",
+    "status": "clean"
   },
   "round": 4,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-16T21:29:56.542047+00:00",
@@ -97,6 +85,10 @@
     },
     {
       "at": "2026-11-17T02:37:52.154493+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-17T03:36:52.912258+00:00",
       "step": "review"
     }
   ],
