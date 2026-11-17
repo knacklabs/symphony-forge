@@ -242,7 +242,9 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
     # this from a plain snapshot folder with no git index, so git would miss it there.
     # Forge's own repo ships starter lockfiles it never builds with pnpm.
     lockfile = "pnpm-lock.yaml" if (top / "pnpm-lock.yaml").is_file() else None
-    root_decides = lockfile or dev_manager or (isinstance(manager, str) and manager.startswith("pnpm@"))
+    named = (dev_manager or {}).get("version") or package.get("engines", {}).get("pnpm")
+    root_decides = lockfile or (isinstance(manager, str) and manager.startswith("pnpm@")) or (
+        isinstance(named, str) and named.strip())
     if not root_decides and cfg.get("repo") != "forge-source":
         # Only tracked lockfiles are listed: a whole-tree listing is slow on Windows.
         found = repo.run("git", "ls-files", "-z", "--", ":(glob)**/pnpm-lock.yaml", cwd=top)
