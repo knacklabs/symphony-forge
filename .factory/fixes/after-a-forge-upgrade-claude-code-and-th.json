@@ -11,8 +11,8 @@
       "gain": 5,
       "harm": 3,
       "line": 220,
-      "outcome": "open",
-      "reason": "",
+      "outcome": "accepted",
+      "reason": "src/forge/upgrade.py:220 Owner's choice: the first upgrade to this release runs the previous release's upgrade code, so it cannot update the tools; every later upgrade does. Accepted as a known issue for the release notes; sync must not update the tools (owner rule).",
       "round": 1,
       "security": false,
       "title": "Not done: After the upgrade, Claude Code and the Codex CLI are at their latest versions, and the upgrade says which version each one.",
@@ -89,7 +89,13 @@
     "branch_diff": "66e7c76cd6b501f92070678d619d7ee689ac30b1fcacfb2e625b1f6fd79e8599",
     "changed": "97ea07233d92d61a529a597d30be9828e55aacb36e0b76a276f68a1a766dd9e6",
     "commit": "36d7ef3dc6586349ebbf5bc91aedf9eaf8a29202",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "because": "src/forge/upgrade.py:220 Owner's choice: the first upgrade to this release runs the previous release's upgrade code, so it cannot update the tools; every later upgrade does. Accepted as a known issue for the release notes; sync must not update the tools (owner rule).",
+        "finding": 1,
+        "from_base": false
+      }
+    ],
     "findings": [
       {
         "body": "Gain 5, Work 3, Harm 3\nRaise: Not done\nCase: normal use - an existing user upgrades to the first Forge release containing this change.\nThe new call runs inside the Forge process that started the upgrade. That process is still executing the previous release's `upgrade.py` after installing the new release, so it never reaches this call. The previous release starts only the new release's `sync` and `close` commands, which do not update the tools. Both CLIs therefore remain unchanged and no installed-version lines appear on this first upgrade.",
@@ -157,7 +163,7 @@
     "status": "blocked"
   },
   "round": 1,
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-17T18:34:07.514746+00:00",
@@ -168,6 +174,11 @@
       "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-11-17T18:54:40.430793+00:00",
+    "file": "src/forge/upgrade.py",
+    "wait_id": "91ec63a7-8498-4eaf-9ca7-fdee1d915805"
+  },
   "stuck": {
     "close": null,
     "head": "98b6c0d666b82cc777104c57a22310bc500a172f",

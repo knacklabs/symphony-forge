@@ -41,8 +41,8 @@
       "text": "Not done: After the upgrade, Claude Code and the Codex CLI are at their latest versions, and the upgrade says which version each one.",
       "from": "blocking",
       "item": "after-a-forge-upgrade-claude-code-and-th",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\ttests/conftest.py\tGate: Keep the existing doctor test's fake tools on PATH\tafter-a-forge-upgrade-claude-code-and-th",
