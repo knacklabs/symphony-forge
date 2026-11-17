@@ -87,7 +87,7 @@
     "id": "4ce48306-cc79-4b8c-9e07-2d65ffa2caa1",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -109,10 +109,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": null,
-    "head": "7ebba73c87aa2bf7c8d2b885dc9c7ec2f1f0e8c1",
+    "close": "28d87391-b79a-4ffb-b807-31aa77f5f2f2",
+    "head": "7795bb174c6ead5e4a1881d1e76cb41000cf2740",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "The upgrade check renders the generated workflow from a snapshot folder with no git repo, so a client repo whose only pnpm lockfile is in a subfolder gets a render without the pnpm setup step, the render differs from the committed workflow, and a pure upgrade then gets a model review.",
   "worker": "claude"
