@@ -7,9 +7,10 @@
 Forge is a command-line tool that takes a change from an idea to a merged pull request. Your
 coding agent, Claude Code or Codex, does the work. You make the decisions.
 
-![A small fix goes from a request to a merged pull request](docs/assets/forge-demo.gif)
+![Three requests become three changes that build in parallel, get a Codex review, are tested together once and merge](docs/assets/forge-demo.gif)
 
-*Illustration of a real Forge flow: Claude builds, Codex reviews. Sped up.*
+*Illustration of a real Forge flow, sped up: three changes build at the same time, Codex
+reviews what Claude built, and only the change with a real problem gets a second round.*
 
 You do three things:
 
