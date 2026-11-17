@@ -90,3 +90,25 @@ def test_1_split_moves_every_open_finding_to_one_linked_fix(env, tmp_path, previ
     assert resumed.returncode == 0, resumed.stdout + resumed.stderr
     assert len(env.review_calls()) == before + 1
     assert len(set(env.repo.git("branch", "--format=%(refname:short)").splitlines()) - branches) == 1
+
+
+def test_2_split_not_done_finding_stays_settled_in_a_later_review(env):
+    """A split 'Not done' finding on the fix's own Done-when must not block a later review."""
+    env.checks(GREEN)
+    seed(env, "src/a.py")
+    item, where = env.start_fix()
+    env.commit(where, "src/a.py", "pass  # round 1\n")
+    missed = {**finding("P1", "Not done: The readme opens with a greeting", "src/a.py"),
+              "body": "Gain 4, Work 1, Harm 2\nEvidence for the open defect."}
+    env.reviews(blocked(missed))
+    held = env.close(item)
+    assert held.returncode == 1, held.stdout + held.stderr
+    assert "Ask the human" in held.stderr, held.stdout + held.stderr
+    split = env.close(item, "--resolve", "split", "--reason", "Move it to one fix")
+    assert split.returncode == 0, split.stdout + split.stderr
+    env.commit(where, "other.py", "print('later work')\n")
+    env.reviews(blocked(missed))
+    before = len(env.review_calls())
+    resumed = env.close(item)
+    assert resumed.returncode == 0, resumed.stdout + resumed.stderr
+    assert len(env.review_calls()) == before + 1
