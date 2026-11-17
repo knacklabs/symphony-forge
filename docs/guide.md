@@ -223,6 +223,34 @@ For the sign-off history, see the
 
 The agent's guide explains how features add and clear each person's waiting records, how demo notes become one list of changes with one FDE OK before work starts, and how Mainline owns the backup at Promote for a release that adds a migration file and one test restore before launch.
 
+## From idea to production
+
+This is the path for a new client project, from the first conversation to running in production.
+The agent starts as a forward deployed engineer (FDE): it learns the customer's problem and
+builds the smallest working prototype that tests it. A salesperson can start this work; a
+developer can take over using the discovery notes and answers page. To start one, follow the
+[prototype checklist](start-a-prototype.md).
+
+1. **Ideas and client notes.** You give the agent the client notes or an idea, and it saves each note in `docs/context/` and reads them all before it asks anything. You can say: "Here are the client notes" or "I have an idea: <idea>".
+2. **Brief.** The agent writes `docs/product/BRIEF.md` from your notes and asks only about a point that changes a screen, a field or a flow. You can say: "The brief looks right" or "Change this in the brief: <change>".
+3. **Canvas design.** The agent makes the screens on a design canvas for the client to click through in Play mode, and you or the FDE approve the canvas. You can say: "Show me the screens" or "Change this screen: <change>".
+4. **Sign-off.** The agent runs the sign-off checks, then the client's named person approves the canvas and answers. A Build now or Later command is planned, not available. Tell the agent what work to start or defer. You can say: "Record the client approval, then plan the first change".
+5. **Build.** The agent plans stories and fixes, builds each one with its tests and a review, and merges it. You can say: "Build this next: <idea>" or "What is ready to merge?".
+6. **Deploy on Mainline.** When you ask, the agent sets up Mainline and deploys dev, and a person presses Promote in Mainline for production. You can say: "Deploy this on Mainline".
+7. **Run and improve.** People use the app, and each new request or problem goes back to step 5. You can say: "Users asked for <request>" or "This is broken: <problem>".
+
+**The cold read loop.** A reader who did not write the plan reads it cold and lists its gaps. The agent fixes the plan, and the reader reads it again. After two rounds that still have open notes, Forge stops and you choose: accept, read again, or split. It exists because a gap found in the plan costs minutes, but the same gap found in the code costs a build round.
+
+**The build and review loop.** A worker builds the part and its tests, then a separate review checks the change. A serious problem goes back to the worker for another round. A task gets two review rounds and a fix gets one. At the limit Forge stops and asks you, but a P0 problem keeps the loop going. It exists because a reviewer sees problems that the worker cannot see in its own work.
+
+**The CI checks.** GitHub runs the repo's checks on the pull request. Close waits while they are queued or running, and a red check goes back to the worker. They exist because the checks run the tests on a clean machine, the same way for every change.
+
+Before sign-off, the prototype uses fixes even when the work is larger than an ordinary fix.
+Each still goes through tests, review and a pull request. The agent confirms specs during this
+work, then adds them to the roadmap after sign-off.
+See [decision 0095](decisions/0095-prototype-before-stories.md) for why this order replaces
+the earlier roadmap-before-sign-off order.
+
 ## Commands
 
 See the [command list](commands.md) for every Forge command.
