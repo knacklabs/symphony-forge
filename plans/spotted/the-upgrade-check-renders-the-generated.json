@@ -1,0 +1,37 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/prcheck.py\tNot done: Keep the correct pnpm version for a nested project after upgrade\tthe-upgrade-check-renders-the-generated",
+      "kind": "bug",
+      "path": "src/forge/prcheck.py",
+      "line": 245,
+      "text": "Not done: Keep the correct pnpm version for a nested project after upgrade",
+      "from": "blocking",
+      "item": "the-upgrade-check-renders-the-generated",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\ttests/test_upgrade_skips_model_review.py\tGate: test_2_pure_upgrade_in_a_repo_with_a_lockfile_skips_review[adopted-nested-pnpm]\tthe-upgrade-check-renders-the-generated",
+      "kind": "bug",
+      "path": "tests/test_upgrade_skips_model_review.py",
+      "line": 83,
+      "text": "Gate: test_2_pure_upgrade_in_a_repo_with_a_lockfile_skips_review[adopted-nested-pnpm]",
+      "from": "blocking",
+      "item": "the-upgrade-check-renders-the-generated",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/prcheck.py\tFollow-up: Match lockfile selection when a repo has multiple nested lockfiles",
+      "kind": "edge",
+      "path": "src/forge/prcheck.py",
+      "line": 245,
+      "text": "Follow-up: Match lockfile selection when a repo has multiple nested lockfiles",
+      "from": "review",
+      "item": "the-upgrade-check-renders-the-generated",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

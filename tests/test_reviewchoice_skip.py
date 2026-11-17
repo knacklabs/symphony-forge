@@ -224,7 +224,8 @@ def _missing_tool_skip(env, monkeypatch):
     env.repo.git("push", "-q", "origin", "main")
     for name in ("codex", "codex.cmd"):
         (env.repo.bin / name).unlink(missing_ok=True)
-    monkeypatch.delenv("CODEX_BIN", raising=False)
+    # A developer's own codex on PATH must not count as installed.
+    monkeypatch.setenv("CODEX_BIN", "codex-is-not-installed")
     item, where = env.start_fix()
     closed = _skip(env, item)
     assert closed.returncode == 0, closed.stdout + closed.stderr
