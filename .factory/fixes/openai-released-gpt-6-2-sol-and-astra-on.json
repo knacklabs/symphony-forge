@@ -10,6 +10,12 @@
   "base": "1cbb39716be75f85678e571714da0f9eae52cf36",
   "branch": "fix/openai-released-gpt-6-2-sol-and-astra-on",
   "done_when": "New repos default Codex build, fix and lite to gpt-6.2-sol, Forge drives Codex through SDK 0.169.0, Forge's own forge.toml uses gpt-6.2-sol, and reviews and cold reads stay on gpt-6.1-terra at max",
+  "drop": {
+    "at": "2026-11-17T19:12:55.370600+00:00",
+    "because": "The owner wants it later",
+    "by": "vrknetha <vrknetha@gmail.com> 1794942775 +0530",
+    "status": "fixing"
+  },
   "fix_kind": "backend",
   "kind": "fix",
   "known": [
@@ -165,7 +171,7 @@
     "status": "blocked"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "dropped",
   "steps": [
     {
       "at": "2026-11-17T18:05:06.260380+00:00",
@@ -174,6 +180,10 @@
     {
       "at": "2026-11-17T19:07:33.288443+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-11-17T19:12:55.370827+00:00",
+      "step": "drop"
     }
   ],
   "stuck": {
