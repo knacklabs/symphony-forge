@@ -37,7 +37,7 @@
       "gain": 3,
       "harm": 3,
       "line": 255,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -50,7 +50,7 @@
       "gain": 3,
       "harm": 3,
       "line": 261,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -63,7 +63,7 @@
       "gain": 4,
       "harm": 2,
       "line": 574,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -76,7 +76,7 @@
       "gain": 3,
       "harm": 3,
       "line": 39,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -86,84 +86,27 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "66e7c76cd6b501f92070678d619d7ee689ac30b1fcacfb2e625b1f6fd79e8599",
-    "changed": "97ea07233d92d61a529a597d30be9828e55aacb36e0b76a276f68a1a766dd9e6",
-    "commit": "36d7ef3dc6586349ebbf5bc91aedf9eaf8a29202",
-    "dismissals": [
-      {
-        "because": "src/forge/upgrade.py:220 Owner's choice: the first upgrade to this release runs the previous release's upgrade code, so it cannot update the tools; every later upgrade does. Accepted as a known issue for the release notes; sync must not update the tools (owner rule).",
-        "finding": 1,
-        "from_base": false
-      }
-    ],
+    "branch_diff": "f30566c679f3604602791ec60784853dc89d01d9f4c70c565630a0568545fb6b",
+    "changed": "e248d7d12c4abb011df245dd93fd437cbe909485e13573c886a34ca7b333c429",
+    "commit": "c03576781cee3c003a4d51fceed1bb2223c18850",
+    "dismissals": [],
     "findings": [
       {
-        "body": "Gain 5, Work 3, Harm 3\nRaise: Not done\nCase: normal use - an existing user upgrades to the first Forge release containing this change.\nThe new call runs inside the Forge process that started the upgrade. That process is still executing the previous release's `upgrade.py` after installing the new release, so it never reaches this call. The previous release starts only the new release's `sync` and `close` commands, which do not update the tools. Both CLIs therefore remain unchanged and no installed-version lines appear on this first upgrade.",
-        "file": "src/forge/upgrade.py",
-        "gain": 5,
-        "harm": 3,
-        "line": 220,
-        "priority": "P1",
-        "required_done_when": true,
-        "title": "Not done: After the upgrade, Claude Code and the Codex CLI are at their latest versions, and the upgrade says which version each one.",
-        "work": 3
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - Codex was installed with OpenAI's standalone installer or Forge's Windows installer.\nThe detector recognizes only paths containing `node_modules`, `Cellar`, or `Caskroom`. OpenAI's [standalone installer](https://github.com/openai/codex/blob/main/scripts/install/install.sh) resolves to its standalone package directory, while a Windows npm install exposes a `codex.cmd` shim beside `node_modules`, as also handled in `src/forge/review.py:1178`. Both are classified as unknown, so Forge skips the update and prints no installed version. The fallback npm command can also install a second copy while the original remains first on PATH. The shipped guide at `src/forge/templates/skill.md:1501` omits the owner-approved standalone installer too.",
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - a user has an older Codex installed with OpenAI's standalone installer.\nOpenAI's [0.125 installer](https://github.com/openai/codex/blob/rust-v0.125.0/scripts/install/install.sh) creates the standalone layout this branch recognizes, but the [0.125 CLI](https://github.com/openai/codex/blob/rust-v0.125.0/codex-rs/cli/src/main.rs) has no `update` subcommand. Forge therefore starts its interactive CLI with `update` as a prompt; because `repo.run` pipes stdin (`src/forge/repo.py:252`), it fails instead of updating. The recovery line repeats `codex update`, so it cannot perform the update either. The test stub at `tests/test_upgrade_updates_agent_tools.py:26` gives its old CLI an update command and misses this case.",
         "file": "src/forge/upgrade.py",
         "gain": 4,
         "harm": 3,
-        "line": 255,
+        "line": 266,
         "priority": "P1",
         "title": "Functional: Recognize the supported standalone and Windows npm installations",
         "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional\nCase: normal use - a developer moves npm's global prefix to a user-writable directory while an older global Codex remains earlier on PATH.\nFinding `node_modules` in the resolved Codex path selects `npm install -g`, but the command uses npm's current global prefix rather than the detected package's prefix. It can successfully update a different copy; the subsequent `codex --version` then reads the still-old executable and Forge reports that old version as installed. [Codex's own update diagnostics](https://github.com/openai/codex/blob/main/codex-rs/cli/src/doctor/updates.rs) explicitly check for this prefix mismatch.",
-        "file": "src/forge/upgrade.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 255,
-        "priority": "P1",
-        "title": "Functional: Update the npm installation that supplies Codex on PATH",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 1, Harm 3\nRaise: Functional\nCase: normal use - a global npm installation is owned by an administrator and the update returns permission denied.\nThe recovery line repeats the same unelevated command that just failed, so copying and running it fails again rather than performing the promised manual update. This affects both the Claude and npm Codex paths. The named failure test at `tests/test_upgrade_updates_agent_tools.py:77` even simulates `permission denied, try sudo` while expecting plain `claude update`.",
-        "file": "src/forge/upgrade.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 261,
-        "priority": "P1",
-        "title": "Functional: Give a usable command when an update needs elevation",
-        "work": 1
-      },
-      {
-        "body": "Gain 4, Work 1, Harm 2\nRaise: Gate\nCase: normal use - the Linux test suite runs the existing doctor host-discovery case.\nAdding `codex` to the shared `repo.bin` makes `tests/test_doctor_fix_files.py:751` remove that entire directory from PATH. Its installed-Codex case then writes a Codex executable back into `repo.bin` at line 762, but the directory is no longer on PATH, so the expected Codex skill warnings cannot appear and the assertion fails. The changed shared fixture also causes this test to be selected by the pull-request test selection.",
-        "file": "tests/conftest.py",
-        "gain": 4,
-        "harm": 2,
-        "line": 574,
-        "priority": "P1",
-        "title": "Gate: Keep the existing doctor test's fake tools on PATH",
-        "work": 1
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - the CLI is installed through a supported standalone installer or an npm symlink, or the user upgrades from the preceding Forge release.\nThe named proof covers only npm and Homebrew, places the fake executable directly inside the detected directory, and starts the upgrade with this checkout's code. It therefore passes without standalone support and would still pass if real-path resolution were removed; real Unix npm launchers are symlinks outside `node_modules`. It also does not exercise the previous release starting the first upgrade into this one. Extend the command-level proof to cover these behaviors.",
-        "file": "tests/test_upgrade_updates_agent_tools.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 39,
-        "priority": "P1",
-        "title": "Gate: test_1_upgrade_updates_both_tools_and_names_their_versions",
-        "work": 2
       }
     ],
-    "id": "c5255e36-4cfc-4342-a5eb-119c21914dd5",
+    "id": "f7152341-aa80-4fb6-87a8-82f57efe4ed6",
     "status": "blocked"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-17T18:34:07.514746+00:00",
@@ -172,16 +115,16 @@
     {
       "at": "2026-11-17T18:52:10.626289+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-11-17T19:15:18.872867+00:00",
+      "step": "review"
     }
   ],
   "stop": {
-    "at": "2026-11-17T18:54:40.430793+00:00",
-    "by": "owner",
-    "choice": "more",
+    "at": "2026-11-17T19:15:18.873142+00:00",
     "file": "src/forge/upgrade.py",
-    "reason": "Owner chose one more round: fix findings 2 to 6; finding 1 (first upgrade) accepted as known",
-    "wait_id": "91ec63a7-8498-4eaf-9ca7-fdee1d915805",
-    "worker_round": 1
+    "wait_id": "767a58cd-bb25-490e-aed5-fd40ef5aed7b"
   },
   "stuck": {
     "close": "e04c0b1e-df63-4bab-80e5-13c82a7e6d6b",
