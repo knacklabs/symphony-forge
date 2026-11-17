@@ -118,6 +118,7 @@ def _assert_python_tree(client: Path):
         react_dependencies.update(react_package.get(group, {}))
         for name, version in versions.items():
             assert re.fullmatch(r"[0-9]+(?:\.[0-9]+)*", version) or version == TS_ALIASES.get(name), (name, version)
+    assert {name: all_dependencies.get(name) for name in TS_ALIASES} == TS_ALIASES
     for name, version in all_dependencies.items():
         if name in react_dependencies:
             assert version == react_dependencies[name], (name, version)

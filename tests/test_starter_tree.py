@@ -541,6 +541,10 @@ def test_1_the_starter_is_a_runnable_stack(request):
         assert locked == version or locked.startswith(version + "("), (name, locked, version)
     for tsconfig in (*STARTER.rglob("tsconfig*.json"), *(ROOT / "src/forge/templates/starter-python").rglob("tsconfig*.json")):
         assert "baseUrl" not in tsconfig.read_text(encoding="utf-8"), tsconfig
+    # `tsc` is TypeScript 7 only while no script or Nx target calls the TypeScript 6 binary `tsc6`.
+    for root in (STARTER, ROOT / "src/forge/templates/starter-python"):
+        for config in (*root.rglob("package.json"), *root.rglob("project.json")):
+            assert "tsc6" not in config.read_text(encoding="utf-8"), config
     assert re.search(r"(?m)^\s+['\"]?playwright-core@" +
                      re.escape(dependencies["@playwright/test"]) + r"(?:\(|:|['\"]?:)",
                      lock_text), "playwright-core is not pinned to @playwright/test's version"
