@@ -110,7 +110,7 @@
     "id": "36ef03be-0a75-4e27-994f-8b4fed1f35c2",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -123,10 +123,12 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "9968f9560d15a2693d1652a6cf8a561150fd6b74",
-    "keys": {},
-    "round": null
+    "close": "d1fbe3a7-d8d2-4dd6-b834-fc3ebb0f01ee",
+    "head": "fae655f0bf94d7a5511595dc677e28b7aae9616c",
+    "keys": {
+      "the open P0 not done: the windows speed test for the hook's generated-file check passes with a median under 0.4 seconds. in tests/test_hook_generated_check_speed.py": 1
+    },
+    "round": 1
   },
   "why": "The commit hook's generated-file check now lists every file in the repo to look for a nested pnpm lockfile, which makes the hook slower and fails the Windows speed test, blocking the v1.2.41 release.",
   "worker": "claude"
