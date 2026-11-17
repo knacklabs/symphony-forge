@@ -80,7 +80,7 @@
     "id": "b9a5e43b-5ba8-4ac5-8107-8d6e3f2b6e6b",
     "status": "blocked"
   },
-  "round": 2,
+  "round": 3,
   "status": "fixing",
   "steps": [
     {
@@ -106,12 +106,10 @@
     "worker_round": 2
   },
   "stuck": {
-    "close": "99d22c63-2dfb-4a19-b8c3-cfbef3ba3f08",
-    "head": "ec4a954b09e0cf700d676d953ad0734808b7c880",
-    "keys": {
-      "the open P0 not done: close misses review-check startup failures on github in src/forge/checks.py": 1
-    },
-    "round": 1
+    "close": "346efdd1-6d9e-4671-b4ef-a54ea5c02e4f",
+    "head": "f1e1d9195df4fc859927d859263c8ac829571cf2",
+    "keys": {},
+    "round": 2
   },
   "why": "When GitHub fails to start the pull request's review check, forge close keeps saying the review check has not reported and gives forge close again as the next step, so the same wait repeats and nothing starts the check.",
   "worker": "claude"
