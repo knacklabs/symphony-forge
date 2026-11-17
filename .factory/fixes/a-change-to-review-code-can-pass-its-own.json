@@ -157,7 +157,7 @@
     "status": "blocked"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-16T08:53:57.093893+00:00",
@@ -170,8 +170,12 @@
   ],
   "stop": {
     "at": "2026-11-16T23:00:17.786586+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": ".forge/always-tests.txt",
-    "wait_id": "86098b59-627d-41aa-975f-9d52081e7080"
+    "reason": "The owner chose one more round",
+    "wait_id": "86098b59-627d-41aa-975f-9d52081e7080",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
