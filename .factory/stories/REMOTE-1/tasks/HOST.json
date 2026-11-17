@@ -20,7 +20,7 @@
       "gain": 4,
       "harm": 5,
       "line": 127,
-      "outcome": "open",
+      "outcome": "fixed in round 5",
       "reason": "",
       "round": 1,
       "security": false,
@@ -121,27 +121,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "5b0c22283c849bd4ebb381fb5a501101f7d78ebabe1f427b49e4d7382740f782",
-    "changed": "b1d0308390658f994b5ae68a15929160a95a1fd049d9cca8a3a19e0099529272",
-    "commit": "4f4bd4b4bc23a9d5078557329f70ba786348f738",
+    "branch_diff": "445a91bc7ce81c7615f12e997af7b875d808367b5fa066e8c9fd2e495fb15483",
+    "changed": "ee115a3075f38778c24e9418b0f43f0f9fde31215b5439223ebf6314d5261b5a",
+    "commit": "7d2f752dec5a0fa29c5bdc5dc87d2bb864e85cf1",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 2, Harm 5\nRaise: Data loss\nCase: normal use - On a Linux host with `hidepid=ptraceable`, a process-access policy can prevent the SSH session from inspecting a still-running worker. Linux then hides its `/proc/<pid>` entry as well as preventing `ps` from reading it. The [kernel documentation](https://docs.kernel.org/filesystems/proc.html) describes this visibility rule. The negated existence test treats the hidden entry as proof that the worker ended, so `--box off --yes` can delete its live worktree. The new test leaves the worker's `/proc` entry visible and therefore does not cover this case.",
-        "file": "src/forge/box_ssh.py",
-        "gain": 4,
-        "harm": 5,
-        "line": 150,
-        "priority": "P1",
-        "title": "Data loss: Do not treat an unverified process identity as finished",
-        "work": 2
-      }
-    ],
-    "id": "01884d1c-e586-4ab6-8b31-d41751334102",
-    "status": "blocked"
+    "findings": [],
+    "id": "11cd8ca8-f859-4d8f-9884-7d4cdd106a0a",
+    "status": "clean"
   },
   "round": 5,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-17T13:39:44.494005+00:00",
@@ -161,6 +150,10 @@
     },
     {
       "at": "2026-11-17T14:50:11.674261+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-17T15:56:26.045853+00:00",
       "step": "review"
     }
   ],
