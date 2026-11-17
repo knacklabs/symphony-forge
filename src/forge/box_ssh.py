@@ -133,16 +133,22 @@ def _holds(top: Path, saved: dict[str, Any]) -> dict[str, Any]:
     out = ssh(saved["host"], f'''F={shlex.quote(posixpath.dirname(saved["clone"]))}; C="$F/clone"
 [ -d "$F" ] || exit 0
 cd "$F" || {{ echo "ERR cannot open $F"; exit 0; }}
+LC_ALL=C; export LC_ALL
 known=""; while read s; do git -C "$C" cat-file -e "$s^{{commit}}" 2>/dev/null && known="$known $s"; done
 git --version >/dev/null 2>&1 || echo "ERR git does not run"
-# Forge's own round files only: runs/<item>/<entry>.pid beside its <entry>.py, never an app's pid file.
-pids=$(find runs -name '*.pid' 2>&1) || echo "ERR find: $pids"
-for p in $pids; do [ -f "${{p%.pid}}.py" ] || continue
-  read id start < "$p"; now=$(LC_ALL=C ps -o lstart= -p "$id" 2>/dev/null); rc=$?
+# Forge's own rounds only: runs/<item>/<entry>.pid beside its <entry>.py and its <entry>/ worktree
+# (a .git file), never an app's pid file inside a worktree. Exit codes only, whatever the locale.
+pids=$(find runs -mindepth 2 -maxdepth 3 -name '*.pid' 2>&1) || echo "ERR find: $pids"
+for p in $(echo "$pids" | sort); do
+  [ -f "${{p%.pid}}.py" ] && [ -f "${{p%.pid}}/.git" ] || continue
+  id=""; start=""
   # A round has ended only when its process is gone, or ps shows another start time; any doubt reads as running.
-  if [ -z "$id" ] || [ -z "$start" ]; then r=1
-  elif [ $rc -eq 0 ] && [ -n "$now" ]; then [ "$(echo $now)" = "$(echo $start)" ] && r=1 || r=0
-  elif kill -0 "$id" 2>&1 | grep -qi "no such process"; then r=0; else r=1; fi
+  if ! read id start < "$p" 2>/dev/null || [ -z "$id" ] || [ -z "$start" ]; then r=1; id=unreadable
+  else
+    now=$(ps -o lstart= -p "$id" 2>/dev/null); rc=$?
+    if [ $rc -eq 0 ] && [ -n "$now" ]; then [ "$(echo $now)" = "$(echo $start)" ] && r=1 || r=0
+    elif kill -0 "$id" 2>/dev/null; then r=1; else r=0; fi
+  fi
   echo "PID $(dirname "${{p#runs/}}") $id $r"; done
 gits=$(find runs -name .git -type f 2>&1) || echo "ERR find: $gits"
 for g in $gits; do d=$(dirname "$g")
@@ -182,6 +188,9 @@ def off(top: Path, saved: dict[str, Any], yes: bool) -> int:
         found = _holds(top, saved)
     except box.ProviderError as error:
         _refuse(f"Could not {'delete' if yes and error.code == 'ssh' else 'read'} {folder} on {host}: {error.message}.", "forge lanes --box off")
+    if found["running"] and found["running"][1] == "unreadable":
+        _refuse(f"A round of {found['running'][0]} may still run on {host}: its process file cannot be read.",
+                f"check the files under {folder}/runs/{found['running'][0]} on {host}, then forge lanes --box off")
     if found["running"]:
         item, pid = found["running"]
         _refuse(f"A round of {item} still runs on {host} (process {pid}); turn off after it ends.",

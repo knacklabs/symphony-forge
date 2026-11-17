@@ -41,7 +41,8 @@ env = {{k: v for k, v in os.environ.items() if not k.startswith(("GIT_AUTHOR_", 
        and k not in ("GIT_CONFIG_GLOBAL", "GIT_CONFIG_NOSYSTEM")}}
 env.update(HOME=home, XDG_CONFIG_HOME=home + "/.config", XDG_DATA_HOME=home + "/.local/share",
            CODEX_HOME=home + "/.codex", PATH=home + "/.local/bin" + os.pathsep + env["PATH"])
-child = subprocess.Popen(["sh", "-c", command], cwd=home, env=env, stdin=subprocess.PIPE,
+shell = os.path.join(hosts, host, "shell")  # a machine whose shell words its errors in another language
+child = subprocess.Popen([shell if os.path.exists(shell) else "sh", "-c", command], cwd=home, env=env, stdin=subprocess.PIPE,
                          stdout=subprocess.PIPE, stderr=subprocess.PIPE, start_new_session=True)
 def feed():
     try:
@@ -114,6 +115,13 @@ class Host:
 
     def down(self, on: bool = True) -> None:
         (self.folder / "down").touch() if on else (self.folder / "down").unlink()
+
+    def translate(self) -> None:
+        """The machine's kill says its 'no such process' error in French."""
+        french = ('kill() { command kill "$@" 2>/dev/null && return 0; code=$?; '
+                  'echo "kill: $2: Aucun processus de ce type" >&2; return $code; }\n')
+        _install(self.folder, "shell", f"#!{sys.executable}\nimport subprocess, sys\n"
+                 f"sys.exit(subprocess.call(['sh', '-c', {french!r} + sys.argv[2]]))\n")
 
     def no_git(self, on: bool = True) -> None:
         if on:

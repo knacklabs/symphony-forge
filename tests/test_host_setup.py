@@ -1,5 +1,6 @@
 """Your own Linux machine for Codex rounds: setup and turn-off, against a stand-in for the machine."""
 import os
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -130,26 +131,37 @@ def test_5_rounds_on_a_machine_are_off_until_turned_on_and_off_deletes_forges_fo
     # a round that still runs, recorded in a .pid file
     runs = folder / "runs/TASK-ONE"
     runs.mkdir(parents=True)
-    (runs / "a1.py").write_text("", encoding="utf-8")  # a round's driver file sits beside its pid file
+    (runs / "r0.py").write_text("", encoding="utf-8")
+    host.git("-C", str(clone), "fetch", "-q", str(repo.path), "HEAD")
+    for name in ("r0", "a2"):  # a round's folder, its driver file and its pid file sit side by side
+        host.git("-C", str(clone), "worktree", "add", "-q", "--detach", str(runs / name), "FETCH_HEAD")
     sleeper = subprocess.Popen(["sleep", "30"], start_new_session=True)
     try:
         start = " ".join(subprocess.run(["ps", "-o", "lstart=", "-p", str(sleeper.pid)],
                                         capture_output=True, text=True,
                                         env={**os.environ, "LC_ALL": "C"}).stdout.split())  # as a round records it
-        (runs / "a1.pid").write_text(f"{sleeper.pid} {start}\n", encoding="utf-8")
+        (runs / "r0.pid").write_text(f"{sleeper.pid} {start}\n", encoding="utf-8")
         for args in (["--box", "off"], ["--box", "off", "--yes"]):
             done = repo.forge("lanes", *args)
             assert done.returncode == 1
             assert f"A round of TASK-ONE still runs on devbox (process {sleeper.pid}); turn off after it ends." in done.stderr
             assert folder.exists()
-        (runs / "a1.pid").write_text(f"{sleeper.pid} Mon Jan  1 00:00:00 2001\n", encoding="utf-8")
+        (runs / "r0.pid").write_text(f"{sleeper.pid} Mon Jan  1 00:00:00 2001\n", encoding="utf-8")
         assert "still runs" not in repo.forge("lanes", "--box", "off").stderr
     finally:
         sleeper.kill()
         sleeper.wait()
-    (runs / "a1.pid").unlink()
+    # a finished round reads as ended by exit codes, even where the shell words its errors in French
+    host.translate()
+    (runs / "r0.pid").write_text(f"{sleeper.pid} {start}\n", encoding="utf-8")
+    assert "still runs" not in repo.forge("lanes", "--box", "off").stderr
+    # an unreadable pid file reads as running, not as the finished round read before it
+    (runs / "a2.py").write_text("", encoding="utf-8")
+    (runs / "a2.pid").mkdir()
+    assert "may still run on devbox" in repo.forge("lanes", "--box", "off", "--yes").stderr
+    shutil.rmtree(runs / "a2.pid"), (runs / "a2.py").unlink()
+    (runs / "r0.pid").unlink()
     # things only on the machine
-    host.git("-C", str(clone), "fetch", "-q", str(repo.path), "HEAD")
     run = runs / "a1"
     host.git("-C", str(clone), "worktree", "add", "-q", "-f", "-b", "task/TASK-ONE", str(run), "FETCH_HEAD")
     host.run(f"cd {run} && printf 'notes.txt\\nnode_modules/\\n' >> $(git rev-parse --git-common-dir)/info/exclude"
@@ -157,7 +169,9 @@ def test_5_rounds_on_a_machine_are_off_until_turned_on_and_off_deletes_forges_fo
              " && echo s > kept.py && git add kept.py && git stash -q"
              " && echo c > c.py && git add c.py && git -c user.name=x -c user.email=x@x commit -q --no-verify -m c")
     (run / "loose.py").write_text("u\n", encoding="utf-8")
-    host.run(f"mkdir -p {run}/tmp/pids && echo 1 > {run}/tmp/pids/server.pid")  # an app's pid file is not a round's
+    # an app's pid file in the worktree, even beside its script, is not a round's
+    host.run(f"mkdir -p {run}/tmp/pids && echo 1 > {run}/tmp/pids/server.pid && echo 1 > {run}/server.pid"
+             f" && echo > {run}/server.py")
     listed = repo.forge("lanes", "--box", "off")
     assert listed.returncode == 0 and folder.exists(), listed.stderr
     assert f"Turning off deletes Forge's folder {folder} on devbox, with everything in it:" in listed.stdout
@@ -172,6 +186,7 @@ def test_5_rounds_on_a_machine_are_off_until_turned_on_and_off_deletes_forges_fo
     done = repo.forge("lanes", "--box", "off", "--yes")
     assert done.returncode == 0, done.stderr
     assert "Turning off deletes" in done.stdout and "loose.py" in done.stdout and "task/TASK-ONE: 1 commits" in done.stdout
+    assert "notes.txt" in done.stdout and "stash" in done.stdout
     assert f"Deleted Forge's folder {folder} on devbox." in done.stdout
     assert not (host.home / "forge-host" / folder.name).exists()
     again = repo.forge("lanes", "--box", "off")
