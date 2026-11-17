@@ -1,0 +1,33 @@
+{
+  "approval": {
+    "at": "2026-11-17T13:47:21.575382+00:00",
+    "by": "human-via-Claude",
+    "event": "toolu_011GeQx1XR1A2aBQ8b8XTiXQ",
+    "hash": "5db8ac1b86494e4f308fa3e137b52910f7907ef36ed817ea92b8f71d96f90ac6",
+    "round": 2,
+    "runtime": "claude",
+    "session": "c01a489d-c76f-41c1-8371-d6f0052b027c"
+  },
+  "doc": "plans/FORGE-FASTCI-1.md",
+  "status": "approved",
+  "steps": [
+    {
+      "at": "2026-11-17T12:41:46.289933+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-17T13:27:21.302399+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-11-17T13:44:37.865262+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-11-17T13:47:21.575862+00:00",
+      "step": "approved"
+    }
+  ],
+  "title": "Faster checks and CI for client repos",
+  "touches": 1
+}
