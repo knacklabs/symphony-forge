@@ -2394,6 +2394,8 @@ being replaced while none are in progress. Each wait ends at 90 minutes,
 even if checks remain in progress. At either wait limit, no decision is needed.
 Run `forge land <item>` again to resume without restarting checks.
 `FORGE_CHECKS_WAIT` keeps its explicit no-progress wait instead of the longer running-check wait.
+If GitHub fails to start the review check, close stops at once and says so. It does not wait again.
+Push a new commit or reopen the pull request on GitHub, then run `forge close <item>`.
 Land says which checks are still running, missing, or
 unreadable. Close and merge also wait up to 90 minutes while a check is running.
 With no running or queued checks, they wait at most ten minutes. When close
