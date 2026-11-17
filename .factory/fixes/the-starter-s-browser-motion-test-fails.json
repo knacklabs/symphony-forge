@@ -87,7 +87,7 @@
     "status": "blocked"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-17T14:48:51.222727+00:00",
@@ -100,8 +100,12 @@
   ],
   "stop": {
     "at": "2026-11-17T16:04:01.858022+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "src/forge/templates/starter/apps/web/e2e/motion.spec.ts",
-    "wait_id": "d447e020-a539-4b21-8241-535730f6fdd0"
+    "reason": "Owner chose one more round: add the missing commit paragraphs",
+    "wait_id": "d447e020-a539-4b21-8241-535730f6fdd0",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
