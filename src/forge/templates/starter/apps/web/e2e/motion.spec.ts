@@ -38,8 +38,9 @@ test('the motion rules hold and reduced motion stops pulses, slides and zooms', 
   expect(await style(page, 'reduced-pulse', 'animation-duration')).toBe('0.001s');
   for (const id of ['reduced-slide', 'reduced-zoom']) {
     expect(await style(page, id, 'animation-duration')).toBe('0.001s');
-    // The normal animation takes 150 ms; a short deadline separates "ended at once" from "ran in full".
-    await expect.poll(() => style(page, id, 'transform'), { timeout: 100, intervals: [25] }).toBe('none');
+    // Wait for the animation to end, then read the transform. A fixed deadline fails on a slow first frame (macOS).
+    await page.evaluate((target) => Promise.all(document.getElementById(target)!.getAnimations().map((a) => a.finished)), id);
+    expect(await style(page, id, 'transform')).toBe('none');
   }
 });
 

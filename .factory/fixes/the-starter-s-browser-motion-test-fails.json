@@ -1,0 +1,91 @@
+{
+  "base": "856e51ad4798de0f0741155f462e0e4d4eb55242",
+  "branch": "fix/the-starter-s-browser-motion-test-fails",
+  "done_when": "The Starter smoke workflow passes on main, and the reduced-motion slide and zoom checks still require the transform to end at none.",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "src/forge/templates/starter/apps/web/e2e/motion.spec.ts",
+      "file": "src/forge/templates/starter/apps/web/e2e/motion.spec.ts",
+      "gain": 4,
+      "harm": 1,
+      "line": 42,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: proof list",
+      "work": 1
+    },
+    {
+      "area": "src/forge/templates/starter/apps/web/e2e/motion.spec.ts",
+      "file": "src/forge/templates/starter/apps/web/e2e/motion.spec.ts",
+      "gain": 4,
+      "harm": 1,
+      "line": 42,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: State what new and upgraded client repos receive",
+      "work": 1
+    },
+    {
+      "area": "src/forge/templates/starter/apps/web/e2e/motion.spec.ts",
+      "file": "src/forge/templates/starter/apps/web/e2e/motion.spec.ts",
+      "gain": 1,
+      "harm": 1,
+      "line": 42,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Simpler: Missing approach \u2192 record the need, simplest option and reuse",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "8d380a3dca7607a8201e5e83a778c86500a71c09c5d308abe0f884ec759b7af9",
+    "changed": "c6826d5062164945386f3d75a951f04766a057e0f4c21c442a2a02df3e51877d",
+    "commit": "73bdcbcb9ff5a90b1287a4b6000e58384c6f8d17",
+    "dismissals": [],
+    "findings": [],
+    "id": "37030598-8ce6-451b-82fc-fc59cdd2a41b",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-17T14:48:51.222727+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-17T16:04:01.843756+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-17T16:13:49.679358+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-17T16:04:01.858022+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "src/forge/templates/starter/apps/web/e2e/motion.spec.ts",
+    "reason": "Owner chose one more round: add the missing commit paragraphs",
+    "wait_id": "d447e020-a539-4b21-8241-535730f6fdd0",
+    "worker_round": 1
+  },
+  "stuck": {
+    "close": "cd6a4488-e92f-406c-9a7f-47437259271a",
+    "head": "11e4ac16eda1e7d44bc88ef8f29e950c42990dc5",
+    "keys": {},
+    "round": 1
+  },
+  "why": "The starter's browser motion test fails on main and on macOS, so the Starter smoke workflow is red. It expects a panel's transform to be none under reduced motion, but reads a translate value instead.",
+  "worker": "claude"
+}
