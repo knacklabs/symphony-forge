@@ -5,14 +5,59 @@
   "done_when": "forge.toml, the package and every pinned reference say v1.2.41, and tests/test_release_version.py passes",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [
+    {
+      "area": ".github/workflows/forge.yml",
+      "file": ".github/workflows/forge.yml",
+      "gain": 3,
+      "harm": 3,
+      "line": 1,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: tests/test_guides_agree.py",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "44e53d8e04faa43f3fefa658da9dfa4beb27f240b12bf3a131ba66c385dcb1e4",
+    "changed": "656ce4fb5e38c2b80556c36f8d7f63c5193941f670cde4d6ac6b6eb891d29d8c",
+    "commit": "7a3c5bf7bac8230b841012546f4bdccac334dd25",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 1, Harm 3\nRaise: Test\nCase: normal use - The release pull request passes its configured CI checks.\nThe proof list names the guide suite, but the PR workflow runs `forge test --change` at `.github/workflows/forge.yml:88`. The selector at `src/forge/fasttest.py:392` does not select this unchanged suite for the release diff, and `.forge/always-tests.txt` does not list it. The separate plugin job runs other tests. The PR can therefore pass without running this named proof. Include the guide suite in the PR check.\nAdds work: run the named guide suite in PR CI; F 1 x H 2 = 2; 2 x C = 2",
+        "file": ".github/workflows/forge.yml",
+        "gain": 3,
+        "harm": 3,
+        "line": 1,
+        "priority": "P1",
+        "title": "Gate: tests/test_guides_agree.py",
+        "work": 1
+      }
+    ],
+    "id": "66eb96e9-1c12-4aaa-bb05-4b1cd6d036fb",
+    "status": "blocked"
+  },
   "round": 2,
-  "status": "working",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-17T04:43:56.763502+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-17T05:02:03.538378+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-11-17T05:02:03.550725+00:00",
+    "file": ".github/workflows/forge.yml",
+    "wait_id": "29a70070-6707-4205-97f3-02fd100a980d"
+  },
   "stuck": {
     "close": null,
     "head": "021f1e58513fb6c4daab0093c711f4bc639c55d0",
