@@ -1,7 +1,14 @@
 {
+  "amendments": [
+    {
+      "at": "2026-11-17T16:09:58.055633+00:00",
+      "because": "Owner's choice after review round 1: a human-merge repo rightly lists an open pull request under Ready to merge",
+      "done_when": "Land lists an item under Merged only when its pull request is merged; otherwise the item stops under Needs you with the reason."
+    }
+  ],
   "base": "856e51ad4798de0f0741155f462e0e4d4eb55242",
   "branch": "fix/land-shows-an-item-under-merged-when-its",
-  "done_when": "Land lists an item under Merged only when its pull request is merged; otherwise the item stops under Needs you with the reason.",
+  "done_when": "In a repo where the agent merges, land lists an item under Merged only when its pull request is merged; otherwise the item stops under Needs you with the real reason (handed to its builder, or its checks failed). In a repo where a person merges, an open pull request stays under Ready to merge.",
   "fix_kind": "backend",
   "kind": "fix",
   "known": [
