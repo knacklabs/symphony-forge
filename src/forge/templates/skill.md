@@ -1498,9 +1498,12 @@ also stay in place; only recognized cache directories may be discarded.
    Its commit includes the upgrade's proof list; close reports tests and review results together.
    It changes only the version in `forge.toml`.
    After the install, it also updates Claude Code (`claude update`) and the Codex CLI, with the
-   installer that installed each (npm or Homebrew, from the binary's real path), and prints
-   `Installed <tool> <version>.` for each. A tool that is not installed is skipped. If an update
-   needs sudo or fails, it prints the one command for the person to run and the upgrade goes on.
+   installer that owns the binary on PATH, found from its real path: npm (updated with
+   `--prefix` for that copy, also the Windows `codex.cmd` shim), Homebrew, or OpenAI's standalone
+   installer (`codex update`). It prints `Installed <tool> <version>.` for each. A tool that is not
+   installed is skipped. If an update fails, it prints the command for the person to run, with
+   `sudo env PATH="$PATH"` in front when the failure was a permission error (an administrator
+   terminal on Windows), and the upgrade goes on.
 4. When it refuses, follow its `Next:` line. Running it again picks up where it stopped.
 5. Close's last line says who merges: the human, or `forge merge <fix>` when the repo allows it.
 
