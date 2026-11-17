@@ -9,7 +9,7 @@ coding agent, Claude Code or Codex, does the work. You make the decisions.
 
 ![A small fix goes from a request to a merged pull request](docs/assets/demo.gif)
 
-*One small fix in a demo repo, from the request to the merge. The recording is sped up.*
+*A small fix from request to merge: Claude builds, Codex reviews. The recording is sped up.*
 
 You do three things:
 
@@ -54,6 +54,20 @@ Python 3.11 if you do not have it. Forge runs on macOS, Linux and Windows.
 No experience with git is needed. If you do not code, give your agent the text in
 [Start with Claude](docs/start.md) and it sets up the computer for you.
 
+## How Forge checks the work
+
+1. **The builder and the reviewer can be different models.** A Claude Code session can build
+   with its own Claude helpers, or hand the build to Codex. A Codex session can do the same the
+   other way round. When both tools are installed, code reviews run on Codex and plan reads run
+   on the other tool by default. New repos use Codex `gpt-6.1-terra` at max effort for both.
+2. **Each change starts small.** The first build or fix round runs at low effort: Claude Sonnet
+   5.5 or Codex `gpt-6.1-sol`. After a failed test, a blocking review finding or a failed
+   required check, the same builder continues at higher effort: high on Codex, xhigh on Claude.
+   The board shows "built at <effort>" for each round.
+3. **Only what matters gets fixed.** The review stops the work only for findings worth their
+   cost. Other notes become follow-ups or known issues. See
+   [how Forge weighs a note](docs/review-rules.md).
+
 ## How a change goes from idea to merge
 
 A *pull request* is a proposed change to the code. *Merging* it makes the change part of the
@@ -79,10 +93,6 @@ Forge picks one of two sizes for each change:
 | **Plan** | A plan, the cold read and your approval | One line of why and a "done when" |
 | **Build** | One branch for each task | One branch |
 | **Before merge** | Code review and passing tests | Code review and passing tests |
-
-The cold read and the code review score each note for how much the fix helps, how much it costs
-and what breaks if the problem stays. Only notes above a fixed bar stop the work. Forge keeps
-the other notes as follow-ups or known issues. See [how Forge weighs a note](docs/review-rules.md).
 
 ## What you can see
 
@@ -122,10 +132,9 @@ The [command list](docs/commands.md) has every command.
 
 ## Settings
 
-`forge.toml` is the one settings file. Your agent keeps it: ask the agent to change a setting.
-It holds the Forge version the repo uses, the test command, who merges (`merge`), which tools
-the repo uses (`tools`: Claude, Codex or both), who builds (`workers`), the model and effort for
-each kind of work, and the CI runner. The [guide](docs/guide.md) explains each one.
+`forge.toml` is the one settings file, and your agent keeps it. It sets the test command, who
+merges, which tools run the work (`tools`, `workers`), and the model and effort for each kind of
+work. The [guide](docs/guide.md) explains each one.
 
 ## Start a client prototype
 
@@ -136,18 +145,15 @@ Follow the [prototype checklist](docs/start-a-prototype.md).
 
 ## Upgrade
 
-Tell your agent "upgrade Forge". It runs `forge upgrade`, which installs the release, refreshes
-Forge's files in the repo and opens a pull request for the upgrade. Each repo pins its Forge
-version, and Forge prints the exact install line when yours does not match.
+Tell your agent "upgrade Forge". It runs `forge upgrade`, which opens a pull request for the
+new release.
 
 ## Where it comes from
 
-In April 2026 OpenAI published
-[an open-source spec for Codex orchestration, Symphony](https://openai.com/index/open-source-codex-orchestration-symphony/)
-([openai/symphony](https://github.com/openai/symphony)). The spec describes handing whole pieces
-of work to agents. Symphony Forge is a working tool built on that idea. It runs with Claude Code
-or Codex, keeps plans and state in the repo, and requires an approved plan, a code review and
-passing tests before a change merges.
+Forge builds on OpenAI's
+[Symphony spec](https://openai.com/index/open-source-codex-orchestration-symphony/)
+(April 2026): hand whole pieces of work to agents. Forge adds an approved plan, a code review
+and passing tests before each change merges.
 
 ## Learn more
 
