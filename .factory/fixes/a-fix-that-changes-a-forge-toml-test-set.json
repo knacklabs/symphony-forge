@@ -63,17 +63,41 @@
       "security": false,
       "title": "Follow-up: Tasks can reach Ready after their changes are removed",
       "work": 2
+    },
+    {
+      "area": "require_fix_changes.record() in src/forge/task.py",
+      "file": "src/forge/task.py",
+      "gain": 5,
+      "harm": 4,
+      "line": 746,
+      "outcome": "open",
+      "reason": "",
+      "round": 4,
+      "security": false,
+      "title": "A carried idea lets forge land skip building the next fix",
+      "work": 2
     }
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "931c329cf7e1a4708a61143c0b1164c5a35e4f58c0d4a29f0abad0ee98b3261f",
-    "changed": "32cdaa14250a88c0c6a422f26c677621b4ec42b089fe34bb85ae061c6c6410a2",
-    "commit": "6751c476c90aff09d1febe9215fd5c5b3f86b6c9",
+    "branch_diff": "960416e772f2397217a55bb7bf470795499c908da5ec55e5cea794251bac446b",
+    "changed": "bf64b7610f059bfc68d009e8b3ff67647b4829e7a43cd7635b6b96aed1d5c18c",
+    "commit": "9c33e48788dab7d3655216ce55141c07474b9efa",
     "dismissals": [],
-    "findings": [],
-    "id": "0281efa7-7b69-488d-a407-a5fb0bdcf7a2",
-    "status": "clean"
+    "findings": [
+      {
+        "body": "Gain 5, Work 2, Harm 4\nRaise: Functional\nCase: normal use - a deferred idea is waiting when someone starts a fix with `forge start` and follows the suggested `forge land` command.\n`forge start` commits the waiting `plans/ideas.md` to the fix (`src/forge/intake.py:153-164`). `unbuilt_fix` treats that commit as completed work (`src/forge/task.py:769-775`), so land skips the worker (`src/forge/land.py:91-103`). This change now also lets the idea file pass `require_fix_changes`; close then classifies it as bookkeeping and skips review (`src/forge/close.py:298-301,354-361`). The fix can be marked Ready, or automatically merged, without its requested work ever being done. Unlike the settled lost-change case, this failure starts no worker and requires no merge that discards work.\nAdds work: exclude carried ideas from completed fix work; F 2 x H 3 = 6; 2 x C = 2.",
+        "file": "src/forge/task.py",
+        "gain": 5,
+        "harm": 4,
+        "line": 746,
+        "priority": "P0",
+        "title": "A carried idea lets forge land skip building the next fix",
+        "work": 2
+      }
+    ],
+    "id": "52e3afcf-4de5-4488-b6a5-ac3b9828b5af",
+    "status": "blocked"
   },
   "round": 4,
   "status": "fixing",
@@ -92,6 +116,10 @@
     },
     {
       "at": "2026-11-16T22:55:40.955957+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-17T00:39:14.851325+00:00",
       "step": "review"
     }
   ],

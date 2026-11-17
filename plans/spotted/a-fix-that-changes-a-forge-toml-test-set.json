@@ -1,6 +1,17 @@
 {
   "items": [
     {
+      "key": "bug\tsrc/forge/task.py\tA carried idea lets forge land skip building the next fix\ta-fix-that-changes-a-forge-toml-test-set",
+      "kind": "bug",
+      "path": "src/forge/task.py",
+      "line": 746,
+      "text": "A carried idea lets forge land skip building the next fix",
+      "from": "blocking",
+      "item": "a-fix-that-changes-a-forge-toml-test-set",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/task.py\tGive a usable next step when main already contains the fix\ta-fix-that-changes-a-forge-toml-test-set",
       "kind": "bug",
       "path": "src/forge/task.py",
