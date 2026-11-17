@@ -65,7 +65,7 @@
     "id": "99ab124f-a8e7-4dc7-a593-2fc34d17b73d",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -87,10 +87,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": null,
-    "head": "118de5f1508208d64aa61d66b97229cab2561751",
+    "close": "e257747f-37b1-46b0-a8fd-a86585f5f025",
+    "head": "e59183ad1b13595be7dff483292f27a0e10c298f",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "forge-pr-check can still call a clean light review out of date for a docs-only change that merged a newer default-branch commit with code changes, when the check's event base is older: prcheck passes the older event base to blocking_level (src/forge/review.py about 172, src/forge/docskip.py about 113), so the unrelated default-branch code counts in the docs-only classification and the light review looks no longer allowed. Part of client issue #1594, left by the owner's accept on 16 Nov 2026.",
   "worker": "claude"
