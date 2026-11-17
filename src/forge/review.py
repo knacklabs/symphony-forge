@@ -160,15 +160,14 @@ def fingerprint(commit: str, item: str, top: Path, state: dict[str, Any], base: 
             parts.append(task(top, item)[0])
     else:
         parts = [str(state.get("why", "")), str(state.get("done_when", ""))]
-    parts.append(commit_paragraph(top, base, "Functional check:", commit))
-    if branch_diff and (approach := before_coding(top, base, commit)):
+    parts.append(commit_paragraph(top, ancestor, "Functional check:", commit))
+    if branch_diff and (approach := before_coding(top, ancestor, commit)):
         parts.append(approach)
-    if branch_diff and (proof := commit_paragraph(top, base, "Proof list:", commit)):
+    if branch_diff and (proof := commit_paragraph(top, ancestor, "Proof list:", commit)):
         parts.append(proof)
     saved_level = reviewed_level or (state.get("review") or {}).get("blocking_level", "P1")
     if saved_level == "P0":
         parts.append("P0-only prototype review")
-        # Only a light review can lose its allowance (judged on the diff base).
         if blocking_level(top, item, state, base, commit, diff_base) != saved_level:
             parts.append("The recorded review level is no longer allowed")
     for part in parts:
@@ -179,12 +178,12 @@ def fingerprint(commit: str, item: str, top: Path, state: dict[str, Any], base: 
 def blocking_level(top: Path, item: str, state: dict[str, Any], base: str,
                    commit: str = "HEAD", docs_base: str | None = None) -> str:
     """Docs/assets and unsigned client prototype fixes get a light review."""
-    if docskip.only_docs(top, docs_base or base, DOC_EXCLUDES, head=commit):
-        return "P0"
     if ("/" in item or state.get("kind") != "fix" or
             state.get("allow_large") != "Prototype before sign-off"):
-        return "P1"
-    return "P0" if repo.is_prototype(top, refs=(base, commit)) else "P1"
+        return "P0" if docskip.only_docs(top, docs_base or base, DOC_EXCLUDES, head=commit) else "P1"
+    from forge import story  # story imports review indirectly
+    # A prototype fix is light only before sign-off, on the base, the head or the default branch.
+    return "P0" if repo.is_prototype(top, refs=(base, commit, story.landed_ref(top))) else "P1"
 
 
 def blocking(result: dict[str, Any]) -> list[tuple[int, dict[str, Any]]]:
