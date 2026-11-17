@@ -11,6 +11,7 @@ STORY = "REVIEW-CHECK-START-1"
 def _start_failure(env, *, old_head: bool = False, tests_red: bool = False) -> str:
     item, _ = env.start_fix()
     rows = [row for row in GREEN if row["name"] not in ("forge-pr-check", "tests")]
+    rows.append(run("Review pull request", "skipped"))  # the test workflow's own skipped job
     env.checks(rows + [run("tests", "failure" if tests_red else "success")])
     # A first close only learns the commit that close checks on GitHub (it may add its own).
     env.close(item)

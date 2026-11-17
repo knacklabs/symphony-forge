@@ -145,7 +145,8 @@ def _wait(top: Path, item: str, sha: str, names: list[str], branch: str, progres
             mergeable = pr.get("mergeable") if pr.get("headRefOid") == sha else None
             if mergeable == "CONFLICTING":
                 repo.refuse(REFUSALS["conflict"], item=item)
-            if not any(name in ("Review pull request", "forge-pr-check") for name, _ in seen):
+            if not any(name == "forge-pr-check" or name == "Review pull request" and state != SKIPPED
+                       for name, state in seen):  # the pull_request workflow skips its own job of that name
                 _no_start(top, item, sha, branch)  # before a red or timed-out test can hide it
             _tests_timeout(top, item, sha, names, check_runs, seen)
             reason = _pending(item, names, seen)
