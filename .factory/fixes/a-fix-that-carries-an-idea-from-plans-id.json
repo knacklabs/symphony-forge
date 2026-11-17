@@ -1,0 +1,15 @@
+{
+  "base": "2cfc90b5fc12b92d06a171c9ffffd668eeacf7c8",
+  "branch": "fix/a-fix-that-carries-an-idea-from-plans-id",
+  "done_when": "A fix whose only change is an edit to plans/ideas.md is not treated as built, so land runs the build step and close refuses it until real code changes exist.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-17T02:18:13.567706+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "A fix that carries an idea from plans/ideas.md can count as already built, so forge land skips the build step and close reviews only records."
+}
