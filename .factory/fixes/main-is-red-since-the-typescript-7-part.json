@@ -4,12 +4,27 @@
   "done_when": "tests/test_render_check.py type-checks with the same TypeScript 7 compiler the app's own type check uses, and passes on main",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "c4d0243d6dd19a9493555d722003149d19c2af902dc10368ff1a281bb76d1d40",
+    "changed": "8917b2a3541b46267e90821435409417486f341b8c049292f1ee87e3c643347d",
+    "commit": "5c799fa7c2775a65c17de682efe06328b611d4e2",
+    "dismissals": [],
+    "findings": [],
+    "id": "f3114b3d-e06e-4980-8402-5b70dd849741",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-17T16:59:47.047686+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-17T17:26:14.847458+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
