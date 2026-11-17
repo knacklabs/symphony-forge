@@ -552,7 +552,9 @@ def _queue(top: Path) -> int:
             elif child.returncode == 0:  # exit 0 is not a merge: GitHub must say so
                 after = next((line[len("Next: "):] for line in reversed(lines) if line.startswith("Next: ")),
                              f"forge land {item}")  # a subagent handoff names its own next step
-                needs[item] = (age, "its pull request is not merged on GitHub.", after)
+                why = next((line.split(": ", 1)[1].rstrip(".") for line in lines if line.startswith("Fix round ")),
+                           "its builder has the round")
+                needs[item] = (age, f"{why}, so its pull request is not merged yet.", after)
                 say(f"{item} stopped: {needs[item][1]}")
             else:
                 needs[item] = _stop(item, age, lines, child.returncode)
