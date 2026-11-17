@@ -105,7 +105,7 @@
     "id": "f7152341-aa80-4fb6-87a8-82f57efe4ed6",
     "status": "blocked"
   },
-  "round": 2,
+  "round": 3,
   "status": "fixing",
   "steps": [
     {
@@ -131,10 +131,10 @@
     "worker_round": 2
   },
   "stuck": {
-    "close": "e04c0b1e-df63-4bab-80e5-13c82a7e6d6b",
-    "head": "35c18675debd4896a5ad59ec7a17f0352b4dd08c",
+    "close": "5a22ca72-d772-49cd-980e-8808b78390ad",
+    "head": "1805ce8f525b3f9809d2f92e8403a8c4582285a5",
     "keys": {},
-    "round": 1
+    "round": 2
   },
   "why": "After a Forge upgrade, Claude Code and the Codex CLI on the machine stay on old versions, because nothing updates them.",
   "worker": "claude"
