@@ -1,0 +1,48 @@
+{
+  "items": [
+    {
+      "key": "bug\ttests/test_render_check.py\tGate: test_1_a_closing_ui_change_lists_rendered_problems_or_says_none\tFORGE-RENDER-1/HELPER",
+      "kind": "bug",
+      "path": "tests/test_render_check.py",
+      "line": 145,
+      "text": "Gate: test_1_a_closing_ui_change_lists_rendered_problems_or_says_none",
+      "from": "blocking",
+      "item": "FORGE-RENDER-1/HELPER",
+      "status": "done",
+      "closed_by": "main-is-red-since-the-typescript-7-part"
+    },
+    {
+      "key": "bug\ttests/test_render_check.py\tGate: test_2_each_rendered_problem_names_its_screen_width_and_theme_and_stops_close\tFORGE-RENDER-1/HELPER",
+      "kind": "bug",
+      "path": "tests/test_render_check.py",
+      "line": 191,
+      "text": "Gate: test_2_each_rendered_problem_names_its_screen_width_and_theme_and_stops_close",
+      "from": "blocking",
+      "item": "FORGE-RENDER-1/HELPER",
+      "status": "done",
+      "closed_by": "main-is-red-since-the-typescript-7-part"
+    },
+    {
+      "key": "bug\ttests/test_render_check.py\tGate: test_3_phone_width_is_checked_only_when_the_screen_asks_for_it\tFORGE-RENDER-1/HELPER",
+      "kind": "bug",
+      "path": "tests/test_render_check.py",
+      "line": 224,
+      "text": "Gate: test_3_phone_width_is_checked_only_when_the_screen_asks_for_it",
+      "from": "blocking",
+      "item": "FORGE-RENDER-1/HELPER",
+      "status": "done",
+      "closed_by": "main-is-red-since-the-typescript-7-part"
+    },
+    {
+      "key": "edge\ttests/test_render_check.py\tFollow-up: Cover cut text without the contrast package",
+      "kind": "edge",
+      "path": "tests/test_render_check.py",
+      "line": 212,
+      "text": "Follow-up: Cover cut text without the contrast package",
+      "from": "review",
+      "item": "FORGE-RENDER-1/HELPER",
+      "status": "done",
+      "closed_by": "main-is-red-since-the-typescript-7-part"
+    }
+  ]
+}
