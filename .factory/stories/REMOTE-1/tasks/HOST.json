@@ -197,7 +197,7 @@
     "id": "5bddf5bb-66be-47b6-aa55-a80e38056049",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -210,10 +210,15 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "9c9fba76d66d3fa4d01250c29d031aa73ec4d5f9",
-    "keys": {},
-    "round": null
+    "close": "ebbf9e0f-ad90-4ed6-b717-37ad91d711dc",
+    "head": "744d9308ea4264438f8ef64a82e5515e43a169b2",
+    "keys": {
+      "the open P0 data loss: do not treat an unverified process identity as finished in src/forge/box_ssh.py": 1,
+      "the open P0 data loss: refuse turn-off when the remote work cannot be inspected in src/forge/box_ssh.py": 1,
+      "the open P0 security: install the pre-commit check in the hook path git uses in src/forge/box_ssh.py": 1,
+      "the open P0 security: quote the checkout name in the remote shell command in src/forge/box_ssh.py": 1
+    },
+    "round": 1
   },
   "worker": "claude"
 }
