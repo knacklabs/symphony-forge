@@ -8,8 +8,8 @@
       "text": "A carried idea lets forge land skip building the next fix",
       "from": "blocking",
       "item": "a-fix-that-changes-a-forge-toml-test-set",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/task.py\tGive a usable next step when main already contains the fix\ta-fix-that-changes-a-forge-toml-test-set",
