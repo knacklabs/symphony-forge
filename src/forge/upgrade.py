@@ -248,29 +248,55 @@ def upgrade(args: argparse.Namespace) -> int:
     return repo.run_release(release, ["close", name], path)
 
 
+def _codex_command() -> list[str] | None:
+    """The update for the Codex on PATH, from where its real path says it was installed."""
+    found = shutil.which("codex")
+    if found is None:
+        return None
+    real = Path(os.path.realpath(found))
+    parts = real.parts
+    if "node_modules" in parts:  # npm's launcher: <prefix>[/lib]/node_modules/@openai/codex/...
+        prefix = Path(*parts[:parts.index("node_modules")])
+        prefix = prefix.parent if prefix.name == "lib" else prefix
+    elif (real.parent / "node_modules/@openai/codex").is_dir():  # Windows: codex.cmd beside it
+        prefix = real.parent
+    elif {"Cellar", "Caskroom"} & set(parts):
+        return ["brew", "upgrade", "codex"]
+    elif "standalone" in parts:  # OpenAI's own installer; Codex updates itself
+        return ["codex", "update"]
+    else:
+        return None
+    # --prefix updates the npm copy that is first on PATH, not npm's current global folder.
+    return ["npm", "install", "-g", "--prefix", str(prefix), "@openai/codex@latest"]
+
+
 def _update_tools() -> None:
     """Update Claude Code and the Codex CLI with the installer that installed each, one line
     each. A failure prints the line for the person to run; it never fails the upgrade."""
-    parts = Path(os.path.realpath(shutil.which("codex") or "")).parts
-    codex = (["npm", "install", "-g", "@openai/codex@latest"] if "node_modules" in parts
-             else ["brew", "upgrade", "codex"] if {"Cellar", "Caskroom"} & set(parts) else None)
+    codex = _codex_command()
     for name, exe, command in (("Claude Code", "claude", ["claude", "update"]),
                                ("Codex CLI", "codex", codex)):
         if shutil.which(exe) is None:
             continue
-        shown = " ".join(command or ["npm", "install", "-g", "@openai/codex@latest"])
         reason = "Forge could not tell which installer put it there"
+        where, lead = "run", ""
         if command:
             try:
                 done = repo.run(*command, timeout=300)
-                reason = ((done.stderr or done.stdout).strip().splitlines() or ["no reason given"])[-1]
+                output = (done.stderr or done.stdout).strip()
+                reason = (output.splitlines() or ["no reason given"])[-1]
                 version = re.search(r"\d+\.\d+\.\d+", repo.run(exe, "--version").stdout)
             except (repo.Refused, OSError, subprocess.TimeoutExpired) as error:
                 done, version, reason = None, None, str(error).splitlines()[0] or "it did not finish"
             if done and done.returncode == 0 and version:
                 print(f"Installed {name} {version[0]}.", flush=True)
                 continue
-        print(f"{name} was not updated ({reason}). To update it, run: {shown}", flush=True)
+            if done and re.search(r"EACCES|permission denied|sudo|administrator|elevat", output, re.I):
+                # Keep this PATH: sudo's own would not find claude or npm.
+                where, lead = (("run this in an administrator terminal", "") if os.name == "nt"
+                               else ("run", 'sudo env PATH="$PATH" '))
+        text = lead + " ".join(map(repo.quote, command or ["codex", "update"]))
+        print(f"{name} was not updated ({reason}). To update it, {where}: {text}", flush=True)
 
 
 def release_notice(top: Path) -> list[str]:

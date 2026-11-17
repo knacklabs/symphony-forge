@@ -570,9 +570,12 @@ elif args == ["plugin", "marketplace", "list", "--json"]:
 elif args == ["plugin", "list", "--json"]:
     print('[{{"id":"forge@forge","scope":"user","enabled":true,"version":"1.2.6"}}]')
 ''')
-    # forge upgrade updates the Codex CLI; its stub sits outside any installer's folder.
-    _install(bin_dir, "codex", f'#!{sys.executable}\nprint("codex-cli 0.1.0")\n')
-    monkeypatch.setenv("PATH", f"{bin_dir}{os.pathsep}{os.environ['PATH']}")
+    # forge upgrade updates the Codex CLI. Its stub sits in its own folder, outside any
+    # installer's folder, so a test that drops "folders with a codex" from PATH keeps bin_dir.
+    codex_dir = tmp_path / "codex-bin"
+    codex_dir.mkdir()
+    _install(codex_dir, "codex", f'#!{sys.executable}\nprint("codex-cli 0.1.0")\n')
+    monkeypatch.setenv("PATH", os.pathsep.join([str(bin_dir), str(codex_dir), os.environ["PATH"]]))
     data = tmp_path / "data"
     monkeypatch.setenv("XDG_DATA_HOME", str(data))
     # Preserve the venv's interpreter links, but copy all writable SDK files.
