@@ -1497,6 +1497,10 @@ also stay in place; only recognized cache directories may be discarded.
    release, has that release refresh Forge's files in the fix, commits them and closes the fix.
    Its commit includes the upgrade's proof list; close reports tests and review results together.
    It changes only the version in `forge.toml`.
+   After the install, it also updates Claude Code (`claude update`) and the Codex CLI, with the
+   installer that installed each (npm or Homebrew, from the binary's real path), and prints
+   `Installed <tool> <version>.` for each. A tool that is not installed is skipped. If an update
+   needs sudo or fails, it prints the one command for the person to run and the upgrade goes on.
 4. When it refuses, follow its `Next:` line. Running it again picks up where it stopped.
 5. Close's last line says who merges: the human, or `forge merge <fix>` when the repo allows it.
 

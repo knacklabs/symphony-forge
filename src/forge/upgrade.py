@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -216,6 +217,7 @@ def upgrade(args: argparse.Namespace) -> int:
                     found=(f"Forge {found} at {where}" if found else f"a forge of unknown version at {where}")
                     if where else "no forge")
     print(f"The forge on your PATH is Forge {release}.", flush=True)
+    _update_tools()
 
     # 5. The release's own sync refreshes Forge's files in the fix's folder.
     print(f"Running Forge {release}'s forge sync in the fix's folder.", flush=True)
@@ -244,6 +246,31 @@ def upgrade(args: argparse.Namespace) -> int:
     # 7 and 8. The release's own close; its last line says who merges, and its exit code is ours.
     print(f"Running Forge {release}'s forge close {name}.", flush=True)
     return repo.run_release(release, ["close", name], path)
+
+
+def _update_tools() -> None:
+    """Update Claude Code and the Codex CLI with the installer that installed each, one line
+    each. A failure prints the line for the person to run; it never fails the upgrade."""
+    parts = Path(os.path.realpath(shutil.which("codex") or "")).parts
+    codex = (["npm", "install", "-g", "@openai/codex@latest"] if "node_modules" in parts
+             else ["brew", "upgrade", "codex"] if {"Cellar", "Caskroom"} & set(parts) else None)
+    for name, exe, command in (("Claude Code", "claude", ["claude", "update"]),
+                               ("Codex CLI", "codex", codex)):
+        if shutil.which(exe) is None:
+            continue
+        shown = " ".join(command or ["npm", "install", "-g", "@openai/codex@latest"])
+        reason = "Forge could not tell which installer put it there"
+        if command:
+            try:
+                done = repo.run(*command, timeout=300)
+                reason = ((done.stderr or done.stdout).strip().splitlines() or ["no reason given"])[-1]
+                version = re.search(r"\d+\.\d+\.\d+", repo.run(exe, "--version").stdout)
+            except (repo.Refused, OSError, subprocess.TimeoutExpired) as error:
+                done, version, reason = None, None, str(error).splitlines()[0] or "it did not finish"
+            if done and done.returncode == 0 and version:
+                print(f"Installed {name} {version[0]}.", flush=True)
+                continue
+        print(f"{name} was not updated ({reason}). To update it, run: {shown}", flush=True)
 
 
 def release_notice(top: Path) -> list[str]:

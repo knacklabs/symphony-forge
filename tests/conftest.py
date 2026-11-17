@@ -570,6 +570,8 @@ elif args == ["plugin", "marketplace", "list", "--json"]:
 elif args == ["plugin", "list", "--json"]:
     print('[{{"id":"forge@forge","scope":"user","enabled":true,"version":"1.2.6"}}]')
 ''')
+    # forge upgrade updates the Codex CLI; its stub sits outside any installer's folder.
+    _install(bin_dir, "codex", f'#!{sys.executable}\nprint("codex-cli 0.1.0")\n')
     monkeypatch.setenv("PATH", f"{bin_dir}{os.pathsep}{os.environ['PATH']}")
     data = tmp_path / "data"
     monkeypatch.setenv("XDG_DATA_HOME", str(data))
