@@ -4,12 +4,20 @@
   "done_when": "New repos default Codex build, fix and lite to gpt-6.2-sol, Forge drives Codex through SDK 0.169.0, and reviews and cold reads stay on gpt-6.1-terra at max",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-17T18:05:06.260380+00:00",
       "step": "start"
     }
   ],
-  "why": "OpenAI released GPT-6.2 Sol and Astra on 17 Nov 2026, and Codex 0.169.0 lists gpt-6.2-sol. Forge's Codex build, fix and lite defaults still name gpt-6.1-sol, and Forge pins the Codex SDK at 0.159.2. Owner decisions: move the Codex default from gpt-6.1-sol to gpt-6.2-sol, move the Codex SDK pin to 0.169.0, keep reviews and cold reads on gpt-6.1-terra at max, and keep gpt-6-luna for Codex helpers. Existing client repos keep their model settings; they are told of the new default (no automatic model migration). Forge's own forge.toml moves to gpt-6.2-sol."
+  "stuck": {
+    "close": null,
+    "head": "70cd1d52912a04729d86da4c1b444a3117e8fd14",
+    "keys": {},
+    "round": null
+  },
+  "why": "OpenAI released GPT-6.2 Sol and Astra on 17 Nov 2026, and Codex 0.169.0 lists gpt-6.2-sol. Forge's Codex build, fix and lite defaults still name gpt-6.1-sol, and Forge pins the Codex SDK at 0.159.2. Owner decisions: move the Codex default from gpt-6.1-sol to gpt-6.2-sol, move the Codex SDK pin to 0.169.0, keep reviews and cold reads on gpt-6.1-terra at max, and keep gpt-6-luna for Codex helpers. Existing client repos keep their model settings; they are told of the new default (no automatic model migration). Forge's own forge.toml moves to gpt-6.2-sol.",
+  "worker": "claude"
 }
