@@ -1,15 +1,179 @@
 {
+  "allow_large": "Owner allowed 7 code files on 18 Nov 2026: the extra files are generated Codex agent settings and the SDK pin",
+  "amendments": [
+    {
+      "at": "2026-11-17T18:53:37.043306+00:00",
+      "because": "The change also moves this repo's own forge.toml to gpt-6.2-sol, as the owner decided",
+      "done_when": "New repos default Codex build, fix and lite to gpt-6.2-sol, Forge drives Codex through SDK 0.169.0, and reviews and cold reads stay on gpt-6.1-terra at max"
+    }
+  ],
   "base": "1cbb39716be75f85678e571714da0f9eae52cf36",
   "branch": "fix/openai-released-gpt-6-2-sol-and-astra-on",
-  "done_when": "New repos default Codex build, fix and lite to gpt-6.2-sol, Forge drives Codex through SDK 0.169.0, and reviews and cold reads stay on gpt-6.1-terra at max",
+  "done_when": "New repos default Codex build, fix and lite to gpt-6.2-sol, Forge drives Codex through SDK 0.169.0, Forge's own forge.toml uses gpt-6.2-sol, and reviews and cold reads stay on gpt-6.1-terra at max",
   "fix_kind": "backend",
   "kind": "fix",
+  "known": [
+    {
+      "area": "src/forge/codex.py",
+      "file": "src/forge/codex.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 34,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Codex 0.169.0 rejects Forge's own unapproved hooks",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/skill.md",
+      "file": "src/forge/templates/skill.md",
+      "gain": 4,
+      "harm": 2,
+      "line": 1870,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Tell upgrading users about the new Codex default",
+      "work": 2
+    },
+    {
+      "area": "tests/test_codex_smoke.py",
+      "file": "tests/test_codex_smoke.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 25,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: Codex SDK smoke test",
+      "work": 1
+    },
+    {
+      "area": "tests/stubs/codex-app-server",
+      "file": "tests/stubs/codex-app-server",
+      "gain": 3,
+      "harm": 3,
+      "line": 26,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: Codex 0.169.0 hook-trust regression test",
+      "work": 1
+    },
+    {
+      "area": "tests/test_fix_gpt_6_2_sol_default.py",
+      "file": "tests/test_fix_gpt_6_2_sol_default.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 13,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: proof list",
+      "work": 1
+    },
+    {
+      "area": "src/forge/codex.py",
+      "file": "src/forge/codex.py",
+      "gain": 1,
+      "harm": 1,
+      "line": 34,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Simpler: Record the missing approach \u2192 explain the minimal choice and reuse",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "33486251641723a85807702ce8e5156bab40c886a5a94bf6742d9e3983435e8f",
+    "changed": "638b9f98059b55045de4b10be9abd54baade307a564dcb9caae20216e1b8c6ce",
+    "commit": "74ede2c65e37a73e14b15d4c9ad4df4f13e0600c",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 5, Work 2, Harm 3\nRaise: Not done\nCase: normal use - A Codex-trusted project starts a worker or cold read while Forge's project hooks await approval or have changed. Codex 0.169.0 serializes the new `environmentId` field, including when it is null, in [hook metadata](https://github.com/openai/codex/blob/rust-v0.169.0/codex-rs/app-server-protocol/src/protocol/v2/plugin.rs#L540-L563). `src/forge/codex_turn.py:35` does not exclude that field, so the comparison at line 197 rejects Forge's own hooks and stops before starting the conversation. This leaves the stated criterion unmet: New repos default Codex build, fix and lite to gpt-6.2-sol, Forge drives Codex through SDK 0.169.0, Forge's own forge.toml uses gpt-6.2-sol, and reviews and cold reads stay on gpt-6.1-terra at max.",
+        "file": "src/forge/codex.py",
+        "gain": 5,
+        "harm": 3,
+        "line": 34,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: Codex 0.169.0 rejects Forge's own unapproved hooks",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 2\nRaise: Functional\nCase: normal use - An existing client with explicit gpt-6.1-sol settings upgrades Forge or runs doctor. Its settings remain unchanged, but neither `src/forge/upgrade.py:194` nor `src/forge/doctor.py:497` announces the new default, despite the owner decision and coordinator note requiring that notice. The changed skill states the fallback in reference text but does not tell the user during either command.\nAdds work: announce the new default during upgrade or doctor; F 1 x H 2 = 2; 2 x C = 2",
+        "file": "src/forge/templates/skill.md",
+        "gain": 4,
+        "harm": 2,
+        "line": 1870,
+        "priority": "P1",
+        "title": "Tell upgrading users about the new Codex default",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 1, Harm 3\nRaise: Test\nCase: normal use - The pull-request smoke workflow runs with its configured API key. `.github/workflows/codex-smoke.yml:37` installs the newly pinned SDK, but line 43 still invokes Python from the `openai-codex-0.159.2` directory. A fresh runner has only the 0.169.0 directory, so login fails and the real SDK smoke test never runs.",
+        "file": "tests/test_codex_smoke.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 25,
+        "priority": "P1",
+        "title": "Gate: Codex SDK smoke test",
+        "work": 1
+      },
+      {
+        "body": "Gain 3, Work 1, Harm 3\nRaise: Test\nCase: normal use - CI exercises Forge's automatic trust of its own hooks. The stub now reports version 0.169.0, but its hook response at `tests/stubs/codex-app-server:106` omits that version's `environmentId` field. Consequently, `tests/test_codex_turns_trust_forge_hooks.py:95` and its reader case pass while the real SDK rejects those hooks. Update the edge fixture and command-level proof to cover the actual response.",
+        "file": "tests/stubs/codex-app-server",
+        "gain": 3,
+        "harm": 3,
+        "line": 26,
+        "priority": "P1",
+        "title": "Gate: Codex 0.169.0 hook-trust regression test",
+        "work": 1
+      },
+      {
+        "body": "Gain 4, Work 1, Harm 2\nRaise: Test\nCase: normal use - Close reviews this fix without a proof list. The supplied list is marked missing, and the branch commits contain no mapping from the Done-when details to their tests. Provide the mapping for new-repository build, fix and lite defaults, the SDK pin, Forge's own settings, and Terra-max reviews and cold reads, including where each proof runs.",
+        "file": "tests/test_fix_gpt_6_2_sol_default.py",
+        "gain": 4,
+        "harm": 2,
+        "line": 13,
+        "priority": "P1",
+        "title": "Gate: proof list",
+        "work": 1
+      },
+      {
+        "body": "Gain 1, Work 1, Harm 1\nThe branch has no before-code `Need`, `Simplest option`, or `Existing code reused` lines; the coordinator-note commit does not supply them. Record those decisions so the SDK and model changes can be compared with the intended approach.\nAdds work: record the three approach decisions; F 1 x H 1 = 1; 2 x C = 2",
+        "file": "src/forge/codex.py",
+        "gain": 1,
+        "harm": 1,
+        "line": 34,
+        "priority": "P2",
+        "title": "Simpler: Record the missing approach \u2192 explain the minimal choice and reuse",
+        "work": 1
+      }
+    ],
+    "id": "b7eb8bab-cd92-4629-a663-11c495c48670",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-17T18:05:06.260380+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-17T19:07:33.288443+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
