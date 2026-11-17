@@ -24,7 +24,7 @@
       "gain": 4,
       "harm": 3,
       "line": 255,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 1,
       "security": false,
@@ -86,27 +86,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "f30566c679f3604602791ec60784853dc89d01d9f4c70c565630a0568545fb6b",
-    "changed": "e248d7d12c4abb011df245dd93fd437cbe909485e13573c886a34ca7b333c429",
-    "commit": "c03576781cee3c003a4d51fceed1bb2223c18850",
+    "branch_diff": "44bfff02f9a7541be0a67688c3573a4f3803c75fd8852354723ebff4cfcf5168",
+    "changed": "d532654939cbc381ea6809205614cc7f066fc5dc2c36583b59502bf99e83403d",
+    "commit": "b2bdafc055726b9655cc154922feeea986392d88",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - a user has an older Codex installed with OpenAI's standalone installer.\nOpenAI's [0.125 installer](https://github.com/openai/codex/blob/rust-v0.125.0/scripts/install/install.sh) creates the standalone layout this branch recognizes, but the [0.125 CLI](https://github.com/openai/codex/blob/rust-v0.125.0/codex-rs/cli/src/main.rs) has no `update` subcommand. Forge therefore starts its interactive CLI with `update` as a prompt; because `repo.run` pipes stdin (`src/forge/repo.py:252`), it fails instead of updating. The recovery line repeats `codex update`, so it cannot perform the update either. The test stub at `tests/test_upgrade_updates_agent_tools.py:26` gives its old CLI an update command and misses this case.",
-        "file": "src/forge/upgrade.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 266,
-        "priority": "P1",
-        "title": "Functional: Recognize the supported standalone and Windows npm installations",
-        "work": 2
-      }
-    ],
-    "id": "f7152341-aa80-4fb6-87a8-82f57efe4ed6",
-    "status": "blocked"
+    "findings": [],
+    "id": "d065e384-1fae-4ec6-ad21-b7ff26d630ab",
+    "status": "clean"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-17T18:34:07.514746+00:00",
@@ -118,6 +107,10 @@
     },
     {
       "at": "2026-11-17T19:15:18.872867+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-17T19:28:00.646076+00:00",
       "step": "review"
     }
   ],
