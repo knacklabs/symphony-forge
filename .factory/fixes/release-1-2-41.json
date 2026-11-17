@@ -5,7 +5,7 @@
   "done_when": "forge.toml, the package and every pinned reference say v1.2.41, and tests/test_release_version.py passes",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "round": 1,
+  "round": 2,
   "status": "working",
   "steps": [
     {
