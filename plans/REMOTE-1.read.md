@@ -132,4 +132,4 @@ Only a genuine trade-off goes to the human, as a question with options.
     Case: normal use - A developer enables the feature after upgrading the main branch while an existing task still pins the previous Forge release. That release’s [local settings reader](/src/forge/repo.py:711) rejects `host`, so commands on the older task, such as `forge test`, refuse before they can run. [The plan](/plans/REMOTE-1.md:63) does not cover this pinned-release case.  
     Adds work: preserve commands on older pinned branches after adding the local setting; F 2 x H 2 = 4; 2 x C = 4.  
     Gain 4, Work 3, Harm 3
-   Disposition: keep - below the bar (follow-up)
+   Disposition: cut - by the owner's answer of 17 Nov 2026 the name goes with `forge lanes --box setup --host <name>` and lives in Forge's record; forge.local.toml gets no new key, so earlier pinned releases are unaffected.
