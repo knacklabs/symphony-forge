@@ -86,7 +86,7 @@
     "id": "ac7629d1-f359-4158-9c0a-271371253128",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -108,10 +108,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": null,
-    "head": "095fd43898bd6c6f9e3f8556a3ddb944d4cd47f8",
+    "close": "cd6a4488-e92f-406c-9a7f-47437259271a",
+    "head": "11e4ac16eda1e7d44bc88ef8f29e950c42990dc5",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "The starter's browser motion test fails on main and on macOS, so the Starter smoke workflow is red. It expects a panel's transform to be none under reduced motion, but reads a translate value instead.",
   "worker": "claude"
