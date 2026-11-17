@@ -142,12 +142,12 @@ pids=$(find runs -mindepth 2 -maxdepth 3 -name '*.pid' 2>&1) || echo "ERR find: 
 for p in $(echo "$pids" | sort); do
   [ -f "${{p%.pid}}.py" ] && [ -f "${{p%.pid}}/.git" ] || continue
   id=""; start=""
-  # A round has ended only when its process is gone, or ps shows another start time; any doubt reads as running.
+  # A round has ended only when its process is gone (no /proc entry on a machine with /proc) or ps shows another start time; any doubt reads as running.
   if ! read id start < "$p" 2>/dev/null || [ -z "$id" ] || [ -z "$start" ]; then r=1; id=unreadable
   else
     now=$(ps -o lstart= -p "$id" 2>/dev/null); rc=$?
     if [ $rc -eq 0 ] && [ -n "$now" ]; then [ "$(echo $now)" = "$(echo $start)" ] && r=1 || r=0
-    elif kill -0 "$id" 2>/dev/null; then r=1; else r=0; fi
+    elif [ -d /proc ] && [ ! -e "/proc/$id" ]; then r=0; else r=1; fi
   fi
   echo "PID $(dirname "${{p#runs/}}") $id $r"; done
 gits=$(find runs -name .git -type f 2>&1) || echo "ERR find: $gits"

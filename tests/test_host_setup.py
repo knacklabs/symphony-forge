@@ -148,19 +148,26 @@ def test_5_rounds_on_a_machine_are_off_until_turned_on_and_off_deletes_forges_fo
             assert folder.exists()
         (runs / "r0.pid").write_text(f"{sleeper.pid} Mon Jan  1 00:00:00 2001\n", encoding="utf-8")
         assert "still runs" not in repo.forge("lanes", "--box", "off").stderr
+        # ps and kill both fail while the round runs: that is doubt, so it reads as running
+        (runs / "r0.pid").write_text(f"{sleeper.pid} {start}\n", encoding="utf-8")
+        host.program("ps", "exit 1")
+        host.deny_kill()
+        assert f"(process {sleeper.pid})" in repo.forge("lanes", "--box", "off", "--yes").stderr
     finally:
         sleeper.kill()
         sleeper.wait()
-    # a finished round reads as ended by exit codes, even where the shell words its errors in French
-    host.translate()
-    (runs / "r0.pid").write_text(f"{sleeper.pid} {start}\n", encoding="utf-8")
-    assert "still runs" not in repo.forge("lanes", "--box", "off").stderr
+    # a finished round reads as ended only with proof: /proc has no entry for it (Linux machines)
+    if Path("/proc").is_dir():
+        (runs / "r0.pid").write_text(f"{sleeper.pid} {start}\n", encoding="utf-8")
+        assert "still runs" not in repo.forge("lanes", "--box", "off").stderr
     # an unreadable pid file reads as running, not as the finished round read before it
-    (runs / "a2.py").write_text("", encoding="utf-8")
-    (runs / "a2.pid").mkdir()
-    assert "may still run on devbox" in repo.forge("lanes", "--box", "off", "--yes").stderr
-    shutil.rmtree(runs / "a2.pid"), (runs / "a2.py").unlink()
+    if Path("/proc").is_dir():
+        (runs / "a2.py").write_text("", encoding="utf-8")
+        (runs / "a2.pid").mkdir()
+        assert "may still run on devbox" in repo.forge("lanes", "--box", "off", "--yes").stderr
+        shutil.rmtree(runs / "a2.pid"), (runs / "a2.py").unlink()
     (runs / "r0.pid").unlink()
+    (host.home / ".local/bin/ps").unlink()
     # things only on the machine
     run = runs / "a1"
     host.git("-C", str(clone), "worktree", "add", "-q", "-f", "-b", "task/TASK-ONE", str(run), "FETCH_HEAD")

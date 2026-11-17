@@ -116,10 +116,9 @@ class Host:
     def down(self, on: bool = True) -> None:
         (self.folder / "down").touch() if on else (self.folder / "down").unlink()
 
-    def translate(self) -> None:
-        """The machine's kill says its 'no such process' error in French."""
-        french = ('kill() { command kill "$@" 2>/dev/null && return 0; code=$?; '
-                  'echo "kill: $2: Aucun processus de ce type" >&2; return $code; }\n')
+    def deny_kill(self) -> None:
+        """The machine's kill fails for a process that runs, as when access to it is denied."""
+        french = 'kill() { echo "kill: $2: Operation not permitted" >&2; return 1; }\n'
         _install(self.folder, "shell", f"#!{sys.executable}\nimport subprocess, sys\n"
                  f"sys.exit(subprocess.call(['sh', '-c', {french!r} + sys.argv[2]]))\n")
 
