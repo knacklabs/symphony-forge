@@ -490,6 +490,24 @@ The page's events stream keeps it live. Ctrl-C stops it at once.
 It adds `team` for the team's summary.
 The run reference explains the board fields and page behaviour.
 
+### Build rounds on a machine you own
+
+A Codex build round can run on a Linux machine your team owns, reached with `ssh`. It is off in every
+repo. Offer it when Codex rounds wait for the laptop and a developer has such a machine. Turn it on
+only after the owner agrees, in a settings fix that sets `boxes = "ssh"` in `forge.toml`.
+
+Each developer runs `forge lanes --box setup --host <the name they give ssh>` once; later setups
+need no `--host`. Setup checks ssh, git, Forge at the repo's version and the Codex sign-in, installs the
+Codex kit, and makes Forge's folder on the machine. Relay each refusal's next step to the developer
+(sign-in, install, the two trust lines for Codex's settings) and run setup again after each step. Never ask
+for or handle a sign-in. A repo whose tests need ignored settings files or services the machine lacks keeps
+it off.
+
+To turn it off, a settings fix sets `boxes = "off"`, and each developer runs `forge lanes --box off`. It
+lists what Forge's folder on the machine still holds: changes not committed, ignored files, stashes and
+commits not yet back. Show that list to the developer and offer `forge work <item>` for commits not yet
+back. Run `forge lanes --box off --yes` only after the developer agrees; it deletes the folder.
+
 ## The Forge pane
 
 `/forge` opens a small live pane in Claude Code, in the terminal and in the desktop app. It shows
