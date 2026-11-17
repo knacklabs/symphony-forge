@@ -170,7 +170,7 @@
     "id": "b34d7ab8-a0c8-4f99-b896-0357c50615ab",
     "status": "blocked"
   },
-  "round": 2,
+  "round": 3,
   "status": "fixing",
   "steps": [
     {
@@ -186,25 +186,14 @@
       "step": "review"
     }
   ],
-  "stop": {
-    "by": "owner",
-    "choice": "same",
-    "question": "Codex build rounds run on a machine you own: A developer sets up and turns off their own machine is stuck. It should deliver: The `boxes` setting with `\"ssh\"`; `box.py` with `ProviderError`, `PROVIDERS`, `provider`, `record`, `save` and `command`; `box_ssh.py` with the places, `SSH`, `ssh`, `setup` and `off`; `forge lanes --box {setup,off}` with `--host` and `--yes` and its listing row; the test machine; the guide's setup and turn-off text\nTwo rounds in a row left the open P0 data loss: do not treat an unverified process identity as finished in src/forge/box_ssh.py.\nThe worker tried: Review of REMOTE-1/HOST: blocked; Fix the eight review findings on machine setup and turn-off.\nChoose one: switch this item to Codex; keep Claude for one more round; or narrow or split it.",
-    "reason": "Owner chose one more round on the same builder: fix all four turn-off findings",
-    "tool": "claude",
-    "wait_id": "001481f6-2e9c-4567-aa89-2db3332fe572",
-    "worker_round": 2
-  },
   "stuck": {
-    "close": "ebbf9e0f-ad90-4ed6-b717-37ad91d711dc",
-    "head": "744d9308ea4264438f8ef64a82e5515e43a169b2",
+    "close": "85882cfc-a156-4c39-a143-49fdf13d4ec0",
+    "head": "d9df6f2bc8e9666f3bd9c08905409cca08965b95",
     "keys": {
-      "the open P0 data loss: do not treat an unverified process identity as finished in src/forge/box_ssh.py": 1,
-      "the open P0 data loss: refuse turn-off when the remote work cannot be inspected in src/forge/box_ssh.py": 1,
-      "the open P0 security: install the pre-commit check in the hook path git uses in src/forge/box_ssh.py": 1,
-      "the open P0 security: quote the checkout name in the remote shell command in src/forge/box_ssh.py": 1
+      "the open P0 data loss: do not treat an unverified process identity as finished in src/forge/box_ssh.py": 2,
+      "the open P0 functional: turn-off fails on hosts with translated process errors in src/forge/box_ssh.py": 1
     },
-    "round": 1
+    "round": 2
   },
   "worker": "claude"
 }
