@@ -155,7 +155,7 @@
     "id": "4bbb6681-83a4-4a42-ab43-0d107dbac474",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -177,10 +177,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": null,
-    "head": "d3c2cdf0494a8a2919d5c6aaffd3062dab55961f",
+    "close": "7b02d7d7-f726-4c08-ab05-ffde3bf0962d",
+    "head": "f6fda2beb567e35aa938b3ad8016ff24cbc4429a",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "The README misses releases v1.2.27 to v1.2.41, names a command that does not exist, and gives wrong statements about who builds, what must be installed and how many plan reads run.",
   "worker": "claude"
