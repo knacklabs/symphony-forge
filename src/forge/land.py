@@ -546,9 +546,12 @@ def _queue(top: Path) -> int:
             if child.returncode == 0 and url:
                 ready_prs.append((order[item], f"{item} {url}"))
                 say(f"{item} is ready for a human merge.")
-            elif child.returncode == 0:
+            elif child.returncode == 0 and _merged(top, branches[item]):
                 merged.append(item)
                 say(f"{item} merged.")
+            elif child.returncode == 0:  # exit 0 is not a merge: GitHub must say so
+                needs[item] = (age, "its pull request is not merged on GitHub.", f"forge land {item}")
+                say(f"{item} stopped: {needs[item][1]}")
             else:
                 needs[item] = _stop(item, age, lines, child.returncode)
                 say(f"{item} stopped: {needs[item][1]}")
@@ -776,6 +779,10 @@ def _train(top: Path, default: str, plan: dict, merged: list[str], needs: dict, 
                 say(f"{item} stopped: {needs[item][1]}")
                 return handled
             handled.add(item)
+            if not _merged(top, member_branch):
+                needs[item] = (age, "its pull request is not merged on GitHub.", f"forge land {item}")
+                say(f"{item} stopped: {needs[item][1]}")
+                return handled
             merged.append(item)
             say(f"{item} merged.")
         repo.git("fetch", "-q", "origin", default, cwd=top)
