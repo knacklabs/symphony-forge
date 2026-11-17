@@ -1,10 +1,18 @@
 {
   "branch": "task/FORGE-FASTCI-1-TS7",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-17T13:48:26.078156+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "63e8b8e7ae454988b3197422083a31e7557461ac",
+    "keys": {},
+    "round": null
+  },
+  "worker": "claude"
 }
