@@ -94,6 +94,7 @@ from forge.cli import main'''), encoding="utf-8")
         for _, parses, commands in samples:
             assert parses == 0, samples
             assert not any("worktree" in command for command in commands), commands
+            assert not any("--exclude-standard" in command for command in commands), commands
 
     def commit(message):
         repo.git("add", "-A", cwd=folder)

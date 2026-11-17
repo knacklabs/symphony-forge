@@ -17,6 +17,8 @@ def _sync(repo, files):
     repo.write("forge.toml", (repo.path / "forge.toml").read_text("utf-8").replace("v1.2.2", current))
     for name, text in files.items():
         repo.write(name, text)
+    # The nested lockfile search lists tracked files only, so stage what the client would commit.
+    repo.git("add", "-A")
     result = repo.forge("sync")
     assert result.returncode == 0, result.stdout + result.stderr
     workflow = (repo.path / ".github/workflows/forge.yml").read_text("utf-8")
