@@ -11,7 +11,7 @@
       "gain": 4,
       "harm": 2,
       "line": 5,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -24,7 +24,7 @@
       "gain": 3,
       "harm": 2,
       "line": 5,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -37,7 +37,7 @@
       "gain": 4,
       "harm": 2,
       "line": 5,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -50,7 +50,7 @@
       "gain": 4,
       "harm": 2,
       "line": 5,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -82,82 +82,68 @@
       "security": false,
       "title": "Simpler: infer the approach from the patch \u2192 record the choices",
       "work": 1
+    },
+    {
+      "area": "_settled() in src/forge/review.py",
+      "file": "src/forge/review.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 631,
+      "outcome": "open",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Not done: A split's decisions survive a later review",
+      "work": 2
+    },
+    {
+      "area": "test_1_repo_required_rules_join_unrelated_selection() in tests/test_required_repo_rules.py",
+      "file": "tests/test_required_repo_rules.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 42,
+      "outcome": "open",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Gate: proof list",
+      "work": 1
     }
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "6dab4294e599d4eb76dca27b089220be54ac152662dc35a42f3b1123994390dc",
-    "changed": "6b2c5b1b6dde43cba4db276f59a798d98fb73956bfc72e7fd902d3bd7a9d4057",
-    "commit": "fac1e761d9973c8ecebd6e4328512db9027e79fd",
+    "branch_diff": "a54c4dbe9285b96c373ccd0b6d1fbec42b6d31568f76483a1fd576e304c87000",
+    "changed": "975b92482057aa9a502adb34ea34187dc57cf95d03f7c90ac5828e31f350280d",
+    "commit": "89ba238bb82b84e5f1ee4e08706fb51e624908fe",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 4, Work 1, Harm 2\nRaise: Functional\nCase: normal use - running the full Forge test suite.\nThe two new entries are copied into the temporary repo by tests/test_required_repo_rules.py:42, but that test creates files only for the four old entries at lines 36\u201348. src/forge/fasttest.py:843\u2013844 passes the missing files to pytest, so the existing test fails instead of proving selection. The full suite will therefore be red when it runs this test.",
-        "file": ".forge/always-tests.txt",
-        "gain": 4,
-        "harm": 2,
-        "line": 5,
-        "priority": "P1",
-        "title": "Keep the required-tests fixture in sync with the new entries",
-        "work": 1
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 2\nRaise: Not done\nCase: normal use - the owner splits a fix's P1 Not done finding, narrows its Done-when, and a later review encounters that finding again.\nThe ruling cites tests/test_split_keeps_review_findings.py, but its findings at lines 54\u201356 have ordinary defect titles. For a Not done finding, src/forge/close.py:128\u2013137 records the split as a follow-up, while src/forge/review.py:1097\u20131105 removes that marker when the saved review is classified again. The finding remains required and blocks under review.py:190\u2013196, so the split decision is lost. The owner-approved Done-when is: A change to review code runs the split and review-noise tests in its related-test check, a split's decisions survive a later review, and the missing-tool review-choice skip test passes.",
-        "file": ".forge/always-tests.txt",
+        "body": "Gain 3, Work 2, Harm 2\nRaise: Not done\nCase: normal use - the owner splits a P1 Not done finding scored Gain 3, Work 2, Harm 2, and a later review reports it again.\nThe split finding now reaches `_settled`, but lines 633\u2013637 record `known: below the bar` before the split reason and use `setdefault` for both. A later review therefore carries the below-bar dismissal, which `bound_review` removes at lines 1122\u20131125 because the finding is required. The finding blocks again despite the split. The previous finding had these same scores; the new test at tests/test_split_keeps_review_findings.py:102 uses Gain 4 and misses this case. The previous report cited .forge/always-tests.txt:5.",
+        "file": "src/forge/review.py",
         "gain": 3,
         "harm": 2,
-        "line": 5,
+        "line": 631,
         "priority": "P1",
         "required_done_when": true,
         "title": "Not done: A split's decisions survive a later review",
         "work": 2
       },
       {
-        "body": "Gain 4, Work 1, Harm 2\nRaise: Gate\nCase: normal use - reviewing the evidence for this fix.\nThe supplied proof list is missing. There is no worker mapping identifying the checks for related-test selection, the later review after a split, and the missing-tool skip case.",
-        "file": ".forge/always-tests.txt",
+        "body": "Gain 4, Work 1, Harm 2\nRaise: Gate\nCase: normal use - reviewing the evidence for this fix.\nThe latest worker commit labels its mapping `Proof:`, but src/forge/review.py:699\u2013707 and :755 look for `Proof list:`. Consequently the supplied review prompt still says the proof list is missing, and close cannot attach test results to the mapping. The previous report cited .forge/always-tests.txt:5.",
+        "file": "tests/test_required_repo_rules.py",
         "gain": 4,
         "harm": 2,
-        "line": 5,
+        "line": 42,
         "priority": "P1",
         "title": "Gate: proof list",
         "work": 1
-      },
-      {
-        "body": "Gain 4, Work 1, Harm 2\nRaise: Test\nCase: normal use - a later review-code change runs the related-test check.\nNo command-level test verifies that both newly required files are selected. The existing test at tests/test_required_repo_rules.py:36\u201348 asserts only the four older entries; if both new lines were removed, its expected receipts would be unchanged. Extend the selection proof so it fails when either required file is omitted.",
-        "file": ".forge/always-tests.txt",
-        "gain": 4,
-        "harm": 2,
-        "line": 5,
-        "priority": "P1",
-        "title": "Gate: related-test selection of the split and review-noise tests",
-        "work": 1
-      },
-      {
-        "body": "Gain 2, Work 1, Harm 1\nRaise: Gate\nAdds work: recording the client-repository effects; F 1 x H 1 = 1; 2 x C = 2\nThe branch explanation does not say what a newly initialized or adopted client repository receives, or what an existing repository receives on upgrade, as the repository's review rule requires. The changes appear confined to Forge's own test list and test fixture; state that outcome for both cases.",
-        "file": ".forge/always-tests.txt",
-        "gain": 2,
-        "harm": 1,
-        "line": 5,
-        "priority": "P1",
-        "title": "Gate: state what new and existing client repositories receive",
-        "work": 1
-      },
-      {
-        "body": "Gain 1, Work 1, Harm 1\nAdds work: recording the three approach lines; F 1 x H 1 = 1; 2 x C = 2\nThe branch has no before-coding lines for the need, simplest option, and existing code reused. Recording them would make the choice to extend the repository-owned test list explicit.",
-        "file": ".forge/always-tests.txt",
-        "gain": 1,
-        "harm": 1,
-        "line": 5,
-        "priority": "P2",
-        "title": "Simpler: infer the approach from the patch \u2192 record the choices",
-        "work": 1
       }
     ],
-    "id": "8c1ba6da-8df2-41af-99ff-ddab77044e92",
+    "id": "d4aac417-9644-4b79-936a-fa22e8a8e110",
     "status": "blocked"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-16T08:53:57.093893+00:00",
@@ -166,16 +152,16 @@
     {
       "at": "2026-11-16T23:00:17.769726+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-11-17T01:24:59.605009+00:00",
+      "step": "review"
     }
   ],
   "stop": {
-    "at": "2026-11-16T23:00:17.786586+00:00",
-    "by": "owner",
-    "choice": "more",
-    "file": ".forge/always-tests.txt",
-    "reason": "The owner chose one more round",
-    "wait_id": "86098b59-627d-41aa-975f-9d52081e7080",
-    "worker_round": 1
+    "at": "2026-11-17T01:24:59.605534+00:00",
+    "file": "src/forge/review.py",
+    "wait_id": "0803c1e6-2423-4036-893f-a6f32cd07962"
   },
   "stuck": {
     "close": "a6b89fc6-5c56-4481-a15d-81ed42e3eb45",

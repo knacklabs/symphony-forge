@@ -45,6 +45,28 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/review.py\tNot done: A split's decisions survive a later review\ta-change-to-review-code-can-pass-its-own",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 631,
+      "text": "Not done: A split's decisions survive a later review",
+      "from": "blocking",
+      "item": "a-change-to-review-code-can-pass-its-own",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_required_repo_rules.py\tGate: proof list\ta-change-to-review-code-can-pass-its-own",
+      "kind": "bug",
+      "path": "tests/test_required_repo_rules.py",
+      "line": 42,
+      "text": "Gate: proof list",
+      "from": "blocking",
+      "item": "a-change-to-review-code-can-pass-its-own",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "simplify\t.forge/always-tests.txt\tSimpler: infer the approach from the patch \u2192 record the choices",
       "kind": "simplify",
       "path": ".forge/always-tests.txt",
