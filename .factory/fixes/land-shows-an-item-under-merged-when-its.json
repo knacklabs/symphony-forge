@@ -1,0 +1,102 @@
+{
+  "amendments": [
+    {
+      "at": "2026-11-17T16:09:58.055633+00:00",
+      "because": "Owner's choice after review round 1: a human-merge repo rightly lists an open pull request under Ready to merge",
+      "done_when": "Land lists an item under Merged only when its pull request is merged; otherwise the item stops under Needs you with the reason."
+    }
+  ],
+  "base": "856e51ad4798de0f0741155f462e0e4d4eb55242",
+  "branch": "fix/land-shows-an-item-under-merged-when-its",
+  "done_when": "In a repo where the agent merges, land lists an item under Merged only when its pull request is merged; otherwise the item stops under Needs you with the real reason (handed to its builder, or its checks failed). In a repo where a person merges, an open pull request stays under Ready to merge.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "_queue() in src/forge/land.py",
+      "file": "src/forge/land.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 555,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Land lists an item under Merged only when its pull request is merged; otherwise the item stops under Needs you with the reason.",
+      "work": 2
+    },
+    {
+      "area": "test_1_a_merge_github_did_not_do_never_lists_a_change_as_merged() in tests/test_land_merged_means_merged.py",
+      "file": "tests/test_land_merged_means_merged.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 15,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: tests/test_land_merged_means_merged.py::test_1_a_merge_github_did_not_do_never_lists_a_change_as_merged",
+      "work": 1
+    },
+    {
+      "area": "test_2_a_fix_round_handed_to_a_session_subagent_is_not_a_merge() in tests/test_land_merged_means_merged.py",
+      "file": "tests/test_land_merged_means_merged.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 36,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: tests/test_land_merged_means_merged.py::test_2_a_fix_round_handed_to_a_session_subagent_is_not_a_merge",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "677af133d6c265126061747e41495c91e3b21ce93748cb73ddcc8b67ee0bc601",
+    "changed": "1ea6e1a1de29ec6969ff86d5cd3d02b575bd07160ad8680f91758ee89c1db4e4",
+    "commit": "014203aa33235526f957b5f6c4830d24c876b5fc",
+    "dismissals": [],
+    "findings": [],
+    "id": "ac9f039d-5eb3-4b85-a736-85b5a98fe94b",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-17T14:42:07.047845+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-17T16:03:31.147136+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-17T16:45:30.035004+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-17T17:21:22.235079+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-17T16:03:31.161969+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "src/forge/land.py",
+    "reason": "Owner chose one more round: narrow the goal to agent-merge repos, give the real reason under Needs you, fix the tests",
+    "wait_id": "07f621d0-88b6-4644-a65b-31d219ce91f3",
+    "worker_round": 1
+  },
+  "stuck": {
+    "close": "1940623b-bc1d-41a7-b6b5-65c869fee9c1",
+    "head": "4e43ec42ed93cc61d8764be0f9092848e5ead278",
+    "keys": {},
+    "round": 2
+  },
+  "why": "Land shows an item under Merged when its pull request is still open, so the owner sees a merge that did not happen.",
+  "worker": "claude"
+}
