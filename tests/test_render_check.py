@@ -68,7 +68,7 @@ def installed(tmp_path_factory):
     (root / "apps/web").mkdir(parents=True)
     pinned = json.loads((STARTER / "package.json").read_text("utf-8"))
     packages = {**pinned.get("dependencies", {}), **pinned.get("devDependencies", {})}
-    wanted = [f"{name}@{packages[name]}" for name in ("@playwright/test", "@axe-core/playwright", "typescript")]
+    wanted = [f"{name}@{packages[name]}" for name in ("@playwright/test", "@axe-core/playwright", "@typescript/native")]
     (root / "apps/web/package.json").write_text('{"name":"render","private":true}', "utf-8")
     npm = shutil.which("npm")
     assert npm, "npm is required to run the rendered check in a real browser."
@@ -156,10 +156,10 @@ def typed(installed) -> list[subprocess.CompletedProcess]:
     """tsc --noEmit --strict over the example spec, as the app's own type check runs it, and over the
     declaration alone with library checking on, from where the app keeps it (no node_modules there)."""
     web, node = installed / "apps/web", shutil.which("node")
-    tsc = str(web / "node_modules/typescript/bin/tsc")
+    tsc = str(web / "node_modules/@typescript/native/bin/tsc")
     return [subprocess.run([node, tsc, *args], cwd=web, capture_output=True, text=True, timeout=120)
             for args in (["-p", "tsconfig.json"],
-                         ["--noEmit", "--strict", "--skipLibCheck", "false", "--module", "ESNext",
+                         ["--ignoreConfig", "--noEmit", "--strict", "--skipLibCheck", "false", "--module", "ESNext",
                           "--moduleResolution", "Bundler", "../../.forge/design/render-check.d.mts"])]
 
 
