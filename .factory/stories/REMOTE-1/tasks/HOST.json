@@ -59,7 +59,7 @@
       "gain": 4,
       "harm": 3,
       "line": 125,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 1,
       "security": false,
@@ -85,7 +85,7 @@
       "gain": 4,
       "harm": 3,
       "line": 90,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 1,
       "security": false,
@@ -111,7 +111,7 @@
       "gain": 5,
       "harm": 4,
       "line": 145,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 2,
       "security": false,
@@ -121,53 +121,23 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "c280e0300f004d62d011ee9e8e21f89ca220b4badc200860789ffc434c13d8d6",
-    "changed": "6b3690c0362a85f98b42bec9b2c8bade401e89af10780f5071b5f3d4be95f6eb",
-    "commit": "3488132a0cfeedbd6f0d8de6baeb1cc0464205bc",
+    "branch_diff": "52a04dfeba42e31a37003dcca5664a1b1c144943518ee710156a7cb2b5687029",
+    "changed": "cd10828da32192963c9af6c01f4103fbdbfcf8a679112e3b6ca079db7a01f659",
+    "commit": "88faf93cb28e5d996f4791dc36d3b048ad7d24bf",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 5, Work 1, Harm 4\nRaise: Functional\nCase: normal use - A developer finishes a round and turns off a Linux machine whose shell uses a French locale. The retained PID names a process that has ended, but only `ps` runs with `LC_ALL=C`; `kill` can emit a translated error, so the English-only match fails and Forge reports that the round still runs. Both turn-off commands then refuse. Error descriptions can depend on the locale, as the [Linux strerror documentation](https://man7.org/linux/man-pages/man3/strerror.3.html) describes.",
-        "file": "src/forge/box_ssh.py",
-        "gain": 5,
-        "harm": 4,
-        "line": 145,
-        "priority": "P0",
-        "title": "Functional: Turn-off fails on hosts with translated process errors",
-        "work": 1
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 5\nRaise: Data loss\nCase: normal use - An active round's PID file cannot be opened after Forge has inspected an earlier, finished round. The failed redirection leaves `id` and `start` holding the earlier round's values, and the script ignores the read error. Forge can therefore classify the active round as finished and delete its folder with `--yes`.",
+        "body": "Gain 4, Work 2, Harm 5\nRaise: Data loss\nCase: normal use - A host\u2019s process access policy prevents both `ps` and `kill -0` from inspecting a still-running worker. This fallback treats every `kill -0` failure as proof that the process has ended, but [Linux kill(2)](https://man7.org/linux/man-pages/man2/kill.2.html) also reports failure when permission is denied. Confirmed turn-off can therefore delete the active worker\u2019s folder. The previous code treated a permission failure as still running, so the earlier process-identity finding remains open.",
         "file": "src/forge/box_ssh.py",
         "gain": 4,
         "harm": 5,
-        "line": 141,
+        "line": 150,
         "priority": "P1",
         "title": "Data loss: Do not treat an unverified process identity as finished",
         "work": 2
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - A worker runs a Python server with a PID file beside its script, such as `server.pid` beside `server.py` in the worktree. The recursive search still treats that file as a Forge round because the matching `.py` exists. Its PID-only contents lack a start time, so preview and confirmed turn-off both refuse after the Forge round ends.",
-        "file": "src/forge/box_ssh.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 140,
-        "priority": "P1",
-        "title": "Functional: Ignore application PID files inside run worktrees",
-        "work": 2
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Test\nCase: normal use - A confirmed turn-off has ignored files and a stash to list before deletion. The new `--yes` assertion checks the loose file and commit count, but not the ignored `notes.txt` or stash that the preview asserts. The test would pass if confirmed turn-off omitted either from its deletion list.",
-        "file": "tests/test_host_setup.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 174,
-        "priority": "P1",
-        "title": "Gate: test_5_rounds_on_a_machine_are_off_until_turned_on_and_off_deletes_forges_folder",
-        "work": 2
       }
     ],
-    "id": "b34d7ab8-a0c8-4f99-b896-0357c50615ab",
+    "id": "a6396f98-7ade-477f-b149-43edd1c98fa1",
     "status": "blocked"
   },
   "round": 3,
@@ -183,6 +153,10 @@
     },
     {
       "at": "2026-11-17T14:23:17.556816+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-17T14:38:32.139406+00:00",
       "step": "review"
     }
   ],
