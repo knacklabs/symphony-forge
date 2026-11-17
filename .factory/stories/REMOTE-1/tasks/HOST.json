@@ -129,8 +129,8 @@
     "id": "11cd8ca8-f859-4d8f-9884-7d4cdd106a0a",
     "status": "clean"
   },
-  "round": 5,
-  "status": "waiting for checks",
+  "round": 6,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-17T13:39:44.494005+00:00",
@@ -158,12 +158,10 @@
     }
   ],
   "stuck": {
-    "close": "386ad8b1-8b85-4b71-9e56-850747589fb5",
-    "head": "ae421a11b69aa6012df8384552a2d17bc4c62e14",
-    "keys": {
-      "the open P0 data loss: do not treat an unverified process identity as finished in src/forge/box_ssh.py": 4
-    },
-    "round": 4
+    "close": "c01758f8-e87f-4e76-959d-14cafb50bce9",
+    "head": "4a30eb76bbdef8a69cda35a02e5eb10bb492bf07",
+    "keys": {},
+    "round": 5
   },
   "worker": "claude"
 }
