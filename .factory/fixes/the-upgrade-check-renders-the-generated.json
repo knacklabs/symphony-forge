@@ -1,0 +1,109 @@
+{
+  "base": "52d8e5ebdc701418ee14d99a7ad86d031c3ad2bd",
+  "branch": "fix/the-upgrade-check-renders-the-generated",
+  "done_when": "After forge sync and a pure upgrade of a client repo whose only pnpm lockfile is in a subfolder, the generated workflow keeps the pnpm setup step with the right version, and the upgrade fix closes without a model review.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "ships() in src/forge/prcheck.py",
+      "file": "src/forge/prcheck.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 245,
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: The owner accepted: the nested pnpm version case stays a known issue",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Keep the correct pnpm version for a nested project after upgrade",
+      "work": 2
+    },
+    {
+      "area": "test_2_pure_upgrade_in_a_repo_with_a_lockfile_skips_review() in tests/test_upgrade_skips_model_review.py",
+      "file": "tests/test_upgrade_skips_model_review.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 83,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_2_pure_upgrade_in_a_repo_with_a_lockfile_skips_review[adopted-nested-pnpm]",
+      "work": 1
+    },
+    {
+      "area": "ships() in src/forge/prcheck.py",
+      "file": "src/forge/prcheck.py",
+      "gain": 2,
+      "harm": 2,
+      "line": 245,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Follow-up: Match lockfile selection when a repo has multiple nested lockfiles",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "e1b321cea147746361963532da6fcd54e71d6741163c9ec7afe6ae83f4f49356",
+    "changed": "5b35bfe04290258dd0df4f5adb32f9337de6133a71ce23c07911686f5b73ba0a",
+    "commit": "0df09cfcb1cfde52351f292811890d5a63a3c4e0",
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: The owner accepted: the nested pnpm version case stays a known issue",
+        "finding": 1
+      }
+    ],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done\nCase: normal use - A repo's root package.json permits pnpm >=9 <11, while web/package.json requires pnpm ^9 and web/pnpm-lock.yaml is its only pnpm lockfile.\nThe root engine takes precedence over the nested engine, so the generated setup step requests >=9 <11 and installs pnpm 10. An install in web then fails its ^9 engine check, even though pnpm 9 satisfies both manifests. The lookup also ignores a nested packageManager or devEngines.packageManager pin, so a pnpm 9 pin with a format-9 lockfile renders version 10. The snapshot agrees with this incorrect render, leaving the previous version finding open while the upgrade skips review. [pnpm documents the engine check](https://pnpm.io/10.x/package_json#engines).",
+        "file": "src/forge/prcheck.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 259,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: Keep the correct pnpm version for a nested project after upgrade",
+        "work": 2
+      }
+    ],
+    "id": "02623a9a-bf8d-4387-8d5c-a8addd243ab3",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-16T21:32:36.104258+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-17T01:29:47.265034+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-17T02:37:00.069401+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-17T02:37:00.072914+00:00",
+    "by": "owner",
+    "choice": "accept",
+    "file": "src/forge/prcheck.py",
+    "reason": "The owner accepted: the nested pnpm version case stays a known issue",
+    "wait_id": "fe14e453-005c-4fe0-8bba-1a9e84122df1",
+    "worker_round": 2
+  },
+  "stuck": {
+    "close": "28d87391-b79a-4ffb-b807-31aa77f5f2f2",
+    "head": "7795bb174c6ead5e4a1881d1e76cb41000cf2740",
+    "keys": {},
+    "round": 1
+  },
+  "why": "The upgrade check renders the generated workflow from a snapshot folder with no git repo, so a client repo whose only pnpm lockfile is in a subfolder gets a render without the pnpm setup step, the render differs from the committed workflow, and a pure upgrade then gets a model review.",
+  "worker": "claude"
+}

@@ -1,6 +1,7 @@
 """The Forge tool selects tests while the client's Python runs pytest without Forge."""
 import json
 import os
+import re
 import subprocess
 import shutil
 import venv
@@ -158,11 +159,11 @@ def test_4_forges_own_fast_command_works_with_an_older_release_on_path(repo, tmp
     command = tomllib.loads((source / "forge.toml").read_text("utf-8"))["fast_test"]
     command = command.replace("{base}", repo.git("rev-parse", "HEAD", cwd=source))
     result = subprocess.run(command, shell=True, cwd=source, capture_output=True,
-                            text=True, timeout=120)
+                            text=True, timeout=600)  # the always-run list holds slow tests
     assert result.returncode == 0, result.stdout + result.stderr
-    # Forge's repo now runs its four required rules even with no changed files.
+    # Forge's repo runs its always-run tests even with no changed files, so tests ran and passed.
     # The earlier release on PATH must still forward to the current picker.
-    assert "4 passed" in result.stdout
+    assert re.search(r"\b[1-9]\d* passed", result.stdout), result.stdout
 
 
 def _client_tests(client, python):

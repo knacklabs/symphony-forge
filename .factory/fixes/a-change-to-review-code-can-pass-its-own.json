@@ -1,0 +1,174 @@
+{
+  "amendments": [
+    {
+      "at": "2026-11-17T02:08:36.830171+00:00",
+      "because": "The owner split the remaining split-decision case into its own fix",
+      "done_when": "A change to review code runs the split and review-noise tests in its related-test check, a split's decisions survive a later review, and the missing-tool review-choice skip test passes."
+    }
+  ],
+  "base": "c7d6e40da22a65c6fbed318acba04252413e9ebb",
+  "branch": "fix/a-change-to-review-code-can-pass-its-own",
+  "done_when": "A change to review code runs the split and review-noise tests in its related-test check, a split Not done finding stays settled in a later review, and the missing-tool review-choice skip test passes.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [
+    {
+      "area": ".forge/always-tests.txt",
+      "file": ".forge/always-tests.txt",
+      "gain": 4,
+      "harm": 2,
+      "line": 5,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Keep the required-tests fixture in sync with the new entries",
+      "work": 1
+    },
+    {
+      "area": ".forge/always-tests.txt",
+      "file": ".forge/always-tests.txt",
+      "gain": 3,
+      "harm": 2,
+      "line": 5,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: A split's decisions survive a later review",
+      "work": 2
+    },
+    {
+      "area": ".forge/always-tests.txt",
+      "file": ".forge/always-tests.txt",
+      "gain": 4,
+      "harm": 2,
+      "line": 5,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: proof list",
+      "work": 1
+    },
+    {
+      "area": ".forge/always-tests.txt",
+      "file": ".forge/always-tests.txt",
+      "gain": 4,
+      "harm": 2,
+      "line": 5,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: related-test selection of the split and review-noise tests",
+      "work": 1
+    },
+    {
+      "area": ".forge/always-tests.txt",
+      "file": ".forge/always-tests.txt",
+      "gain": 2,
+      "harm": 1,
+      "line": 5,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: state what new and existing client repositories receive",
+      "work": 1
+    },
+    {
+      "area": ".forge/always-tests.txt",
+      "file": ".forge/always-tests.txt",
+      "gain": 1,
+      "harm": 1,
+      "line": 5,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Simpler: infer the approach from the patch \u2192 record the choices",
+      "work": 1
+    },
+    {
+      "area": "_settled() in src/forge/review.py",
+      "file": "src/forge/review.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 631,
+      "outcome": "fixed in round 3",
+      "reason": "Split into follow-up fix review-findings-split-from-a-change-to-r",
+      "round": 2,
+      "security": false,
+      "title": "Not done: A split's decisions survive a later review",
+      "work": 2
+    },
+    {
+      "area": "test_1_repo_required_rules_join_unrelated_selection() in tests/test_required_repo_rules.py",
+      "file": "tests/test_required_repo_rules.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 42,
+      "outcome": "follow-up",
+      "reason": "Split into follow-up fix review-findings-split-from-a-change-to-r",
+      "round": 2,
+      "security": false,
+      "title": "Gate: proof list",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "6ad71c2bf918d839e00394fe068a2f14d837c980fc52e39e901454d132c3a409",
+    "changed": "b11575a6048416d8bb91d4eb7a990d02a10a0bc4361f5356a2636f9533882584",
+    "commit": "1d2ecd98ede68d0364f64a7ad568e28de5ba22df",
+    "dismissals": [],
+    "findings": [],
+    "id": "5b971c2f-22c3-4f25-9b4c-a5f2edd54f18",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-16T08:53:57.093893+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-16T23:00:17.769726+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-17T01:24:59.605009+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-17T02:11:52.658806+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-17T03:22:41.959844+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-17T01:24:59.605534+00:00",
+    "by": "owner",
+    "choice": "split",
+    "file": "src/forge/review.py",
+    "fixes": [
+      "review-findings-split-from-a-change-to-r"
+    ],
+    "reason": "The owner chose split: merge now, the remaining split-decision case becomes its own fix",
+    "wait_id": "0803c1e6-2423-4036-893f-a6f32cd07962",
+    "worker_round": 2
+  },
+  "stuck": {
+    "close": "41a6d653-06f4-4be6-a94e-e776208fb425",
+    "head": "2071447682ba89ebfb7199adf8240f66fe0d1ec6",
+    "keys": {},
+    "round": 2
+  },
+  "why": "A change to review code can pass its own related-test check while the split and review-noise tests fail, which turned main red twice on 16 Nov 2026; a split's decisions may also be lost when a later review runs, and one review-choice skip test fails before these changes.",
+  "worker": "claude"
+}
