@@ -628,7 +628,7 @@ def _settled(history: list[dict[str, Any]]) -> dict[tuple[str, str], str]:
         for key in earlier - current:
             settled.setdefault(key, "fixed: absent from a later review")
         for finding in score.open_findings(result):
-            if finding.get("required_done_when"):
+            if finding.get("required_done_when") and not str(finding.get("follow_up", "")).startswith("Split into"):
                 continue
             if (outcome := score.bar(score.of(finding))) in ("follow-up", "live with"):
                 settled.setdefault(score.identity(finding["file"], finding["title"]), f"known: below the bar ({outcome})")
@@ -1099,7 +1099,7 @@ def bound_review(top: Path, item: str, state: dict[str, Any], result: dict[str, 
         must = score.MUST.match(title)
         raised = missed and any(p.search(finding["body"]) for p, _ in score.FLOORS[:2])
         if approved_missed or raised or (must and must[1].strip().casefold() in kinds):
-            if not finding.get("required_done_when") or finding.get("follow_up"):
+            if not finding.get("required_done_when") or not str(finding.get("follow_up") or "Split into").startswith("Split into"):
                 finding["required_done_when"] = True
                 finding.pop("follow_up", None)
                 changed = True
@@ -1120,7 +1120,7 @@ def bound_review(top: Path, item: str, state: dict[str, Any], result: dict[str, 
             finding["follow_up"] = reason
             changed = True
     kept = [d for d in result.get("dismissals", []) if not (
-        not d.get("accepted") and d["because"].startswith("known:")
+        not d.get("accepted") and d["because"].startswith("known:") and not d["because"].startswith("known: Split into")
         and (findings[d["finding"] - 1].get("required_done_when")
              or (d["because"].startswith("known: " + score.ADDED_WORK_REASON)
                  and not findings[d["finding"] - 1].get("follow_up"))))]

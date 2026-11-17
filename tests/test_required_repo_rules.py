@@ -3,6 +3,7 @@ import json
 import re
 import subprocess
 import sys
+from pathlib import Path
 
 import pytest
 
@@ -38,11 +39,13 @@ def test_1_repo_required_rules_join_unrelated_selection(repo, monkeypatch, histo
         "tests/test_tools_guide.py::test_9_synced_guides_explain_tools_and_the_session_handoff",
         "tests/test_rules.py::test_4_one_test_per_rule",
         "tests/test_rules.py::test_5_forge_stays_small",
+        "tests/test_split_keeps_review_findings.py",
+        "tests/test_since_7_nov_review_noise.py",
     ]
     repo.write(".forge/always-tests.txt", (ROOT / ".forge/always-tests.txt").read_text("utf-8"))
     for entry in required:
         file, _, node = entry.partition("::")
-        node = node or "test_platform"
+        node = node or Path(file).stem
         path = repo.path / file
         source = path.read_text("utf-8") if path.exists() else "from pathlib import Path\n"
         repo.write(file, source + f"def {node}():\n    Path('{node}.ran').touch()\n")
@@ -79,7 +82,7 @@ def test_1_repo_required_rules_join_unrelated_selection(repo, monkeypatch, histo
         assert decisions["reuse"] == "false", decisions
     ran = repo.forge("test", selection, *([base] if selection == "--pytest" else []))
     assert ran.returncode == 0, ran.stdout + ran.stderr
-    expected = {entry.partition("::")[2] or "test_platform" for entry in required}
+    expected = {entry.partition("::")[2] or Path(entry).stem for entry in required}
     if change == "product":
         expected.add("product")
     assert {path.stem for path in repo.path.glob("*.ran")} == expected, ran.stdout + ran.stderr
