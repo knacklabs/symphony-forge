@@ -1,0 +1,16 @@
+{
+  "base": "05070dba48c746799690c03091d70271fdf1a93e",
+  "branch": "fix/review-findings-split-from-a-change-to-r",
+  "done_when": "A review no longer finds: Not done: A split's decisions survive a later review (src/forge/review.py:631); Gate: proof list (tests/test_required_repo_rules.py:42)",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "stacked_on": "a-change-to-review-code-can-pass-its-own",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-17T02:07:38.013068+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Review findings split from a-change-to-review-code-can-pass-its-own: Not done: A split's decisions survive a later review (src/forge/review.py:631); Gate: proof list (tests/test_required_repo_rules.py:42)"
+}
