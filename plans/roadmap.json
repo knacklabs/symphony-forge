@@ -669,7 +669,7 @@
     },
     {
       "key": "REMOTE-1",
-      "title": "Run work rounds on a second Linux machine",
+      "title": "Codex build rounds run on a machine you own",
       "status": "pending",
       "order": 125
     }
