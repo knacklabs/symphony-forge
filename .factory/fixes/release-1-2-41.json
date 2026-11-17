@@ -1,4 +1,5 @@
 {
+  "allow_large": "The owner approved release v1.2.41; the version bump names the release in every pinned file, as the v1.2.40 release did",
   "base": "5d4ec160fe8349a90541ff92cfd8b7ba602fe424",
   "branch": "fix/release-1-2-41",
   "done_when": "forge.toml, the package and every pinned reference say v1.2.41, and tests/test_release_version.py passes",
