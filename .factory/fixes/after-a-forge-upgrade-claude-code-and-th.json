@@ -163,7 +163,7 @@
     "status": "blocked"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-17T18:34:07.514746+00:00",
@@ -176,8 +176,12 @@
   ],
   "stop": {
     "at": "2026-11-17T18:54:40.430793+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "src/forge/upgrade.py",
-    "wait_id": "91ec63a7-8498-4eaf-9ca7-fdee1d915805"
+    "reason": "Owner chose one more round: fix findings 2 to 6; finding 1 (first upgrade) accepted as known",
+    "wait_id": "91ec63a7-8498-4eaf-9ca7-fdee1d915805",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
