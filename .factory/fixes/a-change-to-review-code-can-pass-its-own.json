@@ -1,7 +1,14 @@
 {
+  "amendments": [
+    {
+      "at": "2026-11-17T02:08:36.830171+00:00",
+      "because": "The owner split the remaining split-decision case into its own fix",
+      "done_when": "A change to review code runs the split and review-noise tests in its related-test check, a split's decisions survive a later review, and the missing-tool review-choice skip test passes."
+    }
+  ],
   "base": "c7d6e40da22a65c6fbed318acba04252413e9ebb",
   "branch": "fix/a-change-to-review-code-can-pass-its-own",
-  "done_when": "A change to review code runs the split and review-noise tests in its related-test check, a split's decisions survive a later review, and the missing-tool review-choice skip test passes.",
+  "done_when": "A change to review code runs the split and review-noise tests in its related-test check, a split Not done finding stays settled in a later review, and the missing-tool review-choice skip test passes.",
   "fix_kind": "backend",
   "kind": "fix",
   "known": [
