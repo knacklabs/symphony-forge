@@ -106,7 +106,7 @@
     "status": "blocked"
   },
   "round": 2,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-17T17:22:44.821888+00:00",
@@ -123,8 +123,12 @@
   ],
   "stop": {
     "at": "2026-11-17T19:01:23.367002+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "README.md",
-    "wait_id": "62491f6e-cac0-4841-9a20-811a3963792b"
+    "reason": "Owner chose one more round: correct the plan-read model sentence",
+    "wait_id": "62491f6e-cac0-4841-9a20-811a3963792b",
+    "worker_round": 2
   },
   "stuck": {
     "close": "7b02d7d7-f726-4c08-ab05-ffde3bf0962d",
