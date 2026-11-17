@@ -773,7 +773,7 @@ def unbuilt_fix(item: str, state: dict, top: Path) -> bool:
         return False
     own = set(repo.git("rev-list", "--no-merges", "HEAD", "--not", start,
                        f"origin/{repo.default_branch(top)}", cwd=top).splitlines())
-    return not any(sha in own and (not files or any(file not in (path, IDEAS) for file in files))
+    return not any(sha in own and any(file not in (path, IDEAS) for file in files)
                    for sha, _, files in repo.commit_log(top, start))
 
 

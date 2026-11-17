@@ -2405,7 +2405,9 @@ two and four seconds. If GitHub still does not answer, rerun the command. Not-fo
 permission refusals stop immediately; writes are never replayed by these read retries.
 If the branch already has commits after the item's start, land goes straight to close unless
 you give `--note "<text>"` to start a worker round with that guidance. The note applies only to
-the first round this run starts, not later fix rounds. Close
+the first round this run starts, not later fix rounds. A fix whose commits only add a carried idea
+to `plans/ideas.md` (or are empty) is not built: land runs the build round and close refuses it
+until real changes exist. New and existing repos get this on the current release. Close
 still stops for a pending question and gives open findings or failing tests a worker fix round.
 
 Use `forge land --all` in place of a hand-made merge lane. It takes every task and fix whose
