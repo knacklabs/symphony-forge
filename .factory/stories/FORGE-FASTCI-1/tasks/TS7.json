@@ -36,7 +36,7 @@
     "id": "7eb49e31-da01-42dc-9a1d-9fe3d6c5efa0",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -49,10 +49,12 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "63e8b8e7ae454988b3197422083a31e7557461ac",
-    "keys": {},
-    "round": null
+    "close": "8940c991-5d7a-46cb-aef8-870e65ac43d3",
+    "head": "f1fcbc0247a0166265e10a8faf3684307505b4ed",
+    "keys": {
+      "the open P0 gate: test_1_the_starter_is_a_runnable_stack in tests/test_starter_tree.py": 1
+    },
+    "round": 1
   },
   "worker": "claude"
 }
