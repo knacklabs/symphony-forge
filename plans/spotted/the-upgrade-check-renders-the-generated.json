@@ -8,8 +8,8 @@
       "text": "Not done: Keep the correct pnpm version for a nested project after upgrade",
       "from": "blocking",
       "item": "the-upgrade-check-renders-the-generated",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\ttests/test_upgrade_skips_model_review.py\tGate: test_2_pure_upgrade_in_a_repo_with_a_lockfile_skips_review[adopted-nested-pnpm]\tthe-upgrade-check-renders-the-generated",
