@@ -2,6 +2,7 @@
 import json
 
 from test_close import env  # noqa: F401
+from test_tools_session_hold import Session
 from test_queue_land_all import _all, _fix, _red, _settings, client  # noqa: F401
 
 STORY = "FIX-LAND-MERGED-MEANS-MERGED"
@@ -20,7 +21,12 @@ def test_1_a_fix_round_handed_to_a_session_subagent_is_not_a_merge(client, monke
     env.gh.respond("pr", "checks", exit=1, stdout=json.dumps([
         {"name": "tests", "bucket": "fail", "link": "https://github.com/acme/shop/actions/runs/1/job/9"}]))
     env.gh.respond("run", "view", "--job", "9", stdout="AssertionError: no greeting in README\n")
-    done = _all(env)
+    # Forge finds the coordinating session by its parent process, so land runs under a real one.
+    host = Session(env.repo, tmp_path / "host", "claude-session")
+    try:
+        done = host.forge("land", "--all")
+    finally:
+        host.close()
     lines = done.stdout.splitlines()
     assert "wait: Next: run the subagent, forge handback wait, then forge land wait" in lines, done.stdout
     assert "wait merged." not in lines, done.stdout
