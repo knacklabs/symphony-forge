@@ -88,7 +88,7 @@
     "status": "blocked"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-17T14:42:07.047845+00:00",
@@ -101,8 +101,12 @@
   ],
   "stop": {
     "at": "2026-11-17T16:03:31.161969+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "src/forge/land.py",
-    "wait_id": "07f621d0-88b6-4644-a65b-31d219ce91f3"
+    "reason": "Owner chose one more round: narrow the goal to agent-merge repos, give the real reason under Needs you, fix the tests",
+    "wait_id": "07f621d0-88b6-4644-a65b-31d219ce91f3",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
