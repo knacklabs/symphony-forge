@@ -4,12 +4,20 @@
   "done_when": "Land lists an item under Merged only when its pull request is merged; otherwise the item stops under Needs you with the reason.",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-17T14:42:07.047845+00:00",
       "step": "start"
     }
   ],
-  "why": "Land shows an item under Merged when its pull request is still open, so the owner sees a merge that did not happen."
+  "stuck": {
+    "close": null,
+    "head": "e5388dd07dba4baa2f0ce1776a01431f6ff85441",
+    "keys": {},
+    "round": null
+  },
+  "why": "Land shows an item under Merged when its pull request is still open, so the owner sees a merge that did not happen.",
+  "worker": "claude"
 }
