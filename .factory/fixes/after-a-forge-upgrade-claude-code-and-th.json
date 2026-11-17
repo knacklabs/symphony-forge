@@ -106,7 +106,7 @@
     "status": "blocked"
   },
   "round": 2,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-17T18:34:07.514746+00:00",
@@ -123,8 +123,12 @@
   ],
   "stop": {
     "at": "2026-11-17T19:15:18.873142+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "src/forge/upgrade.py",
-    "wait_id": "767a58cd-bb25-490e-aed5-fd40ef5aed7b"
+    "reason": "Owner chose one more small round: run codex update only when that Codex has the command, else print OpenAI's install line",
+    "wait_id": "767a58cd-bb25-490e-aed5-fd40ef5aed7b",
+    "worker_round": 2
   },
   "stuck": {
     "close": "e04c0b1e-df63-4bab-80e5-13c82a7e6d6b",
