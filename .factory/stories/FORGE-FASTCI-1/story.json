@@ -1,0 +1,12 @@
+{
+  "doc": "plans/FORGE-FASTCI-1.md",
+  "status": "planning",
+  "steps": [
+    {
+      "at": "2026-11-17T12:41:46.289933+00:00",
+      "step": "start"
+    }
+  ],
+  "title": "Faster checks and CI for client repos",
+  "touches": 0
+}

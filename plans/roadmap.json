@@ -666,6 +666,12 @@
       "title": "Show the full text of the last close's findings without running close again",
       "status": "pending",
       "order": 124
+    },
+    {
+      "key": "FORGE-FASTCI-1",
+      "title": "Faster checks and CI for client repos",
+      "status": "pending",
+      "order": 125
     }
   ],
   "epics": [
