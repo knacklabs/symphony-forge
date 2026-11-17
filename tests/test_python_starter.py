@@ -23,6 +23,7 @@ from test_defaults_organisations import PYTHON_ORGANISATION_API_CASES
 from test_starter_tree import (
     BROWSER_FLOWS,
     PYTHON_REACT_PATHS,
+    TS_ALIASES,
     _assert_first_commit_has,
     _files_under,
     _pnpm_root_importer,
@@ -116,7 +117,8 @@ def _assert_python_tree(client: Path):
         all_dependencies.update(versions)
         react_dependencies.update(react_package.get(group, {}))
         for name, version in versions.items():
-            assert re.fullmatch(r"[0-9]+(?:\.[0-9]+)*", version), (name, version)
+            assert re.fullmatch(r"[0-9]+(?:\.[0-9]+)*", version) or version == TS_ALIASES.get(name), (name, version)
+    assert {name: all_dependencies.get(name) for name in TS_ALIASES} == TS_ALIASES
     for name, version in all_dependencies.items():
         if name in react_dependencies:
             assert version == react_dependencies[name], (name, version)
@@ -131,6 +133,7 @@ def _assert_python_tree(client: Path):
         for name, version in package.get(group, {}).items():
             locked = lock_importer[group][name]
             assert locked["specifier"] == version, (group, name)
+            version = version.removeprefix("npm:")
             assert locked["version"] == version or locked["version"].startswith(version + "("), (group, name)
 
     assert (api / ".python-version").read_text(encoding="utf-8").strip() == "3.14"
