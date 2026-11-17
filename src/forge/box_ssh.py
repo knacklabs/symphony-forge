@@ -54,12 +54,20 @@ def setup(top: Path, args: Any) -> int:
                 "forge lanes --box off, then forge lanes --box setup")
     again = "forge lanes --box setup" + ("" if saved else f" --host {host}")
     folder, pin = _folder(top), cfg["version"]
+    home = f'"$HOME"/{shlex.quote(folder)}'
+
+    def remote(script: str, doing: str, input: str | None = None):
+        try:
+            return ssh(host, script, input=input)
+        except box.ProviderError as error:
+            _refuse(f"{doing} on {host} failed: {error.message}.", again)
+
     try:
         facts = ssh(host, f'''echo "GIT $(git --version 2>/dev/null)"; echo "FORGE $(forge --version 2>/dev/null)"
 codex login status >/dev/null 2>&1; echo "CODEX $?"
 echo "PROBE $({KIT}/bin/python -c {shlex.quote(codex.PROBE)} 2>&1 | tail -n 1)"
-echo "PS $(ps -o lstart= -p $$ 2>/dev/null)"; echo "CORES $(getconf _NPROCESSORS_ONLN)"
-echo "HOME $HOME"; test -d "$HOME/{folder}/clone/.git" && echo "CLONE yes"
+echo "PS $(LC_ALL=C ps -o lstart= -p $$ 2>/dev/null)"; echo "CORES $(getconf _NPROCESSORS_ONLN)"
+echo "HOME $HOME"; test -d {home}/clone/.git && echo "CLONE yes"
 echo "CONFIG $(echo {CONFIG})"; cat {CONFIG} 2>/dev/null; true''')
     except box.ProviderError as error:
         _refuse(f"Forge cannot reach {host} with ssh: {error.message}. ssh {host} true must work from this laptop "
@@ -78,9 +86,9 @@ echo "CONFIG $(echo {CONFIG})"; cat {CONFIG} 2>/dev/null; true''')
                 f"with npm install -g @openai/codex when it is missing), then {again}")
     if not codex.GOOD.fullmatch(got.get("PROBE", "")):
         print(f"Installing the Codex kit {codex.SDK_PIN} on {host} with uv (about 300 MB).", flush=True)
-        done = ssh(host, f'''env={KIT}; rm -f "$env/{codex.READY}"; rm -rf "$env"; mkdir -p "$(dirname "$env")"
-uv venv --python 3.11 "$env" && uv pip install --python "$env/bin/python" openai-codex=={codex.SDK_PIN} \\
-&& echo {codex.SDK_PIN} > "$env/{codex.READY}" 2>&1''')
+        done = remote(f'''env={KIT}; rm -f "$env/{codex.READY}"; rm -rf "$env"; mkdir -p "$(dirname "$env")"
+(uv venv --python 3.11 "$env" && uv pip install --python "$env/bin/python" openai-codex=={codex.SDK_PIN} \\
+&& echo {codex.SDK_PIN} > "$env/{codex.READY}") 2>&1''', "The Codex kit install")
         if done.returncode:
             _refuse(f"The Codex kit install on {host} failed: {_last(done.stdout + done.stderr)}.", again)
     identity = [repo.run("git", "config", key, cwd=top).stdout.strip() for key in ("user.name", "user.email")]
@@ -95,9 +103,11 @@ uv venv --python 3.11 "$env" && uv pip install --python "$env/bin/python" openai
         'mkdir -p "$F/runs" && git init -q "$C" && cat > "$C/.git/hooks/pre-commit" '
         '&& chmod 755 "$C/.git/hooks/pre-commit" '
         f'&& git -C "$C" symbolic-ref refs/remotes/origin/HEAD refs/remotes/origin/{default} && ')
-    done = ssh(host, f'F="$HOME"/{shlex.quote(folder)}; C="$F/clone"; {make}'
+    done = remote(f'F={home}; C="$F/clone"; {make}'
                f'git -C "$C" config user.name {shlex.quote(identity[0])} '
-               f'&& git -C "$C" config user.email {shlex.quote(identity[1])}', input=hook if make else None)
+               f'&& git -C "$C" config user.email {shlex.quote(identity[1])} '
+               # Git reads hooks from core.hooksPath, so this clone names its own hooks folder.
+               '&& git -C "$C" config core.hooksPath "$C/.git/hooks"', "Making Forge's folder", hook if make else None)
     if done.returncode:
         _refuse(f"Forge could not make its folder on {host}: {_last(done.stderr)}.", again)
     try:
@@ -120,18 +130,34 @@ uv venv --python 3.11 "$env" && uv pip install --python "$env/bin/python" openai
 def _holds(top: Path, saved: dict[str, Any]) -> dict[str, Any]:
     """What Forge's folder on the machine holds: running rounds, loose files, stashes, commits not back."""
     tips = repo.git("for-each-ref", "--format=%(objectname)", "refs/heads", "refs/remotes", cwd=top)
-    out = ssh(saved["host"], f'''F={shlex.quote(posixpath.dirname(saved["clone"]))}; C="$F/clone"; cd "$F" || exit 0
+    out = ssh(saved["host"], f'''F={shlex.quote(posixpath.dirname(saved["clone"]))}; C="$F/clone"
+[ -d "$F" ] || exit 0
+cd "$F" || {{ echo "ERR cannot open $F"; exit 0; }}
 known=""; while read s; do git -C "$C" cat-file -e "$s^{{commit}}" 2>/dev/null && known="$known $s"; done
-find runs -name '*.pid' 2>/dev/null | while read p; do
-  read id start < "$p"; now=$(ps -o lstart= -p "$id" 2>/dev/null); rc=$?
-  if [ -z "$id" ] || [ -z "$start" ] || [ $rc -gt 1 ]; then r=1
-  elif [ "$(echo $now)" = "$(echo $start)" ]; then r=1; else r=0; fi
+git --version >/dev/null 2>&1 || echo "ERR git does not run"
+# Forge's own round files only: runs/<item>/<entry>.pid beside its <entry>.py, never an app's pid file.
+pids=$(find runs -name '*.pid' 2>&1) || echo "ERR find: $pids"
+for p in $pids; do [ -f "${{p%.pid}}.py" ] || continue
+  read id start < "$p"; now=$(LC_ALL=C ps -o lstart= -p "$id" 2>/dev/null); rc=$?
+  # A round has ended only when its process is gone, or ps shows another start time; any doubt reads as running.
+  if [ -z "$id" ] || [ -z "$start" ]; then r=1
+  elif [ $rc -eq 0 ] && [ -n "$now" ]; then [ "$(echo $now)" = "$(echo $start)" ] && r=1 || r=0
+  elif kill -0 "$id" 2>&1 | grep -qi "no such process"; then r=0; else r=1; fi
   echo "PID $(dirname "${{p#runs/}}") $id $r"; done
-find runs -name .git -type f 2>/dev/null | while read g; do d=$(dirname "$g")
-  git -C "$d" status --porcelain -uall --ignored | sed "s|^|FILE $d |"; done
-git -C "$C" stash list | sed 's/^/STASH /'
-git -C "$C" for-each-ref --format='%(refname:short) %(objectname)' refs/heads | while read b s; do
-  echo "BRANCH $b $(git -C "$C" rev-list --count "$s" --not $known)"; done''', input=tips + "\n")
+gits=$(find runs -name .git -type f 2>&1) || echo "ERR find: $gits"
+for g in $gits; do d=$(dirname "$g")
+  st=$(git -C "$d" status --porcelain -uall --ignored 2>&1) || {{ echo "ERR status of $d: $st"; continue; }}
+  printf '%s\\n' "$st" | sed "s|^|FILE $d |"; done
+st=$(git -C "$C" stash list 2>&1) || echo "ERR stash list: $st"
+[ -z "$st" ] || printf '%s\\n' "$st" | sed 's/^/STASH /'
+bs=$(git -C "$C" for-each-ref --format='%(refname:short) %(objectname)' refs/heads 2>&1) || echo "ERR branches: $bs"
+printf '%s\\n' "$bs" | while read b s; do [ -n "$b" ] || continue
+  n=$(git -C "$C" rev-list --count "$s" --not $known 2>&1) || {{ echo "ERR commits of $b: $n"; continue; }}
+  echo "BRANCH $b $n"; done
+exit 0''', input=tips + "\n")
+    if out.returncode or "\nERR " in "\n" + out.stdout:
+        error = next((line[4:] for line in out.stdout.splitlines() if line.startswith("ERR ")), _last(out.stderr))
+        raise box.ProviderError("inspect", error)
     found: dict[str, Any] = {"running": None, "files": {}, "stash": [], "branches": []}
     for line in out.stdout.splitlines():
         kind, _, rest = line.partition(" ")
@@ -155,7 +181,7 @@ def off(top: Path, saved: dict[str, Any], yes: bool) -> int:
     try:
         found = _holds(top, saved)
     except box.ProviderError as error:
-        _refuse(f"Could not {'delete' if yes else 'read'} {folder} on {host}: {error.message}.", "forge lanes --box off")
+        _refuse(f"Could not {'delete' if yes and error.code == 'ssh' else 'read'} {folder} on {host}: {error.message}.", "forge lanes --box off")
     if found["running"]:
         item, pid = found["running"]
         _refuse(f"A round of {item} still runs on {host} (process {pid}); turn off after it ends.",

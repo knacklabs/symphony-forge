@@ -115,6 +115,12 @@ class Host:
     def down(self, on: bool = True) -> None:
         (self.folder / "down").touch() if on else (self.folder / "down").unlink()
 
+    def no_git(self, on: bool = True) -> None:
+        if on:
+            self.program("git", "exit 127")
+        else:
+            (self.home / ".local/bin/git").unlink()
+
     def fail(self, word: str) -> None:
         (self.folder / f"fail-{word}").touch()
 

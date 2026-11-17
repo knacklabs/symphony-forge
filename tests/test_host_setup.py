@@ -14,13 +14,17 @@ pytestmark = pytest.mark.skipif(os.name == "nt", reason="the test machine runs s
 STORY = "REMOTE-1"
 
 
-def _repo(repo, monkeypatch, sdk_data, boxes="ssh"):
+def _env(repo, monkeypatch, sdk_data):
     _install(repo.bin, "codex-app-server",
              (ROOT / "tests/stubs/codex-app-server").read_text(encoding="utf-8"))
     monkeypatch.setenv("CODEX_BIN", str(repo.bin / "codex-app-server"))
     monkeypatch.setenv("XDG_DATA_HOME", str(sdk_data))
+
+
+def _repo(repo, monkeypatch, sdk_data):
+    _env(repo, monkeypatch, sdk_data)
     version = repo.forge("--version").stdout.split()[-1]
-    repo.write("forge.toml", f'version = "{version}"\nrepo = "client"\nboxes = "{boxes}"\n')
+    repo.write("forge.toml", f'version = "{version}"\nrepo = "client"\nboxes = "ssh"\n')
     repo.git("add", "forge.toml")
     repo.git("commit", "-qm", "Turn on a machine you own")
     repo.git("push", "-q", "origin", "main")
@@ -37,7 +41,11 @@ def _clone(host) -> Path:
 
 def test_1_setup_checks_the_machine_and_says_what_is_missing(repo, monkeypatch, sdk_data):
     version = _repo(repo, monkeypatch, sdk_data)
+    odd = repo.path.parent / "a$(touch pwned)b"  # a checkout name with shell syntax in it
+    repo.path.rename(odd)
+    repo.path = odd
     host = machine(repo)
+    (host.home / ".gitconfig").write_text(f"[core]\n\thooksPath = {host.home / 'shared-hooks'}\n", encoding="utf-8")
     done = _setup(repo)
     assert done.returncode == 1 and "Name your machine: forge lanes --box setup --host" in done.stderr
     done = _setup(repo, "--host=-oProxyCommand=x")
@@ -45,6 +53,10 @@ def test_1_setup_checks_the_machine_and_says_what_is_missing(repo, monkeypatch, 
     assert host.calls() == []
     done = _setup(repo, "--host", "nowhere")
     assert "Forge cannot reach nowhere with ssh: ssh: Could not resolve hostname nowhere" in done.stderr
+    host.no_git()
+    done = _setup(repo, "--host", "devbox")
+    assert "devbox has no git." in done.stderr and "Next: install git on devbox" in done.stderr
+    host.no_git(False)
     host.forge(version="v0.0.1")
     done = _setup(repo, "--host", "devbox")
     assert f"devbox has Forge v0.0.1, and this repo pins Forge {version}." in done.stderr
@@ -53,11 +65,14 @@ def test_1_setup_checks_the_machine_and_says_what_is_missing(repo, monkeypatch, 
     done = _setup(repo, "--host", "devbox")
     assert "Codex is not signed in on devbox." in done.stderr and "codex login --device-auth" in done.stderr
     host.sign_in()
+    host.fail(f"openai-codex=={PIN}")  # the connection drops during the install
+    done = _setup(repo, "--host", "devbox")
+    assert "The Codex kit install on devbox failed: ssh: connect to host devbox failed." in done.stderr
+    assert "Traceback" not in done.stderr
     done = _setup(repo, "--host", "devbox")
     assert f"Installing the Codex kit {PIN} on devbox with uv (about 300 MB)." in done.stdout
     steps = (host.home / "uv.log").read_text("utf-8").splitlines()
     assert steps[0].startswith("venv --python 3.11") and f"openai-codex=={PIN}" in steps[1]
-    print("STDERR", done.stderr, done.stdout)
     clone = _clone(host)
     assert f"Codex on devbox does not trust {clone}" in done.stderr
     assert str(host.home / ".codex/config.toml") in done.stderr
@@ -84,10 +99,21 @@ def test_1_setup_checks_the_machine_and_says_what_is_missing(repo, monkeypatch, 
     misuse = repo.forge("lanes", "--host", "devbox")
     assert "Use --host only with --box setup." in misuse.stderr
     assert not any("auth.json" in call for call in host.calls())
+    assert not list(host.home.rglob("pwned"))
 
 
-def test_5_rounds_on_a_machine_are_off_until_turned_on_and_off_deletes_forges_folder(repo, monkeypatch, sdk_data):
-    version = _repo(repo, monkeypatch, sdk_data, boxes="off")
+def test_5_rounds_on_a_machine_are_off_until_turned_on_and_off_deletes_forges_folder(repo, gh, monkeypatch, sdk_data):
+    _env(repo, monkeypatch, sdk_data)
+    client, remote = repo.path.parent / "client", repo.path.parent / "client.git"
+    repo.git("init", "-q", "--bare", "-b", "main", str(remote))
+    repo.git("init", "-q", "-b", "main", str(client))
+    repo.git("remote", "add", "origin", str(remote), cwd=client)
+    repo.path = client
+    repo.write("package.json", '{"scripts":{"test":"node --test"}}\n')
+    gh.respond("api", stdout="{}")
+    assert repo.forge("init", "--actions", "yes").returncode == 0
+    settings = (client / "forge.toml").read_text("utf-8")
+    assert "boxes" not in settings
     host = machine(repo)
     host.sign_in()
     done = _setup(repo, "--host", "devbox")
@@ -95,7 +121,7 @@ def test_5_rounds_on_a_machine_are_off_until_turned_on_and_off_deletes_forges_fo
     for guide in (".claude", ".codex"):
         text = (ROOT / guide / "skills/forge/SKILL.md").read_text("utf-8")
         assert "### Build rounds on a machine you own" in text
-    repo.write("forge.toml", f'version = "{version}"\nrepo = "client"\nboxes = "ssh"\n')
+    repo.write("forge.toml", 'boxes = "ssh"\n' + settings)
     first = _setup(repo, "--host", "devbox")
     host.trust(str(_clone(host)))
     assert _setup(repo, "--host", "devbox").returncode == 0, first.stderr
@@ -104,10 +130,12 @@ def test_5_rounds_on_a_machine_are_off_until_turned_on_and_off_deletes_forges_fo
     # a round that still runs, recorded in a .pid file
     runs = folder / "runs/TASK-ONE"
     runs.mkdir(parents=True)
+    (runs / "a1.py").write_text("", encoding="utf-8")  # a round's driver file sits beside its pid file
     sleeper = subprocess.Popen(["sleep", "30"], start_new_session=True)
     try:
         start = " ".join(subprocess.run(["ps", "-o", "lstart=", "-p", str(sleeper.pid)],
-                                        capture_output=True, text=True).stdout.split())
+                                        capture_output=True, text=True,
+                                        env={**os.environ, "LC_ALL": "C"}).stdout.split())  # as a round records it
         (runs / "a1.pid").write_text(f"{sleeper.pid} {start}\n", encoding="utf-8")
         for args in (["--box", "off"], ["--box", "off", "--yes"]):
             done = repo.forge("lanes", *args)
@@ -121,7 +149,7 @@ def test_5_rounds_on_a_machine_are_off_until_turned_on_and_off_deletes_forges_fo
         sleeper.wait()
     (runs / "a1.pid").unlink()
     # things only on the machine
-    host.git("-C", str(clone), "fetch", "-q", str(repo.path), "main")
+    host.git("-C", str(clone), "fetch", "-q", str(repo.path), "HEAD")
     run = runs / "a1"
     host.git("-C", str(clone), "worktree", "add", "-q", "-f", "-b", "task/TASK-ONE", str(run), "FETCH_HEAD")
     host.run(f"cd {run} && printf 'notes.txt\\nnode_modules/\\n' >> $(git rev-parse --git-common-dir)/info/exclude"
@@ -129,6 +157,7 @@ def test_5_rounds_on_a_machine_are_off_until_turned_on_and_off_deletes_forges_fo
              " && echo s > kept.py && git add kept.py && git stash -q"
              " && echo c > c.py && git add c.py && git -c user.name=x -c user.email=x@x commit -q --no-verify -m c")
     (run / "loose.py").write_text("u\n", encoding="utf-8")
+    host.run(f"mkdir -p {run}/tmp/pids && echo 1 > {run}/tmp/pids/server.pid")  # an app's pid file is not a round's
     listed = repo.forge("lanes", "--box", "off")
     assert listed.returncode == 0 and folder.exists(), listed.stderr
     assert f"Turning off deletes Forge's folder {folder} on devbox, with everything in it:" in listed.stdout
@@ -136,8 +165,13 @@ def test_5_rounds_on_a_machine_are_off_until_turned_on_and_off_deletes_forges_fo
     assert "stash" in listed.stdout
     assert "task/TASK-ONE: 1 commits that have not come back" in listed.stdout
     assert "Next: forge lanes --box off --yes, once the developer agrees" in listed.stdout
+    host.no_git()  # work that cannot be inspected is never deleted
+    done = repo.forge("lanes", "--box", "off", "--yes")
+    assert done.returncode == 1 and f"Could not read {folder} on devbox:" in done.stderr and folder.exists()
+    host.no_git(False)
     done = repo.forge("lanes", "--box", "off", "--yes")
     assert done.returncode == 0, done.stderr
+    assert "Turning off deletes" in done.stdout and "loose.py" in done.stdout and "task/TASK-ONE: 1 commits" in done.stdout
     assert f"Deleted Forge's folder {folder} on devbox." in done.stdout
     assert not (host.home / "forge-host" / folder.name).exists()
     again = repo.forge("lanes", "--box", "off")
