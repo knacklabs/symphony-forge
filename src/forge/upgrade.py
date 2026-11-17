@@ -248,6 +248,10 @@ def upgrade(args: argparse.Namespace) -> int:
     return repo.run_release(release, ["close", name], path)
 
 
+CODEX_INSTALL = ("irm https://chatgpt.com/codex/install.ps1 | iex" if os.name == "nt"
+                 else "curl -fsSL https://chatgpt.com/codex/install.sh | sh")  # OpenAI's standalone installer
+
+
 def _codex_command() -> list[str] | None:
     """The update for the Codex on PATH, from where its real path says it was installed."""
     found = shutil.which("codex")
@@ -262,8 +266,10 @@ def _codex_command() -> list[str] | None:
         prefix = real.parent
     elif {"Cellar", "Caskroom"} & set(parts):
         return ["brew", "upgrade", "codex"]
-    elif "standalone" in parts:  # OpenAI's own installer; Codex updates itself
-        return ["codex", "update"]
+    elif "standalone" in parts:  # OpenAI's own installer; only newer Codex has `update`
+        # --help starts no session; never pass `update` blind, an old Codex reads it as a prompt.
+        helped = repo.run("codex", "--help", timeout=30)
+        return ["codex", "update"] if re.search(r"^\s+update\b", helped.stdout, re.M) else None
     else:
         return None
     # --prefix updates the npm copy that is first on PATH, not npm's current global folder.
@@ -295,7 +301,7 @@ def _update_tools() -> None:
                 # Keep this PATH: sudo's own would not find claude or npm.
                 where, lead = (("run this in an administrator terminal", "") if os.name == "nt"
                                else ("run", 'sudo env PATH="$PATH" '))
-        text = lead + " ".join(map(repo.quote, command or ["codex", "update"]))
+        text = lead + (" ".join(map(repo.quote, command)) if command else CODEX_INSTALL)
         print(f"{name} was not updated ({reason}). To update it, {where}: {text}", flush=True)
 
 

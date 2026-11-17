@@ -23,12 +23,15 @@ here = pathlib.Path(__file__).resolve().parent
 version = here / "{name}-version"
 if sys.argv[1:] == ["--version"]:
     print("{name} " + version.read_text().strip())
+elif sys.argv[1:] == ["--help"]:
+    print("Commands:\\n  update  Update {name}")
 elif sys.argv[1:] == ["update"]:
     here.joinpath("calls").open("a").write("update\\n")
     if (here / "{name}-fails").exists():
         sys.exit("error: EACCES permission denied, try sudo")
     version.write_text("{new}")
 """
+INSTALL = "irm https://chatgpt.com/codex/install.ps1 | iex" if os.name == "nt" else "curl -fsSL https://chatgpt.com/codex/install.sh | sh"
 symlinks = pytest.mark.skipif(os.name == "nt", reason="needs symlinks")
 
 
@@ -109,4 +112,27 @@ def test_2_a_failed_update_prints_a_command_to_paste_and_the_upgrade_goes_on(up,
               else 'run: sudo env PATH="$PATH" claude update')
     assert f"Claude Code was not updated (error: EACCES permission denied, try sudo). To update it, {to_run}" in lines
     assert ("Codex CLI was not updated (Forge could not tell which installer put it there). "
-            "To update it, run: codex update") in lines
+            f"To update it, run: {INSTALL}") in lines
+
+
+@symlinks
+def test_3_an_old_standalone_codex_without_update_is_not_run_and_gets_the_install_line(
+        up, tmp_path, monkeypatch):
+    real, found, _ = layout("standalone", tmp_path)
+    real.mkdir(parents=True)
+    # An old Codex reads `update` as a prompt: it logs every call and has no update command.
+    conftest._install(real, "codex", f"""#!{sys.executable}
+import pathlib, sys
+pathlib.Path({str(real / "calls")!r}).open("a").write(" ".join(sys.argv[1:]) + "\\n")
+print("codex-cli 0.125.0" if sys.argv[1:] == ["--version"] else "Commands:\\n  exec  Run non-interactively")
+""")
+    found.mkdir()
+    (found / "codex").symlink_to(real / "codex")
+    on_path(monkeypatch, found)
+
+    done = up.run(RELEASE)
+
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "update" not in (real / "calls").read_text().split()
+    assert ("Codex CLI was not updated (Forge could not tell which installer put it there). "
+            f"To update it, run: {INSTALL}") in done.stdout.splitlines()
