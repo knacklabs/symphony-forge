@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/review.py\tNot done: A docs-only change with a clean light review passes forge-pr-check with an older event base\tdocs-only-light-review-older-base",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 172,
+      "text": "Not done: A docs-only change with a clean light review passes forge-pr-check with an older event base",
+      "from": "blocking",
+      "item": "docs-only-light-review-older-base",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tNot done: A sign-off merged to the default branch after the review still makes a light prototype review stale\tdocs-only-light-review-older-base",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 182,
+      "text": "Not done: A sign-off merged to the default branch after the review still makes a light prototype review stale",
+      "from": "blocking",
+      "item": "docs-only-light-review-older-base",
+      "status": "done",
+      "closed_by": "dismissed"
+    }
+  ]
+}

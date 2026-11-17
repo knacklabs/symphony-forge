@@ -1,0 +1,81 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/task.py\tA carried idea lets forge land skip building the next fix\ta-fix-that-changes-a-forge-toml-test-set",
+      "kind": "bug",
+      "path": "src/forge/task.py",
+      "line": 746,
+      "text": "A carried idea lets forge land skip building the next fix",
+      "from": "blocking",
+      "item": "a-fix-that-changes-a-forge-toml-test-set",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/task.py\tGive a usable next step when main already contains the fix\ta-fix-that-changes-a-forge-toml-test-set",
+      "kind": "bug",
+      "path": "src/forge/task.py",
+      "line": 754,
+      "text": "Give a usable next step when main already contains the fix",
+      "from": "blocking",
+      "item": "a-fix-that-changes-a-forge-toml-test-set",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/task.py\tNot done: A settings fix can reach Ready after its change is lost\ta-fix-that-changes-a-forge-toml-test-set",
+      "kind": "bug",
+      "path": "src/forge/task.py",
+      "line": 750,
+      "text": "Not done: A settings fix can reach Ready after its change is lost",
+      "from": "blocking",
+      "item": "a-fix-that-changes-a-forge-toml-test-set",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_close_keeps_fix_settings.py\tGate: tests/test_close_keeps_fix_settings.py::test_1_close_keeps_the_fix_test_setting_after_main_moves_the_pin\ta-fix-that-changes-a-forge-toml-test-set",
+      "kind": "bug",
+      "path": "tests/test_close_keeps_fix_settings.py",
+      "line": 26,
+      "text": "Gate: tests/test_close_keeps_fix_settings.py::test_1_close_keeps_the_fix_test_setting_after_main_moves_the_pin",
+      "from": "blocking",
+      "item": "a-fix-that-changes-a-forge-toml-test-set",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/close.py\tClose counts every plans/ file as records and skips review, while a fix may ship plans docs as its work.",
+      "kind": "edge",
+      "path": "src/forge/close.py",
+      "line": 299,
+      "text": "Close counts every plans/ file as records and skips review, while a fix may ship plans docs as its work.",
+      "from": "worker",
+      "item": "a-fix-that-changes-a-forge-toml-test-set",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/close.py\tTasks (not fixes) can still print \"nothing to review\" and reach Ready when a merge removed their change.",
+      "kind": "edge",
+      "path": "src/forge/close.py",
+      "line": 301,
+      "text": "Tasks (not fixes) can still print \"nothing to review\" and reach Ready when a merge removed their change.",
+      "from": "worker",
+      "item": "a-fix-that-changes-a-forge-toml-test-set",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/task.py\tFollow-up: Tasks can reach Ready after their changes are removed",
+      "kind": "edge",
+      "path": "src/forge/task.py",
+      "line": 750,
+      "text": "Follow-up: Tasks can reach Ready after their changes are removed",
+      "from": "review",
+      "item": "a-fix-that-changes-a-forge-toml-test-set",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

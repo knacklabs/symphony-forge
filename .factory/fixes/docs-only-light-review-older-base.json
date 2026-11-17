@@ -1,0 +1,96 @@
+{
+  "base": "a7295f334a225f95fa55738cc41b8e0543789ad1",
+  "branch": "fix/docs-only-light-review-older-base",
+  "done_when": "A docs-only change with a clean light review passes forge-pr-check when its event base is older than the default branch it merged, while a sign-off merged to the default branch after the review still makes a light prototype review stale",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "blocking_level() in src/forge/review.py",
+      "file": "src/forge/review.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 182,
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: The owner accepted: the hand-set allowance case stays a known issue",
+      "round": 1,
+      "security": false,
+      "title": "Not done: A sign-off merged to the default branch after the review still makes a light prototype review stale",
+      "work": 2
+    },
+    {
+      "area": "fingerprint() in src/forge/review.py",
+      "file": "src/forge/review.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 172,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: A docs-only change with a clean light review passes forge-pr-check with an older event base",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "b28e3e6f506389356268e8531d410cda3b418d9b1f1f7e1a4c59d57396dba1ea",
+    "changed": "edce4cd190c93e08f91faf1e2963d54c3368345de3c57597e750ef553b5a56e6",
+    "commit": "0424a03e88473c05cf5967555dca4d6f931a0ffb",
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: The owner accepted: the hand-set allowance case stays a known issue",
+        "finding": 1
+      }
+    ],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done\nCase: normal use - A coordinator records another allowance for a prototype fix, then closes a README-only change. `forge fix allow-large` replaces the automatic prototype allowance (src/forge/task.py:712-713, 721-735), but the docs-only path still selects a light review and `review.run` uses the restricted prototype prompt (src/forge/review.py:861-863). After sign-off lands, this return still selects P0 solely because the change is docs-only, so the fingerprint remains valid and forge-pr-check accepts the pre-sign-off review. The new sign-off test covers only the automatic allowance (tests/test_prcheck_light_review_older_base.py:43).",
+        "file": "src/forge/review.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 183,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: A sign-off merged to the default branch after the review still makes a light prototype review stale",
+        "work": 2
+      }
+    ],
+    "id": "6809cd3b-004a-4fb8-86be-5483806f2504",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-16T10:53:33.864967+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-16T22:59:37.770179+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-17T01:25:21.124880+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-17T01:25:21.125228+00:00",
+    "by": "owner",
+    "choice": "accept",
+    "file": "src/forge/review.py",
+    "reason": "The owner accepted: the hand-set allowance case stays a known issue",
+    "wait_id": "2d8ba8c4-f4f8-4629-adcc-6cdb9a367e24",
+    "worker_round": 2
+  },
+  "stuck": {
+    "close": "e257747f-37b1-46b0-a8fd-a86585f5f025",
+    "head": "e59183ad1b13595be7dff483292f27a0e10c298f",
+    "keys": {},
+    "round": 1
+  },
+  "why": "forge-pr-check can still call a clean light review out of date for a docs-only change that merged a newer default-branch commit with code changes, when the check's event base is older: prcheck passes the older event base to blocking_level (src/forge/review.py about 172, src/forge/docskip.py about 113), so the unrelated default-branch code counts in the docs-only classification and the light review looks no longer allowed. Part of client issue #1594, left by the owner's accept on 16 Nov 2026.",
+  "worker": "claude"
+}
