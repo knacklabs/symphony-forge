@@ -1,0 +1,15 @@
+{
+  "base": "a512238b63015714e7f59305c3b839d01074dc77",
+  "branch": "fix/main-is-red-since-the-typescript-7-part",
+  "done_when": "tests/test_render_check.py type-checks with the same TypeScript 7 compiler the app's own type check uses, and passes on main",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-17T16:59:47.047686+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Main is red since the TypeScript 7 part merged: tests/test_render_check.py runs apps/web/node_modules/typescript/bin/tsc, but typescript now points at the TypeScript 6 package for tools, so that path no longer exists. The app's own type check runs TypeScript 7 (the @typescript/native alias)."
+}
