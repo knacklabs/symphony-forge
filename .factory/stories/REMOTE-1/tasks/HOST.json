@@ -171,7 +171,7 @@
     "status": "blocked"
   },
   "round": 2,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-17T13:39:44.494005+00:00",
@@ -187,9 +187,13 @@
     }
   ],
   "stop": {
+    "by": "owner",
+    "choice": "same",
     "question": "Codex build rounds run on a machine you own: A developer sets up and turns off their own machine is stuck. It should deliver: The `boxes` setting with `\"ssh\"`; `box.py` with `ProviderError`, `PROVIDERS`, `provider`, `record`, `save` and `command`; `box_ssh.py` with the places, `SSH`, `ssh`, `setup` and `off`; `forge lanes --box {setup,off}` with `--host` and `--yes` and its listing row; the test machine; the guide's setup and turn-off text\nTwo rounds in a row left the open P0 data loss: do not treat an unverified process identity as finished in src/forge/box_ssh.py.\nThe worker tried: Review of REMOTE-1/HOST: blocked; Fix the eight review findings on machine setup and turn-off.\nChoose one: switch this item to Codex; keep Claude for one more round; or narrow or split it.",
+    "reason": "Owner chose one more round on the same builder: fix all four turn-off findings",
     "tool": "claude",
-    "wait_id": "001481f6-2e9c-4567-aa89-2db3332fe572"
+    "wait_id": "001481f6-2e9c-4567-aa89-2db3332fe572",
+    "worker_round": 2
   },
   "stuck": {
     "close": "ebbf9e0f-ad90-4ed6-b717-37ad91d711dc",
