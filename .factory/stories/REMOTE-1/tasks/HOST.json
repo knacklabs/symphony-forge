@@ -140,7 +140,7 @@
     "id": "01884d1c-e586-4ab6-8b31-d41751334102",
     "status": "blocked"
   },
-  "round": 4,
+  "round": 5,
   "status": "fixing",
   "steps": [
     {
@@ -164,22 +164,13 @@
       "step": "review"
     }
   ],
-  "stop": {
-    "by": "owner",
-    "choice": "same",
-    "question": "Codex build rounds run on a machine you own: A developer sets up and turns off their own machine is stuck. It should deliver: The `boxes` setting with `\"ssh\"`; `box.py` with `ProviderError`, `PROVIDERS`, `provider`, `record`, `save` and `command`; `box_ssh.py` with the places, `SSH`, `ssh`, `setup` and `off`; `forge lanes --box {setup,off}` with `--host` and `--yes` and its listing row; the test machine; the guide's setup and turn-off text\nTwo rounds in a row left the open P0 data loss: do not treat an unverified process identity as finished in src/forge/box_ssh.py.\nThe worker tried: Count a round as ended only with proof.\nChoose one: switch this item to Codex; keep Claude for one more round; or narrow or split it.",
-    "reason": "Owner chose a done file in place of all process checks",
-    "tool": "claude",
-    "wait_id": "7e337c6d-9df1-4c75-8bc3-79d2c05b529c",
-    "worker_round": 4
-  },
   "stuck": {
-    "close": "7e803ab1-634f-44e9-8a8a-19a13a847467",
-    "head": "35203e118295f9094bd76ea471228297814252bf",
+    "close": "386ad8b1-8b85-4b71-9e56-850747589fb5",
+    "head": "ae421a11b69aa6012df8384552a2d17bc4c62e14",
     "keys": {
-      "the open P0 data loss: do not treat an unverified process identity as finished in src/forge/box_ssh.py": 3
+      "the open P0 data loss: do not treat an unverified process identity as finished in src/forge/box_ssh.py": 4
     },
-    "round": 3
+    "round": 4
   },
   "worker": "claude"
 }
