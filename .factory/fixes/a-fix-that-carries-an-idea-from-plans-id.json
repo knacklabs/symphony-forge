@@ -87,7 +87,7 @@
     "id": "8aac73c8-d76a-4409-9ae1-d8a62245dfb5",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -109,10 +109,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": null,
-    "head": "c1a49695e63c56c27ce14e0b83c9537535c96fac",
+    "close": "dc58a595-d80f-4095-866a-12330da95fbc",
+    "head": "2d71ea87e9367fb2266cbd2b62b51a59871f2ff8",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "A fix that carries an idea from plans/ideas.md can count as already built, so forge land skips the build step and close reviews only records.",
   "worker": "claude"
