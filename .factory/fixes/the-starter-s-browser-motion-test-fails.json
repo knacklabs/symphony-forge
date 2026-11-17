@@ -11,7 +11,7 @@
       "gain": 4,
       "harm": 1,
       "line": 42,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -24,7 +24,7 @@
       "gain": 4,
       "harm": 1,
       "line": 42,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -47,47 +47,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "7b8a7aff2823ce19ea5a901b33bc38faf035b577a66965c6f094f09aae950605",
+    "branch_diff": "8d380a3dca7607a8201e5e83a778c86500a71c09c5d308abe0f884ec759b7af9",
     "changed": "c6826d5062164945386f3d75a951f04766a057e0f4c21c442a2a02df3e51877d",
-    "commit": "1b471cd5a65bae9887b4167051e5b536a5476f9c",
+    "commit": "73bdcbcb9ff5a90b1287a4b6000e58384c6f8d17",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 1, Harm 1\nRaise: Gate\nCase: normal use - reviewing the starter fix before merge.\nThe supplied proof list is `missing`, so it does not map either the Starter smoke workflow or the slide and zoom transform checks to their proofs. The workflow and browser test exist, but the required mapping is absent. Record the proofs for both parts of the Done-when item.",
-        "file": "src/forge/templates/starter/apps/web/e2e/motion.spec.ts",
-        "gain": 4,
-        "harm": 1,
-        "line": 42,
-        "priority": "P1",
-        "title": "Gate: proof list",
-        "work": 1
-      },
-      {
-        "body": "Gain 4, Work 1, Harm 1\nRaise: Gate\nCase: normal use - a team creates a starter app or upgrades an existing one.\nThe branch does not state which repos receive the corrected test. New starter apps copy it through `src/forge/init.py:202-219`, while `tests/test_noscreens_starters.py:86-93` shows that sync leaves existing app files alone, so an upgraded app retains its earlier motion test. State these outcomes so existing users do not assume the upgrade repaired their test.",
-        "file": "src/forge/templates/starter/apps/web/e2e/motion.spec.ts",
-        "gain": 4,
-        "harm": 1,
-        "line": 42,
-        "priority": "P1",
-        "title": "Gate: State what new and upgraded client repos receive",
-        "work": 1
-      },
-      {
-        "body": "Gain 1, Work 1, Harm 1\nThe branch's commits do not record the three requested approach lines before the code change, leaving the choice of the animation-finished wait without the required comparison of alternatives and existing code.\nAdds work: record the three approach lines; F 1 x H 1 = 1; 2 x C = 2",
-        "file": "src/forge/templates/starter/apps/web/e2e/motion.spec.ts",
-        "gain": 1,
-        "harm": 1,
-        "line": 42,
-        "priority": "P2",
-        "title": "Simpler: Missing approach \u2192 record the need, simplest option and reuse",
-        "work": 1
-      }
-    ],
-    "id": "ac7629d1-f359-4158-9c0a-271371253128",
-    "status": "blocked"
+    "findings": [],
+    "id": "37030598-8ce6-451b-82fc-fc59cdd2a41b",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-17T14:48:51.222727+00:00",
@@ -95,6 +64,10 @@
     },
     {
       "at": "2026-11-17T16:04:01.843756+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-17T16:13:49.679358+00:00",
       "step": "review"
     }
   ],
