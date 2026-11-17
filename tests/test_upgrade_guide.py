@@ -15,8 +15,8 @@ def _section(path: str, heading: str) -> str:
 
 
 def test_4_readme_and_guide_upgrade_with_the_one_command():
-    for path, heading in (("README.md", "### Upgrade a project"),
-                          ("docs/guide.md", "## Upgrading a repo")):
+    # The README now links to the guide for upgrades; the guide owns the upgrade steps.
+    for path, heading in (("docs/guide.md", "## Upgrading a repo"),):
         section = _section(path, heading)
         assert "`forge upgrade <release>`" in section, path
         assert 'forge fix start "Upgrade Forge' not in section, path

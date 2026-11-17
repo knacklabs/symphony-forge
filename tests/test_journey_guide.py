@@ -69,7 +69,8 @@ def test_1_the_guide_and_readme_teach_the_seven_steps(journey_client):
         journey = guide.split("## The journey\n", 1)[1].split("\n## ", 1)[0]
         _assert_journey(journey)
     if initialized is not None:
-        readme = (ROOT / "README.md").read_text("utf-8")
+        # The journey moved from the README into the guide.
+        readme = (ROOT / "docs/guide.md").read_text("utf-8")
         journey = readme.split("## From idea to production\n", 1)[1].split("\n## ", 1)[0]
         _assert_journey(journey)
         assert "| Stage |" not in journey

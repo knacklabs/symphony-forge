@@ -1,309 +1,143 @@
 # Symphony Forge
 
-Forge takes a change from an idea to a merged pull request. An AI coding agent, Claude Code or
-Codex, does the work: it plans, writes the code, runs the tests and gets it reviewed. You stay in
-charge of the decisions: what gets built, which option to pick, and when it goes in.
+[![Release](https://img.shields.io/github/v/release/knacklabs/symphony-forge)](https://github.com/knacklabs/symphony-forge/releases/latest)
+[![Tests](https://github.com/knacklabs/symphony-forge/actions/workflows/forge.yml/badge.svg)](https://github.com/knacklabs/symphony-forge/actions/workflows/forge.yml)
+[![License: MIT](https://img.shields.io/github/license/knacklabs/symphony-forge)](LICENSE)
 
-A *pull request* is a proposed change to the code that gets checked before it is added.
-*Merging* it is the moment the change becomes part of the real project.
+Forge is a command-line tool that takes a change from an idea to a merged pull request. Your
+coding agent, Claude Code or Codex, does the work. You make the decisions.
 
-[![Highlights from the explainer; tap to watch it with sound](https://github.com/knacklabs/symphony-forge/releases/download/v1.1.0/forge-explainer-preview.webp)](https://github.com/user-attachments/assets/1a7ec040-190e-4c14-9671-c2271ecedbf7)
+![Three requests become three changes that build in parallel, get a Codex review, are tested together once and merge](docs/assets/forge-demo.gif)
 
-## Where it comes from
-
-In April 2026 OpenAI published
-[*An open-source spec for Codex orchestration: Symphony*](https://openai.com/index/open-source-codex-orchestration-symphony/)
-([openai/symphony](https://github.com/openai/symphony)). Its idea: the slow part of building with
-AI agents was never the agents, it was people watching them. So stop supervising agent sessions
-one by one and hand them whole pieces of work instead. The spec is a description of the idea, not
-a tool.
-
-Symphony Forge is that idea made into a working tool. It keeps the core (you assign work, agents
-do it) and differs in three ways:
-
-| | Symphony (the spec) | Symphony Forge |
-|---|---|---|
-| **Who runs it** | Codex only | Claude Code or Codex plans with you; Codex workers build |
-| **Where the truth lives** | The issue tracker | The repo: plans, specs, decisions and each change's state |
-| **Checks before a change goes in** | Left open on purpose | One approval of the plan, an automatic review and green tests on every change |
-
-## Who it's for
-
-- **Developers:** every change runs in its own branch, and it isn't ready until the tests pass
-  and an automatic code review finds no serious problem. Nothing is committed straight to the
-  main branch.
-- **Product people who don't code:** you approve a short plan written in plain English, and
-  follow progress on a simple board page instead of in code.
-- **Vibe coders who build with AI:** you don't need to know git. Forge handles branches, commits
-  and pull requests for your agent, and tells you the next step whenever you're unsure.
-- **Salespeople starting a prototype:** follow the [Start a prototype](docs/start-a-prototype.md)
-  checklist from an empty repo to a live customer demo.
-
-## How it works
-
-After a new client's prototype is signed off, each story follows this loop:
-
-1. **A short story doc.** The agent writes one short page: what changes for you, why, when it's
-   done, and the tasks.
-2. **One independent read.** A second AI agent, not the one that wrote the plan, reads it cold
-   and points out problems. The plan is fixed once.
-3. **You approve once.** Nothing is built until you say yes.
-4. **The work runs on its own.** Each task gets its own branch (a separate line of work) and its
-   own folder, so tasks don't get in each other's way. A Codex or Claude worker writes the code.
-5. **Tests and review must pass.** An automatic code review runs, and the tests must be green.
-   Only then is the pull request marked ready.
-6. **It merges.** Before client sign-off, the agent merges ready prototype changes. After
-   sign-off, you click merge by default. Set `merge = "agent"` in the project's `forge.toml`
-   if you want the agent to run `forge merge` for each ready change instead.
-
-There are two sizes of change:
-
-- **Story:** a bigger change, one that touches an interface or more than five code files. It gets
-  the plan, the independent read and your approval.
-- **Fix:** a small change. It needs only a one-line reason and a "done when", but still gets its
-  own branch, the tests and the review.
-
-## How Forge weighs a note
-
-Two checks read your work before Forge ships it. The **cold read** reads the plan of a story
-before you approve it. The **code review** reads each change before it merges. Both checks use
-the same three scores and the same bar. Thus Forge judges a plan note and a code review note in the
-same way.
-
-### Three scores
-
-The reader gives each note three scores from 1 to 5. The scores are a judgement. They are not a
-measurement.
-
-| Score | 1 | 3 | 5 |
-|---|---|---|---|
-| **Gain**: how much the fix helps | the words of a sentence, or a rare case that no one named | one case that the "Done when" names does not work | security, data loss, or the main case of a "Done when" does not work |
-| **Work**: how much the fix costs | one line, no new test | one file and one test, less than one hour | a new module, a different platform, or a migration |
-| **Harm**: what breaks if the problem stays | no part breaks, and a revert removes the change | a change that people can see, and a revert removes it | a change that you cannot reverse: data, a migration, or a release that clients install |
-
-A note about security, data loss or a migration always gets Harm 4 or more. Forge sets this
-floor if the reader gave a lower Harm. Forge shows the reason, for example
-`Harm 4 (floor: security)`.
-
-### The bar
-
-| When | What occurs |
-|---|---|
-| Harm 4 or 5, or Gain 5 | The note stops the work. The worker fixes it now. |
-| Gain 4, or Gain 3 with Harm 3, and Work 1 or 2 | The worker fixes it in this round. |
-| Gain 4, or Gain 3 with Harm 3, and Work 3 or more | The note becomes a follow-up fix. The work continues. |
-| Other Gain 3 notes | The note becomes a follow-up fix, even at Work 1 or 2. The work continues. |
-| Gain 1 or 2 | Forge keeps the note in its record and does not fix it. |
-| Harm 3, and the note adds new scope or reverses your decision | The agent asks you. |
-
-A Gain 1 or 2 note never stops the work. This is true also when the reader calls the note
-serious. Only Harm 4 or more can stop the work for such a note.
-The Harm 4 or 5 and Gain 5 stop rule comes first. Below that rule, Gain 3 holds work only at
-Harm 3 with Work 1 or 2.
-
-A note with `Case: rare` never stops the work, whatever its scores. A note that stops work
-must name a case in normal use. A security hole or data loss that any user can reach is normal use.
-
-From code review round two, the review checks each earlier finding and raises new findings only for P0s in normal use.
-A fix that breaks the main path is a P0. At the round limit, open findings below P0 need your choice.
-Accept puts them in Known issues as follow-ups with your reason.
-
-A worker can decline a finding as "not worth the code" with a reason in a commit message.
-Forge records it as a follow-up, even if no code changed. A P0 stays open.
-Review rules and recorded owner decisions settle a question for later readers and reviewers.
-
-### Who decides
-
-- **The reader gives the scores.** The worker and the agent do not change a score.
-- **Forge applies the bar.** A plan passes its read, and a change is ready to merge, when no
-  note is at the bar.
-- **The agent decides small items.** The agent decides each note with Harm 1 or 2 that a revert
-  can remove. Then the agent tells you.
-- **You decide the other items.** The agent asks you about Harm 3 or more, about new scope
-  outside the approved "Done when", about your approval and merge steps, and about a change to a
-  decision that you made.
-
-### Forge keeps each note, and a settled note does not come back
-
-- **Forge keeps each note below the bar.** The read notes, the pull request and the record of
-  the item on the default branch show each note with its scores. Thus you can find a known
-  problem when a bug occurs later.
-- **A settled note stays settled.** You, the agent or Forge can settle a note. Each later read
-  and review gets the settled note as known and accepted. A reader can show the note again only
-  with new evidence of harm.
-- **The cold read gives its decisions to the code review.** If you accepted a plan note, the
-  code review does not show that note again.
-
-### When a loop stops
-
-A fix gets one review round. A story part gets two. At the limit, open findings below P0 stop the change.
-Forge asks: "One more round, split or accept?" Close, land and work show the same question until you answer.
-
-One more round gives the worker one more attempt. Split moves the open findings to a follow-up fix.
-Accept puts them in Known issues as follow-ups with your reason.
-A merge of the default branch or a clean review does not clear an unanswered stop.
-
-An open P0 returns to the worker. A P0 is a security hole, data loss or a broken main path.
-If the same P0 stays open for two worker rounds in a row, Forge stops with the stuck question.
-Work waits for your recorded choice of switch, same, narrow or split.
-
-`forge land` runs at most one fix round, including across session handbacks. If findings, tests
-or checks still need a worker, land stops. A review stop exits with status 3 and prints the
-question. Record the choice with `forge close <item> --resolve <more|split|accept> --reason
-"<human's choice>"`, then run land again.
-
-A cold read stops after round two when notes below P0 are still open, or when P0 notes are open
-in two rounds in a row. Forge asks: "One more round, split or accept?"
-Forge waits for your choice and never starts a third round by itself. Record your choice with
-`forge read <KEY or spec or decision> --resolve <accept|more|split> --reason "<human's choice>"`.
-
-A note from an earlier release of Forge has no scores. Forge judges that note as before, until
-the next read or review gives new scores.
-
-### Three examples
-
-1. **"The default test selection of close breaks Go repos."** Gain 3, Work 4, Harm 2. The fix
-   helps, but it needs the tools of a different language. The note becomes a follow-up fix, and
-   the change merges.
-
-2. **"The migration removes a column that contains data."** The reader gave Harm 2. Forge sets
-   Harm 4 (floor: migration). The note stops the merge until the worker fixes it.
-
-3. **"This sentence in the plan is not clear."** Gain 1, Work 1, Harm 1. Forge keeps the note in
-   the read notes and does not fix it. The plan goes to you for approval.
-
-## From idea to production
-
-This is the path for a new client project, from the first conversation to running in production.
-The agent starts as a forward deployed engineer (FDE): it learns the customer's problem and
-builds the smallest working prototype that tests it. A salesperson can start this work; a
-developer can take over using the discovery notes and answers page. To start one, follow the
-[prototype checklist](docs/start-a-prototype.md).
-
-1. **Ideas and client notes.** You give the agent the client notes or an idea, and it saves each note in `docs/context/` and reads them all before it asks anything. You can say: "Here are the client notes" or "I have an idea: <idea>".
-2. **Brief.** The agent writes `docs/product/BRIEF.md` from your notes and asks only about a point that changes a screen, a field or a flow. You can say: "The brief looks right" or "Change this in the brief: <change>".
-3. **Canvas design.** The agent makes the screens on a design canvas for the client to click through in Play mode, and you or the FDE approve the canvas. You can say: "Show me the screens" or "Change this screen: <change>".
-4. **Sign-off.** The agent runs the sign-off checks, then the client's named person approves the canvas and answers. A Build now or Later command is planned, not available. Tell the agent what work to start or defer. You can say: "Record the client approval, then plan the first change".
-5. **Build.** The agent plans stories and fixes, builds each one with its tests and a review, and merges it. You can say: "Build this next: <idea>" or "What is ready to merge?".
-6. **Deploy on Mainline.** When you ask, the agent sets up Mainline and deploys dev, and a person presses Promote in Mainline for production. You can say: "Deploy this on Mainline".
-7. **Run and improve.** People use the app, and each new request or problem goes back to step 5. You can say: "Users asked for <request>" or "This is broken: <problem>".
-
-**The cold read loop.** A reader who did not write the plan reads it cold and lists its gaps. The agent fixes the plan, and the reader reads it again. After two rounds that still have open notes, Forge stops and you choose: accept, read again, or split. It exists because a gap found in the plan costs minutes, but the same gap found in the code costs a build round.
-
-**The build and review loop.** A worker builds the part and its tests, then a separate review checks the change. A serious problem goes back to the worker for another round. A task gets two review rounds and a fix gets one. At the limit Forge stops and asks you, but a P0 problem keeps the loop going. It exists because a reviewer sees problems that the worker cannot see in its own work.
-
-**The CI checks.** GitHub runs the repo's checks on the pull request. Close waits while they are queued or running, and a red check goes back to the worker. They exist because the checks run the tests on a clean machine, the same way for every change.
-
-Before sign-off, the prototype uses fixes even when the work is larger than an ordinary fix.
-Each still goes through tests, review and a pull request. The agent confirms specs during this
-work, then adds them to the roadmap after sign-off.
-See [decision 0095](docs/decisions/0095-prototype-before-stories.md) for why this order replaces
-the earlier roadmap-before-sign-off order.
-
-## What you do vs what the agent does
+*Illustration of a real Forge flow, sped up: three changes build at the same time, Codex
+reviews what Claude built, and only the change with a real problem gets a second round.*
 
 You do three things:
 
-- **Approve** a story's plan.
-- **Choose** between options when the agent asks.
-- **Merge** the finished pull request after client sign-off, unless you let the agent do it
-  (`merge = "agent"`). The agent merges ready prototype changes before sign-off.
+- **Approve** the plan of a larger change.
+- **Choose** when the agent gives you options.
+- **Merge** the finished pull request yourself, or switch on agent merges once and let the agent merge it.
 
-The agent does everything else: the plan, the code, the tests, fixing what the review finds, and
-keeping Forge's settings file up to date.
+The agent does the rest. It writes the plan, has a second agent read it, builds each part in
+its own branch, runs the tests, gets a code review and fixes what the review finds.
 
-Not sure where things stand? Run `forge next`, or just ask your agent "what's next?". It says
-where things are in one sentence and gives the exact next step.
+## Quick start
 
-## Get started
+You need [git](https://git-scm.com/), the [GitHub CLI](https://cli.github.com/) signed in,
+[uv](https://docs.astral.sh/uv/), and Claude Code or Codex. Code reviews also need the
+Autoreview skill from [openclaw/agent-skills](https://github.com/openclaw/agent-skills), at the
+version Forge pins. When you ask your agent to set up Forge, its setup check names that version
+and where to install it. Forge runs on macOS, Linux and Windows.
 
-### What you need
+1. Install Forge. This is the only command you type:
 
-- **git**, which keeps track of changes.
-- **GitHub CLI** (`gh`), signed in with `gh auth login`.
-- **uv**, a tool that installs Python programs. Get it from
-  [docs.astral.sh/uv](https://docs.astral.sh/uv/).
-- **Python 3.11** or later. uv can install it for you.
-- **Claude Code and Codex.** With one tool selected, a separate reader on that tool reads plans.
-  With both selected, the first read uses the other installed tool, or your tool if the other
-  is unavailable. Later reads keep that reader while available. Canvas sign-off always needs
-  Codex, even in a Claude-only project.
+   ```sh
+   uv tool install --python 3.11 "git+https://github.com/knacklabs/symphony-forge@v1.2.41"
+   ```
 
-### Install
+2. Open Claude Code or Codex in your repo and say:
 
-```sh
-uv tool install --python 3.11 "git+https://github.com/knacklabs/symphony-forge@v1.2.41"
-```
+   > Set up Forge in this repo.
 
-Check it worked with `forge --version`. Each project pins the Forge version it uses, and Forge
-prints the exact install line if yours doesn't match.
+   The agent sets up the settings file, the agent instructions, the CI workflow and the git
+   hooks, and checks the setup. It works in an empty repo and in a repo that already has code.
 
-### Set up a project
+3. Then say what you want, in your own words:
 
-- **A new project:** create an empty repository on GitHub (no files yet), clone it, and run
-  `forge init` inside it. It writes Forge's settings, a starter docs folder and the agent
-  instructions, makes the first commit and protects the main branch.
-- **A project with an older, copied-in Forge:** run `forge migrate`. It moves you over in one
-  pull request.
-- **Every new copy of a project on your machine:** run `forge sync` once, then `forge doctor` to
-  check your setup. Doctor prints a fix for each problem it finds.
+   > The due-date filter shows yesterday's tasks. Fix it.
 
-### Upgrade a project
+   > What needs me?
 
-Tell your agent "upgrade Forge". It asks which release, recommending the newest, then runs
-`forge upgrade <release>` from the main branch with nothing uncommitted. That one command
-installs the release, has it refresh Forge's files for Claude Code and Codex (your own text and
-settings stay), and opens the upgrade's pull request, which merges like any other change. If it
-stops, its `Next:` line says what to do; running it again picks up where it stopped.
+If you do not code, give your agent the text in [Start with Claude](docs/start.md) and it sets
+up the computer for you.
 
-### Start working
+## How Forge checks the work
 
-Open Claude Code or Codex in the project and ask "what's next?", or run `forge next` yourself.
-Then describe the change you want.
+1. **The builder and the reviewer can be different models.** A Claude Code session can build
+   with its own Claude helpers, or hand the build to Codex. A Codex session can do the same the
+   other way round. In a new repo with both tools, code reviews run on Codex `gpt-6.1-terra` at
+   max effort. A plan read runs on the tool that is not the session's: Codex `gpt-6.1-terra` at
+   max effort from a Claude session, or Claude Sonnet 5.5 at high effort from a Codex session.
+   A Claude-only repo uses Claude Sonnet 5.5 at high effort for both.
+2. **Each change starts small.** In a new repo, the first build or fix round runs at low
+   effort: Claude Sonnet 5.5 or Codex `gpt-6.1-sol`. User-facing work uses the design settings,
+   which start higher. After a failed test, a blocking review finding or a failed
+   required check, the same builder continues at higher effort: high on Codex, xhigh on Claude.
+   The board shows "built at <effort>" for each round.
+3. **Only what matters gets fixed.** The review stops the work only for findings worth their
+   cost. Other notes become follow-ups or known issues. See
+   [how Forge weighs a note](docs/review-rules.md).
 
-## Contributing
+## How a change goes from idea to merge
 
-Clone this repository, then run `uv sync` and `uv run pytest` to run the tests. The Codex SDK is
-not needed for the tests. Start fixes with `forge fix start "<why>" --done "<done when>"` so the
-pull request uses a Forge branch; the pull-request check accepts only Forge branches.
+A *pull request* is a proposed change to the code. *Merging* it makes the change part of the
+project.
 
-Forge's own CI balances its test groups using the committed `.test_durations` file.
-Refresh it from the repository root after changes to slow tests:
+1. **Plan.** The agent writes one short page: what changes for you, why, when it is done, and
+   the tasks.
+2. **Cold read.** A second agent that did not write the plan reads it and lists the gaps. The
+   agent fixes the plan. By default there are at most two rounds.
+3. **Approve.** You approve the plan once. Nothing is built before that.
+4. **Build.** Each task gets its own branch and its own folder, so tasks do not get in each
+   other's way. A Claude or Codex worker writes the code and the tests.
+5. **Review and tests.** A separate code review reads the change, and the tests must pass. A
+   serious finding goes back to the worker. Only then is the pull request ready.
+6. **Merge.** You merge the pull request. Or you switch on agent merges yourself, once: run
+   `forge merge enable` in your own terminal, outside Claude Code or Codex, and merge the pull
+   request it opens ([merging](docs/guide.md#merging-a-ready-item)). After that, the agent merges
+   ready pull requests. In a client repo before the client's sign-off is accepted, the agent
+   merges ready changes by itself.
 
-```sh
-uv run --python 3.11 pytest tests -q -n auto -o faulthandler_timeout=120 --timeout=150 --timeout-method=thread --store-durations --clean-durations
-```
+Forge picks one of two sizes for each change:
 
-Commit the refreshed file after the full run passes. Check the latest CI run on all three
-platforms: each group, including setup, must finish within seven minutes on Ubuntu and macOS,
-and fourteen minutes on Windows (70% of its job limit). These settings affect only Forge's
-own repository; new and existing client repositories get no change.
+| | Story | Fix |
+|---|---|---|
+| **When** | The change touches an interface or more than five code files | A small change |
+| **Plan** | A plan, the cold read and your approval | One line of why and a "done when" |
+| **Build** | One branch for each task | One branch |
+| **Before merge** | Code review and passing tests | Code review and passing tests |
 
-## Commands you'll see
+## What you can see
 
-Your agent runs these for you. You'll see them in its messages.
+**The board.** Ask your agent to open the board. It is a live page on your computer that shows
+what is in progress, what waits for you and what has merged, in plain English.
 
-| Command | What it does |
-|---|---|
-| `forge start "<idea>"` | Chooses a fix, a plan, discovery or the idea list |
-| `forge next` | Says where things stand and gives the exact next step |
-| `forge board` | Opens a plain-English page showing the work and its progress |
-| `forge story new` | Starts a new story and its plan |
-| `forge read` | Runs the one independent read of a plan |
-| `forge task start` | Starts one task of an approved story in its own branch and folder |
-| `forge fix start` | Starts a small fix in its own branch and folder |
-| `forge work` | Has the worker build a task or fix, or fix what the review found |
-| `forge close` | Runs the review, waits for the tests, and marks the pull request ready |
-| `forge merge` | Merges a ready pull request, when the project allows the agent to merge |
-| `forge ask` | Asks Codex a quick read-only question about the code |
-| `forge doctor` | Checks your setup and says how to fix each problem |
+![The Forge board. This picture shows an earlier design of the board.](docs/assets/board.png)
 
-The full command list is in the [Forge guide](docs/guide.md#commands).
+**The Forge pane in Claude Code.** It shows the builds, tests and reviews that run on your
+computer now. You can open a run's output or stop a run. It was checked in a terminal. Nobody
+has checked it in the Claude desktop app yet.
+
+[Commands your agent runs](docs/commands.md)
+
+## Settings, starters and upgrades
+
+Your agent keeps Forge's one settings file, can start a new app from a starter, and upgrades
+Forge when you ask. The [guide](docs/guide.md) explains each one, and the
+[prototype checklist](docs/start-a-prototype.md) covers a new client app.
+
+## Where it comes from
+
+Forge builds on OpenAI's
+[Symphony spec](https://openai.com/index/open-source-codex-orchestration-symphony/)
+(April 2026): hand whole pieces of work to agents. Forge adds an approved plan, a code review
+and passing tests before each change merges.
 
 ## Learn more
 
-- [Forge guide](docs/guide.md): installing, every command, the two sizes of change, closing,
+- [Forge guide](docs/guide.md): installing, the flow, workers and models, closing, merging,
   upgrading and releasing.
+- [How Forge weighs a note](docs/review-rules.md): the scores, the bar and when a loop stops.
 - [Standards](src/forge/standards.md): the engineering rules every worker follows.
-- [Specs](docs/specs/): the detailed designs behind how Forge behaves, starting with
+- [Specs](docs/specs/): the designs behind how Forge behaves, starting with
   [Forge v1](docs/specs/lean-forge-v1.md).
+- [Release notes](https://github.com/knacklabs/symphony-forge/releases): what changed in each
+  release, and its known issues.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## License
+
+[MIT](LICENSE)

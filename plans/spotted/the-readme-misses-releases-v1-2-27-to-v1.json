@@ -1,0 +1,125 @@
+{
+  "items": [
+    {
+      "key": "bug\tREADME.md\tCorrect the default model and effort claims\tthe-readme-misses-releases-v1-2-27-to-v1",
+      "kind": "bug",
+      "path": "README.md",
+      "line": 57,
+      "text": "Correct the default model and effort claims",
+      "from": "blocking",
+      "item": "the-readme-misses-releases-v1-2-27-to-v1",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tREADME.md\tCorrect the merge instructions in the linked guide\tthe-readme-misses-releases-v1-2-27-to-v1",
+      "kind": "bug",
+      "path": "README.md",
+      "line": 82,
+      "text": "Correct the merge instructions in the linked guide",
+      "from": "blocking",
+      "item": "the-readme-misses-releases-v1-2-27-to-v1",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tREADME.md\tGate: Update the tests that read the moved README sections\tthe-readme-misses-releases-v1-2-27-to-v1",
+      "kind": "bug",
+      "path": "README.md",
+      "line": 108,
+      "text": "Gate: Update the tests that read the moved README sections",
+      "from": "blocking",
+      "item": "the-readme-misses-releases-v1-2-27-to-v1",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tREADME.md\tGate: proof list\tthe-readme-misses-releases-v1-2-27-to-v1",
+      "kind": "bug",
+      "path": "README.md",
+      "line": 81,
+      "text": "Gate: proof list",
+      "from": "blocking",
+      "item": "the-readme-misses-releases-v1-2-27-to-v1",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tREADME.md\tInclude the required Autoreview helper in the setup path\tthe-readme-misses-releases-v1-2-27-to-v1",
+      "kind": "bug",
+      "path": "README.md",
+      "line": 49,
+      "text": "Include the required Autoreview helper in the setup path",
+      "from": "blocking",
+      "item": "the-readme-misses-releases-v1-2-27-to-v1",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tREADME.md\tNot done: Forge's own CI splits its test groups by recorded test time (a committed .test_durations file that pytest-split reads, with a save\tforge-s-ci-splits-tests-into-groups-by-c",
+      "kind": "bug",
+      "path": "README.md",
+      "line": 165,
+      "text": "Not done: Forge's own CI splits its test groups by recorded test time (a committed .test_durations file that pytest-split reads, with a save",
+      "from": "blocking",
+      "item": "forge-s-ci-splits-tests-into-groups-by-c",
+      "status": "done",
+      "closed_by": "the-readme-misses-releases-v1-2-27-to-v1"
+    },
+    {
+      "key": "bug\tREADME.md\tNot done: Verify every CI group finishes within 70% of its time limit\tforge-s-ci-splits-tests-into-groups-by-c",
+      "kind": "bug",
+      "path": "README.md",
+      "line": 165,
+      "text": "Not done: Verify every CI group finishes within 70% of its time limit",
+      "from": "blocking",
+      "item": "forge-s-ci-splits-tests-into-groups-by-c",
+      "status": "done",
+      "closed_by": "the-readme-misses-releases-v1-2-27-to-v1"
+    },
+    {
+      "key": "bug\tREADME.md\tNot done: forge.toml, the package and every pinned reference say v1.2.19\trelease-1219",
+      "kind": "bug",
+      "path": "README.md",
+      "line": 232,
+      "text": "Not done: forge.toml, the package and every pinned reference say v1.2.19",
+      "from": "blocking",
+      "item": "release-1219",
+      "status": "done",
+      "closed_by": "the-readme-misses-releases-v1-2-27-to-v1"
+    },
+    {
+      "key": "bug\tREADME.md\tThe command table lists forge ask, but that command does not exist.",
+      "kind": "bug",
+      "path": "README.md",
+      "line": 292,
+      "text": "The command table lists forge ask, but that command does not exist.",
+      "from": "worker",
+      "item": "FORGE-INTAKE-1/MOVE",
+      "status": "done",
+      "closed_by": "the-readme-misses-releases-v1-2-27-to-v1"
+    },
+    {
+      "key": "bug\tdocs/review-rules.md\tCorrect the documented review-round settings\tthe-readme-misses-releases-v1-2-27-to-v1",
+      "kind": "bug",
+      "path": "docs/review-rules.md",
+      "line": 74,
+      "text": "Correct the documented review-round settings",
+      "from": "blocking",
+      "item": "the-readme-misses-releases-v1-2-27-to-v1",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board.py\tforge next crashes with KeyError 'refs/heads/main' in a new git repo that has no commits.",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 951,
+      "text": "forge next crashes with KeyError 'refs/heads/main' in a new git repo that has no commits.",
+      "from": "worker",
+      "item": "the-readme-misses-releases-v1-2-27-to-v1",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
