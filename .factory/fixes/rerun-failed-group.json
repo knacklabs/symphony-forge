@@ -1,0 +1,15 @@
+{
+  "base": "02c44b622a5a1b1bd8f74cb45b2204a93d9a0b31",
+  "branch": "fix/rerun-failed-group",
+  "done_when": "When an item's latest CI run failed only in test groups, close and merge rerun only the failed jobs of that run once (the way land does) and wait for them; a second failure counts as failed and names forge work; new and existing repos get it on upgrade",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-18T09:20:10.614816+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Issue 1664: when one CI test group fails or times out, close and merge stop, and only land reruns the failed group (gh run rerun --failed); a person has to rerun the whole run"
+}
