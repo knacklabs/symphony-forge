@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -216,6 +217,7 @@ def upgrade(args: argparse.Namespace) -> int:
                     found=(f"Forge {found} at {where}" if found else f"a forge of unknown version at {where}")
                     if where else "no forge")
     print(f"The forge on your PATH is Forge {release}.", flush=True)
+    _update_tools()
 
     # 5. The release's own sync refreshes Forge's files in the fix's folder.
     print(f"Running Forge {release}'s forge sync in the fix's folder.", flush=True)
@@ -244,6 +246,63 @@ def upgrade(args: argparse.Namespace) -> int:
     # 7 and 8. The release's own close; its last line says who merges, and its exit code is ours.
     print(f"Running Forge {release}'s forge close {name}.", flush=True)
     return repo.run_release(release, ["close", name], path)
+
+
+CODEX_INSTALL = ("irm https://chatgpt.com/codex/install.ps1 | iex" if os.name == "nt"
+                 else "curl -fsSL https://chatgpt.com/codex/install.sh | sh")  # OpenAI's standalone installer
+
+
+def _codex_command() -> list[str] | None:
+    """The update for the Codex on PATH, from where its real path says it was installed."""
+    found = shutil.which("codex")
+    if found is None:
+        return None
+    real = Path(os.path.realpath(found))
+    parts = real.parts
+    if "node_modules" in parts:  # npm's launcher: <prefix>[/lib]/node_modules/@openai/codex/...
+        prefix = Path(*parts[:parts.index("node_modules")])
+        prefix = prefix.parent if prefix.name == "lib" else prefix
+    elif (real.parent / "node_modules/@openai/codex").is_dir():  # Windows: codex.cmd beside it
+        prefix = real.parent
+    elif {"Cellar", "Caskroom"} & set(parts):
+        return ["brew", "upgrade", "codex"]
+    elif "standalone" in parts:  # OpenAI's own installer; only newer Codex has `update`
+        # --help starts no session; never pass `update` blind, an old Codex reads it as a prompt.
+        helped = repo.run("codex", "--help", timeout=30)
+        return ["codex", "update"] if re.search(r"^\s+update\b", helped.stdout, re.M) else None
+    else:
+        return None
+    # --prefix updates the npm copy that is first on PATH, not npm's current global folder.
+    return ["npm", "install", "-g", "--prefix", str(prefix), "@openai/codex@latest"]
+
+
+def _update_tools() -> None:
+    """Update Claude Code and the Codex CLI with the installer that installed each, one line
+    each. A failure prints the line for the person to run; it never fails the upgrade."""
+    codex = _codex_command()
+    for name, exe, command in (("Claude Code", "claude", ["claude", "update"]),
+                               ("Codex CLI", "codex", codex)):
+        if shutil.which(exe) is None:
+            continue
+        reason = "Forge could not tell which installer put it there"
+        where, lead = "run", ""
+        if command:
+            try:
+                done = repo.run(*command, timeout=300)
+                output = (done.stderr or done.stdout).strip()
+                reason = (output.splitlines() or ["no reason given"])[-1]
+                version = re.search(r"\d+\.\d+\.\d+", repo.run(exe, "--version").stdout)
+            except (repo.Refused, OSError, subprocess.TimeoutExpired) as error:
+                done, version, reason = None, None, str(error).splitlines()[0] or "it did not finish"
+            if done and done.returncode == 0 and version:
+                print(f"Installed {name} {version[0]}.", flush=True)
+                continue
+            if done and re.search(r"EACCES|permission denied|sudo|administrator|elevat", output, re.I):
+                # Keep this PATH: sudo's own would not find claude or npm.
+                where, lead = (("run this in an administrator terminal", "") if os.name == "nt"
+                               else ("run", 'sudo env PATH="$PATH" '))
+        text = lead + (" ".join(map(repo.quote, command)) if command else CODEX_INSTALL)
+        print(f"{name} was not updated ({reason}). To update it, {where}: {text}", flush=True)
 
 
 def release_notice(top: Path) -> list[str]:

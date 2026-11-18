@@ -57,7 +57,10 @@ def person(monkeypatch):
 
 
 def hold_agents(env):
+    # forge upgrade updates the tool and reads its version; only a session is held.
     _install(env.repo.bin, "claude", HOLDING_CLAUDE.format(python=sys.executable).replace(
+        "sys.stdin.read()\n", 'if sys.argv[1:] in (["update"], ["--version"]):\n'
+        '    print("2.1.291 (Claude Code)")\n    sys.exit(0)\nsys.stdin.read()\n', 1).replace(
         'while not (here / f"go-{name}").exists():',
         'while not (here / f"go-{name}").exists() and not (here / "go-all").exists():'))
     sdk = env.repo.bin / "claude_agent_sdk" / "__init__.py"
