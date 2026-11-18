@@ -58,8 +58,8 @@
       "gain": 4,
       "harm": 3,
       "line": 54,
-      "outcome": "open",
-      "reason": "",
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: Owner accepted on 18 Nov 2026: a teammate's clone that has not fetched a merge done elsewhere refuses that item; workaround git fetch; added to issue 1674",
       "round": 3,
       "security": false,
       "title": "Allow a partially completed named batch to resume",
@@ -84,7 +84,13 @@
     "branch_diff": "005747f8419bf0f88aabb5f41680d7f2ead707aaca9538e4554a0cbeceb92a78",
     "changed": "5b18e66333f4608dd1c1f2f22af72674242127265faffaa15e952b908d39287b",
     "commit": "f53ad6d14990108ee11fedb346b85ed911335b5b",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner accepted on 18 Nov 2026: a teammate's clone that has not fetched a merge done elsewhere refuses that item; workaround git fetch; added to issue 1674",
+        "finding": 1
+      }
+    ],
     "findings": [
       {
         "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - a teammate resumes a partially completed batch from a clone that has no checkout of the merged item and has not fetched since it merged.\n`story.landed_ref()` returns the default branch as last fetched (`src/forge/story.py:838-845`), while the queue fetch occurs only after this preflight (`src/forge/land.py:378`). If `aa` was merged and its branch deleted on another machine, this check misses the merge and `close._worktree` cannot fetch the deleted branch (`src/forge/task.py:239-265`). Thus `forge land aa bb` still refuses before landing `bb`. The new test merges locally, which fetches the default branch during cleanup (`src/forge/merge.py:297`), so it does not expose this case.",
@@ -98,10 +104,10 @@
       }
     ],
     "id": "22d2021f-abda-44a3-adf3-f36b465eee8f",
-    "status": "blocked"
+    "status": "clean"
   },
   "round": 4,
-  "status": "hotspot",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-18T06:22:46.550167+00:00",
@@ -126,8 +132,12 @@
   ],
   "stop": {
     "at": "2026-11-18T09:26:57.335210+00:00",
+    "by": "owner",
+    "choice": "accept",
     "file": "src/forge/land.py",
-    "wait_id": "afcc37c5-ffff-4dba-b3e8-082dfcedfa10"
+    "reason": "Owner accepted on 18 Nov 2026: a teammate's clone that has not fetched a merge done elsewhere refuses that item; workaround git fetch; added to issue 1674",
+    "wait_id": "afcc37c5-ffff-4dba-b3e8-082dfcedfa10",
+    "worker_round": 4
   },
   "stuck": {
     "close": "00a6c81f-5003-42a2-94df-d926936dfe4a",
