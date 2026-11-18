@@ -18,7 +18,7 @@
       "gain": 4,
       "harm": 3,
       "line": 402,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -31,7 +31,7 @@
       "gain": 4,
       "harm": 3,
       "line": 250,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -57,7 +57,7 @@
       "gain": 3,
       "harm": 2,
       "line": 125,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -70,7 +70,7 @@
       "gain": 3,
       "harm": 3,
       "line": 35,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -83,7 +83,7 @@
       "gain": 4,
       "harm": 2,
       "line": 15,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -93,80 +93,27 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "72421fadc9aefa38781da9d0f87af23d8edd11393e48fc806f88f13121a3e370",
-    "changed": "ba54316e163db34228208e2550c9ec3c39a71703b5165bd3d7754e88fa05cb4f",
-    "commit": "630365513854108723838bfaa29ab6c7beb358e8",
+    "branch_diff": "8e754a9a08afb9a10d37f907a0a3d1c408cf0de3ca96661bdf8e77a19946611a",
+    "changed": "deeac73fb27fd5effb91f2fb5c8263c92300f415ba755fa92ab0d77e2c837fa0",
+    "commit": "2beb0eb4d345d02f731a123d8277478ea6e3eee0",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done\nCase: normal use - A test job is cancelled after waiting about 60 minutes for a runner that never picks it up.\nA GitHub Actions job can retain its queue time in `started_at` even when `runner_id` is zero and no steps ran ([Apache Airflow\u2019s GitHub Actions observations](https://raw.githubusercontent.com/apache/airflow/main/dev/breeze/doc/ci/08_fork_ci_for_external_contributors.md)). This code treats that timestamp as execution start, so `cancelled_at_limit` at `checks.py:357-369` calls the cancellation a test timeout and `_recover` stops before its retry. The new no-runner fixture instead supplies a null start time at `tests/test_job_runtime_excludes_runner_queue.py:35`. The sibling CI report at `src/forge/citime.py:54-60,85` also still uses check timestamps, so a cancelled job queued 50 minutes and run 10 can be displayed as timed out.\nDone-when: close, merge and land keep waiting while checks are queued or running, printing a progress line at most every 5 minutes, until the checks finish; the test time limit counts only time a job ran, not time it waited for a runner; new and existing repos get it on upgrade.",
+        "body": "Gain 4, Work 1, Harm 3\nRaise: Functional\nCase: normal use - An operator sets a positive `FORGE_CHECKS_WAIT` while one test group is running and another is queued for a runner.\nThe pre-push loop resets the deadline on every poll whenever any check is queued, even if the running and queued checks make no progress. Close and land can therefore wait through the entire runner queue instead of honoring the requested running-check limit. The new override test uses only `0`, which bypasses this deadline reset.",
         "file": "src/forge/checks.py",
         "gain": 4,
         "harm": 3,
-        "line": 402,
-        "priority": "P1",
-        "required_done_when": true,
-        "title": "Not done: count only job runtime toward the test limit",
-        "work": 2
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done\nCase: normal use - A fast lint check fails while tests are queued or running, or a running test is cancelled and Forge starts its retry.\nThe new indefinite-wait branch is reached only after `_pending` at `checks.py:214`, which refuses as soon as any check is red (`checks.py:501-506`), even if another is active. A timeout also refuses at `checks.py:425` while other jobs can still be running. Separately, `running` is calculated before `_recover` changes a cancelled check to pending (`checks.py:193,212,482-483`): after a standalone close or merge has waited over ten minutes, it can start the retry and immediately exit because the old deadline has expired. These paths contradict the coordinator\u2019s instruction to stop only after the checks end.\nDone-when: close, merge and land keep waiting while checks are queued or running, printing a progress line at most every 5 minutes, until the checks finish; the test time limit counts only time a job ran, not time it waited for a runner; new and existing repos get it on upgrade.",
-        "file": "src/forge/checks.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 250,
-        "priority": "P1",
-        "required_done_when": true,
-        "title": "Not done: keep waiting while any check remains active",
-        "work": 2
-      },
-      {
-        "body": "Gain 4, Work 1, Harm 3\nRaise: Functional\nCase: normal use - An operator sets `FORGE_CHECKS_WAIT` while closing a CI-tested change whose already-pushed checks are running.\n`after_code_ci` calls `let_finish` before the review-record push (`checks.py:151-166` and `close.py:429-430`), but this loop no longer reads the override or has a deadline. Close and land can therefore wait indefinitely at this earlier stage even when the operator explicitly requested a bounded running-check wait. The recorded ruling preserves that override; the later `_wait` implementation does not cover this call.",
-        "file": "src/forge/checks.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 125,
+        "line": 152,
         "priority": "P1",
         "title": "Honor the wait override before pushing the review record",
         "work": 1
-      },
-      {
-        "body": "Gain 3, Work 1, Harm 2\nRaise: Not done\nCase: normal use - Close waits for the code\u2019s CI before pushing its review record, then waits for checks on the new head.\n`let_finish` starts its own progress timer here, while `_wait` starts another at `checks.py:176`. If the first wait prints and finishes on its next poll, the second wait prints immediately, potentially only seconds later. The five-minute limit therefore does not hold across one close or land command.\nDone-when: close, merge and land keep waiting while checks are queued or running, printing a progress line at most every 5 minutes, until the checks finish; the test time limit counts only time a job ran, not time it waited for a runner; new and existing repos get it on upgrade.",
-        "file": "src/forge/checks.py",
-        "gain": 3,
-        "harm": 2,
-        "line": 125,
-        "priority": "P1",
-        "required_done_when": true,
-        "title": "Not done: keep progress lines at least five minutes apart",
-        "work": 1
-      },
-      {
-        "body": "Gain 3, Work 1, Harm 3\nRaise: Test\nCase: normal use - A check runs for more than five minutes after leaving the runner queue.\nThe command test measures spacing only for lines matching `checks queued for ... minutes`; it does not measure the running-check messages. The record-push test at `tests/test_close_pushes_record_after_code_ci.py:53` only checks that one message exists. Printing a running progress line on every 15-second poll would still pass these checks, so the Done-when cadence lacks an effective command-boundary test for running checks.",
-        "file": "tests/test_checks_finish_after_long_runner_queues.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 35,
-        "priority": "P1",
-        "title": "Gate: running-check progress cadence",
-        "work": 1
-      },
-      {
-        "body": "Gain 4, Work 1, Harm 2\nRaise: Gate\nCase: normal use - Close or a reviewer uses the supplied proof list to verify the fix.\nThe supplied list contains only the unchecked skill-sync entry. It has no entries mapping the waiting, progress cadence, job-runtime, or upgrade clauses to their proofs. The implementation commit recorded test names, but those mappings are absent from the proof list supplied for this review, so the required entries are missing.",
-        "file": "tests/test_checks_finish_after_long_runner_queues.py",
-        "gain": 4,
-        "harm": 2,
-        "line": 15,
-        "priority": "P1",
-        "title": "Gate: proof list",
-        "work": 1
       }
     ],
-    "id": "a226a227-32ac-4f56-a5fb-f4317b4dfdfb",
+    "id": "24c4ff21-279f-46bb-97d8-4f358a460654",
     "status": "blocked"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-18T15:24:58.020651+00:00",
@@ -175,16 +122,16 @@
     {
       "at": "2026-11-18T15:57:18.618863+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-11-18T16:48:02.159655+00:00",
+      "step": "review"
     }
   ],
   "stop": {
-    "at": "2026-11-18T15:57:18.644046+00:00",
-    "by": "owner",
-    "choice": "more",
+    "at": "2026-11-18T16:48:02.159938+00:00",
     "file": "src/forge/checks.py",
-    "reason": "Owner chose one more round: fix the six review findings",
-    "wait_id": "d8ca798c-788d-4e0b-be3a-2637299ff9ee",
-    "worker_round": 1
+    "wait_id": "c0d9d8a0-573f-41d8-9717-5195785c1f40"
   },
   "stuck": {
     "close": "282b5d10-268c-4c44-8697-831068d4e01e",
