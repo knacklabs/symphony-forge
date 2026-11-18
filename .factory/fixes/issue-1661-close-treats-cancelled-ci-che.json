@@ -24,7 +24,7 @@
       "gain": 5,
       "harm": 3,
       "line": 352,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 1,
       "security": false,
@@ -50,7 +50,7 @@
       "gain": 3,
       "harm": 3,
       "line": 55,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 1,
       "security": false,
@@ -60,38 +60,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "c5a5afb5bff9e20c2b1c6ab6910f340fc79e856cb426e7d9299440b5f41c2b96",
-    "changed": "ee7aa5798a6e0f26f830f6255e5b16c53347ef22b427e9ce7466be43ba77e9a8",
-    "commit": "3e4a6f648db8db5ec86615a0e64c61ff9455436f",
+    "branch_diff": "29a6a1870bf5d876097adcfb9f1aad199bf3d8a84d3a5811213e1a7108a69624",
+    "changed": "97527aee32d13c1a1160a41702f43abb47a64a58f8d8573bee27eb88a12a61c0",
+    "commit": "8981e9fc3c832a3510a62f3755845a7d8cf6f856",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done\nCase: normal use - `forge land` retries a cancelled lint workflow, and the retry succeeds within a minute. `land.py:64` enables progress caching, and `checks.py:268-270` retains the original cancelled checks for 60 seconds. When the fresh workflow response reports completed attempt 2, this branch leaves those cached checks red even if the retry succeeded, so `_pending` reports a failure and recommends `forge work`. The previous round raised this cancellation classification problem. Its third-party case also remains: lines 345-347 leave a cancelled GitHub App check red when it has no matching Actions workflow. [GitHub's Checks API](https://docs.github.com/en/rest/checks/runs?apiVersion=latest) supports checks created by apps. The approved item remains unmet: \"When an item's CI checks were cancelled and none failed, close starts them again or waits for the newer run instead of sending the item to a worker round\".",
-        "file": "src/forge/checks.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 357,
-        "priority": "P1",
-        "required_done_when": true,
-        "title": "Not done: Cancelled checks are still reported as failed",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 1, Harm 3\nRaise: Test\nCase: normal use - a newer run of the same event is queued before it has published its own check runs. The second proof supplies a separate pending check from the newer suite, so it still passes if the cancelled check is incorrectly marked PASS while the newer workflow is running: that separate check forces the wait. Without that check, the same regression would let close report ready early. Lines 52-53 assert only success and the absence of a rerun; the proof needs to verify waiting when the newer run has not yet reported a job.",
-        "file": "tests/test_close_reruns_cancelled_ci.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 48,
-        "priority": "P1",
-        "title": "Gate: tests/test_close_reruns_cancelled_ci.py",
-        "work": 1
-      }
-    ],
-    "id": "6cb4a023-9ff5-46b9-ba98-7fb3b5b204b4",
-    "status": "blocked"
+    "findings": [],
+    "id": "ac02821d-9350-4cc3-aba9-017f2bb7bea8",
+    "status": "clean"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-18T05:31:26.203001+00:00",
@@ -103,6 +81,10 @@
     },
     {
       "at": "2026-11-18T07:17:49.372244+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-18T07:54:07.940592+00:00",
       "step": "review"
     }
   ],
