@@ -4,12 +4,20 @@
   "done_when": "A head commit that differs from its parent only in Forge's close records does not cancel the parent's CI run still in progress, and reuses its result when it finishes, so a record-only commit adds no full test run",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-18T03:54:15.907087+00:00",
       "step": "start"
     }
   ],
-  "why": "Issue 1656: in CI-test repos, close pushes its review record commit a few minutes after the code, and that push cancels the code's own CI run in progress (concurrency cancel-in-progress). The parent then has no successful run, so .forge/review-tests.py cannot reuse it, and every record-only commit starts a full run again: 72% of one client's runs, about 28 minutes each."
+  "stuck": {
+    "close": null,
+    "head": "0de26b9443618fc181deab3363c0de5b24645c64",
+    "keys": {},
+    "round": null
+  },
+  "why": "Issue 1656: in CI-test repos, close pushes its review record commit a few minutes after the code, and that push cancels the code's own CI run in progress (concurrency cancel-in-progress). The parent then has no successful run, so .forge/review-tests.py cannot reuse it, and every record-only commit starts a full run again: 72% of one client's runs, about 28 minutes each.",
+  "worker": "claude"
 }
