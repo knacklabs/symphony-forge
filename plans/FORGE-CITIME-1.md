@@ -1,69 +1,117 @@
 # Client pull requests finish CI in about 10 minutes, and Forge shows when they do not
 
-<n> parts · Risks: ... · New moving parts: ...
+3 parts · Risks: none one-way; five accepted limits · New moving parts: none
 
 ## What changes for you
 
-- Close and forge doctor show each pull request's CI wall time, runner minutes and slowest job, and warn when a repo goes over 10 minutes.
-- A small change runs one test group instead of all of them.
-- New starter apps run API test files in parallel and run browser tests only nightly.
-- The testing rules say how to keep test selection small and slow tests off pull requests.
+- After the checks of a pull request pass, close prints one line: how long CI took from the start of the first job to the end of the last job, how many runner minutes it used, and which job was slowest. Forge reads these times from GitHub. It stores nothing. (Source: the owner's decision, 18 Nov 2026)
+- `forge doctor` (Forge's health check) warns when the usual CI time of the last 20 merged pull requests is over 10 minutes. The warning names the slowest job and points to a short list of fixes in the guide. It only warns. It never stops a close or a merge. The 10 minutes is fixed; there is no setting for it. The board does not change. (Source: the owner's decision, 18 Nov 2026)
+- In a repo with more than one test group, a pull request that changes 5 or fewer code files, and no lockfile or shared settings file, runs one test group instead of all of them. A larger change runs all groups. The required `tests` check keeps its name and its pass rule. A small change no longer fills every runner while other pull requests wait. (Source: a client team's CI audit of 150 pull requests, and the owner's decision, 18 Nov 2026)
+- New apps made from the TypeScript starter run their API test files at the same time, not one after another. (Source: the same CI audit)
+- New apps made from either starter run no browser tests on a pull request. The full browser suite, with the rendered check of each screen, runs in the nightly full run. So a broken screen can merge, and the nightly run shows it the next morning. (Source: the owner's decision, 18 Nov 2026)
+- The testing rules and the guide that Forge gives every repo change. They now say: run browser tests nightly, not in the pull request check (today's text says the opposite); test setup and helpers do not import the whole app, so a change does not select almost every test; each test file owns its data, so files can run at the same time; slow tests that depend on certain files run on a pull request only when those files change, and always nightly; within one CI job, the test picker never selects a test file twice, so when a job runs a project whole it does not run that project's files again as related tests. The guide also gets a list of fixes for a CI over 10 minutes, with what to preinstall on a self-hosted runner. (Source: the same CI audit, and the owner's decision, 18 Nov 2026)
+- Not in this story: test groups balanced by recorded time for Vitest (left out until a repo's slowest group is still twice its fastest); Forge code for runner images or for a table of slow tests and their inputs (guide text only); separate lint, type check and build checks (moved out of the faster-checks story; a later change adds at most one, only if the new time line shows that it helps); the board; and the extra CI runs that Forge's record commits cause, which a separate fix (issue 1656) solves first.
+- What each repo gets. A new repo gets all of this at setup. An existing repo gets the close line, the doctor warning, the one-group rule and the new rules and guide when it upgrades and Forge refreshes its files (Forge owns the workflow file). Its own test scripts and test settings do not change. To take the starters' browser and parallel changes, the agent asks the owner and makes the change through a fix.
+- Cost. No model call is added. Close and doctor each make one more GitHub request. Runner minutes go down for small changes and for pull requests that touch the web app.
+
+Design: none. Nothing on the board changes.
 
 ## Why
 
-A real client team measured pull request CI far over 10 minutes: every change fans out into all test groups, browser tests run on every pull request, and nothing shows the time.
+A client team measured its pull request CI far over 10 minutes. The audit found four causes: Forge's own record commits start most runs again (a separate fix, issue 1656); each small change fans out into every test group, and each group pays about a minute of setup; the whole browser suite runs on every pull request (16 minutes in one group); and test files cannot run at the same time. Nothing in Forge shows the CI time, so nobody sees it grow.
 
 ## Done when
 
-1. **Close and doctor report each pull request's CI time and warn over 10 minutes.**
-2. **A change of 5 or fewer code files with no lockfile or shared settings change runs one test group.**
-3. **A new starter app runs API test files in parallel and runs browser tests only in the nightly run.**
+1. **After a pull request's checks pass, close prints its CI time, its runner minutes and its slowest job, and the health check warns when the usual CI time of recent merged pull requests is over 10 minutes.**
+2. **In a repo with several test groups, a change of 5 or fewer code files with no lockfile or shared settings change runs one test group, a larger change runs all groups, and the required tests check keeps its name and its pass rule.**
+3. **A new TypeScript starter app runs its API test files at the same time, and a new app from either starter runs no browser tests on a pull request while its nightly full run runs all of them.**
+4. **The testing rules and the guide tell clients to run browser tests nightly instead of in the pull request check, keep test selection small, keep test files independent, never select a test file twice in one job, and list the fixes for a CI over 10 minutes.**
 
 ## Risks
 
-<!-- Each one-way step: deleting data, a destructive migration, a new vendor. -->
+Risks: none one-way. Each part reverts with its pull request. An existing repo's own test scripts change only through a fix that its owner agrees to.
 
-Risks: none
+Accepted limits, in plain words:
+- A pull request can merge a broken screen. The nightly full run finds it the next morning. This is the owner's choice.
+- A small change to a file that many tests use can select many tests. They then run in one group, which can be slower than today. The time line shows it.
+- Forge takes the times from GitHub's check data. Whether that data counts the time a job waits for a free runner is not checked yet.
+- The usual time (the median) includes pull requests that changed only documents. Their short runs lower it.
+- The 10 minutes is the same for every repo. A setting comes only when a client asks for another number.
 
 ## For the builders
 
 <!-- Everything from here down is for the agents. The owner doesn't see it when approving, and
 tightening it needs no new approval. -->
 
+Sources: GitHub issues #1652 (group count) and #1656 (record-commit reruns, fixed separately and first), the client team's CI audit as the owner relayed it, an advisor's review of 18 Nov 2026, and the owner's decisions of 18 Nov 2026. Name no client in code, tests, texts or commits.
+
+### What exists (evidence)
+
+Checked in this worktree on 18 Nov 2026 (base `83f1b9a6b`; `origin/main` is at the v1.2.42 release). The builder checks each name again before it starts.
+
+- **The generated workflow.** `WORKFLOW` in `src/forge/prcheck.py:44-221`. With `groups` above 1 a pull request runs `docs-check`, then a `tests` matrix over `group`, then the one required `tests` gate (`tests-passed`). The matrix, the job name and `FORGE_GROUPS` choose one group when `needs.docs-check.outputs.test-only == 'true'` (`prcheck.py:85-96`). With one group, `ships` folds the jobs into one `tests` job and rewrites those expressions (`prcheck.py:395-408`). `groups` comes from `forge.toml` or 6 for an automatic pytest split (`prcheck.py:286-292`).
+- **The CI script.** The source is `src/forge/templates/review-tests.py` (168 lines), with `src/forge/docskip.py` pasted in at `# <docs-only-rule>` (`prcheck.py:462-464`); sync writes it as `.forge/review-tests.py`. It writes `docs-only`, `test-only`, `platform-files` and `run-windows` to `GITHUB_OUTPUT` (`.forge/review-tests.py:335-341` in this repo's copy). `test_files` (`:230-254`) sets `test-only` for a change to Python test files only; a branch that merged the default branch in clears it (`:321-322`). `only_docs` holds the test-file globs (`:143-145`). `DOCS_ONLY_EXCLUDES` is `review.DOC_EXCLUDES` (`src/forge/review.py:42-46`): bookkeeping paths, `.forge/`, `docs/`, Markdown and images.
+- **The fix lane's code-file count.** `prcheck.promote_problem` (`prcheck.py:553-577`) and `githooks` (`src/forge/githooks.py:16`, `:220-243`) count code files with `LIMIT = 5`, leaving out Markdown, bookkeeping, test paths and generated files. The CI script cannot import Forge, so it needs its own short count.
+- **Check times close already has.** `checks.wait` (`src/forge/checks.py:72-107`) polls `_status` (`:232-285`), whose `_seen` (`:515-538`) reads every check run of the head commit with `started_at` and `completed_at`; `_wait` returns when `outcome` is `passed` (`:164-169`). `checks.wait` is called by close (`src/forge/close.py:465`), land (`src/forge/land.py:746`) and merge (`src/forge/merge.py:165`). `_status` also reads the pull request's `number` (`checks.py:236-237`).
+- **History Forge already reads.** `board_facts.details` (`src/forge/board_facts.py:390-394`) lists the last 25 merged pull requests with `statusCheckRollup`, which holds only the head commit's checks. `backfill._checks` (`src/forge/backfill.py:76-87`) reads one commit's check runs. `board_facts.CHECKS_QUERY` (`:68-83`) shows the GraphQL shape for check runs with `startedAt` and `completedAt`.
+- **Close's head is often a record commit.** Close saves the review record as a commit (`close.py:419-426`), pushes, and then waits on that head (`:429-430`, `:465`). When the parent's run finished, the head's test groups reuse it and skip the test step (`reuse` in `.forge/review-tests.py:257-305`), so the head's own check times are short. Issue #1656 makes that reuse common.
+- **Doctor.** `doctor.doctor` (`src/forge/doctor.py:313`) prints `- Warning: ...` lines first (`:318-331`).
+- **Size ceilings.** `tests/test_rules.py::test_5_forge_stays_small` refuses a module over 1,200 lines. `close.py` is at 1,200, `board.py` 1,197, `checks.py` 558, `doctor.py` 575, `prcheck.py` 611.
+- **The starters.** The TypeScript starter's API tests run one file at a time: `fileParallelism: false` in `src/forge/templates/starter/apps/api/vitest.config.ts`, over 15 files in `starter/apps/api/test/` that share one running API and database. Its `scripts/test.mjs` runs `web:e2e` for a web change and `test:browser` for a full run (no base), and installs Chromium for any web change. The Python starter's `scripts/test.mjs:51`, `:72` runs `test:browser` for every web or library change. Both full runs (no base) run the browser suite; the nightly full run calls the `test` command with no base.
+- **Double selection in the starters.** In the TypeScript starter, the `web` test target excludes `libs/**` (`starter/apps/web/project.json:12`), each library with a `test` target runs only its own `src`, and a library without one gets its own files once (`starter/scripts/test.mjs`, the `libs/` branch). The Python starter runs `test:api` whole for an API change and one `vitest run --changed` for the web. No file is selected twice today as far as these scripts show; the rule and one assertion keep it so.
+- **The text that says the opposite.** `src/forge/templates/skill.md:1385-1387` (close command should run browser tests), `:1404-1407` (Python starter web changes select the browser suite), `:1432-1433` (keep the browser-test steps in `fast_test`); `src/forge/templates/conventions/testing.md:81` and `:83` (keep browser tests in the root test command); `src/forge/templates/brief.md:652` (close runs browser tests when the close command has them). This repo's copies `.claude/skills/forge/SKILL.md` and `.codex/skills/forge/SKILL.md` carry the same skill text.
+- **This repo's own CI.** `forge.toml` has `repo = "forge-source"`, no `groups` (so 6 groups by pytest split) and `fast_test = "uv run --frozen --python 3.11 forge test --pytest {base}"`. Its `.github/workflows/forge.yml` and `.forge/review-tests.py` come from `forge sync`.
+- **Tests to copy from.** `tests/test_merged_default_branch_pull_requests_run_normal_groups.py` runs the shipped CI script on a real checkout and evaluates the generated matrix with `expression` from `tests/test_ci_limits_pull_requests_to_linux.py`. `tests/test_ci_waits_for_busy_runners.py` and `tests/test_close.py` (`env`, `GREEN`) stub GitHub's check runs for close and doctor.
+
+### Decisions
+
+- **Which runs count (TIME).** Recommended answer to owner question 1, used below until the owner answers: Forge reads the check runs of the pull request's last five commits in one GraphQL request, and reports the commit whose CI took longest. A head commit whose test groups only reused an earlier result is short, so it never hides the run that tested the code. Runs that are skipped, neutral or cancelled, and the run named `Review pull request` (Forge's review, not the tests), are left out. A commit with no counted run is left out. `ponytail:` comment: shows an older push when it was slower; read the reuse step's output instead if that misleads.
+- **The numbers.** Wall time = latest `completedAt` minus earliest `startedAt` of the counted runs of that commit. Runner minutes = the sum of each run's `completedAt - startedAt`, in whole minutes, rounded up per run as GitHub bills. Slowest job = the run with the longest time. Each test group appears as its own job, so the slowest group is named.
+- **Close's line.** In `checks.wait`, after `_wait` returns with outcome `passed`, print one line, for example `CI took 12 min 30 s (first job start to last job end), 41 runner minutes; slowest job: test group 2 of 6 (9 min 10 s).` When the request fails or nothing counts, print nothing; a missing time line never fails close. Land and merge also print it, because they call the same function; that is fine. `close.py` does not change.
+- **Doctor's warning.** One GraphQL request for the last 20 merged pull requests, each with its last five commits' check runs. Per pull request, take the time as above; the median over those with a time. When the median is over 10 minutes (`BUDGET = 600` seconds, fixed, with a `ponytail:` comment naming the setting as the upgrade path), print `- Warning: The last <n> merged pull requests took a median of <m> min in CI, over the 10-minute budget. The slowest job of the median one was <job> (<t>). See "When CI is over 10 minutes" in the Forge guide.` No warning at or under 10 minutes, with no merged pull request, without `gh`, or when GitHub does not answer. Doctor's exit code does not change.
+- **Where the code goes.** A new module `src/forge/citime.py`, about 100 to 130 lines: the GraphQL query, `line(runs)` and `warning(top)`. `checks.py` and `doctor.py` get a few lines each. Nothing is stored.
+- **Small change (GROUPS).** In the CI script, after `docs_only` and `tests_only`: list the changed paths with the same `git diff --name-only -z --no-renames BASE...HEAD -- . <DOCS_ONLY_EXCLUDES>` call, drop test files (the globs `only_docs` uses), and call the change small when 5 or fewer paths remain and none is a lockfile (`package-lock.json`, `pnpm-lock.yaml`, `yarn.lock`, `uv.lock`, `poetry.lock`) or shared settings (`forge.toml`, any `package.json`, `pnpm-workspace.yaml`, `nx.json`, `pyproject.toml`, `setup.cfg`, `pytest.ini`, `conftest.py`, `tsconfig*.json`, `vitest.config.*`, `vitest.workspace.*`, `jest.config.*`, `playwright.config.*`, or anything under `.github/`). A branch that merged the default branch in is never small, as for `test-only`. Fixed in code; no setting. Write a new output `one-group=<tests_only or small>`. `test-only`, `platform-files` and `run-windows` keep their meaning.
+- **The workflow.** `docs-check` exposes `one-group`; the matrix, the job name and `FORGE_GROUPS` read `one-group` instead of `test-only`. The one-group fold in `ships` updates its replaced expression to match. The `tests` gate does not change.
+- **Forge's own repo (GROUPS).** Recommended answer to owner question 2, used below until the owner answers: the one-group rule applies to client repos only; for `repo = "forge-source"` `ships` keeps today's `test-only` expressions. Reason: Forge's tests reach its code only through the `forge` command, so the picker can select much of the suite for a one-file change, and one group could pass the 45-minute cap.
+- **The starters (STARTER).** TypeScript starter: read why `fileParallelism` is false, make the API test files own their data (unique names and companies per file, no shared rows, no order between files), and turn it on; if the sign-up rate limit is the reason, raise it in the test stack only. If `forge task feature` writes API test files that share data, fix its template too. Both starters: a run with a base runs no browser tests and installs no browser, and starts the Docker stack only when the API tests need it; a run without a base keeps the full browser suite. Record before-and-after times of one web change and one API change in the pull request text.
+- **The rules and guide (in TIME).** `conventions/testing.md`: replace "Keep browser tests in the root test command" with: browser tests, with each screen's rendered check, run in the full test command and the nightly full run, not in `fast_test`; add the four rules (no whole-app imports in test setup and helpers; each test file owns its data; slow file-dependent tests run on a pull request only when those inputs change, always nightly; one CI job never selects a test file twice, so a project that runs whole is not passed again to a related-test runner, while other projects' related files still run). `skill.md`: correct `:1385-1387` and `:1432-1433` to match; add a section "When CI is over 10 minutes" that lists the fixes in order of measured gain (record-commit reruns fixed in the release with #1656; browser tests nightly; selection that does not import the whole app; test files in parallel; one group for a small change, which is automatic; tools preinstalled on a self-hosted runner: git, Python 3.11, uv, Node and the package manager, Docker, and a warm package store, never `node_modules` or Playwright's browsers) and tells the agent to open the slowest job with `gh run view` before choosing one; add one line on close's time line and doctor's warning near the doctor rows. `brief.md:652`: the rendered check runs with the browser tests, in the full run. Copy each skill change into `.claude/skills/forge/SKILL.md` and `.codex/skills/forge/SKILL.md` by hand, in the same place, and change nothing else there. The starter-specific lines (`skill.md:1404-1407` and the TypeScript starter's selection lines) change in STARTER, when the scripts change.
+- **New and existing repos.** Each rule is tested on a new repo only. No record changes, so the upgrade test does not change. Existing repos get the workflow and CI script on upgrade and sync, and the text with the normal refresh; their scripts change only through a fix.
+
 ### Done-when details
 
-<!-- Under each Done-when item's number: its evidence, edge cases and the tests that prove it.
-Workers and reviewers get the entries of the items they cover. An item with nothing to add has
-no entry. -->
+1. CI time.
+   - Test: `tests/test_ci_time_report.py::test_1_close_prints_ci_time_and_doctor_warns_over_ten_minutes` (new repo only), on the `env` fixture from `tests/test_close.py`, with the GitHub stub answering the GraphQL request with canned check runs.
+   - Close: a pull request whose last five commits are a code commit with three test groups (4, 9 and 6 minutes, overlapping, wall time 12 min 30 s), a `docs-check` and the gate, plus a head record commit whose groups took 40 s, plus a skipped run, a cancelled run and a `Review pull request` run. `forge close <item>` passes and prints the line with 12 min 30 s, the runner minutes and `test group 2 of 3`. With the GraphQL stub failing, close still passes and prints no time line.
+   - Doctor: 20 merged pull requests with a median of 11 minutes print the warning with the slowest job; a median of 9 minutes prints none; doctor's exit code is the same in both.
+2. Group count.
+   - Test: `tests/test_small_change_runs_one_group.py::test_1_a_small_change_runs_one_test_group` (new repo only, `groups = 2`), copying the real-checkout approach of `tests/test_merged_default_branch_pull_requests_run_normal_groups.py`: run the synced `.forge/review-tests.py` and evaluate the generated matrix. Three changed code files give `[1]`; six give `[1, 2]`; one code file plus `pnpm-lock.yaml` gives `[1, 2]`; one code file plus `tsconfig.json` gives `[1, 2]`; three code files plus Markdown and test files give `[1]`. The `tests` gate's name and its `run` line are unchanged from today's workflow.
+   - Update the matrix name in `tests/test_merged_default_branch_pull_requests_run_normal_groups.py` from `test-only` to `one-group`; its asserts stay.
+   - Run this checkout's `forge sync` and commit only this part's changes to `.github/workflows/forge.yml` and `.forge/review-tests.py`.
+3. Starters.
+   - Test: extend `tests/test_affected_ts_starter.py::test_5_typescript_starter_selects_its_affected_parts` and `tests/test_affected_py_starter.py::test_6_python_starter_selects_its_affected_parts`: for a web change, `--list <base>` names no `playwright`, `web:e2e` or `test:browser` command; with no base it still names `test:browser`; and in every case no test file, folder or project appears twice in the listed test commands.
+   - Live, must pass: `tests/test_starter_tree.py::test_1_the_starter_is_a_runnable_stack` with parallel API files, run three times in a row to catch order-dependent data.
+4. Rules and guide. No test: text only. The reviewer checks that no Forge text still tells clients to keep browser tests in the pull request check (`grep -n -i "browser" src/forge/templates/skill.md src/forge/templates/conventions/testing.md src/forge/templates/brief.md`).
 
-1. <Evidence, edge cases and the tests that prove item 1.>
+Before each round ends, run the two cheap checks from AGENTS.md (`test_4_one_test_per_rule`, `test_5_forge_stays_small`).
 
 ## Tasks
 
-<!-- One row per task. Covers: the Done-when numbers it delivers, at most three. Scope: the paths
-it may change. Before writing each Scope, search the code for the files the task needs. The plan
-check refuses two tasks whose Scope paths have the same prefix up to the first wildcard, unless
-one waits for the other through After, directly or through another task; it names both tasks.
-Paths with a segment named `tests`, `test`, `__tests__` or `spec` do not cause Scope overlaps
-and can be shared without an After link. Explicit After links still apply.
-When tasks need the same production file, put it in the first task's Scope with the shared names and stubs;
-tasks that need them wait for that task through After and then own only their files. Keep a file
-that a script can make at build time out of the repo and out of every Scope; when the repo keeps such
-a file on purpose, give its change to one part that the others wait for. Tests: the
-tests it adds or changes. After: the tasks it waits for. When two tasks share a function, field,
-file format or command, the first task pins it: it commits the shared names and stubs plus one
-test that crosses both sides, and the tasks that use it list it under After. Split tasks so each
-owns its files; shared lines (command table, guide list, registry) go to one task or a small last
-wiring task; After only when a task needs another task's code. The
-Developer column is optional: the lead fills or changes a GitHub username here, below For the
-builders, without another approval. Leave it blank for an unassigned part. Forge next uses
-the caller's GitHub login; another developer may start it with a warning. Existing tables
-without Developer still work. The moving-parts line stays last: "none", or each new dependency, service, datastore,
-queue, background job or abstraction layer, with the Done-when item that needs it. -->
-
 | ID | Name | What it delivers | Covers | Scope | Tests | After | User-facing | Developer |
 |---|---|---|---|---|---|---|---|---|
+| TIME | CI time line, doctor warning, rules and guide | `citime.py`, the line after green checks, doctor's warning, the testing rules, the guide section and corrected browser text in the template and both repo copies, the brief line | 1, 4 | `src/forge/citime.py` (new), `src/forge/checks.py`, `src/forge/doctor.py`, `src/forge/templates/conventions/testing.md`, `src/forge/templates/skill.md`, `src/forge/templates/brief.md`, `.claude/skills/forge/SKILL.md`, `.codex/skills/forge/SKILL.md`, `tests/test_ci_time_report.py` (new) | `tests/test_ci_time_report.py::test_1_close_prints_ci_time_and_doctor_warns_over_ten_minutes` | | no | |
+| GROUPS | One test group for a small change | The small-change count and `one-group` output in the CI script, the workflow's matrix lines, this repo's regenerated workflow and script | 2 | `src/forge/templates/review-tests.py`, `src/forge/prcheck.py` (`WORKFLOW` and the one-group fold in `ships` only), `.github/workflows/forge.yml`, `.forge/review-tests.py`, `tests/test_small_change_runs_one_group.py` (new), `tests/test_merged_default_branch_pull_requests_run_normal_groups.py` | `tests/test_small_change_runs_one_group.py::test_1_a_small_change_runs_one_test_group`; stays green: `tests/test_merged_default_branch_pull_requests_run_normal_groups.py::test_1_pull_request_that_merged_the_default_branch_runs_normal_groups` | | no | |
+| STARTER | Parallel API files and no browser tests in change runs | TypeScript starter API tests own their data and run in parallel; both starters' change runs skip browser tests and the browser install; the starter lines in the guide and both repo copies; before-and-after times | 3 | `src/forge/templates/starter/scripts/test.mjs`, `src/forge/templates/starter/apps/api/vitest.config.ts`, `src/forge/templates/starter/apps/api/test/**`, `src/forge/templates/starter/compose.test.yml` (only for a test-only rate limit), `src/forge/templates/feature/**` (only if its API test template shares data), `src/forge/templates/starter-python/scripts/test.mjs`, `src/forge/templates/skill.md`, `.claude/skills/forge/SKILL.md`, `.codex/skills/forge/SKILL.md`, `tests/test_affected_ts_starter.py`, `tests/test_affected_py_starter.py`, `tests/test_starter_tree.py` | `tests/test_affected_ts_starter.py::test_5_typescript_starter_selects_its_affected_parts` and `tests/test_affected_py_starter.py::test_6_python_starter_selects_its_affected_parts` (extended); live, must pass: `tests/test_starter_tree.py::test_1_the_starter_is_a_runnable_stack` | TIME | no | |
 
 New moving parts: none
 
 ## Notes
+
+- **Order.** TIME and GROUPS start now, at the same time as FORGE-FASTCI-1's OXLINT part; they share no file with it except the guide text in `skill.md` and `brief.md`, in other sections. GROUPS starts after the #1656 fix merges if that fix changes `review-tests.py` or the workflow's test lines. STARTER waits for TIME (both change `skill.md`) and for FORGE-FASTCI-1's OXLINT part to merge, because both change the starters' scripts and lockfiles; the coordinator starts it only after OXLINT merges.
+- **FORGE-FASTCI-1.** Its CHECKS part (four separate checks) leaves that story, which changes its third Done-when item and shrinks its fourth; the owner approves that changed story once. This story adds no static-check part. If TIME's line shows that lint, type check and build take over two minutes in a new starter app, plan one static-check job beside the tests, under the same gate, as its own change.
+- **Scores (F x H >= 2 x C).** CI time line and warning: 3 x 2 = 6 >= 4 (C 2), kept. One group for a small change: 2 x 2 = 4 >= 4, kept. Browser tests nightly: 3 x 2 = 6 >= 2 as text, and the starter change is inside STARTER. Parallel API files: 3 x 2 = 6 >= 4, kept. Rules and guide: text, C 1, kept. Cut: Vitest groups by time (2 < 4), runner image code (2 < 6), a table of slow-test inputs (a new record and setting), a stored history of CI times or a board view, a blocking budget (a slow CI is not a wrong result, principle 3), a budget setting, caching `node_modules` or Playwright's browsers, and Vitest's recorded dependencies (experimental, needs Vitest 5.1; the starters pin 3.2.4).
+- **Principle 6.** Product code: about +130 lines (TIME), +40 (GROUPS), and starter scripts about -10 to +60 (STARTER, unknown until the reason for serial files is read). Process removed: the browser suite and the browser install leave every starter pull request; a small change stops filling every runner.
+- **Model cost.** None added.
+- **Owner questions (recommended answer first).**
+  1. Which commit's checks give the CI time? Recommended: the slowest of the pull request's last five commits, so a record commit that only reused an earlier test result (short) does not hide the run that tested the code; close and doctor use the same rule and one GitHub request each. The alternative, the head commit only as first decided, often shows a run of under a minute once the #1656 fix makes reuse work.
+  2. Should Forge's own repo use the one-group rule? Recommended: no, client repos only. Forge's tests reach its code only through the `forge` command, so a one-file change can select much of the suite, and one group could pass the 45-minute limit. The alternative applies it everywhere, so Forge tests it on itself first, and the builder measures the picker on one central-file change before merging.
+- **Not verified.** Step times of a new starter app's pull request, and so whether it meets 10 minutes today; why the starter's API tests run one file at a time; whether check-run start times include waiting for a runner (if they do, the jobs list's `created_at` and `started_at` give the wait as its own number, for issue #1639); what the client's 75 s of setup per job was made of; how many tests Forge's own picker selects for a one-file change.
