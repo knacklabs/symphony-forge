@@ -935,6 +935,8 @@ def check_pin(cwd: str | os.PathLike[str] | None = None, item: str = "", words: 
             handed = run("git", "show", f"{pending['head']}:forge.toml", cwd=pending["checkout"])
             pinned = _pin(handed.stdout)
     pinned = pinned or config(top)["version"].removeprefix("v")
+    if os.environ.get("FORGE_PINNED_RUN") == f"source:v{pinned}":
+        return
     if pinned == __version__:
         return
     from forge import story
@@ -991,11 +993,25 @@ def resume_pin(top: Path, previous: str, rounds: int | None = None, *, accepted:
 
 
 def run_release(release: str, args: list[str], cwd: str | os.PathLike[str] | None) -> int:
-    """Run a Forge release's `forge <args>` through uv in cwd, its output streamed; its exit code."""
-    return subprocess.run(
-        [shutil.which("uv") or "uv", "tool", "run", "--from",
-         f"git+https://github.com/knacklabs/symphony-forge@{release}", "forge", *args],
-        cwd=cwd, env={**uv_env(), "FORGE_PINNED_RUN": release}).returncode
+    """Run a published Forge release, or an unpublished source pin, through uv."""
+    uv = shutil.which("uv") or "uv"
+    top = root(cwd)
+    source = False
+    settings = top / "forge.toml"
+    if settings.is_file() and tomllib.loads(settings.read_text("utf-8")).get("repo") == "forge-source":
+        tags = run("git", "tag", "--list", cwd=top).stdout.splitlines()
+        source = all(_older(tag.removeprefix("v"), release.removeprefix("v"))
+                     for tag in tags if VERSION.fullmatch(tag))
+    if source:
+        print(f"Forge {release} is not published yet, so this checkout runs through uv.", file=sys.stderr)
+        command = [uv, "run", "--project", str(top), "forge", *args]
+        marker = f"source:{release}"
+    else:
+        command = [uv, "tool", "run", "--from",
+                   f"git+https://github.com/knacklabs/symphony-forge@{release}", "forge", *args]
+        marker = release
+    return subprocess.run(command, cwd=cwd,
+                          env={**uv_env(), "FORGE_PINNED_RUN": marker}).returncode
 
 
 def uv_env() -> dict[str, str]:

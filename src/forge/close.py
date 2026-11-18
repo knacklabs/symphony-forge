@@ -801,6 +801,13 @@ def _merge_default(top: Path, item: str, branch: str, default: str,
 def _synced(top: Path, item: str, changed_files: list[str]) -> None:
     """An upgrade is ready only once forge sync, run by the Forge it pins on a copy of the commit
     close pushes, changes and deletes nothing."""
+    cfg = repo.config(top)
+    if cfg.get("repo") != "forge-source":
+        from forge import prcheck
+        workflow = ".github/workflows/forge.yml"
+        committed = story.show(top, "HEAD", workflow)
+        if committed is not None and committed != prcheck.ships(top, cfg)[workflow]:
+            repo.refuse(("Run forge sync and commit .github/workflows/forge.yml", ""))
     toml = story.show(top, "HEAD", "forge.toml") or ""
     pinned = repo._pin(toml)  # pyright: ignore[reportPrivateUsage]
     if pinned == (release := repo._pin(story.show(top, f"origin/{repo.default_branch(top)}", "forge.toml") or "")):  # pyright: ignore[reportPrivateUsage]
