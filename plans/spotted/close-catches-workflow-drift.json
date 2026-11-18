@@ -34,6 +34,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/conftest.py\tProcess-cleanup failures can print inherited secret environment values from the process list.",
+      "kind": "bug",
+      "path": "tests/conftest.py",
+      "line": 388,
+      "text": "Process-cleanup failures can print inherited secret environment values from the process list.",
+      "from": "worker",
+      "item": "close-catches-workflow-drift",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_close_requires_current_workflow.py\tGate: tests/test_close_requires_current_workflow.py::test_2_source_generator_changes_run_the_release_sync_test\tclose-catches-workflow-drift",
       "kind": "bug",
       "path": "tests/test_close_requires_current_workflow.py",

@@ -18,7 +18,7 @@
       "gain": 4,
       "harm": 3,
       "line": 809,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -31,7 +31,7 @@
       "gain": 4,
       "harm": 3,
       "line": 938,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -44,7 +44,7 @@
       "gain": 4,
       "harm": 3,
       "line": 809,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -70,7 +70,7 @@
       "gain": 3,
       "harm": 3,
       "line": 57,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -80,68 +80,27 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "740439b0fd64173669cbeabba4e449823b6b644ed0a8db41192b8147d8b942c0",
-    "changed": "e3beff2a5278c312e03bad5e8c326a47c575bca0eafc10c08241bc42c61c93e1",
-    "commit": "44ab92a54aa6793a7b795a9b2f4871930c279299",
+    "branch_diff": "48ac2b63ba2e50dbce81972253428f7d329cc7e6727a87a1e56fe397774b953d",
+    "changed": "84edb0208ea27f34d1f1c13cf8f458981cabb1af3bff919c4c6a741ccbdb4ae0",
+    "commit": "3291fc9444f85d04bf19817032de5b6abfdf7b4c",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 4, Work 1, Harm 3\nRaise: Functional\nCase: normal use - a sample-data prototype closes a fix while retaining its existing workflow.\nIn sample-data mode, `prcheck.ships()` returns an empty dictionary (`src/forge/prcheck.py:234`), but this lookup indexes it whenever the committed workflow exists. Close therefore raises `KeyError` before review. Retaining an existing workflow in this mode is an established path in `tests/test_sample_setup.py:85-106`.",
-        "file": "src/forge/close.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 809,
-        "priority": "P1",
-        "title": "Close crashes for sample-data prototypes with an existing workflow",
-        "work": 1
-      },
-      {
-        "body": "Gain 4, Work 3, Harm 3\nRaise: Not done\nCase: normal use - close a source fix from the main checkout after its worktree has merged an unpublished release bump.\nThe Done-when requires: \"close runs the release-checkout sync test (or forge sync --check) when a change touches the workflow generator or the templates and fails with one line naming the file to regenerate; and when the pinned release is newer than the newest published tag in Forge's own repo, close runs Forge from the source checkout instead of failing; new and existing repos get it on upgrade\". `check_pin` checks the caller's checkout and returns when its older pin matches the installed version (`repo.py:937-941`). Close then reads the fix worktree's already-new pin as its previous pin (`close.py:87,247`), so no handoff occurs and the old Forge continues. Two other paths still fail: generated-guide conflict repair fetches the unpublished tag directly with `--with` (`close.py:775-780`), and `_older` ignores prerelease suffixes, so a published `v1.3.0-rc.1` prevents fallback for an unpublished `v1.3.0` (`repo.py:1003,1057-1061`).",
-        "file": "src/forge/repo.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 938,
-        "priority": "P1",
-        "required_done_when": true,
-        "title": "Not done: close does not consistently use the source checkout for an unpublished pin",
-        "work": 3
-      },
-      {
-        "body": "Gain 4, Work 1, Harm 3\nRaise: Functional\nCase: normal use - an earlier-adopted sample-data client without a Forge workflow turns sample data off and enables checks.\nWhen the workflow is absent from HEAD, `committed` is `None` and this condition skips the comparison, although normal-mode sync would generate the file (`src/forge/prcheck.py:466`). Close can proceed without the promised regeneration message; CI-configured repos then lack the workflow that produces the expected checks. The earlier-adopted fixture has no workflow, and sync deliberately leaves workflows alone in sample-data mode.",
-        "file": "src/forge/close.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 809,
-        "priority": "P1",
-        "title": "Close skips a missing generated client workflow",
-        "work": 1
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - a source pull request changes the workflow generator or a template.\nThis proof invokes `forge test --pytest` directly and substitutes a receipt-writing function for the release sync test. The separate release test invokes sync but does not close a source change. Both can pass if close or its CI path skips the selected test, allowing a stale generated workflow through. The promised behavior needs coverage through close with the real sync check.",
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - a source pull request changes a generator or template and runs its checks in CI.\nThe replacement test forces `test_place = \"local\"` and changes only `src/forge/prcheck.py`. Forge's own configuration instead runs tests in CI (`forge.toml:8` and `src/forge/repo.py:604-607`). The test would still pass if the CI `forge test --change` path skipped the release sync check, or if `src/forge/fasttest.py:797` stopped selecting it for template changes. The previous finding therefore remains open for those paths.",
         "file": "tests/test_close_requires_current_workflow.py",
         "gain": 3,
         "harm": 3,
-        "line": 56,
+        "line": 70,
         "priority": "P1",
         "title": "Gate: tests/test_close_requires_current_workflow.py::test_2_source_generator_changes_run_the_release_sync_test",
         "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - a source fix is being closed as an unpublished release bump arrives.\nThe proof closes `missing-fix` and expects the immediate not-started refusal, so it never exercises an actual close, an in-flight pin change, or generated-file conflict repair. It passes while the direct `--with` fetch in `src/forge/close.py:775-780` still fails for the unpublished release. A real item must reach close's completion path to prove this behavior.",
-        "file": "tests/test_forge_source_uses_unpublished_pin.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 57,
-        "priority": "P1",
-        "title": "Gate: tests/test_forge_source_uses_unpublished_pin.py::test_3_close_runs_an_unpublished_forge_source_pin_from_its_checkout",
-        "work": 2
       }
     ],
-    "id": "acb95e49-cd0c-4754-a24d-7d57f99211ac",
+    "id": "54551972-88e0-402a-8260-f224c2418b1a",
     "status": "blocked"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-18T15:25:03.931125+00:00",
@@ -150,16 +109,16 @@
     {
       "at": "2026-11-18T16:05:16.065717+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-11-18T17:41:02.634416+00:00",
+      "step": "review"
     }
   ],
   "stop": {
-    "at": "2026-11-18T16:05:16.089323+00:00",
-    "by": "owner",
-    "choice": "more",
-    "file": "src/forge/close.py",
-    "reason": "Owner chose one more round: fix the five review findings",
-    "wait_id": "46a174d8-bb44-47cd-9760-e79d2a2de55a",
-    "worker_round": 1
+    "at": "2026-11-18T17:41:02.634736+00:00",
+    "file": "tests/test_close_requires_current_workflow.py",
+    "wait_id": "a2efcb8b-aee1-4506-9ed9-3d0c0d63acf9"
   },
   "stuck": {
     "close": "163715be-bec8-4b2b-be48-6b7af63e1286",
