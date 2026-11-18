@@ -133,7 +133,7 @@
     "id": "df332b6e-efe9-4892-b976-913e93316780",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -146,10 +146,12 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "0de26b9443618fc181deab3363c0de5b24645c64",
-    "keys": {},
-    "round": null
+    "close": "e07228cc-0d60-425b-aa5e-4360555f299d",
+    "head": "a8b93ee2416f402c461a25f73641720ab0b40e8c",
+    "keys": {
+      "the open P0 not done: a head commit that differs from its parent only in forge's close records does not cancel the parent's ci run still in progress in src/forge/checks.py": 1
+    },
+    "round": 1
   },
   "why": "Issue 1656: in CI-test repos, close pushes its review record commit a few minutes after the code, and that push cancels the code's own CI run in progress (concurrency cancel-in-progress). The parent then has no successful run, so .forge/review-tests.py cannot reuse it, and every record-only commit starts a full run again: 72% of one client's runs, about 28 minutes each.",
   "worker": "claude"
