@@ -18,7 +18,7 @@
       "gain": 4,
       "harm": 2,
       "line": 144,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -31,7 +31,7 @@
       "gain": 3,
       "harm": 3,
       "line": 49,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -44,7 +44,7 @@
       "gain": 3,
       "harm": 2,
       "line": 594,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -54,49 +54,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "650c9513ac73504deaf7a31da4781b62c88ecd94ce50dc44fb77f278508c1f38",
-    "changed": "284ab3921f620f3f2836c4b9d2ad461ca077fbbcb3a2d2c5b9be7d61b343da56",
-    "commit": "174690f590b274c74c03ca8ad82cbc76d3f1dd10",
+    "branch_diff": "c811e45b3119dbbbb2a05df1544844b1010ee5da5512a3ef58fc439c91233b29",
+    "changed": "6994507fa10914713abaec41f823ddb051f9a3b317df5df67c6e83fe6a79dfce",
+    "commit": "08977e998d865de3e8ac904b4cd0e6dc99ef1f86",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 3, Harm 2\nRaise: Not done\nCase: normal use - CI runs the tests on a busy runner.\nThis change repairs the worker-rerun test, but the supplied proof list says the memory-budget test's timing cause and repair are missing, and that test is unchanged in the diff. The reported CI timeout can therefore still occur; five passing runs that did not reproduce it do not establish a repair.",
-        "file": "tests/test_parallel_worker_crash_keeps_failed_names.py",
-        "gain": 4,
-        "harm": 2,
-        "line": 144,
-        "priority": "P1",
-        "required_done_when": true,
-        "title": "Not done: the two flaky tests no longer fail at random under load",
-        "work": 3
-      },
-      {
-        "body": "Gain 3, Work 1, Harm 3\nRaise: Test\nCase: normal use - close is rerun while the same pushed head's CI changes from pending to green.\nThe new `check_reads` includes requests from earlier iterations, while the before-and-after counts accept requests for any commit. After the first iteration queries the pushed head, a later invocation can query both endpoints for a different head and still satisfy these assertions. The fixture in `tests/test_close.py:175` returns the current check results regardless of the requested commit, so the test can pass while a retry makes the current head ready using another commit's CI. Each iteration needs to establish that its new reads target the pushed head.",
-        "file": "tests/test_close_overlaps_review_and_ci.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 49,
-        "priority": "P1",
-        "title": "Gate: test_1_close_publishes_after_review_and_ready_needs_both",
-        "work": 1
-      },
-      {
-        "body": "Gain 3, Work 1, Harm 2\nRaise: Not done\nCase: normal use - a command adds another GitHub check request.\nThe board test still chooses `calls[-1]` at `tests/test_machine_views.py:596` after filtering on a shared query fragment. Also, `test_18_close` still collects broad check-run and status calls and selects `[-2:]` at `tests/test_close.py:624-625`. An additional matching request can change which calls these tests inspect and fail them even when the intended check remains correct.",
-        "file": "tests/test_machine_views.py",
-        "gain": 3,
-        "harm": 2,
-        "line": 594,
-        "priority": "P1",
-        "required_done_when": true,
-        "title": "Not done: tests select gh calls through one shared helper by path or query instead of by position or count",
-        "work": 1
-      }
-    ],
-    "id": "50b032fd-115b-459d-82cc-2e5f4002121e",
-    "status": "blocked"
+    "findings": [],
+    "id": "012a6cf5-cd3b-4308-ac3c-4fd56f8c0284",
+    "status": "clean"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-18T15:25:09.021096+00:00",
@@ -104,6 +71,10 @@
     },
     {
       "at": "2026-11-18T17:01:27.326810+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-18T17:28:06.574230+00:00",
       "step": "review"
     }
   ],
