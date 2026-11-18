@@ -1,12 +1,11 @@
 """Wait for explicit GitHub quota refusals at the shared command edge."""
 import json
 import re
+import subprocess
 import sys
 import time
 from datetime import datetime, timezone
 
-NETWORK = ("Could not resolve host", "i/o timeout", "Connection timed out", "Connection reset",
-           "error connecting to")
 wait_for_reset = False  # Shared command setup enables this only for close, merge and land.
 
 
@@ -37,3 +36,59 @@ def run(args, execute, cwd):
                   file=sys.stderr, flush=True)
             announced = True
         time.sleep(max(0, resume - time.time()))
+
+
+def read(args: tuple[str, ...], execute) -> subprocess.CompletedProcess[str]:
+    """Retry reads only: replaying a write after an unreadable receipt could duplicate it."""
+    from forge import repo
+
+    api = args[1:2] == ("api",)
+    read = (args[1:3] in (("pr", "list"), ("pr", "view"), ("pr", "checks"),
+                         ("run", "list"), ("run", "view"),
+                         ("release", "list"), ("release", "view")))
+    if api:
+        # gh infers POST from fields; our GraphQL query is a read despite that POST.
+        read = (not any(flag in args for flag in ("-f", "-F", "--field", "--raw-field", "--input"))
+                or ("graphql" in args and any(re.match(r"query=\s*(?:\{|query\b)", arg)
+                                              for arg in args)))
+        if "--method" in args or "-X" in args:
+            flag = "--method" if "--method" in args else "-X"
+            read = args[args.index(flag) + 1].upper() == "GET"
+    if not read:
+        return execute()
+    jq = args[args.index("--jq") + 1] if "--jq" in args else None
+    structured = api or "--json" in args
+    for pause in (1, 2, 4, None):
+        done = execute()
+        said = done.stderr + done.stdout
+        if done.returncode and re.search(r"\bHTTP\s+(?:401|403|404)\b", said, re.I):
+            return done
+        unreadable = False
+        if structured and done.returncode == 0:
+            text = done.stdout.strip()
+            try:
+                if ((jq is None and api and "--paginate" in args and "--slurp" not in args)
+                        or (jq is not None and jq.endswith("[]"))):
+                    decoder = json.JSONDecoder()
+                    while text:
+                        _, end = decoder.raw_decode(text)
+                        text = text[end:].lstrip()
+                elif jq is None:
+                    json.loads(text)
+                else:
+                    unreadable = text.startswith("<")
+            except ValueError:
+                unreadable = True
+        transient = unreadable or (structured and (done.stdout.lstrip().startswith("<")
+                                                   or done.stderr.lstrip().startswith("<"))) or (done.returncode and (
+            re.search(r"\bHTTP\s+5\d\d\b", said, re.I)
+            or re.search(r"\bunexpected EOF\b|\binvalid character\b", said, re.I)
+            or "looking for beginning of value" in said
+            or "unexpected end of JSON input" in said
+            or any(text in said for text in repo.NETWORK)))
+        if not transient:
+            return done
+        if pause is None:
+            return subprocess.CompletedProcess(done.args, 1, "",
+                                               repo.REFUSALS["no_github"][0] + "\n")
+        time.sleep(pause)

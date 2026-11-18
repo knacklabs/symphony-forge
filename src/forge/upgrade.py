@@ -334,11 +334,13 @@ def release_notice(top: Path) -> list[str]:
 
 def _newest(top: Path, timeout: float | None = None) -> str:
     """The newest release's tag, as GitHub has it."""
+    from forge import github
+
     gh = shutil.which("gh")
     if gh is None:
         repo.refuse(REFUSALS["no_newest"], reason="gh is not installed")
     args = ("gh", "release", "view", "--repo", SOURCE, "--json", "tagName")
-    done = repo._github_read(args, lambda: subprocess.run(  # pyright: ignore[reportPrivateUsage]
+    done = github.read(args, lambda: subprocess.run(
         [gh, *args[1:]], cwd=top, input="", capture_output=True, text=True, encoding="utf-8",
         errors="replace", timeout=timeout))
     try:
