@@ -4,12 +4,20 @@
   "done_when": "Fixes use task_review_rounds like story parts (default 2), so a fix stops for the owner only after its second blocked review; the skill and guide say so; new and existing repos get it on upgrade",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-18T16:43:34.717641+00:00",
       "step": "start"
     }
   ],
-  "why": "Fixes stop for the owner's choice after the first blocked review unless a finding is P0 (close.py uses a fixed limit of 1 for fixes), while story parts get task_review_rounds (default 2); at a client this cost an owner question and 20-60 minutes three times on 18 Nov 2026"
+  "stuck": {
+    "close": null,
+    "head": "83f43c7a850d1e13d4bee6c7a7dc36ed4414a110",
+    "keys": {},
+    "round": null
+  },
+  "why": "Fixes stop for the owner's choice after the first blocked review unless a finding is P0 (close.py uses a fixed limit of 1 for fixes), while story parts get task_review_rounds (default 2); at a client this cost an owner question and 20-60 minutes three times on 18 Nov 2026",
+  "worker": "codex"
 }
