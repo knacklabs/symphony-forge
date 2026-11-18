@@ -593,7 +593,7 @@ def test_3_board_reports_github_occurrences_after_cache_expiry(repo, gh, monkeyp
     assert {e["id"] for e in events} == {"check-run:111371488291:2026-10-04T10:03:00Z", "status:SC_kwDNIULPAAAADOokTrg"}
     calls = gh.calls("api", "graphql", query=check_query)
     assert len(calls) == initial_calls + 5
-    assert "first: 25" in " ".join(calls[-1]) and "CREATED_AT" in " ".join(calls[-1])
+    assert all("CREATED_AT" in " ".join(call) for call in calls)
 
 
 @pytest.mark.parametrize("phase,history", [

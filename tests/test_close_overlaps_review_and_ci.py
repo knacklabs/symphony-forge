@@ -33,8 +33,7 @@ Path({observed!r}).write_text(json.dumps({{"remote": remote,
     for tests in ([None, "failure", "success"] if review_clean else ["success"]):
         env.checks([run("tests", tests, "in_progress" if tests is None else "completed"),
                     run("forge-pr-check")])
-        before_check_runs = len(env.gh_calls("api", path="/check-runs"))
-        before_statuses = len(env.gh_calls("api", path="/status"))
+        before_commit_reads = env.gh_calls("api", path="/commits/")
         closed = env.close(item)
         assert (closed.returncode == 0) == (review_clean and tests == "success"), closed.stderr
         assert ("Ready:" in closed.stdout) == (review_clean and tests == "success")
@@ -46,13 +45,11 @@ Path({observed!r}).write_text(json.dumps({{"remote": remote,
         pushed = env.repo.git("ls-remote", "origin", "task/SHOP-T1").split()[0]
         assert pushed == env.repo.git("rev-parse", "HEAD", cwd=where)
         if review_clean:
-            check_reads = env.gh_calls("api", path=f"/commits/{pushed}/")
-            assert len(env.gh_calls("api", path="/check-runs")) > before_check_runs
-            assert len(env.gh_calls("api", path="/status")) > before_statuses
-            # Close may also finish the previous push's CI before publishing its records.
             for endpoint in ("check-runs", "status"):
-                assert any(call[-1].split("?")[0].endswith(f"/commits/{pushed}/{endpoint}")
-                           for call in check_reads)
+                path = f"/commits/{pushed}/{endpoint}"
+                reads_before = sum(call[-1].split("?")[0].endswith(path)
+                                   for call in before_commit_reads)
+                assert len(env.gh_calls("api", path=path)) > reads_before
         # GitHub remembers the draft created by the first round; later rounds edit it.
         env.open_pr(body, draft=closed.returncode != 0)
 
