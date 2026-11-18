@@ -1,0 +1,70 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/github.py\tFunctional: A branch name can trigger a false rate-limit wait\trate-limit-waits",
+      "kind": "bug",
+      "path": "src/forge/github.py",
+      "line": 16,
+      "text": "Functional: A branch name can trigger a false rate-limit wait",
+      "from": "blocking",
+      "item": "rate-limit-waits",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/github.py\tFunctional: HTTP 403 secondary rate limits stop Forge commands\trate-limit-waits",
+      "kind": "bug",
+      "path": "src/forge/github.py",
+      "line": 23,
+      "text": "Functional: HTTP 403 secondary rate limits stop Forge commands",
+      "from": "blocking",
+      "item": "rate-limit-waits",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/github.py\tFunctional: Honor the retry time for secondary limits\trate-limit-waits",
+      "kind": "bug",
+      "path": "src/forge/github.py",
+      "line": 18,
+      "text": "Functional: Honor the retry time for secondary limits",
+      "from": "blocking",
+      "item": "rate-limit-waits",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/github.py\tNot done: When GitHub answers with a rate-limit error, close, merge and land wait until the reset time GitHub reports\trate-limit-waits",
+      "kind": "bug",
+      "path": "src/forge/github.py",
+      "line": 28,
+      "text": "Not done: When GitHub answers with a rate-limit error, close, merge and land wait until the reset time GitHub reports",
+      "from": "blocking",
+      "item": "rate-limit-waits",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/repo.py\tFunctional: Keep board and next responsive while GitHub is rate-limited\trate-limit-waits",
+      "kind": "bug",
+      "path": "src/forge/repo.py",
+      "line": 290,
+      "text": "Functional: Keep board and next responsive while GitHub is rate-limited",
+      "from": "blocking",
+      "item": "rate-limit-waits",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_github_rate_limits_wait_for_reset.py\tGate: tests/test_github_rate_limits_wait_for_reset.py::test_1_commands_wait_for_github_reset_and_continue\trate-limit-waits",
+      "kind": "bug",
+      "path": "tests/test_github_rate_limits_wait_for_reset.py",
+      "line": 48,
+      "text": "Gate: tests/test_github_rate_limits_wait_for_reset.py::test_1_commands_wait_for_github_reset_and_continue",
+      "from": "blocking",
+      "item": "rate-limit-waits",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
