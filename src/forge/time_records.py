@@ -107,15 +107,26 @@ def hours_minutes(seconds: float) -> str:
     return f"{hours}h{minutes}m"
 
 
-def daily_median(items: list[dict[str, Any]]) -> dict[str, Any]:
+def daily_median(items: list[dict[str, Any]], *, viewer: str | None) -> dict[str, Any]:
     today = when(repo.now()).date()
-    times = [row["total_seconds"] for parent in items for row in [parent, *parent.get("children", [])]
+    rows = [row for parent in items for row in [parent, *parent.get("children", [])]
              if row["kind"] in ("fix", "task") and (end := when(row.get("merged_at")))
              and end.date() == today and row.get("total_seconds") is not None]
-    value = statistics.median(times) if times else None
-    return {"date": today.isoformat(), "median_seconds": value,
-            "line": "Median start to merge today (UTC): " + hours_minutes(value)
-                    if value is not None else "No measured merges today (UTC)"}
+
+    def measure(selected: list[dict[str, Any]]) -> dict[str, Any]:
+        value = statistics.median(row["total_seconds"] for row in selected) if selected else None
+        return {"date": today.isoformat(), "median_seconds": value,
+                "line": "Median start to merge today (UTC): " + hours_minutes(value)
+                        if value is not None else "No measured merges today (UTC)"}
+
+    mine = [row for row in rows if viewer and any(
+        (row.get(field) or "").removeprefix("@").lower() == viewer.removeprefix("@").lower()
+        for field in ("owner", "developer_login", "started_by_login"))]
+    result = measure(rows)
+    for view, selected in (("team", rows), ("me", mine)):
+        result[view] = {kind: measure([row for row in selected if kind == "all" or row["kind"] == kind])
+                        for kind in ("all", "fix", "task")}
+    return result
 
 
 def merge_line(top: Path, key: str, state: dict[str, Any], published: str, ended_at: str) -> str:
@@ -124,12 +135,13 @@ def merge_line(top: Path, key: str, state: dict[str, Any], published: str, ended
     seconds = data["total_seconds"]
     if seconds is None or end is None:
         return f"Merged {key}: start-to-merge time is not measured."
-    start = end - timedelta(seconds=seconds)
+    start = min((when(span["start"]) for span in data["intervals"]),
+                default=end - timedelta(seconds=seconds))
     waits = {label: data["time_breakdown"].get(category) for category, label in zip(CATEGORIES[4:], LABELS[4:])}
     measured = {label: value for label, value in waits.items() if value is not None and value > 0}
     cause = max(measured, key=measured.get) if measured else "not measured"
     return (f"Merged {key}: started {start.isoformat()}, merged {ended_at}, "
-            f"{hours_minutes(seconds)} start to merge; biggest wait: {cause}")
+            f"{hours_minutes((end - start).total_seconds())} start to merge; biggest wait: {cause}")
 
 
 def plain(seconds: float | None) -> str:

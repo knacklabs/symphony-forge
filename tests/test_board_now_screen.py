@@ -10,6 +10,7 @@ from datetime import datetime, timedelta, timezone
 
 import board_fixture
 from conftest import REAL_UV, Repo
+from test_board import DOC
 from test_board_server import client, clone, fix, live, pushed, snapshot  # noqa: F401
 
 STORY = "FORGE-BOARD-4"
@@ -156,9 +157,18 @@ with sync_playwright() as p:
             page.get_by_role('button', name='Fixes', exact=True).click()
             expect(flight).to_contain_text('Readers see theirs')
             page.get_by_role('button', name='Me', exact=True).click()
+            expect(figures).to_contain_text('Median start to merge today (UTC): 1h0m')
             expect(page.get_by_role('region', name='Needs you')).to_contain_text('@asha')
             expect(flight).to_contain_text('Readers see mine')
             expect(flight).not_to_contain_text('Readers see theirs')
+            page.get_by_role('button', name='Story parts', exact=True).click()
+            expect(figures).to_contain_text('Median start to merge today (UTC): 4h0m')
+            page.get_by_role('button', name='All', exact=True).click()
+            expect(figures).to_contain_text('Median start to merge today (UTC): 2h30m')
+            page.get_by_role('button', name='Team', exact=True).click()
+            expect(figures).to_contain_text('Median start to merge today (UTC): 3h0m')
+            page.get_by_role('button', name='Fixes', exact=True).click()
+            expect(figures).to_contain_text('Median start to merge today (UTC): 2h0m')
             accessible(page)
     finally:
         browser.close()
@@ -217,9 +227,9 @@ def test_12_the_first_screen_fits_a_laptop_window_and_keeps_every_item_reachable
 
 
 def merged_fixes(repo, tmp_path, times):
-    """Fixes merged an hour ago, each (hours long, seconds of it waiting for a person), written as a
+    """Fixes merged today, each (hours long, seconds of it waiting for a person), written as a
     merged fix's record on the default branch and the events Forge logs while it waits and finishes."""
-    end = datetime.now(timezone.utc).replace(microsecond=0) - timedelta(hours=1)
+    end = datetime.now(timezone.utc).replace(microsecond=0)
     events, records = [], {}
     for n, (took, waited) in enumerate(times, 1):
         records[f".factory/fixes/done-{n}.json"] = json.dumps({
@@ -230,17 +240,30 @@ def merged_fixes(repo, tmp_path, times):
                    {"id": f"waited-{n}", "item": f"done-{n}", "event": "owner wait end", "wait_id": f"wait-{n}",
                     "at": end.isoformat()},
                    {"id": f"end-{n}", "item": f"done-{n}", "event": "item finished", "at": end.isoformat()}]
-    pushed(clone(repo, tmp_path), "Merge three fixes", records)
+    records.update({"plans/SHOP.md": DOC.replace("## Tasks\n", "## Tasks\n\nOwner: asha\n", 1),
+                    ".factory/stories/SHOP/story.json": json.dumps({"title": "Shoppers can save a basket", "status": "approved"}),
+                    ".factory/stories/SHOP/tasks/SAVE.json": json.dumps({"branch": "task/SHOP-SAVE", "status": "merged",
+                        "finished": end.isoformat(), "steps": [{"step": "start", "at": (end - timedelta(hours=4)).isoformat()}]})})
+    events += [{"item": "SHOP/SAVE", "event": "owner wait start", "id": "part-wait", "at": end.isoformat()},
+               {"item": "SHOP/SAVE", "event": "owner wait end", "wait_id": "part-wait", "at": end.isoformat()},
+               {"item": "SHOP/SAVE", "event": "item finished", "at": end.isoformat()}]
+    pushed(clone(repo, tmp_path), "Merge three fixes and a story part", records)
     repo.git("fetch", "-q", "origin")
     with (repo.path / ".git/forge/events.jsonl").open("a", encoding="utf-8") as log:
         log.writelines(json.dumps(event) + "\n" for event in events)
+    return end
 
 
 def test_13_the_figures_and_the_me_view_follow_forges_records(client, gh, tmp_path):
-    """Three fixes merged this week took 1, 2 and 9 hours and waited 10, 30 and 60 minutes for a person:
-    a median of 2 h and 6000 of 43200 seconds waiting. One open fix's checks fail. The viewer, asha,
-    opened one of the two open fixes, so Me shows only that one."""
-    merged_fixes(client, tmp_path, [(1, 600), (2, 1800), (9, 3600)])
+    """Today's fixes took 1, 2 and 9 hours and a story part took 4 hours. Asha owns the
+    one-hour fix and the part. Team, Me and kind filters must select their own median.
+    The 6000 seconds of person wait cover 57600 seconds. Existing tests checked only
+    the unfiltered figure, so a global median could hide inside Me. No new seam is needed."""
+    end = merged_fixes(client, tmp_path, [(1, 600), (2, 1800), (9, 3600)])
+    gh.respond("pr", "list", "--state", "merged", stdout=json.dumps([
+        {"number": n, "state": "MERGED", "headRefName": f"fix/done-{n}", "mergedAt": end.isoformat(),
+         "title": f"Readers see total {n}", "author": {"login": "asha" if n == 1 else "ben"},
+         "body": "", "files": []} for n in range(1, 4)]))
     fix(client, "mine")
     fix(client, "theirs")
 
@@ -256,11 +279,10 @@ def test_13_the_figures_and_the_me_view_follow_forges_records(client, gh, tmp_pa
         opened("mine", "asha", "SUCCESS"), opened("theirs", "ben", "FAILURE")]}}}}))
     gh.respond("api", "user", stdout="asha\n")
     with live(client) as url:
-        # The earlier-adopted repo also merged its upgrade fix this week, with no recorded time.
         board = snapshot(url)
         merged = sum(board["team"]["counts"]["finished_last_7_days"].values())
         timed = [row["id"] for row in board["items"] if row["stage"] == "merged" and row["total_seconds"] is not None]
-        assert merged >= 3 and sorted(timed) == ["done-1", "done-2", "done-3"], (merged, timed)
+        assert merged >= 4 and sorted(timed) == ["done-1", "done-2", "done-3"], (merged, timed)
         # The median now covers today's merges in UTC, rather than the last seven days.
-        look(url, "figures", {"figures": [f"{merged} merged, 7 days", board["daily_start_to_merge"]["line"], "13.9% waiting on people",
+        look(url, "figures", {"figures": [f"{merged} merged, 7 days", "Median start to merge today (UTC): 3h0m", "10.4% waiting on people",
                                           "1 red checks"]})

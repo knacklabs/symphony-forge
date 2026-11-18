@@ -88,7 +88,8 @@ function facts(snapshot) {
     asks: snapshot.team.needs_you.filter((ask) => viewer === null || ask.kind === 'run' || ids.has(ask.id)), // a failed run has no owner
     merged: viewer === null ? (kind === 'all' ? counted.parts + counted.fixes : counted[kind === 'task' ? 'parts' : 'fixes'])
       : recent.length,
-    dailyMedian: snapshot.daily_start_to_merge?.line || 'No measured merges today (UTC)',
+    dailyMedian: snapshot.daily_start_to_merge?.[Board.view === 'me' ? 'me' : 'team']?.[kind]?.line
+      || 'No measured merges today (UTC)',
     waiting: total && waitingKnown ? `${+(100 * waited / total).toFixed(1)}%` : 'unknown',
     red: cards.filter((row) => row.gates?.ci?.status === 'red' && STAGE_OF[row.stage] !== 'merged').length,
     stories: maps.filter((map) => !['done', 'needs a spec'].includes(map.stage))
