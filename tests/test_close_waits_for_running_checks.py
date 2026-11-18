@@ -1,7 +1,7 @@
-"""Close and merge keep running checks past ten minutes, with a bounded wait.
+"""Close and merge wait for running checks, with an explicit bounded override.
 
 Audit: owns standalone command waits, generated test groups and commit statuses.
-The fixed deadline and a check-run-only deadline each fail before green. Land
+The old fixed deadline and a check-run-only deadline each fail before green. Land
 does not exercise standalone merge. No production test seam is needed.
 """
 import pytest
@@ -37,20 +37,8 @@ def test_1_close_and_merge_wait_for_running_checks_until_green_or_the_limit(
                if provider == "groups" else [{"context": name, "state": "pending"}])
     green = GREEN if provider == "groups" else [{"context": name, "state": "success"}]
     elapsed = tmp_path / "clock" / "elapsed"
-
-    (env.repo.bin / "gh-queues.json").write_text("[]", encoding="utf-8")
-    _queue(env, api, *_runs(running))
-    before = float(elapsed.read_text("utf-8"))
-    done = env.repo.forge(command, ITEM)
-    waited = float(elapsed.read_text("utf-8")) - before
-    output = done.stdout + done.stderr
-    assert done.returncode == 1, output
-    assert 89 * 60 <= waited <= 91 * 60, (waited, output)
-    assert "90 minutes limit" in output
-    assert f"{name} is still running" in output
-    assert f"forge close {ITEM}" in output
-
     monkeypatch.setenv("FORGE_CHECKS_WAIT", "0")
+    _queue(env, api, *_runs(running))
     before = float(elapsed.read_text("utf-8"))
     calls = len(env.gh_calls(*api))
     done = env.repo.forge(command, ITEM)
@@ -69,5 +57,5 @@ def test_1_close_and_merge_wait_for_running_checks_until_green_or_the_limit(
     done = env.repo.forge(command, ITEM)
     output = done.stdout + done.stderr
     assert done.returncode == 0, output
-    assert 30 * 60 <= float(elapsed.read_text("utf-8")) - before < 90 * 60
+    assert float(elapsed.read_text("utf-8")) - before >= 30 * 60
     assert ("clean review and green checks" if command == "close" else "Merged") in output

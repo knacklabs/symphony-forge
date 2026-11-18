@@ -122,7 +122,7 @@ def let_finish(top: Path, item: str, sha: str, names: list[str],
     record's own run could not reuse its result. Waiting reuses _seen and the wait's slot idea
     (a running wait lends the land queue place back) and needs no change to the workflow.
     Test groups report no `tests` check until they end, so the wait does not look for names."""
-    deadline = time.monotonic() + float(os.environ.get("FORGE_CHECKS_WAIT", "5400"))
+    printed_at = None
     try:
         while True:
             try:
@@ -134,8 +134,12 @@ def let_finish(top: Path, item: str, sha: str, names: list[str],
                     for name, state in seen]
             _recover(top, item, sha, names, runs, seen)
             states = [state for _, state in seen]
-            if not any(state in (PENDING, QUEUED) for state in states) or time.monotonic() >= deadline:
+            if not any(state in (PENDING, QUEUED) for state in states):
                 return
+            now = time.monotonic()
+            if printed_at is None or now - printed_at >= 300:
+                print("Waiting: the code's checks are still queued or running.", flush=True)
+                printed_at = now
             if slot is not None:
                 slot(QUEUED not in states)  # queued runs keep the place; running ones lend it
             time.sleep(15)
@@ -167,10 +171,9 @@ def _wait(top: Path, item: str, sha: str, names: list[str], branch: str, progres
     # ponytail: an env override is the whole wait seam (tests set 0 to look once).
     timeout = float(os.environ.get("FORGE_CHECKS_WAIT", "1800" if progress else "600"))
     deadline = time.monotonic() + timeout
-    running_deadline = time.monotonic() + 90 * 60
     previous = None
     queued_since = None
-    printed_minute = None
+    printed_at = None
     requested: set[int] = set()
     cache = (repo.forge_dir(top) / f"check-wait-{repo.blob_hash(branch + sha)}.json"
              if progress else None)
@@ -230,29 +233,27 @@ def _wait(top: Path, item: str, sha: str, names: list[str], branch: str, progres
             if queued_since is None:
                 queued_since = now
             minute = int((now - queued_since) / 60)
-            if minute != printed_minute:
+            if printed_at is None or now - printed_at >= 300:
                 print(f"Waiting: checks queued for {minute} minutes during this wait; "
                       "shared runners may be busy or no runner may match the runner setting "
                       "in forge.toml.", flush=True)
-                printed_minute = minute
-            # Keep close's queue policy and the explicit wait override. Land's
-            # normal short limit still applies when no check actually starts.
-            if timeout > 0 and (not progress or "FORGE_CHECKS_WAIT" in os.environ):
+                printed_at = now
+            if timeout > 0:
                 deadline = now + timeout
         else:
-            queued_since = printed_minute = None
-        left = deadline - time.monotonic()
-        remaining = running_deadline - time.monotonic()
-        if progress or running:
-            left = (remaining if running and "FORGE_CHECKS_WAIT" not in os.environ
-                    else min(left, remaining))
+            queued_since = None
+            now = time.monotonic()
+            if running and (printed_at is None or now - printed_at >= 300):
+                print(f"Waiting: {reason}.", flush=True)
+                printed_at = now
+        # An explicit override still permits a bounded wait for operators.
+        left = (15 if (queued or running) and "FORGE_CHECKS_WAIT" not in os.environ
+                else deadline - time.monotonic())
         if left <= 0:
             if result["state"] in ("queued", "running"):
                 result["outcome"] = "gave_up_" + result["state"]
             if progress or running:
-                reason = (f"The wait reached its 90 minutes limit: {reason}"
-                          if remaining <= 0 else
-                          f"GitHub has shown no check progress for {timeout / 60:g} minutes: {reason}")
+                reason = f"GitHub has shown no check progress for {timeout / 60:g} minutes: {reason}"
             if progress:
                 repo.refuse(REFUSALS["wait_ended"], reason=reason, item=item)
             repo.refuse(REFUSALS["not_green"], reason=reason, item=item)
@@ -392,6 +393,13 @@ def _tests_timeout(top: Path, item: str, sha: str, names: list[str],
     limit = timeout_limit(top, sha)
     timed_out: dict[int, str] = {}
     for index, run in candidates:
+        # A check can start when its job queues. Actions job timestamps measure
+        # execution on the runner, so queue time cannot turn a cancellation into a timeout.
+        job_id = re.search(r"/actions/runs/\d+/job/(\d+)(?:\?|$)", str(run.get("details_url", "")))
+        if job_id:
+            jobs = _ask(top, item, "[.]", f"repos/{{owner}}/{{repo}}/actions/jobs/{job_id[1]}")
+            job = jobs[0] if jobs else {}
+            run = dict(run, started_at=job.get("started_at"), completed_at=job.get("completed_at"))
         try:
             seconds = (datetime.fromisoformat(run["completed_at"])
                        - datetime.fromisoformat(run["started_at"])).total_seconds()

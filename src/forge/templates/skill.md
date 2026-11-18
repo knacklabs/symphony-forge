@@ -182,7 +182,7 @@ Every client repo moves through seven steps. `forge next` names the current step
 
 **The build and review loop.** A worker builds the part and its tests, then a separate review checks the change. A serious problem goes back to the worker for another round. A task gets review rounds up to the repo's setting, two by default, and a fix gets one. At the round limit (the repo's setting, two by default), Forge stops and asks the owner, but a P0 problem keeps the loop going. It exists because a reviewer sees problems that the worker cannot see in its own work.
 
-**The CI checks.** GitHub runs the repo's checks on the pull request. Close and merge wait up to 90 minutes while a check is running, and a red check goes back to the worker. At a wait limit, the message names the limit and the checks still running. They exist because the checks run the tests on a clean machine, the same way for every change. If uv installation fails, the generated workflow retries it once before the job fails.
+**The CI checks.** GitHub runs the repo's checks on the pull request. Close and merge wait until queued or running checks finish, and a red check goes back to the worker. Progress prints at most once every five minutes. The test time limit excludes time in the runner queue. New and existing repos get this behaviour on upgrade. The checks run the tests on a clean machine, the same way for every change. If uv installation fails, the generated workflow retries it once before the job fails.
 On GitHub Actions, `forge test` streams the test output into the job log.
 
 `forge next` adds one line under each running item that says what it waits on, why and for how long. Give that line to the person when they ask why something takes time.
@@ -2413,17 +2413,17 @@ round if the check is still red.
 
 Use `forge land <item>` for build, close, fix rounds and merge where agent merges are allowed;
 otherwise it hands the ready pull request to the human. It replaces private landing and CI-wait
-loops, with bounded check waiting and fix rounds. Land waits for the pushed head's checks while
+loops, with check waits and bounded fix rounds. Land waits for the pushed head's checks while
 GitHub shows progress or a check is in progress, retrying unreadable or failed answers. It stops
-waiting on green or failed checks, or after 30 minutes without a check starting, finishing or
-being replaced while none are in progress. Each wait ends at 90 minutes,
-even if checks remain in progress. At either wait limit, no decision is needed.
+waiting on green or failed checks, or after 30 minutes without progress when no check is queued or running.
+Queued or running checks keep the command alive until they finish. Progress prints at most once every five minutes.
+At the no-progress limit, no decision is needed.
 Run `forge land <item>` again to resume without restarting checks.
-`FORGE_CHECKS_WAIT` keeps its explicit no-progress wait instead of the longer running-check wait.
+`FORGE_CHECKS_WAIT` keeps its explicit no-progress wait for running or missing checks.
 If GitHub fails to start the review check, close stops at once and says so. It does not wait again.
 Push a new commit or reopen the pull request on GitHub, then run `forge close <item>`.
 Land says which checks are still running, missing, or
-unreadable. Close and merge also wait up to 90 minutes while a check is running.
+unreadable. Close and merge also wait until queued or running checks finish.
 With no running or queued checks, they wait at most ten minutes. When close
 stops, follow its refusal and the
 Closing section above, then run it again. Run it in the background and keep watching it.

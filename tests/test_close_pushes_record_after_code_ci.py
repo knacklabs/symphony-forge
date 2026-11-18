@@ -1,6 +1,7 @@
 """Close pushes its review record only after the code's own CI run ends (issue 1656)."""
 import json
 import sys
+import pytest
 
 from test_close import CLEAN, GREEN, env, run  # noqa: F401
 
@@ -17,7 +18,8 @@ for line in sys.stdin:
 """
 
 
-def test_1_record_push_waits_until_the_running_code_ci_run_ends(env, tmp_path, monkeypatch):
+@pytest.mark.parametrize("fake_clock", [900], indirect=True)
+def test_1_record_push_waits_until_the_running_code_ci_run_ends(env, tmp_path, monkeypatch, fake_clock):
     config = (env.repo.path / "forge.toml").read_text("utf-8")
     env.repo.write("forge.toml", "\n".join(
         line for line in config.splitlines() if line.partition("=")[0].strip() != "test_place")
@@ -34,21 +36,21 @@ def test_1_record_push_waits_until_the_running_code_ci_run_ends(env, tmp_path, m
     hook.write_text(HOOK.format(python=sys.executable, parent=parent, log=str(log),
                                 calls=str(env.repo.bin / "gh-calls.jsonl")), "utf-8")
     hook.chmod(0o755)
-    monkeypatch.setenv("FORGE_CHECKS_WAIT", "120")  # the fixture default is a single look
+    monkeypatch.delenv("FORGE_CHECKS_WAIT", raising=False)
     env.reviews(CLEAN)
-    # The code's run is still going on the first look, and is green on the next ones. The tests
-    # group has not reported yet, as when CI splits its tests into groups.
+    # The record push must not cancel the code's CI, even past the old 90-minute wait.
+    # This lifecycle boundary needs the remote push hook, which ordinary wait tests lack.
     lines = lambda rows: "".join(json.dumps(row) + "\n" for row in rows)  # noqa: E731
     env.checks(GREEN)
     env.gh.respond("api", "--paginate", "--jq", ".check_runs[]", stdout="")
     rules = json.loads(env.gh.responses.read_text("utf-8"))
-    rules[-1]["then"] = [lines([run("docs-check"), run("tests (1/2)", None, "in_progress")]),
-                         lines(GREEN)]
+    rules[-1]["then"] = [lines([run("docs-check"), run("tests (1/2)", None, "in_progress")])] * 9 + [lines(GREEN)]
     env.gh.responses.write_text(json.dumps(rules), "utf-8")
 
     closed = env.close(item)
 
     assert closed.returncode == 0, closed.stdout + closed.stderr
+    assert "Waiting: the code's checks are still queued or running." in closed.stdout
     pushes = [json.loads(line) for line in log.read_text("utf-8").splitlines()]
     [record] = [push for push in pushes if push[1] == parent]
-    assert record[3] >= 2, "close pushed its review record while the code's CI run was still going"
+    assert record[3] >= 10, "close pushed its review record while the code's CI run was still going"
