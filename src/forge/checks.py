@@ -135,7 +135,7 @@ def after_code_ci(top: Path, item: str, branch: str, cfg: dict[str, Any], seriou
                                            or repo.SIGNOFF.fullmatch(path)) for path in paths):
         return
     let_finish(top, item, remote.stdout.strip(),
-                      [name for name in cfg["checks"] if name != "forge-pr-check"])
+               [name for name in cfg["checks"] if name != "forge-pr-check"])
 
 
 def _wait(top: Path, item: str, sha: str, names: list[str], branch: str, progress: bool,
