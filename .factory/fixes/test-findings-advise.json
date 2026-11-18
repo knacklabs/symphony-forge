@@ -96,7 +96,7 @@
     "status": "blocked"
   },
   "round": 2,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-18T15:25:09.021096+00:00",
@@ -109,8 +109,12 @@
   ],
   "stop": {
     "at": "2026-11-18T17:01:27.358994+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "tests/test_parallel_worker_crash_keeps_failed_names.py",
-    "wait_id": "0a7c45f8-a291-4d35-b998-388c1b6098c4"
+    "reason": "Owner decided on 18 Nov 2026 that fixes get two review rounds; this is the second",
+    "wait_id": "0a7c45f8-a291-4d35-b998-388c1b6098c4",
+    "worker_round": 2
   },
   "stuck": {
     "close": null,
