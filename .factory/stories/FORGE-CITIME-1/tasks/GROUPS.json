@@ -7,12 +7,52 @@
     "head": null,
     "start": "7edfe54d67fc28de7760eb009c07e520d35c8894"
   },
+  "known": [
+    {
+      "area": "src/forge/prcheck.py",
+      "file": "src/forge/prcheck.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 89,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Small changes can run only one fixed shard",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "39ee4c173e5ad12e4a22b2eee92308268238307662701754a12dc63d1fc14bc0",
+    "changed": "e67c4f1f5cf070e638b207fd2c18d3fd703a11ee7be1cf96deae8e45d39d33a7",
+    "commit": "e13f609f6b06534f24b2798eb6df6d353ea4f5f8",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 5, Work 2, Harm 3\nRaise: Functional\nCase: normal use - An existing client has `groups = 4` and `fast_test = \"vitest run --shard={group}/4\"`. Forge accepts this configuration without a warning because `src/forge/quicktest.py:22` requires only `{group}`. For a small source change, the new matrix starts only group 1, while `src/forge/repo.py:693` cannot change the fixed denominator. Only shard 1 of 4 runs, so a failing selected test in another shard can be omitted while the required check passes. The owner-approved upgrade leaves existing test settings unchanged.",
+        "file": "src/forge/prcheck.py",
+        "gain": 5,
+        "harm": 3,
+        "line": 89,
+        "priority": "P1",
+        "title": "Functional: Small changes can run only one fixed shard",
+        "work": 2
+      }
+    ],
+    "id": "1b369ad7-5455-4279-9bcd-0c5f9d48a093",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-18T10:45:20.676018+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-18T11:01:51.285055+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
