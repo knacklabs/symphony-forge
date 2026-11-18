@@ -18,7 +18,7 @@
       "gain": 4,
       "harm": 3,
       "line": 470,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 1,
       "security": false,
@@ -31,7 +31,7 @@
       "gain": 4,
       "harm": 3,
       "line": 450,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 1,
       "security": false,
@@ -57,7 +57,7 @@
       "gain": 3,
       "harm": 3,
       "line": 41,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 1,
       "security": false,
@@ -70,7 +70,7 @@
       "gain": 5,
       "harm": 4,
       "line": 163,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 2,
       "security": false,
@@ -80,58 +80,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "aecf77975af5506ea25222345f0221441be1b3659537784e0184bf4d025e1d0d",
-    "changed": "ead522b430bf7933e967c70fe2f48ffe36b474c0e7865526da88e6aacb948657",
-    "commit": "8892fa7f26f9b4fd1f56782cc06e2549125c7649",
+    "branch_diff": "ea68a0208956f70b23d78b5bb9b342a8c4fbdd15c00f14ddd9019e1f3b565c77",
+    "changed": "0e054cb9191547ce3b2189656c063e61db094a0cc414f7e32e13d718955b6ee3",
+    "commit": "d1bce594e7f371c0fb90f52edb7acdbca2750a85",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 5, Work 3, Harm 4\nRaise: Scale\nCase: normal use - an existing repository with 10,000 commits is adopted with laptop tests or a custom workflow before it has a green Forge full run.\n`history()` reads 30 commits per GitHub request until it finds a success or reaches the root. This case needs about 334 sequential requests before `forge next` or the first board snapshot can finish, and the scan repeats on each command and board rebuild (`src/forge/board_server.py:244`). Fifteen scans within an hour consume at least 5,010 points against GitHub's [5,000-point user limit](https://docs.github.com/en/graphql/overview/rate-limits-and-query-limits-for-the-graphql-api). Once limited, the history error path sets `needs_you` false (`src/forge/board_facts.py:468`), while other GitHub-dependent work also loses access. The CI path similarly reads every earlier workflow attempt at `src/forge/board_facts.py:466`.",
-        "file": "src/forge/fullrun.py",
-        "gain": 5,
-        "harm": 4,
-        "line": 163,
-        "priority": "P0",
-        "title": "Unbounded full-run history blocks the board and next",
-        "work": 3
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - a custom full-suite workflow posts a failed test status but concludes successfully, after an earlier green run within 24 hours.\nThe summary now reads the recorded failure, but `failed_schedules` still chooses attempts by the workflow conclusion and filters for workflow failures at `src/forge/board_facts.py:575`. The earlier green suppresses the overdue row, and the successful workflow conclusion suppresses the existing failed-run row. Neither the board nor `forge next` therefore gives the failed-run Needs you advice or fix command for this failure.",
-        "file": "src/forge/board_facts.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 543,
-        "priority": "P1",
-        "title": "Functional: Use the recorded full-suite result for custom workflows",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 3, Harm 3\nRaise: Not done\nCase: normal use - a laptop full run or custom workflow passes, then a rerun fails on the same default-branch commit within 24 hours.\nDone when: forge next and the board show the age and result of the last complete full run, including missing, queued for more than 24 hours and cancelled runs, and treat no green full run in the last 24 hours as Needs you before a release; new and existing repos get it on upgrade.\nThe earlier green result is still lost. `fullrun.history()` reads the combined `status.contexts` for each commit (`src/forge/fullrun.py:143`), which exposes the latest status for a context rather than its history; see [GitHub's status documentation](https://docs.github.com/en/rest/commits/statuses#get-the-combined-status-for-a-specific-reference). This line replaces the non-cancelled workflow attempts with those recorded contexts. Once the failure replaces the success on the same commit, both surfaces incorrectly warn that no green run occurred in the last 24 hours.",
-        "file": "src/forge/board_facts.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 470,
-        "priority": "P1",
-        "required_done_when": true,
-        "title": "Not done: Show complete full-run history and the 24-hour warning",
-        "work": 3
-      },
-      {
-        "body": "Gain 3, Work 1, Harm 3\nRaise: Test\nCase: normal use - a queued full run follows a green run less than 24 hours old.\nThe new cases verify that the board has no overdue row, but `forge next` is checked for the warning only when `needs` is true. A regression that makes `forge next` warn for every queued run while the board remains correct would pass the fresh-green queue cases. The original missing negative check on the next-command surface therefore remains open.",
-        "file": "tests/test_full_run_release_age.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 73,
-        "priority": "P1",
-        "title": "Gate: tests/test_full_run_release_age.py::test_1_next_and_board_show_full_run_age_before_release",
-        "work": 1
-      }
-    ],
-    "id": "d02a5a97-e0eb-4759-a7fe-9443b074a455",
-    "status": "blocked"
+    "findings": [],
+    "id": "3591bb11-1b1e-40f4-92af-f116fc31ab4d",
+    "status": "clean"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-18T14:04:06.332449+00:00",
@@ -143,6 +101,10 @@
     },
     {
       "at": "2026-11-18T14:51:52.504064+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-18T15:38:51.623129+00:00",
       "step": "review"
     }
   ],
