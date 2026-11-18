@@ -1,6 +1,13 @@
 {
   "base": "02c44b622a5a1b1bd8f74cb45b2204a93d9a0b31",
   "branch": "fix/rerun-failed-group",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1edf7-7f0d-73b3-94b3-c09472b8b063",
+    "head": null,
+    "start": "a60245d244add89ec0b9f53afb68291f69d3fb98"
+  },
   "done_when": "When an item's latest CI run failed only in test groups, close and merge rerun only the failed jobs of that run once (the way land does) and wait for them; a second failure counts as failed and names forge work; new and existing repos get it on upgrade",
   "fix_kind": "mechanical",
   "kind": "fix",
