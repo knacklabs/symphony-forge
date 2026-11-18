@@ -94,7 +94,7 @@
     "id": "d6754626-8b36-4386-bb04-9c4fb680d96d",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -116,10 +116,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": null,
-    "head": "7d5cef08abd1fa77c7bf679ccf37c395cb049660",
+    "close": "3caba546-7d5a-48bc-b535-9b3ba6f588a2",
+    "head": "a9af0b46405f04584d35a1bb22e9eaea3e5e87db",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "When two or more items are Ready to merge, forge next suggests merging them one by one, so each merge can start a new combined CI run",
   "worker": "codex"
