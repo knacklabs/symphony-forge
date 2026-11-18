@@ -49,8 +49,8 @@
     "id": "e3ecae83-952e-4c76-94ef-687c101cc605",
     "status": "clean"
   },
-  "round": 2,
-  "status": "waiting for checks",
+  "round": 3,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-18T09:19:58.101607+00:00",
@@ -66,12 +66,10 @@
     }
   ],
   "stuck": {
-    "close": "4261936e-259c-4269-90e9-c5dc7c246f92",
-    "head": "fe69913f5742be4803d4e5b2fe72de41c78876d2",
-    "keys": {
-      "the open P0 keep status-write tokens off pull-request test runners in src/forge/prcheck.py": 1
-    },
-    "round": 1
+    "close": "a39ed3ab-3733-4ab9-af4e-5df6f41d167c",
+    "head": "f0c25424bce110fba0f41a23cd5826e2039b1767",
+    "keys": {},
+    "round": 2
   },
   "why": "Issue 1660: the generated workflow's scheduled full-suite job runs on runner, not test_runner, so a team cannot send the nightly full suite to its fast runners",
   "worker": "codex"
