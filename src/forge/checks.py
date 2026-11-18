@@ -78,6 +78,8 @@ def wait(top: Path, item: str, sha: str, names: list[str], *, branch: str,
         names = shared
     start, clock = repo.now(), time.monotonic()
     released = False
+    report_time = False
+    failed = False
 
     def waiting(value: bool) -> None:
         nonlocal released
@@ -91,7 +93,10 @@ def wait(top: Path, item: str, sha: str, names: list[str], *, branch: str,
         result.update(outcome="unknown", state="unknown")
         try:
             _wait(top, item, sha, names, branch, progress, result, waiting, train)
+            report_time = True
         except repo.Refused as error:
+            report_time = error.entry in (REFUSALS["red"], REFUSALS["timeout"])
+            failed = report_time
             if error.entry is REFUSALS["red"]:
                 result["outcome"] = "failed"
             result["reason"] = str(error).split("\n", 1)[0]
@@ -103,6 +108,9 @@ def wait(top: Path, item: str, sha: str, names: list[str], *, branch: str,
             raise
         finally:
             waiting(False)
+            if report_time:
+                from forge import citime
+                citime.report(top, branch, current=failed)
             repo.record_event(top, item, "CI result", commit=sha, start=start, **result)
             repo.record_timing(top, item, "CI wait", start, clock, result["outcome"])
 
@@ -335,6 +343,31 @@ def _status(top: Path, item: str, sha: str, branch: str, cache: Path | None,
     return value
 
 
+def timeout_limit(top: Path, sha: str) -> int | None:
+    """The generated test job's limit at the checked commit, when available locally."""
+    if not sha:
+        return None
+    workflow = repo.run("git", "show", f"{sha}:.github/workflows/forge.yml", cwd=top)
+    job = re.search(r"(?ms)^  tests:[ \t]*\n(.*?)(?=^  \S|\Z)", workflow.stdout)
+    cap = re.search(r"(?m)^    timeout-minutes: (\d+)[ \t]*$", job[1]) if job else None
+    return int(cap[1]) if cap else None
+
+
+def cancelled_at_limit(run: dict[str, Any], limit: int | None) -> bool:
+    """GitHub can cancel a test job rather than mark it timed out at its time limit."""
+    name = str(run.get("name", ""))
+    if (limit is None or run.get("status") != "completed" or run.get("conclusion") != "cancelled"
+            or not (name == "tests" or name.startswith("tests (")
+                    or re.fullmatch(r"test group \d+ of \d+", name))):
+        return False
+    try:
+        seconds = (datetime.fromisoformat(run["completed_at"])
+                   - datetime.fromisoformat(run["started_at"])).total_seconds()
+    except (KeyError, ValueError, TypeError):
+        return False
+    return abs(seconds - limit * 60) <= 60
+
+
 def _recover(top: Path, item: str, sha: str, names: list[str],
              runs: list[dict[str, Any]], seen: list[tuple[str, str]]) -> bool:
     # Ungrouped test timeouts keep their manual recovery, before any retry can start.
@@ -356,11 +389,7 @@ def _tests_timeout(top: Path, item: str, sha: str, names: list[str],
                        or groups and re.fullmatch(r"test group \d+ of \d+", str(run.get("name", ""))))]
     if not candidates:
         return
-    # Read the generated job's limit at the checked commit, not an uncommitted edit.
-    workflow = repo.run("git", "show", f"{sha}:.github/workflows/forge.yml", cwd=top)
-    job = re.search(r"(?ms)^  tests:[ \t]*\n(.*?)(?=^  \S|\Z)", workflow.stdout)
-    cap = re.search(r"(?m)^    timeout-minutes: (\d+)[ \t]*$", job[1]) if job else None
-    limit = int(cap[1]) if cap else None
+    limit = timeout_limit(top, sha)
     timed_out: dict[int, str] = {}
     for index, run in candidates:
         try:
@@ -368,8 +397,7 @@ def _tests_timeout(top: Path, item: str, sha: str, names: list[str],
                        - datetime.fromisoformat(run["started_at"])).total_seconds()
         except (KeyError, ValueError, TypeError):
             seconds = None
-        if run["conclusion"] == "cancelled" and (
-                limit is None or seconds is None or abs(seconds - limit * 60) > 60):
+        if run["conclusion"] == "cancelled" and not cancelled_at_limit(run, limit):
             continue
         minutes = limit if limit is not None else round(seconds / 60) if seconds is not None else None
         timed_out[index] = f" after {minutes} minutes" if minutes is not None else ""
