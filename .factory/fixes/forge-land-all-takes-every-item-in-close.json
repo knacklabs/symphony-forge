@@ -2,6 +2,13 @@
   "allow_large": "Owner allowed on 18 Nov 2026: one line in cli.py passes the first named item to the release pin check, so forge land with several items does not crash",
   "base": "a3272814e237b99271e2d7f844779588405e15d3",
   "branch": "fix/forge-land-all-takes-every-item-in-close",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1edcc-1da7-7252-88bd-57b40d5542c5",
+    "head": null,
+    "start": "c2d621550ad1885f61e25f1908d3e5266285b3a8"
+  },
   "done_when": "forge land <item> <item> ... closes and merges exactly the named items the way --all does, testing ready ones together once in the merge train and merging them in order without a re-test after each merge, and leaves every other item alone",
   "fix_kind": "backend",
   "kind": "fix",
