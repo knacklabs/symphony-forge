@@ -156,6 +156,7 @@ if sys.argv[1:2] == ["status"]:
     sys.exit()
 
 docs_only = False
+docs_tests = False
 tests_only, platform_files = False, []
 one_group = False
 records_only = "--records-only" in sys.argv[1:]
@@ -173,6 +174,7 @@ try:
         docs_only = only_docs(Path.cwd(), os.environ["BASE_SHA"],
                               json.loads(os.environ["DOCS_ONLY_EXCLUDES"]), allow_required=True)
         if docs_only and required_tests(Path.cwd()):
+            docs_tests = True
             docs_only, tests_only = False, True
             one_group = True
         if merged:
@@ -189,6 +191,7 @@ with Path(os.environ["GITHUB_OUTPUT"]).open("a", encoding="utf-8") as output:
     output.write(f"{'records_only' if records_only else 'reuse'}={str(passed).lower()}\n")
     if docs_only:
         output.write("docs-only=true\n")
+    output.write(f"docs-tests={str(docs_tests).lower()}\n")
     output.write(f"test-only={str(tests_only).lower()}\n")
     output.write(f"one-group={str(one_group).lower()}\n")
     output.write(f"platform-files={json.dumps(platform_files)}\n")

@@ -1,0 +1,59 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/prcheck.py\tGenerate valid GitHub Actions runner expressions\tdocs-only-off-fast-runners",
+      "kind": "bug",
+      "path": "src/forge/prcheck.py",
+      "line": 423,
+      "text": "Generate valid GitHub Actions runner expressions",
+      "from": "blocking",
+      "item": "docs-only-off-fast-runners",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/prcheck.py\tKeep the required result job executable on Windows\tdocs-only-off-fast-runners",
+      "kind": "bug",
+      "path": "src/forge/prcheck.py",
+      "line": 405,
+      "text": "Keep the required result job executable on Windows",
+      "from": "blocking",
+      "item": "docs-only-off-fast-runners",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/prcheck.py\tNot done: A docs-only pull request runs no job on test_runner; its result job runs on runner; the required tests check keeps its name and as\tdocs-only-off-fast-runners",
+      "kind": "bug",
+      "path": "src/forge/prcheck.py",
+      "line": 405,
+      "text": "Not done: A docs-only pull request runs no job on test_runner; its result job runs on runner; the required tests check keeps its name and as",
+      "from": "blocking",
+      "item": "docs-only-off-fast-runners",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/prcheck.py\tUpdate the existing one-group runner test\tdocs-only-off-fast-runners",
+      "kind": "bug",
+      "path": "src/forge/prcheck.py",
+      "line": 405,
+      "text": "Update the existing one-group runner test",
+      "from": "blocking",
+      "item": "docs-only-off-fast-runners",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_docs_only_runner_allocation.py\tGate: test_1_docs_only_pr_keeps_the_test_runner_free\tdocs-only-off-fast-runners",
+      "kind": "bug",
+      "path": "tests/test_docs_only_runner_allocation.py",
+      "line": 45,
+      "text": "Gate: test_1_docs_only_pr_keeps_the_test_runner_free",
+      "from": "blocking",
+      "item": "docs-only-off-fast-runners",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
