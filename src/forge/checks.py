@@ -195,7 +195,10 @@ def _wait(top: Path, item: str, sha: str, names: list[str], branch: str, progres
             if not any(name == "forge-pr-check" or name == "Review pull request" and state != SKIPPED
                        for name, state in seen):  # the pull_request workflow skips its own job of that name
                 _no_start(top, item, sha, branch)  # before a red or timed-out test can hide it
-            if _recover(top, item, sha, names, check_runs, seen) and cache is not None:
+            if train:
+                # The train reads failed-job logs and owns its one retry in land._red.
+                _tests_timeout(top, item, sha, names, check_runs, seen)
+            elif _recover(top, item, sha, names, check_runs, seen) and cache is not None:
                 cache.unlink(missing_ok=True)  # Read the new attempt instead of cached failures.
             reason = _pending(item, names, seen)
             if mergeable == "UNKNOWN":
