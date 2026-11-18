@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "bug\tforge.toml\tGate: source-worker tests still require Claude\towner-direction-18-nov-2026-forge-s-own",
+      "kind": "bug",
+      "path": "forge.toml",
+      "line": 4,
+      "text": "Gate: source-worker tests still require Claude",
+      "from": "blocking",
+      "item": "owner-direction-18-nov-2026-forge-s-own",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tforge.toml\tKeep design routing for user-facing Forge tasks\towner-direction-18-nov-2026-forge-s-own",
+      "kind": "bug",
+      "path": "forge.toml",
+      "line": 4,
+      "text": "Keep design routing for user-facing Forge tasks",
+      "from": "blocking",
+      "item": "owner-direction-18-nov-2026-forge-s-own",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
