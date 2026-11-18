@@ -4,14 +4,106 @@
   "done_when": "forge land <item> <item> ... closes and merges exactly the named items the way --all does, testing ready ones together once in the merge train and merging them in order without a re-test after each merge, and leaves every other item alone",
   "fix_kind": "backend",
   "kind": "fix",
+  "known": [
+    {
+      "area": "_queue() in src/forge/land.py",
+      "file": "src/forge/land.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 418,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: forge land <item> <item> ... closes and merges exactly the named items the way --all does",
+      "work": 2
+    },
+    {
+      "area": "src/forge/land.py",
+      "file": "src/forge/land.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 866,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Preserve release-pin handling for named land commands",
+      "work": 2
+    },
+    {
+      "area": "test_1_two_named_items_are_tested_together_once_and_the_third_is_left_alone() in tests/test_land_takes_exactly_the_named_items.py",
+      "file": "tests/test_land_takes_exactly_the_named_items.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 19,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_two_named_items_are_tested_together_once_and_the_third_is_left_alone",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "d3593a840feccc76f7088af8a43ba96db0c13b97013603f97d0e1313eb6a9dc5",
+    "changed": "71a47da4b0f4ec50b270e28b40fcb82cc3a767086fd6c31c794a7043e6b57025",
+    "commit": "d039d5a6d274e6fa64496aee5ba16095c1003322",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done\nCase: normal use - a manager selects a ready item published by a teammate along with a locally checked-out item.\nThe Done-when requires: \"forge land <item> <item> ... closes and merges exactly the named items the way --all does, testing ready ones together once in the merge train and merging them in order without a re-test after each merge, and leaves every other item alone\". `story.worktrees` at src/forge/story.py:801 lists only local checkouts, so the new `only - seen` check refuses the teammate's valid item as unknown before either item is landed. The worktree-scan ruling does not account for the existing published-item path: `task.pick_up` at src/forge/task.py:239-265 can find that item on the remote and create its checkout for single-item land.",
+        "file": "src/forge/land.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 418,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: forge land <item> <item> ... closes and merges exactly the named items the way --all does",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - a developer runs `forge land <item>` from an older task or fix checkout after the repository's Forge upgrade has landed.\nChanging `item` to `nargs=\"*\"` makes it a list even for one name. Before `land` can unwrap it, src/forge/cli.py:150-151 passes that list to `repo.check_pin`; when the checkout's pin differs from the installed release, src/forge/repo.py:1007 calls `item.replace(...)` and raises `AttributeError`. The command crashes instead of running the pinned release or giving the existing pin advice. Multiple named items have the same failure.",
+        "file": "src/forge/land.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 866,
+        "priority": "P1",
+        "title": "Preserve release-pin handling for named land commands",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 1, Harm 3\nRaise: Test\nCase: normal use - a named-items run starts an extra combined check or reruns a member's checks, adding another long CI wait.\nThe named proof checks that two status lines occur and that the two original heads were merged, but it does not count train pull requests or check for CI reruns. A second train or a rerun of an unchanged head can therefore leave every assertion passing. The existing `--all` train test checks those effects for `--all`, but does not exercise the new named-items route; extend the named proof to verify one combined run and no member reruns.",
+        "file": "tests/test_land_takes_exactly_the_named_items.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 19,
+        "priority": "P1",
+        "title": "Gate: test_1_two_named_items_are_tested_together_once_and_the_third_is_left_alone",
+        "work": 1
+      }
+    ],
+    "id": "5e9e7fd8-2232-4ba4-8f1e-e37ab6837048",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-18T06:22:46.550167+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-18T07:35:01.669818+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-11-18T07:35:01.909731+00:00",
+    "file": "src/forge/land.py",
+    "wait_id": "c4bb7589-3d13-4be8-b305-55199232579e"
+  },
   "stuck": {
     "close": null,
     "head": "19c69f5afe0d097c643e9d3c50bb27cb1e72666a",
