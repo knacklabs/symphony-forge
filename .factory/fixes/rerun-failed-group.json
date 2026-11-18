@@ -88,8 +88,8 @@
     "id": "d3954f1c-9732-4253-b59c-8b1aaed16c9e",
     "status": "clean"
   },
-  "round": 3,
-  "status": "waiting for checks",
+  "round": 4,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-18T09:20:10.614816+00:00",
@@ -109,10 +109,10 @@
     }
   ],
   "stuck": {
-    "close": "c05436c7-c08b-4171-8e77-c19426cc5e16",
-    "head": "9bdbd206b9927c35f8f306ddd9f50e86f0fda342",
+    "close": "eae8d240-707f-48ff-bf4e-74debfe7d258",
+    "head": "6660e729b8ec77e19acdef0e3630135581be4053",
     "keys": {},
-    "round": 2
+    "round": 3
   },
   "why": "Issue 1664: when one CI test group fails or times out, close and merge stop, and only land reruns the failed group (gh run rerun --failed); a person has to rerun the whole run",
   "worker": "codex"
