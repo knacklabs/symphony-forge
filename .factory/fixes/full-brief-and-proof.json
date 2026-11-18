@@ -11,12 +11,170 @@
   "done_when": "Each worker round's brief carries the item's full Done-when, the callers of each changed function and the tests that cover them, and tells the worker to finish all of them before review; close names a missing proof list before the review and the skill tells the coordinator to add it when it commits a fix itself; a review finding that is only a missing proof list or approach record gets one automatic repair round without an owner question; new and existing repos get it on upgrade",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [
+    {
+      "area": "close() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 4,
+      "harm": 4,
+      "line": 337,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Preserve close for generated adoption and migration branches",
+      "work": 2
+    },
+    {
+      "area": "close() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 340,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Propagate the missing-proof failure to forge land",
+      "work": 1
+    },
+    {
+      "area": "_function_name() in src/forge/worker.py",
+      "file": "src/forge/worker.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 822,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Include multiline TypeScript methods in the worker brief",
+      "work": 2
+    },
+    {
+      "area": "_changed_function_context() in src/forge/worker.py",
+      "file": "src/forge/worker.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 789,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Exclude unchanged methods from the changed-function map",
+      "work": 2
+    },
+    {
+      "area": "close() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 337,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Stop before review when the proof list is empty",
+      "work": 1
+    },
+    {
+      "area": "close() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 423,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Grant the repair round for other missing-record findings",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "6f86f7bb2b7eb426f652ebd6c0258b8f9deb9406f7178dba87c383f50cfdd31d",
+    "changed": "76ff501d2c5df5fcad0bb96e1bd3d0eb71074d14b9e647c18a6f1737a84733ec",
+    "commit": "43b1cccf1a9a2e6870bef48bb2a14ea32189bbbc",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 4\nRaise: Functional\nCase: normal use - A team adopts an existing repo or runs forge migrate, then follows the printed instruction to run forge close. Both commands create a single commit without a Proof list (`src/forge/init.py:483` and `src/forge/migrate.py:670`). Neither branch qualifies for the new mechanical exemption, so close now stops before review and cannot open the pull request. The existing command-level tests expect these generated branches to close successfully. Harm floor: migration.",
+        "file": "src/forge/close.py",
+        "gain": 4,
+        "harm": 4,
+        "line": 337,
+        "priority": "P1",
+        "title": "Functional: Preserve close for generated adoption and migration branches",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 1, Harm 3\nRaise: Functional\nCase: normal use - A coordinator runs forge land on a change with an existing pull request but no proof list. This return value is ignored by `src/forge/land.py:117`, which assumes close succeeded; in a human-merge repo it then prints that the pull request is ready and exits successfully (`src/forge/land.py:172-175`), even though no review or checks were run. With agent merging, it proceeds to an unrelated merge refusal instead of stopping at the proof problem.",
+        "file": "src/forge/close.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 340,
+        "priority": "P1",
+        "title": "Functional: Propagate the missing-proof failure to forge land",
+        "work": 1
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done\nCase: normal use - A worker changes the body of a multiline TypeScript method such as `ProjectsController.create` in `src/forge/templates/starter/libs/projects/server/src/projects.controller.ts:70`. The method pattern requires the closing parenthesis and opening brace on the same line, and the other patterns do not recognize methods, so the next brief omits that changed function and its caller and test files. The same omission occurs for source directories such as `src/testimonials`, which `_test_file` classifies as tests at `src/forge/worker.py:811`. The filename-grep ruling does not cover these cases: the changed functions never reach grep. The new test covers only a Python function and a single-line TypeScript arrow.",
+        "file": "src/forge/worker.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 822,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: Include multiline TypeScript methods in the worker brief",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 2\nRaise: Functional\nCase: normal use - A worker changes one method in a Python service class. Git's function context includes the whole class, and this loop treats every context-line definition as changed. For example, the `AuthService` class at `src/forge/templates/starter-python/apps/api/app/auth/service.py:122` includes many unrelated methods when `remove_member` is edited. Forge greps and lists callers and tests for all of them, then tells the worker to complete the listed files before review. This adds substantial unrelated work to ordinary rounds. The ruling about approximate filename matches does not address the inclusion of unchanged function names.",
+        "file": "src/forge/worker.py",
+        "gain": 4,
+        "harm": 2,
+        "line": 789,
+        "priority": "P1",
+        "title": "Functional: Exclude unchanged methods from the changed-function map",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 1, Harm 3\nRaise: Not done\nCase: normal use - A last commit contains the heading `Proof list:` but no entries. `commit_paragraph` returns that heading as a nonempty string, so this check starts the model review even though the list is missing. The new repair-round test explicitly uses this empty heading and expects a review call; the preflight test checks only a completely absent heading. This leaves the named pre-review check unable to catch an empty list.",
+        "file": "src/forge/close.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 337,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: Stop before review when the proof list is empty",
+        "work": 1
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Not done\nCase: normal use - A reviewer reports only `Gate: proof list` because a proof mapping is missing from an otherwise populated list, or the commit says `Proof list: missing`. Both are rejected as record-only findings because text follows the colon, so a fix reaches the round limit and asks the owner instead of getting its repair round. The approach-record branch also depends on narrow title wording: a finding such as `Simpler: Missing before-coding record` is not recognized. The added test covers only an empty header and one exact approach title.",
+        "file": "src/forge/close.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 423,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: Grant the repair round for other missing-record findings",
+        "work": 2
+      }
+    ],
+    "id": "dd583f26-7fbd-46e3-ab1c-d2780cf625c7",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-18T16:44:04.017358+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-18T17:25:33.827870+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
