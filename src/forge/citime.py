@@ -220,8 +220,9 @@ def warning(top: Path) -> str:
     if not heads:
         return ""
     ids = list(heads)
+    warning_checks = CHECKS.replace("workflowRun { databaseId }", "")
     fields = [f"checks_{offset}: nodes(ids:" + json.dumps(ids[offset:offset + 50])
-              + ") { ... on Commit { id oid " + CHECKS + " } }" for offset in range(0, len(ids), 50)]
+              + ") { ... on Commit { id oid " + warning_checks + " } }" for offset in range(0, len(ids), 50)]
     value = _read(top, "graphql", "-f", "query=query { " + " ".join(fields) + " }")
     if not isinstance(value, dict) or not isinstance(value.get("data"), dict):
         return ""

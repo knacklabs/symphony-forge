@@ -8,6 +8,7 @@ import re
 import shutil
 import subprocess
 import tomllib
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
@@ -446,32 +447,36 @@ def doctor(args: argparse.Namespace) -> int:
                          f"{_last(deleted).rstrip('.')}.", f"git branch -D {branch}")
         else: print(f"- Fixed: removed {path}, whose pull request is {state}.")
     rows += _files(top, cfg, wanted, args.fix and pinned == f"v{__version__}")
-    if not shutil.which("sh"): add("sh isn't on PATH, so no host hook can run.", "install Git, which brings sh, and put it on PATH")
-    elif wanted and sync.read(top / sync.LAUNCHER) != wanted.get(sync.LAUNCHER):
-        add(f"doctor didn't run the host hooks, because {sync.LAUNCHER} differs from what " "forge sync writes.")
-    else:
-        env = {**os.environ, "PATH": BARE_PATH} if os.name != "nt" else None  # Windows has no /usr/bin
-        bare = f" when run with PATH={BARE_PATH}" if env else ""
-        checked: dict[tuple[str, str], subprocess.CompletedProcess[str]] = {}
-        for rel in sync.HOSTS:
-            generated = set(_forge_hooks(wanted.get(rel, "")))
-            for event, command in _forge_hooks(sync.read(top / rel)):
-                if (event, command) not in generated: continue
+    with ThreadPoolExecutor(max_workers=5) as pool:
+        from forge import citime
+        warning_read = pool.submit(citime.warning, top) if shutil.which("gh") else None
+        if not shutil.which("sh"): add("sh isn't on PATH, so no host hook can run.", "install Git, which brings sh, and put it on PATH")
+        elif wanted and sync.read(top / sync.LAUNCHER) != wanted.get(sync.LAUNCHER):
+            add(f"doctor didn't run the host hooks, because {sync.LAUNCHER} differs from what " "forge sync writes.")
+        else:
+            env = {**os.environ, "PATH": BARE_PATH} if os.name != "nt" else None  # Windows has no /usr/bin
+            bare = f" when run with PATH={BARE_PATH}" if env else ""
+            checked = {}
+            hooks = [(rel, event, command) for rel in sync.HOSTS
+                     for event, command in _forge_hooks(sync.read(top / rel))
+                     if (event, command) in set(_forge_hooks(wanted.get(rel, "")))]
+            for rel, event, command in hooks:
                 key = (event, command)
                 if key not in checked:
                     payload = {"session_id": "forge-doctor", "cwd": str(top), "hook_event_name": event, **SAMPLES.get(event, {})}
-                    checked[key] = subprocess.run( [shutil.which("sh") or "sh", "-c", command], cwd=top,
+                    checked[key] = pool.submit(subprocess.run, [shutil.which("sh") or "sh", "-c", command], cwd=top,
                         input=json.dumps(payload), capture_output=True, text=True, encoding="utf-8", errors="replace", env=env)
-                done = checked[key]
+            for rel, event, command in hooks:
+                done = checked[event, command].result()
                 if done.returncode:
                     said = (done.stderr.strip() or "it printed nothing").splitlines()
                     fix = next((line[6:] for line in said if line.startswith("Next: ")), install)
                     add(f"The {event} hook in {rel} fails with exit code " f"{done.returncode}{bare}: {said[0]}", fix)
+        warning = warning_read.result() if warning_read else ""
     if cfg["test_place"] == "ci" and not cfg["checks"]:
         add("forge.toml names no checks, so close has nothing to wait for.", "ask your agent to set checks in forge.toml")
     if shutil.which("gh"):
-        from forge import citime
-        if warning := citime.warning(top):
+        if warning:
             print(f"- Warning: {warning}")
         prs = _prs(top, repo.current_branch(top), "--json", "headRefOid,state,number,headRefName")
         for pr in prs if isinstance(prs, list) else []:

@@ -147,7 +147,7 @@ def next_step(args: Any) -> int:
 
     if (top / "forge.toml").is_file():
         try:
-            repo.config(top)
+            _configuration(top)
         except repo.Refused as refusal:
             if refusal.entry == repo.REFUSALS["added_work_min_gain"]:
                 raise
@@ -171,10 +171,12 @@ def next_step(args: Any) -> int:
                    "checks": pool.submit(checks), "github": github_read}
         activity = pool.submit(board._event_history, top)
         warning_read = pool.submit(migration_warnings.warnings, top)
+        numbers_read = pool.submit(board._prs, top)
         history = board._machine_history(top)
         warnings = warning_read.result()
         activity.result()
         facts = {name: future.result() for name, future in pending.items()}
+        numbers_read.result()
     lines = warnings + _report(
         top, history, schedules=True, numbers=True, facts=facts)
     step = ([journey.step_line(top, _report_config(top, {}), history, idle=_idle(top)[0] in lines)]
@@ -202,6 +204,7 @@ def context_hook(args: Any) -> int:
     return 0
 
 
+@repo.command_cache(snapshot=True)
 def handoff_hook(args: Any) -> int:
     top = repo.root()
     path = repo.forge_dir(top) / "handoff.md"
@@ -348,7 +351,7 @@ def _report(top: Path, history: dict[str, Any] | None = None,
                 record, findings = story._record(text)  # pyright: ignore[reportPrivateUsage]
                 spec_text = spec.read_text(encoding="utf-8")
                 fields, body = story._record(spec_text)  # pyright: ignore[reportPrivateUsage]
-                config = repo.config(path) if (path / "forge.toml").is_file() else repo.DEFAULTS
+                config = _configuration(path) if (path / "forge.toml").is_file() else repo.DEFAULTS
                 if story.stopped(record, findings, config["cold_read_rounds"]):
                     lines += _read_loop(spec.stem, spec_text, text, path)
                 elif (fields.get("status") == "draft" and story.passed(record, findings)
@@ -500,9 +503,13 @@ def _needs_demo_address(top: Path) -> bool:
             and design.has_app_code(top, ref))
 
 
+def _configuration(path: Path) -> dict[str, Any]:
+    return repo.command_fact(("report config", path.resolve()), path, lambda: repo.config(path))
+
+
 def _report_config(path: Path, refusals: dict[Path, str]) -> dict[str, Any]:
     try:
-        return repo.command_fact(("report config", path.resolve()), path, lambda: repo.config(path))
+        return _configuration(path)
     except repo.Refused as refusal:
         refusals[path] = str(refusal).splitlines()[0]
         return repo.DEFAULTS
@@ -815,7 +822,7 @@ def _next_round(key: str, text: str, doc_hash: str, title: str, required: bool, 
         return []
     if not record.get("round"):
         return [f"Planning {title}: {notes} has no round of cold read.", f"Next: forge read {key}"]
-    config = repo.config(top) if (top / "forge.toml").is_file() else repo.DEFAULTS
+    config = _configuration(top) if (top / "forge.toml").is_file() else repo.DEFAULTS
     limit = config["cold_read_rounds"]
     if story.stopped(record, findings, limit):
         return _read_loop(key, doc, text)
@@ -1027,7 +1034,7 @@ def person_waits(top: Path, item: str, state: dict[str, Any], stage: str, pr: di
     # An older open pull request, ready before merge waits were recorded, still waits on its human
     # merge. This checkout's forge.toml, so the board needs no fetch.
     if stage == "ready" and (since("merge") or pr and pr.get("state", "OPEN") == "OPEN"
-                             and repo.config(top)["merge"] == "human"
+                             and _configuration(top)["merge"] == "human"
                              and not any(e.get("reason") == "merge" for e in recorded)):
         waits.append({"reason": "merge", "since": since("merge"), "detail": None})
     return waits

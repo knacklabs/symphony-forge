@@ -985,7 +985,7 @@ def _copies(top: Path, landed: str, history: Item | None = None) -> list[tuple[s
                             "--", ".factory", cwd=path).split("\0"))
 
     work = [(branch, path) for branch, path in trees.items() if branch.startswith(PREFIXES)]
-    with ThreadPoolExecutor(max_workers=4) as pool:
+    with ThreadPoolExecutor(max_workers=8) as pool:
         changes = dict(zip((path for _, path in work), pool.map(changed_files, (path for _, path in work))))
     for branch, path in work:
         saved = state_files.get(refs.get(f"refs/heads/{branch}"), {})
@@ -1030,6 +1030,10 @@ def _copies(top: Path, landed: str, history: Item | None = None) -> list[tuple[s
 
 
 def _prs(top: Path) -> list[Item] | None:
+    return repo.command_fact("board pull requests", top, lambda: _read_prs(top))
+
+
+def _read_prs(top: Path) -> list[Item] | None:
     """Every pull request gh can see, newest first, or None without a working gh."""
     github = board_facts.prs(top)
     if github is None:
