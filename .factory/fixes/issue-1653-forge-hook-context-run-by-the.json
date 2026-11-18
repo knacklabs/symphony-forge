@@ -4,14 +4,152 @@
   "done_when": "forge hook context finishes in about 2 seconds or less on a repo with many hotspots, prints at most a few hotspot lines with a pointer to the full list, and worker rounds start without an initialize timeout",
   "fix_kind": "backend",
   "kind": "fix",
+  "known": [
+    {
+      "area": "context_hook() in src/forge/nextstep.py",
+      "file": "src/forge/nextstep.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 196,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: forge hook context finishes in about 2 seconds or less on a repo with many hotspots",
+      "work": 2
+    },
+    {
+      "area": "context_hook() in src/forge/nextstep.py",
+      "file": "src/forge/nextstep.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 196,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: update the session-start host contract tests",
+      "work": 1
+    },
+    {
+      "area": "test_1_hook_context_with_many_hotspots_stays_short() in tests/test_hook_context_stays_short.py",
+      "file": "tests/test_hook_context_stays_short.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 29,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_hook_context_with_many_hotspots_stays_short",
+      "work": 2
+    },
+    {
+      "area": "test_15_human_touches() in tests/test_next.py",
+      "file": "tests/test_next.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 64,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: check human-touch counts at an observable boundary",
+      "work": 2
+    },
+    {
+      "area": "context_hook() in src/forge/nextstep.py",
+      "file": "src/forge/nextstep.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 196,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: state what new and upgraded client repos receive",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "0ef50a83f825f5593a3f45036d6b5c535cc1ad0c74f40d3523d010cba9dc9dd5",
+    "changed": "cd1b07ea70c52e39aa9e698c3f1e81ab04001e12bada74ec7aa5e4a3654a7b88",
+    "commit": "2082323b35c8f66068556bd17ff5025bb10c1b2b",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done - The full owner-approved item is: \"forge hook context finishes in about 2 seconds or less on a repo with many hotspots, prints at most a few hotspot lines with a pointer to the full list, and worker rounds start without an initialize timeout\".\nCase: normal use - a client repository has spotted items and its Git remote is slow or unavailable. This call reaches `spotted.before_signoff` (`src/forge/spotted.py:144`), which calls `repo.default_config`; that function performs `git fetch` without a timeout (`src/forge/repo.py:721-725`, `222-224`). The hook can therefore exceed the startup deadline again, or exit before printing any context when the fetch fails. The reported 1.6-second measurement on this repository does not cover a slow remote.",
+        "file": "src/forge/nextstep.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 196,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: forge hook context finishes in about 2 seconds or less on a repo with many hotspots",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 1, Harm 3\nRaise: Gate - The new context output leaves existing tests asserting the removed output.\nCase: normal use - the repository runs its related or full test suite. `tests/test_contracts.py:364-366` still requires session context to start with the complete `forge next` output for both hosts, and `tests/test_contracts.py:414-416` requires it to contain \"waiting for approval\". For their normal ready-story fixtures, this changed line prints the pointer instead, so those tests fail. Update both contract checks for the approved shorter output.",
+        "file": "src/forge/nextstep.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 196,
+        "priority": "P1",
+        "title": "Gate: update the session-start host contract tests",
+        "work": 1
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Test - The named proof checks the displayed lines but neither the elapsed time nor worker initialization.\nCase: normal use - a Claude worker starts in a client repository with many hotspots. A hook that takes 30 seconds and then prints the same text still passes this test, as does a broken worker startup, because it never starts a worker. The fixture also uses a Forge source repo (`tests/test_story.py:137-141`), so it bypasses the client sign-off scan in `src/forge/spotted.py:144-160`. The one-off timing measurement does not provide a regression check for these Done-when details.",
+        "file": "tests/test_hook_context_stays_short.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 29,
+        "priority": "P1",
+        "title": "Gate: test_1_hook_context_with_many_hotspots_stays_short",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Test - The changed human-touch checks now read private `.factory` JSON records directly here and in `tests/test_approval_pin_notice.py:83-84`.\nCase: normal use - an answered question contributes to the reported human-touch measure. These assertions can pass while the reported aggregation is wrong, and a storage refactor can break them while the reported behavior remains correct. The test audit requires these checks at the user-visible Forge boundary.",
+        "file": "tests/test_next.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 64,
+        "priority": "P1",
+        "title": "Gate: check human-touch counts at an observable boundary",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 1, Harm 2\nRaise: Gate - The repository's review rule requires each Forge change to say what a new client repo and an existing client repo on upgrade each receive.\nCase: normal use - a client initializes Forge or upgrades to this release. The change's proof and commit messages describe the shorter hook generally but do not state the result for each client-repo path. The earlier-adopted fixture in `tests/test_handover_notes.py:12-19` does not describe an upgrade. Record the release effect for both paths.",
+        "file": "src/forge/nextstep.py",
+        "gain": 4,
+        "harm": 2,
+        "line": 196,
+        "priority": "P1",
+        "title": "Gate: state what new and upgraded client repos receive",
+        "work": 1
+      }
+    ],
+    "id": "6c2a1cb5-a0fc-4623-9cc3-b16e11243f7e",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-18T01:44:42.035325+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-18T02:14:54.027427+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-11-18T02:14:54.041367+00:00",
+    "file": "src/forge/nextstep.py",
+    "wait_id": "84784a54-1bc3-4eda-a4fb-60797bf77673"
+  },
   "stuck": {
     "close": null,
     "head": "8b86056483a5a87e58eae28deed7b2d0b1489e58",
