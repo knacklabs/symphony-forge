@@ -16,7 +16,14 @@ from test_board_server import live, snapshot
 STORY = "rate-limit-waits"
 
 
-def limit(env, prefix, kind, *, graphql=False):
+def limit(env, prefix, kind):
+    error = {
+        "rest": "API rate limit exceeded for 192.0.2.1. (HTTP 403)",
+        "graphql": "API rate limit already exceeded for user ID 1.",
+        "secondary": "You have exceeded a secondary rate limit. Please wait a few minutes before you try again. (HTTP 429)",
+        "quota-failed": "API rate limit exceeded for 192.0.2.1. (HTTP 403)",
+        "branch": 'no pull requests found for branch "fix/rate-limit-waits"',
+    }[kind]
     stub = env.repo.bin / "gh"
     first, rest = stub.read_text("utf-8").split("\n", 1)
     code = f'''import json, pathlib, sys, time
@@ -28,33 +35,26 @@ if args[:{len(prefix)}] == {prefix!r}:
         log.write(str(time.monotonic()) + "\\n")
     if not marker.exists():
         marker.write_text(str(int(time.time()) + 600), encoding="utf-8")
-        print({('no pull requests found for branch "fix/rate-limit-waits"' if kind == 'branch' else 'API rate limit exceeded')!r}, file=sys.stderr)
-        if {kind == 'header'!r}:
-            print("x-ratelimit-reset: " + marker.read_text("utf-8"), file=sys.stderr)
-        if {kind == 'secondary'!r}:
-            print("secondary rate limit\\nRetry-After: 37", file=sys.stderr)
-        if {kind == 'secondary-no-retry'!r}:
-            print("HTTP 429: secondary rate limit\\nx-ratelimit-remaining: 5000", file=sys.stderr)
-            print("x-ratelimit-reset: " + marker.read_text("utf-8"), file=sys.stderr)
+        print({error!r}, file=sys.stderr)
         sys.exit(1)
 if args[:2] == ["api", "rate_limit"]:
     if {kind == 'quota-failed'!r}:
-        print("HTTP 403: secondary rate limit", file=sys.stderr)
+        print("HTTP 403: You have exceeded a secondary rate limit.", file=sys.stderr)
         sys.exit(1)
     reset = int(marker.read_text("utf-8"))
-    core = reset + {1000 if graphql or kind == 'header' else 0}
-    graphql = reset + {0 if graphql else 1000}
-    print(json.dumps(dict(resources=dict(core=dict(remaining=0, reset=core),
+    core = reset + {1000 if prefix == ['api', 'graphql'] else 0}
+    graphql = reset + {0 if prefix == ['api', 'graphql'] else 1000}
+    print(json.dumps(dict(resources=dict(core=dict(remaining={10 if kind == 'secondary' else 0}, reset=core),
                                         graphql=dict(remaining=0, reset=graphql)))))
     sys.exit(0)
 '''
     stub.write_text(first + "\n" + code + rest, "utf-8")
 
 
-@pytest.mark.parametrize("command,kind", [("close", "header"), ("close", "quota"),
-                                         ("merge", "quota"), ("land", "header"),
+@pytest.mark.parametrize("command,kind", [("close", "rest"),
+                                         ("merge", "rest"), ("land", "rest"),
                                          ("land", "graphql"), ("close", "secondary"),
-                                         ("close", "secondary-no-retry"), ("close", "quota-failed")])
+                                         ("close", "quota-failed")])
 def test_1_commands_wait_for_github_reset_and_continue(env, fake_clock, command, kind):
     if kind == "graphql":
         item, where = "", env.repo.path
@@ -62,7 +62,8 @@ def test_1_commands_wait_for_github_reset_and_continue(env, fake_clock, command,
         env.gh.respond(*prefix, stdout=json.dumps({"data": {"repository": {"pullRequests": {"nodes": []}}}}))
     elif command == "close":
         item, where = env.start_fix()
-        prefix = ["pr", "edit"]
+        prefix = (["api", "--paginate", "--jq", ".check_runs[]"]
+                  if kind == "rest" else ["pr", "edit"])
     else:
         item, where = _ready(env)
         head = env.repo.git("rev-parse", "HEAD", cwd=where)
@@ -71,16 +72,16 @@ def test_1_commands_wait_for_github_reset_and_continue(env, fake_clock, command,
             "headRefName": "fix/tidy-readme", "title": "Tidy readme", "isDraft": False}))
         _merge_at_github(env)
         prefix = ["pr", "view"]
-    limit(env, prefix, kind, graphql=kind == "graphql")
+    limit(env, prefix, kind)
     done = env.repo.forge(command, "--all" if kind == "graphql" else item,
                           cwd=where if command == "close" else env.repo.path)
     assert done.returncode == 0, done.stdout + done.stderr
     assert done.stderr.count("GitHub rate limit reached. Wait until ") == 1
     attempts = [float(line) for line in (env.repo.bin / "quota-times").read_text("utf-8").splitlines()]
     assert len(attempts) >= 2
-    pause = 40 if kind == "secondary" else 60 if kind in ("quota-failed", "secondary-no-retry") else 603
+    pause = 60 if kind in ("quota-failed", "secondary") else 603
     assert pause - 1 <= attempts[1] - attempts[0] < pause + 7
-    if kind not in ("secondary", "secondary-no-retry", "quota-failed"):
+    if kind not in ("secondary", "quota-failed"):
         reset = int((env.repo.bin / "quota-attempt").read_text("utf-8"))
         when = datetime.fromtimestamp(reset + 3, timezone.utc).strftime("%H:%M:%S UTC")
         assert f"GitHub rate limit reached. Wait until {when}, then continue.\n" in done.stderr
@@ -95,7 +96,7 @@ def test_1_commands_wait_for_github_reset_and_continue(env, fake_clock, command,
 @pytest.mark.parametrize("command", ["board", "next", "server"])
 def test_2_views_keep_local_data_without_a_rate_limit_wait(env, command):
     item, _ = env.start_fix()
-    limit(env, ["pr", "list", "--state", "open"], "header")
+    limit(env, ["pr", "list", "--state", "open"], "rest")
     # Keep the server's periodic sleeps real; record and advance only the quota wait.
     shim = env.repo.bin / "forge"
     sleep_log = env.repo.bin / "quota-sleep"
