@@ -8,6 +8,13 @@
   ],
   "base": "a3272814e237b99271e2d7f844779588405e15d3",
   "branch": "fix/owner-direction-18-nov-2026-forge-s-own",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1eda1-fbc5-77f2-8ec0-7c997832ca55",
+    "head": null,
+    "start": "b8bb20ce0ecbc883c303b7326e765735a8ec5325"
+  },
   "done_when": "Forge's own forge.toml says workers = split, so new build and fix rounds in this repo run on Codex and user-facing parts run on Claude with the design routing",
   "fix_kind": "mechanical",
   "kind": "fix",
