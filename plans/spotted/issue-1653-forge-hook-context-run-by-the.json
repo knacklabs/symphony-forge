@@ -1,0 +1,59 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tGate: state what new and upgraded client repos receive\tissue-1653-forge-hook-context-run-by-the",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 196,
+      "text": "Gate: state what new and upgraded client repos receive",
+      "from": "blocking",
+      "item": "issue-1653-forge-hook-context-run-by-the",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tGate: update the session-start host contract tests\tissue-1653-forge-hook-context-run-by-the",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 196,
+      "text": "Gate: update the session-start host contract tests",
+      "from": "blocking",
+      "item": "issue-1653-forge-hook-context-run-by-the",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: forge hook context finishes in about 2 seconds or less on a repo with many hotspots\tissue-1653-forge-hook-context-run-by-the",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 196,
+      "text": "Not done: forge hook context finishes in about 2 seconds or less on a repo with many hotspots",
+      "from": "blocking",
+      "item": "issue-1653-forge-hook-context-run-by-the",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_hook_context_stays_short.py\tGate: test_1_hook_context_with_many_hotspots_stays_short\tissue-1653-forge-hook-context-run-by-the",
+      "kind": "bug",
+      "path": "tests/test_hook_context_stays_short.py",
+      "line": 29,
+      "text": "Gate: test_1_hook_context_with_many_hotspots_stays_short",
+      "from": "blocking",
+      "item": "issue-1653-forge-hook-context-run-by-the",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\ttests/test_next.py\tGate: check human-touch counts at an observable boundary\tissue-1653-forge-hook-context-run-by-the",
+      "kind": "bug",
+      "path": "tests/test_next.py",
+      "line": 64,
+      "text": "Gate: check human-touch counts at an observable boundary",
+      "from": "blocking",
+      "item": "issue-1653-forge-hook-context-run-by-the",
+      "status": "done",
+      "closed_by": "dismissed"
+    }
+  ]
+}

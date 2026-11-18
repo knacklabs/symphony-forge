@@ -1,0 +1,149 @@
+{
+  "base": "920ccb5e7d7d2ce33e6a5e7b527f4d9f42bfaea5",
+  "branch": "fix/issue-1653-forge-hook-context-run-by-the",
+  "done_when": "forge hook context finishes in about 2 seconds or less on a repo with many hotspots, prints at most a few hotspot lines with a pointer to the full list, and worker rounds start without an initialize timeout",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "context_hook() in src/forge/nextstep.py",
+      "file": "src/forge/nextstep.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 196,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: forge hook context finishes in about 2 seconds or less on a repo with many hotspots",
+      "work": 2
+    },
+    {
+      "area": "context_hook() in src/forge/nextstep.py",
+      "file": "src/forge/nextstep.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 196,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: update the session-start host contract tests",
+      "work": 1
+    },
+    {
+      "area": "test_1_hook_context_with_many_hotspots_stays_short() in tests/test_hook_context_stays_short.py",
+      "file": "tests/test_hook_context_stays_short.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 29,
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: Owner accepted the two test-only findings as follow-ups: the hook itself is fixed (1.6 s, no network); a worker-start test with the real hook and a shown fix touch count come later",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_hook_context_with_many_hotspots_stays_short",
+      "work": 2
+    },
+    {
+      "area": "test_15_human_touches() in tests/test_next.py",
+      "file": "tests/test_next.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 64,
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: Owner accepted the two test-only findings as follow-ups: the hook itself is fixed (1.6 s, no network); a worker-start test with the real hook and a shown fix touch count come later",
+      "round": 1,
+      "security": false,
+      "title": "Gate: check human-touch counts at an observable boundary",
+      "work": 2
+    },
+    {
+      "area": "context_hook() in src/forge/nextstep.py",
+      "file": "src/forge/nextstep.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 196,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: state what new and upgraded client repos receive",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "698af2e7f53c00997f25977478db0b7247fdaa4e11afa4974ac6c56dbb234e85",
+    "changed": "de8705622ffc1e1d51fe073c9e7a74ca3543c77b57c83a1e81ee618778b278e1",
+    "commit": "830526d3a6e5dddde6186a6757d143b6c0c3f801",
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner accepted the two test-only findings as follow-ups: the hook itself is fixed (1.6 s, no network); a worker-start test with the real hook and a shown fix touch count come later",
+        "finding": 1
+      },
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner accepted the two test-only findings as follow-ups: the hook itself is fixed (1.6 s, no network); a worker-start test with the real hook and a shown fix touch count come later",
+        "finding": 2
+      }
+    ],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Test - The timed client-repository proof still invokes only `forge hook context`; it does not start a worker.\nCase: normal use - a Claude worker starts in a repository with many hotspots. The added test times the direct command at lines 64\u201366, while the existing worker contract uses an SDK stub that emits its initialization message without running the SessionStart hook (`tests/stubs/claude_agent_sdk.py:100-102`). An initialization timeout in the generated-hook and worker integration can therefore leave both checks green. The worker-start detail of the Done-when item still needs proof.",
+        "file": "tests/test_hook_context_stays_short.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 65,
+        "priority": "P1",
+        "title": "Gate: test_1_hook_context_with_many_hotspots_stays_short",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Test - The repair leaves the blank-answer checks reading private records, while this public assertion covers only the story statistic.\nCase: normal use - a person answers or leaves a question blank during a fix. `tests/test_approval_pin_notice.py:83-84,101,110` still asserts the `.factory` JSON directly. The assertion here checks the story aggregate, which includes stories and tasks but excludes fixes (`src/forge/board.py:853-873`), so it does not replace those checks at an observable boundary. The private assertions can pass when the reported measure is wrong and fail after a storage-only refactor.",
+        "file": "tests/test_next.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 60,
+        "priority": "P1",
+        "title": "Gate: check human-touch counts at an observable boundary",
+        "work": 2
+      }
+    ],
+    "id": "be4d8e97-3ebd-423a-bc4e-1bc6d2fbc797",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-18T01:44:42.035325+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-18T02:14:54.027427+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-18T02:33:18.778879+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-18T02:33:18.779184+00:00",
+    "by": "owner",
+    "choice": "accept",
+    "file": "tests/test_hook_context_stays_short.py",
+    "reason": "Owner accepted the two test-only findings as follow-ups: the hook itself is fixed (1.6 s, no network); a worker-start test with the real hook and a shown fix touch count come later",
+    "wait_id": "e5d10b65-2efc-4575-b9f6-4da3631a3731",
+    "worker_round": 2
+  },
+  "stuck": {
+    "close": "903098f2-eb9e-493e-b56d-75e9997f5260",
+    "head": "19e49e159f86e9d9498dbac1f348430188285d5b",
+    "keys": {},
+    "round": 1
+  },
+  "why": "Issue 1653: forge hook context, run by the generated Claude SessionStart hook, takes 72 to 124 s and prints 150 to 200 KB in a client repo, almost all of it 'X keeps breaking: N noted problems are open there' blocks with full forge fix start commands, one per file. Claude worker rounds fail with 'Control request timeout: initialize', and every session gets a huge context.",
+  "worker": "claude"
+}

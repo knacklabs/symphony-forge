@@ -718,15 +718,16 @@ def _with_local(cfg: dict[str, Any], top: Path) -> dict[str, Any]:
     return {**cfg, **data, "models": {**cfg["models"], **data.get("models", {})}, "local": data, "shared": cfg}
 
 
-def default_config(top: Path) -> dict[str, Any]:
-    """Fetch and read only the default branch's config for merge permission and checks."""
+def default_config(top: Path, at: str | None = None) -> dict[str, Any]:
+    """Fetch, then read the default branch's config; `at` (a fetched ref) makes no network call."""
     default = default_branch(top)
-    if not command_fact("fetched origin", top, dict).get("all"):
+    if not at and not command_fact("fetched origin", top, dict).get("all"):
         command_fact(("fetch default", default), top, lambda: git("fetch", "-q", "origin", default, cwd=top))
-    found = run("git", "show", f"origin/{default}:forge.toml", cwd=top)
+    ref = at or f"origin/{default}"
+    found = run("git", "show", f"{ref}:forge.toml", cwd=top)
     if found.returncode:
         refuse(REFUSALS["no_config"])
-    return _sample_settings(top, _config_text(found.stdout), f"origin/{default}")
+    return _sample_settings(top, _config_text(found.stdout), ref)
 
 
 def review_settings(top: Path) -> dict[str, Any]:

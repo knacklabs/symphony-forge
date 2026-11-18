@@ -31,14 +31,12 @@ def test_2_a_new_clone_shows_the_committed_notes(repo, tmp_path, setup):
     (clone / "docs").mkdir(exist_ok=True)
     (clone / "docs/handover.md").write_text(
         "## Decisions and lessons\n- Local branch only.\n", encoding="utf-8")
-    before = repo.forge("next", cwd=clone)
     context = repo.forge("hook", "context", cwd=clone)
-    assert before.returncode == context.returncode == 0, context.stdout + context.stderr
-    assert before.stdout.strip() in context.stdout
+    assert context.returncode == 0, context.stdout + context.stderr
     assert "Local branch only" not in context.stdout
     if setup == "new repo":
         assert context.stdout.endswith("## Decisions and lessons\n- Keep the client wording.\n")
-        assert context.stdout.index("## Decisions and lessons") > context.stdout.index(before.stdout.strip())
+        assert context.stdout.startswith("Run forge next for the full picture.\n")
         assert "Do not show this" not in context.stdout
     else:
-        assert context.stdout == before.stdout
+        assert context.stdout == "Run forge next for the full picture.\n"

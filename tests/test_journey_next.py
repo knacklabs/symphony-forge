@@ -83,7 +83,7 @@ def test_3_forge_next_names_the_journey_step(repo, gh, tmp_path):
 
     context = repo.forge("hook", "context", cwd=client)
     assert context.returncode == 0, context.stderr
-    assert context.stdout.splitlines()[0] == "Step 1 of 7: ideas and client notes."
+    assert context.stdout.splitlines()[0] == "Run forge next for the full picture."
 
     (client / "docs/context/notes.md").parent.mkdir(parents=True, exist_ok=True)
     (client / "docs/context/notes.md").write_text("The client needs a simple order list.\n", "utf-8")
