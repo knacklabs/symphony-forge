@@ -11,12 +11,145 @@
   "done_when": "When an item's latest CI run failed only in test groups, close and merge rerun only the failed jobs of that run once (the way land does) and wait for them; a second failure counts as failed and names forge work; new and existing repos get it on upgrade",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [
+    {
+      "area": "_rerun_cancelled() in src/forge/checks.py",
+      "file": "src/forge/checks.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 387,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: When an item's latest CI run failed only in test groups, close and merge rerun only the failed jobs of that run once",
+      "work": 3
+    },
+    {
+      "area": "_wait() in src/forge/checks.py",
+      "file": "src/forge/checks.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 193,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Retry the failed run before publishing close's review record",
+      "work": 3
+    },
+    {
+      "area": "_wait() in src/forge/checks.py",
+      "file": "src/forge/checks.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 193,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Preserve timeout handling for non-group test jobs",
+      "work": 2
+    },
+    {
+      "area": "_rerun_cancelled() in src/forge/checks.py",
+      "file": "src/forge/checks.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 392,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Treat skipped required checks as failures before starting a retry",
+      "work": 2
+    },
+    {
+      "area": "test_1_failed_test_jobs_retry_once_and_wait() in tests/test_ci_retries_failed_test_jobs.py",
+      "file": "tests/test_ci_retries_failed_test_jobs.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 32,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_failed_test_jobs_retry_once_and_wait and test_2_other_failures_and_used_attempts_do_not_restart_ci",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "5bfe90af9d2477242b067a93cff30bc9d7036f1a34761ef0f3b2ef6ce1768d05",
+    "changed": "b78cf5f640e25d74088561c29b5b524df7da598f2392e383d54035d2b7470851",
+    "commit": "78db1802b132ce8feb964960a7a620ea887f2f6b",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 5, Work 3, Harm 3\nRaise: Not done\nCase: normal use - a retried group is still running, or a group reaches its configured job timeout.\nDone when: When an item's latest CI run failed only in test groups, close and merge rerun only the failed jobs of that run once (the way land does) and wait for them; a second failure counts as failed and names forge work; new and existing repos get it on upgrade.\nThe suite set is derived only from completed groups with conclusion `failure` or `timed_out`. While a retried group is running, its previous failed `tests` aggregate can still be visible; the replacement aggregate depends on the group finishing (src/forge/prcheck.py:113). The aggregate is then treated as an independent failure and close or merge exits instead of waiting. Separately, GitHub [cancels a job at its configured timeout](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax); a group reported as `cancelled` is also excluded from the suite set. With its failed aggregate present, Forge does not request the first retry, and a second timeout can give manual-rerun guidance instead of naming `forge work`.",
+        "file": "src/forge/checks.py",
+        "gain": 5,
+        "harm": 3,
+        "line": 387,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: When an item's latest CI run failed only in test groups, close and merge rerun only the failed jobs of that run once",
+        "work": 3
+      },
+      {
+        "body": "Gain 5, Work 3, Harm 3\nRaise: Functional\nCase: normal use - the pushed code's CI run has already failed in one test group when close finishes its review.\nClose saves and pushes a new review-record commit before calling `checks.wait` (src/forge/close.py:419 and :429-430). The new recovery therefore examines the new head, not the failed run. The generated workflow reuses a parent only when that parent's latest run succeeded (src/forge/templates/review-tests.py:125-127), so it starts every test group again instead of rerunning only the failed jobs of the existing run.",
+        "file": "src/forge/checks.py",
+        "gain": 5,
+        "harm": 3,
+        "line": 193,
+        "priority": "P1",
+        "title": "Retry the failed run before publishing close's review record",
+        "work": 3
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - a repo's required `tests` or `tests (ubuntu-latest)` job is cancelled at its configured time limit.\nRecovery now runs before the existing timeout classifier. If GitHub supplies the job's workflow suite, the cancellation branch starts `gh run rerun` without `--failed`, rerunning the entire workflow and its successful jobs before `_tests_timeout` can direct the user to rerun or split the test job. This changes the documented handling of other test timeouts and can add another full timeout period. The existing timeout test omits the suite ID, so it does not exercise this path.",
+        "file": "src/forge/checks.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 193,
+        "priority": "P1",
+        "title": "Preserve timeout handling for non-group test jobs",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional\nCase: normal use - a path-conditioned required lint check is skipped while a test group fails.\nThis guard checks only states already marked `RED`, but `_pending` later turns a skipped or neutral required check red (src/forge/checks.py:437-438). Forge consequently starts the failed-job rerun despite another required check failing its gate, then immediately exits on that check without waiting for the retry. The attempt is consumed and continues in the background.",
+        "file": "src/forge/checks.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 392,
+        "priority": "P1",
+        "title": "Treat skipped required checks as failures before starting a retry",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - GitHub reports a running retry before its dependent aggregate is replaced, or reports a job timeout as a cancellation.\nThe first test queues only the initial failure and final result, with no in-progress retry snapshot; its initial timeout cases also never use `cancelled` with timeout timestamps. The second test's other-check case uses a literal lint failure, not a skipped required check. These named proofs therefore do not catch the retry and waiting defects above even though they exercise the command. Extend the command-boundary cases to cover those GitHub states.",
+        "file": "tests/test_ci_retries_failed_test_jobs.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 32,
+        "priority": "P1",
+        "title": "Gate: test_1_failed_test_jobs_retry_once_and_wait and test_2_other_failures_and_used_attempts_do_not_restart_ci",
+        "work": 2
+      }
+    ],
+    "id": "00c2e7b1-e64a-4016-adac-71b187a8766b",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-18T09:20:10.614816+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-18T09:41:04.168727+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
