@@ -37,8 +37,8 @@
       "gain": 4,
       "harm": 3,
       "line": 29,
-      "outcome": "open",
-      "reason": "",
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: Owner accepted the two test-only findings as follow-ups: the hook itself is fixed (1.6 s, no network); a worker-start test with the real hook and a shown fix touch count come later",
       "round": 1,
       "security": false,
       "title": "Gate: test_1_hook_context_with_many_hotspots_stays_short",
@@ -50,8 +50,8 @@
       "gain": 3,
       "harm": 3,
       "line": 64,
-      "outcome": "open",
-      "reason": "",
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: Owner accepted the two test-only findings as follow-ups: the hook itself is fixed (1.6 s, no network); a worker-start test with the real hook and a shown fix touch count come later",
       "round": 1,
       "security": false,
       "title": "Gate: check human-touch counts at an observable boundary",
@@ -76,7 +76,18 @@
     "branch_diff": "698af2e7f53c00997f25977478db0b7247fdaa4e11afa4974ac6c56dbb234e85",
     "changed": "de8705622ffc1e1d51fe073c9e7a74ca3543c77b57c83a1e81ee618778b278e1",
     "commit": "830526d3a6e5dddde6186a6757d143b6c0c3f801",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner accepted the two test-only findings as follow-ups: the hook itself is fixed (1.6 s, no network); a worker-start test with the real hook and a shown fix touch count come later",
+        "finding": 1
+      },
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner accepted the two test-only findings as follow-ups: the hook itself is fixed (1.6 s, no network); a worker-start test with the real hook and a shown fix touch count come later",
+        "finding": 2
+      }
+    ],
     "findings": [
       {
         "body": "Gain 4, Work 2, Harm 3\nRaise: Test - The timed client-repository proof still invokes only `forge hook context`; it does not start a worker.\nCase: normal use - a Claude worker starts in a repository with many hotspots. The added test times the direct command at lines 64\u201366, while the existing worker contract uses an SDK stub that emits its initialization message without running the SessionStart hook (`tests/stubs/claude_agent_sdk.py:100-102`). An initialization timeout in the generated-hook and worker integration can therefore leave both checks green. The worker-start detail of the Done-when item still needs proof.",
@@ -100,10 +111,10 @@
       }
     ],
     "id": "be4d8e97-3ebd-423a-bc4e-1bc6d2fbc797",
-    "status": "blocked"
+    "status": "clean"
   },
   "round": 2,
-  "status": "hotspot",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-18T01:44:42.035325+00:00",
@@ -120,8 +131,12 @@
   ],
   "stop": {
     "at": "2026-11-18T02:33:18.779184+00:00",
+    "by": "owner",
+    "choice": "accept",
     "file": "tests/test_hook_context_stays_short.py",
-    "wait_id": "e5d10b65-2efc-4575-b9f6-4da3631a3731"
+    "reason": "Owner accepted the two test-only findings as follow-ups: the hook itself is fixed (1.6 s, no network); a worker-start test with the real hook and a shown fix touch count come later",
+    "wait_id": "e5d10b65-2efc-4575-b9f6-4da3631a3731",
+    "worker_round": 2
   },
   "stuck": {
     "close": "903098f2-eb9e-493e-b56d-75e9997f5260",
