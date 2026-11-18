@@ -1,6 +1,13 @@
 {
   "base": "1a5b4d2cf1d9b0e80bb05627d2864a9ac40fd2bb",
   "branch": "fix/ci-wait-newest-release",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1efbc-6407-7833-a8b1-55ece3b404e4",
+    "head": null,
+    "start": "64a21913a714810f52d165f90e5fcaf87bd826ea"
+  },
   "done_when": "close and merge use the installed release's CI wait and rerun behaviour when it is newer than the branch's pin, while review and the rest of close keep the pinned release; new and existing repos get it on upgrade",
   "fix_kind": "mechanical",
   "kind": "fix",
