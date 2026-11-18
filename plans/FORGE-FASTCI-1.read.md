@@ -1,18 +1,18 @@
 ---
 reader: codex (gpt-6.1-terra)
-read_at: 2026-11-18T10:55:29.840943+00:00
-seconds: 390.84
-read_hash: 4d7e4acede5e596543bcbe3ad33d1e57eb38e74a
-round: 4
-passed: yes
-doc_seen: 4d7e4acede5e596543bcbe3ad33d1e57eb38e74a
+read_at: 2026-11-18T11:19:30.045923+00:00
+seconds: 611.273
+read_hash: 5e19130c47e82f06cc3dc9dadced8dcac4363f6a
+round: 5
+passed: no
+doc_seen: 5e19130c47e82f06cc3dc9dadced8dcac4363f6a
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 4e4ea0087a3840cfe7254cb6f616a09943232910
+notes_seen: fbadfd198f63350565e04c0fa540b5d0775f3bd6
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a1e9a5-ba42-7df2-a8f1-79526a848260
 session:
-loop_choice:
-loop_reason:
+loop_choice: accept
+loop_reason: No blocking notes. Advisory 21 (test numbering) and 22 (suggestion line when an Oxlint app lacks the testing rules) go to the OXLINT builder. 23-26 are limits of the third-party landmines rules (shared MSW server, fake timers, other retry settings, two-assertion polling); kept as known, not patched in Forge.
 ---
 # Cold read notes
 
@@ -139,4 +139,36 @@ Only a genuine trade-off goes to the human, as a question with options.
 20. Advisory: Plan gap: The Oxlint task has unlisted conflicts with active tasks.
     Raise: Plan gap. The plan says Oxlint waits only for TypeScript 7, but its scope also overlaps the active CI time task in `doctor.py` and two active assistant tasks in the TypeScript assistant template. Forge refuses to start it while multiple overlapping tasks remain unmerged. [Oxlint scope](/plans/FORGE-FASTCI-1.md:134), [CI time scope](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-CITIME-1/plans/FORGE-CITIME-1.md:122), [assistant scopes](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-ASSIST-1/plans/FORGE-ASSIST-1.md:205), [start rule](/src/forge/task.py:565).
     Gain 3, Work 1, Harm 2
+   Disposition: keep - below the bar (follow-up)
+
+## Round 5
+
+21. Advisory: Plan gap: The planned tests cannot pass Forge’s numbering check.
+    Raise: Plan gap. Both new test files use the same story name and a `test_1` function. The required check rejects duplicate test numbers within a story. [Plan](/plans/FORGE-FASTCI-1.md:124), [check](/tests/test_rules.py:26).
+    Gain 4, Work 1, Harm 2
+   Disposition: keep - No blocking notes. Advisory 21 (test numbering) and 22 (suggestion line when an Oxlint app lacks the testing rules) go to the OXLINT builder. 23-26 are limits of the third-party landmines rules (shared MSW server, fake timers, other retry settings, two-assertion polling); kept as known, not patched in Forge.
+
+22. Advisory: Not done: An app can lack the testing rules without receiving a suggestion.
+    Raise: Not done. An app can install Landmines for its separately selectable style plugin without enabling its testing plugin. The planned detector checks only whether the package is installed, so it suppresses the suggestion. [Plan](/plans/FORGE-FASTCI-1.md:110), [Landmines configuration](https://github.com/interfere-inc/landmines#install).
+    Gain 3, Work 2, Harm 2
+   Disposition: keep - below the bar (follow-up)
+
+23. Advisory: Not done: A shared MSW server can let unexpected requests through.
+    Raise: Not done. A test setup can import a shared server and call `server.listen()` without an error setting. The upstream rule recognizes servers created in the same file, so it misses that setup; MSW’s default allows unhandled requests through. The proposed test checks only a module mock. [Plan](/plans/FORGE-FASTCI-1.md:125), [rule](https://raw.githubusercontent.com/interfere-inc/landmines/main/packages/landmines/src/rules/strict-msw.ts), [MSW shared-server example](https://github.com/mswjs/msw/discussions/821).
+    Gain 3, Work 3, Harm 2
+   Disposition: keep - below the bar (follow-up)
+
+24. Advisory: Not done: Fake timers disable the fixed-sleep rule for the whole file.
+    Raise: Not done. The starter already uses fake timers in one test and restores real timers afterward. A fixed sleep added to another test in that file is ignored because the rule suppresses every sleep when it sees `vi.useFakeTimers()` anywhere in the file. [Starter test](/src/forge/templates/starter/libs/core/server/src/common/tools.test.ts:122), [rule](https://raw.githubusercontent.com/interfere-inc/landmines/main/packages/landmines/src/rules/no-fixed-sleep.ts).
+    Gain 3, Work 3, Harm 2
+   Disposition: keep - below the bar (follow-up)
+
+25. Advisory: Not done: The testing rule misses common retry and timeout settings.
+    Raise: Not done. Raising the starter API’s `testTimeout` or changing Playwright’s `retries` from zero can hide a flaky test. The upstream rule does not inspect those configuration fields in their current locations, and the planned test checks only a module mock. [API config](/src/forge/templates/starter/apps/api/vitest.config.ts:9), [browser config](/src/forge/templates/starter/apps/web/playwright.config.ts:12), [rule](https://raw.githubusercontent.com/interfere-inc/landmines/main/packages/landmines/src/rules/no-flake-masking.ts).
+    Gain 3, Work 3, Harm 2
+   Disposition: keep - below the bar (follow-up)
+
+26. Advisory: Not done: Polling a recorded call can pass with two assertions.
+    Raise: Not done. A `vi.waitFor` callback that checks both a spy’s call count and its arguments is a normal way to test an asynchronous call. The upstream rule ignores callbacks containing more than one statement, so this polling passes its check. [Plan](/plans/FORGE-FASTCI-1.md:9), [rule](https://raw.githubusercontent.com/interfere-inc/landmines/main/packages/landmines/src/rules/no-unsignaled-poll.ts).
+    Gain 3, Work 3, Harm 2
    Disposition: keep - below the bar (follow-up)
