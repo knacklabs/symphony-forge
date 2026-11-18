@@ -1,0 +1,15 @@
+{
+  "base": "a3272814e237b99271e2d7f844779588405e15d3",
+  "branch": "fix/owner-direction-18-nov-2026-forge-s-own",
+  "done_when": "Forge's own forge.toml says workers = codex, so new build and fix rounds in this repo run on Codex",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-18T06:49:12.784679+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Owner direction 18 Nov 2026: Forge's own repo builds with Codex. forge.toml still says workers = claude."
+}
