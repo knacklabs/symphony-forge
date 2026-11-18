@@ -43,7 +43,7 @@
     "id": "66688b85-ca6b-4cc1-9004-ca0bd7f67c30",
     "status": "blocked"
   },
-  "round": 2,
+  "round": 3,
   "status": "fixing",
   "steps": [
     {
@@ -69,12 +69,10 @@
     "worker_round": 2
   },
   "stuck": {
-    "close": "803917c0-29cc-4a05-815f-ce42fde1d224",
-    "head": "6401e92ecda695c5b50fb27ec17a705396e5081d",
-    "keys": {
-      "the open P0 functional: small changes can run only one fixed shard in src/forge/prcheck.py": 1
-    },
-    "round": 1
+    "close": "ec2ccb57-c8ea-4df6-a628-951cbadda870",
+    "head": "6ff62d111254c28635890944ee5a639e9d576513",
+    "keys": {},
+    "round": 2
   },
   "worker": "codex"
 }
