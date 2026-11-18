@@ -49,6 +49,8 @@ REFUSALS = {
     "blocked": ("The review left serious findings open: {findings}.",
                 'forge work {item}, or forge close {item} --dismiss <n> --because '
                 '"<file:line> <reason>"'),
+    "missing_proof": ("Proof list: missing. Add the full Proof list to the last commit.",
+                      "forge close {item}"),
     "hotspot": ("Review round {round} of {item} reached the round limit with open findings, so Forge stopped. {question}",
                 'forge close {item} --resolve <more|split|accept> --reason "<human\'s choice>"'),
     "bad_choice": ("Record the human's choice only on a stopped review loop, with a non-empty "
@@ -334,10 +336,9 @@ def close(args: argparse.Namespace) -> int:
     if not fresh:
         mechanical = switch or records_only or skip or review_skip.upgrade_only(
             top, item, cfg, ancestor, head, [p for p in files if p], previous)
-        if not mechanical and not review.commit_paragraph(top, review_ref, "Proof list:"):
-            print("Proof list: missing. Add the full Proof list to the last commit, then run "
-                  f"forge close {item}.", file=sys.stderr)
-            return 1
+        if not (mechanical or migrating) and not review.commit_paragraph(
+                top, review_ref, "Proof list:").partition(":")[2].strip():
+            repo.refuse(REFUSALS["missing_proof"], item=item)
         if pending := time_records.pending_merge_wait(top, item, (pr or {}).get("body") or ""):
             repo.record_event(top, item, "owner wait end", wait_id=pending["id"])
         # Read after the merge, which may change the command.
@@ -416,15 +417,12 @@ def close(args: argparse.Namespace) -> int:
                        {} if fresh else areas,
                        repaired=previous if not (fresh or records_only or switch or replayed) else None)
     opened = score.open_findings(result)
-    proof, approach = (review.commit_paragraph(top, review_ref, "Proof list:"),
-                       review.before_coding(top, base, head))
     record_findings = bool(serious) and bool(opened) and all(
-        not f.get("required_done_when") and (
-            f["title"].casefold() == "gate: proof list" and not proof.partition(":")[2].strip() or
-            f["title"].casefold().startswith("simpler:") and
-            re.search(r"\b(?:before coding|approach record)\b", f["title"], re.I) and
-            re.search(r"\b(?:missing|absent|no|lacks?|not present|does not (?:include|have))\b",
-                      f["title"], re.I) and not approach) for f in opened)
+        f["title"].casefold().startswith("gate: proof list") or
+        f["title"].casefold().startswith("simpler:") and
+        re.search(r"\b(?:before[- ]coding|approach record)\b", f["title"], re.I) and
+        re.search(r"\b(?:missing|absent|no|lacks?|not present|does not (?:include|have))\b",
+                  f["title"], re.I) for f in opened)
     repair_round = state.get("record_repair_round")
     if record_findings and repair_round is None: state["record_repair_round"] = repair_round = round_number
     if (serious and round_number >= (cfg["task_review_rounds"] if "/" in item else 1) and

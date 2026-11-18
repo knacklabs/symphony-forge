@@ -13,18 +13,29 @@ FIX = "fix-the-login-typo"
 DONE = "The login page says Log in"
 
 
-@pytest.mark.parametrize("source, caller, test, original", [
+@pytest.mark.parametrize("source, caller, test, original, function, unchanged", [
     ("validator.py", "service.py", "tests/test_verify_credentials.py",
-     "def verify_credentials():\n    return False\n"),
+     "def verify_credentials():\n    return False\n", "verify_credentials", ""),
     ("validator.ts", "service.ts", "tests/credentials.spec.ts",
-     "export const verify_credentials = (): boolean => {\n    return false;\n};\n"),
-], ids=["python-function", "typed-typescript-arrow"])
+     "export const verify_credentials = (): boolean => {\n    return false;\n};\n",
+     "verify_credentials", ""),
+    ("src/testimonials/controller.ts", "src/api.ts", "tests/test_testimonials.py",
+     "export class TestimonialsController {\n"
+     "  createTestimonial(\n    input: unknown,\n  ): boolean {\n"
+     "    return false;\n  }\n}\n", "createTestimonial", ""),
+    ("auth/service.py", "auth/routes.py", "tests/test_auth_service.py",
+     "class AuthService:\n"
+     "    def authenticate(self):\n        return False\n\n"
+     "    def unchanged_archive_sessions(self):\n        return True\n",
+     "authenticate", "unchanged_archive_sessions"),
+], ids=["python-function", "typed-typescript-arrow", "multiline-typescript-method",
+        "changed-method-with-unchanged-sibling"])
 def test_2_worker_round_brief_shows_done_when_and_changed_function_context(
-        repo, source, caller, test, original):
+        repo, source, caller, test, original, function, unchanged):
     # The grep map must work for both Python and the typed TypeScript client stack.
     repo.write(source, original)
-    repo.write(caller, "verify_credentials()\n")
-    repo.write(test, "verify_credentials()\n")
+    repo.write(caller, f"service.{function}()\n")
+    repo.write(test, f"service.{function}()\n")
     repo.git("add", source, caller, test)
     repo.git("commit", "-q", "-m", "Seed the sign-in check",
              "-m", "Proof list:\n- Sign-in check: manual check passed")
@@ -48,6 +59,8 @@ def test_2_worker_round_brief_shows_done_when_and_changed_function_context(
 
     assert f"Done when: {DONE}" in brief
     assert "Complete the full Done-when for this item" in brief
-    assert "verify_credentials" in brief
+    changed_functions = brief.split("## Changed functions at round start\n", 1)[1].split("\n\n", 1)[0]
+    assert function in changed_functions
+    assert not unchanged or unchanged not in changed_functions
     assert caller in brief
     assert test in brief

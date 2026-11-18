@@ -6,18 +6,22 @@ from test_close import blocked, body, env, finding
 STORY = "FIX-FULL-BRIEF-AND-PROOF"
 
 
-@pytest.mark.parametrize("record, mixed", [("proof", False), ("approach", False), ("proof", True)],
-                         ids=["empty-proof-list", "missing-approach-record", "other-open-finding-still-stops"])
+@pytest.mark.parametrize("record, mixed", [("proof", False), ("sentinel", False),
+                         ("approach", False), ("hyphenated approach", False), ("proof", True)],
+                         ids=["missing-proof-entry", "proof-list-says-missing", "missing-approach-record",
+                              "hyphenated-approach-record", "other-open-finding-still-stops"])
 def test_3_record_only_review_findings_get_one_automatic_repair(env, record, mixed):
     item, where = env.start("full-brief-and-proof", "fix/full-brief-and-proof",
                             ".factory/fixes/full-brief-and-proof.json",
                             {"kind": "fix", "why": "Fix a small change",
                              "done_when": "The change has its required records"},
                             {"app.py": "print('hello')\n"})
-    if record == "proof":
-        env.commit(where, "app.py", "print('hello')\n", "Work\n\nProof list:")
-    problem = finding("P1", "Gate: proof list" if record == "proof" else
-                      "Simpler: Missing Before coding record")
+    if record == "sentinel":
+        env.commit(where, "app.py", "print('hello')\n", "Work\n\nProof list: missing")
+    title = ("Gate: proof list" if record in ("proof", "sentinel") else
+             "Simpler: Missing before-coding record" if record == "hyphenated approach" else
+             "Simpler: Missing Before coding record")
+    problem = finding("P1", title)
     findings = [problem, *([finding("P2", "Simpler: use a dict")] if mixed else [])]
     env.reviews(blocked(*findings), blocked(*findings))
 

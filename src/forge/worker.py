@@ -779,16 +779,53 @@ def _existing_tests(top: Path, scope: list[str]) -> str:
 def _changed_function_context(top: Path) -> str:
     """Name changed functions and the code and test files that grep finds referring to them."""
     base = f"origin/{repo.default_branch(top)}"
-    diff = repo.run("git", "diff", "--function-context", "--unified=0", "--no-color", base,
+    diff = repo.run("git", "diff", "--unified=0", "--no-color", base,
                     "--", cwd=top).stdout
     functions = set()
+    changed: dict[str, set[int]] = {}
     path = ""
+    line_number = 0
     for line in diff.splitlines():
         if line.startswith("diff --git "):
             path = line.split(" b/", 1)[1].rstrip('"') if " b/" in line else ""
-        elif path and not _test_file(path) and line[:1] in {" ", "+", "-"}:
-            if name := _function_name(line[1:]):
+        elif line.startswith("@@"):
+            match = re.search(r"\+(\d+)(?:,\d+)?", line)
+            line_number = int(match[1]) if match else 0
+        elif path and line.startswith("+") and not line.startswith("+++"):
+            changed.setdefault(path, set()).add(line_number)
+            line_number += 1
+        elif path and line.startswith("-") and not line.startswith("---"):
+            if not _test_file(path) and (name := _function_name(line[1:])):
                 functions.add(name)
+        elif path and line.startswith(" "):
+            line_number += 1
+    for path, line_numbers in changed.items():
+        if _test_file(path):
+            continue
+        source = top / path
+        if not source.is_file():
+            continue
+        lines = source.read_text(encoding="utf-8").splitlines()
+        definitions = []
+        for index, source_line in enumerate(lines):
+            if not source_line.strip():
+                continue
+            if name := _function_name("\n".join(lines[index:])):
+                indent = len(source_line) - len(source_line.lstrip())
+                definitions.append((index + 1, indent, name))
+        for changed_line in line_numbers:
+            if not 1 <= changed_line <= len(lines):
+                continue
+            source_line = lines[changed_line - 1]
+            if not source_line.strip():
+                continue
+            if name := _function_name("\n".join(lines[changed_line - 1:])):
+                functions.add(name)
+            indent = len(source_line) - len(source_line.lstrip())
+            enclosing = [definition for definition in definitions
+                         if definition[0] < changed_line and definition[1] < indent]
+            if enclosing:
+                functions.add(max(enclosing, key=lambda definition: definition[0])[2])
     if not functions:
         return "None."
 
@@ -807,13 +844,12 @@ def _changed_function_context(top: Path) -> str:
 def _test_file(path: str) -> bool:
     parts = Path(path).parts
     name = parts[-1].lower() if parts else ""
-    return (any(part.lower() in {"test", "tests", "__tests__", "spec"}
-                or part.lower().startswith("test") for part in parts)
+    return (any(part.lower() in {"test", "tests", "__tests__", "spec"} for part in parts)
             or name.startswith("test_") or name.endswith("_test.py")
             or re.search(r"\.(?:test|spec)\.", name) is not None)
 
 
-def _function_name(line: str) -> str | None:
+def _function_name(source: str) -> str | None:
     patterns = (
         r"^\s*(?:(?:export|default)\s+)*(?:async\s+)?(?:def|function|fn)\s+([A-Za-z_$][\w$]*)\s*\(",
         r"^\s*func\s+(?:\([^)]*\)\s*)?([A-Za-z_$][\w$]*)\s*\(",
@@ -822,8 +858,16 @@ def _function_name(line: str) -> str | None:
         r"^\s*(?:(?:public|private|protected|static|async|override|abstract|final|virtual)\s+)*([A-Za-z_$][\w$]*)\s*\([^)]*\)\s*(?:\:[^{=]+)?\{",
     )
     match = next((candidate for pattern in patterns
-                  if (candidate := re.match(pattern, line))), None)
-    return match[1] if match and match[1] not in {"if", "for", "while", "switch", "catch", "with", "match"} else None
+                  if (candidate := re.match(pattern, source))), None)
+    if match:
+        return match[1] if match[1] not in {"if", "for", "while", "switch", "catch", "with", "match"} else None
+    method = re.match(
+        r"^\s*(?:(?:public|private|protected|static|async|override|abstract|final|virtual|get|set)\s+)*"
+        r"([A-Za-z_$][\w$]*)\s*\(", source)
+    if method and method[1] not in {"if", "for", "while", "switch", "catch", "with", "match"} \
+            and re.search(r"\)\s*(?::[^;{=]+)?\{", source.split(";", 1)[0], re.S):
+        return method[1]
+    return None
 
 
 def _claude(item: str, top: Path, brief: str, fresh_brief: str | None, models: list[str],
