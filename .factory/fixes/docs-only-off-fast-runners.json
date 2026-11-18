@@ -44,7 +44,7 @@
       "gain": 3,
       "harm": 3,
       "line": 405,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 1,
       "security": false,
@@ -57,7 +57,7 @@
       "gain": 3,
       "harm": 3,
       "line": 45,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 1,
       "security": false,
@@ -70,7 +70,7 @@
       "gain": 5,
       "harm": 4,
       "line": 423,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 2,
       "security": false,
@@ -80,48 +80,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "5cef6073fb7acf84049e5c11b33df8aa527e0ec85fae34b564a0a2625952cd0f",
-    "changed": "82781fec0bf8ca499854e25266f05473c57dc01bc268674b5c6ea4af4cec8b58",
-    "commit": "b9320b37ccb32a15096da926e9f8ab649f6e2688",
+    "branch_diff": "418675d9a89d9a94eb13c1cf8a4ae908fd4e2efd4aaed87abf7acac7448203d7",
+    "changed": "370b58dcb5d49fbd1f6e30d3b2d58e7efa4463060038264ee885cd11805b39ff",
+    "commit": "bb7ad728d7e533a8f682a9437ba10c13f8f9010b",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 5, Work 2, Harm 4\nRaise: Functional\nCase: normal use - a CI repo configures a separate test_runner and opens a pull request.\nThe new expression is populated with json.dumps at lines 466\u2013467, producing labels such as `\"ubuntu-24.04\"` inside `${{ }}`. [GitHub Actions requires single-quoted string literals in expressions](https://docs.github.com/en/actions/reference/workflows-and-actions/expressions#literals) and rejects double-quoted ones. It therefore rejects the generated workflow before scheduling its jobs, blocking both documentation and code pull requests for this configuration.",
-        "file": "src/forge/prcheck.py",
-        "gain": 5,
-        "harm": 4,
-        "line": 423,
-        "priority": "P0",
-        "title": "Generate valid GitHub Actions runner expressions",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Not done\nCase: normal use - a repo has required documentation tests, `runner = \"ubuntu-24.04\"`, and `test_runner = \"windows-latest\"`.\nThe new selection routes the required test group to the Linux runner, but `src/forge/prcheck.py:303-310` still constructs its command from the Windows test_runner and wraps it in PowerShell syntax. Linux runs that step with Bash, which rejects the wrapper, so the required tests do not run and the result check fails. The invalid expression in the P0 finding currently masks this independent failure.",
-        "file": "src/forge/prcheck.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 423,
-        "priority": "P1",
-        "required_done_when": true,
-        "title": "Not done: A docs-only pull request runs no job on test_runner; its result job runs on runner; the required tests check keeps its name and as",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - a newly initialized repo uses a separate test_runner.\nThe scheduling proof still accepts a workflow GitHub cannot schedule: `evaluate` delegates to the Python evaluator at `tests/test_ci_limits_pull_requests_to_linux.py:14-21`, which accepts the double-quoted labels that GitHub rejects. The required-test case also invokes `forge test` directly at line 99 instead of executing the emitted job command, so it misses the Windows-to-Linux shell failure. The named test can pass with both defects present.",
-        "file": "tests/test_docs_only_runner_allocation.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 87,
-        "priority": "P1",
-        "title": "Gate: test_1_docs_only_pr_keeps_the_test_runner_free",
-        "work": 2
-      }
-    ],
-    "id": "a54eb53f-b521-45f4-9707-f2fdf1348fc1",
-    "status": "blocked"
+    "findings": [],
+    "id": "3ce65115-1b77-4a72-be38-ffd6b670240a",
+    "status": "clean"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-18T14:04:11.292480+00:00",
@@ -133,6 +101,10 @@
     },
     {
       "at": "2026-11-18T14:42:36.533623+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-18T14:54:42.605507+00:00",
       "step": "review"
     }
   ],
