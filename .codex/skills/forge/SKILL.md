@@ -1930,10 +1930,10 @@ model and effort it starts with, and why; `forge next` names the worker beside e
 
 - `codex`: everything on Codex; user-facing work uses `[models.design.codex]`.
 - `claude`: everything on Claude; user-facing work uses `[models.design.claude]`.
-- `split` (what `forge init` writes): user-facing story tasks on Claude, everything else on Codex.
+- `split`: user-facing story tasks on Claude, everything else on Codex.
 
 Split routing also applies in Forge's source repo: a task row's `User-facing: yes` selects
-Claude and its design entry. New repos get this at init; existing repos get it on upgrade.
+Claude and its design entry. `forge init` writes `workers = "claude"`; existing repos keep their setting.
 
 When the worker changes between rounds of one item, the next `forge work` starts a fresh session
 on the new worker with the whole brief and the latest review findings.

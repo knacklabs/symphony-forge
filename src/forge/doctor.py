@@ -349,7 +349,7 @@ def doctor(args: argparse.Namespace) -> int:
     workers = cfg["workers"] if cfg["tools"] == "both" else cfg["tools"]
     if item := task.branch_item(repo.current_branch(top), top):
         workers = item[1].get("tool") or workers
-    on_codex = workers != "claude"  # split runs Codex and Claude
+    on_codex = workers != "claude" or cfg["tools"] == "both"  # reviews and reads use Codex when both are set
     programs = {"codex": shutil.which(os.environ.get("CODEX_BIN") or "codex"),
                 "claude": shutil.which("claude")}
     if cfg["tools"] != "both" and not programs[cfg["tools"]]:
