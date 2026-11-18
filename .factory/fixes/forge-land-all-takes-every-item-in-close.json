@@ -88,7 +88,7 @@
     "status": "blocked"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-18T06:22:46.550167+00:00",
@@ -101,8 +101,12 @@
   ],
   "stop": {
     "at": "2026-11-18T07:35:01.909731+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "src/forge/land.py",
-    "wait_id": "c4bb7589-3d13-4be8-b305-55199232579e"
+    "reason": "Owner chose one more round: fix the three land findings",
+    "wait_id": "c4bb7589-3d13-4be8-b305-55199232579e",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
