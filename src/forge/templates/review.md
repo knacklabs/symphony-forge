@@ -277,6 +277,12 @@ gate holds the merge until that check passes. A failed check or a proof with no 
 it is still P1 `Not done`.
 
 ## Test audit
+A Test or Gate finding based only on a future change to a test fake or GitHub call order is
+advice: for example, a fake that matches exact request text, or selecting a GitHub call by
+position or counting unrelated calls. Report it as P2 with Gain 2, Work 1, Harm 1; it does not
+block close. A real gap where today's code can do the wrong thing and the test still passes
+keeps its normal blocking score. Name that present failure and how the test misses it.
+
 Every test the change needs must exist, run in the repository's test suite, and fail if the
 behaviour it names broke. Report a missing test, or a hollow one (it checks only a mock, asserts
 nothing the change does, is skipped, or always passes), as a P1 finding titled

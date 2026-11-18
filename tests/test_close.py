@@ -186,8 +186,9 @@ class Forge:
         self.gh.respond("pr", "list", "--head", stdout=json.dumps(
             [{"number": 7, "state": state, "body": body, "isDraft": draft}]))
 
-    def gh_calls(self, *prefix: str) -> list[list[str]]:
-        return [call for call in self.gh.calls() if call[:len(prefix)] == list(prefix)]
+    def gh_calls(self, *prefix: str, path: str | None = None,
+                 query: str | None = None) -> list[list[str]]:
+        return self.gh.calls(*prefix, path=path, query=query)
 
     def commit(self, where: Path, rel: str, text: str, message: str = "More work") -> str:
         (where / rel).parent.mkdir(parents=True, exist_ok=True)
