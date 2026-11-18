@@ -548,17 +548,17 @@ KEYS = {"version": str, "repo": str, "stage": str, "workers": str, "tools": str,
         "signoff": str, "sample_data": bool, "runner": str, "test_runner": str, "codex_fast": str, "stop_default": str,
         "merge": str, "stack": str, "test_place": str, "checks": list, "interfaces": list,
         "always_test": list, "groups": int, "models": dict, "full_suite_workflow": str,
-        "added_work_min_gain": int, "always_block": list, "cold_read_rounds": int, "task_review_rounds": int}
+        "added_work_min_gain": int, "always_block": list, "cold_read_rounds": int, "task_review_rounds": int, "boxes": str}
 # A client repo without a stage counts as live: prototype rules never reach an app by default.
 DEFAULTS = {"repo": "client", "stage": "live", "workers": "codex", "tools": "both", "test": "", "fast_test": "",
             "signoff": "", "runner": "ubuntu-24.04", "test_runner": "", "codex_fast": "off",
             "stop_default": "narrow", "merge": "human", "stack": "on", "checks": [], "interfaces": [], "always_test": [],
-            "models": {}, "cold_read_rounds": 2, "task_review_rounds": 2}
+            "models": {}, "cold_read_rounds": 2, "task_review_rounds": 2, "boxes": "off"}
 # ponytail: retain stop_default's old values so existing forge.toml files still load.
 CHOICES = {"repo": ("client", "forge-source"), "stage": ("live", "prototype"),
            "workers": ("claude", "codex", "split"), "tools": ("both", "claude", "codex"), "merge": ("agent", "human"),
            "codex_fast": ("needed", "off", "always"), "stop_default": ("narrow", "off"), "stack": ("on", "off"),
-           "test_place": ("ci", "local")}
+           "test_place": ("ci", "local"), "boxes": ("off", "ssh")}
 # signoff pins the client's sign-off record: a decision directly under docs/decisions whose slug
 # ends in client-signoff, as `forge decision new` names it and the old Forge accepted it.
 SIGNOFF = re.compile(r"docs/decisions/[0-9]{4,}-[a-z0-9-]*client-signoff\.md")

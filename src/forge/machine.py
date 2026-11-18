@@ -25,8 +25,10 @@ _WAIT_REASONS = {
 
 COMMANDS = [{"words": "lanes", "run": "lanes", "changes_state": False,
     "help": "Show this release's machine-wide runs", "position": 60,
-    "args": [(("--json",), {"action": "store_true"})],
-    "listing": "| `forge lanes --json` | Runs on this machine from every repo, and the items that wait for the person |"},
+    "args": [(("--json",), {"action": "store_true"}),
+             (("--box",), {"choices": ["setup", "off"], "help": "Set up or turn off your own Linux machine"}),
+             (("--host",), {"metavar": "NAME"}), (("--yes",), {"action": "store_true"})],
+    "listing": "| `forge lanes --json` | Runs on this machine from every repo, and the items that wait for the person; `--box setup --host <name>` sets up your own Linux machine for Codex rounds, `--box off` turns it off |"},
     {"words": "stop", "run": "stop", "changes_state": False,
     "help": "Stop a running or waiting run (only a person)", "position": 61,
     "args": [(("item",), {"nargs": "?"}), (("--repo",), {"metavar": "ROOT"}),
@@ -546,6 +548,13 @@ def _pressed(agents: list[dict[str, Any]]) -> bool:
 
 def lanes(args: Any) -> int:
     """Show every release's runs, while all of them count towards queue admission."""
+    if args.host and args.box != "setup":
+        raise repo.Refused("Use --host only with --box setup.", "forge lanes --box setup --host <name>")
+    if args.yes and args.box != "off":
+        raise repo.Refused("Use --yes only with --box off.", "forge lanes --box off")
+    if args.box:
+        from forge import box
+        return box.command(repo.root(), args)
     result = view()
     now = datetime.fromisoformat(repo.now())
     live = _live_steps([run for lane in result.values() for run in lane["entries"]])

@@ -1,0 +1,103 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/box_ssh.py\tData loss: Do not treat an unverified process identity as finished\tREMOTE-1/HOST",
+      "kind": "bug",
+      "path": "src/forge/box_ssh.py",
+      "line": 127,
+      "text": "Data loss: Do not treat an unverified process identity as finished",
+      "from": "blocking",
+      "item": "REMOTE-1/HOST",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/box_ssh.py\tData loss: Refuse turn-off when the remote work cannot be inspected\tREMOTE-1/HOST",
+      "kind": "bug",
+      "path": "src/forge/box_ssh.py",
+      "line": 130,
+      "text": "Data loss: Refuse turn-off when the remote work cannot be inspected",
+      "from": "blocking",
+      "item": "REMOTE-1/HOST",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/box_ssh.py\tFunctional: Ignore application PID files inside run worktrees\tREMOTE-1/HOST",
+      "kind": "bug",
+      "path": "src/forge/box_ssh.py",
+      "line": 125,
+      "text": "Functional: Ignore application PID files inside run worktrees",
+      "from": "blocking",
+      "item": "REMOTE-1/HOST",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/box_ssh.py\tFunctional: Report SSH failures throughout setup\tREMOTE-1/HOST",
+      "kind": "bug",
+      "path": "src/forge/box_ssh.py",
+      "line": 81,
+      "text": "Functional: Report SSH failures throughout setup",
+      "from": "blocking",
+      "item": "REMOTE-1/HOST",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/box_ssh.py\tFunctional: Turn-off fails on hosts with translated process errors\tREMOTE-1/HOST",
+      "kind": "bug",
+      "path": "src/forge/box_ssh.py",
+      "line": 145,
+      "text": "Functional: Turn-off fails on hosts with translated process errors",
+      "from": "blocking",
+      "item": "REMOTE-1/HOST",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/box_ssh.py\tSecurity: Install the pre-commit check in the hook path Git uses\tREMOTE-1/HOST",
+      "kind": "bug",
+      "path": "src/forge/box_ssh.py",
+      "line": 95,
+      "text": "Security: Install the pre-commit check in the hook path Git uses",
+      "from": "blocking",
+      "item": "REMOTE-1/HOST",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/box_ssh.py\tSecurity: Quote the checkout name in the remote shell command\tREMOTE-1/HOST",
+      "kind": "bug",
+      "path": "src/forge/box_ssh.py",
+      "line": 62,
+      "text": "Security: Quote the checkout name in the remote shell command",
+      "from": "blocking",
+      "item": "REMOTE-1/HOST",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_host_setup.py\tGate: test_1_setup_checks_the_machine_and_says_what_is_missing\tREMOTE-1/HOST",
+      "kind": "bug",
+      "path": "tests/test_host_setup.py",
+      "line": 38,
+      "text": "Gate: test_1_setup_checks_the_machine_and_says_what_is_missing",
+      "from": "blocking",
+      "item": "REMOTE-1/HOST",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_host_setup.py\tGate: test_5_rounds_on_a_machine_are_off_until_turned_on_and_off_deletes_forges_folder\tREMOTE-1/HOST",
+      "kind": "bug",
+      "path": "tests/test_host_setup.py",
+      "line": 90,
+      "text": "Gate: test_5_rounds_on_a_machine_are_off_until_turned_on_and_off_deletes_forges_folder",
+      "from": "blocking",
+      "item": "REMOTE-1/HOST",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
