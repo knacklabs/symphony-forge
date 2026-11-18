@@ -159,7 +159,7 @@
     "id": "85097bac-2ced-438a-99d6-ffdcce8cecd2",
     "status": "blocked"
   },
-  "round": 2,
+  "round": 3,
   "stacked_on": "REMOTE-1/HOST",
   "status": "fixing",
   "steps": [
