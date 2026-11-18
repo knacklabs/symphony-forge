@@ -21,16 +21,22 @@ from test_testplace_workflow import _jobs
 STORY = "FIX-DOCS-ONLY-OFF-FAST-RUNNERS"
 
 
-@pytest.mark.parametrize("runner", ["ubuntu-24.04", "windows-latest"])
+@pytest.mark.platform
+@pytest.mark.parametrize("runner,test_runner", [
+    ("ubuntu-24.04", "windows-latest"),
+    ("windows-latest", "ubuntu-24.04"),
+    ("regular's pool", "fast's pool"),
+])
 @pytest.mark.parametrize("required", [False, True], ids=["no-required-tests", "required-tests"])
-def test_1_docs_only_pr_keeps_the_test_runner_free(repo, gh, tmp_path, monkeypatch, runner, required):
+def test_1_docs_only_pr_keeps_the_test_runner_free(
+        repo, gh, tmp_path, monkeypatch, runner, test_runner, required):
     # Audit: also protect mandatory docs tests, Windows shell selection, actual job
     # eligibility and replacement of stale workflows. These extend this rule's owner.
     version = repo.forge("--version").stdout.split()[-1]
     receipt = tmp_path / "required-ran"
     command = f'"{Path(sys.executable).as_posix()}" -m pytest tests -q'
     client = _new_repo(repo, gh, tmp_path, f'version = "{version}"\n'
-        f'runner = {json.dumps(runner)}\ntest_runner = "fast-tests"\ngroups = 1\n'
+        f'runner = {json.dumps(runner)}\ntest_runner = {json.dumps(test_runner)}\ngroups = 1\n'
         f'test = {json.dumps(command)}\nchecks = ["tests", "forge-pr-check"]\n')
     initialized = repo.forge("init", "--actions", "yes", cwd=client)
     assert initialized.returncode == 0, initialized.stdout + initialized.stderr
@@ -84,19 +90,38 @@ def test_1_docs_only_pr_keeps_the_test_runner_free(repo, gh, tmp_path, monkeypat
     def evaluate(text, event="pull_request", **outputs):
         text = re.sub(r"needs.docs-check.outputs.([\w-]+)",
                       lambda match: repr(outputs.get(match[1], "")), text)
+        text = text.replace("steps.parent-tests.outputs.reuse", repr(outputs.get("reuse", "false")))
+        # GitHub escapes an apostrophe by doubling it, unlike Python literals.
+        text = re.sub(r"'((?:[^']|'')*)'", lambda match: repr(match[1].replace("''", "'")), text)
         return expression(text if text.startswith("${{") else "${{ " + text + " }}",
                           event_name=event)
 
     condition = re.search(r"^    if: (.+)$", jobs["tests"], re.M)[1]
     label = re.search(r"^    runs-on: (.+)$", jobs["tests"], re.M)[1]
+    assert '"' not in label.removeprefix("${{").removesuffix("}}"), label
     assert bool(evaluate(condition, **values)) == required
     if required:
         assert evaluate(label, **values) == runner
         assert values["one-group"] == "true"
-        # Mandatory tests execute through the same real Forge command as the job.
-        monkeypatch.setenv("FORGE_GROUP", "1")
-        monkeypatch.setenv("FORGE_GROUPS", "1")
-        tested = repo.forge("test", "--change", cwd=client)
+        # Execute the emitted job step, including its shell wrapper, not a substitute.
+        commands = []
+        for step in re.split(r"^      - ", jobs["tests"], flags=re.M)[1:]:
+            if not step.startswith("run:") or "forge test --change" not in step:
+                continue
+            guard = re.search(r"^        if: (.+)$", step, re.M)[1]
+            if evaluate(guard, **values):
+                commands.append(json.loads(step.splitlines()[0].removeprefix("run: ")))
+        assert len(commands) == 1
+        if runner.startswith("windows-"):
+            shell = shutil.which("pwsh")
+            if shell is None and os.name != "nt":
+                pytest.skip("The emitted Windows command needs real PowerShell; Windows CI executes it")
+            assert shell, "Windows CI must supply PowerShell"
+            invocation = [shell, "-NoProfile", "-NonInteractive", "-Command", commands[0]]
+        else:
+            invocation = [shutil.which("bash"), "--noprofile", "--norc", "-e", "-o", "pipefail", "-c", commands[0]]
+        tested = subprocess.run(invocation, cwd=client, capture_output=True, text=True, timeout=30,
+            env={**os.environ, "FORGE_GROUP": "1", "FORGE_GROUPS": "1"})
         assert tested.returncode == 0, tested.stdout + tested.stderr
         assert receipt.exists()
     else:
@@ -106,7 +131,7 @@ def test_1_docs_only_pr_keeps_the_test_runner_free(repo, gh, tmp_path, monkeypat
         code_outputs = {"docs-only": "false", "docs-tests": "false"}
         assert bool(evaluate(condition, event, **code_outputs)) == (event == "pull_request")
         assert not evaluate(condition, event, **{"docs-only": "true", "docs-tests": "false"})
-    assert evaluate(label, **{"docs-tests": "false"}) == "fast-tests"
+    assert evaluate(label, **{"docs-tests": "false"}) == test_runner
     # Execute the emitted required-check rule: failed detection or tests never pass.
     shell = shutil.which("bash")
     assert shell, "The GitHub result job requires bash"
