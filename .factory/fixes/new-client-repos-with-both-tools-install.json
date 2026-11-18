@@ -159,7 +159,7 @@
     "status": "blocked"
   },
   "round": 2,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-18T03:34:42.748414+00:00",
@@ -176,8 +176,12 @@
   ],
   "stop": {
     "at": "2026-11-18T05:11:47.455937+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "src/forge/doctor.py",
-    "wait_id": "382af966-4f77-420c-b0ee-a6a0112f4d95"
+    "reason": "Owner chose one more round: fix the three remaining findings",
+    "wait_id": "382af966-4f77-420c-b0ee-a6a0112f4d95",
+    "worker_round": 2
   },
   "stuck": {
     "close": "5a133daa-27ee-4afd-ace8-54b927ba0cab",
