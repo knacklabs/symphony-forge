@@ -4,6 +4,8 @@ from __future__ import annotations
 import json
 from datetime import datetime, timedelta, timezone
 
+import pytest
+
 from test_close import env, run  # noqa: F401
 
 STORY = "FORGE-CITIME-1"
@@ -29,7 +31,7 @@ def _commit(checks: list[dict]) -> dict:
             "workflowRun": workflow, "checkRuns": {"nodes": []}})
         suite["checkRuns"]["nodes"].append({key: value for key, value in check.items()
                                            if key != "checkSuite"})
-    return {"commit": {"checkSuites": {"nodes": list(suites.values())}}}
+    return {"commit": {"oid": "", "checkSuites": {"nodes": list(suites.values())}}}
 
 
 def _pull(number: int, checks: list[dict], *, state: str = "OPEN",
@@ -42,6 +44,32 @@ def _pull(number: int, checks: list[dict], *, state: str = "OPEN",
 
 
 def _graphql(env, pulls: list[dict], *, exit: int = 0) -> None:
+    # GitHub defaults to the latest check of each name. Apply that contract at
+    # the service edge, accepting GraphQL whitespace rather than query bytes.
+    stub = env.repo.bin / "gh"
+    source = stub.read_text(encoding="utf-8")
+    if "def latest_checks" not in source:
+        source = source.replace('        sys.stdout.write(rule["stdout"])', '''        if args[:2] == ["api", "graphql"] and rule["stdout"]:
+            import re
+            query = next((arg[6:] for arg in args if arg.startswith("query=")), "")
+            value = json.loads(rule["stdout"])
+            def latest_checks(value):
+                if isinstance(value, dict):
+                    checks = value.get("checkRuns", {}).get("nodes", [])
+                    if checks and not re.search(r"checkType\\s*:\\s*ALL\\b", query):
+                        latest = {}
+                        for check in sorted(checks, key=lambda check: check.get("startedAt") or ""):
+                            latest[check["name"]] = check
+                        value["checkRuns"]["nodes"] = list(latest.values())
+                    for child in value.values():
+                        latest_checks(child)
+                elif isinstance(value, list):
+                    for child in value:
+                        latest_checks(child)
+            latest_checks(value)
+            rule["stdout"] = json.dumps(value)
+        sys.stdout.write(rule["stdout"])''')
+        stub.write_text(source, encoding="utf-8")
     commits = {}
     for pr in pulls:
         for index, node in enumerate(pr["commits"]["nodes"]):
@@ -97,7 +125,7 @@ def _doctor_history(durations: list[int]) -> list[dict]:
     return pulls
 
 
-def test_1_close_prints_ci_time_and_doctor_warns_over_ten_minutes(env):
+def _recent_pushes(env):
     item, where = env.start_fix()
     checks = [
         _check("test group 1 of 3", _at(0, 30), _at(4, 30)),
@@ -128,14 +156,15 @@ def test_1_close_prints_ci_time_and_doctor_warns_over_ten_minutes(env):
         _job("test group 1 of 3", _at(0, 30), _at(0, 30), _at(4, 30), []),
         _job("test group 2 of 3", _at(), _at(4), _at(13), [
             ("Set up job", _at(4), _at(4, 30)),
-            ("Select tests", _at(4, 30), _at(5, 30)),
+            ("python .forge/review-tests.py", _at(4, 30), _at(5, 30)),
             ("Run tests", _at(5, 30), _at(12, 30)),
             ("Retry failed tests", _at(12, 30), _at(13)),
         ], attempt=2),
         _job("test group 2 of 3", _at(3, 45), _at(3, 45), _at(4),
              [("Run tests", _at(3, 45), _at(4))]),
         _job("test group 3 of 3", _at(-2), _at(3), _at(9), []),
-        _job("docs-check", _at(0, 30), _at(0, 30), _at(1), []),
+        _job("docs-check", _at(0, 30), _at(0, 30), _at(1), [
+            ("python .forge/review-tests.py", _at(0, 30), _at(1))]),
         _job("forge-pr-check", _at(12, 30), _at(12, 30), _at(13), []),
     ])
 
@@ -148,18 +177,14 @@ def test_1_close_prints_ci_time_and_doctor_warns_over_ten_minutes(env):
     assert "test group 2 of 3" in closed.stdout
     assert "queue 4 min" in closed.stdout
     assert "setup 30 s" in closed.stdout
-    assert "selection 1 min" in closed.stdout
+    assert "selection 1 min 30 s" in closed.stdout
     assert "tests 7 min" in closed.stdout
     assert "retries 45 s" in closed.stdout
-    assert "20.25 runner minutes" in closed.stdout
+    assert "22 runner minutes" in closed.stdout
     assert "over budget" in closed.stdout.lower()
     assert "test group 3 of 3" in closed.stdout
     assert "11 min" in closed.stdout
     assert "CI over budget: test group 1 of 3" not in closed.stdout
-    # GitHub's default rollup contains only the latest attempt. Ask for all
-    # attempts so a short rerun cannot erase the first attempt's runner time.
-    assert any("filterBy:{checkType:ALL}" in arg
-               for call in env.gh_calls("api", "graphql") for arg in call)
 
     # A GitHub history outage does not change close's pass result or invent a time.
     no_time_item, no_time_where = _start_fix(env, "no-ci-time")
@@ -175,23 +200,29 @@ def test_1_close_prints_ci_time_and_doctor_warns_over_ten_minutes(env):
     assert missing.returncode == 0, missing.stdout + missing.stderr
     assert "CI:" not in missing.stdout
 
-    # A timed-out group still refuses close, and the report includes jobs that
-    # ended plus the number that were still running.
+
+def _timeout(env, conclusion):
     timed_item, timed_where = _start_fix(env, "timed-out-tests")
-    timeout = {**run("test group 1 of 2", "timed_out"),
+    sha = env.commit(timed_where, ".github/workflows/forge.yml",
+                     "name: Forge\non: pull_request\njobs:\n  tests:\n"
+                     "    timeout-minutes: 45\n    runs-on: ubuntu-latest\n"
+                     "    steps:\n      - run: python -m pytest\n")
+    timeout = {**run("test group 1 of 2", conclusion),
                "started_at": _at(), "completed_at": _at(45),
                "check_suite": {"id": 301}}
     running = {**run("test group 2 of 2", None, "in_progress"),
                "started_at": _at(10), "check_suite": {"id": 301}}
     aggregate = {**run("tests", "failure"), "check_suite": {"id": 301}}
     env.checks([aggregate, timeout, running, run("forge-pr-check")])
-    _graphql(env, [{"number": 7, "state": "OPEN", "headRefName": "fix/timed-out-tests",
+    pr = {"number": 7, "state": "OPEN", "headRefName": "fix/timed-out-tests",
                     "commits": {"nodes": [_commit([
-                        _check("test group 1 of 2", _at(), _at(45), conclusion="TIMED_OUT",
+                        _check("test group 1 of 2", _at(), _at(45), conclusion=conclusion.upper(),
                                run_id=301),
                         _check("test group 2 of 2", _at(10), None, status="IN_PROGRESS",
                                conclusion="", run_id=301),
-                    ])]}}])
+                    ])]}}
+    pr["commits"]["nodes"][-1]["commit"]["oid"] = sha
+    _graphql(env, [pr])
     _jobs(env, 301, [
         _job("test group 1 of 2", _at(), _at(), _at(45), []),
         {"name": "test group 2 of 2", "created_at": _at(9), "started_at": _at(10),
@@ -204,7 +235,20 @@ def test_1_close_prints_ci_time_and_doctor_warns_over_ten_minutes(env):
     assert "45 min" in timed.stdout + timed.stderr
     assert "timed out" in (timed.stdout + timed.stderr).lower()
     assert "1 job was still running" in timed.stdout + timed.stderr
+    if conclusion == "cancelled":
+        history = [_pull(100 + n, [
+            _check("test group 1 of 1", _at(), _at(45), conclusion="CANCELLED"),
+            _check("tests", _at(), _at(0, 30))], state="MERGED", merged=_at(-1440 * n))
+            for n in range(20)]
+        for pr in history:
+            pr["commits"]["nodes"][-1]["commit"]["oid"] = sha
+        _graphql(env, history)
+        diagnosed = env.repo.forge("doctor")
+        assert "last 20 merged pull requests is 45 min" in diagnosed.stdout
+        assert "slowest test group 1 of 1 (45 min, timed out)" in diagnosed.stdout
 
+
+def _doctor(env):
     high = [20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 11, 9, 9, 9, 9, 9, 9, 9, 9, 9]
     history = _doctor_history(high)
     # Stacked pull requests can include the same pushed commit. Both PRs still
@@ -224,3 +268,76 @@ def test_1_close_prints_ci_time_and_doctor_warns_over_ten_minutes(env):
     assert slow_doctor.returncode == fast_doctor.returncode
     assert not any(line.startswith("- Warning: Usual CI time for the last 20 merged pull requests")
                    for line in fast_doctor.stdout.splitlines())
+
+
+def _missing_history(env):
+    history = _doctor_history([12] * 19)
+    history.append(_pull(999, [], state="MERGED", merged=_at(-1440 * 20)))
+    _graphql(env, history)
+    done = env.repo.forge("doctor")
+    assert "last 19 merged pull requests is 12 min" in done.stdout
+    assert "guide lists the fixes" in done.stdout
+
+
+def _current_failure(env):
+    item, where = env.start_fix()
+    failed = _check("test group 1 of 2", _at(20), _at(21), conclusion="FAILURE")
+    active = _check("test group 2 of 2", _at(20), None, status="IN_PROGRESS", conclusion="")
+    pr = _pull(7, [failed, active])
+    pr["commits"]["nodes"].insert(0, _commit([
+        _check("test group 1 of 2", _at(), _at(12), run_id=100)]))
+    _graphql(env, [pr])
+    env.checks([run("tests", "failure"), run("test group 1 of 2", "failure"),
+                run("test group 2 of 2", None, "in_progress"), run("forge-pr-check")])
+    _jobs(env, 101, [_job("test group 1 of 2", _at(20), _at(20), _at(21), [])])
+    done = env.repo.forge("close", item, cwd=where)
+    assert done.returncode == 1, done.stdout + done.stderr
+    assert "slowest test group 1 of 2 (1 min)" in done.stdout
+    assert "1 job was still running" in done.stdout
+    assert "CI: 12 min" not in done.stdout
+
+
+def _selection_path(env):
+    item, where = env.start_fix()
+    _graphql(env, [_pull(7, [
+        _check("docs-check", _at(), _at(3)),
+        _check("test group 1 of 1", _at(3), _at(12))])])
+    _jobs(env, 101, [
+        _job("docs-check", _at(), _at(), _at(3), [
+            ("Run actions/checkout@v7", _at(), _at(0, 30)),
+            ("python .forge/review-tests.py", _at(0, 30), _at(3))]),
+        _job("test group 1 of 1", _at(3), _at(3), _at(12), [
+            ("python .forge/review-tests.py", _at(3), _at(4)),
+            ("forge test --change", _at(4), _at(12))]),
+    ])
+    done = env.repo.forge("close", item, cwd=where)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "setup 30 s" in done.stdout
+    assert "selection 3 min 30 s" in done.stdout
+    assert "tests 8 min" in done.stdout
+    assert "CI over budget: test group 1 of 1 (12 min)" in done.stdout
+
+
+def _runner_minutes(env):
+    item, where = env.start_fix()
+    _graphql(env, [_pull(7, [_check(f"job {n}", _at(), _at(1, 1)) for n in range(6)])])
+    done = env.repo.forge("close", item, cwd=where)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "12 runner minutes" in done.stdout
+
+
+@pytest.mark.parametrize("scenario,conclusion", [
+    pytest.param(_recent_pushes, None, id="recent-pushes-and-attempts"),
+    pytest.param(_timeout, "timed_out", id="timed-out"),
+    pytest.param(_timeout, "cancelled", id="cancelled-at-limit"),
+    pytest.param(_current_failure, None, id="current-failure"),
+    pytest.param(_selection_path, None, id="selection-path"),
+    pytest.param(_runner_minutes, None, id="runner-rounding"),
+    pytest.param(_doctor, None, id="doctor-median"),
+    pytest.param(_missing_history, None, id="unmeasured-history"),
+])
+def test_1_close_prints_ci_time_and_doctor_warns_over_ten_minutes(env, scenario, conclusion):
+    if conclusion is None:
+        scenario(env)
+    else:
+        scenario(env, conclusion)

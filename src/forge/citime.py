@@ -4,18 +4,19 @@ from __future__ import annotations
 import json
 import re
 from datetime import datetime
+from math import ceil
 from pathlib import Path
 from statistics import median
 from typing import Any
 
-from forge import repo
+from forge import checks, repo
 
 CHECKS = """checkSuites(first:20) { nodes { workflowRun { databaseId }
-    checkRuns(first:100,filterBy:{checkType:ALL}) { nodes {
+    checkRuns(first:100, filterBy: { checkType: ALL }) { nodes {
       name status conclusion startedAt completedAt
     } pageInfo { hasNextPage } }
   } pageInfo { hasNextPage } }"""
-COMMIT_CHECKS = "commits(last:100) { nodes { commit { " + CHECKS + " } } pageInfo { hasPreviousPage } }"
+COMMIT_CHECKS = "commits(last:100) { nodes { commit { oid " + CHECKS + " } } pageInfo { hasPreviousPage } }"
 PUSH_HEADS = """commits(last:100) { nodes { commit {
   id statusCheckRollup { contexts { totalCount } }
 } } pageInfo { hasPreviousPage } }"""
@@ -50,12 +51,18 @@ def _seconds(start: Any, end: Any) -> float:
     return max(0, _at(end) - _at(start))
 
 
-def _eligible(run: dict[str, Any]) -> bool:
+def _eligible(run: dict[str, Any], limit: int | None = None) -> bool:
+    if str(run.get("conclusion")).lower() == "cancelled":
+        return checks.cancelled_at_limit({
+            **run, "status": str(run.get("status")).lower(), "conclusion": "cancelled",
+            "started_at": run.get("started_at", run.get("startedAt")),
+            "completed_at": run.get("completed_at", run.get("completedAt")),
+        }, limit)
     return (bool(run.get("name")) and run["name"] != "Review pull request"
-            and str(run.get("conclusion")).lower() not in ("skipped", "cancelled", "neutral"))
+            and str(run.get("conclusion")).lower() not in ("skipped", "neutral"))
 
 
-def _measure(pr: dict[str, Any]) -> dict[str, Any] | None:
+def _measure(top: Path, pr: dict[str, Any], current: bool = False) -> dict[str, Any] | None:
     pushes = []
     heads = 0
     for node in reversed(pr.get("commits", {}).get("nodes", [])):
@@ -65,14 +72,18 @@ def _measure(pr: dict[str, Any]) -> dict[str, Any] | None:
         runs = []
         has_checks = False
         for suite in suites.get("nodes", []):
-            checks = suite.get("checkRuns") or {}
-            if checks.get("pageInfo", {}).get("hasNextPage"):
+            suite_checks = suite.get("checkRuns") or {}
+            if suite_checks.get("pageInfo", {}).get("hasNextPage"):
                 return None
-            has_checks = has_checks or bool(checks.get("nodes"))
+            has_checks = has_checks or bool(suite_checks.get("nodes"))
             runs.extend({**run, "checkSuite": {"workflowRun": suite.get("workflowRun")}}
-                        for run in checks.get("nodes", []) if _eligible(run))
+                        for run in suite_checks.get("nodes", []))
         if not has_checks:
             continue  # A multi-commit push starts checks only on its head commit.
+        limit = (checks.timeout_limit(top, node["commit"].get("oid", ""))
+                 if any(str(run.get("conclusion")).lower() == "cancelled" for run in runs) else None)
+        runs = [dict(run, conclusion="TIMED_OUT") if str(run.get("conclusion")).lower() == "cancelled" else run
+                for run in runs if _eligible(run, limit)]
         heads += 1
         ended = [run for run in runs if str(run.get("status")).lower() == "completed"]
         try:
@@ -81,15 +92,15 @@ def _measure(pr: dict[str, Any]) -> dict[str, Any] | None:
                     _at(run["startedAt"]) for run in ended)
                 slowest = max(ended, key=lambda run: _seconds(run["startedAt"], run["completedAt"]))
                 pushes.append({"seconds": seconds, "runs": runs, "slowest": slowest,
-                               "runner": sum(_seconds(run["startedAt"], run["completedAt"]) for run in ended),
-                               "pending": len(runs) - len(ended)})
+                               "runner": sum(ceil(_seconds(run["startedAt"], run["completedAt"]) / 60) for run in ended),
+                               "pending": len(runs) - len(ended), "limit": limit})
         except (KeyError, TypeError, ValueError):
             return None
         if heads == 5:
             break
     if heads < 5 and pr.get("commits", {}).get("pageInfo", {}).get("hasPreviousPage"):
         return None
-    return max(pushes, key=lambda push: push["seconds"], default=None)
+    return (pushes[0] if pushes else None) if current else max(pushes, key=lambda push: push["seconds"], default=None)
 
 
 def _duration(seconds: float) -> str:
@@ -107,12 +118,14 @@ def _stages(jobs: list[dict[str, Any]]) -> str:
     totals: dict[str, float] = {name: 0 for name in ("queue", "setup", "selection", "tests", "retries")}
     reported = set()
     try:
-        latest = max((job.get("run_attempt", 1) for job in jobs), default=1)
+        latest = {}
+        for job in jobs:
+            latest[job["name"]] = max(latest.get(job["name"], 1), job.get("run_attempt", 1))
         for job in jobs:
             if job.get("created_at") and job.get("started_at"):
                 totals["queue"] += _seconds(job["created_at"], job["started_at"])
                 reported.add("queue")
-            if job.get("run_attempt", 1) < latest and job.get("completed_at"):
+            if job.get("run_attempt", 1) < latest[job["name"]] and job.get("completed_at"):
                 totals["retries"] += _seconds(job["started_at"], job["completed_at"])
                 reported.add("retries")
                 continue
@@ -121,7 +134,7 @@ def _stages(jobs: list[dict[str, Any]]) -> str:
                     continue
                 name = step["name"].lower()
                 stage = ("retries" if re.search(r"retr(y|ies)|rerun", name) else
-                         "selection" if "select" in name or "pick" in name else
+                         "selection" if "review-tests.py" in name or "select" in name or "pick" in name else
                          "tests" if "test" in name else "setup")
                 totals[stage] += _seconds(step["started_at"], step["completed_at"])
                 reported.add(stage)
@@ -131,9 +144,9 @@ def _stages(jobs: list[dict[str, Any]]) -> str:
                      else f"{name} not reported separately" for name, seconds in totals.items())
 
 
-def report(top: Path, branch: str) -> None:
+def report(top: Path, branch: str, *, current: bool = False) -> None:
     prs = _pulls(top, f"first:1,states:OPEN,headRefName:{json.dumps(branch)}").get("nodes", [])
-    measured = _measure(prs[0]) if prs else None
+    measured = _measure(top, prs[0], current) if prs else None
     if measured is None:
         return  # Timing is optional information; GitHub's check results still decide the gate.
     slowest = measured["slowest"]
@@ -147,20 +160,24 @@ def report(top: Path, branch: str) -> None:
             value = _read(top, endpoint + (f"&page={page}" if page > 1 else ""))
             if not isinstance(value, dict) or not isinstance(value.get("jobs"), list):
                 break
-            jobs.extend(job for job in value["jobs"] if _eligible(job))
+            jobs.extend({**job, "run_id": run_id} for job in value["jobs"] if _eligible(job, measured["limit"]))
             read += len(value["jobs"])
             if not value["jobs"] or read >= value.get("total_count", read):
                 break
             page += 1
-    slow_jobs = [job for job in jobs if job.get("name") == slowest["name"]]
+    slow_run = (slowest.get("checkSuite", {}).get("workflowRun") or {}).get("databaseId")
+    slow_jobs = [job for job in jobs if job["run_id"] == slow_run
+                 and job.get("name") in (slowest["name"], "docs-check")]
     line = (f"CI: {_duration(measured['seconds'])} (10 min budget); "
-            f"{measured['runner'] / 60:g} runner minutes; slowest {_job_name(slowest)}; "
+            f"{measured['runner']} runner minutes; slowest {_job_name(slowest)}; "
             + _stages(slow_jobs))
     if pending := measured["pending"]:
         line += f"; {pending} job was still running" if pending == 1 else f"; {pending} jobs were still running"
     print(line, flush=True)
-    for name in dict.fromkeys(job["name"] for job in jobs if re.fullmatch(r"test group \d+ of \d+", job["name"])):
-        group = [job for job in jobs if job["name"] == name and job.get("completed_at")]
+    for run_id, name in dict.fromkeys((job["run_id"], job["name"]) for job in jobs
+                                      if re.fullmatch(r"test group \d+ of \d+", job["name"])):
+        group = [job for job in jobs if job["run_id"] == run_id
+                 and job["name"] in (name, "docs-check") and job.get("completed_at")]
         try:
             seconds = max(_at(job["completed_at"]) for job in group) - min(
                 _at(job.get("created_at") or job["started_at"]) for job in group)
@@ -205,7 +222,7 @@ def warning(top: Path) -> str:
     ids = list(heads)
     for offset in range(0, len(ids), 50):
         query = ("query { nodes(ids:" + json.dumps(ids[offset:offset + 50])
-                 + ") { ... on Commit { id " + CHECKS + " } } }")
+                 + ") { ... on Commit { id oid " + CHECKS + " } } }")
         value = _read(top, "graphql", "-f", "query=" + query)
         if not isinstance(value, dict) or not isinstance(value.get("data", {}).get("nodes"), list):
             return ""
@@ -216,10 +233,11 @@ def warning(top: Path) -> str:
                 node["commit"] = commit
     if heads:
         return ""
-    measured = [_measure(pr) for pr in prs[:20]]
-    if not measured or any(value is None or value["pending"] for value in measured):
+    measured = [_measure(top, pr) for pr in prs[:20]]
+    values = sorted((value for value in measured if value is not None and not value["pending"]),
+                    key=lambda value: value["seconds"])
+    if not values:
         return ""
-    values = sorted((value for value in measured if value is not None), key=lambda value: value["seconds"])
     usual = median(value["seconds"] for value in values)
     if usual <= 600:
         return ""
