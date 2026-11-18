@@ -141,7 +141,7 @@
     "status": "blocked"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-18T09:20:16.262104+00:00",
@@ -154,8 +154,12 @@
   ],
   "stop": {
     "at": "2026-11-18T09:39:42.376456+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "src/forge/github.py",
-    "wait_id": "ff686d0a-5c9d-4cb1-a83a-9b3c98568699"
+    "reason": "Owner chose one more round: fix all five review findings",
+    "wait_id": "ff686d0a-5c9d-4cb1-a83a-9b3c98568699",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
