@@ -18,7 +18,7 @@
       "gain": 3,
       "harm": 3,
       "line": 446,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -31,7 +31,7 @@
       "gain": 4,
       "harm": 3,
       "line": 183,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -44,7 +44,7 @@
       "gain": 4,
       "harm": 3,
       "line": 183,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -57,7 +57,7 @@
       "gain": 4,
       "harm": 2,
       "line": 446,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -89,82 +89,77 @@
       "security": false,
       "title": "Simpler: unrecorded approach \u2192 record deletion, cost and reuse checks",
       "work": 1
+    },
+    {
+      "area": "doctor() in src/forge/doctor.py",
+      "file": "src/forge/doctor.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 352,
+      "outcome": "open",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Keep the existing test suite runnable with the new default",
+      "work": 2
+    },
+    {
+      "area": "doctor() in src/forge/doctor.py",
+      "file": "src/forge/doctor.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 352,
+      "outcome": "open",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Check both tools' readiness with the new default",
+      "work": 2
     }
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "85924e7b2e48f180697f58e0015415dd071230147616880a0c9956fa18e7f285",
-    "changed": "e0d831f0dbe3f5c1c93ffa25568e5bed598ebefeb43fb44e3dace114d6fc4269",
-    "commit": "6f0ee4fa1de9ab947a3d61eabf7c52f927913f01",
+    "branch_diff": "db199380f9d05ef76ec7035b2355e60a340396fb9aa44a6b778e9789e76ce877",
+    "changed": "3f08e11869a37908acd0dc76e79875aed1321acf7ed1623e9a05c0f5cf667e72",
+    "commit": "91dc26902c4b17c63c536aa07586197e3f4acc8e",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Not done\nCase: normal use - A plan is first read from Claude Code, then the developer resumes it from Codex for the next read, with both tools available.\nThe approved Done-when says: \"forge init in a repo where both Claude and Codex are signed in writes workers = claude, code reviews run on Codex, cold reads run on the other tool from the session, and a Claude-only repo keeps Claude for everything\". `src/forge/story.py:227-234` prefers the saved reader over the current session's other tool, so the next read stays on Codex as a subagent of the Codex coordinator instead of moving to Claude. `tests/test_readloop_rounds.py:400-406` explicitly exercises this same-tool continuation.",
-        "file": "src/forge/templates/skill.md",
-        "gain": 3,
-        "harm": 3,
-        "line": 446,
-        "priority": "P1",
-        "required_done_when": true,
-        "title": "Not done: cold reads run on the other tool from the session",
-        "work": 2
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - Run the repository's full test suite after this change.\nThe new default makes test setup that replaces `workers = \"split\"` or `\"codex\"` with Claude a no-op. Its subsequent Git commit fails because there is nothing to commit; the helper raises on a nonzero exit. Examples are `tests/test_aha_templates.py:35-38` and `tests/test_services_guide.py:35-44`. The same setup appears in `tests/test_adoption_shared_input_checks.py`, `test_after_demo_guide.py`, `test_agent_ready_guide.py`, `test_agents_skill.py`, `test_deployment_requires_an_explicit_request.py`, `test_deploy_setup_guide.py`, `test_journey_guide.py`, `test_mcp_guide.py`, `test_mcp_resources_guide.py`, `test_prodgap_guide.py`, `test_request_log_guide.py`, `test_reviews_receive_done_when_proof.py`, `test_spec_rules.py` and `test_workers_fix_findings_until_close_holds.py`. Separately, `tests/test_workers_delegate_independent_work.py:75-95` no longer switches to Codex, and `tests/test_fix_reviews_always_run_on_codex_so_a_team_wi.py:67-81` no longer selects Claude-only. The full suite specified in `forge.toml:6` therefore cannot pass unchanged.",
-        "file": "src/forge/init.py",
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - Run the repository's full test suite after this repair.\nThe new `on_codex` condition makes doctor require Codex trust and print Codex notes for `tools = \"both\"` with Claude workers, but existing tests still expect the former behavior. `tests/test_codex_setup.py:223-235` expects doctor to succeed without trust; `tests/test_doctor_reports_only_used_worker_speed.py:26-36` expects no Codex Fast line; `tests/test_fix_the_owner_moved_this_repo_s_workers_from.py:109-114` expects no hook approval note; and `tests/test_fix_both_ui_skills.py:121-123` expects output to start with `Everything checks out`. Also, `tests/test_fix_reviews_always_run_on_codex_so_a_team_wi.py:67-81` still replaces the absent split setting, leaving both tools selected before removing Codex. These cases leave the full suite failing.",
+        "file": "src/forge/doctor.py",
         "gain": 4,
         "harm": 3,
-        "line": 183,
+        "line": 352,
         "priority": "P1",
         "title": "Keep the existing test suite runnable with the new default",
         "work": 2
       },
       {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - A teammate clones a two-tool repo, has both CLIs installed, and runs `forge doctor` before working, but one CLI is not signed in or Codex has not trusted the project.\nThe generated settings leave `tools` at `both` and set `workers` to `claude`. In `src/forge/doctor.py:349-370`, that makes `on_codex` false and skips both the Codex sign-in check and the Claude check reserved for `tools = \"claude\"`. The same condition downgrades missing Codex trust to a note at `doctor.py:479-482,513-519`. Yet `src/forge/review.py:842-846` still selects installed Codex for reviews, and `src/forge/worker.py:473-480` requires its trust for a Codex read. Doctor can consequently exit successfully before a build, read, or review fails for a setup problem it did not report as a failure.\nAdds work: check the readiness of both used tools in doctor; F 2 x H 2 = 4; 2 x C = 2",
-        "file": "src/forge/init.py",
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - A teammate runs doctor in a two-tool repo after Claude has signed out while Codex remains ready.\nThe repair enables the Codex checks, but `src/forge/doctor.py:367-368` still checks Claude sign-in only when `tools = \"claude\"`. New two-tool repos use Claude workers with the default `tools = \"both\"`, so doctor can report success even though the next Claude build cannot authenticate. The changed test at `tests/test_init_uses_signed_in_tools.py:57` always supplies a signed-in Claude and does not catch this remaining half of the reported issue.\nAdds work: check the readiness of both used tools in doctor; F 2 x H 2 = 4; 2 x C = 2",
+        "file": "src/forge/doctor.py",
         "gain": 4,
         "harm": 3,
-        "line": 183,
+        "line": 352,
         "priority": "P1",
         "title": "Check both tools' readiness with the new default",
         "work": 2
       },
       {
-        "body": "Gain 4, Work 1, Harm 2\nRaise: Gate\nCase: normal use - A coordinator consults the shipped guide to explain which tool builds a newly initialized repo.\nThe standard says, \"Replacing behaviour deletes the old path, its tests and its docs in the same change.\" Although this section now says Claude is the default, `src/forge/templates/skill.md:1933-1936` still says init writes split workers and new repos send ordinary work to Codex; the changed `.claude` and `.codex` copies contain the same claim. In addition, `docs/guide.md:12` says Codex reads plans for new repos even when a Codex coordinator's first read uses Claude. The shipped instructions therefore give contradictory answers about the new routing.",
-        "file": "src/forge/templates/skill.md",
-        "gain": 4,
-        "harm": 2,
-        "line": 446,
-        "priority": "P1",
-        "title": "Standard: Delete before adding",
-        "work": 1
-      },
-      {
-        "body": "Gain 4, Work 1, Harm 2\nRaise: Gate\nCase: normal use - Review the fix and its required checks before merging.\nThe supplied proof list is explicitly `missing`. It contains no mapping from the Done-when details to their command-level tests or pull-request checks, so the required proof-list gate cannot verify which evidence covers initialization, review routing, cold reads, and the Claude-only case.",
+        "body": "Gain 4, Work 1, Harm 2\nRaise: Gate\nCase: normal use - Review the fix and its required checks before merging.\nThe supplied proof list remains `missing`, and the repair commits contain no mapping of the Done-when details to tests or pull-request checks. The required gate therefore still cannot verify the stated proof for initialization, review routing, cold reads, and the Claude-only case.",
         "file": "tests/test_init_uses_signed_in_tools.py",
         "gain": 4,
         "harm": 2,
-        "line": 32,
+        "line": 52,
         "priority": "P1",
         "title": "Gate: proof list",
         "work": 1
-      },
-      {
-        "body": "Gain 1, Work 1, Harm 1\nThe branch history has no pre-code approach commit recording the required deletion check, F x H versus 2 x C comparison, and existing-code reuse. Record that rationale so the choice of this default can be reviewed.\nAdds work: write the three missing approach lines; F 1 x H 1 = 1; 2 x C = 2",
-        "file": "src/forge/init.py",
-        "gain": 1,
-        "harm": 1,
-        "line": 183,
-        "priority": "P2",
-        "title": "Simpler: unrecorded approach \u2192 record deletion, cost and reuse checks",
-        "work": 1
       }
     ],
-    "id": "faee881d-d33e-441f-9d6d-af90e0e0df5c",
+    "id": "796f6639-a2fb-45dd-9180-42bd79ecf384",
     "status": "blocked"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-18T03:34:42.748414+00:00",
@@ -173,16 +168,16 @@
     {
       "at": "2026-11-18T04:44:30.748706+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-11-18T05:11:47.455324+00:00",
+      "step": "review"
     }
   ],
   "stop": {
-    "at": "2026-11-18T04:44:30.768846+00:00",
-    "by": "owner",
-    "choice": "more",
-    "file": "src/forge/templates/skill.md",
-    "reason": "Owner chose one more round: fix the four gaps, keep reader reuse",
-    "wait_id": "2a26ca6b-1bfd-4d95-927b-3cfad9fce095",
-    "worker_round": 1
+    "at": "2026-11-18T05:11:47.455937+00:00",
+    "file": "src/forge/doctor.py",
+    "wait_id": "382af966-4f77-420c-b0ee-a6a0112f4d95"
   },
   "stuck": {
     "close": "5a133daa-27ee-4afd-ace8-54b927ba0cab",
