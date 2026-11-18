@@ -1,6 +1,13 @@
 {
   "base": "67376f6c033979de5e01536db35aaf293d3e8899",
   "branch": "fix/long-ci-queues",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1ef43-7c91-71d1-9af2-b44c5c4b8679",
+    "head": null,
+    "start": "bba3e03b6e7a109a610d12e307ffca3756d96ea5"
+  },
   "done_when": "close, merge and land keep waiting while checks are queued or running, printing a progress line at most every 5 minutes, until the checks finish; the test time limit counts only time a job ran, not time it waited for a runner; new and existing repos get it on upgrade",
   "fix_kind": "mechanical",
   "kind": "fix",
