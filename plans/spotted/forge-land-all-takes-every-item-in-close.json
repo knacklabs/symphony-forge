@@ -1,0 +1,59 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/land.py\tAllow a partially completed named batch to resume\tforge-land-all-takes-every-item-in-close",
+      "kind": "bug",
+      "path": "src/forge/land.py",
+      "line": 54,
+      "text": "Allow a partially completed named batch to resume",
+      "from": "blocking",
+      "item": "forge-land-all-takes-every-item-in-close",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/land.py\tKeep named batches working when the main checkout has an older pin\tforge-land-all-takes-every-item-in-close",
+      "kind": "bug",
+      "path": "src/forge/land.py",
+      "line": 55,
+      "text": "Keep named batches working when the main checkout has an older pin",
+      "from": "blocking",
+      "item": "forge-land-all-takes-every-item-in-close",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/land.py\tNot done: forge land <item> <item> ... closes and merges exactly the named items the way --all does\tforge-land-all-takes-every-item-in-close",
+      "kind": "bug",
+      "path": "src/forge/land.py",
+      "line": 418,
+      "text": "Not done: forge land <item> <item> ... closes and merges exactly the named items the way --all does",
+      "from": "blocking",
+      "item": "forge-land-all-takes-every-item-in-close",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/land.py\tPreserve release-pin handling for named land commands\tforge-land-all-takes-every-item-in-close",
+      "kind": "bug",
+      "path": "src/forge/land.py",
+      "line": 866,
+      "text": "Preserve release-pin handling for named land commands",
+      "from": "blocking",
+      "item": "forge-land-all-takes-every-item-in-close",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_land_takes_exactly_the_named_items.py\tGate: test_1_two_named_items_are_tested_together_once_and_the_third_is_left_alone\tforge-land-all-takes-every-item-in-close",
+      "kind": "bug",
+      "path": "tests/test_land_takes_exactly_the_named_items.py",
+      "line": 19,
+      "text": "Gate: test_1_two_named_items_are_tested_together_once_and_the_third_is_left_alone",
+      "from": "blocking",
+      "item": "forge-land-all-takes-every-item-in-close",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

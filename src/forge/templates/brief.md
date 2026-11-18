@@ -93,6 +93,8 @@ A merge of the default branch or a clean review does not clear it. Close repeats
 Land prints the owner's question, open findings and failing checks, then exits with status 3
 (needs a choice) instead of waiting. The coordinator records the choice, then runs `forge land <item>`
 again. Other stops and session subagent handoffs also print the open findings and failing checks.
+A repeated `forge land <item> <item> ...` skips names already merged on the default branch,
+says that they already merged, and continues with the remaining names. New and existing repos get this behaviour.
 While land waits, commands share each pull request head's status snapshot across worktrees for 60 seconds.
 Land waits up to 90 minutes while a check is in progress, even without a status change.
 Checks that never start have a 30-minute no-progress limit. At either limit,
