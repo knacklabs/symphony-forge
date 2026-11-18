@@ -97,7 +97,8 @@ sys.exit(subprocess.run([{json.dumps(real_git)}, *sys.argv[1:]]).returncode)
     assert len(roots) <= (2 if command == "close" else 1), calls
     # The read-history next case has two open branches. Overlap advice adds
     # one ancestry check and one changed-file diff for each: 32 + 2 * 2.
+    # Close in a CI repo adds one diff before it pushes its records: 90 + 1.
     # Other command ceilings stay unchanged.
-    ceiling = (90 if command == "close" else 36) if history else (
+    ceiling = (91 if command == "close" else 36) if history else (
         100 if command == "close" else 24 if previous else 30)
     assert len(calls) <= ceiling, calls
