@@ -4,12 +4,20 @@
   "done_when": "When the intake or the first round predicts more than the fix file limit, Forge asks for the size allowance at fix start or before the round; forge next lists every pending owner choice first, with its exact question and how long it has waited; new and existing repos get it on upgrade",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-18T16:44:09.279803+00:00",
       "step": "start"
     }
   ],
-  "why": "Owner choices wait 14-55 minutes at a client: the size allowance is asked mid-round instead of at fix start, and pending owner choices are not at the top of forge next with their wording and wait time"
+  "stuck": {
+    "close": null,
+    "head": "dcab64aa1e04b4317b1cb95f1084c41b243377a9",
+    "keys": {},
+    "round": null
+  },
+  "why": "Owner choices wait 14-55 minutes at a client: the size allowance is asked mid-round instead of at fix start, and pending owner choices are not at the top of forge next with their wording and wait time",
+  "worker": "codex"
 }
