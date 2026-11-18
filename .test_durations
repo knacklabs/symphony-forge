@@ -1934,8 +1934,6 @@
     "tests/test_mainonce_clash.py::test_2_close_merges_main_once_when_a_local_or_github_clash_requires_it[trial-new-repo]": 2.186944168000082,
     "tests/test_mainonce_clash.py::test_3_close_stops_after_github_refuses_one_pull_request_body_update[other-refusal-earlier-adoption]": 1.7651695019999352,
     "tests/test_mainonce_clash.py::test_3_close_stops_after_github_refuses_one_pull_request_body_update[other-refusal-new-repo]": 1.4916085839995503,
-    "tests/test_mainonce_clash.py::test_3_close_stops_after_github_refuses_one_pull_request_body_update[rate-limit-earlier-adoption]": 1.8895016679996388,
-    "tests/test_mainonce_clash.py::test_3_close_stops_after_github_refuses_one_pull_request_body_update[rate-limit-new-repo]": 1.5276458329999514,
     "tests/test_mainonce_spotted.py::test_4_changes_keep_spotted_records_and_closures_separate[earlier-adopted-client]": 7.470110628000157,
     "tests/test_mainonce_spotted.py::test_4_changes_keep_spotted_records_and_closures_separate[new-client]": 7.181470462000107,
     "tests/test_mcp.py::test_1_a_new_starter_app_serves_its_mcp_server[earlier adopted]": 0.982219124911353,

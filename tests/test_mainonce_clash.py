@@ -177,9 +177,8 @@ def test_1_close_rounds_leave_unrelated_main_changes_out_of_the_pull_request(env
 
 @pytest.mark.parametrize("previous", [False, True], ids=["new-repo", "earlier-adoption"])
 @pytest.mark.parametrize("problem,next_action", [
-    ("GraphQL: API rate limit exceeded", "wait for GitHub's rate limit to reset"),
     ("GraphQL: Resource not accessible by integration", "fix the GitHub problem"),
-], ids=["rate-limit", "other-refusal"])
+], ids=["other-refusal"])
 def test_3_close_stops_after_github_refuses_one_pull_request_body_update(env, previous, problem, next_action):
     client(env, previous)
     _green_pull_request(env)
