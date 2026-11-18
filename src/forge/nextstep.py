@@ -398,12 +398,14 @@ def _report(top: Path, history: dict[str, Any] | None = None,
                 (f"The fix {state['branch'].partition('/')[2]}", state)
                 for state, _ in fixes if state.get("branch")], prs, (history or {}).get("states", {}))
             + lines + [f"Builds running: {running} of {agents['size']}"])
-    ready = {index: line.removeprefix("Next: forge merge ")
-             for index, line in enumerate(report) if line.startswith("Next: forge merge ")
-             and index and " is ready to merge" in report[index - 1]}
-    if len(ready) >= 2:
-        report = [line for index, line in enumerate(report) if index not in ready]
-        report.insert(min(ready), "Next: forge land " + " ".join(ready.values()))
+    ready = [(index, report[index - 1].split(" is ready to merge", 1)[0].removeprefix("The fix "), line)
+             for index, line in enumerate(report) if line.startswith(("Next: forge merge ", "Next: merge "))
+             and index and " is ready to merge" in report[index - 1]]
+    if (len(ready) >= 2 and (pin := _report_config(top, refusals).get("version"))
+            and not repo._older(pin.removeprefix("v"), "1.2.43")):
+        commands = {line for _, _, line in ready}
+        report = [line for line in report if line not in commands]
+        report.insert(ready[0][0], "Next: forge land " + " ".join(item for _, item, _ in ready))
     return report
 
 
