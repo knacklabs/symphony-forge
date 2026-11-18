@@ -165,7 +165,7 @@
     "id": "dd583f26-7fbd-46e3-ab1c-d2780cf625c7",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -178,10 +178,12 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "cd447e66d5e92b6f133859bd757f8e43a3e31808",
-    "keys": {},
-    "round": null
+    "close": "31189e4a-e77b-44c6-80ed-41867e0341a1",
+    "head": "6fc99dbc7c51528de36ab7667ead304f349332fe",
+    "keys": {
+      "the open P0 functional: preserve close for generated adoption and migration branches in src/forge/close.py": 1
+    },
+    "round": 1
   },
   "why": "Worker rounds often need 2-4 rounds for selector, assertion or execution-path corrections the first round could have caught, and when the coordinator commits a small fix itself its first review blocks on 'proof list: missing' (measured at a client on 18 Nov 2026: 3 one-file fixes, 20-60 min each)",
   "worker": "codex"
