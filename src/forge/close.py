@@ -426,6 +426,8 @@ def close(args: argparse.Namespace) -> int:
         _save(top, item, state, message, *noted)
     elif noted:  # a reused clean review still records what the worker spotted
         _save(top, item, state, f"Review of {item}: {result['status']}", *noted)
+    if not serious:
+        _after_code_ci(top, item, branch, cfg)
     _push(top, branch, reviewed=True)
     head = repo.git("rev-parse", "HEAD", cwd=top)
     pr = _publish(top, item, state, branch, pr_target, pr, result, evidence)
@@ -861,6 +863,21 @@ def synced_changes(top: Path) -> list[str]:
     # sync's new hook shims are never committed, even when the hooks folder is in the checkout (husky).
     hooks = repo.git("rev-parse", "--git-path", "hooks/", cwd=top)
     return [entry[3:] for entry in status.split("\0") if entry and not entry.startswith(f"?? {hooks}")]
+
+
+def _after_code_ci(top: Path, item: str, branch: str, cfg: dict[str, Any]) -> None:
+    """Pushing only Forge's records cancels the code's CI run in progress, and the record's own
+    run then cannot reuse that result. Let the code's run end first."""
+    remote = repo.run("git", "rev-parse", "-q", "--verify", f"origin/{branch}", cwd=top)
+    if cfg["test_place"] != "ci" or remote.returncode:
+        return
+    paths = repo.git("diff", "--name-only", "-z", "--no-renames", remote.stdout.strip(), "HEAD",
+                     cwd=top).split("\0")
+    if not any(paths) or any(path and not (path.startswith(review.BOOKKEEPING)
+                                           or repo.SIGNOFF.fullmatch(path)) for path in paths):
+        return
+    checks.let_finish(top, item, remote.stdout.strip(),
+                      [name for name in cfg["checks"] if name != "forge-pr-check"])
 
 
 def _push(top: Path, branch: str, *, reviewed: bool = False) -> None:

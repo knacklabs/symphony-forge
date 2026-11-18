@@ -107,6 +107,21 @@ def wait(top: Path, item: str, sha: str, names: list[str], *, branch: str,
             repo.record_timing(top, item, "CI wait", start, clock, result["outcome"])
 
 
+def let_finish(top: Path, item: str, sha: str, names: list[str]) -> None:
+    """Wait, within the usual limit, while sha's checks are queued or running. Close calls this
+    before it pushes a record-only commit, because that push cancels the run in progress."""
+    deadline = time.monotonic() + float(os.environ.get("FORGE_CHECKS_WAIT", "600"))
+    while True:
+        try:
+            busy = any(state in (PENDING, QUEUED) for name, state in _seen(top, item, sha)[0]
+                       if name in names)
+        except repo.Refused:
+            return  # The push is not worth refusing for a status GitHub cannot answer.
+        if not busy or time.monotonic() >= deadline:
+            return
+        time.sleep(15)
+
+
 def _wait(top: Path, item: str, sha: str, names: list[str], branch: str, progress: bool,
           result: dict[str, Any], waiting: Callable[[bool], None], train: bool = False) -> None:
     # ponytail: an env override is the whole wait seam (tests set 0 to look once).
