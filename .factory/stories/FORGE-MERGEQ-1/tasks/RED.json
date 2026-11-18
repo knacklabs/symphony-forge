@@ -1,0 +1,12 @@
+{
+  "base": "3a8959a99be727fab5350411b1e0c893e2343e98",
+  "branch": "task/FORGE-MERGEQ-1-RED",
+  "stacked_on": "REMOTE-1/HOST",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-18T14:17:31.848635+00:00",
+      "step": "start"
+    }
+  ]
+}
