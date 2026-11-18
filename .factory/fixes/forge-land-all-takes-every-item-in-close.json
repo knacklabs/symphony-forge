@@ -120,7 +120,7 @@
     "id": "b4c24581-5c1e-4a52-a0bb-085454e07175",
     "status": "blocked"
   },
-  "round": 3,
+  "round": 4,
   "status": "fixing",
   "steps": [
     {
@@ -150,10 +150,10 @@
     "worker_round": 3
   },
   "stuck": {
-    "close": "3a7a556c-e587-4453-b1b1-2973f239ba93",
-    "head": "be036790fcadee5fa1351c7e210982d8fb55a4f1",
+    "close": "00a6c81f-5003-42a2-94df-d926936dfe4a",
+    "head": "ecd2b9f1e9d841c5cf03f92d6215f8ebc708ff03",
     "keys": {},
-    "round": 2
+    "round": 3
   },
   "why": "forge land --all takes every item in close, including items the owner has on hold, so a team cannot land a chosen set of Ready items with one combined check; merging them one by one re-runs the combined test after each merge (25-40 min each at a client). Owner, 18 Nov 2026: fix it and release fast.",
   "worker": "codex"
