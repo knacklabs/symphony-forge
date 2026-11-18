@@ -393,11 +393,18 @@ def _report(top: Path, history: dict[str, Any] | None = None,
         if not ongoing and repo.is_prototype(top, {**cfg, "stage": "prototype"}):
             lines += build
             build = []
-    return (build + _due(top, history) + pinned + [line for alert in alerts.values() for line in alert]
+    report = (build + _due(top, history) + pinned + [line for alert in alerts.values() for line in alert]
             + _hotspots(top, trees) + _overlaps(top, parts + [
                 (f"The fix {state['branch'].partition('/')[2]}", state)
                 for state, _ in fixes if state.get("branch")], prs, (history or {}).get("states", {}))
             + lines + [f"Builds running: {running} of {agents['size']}"])
+    ready = {index: line.removeprefix("Next: forge merge ")
+             for index, line in enumerate(report) if line.startswith("Next: forge merge ")
+             and index and " is ready to merge" in report[index - 1]}
+    if len(ready) >= 2:
+        report = [line for index, line in enumerate(report) if index not in ready]
+        report.insert(min(ready), "Next: forge land " + " ".join(ready.values()))
+    return report
 
 
 def _overlaps(top: Path, items: list[tuple[str, dict[str, Any]]],
