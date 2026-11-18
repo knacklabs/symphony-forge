@@ -9,7 +9,7 @@ from test_story import setup
 pytestmark = pytest.mark.platform
 
 
-def test_hook_context_with_many_hotspots_stays_short(repo):
+def test_1_hook_context_with_many_hotspots_stays_short(repo):
     setup(repo)
     items = []
     for number in range(8):

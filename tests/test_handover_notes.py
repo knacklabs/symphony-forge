@@ -4,6 +4,7 @@ import shutil
 import pytest
 
 from conftest import ROOT
+from test_next import without_numbers
 
 STORY = "FORGE-HANDOVER-1"
 
@@ -34,11 +35,11 @@ def test_2_a_new_clone_shows_the_committed_notes(repo, tmp_path, setup):
     before = repo.forge("next", cwd=clone)
     context = repo.forge("hook", "context", cwd=clone)
     assert before.returncode == context.returncode == 0, context.stdout + context.stderr
-    assert before.stdout.strip() in context.stdout
+    assert without_numbers(before.stdout).strip() in context.stdout
     assert "Local branch only" not in context.stdout
     if setup == "new repo":
         assert context.stdout.endswith("## Decisions and lessons\n- Keep the client wording.\n")
-        assert context.stdout.index("## Decisions and lessons") > context.stdout.index(before.stdout.strip())
+        assert context.stdout.index("## Decisions and lessons") > context.stdout.index(without_numbers(before.stdout).strip())
         assert "Do not show this" not in context.stdout
     else:
-        assert context.stdout == before.stdout
+        assert context.stdout == without_numbers(before.stdout)
