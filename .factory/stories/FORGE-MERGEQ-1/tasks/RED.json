@@ -159,7 +159,7 @@
     "id": "85097bac-2ced-438a-99d6-ffdcce8cecd2",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "stacked_on": "REMOTE-1/HOST",
   "status": "fixing",
   "steps": [
@@ -173,10 +173,10 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "9797420aa641e86031cecba1f01f24afb536d5a6",
+    "close": "7d93a5ec-95fb-4ace-8293-2793c6bc6633",
+    "head": "00d945c721b33c70daebbcf46599489b2391609a",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "worker": "codex"
 }
