@@ -117,7 +117,7 @@
     "id": "060c585a-9c69-44c2-bb4d-57f438cc8e88",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -139,10 +139,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": null,
-    "head": "bd1da78fd79c71b2569c69d06bdc529ddefc47b1",
+    "close": "44039d3d-0980-46a9-9c57-992b09ef7d41",
+    "head": "05d444a37aa7d39cbb12dd42473cdeb6ff67d868",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "After forge fix drop, forge next raises FileNotFoundError on the dropped fix's worktree path, and a worker round that runs forge next then asks which failure or review finding to fix although its review was clean",
   "worker": "codex"
