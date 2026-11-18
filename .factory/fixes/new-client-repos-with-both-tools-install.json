@@ -164,7 +164,7 @@
     "status": "blocked"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-18T03:34:42.748414+00:00",
@@ -177,8 +177,12 @@
   ],
   "stop": {
     "at": "2026-11-18T04:44:30.768846+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "src/forge/templates/skill.md",
-    "wait_id": "2a26ca6b-1bfd-4d95-927b-3cfad9fce095"
+    "reason": "Owner chose one more round: fix the four gaps, keep reader reuse",
+    "wait_id": "2a26ca6b-1bfd-4d95-927b-3cfad9fce095",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
