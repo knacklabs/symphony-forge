@@ -63,8 +63,8 @@
       "text": "Gate: tests/test_ci_time_report.py::test_1_close_prints_ci_time_and_doctor_warns_over_ten_minutes",
       "from": "blocking",
       "item": "FORGE-CITIME-1/TIME",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "edge\tsrc/forge/citime.py\tNot done: the health check warns when the usual CI time of recent merged pull requests is over 10 minutes",
