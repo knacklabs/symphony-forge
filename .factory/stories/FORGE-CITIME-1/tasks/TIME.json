@@ -92,8 +92,8 @@
       "gain": 3,
       "harm": 3,
       "line": 161,
-      "outcome": "open",
-      "reason": "",
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: Owner accepted on 18 Nov 2026: the test's fake matches the exact all-attempts query text; a future rewrite of the query could pass the test while counting wrong; code is correct today",
       "round": 1,
       "security": false,
       "title": "Gate: tests/test_ci_time_report.py::test_1_close_prints_ci_time_and_doctor_warns_over_ten_minutes",
@@ -105,7 +105,13 @@
     "branch_diff": "8b9f81477f4005d39c4a24d7a13ae30cec741d1af73bbb224baa2ce0f5bcf1a4",
     "changed": "03989c511068e2a53e65819cc8a9a4c6a596166207e8c2025ed1a46511c6c4d7",
     "commit": "b1a2b785a0e09ee17f70e242acc0dee3fb48aeb8",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner accepted on 18 Nov 2026: the test's fake matches the exact all-attempts query text; a future rewrite of the query could pass the test while counting wrong; code is correct today",
+        "finding": 1
+      }
+    ],
     "findings": [
       {
         "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - A maintainer moves the all-attempts filter into a GraphQL variable set to `ALL`. GitHub accepts that equivalent request, but this regex sees no literal `checkType: ALL` and the fake drops earlier attempts, making the runner-minute assertion fail despite unchanged behavior. [GitHub documents variables for query arguments](https://docs.github.com/en/graphql/guides/forming-calls-with-graphql#working-with-variables). The fake also supplies `oid` even if the query omits it, so the cancelled-timeout test can pass while the real report cannot identify the timeout. The previously raised test gate therefore remains open.",
@@ -119,10 +125,10 @@
       }
     ],
     "id": "54e83c0e-f2fc-4329-b7bc-e9d26c6b2686",
-    "status": "blocked"
+    "status": "clean"
   },
   "round": 2,
-  "status": "hotspot",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-18T10:45:14.639794+00:00",
@@ -139,8 +145,12 @@
   ],
   "stop": {
     "at": "2026-11-18T11:34:08.789823+00:00",
+    "by": "owner",
+    "choice": "accept",
     "file": "tests/test_ci_time_report.py",
-    "wait_id": "00944cf3-9a53-4f69-9f36-d2c5e7617fc7"
+    "reason": "Owner accepted on 18 Nov 2026: the test's fake matches the exact all-attempts query text; a future rewrite of the query could pass the test while counting wrong; code is correct today",
+    "wait_id": "00944cf3-9a53-4f69-9f36-d2c5e7617fc7",
+    "worker_round": 2
   },
   "stuck": {
     "close": "eee5ab7c-84c0-4f4f-b45e-17dab65d6601",
