@@ -79,6 +79,29 @@ def test_files(top: Path, base: str, excludes: list[str], *, head: str = "HEAD")
     return True, platform
 
 
+def small_change(base: str, excludes: list[str], tests_only: bool) -> bool:
+    """Count code files, keeping shared build and selection inputs on all groups."""
+    diff = ("git", "diff", "--name-only", "-z", "--no-renames", f"{base}...HEAD")
+    changed = run(*diff).split("\0")
+    for name in filter(None, changed):
+        path = Path(name)
+        if (name.startswith((".github/workflows/", ".forge/"))
+                or path.name in {"forge.toml", "conftest.py", "package.json", "pyproject.toml",
+                                 "Pipfile", "pnpm-workspace.yaml", "nx.json", "turbo.json"}
+                or re.search(r"(^|[.-])(lock|config)([.-]|$)", path.name)
+                or re.fullmatch(r"requirements.*\.txt|tsconfig.*\.json", path.name)):
+            return False
+    code = 0
+    for name in filter(None, run(*diff, "--", ".", *excludes).split("\0")):
+        path = Path(name)
+        if (any(part in {"tests", "test", "__tests__", "spec"} for part in path.parts)
+                or path.name.startswith("test_") or path.name.endswith("_test.py")
+                or re.search(r"\.(test|spec)\.", path.name)):
+            continue
+        code += 1
+    return tests_only or 0 < code <= 5
+
+
 def reuse() -> bool:
     head = os.environ["HEAD_SHA"]
     base = os.environ.get("BASE_SHA")
@@ -134,6 +157,7 @@ if sys.argv[1:2] == ["status"]:
 
 docs_only = False
 tests_only, platform_files = False, []
+one_group = False
 records_only = "--records-only" in sys.argv[1:]
 try:
     # Sync copies close's classifier and supplies its Git path exclusions.
@@ -144,12 +168,16 @@ try:
                      f"{os.environ['BASE_SHA']}..{os.environ['HEAD_SHA']}")
         tests_only, platform_files = test_files(Path.cwd(), os.environ["BASE_SHA"],
                                                 json.loads(os.environ["DOCS_ONLY_EXCLUDES"]))
+        one_group = small_change(os.environ["BASE_SHA"],
+                                 json.loads(os.environ["DOCS_ONLY_EXCLUDES"]), tests_only)
         docs_only = only_docs(Path.cwd(), os.environ["BASE_SHA"],
                               json.loads(os.environ["DOCS_ONLY_EXCLUDES"]), allow_required=True)
         if docs_only and required_tests(Path.cwd()):
             docs_only, tests_only = False, True
+            one_group = True
         if merged:
             tests_only, platform_files = False, []
+            one_group = False
     if records_only:
         passed = os.environ.get("GITHUB_EVENT_NAME") in {"push", "pull_request"} and reuse()
     else:
@@ -162,6 +190,7 @@ with Path(os.environ["GITHUB_OUTPUT"]).open("a", encoding="utf-8") as output:
     if docs_only:
         output.write("docs-only=true\n")
     output.write(f"test-only={str(tests_only).lower()}\n")
+    output.write(f"one-group={str(one_group).lower()}\n")
     output.write(f"platform-files={json.dumps(platform_files)}\n")
     output.write(f"run-windows={str(not tests_only or bool(platform_files)).lower()}\n")
 print("docs only: tests skipped" if docs_only else
