@@ -1,18 +1,18 @@
 ---
 reader: codex (gpt-6.1-terra)
-read_at: 2026-11-18T05:59:09.261006+00:00
-seconds: 639.05
-read_hash: e2f0c6c96698140a0449faaeb180373eddf82722
-round: 3
+read_at: 2026-11-18T06:32:02.932002+00:00
+seconds: 360.343
+read_hash: a8a99f3cfae7d0ea03bdf5e0f6ac86f52f840399
+round: 4
 passed: no
-doc_seen: e2f0c6c96698140a0449faaeb180373eddf82722
+doc_seen: a8a99f3cfae7d0ea03bdf5e0f6ac86f52f840399
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 86e27521c45efca856a617783ef1bd31116b7f88
+notes_seen: fcd3121f34c623ef998af65fa254626768b4e57f
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a1ecb9-0d2c-7ba3-967f-9b980e7a0a1b
 session:
-loop_choice:
-loop_reason:
+loop_choice: accept
+loop_reason: Owner accepted read round 3: notes 28-30 fixed in the builders' section
 ---
 # Cold read notes
 
@@ -258,3 +258,43 @@ Only a genuine trade-off goes to the human, as a question with options.
     Case: normal use - TIMEGROUPS changes the new TypeScript starter’s `test` setting to include `--group`, while this existing test asserts that the setting equals the old command. The task does not identify that assertion for update, so the full test suite fails after the planned change.
     Gain 4, Work 1, Harm 2
     Disposition: cut - fixed in the builders section: TIMEGROUPS updates the `COMMAND` assertion in `tests/test_starter_app.py:62` and has that file in its Scope and Tests.
+
+## Round 4
+
+38. Blocking: Plan gap: the grouped-run test still requires group 2 to skip Docker.
+    Raise: Plan gap — [setup rule](/plans/FORGE-CITIME-1.md:88); [test](/plans/FORGE-CITIME-1.md:111).
+    Case: normal use - For an API change, group 2 must start its own Docker stack, but the required `--list` test asserts that group 2 has no Docker step. A correct implementation cannot pass that test.
+    Gain 5, Work 1, Harm 3
+   Disposition: keep - Owner accepted read round 3: notes 28-30 fixed in the builders' section
+
+39. Blocking: Plan gap: STARTER’s live proof requires the later TIMEGROUPS task.
+    Raise: Plan gap — [live proof](/plans/FORGE-CITIME-1.md:108); [task order](/plans/FORGE-CITIME-1.md:123).
+    Case: normal use - STARTER must pass its live test with `--group 1/2` and `--group 2/2`, but TIMEGROUPS adds that option and cannot start until STARTER finishes.
+    Gain 5, Work 2, Harm 3
+   Disposition: keep - Owner accepted read round 3: notes 28-30 fixed in the builders' section
+
+40. Advisory: Unproven: item 5: the live split can pass without the new sequencer.
+    Raise: Test — [plan](/plans/FORGE-CITIME-1.md:108); [pinned Vitest](/src/forge/templates/starter/package.json:60).
+    Case: normal use - Vitest’s existing file-count sharding also divides the files between two groups with none repeated. The new union check therefore passes if the custom sequencer is never loaded.
+    Gain 3, Work 3, Harm 3
+   Disposition: keep - below the bar (follow-up)
+
+41. Advisory: Plan gap: the Python starter copy test requires two different web configurations.
+    Raise: Plan gap — [plan](/plans/FORGE-CITIME-1.md:85); [Python starter test](/tests/test_python_starter.py:69).
+    Case: normal use - The override makes the Python app’s web configuration differ from the TypeScript one. The existing test checks the first commit against both the Python starter files and every file in the TypeScript `apps/web` tree, so it fails after the planned change.
+    Gain 4, Work 2, Harm 2
+   Disposition: keep - Owner accepted read round 3: notes 28-30 fixed in the builders' section
+
+42. Advisory: Scale: grouped nightly runs can repeat the whole browser suite.
+    Raise: Scale — [full-run matrix](/src/forge/prcheck.py:326); [starter script](/src/forge/templates/starter/scripts/test.mjs:80).
+    Case: normal use - Each nightly group runs without a base, and the plan shards Vitest runs but gives no group rule for the browser suite. The existing no-base path selects the whole browser suite in every group.
+    Adds work: run the browser suite in one group; F 2 x H 2 = 4; 2 x C = 2
+    Gain 3, Work 2, Harm 2
+   Disposition: keep - below the bar (follow-up)
+
+43. Advisory: Plan gap: each group’s Docker setup still builds the app.
+    Raise: Plan gap — [plan](/plans/FORGE-CITIME-1.md:88); [Dockerfile](/src/forge/templates/starter/Dockerfile:19).
+    Case: normal use - Each fresh runner starts its own stack, whose image runs the full app build. The plan’s statement that build runs only in group 1 therefore does not cover the repeated container builds.
+    Adds work: avoid rebuilding the test image on each runner; F 2 x H 2 = 4; 2 x C = 6
+    Gain 2, Work 4, Harm 2
+   Disposition: keep - below the bar (live with)
