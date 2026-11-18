@@ -1,0 +1,102 @@
+{
+  "base": "64105f1b7b691f43af2a995f8f72fe8da1372287",
+  "branch": "fix/suggest-named-land",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1eef9-ae39-7a70-944c-60fdab59b121",
+    "head": null,
+    "start": "c23339364a404a900a106a343049444847fe7468"
+  },
+  "done_when": "When two or more tasks or fixes are Ready to merge, forge next and the skill suggest one forge land <item> <item> command naming them; with one Ready item nothing changes; new and existing repos get it on upgrade",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "_report() in src/forge/nextstep.py",
+      "file": "src/forge/nextstep.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 402,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Batch ready items under the human merge policy",
+      "work": 2
+    },
+    {
+      "area": "_report() in src/forge/nextstep.py",
+      "file": "src/forge/nextstep.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 406,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Suggest a batch that the checkout's pinned Forge can run",
+      "work": 2
+    },
+    {
+      "area": "_report() in src/forge/nextstep.py",
+      "file": "src/forge/nextstep.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 403,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Remove individual merge advice repeated for a stacked task",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "525883801dfcb7f3764cf3b221b6a63d5f2e83d5f09e716b1b8a143f9f18d7ef",
+    "changed": "f5f0eb9a8f8983dd9e7402635c11b1c2ddd6f44f0b373f9abbf99a7266936eb0",
+    "commit": "56fda1e273f932483d1da3aab8ad30c09af57162",
+    "dismissals": [],
+    "findings": [],
+    "id": "016d3d4f-ec99-4eba-9cef-770c66024bfa",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-18T14:04:16.418410+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-18T14:24:00.524622+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-18T14:40:26.433166+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-18T16:10:42.180089+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-18T14:24:00.536499+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "src/forge/nextstep.py",
+    "reason": "Owner chose one more round: fix the three review findings",
+    "wait_id": "447b1800-e51f-4840-af83-7d3241f728cf",
+    "worker_round": 1
+  },
+  "stuck": {
+    "close": "8e38a6f4-9efa-469b-be31-7be7188aaf76",
+    "head": "06e304272765717cba298c9e1114f7cfe847183a",
+    "keys": {},
+    "round": 2
+  },
+  "why": "When two or more items are Ready to merge, forge next suggests merging them one by one, so each merge can start a new combined CI run",
+  "worker": "codex"
+}
