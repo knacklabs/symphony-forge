@@ -103,7 +103,7 @@ def test_2_clients_receive_related_test_guidance_in_briefs_and_synced_skills(
     assert synced.returncode == 0, synced.stdout + synced.stderr
     repo.git("add", "-A")
     # Seed a landed client setup, as the upgrade tests do; it has no active fix record yet.
-    repo.git("-c", f"core.hooksPath={tmp_path / 'no-hooks'}", "commit", "-q", "-m",
+    repo.git("-c", f"core.hooksPath={tmp_path / 'no-hooks'}", "commit", "--allow-empty", "-q", "-m",
              "Upgrade worker guidance")
     repo.git("switch", "-q", "main")
     repo.git("merge", "-q", "--ff-only", "fix/test-guidance")

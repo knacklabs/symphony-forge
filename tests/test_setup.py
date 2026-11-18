@@ -274,7 +274,7 @@ def test_29_doctor(repo, gh, tmp_path, monkeypatch, case, rows, doctor_sdks):
     toml = client / "forge.toml"
     # These doctor cases exercise Claude workers, including its optional Codex trust advice.
     toml.write_text(toml.read_text(encoding="utf-8").replace(
-        'workers = "split"', 'workers = "claude"', 1), encoding="utf-8")
+        'workers = "split"', 'tools = "claude"\nworkers = "claude"', 1), encoding="utf-8")
     if case.startswith("impeccable") or case == "no impeccable":
         # Clients now receive repo copies at init. Global placement still matters in Forge's
         # own repo, which deliberately receives neither skill, so retain these cases there.
@@ -350,7 +350,7 @@ def test_29_doctor(repo, gh, tmp_path, monkeypatch, case, rows, doctor_sdks):
             encoding="utf-8")
         repo.git("add", ".github/workflows/forge.yml", cwd=client)
         repo.git("-c", f"core.hooksPath={(tmp_path / 'no-hooks').as_posix()}",
-                 "commit", "-q", "-m", "Break the test workflow", cwd=client)
+                 "commit", "--allow-empty", "-q", "-m", "Break the test workflow", cwd=client)
     if case == "forge's own repo without git hooks":  # the workflow installs Forge from its checkout
         repo.git("checkout", "-q", "-b", "fix/own", cwd=client)  # sync refuses on main
         assert repo.forge("sync", cwd=client).returncode == 0

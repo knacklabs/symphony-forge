@@ -37,7 +37,7 @@ def client(repo, gh, tmp_path, request):
     assert synced.returncode == 0, synced.stdout + synced.stderr
     repo.git("add", "-A")
     # Fixture setup predates an active Forge item; commits under test use the installed hook.
-    repo.git("-c", f"core.hooksPath={tmp_path / 'no-hooks'}", "commit", "-q", "-m", "Setup")
+    repo.git("-c", f"core.hooksPath={tmp_path / 'no-hooks'}", "commit", "--allow-empty", "-q", "-m", "Setup")
     repo.git("switch", "-q", "main")
     repo.git("merge", "-q", "--ff-only", "fix/settings-setup")
     repo.git("-c", f"core.hooksPath={tmp_path / 'no-hooks'}", "push", "-q", "origin", "main")
@@ -135,7 +135,7 @@ def test_4_worker_round_restores_uncommitted_settings_unless_done_when_names_the
     client.git("switch", "-q", "fix/settings-setup")
     client.write("forge.toml", _toml(client.forge("--version").stdout.split()[-1],
                                     "codex", MODELS, "client"))
-    client.git("-c", f"core.hooksPath={tmp_path / 'no-hooks'}", "commit", "-qam", "Use Codex")
+    client.git("-c", f"core.hooksPath={tmp_path / 'no-hooks'}", "commit", "--allow-empty", "-qam", "Use Codex")
     client.git("switch", "-q", "main")
     client.git("merge", "-q", "--ff-only", "fix/settings-setup")
     client.git("-c", f"core.hooksPath={tmp_path / 'no-hooks'}", "push", "-q", "origin", "main")

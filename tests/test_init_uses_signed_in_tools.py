@@ -49,7 +49,7 @@ def test_1_init_uses_signed_in_tools(repo, gh, tmp_path, claude, codex, tools, w
 
 @pytest.mark.parametrize("workers,codex,warns,adopted", [
     ("split", False, True, False), ("codex", False, True, False),
-    ("claude", False, False, False), ("split", True, False, False),
+    ("claude", False, True, False), ("split", True, False, False),
     ("split", None, False, False), ("split", False, True, True),
 ])
 def test_2_doctor_reports_codex_sign_in_without_changing_existing_settings(
