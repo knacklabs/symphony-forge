@@ -1,6 +1,13 @@
 {
   "base": "1a5b4d2cf1d9b0e80bb05627d2864a9ac40fd2bb",
   "branch": "fix/dropped-fix-next-crash",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1ef8c-469e-7ba1-b237-e29b31ccaeaf",
+    "head": null,
+    "start": "cdc7f79f123bcc063490e0a3fc3d3920663c8311"
+  },
   "done_when": "forge next and worker rounds skip a dropped fix whose checkout is gone, with no traceback; a command-level test drops a fix, removes its worktree and runs forge next; new and existing repos get it on upgrade",
   "fix_kind": "mechanical",
   "kind": "fix",
