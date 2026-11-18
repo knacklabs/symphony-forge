@@ -1,18 +1,18 @@
 ---
 reader: codex (gpt-6.1-terra)
-read_at: 2026-11-18T09:32:04.472349+00:00
-seconds: 548.078
-read_hash: 4408999dfaf112a075d21ba992adc5b9d3d8b38c
-round: 5
+read_at: 2026-11-18T09:39:37.516278+00:00
+seconds: 302.209
+read_hash: 7d1fa33871c27f42d7e07068c4361ceebe0f37ab
+round: 6
 passed: no
-doc_seen: 4408999dfaf112a075d21ba992adc5b9d3d8b38c
+doc_seen: 7d1fa33871c27f42d7e07068c4361ceebe0f37ab
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 93957f446e76e10ee3c292abc460446c3a2331fb
+notes_seen: 1411a349105f64f6d40612b677e8d6977fb6dcb3
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a1ecb9-0d2c-7ba3-967f-9b980e7a0a1b
 session:
-loop_choice: more
-loop_reason: Owner chose one more round: cap groups at the file count, close the test-only bypass, make the chain test fail when no tests run
+loop_choice:
+loop_reason:
 ---
 # Cold read notes
 
@@ -342,3 +342,23 @@ Only a genuine trade-off goes to the human, as a question with options.
     Case: normal use - A successful close needs the new GraphQL request for push history and a separate jobs request for stages. Doctor also needs the history request and at least one jobs request. The stated cost of one additional request each understates the GitHub traffic.
     Gain 2, Work 1, Harm 2
     Disposition: cut - the cost line now says close makes two more GitHub requests and doctor two or three.
+
+## Round 6
+
+51. Blocking: Not done: zero discovered files make every group skip the suite.
+    Raise: Not done — [plan](/plans/FORGE-CITIME-1.md:89); [Vitest’s list command](https://github.com/vitest-dev/vitest/blob/v3.2.4/packages/vitest/src/node/cli/cac.ts#L309-L337).
+    Case: normal use - A change to the API Vitest configuration accidentally makes its include pattern match no files. `vitest list --filesOnly` returns an empty list, so every group number is above the file count and every group skips the API run. The required check can pass with no API tests, where the current API configuration would fail.
+    Gain 5, Work 2, Harm 4
+    Disposition: keep - the owner's group rule (18 Nov 2026), now in TIMEGROUPS, STARTER and the existing-app recipe: a run that discovers zero files fails with one clear line, so no group can pass without the suite.
+
+52. Blocking: Not done: an untimed file can leave an active group empty.
+    Raise: Not done — [placement and group cap](/plans/FORGE-CITIME-1.md:85); [Vitest’s empty-run result](https://github.com/vitest-dev/vitest/blob/v3.2.4/packages/vitest/src/node/test-run.ts#L79-L110).
+    Case: normal use - An app has 16 groups, 15 recorded API test files and one new untimed file. If the new path hashes to a group already holding a recorded file, another group gets no files. The count is still 16, so no group is skipped by the cap; Vitest fails the empty group and the required check turns red.
+    Gain 5, Work 2, Harm 3
+    Disposition: keep - the owner's group rule (18 Nov 2026): files are placed only across the groups in use, and untimed files fill any empty group first, so no group in use is empty.
+
+53. Blocking: Plan gap: the existing-app recipe omits the new group limit.
+    Raise: Plan gap — [starter limit](/plans/FORGE-CITIME-1.md:89); [existing-app instructions](/plans/FORGE-CITIME-1.md:92); [Vitest 3.2.4](https://github.com/vitest-dev/vitest/blob/v3.2.4/packages/vitest/src/node/pool.ts#L207-L219).
+    Case: normal use - An existing app with 16 runner slots and 15 API test files follows the guide. It copies the sequencer and passes the uncapped group count directly to Vitest. Vitest rejects the count before calling the sequencer, so the required check fails. The new cap exists only in the starter script, which the recipe does not copy.
+    Gain 5, Work 2, Harm 3
+    Disposition: keep - the owner's group rule (18 Nov 2026) is now in the existing-app recipe too: each run uses at most as many groups as it has files, extra jobs pass with nothing to do, zero files fail, no group in use is empty.
