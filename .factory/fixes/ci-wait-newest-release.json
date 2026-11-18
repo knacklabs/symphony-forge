@@ -1,0 +1,15 @@
+{
+  "base": "1a5b4d2cf1d9b0e80bb05627d2864a9ac40fd2bb",
+  "branch": "fix/ci-wait-newest-release",
+  "done_when": "close and merge use the installed release's CI wait and rerun behaviour when it is newer than the branch's pin, while review and the rest of close keep the pinned release; new and existing repos get it on upgrade",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-18T16:44:13.929843+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "A branch pinned to the earlier release runs close and merge through that release, so CI-wait fixes in a newer installed release (rerun failed groups, cancelled is not failed) do not apply until each branch merges the pin upgrade"
+}
