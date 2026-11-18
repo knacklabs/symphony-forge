@@ -98,9 +98,9 @@
     "id": "650483e6-7ae3-4c11-8614-71b64ca3b87b",
     "status": "clean"
   },
-  "round": 3,
+  "round": 4,
   "stacked_on": "REMOTE-1/HOST",
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-18T14:17:31.848635+00:00",
@@ -116,10 +116,10 @@
     }
   ],
   "stuck": {
-    "close": "7d93a5ec-95fb-4ace-8293-2793c6bc6633",
-    "head": "00d945c721b33c70daebbcf46599489b2391609a",
+    "close": "afdcdb53-951c-4a5f-ad33-068f25aad00e",
+    "head": "1a595b0126a3c05364fdae42890d2dd55611d282",
     "keys": {},
-    "round": 1
+    "round": 3
   },
   "worker": "codex"
 }
