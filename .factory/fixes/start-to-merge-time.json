@@ -139,7 +139,7 @@
     "id": "158d9742-e136-46be-a0ee-2eeaaa5839bb",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -161,10 +161,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": null,
-    "head": "9b4581e83a578af17c51459647a86d742adfa193",
+    "close": "47ebb8b8-33f3-4635-917c-e956e017aea3",
+    "head": "e9cf65d3d4301824255323a936f2a415e936bbf1",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "The owner measures time from a task or fix start to its merge, but merge prints no such time and the board shows no daily figure, so it is read by hand from records",
   "worker": "codex"
