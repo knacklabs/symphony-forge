@@ -122,6 +122,22 @@ def let_finish(top: Path, item: str, sha: str, names: list[str]) -> None:
         time.sleep(15)
 
 
+def after_code_ci(top: Path, item: str, branch: str, cfg: dict[str, Any], serious: Any) -> None:
+    """Pushing only Forge's records cancels the code's CI run in progress, and the record's own
+    run then cannot reuse that result. Let the code's run end first."""
+    remote = repo.run("git", "rev-parse", "-q", "--verify", f"origin/{branch}", cwd=top)
+    if serious or cfg["test_place"] != "ci" or remote.returncode:
+        return
+    from forge import review
+    paths = repo.git("diff", "--name-only", "-z", "--no-renames", remote.stdout.strip(), "HEAD",
+                     cwd=top).split("\0")
+    if not any(paths) or any(path and not (path.startswith(review.BOOKKEEPING)
+                                           or repo.SIGNOFF.fullmatch(path)) for path in paths):
+        return
+    let_finish(top, item, remote.stdout.strip(),
+                      [name for name in cfg["checks"] if name != "forge-pr-check"])
+
+
 def _wait(top: Path, item: str, sha: str, names: list[str], branch: str, progress: bool,
           result: dict[str, Any], waiting: Callable[[bool], None], train: bool = False) -> None:
     # ponytail: an env override is the whole wait seam (tests set 0 to look once).
