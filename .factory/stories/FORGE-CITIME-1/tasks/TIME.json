@@ -127,8 +127,8 @@
     "id": "54e83c0e-f2fc-4329-b7bc-e9d26c6b2686",
     "status": "clean"
   },
-  "round": 2,
-  "status": "waiting for checks",
+  "round": 3,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-18T10:45:14.639794+00:00",
@@ -153,10 +153,10 @@
     "worker_round": 2
   },
   "stuck": {
-    "close": "eee5ab7c-84c0-4f4f-b45e-17dab65d6601",
-    "head": "32a7874fee067f504a5777f0573e066f914b3085",
+    "close": "9ab785f4-a8c5-42d3-b2e0-b025ea16b31e",
+    "head": "66ff1610ebf223dbf558395d53ffefeae0cabf23",
     "keys": {},
-    "round": 1
+    "round": 2
   },
   "worker": "codex"
 }
