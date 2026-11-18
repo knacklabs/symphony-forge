@@ -37,49 +37,49 @@ Only a genuine trade-off goes to the human, as a question with options.
    Raise: Not done — [plan](/plans/FORGE-CITIME-1.md:90); [fasttest.py](/src/forge/fasttest.py:19).
    Case: normal use - After a merge, `forge test --change --base <before>` is rejected because `forge test` has no `--base` option. Its existing `--pytest` option takes a different path and does not run the starter’s `fast_test`. The required command change is outside MERGE’s Scope.
    Gain 5, Work 3, Harm 3
-   Disposition: cut - no new option: on a push, one workflow line points origin/<default> at the push's previous commit, so the unchanged `forge test --change` selects only what the merge brought; it is in MERGE's Scope (`prcheck.py` whole).
+   Disposition: cut - moved to a separate story (owner, 18 Nov 2026), with this fix carried into its draft
 
 2. Blocking: Not done: the red-branch check cannot recognize the planned push result.
    Raise: Not done — [plan](/plans/FORGE-CITIME-1.md:89); [prcheck.py](/src/forge/prcheck.py:119).
    Case: normal use - On a push, both generated workflow shapes name the result `tests (other event)`, while the plan looks for `tests`. A failed post-merge run can therefore be missed. The planned workflow assertion does not check the result’s name.
    Gain 5, Work 2, Harm 3
-   Disposition: cut - the gate is now named `tests` on `pull_request` and `push` (`tests (other event)` stays for `pull_request_target`), and the MERGE test asserts that name.
+   Disposition: cut - moved to a separate story (owner, 18 Nov 2026), with this fix carried into its draft
 
 3. Blocking: Plan gap: MERGE’s Scope excludes the workflow wiring it requires.
    Raise: Plan gap — [task table](/plans/FORGE-CITIME-1.md:122); [prcheck.py](/src/forge/prcheck.py:74).
    Case: normal use - The push needs the previous commit in `BASE_SHA` and a different test command. MERGE may change only triggers and job `if` lines, but the current base value and command are elsewhere in the workflow generator.
    Gain 4, Work 1, Harm 2
-   Disposition: cut - MERGE's Scope now holds `src/forge/prcheck.py` whole, after GROUPS.
+   Disposition: cut - moved to a separate story (owner, 18 Nov 2026), with this fix carried into its draft
 
 4. Blocking: Plan gap: a persistent failure on the default branch has no permitted repair path.
    Raise: Plan gap — [plan](/plans/FORGE-CITIME-1.md:89); [fullrun.py](/src/forge/fullrun.py:75).
    Case: normal use - A real regression makes the default branch red. The rule blocks the repair pull request as well, and a full run can test only the current default-branch commit. The refusal’s instruction to fix the branch cannot be completed through the stated flow.
    Gain 5, Work 3, Harm 3
-   Disposition: cut - repair path written: the agent fixes the break in a fix, the owner merges it on GitHub, the agent starts a full run, and its green status clears the red; the refusal's Next says so, and Risks names the owner's one merge.
+   Disposition: cut - moved to a separate story (owner, 18 Nov 2026), with this fix carried into its draft
 
 5. Blocking: Not done: the red-branch rule does not cover human merges.
    Raise: Not done — [plan](/plans/FORGE-CITIME-1.md:32); [land.py](/src/forge/land.py:163).
    Case: normal use - Human merge is the default. Forge hands the person a pull-request link without calling `merge.merge`, the only place assigned the red-branch wait, so the promised rule does not stop that merge.
    Gain 5, Work 3, Harm 3
-   Disposition: cut - narrowed to Forge's merges in What changes and Done-when 6; land's human hand-off line adds a red note, and Risks says Forge cannot stop a GitHub merge.
+   Disposition: cut - moved to a separate story (owner, 18 Nov 2026), with this fix carried into its draft
 
 6. Blocking: Not done: a later commit’s green check can hide the latest failure.
    Raise: Not done — [plan](/plans/FORGE-CITIME-1.md:89); [merge.py](/src/forge/merge.py:108).
    Case: normal use - Two changes merge while their default-branch checks run concurrently. The newer commit’s narrow check finishes green first; the older commit’s check then fails. Walking commits newest first finds the green result and permits another merge even though the latest finished run is red.
    Gain 4, Work 2, Harm 3
-   Disposition: cut - red now means any failed `tests` run or full run since the last green full run, within ten first-parent commits; a later green narrow run does not clear it.
+   Disposition: cut - moved to a separate story (owner, 18 Nov 2026), with this fix carried into its draft
 
 7. Blocking: Not done: an up-to-date branch rule forces another check for a non-overlapping change.
    Raise: Not done — [plan](/plans/FORGE-CITIME-1.md:31); [merge.py](/src/forge/merge.py:220).
    Case: normal use - GitHub can require a pull request to include the current default branch before merging. Forge’s existing response to `BEHIND` runs close again, including a new check, even when the files do not overlap. The plan’s test uses a permissive GitHub stub.
    Gain 4, Work 2, Harm 3
-   Disposition: cut - when GitHub requires up-to-date branches (`land._up_to_date_rule`), merge keeps today's push and wait; named in What changes, Done-when 5, Risks and the MERGE test.
+   Disposition: cut - moved to a separate story (owner, 18 Nov 2026), with this fix carried into its draft
 
 8. Blocking: Not done: an item’s own guide edits are mistaken for a merge repair.
    Raise: Not done — [plan](/plans/FORGE-CITIME-1.md:87); [merge.py](/src/forge/merge.py:128).
    Case: normal use - A ready item edits a Forge guide and the default branch gains an unrelated file. The existing comparison sees the item’s guide edits in the combined tree, sets `overlap`, and starts another check even though no guide repair occurred.
    Gain 3, Work 2, Harm 3
-   Disposition: cut - a guide repair counts only for a skills path whose merged content differs from both the item's head and the gained default branch; the MERGE test's item edits the guide.
+   Disposition: cut - moved to a separate story (owner, 18 Nov 2026), with this fix carried into its draft
 
 9. Blocking: Plan gap: TIME and OXLINT cannot start together with their stated Scopes.
    Raise: Plan gap — [plan](/plans/FORGE-CITIME-1.md:129); [task.py](/src/forge/task.py:516).
@@ -133,7 +133,7 @@ Only a genuine trade-off goes to the human, as a question with options.
     Raise: Plan gap — [task table](/plans/FORGE-CITIME-1.md:122); [test_train_land_all.py](/tests/test_train_land_all.py:317).
     Case: normal use - The plan asks for an extended train test, but the Tests cell names only the two new merge tests. Existing train tests also expect three disjoint changes to form a train, contrary to the new rule.
     Gain 4, Work 2, Harm 2
-    Disposition: cut - MERGE no longer changes the merge train, so `tests/test_train_land_all.py` stays as it is and is named as staying green in the Tests cell.
+    Disposition: cut - moved to a separate story (owner, 18 Nov 2026), with this fix carried into its draft
 
 18. Advisory: Plan gap: the five-item train limit conflicts with “every” overlapping item.
     Raise: Plan gap — [plan](/plans/FORGE-CITIME-1.md:88); [land.py](/src/forge/land.py:37).
