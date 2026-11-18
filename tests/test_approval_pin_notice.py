@@ -79,6 +79,11 @@ def test_2_newer_pin_notice_names_the_pinned_release(repo, gh, tmp_path, claude_
     assert repo.git("log", "-1", "--format=%s", "story/SHOP").startswith("Approve the plan")
 
 
+
+def touches(fix):
+    return json.loads((fix / ".factory" / "fixes" / "answers.json").read_text("utf-8")).get("touches", 0)
+
+
 @pytest.mark.parametrize("adopted", [False], ids=["new-client"])
 def test_3_blank_answers_count_as_unanswered(repo, gh, tmp_path, claude_payload, codex_payload, adopted):
     _waiting(repo, gh, tmp_path, adopted)
@@ -93,9 +98,7 @@ def test_3_blank_answers_count_as_unanswered(repo, gh, tmp_path, claude_payload,
         result = hook(repo, make("PostToolUse", tool, questions,
                                  {"answers": {"colour": blank}}, cwd=fix))
         assert result.returncode == 0, result.stdout + result.stderr
-    shown = repo.forge("next", cwd=fix)
-    assert shown.returncode == 0, shown.stdout + shown.stderr
-    assert "The fix answers (started): 0 human touches so far." in shown.stdout
+    assert touches(fix) == 0
 
     for make, tool, answer in (
         (claude_payload, "AskUserQuestion", "Blue"),
@@ -104,5 +107,4 @@ def test_3_blank_answers_count_as_unanswered(repo, gh, tmp_path, claude_payload,
         result = hook(repo, make("PostToolUse", tool, questions,
                                  {"answers": {"colour": answer}}, cwd=fix))
         assert result.returncode == 0, result.stdout + result.stderr
-    assert "The fix answers (started): 2 human touches so far." in repo.forge(
-        "next", cwd=fix).stdout
+    assert touches(fix) == 2
