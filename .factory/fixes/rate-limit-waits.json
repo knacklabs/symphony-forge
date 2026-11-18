@@ -4,12 +4,20 @@
   "done_when": "When GitHub answers with a rate-limit error, close, merge and land wait until the reset time GitHub reports (with one line saying so) and then continue, instead of stopping; new and existing repos get it on upgrade",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-18T09:20:16.262104+00:00",
       "step": "start"
     }
   ],
-  "why": "Issue 1665: when several closes, merges and land runs share one GitHub account, the API rate limit stops them with 'API rate limit exceeded' instead of waiting for the reset"
+  "stuck": {
+    "close": null,
+    "head": "0725d4e333b92385bb68ca551dd03ce702e1c371",
+    "keys": {},
+    "round": null
+  },
+  "why": "Issue 1665: when several closes, merges and land runs share one GitHub account, the API rate limit stops them with 'API rate limit exceeded' instead of waiting for the reset",
+  "worker": "codex"
 }
