@@ -364,7 +364,7 @@ def doctor(args: argparse.Namespace) -> int:
     for tool in ("git", "gh", "uv"):
         if not shutil.which(tool): add(f"{tool} is not installed or not on PATH.", INSTALL[tool])
     if shutil.which("gh") and repo.run("gh", "auth", "status", cwd=top).returncode: add("gh is not signed in to GitHub.", "gh auth login")
-    if workers != "codex" and init.signed_in("claude", top) is False:  # Claude builds on claude and split
+    if workers != "codex" and programs["claude"] and init.signed_in("claude", top) is False:  # Claude builds on claude and split
         add("Claude is not signed in.", "run claude and sign in")
     if on_codex and init.signed_in("codex", top) is False:
         add("Codex is not signed in.", "codex login")
