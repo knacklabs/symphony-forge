@@ -5,14 +5,59 @@
   "done_when": "forge.toml, the package and every pinned reference say v1.2.42, and tests/test_release_version.py passes",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [
+    {
+      "area": "test_1_forge_version_is_1_2_27_everywhere_it_is_recorded() in tests/test_release_version.py",
+      "file": "tests/test_release_version.py",
+      "gain": 4,
+      "harm": 1,
+      "line": 17,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: proof list",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "71feda189d8eae85ddc4f39dbfcce071e8b32ac65c140fd43765105401657b45",
+    "changed": "698a5187380c006d9eea19fd6bf5bff7a857ac2cda8982c200aeed617bc4db1d",
+    "commit": "6ab3f6b3c8da4edec0df6b385603b4acae0a8067",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 1, Harm 1\nRaise: Gate\nCase: normal use - reviewing the release before merge.\nThe supplied proof list is missing, and no commit on the branch contains a `Proof list:` paragraph. Close therefore has no mapping from the version requirements and the required release test to their evidence. Add a proof list covering the repository pin, package version, current-release references, and `tests/test_release_version.py`.",
+        "file": "tests/test_release_version.py",
+        "gain": 4,
+        "harm": 1,
+        "line": 17,
+        "priority": "P1",
+        "title": "Gate: proof list",
+        "work": 1
+      }
+    ],
+    "id": "01b2638e-c580-4f7d-b9ff-72621ab2b17b",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-18T02:57:13.667406+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-18T03:03:57.540943+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-11-18T03:03:57.557095+00:00",
+    "file": "tests/test_release_version.py",
+    "wait_id": "97c991e4-704d-4ff0-b073-02f836cd0112"
+  },
   "stuck": {
     "close": null,
     "head": "45b74f4f498b80e60cc526d87e182f8a996fa23e",
