@@ -48,9 +48,14 @@ def land(args: argparse.Namespace) -> int:
     if len(args.item) != 1:  # --all, or several named items: the same queue, the named ones only
         if getattr(args, "note", None) is not None:
             repo.refuse(REFUSALS["note_all"])
+        top = repo.root()
+        main = story.landed_ref(top)
         for name in args.item:
             if not repo.ITEM.fullmatch(name):
                 repo.refuse(repo.REFUSALS["bad_item"], item=name)
+            if task._merged(main, name, top):
+                say(f"Left out {name}: its pull request already merged.")
+                continue
             close._worktree(name)  # a teammate's published item gets its checkout; unknown everywhere refuses
         return _land_all(set(args.item))
     queued = os.environ.pop(QUEUED, "") == "1"

@@ -36,3 +36,19 @@ def test_2_named_items_run_the_pinned_release(repo):
     ran = repo.forge("land", "aa", "bb")
     assert ran.stderr == f"Forge {version} is installed, but this repo pins {OLD}, so {OLD} runs through uv.\n"
     assert [call["args"][-3:] for call in _calls(log)] == [["land", "aa", "bb"]]
+
+
+def test_3_a_named_batch_skips_an_earlier_merge_and_lands_the_remaining_item(train, monkeypatch):
+    env = train
+    heads = _ready(env, monkeypatch, ("aa",))
+    merged = env.repo.forge("merge", "aa")
+    assert merged.returncode == 0, merged.stdout + merged.stderr
+    assert not env.repo.git("branch", "--list", "fix/aa")
+    heads.update(_ready(env, monkeypatch, ("bb",), first=2))
+
+    done = env.repo.forge("land", "aa", "bb", timeout=600)
+    text = done.stdout + done.stderr
+    assert done.returncode == 0, text
+    assert "Left out aa: its pull request already merged." in done.stdout.splitlines(), text
+    assert "bb merged." in done.stdout.splitlines(), text
+    assert _merge_heads(env) == [(_number(f"fix/{slug}"), heads[slug]) for slug in ("aa", "bb")], text
