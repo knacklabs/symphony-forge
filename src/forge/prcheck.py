@@ -334,7 +334,7 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
                   "      contents: read\n"
                   "      actions: read\n"
                   "      statuses: write\n"
-                  "    runs-on: <runner>\n"
+                  "    runs-on: <test-runner>\n"
                   "    env:\n"
                   "      UV_FROZEN: '1'\n"
                   "      FORGE_GROUP: ${{ matrix.group }}\n"

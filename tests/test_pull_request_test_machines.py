@@ -20,7 +20,7 @@ STORY = "FIX-TEST-RUNNER-SETTING"
     ("new", 3, "windows-latest", "self-hosted"),
     ("adopted", 1, "ubuntu-24.04", None),
 ])
-def test_1_only_pull_request_tests_use_the_optional_machine(repo, gh, tmp_path, history, groups, runner, test_runner):
+def test_1_test_jobs_use_the_optional_machine(repo, gh, tmp_path, history, groups, runner, test_runner):
     # Public workflow contract: init/sync must keep each job on its intended event and machine.
     # A wrong label or event guard breaks CI; no test-only production seam is needed.
     version = repo.forge("--version").stdout.split()[-1]
@@ -58,7 +58,7 @@ def test_1_only_pull_request_tests_use_the_optional_machine(repo, gh, tmp_path, 
     assert set(jobs) == expected_jobs
     for name, job in jobs.items():
         selected = json.loads(re.search(r"^    runs-on: (.+)$", job, re.M)[1])
-        expected = "ubuntu-24.04" if history == "adopted" else test_runner if name == "tests" else runner
+        expected = "ubuntu-24.04" if history == "adopted" else test_runner if name in {"tests", "full-suite"} else runner
         assert selected == expected
     condition = re.search(r"^    if: (.+)$", jobs["tests"], re.M)[1]
     condition = condition.replace("needs.docs-check.outputs.docs-only", "'false'")
