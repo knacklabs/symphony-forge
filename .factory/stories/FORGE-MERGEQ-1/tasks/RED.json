@@ -1,6 +1,13 @@
 {
   "base": "3a8959a99be727fab5350411b1e0c893e2343e98",
   "branch": "task/FORGE-MERGEQ-1-RED",
+  "chat": {
+    "approval": "3f9cdacabf3cd0f35a0a7d50586d8b986f81a9fe88127b5a00eb2e017e7dfb8b",
+    "claude": null,
+    "conversation": "01a1ef05-7b8d-7012-b8e3-59128e3e1bcf",
+    "head": null,
+    "start": "b6b1af53c6011bc7cbffb158c3189bd1b33c116e"
+  },
   "round": 1,
   "stacked_on": "REMOTE-1/HOST",
   "status": "working",
