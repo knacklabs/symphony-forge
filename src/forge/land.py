@@ -24,7 +24,6 @@ REFUSALS = {
     "one_or_all": ("Give one change or --all, not both and not neither.",
                    "forge land <item>, or forge land --all"),
     "one_run": ("A land run already works in this repo.", "wait for it to end, then forge land --all"),
-    "unknown": ("No task or fix named {item}.", "forge board"),
     "note_all": ("Give one change with --note.", 'forge land <item> --note "<text>"'),
 }
 # A child of forge land --all: lend its queue place while close waits for CI.
@@ -52,6 +51,7 @@ def land(args: argparse.Namespace) -> int:
         for name in args.item:
             if not repo.ITEM.fullmatch(name):
                 repo.refuse(repo.REFUSALS["bad_item"], item=name)
+            close._worktree(name)  # a teammate's published item gets its checkout; unknown everywhere refuses
         return _land_all(set(args.item))
     queued = os.environ.pop(QUEUED, "") == "1"
     member, hold = os.environ.pop(TRAIN, ""), os.environ.pop(HOLD, "") == "1"
@@ -374,14 +374,13 @@ def _queue(top: Path, only: set[str]) -> int:
     default = repo.default_branch(top)
     hold = repo.merge_setting(top) == "agent"
     live = {run.get("item") for run in machine.entries() if run.get("repo_root") == top.as_posix()}
-    changes, needs, stacked, branches, seen = [], {}, {}, {}, set()
+    changes, needs, stacked, branches = [], {}, {}, {}
     prs = {pr.get("headRefName"): pr for pr in board._machine_prs(top)}
     for branch, tree in story.worktrees(top).items():
         found = None if branch.startswith("story/") else task.branch_item(branch, tree)
         if not found:
             continue
         item, state = found
-        seen.add(item)
         if only and item not in only:
             continue
         state = nextstep.at_ref(top, item, state, prs.get(branch))
@@ -415,8 +414,6 @@ def _queue(top: Path, only: set[str]) -> int:
             changes.append((age, item, files, ready))
             stacked[item] = state.get("stacked_on")
             branches[item] = branch
-    if unknown := sorted(only - seen):
-        repo.refuse(REFUSALS["unknown"], item=", ".join(unknown))
     changes.sort()
     queued = {item: age for age, item, *_ in changes}
     dependencies = TopologicalSorter({
