@@ -136,17 +136,16 @@ def after_code_ci(top: Path, item: str, branch: str, cfg: dict[str, Any], seriou
     """Let the code's CI run end before close pushes only Forge's records on top of it."""
     if serious or cfg["test_place"] != "ci":
         return
-    remote = repo.run("git", "rev-parse", "-q", "--verify", f"origin/{branch}", cwd=top)
-    if remote.returncode:
-        return
     from forge import review
     # Three dots: a replayed branch, whose remote head is no ancestor, shows its code and is skipped.
+    # A branch with no remote head yet makes the diff fail, so nothing is running to wait for.
     changed = repo.run("git", "diff", "--name-only", "-z", "--no-renames", f"origin/{branch}...HEAD", cwd=top)
     paths = changed.stdout.split("\0")
     if (changed.returncode or not any(paths)
             or any(path and not (path.startswith(review.BOOKKEEPING) or repo.SIGNOFF.fullmatch(path))
                    for path in paths)):
         return
+    remote = repo.run("git", "rev-parse", f"origin/{branch}", cwd=top)
     let_finish(top, item, remote.stdout.strip(), slot)
 
 
