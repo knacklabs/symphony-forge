@@ -8,8 +8,8 @@
       "text": "Honor the wait override before pushing the review record",
       "from": "blocking",
       "item": "long-ci-queues",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/checks.py\tNot done: count only job runtime toward the test limit\tlong-ci-queues",
