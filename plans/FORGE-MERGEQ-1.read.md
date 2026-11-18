@@ -1,13 +1,13 @@
 ---
 reader: codex (gpt-6.1-terra)
-read_at: 2026-11-18T04:57:03.604812+00:00
-seconds: 358.47
-read_hash: d9908a45fa02aadcaa4a65db8d9055ed22c39b53
-round: 2
+read_at: 2026-11-18T05:52:03.089592+00:00
+seconds: 212.901
+read_hash: 4c9e0ca6c9467855d35c17d89d5d5a2fdf904dd0
+round: 3
 passed: no
-doc_seen: d9908a45fa02aadcaa4a65db8d9055ed22c39b53
+doc_seen: 4c9e0ca6c9467855d35c17d89d5d5a2fdf904dd0
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: f298d0fd5b4ce3aebc99f7a8d3fab4946d3bd384
+notes_seen: c44acd520e14bfa130456b087bf45092e8c1570b
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a1ece5-0260-7cd2-b5a1-0a941555a861
 session:
@@ -118,3 +118,19 @@ Only a genuine trade-off goes to the human, as a question with options.
     The current workflow generator removes its test jobs unless `checks` contains `tests` ([prcheck.py](/src/forge/prcheck.py:294)). The amended plan promises a push run for CI-test repos but tests only the standard setup ([plan](/plans/FORGE-MERGEQ-1.md:75)); that test can pass while this supported configuration gets no post-merge test.  
     Gain 3, Work 2, Harm 3
     Disposition: keep - a repo whose required checks are its own (no Forge `tests` job) runs its tests in its own workflow, which Forge does not generate; the push run covers Forge's generated test jobs only, and that repo's own main CI stays its owner's (coordinator ruling, not worth a second generator path)
+
+## Round 3
+
+13. Advisory: Disputed keep 12: A failing custom push test does not stop merges.
+    Raise: Functional  
+    Case: normal use - A repo’s own `build` check runs tests on both pull requests and the default branch, and its default-branch run fails.  
+    Even when the owner supplies that push workflow, the planned red check reads only `tests` and `forge-full-suite` ([plan](/plans/FORGE-MERGEQ-1.md:67)). It ignores the failed `build` result and can continue merging. This is distinct from whether Forge generates the repo’s push workflow.  
+    Gain 3, Work 2, Harm 3
+    Disposition: keep - a repo whose required checks are its own runs its own default-branch CI; Forge does not generate it, and the red check reads only the runs Forge generates (`tests`) and the full run, as the owner accepted on 18 Nov 2026.
+
+14. Advisory: A cancelled test rerun can clear the red wait without passing.
+    Raise: Functional  
+    Case: normal use - The default-branch test fails, someone reruns it, then cancels the rerun.  
+    The plan reads all attempts, selects the latest completed check, and treats conclusions other than failure or timeout as not red ([plan](/plans/FORGE-MERGEQ-1.md:67)). A cancelled attempt therefore clears the earlier failure, contrary to the same rule’s requirement to stay red until the rerun ends green. Forge’s existing result reader retains the earlier finished attempt after cancellation ([board_facts.py](/src/forge/board_facts.py:457)).  
+    Gain 3, Work 2, Harm 3
+    Disposition: cut - fixed in the builders section: only a `tests` run that ended `success`, `failure` or `timed_out` is a result; a cancelled, skipped or neutral run never counts as green, so a cancelled rerun leaves the earlier failure red; the red-wait test covers a cancelled and a skipped rerun.
