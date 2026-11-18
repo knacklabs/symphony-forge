@@ -63,7 +63,7 @@ def test_1_pull_request_that_merged_the_default_branch_runs_normal_groups(
     workflow = (client / ".github/workflows/forge.yml").read_text("utf-8")
     excludes = re.search(r"^          DOCS_ONLY_EXCLUDES: '(.*)'$", workflow, re.M)[1]
     matrix = re.search(r"^        group: (.+)$", _jobs(workflow)["tests"], re.M)[1]
-    matrix = matrix.replace("needs.docs-check.outputs.test-only", "github.test_only")
+    matrix = matrix.replace("needs.docs-check.outputs.one-group", "github.one_group")
     main = repo.git("rev-parse", "HEAD", cwd=client)
     mine = ({"tests/test_mine.py": "def test_it(): assert True\n# Mine\n"} if change == "test"
             else {"docs/overview.md": "Mine\n"})
@@ -85,7 +85,7 @@ def test_1_pull_request_that_merged_the_default_branch_runs_normal_groups(
         assert done.returncode == 0, done.stdout + done.stderr
         values = dict(line.split("=", 1) for line in output.read_text("utf-8").splitlines())
         assert values.get("docs-only") != "true", values
-        return expression(matrix, test_only=values["test-only"])
+        return expression(matrix, one_group=values["one-group"])
 
     everything = list(range(1, 7)) if adopted else [1, 2]
     # The branch merged nothing in: one group runs the pull request's own test or required tests.

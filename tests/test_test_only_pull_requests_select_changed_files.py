@@ -82,8 +82,8 @@ def test_1_test_only_pull_requests_select_changed_files(repo, gh, tmp_path, adop
         pr_job = _jobs(workflow)["tests"]
         if adopted:
             groups = re.search(r"^        group: (.+)$", pr_job, re.M)[1]
-            groups = groups.replace("needs.docs-check.outputs.test-only", "github.test_only")
-            selected_groups = expression(groups, test_only=values["test-only"])
+            groups = groups.replace("needs.docs-check.outputs.one-group", "github.one_group")
+            selected_groups = expression(groups, one_group=values["one-group"])
         else:
             # New clients now run one PR job without a matrix. Never read the
             # nightly matrix as a substitute for the PR's group selection.
