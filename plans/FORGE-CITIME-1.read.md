@@ -1,18 +1,18 @@
 ---
 reader: codex (gpt-6.1-terra)
-read_at: 2026-11-18T04:13:23.525502+00:00
-seconds: 805.929
-read_hash: 174b780ed23c07c0dd24f0b4ef05132ffed6f84c
-round: 2
+read_at: 2026-11-18T05:59:09.261006+00:00
+seconds: 639.05
+read_hash: e2f0c6c96698140a0449faaeb180373eddf82722
+round: 3
 passed: no
-doc_seen: d1674823920a9ace885aaf9bca91e7a534a55d73
+doc_seen: e2f0c6c96698140a0449faaeb180373eddf82722
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 51888d4d04507f020a1637daf1b852fe887a7016
+notes_seen: 86e27521c45efca856a617783ef1bd31116b7f88
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a1ecb9-0d2c-7ba3-967f-9b980e7a0a1b
 session:
-loop_choice: accept
-loop_reason: Owner accepted read round 2: notes 20 and 21 and advisory 22 fixed in the builders' section
+loop_choice:
+loop_reason:
 ---
 # Cold read notes
 
@@ -196,3 +196,70 @@ Only a genuine trade-off goes to the human, as a question with options.
     Case: normal use - The local issue 1656 fix is still working and changes `checks.py`, which TIME also owns. The plan says that fix goes first but gives TIME no dependency on it; Forge’s started-work overlap check scans task branches, not fix branches.
     Gain 4, Work 1, Harm 2
    Disposition: keep - Owner accepted read round 2: notes 20 and 21 and advisory 22 fixed in the builders' section
+
+## Round 3
+
+28. Blocking: Not done: grouped CI jobs lack their own test setup.
+    Raise: Not done — [plan](/plans/FORGE-CITIME-1.md:88); [workflow](/src/forge/prcheck.py:82).
+    Case: normal use - GitHub runs each matrix group on a separate runner. The plan runs package installation and the Docker stack only in group 1, so group 2 has neither the installed test tools nor the API and database its tests need. The required check fails for a grouped run.
+    Gain 5, Work 3, Harm 3
+    Disposition: cut - fixed in the builders section: every group runs its own setup (install, Prisma generate, the Docker stack); only lint, type check, build and the health check run in group 1.
+
+29. Blocking: Not done: the shared web configuration breaks new Python starter apps.
+    Raise: Not done — [plan](/plans/FORGE-CITIME-1.md:85); [init.py](/src/forge/init.py:202).
+    Case: normal use - Python starter apps copy the TypeScript starter’s web Vitest configuration, but their scripts come from `starter-python`. The planned configuration references the new sequencer, which is added only to the TypeScript starter, so the Python app cannot load its web test configuration.
+    Gain 5, Work 2, Harm 3
+    Disposition: cut - fixed in the builders section: the sequencer is set only in the TypeScript starter's configs; the Python starter gets an unchanged copy of today's web config under `starter-python`, which overrides the copied file.
+
+30. Blocking: Unproven: item 3: the proposed two-worker override can still be capped to one.
+    Raise: Test — [plan](/plans/FORGE-CITIME-1.md:108); [worker cap](/src/forge/node_workers.cjs:19).
+    Case: normal use - When the live test inherits a one-CPU Forge allocation, the Node preload rewrites an explicit `--maxWorkers=2` to `--maxWorkers=1`. The proposed proof can therefore still run all three times serially.
+    Gain 3, Work 2, Harm 3
+    Disposition: cut - fixed in the builders section: the live API run passes `--maxWorkers=2` and sets `FORGE_TEST_CPUS=2`, so Forge's worker cap cannot lower it to one.
+
+31. Advisory: Unproven: item 5: the test never runs the timings refresh command.
+    Raise: Test — [plan](/plans/FORGE-CITIME-1.md:111); [API test helper](/src/forge/templates/starter/apps/api/test/helpers.ts:7).
+    Case: normal use - On a clean developer machine, a refresh that starts the API tests without their Docker stack cannot reach the test API. The planned test exercises placement and command listing, so it can pass while the documented refresh command fails.
+    Gain 3, Work 3, Harm 2
+    Disposition: cut - fixed in the builders section: the refresh is `node scripts/test.mjs --timings`, the starter's own full run with its Docker stack, so no separate script can miss the stack; the builder seeds the timings with it.
+   Disposition: keep - below the bar (follow-up)
+
+32. Advisory: Unproven: item 5: the test never runs Vitest with the new sequencer.
+    Raise: Test — [plan](/plans/FORGE-CITIME-1.md:111); [starter configuration](/src/forge/templates/starter/apps/web/vitest.config.ts:14).
+    Case: normal use - The placement helper and `--list` can pass even if the Vitest configuration does not load the sequencer. A grouped run would then use Vitest’s existing file-count split instead of recorded times.
+    Gain 3, Work 3, Harm 3
+    Disposition: cut - fixed in the builders section: the live run runs `--group 1/2` and `--group 2/2` and checks that the API files split into the whole set with none twice, which needs the sequencer loaded.
+   Disposition: keep - below the bar (follow-up)
+
+33. Advisory: Plan gap: the existing-app guide omits the wiring needed for timed groups.
+    Raise: Plan gap — [plan](/plans/FORGE-CITIME-1.md:90); [group warning](/src/forge/quicktest.py:19).
+    Case: normal use - An existing app follows the listed copy steps, but they do not include registering the sequencer in its Vitest configuration or adding group placeholders to its Forge commands. Copying the listed files alone does not enable timed groups.
+    Gain 3, Work 2, Harm 2
+    Disposition: cut - fixed in the builders section: the existing-app guide step now names registering the sequencer, `--shard` on each Vitest run, the `{group}`/`{groups}` placeholders, per-group setup and a refresh command.
+   Disposition: keep - below the bar (follow-up)
+
+34. Advisory: Not done: placement starts over for each affected project.
+    Raise: Not done — [plan](/plans/FORGE-CITIME-1.md:84); [starter test script](/src/forge/templates/starter/scripts/test.mjs:65).
+    Case: normal use - A change selects two library projects, each with one timed test file. The script starts Vitest separately for each project, so each placement starts with empty group totals and can assign both files to the same group. The groups can remain uneven even with current timings.
+    Gain 3, Work 3, Harm 2
+    Disposition: keep - each Vitest run balances its own files by time, so each project's split is even; balancing across projects needs one placement shared between separate Vitest runs, which is more code than the gain while the starter has few projects; the group time line shows it if it matters.
+   Disposition: keep - below the bar (follow-up)
+
+35. Advisory: Plan gap: doctor may lack the workflow needed to recognize an old timeout.
+    Raise: Plan gap — [plan](/plans/FORGE-CITIME-1.md:74); [timeout check](/src/forge/checks.py:298).
+    Case: normal use - In a fresh clone after squash merges, old pull-request commits need not exist locally. The reused rule reads each commit’s workflow with `git show`; when that commit is absent, it cannot identify a cancelled job at its time limit.
+    Gain 3, Work 2, Harm 2
+    Disposition: keep - when an old commit's workflow cannot be read, the cancelled run is left out as before; this needs a fresh clone, a squash merge and a time-limit cancel together, and the timed-out group still shows in the close line on the machine that ran close.
+   Disposition: keep - below the bar (follow-up)
+
+36. Advisory: Unproven: item 3: password-reset tests still read each other’s log events.
+    Raise: Test — [API test](/src/forge/templates/starter/apps/api/test/api.e2e-spec.ts:7); [organisation test](/src/forge/templates/starter/apps/api/test/organisations.e2e-spec.ts:111).
+    Case: normal use - Parallel files request password resets against the same API. Both look for the latest reset link in its shared log, so one can take the other file’s token. Three passing live runs do not establish that this ordering cannot occur.
+    Gain 3, Work 2, Harm 3
+    Disposition: cut - fixed in the builders section: the per-file key applies to every lookup of a link in the shared log, including password-reset links.
+
+37. Advisory: Plan gap: an existing starter test still requires the old init command.
+    Raise: Plan gap — [task table](/plans/FORGE-CITIME-1.md:123); [starter test](/tests/test_starter_app.py:62).
+    Case: normal use - TIMEGROUPS changes the new TypeScript starter’s `test` setting to include `--group`, while this existing test asserts that the setting equals the old command. The task does not identify that assertion for update, so the full test suite fails after the planned change.
+    Gain 4, Work 1, Harm 2
+    Disposition: cut - fixed in the builders section: TIMEGROUPS updates the `COMMAND` assertion in `tests/test_starter_app.py:62` and has that file in its Scope and Tests.
