@@ -715,6 +715,10 @@ def fix_start(args: argparse.Namespace) -> None:
         state["allow_large"] = "Prototype before sign-off"
     path = _new_checkout(name, f"fix/{name}", f"fix-{name}", base, state, f"Start the fix: {why}")
     print(f"Started fix {name} on fix/{name} in {path}")
+    from forge import owner_choices
+
+    if owner_choices.size_choice(path, name, getattr(args, "files", [])):
+        return
     if name != slug:
         print(f"Fix name {slug} is already taken; using {name}.")
     print(f"Next: forge {getattr(args, 'next', 'work')} {name}")
@@ -734,6 +738,9 @@ def allow_large(args: argparse.Namespace) -> None:
             run.get("kind") in ("work", "worker") for run in board.active_runs(top, name)):
         refuse(REFUSALS["worker_allow"])
     state["allow_large"] = args.reason.strip()
+    if (state.get("stop") or {}).get("predicted_files"):
+        repo.record_event(top, name, "owner wait end", wait_id=state["stop"].get("wait_id"))
+        del state["stop"]
     kind, limit = ("story part", "line limit") if "/" in name else ("fix", "fix limit")
     repo.commit_state(f"Allow the {kind} past the {limit}: {state['allow_large']}",
                       repo.write_state(name, state, top), top=top)
@@ -805,8 +812,14 @@ def amend(args: argparse.Namespace) -> None:
 
 def require_active(item: str, top: Path | None = None) -> None:
     """A retained checkout cannot resume a dropped fix without an explicit restore."""
-    from forge import nextstep
+    from forge import nextstep, story
 
+    location = top or repo.root()
+    location = next((path for branch, path in story.worktrees(location).items()
+                     if branch == f"fix/{item}"), location)
+    state = repo.read_state(item, location) or {}
+    if (state.get("stop") or {}).get("predicted_files") and not state.get("allow_large"):
+        raise repo.Refused(state["stop"]["question"], 'forge fix allow-large "<reason>"')
     if re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", item):
         top = top or repo.root()
         for branch in (f"fix/{item}", f"forge/{item}"):

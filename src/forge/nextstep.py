@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Any
 
 from forge import (__version__, approval, board, board_facts, close, codex, gaps, githooks, machine, migration_warnings,
-                   journey, native, records, repo, review, spotted, story, score, task, time_records, upgrade)
+                   journey, native, owner_choices, records, repo, review, spotted, story, score, task, time_records, upgrade)
 from forge.task import _merged, _started, can_start, developer, github_login, owner, sections, start_base, unbuilt_fix, waits_for
 from forge.task import rows as task_rows
 
@@ -179,7 +179,7 @@ def next_step(args: Any) -> int:
         top, history, schedules=True, numbers=True, facts=facts)
     step = ([journey.step_line(top, _report_config(top, {}), history, idle=_idle(top)[0] in lines)]
             if (top / "forge.toml").is_file() else [])
-    print("\n".join(step + notice + lines))
+    print("\n".join(owner_choices.first(top, step + notice + lines, (facts["github"] or {}).get("open", []))))
     return 0
 
 
@@ -1062,6 +1062,9 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
         statuses[item] = "hotspot" if state.get("stop") and not state["stop"].get("choice") else status
     if state.get("stop") and not state["stop"].get("choice"):
         stop = state["stop"]
+        if stop.get("predicted_files"):
+            return [f"Forge stopped {label}. Ask the human:", stop["question"],
+                    f'Next: cd {repo.quote(str(path or top))} && forge fix allow-large "<reason>"']
         if "question" in stop:
             return [f"Forge stopped {label}. Ask the human:", stop["question"],
                     "Next: " + close.REFUSALS["stuck"][1].format(item=item)]
