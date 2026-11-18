@@ -409,7 +409,7 @@ def close(args: argparse.Namespace) -> int:
         score.remember(_known(top, item, state, review_ref, previous), result, round_number,
                        {} if fresh else areas,
                        repaired=previous if not (fresh or records_only or switch or replayed) else None)
-    if (serious and round_number >= (cfg["task_review_rounds"] if "/" in item else 1) and
+    if (serious and round_number >= cfg["task_review_rounds"] and
             not any(score.holds(f, "P0") for _, f in serious) and (not fresh or not state.get("stop"))):
         stopped = {"file": serious[0][1]["file"], "at": repo.now(),
                    "wait_id": repo.record_event(top, item, "owner wait start", reason="review loop")}
@@ -1176,5 +1176,5 @@ COMMANDS = [{
              (('--resolve',), {"choices": ["more", "narrow", "split", "accept", "switch", "same"]}),
              (('--reason',), {"help": "The person's reason for a skip or choice after a review loop stop"})],
     "position": 150,
-    "listing": "| `forge close <item>` | Closes a task or fix; `--show` prints the latest saved review in full, with each finding's open, dismissed or follow-up state, and runs no tests or review; `--no-review --by \"<name>\" --reason \"<why>\"` skips only the model review when a person asks, unless an earlier review blocked the item; a fix gets one review round and a part two; open findings below P0 at the limit wait for `--resolve more`, `split` or `accept` with `--reason \"<human's choice>\"`; an open P0 returns to the worker, and the same P0 after two worker rounds stops for the owner; docs-only changes skip local and generated CI tests, and the required tests check passes with a docs-only note |",
+    "listing": "| `forge close <item>` | Closes a task or fix; `--show` prints the latest saved review in full, with each finding's open, dismissed or follow-up state, and runs no tests or review; `--no-review --by \"<name>\" --reason \"<why>\"` skips only the model review when a person asks, unless an earlier review blocked the item; fixes and parts use task_review_rounds, two by default; open findings below P0 at the limit wait for `--resolve more`, `split` or `accept` with `--reason \"<human's choice>\"`; an open P0 returns to the worker, and the same P0 after two worker rounds stops for the owner; docs-only changes skip local and generated CI tests, and the required tests check passes with a docs-only note |",
 }]
