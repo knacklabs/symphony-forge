@@ -12,12 +12,76 @@
   "done_when": "On Forge's own repo, forge next finishes in under 5 seconds and forge doctor in under 30 seconds on a warm run, with the same output as before; next reads merge history with one git log call and reuses the board's snapshot, and doctor reads its pull requests in one or a few batched requests; before and after times are in the pull request; new and existing repos get it on upgrade",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [
+    {
+      "area": "_finished() in src/forge/doctor.py",
+      "file": "src/forge/doctor.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 102,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Warm runtime targets and batched pull-request reads",
+      "work": 4
+    },
+    {
+      "area": "_gather() in src/forge/board.py",
+      "file": "src/forge/board.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 840,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Refresh the board snapshot after the concurrent fetch",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "ae91f89b6da2dec4e7dbd0e397024704fbd738a7075d4e2a7b8f8316f9b42359",
+    "changed": "4d90d594f4ebec235e49156c67eed9f62459724e49f19e55fa87cf79cb919b09",
+    "commit": "b007f0f80ea9f249117cac502a11d1fd5128bb11",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 5, Work 4, Harm 3\nRaise: Not done\nCase: normal use - running the commands on Forge's own repository, including after file-repair branches accumulate.\nThe owner-approved item is: \"On Forge's own repo, forge next finishes in under 5 seconds and forge doctor in under 30 seconds on a warm run, with the same output as before; next reads merge history with one git log call and reuses the board's snapshot, and doctor reads its pull requests in one or a few batched requests; before and after times are in the pull request; new and existing repos get it on upgrade\".\nThe recorded final warm runs took 13.380 and 6.581 seconds for next, and 38.205 and 67.00 seconds for doctor, all above the targets. Batching is also incomplete: doctor.py:70-71 still runs a separate `gh pr list` for each retained finished `fix/forge-files-*` branch before the new batch runs; ten such branches cause ten serial PR reads. The one-log guarantee can also fail: nextstep.py:173-175 overlaps the board history with migration_warnings.py:83, and both can enter story.py:885 for the same commit before repo.py:140-145 caches either result, launching two history reads.",
+        "file": "src/forge/doctor.py",
+        "gain": 5,
+        "harm": 3,
+        "line": 102,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: Warm runtime targets and batched pull-request reads",
+        "work": 4
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - a teammate has merged work since this checkout last fetched, and `forge next` refreshes origin.\nnextstep.py:173-175 starts the fetch in migration_warnings.py:34 concurrently with the board-history read. If the local read finishes first, this line reuses its pre-fetch `best` states for the factory numbers even after next waits for the fetch; repo.py:312-317 does not invalidate the cached board history. Before this change, `_gather` read the copies after that wait, so newly fetched stories and tasks contributed to the numbers. The new regression fixture pushes before starting the command, so it does not exercise a fetch that advances the default branch during the read.",
+        "file": "src/forge/board.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 840,
+        "priority": "P1",
+        "title": "Refresh the board snapshot after the concurrent fetch",
+        "work": 2
+      }
+    ],
+    "id": "0cbf153f-5352-4c4f-bcd2-ec0c6c9d2d2e",
+    "status": "blocked"
+  },
   "round": 2,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-18T15:14:57.669266+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-18T17:35:34.675403+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
