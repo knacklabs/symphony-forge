@@ -191,7 +191,7 @@ def startable(top: Path) -> list[str]:
 
 def context_hook(args: Any) -> int:
     top = repo.root()
-    lines, states = _report(top)
+    lines, states = _report(top, quick=True)
     step = ([journey.step_line(top, _report_config(top, {}), idle=_idle(top)[0] in lines)]
             if (top / "forge.toml").is_file() else [])
     print("\n".join(step + lines + states))
@@ -227,7 +227,8 @@ def handoff_hook(args: Any) -> int:
 
 def _report(top: Path, history: dict[str, Any] | None = None,
             schedules: bool = False, numbers: bool = False,
-            facts: dict[str, Any] | None = None) -> tuple[list[str], list[str]]:
+            facts: dict[str, Any] | None = None,
+            quick: bool = False) -> tuple[list[str], list[str]]:
     """The lines `forge next` prints, and one state line per story and fix with its human touches."""
     agents = machine.view()["agents"]
     running = sum(run.get("version") == __version__ and run.get("kind") == "work"
@@ -380,7 +381,7 @@ def _report(top: Path, history: dict[str, Any] | None = None,
         lines += ["Next: connect the repo on our deploy platform, pick a subdomain, and record its "
                   "address in docs/product/BRIEF.md under ## Demo as - Address: <url>."]
     # Appended statistics never enter machine_next's first line or command.
-    if (history is None or numbers) and repo.now()[:10] >= board.CHECK_DATE:
+    if (history is None or numbers) and not quick and repo.now()[:10] >= board.CHECK_DATE:
         lines.append(board.numbers_line(top, _report_config(top, refusals)["checks"]))
     lines += [f"{path}: {reason}" for path, reason in refusals.items()]
     build = []
@@ -400,7 +401,7 @@ def _report(top: Path, history: dict[str, Any] | None = None,
             lines += build
             build = []
     return (build + _due(top, history) + pinned + [line for alert in alerts.values() for line in alert]
-            + _hotspots(top, trees) + _overlaps(top, parts + [
+            + _hotspots(top, trees, 3 if quick else None) + _overlaps(top, parts + [
                 (f"The fix {state['branch'].partition('/')[2]}", state)
                 for state, _ in fixes if state.get("branch")], prs, (history or {}).get("states", {}))
             + lines + [f"Builds running: {running} of {agents['size']}"]), states
@@ -449,8 +450,9 @@ def _failed_schedules(top: Path) -> dict[str, list[str]]:
     return alerts
 
 
-def _hotspots(top: Path, trees: dict[str, Path]) -> list[str]:
-    """Hotspots on the default branch, unless their fix already has a worktree."""
+def _hotspots(top: Path, trees: dict[str, Path], cap: int | None = None) -> list[str]:
+    """Hotspots on the default branch, unless their fix already has a worktree. With a cap, the
+    session context names that many and points to forge next for the rest."""
     ref = story.landed_ref(top)
     try:
         items = spotted.read(top, ref)
@@ -466,7 +468,7 @@ def _hotspots(top: Path, trees: dict[str, Path]) -> list[str]:
     whys = {(repo.read_state(branch.partition("/")[2], path) or {}).get("why")
             for branch, path in trees.items()
             if re.fullmatch(r"(?:fix|forge)/[a-z0-9][a-z0-9-]*", branch)}
-    lines = []
+    lines: list[list[str]] = []
     for hotspot in hotspots:
         path, count = hotspot["path"], hotspot["count"]
         why, done = spotted.fix_text(path, hotspot["texts"])
@@ -480,9 +482,12 @@ def _hotspots(top: Path, trees: dict[str, Path]) -> list[str]:
                     "web", "frontend", "components", "screens", "pages"}
                 else "backend" if suffix in {".py", ".ts", ".js", ".go", ".rs", ".java", ".rb",
                                              ".sql", ".prisma"} else "mechanical")
-        lines += [f"{path} keeps breaking: {reason}",
-                  f'Next: forge fix start "{why}" --done "{done}" --kind {kind}']
-    return lines
+        lines.append([f"{path} keeps breaking: {reason}",
+                      f'Next: forge fix start "{why}" --done "{done}" --kind {kind}'])
+    if cap is None:
+        return [line for block in lines for line in block]
+    more = f"{len(lines) - cap} more files keep breaking. Run forge next for the list."
+    return [block[0] for block in lines[:cap]] + ([more] if len(lines) > cap else [])
 
 
 def _needs_demo_address(top: Path) -> bool:
