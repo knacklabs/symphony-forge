@@ -4,12 +4,20 @@
   "done_when": "forge merge (and land, for each item) prints 'Merged <item>: started <time>, merged <time>, <h>h<m>m start to merge; biggest wait: <cause>' from the item's How it went record, and the board shows the median start-to-merge time of items merged that day; new and existing repos get it on upgrade",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-18T16:43:44.516570+00:00",
       "step": "start"
     }
   ],
-  "why": "The owner measures time from a task or fix start to its merge, but merge prints no such time and the board shows no daily figure, so it is read by hand from records"
+  "stuck": {
+    "close": null,
+    "head": "9b4581e83a578af17c51459647a86d742adfa193",
+    "keys": {},
+    "round": null
+  },
+  "why": "The owner measures time from a task or fix start to its merge, but merge prints no such time and the board shows no daily figure, so it is read by hand from records",
+  "worker": "codex"
 }
