@@ -807,7 +807,11 @@ def worktrees(top: Path) -> dict[str, Path]:
             if line.startswith("worktree "):
                 path = Path(line[len("worktree "):])
             elif line.startswith("branch refs/heads/"):
-                found[line[len("branch refs/heads/"):]] = path
+                branch = line[len("branch refs/heads/"):]
+                if (not path.is_dir() and branch.startswith(("fix/", "forge/"))
+                        and json_of(show(top, branch, repo.state_path(branch.partition("/")[2]))).get("status") == "dropped"):
+                    continue
+                found[branch] = path
         return found
     return dict(repo.command_fact("worktrees", top, read))
 
