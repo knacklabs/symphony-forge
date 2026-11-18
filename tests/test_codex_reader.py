@@ -148,9 +148,11 @@ def test_10_the_cold_read_runs_on_the_other_family(repo, gh, monkeypatch, sdk_da
     monkeypatch.delenv("CLAUDECODE")
     before = len(_stub(stub))
 
-    # Under Codex the reader is Claude, read-only, on the grill kind's model and effort.
+    # Under Codex with tools = "claude" the reader is Claude, read-only, on the grill kind's model and effort.
     monkeypatch.setenv("CODEX_THREAD_ID", "thr-coordinator")
     wish = new_story(repo, "WISH")
+    wish_toml = wish / "forge.toml"
+    wish_toml.write_text('tools = "claude"\n' + wish_toml.read_text("utf-8"), encoding="utf-8")
     (wish / "plans" / "WISH.md").write_text(DOC, encoding="utf-8")
     (repo.bin / "claude-says.md").write_text(f"1. see {wish.resolve()}/docs/b.md\n", encoding="utf-8")
     assert repo.forge("read", "WISH").returncode == 0

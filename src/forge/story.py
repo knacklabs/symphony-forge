@@ -222,7 +222,6 @@ def read(args: Any) -> int:
         repo.refuse(REFUSALS["coordinator"], target=target)
     installed = {"claude": not claude_sdk.sdk_problem(), "codex": codex.installed()}
     installed[here] = True  # the coordinating app needs no external driver to read natively
-    other = "claude" if here == "codex" else "codex"
     # One tool always reads its own plans; both keep the earlier reader while it is installed.
     saved = codex.record(top, target, "Grill")
     recorded = ("codex" if record.get("conversation") else "claude" if record.get("session") else
