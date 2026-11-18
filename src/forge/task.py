@@ -970,3 +970,24 @@ GROUP_HELP = {
     "task": "Start a task",
     "fix": "Start a fix, let it go over the fix limit, or change its done-when",
 }
+
+
+def warn_fix_kind(top: Path, state: dict[str, Any], base: str) -> None:
+    kind = state.get("fix_kind")
+    if not kind:
+        return
+    files = repo.git("diff", "--name-only", "-z", "--no-renames", f"{base}...HEAD",
+                     "--", ".", *[path.replace(":(glob)", ":(exclude,glob)")
+                                    for path in repo.TEST_PATHS], cwd=top).split("\0")
+    # This is advice: paths can suggest a mismatch, but cannot decide what a change does.
+    code = [Path(path) for path in files if path and not path.startswith(
+        (".factory/", "plans/", "docs/"))]
+    ui = any(path.suffix in {".html", ".css", ".scss", ".jsx", ".tsx", ".vue", ".svelte"}
+             or set(path.parts) & {"web", "frontend", "components", "screens", "pages"}
+             for path in code)
+    backend = any(path.suffix in {".py", ".ts", ".js", ".go", ".rs", ".java", ".rb"}
+                  for path in code)
+    if (kind == "backend" and ui or kind == "ui" and backend and not ui
+            or kind == "mechanical" and (ui or backend)):
+        print("Warning: The changed files do not match this fix's worker kind "
+              f"({kind}). Check the kind before the next round.")
