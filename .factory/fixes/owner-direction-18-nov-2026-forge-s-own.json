@@ -60,7 +60,7 @@
     "id": "8f0f33ce-2cde-4746-9c0d-1ca97fcdb773",
     "status": "blocked"
   },
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-18T06:49:12.784679+00:00",
@@ -77,8 +77,12 @@
   ],
   "stop": {
     "at": "2026-11-18T07:28:04.562699+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "forge.toml",
-    "wait_id": "23f6c6c4-db2b-4328-9f2f-1dc06a657f16"
+    "reason": "Owner chose one more round: update the test that pins this repo's workers setting",
+    "wait_id": "23f6c6c4-db2b-4328-9f2f-1dc06a657f16",
+    "worker_round": null
   },
   "why": "Owner direction 18 Nov 2026: Forge's own repo builds with Codex. forge.toml still says workers = claude."
 }
