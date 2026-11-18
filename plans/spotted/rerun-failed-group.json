@@ -1,0 +1,81 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/checks.py\tNot done: When an item's latest CI run failed only in test groups, close and merge rerun only the failed jobs of that run once\trerun-failed-group",
+      "kind": "bug",
+      "path": "src/forge/checks.py",
+      "line": 387,
+      "text": "Not done: When an item's latest CI run failed only in test groups, close and merge rerun only the failed jobs of that run once",
+      "from": "blocking",
+      "item": "rerun-failed-group",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/checks.py\tPreserve timeout handling for non-group test jobs\trerun-failed-group",
+      "kind": "bug",
+      "path": "src/forge/checks.py",
+      "line": 193,
+      "text": "Preserve timeout handling for non-group test jobs",
+      "from": "blocking",
+      "item": "rerun-failed-group",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/checks.py\tRetry the failed run before publishing close's review record\trerun-failed-group",
+      "kind": "bug",
+      "path": "src/forge/checks.py",
+      "line": 193,
+      "text": "Retry the failed run before publishing close's review record",
+      "from": "blocking",
+      "item": "rerun-failed-group",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/checks.py\tTreat skipped required checks as failures before starting a retry\trerun-failed-group",
+      "kind": "bug",
+      "path": "src/forge/checks.py",
+      "line": 392,
+      "text": "Treat skipped required checks as failures before starting a retry",
+      "from": "blocking",
+      "item": "rerun-failed-group",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/conftest.py\tProcess cleanup can put secret environment values in a test failure message.",
+      "kind": "bug",
+      "path": "tests/conftest.py",
+      "line": 385,
+      "text": "Process cleanup can put secret environment values in a test failure message.",
+      "from": "worker",
+      "item": "rerun-failed-group",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_ci_retries_failed_test_jobs.py\tGate: test_1_failed_test_jobs_retry_once_and_wait and test_2_other_failures_and_used_attempts_do_not_restart_ci\trerun-failed-group",
+      "kind": "bug",
+      "path": "tests/test_ci_retries_failed_test_jobs.py",
+      "line": 32,
+      "text": "Gate: test_1_failed_test_jobs_retry_once_and_wait and test_2_other_failures_and_used_attempts_do_not_restart_ci",
+      "from": "blocking",
+      "item": "rerun-failed-group",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\ttests/test_land_releases_check_wait_slots.py\tTwo status snapshots of one minute each make this test exceed a two-minute whole-test limit.",
+      "kind": "edge",
+      "path": "tests/test_land_releases_check_wait_slots.py",
+      "line": 69,
+      "text": "Two status snapshots of one minute each make this test exceed a two-minute whole-test limit.",
+      "from": "worker",
+      "item": "rerun-failed-group",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
