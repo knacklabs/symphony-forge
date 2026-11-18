@@ -22,14 +22,14 @@ def test_3_user_facing_task_uses_design_claude_with_split_workers(repo, monkeypa
     config.write_text(config.read_text("utf-8").replace('workers = "codex"', 'workers = "split"'),
                       encoding="utf-8")
     # Committed: a round that ends with changes uncommitted gets a second, commit-nudge turn.
-    repo.git("commit", "-qam", "Use split workers", cwd=folder)
+    repo.git("commit", "--allow-empty", "-qam", "Use split workers", cwd=folder)
     # A client repo counts as live unless forge.toml says prototype.
     repo.write("forge.toml", (repo.path / "forge.toml").read_text("utf-8").replace(
         'repo = "client"', 'repo = "client"\nstage = "prototype"').replace(
         'workers = "codex"', 'workers = "split"'))
     prototype_design(repo)
     repo.git("add", "docs/design/prototype", "docs/decisions/0001-prototype-design.md")
-    repo.git("commit", "-q", "-am", "Prototype stage")
+    repo.git("commit", "--allow-empty", "-q", "-am", "Prototype stage")
     repo.git("push", "-q", "origin", "main")
     claude_log = install_claude(repo)
     result = repo.forge("work", "BOARD/PAGE")
@@ -54,7 +54,7 @@ def test_3_user_facing_task_uses_design_claude_with_split_workers(repo, monkeypa
     state["allow_large"] = "Other allowance"
     state_file.write_text(json.dumps(state), encoding="utf-8")
     # Committed: a round that ends with changes uncommitted gets a second, commit-nudge turn.
-    repo.git("commit", "-qam", "Allow other work", cwd=fix)
+    repo.git("commit", "--allow-empty", "-qam", "Allow other work", cwd=fix)
     request.getfixturevalue("claude_session")
     # The UI fix keeps Claude now; neither coordinating app should claim this toolkit round.
     monkeypatch.delenv("CLAUDECODE", raising=False)
@@ -67,7 +67,7 @@ def test_3_user_facing_task_uses_design_claude_with_split_workers(repo, monkeypa
     config.write_text(config.read_text("utf-8").replace('repo = "client"',
                                                      'repo = "forge-source"').replace(
         'workers = "split"', 'workers = "codex"'), encoding="utf-8")
-    repo.git("commit", "-qam", "Use the source repo", cwd=folder)
+    repo.git("commit", "--allow-empty", "-qam", "Use the source repo", cwd=folder)
     source = repo.forge("work", "BOARD/PAGE")
     assert source.returncode == 0, source.stdout + source.stderr
     assert len(_sent(codex_log, "turn/start")) == 1
@@ -78,7 +78,7 @@ def test_3_user_facing_task_uses_design_claude_with_split_workers(repo, monkeypa
         'workers = "codex"', 'workers = "split"') +
                       '\n[models.design.claude]\nmodel = "custom-opus"\neffort = "high"\n',
                       encoding="utf-8")
-    repo.git("commit", "-qam", "Use a custom design model", cwd=folder)
+    repo.git("commit", "--allow-empty", "-qam", "Use a custom design model", cwd=folder)
     monkeypatch.setenv("CODEX_THREAD_ID", "thr-test-coordinator")
     monkeypatch.delenv("CLAUDECODE", raising=False)
     custom = repo.forge("work", "BOARD/PAGE")
@@ -104,7 +104,7 @@ def test_3_user_facing_task_uses_design_claude_with_split_workers(repo, monkeypa
     # Design still uses its own Claude model when the repo chooses Claude for ordinary work.
     config.write_text(config.read_text("utf-8").replace('workers = "split"',
                                                      'workers = "claude"'), encoding="utf-8")
-    repo.git("commit", "-qam", "Use Claude workers", cwd=folder)
+    repo.git("commit", "--allow-empty", "-qam", "Use Claude workers", cwd=folder)
     monkeypatch.setenv("CODEX_THREAD_ID", "thr-test-coordinator")
     monkeypatch.delenv("CLAUDECODE")
     claude_worker = repo.forge("work", "BOARD/PAGE")
@@ -124,7 +124,7 @@ def test_4_missing_or_cleanly_failed_claude_falls_back_to_sol(repo, monkeypatch,
     config.write_text(config.read_text("utf-8").replace('workers = "codex"', 'workers = "split"') +
                       '\n[models.design.codex]\nmodel = "gpt-6-nova"\neffort = "xhigh"\n',
                       encoding="utf-8")
-    repo.git("commit", "-qam", "Use Nova for design", cwd=folder)
+    repo.git("commit", "--allow-empty", "-qam", "Use Nova for design", cwd=folder)
     monkeypatch.setenv("STUB_CLAUDE_EXIT", "3")
     clean = repo.forge("work", "BOARD/PAGE")
     assert clean.returncode == 0, clean.stdout + clean.stderr
@@ -149,7 +149,7 @@ def test_4_missing_or_cleanly_failed_claude_falls_back_to_sol(repo, monkeypatch,
     version = repo.forge("--version").stdout.split()[-1]
     config.write_text(
         f'version = "{version}"\nrepo = "client"\nworkers = "split"\n', encoding="utf-8")
-    repo.git("commit", "-qam", "Use the defaults", cwd=folder)
+    repo.git("commit", "--allow-empty", "-qam", "Use the defaults", cwd=folder)
     os.unlink(repo.bin / "claude")
     if os.name == "nt":
         os.unlink(repo.bin / "claude.cmd")

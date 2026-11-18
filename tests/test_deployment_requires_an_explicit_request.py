@@ -53,7 +53,7 @@ def test_1_clients_receive_explicit_deployment_authorization(repo, gh, tmp_path,
         synced = repo.forge("sync", cwd=client)
         assert synced.returncode == 0, synced.stdout + synced.stderr
     repo.git("add", "-A", cwd=client)
-    repo.git("commit", "-q", "-m", "Use the current client guidance", cwd=client)
+    repo.git("commit", "--allow-empty", "-q", "-m", "Use the current client guidance", cwd=client)
     worked = repo.forge("work", item, cwd=client)
     assert worked.returncode == 0, worked.stdout + worked.stderr
 

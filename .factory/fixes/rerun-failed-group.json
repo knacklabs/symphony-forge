@@ -1,0 +1,123 @@
+{
+  "base": "02c44b622a5a1b1bd8f74cb45b2204a93d9a0b31",
+  "branch": "fix/rerun-failed-group",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1edf7-7f0d-73b3-94b3-c09472b8b063",
+    "head": null,
+    "start": "a60245d244add89ec0b9f53afb68291f69d3fb98"
+  },
+  "done_when": "When an item's latest CI run failed only in test groups, close and merge rerun only the failed jobs of that run once (the way land does) and wait for them; a second failure counts as failed and names forge work; new and existing repos get it on upgrade",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "_rerun_cancelled() in src/forge/checks.py",
+      "file": "src/forge/checks.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 387,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: When an item's latest CI run failed only in test groups, close and merge rerun only the failed jobs of that run once",
+      "work": 3
+    },
+    {
+      "area": "_wait() in src/forge/checks.py",
+      "file": "src/forge/checks.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 193,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Retry the failed run before publishing close's review record",
+      "work": 3
+    },
+    {
+      "area": "_wait() in src/forge/checks.py",
+      "file": "src/forge/checks.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 193,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Preserve timeout handling for non-group test jobs",
+      "work": 2
+    },
+    {
+      "area": "_rerun_cancelled() in src/forge/checks.py",
+      "file": "src/forge/checks.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 392,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Treat skipped required checks as failures before starting a retry",
+      "work": 2
+    },
+    {
+      "area": "test_1_failed_test_jobs_retry_once_and_wait() in tests/test_ci_retries_failed_test_jobs.py",
+      "file": "tests/test_ci_retries_failed_test_jobs.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 32,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_failed_test_jobs_retry_once_and_wait and test_2_other_failures_and_used_attempts_do_not_restart_ci",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "64a56d449382157960d087fcf52ff00129814cf9c6cf165cebe5de736c194a4f",
+    "changed": "9dcf4424ca4d318e25f1e353fc452779464e971e5c10ba4cf487a11b434fe7d0",
+    "commit": "1c668f22d578d2713188601bf7dc87e9ff890454",
+    "dismissals": [],
+    "findings": [],
+    "id": "d48ed4d5-7e00-4226-bd64-c363a1e5c46b",
+    "status": "clean"
+  },
+  "round": 4,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-18T09:20:10.614816+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-18T09:41:04.168727+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-18T10:05:23.013065+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-18T11:56:40.185444+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-18T12:46:10.265658+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "eae8d240-707f-48ff-bf4e-74debfe7d258",
+    "head": "6660e729b8ec77e19acdef0e3630135581be4053",
+    "keys": {},
+    "round": 3
+  },
+  "why": "Issue 1664: when one CI test group fails or times out, close and merge stop, and only land reruns the failed group (gh run rerun --failed); a person has to rerun the whole run",
+  "worker": "codex"
+}

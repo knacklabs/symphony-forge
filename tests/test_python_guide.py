@@ -102,11 +102,11 @@ def test_5_an_existing_app_keeps_its_stack(repo, gh, tmp_path):
                       count=1, flags=re.M)
     config.write_text(settings, encoding="utf-8")
     _fixture_git(repo, tmp_path, "add", "-A")
-    _fixture_git(repo, tmp_path, "commit", "-q", "-m", "Adopt existing Python app")
+    _fixture_git(repo, tmp_path, "commit", "--allow-empty", "-q", "-m", "Adopt existing Python app")
     config.write_text(re.sub(r'^version = ".*"$', f'version = "{_version(repo)}"',
                              settings, count=1, flags=re.M), encoding="utf-8")
     _fixture_git(repo, tmp_path, "add", "forge.toml")
-    _fixture_git(repo, tmp_path, "commit", "-q", "-m", "Upgrade Forge")
+    _fixture_git(repo, tmp_path, "commit", "--allow-empty", "-q", "-m", "Upgrade Forge")
     _fixture_git(repo, tmp_path, "push", "-q", "origin", "main")
 
     started = repo.forge("fix", "start", "Preserve the existing Python app", "--done",

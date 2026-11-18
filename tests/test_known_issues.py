@@ -67,7 +67,7 @@ def kept_history(unsynced_up, monkeypatch, request):
     head = env.commit(where, path, json.dumps(state), f"Review of {item}: clean")
     repo.git("push", "-q", "origin", head + ":refs/pull/11/head")
     repo.git("merge", "-q", "--squash", branch)
-    repo.git("commit", "-qm", "Readers see a greeting")
+    repo.git("commit", "--allow-empty", "-qm", "Readers see a greeting")
     repo.git("worktree", "remove", where.as_posix())
     repo.git("branch", "-D", branch)
     # A current persisted list is authoritative even when no review survives.
@@ -176,7 +176,7 @@ def test_16_board_refresh_uses_the_current_saved_list(kept_history, monkeypatch)
     def publish(message):
         repo.write(path, json.dumps(state))
         repo.git("add", path)
-        repo.git("commit", "-q", "-m", message)
+        repo.git("commit", "--allow-empty", "-q", "-m", message)
         repo.git("switch", "-q", "main")
         repo.git("merge", "-q", "--ff-only", branch)
         repo.git("--git-dir", repo.git("remote", "get-url", "origin"), "fetch", "-q",

@@ -11,7 +11,7 @@ def test_1_worker_brief_requires_named_tests_and_keeps_flaky_failures_unresolved
     repo.write("forge.toml", f'version = "{version}"\nworkers = "claude"\n'
                'models.lite = { model = "sonnet", effort = "medium" }\n')
     repo.git("add", "forge.toml")
-    repo.git("commit", "-q", "-m", "Pin Forge")
+    repo.git("commit", "--allow-empty", "-q", "-m", "Pin Forge")
     repo.git("push", "-q", "origin", "main")
 
     started = repo.forge("fix", "start", "Clarify worker test guidance",

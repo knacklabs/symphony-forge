@@ -42,7 +42,7 @@ if args[:2] == ["pr", "merge"]:
         message += "\\n\\n" + (sys.stdin.buffer.read().decode("utf-8") if source == "-"
                                   else pathlib.Path(source).read_text(encoding="utf-8"))
     # Windows caps a command line at 32,767 characters; long messages go through stdin.
-    subprocess.run(["git", "commit", "-q", "-F", "-"], cwd=checkout, check=True, input=message.encode("utf-8"))
+    subprocess.run(["git", "commit", "--allow-empty", "-q", "-F", "-"], cwd=checkout, check=True, input=message.encode("utf-8"))
     subprocess.run(["git", "push", "-q", "origin", "main"], cwd=checkout, check=True)
     (here / "github-merged").touch()
     sys.exit(0)
@@ -81,7 +81,7 @@ def test_1_last_task_merge_records_story_done_without_another_pull_request(
         shutil.copytree(ROOT / "tests/fixtures/adopted-v1.2.2/client", repo.path,
                         dirs_exist_ok=True)
         repo.git("add", "-A")
-        repo.git("commit", "-qm", "Adopt the previous release")
+        repo.git("commit", "--allow-empty", "-qm", "Adopt the previous release")
         env.commit(repo.path, ".factory/fixes/upgrade-client.json", json.dumps({
             "kind": "fix", "branch": "fix/upgrade-client", "why": "Upgrade Forge",
             "done_when": "The client uses this release", "status": "started"}))
@@ -91,7 +91,7 @@ def test_1_last_task_merge_records_story_done_without_another_pull_request(
         synced = repo.forge("sync")  # the same command the release upgrade runs
         assert synced.returncode == 0, synced.stderr
         repo.git("add", "-A")
-        repo.git("commit", "-qm", "Upgrade Forge")
+        repo.git("commit", "--allow-empty", "-qm", "Upgrade Forge")
         checkout = env.tmp / "upgraded-checkout"
         remote = repo.git("remote", "get-url", "origin")
         repo.git("clone", "-q", "--branch", "fix/upgrade-client", str(repo.path), str(checkout))
@@ -157,10 +157,10 @@ def test_2_story_done_changes_outcome_on_the_existing_work_branch(env):
     repo = env.repo
     item, where = env.start_approved_task(STORY_DOC)
     repo.git("merge", "-q", "--squash", "task/SHOP-T1")
-    repo.git("commit", "-qm", "Merge the first task")
+    repo.git("commit", "--allow-empty", "-qm", "Merge the first task")
     item, last = env.start_task("T2", {"show.py": "print('saved')\n"})
     repo.git("merge", "-q", "--squash", "task/SHOP-T2")
-    repo.git("commit", "-qm", "Merge the last task")
+    repo.git("commit", "--allow-empty", "-qm", "Merge the last task")
     repo.git("push", "-q", "origin", "main")
     correction = repo.forge("fix", "start", "Correct the basket outcome", "--done",
                             "The outcome describes returning baskets")

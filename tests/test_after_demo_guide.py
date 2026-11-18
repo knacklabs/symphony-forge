@@ -46,7 +46,7 @@ def delivered(repo, gh, tmp_path, request):
         config.write_text(config.read_text("utf-8").replace(
             'version = "v1.2.2"', f'version = "{_version(repo)}"'), encoding="utf-8")
         repo.git("add", "-A", cwd=client)
-        repo.git("commit", "-q", "-m", "Upgrade the earlier client", cwd=client)
+        repo.git("commit", "--allow-empty", "-q", "-m", "Upgrade the earlier client", cwd=client)
         repo.git("push", "-q", "origin", "main", cwd=client)
     started = repo.forge("fix", "start", "Check after demo guidance", "--done",
                          "The after demo guidance is delivered", "--kind", "mechanical", cwd=client)
@@ -65,7 +65,7 @@ def delivered(repo, gh, tmp_path, request):
         'workers = "split"', 'workers = "claude"').replace(
         'workers = "codex"', 'workers = "claude"'), encoding="utf-8")
     repo.git("add", "-A", cwd=client)
-    repo.git("commit", "-q", "-m", "Use the delivered guidance", cwd=client)
+    repo.git("commit", "--allow-empty", "-q", "-m", "Use the delivered guidance", cwd=client)
     worked = repo.forge("work", "check-after-demo-guidance", cwd=client)
     assert worked.returncode == 0, worked.stdout + worked.stderr
     brief = " ".join(calls(log)[-1]["brief"].split())

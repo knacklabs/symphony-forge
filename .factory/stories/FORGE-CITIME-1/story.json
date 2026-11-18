@@ -1,0 +1,49 @@
+{
+  "approval": {
+    "at": "2026-11-18T10:44:33.043213+00:00",
+    "by": "human-via-Claude",
+    "event": "toolu_01SZVS6BMyjhYdmw5pZvQuEb",
+    "hash": "1280d44b1a637b802f4fe8e3abbad6a3bcd0cc63776d2c73dab88bc44c52e21d",
+    "round": 6,
+    "runtime": "claude",
+    "session": "c01a489d-c76f-41c1-8371-d6f0052b027c"
+  },
+  "doc": "plans/FORGE-CITIME-1.md",
+  "status": "approved",
+  "steps": [
+    {
+      "at": "2026-11-18T03:18:46.027160+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-18T03:46:51.988840+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-11-18T04:13:23.645600+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-11-18T05:59:09.369914+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-11-18T06:32:03.007489+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-11-18T09:32:04.496370+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-11-18T09:39:37.558437+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-11-18T10:44:33.043714+00:00",
+      "step": "approved"
+    }
+  ],
+  "title": "Client pull requests finish CI in about 10 minutes, and Forge shows when they do not",
+  "touches": 1
+}

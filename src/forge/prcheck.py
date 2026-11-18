@@ -63,7 +63,7 @@ jobs:
     runs-on: <runner>
     outputs:
       docs-only: ${{ steps.docs.outputs.docs-only }}
-      test-only: ${{ steps.docs.outputs.test-only }}
+      one-group: ${{ steps.docs.outputs.one-group }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -82,16 +82,16 @@ jobs:
   tests:
     needs: docs-check
     if: github.event_name == 'pull_request' && needs.docs-check.outputs.docs-only != 'true'
-    name: test group ${{ matrix.group }} of ${{ needs.docs-check.outputs.test-only == 'true' && 1 || <groups> }}
+    name: test group ${{ matrix.group }} of ${{ needs.docs-check.outputs.one-group == 'true' && 1 || <groups> }}
     strategy:
       fail-fast: false
       matrix:
-        group: ${{ fromJSON(needs.docs-check.outputs.test-only == 'true' && '[1]' || '<group-list>') }}
+        group: ${{ fromJSON(needs.docs-check.outputs.one-group == 'true' && '[1]' || '<group-list>') }}
     runs-on: <test-runner>
     env:
       UV_FROZEN: '1'
       FORGE_GROUP: ${{ matrix.group }}
-      FORGE_GROUPS: ${{ needs.docs-check.outputs.test-only == 'true' && '1' || '<groups>' }}
+      FORGE_GROUPS: ${{ needs.docs-check.outputs.one-group == 'true' && '1' || '<groups>' }}
 <containers><tests-timeout>    steps:
       - uses: actions/checkout@v7
         with:
@@ -333,8 +333,7 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
                   "    permissions:\n"
                   "      contents: read\n"
                   "      actions: read\n"
-                  "      statuses: write\n"
-                  "    runs-on: <runner>\n"
+                  "    runs-on: <test-runner>\n"
                   "    env:\n"
                   "      UV_FROZEN: '1'\n"
                   "      FORGE_GROUP: ${{ matrix.group }}\n"
@@ -397,6 +396,11 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
         full_suite = full_suite.replace("    steps:\n", "    steps:\n      - run: " + json.dumps(
             'echo "::warning::' + full_warning + '"') + "\n", 1)
     template = WORKFLOW
+    if ("{groups}" not in change_command
+            or re.search(r"(?:\{group\}|--shard=\d+)/\d+",
+                         (cfg.get("fast_test") or "") + "\n" + cfg["test"])):
+        # A fixed shard count must keep every shard, even for a small change.
+        template = template.replace("steps.docs.outputs.one-group", "'false'")
     if groups == 1:
         start = template.index("  docs-check:\n")
         tests = template.index("  tests:\n", start)
@@ -408,7 +412,7 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
                   "    name: ${{ github.event_name == 'pull_request' && 'tests' || 'tests (other event)' }}\n"
                   + template[runner:end])
         single = single.replace("${{ matrix.group }}", "'1'").replace(
-            "${{ needs.docs-check.outputs.test-only == 'true' && '1' || '<groups>' }}", "'1'")
+            "${{ needs.docs-check.outputs.one-group == 'true' && '1' || '<groups>' }}", "'1'")
         single = single.replace("    steps:\n", "    steps:\n<group-warning>", 1)
         template = template[:start] + single + template[gate:]
     workflow = (template.replace("<full-triggers>", full_triggers)

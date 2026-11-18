@@ -29,11 +29,11 @@ def _auth(repo, claude, codex):
 
 @pytest.mark.parametrize("claude,codex,tools,workers,message", [
     (True, False, "claude", "claude", "Only Claude is signed in. Forge uses Claude for all work."),
-    (True, True, "both", "split", ""),
-    (False, False, "both", "split", "Sign in to Claude or Codex before you start work."),
-    (True, None, "both", "split", ""),
-    (None, False, "both", "split", ""),
-    (False, True, "both", "split", ""),
+    (True, True, "both", "claude", ""),
+    (False, False, "both", "claude", "Sign in to Claude or Codex before you start work."),
+    (True, None, "both", "claude", ""),
+    (None, False, "both", "claude", ""),
+    (False, True, "codex", "codex", "Only Codex is signed in. Forge uses Codex for all work."),
 ])
 def test_1_init_uses_signed_in_tools(repo, gh, tmp_path, claude, codex, tools, workers, message):
     _auth(repo, claude, codex)
@@ -49,7 +49,7 @@ def test_1_init_uses_signed_in_tools(repo, gh, tmp_path, claude, codex, tools, w
 
 @pytest.mark.parametrize("workers,codex,warns,adopted", [
     ("split", False, True, False), ("codex", False, True, False),
-    ("claude", False, False, False), ("split", True, False, False),
+    ("claude", False, True, False), ("split", True, False, False),
     ("split", None, False, False), ("split", False, True, True),
 ])
 def test_2_doctor_reports_codex_sign_in_without_changing_existing_settings(
@@ -70,3 +70,12 @@ def test_2_doctor_reports_codex_sign_in_without_changing_existing_settings(
     done = repo.forge("doctor", cwd=client)
     assert ("Codex is not signed in.\n  Fix: codex login" in done.stdout) is warns, done.stdout
     assert settings.read_text(encoding="utf-8") == text
+
+
+def test_3_doctor_reports_claude_sign_out_in_a_two_tool_repo(repo, gh, tmp_path):
+    _auth(repo, False, True)
+    version = repo.forge("--version").stdout.split()[-1]
+    client = _new_repo(repo, gh, tmp_path, f'version = "{version}"\nworkers = "claude"\n')
+    done = repo.forge("init", "--actions", "yes", cwd=client)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "Claude is not signed in.\n  Fix: run claude and sign in" in repo.forge("doctor", cwd=client).stdout

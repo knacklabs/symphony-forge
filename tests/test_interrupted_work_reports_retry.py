@@ -47,7 +47,7 @@ def test_1_interrupted_round_prints_retry_and_releases_lock(
     config.write_text(f'version = "{version}"\nrepo = "client"\ntools = "both"\n'
                       'workers = "claude"\ntest = "git status --porcelain"\n', encoding="utf-8")
     repo.git("add", "forge.toml", ".factory")
-    repo.git("commit", "-qm", "Choose external Claude worker")
+    repo.git("commit", "--allow-empty", "-qm", "Choose external Claude worker")
     repo.git("switch", "-q", "main")
     repo.git("merge", "-q", "--ff-only", "fix/configure-worker")
     _land_fixture(repo)

@@ -21,11 +21,11 @@ def _closable(repo, gh, monkeypatch, tmp_path, sdk_data, client=False):
     toml = folder / "forge.toml"
     toml.write_text(toml.read_text("utf-8").replace(
         'workers = "codex"', 'workers = "codex"\nchecks = ["tests"]', 1), encoding="utf-8")
-    repo.git("commit", "-q", "-am", "Close waits for tests", cwd=folder)
+    repo.git("commit", "--allow-empty", "-q", "-am", "Close waits for tests", cwd=folder)
     # The coordinator's check list belongs on main, not to the chat-link task.
     repo.write("forge.toml", toml.read_text("utf-8"))
     repo.git("add", "forge.toml")
-    repo.git("commit", "-qm", "Configure chat link checks")
+    repo.git("commit", "--allow-empty", "-qm", "Configure chat link checks")
     repo.git("push", "-q", "origin", "main")
     skill = tmp_path / "autoreview"
     (skill / "scripts").mkdir(parents=True)

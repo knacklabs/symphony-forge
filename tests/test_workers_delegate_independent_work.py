@@ -72,11 +72,12 @@ def test_1_workers_invite_delegation_and_codex_enables_configured_helpers(
     config_path.write_text(config_path.read_text("utf-8").replace(
         "[features]", "[features]\nmulti_agent = false"), encoding="utf-8")
     path = client / "forge.toml"
-    path.write_text(path.read_text("utf-8").replace('workers = "split"', 'workers = "codex"'),
+    path.write_text(path.read_text("utf-8").replace('workers = "split"', 'workers = "codex"').replace(
+        'workers = "claude"', 'workers = "codex"'),
                     encoding="utf-8")
     repo.git("add", "-A", cwd=client)
     # Seed the landed setup as the upgrade tests do, before there is an active fix record.
-    repo.git("-c", f"core.hooksPath={tmp_path / 'no-hooks'}", "commit", "-q", "-m",
+    repo.git("-c", f"core.hooksPath={tmp_path / 'no-hooks'}", "commit", "--allow-empty", "-q", "-m",
              "Set up client workers", cwd=client)
     if previous:
         repo.git("branch", "main", cwd=client)
@@ -100,7 +101,7 @@ def test_1_workers_invite_delegation_and_codex_enables_configured_helpers(
     path.write_text(path.read_text("utf-8").replace('workers = "codex"',
                     'workers = "claude"').replace('workers = "split"', 'workers = "claude"'),
                     encoding="utf-8")
-    repo.git("commit", "-qam", "Choose Claude workers", cwd=folder)
+    repo.git("commit", "--allow-empty", "-qam", "Choose Claude workers", cwd=folder)
     monkeypatch.setenv("CODEX_THREAD_ID", "thr-test-coordinator")
     monkeypatch.delenv("CLAUDECODE")
     worked = repo.forge("work", "delegate-independent-work", cwd=client)
@@ -153,7 +154,7 @@ def test_2_sync_gives_existing_sessions_the_invitation_when_they_resume(
     assert synced.returncode == 0, synced.stdout + synced.stderr
     assert (folder / "forge.toml").read_bytes() == before
     repo.git("add", "-A", cwd=folder)
-    repo.git("commit", "-q", "-m", "Sync upgraded instructions", cwd=folder)
+    repo.git("commit", "--allow-empty", "-q", "-m", "Sync upgraded instructions", cwd=folder)
 
     worked = repo.forge("work", item)
 

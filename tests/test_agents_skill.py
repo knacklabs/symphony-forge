@@ -39,7 +39,7 @@ def client(repo, gh, tmp_path, adoption):
         agent.parent.mkdir(parents=True, exist_ok=True)
         agent.write_text("# Existing agent keeps its own implementation.\n", encoding="utf-8")
         repo.git("add", "-A")
-        repo.git("commit", "-q", "-m", "Keep the earlier app")
+        repo.git("commit", "--allow-empty", "-q", "-m", "Keep the earlier app")
         repo.git("push", "-q", "origin", "main")
         before = {file.relative_to(path).as_posix(): file.read_bytes()
                   for file in (path / "apps").rglob("*") if file.is_file()}
@@ -111,7 +111,7 @@ def test_2_the_brief_and_the_coordinator_name_the_skill(repo, client, adoption):
         'workers = "split"', 'workers = "claude"').replace(
         'workers = "codex"', 'workers = "claude"'), encoding="utf-8")
     repo.git("add", "-A", cwd=client)
-    repo.git("commit", "-q", "-m", "Use the current guidance", cwd=client)
+    repo.git("commit", "--allow-empty", "-q", "-m", "Use the current guidance", cwd=client)
     worked = repo.forge("work", "check-agent-guidance", cwd=client)
     assert worked.returncode == 0, worked.stdout + worked.stderr
     assert BRIEF in " ".join(calls(log)[-1]["brief"].split())

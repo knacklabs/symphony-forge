@@ -57,7 +57,7 @@ def test_1_merge_enable_rebuilds_same_fix_on_upgraded_default(unsynced_up, monke
         "kind": "fix", "branch": "fix/adoption", "status": "working",
         "why": "Adopt Forge", "done_when": "Forge is adopted"}))
     repo.git("add", "-A")
-    repo.git("commit", "-qm", "Adopt Forge")
+    repo.git("commit", "--allow-empty", "-qm", "Adopt Forge")
     repo.git("push", "-q", "origin", "fix/adoption")
     remote = repo.git("remote", "get-url", "origin")
     repo.git("update-ref", "refs/heads/main", repo.git("rev-parse", "HEAD"), cwd=remote)
