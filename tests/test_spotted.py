@@ -196,7 +196,7 @@ def _a_linked_own_file_is_refused(env):
     except OSError:
         pytest.skip("this machine can't make symbolic links")
     env.repo.git("add", OWN, cwd=where)
-    env.repo.git("commit", "-q", "-m", "Link the records", cwd=where)
+    env.repo.git("commit", "--allow-empty", "-q", "-m", "Link the records", cwd=where)
     refused = env.close(item)
     assert refused.returncode == 1
     assert refused.stderr == (
@@ -240,7 +240,7 @@ def _a_linked_list_is_refused(env):
     except OSError:
         pytest.skip("this machine can't make symbolic links")
     env.repo.git("add", LIST, cwd=where)
-    env.repo.git("commit", "-q", "-m", "Link the list", cwd=where)
+    env.repo.git("commit", "--allow-empty", "-q", "-m", "Link the list", cwd=where)
     note(env, where, "Notes\n\nSpotted: improve app.py:1 The greeting is hard-coded.\n")
 
     refused = env.close(item)
@@ -284,13 +284,13 @@ def _every_unreadable_list_is_refused(env):
         (where / LIST).parent.mkdir(exist_ok=True)
         (where / LIST).write_bytes(raw)
         env.repo.git("add", LIST, cwd=where)
-        env.repo.git("commit", "-q", "-m", "Edit the list by hand", cwd=where)
+        env.repo.git("commit", "--allow-empty", "-q", "-m", "Edit the list by hand", cwd=where)
         said, repair = _refused(env, item, where)
         assert said == f"plans/spotted.json isn't a list Forge can read: {problem}.", raw
         # No readable copy was ever committed, so the repair removes the file.
         assert repair == f"git -C {where} rm -q {LIST}"
     subprocess.run(repair, shell=True, check=True)
-    env.repo.git("commit", "-q", "-m", "Repair the list", cwd=where)
+    env.repo.git("commit", "--allow-empty", "-q", "-m", "Repair the list", cwd=where)
     assert env.close(item).returncode == 0 and len(env.review_calls()) == 1
 
 
@@ -312,7 +312,7 @@ def _the_repair_restores_the_last_readable_copy(env):
     assert refused.stderr == (f"{OWN} isn't a list Forge can read: it isn't UTF-8 JSON.\n"
                               f"Next: {repair}, commit it, then forge close {item}\n")
     subprocess.run(repair, shell=True, check=True)
-    env.repo.git("commit", "-q", "-m", "Repair the list", cwd=where)
+    env.repo.git("commit", "--allow-empty", "-q", "-m", "Repair the list", cwd=where)
     assert env.close(item).returncode == 0
     assert listed(where) == kept
 
@@ -328,7 +328,7 @@ def _git(repo, *args: str) -> subprocess.CompletedProcess[str]:
 def _commit_list(repo, items: list[dict], message: str) -> None:
     repo.write(LIST, json.dumps({"items": items}, indent=2) + "\n")
     assert _git(repo, "add", LIST).returncode == 0
-    assert _git(repo, "commit", "-q", "-m", message).returncode == 0
+    assert _git(repo, "commit", "--allow-empty", "-q", "-m", message).returncode == 0
 
 
 def _merge(repo, ours: str, theirs: str) -> list[dict]:
@@ -353,7 +353,7 @@ def _synced(repo, gitattributes: str | None) -> None:
     assert rules.count("plans/roadmap.json merge=forge-roadmap") == 1
     assert rules.count("plans/spotted.json merge=forge-roadmap") == 1
     repo.git("add", "-A")
-    assert _git(repo, "commit", "-q", "-m", "Synced").returncode == 0
+    assert _git(repo, "commit", "--allow-empty", "-q", "-m", "Synced").returncode == 0
 
 
 def _sync_adds_the_rule_once(env):
@@ -430,7 +430,7 @@ def _claude_task(request, repo) -> str:
                              'workers = "claude"\ntest = "pytest -q"\n'
                              'models.build = { model = "sonnet", effort = "medium" }\n')
     repo.git("add", "forge.toml")
-    repo.git("commit", "-q", "-m", "Pin Forge")
+    repo.git("commit", "--allow-empty", "-q", "-m", "Pin Forge")
     repo.git("push", "-q", "origin", "main")
     story(repo)
     assert repo.forge("task", "start", "BOARD/PAGE").returncode == 0

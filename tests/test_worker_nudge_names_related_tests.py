@@ -55,7 +55,7 @@ def test_1_the_commit_nudge_and_continued_round_use_the_test_lane(repo, monkeypa
                              'fast_test = "pytest -q --since {base}"\n'
                              'models.lite = { model = "sonnet", effort = "medium" }\n')
     repo.git("add", "forge.toml")
-    repo.git("commit", "-q", "-m", "Pin Forge")
+    repo.git("commit", "--allow-empty", "-q", "-m", "Pin Forge")
     repo.git("push", "-q", "origin", "main")
     assert repo.forge("fix", "start", "Fix the login typo", "--done",
                       "The login page says Log in").returncode == 0
@@ -103,7 +103,7 @@ def test_2_clients_receive_related_test_guidance_in_briefs_and_synced_skills(
     assert synced.returncode == 0, synced.stdout + synced.stderr
     repo.git("add", "-A")
     # Seed a landed client setup, as the upgrade tests do; it has no active fix record yet.
-    repo.git("-c", f"core.hooksPath={tmp_path / 'no-hooks'}", "commit", "-q", "-m",
+    repo.git("-c", f"core.hooksPath={tmp_path / 'no-hooks'}", "commit", "--allow-empty", "-q", "-m",
              "Upgrade worker guidance")
     repo.git("switch", "-q", "main")
     repo.git("merge", "-q", "--ff-only", "fix/test-guidance")
@@ -134,7 +134,7 @@ def test_3_the_commit_nudge_uses_the_lane_even_without_a_test_command(repo, monk
                              'workers = "claude"\n' + full + fast +
                              'models.lite = { model = "sonnet", effort = "medium" }\n')
     repo.git("add", "forge.toml")
-    repo.git("commit", "-q", "-m", "Configure worker tests")
+    repo.git("commit", "--allow-empty", "-q", "-m", "Configure worker tests")
     repo.git("push", "-q", "origin", "main")
     started = repo.forge("fix", "start", "Fix the login typo", "--done", "The login page says Log in")
     assert started.returncode == 0, started.stdout + started.stderr

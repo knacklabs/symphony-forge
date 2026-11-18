@@ -35,7 +35,7 @@ def _conventions(repo, client):
     toml.write_text(toml.read_text(encoding="utf-8").replace('workers = "split"', 'workers = "claude"'),
                     encoding="utf-8")
     # Committed: a round that ends with changes uncommitted gets a second, commit-nudge turn.
-    repo.git("commit", "-qam", "Use Claude workers", cwd=fix)
+    repo.git("commit", "--allow-empty", "-qam", "Use Claude workers", cwd=fix)
     built = repo.forge("work", "show-their-work", cwd=client)
     assert built.returncode == 0, built.stderr
     folder = Path(calls(log)[-1]["options"]["add_dirs"][0])

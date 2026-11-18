@@ -27,7 +27,7 @@ def test_1_read_shows_confirmed_spec_on_promoted_task_branch(repo):
     path.parent.mkdir(parents=True)
     path.write_text(spec, encoding="utf-8")
     repo.git("add", "-A", cwd=fix)
-    repo.git("commit", "-q", "-m", "Confirm the basket spec", cwd=fix)
+    repo.git("commit", "--allow-empty", "-q", "-m", "Confirm the basket spec", cwd=fix)
     made = repo.forge("story", "new", "BASKET", "Recover baskets", "--from-fix", "recover-the-saved-basket")
     assert made.returncode == 0, made.stderr
     story = worktree(repo, "story/BASKET")
@@ -70,7 +70,7 @@ def test_3_fix_work_brief_states_limit_interfaces_and_allowance(repo):
                'interfaces = ["**/routes/**", "**/*.schema.*"]\n'
                'models.lite = { model = "sonnet", effort = "medium" }\n')
     repo.git("add", "forge.toml")
-    repo.git("commit", "-q", "-m", "Configure Forge")
+    repo.git("commit", "--allow-empty", "-q", "-m", "Configure Forge")
     repo.git("push", "-q", "origin", "main")
     assert repo.forge("fix", "start", "Clarify the fix boundary", "--done", "Workers see the boundary",
                       "--kind", "mechanical").returncode == 0

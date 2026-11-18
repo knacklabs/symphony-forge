@@ -40,7 +40,7 @@ def guided_client(repo, gh, tmp_path, request):
     config.write_text(re.sub(r'^workers = ".*"$', 'workers = "claude"',
                              config.read_text("utf-8"), flags=re.M), encoding="utf-8")
     _fixture_git(repo, tmp_path, "add", "-A", cwd=client)
-    _fixture_git(repo, tmp_path, "commit", "-q", "-m", "Prepare guide check", cwd=client)
+    _fixture_git(repo, tmp_path, "commit", "--allow-empty", "-q", "-m", "Prepare guide check", cwd=client)
     _fixture_git(repo, tmp_path, "push", "-q", "origin", "main", cwd=client)
     started = repo.forge("fix", "start", "Check guide alignment", "--done",
                          "The worker receives matching guides", "--kind", "mechanical",
@@ -51,7 +51,7 @@ def guided_client(repo, gh, tmp_path, request):
         synced = repo.forge("sync", cwd=top)
         assert synced.returncode == 0, synced.stdout + synced.stderr
         _fixture_git(repo, tmp_path, "add", "-A", cwd=top)
-        _fixture_git(repo, tmp_path, "commit", "-q", "-m", "Sync the client guide", cwd=top)
+        _fixture_git(repo, tmp_path, "commit", "--allow-empty", "-q", "-m", "Sync the client guide", cwd=top)
     return top
 
 
@@ -170,7 +170,7 @@ def test_4_an_existing_repo_gets_the_non_root_rule_and_keeps_its_app_files(repo,
     for name in names:
         assert name not in status
     _fixture_git(repo, tmp_path, "add", "-A", cwd=guided_client)
-    _fixture_git(repo, tmp_path, "commit", "-q", "-m", "Sync the client guide", cwd=guided_client)
+    _fixture_git(repo, tmp_path, "commit", "--allow-empty", "-q", "-m", "Sync the client guide", cwd=guided_client)
     deploy = (_worker_conventions(repo, guided_client) / "deploy.md").read_text("utf-8")
     assert "Containers run as a user that is not root." in deploy
 

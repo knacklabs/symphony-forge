@@ -55,7 +55,7 @@ def start(repo, adopted):
         assert synced.returncode == 0, synced.stdout + synced.stderr
         repo.git("config", "core.hooksPath", (repo.path.parent / "fixture-no-hooks").as_posix())
     repo.git("add", "-A")
-    repo.git("commit", "-qm", "Sync the guides")
+    repo.git("commit", "--allow-empty", "-qm", "Sync the guides")
     if not adopted:
         repo.git("switch", "-q", "main")
         repo.git("merge", "-q", "--ff-only", "fix/sync-guides")
@@ -184,7 +184,7 @@ def test_3_a_conflicting_other_story_cannot_stop_a_read_for_its_note(
     turn = new_story(repo, "TURN-1")
     (turn / "plans/TURN-1.md").write_text(OTHER, "utf-8")
     repo.git("add", "-A", cwd=turn)
-    repo.git("commit", "-qm", "Plan TURN-1", cwd=turn)
+    repo.git("commit", "--allow-empty", "-qm", "Plan TURN-1", cwd=turn)
     repo.git("push", "-q", "-u", "origin", "story/TURN-1", cwd=turn)
     number = handed(repo)  # SHOP's After names TURN-1/T4, which exists now
     # While the reader works, TURN-1's own and published plans get edits that git cannot merge.
@@ -193,7 +193,7 @@ def test_3_a_conflicting_other_story_cannot_stop_a_read_for_its_note(
     for where, branch, word in ((published, "published", "early"), (turn, "story/TURN-1", "a shop")):
         file = where / "plans/TURN-1.md"
         file.write_text(file.read_text("utf-8").replace("when they leave.", f"when they leave {word}."), "utf-8")
-        repo.git("commit", "-aqm", f"Change TURN-1 for {word}", cwd=where)
+        repo.git("commit", "--allow-empty", "-aqm", f"Change TURN-1 for {word}", cwd=where)
     repo.git("push", "-q", "origin", "published:story/TURN-1", cwd=published)
     repo.git("fetch", "-q", "origin")
     done = back(repo, number, "No findings.")

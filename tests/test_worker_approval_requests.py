@@ -55,7 +55,7 @@ def test_2_builder_runs_forge_test_and_observes_its_failure(
                '    assert False, "worker observed the real failing regression"\n')
     repo.write(".gitignore", "__pycache__/\n.pytest_cache/\n")
     repo.git("add", ".")
-    repo.git("commit", "-qm", "Prepare the intentional failing regression")
+    repo.git("commit", "--allow-empty", "-qm", "Prepare the intentional failing regression")
     repo.git("push", "-q", "origin", "main")
     fixed = repo.forge("fix", "start", "Observe the failing regression", "--done",
                        "The worker observes the intentional test failure")

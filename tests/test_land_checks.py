@@ -129,7 +129,7 @@ def _renamed_old_path(env):
     env.commit(env.repo.path, "old_name.py", "x = 1\n")
     where = _red_then_green(env)
     env.repo.git("mv", "old_name.py", "new_name.py", cwd=where)
-    env.repo.git("commit", "-q", "-m", "Worker round", cwd=where)
+    env.repo.git("commit", "--allow-empty", "-q", "-m", "Worker round", cwd=where)
     _failing(env, ("tests", LINK.format(9), "ModuleNotFoundError: old_name.py\n"))
     _fix_round(env, _land(env))
 

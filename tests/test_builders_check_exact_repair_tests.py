@@ -32,7 +32,7 @@ def test_1_builders_check_exact_repair_tests_before_committing(repo, gh, tmp_pat
     assert synced.returncode == 0, synced.stdout + synced.stderr
     repo.git("add", "-A")
     # Seed a landed setup before the client has an active fix, as the upgrade tests do.
-    repo.git("-c", f"core.hooksPath={tmp_path / 'no-hooks'}", "commit", "-q", "-m",
+    repo.git("-c", f"core.hooksPath={tmp_path / 'no-hooks'}", "commit", "--allow-empty", "-q", "-m",
              "Upgrade worker guidance")
     repo.git("switch", "-q", "main")
     repo.git("merge", "-q", "--ff-only", "fix/ci-guidance")

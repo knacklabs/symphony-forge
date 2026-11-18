@@ -100,7 +100,7 @@ def test_11_codex_doctor(repo, gh, tmp_path, monkeypatch):
     # Default-branch file repairs now require a clean checkout at origin/main. Land the
     # worker setting so this SDK test still isolates SDK and trust problems.
     repo.git("add", "forge.toml", cwd=client)
-    repo.git("commit", "-q", "-m", "Use Codex workers", cwd=client)
+    repo.git("commit", "--allow-empty", "-q", "-m", "Use Codex workers", cwd=client)
     repo.git("push", "-q", "origin", "main", cwd=client)
 
     def trust(level: str) -> None:
@@ -208,7 +208,7 @@ def test_11_codex_doctor(repo, gh, tmp_path, monkeypatch):
     config.write_text(config.read_text("utf-8").replace(
         'workers = "claude"', 'workers = "claude"\ntools = "claude"'), encoding="utf-8")
     repo.git("add", "forge.toml", cwd=client)
-    repo.git("commit", "-q", "-m", "Use Claude workers", cwd=client)
+    repo.git("commit", "--allow-empty", "-q", "-m", "Use Claude workers", cwd=client)
     repo.git("push", "-q", "origin", "main", cwd=client)
     _install(repo.bin, "claude", "#!/bin/sh\n")
     claude = repo.forge("doctor", "--fix", cwd=client)
@@ -220,10 +220,11 @@ def test_11_codex_doctor(repo, gh, tmp_path, monkeypatch):
     assert not env.exists()
     assert len((repo.bin / "uv-calls.jsonl").read_text(encoding="utf-8").splitlines()) == 2
 
-    # Permit both tools again: a Codex cold read needs its SDK; trust stays advice.
+    # Permit both tools again: a Codex cold read needs its SDK, and reviews need trust.
+    trust("trusted")
     config.write_text(config.read_text("utf-8").replace('tools = "claude"', 'tools = "both"'), "utf-8")
     repo.git("add", "forge.toml", cwd=client)
-    repo.git("commit", "-q", "-m", "Permit both tools", cwd=client)
+    repo.git("commit", "--allow-empty", "-q", "-m", "Permit both tools", cwd=client)
     repo.git("push", "-q", "origin", "main", cwd=client)
     _install(repo.bin, "codex", "#!/bin/sh\n")
     monkeypatch.setenv("CLAUDECODE", "1")

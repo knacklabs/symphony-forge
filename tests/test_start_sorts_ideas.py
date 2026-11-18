@@ -340,7 +340,7 @@ def test_5_one_short_instruction_moves_an_idea_and_leaves_one_item(intake, move,
         data["items"].append({"key": "WELCOME-MOBILE", "title": "Correct the welcome"})
         roadmap.write_text(json.dumps(data), "utf-8")
         repo.git("add", "plans/roadmap.json", cwd=where)
-        repo.git("commit", "-qm", "Plan the welcome change", cwd=where)
+        repo.git("commit", "--allow-empty", "-qm", "Plan the welcome change", cwd=where)
         moved = repo.forge("story", "new", "WELCOME-MOBILE", "--from-fix", fix, cwd=top)
         assert moved.returncode == 0, moved.stdout + moved.stderr
         doc = repo.git("show", "story/WELCOME-MOBILE:plans/WELCOME-MOBILE.md", cwd=top)
@@ -427,7 +427,7 @@ def test_5_one_short_instruction_moves_an_idea_and_leaves_one_item(intake, move,
         original = ignore.read_text("utf-8") if ignore.exists() else ""
         ignore.write_text(original + "\nowner-note.txt\n", "utf-8")
         repo.git("add", ".gitignore", cwd=private)
-        repo.git("commit", "-qm", "Keep local working notes private", cwd=private)
+        repo.git("commit", "--allow-empty", "-qm", "Keep local working notes private", cwd=private)
         note = private / "owner-note.txt"
         note.write_text("The owner needs these working notes.\n", "utf-8")
         assert repo.git("status", "--porcelain", cwd=private) == ""
@@ -463,7 +463,7 @@ def test_5_one_short_instruction_moves_an_idea_and_leaves_one_item(intake, move,
             carried.write_text("\n".join(line for line in carried.read_text("utf-8").splitlines()
                                          if "add dark mode" not in line) + "\n", "utf-8")
             repo.git("add", "plans/ideas.md", cwd=where)
-            repo.git("commit", "-qm", "Take the idea off the later list", cwd=where)
+            repo.git("commit", "--allow-empty", "-qm", "Take the idea off the later list", cwd=where)
         for path in (main_ideas, carried):
             assert not path.exists() or "add dark mode" not in path.read_text("utf-8")
 

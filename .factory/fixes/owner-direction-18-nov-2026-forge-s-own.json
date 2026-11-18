@@ -1,0 +1,96 @@
+{
+  "amendments": [
+    {
+      "at": "2026-11-18T07:21:08.396838+00:00",
+      "because": "Owner chose split on 18 Nov 2026 after the review noted design routing",
+      "done_when": "Forge's own forge.toml says workers = codex, so new build and fix rounds in this repo run on Codex"
+    }
+  ],
+  "base": "a3272814e237b99271e2d7f844779588405e15d3",
+  "branch": "fix/owner-direction-18-nov-2026-forge-s-own",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1eda1-fbc5-77f2-8ec0-7c997832ca55",
+    "head": null,
+    "start": "b8bb20ce0ecbc883c303b7326e765735a8ec5325"
+  },
+  "done_when": "Forge's own forge.toml says workers = split, so new build and fix rounds in this repo run on Codex and user-facing parts run on Claude with the design routing",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "forge.toml",
+      "file": "forge.toml",
+      "gain": 4,
+      "harm": 3,
+      "line": 4,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: source-worker tests still require Claude",
+      "work": 2
+    },
+    {
+      "area": "forge.toml",
+      "file": "forge.toml",
+      "gain": 3,
+      "harm": 3,
+      "line": 4,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Keep design routing for user-facing Forge tasks",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "19edb71d869dbd192d4d43356d5cc5147ff5dd45cb1d4c069ce881ffff86e4d7",
+    "changed": "3074c3ee61b621fe937461efd43ef77ddc37edee389475c24ac40dee390d0cc0",
+    "commit": "1b1d42b243b71a078308874224f6832e9b2e79eb",
+    "dismissals": [],
+    "findings": [],
+    "id": "10e53cb9-c11f-442f-b792-a1e7a38575a4",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-18T06:49:12.784679+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-18T07:18:00.942294+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-18T07:28:04.562404+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-18T08:05:09.287985+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-18T07:28:04.562699+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "forge.toml",
+    "reason": "Owner chose one more round: update the test that pins this repo's workers setting",
+    "wait_id": "23f6c6c4-db2b-4328-9f2f-1dc06a657f16",
+    "worker_round": null
+  },
+  "stuck": {
+    "close": "126ba349-1039-4752-95d2-63c6ea1877d9",
+    "head": "a1970ac4c3c4bdf946cb78aa6579f24e609298c7",
+    "keys": {},
+    "round": null
+  },
+  "why": "Owner direction 18 Nov 2026: Forge's own repo builds with Codex. forge.toml still says workers = claude.",
+  "worker": "codex"
+}

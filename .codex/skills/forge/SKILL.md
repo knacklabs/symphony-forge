@@ -442,7 +442,8 @@ Before `forge init` writes any files in a new or existing repo, it checks Git's 
 
 When `forge init` writes settings, it checks `claude auth status` and `codex login status`.
 If only Claude is signed in, it sets `tools = "claude"` and `workers = "claude"` and says so.
-Otherwise it keeps split workers. An unavailable check keeps that default unless the binary is missing.
+If only Codex is signed in, it sets `tools = "codex"` and `workers = "codex"`.
+Otherwise it sets `workers = "claude"`: Claude builds, and code reviews use Codex when it is installed, and cold reads use the other tool than the one you coordinate with. An unavailable check keeps that default unless the binary is missing.
 If neither tool is signed in, it asks you to sign in. Existing repos keep their settings.
 `forge doctor` says when the repo needs Codex but Codex is not signed in, and gives `codex login`.
 
@@ -1929,10 +1930,10 @@ model and effort it starts with, and why; `forge next` names the worker beside e
 
 - `codex`: everything on Codex; user-facing work uses `[models.design.codex]`.
 - `claude`: everything on Claude; user-facing work uses `[models.design.claude]`.
-- `split` (what `forge init` writes): user-facing story tasks on Claude, everything else on Codex.
+- `split`: user-facing story tasks on Claude, everything else on Codex.
 
 Split routing also applies in Forge's source repo: a task row's `User-facing: yes` selects
-Claude and its design entry. New repos get this at init; existing repos get it on upgrade.
+Claude and its design entry. `forge init` writes `workers = "claude"`; existing repos keep their setting.
 
 When the worker changes between rounds of one item, the next `forge work` starts a fresh session
 on the new worker with the whole brief and the latest review findings.

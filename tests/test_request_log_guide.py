@@ -97,7 +97,7 @@ def test_4_the_guides_state_the_log_rules(repo, gh, tmp_path, setup):
         config.write_text(config.read_text("utf-8").replace(
             'version = "v1.2.2"', f'version = "{_version(repo)}"'), "utf-8")
         repo.git("add", "-A", cwd=client)
-        repo.git("commit", "-q", "-m", "Upgrade the earlier client", cwd=client)
+        repo.git("commit", "--allow-empty", "-q", "-m", "Upgrade the earlier client", cwd=client)
         repo.git("push", "-q", "origin", "main", cwd=client)
 
     started = repo.forge("fix", "start", "Check logging guidance", "--done",
@@ -125,7 +125,7 @@ def test_4_the_guides_state_the_log_rules(repo, gh, tmp_path, setup):
         'workers = "split"', 'workers = "claude"').replace(
         'workers = "codex"', 'workers = "claude"'), "utf-8")
     repo.git("add", "-A", cwd=client)
-    repo.git("commit", "-q", "-m", "Use the current logging guidance", cwd=client)
+    repo.git("commit", "--allow-empty", "-q", "-m", "Use the current logging guidance", cwd=client)
     worked = repo.forge("work", "check-logging-guidance", cwd=client)
     assert worked.returncode == 0, worked.stdout + worked.stderr
     brief = " ".join(calls(log)[-1]["brief"].split())

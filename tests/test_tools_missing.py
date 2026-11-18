@@ -41,7 +41,7 @@ def test_8_missing_tools_stop_plainly_and_doctor_repairs_them(env, tmp_path, mon
         version = repo.forge("--version").stdout.split()[-1]
         repo.write("forge.toml", f'version = "{version}"\nworkers = "claude"\n')
         repo.git("add", "-A")
-        repo.git("commit", "-qm", "Adopt earlier release")
+        repo.git("commit", "--allow-empty", "-qm", "Adopt earlier release")
     config = repo.path / "forge.toml"
     env.commit(repo.path, "forge.toml", config.read_text("utf-8") + f'\ntools = "{tool}"\n')
     repo.git("push", "-q", "origin", "main")
