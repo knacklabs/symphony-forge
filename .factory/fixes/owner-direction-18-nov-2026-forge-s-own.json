@@ -1,7 +1,14 @@
 {
+  "amendments": [
+    {
+      "at": "2026-11-18T07:21:08.396838+00:00",
+      "because": "Owner chose split on 18 Nov 2026 after the review noted design routing",
+      "done_when": "Forge's own forge.toml says workers = codex, so new build and fix rounds in this repo run on Codex"
+    }
+  ],
   "base": "a3272814e237b99271e2d7f844779588405e15d3",
   "branch": "fix/owner-direction-18-nov-2026-forge-s-own",
-  "done_when": "Forge's own forge.toml says workers = codex, so new build and fix rounds in this repo run on Codex",
+  "done_when": "Forge's own forge.toml says workers = split, so new build and fix rounds in this repo run on Codex and user-facing parts run on Claude with the design routing",
   "fix_kind": "mechanical",
   "kind": "fix",
   "known": [
