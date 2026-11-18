@@ -30,3 +30,4 @@ def test_1_hook_context_with_many_hotspots_stays_short(repo):
     assert context.count("keeps breaking") == 3
     assert "forge fix start \"Simplify" not in context
     assert "5 more files keep breaking. Run forge next for the list." in context
+    assert context.rstrip().endswith("Run forge next for the full picture.")

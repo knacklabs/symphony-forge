@@ -6,12 +6,6 @@ import json
 from test_story import claude_plan, hook, ready, setup
 
 
-def without_numbers(text):
-    """The hook skips forge next's slow success-numbers line."""
-    return "\n".join(line for line in text.splitlines()
-                     if not line.startswith("How the factory is doing:")) + "\n"
-
-
 def test_15_human_touches(repo, claude_payload, codex_payload):
     setup(repo)
     shop = ready(repo, "SHOP")
@@ -60,8 +54,10 @@ def test_15_human_touches(repo, claude_payload, codex_payload):
     context = repo.forge("hook", "context",
                          input=json.dumps(claude_payload("SessionStart")))
     assert context.returncode == 0, context.stderr
+    assert context.stdout == "Run forge next for the full picture.\n"
+    context = repo.forge("next")
+    assert context.returncode == 0, context.stderr
     assert "Shoppers can save a basket (approved): 3 human touches so far." in context.stdout
     assert "The fix tidy-up (started): 1 human touch so far." in context.stdout
     # SHOP/SAVE reads working, but no worker process is recorded for it, so none is building it.
     assert "SHOP/SAVE's worker has stopped." in context.stdout
-    assert context.stdout.startswith(without_numbers(repo.forge("next").stdout).strip())

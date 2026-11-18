@@ -93,8 +93,7 @@ def test_3_blank_answers_count_as_unanswered(repo, gh, tmp_path, claude_payload,
         result = hook(repo, make("PostToolUse", tool, questions,
                                  {"answers": {"colour": blank}}, cwd=fix))
         assert result.returncode == 0, result.stdout + result.stderr
-    context = json.dumps(claude_payload("SessionStart", cwd=fix))
-    shown = repo.forge("hook", "context", input=context, cwd=fix)
+    shown = repo.forge("next", cwd=fix)
     assert shown.returncode == 0, shown.stdout + shown.stderr
     assert "The fix answers (started): 0 human touches so far." in shown.stdout
 
@@ -106,4 +105,4 @@ def test_3_blank_answers_count_as_unanswered(repo, gh, tmp_path, claude_payload,
                                  {"answers": {"colour": answer}}, cwd=fix))
         assert result.returncode == 0, result.stdout + result.stderr
     assert "The fix answers (started): 2 human touches so far." in repo.forge(
-        "hook", "context", input=context, cwd=fix).stdout
+        "next", cwd=fix).stdout
