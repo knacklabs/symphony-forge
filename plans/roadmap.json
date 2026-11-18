@@ -672,6 +672,12 @@
       "title": "Faster checks and CI for client repos",
       "status": "pending",
       "order": 125
+    },
+    {
+      "key": "FORGE-MERGEQ-1",
+      "title": "Ready pull requests stop re-running CI against each other",
+      "status": "pending",
+      "order": 126
     }
   ],
   "epics": [

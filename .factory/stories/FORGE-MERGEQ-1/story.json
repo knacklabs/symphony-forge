@@ -1,0 +1,12 @@
+{
+  "doc": "plans/FORGE-MERGEQ-1.md",
+  "status": "planning",
+  "steps": [
+    {
+      "at": "2026-11-18T04:00:08.767397+00:00",
+      "step": "start"
+    }
+  ],
+  "title": "Ready pull requests stop re-running CI against each other",
+  "touches": 0
+}
