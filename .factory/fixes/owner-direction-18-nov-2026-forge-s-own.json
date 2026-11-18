@@ -25,7 +25,7 @@
       "gain": 4,
       "harm": 3,
       "line": 4,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 1,
       "security": false,
@@ -48,27 +48,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "735dcbd99830e173f825346bde40b7d1cfe572e5471d153a046ad8dd8e9e228e",
-    "changed": "29652eb0972325e7821ae1f8c4b31eb091ed570f78d0b8e973fa2cd64233b71b",
-    "commit": "28d79c8e99b1747551a4356749a25a8682280484",
+    "branch_diff": "19edb71d869dbd192d4d43356d5cc5147ff5dd45cb1d4c069ce881ffff86e4d7",
+    "changed": "3074c3ee61b621fe937461efd43ef77ddc37edee389475c24ac40dee390d0cc0",
+    "commit": "1b1d42b243b71a078308874224f6832e9b2e79eb",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Gate - The full suite still asserts the old Claude-only setting and fails with split workers.\nCase: normal use - running the configured full suite or the nightly full-suite check.\n`tests/test_fix_the_owner_moved_this_repo_s_workers_from.py:50` asserts that `workers` is `claude`, although this line sets it to `split`. Its fix case also expects a Claude turn, and its doctor case at line 114 rejects the hook-approval note that `src/forge/doctor.py:352` and line 513 produce for split workers. `tests/test_source_split_workers.py:30`\u201335 expects the non-user-facing task to use Claude and no Codex, although `src/forge/repo.py:847`\u2013850 routes it to Codex. Update those tests and their stubs for the split routes.",
-        "file": "forge.toml",
-        "gain": 4,
-        "harm": 3,
-        "line": 4,
-        "priority": "P1",
-        "title": "Gate: source-worker tests still require Claude",
-        "work": 2
-      }
-    ],
-    "id": "8f0f33ce-2cde-4746-9c0d-1ca97fcdb773",
-    "status": "blocked"
+    "findings": [],
+    "id": "10e53cb9-c11f-442f-b792-a1e7a38575a4",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-18T06:49:12.784679+00:00",
@@ -80,6 +69,10 @@
     },
     {
       "at": "2026-11-18T07:28:04.562404+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-18T08:05:09.287985+00:00",
       "step": "review"
     }
   ],
