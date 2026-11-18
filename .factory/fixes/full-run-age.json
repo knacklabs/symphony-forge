@@ -11,14 +11,129 @@
   "done_when": "forge next and the board show the age and result of the last complete full run, including missing, queued for more than 24 hours and cancelled runs, and treat no green full run in the last 24 hours as Needs you before a release; new and existing repos get it on upgrade",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [
+    {
+      "area": "full_run_health() in src/forge/board_facts.py",
+      "file": "src/forge/board_facts.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 470,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Use the recorded full-suite result for custom workflows",
+      "work": 2
+    },
+    {
+      "area": "full_run_health() in src/forge/board_facts.py",
+      "file": "src/forge/board_facts.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 450,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Show complete full-run history and the 24-hour warning",
+      "work": 3
+    },
+    {
+      "area": "team() in src/forge/board_facts.py",
+      "file": "src/forge/board_facts.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 743,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Preserve the Needs you row contract for overdue runs",
+      "work": 1
+    },
+    {
+      "area": "test_1_next_and_board_show_full_run_age_before_release() in tests/test_full_run_release_age.py",
+      "file": "tests/test_full_run_release_age.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 41,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: tests/test_full_run_release_age.py::test_1_next_and_board_show_full_run_age_before_release",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "b4090a5e4329f8df2350b41a468fc4a99818e097fb103398bf7124da9d4d70a6",
+    "changed": "c29434490053116687d223cad628573dd075ed1df785978a8f843901e3c991e9",
+    "commit": "38c5ec5f42c9ee99573a156d1ecf63dfced9c3df",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - a custom full-suite workflow reports a failed test through its required commit status while allowing the workflow to finish successfully.\nThe freshness check treats the overall workflow conclusion as the test result. A workflow can use `continue-on-error` to post a `forge-full-suite` failure status and still conclude successfully; Forge then reports a recent passing full run and omits the 24-hour warning. The supported custom-workflow contract requires that status in src/forge/templates/skill.md:2185-2188, and the release check reads it in src/forge/fullrun.py:61-70.",
+        "file": "src/forge/board_facts.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 470,
+        "priority": "P1",
+        "title": "Functional: Use the recorded full-suite result for custom workflows",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 3, Harm 3\nRaise: Not done\nCase: normal use - a nightly run is rerun, a laptop-tested repo accumulates 30 commits between runs, or the latest run fails after the last green result ages out.\nDone when: forge next and the board show the age and result of the last complete full run, including missing, queued for more than 24 hours and cancelled runs, and treat no green full run in the last 24 hours as Needs you before a release; new and existing repos get it on upgrade.\nThe summary considers only each workflow's current conclusion, so a queued rerun hides its preceding completed attempt, although `failed_schedules` reads that attempt at src/forge/board_facts.py:513-525. It can consequently report no complete run and overlook a recent green. Lines 463-469 also inspect only the newest created run, so a new daily run hides an earlier run queued for over 24 hours. For laptop runs, line 438 uses `fullrun.history`, whose 30-commit limit at src/forge/fullrun.py:140 makes an older existing run appear missing. Finally, line 742 suppresses the overdue-green board warning when a failed-run row already exists, leaving the board without the reason that no green run is recent.",
+        "file": "src/forge/board_facts.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 450,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: Show complete full-run history and the 24-hour warning",
+        "work": 3
+      },
+      {
+        "body": "Gain 3, Work 1, Harm 3\nRaise: Functional\nCase: normal use - an agent reads board JSON for an overdue run, or the board has three other items awaiting a person.\nThe new row is appended after `needs_you` has renamed `seconds` to `waited_seconds` and sorted the entries at src/forge/board_facts.py:625-629. It therefore lacks the `waited_seconds` field documented for every entry in src/forge/templates/run-reference.md:127-128, breaking consumers that read that field. It also appears after newer waits even when its recorded time is older; src/forge/board_app/now.js:151 initially shows only the first three, hiding the overdue warning behind the expanded list.",
+        "file": "src/forge/board_facts.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 743,
+        "priority": "P1",
+        "title": "Functional: Preserve the Needs you row contract for overdue runs",
+        "work": 1
+      },
+      {
+        "body": "Gain 3, Work 1, Harm 3\nRaise: Test\nCase: normal use - a fresh green run is followed by a queued run, or the latest run fails after the previous green becomes stale.\nThe only queue case with an earlier completed run uses a green result 100 hours old. An implementation that warns for every queued run would pass even when an earlier green is still within 24 hours. The test also accepts the existing failed-run row as proof of the overdue-green warning, so it passes while that warning is absent from the board. Its laptop case supplies only an old success; treating a completed laptop failure as unfinished would pass too.",
+        "file": "tests/test_full_run_release_age.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 41,
+        "priority": "P1",
+        "title": "Gate: tests/test_full_run_release_age.py::test_1_next_and_board_show_full_run_age_before_release",
+        "work": 1
+      }
+    ],
+    "id": "4a5d37b0-1237-4947-8319-2a99b09ec13c",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-18T14:04:06.332449+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-18T14:23:40.911360+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-11-18T14:23:40.922985+00:00",
+    "file": "src/forge/board_facts.py",
+    "wait_id": "39c23189-5659-4ee1-b030-28f35feda422"
+  },
   "stuck": {
     "close": null,
     "head": "b065fa3788a9211a601eea6afd39602a2dfe5216",

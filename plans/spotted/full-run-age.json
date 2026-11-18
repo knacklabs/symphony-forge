@@ -1,0 +1,48 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/board_facts.py\tFunctional: Preserve the Needs you row contract for overdue runs\tfull-run-age",
+      "kind": "bug",
+      "path": "src/forge/board_facts.py",
+      "line": 743,
+      "text": "Functional: Preserve the Needs you row contract for overdue runs",
+      "from": "blocking",
+      "item": "full-run-age",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board_facts.py\tFunctional: Use the recorded full-suite result for custom workflows\tfull-run-age",
+      "kind": "bug",
+      "path": "src/forge/board_facts.py",
+      "line": 470,
+      "text": "Functional: Use the recorded full-suite result for custom workflows",
+      "from": "blocking",
+      "item": "full-run-age",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board_facts.py\tNot done: Show complete full-run history and the 24-hour warning\tfull-run-age",
+      "kind": "bug",
+      "path": "src/forge/board_facts.py",
+      "line": 450,
+      "text": "Not done: Show complete full-run history and the 24-hour warning",
+      "from": "blocking",
+      "item": "full-run-age",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_full_run_release_age.py\tGate: tests/test_full_run_release_age.py::test_1_next_and_board_show_full_run_age_before_release\tfull-run-age",
+      "kind": "bug",
+      "path": "tests/test_full_run_release_age.py",
+      "line": 41,
+      "text": "Gate: tests/test_full_run_release_age.py::test_1_next_and_board_show_full_run_age_before_release",
+      "from": "blocking",
+      "item": "full-run-age",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
