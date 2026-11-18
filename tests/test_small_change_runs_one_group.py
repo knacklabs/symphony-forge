@@ -3,11 +3,15 @@
 Test-audit: Runs the synced CI script on real commits and evaluates its workflow.
 The existing test-only cases cannot detect code-count or shared-input mistakes.
 No fake or production seam decides selection.
+Fixed shard counts must keep all groups: the old cases use Forge's pytest split
+and cannot catch omitted shards in a client's own command.
 """
 import os
 import re
 import subprocess
 import sys
+
+import pytest
 
 from test_ci_limits_pull_requests_to_linux import expression
 from test_groups_pytest import PYTEST, _branch, _new_client, _settings
@@ -17,10 +21,12 @@ from test_testplace_workflow import _jobs
 STORY = "FORGE-CITIME-1"
 
 
-def test_1_a_small_change_runs_one_test_group(repo, gh, tmp_path):
+@pytest.mark.parametrize("fixed_shards", [False, True], ids=["forge-split", "fixed-shards"])
+def test_1_a_small_change_runs_one_test_group(repo, gh, tmp_path, fixed_shards):
     client = _new_client(repo, gh, tmp_path, "client")
     _branch(repo, client, "small-change")
-    _settings(client, test=PYTEST, groups=2)
+    _settings(client, test=PYTEST, groups=4 if fixed_shards else 2,
+              fast_test="vitest run --shard={group}/4" if fixed_shards else "")
     (client / "tests").mkdir(exist_ok=True)
     (client / "tests/test_example.py").write_text("def test_it(): assert True\n", encoding="utf-8")
     repo.git("add", "-A", cwd=client)
@@ -35,6 +41,8 @@ def test_1_a_small_change_runs_one_test_group(repo, gh, tmp_path):
     matrix = re.search(r"^        group: (.+)$", _jobs(workflow)["tests"], re.M)[1]
     matrix = matrix.replace("needs.docs-check.outputs.one-group", "github.one_group")
     matrix = matrix.replace("needs.docs-check.outputs.test-only", "github.test_only")
+    group_output = re.search(r"^      one-group: (.+)$", _jobs(workflow)["docs-check"], re.M)[1]
+    group_output = group_output.replace("steps.docs.outputs.one-group", "github.one_group")
     code = {f"src/file_{i}.py": "VALUE = 1\n" for i in range(6)}
     small = dict(list(code.items())[:3])
     cases = [(small, [1]), (dict(list(code.items())[:5]), [1]), (code, [1, 2])]
@@ -47,6 +55,8 @@ def test_1_a_small_change_runs_one_test_group(repo, gh, tmp_path):
                    ".forge/review-tests.py": script + "\n# Changed\n"}, [1, 2]))
     cases.append(({**small, "README.md": "Changed\n",
                    "tests/test_example.py": "def test_it(): assert 1\n"}, [1]))
+    if fixed_shards:
+        cases = [(small, [1, 2, 3, 4])]
     for files, expected in cases:
         head = _commit(repo, client, tmp_path, [base], files)
         repo.git("checkout", "-q", "--detach", head, cwd=client)
@@ -58,5 +68,6 @@ def test_1_a_small_change_runs_one_test_group(repo, gh, tmp_path):
                               capture_output=True, text=True, timeout=30)
         assert done.returncode == 0, done.stdout + done.stderr
         values = dict(line.split("=", 1) for line in output.read_text("utf-8").splitlines())
-        assert expression(matrix, one_group=values.get("one-group"),
+        one_group = expression(group_output, one_group=values["one-group"])
+        assert expression(matrix, one_group=one_group,
                           test_only=values["test-only"]) == expected, (files, values)
