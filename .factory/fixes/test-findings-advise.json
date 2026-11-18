@@ -11,7 +11,7 @@
   "done_when": "Review findings of the Test kind whose case is only a future change to a test fake or call order are advice and do not block close; tests select gh calls through one shared helper by path or query instead of by position or count; the two flaky tests no longer fail at random under load; new and existing repos get the review rule on upgrade",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "round": 1,
+  "round": 2,
   "status": "working",
   "steps": [
     {
