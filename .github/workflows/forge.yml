@@ -4,6 +4,8 @@ name: forge
 on:
   pull_request:
   pull_request_target:
+  push:
+    branches: ["main"]
   schedule:
     - cron: '0 3 * * *'
   workflow_dispatch:
@@ -40,7 +42,7 @@ jobs:
 
   tests:
     needs: docs-check
-    if: github.event_name == 'pull_request' && needs.docs-check.outputs.docs-only != 'true'
+    if: always() && (github.event_name == 'push' || (github.event_name == 'pull_request' && needs.docs-check.result == 'success' && needs.docs-check.outputs.docs-only != 'true'))
     name: test group ${{ matrix.group }} of ${{ needs.docs-check.outputs.one-group == 'true' && 1 || 6 }}
     strategy:
       fail-fast: false
@@ -51,6 +53,7 @@ jobs:
       UV_FROZEN: '1'
       FORGE_GROUP: ${{ matrix.group }}
       FORGE_GROUPS: ${{ needs.docs-check.outputs.one-group == 'true' && '1' || '6' }}
+      FORGE_PUSH_BASE: ${{ github.event.before }}
       FORGE_CONTAINERS: '1'
       # Measure every test on CI hardware before choosing a performance repair.
       PYTEST_ADDOPTS: '--durations=0'
@@ -59,6 +62,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
+      - run: git remote set-head origin --auto
       - uses: actions/setup-python@v6
         with:
           python-version: '3.11'
@@ -75,7 +79,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          BASE_SHA: ${{ github.event_name == 'push' && github.event.before || github.event.pull_request.base.sha }}
           DOCS_ONLY_EXCLUDES: '[":(exclude,glob).factory/**", ":(exclude,glob)plans/**", ":(exclude,glob).forge/**", ":(exclude,glob)docs/**", ":(exclude,glob,icase)**/*.md", ":(exclude,glob,icase)**/*.png", ":(exclude,glob,icase)**/*.jpg", ":(exclude,glob,icase)**/*.jpeg", ":(exclude,glob,icase)**/*.gif", ":(exclude,glob,icase)**/*.svg", ":(exclude,glob,icase)**/*.webp", ":(exclude,glob,icase)**/*.avif", ":(exclude,glob,icase)**/*.ico", ":(exclude,glob,icase)**/*.bmp", ":(exclude,glob,icase)**/*.tif", ":(exclude,glob,icase)**/*.tiff", ":(exclude,glob,icase)**/*.icns", ":(exclude,glob,icase)**/*.woff", ":(exclude,glob,icase)**/*.woff2", ":(exclude,glob,icase)**/*.ttf", ":(exclude,glob,icase)**/*.otf", ":(exclude,glob,icase)**/*.eot"]'
         run: python .forge/review-tests.py
       - uses: actions/cache@v4
@@ -94,14 +98,14 @@ jobs:
     # job would otherwise pass a required check of the same name; always() keeps a failed
     # group from skipping this one.
     needs: [docs-check, tests]
-    if: always() && github.event_name == 'pull_request'
-    name: ${{ github.event_name == 'pull_request' && 'tests' || 'tests (other event)' }}
+    if: always() && (github.event_name == 'pull_request' || github.event_name == 'push')
+    name: ${{ github.event_name == 'pull_request_target' && 'tests (other event)' || 'tests' }}
     runs-on: "ubuntu-24.04"
     steps:
       - env:
           TEST_GROUP_RESULT: ${{ needs.tests.result }}
-          DOCS_CHECK: ${{ needs.docs-check.result }}
-          DOCS_ONLY: ${{ needs.docs-check.outputs.docs-only }}
+          DOCS_CHECK: ${{ github.event_name == 'push' && 'success' || needs.docs-check.result }}
+          DOCS_ONLY: ${{ github.event_name == 'push' && 'false' || needs.docs-check.outputs.docs-only }}
         run: test "$DOCS_CHECK" = success && { test "$TEST_GROUP_RESULT" = success || { test "$DOCS_ONLY" = true && test "$TEST_GROUP_RESULT" = skipped; }; }
       - if: needs.docs-check.outputs.docs-only == 'true'
         run: "echo 'docs only: tests skipped'"

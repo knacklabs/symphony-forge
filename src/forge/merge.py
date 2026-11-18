@@ -4,9 +4,11 @@ import argparse
 import json
 import os
 import re
+import time
 import tomllib
+from datetime import datetime
 from pathlib import Path
-from forge import checks, close, codex, github, githooks, prcheck, repo, review, story, task, time_records
+from forge import checks, close, codex, fullrun, github, githooks, prcheck, repo, review, story, task, time_records
 
 COMMANDS = [{
     "words": "merge", "run": "merge", "changes_state": False,
@@ -18,6 +20,8 @@ COMMANDS = [{
 ENABLE = "let-the-agent-merge"
 
 REFUSALS = {
+    "red_default": ("The default branch is still red. Forge did not merge the pull request.",
+                    "forge merge {item}"),
     "disabled": ("forge merge is disabled by merge = \"human\" in the default branch's forge.toml.",
                  "the repo owner runs forge merge enable in their own terminal"),
     "owner_only": ("Only the repo owner switches on agent merges, on {default}, from a terminal outside Claude Code or Codex.", "the repo owner runs forge merge enable on {default} in a terminal outside Claude Code or Codex"),
@@ -104,6 +108,7 @@ def merge(args: argparse.Namespace, *, refreshed: bool = False) -> int:
         item_files = set(repo.git("diff", "--name-only", "--no-renames", "-z", base, head,
                                   cwd=worktree).split("\0")) - {""}
         moves = 0
+        red_announced = False
         combined_tested = False
         train = getattr(args, "train", None)  # the default branch's tree that a merge train tested for this head
         while True:
@@ -195,6 +200,18 @@ def merge(args: argparse.Namespace, *, refreshed: bool = False) -> int:
             repo.git("fetch", "-q", "origin", default, cwd=top)
             if repo.merge_setting(top) != "agent":
                 repo.refuse(REFUSALS["owner_merges" if item == ENABLE else "disabled"], item=item)
+            deadline = time.monotonic() + float(os.environ.get("FORGE_CHECKS_WAIT", "600"))
+            while red(top, item=item):
+                if not red_announced:
+                    print("The default branch is red. Forge will wait for a newer green test result.", flush=True)
+                    red_announced = True
+                left = deadline - time.monotonic()
+                if left <= 0:
+                    repo.refuse(REFUSALS["red_default"], item=item)
+                time.sleep(min(15, left))
+                repo.git("fetch", "-q", "origin", default, cwd=top)
+                if repo.merge_setting(top) != "agent":
+                    repo.refuse(REFUSALS["disabled"], item=item)
             if train or repo.git("rev-parse", f"origin/{default}", cwd=top) == checked_default:
                 break  # a train member never tests again: the check below decides
             if combined_tested:
@@ -403,6 +420,33 @@ def _save_ready(path: Path, receipt: dict) -> None:
     saved = path.with_suffix(".tmp")
     saved.write_text(json.dumps(receipt) + "\n", encoding="utf-8")
     os.replace(saved, path)
+
+
+def red(top: Path, *, item: str = "") -> bool:
+    """The newest finished test result on the newest commit with one decides."""
+    default = repo.default_branch(top)
+    commits = repo.git("rev-list", "--first-parent", "--max-count=30",
+                       f"origin/{default}", cwd=top).splitlines()
+    config = repo._config_text(story.show(top, f"origin/{default}", "forge.toml") or "")
+    for sha in commits:
+        endpoint = f"repos/{{owner}}/{{repo}}/commits/{sha}"
+        statuses = checks._ask(top, item, ".", endpoint + "/statuses?per_page=100")
+        results = [(row.get("updated_at") or row.get("created_at"), row["state"] == "success")
+                   for row in statuses if row.get("context") == fullrun.STATUS
+                   and row.get("state") in ("success", "failure", "error")]
+        if repo.test_place(config) == "ci":
+            runs = checks._ask(top, item, ".check_runs", endpoint + "/check-runs?per_page=100&filter=all")
+            results.extend((row.get("completed_at"), row["conclusion"] == "success")
+                           for row in runs if row.get("name") == "tests"
+                           and row.get("status") == "completed"
+                           and row.get("app", {}).get("slug") == "github-actions"
+                           and row.get("conclusion") in ("success", "failure", "timed_out",
+                                                         "action_required", "startup_failure"))
+        finished = [(datetime.fromisoformat(date.replace("Z", "+00:00")), green)
+                    for date, green in results if date]
+        if finished:
+            return not max(finished, key=lambda result: result[0])[1]
+    return False
 
 
 def _conversations(top: Path, item: str) -> set[str]:
