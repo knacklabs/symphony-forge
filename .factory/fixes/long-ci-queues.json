@@ -44,8 +44,8 @@
       "gain": 4,
       "harm": 3,
       "line": 125,
-      "outcome": "open",
-      "reason": "",
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: Owner accepted on 18 Nov 2026: with a set FORGE_CHECKS_WAIT, the pre-push wait still waits through a runner queue; waiting through the queue is the wanted default",
       "round": 1,
       "security": false,
       "title": "Honor the wait override before pushing the review record",
@@ -96,7 +96,13 @@
     "branch_diff": "8e754a9a08afb9a10d37f907a0a3d1c408cf0de3ca96661bdf8e77a19946611a",
     "changed": "deeac73fb27fd5effb91f2fb5c8263c92300f415ba755fa92ab0d77e2c837fa0",
     "commit": "2beb0eb4d345d02f731a123d8277478ea6e3eee0",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner accepted on 18 Nov 2026: with a set FORGE_CHECKS_WAIT, the pre-push wait still waits through a runner queue; waiting through the queue is the wanted default",
+        "finding": 1
+      }
+    ],
     "findings": [
       {
         "body": "Gain 4, Work 1, Harm 3\nRaise: Functional\nCase: normal use - An operator sets a positive `FORGE_CHECKS_WAIT` while one test group is running and another is queued for a runner.\nThe pre-push loop resets the deadline on every poll whenever any check is queued, even if the running and queued checks make no progress. Close and land can therefore wait through the entire runner queue instead of honoring the requested running-check limit. The new override test uses only `0`, which bypasses this deadline reset.",
@@ -110,10 +116,10 @@
       }
     ],
     "id": "24c4ff21-279f-46bb-97d8-4f358a460654",
-    "status": "blocked"
+    "status": "clean"
   },
   "round": 2,
-  "status": "hotspot",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-18T15:24:58.020651+00:00",
@@ -130,8 +136,12 @@
   ],
   "stop": {
     "at": "2026-11-18T16:48:02.159938+00:00",
+    "by": "owner",
+    "choice": "accept",
     "file": "src/forge/checks.py",
-    "wait_id": "c0d9d8a0-573f-41d8-9717-5195785c1f40"
+    "reason": "Owner accepted on 18 Nov 2026: with a set FORGE_CHECKS_WAIT, the pre-push wait still waits through a runner queue; waiting through the queue is the wanted default",
+    "wait_id": "c0d9d8a0-573f-41d8-9717-5195785c1f40",
+    "worker_round": 2
   },
   "stuck": {
     "close": "282b5d10-268c-4c44-8697-831068d4e01e",
