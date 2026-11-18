@@ -242,8 +242,10 @@ $delegation
   to push or run CI. CI is the merge gate. Commit your local proof in the `Proof list:` without
   waiting for CI results or timings.
 - Close and doctor cancel only this pull request's older forge.yml runs when they block its newest queued run. Client workflows stay untouched. If a run stays active after cancellation, Forge prints GitHub's force-cancel command for the operator. It never calls that command automatically. Close keeps waiting for the new run.
-- If close reports that the tests ran out of time, rerun the tests job or split the suite.
-  This timeout does not send the item to a worker. Generated pull request and nightly test jobs
+- On new and upgraded repos, close and merge retry only the failed jobs once when only CI test
+  groups fail or time out. They wait for that attempt. Cancelled runs use the same retry limit.
+  A second failure sends the item to `forge work`. For other test timeouts, rerun the tests job
+  or split the suite. Generated pull request and nightly test jobs
   each get 60 minutes. The nightly run uses the repo's groups and records one
   combined result for the default branch after all groups finish.
 - Run any test command you start in the foreground and wait for it to finish. Never end your turn

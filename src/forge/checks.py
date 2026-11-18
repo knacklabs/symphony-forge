@@ -190,9 +190,12 @@ def _wait(top: Path, item: str, sha: str, names: list[str], branch: str, progres
             if not any(name == "forge-pr-check" or name == "Review pull request" and state != SKIPPED
                        for name, state in seen):  # the pull_request workflow skips its own job of that name
                 _no_start(top, item, sha, branch)  # before a red or timed-out test can hide it
-            _tests_timeout(top, item, sha, names, check_runs, seen)
-            if _rerun_cancelled(top, item, sha, seen, check_runs) and cache is not None:
-                cache.unlink(missing_ok=True)  # The next poll must read fresh results, not the cancelled ones.
+            recovered = _rerun_cancelled(top, item, sha, seen, check_runs)
+            if recovered:
+                if cache is not None:
+                    cache.unlink(missing_ok=True)  # Read the new attempt instead of cached failures.
+            else:
+                _tests_timeout(top, item, sha, names, check_runs, seen)
             reason = _pending(item, names, seen)
             if mergeable == "UNKNOWN":
                 reason = reason or "GitHub has not determined whether this pull request can merge"
@@ -374,16 +377,24 @@ def _tests_timeout(top: Path, item: str, sha: str, names: list[str],
 
 def _rerun_cancelled(top: Path, item: str, sha: str, seen: list[tuple[str, str]],
                      runs: list[dict[str, Any]]) -> bool:
-    """Cancelled checks are not failures when none failed. Decide per workflow run: wait for a newer
-    run of the same workflow and event, or start the run again once (run_attempt 1); a second attempt stays red."""
+    """Recover cancellations and test-only failures once per workflow run, sharing run_attempt.
+    A newer run of the same workflow and event takes precedence; a second attempt stays red."""
     cancelled = [index for index, run in enumerate(runs)
                  if run.get("status") == "completed" and run.get("conclusion") == "cancelled"]
-    if not cancelled or any(state == RED for index, (_, state) in enumerate(seen) if index not in cancelled):
+    failed = [index for index, run in enumerate(runs)
+              if run.get("status") == "completed" and run.get("conclusion") in ("failure", "timed_out")
+              and re.fullmatch(r"test group \d+ of \d+", str(run.get("name", "")))]
+    suites = {runs[index].get("check_suite", {}).get("id") for index in failed} - {None}
+    failed += [index for index, run in enumerate(runs)
+               if run.get("name") == "tests" and run.get("conclusion") == "failure"
+               and run.get("check_suite", {}).get("id") in suites]
+    retryable = cancelled + failed
+    if not retryable or any(state == RED for index, (_, state) in enumerate(seen) if index not in retryable):
         return False
     workflows = _ask(top, item, ".workflow_runs", "repos/{owner}/{repo}/actions/runs", "--method", "GET",
                      "--raw-field", "per_page=100", "--raw-field", f"head_sha={sha}")
     decided: dict[Any, str | None] = {}
-    for index in cancelled:
+    for index in retryable:
         suite = runs[index].get("check_suite", {}).get("id")
         current = next((run for run in workflows if suite is not None and run.get("check_suite_id") == suite), None)
         if current is None or not isinstance(current.get("id"), int):
@@ -398,9 +409,20 @@ def _rerun_cancelled(top: Path, item: str, sha: str, seen: list[tuple[str, str]]
             elif current.get("status") != "completed":
                 decided[suite] = PENDING  # A rerun is already going; GitHub keeps the run and counts attempts.
             elif (current.get("run_attempt") or 1) == 1:
-                if repo.run("gh", "run", "rerun", str(current["id"]), cwd=top, timeout=60).returncode == 0:
+                if suite in suites:
+                    from forge import land
+                    late = land._restart(top, [str(current["id"])])
+                    if late and late != "gh":
+                        repo.refuse(REFUSALS["not_green"], item=item,
+                                    reason="GitHub has not started the failed test jobs again")
+                    if not late:
+                        print("Started the failed test jobs again once; waiting for them.", flush=True)
+                        decided[suite] = PENDING
+                elif repo.run("gh", "run", "rerun", str(current["id"]), cwd=top, timeout=60).returncode == 0:
                     print(f"Run {current['id']} was cancelled. Started it again; waiting for it.", flush=True)
                     decided[suite] = PENDING
+            elif suite in suites:
+                _pending(item, [], seen)  # A second test timeout is a failure too: send it to work.
         if decided[suite]:
             seen[index] = (seen[index][0], decided[suite])
     return any(decided.values())
