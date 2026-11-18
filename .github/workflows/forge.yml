@@ -200,7 +200,6 @@ jobs:
     permissions:
       contents: read
       actions: read
-      statuses: write
     runs-on: "ubuntu-24.04"
     env:
       UV_FROZEN: '1'
