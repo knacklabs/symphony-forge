@@ -140,7 +140,7 @@
     "id": "00c2e7b1-e64a-4016-adac-71b187a8766b",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -153,10 +153,13 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "314bcf229063dd097bcd81a1f3bea001c3a3ef15",
-    "keys": {},
-    "round": null
+    "close": "65e8041b-9393-4811-9b00-2a3b490b96a7",
+    "head": "6a83f896921199a3f63dac5595ed12b43452b06d",
+    "keys": {
+      "the open P0 not done: when an item's latest ci run failed only in test groups, close and merge rerun only the failed jobs of that run once in src/forge/checks.py": 1,
+      "the open P0 retry the failed run before publishing close's review record in src/forge/checks.py": 1
+    },
+    "round": 1
   },
   "why": "Issue 1664: when one CI test group fails or times out, close and merge stop, and only land reruns the failed group (gh run rerun --failed); a person has to rerun the whole run",
   "worker": "codex"
