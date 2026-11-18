@@ -30,7 +30,7 @@ def journey_client(repo, gh, tmp_path, request):
         config.write_text(config.read_text("utf-8").replace(
             'version = "v1.2.2"', f'version = "{_version(repo)}"'), "utf-8")
         repo.git("add", "-A")
-        repo.git("commit", "-q", "-m", "Upgrade the earlier client")
+        repo.git("commit", "--allow-empty", "-q", "-m", "Upgrade the earlier client")
         repo.git("push", "-q", "origin", "main")
     started = repo.forge("fix", "start", "Check journey guidance", "--done",
                          "The journey guidance is delivered", "--kind", "mechanical", cwd=client)
@@ -96,7 +96,7 @@ def test_2_the_agent_explains_the_steps_and_refusals(repo, journey_client):
         'workers = "split"', 'workers = "claude"').replace(
         'workers = "codex"', 'workers = "claude"'), "utf-8")
     repo.git("add", "-A", cwd=client)
-    repo.git("commit", "-q", "-m", "Use the current journey guidance", cwd=client)
+    repo.git("commit", "--allow-empty", "-q", "-m", "Use the current journey guidance", cwd=client)
     worked = repo.forge("work", "check-journey-guidance", cwd=client)
     assert worked.returncode == 0, worked.stdout + worked.stderr
     brief = " ".join(calls(log)[-1]["brief"].split())

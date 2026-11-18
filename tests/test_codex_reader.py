@@ -101,6 +101,7 @@ def test_10_the_cold_read_runs_on_the_other_family(repo, gh, monkeypatch, sdk_da
         assert ("- Stopped the Codex processes that a crashed forge read SHOP left.\n"
                 in repo.forge("doctor", cwd=shop).stdout)
         assert _down(server) and _down(saved["driver"]["pid"]) and unaccepted()
+        claude.unlink(missing_ok=True)  # doctor's sign-in check calls Claude; the read itself must not
 
     # The read: a "Grill" conversation in the story's checkout, read-only with approvals "never"
     # at its start and on its turn, on the grill kind's models. Codex's text becomes the notes.

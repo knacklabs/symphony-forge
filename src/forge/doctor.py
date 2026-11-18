@@ -349,7 +349,7 @@ def doctor(args: argparse.Namespace) -> int:
     workers = cfg["workers"] if cfg["tools"] == "both" else cfg["tools"]
     if item := task.branch_item(repo.current_branch(top), top):
         workers = item[1].get("tool") or workers
-    on_codex = workers != "claude"  # split runs Codex and Claude
+    on_codex = workers != "claude" or cfg["tools"] == "both"  # reviews and reads use Codex when both are set
     programs = {"codex": shutil.which(os.environ.get("CODEX_BIN") or "codex"),
                 "claude": shutil.which("claude")}
     if cfg["tools"] != "both" and not programs[cfg["tools"]]:
@@ -364,7 +364,7 @@ def doctor(args: argparse.Namespace) -> int:
     for tool in ("git", "gh", "uv"):
         if not shutil.which(tool): add(f"{tool} is not installed or not on PATH.", INSTALL[tool])
     if shutil.which("gh") and repo.run("gh", "auth", "status", cwd=top).returncode: add("gh is not signed in to GitHub.", "gh auth login")
-    if cfg["tools"] == "claude" and init.signed_in("claude", top) is False:
+    if workers != "codex" and programs["claude"] and init.signed_in("claude", top) is False:  # Claude builds on claude and split
         add("Claude is not signed in.", "run claude and sign in")
     if on_codex and init.signed_in("codex", top) is False:
         add("Codex is not signed in.", "codex login")

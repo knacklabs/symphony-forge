@@ -41,7 +41,7 @@ def test_1_close_isolates_removal_and_merge_waits_for_shared_checks(env, adopted
     synced = repo.forge("sync")
     assert synced.returncode == 0, synced.stdout + synced.stderr
     repo.git("add", "-A")
-    repo.git("commit", "-qm", "Sync settings")
+    repo.git("commit", "--allow-empty", "-qm", "Sync settings")
     repo.git("switch", "-q", "main")
     repo.git("merge", "-q", "--ff-only", "fix/setup")
     repo.git("fetch", "-q", str(repo.path), "main:main",

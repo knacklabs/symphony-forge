@@ -43,12 +43,12 @@ def _doctor_defaults(env, tmp_path, monkeypatch, adopted):
         patient(lambda: shutil.copytree(ROOT / "tests/fixtures/adopted-v1.2.2/client", client,
                                          dirs_exist_ok=True))
         repo.git("add", "-A", cwd=client)
-        repo.git("commit", "-qm", "Adopt earlier Forge", cwd=client)
+        repo.git("commit", "--allow-empty", "-qm", "Adopt earlier Forge", cwd=client)
         version = repo.forge("--version").stdout.split()[-1]
         config = client / "forge.toml"
         config.write_text(re.sub(r'^version = .*$', f'version = "{version}"',
                                  config.read_text("utf-8"), flags=re.M), "utf-8")
-        repo.git("commit", "-qam", "Pin current Forge", cwd=client)
+        repo.git("commit", "--allow-empty", "-qam", "Pin current Forge", cwd=client)
         repo.git("push", "-q", "origin", "main", cwd=client)
     else:
         client, initialized = _fresh_client(repo, env.gh, tmp_path)
@@ -66,7 +66,7 @@ def _doctor_defaults(env, tmp_path, monkeypatch, adopted):
     assert synced.returncode == 0, synced.stdout + synced.stderr
     assert config.read_bytes() == before
     repo.git("add", "-A", cwd=client)
-    repo.git("commit", "-qm", "Upgrade Forge files", cwd=client)
+    repo.git("commit", "-qm", "Upgrade Forge files", "--allow-empty", cwd=client)
     env.gh.respond("auth", "status")
     codex_home = tmp_path / "doctor-codex"
     codex_home.mkdir()

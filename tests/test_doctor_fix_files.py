@@ -122,10 +122,10 @@ def _land(repo, client: Path, message: str, edit, forge: bool = False) -> str:
         if forge:
             toml.write_text(_pin(pinned, "v0.0.1"), encoding="utf-8")
         repo.git("add", "-A", cwd=clone)
-        repo.git("commit", "-q", "-m", message, cwd=clone)
+        repo.git("commit", "--allow-empty", "-q", "-m", message, cwd=clone)
         if forge:
             toml.write_text(pinned, encoding="utf-8")
-            repo.git("commit", "-q", "-am", "Pin the installed Forge again", cwd=clone)
+            repo.git("commit", "--allow-empty", "-q", "-am", "Pin the installed Forge again", cwd=clone)
         repo.git("push", "-q", "origin", "HEAD:main", cwd=clone)
     repo.git("pull", "-q", "--ff-only", "origin", "main", cwd=client)
     return repo.git("rev-parse", "HEAD", cwd=client)
@@ -668,9 +668,9 @@ def _a_local_commit_that_moves_the_pin_on_a_fix_branch_is_held_back(repo, gh, tm
     pinned = toml.read_text(encoding="utf-8")
     _set(folder, SKILL, "Our skill\n")
     toml.write_text(_pin(pinned, "v0.0.1"), encoding="utf-8")
-    repo.git("commit", "-q", "-am", "Move the pin and the skill", cwd=folder)
+    repo.git("commit", "--allow-empty", "-q", "-am", "Move the pin and the skill", cwd=folder)
     toml.write_text(pinned, encoding="utf-8")
-    repo.git("commit", "-q", "-am", "Pin back", cwd=folder)
+    repo.git("commit", "--allow-empty", "-q", "-am", "Pin back", cwd=folder)
     done = repo.forge("doctor", "--fix", cwd=folder)
     assert _held(SKILL, "was changed by hand (Move the pin and the skill)") in done.stdout, done.stdout
     assert (folder / SKILL).read_text(encoding="utf-8") == "Our skill\n"
@@ -806,7 +806,7 @@ def _an_existing_app_adopted_on_v1_2_2_is_repaired(repo, gh, tmp_path, monkeypat
                     dirs_exist_ok=True)
     assert 'version = "v1.2.2"' in (client / "forge.toml").read_text(encoding="utf-8")
     repo.git("add", "-A")
-    repo.git("commit", "-qm", "Adopt Forge")
+    repo.git("commit", "--allow-empty", "-qm", "Adopt Forge")
     repo.git("push", "-q", "origin", "main")
     _land(repo, client, "Upgrade Forge", lambda folder: _set(
         folder, "forge.toml", _pin((folder / "forge.toml").read_text(encoding="utf-8"),

@@ -62,7 +62,7 @@ def test_2_fix_kind_selects_the_same_worker_on_every_round(repo, gh, tmp_path, m
     assert synced.returncode == 0, synced.stdout + synced.stderr
     prototype_design(repo)
     repo.git("add", "-A")
-    repo.git("commit", "-qm", "Set distinct worker models")
+    repo.git("commit", "--allow-empty", "-qm", "Set distinct worker models")
     _publish_default(repo, repo.git("remote", "get-url", "origin"))
     repo.git("switch", "-q", "main")
     repo.git("merge", "-q", "--ff-only", "fix/worker-settings")
@@ -84,7 +84,7 @@ def test_2_fix_kind_selects_the_same_worker_on_every_round(repo, gh, tmp_path, m
             state = json.loads(state_file.read_text("utf-8"))
             state["allow_large"] = "Owner permits this change"
             state_file.write_text(json.dumps(state), encoding="utf-8")
-            repo.git("commit", "-qam", "Record the allowance", cwd=folder)
+            repo.git("commit", "--allow-empty", "-qam", "Record the allowance", cwd=folder)
         worked = repo.forge("work", "repair-the-app")
         assert worked.returncode == 0, worked.stdout + worked.stderr
         expected = f"gpt-6-{model_kind}" if family == "codex" else f"claude-{model_kind}"
@@ -117,7 +117,7 @@ def test_22_prototype_fixes_require_a_kind_before_a_checkout_exists(repo):
     version = repo.forge("--version").stdout.split()[-1]
     repo.write("forge.toml", f'version = "{version}"\nrepo = "client"\nstage = "prototype"\n')
     repo.git("add", "-A")
-    repo.git("commit", "-qm", "Start a prototype")
+    repo.git("commit", "--allow-empty", "-qm", "Start a prototype")
     repo.git("push", "-q", "origin", "main")
     refused = repo.forge("fix", "start", "Repair the app", "--done", "The app works")
     assert refused.returncode == 1
@@ -186,7 +186,7 @@ def test_23_prototype_next_fix_commands_run_as_printed(repo, gh, tmp_path, monke
     monkeypatch.setenv("GIT_COMMITTER_DATE", "2026-09-01T10:00:00+00:00")
     prototype_design(repo)
     repo.git("add", "-A")
-    repo.git("commit", "-qm", "Prepare guidance inputs")
+    repo.git("commit", "--allow-empty", "-qm", "Prepare guidance inputs")
     monkeypatch.delenv("GIT_COMMITTER_DATE")
     _publish_default(repo, repo.git("remote", "get-url", "origin"))
     repo.git("switch", "-q", "main")

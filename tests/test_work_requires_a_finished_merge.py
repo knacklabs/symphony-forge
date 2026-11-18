@@ -27,7 +27,7 @@ def test_1_work_requires_resolving_and_committing_the_default_branch_merge(
                         dirs_exist_ok=True)
         repo.git("switch", "-qc", "adoption")
         repo.git("add", "-A")
-        repo.git("commit", "-qm", "Adopt earlier Forge")
+        repo.git("commit", "--allow-empty", "-qm", "Adopt earlier Forge")
         repo.git("switch", "-q", "main")
         repo.git("merge", "-q", "--ff-only", "adoption")
     else:
@@ -46,7 +46,7 @@ def test_1_work_requires_resolving_and_committing_the_default_branch_merge(
     repo.git("add", "-A")
     # Seed an already landed upgrade, before a Forge item exists to own this setup.
     no_hooks = f"core.hooksPath={tmp_path / 'no-hooks'}"
-    repo.git("-c", no_hooks, "commit", "-qm", "Upgrade client")
+    repo.git("-c", no_hooks, "commit", "--allow-empty", "-qm", "Upgrade client")
     repo.git("switch", "-q", "main")
     repo.git("merge", "-q", "--ff-only", "fix/upgrade")
     repo.git("-c", no_hooks, "push", "-q", "origin", "main")
@@ -69,11 +69,11 @@ def test_1_work_requires_resolving_and_committing_the_default_branch_merge(
                     if conflict == "forge.toml" else "Default work\n")
     (folder / conflict).write_text(branch_text, "utf-8")
     repo.git("add", conflict, cwd=folder)
-    repo.git("commit", "-qm", "Branch work", cwd=folder)
+    repo.git("commit", "--allow-empty", "-qm", "Branch work", cwd=folder)
     repo.git("switch", "-qc", "fix/default-change")
     repo.write(conflict, default_text)
     repo.git("add", conflict)
-    repo.git("-c", no_hooks, "commit", "-qm", "Default work")
+    repo.git("-c", no_hooks, "commit", "--allow-empty", "-qm", "Default work")
     repo.git("-c", no_hooks, "push", "-q", "origin", "HEAD:main")
     merged = subprocess.run(["git", "merge", "--no-edit", "origin/main"], cwd=folder,
                             capture_output=True, text=True)
@@ -103,7 +103,7 @@ def test_1_work_requires_resolving_and_committing_the_default_branch_merge(
     assert pending.returncode == 1 and pending.stderr == expected
     assert repo.git("ls-files", "--stage", cwd=folder) == index
     assert calls(log) == []
-    repo.git("commit", "-qm", "Resolve the merge", cwd=folder)
+    repo.git("commit", "--allow-empty", "-qm", "Resolve the merge", cwd=folder)
     retried = repo.forge("work", item, cwd=folder)
     assert retried.returncode == 0, retried.stdout + retried.stderr
     assert len(calls(log)) == 1

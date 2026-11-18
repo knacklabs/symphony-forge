@@ -65,7 +65,7 @@ def test_3_build_rounds_run_as_session_subagents(repo, gh, monkeypatch, tmp_path
     synced = repo.forge("sync")
     assert synced.returncode == 0, synced.stdout + synced.stderr
     repo.git("add", "-A")
-    repo.git("commit", "-q", "-m", "Pin Forge")
+    repo.git("commit", "--allow-empty", "-q", "-m", "Pin Forge")
     repo.git("switch", "-q", "main")
     repo.git("merge", "-q", "--ff-only", "fix/settings")
     _publish_default(repo, Path(repo.git("remote", "get-url", "origin")).as_posix())
@@ -154,7 +154,7 @@ def test_3_build_rounds_run_as_session_subagents(repo, gh, monkeypatch, tmp_path
         assert "web/help.py" in done.stdout
         assert lane("BOARD/HELP") == []
         repo.git("add", "-A", cwd=folder)
-        repo.git("commit", "-q", "-m", "Add the words", cwd=folder)
+        repo.git("commit", "--allow-empty", "-q", "-m", "Add the words", cwd=folder)
         assert "Next: forge close BOARD/HELP" in repo.forge("next").stdout  # the round is finished
         timings = (repo.path / ".git/forge/timings.jsonl").read_text("utf-8")
         assert '"item": "BOARD/HELP", "round": 1, "step": "worker round"' in timings
@@ -210,7 +210,7 @@ def test_3_build_rounds_run_as_session_subagents(repo, gh, monkeypatch, tmp_path
         handed = repo.git("rev-parse", "HEAD", cwd=folder)
         (folder / "web/help.py").write_text("WORDS = {'done': 'Done'}\n", "utf-8")
         (folder / "forge.toml").write_text(settings.replace(version, "v9.9.9"), "utf-8")
-        repo.git("commit", "-q", "-am", "Finish the words and try another release", cwd=folder)
+        repo.git("commit", "--allow-empty", "-q", "-am", "Finish the words and try another release", cwd=folder)
         finished = handback("BOARD/HELP", number, "Committed everything.", cwd=folder)
         assert finished.returncode == 0, finished.stdout + finished.stderr
         assert "Send this to subagent" not in finished.stdout and "Warning" not in finished.stdout
@@ -284,7 +284,7 @@ def test_3_build_rounds_run_as_session_subagents(repo, gh, monkeypatch, tmp_path
             page = repo.path.parent / f"{repo.path.name}-BOARD-PAGE"
             (page / "forge.toml").write_text((page / "forge.toml").read_text("utf-8").replace(
                 'tools = "codex"\nworkers = "claude"', 'tools = "both"\nworkers = "split"'), "utf-8")
-            repo.git("commit", "-q", "-am", "Both tools, split workers", cwd=page)
+            repo.git("commit", "--allow-empty", "-q", "-am", "Both tools, split workers", cwd=page)
             monkeypatch.setenv("STUB_CLAUDE_EXIT", "3")
             fell = handout("BOARD/PAGE", "frontend")[0]
             monkeypatch.delenv("STUB_CLAUDE_EXIT")
@@ -306,7 +306,7 @@ def test_3_build_rounds_run_as_session_subagents(repo, gh, monkeypatch, tmp_path
         page = repo.path.parent / f"{repo.path.name}-BOARD-PAGE"
         (page / "forge.toml").write_text((page / "forge.toml").read_text("utf-8").replace(
             'workers = "claude"', 'workers = "split"'), "utf-8")
-        repo.git("commit", "-q", "-am", "Split workers", cwd=page)
+        repo.git("commit", "--allow-empty", "-q", "-am", "Split workers", cwd=page)
         handout("BOARD/PAGE", "frontend")
         assert calls(claude_log) == []
     finally:

@@ -1,0 +1,92 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/doctor.py\tCheck both tools' readiness with the new default\tnew-client-repos-with-both-tools-install",
+      "kind": "bug",
+      "path": "src/forge/doctor.py",
+      "line": 352,
+      "text": "Check both tools' readiness with the new default",
+      "from": "blocking",
+      "item": "new-client-repos-with-both-tools-install",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/doctor.py\tKeep the existing test suite runnable with the new default\tnew-client-repos-with-both-tools-install",
+      "kind": "bug",
+      "path": "src/forge/doctor.py",
+      "line": 352,
+      "text": "Keep the existing test suite runnable with the new default",
+      "from": "blocking",
+      "item": "new-client-repos-with-both-tools-install",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/init.py\tCheck both tools' readiness with the new default\tnew-client-repos-with-both-tools-install",
+      "kind": "bug",
+      "path": "src/forge/init.py",
+      "line": 183,
+      "text": "Check both tools' readiness with the new default",
+      "from": "blocking",
+      "item": "new-client-repos-with-both-tools-install",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/init.py\tKeep the existing test suite runnable with the new default\tnew-client-repos-with-both-tools-install",
+      "kind": "bug",
+      "path": "src/forge/init.py",
+      "line": 183,
+      "text": "Keep the existing test suite runnable with the new default",
+      "from": "blocking",
+      "item": "new-client-repos-with-both-tools-install",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/skill.md\tNot done: cold reads run on the other tool from the session\tnew-client-repos-with-both-tools-install",
+      "kind": "bug",
+      "path": "src/forge/templates/skill.md",
+      "line": 446,
+      "text": "Not done: cold reads run on the other tool from the session",
+      "from": "blocking",
+      "item": "new-client-repos-with-both-tools-install",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/skill.md\tStandard: Delete before adding\tnew-client-repos-with-both-tools-install",
+      "kind": "bug",
+      "path": "src/forge/templates/skill.md",
+      "line": 446,
+      "text": "Standard: Delete before adding",
+      "from": "blocking",
+      "item": "new-client-repos-with-both-tools-install",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_init_uses_signed_in_tools.py\tGate: proof list\tnew-client-repos-with-both-tools-install",
+      "kind": "bug",
+      "path": "tests/test_init_uses_signed_in_tools.py",
+      "line": 32,
+      "text": "Gate: proof list",
+      "from": "blocking",
+      "item": "new-client-repos-with-both-tools-install",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "simplify\tsrc/forge/init.py\tSimpler: unrecorded approach \u2192 record deletion, cost and reuse checks",
+      "kind": "simplify",
+      "path": "src/forge/init.py",
+      "line": 183,
+      "text": "Simpler: unrecorded approach \u2192 record deletion, cost and reuse checks",
+      "from": "review",
+      "item": "new-client-repos-with-both-tools-install",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

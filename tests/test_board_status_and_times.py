@@ -98,7 +98,7 @@ def test_1_roadmap_done_without_local_state_is_finished(client, tmp_path, monkey
         with monkeypatch.context() as dated:
             dated.setenv("GIT_AUTHOR_DATE", OLD)
             dated.setenv("GIT_COMMITTER_DATE", OLD)
-            client.git("commit", "-qm", "Record the basket plan", cwd=tree)
+            client.git("commit", "--allow-empty", "-qm", "Record the basket plan", cwd=tree)
         client.git("merge", "-q", "--ff-only", "fix/correct-state")
         _land_fixture(client)
     (tree / "plans").mkdir(exist_ok=True)
@@ -173,7 +173,7 @@ def test_11_story_idle_time_tracks_its_parts(
     (configured / "plans").mkdir(exist_ok=True)
     (configured / "plans/roadmap.json").write_text(json.dumps({"items": [{"key": "SHOP"}]}), "utf-8")
     client.git("add", "-A", cwd=configured)
-    client.git("commit", "-qm", "Configure basket work", cwd=configured)
+    client.git("commit", "--allow-empty", "-qm", "Configure basket work", cwd=configured)
     client.git("merge", "-q", "--ff-only", "fix/correct-state")
     _land_fixture(client)
     if not (client.path / "docs/product/CONSTITUTION.md").exists():
@@ -221,7 +221,7 @@ def test_11_story_idle_time_tracks_its_parts(
             with monkeypatch.context() as dated:
                 dated.setenv("GIT_AUTHOR_DATE", "2026-10-09T11:55:00+00:00")
                 dated.setenv("GIT_COMMITTER_DATE", "2026-10-09T11:55:00+00:00")
-                client.git("commit", "-qm", "Save baskets", cwd=part)
+                client.git("commit", "--allow-empty", "-qm", "Save baskets", cwd=part)
     _records(client, "events.jsonl", events)
     data, _, _ = _board(client, tmp_path)
     parent = _row(data, "SHOP")
@@ -382,7 +382,7 @@ def test_6_live_plan_read_is_planning_then_clean_read_waits_for_approval(client,
     (configured / "plans").mkdir(exist_ok=True)
     (configured / "plans/roadmap.json").write_text(json.dumps({"items": [{"key": "SHOP"}]}), "utf-8")
     client.git("add", "-A", cwd=configured)
-    client.git("commit", "-qm", "Configure the plan reader", cwd=configured)
+    client.git("commit", "--allow-empty", "-qm", "Configure the plan reader", cwd=configured)
     client.git("merge", "-q", "--ff-only", "fix/correct-state")
     _land_fixture(client)
     if not (client.path / "docs/product/CONSTITUTION.md").exists():
@@ -455,7 +455,7 @@ def test_9_one_person_has_one_display_name_across_approval_history(
     (configured / "plans/roadmap.json").write_text(json.dumps({"items": [
         {"key": "FIRST"}, {"key": "SECOND"}]}), "utf-8")
     client.git("add", "-A", cwd=configured)
-    client.git("commit", "-qm", "Configure plan reads", cwd=configured)
+    client.git("commit", "--allow-empty", "-qm", "Configure plan reads", cwd=configured)
     client.git("merge", "-q", "--ff-only", "fix/correct-state")
     _land_fixture(client)
     if not (client.path / "docs/product/CONSTITUTION.md").exists():
