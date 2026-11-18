@@ -1,6 +1,13 @@
 {
   "base": "1a5b4d2cf1d9b0e80bb05627d2864a9ac40fd2bb",
   "branch": "fix/start-to-merge-time",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1ef8f-9323-7b91-84f8-2e90c4430927",
+    "head": null,
+    "start": "1d2a6d8b72fdec50d442f922d16e69370a64cf4f"
+  },
   "done_when": "forge merge (and land, for each item) prints 'Merged <item>: started <time>, merged <time>, <h>h<m>m start to merge; biggest wait: <cause>' from the item's How it went record, and the board shows the median start-to-merge time of items merged that day; new and existing repos get it on upgrade",
   "fix_kind": "mechanical",
   "kind": "fix",
