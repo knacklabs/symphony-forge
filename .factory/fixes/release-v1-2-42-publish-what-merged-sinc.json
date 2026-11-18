@@ -42,7 +42,7 @@
     "status": "blocked"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-18T02:57:13.667406+00:00",
@@ -55,8 +55,12 @@
   ],
   "stop": {
     "at": "2026-11-18T03:03:57.557095+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "tests/test_release_version.py",
-    "wait_id": "97c991e4-704d-4ff0-b073-02f836cd0112"
+    "reason": "Owner chose one more round: the proof list is added",
+    "wait_id": "97c991e4-704d-4ff0-b073-02f836cd0112",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
