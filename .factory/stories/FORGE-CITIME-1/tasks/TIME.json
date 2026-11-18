@@ -1,0 +1,153 @@
+{
+  "branch": "task/FORGE-CITIME-1-TIME",
+  "chat": {
+    "approval": "1280d44b1a637b802f4fe8e3abbad6a3bcd0cc63776d2c73dab88bc44c52e21d",
+    "claude": null,
+    "conversation": "01a1ee43-318e-7430-b04f-eab1554e6d73",
+    "head": null,
+    "start": "029af69da746693a48e3b9b4530d5e17087343a3"
+  },
+  "known": [
+    {
+      "area": "warning() in src/forge/citime.py",
+      "file": "src/forge/citime.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 220,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: the health check warns when the usual CI time of recent merged pull requests is over 10 minutes",
+      "work": 2
+    },
+    {
+      "area": "_eligible() in src/forge/citime.py",
+      "file": "src/forge/citime.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 55,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Include cancelled jobs that reached their time limit",
+      "work": 2
+    },
+    {
+      "area": "_measure() in src/forge/citime.py",
+      "file": "src/forge/citime.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 92,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Report the current failure when an earlier push was slower",
+      "work": 2
+    },
+    {
+      "area": "_stages() in src/forge/citime.py",
+      "file": "src/forge/citime.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 123,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Classify the generated workflow's selection time",
+      "work": 2
+    },
+    {
+      "area": "report() in src/forge/citime.py",
+      "file": "src/forge/citime.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 165,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Include the prerequisite selection job in each group's budget",
+      "work": 2
+    },
+    {
+      "area": "_measure() in src/forge/citime.py",
+      "file": "src/forge/citime.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 84,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Round runner usage for each job",
+      "work": 2
+    },
+    {
+      "area": "test_1_close_prints_ci_time_and_doctor_warns_over_ten_minutes() in tests/test_ci_time_report.py",
+      "file": "tests/test_ci_time_report.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 161,
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: Owner accepted on 18 Nov 2026: the test's fake matches the exact all-attempts query text; a future rewrite of the query could pass the test while counting wrong; code is correct today",
+      "round": 1,
+      "security": false,
+      "title": "Gate: tests/test_ci_time_report.py::test_1_close_prints_ci_time_and_doctor_warns_over_ten_minutes",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "1c0f9ae3d9826b489416b77fc7e23f5d1a1fbba05e350a04c933f34b198ef8ed",
+    "changed": "f68da634c171e7b180f3643256fd63fc3e76124e633640dc025311f2db05efcc",
+    "commit": "2b4fdd0e46e0a8116a06f90727717e2cb78e55cb",
+    "dismissals": [],
+    "findings": [],
+    "id": "c8906d28-2aca-4da4-b6d3-53d294cdbfce",
+    "status": "clean"
+  },
+  "round": 5,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-18T10:45:14.639794+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-18T11:18:05.363642+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-18T11:34:08.789545+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-18T12:12:24.435460+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-18T13:56:56.646369+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-18T11:34:08.789823+00:00",
+    "by": "owner",
+    "choice": "accept",
+    "file": "tests/test_ci_time_report.py",
+    "reason": "Owner accepted on 18 Nov 2026: the test's fake matches the exact all-attempts query text; a future rewrite of the query could pass the test while counting wrong; code is correct today",
+    "wait_id": "00944cf3-9a53-4f69-9f36-d2c5e7617fc7",
+    "worker_round": 2
+  },
+  "stuck": {
+    "close": "9006812d-e005-40a9-bd42-3e6fa0bf104e",
+    "head": "4a4612a2444faa4e5f7e36d2a849c3077aea08f2",
+    "keys": {},
+    "round": 3
+  },
+  "worker": "codex"
+}
