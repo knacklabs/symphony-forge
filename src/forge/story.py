@@ -801,6 +801,8 @@ def check_pr_docs(top: Path, head: str, changed: list[str]) -> str | None:
 def worktrees(top: Path) -> dict[str, Path]:
     """Every checked-out branch and its worktree folder."""
     def read() -> dict[str, Path]:
+        from forge.nextstep import remote_state
+
         found: dict[str, Path] = {}
         path = top
         for line in repo.git("worktree", "list", "--porcelain", cwd=top).splitlines():
@@ -808,9 +810,10 @@ def worktrees(top: Path) -> dict[str, Path]:
                 path = Path(line[len("worktree "):])
             elif line.startswith("branch refs/heads/"):
                 branch = line[len("branch refs/heads/"):]
-                if (not path.is_dir() and branch.startswith(("fix/", "forge/"))
-                        and json_of(show(top, branch, repo.state_path(branch.partition("/")[2]))).get("status") == "dropped"):
-                    continue
+                if not path.is_dir() and (match := re.fullmatch(r"(?:fix|forge)/([a-z0-9]+(?:-[a-z0-9]+)*)", branch)):
+                    state = remote_state(top, match[1], branch)
+                    if state.get("branch") == branch and state.get("status") == "dropped":
+                        continue
                 found[branch] = path
         return found
     return dict(repo.command_fact("worktrees", top, read))
