@@ -333,7 +333,6 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
                   "    permissions:\n"
                   "      contents: read\n"
                   "      actions: read\n"
-                  "      statuses: write\n"
                   "    runs-on: <test-runner>\n"
                   "    env:\n"
                   "      UV_FROZEN: '1'\n"
