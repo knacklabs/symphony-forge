@@ -1,4 +1,6 @@
 """forge land <item> <item> merges just those items in one merge train and leaves the rest alone."""
+import pytest
+
 from test_close import env  # noqa: F401
 from test_fix_when_the_installed_forge_differs_from_th import _calls, _uv
 from test_upgrade_pending import OLD, _pin_old
@@ -6,6 +8,7 @@ from test_queue_land_all import _fix, _number, client  # noqa: F401
 from test_train_land_all import _merge_heads, _ready, train  # noqa: F401
 
 STORY = "FIX-FORGE-LAND-ALL-TAKES-EVERY-ITEM-IN-CLOSE"
+pytestmark = pytest.mark.platform
 
 
 def test_1_two_named_items_are_tested_together_once_and_the_third_is_left_alone(train, monkeypatch):
