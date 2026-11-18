@@ -112,7 +112,7 @@
     "id": "fb52fcc2-d3a7-4873-9ac8-a17b4cafb275",
     "status": "blocked"
   },
-  "round": 3,
+  "round": 4,
   "status": "fixing",
   "steps": [
     {
@@ -142,12 +142,12 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": "93cea592-8b7b-487e-97ef-27862ce397ba",
-    "head": "497d8a513841e2e3b51164511dcccd1767135a5f",
+    "close": "7797237d-c335-40b5-807c-88db720ca967",
+    "head": "7b308facd0879a49ebbc1d3bc27e8b93c10dea83",
     "keys": {
-      "the open P0 not done: when github answers with a rate-limit error, close, merge and land wait until the reset time github reports in src/forge/github.py": 1
+      "the open P0 functional: http 403 secondary rate limits stop forge commands in src/forge/github.py": 1
     },
-    "round": 2
+    "round": 3
   },
   "why": "Issue 1665: when several closes, merges and land runs share one GitHub account, the API rate limit stops them with 'API rate limit exceeded' instead of waiting for the reset",
   "worker": "codex"
