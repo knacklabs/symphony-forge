@@ -100,7 +100,7 @@ def test_1_workers_invite_delegation_and_codex_enables_configured_helpers(
     path.write_text(path.read_text("utf-8").replace('workers = "codex"',
                     'workers = "claude"').replace('workers = "split"', 'workers = "claude"'),
                     encoding="utf-8")
-    repo.git("commit", "-qam", "Choose Claude workers", cwd=folder)
+    repo.git("commit", "--allow-empty", "-qam", "Choose Claude workers", cwd=folder)
     monkeypatch.setenv("CODEX_THREAD_ID", "thr-test-coordinator")
     monkeypatch.delenv("CLAUDECODE")
     worked = repo.forge("work", "delegate-independent-work", cwd=client)
@@ -153,7 +153,7 @@ def test_2_sync_gives_existing_sessions_the_invitation_when_they_resume(
     assert synced.returncode == 0, synced.stdout + synced.stderr
     assert (folder / "forge.toml").read_bytes() == before
     repo.git("add", "-A", cwd=folder)
-    repo.git("commit", "-q", "-m", "Sync upgraded instructions", cwd=folder)
+    repo.git("commit", "--allow-empty", "-q", "-m", "Sync upgraded instructions", cwd=folder)
 
     worked = repo.forge("work", item)
 

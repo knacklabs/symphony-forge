@@ -25,7 +25,7 @@ def test_3_the_guides_name_the_services_list(repo, gh, tmp_path, setup):
         config.write_text(config.read_text("utf-8").replace(
             'version = "v1.2.2"', f'version = "{_version(repo)}"'), "utf-8")
         repo.git("add", "-A", cwd=client)
-        repo.git("commit", "-q", "-m", "Upgrade the earlier client", cwd=client)
+        repo.git("commit", "--allow-empty", "-q", "-m", "Upgrade the earlier client", cwd=client)
         repo.git("push", "-q", "origin", "main", cwd=client)
 
     started = repo.forge("fix", "start", "Check services guidance", "--done",
@@ -41,7 +41,7 @@ def test_3_the_guides_name_the_services_list(repo, gh, tmp_path, setup):
         assert synced.returncode == 0, synced.stdout + synced.stderr
         assert not (client / "services.toml").exists()
     repo.git("add", "-A", cwd=client)
-    repo.git("commit", "-q", "-m", "Use the current services guidance", cwd=client)
+    repo.git("commit", "--allow-empty", "-q", "-m", "Use the current services guidance", cwd=client)
     worked = repo.forge("work", "check-services-guidance", cwd=client)
     assert worked.returncode == 0, worked.stdout + worked.stderr
 
