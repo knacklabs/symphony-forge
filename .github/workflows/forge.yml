@@ -53,7 +53,7 @@ jobs:
       UV_FROZEN: '1'
       FORGE_GROUP: ${{ matrix.group }}
       FORGE_GROUPS: ${{ needs.docs-check.outputs.one-group == 'true' && '1' || '6' }}
-      FORGE_PUSH_BASE: ${{ github.event.before }}
+      FORGE_PUSH_BASE: ${{ github.event_name == 'push' && github.event.before || '' }}
       FORGE_CONTAINERS: '1'
       # Measure every test on CI hardware before choosing a performance repair.
       PYTEST_ADDOPTS: '--durations=0'

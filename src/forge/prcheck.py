@@ -92,7 +92,7 @@ jobs:
       UV_FROZEN: '1'
       FORGE_GROUP: ${{ matrix.group }}
       FORGE_GROUPS: ${{ needs.docs-check.outputs.one-group == 'true' && '1' || '<groups>' }}
-      FORGE_PUSH_BASE: ${{ github.event.before }}
+      FORGE_PUSH_BASE: ${{ github.event_name == 'push' && github.event.before || '' }}
 <containers><tests-timeout>    steps:
       - uses: actions/checkout@v7
         with:

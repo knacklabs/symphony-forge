@@ -125,7 +125,7 @@ def test_1_merge_retests_combined_change_and_names_failures(env, tmp_path, previ
         stub = (env.repo.bin / "gh").read_text("utf-8")
         _install(env.repo.bin, "gh", stub.replace("args = sys.argv[1:]", (
             "args = sys.argv[1:]\n"
-            "if args[:1] == ['api'] and '.check_runs[]' in args:\n"
+            "if args[-1].endswith('/check-runs?per_page=100'):\n"
             "    (here / 'ci-polled').write_text('CI is still queued', encoding='utf-8')\n"
             "    sys.stderr.write('CI is still queued\\n')\n"
             "    sys.exit(1)"), 1))
@@ -188,4 +188,16 @@ def test_1_merge_retests_combined_change_and_names_failures(env, tmp_path, previ
             assert len(env.review_calls()) == reviews
         else:
             assert published == original
-            assert not env.gh_calls("api")[before_checks:]
+            reads = env.gh_calls("api")[before_checks:]
+            # The approved red-branch gate reads default health history, but must not wait for PR checks.
+            default_health_reads = [call for call in reads
+                                    if (call[:4] == ["api", "--paginate", "--jq", ".[]"]
+                                        and call[-1].startswith("repos/{owner}/{repo}/commits/")
+                                        and call[-1].endswith("/statuses?per_page=100")
+                                        or call[:4] == ["api", "--paginate", "--jq", ".check_runs[]"]
+                                        and call[-1].startswith("repos/{owner}/{repo}/commits/")
+                                        and call[-1].endswith("/check-runs?per_page=100&filter=all"))]
+            assert reads == default_health_reads
+            assert not any(call[:4] == ["api", "--paginate", "--jq", ".check_runs[]"]
+                           and call[-1].endswith("/check-runs?per_page=100")
+                           for call in reads)

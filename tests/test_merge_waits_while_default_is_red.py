@@ -1,11 +1,11 @@
 """CI tests run after each merge and name the previous default-branch commit.
 
 Test-audit gate:
-1. Protect the generated push workflow and the public ``forge test --change`` command.
-2. A workflow can omit pushes or compare the merged commit with the wrong base, rerunning old
-   default-branch tests or no tests; the command can ignore the push's base.
-3. Existing workflow checks cover pull requests and nightly runs, but none tests this push event
-   or the changed-test selection on a merge that already contains a merge from the default branch.
+1. Protect the workflow's push-only base and the public ``forge test --change`` selection.
+2. If a pull-request synchronize event's ``before`` value is used as a push base, a failing test
+   from the first pull-request commit can be skipped after an unrelated second commit.
+3. Existing workflow checks cover pull requests and nightly runs, but none checks the push-only
+   base or changed-test selection for both merge pushes and later pull-request commits.
 4. Exercise sync and the Forge command in a fresh client; no production seam is needed.
 """
 from __future__ import annotations
@@ -46,7 +46,7 @@ def test_1_ci_repos_test_each_merge_to_the_default_branch(repo, gh, tmp_path, gr
     assert re.search(r"(?m)^  push:\n    branches: \[\"main\"\]$", workflow)
     assert "github.event_name == 'push'" in jobs["tests"]
     assert "BASE_SHA: ${{ github.event_name == 'push' && github.event.before || github.event.pull_request.base.sha }}" in jobs["tests"]
-    assert "FORGE_PUSH_BASE: ${{ github.event.before }}" in jobs["tests"]
+    assert "FORGE_PUSH_BASE: ${{ github.event_name == 'push' && github.event.before || '' }}" in jobs["tests"]
     assert "git remote set-head origin --auto" in jobs["tests"]
     if groups == 1:
         assert "if: github.event_name == 'pull_request' || github.event_name == 'push'" in jobs["tests"]
@@ -142,24 +142,72 @@ def test_2_a_push_run_tests_only_what_that_merge_brought(repo, gh, tmp_path, mon
     assert (tmp_path / "feature-test-ran").read_text(encoding="utf-8") == "ran"
     assert not (tmp_path / "existing-test-ran").exists()
 
+    # A pull_request synchronize event also has a non-empty `before`, but it is not
+    # the default-branch base. The workflow must leave FORGE_PUSH_BASE empty so the
+    # picker includes tests from the pull request's first commit.
+    repo.git("remote", "set-head", "origin", "master", cwd=client)
+    started_fix = repo.forge("fix", "start", "Preserve first pull request tests", "--done",
+                             "The first pull request test runs after a second commit",
+                             "--kind", "mechanical", cwd=client)
+    assert started_fix.returncode == 0, started_fix.stdout + started_fix.stderr
+    fix_worktree = Path(started_fix.stdout.splitlines()[0].rsplit(" in ", 1)[1])
+    first_commit_receipt = (tmp_path / "first-pr-commit-test-ran").as_posix()
+    (fix_worktree / "tests/test_pr_first_commit.py").write_text(
+        "from pathlib import Path\n"
+        "def test_first_pull_request_commit():\n"
+        f"    Path({json.dumps(first_commit_receipt)}).write_text('ran', encoding='utf-8')\n"
+        "    assert False, 'the first pull-request test must run'\n",
+        encoding="utf-8")
+    repo.git("add", "tests/test_pr_first_commit.py", cwd=fix_worktree)
+    repo.git("-c", f"core.hooksPath={hooks.as_posix()}", "commit", "-q", "-m",
+             "Add a failing pull-request test", cwd=fix_worktree)
+    previous_pr_head = repo.git("rev-parse", "HEAD", cwd=fix_worktree)
+    (fix_worktree / "notes.txt").write_text("unrelated second commit\n", encoding="utf-8")
+    repo.git("add", "notes.txt", cwd=fix_worktree)
+    repo.git("-c", f"core.hooksPath={hooks.as_posix()}", "commit", "-q", "-m",
+             "Add an unrelated pull-request change", cwd=fix_worktree)
+
+    monkeypatch.setenv("FORGE_PUSH_BASE", previous_pr_head)
+    wrongly_based = repo.forge("test", "--change", cwd=fix_worktree)
+    assert wrongly_based.returncode == 0, wrongly_based.stdout + wrongly_based.stderr
+    assert not (tmp_path / "first-pr-commit-test-ran").exists()
+
+    monkeypatch.delenv("FORGE_PUSH_BASE", raising=False)
+    correctly_based = repo.forge("test", "--change", cwd=fix_worktree)
+    assert correctly_based.returncode != 0, correctly_based.stdout + correctly_based.stderr
+    assert (tmp_path / "first-pr-commit-test-ran").read_text(encoding="utf-8") == "ran"
+
 
 # Test-audit gate for tests 3 and 4:
 # 1. Protect merge and land behavior against the newest default-branch test result.
-# 2. A failed run can be ignored, hidden by an unfinished rerun, or fail to stop a merge;
-#    a repair must let a waiting merge continue when its run is green.
+# 2. Another workflow can hide a failure, or a pending run can fail during the history scan.
+#    A successful rerun must release the wait, and a timeout must explain the repair step.
 # 3. Existing tests cover pull-request checks and default-branch retests separately, but not
-#    default-branch result order, the wait, or the red hand-off to a person.
+#    default-branch workflow identity, changing results during the scan or wait, or the red hand-off.
 # 4. These tests drive forge merge/land and fake only GitHub's API and merge endpoints.
 def _rows(rows: list[dict]) -> str:
     return "".join(json.dumps(row) + "\n" for row in rows)
 
 
-def _default_ci_result(env, sha: str, runs: list[dict], statuses: list[dict] | None = None) -> None:
+def _workflow_run(sha: str, suite_id: int, *, path: str = ".github/workflows/forge.yml",
+                  event: str = "push") -> dict:
+    return {"check_suite_id": suite_id, "event": event, "path": path + "@refs/heads/main",
+            "head_branch": "main", "head_sha": sha}
+
+
+def _default_ci_result(env, sha: str, runs: list[dict], statuses: list[dict] | None = None,
+                       workflows: list[dict] | None = None) -> None:
     endpoint = f"repos/{{owner}}/{{repo}}/commits/{sha}"
     env.gh.respond("api", "--paginate", "--jq", ".[]", endpoint + "/statuses?per_page=100",
                    stdout=_rows(statuses or []))
     env.gh.respond("api", "--paginate", "--jq", ".check_runs[]",
                    endpoint + "/check-runs?per_page=100&filter=all", stdout=_rows(runs))
+    if workflows is None:
+        suites = {run.get("check_suite", {}).get("id") for run in runs if run.get("name") == "tests"}
+        workflows = [_workflow_run(sha, suite) for suite in suites if isinstance(suite, int)]
+    env.gh.respond("api", "--paginate", "--jq", ".workflow_runs[]",
+                   "--method", "GET", "--raw-field", "per_page=100", "--raw-field",
+                   f"head_sha={sha}", "repos/{owner}/{repo}/actions/runs", stdout=_rows(workflows))
 
 
 def _queue_gh(env, args: list[str], answers: list[str]) -> None:
@@ -170,10 +218,12 @@ def _queue_gh(env, args: list[str], answers: list[str]) -> None:
     env.gh.responses.write_text(json.dumps(responses), encoding="utf-8")
 
 
-def _ci_run(sha: str, status: str, conclusion: str | None, when: str) -> dict:
+def _ci_run(sha: str, status: str, conclusion: str | None, when: str,
+            *, suite_id: int = 100) -> dict:
     return {"name": "tests", "status": status, "conclusion": conclusion,
             "completed_at": when if status == "completed" else None,
-            "head_sha": sha, "app": {"slug": "github-actions"}}
+            "head_sha": sha, "app": {"slug": "github-actions"},
+            "check_suite": {"id": suite_id}}
 
 
 def _full_run(state: str, when: str) -> dict:
@@ -273,7 +323,15 @@ if plan_path.exists() and not marker.exists():
                       endpoint + "/check-runs?per_page=100&filter=all"],
              "stdout": json.dumps({"name": "tests", "status": "completed",
                                    "conclusion": "success", "completed_at": "2026-11-18T10:00:03Z",
-                                   "head_sha": repaired, "app": {"slug": "github-actions"}}) + "\\n",
+                                   "head_sha": repaired, "app": {"slug": "github-actions"},
+                                   "check_suite": {"id": 100}}) + "\\n",
+             "stderr": "", "exit": 0},
+            {"args": ["api", "--paginate", "--jq", ".workflow_runs[]",
+                      "--method", "GET", "--raw-field", "per_page=100", "--raw-field",
+                      "head_sha=" + repaired, "repos/{owner}/{repo}/actions/runs"],
+             "stdout": json.dumps({"check_suite_id": 100, "event": "push",
+                                   "path": ".github/workflows/forge.yml@refs/heads/main",
+                                   "head_branch": "main", "head_sha": repaired}) + "\\n",
              "stderr": "", "exit": 0},
         ])
         responses.write_text(json.dumps(rules), encoding="utf-8")
@@ -291,10 +349,14 @@ if plan_path.exists() and not marker.exists():
     "pending-then-failure", "failed-then-pending", "failed-then-cancelled",
     "failed-then-skipped", "tests-fail-after-full-green", "full-green-after-tests-fail",
     "red-at-limit", "repair-disjoint", "repair-overlap", "repair-disables-merge",
-    "human-land-handoff",
+    "human-land-handoff", "newer-pending-then-failure", "same-commit-rerun-green",
+    "foreign-tests-failure-only", "foreign-tests-success-only",
+    "forge-failure-foreign-success",
 ], ids=["failure-during-pr-wait", "pending-rerun", "cancelled-rerun", "skipped-rerun",
        "tests-newest", "full-run-newest", "red-at-limit", "repair-disjoint",
-       "repair-overlap", "disabled-during-wait", "human-land-handoff"])
+       "repair-overlap", "disabled-during-wait", "human-land-handoff",
+       "newer-pending-turns-red", "same-commit-rerun-turns-green",
+       "foreign-failure-only", "foreign-success-only", "foreign-success-cannot-clear-red"])
 @pytest.mark.platform
 def test_3_merge_waits_while_the_default_branch_is_red(env, monkeypatch, case):
     from test_close import run
@@ -357,6 +419,37 @@ def test_3_merge_waits_while_the_default_branch_is_red(env, monkeypatch, case):
                   [_rows([run("tests", None, "in_progress"), run("forge-pr-check")]),
                    _rows([run("tests"), run("forge-pr-check")])])
         _fail_default_during_pr_checks(env, head, default, later)
+    elif case == "newer-pending-then-failure":
+        older = default
+        env.commit(env.repo.path, "between.txt", "A later default-branch commit.\n")
+        env.repo.git("push", "-q", "origin", "main")
+        newest = env.repo.git("rev-parse", "origin/main")
+        _default_ci_result(env, older, [_ci_run(older, "completed", "success", stamp)])
+        pending = _ci_run(newest, "in_progress", None, later)
+        failure = _ci_run(newest, "completed", "failure", later)
+        _default_ci_result(env, newest, [pending])
+        endpoint = f"repos/{{owner}}/{{repo}}/commits/{newest}/check-runs?per_page=100&filter=all"
+        _queue_gh(env, ["api", "--paginate", "--jq", ".check_runs[]", endpoint],
+                  [_rows([pending]), _rows([failure])])
+    elif case == "same-commit-rerun-green":
+        monkeypatch.setenv("FORGE_CHECKS_WAIT", "1")
+        failed = _ci_run(default, "completed", "failure", stamp)
+        green = _ci_run(default, "completed", "success", later)
+        _default_ci_result(env, default, [failed])
+        endpoint = f"repos/{{owner}}/{{repo}}/commits/{default}/check-runs?per_page=100&filter=all"
+        _queue_gh(env, ["api", "--paginate", "--jq", ".check_runs[]", endpoint],
+                  [_rows([failed]), _rows([failed, green])])
+    elif case in ("foreign-tests-failure-only", "foreign-tests-success-only"):
+        conclusion = "failure" if case.endswith("failure-only") else "success"
+        foreign = _ci_run(default, "completed", conclusion, later, suite_id=200)
+        _default_ci_result(env, default, [foreign], workflows=[
+            _workflow_run(default, 200, path=".github/workflows/another.yml")])
+    elif case == "forge-failure-foreign-success":
+        own = _ci_run(default, "completed", "failure", stamp)
+        foreign = _ci_run(default, "completed", "success", later, suite_id=200)
+        _default_ci_result(env, default, [own, foreign], workflows=[
+            _workflow_run(default, 100),
+            _workflow_run(default, 200, path=".github/workflows/another.yml")])
     elif case in ("failed-then-pending", "failed-then-cancelled", "failed-then-skipped"):
         attempted = [_ci_run(default, "completed", "failure", stamp)]
         if case == "failed-then-pending":
@@ -387,6 +480,14 @@ def test_3_merge_waits_while_the_default_branch_is_red(env, monkeypatch, case):
     if case == "full-green-after-tests-fail":
         assert result.returncode == 0, result.stdout + result.stderr
         assert len(merged) == 1
+    elif case in ("same-commit-rerun-green", "foreign-tests-failure-only",
+                  "foreign-tests-success-only"):
+        assert result.returncode == 0, result.stdout + result.stderr
+        assert len(merged) == 1
+        if case == "same-commit-rerun-green":
+            assert result.stdout.count("The default branch is red. Forge will wait for a newer green test result.") == 1
+        else:
+            assert "The default branch is red." not in result.stdout
     elif case in ("repair-disjoint", "repair-overlap"):
         assert result.returncode == 0, result.stdout + result.stderr
         assert len(merged) == 1
@@ -410,12 +511,15 @@ def test_3_merge_waits_while_the_default_branch_is_red(env, monkeypatch, case):
         assert len(merged) == 0
         assert result.stdout.count("The default branch is red. Forge will wait for a newer green test result.") == 1
         assert "The default branch is still red. Forge did not merge the pull request." in result.stderr
-        assert f"Next: forge merge {item}" in result.stderr
+        assert (f"Next: start a fix for the failed default-branch tests. Have the owner merge it on "
+                f"GitHub, then run gh workflow run forge.yml --ref main. After a green result, "
+                f"run forge merge {item}") in result.stderr
 
 
-@pytest.mark.parametrize("state", ["failure", "success"], ids=["failed-full-run", "green-full-run"])
+@pytest.mark.parametrize("state", ["failure", "success", "failure-then-green"],
+                         ids=["failed-full-run", "green-full-run", "full-run-turns-green"])
 @pytest.mark.platform
-def test_4_a_laptop_repo_waits_on_a_failed_full_run(env, state):
+def test_4_a_laptop_repo_waits_on_a_failed_full_run(env, state, monkeypatch):
     from test_merge_command import _ready
 
     config_path = env.repo.path / "forge.toml"
@@ -432,7 +536,14 @@ def test_4_a_laptop_repo_waits_on_a_failed_full_run(env, state):
     tip = env.repo.git("rev-parse", "origin/main")
     assert tip != result_commit
     _default_ci_result(env, tip, [])
-    _default_ci_result(env, result_commit, [], [_full_run(state, "2026-11-18T10:00:00Z")])
+    failed = _full_run("failure", "2026-11-18T10:00:00Z")
+    green = _full_run("success", "2026-11-18T10:00:01Z")
+    _default_ci_result(env, result_commit, [], [green if state == "success" else failed])
+    if state == "failure-then-green":
+        monkeypatch.setenv("FORGE_CHECKS_WAIT", "1")
+        endpoint = f"repos/{{owner}}/{{repo}}/commits/{result_commit}/statuses?per_page=100"
+        _queue_gh(env, ["api", "--paginate", "--jq", ".[]", endpoint],
+                  [_rows([failed]), _rows([failed, green])])
     _github_ready_pr(env, item)
 
     merged = env.repo.forge("merge", item)
@@ -443,7 +554,11 @@ def test_4_a_laptop_repo_waits_on_a_failed_full_run(env, state):
         assert not attempts
         assert "The default branch is red. Forge will wait for a newer green test result." in merged.stdout
         assert "The default branch is still red. Forge did not merge the pull request." in merged.stderr
-        assert f"Next: forge merge {item}" in merged.stderr
+        assert (f"Next: start a fix for the failed default-branch tests. Have the owner merge it on "
+                f"GitHub, then run forge test --full in the main checkout. After a green result, "
+                f"run forge merge {item}") in merged.stderr
     else:
         assert merged.returncode == 0, merged.stdout + merged.stderr
         assert len(attempts) == 1
+        if state == "failure-then-green":
+            assert merged.stdout.count("The default branch is red. Forge will wait for a newer green test result.") == 1
