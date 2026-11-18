@@ -24,27 +24,27 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "39ee4c173e5ad12e4a22b2eee92308268238307662701754a12dc63d1fc14bc0",
-    "changed": "e67c4f1f5cf070e638b207fd2c18d3fd703a11ee7be1cf96deae8e45d39d33a7",
-    "commit": "e13f609f6b06534f24b2798eb6df6d353ea4f5f8",
+    "branch_diff": "2b14666901a1e564a96c12efdb9bc53a59b81cc51cbd08913c2369349235ff44",
+    "changed": "f87517f34513b6d5e603bea2834804dad9fe46028771d594e21402ad0f55639e",
+    "commit": "fefb346e8b37e356fb44c855b43fe1f9a6c6753a",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 5, Work 2, Harm 3\nRaise: Functional\nCase: normal use - An existing client has `groups = 4` and `fast_test = \"vitest run --shard={group}/4\"`. Forge accepts this configuration without a warning because `src/forge/quicktest.py:22` requires only `{group}`. For a small source change, the new matrix starts only group 1, while `src/forge/repo.py:693` cannot change the fixed denominator. Only shard 1 of 4 runs, so a failing selected test in another shard can be omitted while the required check passes. The owner-approved upgrade leaves existing test settings unchanged.",
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - An existing four-group repo runs two Vitest suites in `fast_test`, one with `--shard={group}/{groups}` and the other with `--shard={group}/4`. This check sees `{groups}` anywhere in the command and enables one group, although the second suite still has a fixed denominator. `src/forge/review.py:369` selects the whole fast command, and `src/forge/repo.py:693` substitutes group 1, so a small code change runs only shard 1 of 4 for the second suite. Failing tests in its other shards are omitted while the required `tests` check can pass. The repair test at `tests/test_small_change_runs_one_group.py:29` covers only a standalone fixed-shard command.",
         "file": "src/forge/prcheck.py",
-        "gain": 5,
+        "gain": 4,
         "harm": 3,
-        "line": 89,
+        "line": 399,
         "priority": "P1",
         "title": "Functional: Small changes can run only one fixed shard",
         "work": 2
       }
     ],
-    "id": "1b369ad7-5455-4279-9bcd-0c5f9d48a093",
+    "id": "66688b85-ca6b-4cc1-9004-ca0bd7f67c30",
     "status": "blocked"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-18T10:45:20.676018+00:00",
@@ -53,8 +53,17 @@
     {
       "at": "2026-11-18T11:01:51.285055+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-11-18T11:17:16.302685+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-11-18T11:17:16.302922+00:00",
+    "file": "src/forge/prcheck.py",
+    "wait_id": "641b1b04-350d-4586-a24e-6d06c418964f"
+  },
   "stuck": {
     "close": "803917c0-29cc-4a05-815f-ce42fde1d224",
     "head": "6401e92ecda695c5b50fb27ec17a705396e5081d",
