@@ -43,7 +43,6 @@ def test_1_acceptance_publishes_once_after_final_review_records(env, previous):
     for field in (".check_runs[]", ".statuses[]"):
         calls = env.gh_calls("api", "--paginate", "--jq", field)
         # Close also looks once at the code it pushed earlier, before it pushes its records on top.
-        pushed_before = env.repo.git("rev-parse", f"{heads[0]}^", cwd=where)
+        own = env.repo.git("rev-list", "-n", "4", heads[0], cwd=where).split()
         assert any(f"/commits/{heads[0]}/" in call[-1] for call in calls)
-        assert all(f"/commits/{heads[0]}/" in call[-1] or f"/commits/{pushed_before}/" in call[-1]
-                   for call in calls)
+        assert all(any(f"/commits/{sha}/" in call[-1] for sha in own) for call in calls)

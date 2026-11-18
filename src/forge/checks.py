@@ -137,14 +137,15 @@ def after_code_ci(top: Path, item: str, branch: str, cfg: dict[str, Any], seriou
     if serious or cfg["test_place"] != "ci":
         return
     remote = repo.run("git", "rev-parse", "-q", "--verify", f"origin/{branch}", cwd=top)
-    if (remote.returncode
-            or repo.run("git", "merge-base", "--is-ancestor", remote.stdout.strip(), "HEAD", cwd=top).returncode):
-        return  # A replayed branch is not a record on top of the code CI is testing.
+    if remote.returncode:
+        return
     from forge import review
-    paths = repo.git("diff", "--name-only", "-z", "--no-renames", remote.stdout.strip(), "HEAD",
-                     cwd=top).split("\0")
-    if not any(paths) or any(path and not (path.startswith(review.BOOKKEEPING)
-                                           or repo.SIGNOFF.fullmatch(path)) for path in paths):
+    # Three dots: a replayed branch, whose remote head is no ancestor, shows its code and is skipped.
+    changed = repo.run("git", "diff", "--name-only", "-z", "--no-renames", f"origin/{branch}...HEAD", cwd=top)
+    paths = changed.stdout.split("\0")
+    if (changed.returncode or not any(paths)
+            or any(path and not (path.startswith(review.BOOKKEEPING) or repo.SIGNOFF.fullmatch(path))
+                   for path in paths)):
         return
     let_finish(top, item, remote.stdout.strip(), slot)
 
