@@ -101,8 +101,8 @@
     "id": "9ac03e75-069b-428e-bd99-719f92b92665",
     "status": "clean"
   },
-  "round": 5,
-  "status": "waiting for checks",
+  "round": 6,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-18T09:20:16.262104+00:00",
@@ -139,10 +139,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": "cdd601e4-fb6d-46c2-ad5a-8947d3d135d3",
-    "head": "42d827ae6bf92ec59f294dcbf1d5089c848a8c9a",
+    "close": "3a3a421f-ef52-4d02-a8a8-6f0c282b0d57",
+    "head": "31603ca16e9d09d32dac5d1e2a85edd5e7f61065",
     "keys": {},
-    "round": 4
+    "round": 5
   },
   "why": "Issue 1665: when several closes, merges and land runs share one GitHub account, the API rate limit stops them with 'API rate limit exceeded' instead of waiting for the reset",
   "worker": "codex"
