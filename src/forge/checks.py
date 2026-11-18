@@ -404,7 +404,8 @@ def _rerun_cancelled(top: Path, item: str, sha: str, seen: list[tuple[str, str]]
     failed += [index for index, run in enumerate(runs)
                if run.get("name") == "tests" and run.get("conclusion") == "failure"
                and run.get("check_suite", {}).get("id") in suites]
-    retryable = cancelled + failed
+    retryable = [index for index in cancelled + failed
+                 if runs[index].get("check_suite", {}).get("id") is not None]
     if not retryable:
         return False
     # _pending applies the required-check rule to skipped and neutral checks too.
