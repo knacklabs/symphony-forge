@@ -18,6 +18,9 @@ def test_1_accepted_close_records_reuse_the_green_code_run(env, previous, tmp_pa
     # Existing parent-reuse cases construct records. Only real acceptance exercises
     # the known findings and spotted records that close writes with its review.
     client(env, previous)
+    config = (env.repo.path / "forge.toml").read_text("utf-8")
+    env.commit(env.repo.path, "forge.toml", "task_review_rounds = 1\n" + config)
+    env.repo.git("push", "-q", "origin", "main")
     env.commit(env.repo.path, "greeting.py", "GREETING = 'Hello'\n")
     env.repo.git("push", "-q", "origin", "main")
     item, where = env.start_fix()

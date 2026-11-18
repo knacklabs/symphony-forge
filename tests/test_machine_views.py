@@ -115,6 +115,10 @@ def _board_exposes_produced_questions_reviews_run_ends_and_readiness(env, priori
     from test_run_records import configure, records
     from test_close import blocked, finding, report, CLEAN
     repo = configure(env)
+    config = re.sub(r"(?m)^task_review_rounds\s*=.*(?:\r?\n|$)", "",
+                    (repo.path / "forge.toml").read_text("utf-8"))
+    env.commit(repo.path, "forge.toml", "task_review_rounds = 1\n" + config)
+    repo.git("push", "-q", "origin", "main")
     item, folder = env.start_fix()
     stub = repo.bin / "claude_agent_sdk/__init__.py"
     source = stub.read_text("utf-8")

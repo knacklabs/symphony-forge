@@ -119,9 +119,10 @@ def test_5_review_flags_new_request_input_that_zod_does_not_check(env, tmp_path,
     closed = env.close(item)
     output = closed.stdout + closed.stderr
     assert closed.returncode == 1, output
-    # Fixes now ask the owner at round one rather than start another worker round.
-    assert "reached the round limit with open findings" in output
-    assert "One more round, split or accept?" in output
+    # The first blocked review sends the P1 back for another worker round.
+    assert "The review left serious findings open" in output
+    assert "reached the round limit with open findings" not in output
+    assert "One more round, split or accept?" not in output
     assert title in output
     assert "Gain 4, Work 1, Harm 1" in output
     assert REVIEW_RULE in " ".join(env.prompt().split())
