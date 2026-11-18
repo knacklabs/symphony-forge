@@ -11,7 +11,7 @@
   "done_when": "When the intake or the first round predicts more than the fix file limit, Forge asks for the size allowance at fix start or before the round; forge next lists every pending owner choice first, with its exact question and how long it has waited; new and existing repos get it on upgrade",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "round": 1,
+  "round": 2,
   "status": "working",
   "steps": [
     {
