@@ -1,4 +1,4 @@
-"""Close starts cancelled checks again, or waits for the newer run, when none failed."""
+"""Close retries only failed jobs of a cancelled run, or waits for a newer run."""
 import json
 
 from test_close import GREEN, env, run  # noqa: F401
@@ -40,7 +40,7 @@ def test_1_a_cancelled_run_with_two_jobs_is_run_again_once_and_waited_for(clock,
                   workflows=(_workflow(5, 77), _workflow(5, 77, None, "in_progress", 2)))
 
     assert done.returncode == 0, done.stdout + done.stderr
-    assert clock.gh_calls("run", "rerun") == [["run", "rerun", "77"]]
+    assert clock.gh_calls("run", "rerun") == [["run", "rerun", "77", "--failed"]]
     assert len(clock.gh_calls(*RUNS)) >= 4  # Close polled through cancelled, running, running, green.
 
 
@@ -61,7 +61,7 @@ def test_3_checks_cancelled_again_after_the_rerun_go_to_the_worker(clock, monkey
     assert done.returncode == 1, done.stdout + done.stderr
     assert "Checks failed on the pull request: tests, lint." in done.stderr
     assert f"Next: forge work {ITEM}" in done.stderr
-    assert clock.gh_calls("run", "rerun") == [["run", "rerun", "77"]]
+    assert clock.gh_calls("run", "rerun") == [["run", "rerun", "77", "--failed"]]
 
 
 def test_4_a_restarted_close_does_not_run_a_second_attempt_again(clock, monkeypatch):
@@ -75,7 +75,7 @@ def test_5_a_newer_run_of_another_event_does_not_pass_the_cancelled_check(clock,
     done = _close(clock, monkeypatch, CANCELLED, RUNNING, GREEN,
                   workflows=(_workflow(5, 77) + _workflow(7, 78, "success", event="workflow_dispatch"),))
 
-    assert clock.gh_calls("run", "rerun") == [["run", "rerun", "77"]]
+    assert clock.gh_calls("run", "rerun") == [["run", "rerun", "77", "--failed"]]
     assert done.returncode == 0, done.stdout + done.stderr
 
 
@@ -90,4 +90,4 @@ def test_6_land_reads_fresh_checks_after_the_rerun_so_a_passed_retry_counts(cloc
     done = clock.repo.forge("land", ITEM)
 
     assert done.returncode == 0, done.stdout + done.stderr
-    assert clock.gh_calls("run", "rerun") == [["run", "rerun", "77"]]
+    assert clock.gh_calls("run", "rerun") == [["run", "rerun", "77", "--failed"]]

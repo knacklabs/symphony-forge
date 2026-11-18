@@ -1,0 +1,153 @@
+{
+  "base": "02c44b622a5a1b1bd8f74cb45b2204a93d9a0b31",
+  "branch": "fix/rate-limit-waits",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1edf7-78eb-72d3-9b29-0ce2b5558b79",
+    "head": null,
+    "start": "4c59376b4e94406a51a005a75e3ad56315200b1e"
+  },
+  "done_when": "When GitHub answers with a rate-limit error, close, merge and land wait until the reset time GitHub reports (with one line saying so) and then continue, instead of stopping; new and existing repos get it on upgrade",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "run() in src/forge/github.py",
+      "file": "src/forge/github.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 28,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: When GitHub answers with a rate-limit error, close, merge and land wait until the reset time GitHub reports",
+      "work": 2
+    },
+    {
+      "area": "run() in src/forge/github.py",
+      "file": "src/forge/github.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 18,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Honor the retry time for secondary limits",
+      "work": 2
+    },
+    {
+      "area": "run() in src/forge/repo.py",
+      "file": "src/forge/repo.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 290,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Keep board and next responsive while GitHub is rate-limited",
+      "work": 2
+    },
+    {
+      "area": "run() in src/forge/github.py",
+      "file": "src/forge/github.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 16,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: A branch name can trigger a false rate-limit wait",
+      "work": 2
+    },
+    {
+      "area": "test_1_commands_wait_for_github_reset_and_continue() in tests/test_github_rate_limits_wait_for_reset.py",
+      "file": "tests/test_github_rate_limits_wait_for_reset.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 48,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: tests/test_github_rate_limits_wait_for_reset.py::test_1_commands_wait_for_github_reset_and_continue",
+      "work": 2
+    },
+    {
+      "area": "run() in src/forge/github.py",
+      "file": "src/forge/github.py",
+      "gain": 5,
+      "harm": 4,
+      "line": 23,
+      "outcome": "fixed in round 4",
+      "reason": "",
+      "round": 3,
+      "security": false,
+      "title": "Functional: HTTP 403 secondary rate limits stop Forge commands",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "f29ec60b88921e530f0b66ea9ad493e7bbd40338ae062ede58a2af63cc4231c3",
+    "changed": "7de5037b82bfa386677d32e69b263187b7576bbf858806a32fa4315069c200b3",
+    "commit": "b92603ac0d19742c09e90246e2342f84ca324e96",
+    "dismissals": [],
+    "findings": [],
+    "id": "a39cedbf-12c8-49e8-ab3b-639a489d3d95",
+    "status": "clean"
+  },
+  "round": 6,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-18T09:20:16.262104+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-18T09:39:42.362562+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-18T10:03:23.155745+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-18T10:13:59.360056+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-18T10:19:24.866465+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-18T10:44:20.432727+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-18T11:18:52.369855+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-18T09:39:42.376456+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "src/forge/github.py",
+    "reason": "Owner chose one more round: fix all five review findings",
+    "wait_id": "ff686d0a-5c9d-4cb1-a83a-9b3c98568699",
+    "worker_round": 1
+  },
+  "stuck": {
+    "close": "3a3a421f-ef52-4d02-a8a8-6f0c282b0d57",
+    "head": "31603ca16e9d09d32dac5d1e2a85edd5e7f61065",
+    "keys": {},
+    "round": 5
+  },
+  "why": "Issue 1665: when several closes, merges and land runs share one GitHub account, the API rate limit stops them with 'API rate limit exceeded' instead of waiting for the reset",
+  "worker": "codex"
+}

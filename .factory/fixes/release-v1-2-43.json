@@ -1,0 +1,31 @@
+{
+  "allow_large": "Release bump: every pinned reference changes (about 19 files), the same as each release; the owner chose to release after 1664 and 1665",
+  "base": "c718fa86d0c8fb4d25d9fc4fd93f00de3f249cd8",
+  "branch": "fix/release-v1-2-43",
+  "done_when": "forge.toml, the package and every pinned reference say v1.2.43, and tests/test_release_version.py passes",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "0f4810c9cd7157b4c35c6bc93b9fa0c61ffac9aafbcb96cc89ffde383c8bcc54",
+    "changed": "728271c5b3c6e534198e029bc102f5f9458476f04322b1a440032e127915852d",
+    "commit": "dfc37bc3ad98988f120d503677e6ac6bb2e89982",
+    "dismissals": [],
+    "findings": [],
+    "id": "1c128485-9e62-412f-8a53-730a42021853",
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-18T13:03:48.143451+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-18T13:13:57.234155+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Release v1.2.43: publish what merged since v1.2.42"
+}

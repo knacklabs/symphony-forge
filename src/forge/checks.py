@@ -78,6 +78,8 @@ def wait(top: Path, item: str, sha: str, names: list[str], *, branch: str,
         names = shared
     start, clock = repo.now(), time.monotonic()
     released = False
+    report_time = False
+    failed = False
 
     def waiting(value: bool) -> None:
         nonlocal released
@@ -91,7 +93,10 @@ def wait(top: Path, item: str, sha: str, names: list[str], *, branch: str,
         result.update(outcome="unknown", state="unknown")
         try:
             _wait(top, item, sha, names, branch, progress, result, waiting, train)
+            report_time = True
         except repo.Refused as error:
+            report_time = error.entry in (REFUSALS["red"], REFUSALS["timeout"])
+            failed = report_time
             if error.entry is REFUSALS["red"]:
                 result["outcome"] = "failed"
             result["reason"] = str(error).split("\n", 1)[0]
@@ -103,11 +108,15 @@ def wait(top: Path, item: str, sha: str, names: list[str], *, branch: str,
             raise
         finally:
             waiting(False)
+            if report_time:
+                from forge import citime
+                citime.report(top, branch, current=failed)
             repo.record_event(top, item, "CI result", commit=sha, start=start, **result)
             repo.record_timing(top, item, "CI wait", start, clock, result["outcome"])
 
 
-def let_finish(top: Path, item: str, sha: str, slot: Callable[[bool], None] | None = None) -> None:
+def let_finish(top: Path, item: str, sha: str, names: list[str],
+               slot: Callable[[bool], None] | None = None) -> None:
     """Wait while any check on sha, except Forge's own review, is queued or running. Close calls
     this before it pushes a record-only commit: that push cancels the run in progress, so the
     record's own run could not reuse its result. Waiting reuses _seen and the wait's slot idea
@@ -117,14 +126,18 @@ def let_finish(top: Path, item: str, sha: str, slot: Callable[[bool], None] | No
     try:
         while True:
             try:
-                seen = [state for name, state in _seen(top, item, sha)[0]
-                        if name not in ("forge-pr-check", "Review pull request")]
+                seen, _, runs = _seen(top, item, sha)
             except repo.Refused:
                 return  # The push is not worth refusing for a status GitHub cannot answer.
-            if not any(state in (PENDING, QUEUED) for state in seen) or time.monotonic() >= deadline:
+            # This head predates the review record. Its review cannot be green yet.
+            seen = [(name, PASS if name in ("forge-pr-check", "Review pull request") else state)
+                    for name, state in seen]
+            _recover(top, item, sha, names, runs, seen)
+            states = [state for _, state in seen]
+            if not any(state in (PENDING, QUEUED) for state in states) or time.monotonic() >= deadline:
                 return
             if slot is not None:
-                slot(QUEUED not in seen)  # queued runs keep the place; running ones lend it
+                slot(QUEUED not in states)  # queued runs keep the place; running ones lend it
             time.sleep(15)
     finally:
         if slot is not None:
@@ -146,7 +159,7 @@ def after_code_ci(top: Path, item: str, branch: str, cfg: dict[str, Any], seriou
                    for path in paths)):
         return
     remote = repo.run("git", "rev-parse", f"origin/{branch}", cwd=top)
-    let_finish(top, item, remote.stdout.strip(), slot)
+    let_finish(top, item, remote.stdout.strip(), cfg["checks"], slot)
 
 
 def _wait(top: Path, item: str, sha: str, names: list[str], branch: str, progress: bool,
@@ -190,9 +203,11 @@ def _wait(top: Path, item: str, sha: str, names: list[str], branch: str, progres
             if not any(name == "forge-pr-check" or name == "Review pull request" and state != SKIPPED
                        for name, state in seen):  # the pull_request workflow skips its own job of that name
                 _no_start(top, item, sha, branch)  # before a red or timed-out test can hide it
-            _tests_timeout(top, item, sha, names, check_runs, seen)
-            if _rerun_cancelled(top, item, sha, seen, check_runs) and cache is not None:
-                cache.unlink(missing_ok=True)  # The next poll must read fresh results, not the cancelled ones.
+            if train:
+                # The train reads failed-job logs and owns its one retry in land._red.
+                _tests_timeout(top, item, sha, names, check_runs, seen)
+            elif _recover(top, item, sha, names, check_runs, seen) and cache is not None:
+                cache.unlink(missing_ok=True)  # Read the new attempt instead of cached failures.
             reason = _pending(item, names, seen)
             if mergeable == "UNKNOWN":
                 reason = reason or "GitHub has not determined whether this pull request can merge"
@@ -328,22 +343,53 @@ def _status(top: Path, item: str, sha: str, branch: str, cache: Path | None,
     return value
 
 
+def timeout_limit(top: Path, sha: str) -> int | None:
+    """The generated test job's limit at the checked commit, when available locally."""
+    if not sha:
+        return None
+    workflow = repo.run("git", "show", f"{sha}:.github/workflows/forge.yml", cwd=top)
+    job = re.search(r"(?ms)^  tests:[ \t]*\n(.*?)(?=^  \S|\Z)", workflow.stdout)
+    cap = re.search(r"(?m)^    timeout-minutes: (\d+)[ \t]*$", job[1]) if job else None
+    return int(cap[1]) if cap else None
+
+
+def cancelled_at_limit(run: dict[str, Any], limit: int | None) -> bool:
+    """GitHub can cancel a test job rather than mark it timed out at its time limit."""
+    name = str(run.get("name", ""))
+    if (limit is None or run.get("status") != "completed" or run.get("conclusion") != "cancelled"
+            or not (name == "tests" or name.startswith("tests (")
+                    or re.fullmatch(r"test group \d+ of \d+", name))):
+        return False
+    try:
+        seconds = (datetime.fromisoformat(run["completed_at"])
+                   - datetime.fromisoformat(run["started_at"])).total_seconds()
+    except (KeyError, ValueError, TypeError):
+        return False
+    return abs(seconds - limit * 60) <= 60
+
+
+def _recover(top: Path, item: str, sha: str, names: list[str],
+             runs: list[dict[str, Any]], seen: list[tuple[str, str]]) -> bool:
+    # Ungrouped test timeouts keep their manual recovery, before any retry can start.
+    _tests_timeout(top, item, sha, names, runs, seen, groups=False)
+    recovered = _rerun_cancelled(top, item, sha, seen, runs, names)
+    if not recovered:
+        _tests_timeout(top, item, sha, names, runs, seen)
+    return recovered
+
+
 def _tests_timeout(top: Path, item: str, sha: str, names: list[str],
-                   runs: list[dict[str, Any]], seen: list[tuple[str, str]]) -> None:
+                   runs: list[dict[str, Any]], seen: list[tuple[str, str]], *, groups: bool = True) -> None:
     if "tests" not in names:
         return
     candidates = [(index, run) for index, run in enumerate(runs) if run.get("status") == "completed"
                   and run.get("conclusion") in ("timed_out", "cancelled")
                   and (run.get("name") == "tests"
                        or str(run.get("name", "")).startswith("tests (")
-                       or re.fullmatch(r"test group \d+ of \d+", str(run.get("name", ""))))]
+                       or groups and re.fullmatch(r"test group \d+ of \d+", str(run.get("name", ""))))]
     if not candidates:
         return
-    # Read the generated job's limit at the checked commit, not an uncommitted edit.
-    workflow = repo.run("git", "show", f"{sha}:.github/workflows/forge.yml", cwd=top)
-    job = re.search(r"(?ms)^  tests:[ \t]*\n(.*?)(?=^  \S|\Z)", workflow.stdout)
-    cap = re.search(r"(?m)^    timeout-minutes: (\d+)[ \t]*$", job[1]) if job else None
-    limit = int(cap[1]) if cap else None
+    limit = timeout_limit(top, sha)
     timed_out: dict[int, str] = {}
     for index, run in candidates:
         try:
@@ -351,8 +397,7 @@ def _tests_timeout(top: Path, item: str, sha: str, names: list[str],
                        - datetime.fromisoformat(run["started_at"])).total_seconds()
         except (KeyError, ValueError, TypeError):
             seconds = None
-        if run["conclusion"] == "cancelled" and (
-                limit is None or seconds is None or abs(seconds - limit * 60) > 60):
+        if run["conclusion"] == "cancelled" and not cancelled_at_limit(run, limit):
             continue
         minutes = limit if limit is not None else round(seconds / 60) if seconds is not None else None
         timed_out[index] = f" after {minutes} minutes" if minutes is not None else ""
@@ -373,17 +418,30 @@ def _tests_timeout(top: Path, item: str, sha: str, names: list[str],
 
 
 def _rerun_cancelled(top: Path, item: str, sha: str, seen: list[tuple[str, str]],
-                     runs: list[dict[str, Any]]) -> bool:
-    """Cancelled checks are not failures when none failed. Decide per workflow run: wait for a newer
-    run of the same workflow and event, or start the run again once (run_attempt 1); a second attempt stays red."""
+                     runs: list[dict[str, Any]], names: list[str]) -> bool:
+    """Recover cancellations and test-only failures once per workflow run, sharing run_attempt.
+    A newer run of the same workflow and event takes precedence; a second attempt stays red."""
     cancelled = [index for index, run in enumerate(runs)
                  if run.get("status") == "completed" and run.get("conclusion") == "cancelled"]
-    if not cancelled or any(state == RED for index, (_, state) in enumerate(seen) if index not in cancelled):
+    groups = [index for index, run in enumerate(runs)
+              if re.fullmatch(r"test group \d+ of \d+", str(run.get("name", "")))]
+    failed = [index for index in groups if seen[index][1] == RED]
+    retry_suites = {runs[index].get("check_suite", {}).get("id") for index in cancelled + failed}
+    # A retry's dependent aggregate can show its earlier failure until the workflow ends.
+    suites = {runs[index].get("check_suite", {}).get("id") for index in groups} - {None}
+    failed += [index for index, run in enumerate(runs)
+               if run.get("name") == "tests" and run.get("conclusion") == "failure"
+               and run.get("check_suite", {}).get("id") in suites]
+    retryable = [index for index in cancelled + failed
+                 if runs[index].get("check_suite", {}).get("id") is not None]
+    if not retryable:
         return False
+    # _pending applies the required-check rule to skipped and neutral checks too.
+    _pending(item, names, [entry for index, entry in enumerate(seen) if index not in retryable])
     workflows = _ask(top, item, ".workflow_runs", "repos/{owner}/{repo}/actions/runs", "--method", "GET",
                      "--raw-field", "per_page=100", "--raw-field", f"head_sha={sha}")
     decided: dict[Any, str | None] = {}
-    for index in cancelled:
+    for index in retryable:
         suite = runs[index].get("check_suite", {}).get("id")
         current = next((run for run in workflows if suite is not None and run.get("check_suite_id") == suite), None)
         if current is None or not isinstance(current.get("id"), int):
@@ -397,10 +455,22 @@ def _rerun_cancelled(top: Path, item: str, sha: str, seen: list[tuple[str, str]]
                 decided[suite] = PASS if all(run.get("status") == "completed" for run in newer) else PENDING
             elif current.get("status") != "completed":
                 decided[suite] = PENDING  # A rerun is already going; GitHub keeps the run and counts attempts.
-            elif (current.get("run_attempt") or 1) == 1:
-                if repo.run("gh", "run", "rerun", str(current["id"]), cwd=top, timeout=60).returncode == 0:
+            elif (current.get("run_attempt") or 1) == 1 and (suite not in suites or suite in retry_suites):
+                if suite in suites:
+                    from forge import land
+                    late = land._restart(top, [str(current["id"])])
+                    if late and late != "gh":
+                        repo.refuse(REFUSALS["not_green"], item=item,
+                                    reason="GitHub has not started the failed test jobs again")
+                    if not late:
+                        print("Started the failed test jobs again once; waiting for them.", flush=True)
+                        decided[suite] = PENDING
+                elif repo.run("gh", "run", "rerun", str(current["id"]), "--failed",
+                              cwd=top, timeout=60).returncode == 0:
                     print(f"Run {current['id']} was cancelled. Started it again; waiting for it.", flush=True)
                     decided[suite] = PENDING
+            elif suite in suites and suite in retry_suites:
+                _pending(item, [], seen)  # A second test timeout is a failure too: send it to work.
         if decided[suite]:
             seen[index] = (seen[index][0], decided[suite])
     return any(decided.values())

@@ -29,6 +29,7 @@ close and land refuse it because the build round did not finish. Run `forge work
 The refusal lists untracked files. Code and documentation changes still qualify as work.
 If unreadable Autoreview output stops close, the refusal shows the saved output path, even if the retry writes no report.
 When the review service returns a rate or usage limit, close waits 30, then 60, then at most 120 seconds between retries without counting these answers as failed reviews.
+When GitHub reports its API rate limit, only close, merge and land wait until its reset time plus three seconds, then continue. They read the reset from `gh api rate_limit`: graphql for `gh api graphql` calls, core otherwise. If that quota still has requests left or the lookup fails, the command waits 60 seconds before another attempt. One line gives the wait time. Board and next keep their available local or cached data without this wait. New and existing repos get this behavior on upgrade.
 From the second review round, close checks the previous round's findings and new P0s that
 happen in normal use. A round-one fix that breaks the main path counts as a P0.
 `task_review_rounds` sets the task review limit. At that limit (the repo's setting, two by default), open findings below P0 need the owner's choice before they become follow-ups.
@@ -244,8 +245,10 @@ $delegation
   to push or run CI. CI is the merge gate. Commit your local proof in the `Proof list:` without
   waiting for CI results or timings.
 - Close and doctor cancel only this pull request's older forge.yml runs when they block its newest queued run. Client workflows stay untouched. If a run stays active after cancellation, Forge prints GitHub's force-cancel command for the operator. It never calls that command automatically. Close keeps waiting for the new run.
-- If close reports that the tests ran out of time, rerun the tests job or split the suite.
-  This timeout does not send the item to a worker. Generated pull request and nightly test jobs
+- On new and upgraded repos, close and merge retry only the failed jobs once when only CI test
+  groups fail or time out. They wait for that attempt. Cancelled runs use the same retry limit.
+  A second failure sends the item to `forge work`. For other test timeouts, rerun the tests job
+  or split the suite. Generated pull request and nightly test jobs
   each get 60 minutes. The nightly run uses the repo's groups and records one
   combined result for the default branch after all groups finish.
 - Run any test command you start in the foreground and wait for it to finish. Never end your turn

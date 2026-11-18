@@ -287,7 +287,11 @@ def run(*args: str, cwd: str | os.PathLike[str] | None = None,
                 snapshots[args] = done
             return done
         return snapshots[args]
-    done = _github_read(args, execute) if args[0] == "gh" else execute()
+    if args[0] == "gh":
+        from forge import github
+        done = github.read(args, lambda: github.run(args, execute, cwd))
+    else:
+        done = execute()
     if args[:3] == ("gh", "pr", "merge") and not done.returncode:
         # Merges must show at once; other pull request changes wait for the minute cache.
         (forge_dir(cwd) / "prs-cache.json").unlink(missing_ok=True)
@@ -344,60 +348,6 @@ def resolve_commit(top: Path, ref: str) -> str:
 # Short network outages, as git and gh print them; the queue (land.py) starts a change again on them too.
 NETWORK = ("Could not resolve host", "i/o timeout", "Connection timed out", "Connection reset",
            "error connecting to")
-
-
-def _github_read(args: tuple[str, ...], execute) -> subprocess.CompletedProcess[str]:
-    """Retry reads only: replaying a write after an unreadable receipt could duplicate it."""
-    api = args[1:2] == ("api",)
-    read = (args[1:3] in (("pr", "list"), ("pr", "view"), ("pr", "checks"),
-                         ("run", "list"), ("run", "view"),
-                         ("release", "list"), ("release", "view")))
-    if api:
-        # gh infers POST from fields; our GraphQL query is a read despite that POST.
-        read = (not any(flag in args for flag in ("-f", "-F", "--field", "--raw-field", "--input"))
-                or ("graphql" in args and any(re.match(r"query=\s*(?:\{|query\b)", arg)
-                                              for arg in args)))
-        if "--method" in args or "-X" in args:
-            flag = "--method" if "--method" in args else "-X"
-            read = args[args.index(flag) + 1].upper() == "GET"
-    if not read:
-        return execute()
-    jq = args[args.index("--jq") + 1] if "--jq" in args else None
-    structured = api or "--json" in args
-    for pause in (1, 2, 4, None):
-        done = execute()
-        said = done.stderr + done.stdout
-        if done.returncode and re.search(r"\bHTTP\s+(?:401|403|404)\b", said, re.I):
-            return done
-        unreadable = False
-        if structured and done.returncode == 0:
-            text = done.stdout.strip()
-            try:
-                if ((jq is None and api and "--paginate" in args and "--slurp" not in args)
-                        or (jq is not None and jq.endswith("[]"))):
-                    decoder = json.JSONDecoder()
-                    while text:
-                        _, end = decoder.raw_decode(text)
-                        text = text[end:].lstrip()
-                elif jq is None:
-                    json.loads(text)
-                else:
-                    unreadable = text.startswith("<")
-            except ValueError:
-                unreadable = True
-        transient = unreadable or (structured and (done.stdout.lstrip().startswith("<")
-                                                   or done.stderr.lstrip().startswith("<"))) or (done.returncode and (
-            re.search(r"\bHTTP\s+5\d\d\b", said, re.I)
-            or re.search(r"\bunexpected EOF\b|\binvalid character\b", said, re.I)
-            or "looking for beginning of value" in said
-            or "unexpected end of JSON input" in said
-            or any(text in said for text in NETWORK)))
-        if not transient:
-            return done
-        if pause is None:
-            return subprocess.CompletedProcess(done.args, 1, "",
-                                               REFUSALS["no_github"][0] + "\n")
-        time.sleep(pause)
 
 
 def quote(argument: object) -> str:
@@ -598,17 +548,17 @@ KEYS = {"version": str, "repo": str, "stage": str, "workers": str, "tools": str,
         "signoff": str, "sample_data": bool, "runner": str, "test_runner": str, "codex_fast": str, "stop_default": str,
         "merge": str, "stack": str, "test_place": str, "checks": list, "interfaces": list,
         "always_test": list, "groups": int, "models": dict, "full_suite_workflow": str,
-        "added_work_min_gain": int, "always_block": list, "cold_read_rounds": int, "task_review_rounds": int}
+        "added_work_min_gain": int, "always_block": list, "cold_read_rounds": int, "task_review_rounds": int, "boxes": str}
 # A client repo without a stage counts as live: prototype rules never reach an app by default.
 DEFAULTS = {"repo": "client", "stage": "live", "workers": "codex", "tools": "both", "test": "", "fast_test": "",
             "signoff": "", "runner": "ubuntu-24.04", "test_runner": "", "codex_fast": "off",
             "stop_default": "narrow", "merge": "human", "stack": "on", "checks": [], "interfaces": [], "always_test": [],
-            "models": {}, "cold_read_rounds": 2, "task_review_rounds": 2}
+            "models": {}, "cold_read_rounds": 2, "task_review_rounds": 2, "boxes": "off"}
 # ponytail: retain stop_default's old values so existing forge.toml files still load.
 CHOICES = {"repo": ("client", "forge-source"), "stage": ("live", "prototype"),
            "workers": ("claude", "codex", "split"), "tools": ("both", "claude", "codex"), "merge": ("agent", "human"),
            "codex_fast": ("needed", "off", "always"), "stop_default": ("narrow", "off"), "stack": ("on", "off"),
-           "test_place": ("ci", "local")}
+           "test_place": ("ci", "local"), "boxes": ("off", "ssh")}
 # signoff pins the client's sign-off record: a decision directly under docs/decisions whose slug
 # ends in client-signoff, as `forge decision new` names it and the old Forge accepted it.
 SIGNOFF = re.compile(r"docs/decisions/[0-9]{4,}-[a-z0-9-]*client-signoff\.md")
@@ -966,6 +916,8 @@ def check_pin(cwd: str | os.PathLike[str] | None = None, item: str = "", words: 
     On the default branch a newer Forge runs while an upgrade fix waits: the default branch as last
     fetched still pins an older one, and a fix worktree pins the installed one.
     """
+    from forge import github
+    github.wait_for_reset = words in ("close", "merge", "land")
     if words == "work":
         from forge.worker import prepare
         prepare(item)  # Merge the default before even the release pin reads settings.

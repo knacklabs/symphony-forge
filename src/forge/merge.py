@@ -6,7 +6,7 @@ import os
 import re
 import tomllib
 from pathlib import Path
-from forge import checks, close, codex, githooks, prcheck, repo, review, story, task, time_records
+from forge import checks, close, codex, github, githooks, prcheck, repo, review, story, task, time_records
 
 COMMANDS = [{
     "words": "merge", "run": "merge", "changes_state": False,
@@ -44,6 +44,7 @@ REFUSALS = {
                       "check the branch on GitHub, then forge merge {item}"),
 }
 def merge(args: argparse.Namespace, *, refreshed: bool = False) -> int:
+    github.wait_for_reset = True  # Merge intentionally skips the shared release-pin check.
     top, item = repo.root(), args.item
     if item == "enable":
         return _enable(top)

@@ -1,0 +1,71 @@
+{
+  "branch": "task/FORGE-CITIME-1-GROUPS",
+  "chat": {
+    "approval": "1280d44b1a637b802f4fe8e3abbad6a3bcd0cc63776d2c73dab88bc44c52e21d",
+    "claude": null,
+    "conversation": "01a1ee43-318e-76e2-8da4-27bb4c3e7039",
+    "head": null,
+    "start": "7edfe54d67fc28de7760eb009c07e520d35c8894"
+  },
+  "known": [
+    {
+      "area": "src/forge/prcheck.py",
+      "file": "src/forge/prcheck.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 89,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Small changes can run only one fixed shard",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "ade2d839651be024e1bc8174e0ac20a210972b20dd272318b489bf6063f13ed2",
+    "changed": "53a93869618a6fbbda6e7625fb005043073244d9f6577bdc2854a03eeb3f2a7c",
+    "commit": "aa432e8c5394de0ef65ca31faa7323eef49570d6",
+    "dismissals": [],
+    "findings": [],
+    "id": "a6374ff4-6ab6-47d8-b5d1-a5ae4330d107",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-18T10:45:20.676018+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-18T11:01:51.285055+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-18T11:17:16.302685+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-18T11:24:14.382334+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-18T11:17:16.302922+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "src/forge/prcheck.py",
+    "reason": "Owner chose one tiny round: no one-group rule when any fixed shard count is in the command",
+    "wait_id": "641b1b04-350d-4586-a24e-6d06c418964f",
+    "worker_round": 2
+  },
+  "stuck": {
+    "close": "ec2ccb57-c8ea-4df6-a628-951cbadda870",
+    "head": "6ff62d111254c28635890944ee5a639e9d576513",
+    "keys": {},
+    "round": 2
+  },
+  "worker": "codex"
+}
