@@ -251,7 +251,9 @@ def test_1_dependency_map_and_stage_timelines_use_the_command_data(
     assert plan_next.returncode == 0, plan_next.stderr
     assert all(f"PLAN/{tid} is ready to merge." in plan_next.stdout
                for tid in ("SAVE", "SHOW"))
+    # These started records are outside land's close queue despite the board receipts.
     assert "Next: merge its pull request, then forge next" in plan_next.stdout
+    assert "Next: forge land " not in plan_next.stdout
 
     # Task/fix checkouts retain an equally recent inherited story record, but
     # the owning story's live task table is what next and board must both read.
