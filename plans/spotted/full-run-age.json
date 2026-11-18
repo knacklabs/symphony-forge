@@ -34,6 +34,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/fullrun.py\tUnbounded full-run history blocks the board and next\tfull-run-age",
+      "kind": "bug",
+      "path": "src/forge/fullrun.py",
+      "line": 163,
+      "text": "Unbounded full-run history blocks the board and next",
+      "from": "blocking",
+      "item": "full-run-age",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_full_run_release_age.py\tGate: tests/test_full_run_release_age.py::test_1_next_and_board_show_full_run_age_before_release\tfull-run-age",
       "kind": "bug",
       "path": "tests/test_full_run_release_age.py",
