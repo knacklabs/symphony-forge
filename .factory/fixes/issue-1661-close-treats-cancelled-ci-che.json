@@ -110,7 +110,7 @@
     "id": "4af07d72-30a3-4e8d-93e6-ebaa9f09e6c4",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -123,10 +123,12 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "9bfddcf102aeaebbbd72a120a53733ba3f56aeb4",
-    "keys": {},
-    "round": null
+    "close": "36c36ee1-0101-40d7-b73e-38dcfdab9963",
+    "head": "b945df984357c6d641b077779aba07cf0f488a51",
+    "keys": {
+      "the open P0 not done: cancelled checks are still reported as failed in src/forge/checks.py": 1
+    },
+    "round": 1
   },
   "why": "Issue 1661: close treats cancelled CI checks as failed and gives forge work as the next step, so a worker round runs, finds nothing and hands back (6 times in one client day).",
   "worker": "claude"
