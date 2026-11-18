@@ -410,100 +410,56 @@ def full_workflow(cfg: Item) -> str | None:
     return cfg.get("full_suite_workflow") or ("forge.yml" if repo.test_place(cfg) == "ci" else None)
 
 
-def _full_runs(top: Path, workflow: str, branch: str, event: str) -> list[Item] | None:
+def _full_runs(top: Path, workflow: str, branch: str) -> list[Item] | None:
     def fetch(_now: datetime) -> list[Item] | None:
         done = repo.run("gh", "api", f"repos/{{owner}}/{{repo}}/actions/workflows/{workflow}/runs",
-                        "--method", "GET", "--raw-field", f"event={event}",
-                        "--raw-field", f"branch={branch}", "--raw-field", "per_page=100", cwd=top)
+                        "--method", "GET", "--raw-field", f"branch={branch}",
+                        "--raw-field", "per_page=20", cwd=top)
         try:
             runs = json.loads(done.stdout).get("workflow_runs") if not done.returncode else None
-            return runs if isinstance(runs, list) and all(isinstance(run, dict) for run in runs) else None
+            return runs[:20] if isinstance(runs, list) and all(isinstance(run, dict) for run in runs) else None
         except (ValueError, AttributeError):
             return None
-    name = hashlib.sha256(f"{workflow}\0{branch}\0{event}".encode()).hexdigest()[:12]
-    return _cached(top, f"full-runs-{name}-cache", fetch, seconds=600)
-
-
-def _attempts(top: Path, run: Item):
-    """Current run, then its earlier complete attempts, newest first."""
-    yield run
-    for attempt in range(run["run_attempt"] - 1 if type(run.get("run_attempt")) is int else 0, 0, -1):
-        got = repo.command_fact(("full-suite", run.get("id"), attempt), top, lambda: repo.run(
-            "gh", "api", f"repos/{{owner}}/{{repo}}/actions/runs/{run.get('id')}/attempts/{attempt}", cwd=top))
-        try:
-            prior = json.loads(got.stdout) if not got.returncode else {}
-            if prior.get("conclusion"):
-                yield {**run, **prior, "run_attempt": attempt, "earlier": True}
-        except (ValueError, AttributeError):
-            continue
+    name = hashlib.sha256(f"{workflow}\0{branch}".encode()).hexdigest()[:12]
+    return _cached(top, f"full-runs-{name}-cache", fetch, stale=True)
 
 
 def full_run_health(top: Path) -> Item | None:
-    cfg = _config(top)
-    workflow = full_workflow(cfg)
+    workflow = _config(top).get("full_suite_workflow") or "forge.yml"
     branch = repo.default_branch(top)
-    if workflow:
-        lists = [_full_runs(top, workflow, branch, event) for event in ("schedule", "workflow_dispatch")]
-        runs = None if any(rows is None for rows in lists) else [run for rows in lists for run in rows or []
-                if run.get("event") in ("schedule", "workflow_dispatch") and run.get("head_branch") == branch]
-    else:
-        runs = []
-    if cfg.get("full_suite_workflow") or (not workflow and cfg.get("test")):
-        from forge import fullrun
-
-        rows = fullrun.history(top)
-        recorded = None if rows is None else [{"conclusion": {"SUCCESS": "success", "FAILURE": "failure", "ERROR": "failure"}.get(row.get("state")),
-                    "created_at": row.get("createdAt"), "updated_at": row.get("createdAt")}
-                    for row in rows]
-    elif not workflow:
-        return None
+    runs = _full_runs(top, workflow, branch)
     if runs is None:
-        return {"line": "The full test run history is not available. Check GitHub before a release.", "needs_you": False}
+        return {"line": "The full test run history is not available. Check GitHub before a release.",
+                "needs_you": True, "since": None, "url": None}
+    runs = sorted((run for run in runs if run.get("event") in ("schedule", "workflow_dispatch")
+                   and run.get("head_branch") == branch), key=lambda run: run.get("created_at", ""), reverse=True)
     now = time_records.when(repo.now()) or datetime.now(timezone.utc)
-    def age(run: Item, field: str) -> float | None:
-        at = time_records.when(run.get(field))
-        return max(0, (now - at).total_seconds()) if at else None
-    complete = [attempt for run in runs for attempt in _attempts(top, run) if attempt.get("conclusion")]
-    if cfg.get("full_suite_workflow") or not workflow:
-        if recorded is None:
-            return {"line": "The full test run history is not available. Check GitHub before a release.", "needs_you": False}
-        complete = [run for run in complete if run.get("conclusion") == "cancelled"] + recorded
-    complete = sorted((run for run in complete if run.get("conclusion")),
-                      key=lambda run: run.get("updated_at") or run.get("created_at", ""), reverse=True)
-    last = complete[0] if complete else None
-    line = f"No complete full test run on {branch}."
-    if last:
-        result = {"success": "passed", "failure": "failed", "cancelled": "was cancelled"}.get(
-            last["conclusion"], f"ended with {clean(last['conclusion'])}")
-        seconds = age(last, "updated_at")
-        hours = int(seconds // 3600) if seconds is not None else None
-        ago = " (completion time is not available)"
-        if hours is not None:
-            ago = " less than 1 hour ago" if hours == 0 else f" {hours} hour{'s' if hours != 1 else ''} ago"
-        line = f"Last complete full test run on {branch} {result}{ago}."
-    latest = max(runs, key=lambda run: run.get("created_at", ""), default=None)
-    queued = ("queued", "waiting", "requested", "pending")
-    pending = min((run for run in runs if not run.get("conclusion")),
-                  key=lambda run: (run.get("status") not in queued, run.get("created_at", "")), default=None)
-    if pending:
-        seconds = age(pending, "created_at")
-        hours = int(seconds // 3600) if seconds is not None else None
-        state = "queued" if pending.get("status") in queued else "in progress"
-        waited = f" for {hours} hour{'s' if hours != 1 else ''}" if hours is not None else ""
-        which = "Latest" if pending is latest else "A"
-        line += f" {which} full test run is {state}{waited}."
-    fresh = any(run.get("conclusion") == "success" and (seconds := age(run, "updated_at")) is not None
-                and seconds <= 86400 for run in complete)
-    green = next((run for run in complete if run.get("conclusion") == "success"), None)
+    green = max((run for run in runs if run.get("conclusion") == "success" and run.get("status") == "completed"),
+                key=lambda run: run.get("updated_at", ""), default=None)
     green_at = time_records.when(green.get("updated_at")) if green else None
-    since = (green_at + timedelta(hours=24)).isoformat() if green_at else (last or {}).get("updated_at")
-    return {"line": line, "needs_you": not fresh, "url": (latest or {}).get("html_url"),
-            "since": since}
+    line = f"No green full test run on {branch}."
+    if green_at:
+        hours = max(0, int((now - green_at).total_seconds() // 3600))
+        ago = "less than 1 hour ago" if not hours else f"{hours} hour{'s' if hours != 1 else ''} ago"
+        line = f"Last green full test run on {branch} passed {ago}."
+    newer = next((run for run in runs if (not green or run.get("created_at", "") > green.get("created_at", ""))
+                  and (not run.get("conclusion") or run.get("conclusion") == "cancelled")), None)
+    if newer and newer.get("conclusion") == "cancelled":
+        line += " Newer full test run was cancelled."
+    elif newer:
+        at = time_records.when(newer.get("created_at"))
+        state = "queued" if newer.get("status") in ("queued", "waiting", "requested", "pending") else "in progress"
+        hours = max(0, int((now - at).total_seconds() // 3600)) if at else None
+        waited = f" for {hours} hour{'s' if hours != 1 else ''}" if hours is not None else ""
+        line += f" Newer full test run is {state}{waited}."
+    return {"line": line, "needs_you": green_at is None or now - green_at >= timedelta(hours=24),
+            "url": (newer or green or {}).get("html_url"),
+            "since": (green_at + timedelta(hours=24)).isoformat() if green_at else None}
 
 
 def failed_schedules(top: Path) -> list[Item]:
     """Failed scheduled workflows and manual full runs on the default branch.
-    Read each run list once and one log per failed workflow, kept ten minutes.
+    Read each run list once and one log per failed workflow, kept one minute.
     The full run (`full_run`) is read from its own list, and its newest finished run decides."""
     branch = repo.default_branch(top)
     cfg = _config(top)
@@ -517,44 +473,35 @@ def failed_schedules(top: Path) -> list[Item]:
     def fetch(now: datetime) -> list[Item] | None:
         # ponytail: the newest 100 scheduled runs of all workflows; a frequent schedule can crowd out a daily one.
         # Separate query fields avoid cmd.exe interpreting an ampersand in a gh.cmd argument.
-        def own(event: str) -> Any:
-            return _full_runs(top, workflow, branch, event)
-        with ThreadPoolExecutor(3) as pool:
-            manual_read = pool.submit(own, "workflow_dispatch")
-            scheduled_read = pool.submit(own, "schedule") if full else None
+        with ThreadPoolExecutor(2) as pool:
+            own_read = pool.submit(_full_runs, top, workflow, branch)
             done = repo.run("gh", "api", "repos/{owner}/{repo}/actions/runs", "--method", "GET",
                             "--raw-field", "event=schedule", "--raw-field", f"branch={branch}",
                             "--raw-field", "per_page=100", cwd=top)
-            lists = [read.result() for read in (manual_read, scheduled_read) if read]
+            own = own_read.result()
         try:
             runs = json.loads(done.stdout).get("workflow_runs") if done.returncode == 0 else None
         except (ValueError, AttributeError):
             return None
         if not isinstance(runs, list) or not all(isinstance(run, dict) for run in runs):
             return None
-        for more in lists:
-            runs += more or []
+        runs = [run for run in runs if not full or file_of(run) != workflow] + (own or [])
         # One entry per run: the full workflow's own lists repeat runs of the shared one.
         runs = list({run.get("id", id(run)): run for run in runs}.values())
         runs.sort(key=lambda run: run.get("created_at", ""), reverse=True)
 
-        def finished(run: Item) -> Item | None:
-            """The run, or for a rerun in progress or cancelled the latest attempt that finished."""
-            return next((attempt for attempt in _attempts(top, run)
-                         if attempt.get("conclusion") in ("success", "failure")), None)
         latest: dict[Any, Item] = {}
         for run in runs:  # newest first
-            if run.get("workflow_id") in latest:  # a newer run decided it: read no attempts for this one
+            if run.get("workflow_id") in latest:  # a newer complete run already decided this workflow
                 continue
             if full and file_of(run) == full:  # only scheduled and manual runs count, and only finished ones
-                run = finished(run) if run.get("event", "schedule") in ways else None
+                run = run if run.get("event", "schedule") in ways and run.get("conclusion") in ("success", "failure") else None
                 if run is None:
                     continue
             latest.setdefault(run.get("workflow_id"), run)
         def failure(run: Item) -> Item:
             def read(_now: datetime) -> Item | None:
-                attempt = ["--attempt", str(run["run_attempt"])] if run.get("earlier") else []
-                log = repo.run("gh", "run", "view", str(run.get("id")), *attempt, "--log-failed", cwd=top)
+                log = repo.run("gh", "run", "view", str(run.get("id")), "--log-failed", cwd=top)
                 if log.returncode != 0:
                     return None
                 lines = log.stdout.splitlines()
@@ -577,7 +524,7 @@ def failed_schedules(top: Path) -> list[Item]:
     # The full run is part of the name: a changed setting reads GitHub again, and an earlier release's list is not reused.
     named = hashlib.sha256(f"{workflow}\0{full or ''}".encode()).hexdigest()[:12]
     return [{**run, "full_run": bool(full) and run["file"] == full and run["event"] in ways}
-            for run in _cached(top, f"failed-runs-{named}-cache", fetch, seconds=600) or []]
+            for run in _cached(top, f"failed-runs-{named}-cache", fetch) or []]
 
 
 def merged_prs(github: Item | None) -> list[Item]:

@@ -143,7 +143,6 @@ def signoff(top: Path, cfg: dict[str, Any] | None = None) -> dict[str, Any]:
 @repo.command_cache(snapshot=True)
 def next_step(args: Any) -> int:
     top = repo.root()
-    from forge import fullrun
 
     if (top / "forge.toml").is_file():
         try:
@@ -151,7 +150,7 @@ def next_step(args: Any) -> int:
         except repo.Refused as refusal:
             if refusal.entry == repo.REFUSALS["added_work_min_gain"]:
                 raise
-    notice = upgrade.release_notice(top) + fullrun.notices(top)
+    notice = upgrade.release_notice(top)
     # Populate shared facts before concurrent readers can race on their first lookup.
     repo.forge_dir(top)
     repo.default_branch(top)

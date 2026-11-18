@@ -80,8 +80,7 @@ def test_1_a_failed_full_test_run_shows_under_needs_you_and_opens_the_run(client
               "run_attempt": 1, "head_branch": "main", "path": ".github/workflows/forge.yml",
               "created_at": "2026-01-01T03:00:00Z", "html_url": URL}
     gh.respond("api", "repos/{owner}/{repo}/actions/runs", "--method", "GET", stdout=json.dumps({"workflow_runs": busy}))
-    gh.respond(*FORGE_RUNS, "event=schedule", stdout=json.dumps({"workflow_runs": [failed]}))
-    gh.respond(*FORGE_RUNS, "event=workflow_dispatch", stdout=json.dumps({"workflow_runs": []}))
+    gh.respond(*FORGE_RUNS, stdout=json.dumps({"workflow_runs": [failed]}))
     gh.respond("run", "view", "41", stdout="full suite\tRun tests\t2030-01-01T03:40:00Z FAILED tests/test_a.py::test_one - boom")
     with live(client) as url:
         team = snapshot(url)["team"]

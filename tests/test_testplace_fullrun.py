@@ -17,7 +17,6 @@ import json
 import shlex
 import subprocess
 import sys
-from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -57,15 +56,6 @@ def _set_status(gh, sha: str, state: str | None) -> None:
 
 def _status_posts(gh) -> list[list[str]]:
     return [call for call in gh.calls() if call[:3] == ["api", "--method", "POST"]]
-
-
-def _history(ages: list[timedelta]) -> str:
-    now = datetime.now(timezone.utc)
-    nodes = [{"status": {"contexts": [{"context": "forge-full-suite", "state": "SUCCESS",
-                                         "createdAt": (now - age).isoformat()}]}}
-             for age in ages]
-    return json.dumps({"data": {"repository": {"ref": {"target": {
-        "history": {"nodes": nodes}}}}}})
 
 
 def _commit(repo, message: str, *paths: str) -> str:
@@ -136,15 +126,8 @@ def test_3_full_run_is_nightly_and_daily(repo, gh, tmp_path, monkeypatch):
     monkeypatch.delenv("GITHUB_RUN_ID", raising=False)
     monkeypatch.delenv("GITHUB_REPOSITORY", raising=False)
 
-    gh.respond("api", "graphql", stdout=_history([]))
-    due = repo.forge("next")
-    assert "daily full run on main is due" in due.stdout.lower()
-    assert "forge test --full" in due.stdout
-    graphql_calls = [call for call in gh.calls() if call[:2] == ["api", "graphql"]
-                     and any("history(first:30)" in argument for argument in call)]
-    assert len(graphql_calls) == 1
-    assert "history(first:30)" in " ".join(graphql_calls[0])
-    assert "branch=refs/heads/main" in graphql_calls[0]
+    # Release-age advice now belongs to test_full_run_release_age.py, using
+    # the bounded workflow list. This rule owns full execution and scheduling.
 
     full_run = repo.forge("test", "--full")
 
@@ -163,16 +146,6 @@ def test_3_full_run_is_nightly_and_daily(repo, gh, tmp_path, monkeypatch):
     assert actions_run.returncode == 0, actions_run.stdout + actions_run.stderr
     assert f"target_url=https://github.example/owner/project/actions/runs/12345" in " ".join(
         _status_posts(gh)[-1])
-
-    for age, due_line in ((timedelta(hours=2), False), (timedelta(hours=25), True)):
-        gh.respond("api", "graphql", stdout=_history([age]))
-        next_output = repo.forge("next").stdout
-        assert ("daily full run on main is due" in next_output.lower()) is due_line
-
-    gh.respond("api", "graphql", exit=1, stderr="GitHub unavailable")
-    unavailable = repo.forge("next")
-    assert unavailable.returncode == 0, unavailable.stderr
-    assert "daily full run on main is due" not in unavailable.stdout.lower()
 
     branch = "full-run-topic"
     repo.git("switch", "-q", "-c", branch)
@@ -199,12 +172,6 @@ def test_3_full_run_is_nightly_and_daily(repo, gh, tmp_path, monkeypatch):
     repo.write("forge.toml", old_config.replace('test_place = "local"', 'test_place = "ci"')
                .replace("checks = []", 'checks = ["tests", "forge-pr-check"]'))
     _commit(repo, "Use CI for change tests", "forge.toml")
-    before_graphql = len([call for call in gh.calls() if call[:2] == ["api", "graphql"]
-                          and any("history(first:30)" in argument for argument in call)])
-    ci_next = repo.forge("next")
-    assert "daily full run on main is due" not in ci_next.stdout.lower()
-    assert len([call for call in gh.calls() if call[:2] == ["api", "graphql"]
-                and any("history(first:30)" in argument for argument in call)]) == before_graphql
 
     ci_tmp = tmp_path / "ci-init"
     ci_tmp.mkdir()
@@ -242,9 +209,6 @@ def test_3_full_run_is_nightly_and_daily(repo, gh, tmp_path, monkeypatch):
     adopted_repo = _adopted_repo(repo, tmp_path / "adopted-client")
     prepare_adopted_client(SimpleNamespace(repo=adopted_repo), [])
     adopted_sha = adopted_repo.git("rev-parse", "origin/main")
-    gh.respond("api", "graphql", stdout=_history([]))
-    adopted_due = adopted_repo.forge("next")
-    assert "daily full run on main is due" in adopted_due.stdout.lower()
     adopted_run = adopted_repo.forge("test", "--full")
     assert adopted_run.returncode == 0, adopted_run.stdout + adopted_run.stderr
     assert (adopted_repo.path / "test-count").read_text("utf-8") == "run\n"
@@ -438,7 +402,7 @@ def test_4_failed_full_run_opens_a_fix(repo, gh, tmp_path, monkeypatch):
     assert "tests/test_stale_run.py::test_old" not in manual_failing
     manual_calls = [call for call in gh.calls()
                     if call[:2] == ["api", "repos/{owner}/{repo}/actions/workflows/forge.yml/runs"]]
-    assert any("event=workflow_dispatch" in call for call in manual_calls)
+    assert any("per_page=20" in call for call in manual_calls)
 
 
 @pytest.mark.platform

@@ -33,6 +33,7 @@ def run(number, file="forge.yml", conclusion="failure", event="schedule", attemp
     """One GitHub workflow run; a later number is a newer run."""
     stem = file.removesuffix(".yml")
     return {"id": number, "workflow_id": {"forge": 1, "backup": 2, "nightly": 3}[stem], "name": name or stem,
+            "status": "completed" if conclusion else "queued",
             "event": event, "conclusion": conclusion, "run_attempt": attempt, "head_branch": "main",
             "path": f".github/workflows/{file}", "created_at": f"2030-01-01T{number % 24:02d}:00:00Z",
             # These lifecycle cases concern current results. Age has its own regression.
@@ -41,12 +42,11 @@ def run(number, file="forge.yml", conclusion="failure", event="schedule", attemp
 
 
 def answer(gh, shared=(), schedule=(), manual=(), file=FORGE):
-    """What GitHub lists: every workflow's scheduled runs, and the full workflow's own two lists."""
+    """All scheduled workflows, and the full workflow's single bounded list."""
     def listing(runs):
         return json.dumps({"workflow_runs": sorted(runs, key=lambda r: r["created_at"], reverse=True)})
     gh.respond(*SHARED, "--method", "GET", stdout=listing(shared))
-    gh.respond(*file, "event=schedule", stdout=listing(schedule))
-    gh.respond(*file, "event=workflow_dispatch", stdout=listing(manual))
+    gh.respond(*file, stdout=listing([*schedule, *manual]))
 
 
 def log(gh, number, job="full suite", test="tests/test_a.py::test_one", *extra):
@@ -121,13 +121,15 @@ def test_2_next_marks_only_the_full_test_run(client, gh, monkeypatch):
     assert "The latest scheduled backup (backup.yml) run on main failed in: unknown jobs." in lines
     assert [entry["id"] for entry in entries] == ["run:forge.yml"]
 
-    # A repo whose tests run on the laptop has no full run: forge.yml keeps today's lines, no mark.
+    # Local failed-schedule advice keeps its unmarked contract. The bounded
+    # release-age advice now uses forge.yml for local repos too.
     config = (client.path / "forge.toml").read_text("utf-8")
     configure(client, config, 'test_place = "local"')
+    clock.tick()
     answer(gh, shared=[run(43)])
     lines, entries, _ = read(client)
     assert "The latest scheduled forge (forge.yml) run on main failed in: full suite." in lines
-    assert not [line for line in lines if line.startswith("Needs you:")] and entries == []
+    assert not [line for line in lines if line.startswith("Needs you: The latest scheduled")] and entries == []
     # ...and the newest run in any state decides there, as before: a cancelled one hides the failure.
     clock.tick()
     answer(gh, shared=[run(44, conclusion="cancelled"), run(43)])
@@ -145,13 +147,12 @@ def test_2_next_marks_only_the_full_test_run(client, gh, monkeypatch):
 
 def test_3_the_row_stays_until_a_later_full_run_passes(client, gh, monkeypatch, tmp_path):
     clock = Clock(monkeypatch)
-    # The failed run is already started again. Its first attempt failed, and its log is the one read.
+    # One queued run follows an earlier complete failure in the bounded list.
+    # Earlier attempts outside that list no longer belong to this contract.
     started = run(61, conclusion=None, attempt=2)
-    answer(gh, schedule=[started])
-    gh.respond("api", "repos/{owner}/{repo}/actions/runs/61/attempts/1",
-               stdout=json.dumps({"id": 61, "run_attempt": 1, "conclusion": "failure"}))
-    gh.respond("run", "view", "61", exit=1, stderr="no log yet")
-    log(gh, 61, "full suite", "tests/test_attempt.py::test_first", "--attempt", "1")
+    earlier = run(60)
+    answer(gh, schedule=[started, earlier])
+    log(gh, 60, "full suite", "tests/test_attempt.py::test_first")
     lines, entries, _ = read(client)
     start = lines.index(FIRST_LINE)
     assert lines[start + 1] == "Failing tests: tests/test_attempt.py::test_first."
@@ -161,7 +162,7 @@ def test_3_the_row_stays_until_a_later_full_run_passes(client, gh, monkeypatch, 
 
     def still_red(*newer):
         clock.tick()
-        answer(gh, schedule=[*newer, {**started, "conclusion": "cancelled"}])
+        answer(gh, schedule=[*newer, {**started, "conclusion": "cancelled"}, earlier])
         lines, entries, _ = read(client)
         assert FIRST_LINE in lines and [entry["id"] for entry in entries] == ["run:forge.yml"]
         return lines, entries
