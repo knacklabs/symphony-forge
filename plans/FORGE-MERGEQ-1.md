@@ -1,68 +1,98 @@
 # Ready pull requests stop re-running CI against each other
 
-<n> parts · Risks: ... · New moving parts: ...
+2 parts · Risks: none one-way; three accepted limits · New moving parts: a test run on the default branch after each merge in repos whose tests run in pull request CI
 
 ## What changes for you
 
-- An item whose changed files do not overlap what just landed on main merges with no new CI run.
-- An overlapping item gets one combined run of only the related tests.
-- Each push to main runs the tests related to what just merged.
-- Forge's merges wait while main is red; the owner merges the repair and a full run turns main green.
+- In a repo whose tests run in pull request CI, each merge to the default branch starts one run of only the tests related to what just merged. A repo that tests on the laptop gets no such run. (Source: owner, 18 Nov 2026)
+- While the default branch has a failed test result that no later full test run has cleared, Forge merges nothing: `forge merge` and `forge land` wait and say so in one line. A green result from a later run of only related tests does not clear it; a green full test run does. In a repo that tests on the laptop, the result is the nightly full run's. (Source: owner, 18 Nov 2026)
+- To repair a red default branch, the agent fixes the break in a fix, the owner merges that fix on GitHub, and the agent starts a full test run. Merges go ahead when it is green. In a repo where a person merges, Forge's line that hands over a ready pull request says the default branch is red and asks the person to wait; Forge cannot stop a merge made on GitHub. (Source: owner, 18 Nov 2026)
+- In a repo whose tests run in pull request CI, a queue of ready changes stops fighting. When the default branch moved after an item's close, and the item's changed files do not overlap the files the default branch gained, Forge merges the item with no new CI run, as repos that test on the laptop already do. When they overlap, the item merges after one combined run of only the tests related to both changes, as today. `forge land --all` already tests up to five ready changes together in one merge train, so overlapping ready items share one run. A repo where GitHub itself requires each pull request to be up to date before it merges keeps today's new run. (Source: owner, 18 Nov 2026)
+- Not in this story: changes to how the merge train picks its members; the board; the extra CI runs that Forge's record commits cause (the separate fix for issue 1656, which comes first).
+- What each repo gets. A new repo gets all of this at setup. An existing repo gets the merge rules and the red-branch wait when it upgrades to the release with this change, and the run after each merge when Forge refreshes its files (Forge owns the workflow file). A repo that tests on the laptop gets only the red-branch wait, from its nightly full run's result. No saved record changes.
+- Cost. No model call is added. Each merge in a repo whose tests run in CI starts one run of the tests related to that merge. In exchange, waiting items without overlap no longer start a whole new run each time the default branch moves.
+
+Design: none. Nothing on the board changes.
 
 ## Why
 
-In CI-test repos each waiting pull request merges main and waits for a whole new CI run every time main moves, even when files do not overlap, so a queue of ready items keeps redoing the same work.
+In a repo whose tests run in pull request CI, when several changes are ready at once, each merge moves the default branch. Every other waiting change then merges the default branch in and waits for a whole new CI run, even when they share no file, so a queue of ready changes keeps redoing the same work. Forge added that run on 28 Oct 2026 after two changes that shared no file merged one after the other and left the default branch red. The owner prefers to catch such a break after the merge, with a run on the default branch, and to stop merging until it is repaired.
 
 ## Done when
 
-1. **A ready item with no shared files merges with no new CI run, and one with shared files gets one combined related-test run.**
-2. **Each push to main runs the related tests of the merge, and Forge's merges wait while main's latest test run is red.**
+1. **In a repo whose tests run in pull request CI, each merge to the default branch runs the tests related to that merge.**
+2. **While the default branch has a failed test result that no later full test run has cleared, Forge merges nothing and each waiting merge says so in one line; a green full test run lets merges go ahead.**
+3. **In a repo whose tests run in pull request CI and where GitHub does not require pull requests to be up to date, Forge merges a ready item whose changed files do not overlap what the default branch gained since its close with no new CI run, and an item that overlaps after one combined run of the tests related to both changes.**
 
 ## Risks
 
-<!-- Each one-way step: deleting data, a destructive migration, a new vendor. -->
+Risks: none one-way. Each part reverts with its pull request. No saved record changes.
 
-Risks: none
+Accepted limits, in plain words:
+- Two changes that share no file can still break each other, for example when one renames a function that the other starts to use. On 28 Oct 2026 two such changes merged one after the other and left the default branch red, and Forge then added a new CI run for every waiting change. This story removes that run when the files do not overlap. Such a break is now found after the merge, by the run on the default branch and the nightly full run, not before. Until a full run is green again, Forge merges nothing. (Source: owner, 18 Nov 2026)
+- The repair of a red default branch needs the owner once: Forge does not merge while the branch is red, so the owner merges the repair fix on GitHub. Forge also cannot stop a person who merges another pull request on GitHub while the branch is red; it only says so. (Source: owner, 18 Nov 2026)
+- In a repo where GitHub requires each pull request to be up to date before it merges, every waiting item still gets a new run after each merge, as today. GitHub asks for that run, not Forge.
 
 ## For the builders
 
 <!-- Everything from here down is for the agents. The owner doesn't see it when approving, and
 tightening it needs no new approval. -->
 
+Sources: the owner's decisions of 18 Nov 2026 (below), split out of FORGE-CITIME-1, whose cold read round 1 raised the notes this plan already answers (listed in Notes). Name no client in code, tests, texts or commits.
+
+### What exists (evidence)
+
+Checked on 18 Nov 2026 against `origin/main` at the v1.2.42 release (`a3272814e`). The builder checks each name again before it starts; FORGE-CITIME-1's GROUPS part and the issue 1656 fix change some of these lines first.
+
+- **The generated workflow.** `WORKFLOW` in `src/forge/prcheck.py:44-221`. It triggers on `pull_request`, `pull_request_target`, and for the full run `schedule` and `workflow_dispatch` (`:47-50`, `:314-315`). Every test job is `if: github.event_name == 'pull_request'`. `docs-check` and the group jobs pass `HEAD_SHA: github.event.pull_request.head.sha || github.sha` and `BASE_SHA: github.event.pull_request.base.sha` (`:74-79`, `:104-109`). The gate `tests-passed` is named `tests` on `pull_request` and `tests (other event)` on any other event (`:119`), so a skipped gate never passes a pull request's required check. With one group, `ships` folds the jobs into one `tests` job (`:395-408`). The concurrency group uses the pull request number or the run id and cancels only pull request runs (`:51-53`), so push runs never cancel each other. The test jobs exist only when `test_place` is `ci` and `checks` names `tests` (`ci_tests`, `:293`).
+- **`forge test --change`.** `fasttest.test` (`src/forge/fasttest.py:340-372`) takes its base from `origin/<default>` and widens it over merges into the branch (`:358-365`). It has no `--base` option; `--pytest BASE` is a different path (`:19-22`). On the default branch itself `origin/<default>` is the checked-out commit, so `--change` selects nothing unless that ref is moved.
+- **The CI script on a push.** `.forge/review-tests.py` (source `src/forge/templates/review-tests.py`) already treats `push` as an event whose parent run it may reuse (`reuse`, `:257-305`; `:329-331`).
+- **Merge after the default branch moved.** `merge.merge` (`src/forge/merge.py:46`, 417 lines) compares the item's changed files with what `origin/<default>` gained since the item's base (`:110-116`), merges the default branch in locally (`:127`), and treats any difference in `.claude/skills` or `.codex/skills` between the gained default branch and the merged tree as a guide repair (`:128-130`), which also catches the item's own guide edits. In a laptop-test repo it runs the related tests and, with no overlap, resets to the checked head and merges with no push or check wait (`:156-158`). In a CI-test repo `ci_retest` (`:136-137`) makes it push the combined commit and wait for its checks (`:148-155`, `:163-167`) even with no overlap. When GitHub answers `BEHIND`, it runs close again and retries (`:220-232`). The run for every CI-test item came from the 28 Oct 2026 fix `54d64e397`. Guide: `src/forge/templates/skill.md:264-289`.
+- **Up-to-date rule.** `land._up_to_date_rule` (`src/forge/land.py:649-666`) reads whether GitHub requires each pull request to be up to date.
+- **Human merges.** `forge land` hands a ready item to a person with `say(f"{item} is ready; a human merges its pull request: {url}")` (`land.py:163-165`), without calling `merge.merge`.
+- **The merge train.** `land._form_train` (`land.py:599-646`) takes two to five ready changes into one draft pull request whose run tests them together; members then merge with no run of their own. Shared files are allowed unless git cannot merge them. This story does not change it.
+- **The full run.** `fullrun.STATUS = "forge-full-suite"` (`src/forge/fullrun.py:11`); `fullrun.green` (`:34-72`) walks up to ten first-parent commits; `fullrun.next_run` (`:14-21`) gives the command that starts a full run (`gh workflow run forge.yml --ref <default>` in a CI-test repo, `forge test --full` on the laptop).
+- **The guide copies.** `story.ships` (`src/forge/story.py:88-100`) writes `.claude/skills/forge/SKILL.md` and `.codex/skills/forge/SKILL.md` from `src/forge/templates/skill.md`; `forge sync` refreshes them.
+- **Size ceilings.** `tests/test_rules.py::test_5_forge_stays_small` refuses a module over 1,200 lines: `merge.py` 417, `land.py` 867, `prcheck.py` 611.
+- **Tests to copy from.** `tests/test_close.py` (`env`, `GREEN`) and `tests/test_ci_waits_for_busy_runners.py` stub GitHub for close, merge and land; `tests/test_train_land_all.py` covers the train.
+- **The issue 1656 fix.** It is being built on `fix/issue-1656-in-ci-test-repos-close-pushes` (Done-when: a record-only head commit does not cancel the parent's CI run in progress and reuses its result). On 18 Nov 2026 it had no code commits yet. It will likely change the workflow's concurrency lines in `prcheck.py` and the reuse step in `review-tests.py`; RED changes the triggers, the jobs' `if` lines, `BASE_SHA` and the gate's name in the same `WORKFLOW` text. RED starts only after that fix merges, and builds on it.
+
+### Decisions
+
+- **Owner decisions (source: owner, 18 Nov 2026).** 1. If an item's changed files do not overlap the default branch's incoming changes, merge with no new CI run, as laptop-test repos already do; the run on the default branch after the merge and the nightly full run catch rare mixing problems. 2. If they overlap, one combined run of only the tests related to both changes; the train (`forge land --all`) batches overlapping ready items. 3. While the default branch's latest run is red, no merge goes ahead; it waits with one line. 4. Each push to the default branch runs the tests related to what just merged, and a red result stops merges until the default branch is green. 5. Red-branch repair: the owner merges the repair fix on GitHub, then the agent starts a full run, and its green result clears the stop. The 28 Oct 2026 cost is an accepted limit.
+- **Run on the default branch (RED).** In a CI-test repo the workflow adds `push: branches: [<default>]` (the default branch's name from `repo.default_branch`). `docs-check`, the group jobs, the one-group `tests` job and the gate also run on `push`. On a push, `BASE_SHA` is `github.event.before` (`HEAD_SHA` already falls back to `github.sha`). Before the test step on a push, one workflow line points `refs/remotes/origin/<default>` at `github.event.before`, with a comment, so the unchanged `forge test --change` selects only what that merge brought; no new `forge test` option. The gate's name becomes `tests` on `pull_request` and `push`; `tests (other event)` stays for `pull_request_target`. `forge-pr-check` and the full-run jobs do not run on a push. The concurrency lines do not change.
+- **Red default branch (RED).** `merge.red(top) -> str` returns the red line or `""`. It walks up to ten first-parent commits from `origin/<default>`, newest first, and stops at the first commit with a green `forge-full-suite` status. The branch is red when any commit seen before that stop has a `tests` check run that ended `failure` or `timed_out`, or a failed `forge-full-suite` status. A pending run is not red, and a later green narrow run does not clear an earlier failure (`ponytail:` comment: ten commits, as in `fullrun.green`). `merge.merge` checks it before it merges: when red, print once `<default> has a failed test run (<link>). Forge waits for a green full test run before it merges <item>.`, check again every 60 seconds, and merge when it clears. After 90 minutes (shortened in tests by the `FORGE_CHECKS_WAIT` seam), refuse with a new `REFUSALS["red_default"]`: `("<default> has a failed test run, so Forge did not merge <item>.", "fix the break in a fix; the owner merges that fix on GitHub; then <fullrun.next_run(top)>; then forge merge <item>")`. In `land.py` the human hand-off line adds ` <default> is red; wait for a green full test run before merging.` when `merge.red(top)` is not empty. Laptop-test repos read only `forge-full-suite`.
+- **Merge with no overlap (SKIP).** In `merge.merge`, a CI-test item whose files do not overlap what the default branch gained, with no guide repair, merges like a laptop-test item without overlap: reset to the checked head, no push, no check wait, and no local test run (CI-test repos leave tests to CI). A guide repair counts only for a skills path whose merged content differs from both the item's head and the gained default branch, so the item's own guide edits do not count. With an overlap, keep today's push of the combined commit and wait; its pull request run of `forge test --change` selects the tests related to both changes (`fasttest.py:358-365`). When `land._up_to_date_rule` is true (imported inside the function, since `land` imports `merge`), keep today's behaviour for every item. The five-move stop stays. The merge train does not change.
+- **Why RED comes first.** SKIP removes the run that caught a break before the merge. RED adds the run after the merge and the stop while red, so SKIP merges only once that safety net exists.
+- **Guide text.** RED: in `skill.md`'s "Merges and settings" section, the run after each merge, the red wait, its refusal and the repair steps (fix, owner merges it on GitHub, full run). SKIP: replace `skill.md:276-279` ("It publishes the combined change and waits for that commit's checks, even when the changed files do not overlap...") with the no-overlap rule and the up-to-date exception. Edit only the template; run this checkout's `forge sync` and commit the refreshed copies, named in the handoff and left out of every Scope.
+- **New and existing repos.** Each rule is tested on a new repo only. No record changes, so the upgrade test does not change. Existing repos get the merge rules with the release, and the workflow with the next sync.
+
 ### Done-when details
 
-<!-- Under each Done-when item's number: its evidence, edge cases and the tests that prove it.
-Workers and reviewers get the entries of the items they cover. An item with nothing to add has
-no entry. -->
+1. Run after each merge.
+   - Test: `tests/test_merge_waits_while_default_is_red.py::test_1_ci_repos_test_each_merge_to_the_default_branch` (new repo only, `test_place = "ci"`): the synced workflow has a `push` trigger on the default branch; on a push, the test jobs and the gate run, the gate is named `tests`, `BASE_SHA` is the push's previous commit, a line points `origin/<default>` at it before `forge test --change`, and no `forge-pr-check` job runs. A laptop-test repo's workflow has no `push` trigger.
+2. Red wait.
+   - Test: `tests/test_merge_waits_while_default_is_red.py::test_2_merge_waits_while_the_default_branch_is_red` (new repo only, `merge = "agent"`), on the `env` fixture with the GitHub stub and the wait shortened through `FORGE_CHECKS_WAIT`. The default branch's head has a green `tests` run and its parent a failed one: `forge merge <item>` prints the red line once and does not merge. When the stub adds a green `forge-full-suite` status on the head, merge goes ahead. With no full run at the limit, merge refuses with `red_default` and its `Next:` line. With `merge = "human"`, `forge land <item>` prints the hand-off line with the red note.
+3. Merge with no overlap.
+   - Test: `tests/test_merge_skips_ci_without_overlap.py::test_1_a_ci_item_without_overlap_merges_with_no_new_run` (new repo only, `test_place = "ci"`, `merge = "agent"`), on the `env` fixture with the GitHub stub. An item that changes `app.py` and the guide template is closed; the default branch then gains `other.py`; `forge merge <item>` merges with no push of the item's branch and no wait on a new head. A second item that changes `app.py` after the default branch also changed `app.py`: merge pushes the combined commit and waits for its checks, as today. A third case, with the stub's branch rules requiring up-to-date branches, keeps the push and wait.
+   - Stays green: `tests/test_train_land_all.py`.
 
-1. <Evidence, edge cases and the tests that prove item 1.>
+Before each round ends, run the two cheap checks from AGENTS.md (`test_4_one_test_per_rule`, `test_5_forge_stays_small`).
 
 ## Tasks
 
-<!-- One row per task. Covers: the Done-when numbers it delivers, at most three. Scope: the paths
-it may change. Before writing each Scope, search the code for the files the task needs. The plan
-check refuses two tasks whose Scope paths have the same prefix up to the first wildcard, unless
-one waits for the other through After, directly or through another task; it names both tasks.
-Paths with a segment named `tests`, `test`, `__tests__` or `spec` do not cause Scope overlaps
-and can be shared without an After link. Explicit After links still apply.
-When tasks need the same production file, put it in the first task's Scope with the shared names and stubs;
-tasks that need them wait for that task through After and then own only their files. Keep a file
-that a script can make at build time out of the repo and out of every Scope; when the repo keeps such
-a file on purpose, give its change to one part that the others wait for. Tests: the
-tests it adds or changes. After: the tasks it waits for. When two tasks share a function, field,
-file format or command, the first task pins it: it commits the shared names and stubs plus one
-test that crosses both sides, and the tasks that use it list it under After. Split tasks so each
-owns its files; shared lines (command table, guide list, registry) go to one task or a small last
-wiring task; After only when a task needs another task's code. The
-Developer column is optional: the lead fills or changes a GitHub username here, below For the
-builders, without another approval. Leave it blank for an unassigned part. Forge next uses
-the caller's GitHub login; another developer may start it with a warning. Existing tables
-without Developer still work. The moving-parts line stays last: "none", or each new dependency, service, datastore,
-queue, background job or abstraction layer, with the Done-when item that needs it. -->
-
 | ID | Name | What it delivers | Covers | Scope | Tests | After | User-facing | Developer |
 |---|---|---|---|---|---|---|---|---|
+| RED | Test each merge and wait while the default branch is red | The push run on the default branch, the gate's name on a push, `merge.red` with its wait and refusal, the red note in land's hand-off line, the guide text, this repo's regenerated workflow | 1, 2 | `src/forge/prcheck.py`, `src/forge/merge.py`, `src/forge/land.py` (the human hand-off line only), `src/forge/templates/skill.md`, `.github/workflows/forge.yml`, `tests/test_merge_waits_while_default_is_red.py` (new) | `tests/test_merge_waits_while_default_is_red.py::test_1_ci_repos_test_each_merge_to_the_default_branch`, `tests/test_merge_waits_while_default_is_red.py::test_2_merge_waits_while_the_default_branch_is_red` | | no | |
+| SKIP | Merge without a new run when files do not overlap | The no-overlap merge for CI-test items, the narrower guide-repair rule, the up-to-date exception, the guide text | 3 | `src/forge/merge.py`, `src/forge/templates/skill.md`, `tests/test_merge_skips_ci_without_overlap.py` (new) | `tests/test_merge_skips_ci_without_overlap.py::test_1_a_ci_item_without_overlap_merges_with_no_new_run`; stays green: `tests/test_train_land_all.py` | RED | no | |
 
-New moving parts: none
+New moving parts: a test run on the default branch after each merge in CI-test repos (needed by Done-when 1 and 2)
 
 ## Notes
+
+- **Order.** RED starts after the issue 1656 fix merges (both change the `WORKFLOW` text in `prcheck.py`) and after FORGE-CITIME-1's GROUPS part merges (`prcheck.py`, `.github/workflows/forge.yml`). Forge refuses a part whose Scope shares a file with a started part of another story, so RED and SKIP also start only when no started part elsewhere holds `src/forge/templates/skill.md` (FORGE-FASTCI-1's OXLINT, FORGE-CITIME-1's RULES and STARTER) or `src/forge/merge.py`. SKIP waits for RED.
+- **Scores (F x H >= 2 x C).** Run after each merge and the red wait: 3 (every merge in a CI-test repo) x 3 (a red default branch blocks everyone) = 9 >= 4 (C 2, about 80 lines), kept. Merge without a new run: 3 (every busy day in a CI-test repo) x 2 (a slow step) = 6 >= 4 (C 2, about 40 lines), kept. Cut: a new `forge test --base` option (a workflow line does it), a change to the merge train's members, a block on human merges (Forge cannot stop a GitHub merge without a required check, which would make every pull request wait for the default branch's run).
+- **Principle 6.** Product code: about +80 lines (RED) and +20 to +40 (SKIP). Process removed: the whole new CI run for every waiting item without overlap.
+- **Model cost.** None added.
+- **Cold read round 1 of FORGE-CITIME-1, already answered here.** No `--base` option exists, so a workflow line moves `origin/<default>`; the gate is named `tests` on a push; RED's Scope holds `prcheck.py` whole; the repair path is the owner's merge plus a full run; human merges get a note, not a block; red lasts until a green full run, so a later narrow green run cannot hide a failure; the up-to-date rule keeps today's run; the item's own guide edits no longer count as a guide repair; the merge train and its test do not change.
+- **Not verified.** That GitHub's `github.event.before` is the previous default-branch commit for every merge method the repos use (it is for squash and merge commits); how the issue 1656 fix reshapes the workflow lines RED touches.
