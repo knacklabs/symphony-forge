@@ -12,6 +12,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/github.py\tFunctional: HTTP 403 secondary rate limits stop Forge commands\trate-limit-waits",
+      "kind": "bug",
+      "path": "src/forge/github.py",
+      "line": 23,
+      "text": "Functional: HTTP 403 secondary rate limits stop Forge commands",
+      "from": "blocking",
+      "item": "rate-limit-waits",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/github.py\tFunctional: Honor the retry time for secondary limits\trate-limit-waits",
       "kind": "bug",
       "path": "src/forge/github.py",

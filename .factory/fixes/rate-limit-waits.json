@@ -18,7 +18,7 @@
       "gain": 4,
       "harm": 3,
       "line": 28,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 1,
       "security": false,
@@ -31,7 +31,7 @@
       "gain": 3,
       "harm": 3,
       "line": 18,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 1,
       "security": false,
@@ -70,54 +70,46 @@
       "gain": 3,
       "harm": 3,
       "line": 48,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 1,
       "security": false,
       "title": "Gate: tests/test_github_rate_limits_wait_for_reset.py::test_1_commands_wait_for_github_reset_and_continue",
       "work": 2
+    },
+    {
+      "area": "run() in src/forge/github.py",
+      "file": "src/forge/github.py",
+      "gain": 5,
+      "harm": 4,
+      "line": 23,
+      "outcome": "open",
+      "reason": "",
+      "round": 3,
+      "security": false,
+      "title": "Functional: HTTP 403 secondary rate limits stop Forge commands",
+      "work": 2
     }
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "76a2b87b42f42ef5fdfe8e6a7e5b0182c142d658f1a5bdcea3357dbac1fccf03",
-    "changed": "315bc3e601ce6c71a563a3b32cc51b0e468453b1fd50a25b93a32c7a6403bcac",
-    "commit": "cdb0beb29626955c7a5bc95d81c89691a240a645",
+    "branch_diff": "a11ee42c86546677c7cb69512a6d2e329d9b2faf049774d8c316ae5001dbf7f8",
+    "changed": "2ef515253ec7f63f6c2d77f4701aafdf5c3c8661e32e335dbfbcef30b24d419e",
+    "commit": "9f2e1549bb66390372d1ed591f58f88fc57a5c11",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 5, Work 2, Harm 4\nRaise: Not done\nCase: normal use - concurrent runs exhaust the shared GraphQL quota.\nGitHub can return `API rate limit already exceeded` in a GraphQL error, as shown in [GitHub CLI's issue tracker](https://github.com/cli/cli/issues/12812). The new matcher requires `API rate limit exceeded` without `already`, so it returns the error before reaching the repaired GraphQL quota lookup. For example, merge's `gh pr view` at `src/forge/merge.py:66` then refuses instead of waiting. Close's history rebuild and land's queue also make GraphQL calls. This repair regresses the main rate-limit recovery path.",
+        "body": "Gain 5, Work 2, Harm 4\nRaise: Functional\nCase: normal use - concurrent Forge runs hit a secondary limit while merge reads a pull request.\nThe new matcher requires `exceeded` after `rate limit` unless the status is 429. New evidence relative to the ruling is that GitHub also returns [HTTP 403 with \u201cYou have exceeded a secondary rate limit\u201d](https://github.com/cli/cli/issues/4443). For `gh pr view`, the error is returned without a successful result on stdout, so neither alternative matches. The failure reaches `src/forge/merge.py:66`, and merge refuses instead of waiting. The previous matcher recognized `secondary rate limit`; the revised test at `tests/test_github_rate_limits_wait_for_reset.py:23` uses HTTP 429, which masks this regression.",
         "file": "src/forge/github.py",
         "gain": 5,
         "harm": 4,
         "line": 23,
         "priority": "P0",
-        "required_done_when": true,
-        "title": "Not done: When GitHub answers with a rate-limit error, close, merge and land wait until the reset time GitHub reports",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional\nCase: normal use - concurrent close or merge requests hit a secondary GitHub rate limit with a Retry-After header.\nThe parser searches only `gh`'s output, but [gh api prints response headers only when requested](https://github.com/cli/cli/blob/v2.83.2/pkg/cmd/api/api.go#L420-L425). The close and merge check request at `src/forge/checks.py:622` does not request them. If GitHub reports `Retry-After: 180`, this code instead announces a 60-second wait and retries early, repeatedly ignoring GitHub's reported time. The repair's test supplies the header directly in the stub's stderr, so it does not demonstrate that the real command exposes it.",
-        "file": "src/forge/github.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 26,
-        "priority": "P1",
-        "title": "Functional: Honor the retry time for secondary limits",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - GitHub exhausts the GraphQL quota or its response header differs from the quota endpoint.\nThe repaired GraphQL case still supplies `API rate limit exceeded`, while a real GitHub response can say `API rate limit already exceeded`; production returns that response without waiting, yet this proof passes. The header case also injects a response header into a `gh pr edit` error, although [gh's error formatter](https://github.com/cli/go-gh/blob/v2.13.0/pkg/api/errors.go#L28-L35) does not print those headers. The named proof therefore still passes while GraphQL recovery and real response-header precedence are broken.",
-        "file": "tests/test_github_rate_limits_wait_for_reset.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 31,
-        "priority": "P1",
-        "title": "Gate: tests/test_github_rate_limits_wait_for_reset.py::test_1_commands_wait_for_github_reset_and_continue",
+        "title": "Functional: HTTP 403 secondary rate limits stop Forge commands",
         "work": 2
       }
     ],
-    "id": "5b7a854a-5efa-4f16-8f4e-53db8e6bb776",
+    "id": "fb52fcc2-d3a7-4873-9ac8-a17b4cafb275",
     "status": "blocked"
   },
   "round": 3,
@@ -133,6 +125,10 @@
     },
     {
       "at": "2026-11-18T10:03:23.155745+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-18T10:13:59.360056+00:00",
       "step": "review"
     }
   ],
