@@ -1,6 +1,13 @@
 {
   "base": "1a5b4d2cf1d9b0e80bb05627d2864a9ac40fd2bb",
   "branch": "fix/fix-review-rounds",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1ef8c-464c-73a0-9873-2e096a038007",
+    "head": null,
+    "start": "e6aba34b13603c0e4cd5049e150dd230c802238e"
+  },
   "done_when": "Fixes use task_review_rounds like story parts (default 2), so a fix stops for the owner only after its second blocked review; the skill and guide say so; new and existing repos get it on upgrade",
   "fix_kind": "mechanical",
   "kind": "fix",
