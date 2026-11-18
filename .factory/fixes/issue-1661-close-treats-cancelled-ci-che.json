@@ -1,0 +1,108 @@
+{
+  "base": "a3272814e237b99271e2d7f844779588405e15d3",
+  "branch": "fix/issue-1661-close-treats-cancelled-ci-che",
+  "done_when": "When an item's CI checks were cancelled and none failed, close starts them again or waits for the newer run instead of sending the item to a worker round",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "_rerun_cancelled() in src/forge/checks.py",
+      "file": "src/forge/checks.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 350,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Do not treat a different event's completed run as a passing check",
+      "work": 2
+    },
+    {
+      "area": "_rerun_cancelled() in src/forge/checks.py",
+      "file": "src/forge/checks.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 352,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Cancelled checks are still reported as failed",
+      "work": 2
+    },
+    {
+      "area": "_wait() in src/forge/checks.py",
+      "file": "src/forge/checks.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 120,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Honor the single retry when close is restarted",
+      "work": 1
+    },
+    {
+      "area": "test_3_checks_cancelled_again_after_the_rerun_go_to_the_worker() in tests/test_close_reruns_cancelled_ci.py",
+      "file": "tests/test_close_reruns_cancelled_ci.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 55,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: tests/test_close_reruns_cancelled_ci.py",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "29a6a1870bf5d876097adcfb9f1aad199bf3d8a84d3a5811213e1a7108a69624",
+    "changed": "97527aee32d13c1a1160a41702f43abb47a64a58f8d8573bee27eb88a12a61c0",
+    "commit": "8981e9fc3c832a3510a62f3755845a7d8cf6f856",
+    "dismissals": [],
+    "findings": [],
+    "id": "ac02821d-9350-4cc3-aba9-017f2bb7bea8",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-18T05:31:26.203001+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-18T06:31:17.083051+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-18T07:17:49.372244+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-18T07:54:07.940592+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-18T07:17:49.372542+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "src/forge/checks.py",
+    "reason": "Owner chose one more small round: clear the cached checks after a rerun",
+    "wait_id": "ae2877ae-d1d0-4ff8-a729-46f0d08e2889",
+    "worker_round": 2
+  },
+  "stuck": {
+    "close": "77289b4e-a2d5-4740-bca1-7f09807e6e68",
+    "head": "3d5c77d419d6a31284ad9e02f041760ad14f0481",
+    "keys": {},
+    "round": 2
+  },
+  "why": "Issue 1661: close treats cancelled CI checks as failed and gives forge work as the next step, so a worker round runs, finds nothing and hands back (6 times in one client day).",
+  "worker": "claude"
+}

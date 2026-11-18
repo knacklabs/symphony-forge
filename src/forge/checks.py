@@ -191,6 +191,8 @@ def _wait(top: Path, item: str, sha: str, names: list[str], branch: str, progres
                        for name, state in seen):  # the pull_request workflow skips its own job of that name
                 _no_start(top, item, sha, branch)  # before a red or timed-out test can hide it
             _tests_timeout(top, item, sha, names, check_runs, seen)
+            if _rerun_cancelled(top, item, sha, seen, check_runs) and cache is not None:
+                cache.unlink(missing_ok=True)  # The next poll must read fresh results, not the cancelled ones.
             reason = _pending(item, names, seen)
             if mergeable == "UNKNOWN":
                 reason = reason or "GitHub has not determined whether this pull request can merge"
@@ -368,6 +370,40 @@ def _tests_timeout(top: Path, item: str, sha: str, names: list[str],
     # failure, including one from another workflow with the same check name.
     _pending(item, names, [entry for index, entry in enumerate(seen) if index not in ignored])
     repo.refuse(REFUSALS["timeout"], duration=next(iter(timed_out.values())), item=item)
+
+
+def _rerun_cancelled(top: Path, item: str, sha: str, seen: list[tuple[str, str]],
+                     runs: list[dict[str, Any]]) -> bool:
+    """Cancelled checks are not failures when none failed. Decide per workflow run: wait for a newer
+    run of the same workflow and event, or start the run again once (run_attempt 1); a second attempt stays red."""
+    cancelled = [index for index, run in enumerate(runs)
+                 if run.get("status") == "completed" and run.get("conclusion") == "cancelled"]
+    if not cancelled or any(state == RED for index, (_, state) in enumerate(seen) if index not in cancelled):
+        return False
+    workflows = _ask(top, item, ".workflow_runs", "repos/{owner}/{repo}/actions/runs", "--method", "GET",
+                     "--raw-field", "per_page=100", "--raw-field", f"head_sha={sha}")
+    decided: dict[Any, str | None] = {}
+    for index in cancelled:
+        suite = runs[index].get("check_suite", {}).get("id")
+        current = next((run for run in workflows if suite is not None and run.get("check_suite_id") == suite), None)
+        if current is None or not isinstance(current.get("id"), int):
+            continue  # Without its run, nothing can start it again: it stays red.
+        if suite not in decided:
+            newer = [run for run in workflows if run.get("workflow_id") == current.get("workflow_id")
+                     and run.get("event") == current.get("event")
+                     and (run.get("run_number") or 0) > (current.get("run_number") or 0)]
+            decided[suite] = None
+            if newer:  # The newer run's own checks decide; until they finish, the check is not done.
+                decided[suite] = PASS if all(run.get("status") == "completed" for run in newer) else PENDING
+            elif current.get("status") != "completed":
+                decided[suite] = PENDING  # A rerun is already going; GitHub keeps the run and counts attempts.
+            elif (current.get("run_attempt") or 1) == 1:
+                if repo.run("gh", "run", "rerun", str(current["id"]), cwd=top, timeout=60).returncode == 0:
+                    print(f"Run {current['id']} was cancelled. Started it again; waiting for it.", flush=True)
+                    decided[suite] = PENDING
+        if decided[suite]:
+            seen[index] = (seen[index][0], decided[suite])
+    return any(decided.values())
 
 
 def _pending(item: str, names: list[str], seen: list[tuple[str, str]]) -> str:
