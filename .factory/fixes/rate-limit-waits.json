@@ -44,7 +44,7 @@
       "gain": 4,
       "harm": 3,
       "line": 290,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -57,7 +57,7 @@
       "gain": 4,
       "harm": 3,
       "line": 16,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -80,64 +80,44 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "91dba1ada85d908675ac41f59d16f28c0c96022d3c997131071147f1a6ebd322",
-    "changed": "20ef14b5ea2502cf7d3afd77a3ee2eef0a3cba6a213f09c8f3d67675f4bab094",
-    "commit": "5601e3a18c8bd2323e14709955cb3ef5861173a4",
+    "branch_diff": "76a2b87b42f42ef5fdfe8e6a7e5b0182c142d658f1a5bdcea3357dbac1fccf03",
+    "changed": "315bc3e601ce6c71a563a3b32cc51b0e468453b1fd50a25b93a32c7a6403bcac",
+    "commit": "cdb0beb29626955c7a5bc95d81c89691a240a645",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done\nCase: normal use - the GraphQL quota is exhausted while REST has a different reset time.\nThe owner-approved item is: \u201cWhen GitHub answers with a rate-limit error, close, merge and land wait until the reset time GitHub reports (with one line saying so) and then continue, instead of stopping; new and existing repos get it on upgrade\u201d.\nThe fallback chooses GraphQL only when the error text contains \u201cgraphql\u201d. New evidence relative to the ruling is that [gh\u2019s own GraphQL error handling](https://github.com/cli/cli/blob/v2.83.2/pkg/cmd/api/api_test.go#L490-L503) prints the error message and JSON without that prefix. `forge land --all` reaches such a `gh api graphql` call through `src/forge/land.py:374` and `src/forge/board_facts.py:102`; close\u2019s history rebuild also calls it at `src/forge/backfill.py:38`. For a headerless refusal, this code chooses the unrelated core reset, so it can retry before GraphQL resets or wait past the reported GraphQL reset.",
+        "body": "Gain 5, Work 2, Harm 4\nRaise: Not done\nCase: normal use - concurrent runs exhaust the shared GraphQL quota.\nGitHub can return `API rate limit already exceeded` in a GraphQL error, as shown in [GitHub CLI's issue tracker](https://github.com/cli/cli/issues/12812). The new matcher requires `API rate limit exceeded` without `already`, so it returns the error before reaching the repaired GraphQL quota lookup. For example, merge's `gh pr view` at `src/forge/merge.py:66` then refuses instead of waiting. Close's history rebuild and land's queue also make GraphQL calls. This repair regresses the main rate-limit recovery path.",
         "file": "src/forge/github.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 28,
-        "priority": "P1",
+        "gain": 5,
+        "harm": 4,
+        "line": 23,
+        "priority": "P0",
         "required_done_when": true,
         "title": "Not done: When GitHub answers with a rate-limit error, close, merge and land wait until the reset time GitHub reports",
         "work": 2
       },
       {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional\nCase: normal use - concurrent close, merge or land requests encounter a secondary GitHub rate limit.\nNew evidence relative to the ruling is that [GitHub documents](https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api) a separate `Retry-After` for secondary limits and says the quota endpoint can itself be subject to that limit. This code ignores `Retry-After` and uses the primary quota\u2019s reset even when that quota still has capacity. It can therefore wait until an unrelated time; if the quota lookup is also throttled, it returns the original error instead of continuing. `src/forge/checks.py:622` is one close and merge path that makes these requests without exposing response headers.",
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional\nCase: normal use - concurrent close or merge requests hit a secondary GitHub rate limit with a Retry-After header.\nThe parser searches only `gh`'s output, but [gh api prints response headers only when requested](https://github.com/cli/cli/blob/v2.83.2/pkg/cmd/api/api.go#L420-L425). The close and merge check request at `src/forge/checks.py:622` does not request them. If GitHub reports `Retry-After: 180`, this code instead announces a 60-second wait and retries early, repeatedly ignoring GitHub's reported time. The repair's test supplies the header directly in the stub's stderr, so it does not demonstrate that the real command exposes it.",
         "file": "src/forge/github.py",
         "gain": 3,
         "harm": 3,
-        "line": 18,
+        "line": 26,
         "priority": "P1",
         "title": "Functional: Honor the retry time for secondary limits",
         "work": 2
       },
       {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - a shared GitHub account reaches its limit while someone opens the board or runs `forge next`.\nAdds work: preserve best-effort GitHub reads for the board and next; F 2 x H 2 = 4; 2 x C = 4\nThe wait now applies to every `gh` invocation, including optional reads. `src/forge/board.py:65` and `src/forge/nextstep.py:163` wait for those reads before returning local information; `src/forge/board_server.py:173` also waits without a deadline when there is no saved snapshot. Previously those paths could use their unavailable-data or cached-data behavior. They now hang until the reset, and an existing board snapshot cannot refresh local changes during that wait.",
-        "file": "src/forge/repo.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 290,
-        "priority": "P1",
-        "title": "Functional: Keep board and next responsive while GitHub is rate-limited",
-        "work": 2
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - an agent runs `forge merge` for a rate-limit fix before its pull request exists.\nAdds work: distinguish quota refusals from unrelated errors; F 2 x H 2 = 4; 2 x C = 4\n`src/forge/merge.py:65` asks `gh pr view` before deciding that the item is not ready. For a branch such as `fix/rate-limit-waits`, [gh reports](https://github.com/cli/cli/blob/v2.83.2/pkg/cmd/pr/shared/finder.go#L405-L413) that no pull request was found for that branch. The broad match treats the branch name as a rate-limit error, reads a normal quota reset and repeatedly waits and retries instead of returning the not-ready refusal.",
-        "file": "src/forge/github.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 16,
-        "priority": "P1",
-        "title": "Functional: A branch name can trigger a false rate-limit wait",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - GitHub\u2019s response header and quota endpoint report different reset times.\nIn both header cases the fixture gives `core.reset` the same value as the header, so the entire test still passes if production code ignores the header and always uses the quota endpoint. The GraphQL case also injects a `GraphQL:` prefix into a `pr view` error, leaving the headerless `gh api graphql` failure described above untested. Finally, line 58 checks only the announcement\u2019s prefix, so an incorrect displayed reset time passes. The named proof therefore does not protect all the reset-source and announcement behavior it claims.",
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - GitHub exhausts the GraphQL quota or its response header differs from the quota endpoint.\nThe repaired GraphQL case still supplies `API rate limit exceeded`, while a real GitHub response can say `API rate limit already exceeded`; production returns that response without waiting, yet this proof passes. The header case also injects a response header into a `gh pr edit` error, although [gh's error formatter](https://github.com/cli/go-gh/blob/v2.13.0/pkg/api/errors.go#L28-L35) does not print those headers. The named proof therefore still passes while GraphQL recovery and real response-header precedence are broken.",
         "file": "tests/test_github_rate_limits_wait_for_reset.py",
         "gain": 3,
         "harm": 3,
-        "line": 48,
+        "line": 31,
         "priority": "P1",
         "title": "Gate: tests/test_github_rate_limits_wait_for_reset.py::test_1_commands_wait_for_github_reset_and_continue",
         "work": 2
       }
     ],
-    "id": "d1277577-d9bc-4b44-9167-6e5a32546984",
+    "id": "5b7a854a-5efa-4f16-8f4e-53db8e6bb776",
     "status": "blocked"
   },
   "round": 2,
@@ -149,6 +129,10 @@
     },
     {
       "at": "2026-11-18T09:39:42.362562+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-18T10:03:23.155745+00:00",
       "step": "review"
     }
   ],
