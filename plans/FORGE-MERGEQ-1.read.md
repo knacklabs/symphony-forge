@@ -103,14 +103,14 @@ Only a genuine trade-off goes to the human, as a question with options.
     Case: normal use - A waiting pull request and the repair both edit different lines of the same file.  
     The amended plan fetches the repair during the red wait and then merges ([plan](/plans/FORGE-MERGEQ-1.md:67)). The existing overlap comparison happens before that wait ([merge.py](/src/forge/merge.py:108)), so the new default-branch change can be merged without the combined run promised for overlapping files.  
     Gain 3, Work 2, Harm 3
-    Disposition: fixed in builders - after any red wait, merge goes back to the start of its loop (`merge.py:108`), so the overlap comparison, any combined run and the red check run again on the fetched default branch; the red-wait test has a repair that overlaps the item.
+    Disposition: cut - fixed in the builders section: after any red wait, merge goes back to the start of its loop (`merge.py:108`), so the overlap comparison, any combined run and the red check run again on the fetched default branch; the red-wait test has a repair that overlaps the item.
 
 11. Advisory: Disputed keep 7: A pending rerun can hide the last failed result.
     Raise: Functional  
     Case: normal use - Someone reruns a failed default-branch test and the new attempt is still running.  
     The amended rule requests GitHub’s latest attempt and ignores pending results ([plan](/plans/FORGE-MERGEQ-1.md:67)). The pending attempt can hide the earlier failure, letting the scan fall back to an older green commit before any rerun passes. Forge’s existing history reader requests all attempts for this reason ([backfill.py](/src/forge/backfill.py:77)). This differs from the accepted green rerun.  
     Gain 3, Work 2, Harm 3
-    Disposition: fixed in builders - this is not the accepted green-rerun limit; the red check now reads every attempt (`filter=all`, as `backfill.py:77`), so a rerun still in progress leaves the earlier failure as the last finished result, and the test covers it.
+    Disposition: cut - fixed in the builders section: this is not the accepted green-rerun limit; the red check now reads every attempt (`filter=all`, as `backfill.py:77`), so a rerun still in progress leaves the earlier failure as the last finished result, and the test covers it.
 
 12. Advisory: Unproven: item 1: A CI repo with custom check names can get no push test.
     Raise: Test  
