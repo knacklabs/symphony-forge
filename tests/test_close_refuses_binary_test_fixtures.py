@@ -20,7 +20,7 @@ def test_1_close_refuses_an_added_binary_test_fixture_before_review(env):
     with zipfile.ZipFile(archive, "w") as fixture:
         fixture.writestr("README.md", "# An old repo\n")
     env.repo.git("add", "tests", cwd=where)
-    env.repo.git("commit", "-q", "-m", "Add an archived fixture", cwd=where)
+    env.repo.git("commit", "--allow-empty", "-q", "-m", "Add an archived fixture", cwd=where)
 
     done = env.close(item)
 
@@ -54,7 +54,7 @@ def test_2_sync_and_work_deliver_plain_text_fixture_guidance(env, existing):
         skill = (where / host / "skills/forge/SKILL.md").read_text("utf-8")
         assert RULE in " ".join(skill.split())
     env.repo.git("add", "-A", cwd=where)
-    env.repo.git("commit", "-q", "-m", "Sync the fixture guidance", cwd=where)
+    env.repo.git("commit", "--allow-empty", "-q", "-m", "Sync the fixture guidance", cwd=where)
     worked = env.repo.forge("work", item, cwd=where)
     assert worked.returncode == 0, worked.stdout + worked.stderr
     assert RULE in " ".join(calls(log)[-1]["brief"].split())

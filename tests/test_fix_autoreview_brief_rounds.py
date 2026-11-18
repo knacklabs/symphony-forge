@@ -105,7 +105,7 @@ def test_7_review_base_is_fetched_remote_commit_when_local_main_lags(env):
     env.repo.git("clone", "-q", remote, str(other))
     (other / "NEWS.md").write_text("Already merged upstream\n", encoding="utf-8")
     env.repo.git("add", "NEWS.md", cwd=other)
-    env.repo.git("commit", "-q", "-m", "Already merged upstream", cwd=other)
+    env.repo.git("commit", "--allow-empty", "-q", "-m", "Already merged upstream", cwd=other)
     env.repo.git("push", "-q", "origin", "main", cwd=other)
     remote_head = env.repo.git("rev-parse", "HEAD", cwd=other)
     assert env.repo.git("rev-parse", "main") != remote_head

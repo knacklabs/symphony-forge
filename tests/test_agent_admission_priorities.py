@@ -34,7 +34,7 @@ def _client(env, tmp_path, adopted):
              if line.partition("=")[0].strip() not in ("workers", "test", "fast_test")]
     settings.write_text('workers = "claude"\n' + "\n".join(lines) + "\n", encoding="utf-8")
     repo.git("add", "forge.toml")
-    repo.git("commit", "-q", "-m", "Use the Claude test worker")
+    repo.git("commit", "--allow-empty", "-q", "-m", "Use the Claude test worker")
     repo.git("push", "-q", "origin", "main")
     return repo
 
@@ -55,7 +55,7 @@ def _record_failed_test(repo, item):
                  tests="AssertionError: the previous test run failed")
     path.write_text(json.dumps(state, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     repo.git("add", rel, cwd=folder)
-    repo.git("commit", "-q", "-m", "Record a failed test", cwd=folder)
+    repo.git("commit", "--allow-empty", "-q", "-m", "Record a failed test", cwd=folder)
     return folder
 
 

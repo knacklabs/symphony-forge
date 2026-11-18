@@ -45,14 +45,23 @@ say = partial(print, flush=True)
 def land(args: argparse.Namespace) -> int:
     if bool(args.item) == bool(getattr(args, "all", False)):
         repo.refuse(REFUSALS["one_or_all"])
-    if args.item is None:
+    if len(args.item) != 1:  # --all, or several named items: the same queue, the named ones only
         if getattr(args, "note", None) is not None:
             repo.refuse(REFUSALS["note_all"])
-        return _land_all()
+        top = repo.root()
+        main = story.landed_ref(top)
+        for name in args.item:
+            if not repo.ITEM.fullmatch(name):
+                repo.refuse(repo.REFUSALS["bad_item"], item=name)
+            if task._merged(main, name, top):
+                say(f"Left out {name}: its pull request already merged.")
+                continue
+            close._worktree(name)  # a teammate's published item gets its checkout; unknown everywhere refuses
+        return _land_all(set(args.item))
     queued = os.environ.pop(QUEUED, "") == "1"
     member, hold = os.environ.pop(TRAIN, ""), os.environ.pop(HOLD, "") == "1"
     left = os.environ.pop(LEFT, "") == "1"
-    item = args.item
+    item = args.item[0]
     match = repo.ITEM.fullmatch(item)
     if not match or not (match["task"] or match["fix"]):
         repo.refuse(repo.REFUSALS["bad_item"], item=item)
@@ -347,7 +356,7 @@ def _hold() -> None:
         raise SystemExit("The land queue ended before this merge could start.")
 
 
-def _land_all() -> int:
+def _land_all(only: set[str]) -> int:
     """One run per repo, from the main checkout: a merge may remove the worktree it started in."""
     top = machine.main_checkout(Path.cwd())
     os.chdir(top)
@@ -356,16 +365,16 @@ def _land_all() -> int:
         if not codex._try_lock(lock):
             repo.refuse(REFUSALS["one_run"])
         try:
-            return _queue(top)
+            return _queue(top, only)
         finally:
             codex._unlock(lock)
 
 
-def _queue(top: Path) -> int:
+def _queue(top: Path, only: set[str]) -> int:
     """Close and merge every change in close, bases before stacked fixes, otherwise oldest first.
     Run up to the agent places at once. A change
     not yet ready waits for an older one in the run that shares a file with it, unless a human
-    merges: then nothing merges in the run, so nothing waits."""
+    merges: then nothing merges in the run, so nothing waits. With `only`, just those changes."""
     repo.git("fetch", "-q", "origin", cwd=top)
     default = repo.default_branch(top)
     hold = repo.merge_setting(top) == "agent"
@@ -377,6 +386,8 @@ def _queue(top: Path) -> int:
         if not found:
             continue
         item, state = found
+        if only and item not in only:
+            continue
         state = nextstep.at_ref(top, item, state, prs.get(branch))
         if state.get("status") == "dropped":
             continue
@@ -546,9 +557,16 @@ def _queue(top: Path) -> int:
             if child.returncode == 0 and url:
                 ready_prs.append((order[item], f"{item} {url}"))
                 say(f"{item} is ready for a human merge.")
-            elif child.returncode == 0:
+            elif child.returncode == 0 and _merged(top, branches[item]):
                 merged.append(item)
                 say(f"{item} merged.")
+            elif child.returncode == 0:  # exit 0 is not a merge: GitHub must say so
+                after = next((line[len("Next: "):] for line in reversed(lines) if line.startswith("Next: ")),
+                             f"forge land {item}")  # a subagent handoff names its own next step
+                why = next((line.split(": ", 1)[1].rstrip(".") for line in lines if line.startswith("Fix round ")),
+                           "its builder has the round")
+                needs[item] = (age, f"{why}, so its pull request is not merged yet.", after)
+                say(f"{item} stopped: {needs[item][1]}")
             else:
                 needs[item] = _stop(item, age, lines, child.returncode)
                 say(f"{item} stopped: {needs[item][1]}")
@@ -776,6 +794,10 @@ def _train(top: Path, default: str, plan: dict, merged: list[str], needs: dict, 
                 say(f"{item} stopped: {needs[item][1]}")
                 return handled
             handled.add(item)
+            if not _merged(top, member_branch):
+                needs[item] = (age, "its pull request is not merged on GitHub.", f"forge land {item}")
+                say(f"{item} stopped: {needs[item][1]}")
+                return handled
             merged.append(item)
             say(f"{item} merged.")
         repo.git("fetch", "-q", "origin", default, cwd=top)
@@ -843,14 +865,15 @@ def _child(top: Path, item: str, slots: dict[str, str], extra: dict[str, str] | 
 COMMANDS = [{
     "words": "land", "run": "land", "changes_state": True,
     "help": "Build, close, fix and merge a task or fix",
-    "args": [(('item',), {"nargs": "?", "help": "the task or fix to land"}),
+    "args": [(('item',), {"nargs": "*", "help": "the task or fix to land; name several to land only those"}),
              (("--note",), {"metavar": "TEXT", "help": "guide the first round this run starts"}),
              (("--all",), {"action": "store_true",
                            "help": "close and merge every change in close, oldest first"})],
     "position": 165,
-    "listing": "| `forge land <item>` / `forge land --all` | Builds, closes, runs at most one fix round and merges a "
-               "task or fix where the repo allows agent merges; `--all` closes and merges every change "
-               "in close, oldest first, several at a time, and tests two to five ready changes together once "
-               "where the agent merges and CI runs the tests; `--note \"<text>\"` guides one item's "
-               "first round; run it in the background |",
+    "listing": "| `forge land <item>` / `forge land <item> <item> ...` / `forge land --all` | Builds, closes, "
+               "runs at most one fix round and merges a task or fix where the repo allows agent merges; "
+               "`--all` closes and merges every change in close, and several named items only those, oldest "
+               "first, several at a time, and tests two to five ready changes together once where the agent "
+               "merges and CI runs the tests; `--note \"<text>\"` guides one item's first round; run it in "
+               "the background |",
 }]

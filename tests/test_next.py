@@ -54,8 +54,9 @@ def test_15_human_touches(repo, claude_payload, codex_payload):
     context = repo.forge("hook", "context",
                          input=json.dumps(claude_payload("SessionStart")))
     assert context.returncode == 0, context.stderr
-    assert "Shoppers can save a basket (approved): 3 human touches so far." in context.stdout
-    assert "The fix tidy-up (started): 1 human touch so far." in context.stdout
+    assert context.stdout == "Run forge next for the full picture.\n"
+    # The hook lists no touches; forge next shows the measure.
+    shown = repo.forge("next").stdout
+    assert "a story usually needs a person 3 times" in shown, shown
     # SHOP/SAVE reads working, but no worker process is recorded for it, so none is building it.
-    assert "SHOP/SAVE's worker has stopped." in context.stdout
-    assert context.stdout.startswith(repo.forge("next").stdout.strip())
+    assert "SHOP/SAVE's worker has stopped." in shown

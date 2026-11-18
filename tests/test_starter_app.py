@@ -75,7 +75,7 @@ def test_3_init_writes_the_starter_and_the_nx_pages(repo, gh, tmp_path, monkeypa
         (repo.path / "package.json").write_bytes(package_json)
         (repo.path / "package-lock.json").write_bytes(package_lock)
         repo.git("add", "-A")
-        repo.git("commit", "-qm", "Earlier adoption")
+        repo.git("commit", "--allow-empty", "-qm", "Earlier adoption")
         before = repo.git("status", "--porcelain", "--ignored", "-uall")
         result = repo.forge("init", "--actions", "yes", "--starter")
         assert result.returncode == 1, result.stdout + result.stderr

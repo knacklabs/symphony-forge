@@ -180,12 +180,15 @@ def signed_in(tool: str, top: Path | None = None) -> bool | None:
 def _settings(stage: str, test_place: str, test: str, checks: list[str], interfaces: list[str],
               merge: str = "", runner: str = "ubuntu-24.04", fast_test: str = "") -> str:
     claude, codex = signed_in("claude"), signed_in("codex")
-    workers = 'workers = "split"\n'
+    workers = 'workers = "claude"\n'  # Claude builds; reviews and cold reads go to Codex when it is there
     if claude is True and codex is False:
         workers = 'tools = "claude"\nworkers = "claude"\n'
         print("Only Claude is signed in. Forge uses Claude for all work.")
+    elif claude is False and codex is True:
+        workers = 'tools = "codex"\nworkers = "codex"\n'
+        print("Only Codex is signed in. Forge uses Codex for all work.")
     elif claude is False and codex is False:
-        print("Sign in to Claude or Codex before you start work. Forge keeps split workers.")
+        print("Sign in to Claude or Codex before you start work. Forge keeps Claude as the worker.")
     return ("# Forge's settings. Your coding agent keeps this file: ask it to change a setting or "
             "upgrade Forge.\n"
             f'version = "v{__version__}"\nrepo = "client"\nstage = "{stage}"\n'

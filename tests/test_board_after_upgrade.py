@@ -161,7 +161,7 @@ class History:
         self.repo.write("forge.toml", old)
         self.repo.git("config", "core.hooksPath", (up.tmp / "no-hooks").as_posix())
         self.repo.git("add", "-A")
-        self.repo.git("commit", "-qm", "Client adopted on an earlier release")
+        self.repo.git("commit", "--allow-empty", "-qm", "Client adopted on an earlier release")
         self.repo.git("push", "-q", "origin", "main")
 
     def story(self):
@@ -197,7 +197,7 @@ class History:
         self.repo.git("push", "-q", "origin", branch)
         self.repo.git("push", "-q", "origin", head + f":refs/pull/{number}/head")
         self.repo.git("merge", "-q", "--squash", branch)
-        self.repo.git("commit", "-qm", title)
+        self.repo.git("commit", "--allow-empty", "-qm", title)
         self.repo.git("push", "-q", "origin", "main")
         self.repo.git("worktree", "remove", where.as_posix())
         self.repo.git("branch", "-D", branch)
@@ -297,7 +297,7 @@ class History:
             self.at(merged)
             if merge == "squash":
                 self.repo.git("merge", "-q", "--squash", branch)
-                self.repo.git("commit", "-qm", "Readers see " + name)
+                self.repo.git("commit", "--allow-empty", "-qm", "Readers see " + name)
             else:
                 self.repo.git("merge", "-q", "--ff-only" if merge == "ff" else "--no-ff", "--no-edit", branch)
             self.repo.git("push", "-q", "origin", "main")
@@ -333,7 +333,7 @@ class History:
         self.repo.git("push", "-q", "origin", head + ":refs/pull/19/head")
         self.at(NOW - timedelta(days=1))
         self.repo.git("merge", "-q", "--squash", branch)
-        self.repo.git("commit", "-qm", "Add a heading")
+        self.repo.git("commit", "--allow-empty", "-qm", "Add a heading")
         self.repo.git("push", "-q", "origin", "main")
         self.repo.git("worktree", "remove", where.as_posix())
         self.repo.git("branch", "-D", branch)

@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\ttests/test_release_version.py\tGate: proof list\trelease-v1-2-42-publish-what-merged-sinc",
+      "kind": "bug",
+      "path": "tests/test_release_version.py",
+      "line": 17,
+      "text": "Gate: proof list",
+      "from": "blocking",
+      "item": "release-v1-2-42-publish-what-merged-sinc",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

@@ -36,7 +36,7 @@ def prepare_adopted_client(env, checks, *, grouped=False):
                    "p.write_text(p.read_text() + 'run\\n' if p.exists() else 'run\\n')\n")
     repo.write("forge.toml", old)
     repo.git("add", "-A")
-    repo.git("commit", "-qm", "Client on the previous Forge release")
+    repo.git("commit", "--allow-empty", "-qm", "Client on the previous Forge release")
     repo.git("push", "-q", "origin", "main")
 
     before = tomllib.loads(old)
@@ -59,7 +59,7 @@ def prepare_adopted_client(env, checks, *, grouped=False):
     assert tomllib.loads(path.read_text("utf-8")) == {**before, "version": installed}
     assert "test_place" not in path.read_text("utf-8")
     repo.git("add", "-A", cwd=folder)
-    repo.git("commit", "-qm", "Upgrade Forge", cwd=folder)
+    repo.git("commit", "--allow-empty", "-qm", "Upgrade Forge", cwd=folder)
     repo.git("push", "-q", "origin", "HEAD", cwd=folder)
     remote = repo.git("remote", "get-url", "origin")
     repo.git("update-ref", "refs/heads/main", "refs/heads/fix/upgrade-the-test-place", cwd=remote)

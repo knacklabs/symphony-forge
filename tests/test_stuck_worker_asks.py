@@ -174,7 +174,7 @@ def test_6_the_owners_chosen_tool_never_falls_back(repo, monkeypatch, sdk_data):
     config.write_text(config.read_text("utf-8").replace('workers = "codex"', 'workers = "split"'), "utf-8")
     state = folder / ".factory/stories/BOARD/tasks/PAGE.json"
     state.write_text(json.dumps({**json.loads(state.read_text("utf-8")), "tool": "claude"}), "utf-8")
-    repo.git("commit", "-qam", "The owner chose Claude", cwd=folder)
+    repo.git("commit", "--allow-empty", "-qam", "The owner chose Claude", cwd=folder)
     monkeypatch.setenv("STUB_CLAUDE_EXIT", "3")
     failed = repo.forge("work", "BOARD/PAGE")
     assert failed.returncode == 1, failed.stdout + failed.stderr

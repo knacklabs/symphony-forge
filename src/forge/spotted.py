@@ -137,11 +137,11 @@ def hotspots(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return found
 
 
-def before_signoff(top: Path, ref: str) -> set[str]:
+def before_signoff(top: Path, ref: str, offline: bool = False) -> set[str]:
     """Keys already noted when the default branch first accepted its sign-off."""
     from forge import story
 
-    cfg = repo.default_config(top)
+    cfg = repo.default_config(top, ref if offline else None)
     if cfg["repo"] != "client":
         return set()
     names = repo.git("ls-tree", "-r", "--name-only", ref, "--", "docs/decisions", cwd=top)

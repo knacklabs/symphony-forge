@@ -176,7 +176,7 @@ def next_step(args: Any) -> int:
         activity.result()
         facts = {name: future.result() for name, future in pending.items()}
     lines = warnings + _report(
-        top, history, schedules=True, numbers=True, facts=facts)[0]
+        top, history, schedules=True, numbers=True, facts=facts)
     step = ([journey.step_line(top, _report_config(top, {}), history, idle=_idle(top)[0] in lines)]
             if (top / "forge.toml").is_file() else [])
     print("\n".join(step + notice + lines))
@@ -185,16 +185,15 @@ def next_step(args: Any) -> int:
 
 def startable(top: Path) -> list[str]:
     """Parts offered by the same report as the context hook."""
-    return [line.split()[4] for line in _report(top)[0]
+    return [line.split()[4] for line in _report(top)
             if line.startswith("Next: forge task start ")]
 
 
 def context_hook(args: Any) -> int:
     top = repo.root()
-    lines, states = _report(top)
-    step = ([journey.step_line(top, _report_config(top, {}), idle=_idle(top)[0] in lines)]
-            if (top / "forge.toml").is_file() else [])
-    print("\n".join(step + lines + states))
+    # Short and offline: no GitHub, story history or per-worktree settings. The step line needs
+    # every story's record, so it stays in forge next.
+    print("\n".join(_hotspots(top, {}, 3) + ["Run forge next for the full picture."]))
     notes = story.show(top, story.landed_ref(top), "docs/handover.md") or ""
     heading = "## Decisions and lessons\n"
     if heading in notes:
@@ -209,7 +208,7 @@ def handoff_hook(args: Any) -> int:
     old = path.read_text(encoding="utf-8") if path.is_file() else ""
     heading = "## Decisions and lessons\n"
     notes = old[old.index(heading):] if heading in old else heading
-    lines = _report(top)[0]
+    lines = _report(top)
     step = ([journey.step_line(top, _report_config(top, {}), idle=_idle(top)[0] in lines)]
             if (top / "forge.toml").is_file() else [])
     current = "\n".join(step + lines)
@@ -227,14 +226,13 @@ def handoff_hook(args: Any) -> int:
 
 def _report(top: Path, history: dict[str, Any] | None = None,
             schedules: bool = False, numbers: bool = False,
-            facts: dict[str, Any] | None = None) -> tuple[list[str], list[str]]:
-    """The lines `forge next` prints, and one state line per story and fix with its human touches."""
+            facts: dict[str, Any] | None = None) -> list[str]:
+    """The lines `forge next` prints."""
     agents = machine.view()["agents"]
     running = sum(run.get("version") == __version__ and run.get("kind") == "work"
         and not run.get("free") and not run.get("suspended_by") and bool(
             run.get("admitted") or run.get("started_at")) for run in agents["entries"])
     lines: list[str] = []
-    states: list[str] = []
     fixes: list[tuple[dict[str, Any], list[str]]] = []
     parts: list[tuple[str, dict[str, Any]]] = []
     refusals: dict[Path, str] = {}
@@ -301,8 +299,6 @@ def _report(top: Path, history: dict[str, Any] | None = None,
             unassigned_starts += [line for line, assigned in ready.items() if not assigned]
             found = [line for line in found if line not in ready or ready[line]]
         story_lines.append((not mine, found))
-        touches = state.get("touches", 0) + sum(task.get("touches", 0) for task in tasks)
-        states.append(f"{title} ({state.get('status', 'planning')}): {_touches(touches)} so far.")
     for _, found in sorted(story_lines, key=lambda entry: entry[0]):
         lines += found
     lines += unassigned_starts
@@ -324,8 +320,6 @@ def _report(top: Path, history: dict[str, Any] | None = None,
                 pinned += alert[:-1] + found
             else:
                 lines += found
-            states.append(f"The fix {name} ({state.get('status', 'started')}): "
-                          f"{_touches(state.get('touches', 0))} so far.")
     pushed = [ref.removeprefix("refs/remotes/origin/") for ref in branch_tips(top)
               if ref.startswith(("refs/remotes/origin/fix/", "refs/remotes/origin/forge/"))]
     landed = story.landed_ref(top)
@@ -403,7 +397,7 @@ def _report(top: Path, history: dict[str, Any] | None = None,
             + _hotspots(top, trees) + _overlaps(top, parts + [
                 (f"The fix {state['branch'].partition('/')[2]}", state)
                 for state, _ in fixes if state.get("branch")], prs, (history or {}).get("states", {}))
-            + lines + [f"Builds running: {running} of {agents['size']}"]), states
+            + lines + [f"Builds running: {running} of {agents['size']}"])
 
 
 def _overlaps(top: Path, items: list[tuple[str, dict[str, Any]]],
@@ -449,12 +443,13 @@ def _failed_schedules(top: Path) -> dict[str, list[str]]:
     return alerts
 
 
-def _hotspots(top: Path, trees: dict[str, Path]) -> list[str]:
-    """Hotspots on the default branch, unless their fix already has a worktree."""
+def _hotspots(top: Path, trees: dict[str, Path], cap: int | None = None) -> list[str]:
+    """Hotspots on the default branch, unless their fix already has a worktree. With a cap, the
+    session context names that many and points to forge next for the rest."""
     ref = story.landed_ref(top)
     try:
         items = spotted.read(top, ref)
-        old = spotted.before_signoff(top, ref) if items else set()
+        old = spotted.before_signoff(top, ref, offline=cap is not None) if items else set()
         items = [entry for entry in items if entry["key"] not in old]
     except spotted.Unreadable as problem:
         return [f"{spotted.PATH} on the default branch can't be read, so no hotspots are "
@@ -466,7 +461,7 @@ def _hotspots(top: Path, trees: dict[str, Path]) -> list[str]:
     whys = {(repo.read_state(branch.partition("/")[2], path) or {}).get("why")
             for branch, path in trees.items()
             if re.fullmatch(r"(?:fix|forge)/[a-z0-9][a-z0-9-]*", branch)}
-    lines = []
+    lines: list[list[str]] = []
     for hotspot in hotspots:
         path, count = hotspot["path"], hotspot["count"]
         why, done = spotted.fix_text(path, hotspot["texts"])
@@ -480,9 +475,12 @@ def _hotspots(top: Path, trees: dict[str, Path]) -> list[str]:
                     "web", "frontend", "components", "screens", "pages"}
                 else "backend" if suffix in {".py", ".ts", ".js", ".go", ".rs", ".java", ".rb",
                                              ".sql", ".prisma"} else "mechanical")
-        lines += [f"{path} keeps breaking: {reason}",
-                  f'Next: forge fix start "{why}" --done "{done}" --kind {kind}']
-    return lines
+        lines.append([f"{path} keeps breaking: {reason}",
+                      f'Next: forge fix start "{why}" --done "{done}" --kind {kind}'])
+    if cap is None:
+        return [line for block in lines for line in block]
+    more = f"{len(lines) - cap} more files keep breaking. Run forge next for the list."
+    return [block[0] for block in lines[:cap]] + ([more] if len(lines) > cap else [])
 
 
 def _needs_demo_address(top: Path) -> bool:
@@ -1187,7 +1185,3 @@ def _prs(top: Path, state: str, fields: str) -> list[dict[str, Any]]:
         return []
     return [pr for pr in prs if isinstance(pr, dict) and isinstance(pr.get("headRefName"), str)
             ] if isinstance(prs, list) else []
-
-
-def _touches(count: int) -> str:
-    return f"{count} human touch{'es' if count != 1 else ''}"

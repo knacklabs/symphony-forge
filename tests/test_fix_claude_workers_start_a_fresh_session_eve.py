@@ -21,7 +21,7 @@ def _started(repo) -> Path:
                              'workers = "claude"\ntest = "pytest -q"\n'
                              'models.lite = { model = "sonnet", effort = "medium" }\n')
     repo.git("add", "forge.toml")
-    repo.git("commit", "-q", "-m", "Pin Forge")
+    repo.git("commit", "--allow-empty", "-q", "-m", "Pin Forge")
     repo.git("push", "-q", "origin", "main")
     started = repo.forge("fix", "start", "Fix the login typo", "--done", "The login page says Log in")
     assert started.returncode == 0, started.stderr
@@ -66,7 +66,7 @@ def test_2_a_design_claude_worker_continues_its_session_with_the_short_prompt(
     config.write_text(config.read_text("utf-8").replace('workers = "codex"', 'workers = "split"'),
                       encoding="utf-8")
     # Committed: a round that ends with changes uncommitted gets a second, commit-nudge turn.
-    repo.git("commit", "-qam", "Use split workers", cwd=folder)
+    repo.git("commit", "--allow-empty", "-qam", "Use split workers", cwd=folder)
     log = install_claude(repo)
 
     first = repo.forge("work", "BOARD/PAGE")

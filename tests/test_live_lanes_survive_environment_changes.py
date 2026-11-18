@@ -49,7 +49,7 @@ def client(env, history):
         shutil.copytree(ROOT / "tests/fixtures/adopted-v1.2.2/client", upgrade,
                         dirs_exist_ok=True)
         repo.git("add", "-A", cwd=upgrade)
-        repo.git("commit", "-qm", "Client adopted on the earlier release", cwd=upgrade)
+        repo.git("commit", "--allow-empty", "-qm", "Client adopted on the earlier release", cwd=upgrade)
         config = upgrade / "forge.toml"
         version = repo.forge("--version").stdout.split()[-1]
         config.write_text(config.read_text("utf-8").replace('version = "v1.2.2"',
@@ -58,7 +58,7 @@ def client(env, history):
         synced = repo.forge("sync", cwd=upgrade)
         assert synced.returncode == 0, synced.stdout + synced.stderr
         repo.git("add", "-A", cwd=upgrade)
-        repo.git("commit", "-qm", "Upgrade the earlier adopted client", cwd=upgrade)
+        repo.git("commit", "--allow-empty", "-qm", "Upgrade the earlier adopted client", cwd=upgrade)
         checkout = env.tmp / "upgraded-checkout"
         remote = repo.git("remote", "get-url", "origin")
         repo.git("clone", "-q", "--branch", "fix/upgrade-client", str(repo.path), str(checkout))

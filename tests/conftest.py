@@ -111,8 +111,12 @@ if "--body-file" in args:  # the body as sent: the next call may rewrite the sam
     body = sys.stdin.read() if path == "-" else pathlib.Path(path).read_text("utf-8")
     append_json(here / "gh-bodies.jsonl", body)
 responses = here / "gh-responses.json"
-for rule in reversed(json.loads(responses.read_text("utf-8")) if responses.exists() else []):
+rules = json.loads(responses.read_text("utf-8")) if responses.exists() else []
+for rule in reversed(rules):
     if args[:len(rule["args"])] == rule["args"]:
+        if rule.get("then"):  # answers for the next calls, in order; the last one repeats
+            rule["stdout"] = rule["then"].pop(0) if len(rule["then"]) > 1 else rule["then"][0]
+            responses.write_text(json.dumps(rules))
         sys.stdout.write(rule["stdout"])
         sys.stderr.write(rule["stderr"])
         sys.exit(rule["exit"])
@@ -570,7 +574,12 @@ elif args == ["plugin", "marketplace", "list", "--json"]:
 elif args == ["plugin", "list", "--json"]:
     print('[{{"id":"forge@forge","scope":"user","enabled":true,"version":"1.2.6"}}]')
 ''')
-    monkeypatch.setenv("PATH", f"{bin_dir}{os.pathsep}{os.environ['PATH']}")
+    # forge upgrade updates the Codex CLI. Its stub sits in its own folder, outside any
+    # installer's folder, so a test that drops "folders with a codex" from PATH keeps bin_dir.
+    codex_dir = tmp_path / "codex-bin"
+    codex_dir.mkdir()
+    _install(codex_dir, "codex", f'#!{sys.executable}\nprint("codex-cli 0.1.0")\n')
+    monkeypatch.setenv("PATH", os.pathsep.join([str(bin_dir), str(codex_dir), os.environ["PATH"]]))
     data = tmp_path / "data"
     monkeypatch.setenv("XDG_DATA_HOME", str(data))
     # Preserve the venv's interpreter links, but copy all writable SDK files.

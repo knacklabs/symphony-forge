@@ -1,0 +1,138 @@
+{
+  "base": "920ccb5e7d7d2ce33e6a5e7b527f4d9f42bfaea5",
+  "branch": "fix/after-a-forge-upgrade-claude-code-and-th",
+  "done_when": "After the upgrade, Claude Code and the Codex CLI are at their latest versions, and the upgrade says which version each one installed.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "upgrade() in src/forge/upgrade.py",
+      "file": "src/forge/upgrade.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 220,
+      "outcome": "accepted",
+      "reason": "src/forge/upgrade.py:220 Owner's choice: the first upgrade to this release runs the previous release's upgrade code, so it cannot update the tools; every later upgrade does. Accepted as a known issue for the release notes; sync must not update the tools (owner rule).",
+      "round": 1,
+      "security": false,
+      "title": "Not done: After the upgrade, Claude Code and the Codex CLI are at their latest versions, and the upgrade says which version each one.",
+      "work": 3
+    },
+    {
+      "area": "_update_tools() in src/forge/upgrade.py",
+      "file": "src/forge/upgrade.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 255,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Recognize the supported standalone and Windows npm installations",
+      "work": 2
+    },
+    {
+      "area": "_update_tools() in src/forge/upgrade.py",
+      "file": "src/forge/upgrade.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 255,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Update the npm installation that supplies Codex on PATH",
+      "work": 2
+    },
+    {
+      "area": "_update_tools() in src/forge/upgrade.py",
+      "file": "src/forge/upgrade.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 261,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Give a usable command when an update needs elevation",
+      "work": 1
+    },
+    {
+      "area": "repo() in tests/conftest.py",
+      "file": "tests/conftest.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 574,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: Keep the existing doctor test's fake tools on PATH",
+      "work": 1
+    },
+    {
+      "area": "tests/test_upgrade_updates_agent_tools.py",
+      "file": "tests/test_upgrade_updates_agent_tools.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 39,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_upgrade_updates_both_tools_and_names_their_versions",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "c2c4635f0c28102049752aba941e9eb6b2843c9cf06f42589b336d3637be5d36",
+    "changed": "99c0246ad75f63457af182d322a4e2b4c121a454af387397f932b66490f0ada3",
+    "commit": "d2d56986814268f46272e9d22e617e1f8d741464",
+    "dismissals": [],
+    "findings": [],
+    "id": "ba3b5ccd-a23e-48b9-afb9-68f12e37ca25",
+    "status": "clean"
+  },
+  "round": 4,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-17T18:34:07.514746+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-17T18:52:10.626289+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-17T19:15:18.872867+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-17T19:28:00.646076+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-18T01:46:12.713849+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-17T19:15:18.873142+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "src/forge/upgrade.py",
+    "reason": "Owner chose one more small round: run codex update only when that Codex has the command, else print OpenAI's install line",
+    "wait_id": "767a58cd-bb25-490e-aed5-fd40ef5aed7b",
+    "worker_round": 2
+  },
+  "stuck": {
+    "close": "e4d58e66-9152-404f-b164-33fb4835939c",
+    "head": "a25816f5422f233884e831913a87c4767ad6304d",
+    "keys": {},
+    "round": 3
+  },
+  "why": "After a Forge upgrade, Claude Code and the Codex CLI on the machine stay on old versions, because nothing updates them.",
+  "worker": "claude"
+}

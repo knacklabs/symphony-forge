@@ -36,7 +36,7 @@ def test_1_unnamed_cases_are_follow_ups_and_defects_still_block(env, adopted):
         guide = " ".join((where / host / "skills/forge/SKILL.md").read_text("utf-8").split())
         assert FIX_RULE in guide and RULE in guide and STILL_BLOCKS in guide, host
     repo.git("add", "-A", cwd=where)
-    repo.git("commit", "-q", "-m", "Sync the guide", cwd=where)
+    repo.git("commit", "--allow-empty", "-q", "-m", "Sync the guide", cwd=where)
     closed = env.close(item)
     assert closed.returncode == 0, closed.stdout + closed.stderr
     review = " ".join(env.prompt().split())

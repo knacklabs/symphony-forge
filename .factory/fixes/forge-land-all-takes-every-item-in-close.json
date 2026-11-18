@@ -1,0 +1,141 @@
+{
+  "allow_large": "Owner allowed on 18 Nov 2026: one line in cli.py passes the first named item to the release pin check, so forge land with several items does not crash",
+  "base": "a3272814e237b99271e2d7f844779588405e15d3",
+  "branch": "fix/forge-land-all-takes-every-item-in-close",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1edcc-1da7-7252-88bd-57b40d5542c5",
+    "head": null,
+    "start": "c2d621550ad1885f61e25f1908d3e5266285b3a8"
+  },
+  "done_when": "forge land <item> <item> ... closes and merges exactly the named items the way --all does, testing ready ones together once in the merge train and merging them in order without a re-test after each merge, and leaves every other item alone",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "_queue() in src/forge/land.py",
+      "file": "src/forge/land.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 418,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: forge land <item> <item> ... closes and merges exactly the named items the way --all does",
+      "work": 2
+    },
+    {
+      "area": "src/forge/land.py",
+      "file": "src/forge/land.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 866,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Preserve release-pin handling for named land commands",
+      "work": 2
+    },
+    {
+      "area": "test_1_two_named_items_are_tested_together_once_and_the_third_is_left_alone() in tests/test_land_takes_exactly_the_named_items.py",
+      "file": "tests/test_land_takes_exactly_the_named_items.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 19,
+      "outcome": "fixed in round 4",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_two_named_items_are_tested_together_once_and_the_third_is_left_alone",
+      "work": 1
+    },
+    {
+      "area": "land() in src/forge/land.py",
+      "file": "src/forge/land.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 54,
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: Owner accepted on 18 Nov 2026: a teammate's clone that has not fetched a merge done elsewhere refuses that item; workaround git fetch; added to issue 1674",
+      "round": 3,
+      "security": false,
+      "title": "Allow a partially completed named batch to resume",
+      "work": 2
+    },
+    {
+      "area": "land() in src/forge/land.py",
+      "file": "src/forge/land.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 55,
+      "outcome": "fixed in round 4",
+      "reason": "",
+      "round": 3,
+      "security": false,
+      "title": "Keep named batches working when the main checkout has an older pin",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "d038e2814e22e928a139a3aecc021124f82b96d3dfff8a0a2f32a83828f67f24",
+    "changed": "69420ff8ec6ceecba4fb9f7c594bb8a6d207679936bcb8f189b844630cf3d312",
+    "commit": "f737e757161bdb67e54d970f134ea73df0376ddb",
+    "dismissals": [],
+    "findings": [],
+    "id": "3270c538-962d-4ce4-b7dc-44b2ae1c89a8",
+    "status": "clean"
+  },
+  "round": 6,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-18T06:22:46.550167+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-18T07:35:01.669818+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-18T08:32:21.301533+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-18T08:48:41.150946+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-18T09:26:57.334884+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-18T09:49:54.433311+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-18T10:21:24.121717+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-18T09:26:57.335210+00:00",
+    "by": "owner",
+    "choice": "accept",
+    "file": "src/forge/land.py",
+    "reason": "Owner accepted on 18 Nov 2026: a teammate's clone that has not fetched a merge done elsewhere refuses that item; workaround git fetch; added to issue 1674",
+    "wait_id": "afcc37c5-ffff-4dba-b3e8-082dfcedfa10",
+    "worker_round": 4
+  },
+  "stuck": {
+    "close": "8ff58076-530b-49aa-a976-758396b9ef17",
+    "head": "fc978f87fc6a9c0ef4c14965d897685bf3f7cf95",
+    "keys": {},
+    "round": 5
+  },
+  "why": "forge land --all takes every item in close, including items the owner has on hold, so a team cannot land a chosen set of Ready items with one combined check; merging them one by one re-runs the combined test after each merge (25-40 min each at a client). Owner, 18 Nov 2026: fix it and release fast.",
+  "worker": "codex"
+}

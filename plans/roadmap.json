@@ -678,6 +678,12 @@
       "title": "Faster checks and CI for client repos",
       "status": "pending",
       "order": 125
+    },
+    {
+      "key": "FORGE-CITIME-1",
+      "title": "Client pull requests finish CI in about 10 minutes, and Forge shows when they do not",
+      "status": "pending",
+      "order": 126
     }
   ],
   "epics": [

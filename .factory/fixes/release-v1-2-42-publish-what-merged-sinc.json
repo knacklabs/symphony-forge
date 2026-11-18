@@ -1,0 +1,66 @@
+{
+  "allow_large": "A release version bump changes the pin in more than five files; the owner asked for the release",
+  "base": "83f1b9a6b053c461bfc8832e10af9400718989fe",
+  "branch": "fix/release-v1-2-42-publish-what-merged-sinc",
+  "done_when": "forge.toml, the package and every pinned reference say v1.2.42, and tests/test_release_version.py passes",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "test_1_forge_version_is_1_2_27_everywhere_it_is_recorded() in tests/test_release_version.py",
+      "file": "tests/test_release_version.py",
+      "gain": 4,
+      "harm": 1,
+      "line": 17,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: proof list",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "5a5a5a4e6cabde44ce158ae905e0fca16f5151a75aeb7f2f1b82f2d86760b891",
+    "changed": "698a5187380c006d9eea19fd6bf5bff7a857ac2cda8982c200aeed617bc4db1d",
+    "commit": "b84bd5dc07a35e4bb63ff38653cf73b2e8663228",
+    "dismissals": [],
+    "findings": [],
+    "id": "95eb3127-d485-4085-9ef0-98bd97a58aba",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-18T02:57:13.667406+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-18T03:03:57.540943+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-18T03:06:58.585057+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-18T03:03:57.557095+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "tests/test_release_version.py",
+    "reason": "Owner chose one more round: the proof list is added",
+    "wait_id": "97c991e4-704d-4ff0-b073-02f836cd0112",
+    "worker_round": 1
+  },
+  "stuck": {
+    "close": null,
+    "head": "45b74f4f498b80e60cc526d87e182f8a996fa23e",
+    "keys": {},
+    "round": null
+  },
+  "why": "Release v1.2.42: publish what merged since v1.2.41",
+  "worker": "claude"
+}
