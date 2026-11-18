@@ -102,33 +102,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "8b9f81477f4005d39c4a24d7a13ae30cec741d1af73bbb224baa2ce0f5bcf1a4",
-    "changed": "03989c511068e2a53e65819cc8a9a4c6a596166207e8c2025ed1a46511c6c4d7",
-    "commit": "b1a2b785a0e09ee17f70e242acc0dee3fb48aeb8",
-    "dismissals": [
-      {
-        "accepted": true,
-        "because": "Human accepted the remaining finding: Owner accepted on 18 Nov 2026: the test's fake matches the exact all-attempts query text; a future rewrite of the query could pass the test while counting wrong; code is correct today",
-        "finding": 1
-      }
-    ],
-    "findings": [
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - A maintainer moves the all-attempts filter into a GraphQL variable set to `ALL`. GitHub accepts that equivalent request, but this regex sees no literal `checkType: ALL` and the fake drops earlier attempts, making the runner-minute assertion fail despite unchanged behavior. [GitHub documents variables for query arguments](https://docs.github.com/en/graphql/guides/forming-calls-with-graphql#working-with-variables). The fake also supplies `oid` even if the query omits it, so the cancelled-timeout test can pass while the real report cannot identify the timeout. The previously raised test gate therefore remains open.",
-        "file": "tests/test_ci_time_report.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 59,
-        "priority": "P1",
-        "title": "Gate: tests/test_ci_time_report.py::test_1_close_prints_ci_time_and_doctor_warns_over_ten_minutes",
-        "work": 2
-      }
-    ],
-    "id": "54e83c0e-f2fc-4329-b7bc-e9d26c6b2686",
+    "branch_diff": "b5f1ec9032b95aa25053d16945b428c05597112b701769e7a0b0628065ab0550",
+    "changed": "8b1caa2ca5deadc4e83ca55db5cbcdb104f3a1d77effc37fc5ff15162a75da58",
+    "commit": "c0dbfc7755b13407977b529aafa98dee4dc35f55",
+    "dismissals": [],
+    "findings": [],
+    "id": "ae5a9d0d-9410-42a3-9be7-9de1a95b9296",
     "status": "clean"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-18T10:45:14.639794+00:00",
@@ -140,6 +123,10 @@
     },
     {
       "at": "2026-11-18T11:34:08.789545+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-18T12:12:24.435460+00:00",
       "step": "review"
     }
   ],
