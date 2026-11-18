@@ -1,0 +1,15 @@
+{
+  "base": "67376f6c033979de5e01536db35aaf293d3e8899",
+  "branch": "fix/long-ci-queues",
+  "done_when": "close, merge and land keep waiting while checks are queued or running, printing a progress line at most every 5 minutes, until the checks finish; the test time limit counts only time a job ran, not time it waited for a runner; new and existing repos get it on upgrade",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-18T15:24:58.020651+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Issues 1666 and 1639: with long runner queues (57 to 118 minutes measured at a client), close and merge end their wait and print 'Next: forge close', so the coordinator restarts them many times, and time a job spends queued for a runner counts against the 60-minute test limit, so jobs that only waited are cancelled"
+}
