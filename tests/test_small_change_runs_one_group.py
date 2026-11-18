@@ -28,7 +28,7 @@ STORY = "FORGE-CITIME-1"
     (True, "vitest run --shard={group}/4"),
     (True, "vitest run --shard={group}/{groups} && vitest run --shard={group}/4"),
 ], ids=["dynamic-count", "fixed-shards", "mixed-suites"])
-def test_1_a_small_change_runs_one_test_group(repo, gh, tmp_path, fixed_shards, fast_test):
+def test_2_a_small_change_runs_one_test_group(repo, gh, tmp_path, fixed_shards, fast_test):
     client = _new_client(repo, gh, tmp_path, "client")
     _branch(repo, client, "small-change")
     _settings(client, test=PYTEST, groups=4 if fixed_shards else 2,
