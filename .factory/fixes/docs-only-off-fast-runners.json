@@ -117,7 +117,7 @@
     "id": "b58ac470-fa6d-4d8b-b970-0306e63f15f8",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -139,10 +139,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": null,
-    "head": "84ac2ada00ba27f3d4841b130760aea63abe6c2a",
+    "close": "e13a47c5-6f4f-415c-801d-636f41462cab",
+    "head": "022a99f40d550403fc29df586d7aa62be15b3c06",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "With one test group, a docs-only pull request still runs its tests result job on the fast test runner, so it takes a fast slot from real test work",
   "worker": "codex"
