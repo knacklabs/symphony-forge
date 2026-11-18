@@ -332,6 +332,12 @@ def close(args: argparse.Namespace) -> int:
     repo.record_event(top, item, "close result")  # a stuck worker counts failures once per close
     failed = 0
     if not fresh:
+        mechanical = switch or records_only or skip or review_skip.upgrade_only(
+            top, item, cfg, ancestor, head, [p for p in files if p], previous)
+        if not mechanical and not review.commit_paragraph(top, review_ref, "Proof list:"):
+            print("Proof list: missing. Add the full Proof list to the last commit, then run "
+                  f"forge close {item}.", file=sys.stderr)
+            return 1
         if pending := time_records.pending_merge_wait(top, item, (pr or {}).get("body") or ""):
             repo.record_event(top, item, "owner wait end", wait_id=pending["id"])
         # Read after the merge, which may change the command.
@@ -351,7 +357,7 @@ def close(args: argparse.Namespace) -> int:
             testing = (pool.submit(review.test_run, top, command, review_ref, always=switch)
                        if local_tests else None)
             try:
-                if switch or records_only or skip or review_skip.upgrade_only(top, item, cfg, ancestor, head, [p for p in files if p], previous):
+                if mechanical:
                     head = repo.git("rev-parse", "HEAD", cwd=top)
                     identity = repo.record_event(top, item, "review result", commit=head, outcome="clean", findings=[],
                                                  review_round=review.round_number(top, item, state),
@@ -409,8 +415,21 @@ def close(args: argparse.Namespace) -> int:
         score.remember(_known(top, item, state, review_ref, previous), result, round_number,
                        {} if fresh else areas,
                        repaired=previous if not (fresh or records_only or switch or replayed) else None)
+    opened = score.open_findings(result)
+    proof, approach = (review.commit_paragraph(top, review_ref, "Proof list:"),
+                       review.before_coding(top, base, head))
+    record_findings = bool(serious) and bool(opened) and all(
+        not f.get("required_done_when") and (
+            f["title"].casefold() == "gate: proof list" and not proof.partition(":")[2].strip() or
+            f["title"].casefold().startswith("simpler:") and
+            re.search(r"\b(?:before coding|approach record)\b", f["title"], re.I) and
+            re.search(r"\b(?:missing|absent|no|lacks?|not present|does not (?:include|have))\b",
+                      f["title"], re.I) and not approach) for f in opened)
+    repair_round = state.get("record_repair_round")
+    if record_findings and repair_round is None: state["record_repair_round"] = repair_round = round_number
     if (serious and round_number >= (cfg["task_review_rounds"] if "/" in item else 1) and
-            not any(score.holds(f, "P0") for _, f in serious) and (not fresh or not state.get("stop"))):
+            not any(score.holds(f, "P0") for _, f in serious) and
+            not (record_findings and repair_round == round_number) and (not fresh or not state.get("stop"))):
         stopped = {"file": serious[0][1]["file"], "at": repo.now(),
                    "wait_id": repo.record_event(top, item, "owner wait start", reason="review loop")}
         state["stop"] = stopped

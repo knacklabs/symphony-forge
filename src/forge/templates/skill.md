@@ -2112,6 +2112,11 @@ reviews show them only as counts of changed lines.
 They count towards neither a part's size warning nor a fix's code-file limit.
 
 Read the worker's final handoff and resolve its stated blockers before `forge close`.
+If you commit a fix yourself, or add a commit after a builder round, put the full
+`Proof list:` in that last commit. Carry the earlier list forward and add the new
+proof. Close names a missing list before it starts the review and gives the next step.
+When a review finds only a missing proof list or approach record, Forge allows one
+automatic repair round without an owner question. Other findings keep the usual limits.
 Before close, the worker puts a `Proof list:` paragraph in its last commit message: each Done-when
 item you cover and every detail next to the test or check that proves it, or marked `missing`.
 Name each test by its pytest node ID or file and write no test results: close checks each named

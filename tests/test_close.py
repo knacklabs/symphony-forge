@@ -222,7 +222,7 @@ class Forge:
         self.repo.git("worktree", "add", "-q", "-b", branch, str(where))
         self.commit(where, rel, json.dumps({"branch": branch, "status": "working", **state}), "Start")
         for path, text in changes.items():
-            self.commit(where, path, text, "Work")
+            self.commit(where, path, text, "Work\n\nProof list:\n- The requested change: manual check passed")
         return item, where
 
     def start_fix(self, changes: dict[str, str] | None = None, **state: str) -> tuple[str, Path]:
@@ -249,7 +249,7 @@ class Forge:
         assert started.returncode == 0, started.stderr
         where = Path(started.stdout.splitlines()[0].rsplit(" in ", 1)[1])
         for path, text in (changes or {"app.py": "print('saved')\n", "other.py": "x = 1\n"}).items():
-            self.commit(where, path, text, "Work")
+            self.commit(where, path, text, "Work\n\nProof list:\n- The requested change: manual check passed")
         return f"SHOP/{task}", where
 
     def close(self, item: str, *extra: str):

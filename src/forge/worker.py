@@ -43,6 +43,9 @@ SETTINGS = ("Workers never edit `forge.toml`. Never edit it even temporarily. It
             "coordinator, through a settings fix the owner asked for. Report a needed settings "
             "change in your last message instead. To run an extra suite, run its command directly "
             "alongside `forge test`.")
+SOURCE_SUFFIXES = {".py", ".pyi", ".js", ".jsx", ".ts", ".tsx", ".mjs", ".cjs", ".go", ".rs",
+                   ".java", ".kt", ".kts", ".cs", ".rb", ".php", ".swift", ".c", ".h", ".cc",
+                   ".cpp", ".hpp", ".vue", ".svelte", ".sh", ".bash"}
 TEST_STEPS = {
     "sample": ("commit your work on this branch first, then walk each demo step in a browser and "
                "record its result in the `Proof list:`; "
@@ -640,6 +643,7 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
     values["summary"] = (f"Fix round {round_number} on {subject}." if round_number > 1 else
                          f"Build {subject} for {match['key']}." if match["task"] else
                          f"Fix: {subject}.")
+    values["changed_functions"] = _changed_function_context(top)
     if findings or failing:
         on.add("fix-round")
         values["findings"] = "\n".join(
@@ -671,6 +675,12 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
             brief += (f"\nScope: {values['scope']}\nTests: {values['tests']}\n"
                       f"Existing related tests: {values['existing_tests']}.\n"
                       f"\n## Current Done when\n\n{values['done']}\n")
+        else:
+            brief += f"\n## Current Done when\n\nDone when: {values['done']}\n"
+        brief += ("\n## Changed functions at round start\n\n"
+                  + values["changed_functions"] + "\n\n"
+                  "Complete the full Done-when for this item before review, including "
+                  "every listed caller and test for each changed function.\n")
         brief += "\n" + values["delegation"] + "\n"
         brief += "\n" + FILE_OWNERSHIP + "\n"
         brief += "\n" + SETTINGS + "\n"
@@ -764,6 +774,56 @@ def _existing_tests(top: Path, scope: list[str]) -> str:
     found = repo.run("git", "grep", "-l", "-w", "-F", *patterns, "--", *TEST_PATHS,
                      cwd=top).stdout.splitlines() if names else []
     return ", ".join(f"`{path}`" for path in found) or "none found"
+
+
+def _changed_function_context(top: Path) -> str:
+    """Name changed functions and the code and test files that grep finds referring to them."""
+    base = f"origin/{repo.default_branch(top)}"
+    diff = repo.run("git", "diff", "--function-context", "--unified=0", "--no-color", base,
+                    "--", cwd=top).stdout
+    functions = set()
+    path = ""
+    for line in diff.splitlines():
+        if line.startswith("diff --git "):
+            path = line.split(" b/", 1)[1].rstrip('"') if " b/" in line else ""
+        elif path and not _test_file(path) and line[:1] in {" ", "+", "-"}:
+            if name := _function_name(line[1:]):
+                functions.add(name)
+    if not functions:
+        return "None."
+
+    rows = []
+    for function in sorted(functions):
+        files = repo.run("git", "grep", "-l", "-w", "-F", "-e", function, "--", ".",
+                         cwd=top).stdout.splitlines()
+        callers = {file for file in files if Path(file).suffix.lower() in SOURCE_SUFFIXES
+                   and not _test_file(file)}
+        tests = {file for file in files if _test_file(file)}
+        listed = lambda paths: ", ".join(f"`{path}`" for path in sorted(paths)) or "none found"
+        rows.append(f"- `{function}`: callers {listed(callers)}; tests {listed(tests)}")
+    return "\n".join(rows)
+
+
+def _test_file(path: str) -> bool:
+    parts = Path(path).parts
+    name = parts[-1].lower() if parts else ""
+    return (any(part.lower() in {"test", "tests", "__tests__", "spec"}
+                or part.lower().startswith("test") for part in parts)
+            or name.startswith("test_") or name.endswith("_test.py")
+            or re.search(r"\.(?:test|spec)\.", name) is not None)
+
+
+def _function_name(line: str) -> str | None:
+    patterns = (
+        r"^\s*(?:(?:export|default)\s+)*(?:async\s+)?(?:def|function|fn)\s+([A-Za-z_$][\w$]*)\s*\(",
+        r"^\s*func\s+(?:\([^)]*\)\s*)?([A-Za-z_$][\w$]*)\s*\(",
+        r"^\s*(?:export\s+)?(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*(?:async\s+)?"
+        r"(?:function\b|\([^)]*\)\s*(?::[^=]+)?=>|[A-Za-z_$][\w$]*\s*=>)",
+        r"^\s*(?:(?:public|private|protected|static|async|override|abstract|final|virtual)\s+)*([A-Za-z_$][\w$]*)\s*\([^)]*\)\s*(?:\:[^{=]+)?\{",
+    )
+    match = next((candidate for pattern in patterns
+                  if (candidate := re.match(pattern, line))), None)
+    return match[1] if match and match[1] not in {"if", "for", "while", "switch", "catch", "with", "match"} else None
 
 
 def _claude(item: str, top: Path, brief: str, fresh_brief: str | None, models: list[str],
