@@ -1,6 +1,13 @@
 {
   "base": "64105f1b7b691f43af2a995f8f72fe8da1372287",
   "branch": "fix/suggest-named-land",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1eef9-ae39-7a70-944c-60fdab59b121",
+    "head": null,
+    "start": "c23339364a404a900a106a343049444847fe7468"
+  },
   "done_when": "When two or more tasks or fixes are Ready to merge, forge next and the skill suggest one forge land <item> <item> command naming them; with one Ready item nothing changes; new and existing repos get it on upgrade",
   "fix_kind": "mechanical",
   "kind": "fix",
