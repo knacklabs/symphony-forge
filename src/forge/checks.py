@@ -107,6 +107,48 @@ def wait(top: Path, item: str, sha: str, names: list[str], *, branch: str,
             repo.record_timing(top, item, "CI wait", start, clock, result["outcome"])
 
 
+def let_finish(top: Path, item: str, sha: str, slot: Callable[[bool], None] | None = None) -> None:
+    """Wait while any check on sha, except Forge's own review, is queued or running. Close calls
+    this before it pushes a record-only commit: that push cancels the run in progress, so the
+    record's own run could not reuse its result. Waiting reuses _seen and the wait's slot idea
+    (a running wait lends the land queue place back) and needs no change to the workflow.
+    Test groups report no `tests` check until they end, so the wait does not look for names."""
+    deadline = time.monotonic() + float(os.environ.get("FORGE_CHECKS_WAIT", "5400"))
+    try:
+        while True:
+            try:
+                seen = [state for name, state in _seen(top, item, sha)[0]
+                        if name not in ("forge-pr-check", "Review pull request")]
+            except repo.Refused:
+                return  # The push is not worth refusing for a status GitHub cannot answer.
+            if not any(state in (PENDING, QUEUED) for state in seen) or time.monotonic() >= deadline:
+                return
+            if slot is not None:
+                slot(QUEUED not in seen)  # queued runs keep the place; running ones lend it
+            time.sleep(15)
+    finally:
+        if slot is not None:
+            slot(False)
+
+
+def after_code_ci(top: Path, item: str, branch: str, cfg: dict[str, Any], serious: Any,
+                  slot: Callable[[bool], None] | None = None) -> None:
+    """Let the code's CI run end before close pushes only Forge's records on top of it."""
+    if serious or cfg["test_place"] != "ci":
+        return
+    from forge import review
+    # Three dots: a replayed branch, whose remote head is no ancestor, shows its code and is skipped.
+    # A branch with no remote head yet makes the diff fail, so nothing is running to wait for.
+    changed = repo.run("git", "diff", "--name-only", "-z", "--no-renames", f"origin/{branch}...HEAD", cwd=top)
+    paths = changed.stdout.split("\0")
+    if (changed.returncode or not any(paths)
+            or any(path and not (path.startswith(review.BOOKKEEPING) or repo.SIGNOFF.fullmatch(path))
+                   for path in paths)):
+        return
+    remote = repo.run("git", "rev-parse", f"origin/{branch}", cwd=top)
+    let_finish(top, item, remote.stdout.strip(), slot)
+
+
 def _wait(top: Path, item: str, sha: str, names: list[str], branch: str, progress: bool,
           result: dict[str, Any], waiting: Callable[[bool], None], train: bool = False) -> None:
     # ponytail: an env override is the whole wait seam (tests set 0 to look once).
