@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Any
 
 from forge import (__version__, approval, board, board_facts, close, codex, gaps, githooks, machine, migration_warnings,
-                   journey, native, records, repo, review, spotted, story, score, task, time_records, upgrade)
+                   journey, land, native, records, repo, review, spotted, story, score, task, time_records, upgrade)
 from forge.task import _merged, _started, can_start, developer, github_login, owner, sections, start_base, unbuilt_fix, waits_for
 from forge.task import rows as task_rows
 
@@ -393,14 +393,18 @@ def _report(top: Path, history: dict[str, Any] | None = None,
         if not ongoing and repo.is_prototype(top, {**cfg, "stage": "prototype"}):
             lines += build
             build = []
+    item_states = dict(parts)
+    item_states.update((f"The fix {state['branch'].partition('/')[2]}", state)
+                       for state, _ in fixes if state.get("branch"))
     report = (build + _due(top, history) + pinned + [line for alert in alerts.values() for line in alert]
-            + _hotspots(top, trees) + _overlaps(top, parts + [
-                (f"The fix {state['branch'].partition('/')[2]}", state)
-                for state, _ in fixes if state.get("branch")], prs, (history or {}).get("states", {}))
+            + _hotspots(top, trees) + _overlaps(top, list(item_states.items()), prs, (history or {}).get("states", {}))
             + lines + [f"Builds running: {running} of {agents['size']}"])
     ready = [(index, report[index - 1].split(" is ready to merge", 1)[0].removeprefix("The fix "), line)
              for index, line in enumerate(report) if line.startswith(("Next: forge merge ", "Next: merge "))
              and index and " is ready to merge" in report[index - 1]]
+    ready = [(index, item, line) for index, item, line in ready
+             if at_ref(top, item, state := item_states.get(item, item_states.get(f"The fix {item}", {})),
+                       prs.get(state.get("branch", ""))).get("status") in land.IN_CLOSE]
     if (len(ready) >= 2 and (pin := _report_config(top, refusals).get("version"))
             and not repo._older(pin.removeprefix("v"), "1.2.43")):
         commands = {line for _, _, line in ready}
