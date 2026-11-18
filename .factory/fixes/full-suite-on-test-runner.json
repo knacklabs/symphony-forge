@@ -18,7 +18,7 @@
       "gain": 5,
       "harm": 4,
       "line": 337,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": true,
@@ -31,7 +31,7 @@
       "gain": 3,
       "harm": 3,
       "line": 20,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -41,37 +41,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "056ad690a9717a1a109c45bb9a67468c0d04aa040262eeb386f23e9f3ce00a0a",
-    "changed": "ad2767aa0883964e7db5efa2f2252ae139e2f670bd5db6a9863cbf90dcecaacf",
-    "commit": "c227330c26d3856d71e0afee8f0e09133cb490de",
+    "branch_diff": "bd8e3ef1d71ddb96478d3f2ce4dafda841b663ed23fbe2321c2264bb9811bb4c",
+    "changed": "d8e307a4287e3f901e046d6914e2e43389b255fa14fe35c1f9d958b1a2371080",
+    "commit": "3705ae75f8a2a0f8f5229fdb7012ccc806c9b5b4",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 5, Work 2, Harm 4\nRaise: Security\nCase: normal use - A repo uses a persistent self-hosted `test_runner` for pull requests and a separate GitHub-hosted `runner`. Code from an approved fork PR can persist on the test runner; this change then runs the scheduled job on that same machine with a job-wide token that has `statuses: write` (lines 333\u2013342). The attacker can use it to forge a successful `forge-pr-check` status on a PR, bypassing the review status. GitHub documents both [persistent runner compromise](https://docs.github.com/en/actions/reference/security/secure-use) and the [status-write API](https://docs.github.com/en/rest/commits/statuses). The separate `full-suite-result` job already posts the full-suite status, and `src/forge/fullrun.py:107` skips posting from matrix jobs, so the test job does not need status-write permission.",
-        "file": "src/forge/prcheck.py",
-        "gain": 5,
-        "harm": 4,
-        "line": 337,
-        "priority": "P1",
-        "title": "Keep status-write tokens off pull-request test runners",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - A new repo starts with `test_runner` already in `forge.toml`, or an existing repo uses a custom `runner` without `test_runner`. This test checks init only with the default runner, then adds `test_runner` after init; its fallback case also leaves `runner` at `ubuntu-24.04`. The sibling PR-machine test likewise configures `test_runner` only after init and uses the default runner in its only fallback case. Thus an init path that ignored a configured `test_runner`, or a nightly fallback hard-coded to Ubuntu, would pass both proofs. Init accepts existing settings (`src/forge/init.py:403\u2013410`), so the named proof needs to exercise both promised cases.",
-        "file": "tests/test_nightly_test_machines.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 20,
-        "priority": "P1",
-        "title": "Gate: nightly runner selection at init and custom runner fallback",
-        "work": 2
-      }
-    ],
-    "id": "fb9441ff-7fe7-43e0-80a5-4201ddc35668",
-    "status": "blocked"
+    "findings": [],
+    "id": "e3ecae83-952e-4c76-94ef-687c101cc605",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-18T09:19:58.101607+00:00",
@@ -79,6 +58,10 @@
     },
     {
       "at": "2026-11-18T09:31:13.006672+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-18T09:36:57.522553+00:00",
       "step": "review"
     }
   ],
