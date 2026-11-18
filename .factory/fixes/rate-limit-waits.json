@@ -1,6 +1,13 @@
 {
   "base": "02c44b622a5a1b1bd8f74cb45b2204a93d9a0b31",
   "branch": "fix/rate-limit-waits",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1edf7-78eb-72d3-9b29-0ce2b5558b79",
+    "head": null,
+    "start": "4c59376b4e94406a51a005a75e3ad56315200b1e"
+  },
   "done_when": "When GitHub answers with a rate-limit error, close, merge and land wait until the reset time GitHub reports (with one line saying so) and then continue, instead of stopping; new and existing repos get it on upgrade",
   "fix_kind": "mechanical",
   "kind": "fix",
