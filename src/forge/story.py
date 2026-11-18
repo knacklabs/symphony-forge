@@ -873,11 +873,21 @@ def show(top: Path, ref: str, path: str) -> str | None:
     return repo.read_blob(top, f"{ref}:{path}")
 
 
+def merge_history(top: Path, ref: str) -> dict[str, tuple[str, str]]:
+    """Each record's addition date and merge message, shared by readers of the same commit."""
+    def read():
+        log = repo.git("log", "--first-parent", "--diff-filter=A", "--no-renames",
+                       "--format=%x00%cI%x00%B%x00", "--name-only", ref, "--",
+                       ".factory/stories", ".factory/fixes", cwd=top).split("\0")[1:]
+        return {path: (datetime.fromisoformat(at).astimezone(timezone.utc).isoformat(timespec="seconds"), message)
+                for at, message, paths in reversed(list(zip(log[::3], log[1::3], log[2::3])))
+                for path in paths.splitlines()}
+    return repo.command_fact(("merge history", repo.git("rev-parse", ref, cwd=top)), top, read)
+
+
 def merged_at(top: Path, ref: str, path: str) -> str:
     """When a file first reached the default branch (a task's merge date) in UTC, or ""."""
-    date = repo.git("log", "--first-parent", "--diff-filter=A", "-1", "--format=%cI", ref, "--", path,
-                    cwd=top)
-    return datetime.fromisoformat(date).astimezone(timezone.utc).isoformat(timespec="seconds") if date else ""
+    return merge_history(top, ref).get(path, ("", ""))[0]
 
 
 def completed(top: Path, key: str, ref: str, history: dict[str, Any] | None = None) -> dict[str, Any]:
@@ -892,16 +902,13 @@ def completed(top: Path, key: str, ref: str, history: dict[str, Any] | None = No
         tasks = parse(text)["tasks"]
     except ValueError:
         return state
-    dates = {row["id"]: (history["dates"].get(repo.state_path(f"{key}/{row['id']}"), "")
-                         if history is not None else merged_at(top, ref, repo.state_path(f"{key}/{row['id']}")))
-             for row in tasks}
+    merged = merge_history(top, ref)
+    dates = {row["id"]: merged.get(repo.state_path(f"{key}/{row['id']}"), ("", ""))[0] for row in tasks}
     if not dates or not all(dates.values()):
         return state
     # The file's first appearance identifies its merge, even after later edits to task state.
     for tid in dates:
-        message = (history["messages"][repo.state_path(f"{key}/{tid}")] if history is not None else
-                   repo.git("log", "--first-parent", "--diff-filter=A", "-1", "--format=%B",
-                            ref, "--", repo.state_path(f"{key}/{tid}"), cwd=top))
+        message = merged[repo.state_path(f"{key}/{tid}")][1]
         for line in reversed(message.splitlines()):
             if line.startswith("Forge-story-done: "):
                 record = json_of(line.removeprefix("Forge-story-done: "))

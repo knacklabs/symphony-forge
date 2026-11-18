@@ -68,14 +68,43 @@ def _files_fix_finished(top: Path, branch: str) -> bool:
     return isinstance(prs, list) and any(isinstance(pr, dict) and pr.get("state") in ("MERGED", "CLOSED") for pr in prs)
 def _open_files_fix(top: Path) -> str: return next((branch for branch in repo.git("for-each-ref", "--format=%(refname:short)",
                  "refs/heads/fix/forge-files-*", cwd=top).splitlines() if not _files_fix_finished(top, branch)), "")
+
+def _finished_prs(top: Path, branches: list[str]) -> dict[str, Any]:
+    if not branches: return {}
+    fields = [f'worktree_{index}: pullRequests(first:100,states:[OPEN,CLOSED,MERGED],headRefName:{json.dumps(branch)}) '
+              "{ nodes { headRefOid state } pageInfo { hasNextPage } }"
+              for index, branch in enumerate(branches)]
+    query = ("query($owner:String!,$name:String!) { repository(owner:$owner,name:$name) { "
+             + " ".join(fields) + " } }")
+    done = repo.run("gh", "api", "graphql", "-F", "owner={owner}", "-F", "name={repo}",
+                    "-f", "query=" + query, cwd=top)
+    try:
+        answer = json.loads(done.stdout) if done.returncode == 0 else None
+    except ValueError:
+        return {}
+    if not isinstance(answer, dict) or answer.get("errors"):
+        return {}
+    data = answer.get("data")
+    if not isinstance(data, dict): return {}
+    data = data.get("repository")
+    if not isinstance(data, dict): return {}
+    return {branch: data.get(f"worktree_{index}") for index, branch in enumerate(branches)}
+
 def _finished(top: Path, main: Path) -> list[tuple[Path, str, str]]:
     if not shutil.which("gh"): return []
     open_fix = _open_files_fix(top)
-    found = []
+    candidates = []
     for branch, path in story.worktrees(top).items():
         if (not branch.startswith(("story/", "task/", "fix/", "forge/")) or branch == open_fix or path.resolve() in (main, top.resolve())
                 or (path / ".gitmodules").exists()): continue
-        prs = _prs(top, branch, "--limit", "100", "--json", "headRefOid,state")
+        candidates.append((branch, path))
+    pulls = _finished_prs(top, [branch for branch, _ in candidates])
+    found = []
+    for branch, path in candidates:
+        result = pulls.get(branch)
+        page = result.get("pageInfo") if isinstance(result, dict) else None
+        if not isinstance(page, dict) or page.get("hasNextPage") is not False: continue
+        prs = result.get("nodes")
         if not isinstance(prs, list) or len(prs) >= 100 or not all(isinstance(pr, dict) for pr in prs): continue
         head = repo.git("rev-parse", f"refs/heads/{branch}", cwd=top)
         states = {pr.get("state") for pr in prs if pr.get("headRefOid") == head}

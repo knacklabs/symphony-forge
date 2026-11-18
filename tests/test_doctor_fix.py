@@ -247,6 +247,37 @@ def _work(repo, tmp_path, branch: str = "fix/done", commit: bool = True) -> tupl
 
 
 def _prs(gh, branch: str, *prs: tuple[str, str], stdout: str = "", exit: int = 0) -> None:
+    stub = gh.responses.parent / "gh"
+    source = stub.read_text(encoding="utf-8")
+    if "doctor_finished_pr_batch" not in source:
+        source = source.replace("for rule in reversed(rules):", '''# doctor_finished_pr_batch
+if args[:2] == ["api", "graphql"]:
+    import re
+    query = next((arg[6:] for arg in args if arg.startswith("query=")), "")
+    matches = re.finditer(r'(worktree_\\d+)\\s*:\\s*pullRequests\\([^)]*headRefName\\s*:\\s*("(?:\\\\.|[^"])*")\\)', query)
+    if "worktree_" in query:
+        repository = {}
+        failed = False
+        for match in matches:
+            alias, branch = match.groups()
+            branch = json.loads(branch)
+            rule = next((rule for rule in reversed(rules)
+                         if rule["args"][:4] == ["pr", "list", "--head", branch]), None)
+            if rule and rule["exit"]:
+                failed = True
+                break
+            try:
+                pulls = json.loads(rule["stdout"]) if rule else []
+            except ValueError:
+                pulls = None
+            repository[alias] = {"nodes": pulls,
+                                 "pageInfo": {"hasNextPage": isinstance(pulls, list) and len(pulls) >= 100}}
+        answer = {"errors": [{"message": "unavailable"}]} if failed else {
+            "data": {"repository": repository}}
+        sys.stdout.write(json.dumps(answer))
+        sys.exit(0)
+for rule in reversed(rules):''')
+        stub.write_text(source, encoding="utf-8")
     gh.respond("pr", "list", "--head", branch, exit=exit, stdout=stdout or json.dumps(
         [{"headRefOid": head, "state": state, "a_new_field": 1} for head, state in prs]))
 
@@ -276,8 +307,9 @@ def _a_finished_folder_with_a_lockfile_change_goes(repo, gh, tmp_path, monkeypat
     done = repo.forge("doctor", "--fix")
     assert f"- Fixed: removed {folder}, whose pull request is {state.lower()}.\n" in done.stdout
     assert _gone(repo, folder, "fix/done")
-    assert ["pr", "list", "--head", "fix/done", "--state", "all", "--limit", "100", "--json",
-            "headRefOid,state"] in gh.calls()
+    batched = [call for call in gh.calls() if call[:2] == ["api", "graphql"]
+               and any(arg.startswith("query=") and "worktree_" in arg for arg in call)]
+    assert len(batched) == 2
 
 
 def _clean_and_cache_only_folders_are_removed(repo, gh, tmp_path, monkeypatch, _):

@@ -191,7 +191,7 @@ def warning(top: Path) -> str:
     prs: list[dict[str, Any]] = []
     cursor = ""
     while True:
-        page = _pulls(top, "first:20,states:MERGED,orderBy:{field:UPDATED_AT,direction:DESC}" + cursor,
+        page = _pulls(top, "first:40,states:MERGED,orderBy:{field:UPDATED_AT,direction:DESC}" + cursor,
                       PUSH_HEADS)
         nodes = page.get("nodes", [])
         if not nodes:
@@ -220,13 +220,16 @@ def warning(top: Path) -> str:
     if not heads:
         return ""
     ids = list(heads)
+    fields = [f"checks_{offset}: nodes(ids:" + json.dumps(ids[offset:offset + 50])
+              + ") { ... on Commit { id oid " + CHECKS + " } }" for offset in range(0, len(ids), 50)]
+    value = _read(top, "graphql", "-f", "query=query { " + " ".join(fields) + " }")
+    if not isinstance(value, dict) or not isinstance(value.get("data"), dict):
+        return ""
     for offset in range(0, len(ids), 50):
-        query = ("query { nodes(ids:" + json.dumps(ids[offset:offset + 50])
-                 + ") { ... on Commit { id oid " + CHECKS + " } } }")
-        value = _read(top, "graphql", "-f", "query=" + query)
-        if not isinstance(value, dict) or not isinstance(value.get("data", {}).get("nodes"), list):
+        commits = value["data"].get(f"checks_{offset}")
+        if not isinstance(commits, list):
             return ""
-        for commit in value["data"]["nodes"]:
+        for commit in commits:
             if not commit or commit.get("id") not in heads:
                 return ""
             for node in heads.pop(commit["id"]):
