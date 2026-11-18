@@ -1,0 +1,182 @@
+{
+  "branch": "task/REMOTE-1-HOST",
+  "chat": {
+    "approval": "18ec5796004d71b9b71617f8f0e0344075f0a76e134ede48f73758c89db67149",
+    "claude": null,
+    "conversation": "01a1eef9-b311-7dd3-8de1-27b5309b37b5",
+    "head": null,
+    "start": "2f33cf2c2e64ed4d388543f1f149b4d8c98d9fd3"
+  },
+  "known": [
+    {
+      "area": "setup() in src/forge/box_ssh.py",
+      "file": "src/forge/box_ssh.py",
+      "gain": 4,
+      "harm": 4,
+      "line": 62,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": true,
+      "title": "Security: Quote the checkout name in the remote shell command",
+      "work": 1
+    },
+    {
+      "area": "_holds() in src/forge/box_ssh.py",
+      "file": "src/forge/box_ssh.py",
+      "gain": 4,
+      "harm": 5,
+      "line": 127,
+      "outcome": "fixed in round 5",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Data loss: Do not treat an unverified process identity as finished",
+      "work": 2
+    },
+    {
+      "area": "_holds() in src/forge/box_ssh.py",
+      "file": "src/forge/box_ssh.py",
+      "gain": 5,
+      "harm": 5,
+      "line": 130,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Data loss: Refuse turn-off when the remote work cannot be inspected",
+      "work": 2
+    },
+    {
+      "area": "setup() in src/forge/box_ssh.py",
+      "file": "src/forge/box_ssh.py",
+      "gain": 4,
+      "harm": 4,
+      "line": 95,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": true,
+      "title": "Security: Install the pre-commit check in the hook path Git uses",
+      "work": 2
+    },
+    {
+      "area": "_holds() in src/forge/box_ssh.py",
+      "file": "src/forge/box_ssh.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 125,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Ignore application PID files inside run worktrees",
+      "work": 2
+    },
+    {
+      "area": "setup() in src/forge/box_ssh.py",
+      "file": "src/forge/box_ssh.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 81,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Report SSH failures throughout setup",
+      "work": 1
+    },
+    {
+      "area": "test_5_rounds_on_a_machine_are_off_until_turned_on_and_off_deletes_forges_folder() in tests/test_host_setup.py",
+      "file": "tests/test_host_setup.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 90,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_5_rounds_on_a_machine_are_off_until_turned_on_and_off_deletes_forges_folder",
+      "work": 2
+    },
+    {
+      "area": "test_1_setup_checks_the_machine_and_says_what_is_missing() in tests/test_host_setup.py",
+      "file": "tests/test_host_setup.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 38,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_setup_checks_the_machine_and_says_what_is_missing",
+      "work": 2
+    },
+    {
+      "area": "_holds() in src/forge/box_ssh.py",
+      "file": "src/forge/box_ssh.py",
+      "gain": 5,
+      "harm": 4,
+      "line": 145,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Functional: Turn-off fails on hosts with translated process errors",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "acfa708e7fe5a4951873fc8ff4cdeb27fecacb18b11cad639dadfe11e79d35d6",
+    "changed": "154b292ccad97b60147466aa7d033b95452d2525eea0db81f348a57cc19b961f",
+    "commit": "9f894ee9ca6b494649ed60409c7b94dd30a25c1c",
+    "dismissals": [],
+    "findings": [],
+    "id": "11dd74d8-272a-481c-83cb-2e83cb5c9c48",
+    "status": "clean"
+  },
+  "round": 7,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-17T13:39:44.494005+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-17T14:08:03.424258+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-17T14:23:17.556816+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-17T14:38:32.139406+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-17T14:50:11.674261+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-17T15:56:26.045853+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-17T16:32:25.101072+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-18T14:10:19.233615+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "11f0da98-5fd8-4b95-baec-9077bb724af7",
+    "head": "9f252e4cb72165bb0bd83eff9bbc5412b8767870",
+    "keys": {},
+    "round": 6
+  },
+  "worker": "codex"
+}
