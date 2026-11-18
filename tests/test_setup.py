@@ -274,7 +274,8 @@ def test_29_doctor(repo, gh, tmp_path, monkeypatch, case, rows, doctor_sdks):
     toml = client / "forge.toml"
     # These doctor cases exercise Claude workers, including its optional Codex trust advice.
     toml.write_text(toml.read_text(encoding="utf-8").replace(
-        'workers = "claude"', 'tools = "claude"\nworkers = "claude"', 1), encoding="utf-8")
+        'workers = "claude"', 'workers = "claude"' if case in ("missing tool", "codex doesn't trust the project")
+        else 'tools = "claude"\nworkers = "claude"', 1), encoding="utf-8")
     if case.startswith("impeccable") or case == "no impeccable":
         # Clients now receive repo copies at init. Global placement still matters in Forge's
         # own repo, which deliberately receives neither skill, so retain these cases there.
@@ -399,12 +400,11 @@ def test_29_doctor(repo, gh, tmp_path, monkeypatch, case, rows, doctor_sdks):
         assert done.returncode == 0, done.stdout + done.stderr
         assert "Warning: Claude Code is missing or older than v2.1.287" in done.stdout
     elif case == "codex doesn't trust the project":
-        # Advice, not a failure, and "everything checks out" never hides it.
-        assert done.returncode == 0, done.stdout + done.stderr
-        assert "- Note: Codex runs this repo's hooks only in a project it trusts" in done.stdout
+        # With both tools set, reviews use Codex, so missing trust is a failure.
+        assert done.returncode == 1, done.stdout + done.stderr
+        assert "Codex doesn't trust this project" in done.stdout
         assert (f'add trust_level = "trusted" under [projects.{json.dumps(str(client.resolve()))}] in '
                 f'{codex_home / "config.toml"}') in done.stdout
-        assert "Everything else checks out" in done.stdout
     elif case == "impeccable in CLAUDE_CONFIG_DIR":
         assert done.returncode == 0, done.stdout + done.stderr
         assert done.stdout.startswith("Everything checks out"), done.stdout
