@@ -60,6 +60,7 @@
     "id": "8f0f33ce-2cde-4746-9c0d-1ca97fcdb773",
     "status": "blocked"
   },
+  "round": 1,
   "status": "fixing",
   "steps": [
     {
@@ -84,5 +85,12 @@
     "wait_id": "23f6c6c4-db2b-4328-9f2f-1dc06a657f16",
     "worker_round": null
   },
-  "why": "Owner direction 18 Nov 2026: Forge's own repo builds with Codex. forge.toml still says workers = claude."
+  "stuck": {
+    "close": "126ba349-1039-4752-95d2-63c6ea1877d9",
+    "head": "a1970ac4c3c4bdf946cb78aa6579f24e609298c7",
+    "keys": {},
+    "round": null
+  },
+  "why": "Owner direction 18 Nov 2026: Forge's own repo builds with Codex. forge.toml still says workers = claude.",
+  "worker": "codex"
 }
