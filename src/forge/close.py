@@ -284,7 +284,7 @@ def close(args: argparse.Namespace) -> int:
         _synced(top, item, changed_files)
     if skip:
         review_skip.requested(args, top, item, state)
-    _warn_fix_kind(top, state, review_ref)
+    task.warn_fix_kind(top, state, review_ref)
     light = review.blocking_level(top, item, state, review_ref) == "P0"
     result = previous
     classified = review.bound_review(top, item, state, result)
@@ -426,7 +426,8 @@ def close(args: argparse.Namespace) -> int:
         _save(top, item, state, message, *noted)
     elif noted:  # a reused clean review still records what the worker spotted
         _save(top, item, state, f"Review of {item}: {result['status']}", *noted)
-    checks.after_code_ci(top, item, branch, cfg, serious); _push(top, branch, reviewed=True)  # noqa: E702
+    checks.after_code_ci(top, item, branch, cfg, serious)
+    _push(top, branch, reviewed=True)
     head = repo.git("rev-parse", "HEAD", cwd=top)
     pr = _publish(top, item, state, branch, pr_target, pr, result, evidence)
     _attach(top, item, branch)
@@ -515,27 +516,6 @@ def close(args: argparse.Namespace) -> int:
     if not retried_history and backfill.upgrade_fix(top, item, state):
         backfill.run(top)
     return 0
-
-
-def _warn_fix_kind(top: Path, state: dict[str, Any], base: str) -> None:
-    kind = state.get("fix_kind")
-    if not kind:
-        return
-    files = repo.git("diff", "--name-only", "-z", "--no-renames", f"{base}...HEAD",
-                     "--", ".", *[path.replace(":(glob)", ":(exclude,glob)")
-                                    for path in repo.TEST_PATHS], cwd=top).split("\0")
-    # This is advice: paths can suggest a mismatch, but cannot decide what a change does.
-    code = [Path(path) for path in files if path and not path.startswith(
-        (".factory/", "plans/", "docs/"))]
-    ui = any(path.suffix in {".html", ".css", ".scss", ".jsx", ".tsx", ".vue", ".svelte"}
-             or set(path.parts) & {"web", "frontend", "components", "screens", "pages"}
-             for path in code)
-    backend = any(path.suffix in {".py", ".ts", ".js", ".go", ".rs", ".java", ".rb"}
-                  for path in code)
-    if (kind == "backend" and ui or kind == "ui" and backend and not ui
-            or kind == "mechanical" and (ui or backend)):
-        print("Warning: The changed files do not match this fix's worker kind "
-              f"({kind}). Check the kind before the next round.")
 
 
 def _known(top: Path, item: str, state: dict[str, Any], base: str, previous: dict[str, Any]) -> list[Any]:
