@@ -95,7 +95,7 @@
     "id": "50b032fd-115b-459d-82cc-2e5f4002121e",
     "status": "blocked"
   },
-  "round": 2,
+  "round": 3,
   "status": "fixing",
   "steps": [
     {
@@ -117,10 +117,10 @@
     "worker_round": 2
   },
   "stuck": {
-    "close": null,
-    "head": "2f5e8977f693d7f5dea2e7c00bc1864b3724208a",
+    "close": "46b83623-ea36-42c0-8861-c5710bdb8c70",
+    "head": "e4709f1be0bd278d57ed1b97ac8f0449b41a9520",
     "keys": {},
-    "round": null
+    "round": 2
   },
   "why": "Review findings about how a test could miss a future change (a fake that matches exact request text, a gh call counted by position) block close and cost a round each, and tests that select gh calls by position or count break each time a command adds a GitHub request (4 times on 18 Nov 2026); two tests fail at random on busy runners (the machine memory budget test and test_3_worker_reruns_report_only_the_final_result)",
   "worker": "codex"
