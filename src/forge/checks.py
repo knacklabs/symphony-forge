@@ -35,6 +35,16 @@ REFUSALS = {
                  "forge close {item}, which brings the default branch in"),
 }
 PASS, PENDING, RED, SKIPPED, QUEUED = "pass", "pending", "red", "skipped", "queued"
+# One CLI process can wait before a push, after it, and again during merge.
+_progress_at: float | None = None
+
+
+def _notice(message: str) -> None:
+    global _progress_at
+    now = time.monotonic()
+    if _progress_at is None or now - _progress_at >= 300:
+        print(message, flush=True)
+        _progress_at = now
 
 
 def required(top: Path, default: str, head: str = "HEAD") -> list[str] | None:
@@ -122,7 +132,8 @@ def let_finish(top: Path, item: str, sha: str, names: list[str],
     record's own run could not reuse its result. Waiting reuses _seen and the wait's slot idea
     (a running wait lends the land queue place back) and needs no change to the workflow.
     Test groups report no `tests` check until they end, so the wait does not look for names."""
-    printed_at = None
+    timeout = float(os.environ["FORGE_CHECKS_WAIT"]) if "FORGE_CHECKS_WAIT" in os.environ else None
+    deadline = time.monotonic() + timeout if timeout is not None else None
     try:
         while True:
             try:
@@ -132,17 +143,23 @@ def let_finish(top: Path, item: str, sha: str, names: list[str],
             # This head predates the review record. Its review cannot be green yet.
             seen = [(name, PASS if name in ("forge-pr-check", "Review pull request") else state)
                     for name, state in seen]
-            _recover(top, item, sha, names, runs, seen)
+            if not any(state in (PENDING, QUEUED) for _, state in seen):
+                _recover(top, item, sha, names, runs, seen)
             states = [state for _, state in seen]
             if not any(state in (PENDING, QUEUED) for state in states):
                 return
             now = time.monotonic()
-            if printed_at is None or now - printed_at >= 300:
-                print("Waiting: the code's checks are still queued or running.", flush=True)
-                printed_at = now
+            if timeout is not None and timeout > 0 and QUEUED in states:
+                deadline = now + timeout
+            left = deadline - now if deadline is not None else 15
+            if left <= 0:
+                repo.refuse(REFUSALS["not_green"], item=item,
+                            reason=f"GitHub has shown no check progress for {timeout / 60:g} minutes: "
+                            "the code's checks are still queued or running")
+            _notice("Waiting: the code's checks are still queued or running.")
             if slot is not None:
                 slot(QUEUED not in states)  # queued runs keep the place; running ones lend it
-            time.sleep(15)
+            time.sleep(min(15, left))
     finally:
         if slot is not None:
             slot(False)
@@ -173,7 +190,6 @@ def _wait(top: Path, item: str, sha: str, names: list[str], branch: str, progres
     deadline = time.monotonic() + timeout
     previous = None
     queued_since = None
-    printed_at = None
     requested: set[int] = set()
     cache = (repo.forge_dir(top) / f"check-wait-{repo.blob_hash(branch + sha)}.json"
              if progress else None)
@@ -190,10 +206,6 @@ def _wait(top: Path, item: str, sha: str, names: list[str], branch: str, progres
                     if (name == "Review pull request" and check_runs[index].get("check_suite", {}).get("id") in own
                             if index < len(check_runs) else name == "forge-pr-check"):
                         seen[index] = (name, PASS)
-            running = any(state == PENDING for _, state in seen)
-            result["state"] = ("running" if running
-                               else "queued" if any(state == QUEUED for _, state in seen)
-                               else "unknown")
             if progress and snapshot != previous:
                 previous = snapshot
                 deadline = time.monotonic() + timeout
@@ -206,15 +218,24 @@ def _wait(top: Path, item: str, sha: str, names: list[str], branch: str, progres
             if not any(name == "forge-pr-check" or name == "Review pull request" and state != SKIPPED
                        for name, state in seen):  # the pull_request workflow skips its own job of that name
                 _no_start(top, item, sha, branch)  # before a red or timed-out test can hide it
-            if train:
-                # The train reads failed-job logs and owns its one retry in land._red.
-                _tests_timeout(top, item, sha, names, check_runs, seen)
-            elif _recover(top, item, sha, names, check_runs, seen) and cache is not None:
-                cache.unlink(missing_ok=True)  # Read the new attempt instead of cached failures.
-            reason = _pending(item, names, seen)
+            active = [(name, state) for name, state in seen if state in (PENDING, QUEUED)]
+            result["state"] = ("running" if any(state == PENDING for _, state in active)
+                               else "queued" if active else "unknown")
+            if active:
+                # A failed sibling or timeout cannot end another job's wait.
+                reason = _pending(item, [], active)
+            else:
+                if train:
+                    # The train reads failed-job logs and owns its one retry in land._red.
+                    _tests_timeout(top, item, sha, names, check_runs, seen)
+                elif _recover(top, item, sha, names, check_runs, seen) and cache is not None:
+                    cache.unlink(missing_ok=True)  # Read the new attempt instead of cached failures.
+                reason = _pending(item, names, seen)
             if mergeable == "UNKNOWN":
                 reason = reason or "GitHub has not determined whether this pull request can merge"
             queued = any(state == QUEUED for _, state in seen)
+            running = any(state == PENDING for _, state in seen)
+            result["state"] = "running" if running else "queued" if queued else "unknown"
         except repo.Refused as error:
             if cache is not None and error.entry is not REFUSALS["not_green"]:
                 cache.unlink(missing_ok=True)
@@ -233,19 +254,15 @@ def _wait(top: Path, item: str, sha: str, names: list[str], branch: str, progres
             if queued_since is None:
                 queued_since = now
             minute = int((now - queued_since) / 60)
-            if printed_at is None or now - printed_at >= 300:
-                print(f"Waiting: checks queued for {minute} minutes during this wait; "
-                      "shared runners may be busy or no runner may match the runner setting "
-                      "in forge.toml.", flush=True)
-                printed_at = now
+            _notice(f"Waiting: checks queued for {minute} minutes during this wait; "
+                    "shared runners may be busy or no runner may match the runner setting "
+                    "in forge.toml.")
             if timeout > 0:
                 deadline = now + timeout
         else:
             queued_since = None
-            now = time.monotonic()
-            if running and (printed_at is None or now - printed_at >= 300):
-                print(f"Waiting: {reason}.", flush=True)
-                printed_at = now
+            if running:
+                _notice(f"Waiting: {reason}.")
         # An explicit override still permits a bounded wait for operators.
         left = (15 if (queued or running) and "FORGE_CHECKS_WAIT" not in os.environ
                 else deadline - time.monotonic())
@@ -361,12 +378,31 @@ def cancelled_at_limit(run: dict[str, Any], limit: int | None) -> bool:
             or not (name == "tests" or name.startswith("tests (")
                     or re.fullmatch(r"test group \d+ of \d+", name))):
         return False
-    try:
-        seconds = (datetime.fromisoformat(run["completed_at"])
-                   - datetime.fromisoformat(run["started_at"])).total_seconds()
-    except (KeyError, ValueError, TypeError):
+    seconds = _job_runtime_seconds(run)
+    if seconds is None:
         return False
     return abs(seconds - limit * 60) <= 60
+
+
+def _job_runtime_seconds(job: dict[str, Any]) -> float | None:
+    """Return elapsed runner time only when GitHub confirms the job actually ran."""
+    if not (job.get("runner_id") or any(step.get("started_at") for step in job.get("steps", []))):
+        return None
+    try:
+        return (datetime.fromisoformat(job["completed_at"])
+                - datetime.fromisoformat(job["started_at"])).total_seconds()
+    except (KeyError, ValueError, TypeError):
+        return None
+
+
+def _action_job(top: Path, item: str, run: dict[str, Any]) -> dict[str, Any] | None:
+    """Read the Actions job linked by a check run, if GitHub supplied one."""
+    url = str(run.get("details_url", run.get("detailsUrl", "")))
+    job_id = re.search(r"/actions/runs/\d+/job/(\d+)(?:\?|$)", url)
+    if not job_id:
+        return None
+    jobs = _ask(top, item, "[.]", f"repos/{{owner}}/{{repo}}/actions/jobs/{job_id[1]}")
+    return jobs[0] if jobs else None
 
 
 def _recover(top: Path, item: str, sha: str, names: list[str],
@@ -393,20 +429,12 @@ def _tests_timeout(top: Path, item: str, sha: str, names: list[str],
     limit = timeout_limit(top, sha)
     timed_out: dict[int, str] = {}
     for index, run in candidates:
-        # A check can start when its job queues. Actions job timestamps measure
-        # execution on the runner, so queue time cannot turn a cancellation into a timeout.
-        job_id = re.search(r"/actions/runs/\d+/job/(\d+)(?:\?|$)", str(run.get("details_url", "")))
-        if job_id:
-            jobs = _ask(top, item, "[.]", f"repos/{{owner}}/{{repo}}/actions/jobs/{job_id[1]}")
-            job = jobs[0] if jobs else {}
-            run = dict(run, started_at=job.get("started_at"), completed_at=job.get("completed_at"))
-        try:
-            seconds = (datetime.fromisoformat(run["completed_at"])
-                       - datetime.fromisoformat(run["started_at"])).total_seconds()
-        except (KeyError, ValueError, TypeError):
-            seconds = None
-        if run["conclusion"] == "cancelled" and not cancelled_at_limit(run, limit):
-            continue
+        job = _action_job(top, item, run)
+        seconds = _job_runtime_seconds(job) if job is not None else None
+        if run["conclusion"] == "cancelled":
+            if job is None or not cancelled_at_limit(
+                    {**run, **job, "status": run["status"], "conclusion": "cancelled"}, limit):
+                continue
         minutes = limit if limit is not None else round(seconds / 60) if seconds is not None else None
         timed_out[index] = f" after {minutes} minutes" if minutes is not None else ""
     if not timed_out:
