@@ -2,7 +2,7 @@
 reader: codex (gpt-6.1-terra)
 read_at: 2026-11-18T04:13:23.525502+00:00
 seconds: 805.929
-read_hash: d1674823920a9ace885aaf9bca91e7a534a55d73
+read_hash: 174b780ed23c07c0dd24f0b4ef05132ffed6f84c
 round: 2
 passed: no
 doc_seen: d1674823920a9ace885aaf9bca91e7a534a55d73
@@ -11,8 +11,8 @@ notes_seen: 51888d4d04507f020a1637daf1b852fe887a7016
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a1ecb9-0d2c-7ba3-967f-9b980e7a0a1b
 session:
-loop_choice:
-loop_reason:
+loop_choice: accept
+loop_reason: Owner accepted read round 2: notes 20 and 21 and advisory 22 fixed in the builders' section
 ---
 # Cold read notes
 
@@ -171,6 +171,7 @@ Only a genuine trade-off goes to the human, as a question with options.
     Raise: Not done — [plan](/plans/FORGE-CITIME-1.md:75); [fasttest.py](/src/forge/fasttest.py:402).
     Case: normal use - A grouped Python repo changes `Pipfile.lock` and one code file. Forge recognizes that lockfile as a shared test input, but the planned list does not, so the change runs one group despite the promise to run all groups for a lockfile change.
     Gain 3, Work 2, Harm 3
+   Disposition: keep - Owner accepted read round 2: notes 20 and 21 and advisory 22 fixed in the builders' section
 
 24. Advisory: Not done: cancelled pushes can move the five-push window too far back.
     Raise: Not done — [plan](/plans/FORGE-CITIME-1.md:70); [workflow concurrency](/src/forge/prcheck.py:52).
@@ -182,6 +183,7 @@ Only a genuine trade-off goes to the human, as a question with options.
     Raise: Test — [plan](/plans/FORGE-CITIME-1.md:90); [workflow](/src/forge/prcheck.py:85).
     Case: normal use - The matrix can start only group 1 while `FORGE_GROUPS` still says 2. The proposed test checks the matrix and gate, so it can pass while the runner executes only the first half of the selected tests and the required check passes.
     Gain 3, Work 2, Harm 3
+   Disposition: keep - Owner accepted read round 2: notes 20 and 21 and advisory 22 fixed in the builders' section
 
 26. Advisory: Not done: external checks are counted as GitHub runner minutes.
     Raise: Not done — [plan](/plans/FORGE-CITIME-1.md:70); [checks.py](/src/forge/checks.py:515).
@@ -193,3 +195,4 @@ Only a genuine trade-off goes to the human, as a question with options.
     Raise: Plan gap — [task table](/plans/FORGE-CITIME-1.md:104); [task admission](/src/forge/task.py:619).
     Case: normal use - The local issue 1656 fix is still working and changes `checks.py`, which TIME also owns. The plan says that fix goes first but gives TIME no dependency on it; Forge’s started-work overlap check scans task branches, not fix branches.
     Gain 4, Work 1, Harm 2
+   Disposition: keep - Owner accepted read round 2: notes 20 and 21 and advisory 22 fixed in the builders' section
