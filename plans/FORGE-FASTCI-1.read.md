@@ -1,13 +1,13 @@
 ---
 reader: codex (gpt-6.1-terra)
-read_at: 2026-11-17T13:44:37.837949+00:00
-seconds: 859.103
-read_hash: f227639f9434c06b68db289bf83095b80013cbf7
-round: 2
+read_at: 2026-11-18T05:18:21.883139+00:00
+seconds: 565.726
+read_hash: a6335d6754a781f45466c345e7439ab9b6afe4ea
+round: 3
 passed: yes
-doc_seen: f227639f9434c06b68db289bf83095b80013cbf7
+doc_seen: a6335d6754a781f45466c345e7439ab9b6afe4ea
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 5de3d342ca7dfe2dce7ea6b31d0add199352fac4
+notes_seen: f2a919eeccfca7a4b7b15e362d3a669703c678b1
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a1e9a5-ba42-7df2-a8f1-79526a848260
 session:
@@ -110,4 +110,26 @@ Only a genuine trade-off goes to the human, as a question with options.
     Raise: Test. With `{step}` and one group, the plan keeps the multi-job template. The current local-test removal chooses where to start deleting by the group count, so it would leave `docs-check` behind. The existing local-workflow test has no `{step}`, and the new step test uses CI tests. [Plan](/plans/FORGE-FASTCI-1.md:105), [removal logic](/src/forge/prcheck.py:458), [existing test](/tests/test_testplace_workflow.py:113).
     Adds work: cover a starter switched from CI to local tests; F 2 x H 1 = 2; 2 x C = 2.
     Gain 2, Work 1, Harm 1
+   Disposition: keep - below the bar (live with)
+
+## Round 3
+
+16. Advisory: Not done: Python’s standalone lint can use missing or stale API types.
+    Raise: Not done. Even with one CI job, a developer can run `pnpm run lint` directly after changing an API response. The planned lint script does not regenerate API types, which are ignored by Git; type-aware results can therefore use missing or outdated types. The full test command generates them first, so its smoke test does not prove standalone lint. [Plan](/plans/FORGE-FASTCI-1.md:102), [package scripts](/src/forge/templates/starter-python/package.json:9), [ignored files](/src/forge/templates/starter-python/.gitignore:12), [Oxlint type-aware linting](https://oxc.rs/docs/guide/usage/linter/type-aware.html).
+    Gain 3, Work 2, Harm 2
+   Disposition: keep - below the bar (follow-up)
+
+17. Advisory: Unproven: item 2: Type-aware lint lacks the API test project’s settings.
+    Raise: Test. The API lint target includes `apps/api/test`, but the automatically discovered `tsconfig.json` includes only `src`; the test files use a separately named `tsconfig.test.json`. Oxlint’s type-aware discovery does not use that filename, so those files can be checked with unresolved or incorrect types. The proposed settings test checks only that type-aware mode is enabled. [API target](/src/forge/templates/starter/apps/api/project.json:6), [API config](/src/forge/templates/starter/apps/api/tsconfig.json:15), [test config](/src/forge/templates/starter/apps/api/tsconfig.test.json:14), [Oxlint issue](https://github.com/oxc-project/oxc/issues/20328).
+    Gain 3, Work 2, Harm 2
+   Disposition: keep - below the bar (follow-up)
+
+18. Advisory: Unproven: item 2: The Python web boundary’s relative-import rule can be lost.
+    Raise: Test. A web library can reach another module with a relative import such as `../../../auth/web/src/index`. The existing live boundary test tries a package-name import, while the Python test named in the plan checks Python backend imports. Those tests can pass if the relative-import pattern is dropped during the Oxlint move. [Plan](/plans/FORGE-FASTCI-1.md:100), [web boundary test](/tests/test_libs_layout.py:47), [Python import test](/tests/test_python_starter.py:293).
+    Gain 3, Work 2, Harm 2
+   Disposition: keep - below the bar (follow-up)
+
+19. Advisory: An older app can acquire a nightly test job during upgrade.
+    Raise: Functional. The amended plan says nothing else changes in an existing repo and no CI job is added. An app using the earlier workflow can instead gain a scheduled full-suite job when upgrade runs the current sync, increasing its runner use. This is a change in execution, beyond the release-number change identified in finding 9. [Plan](/plans/FORGE-FASTCI-1.md:12), [earlier workflow](/tests/fixtures/forge-v1.2.2/src/forge/prcheck.py:37), [current workflow](/src/forge/prcheck.py:294).
+    Gain 2, Work 1, Harm 2
    Disposition: keep - below the bar (live with)
