@@ -274,7 +274,7 @@ def test_29_doctor(repo, gh, tmp_path, monkeypatch, case, rows, doctor_sdks):
     toml = client / "forge.toml"
     # These doctor cases exercise Claude workers, including its optional Codex trust advice.
     toml.write_text(toml.read_text(encoding="utf-8").replace(
-        'workers = "split"', 'tools = "claude"\nworkers = "claude"', 1), encoding="utf-8")
+        'workers = "claude"', 'tools = "claude"\nworkers = "claude"', 1), encoding="utf-8")
     if case.startswith("impeccable") or case == "no impeccable":
         # Clients now receive repo copies at init. Global placement still matters in Forge's
         # own repo, which deliberately receives neither skill, so retain these cases there.
