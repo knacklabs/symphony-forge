@@ -1,0 +1,81 @@
+{
+  "items": [
+    {
+      "key": "bug\t.github/workflows/forge.yml\tGate: live starter tests in the full suite\trelease-1-2-28",
+      "kind": "bug",
+      "path": ".github/workflows/forge.yml",
+      "line": 189,
+      "text": "Gate: live starter tests in the full suite",
+      "from": "blocking",
+      "item": "release-1-2-28",
+      "status": "done",
+      "closed_by": "main-red-workflow-sync"
+    },
+    {
+      "key": "bug\t.github/workflows/forge.yml\tNot done: Each check runs once per pull request, and the live starter tests still run every night.\tpull-requests-print-the-net-line-count-i",
+      "kind": "bug",
+      "path": ".github/workflows/forge.yml",
+      "line": 181,
+      "text": "Not done: Each check runs once per pull request, and the live starter tests still run every night.",
+      "from": "blocking",
+      "item": "pull-requests-print-the-net-line-count-i",
+      "status": "done",
+      "closed_by": "main-red-workflow-sync"
+    },
+    {
+      "key": "bug\t.github/workflows/forge.yml\tNot done: Forge's own pull request checks keep npm's download cache between runs\tci-npm-and-scan-flakes",
+      "kind": "bug",
+      "path": ".github/workflows/forge.yml",
+      "line": 42,
+      "text": "Not done: Forge's own pull request checks keep npm's download cache between runs",
+      "from": "blocking",
+      "item": "ci-npm-and-scan-flakes",
+      "status": "done",
+      "closed_by": "main-red-workflow-sync"
+    },
+    {
+      "key": "bug\t.github/workflows/forge.yml\tThe review job fails before review when the remote pull-request ref is behind the event commit; filed Forge issue 1309.",
+      "kind": "bug",
+      "path": ".github/workflows/forge.yml",
+      "line": 125,
+      "text": "The review job fails before review when the remote pull-request ref is behind the event commit; filed Forge issue 1309.",
+      "from": "worker",
+      "item": "FORGE-NOSCREENS-1/AUTH",
+      "status": "done",
+      "closed_by": "main-red-workflow-sync"
+    },
+    {
+      "key": "edge\t.github/workflows/forge.yml\tGate: live starter tests in the full suite",
+      "kind": "edge",
+      "path": ".github/workflows/forge.yml",
+      "line": 189,
+      "text": "Gate: live starter tests in the full suite",
+      "from": "review",
+      "item": "release-1-2-28",
+      "status": "done",
+      "closed_by": "main-red-workflow-sync"
+    },
+    {
+      "key": "edge\t.github/workflows/forge.yml\tNot done: The slowest of the six pull request test groups does not finish in about 5 minutes on the same runners",
+      "kind": "edge",
+      "path": ".github/workflows/forge.yml",
+      "line": 56,
+      "text": "Not done: The slowest of the six pull request test groups does not finish in about 5 minutes on the same runners",
+      "from": "review",
+      "item": "each-of-the-six-pull-request-test-groups",
+      "status": "done",
+      "closed_by": "main-red-workflow-sync"
+    },
+    {
+      "key": "edge\t.github/workflows/forge.yml\tNot done: The slowest of the six pull request test groups finishes in about 5 minutes on a normal run, with the same six groups and the same",
+      "kind": "edge",
+      "path": ".github/workflows/forge.yml",
+      "line": 56,
+      "text": "Not done: The slowest of the six pull request test groups finishes in about 5 minutes on a normal run, with the same six groups and the same",
+      "from": "review",
+      "item": "each-of-the-six-pull-request-test-groups",
+      "status": "done",
+      "closed_by": "main-red-workflow-sync"
+    }
+  ]
+}
