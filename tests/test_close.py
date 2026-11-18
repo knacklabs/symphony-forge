@@ -182,6 +182,10 @@ class Forge:
         # Default-branch admission reads all historical full-run statuses. Ordinary
         # PR fixtures have no full-run history; red-branch tests supply it explicitly.
         self.gh.respond("api", "--paginate", "--jq", ".[]", stdout="")
+        # Default-branch history is independent of the pull request's checks.
+        # Health tests provide results; ordinary PR fixtures have none.
+        self.gh.respond("api", "graphql", "-f", "operationName=ForgeDefaultTests",
+                        stdout=json.dumps({"data": {"repository": {}}}))
         # No old queued workflow unless the case supplies one explicitly.
         self.gh.respond("api", "--paginate", "--jq", ".workflow_runs[]", stdout="")
 
@@ -189,8 +193,9 @@ class Forge:
         self.gh.respond("pr", "list", "--head", stdout=json.dumps(
             [{"number": 7, "state": state, "body": body, "isDraft": draft}]))
 
-    def gh_calls(self, *prefix: str) -> list[list[str]]:
-        return [call for call in self.gh.calls() if call[:len(prefix)] == list(prefix)]
+    def gh_calls(self, *prefix: str, path: str | None = None) -> list[list[str]]:
+        return [call for call in self.gh.calls() if call[:len(prefix)] == list(prefix)
+                and (path is None or path in call)]
 
     def commit(self, where: Path, rel: str, text: str, message: str = "More work") -> str:
         (where / rel).parent.mkdir(parents=True, exist_ok=True)

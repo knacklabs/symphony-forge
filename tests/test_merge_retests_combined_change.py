@@ -137,6 +137,8 @@ def test_1_merge_retests_combined_change_and_names_failures(env, tmp_path, previ
         before = env.repo.git("rev-parse", "HEAD", cwd=where)
 
     before_checks = len(env.gh_calls("api"))
+    head_checks = f"repos/{{owner}}/{{repo}}/commits/{original}/check-runs?per_page=100"
+    before_head_checks = len(env.gh_calls("api", path=head_checks))
     merged = env.repo.forge("merge", item)
 
     if case.startswith("dirty"):
@@ -188,16 +190,7 @@ def test_1_merge_retests_combined_change_and_names_failures(env, tmp_path, previ
             assert len(env.review_calls()) == reviews
         else:
             assert published == original
-            reads = env.gh_calls("api")[before_checks:]
-            # The approved red-branch gate reads default health history, but must not wait for PR checks.
-            default_health_reads = [call for call in reads
-                                    if (call[:4] == ["api", "--paginate", "--jq", ".[]"]
-                                        and call[-1].startswith("repos/{owner}/{repo}/commits/")
-                                        and call[-1].endswith("/statuses?per_page=100")
-                                        or call[:4] == ["api", "--paginate", "--jq", ".check_runs[]"]
-                                        and call[-1].startswith("repos/{owner}/{repo}/commits/")
-                                        and call[-1].endswith("/check-runs?per_page=100&filter=all"))]
-            assert reads == default_health_reads
-            assert not any(call[:4] == ["api", "--paginate", "--jq", ".check_runs[]"]
-                           and call[-1].endswith("/check-runs?per_page=100")
-                           for call in reads)
+            # Default health now uses one aggregate request. This contract still
+            # forbids a new wait on the unchanged PR head; select that path with
+            # the shared helper instead of classifying unrelated health reads.
+            assert len(env.gh_calls("api", path=head_checks)) == before_head_checks

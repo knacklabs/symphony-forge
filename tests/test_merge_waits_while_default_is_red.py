@@ -24,6 +24,7 @@ from test_testplace_workflow import _jobs
 
 
 STORY = "FORGE-MERGEQ-1/RED"
+DEFAULT_TESTS = ["api", "graphql", "-f", "operationName=ForgeDefaultTests"]
 
 
 @pytest.mark.platform
@@ -185,6 +186,10 @@ def test_2_a_push_run_tests_only_what_that_merge_brought(repo, gh, tmp_path, mon
 # 3. Existing tests cover pull-request checks and default-branch retests separately, but not
 #    default-branch workflow identity, changing results during the scan or wait, or the red hand-off.
 # 4. These tests drive forge merge/land and fake only GitHub's API and merge endpoints.
+# Request-budget regression: a ready merge with a long default history needs one
+# aggregate GitHub read. Per-commit reads can exhaust the account's quota. The
+# existing result cases do not constrain this cost; extend their command boundary
+# without adding a production seam or replaying the rule at another layer.
 def _rows(rows: list[dict]) -> str:
     return "".join(json.dumps(row) + "\n" for row in rows)
 
@@ -195,19 +200,39 @@ def _workflow_run(sha: str, suite_id: int, *, path: str = ".github/workflows/for
             "head_branch": "main", "head_sha": sha}
 
 
-def _default_ci_result(env, sha: str, runs: list[dict], statuses: list[dict] | None = None,
-                       workflows: list[dict] | None = None) -> None:
-    endpoint = f"repos/{{owner}}/{{repo}}/commits/{sha}"
-    env.gh.respond("api", "--paginate", "--jq", ".[]", endpoint + "/statuses?per_page=100",
-                   stdout=_rows(statuses or []))
-    env.gh.respond("api", "--paginate", "--jq", ".check_runs[]",
-                   endpoint + "/check-runs?per_page=100&filter=all", stdout=_rows(runs))
+def _ci_node(sha: str, runs: list[dict], statuses: list[dict] | None = None,
+             workflows: list[dict] | None = None) -> dict:
     if workflows is None:
         suites = {run.get("check_suite", {}).get("id") for run in runs if run.get("name") == "tests"}
         workflows = [_workflow_run(sha, suite) for suite in suites if isinstance(suite, int)]
-    env.gh.respond("api", "--paginate", "--jq", ".workflow_runs[]",
-                   "--method", "GET", "--raw-field", "per_page=100", "--raw-field",
-                   f"head_sha={sha}", "repos/{owner}/{repo}/actions/runs", stdout=_rows(workflows))
+    return {"status": {"contexts": [
+        {"context": row["context"], "state": row["state"].upper(),
+         "createdAt": row["updated_at"]} for row in statuses or []]},
+        "checkSuites": {"nodes": [
+            {"app": {"slug": "github-actions"}, "branch": {"name": workflow["head_branch"]},
+             "workflowRun": {"event": workflow["event"],
+                             "workflow": {"path": workflow["path"].partition("@")[0]}},
+             "checkRuns": {"nodes": [
+                 {"name": row["name"], "status": row["status"].upper(),
+                  "conclusion": row["conclusion"].upper() if row["conclusion"] else None,
+                  "completedAt": row["completed_at"]}
+                 for row in runs if row["check_suite"]["id"] == workflow["check_suite_id"]]}}
+            for workflow in workflows]}}
+
+
+def _default_ci_result(env, sha: str, runs: list[dict], statuses: list[dict] | None = None,
+                       workflows: list[dict] | None = None) -> str:
+    # Local-test repos still read their full-run statuses, never CI check suites.
+    endpoint = f"repos/{{owner}}/{{repo}}/commits/{sha}"
+    env.gh.respond("api", "--paginate", "--jq", ".[]", endpoint + "/statuses?per_page=100",
+                   stdout=_rows(statuses or []))
+    responses = json.loads(env.gh.responses.read_text(encoding="utf-8"))
+    previous = next((json.loads(rule["stdout"])["data"]["repository"]
+                     for rule in reversed(responses) if rule["args"] == DEFAULT_TESTS), {})
+    previous["c" + sha] = _ci_node(sha, runs, statuses, workflows)
+    answer = json.dumps({"data": {"repository": previous}})
+    env.gh.respond(*DEFAULT_TESTS, stdout=answer)
+    return answer
 
 
 def _queue_gh(env, args: list[str], answers: list[str]) -> None:
@@ -247,9 +272,9 @@ def _fail_default_during_pr_checks(env, head: str, default: str, when: str) -> N
     stub_path = env.repo.bin / "gh"
     header, program = stub_path.read_text(encoding="utf-8").split("\n", 1)
     watched = f"repos/{{owner}}/{{repo}}/commits/{head}/check-runs?per_page=100"
-    endpoint = f"repos/{{owner}}/{{repo}}/commits/{default}/check-runs?per_page=100&filter=all"
-    rule = {"args": ["api", "--paginate", "--jq", ".check_runs[]", endpoint],
-            "stdout": _rows([_ci_run(default, "completed", "failure", when)]),
+    rule = {"args": DEFAULT_TESTS,
+            "stdout": json.dumps({"data": {"repository": {
+                "c" + default: _ci_node(default, [_ci_run(default, "completed", "failure", when)])}}}),
             "stderr": "", "exit": 0}
     prefix = ("import json, pathlib, sys\n"
               "here = pathlib.Path(__file__).resolve().parent\n"
@@ -273,12 +298,11 @@ def _ready_with_changes(env, changes: dict[str, str]) -> tuple[str, Path]:
     return item, where
 
 
-def _repair_default_after_red(env, old_sha: str, *, path: str, content: str,
+def _repair_default_after_red(env, *, path: str, content: str,
                               make_human: bool = False) -> None:
     """Push a real repair commit from the GitHub stub during the default-result lookup."""
     plan_path = env.repo.bin / "default-repair.json"
     plan_path.write_text(json.dumps({
-        "old": old_sha,
         "remote": env.repo.git("remote", "get-url", "origin"),
         "path": path,
         "content": content,
@@ -291,9 +315,7 @@ plan_path = here / "default-repair.json"
 marker = here / "default-repair.sha"
 if plan_path.exists() and not marker.exists():
     plan = json.loads(plan_path.read_text("utf-8"))
-    expected = (f"repos/{{owner}}/{{repo}}/commits/{plan['old']}"
-                "/check-runs?per_page=100&filter=all")
-    if args[:2] == ["api", "--paginate"] and args[-1] == expected:
+    if args[:4] == ["api", "graphql", "-f", "operationName=ForgeDefaultTests"]:
         checkout = here / "default-repair"
         subprocess.run(["git", "clone", "-q", plan["remote"], str(checkout)],
                        check=True, stdin=subprocess.DEVNULL, timeout=60)
@@ -312,28 +334,19 @@ if plan_path.exists() and not marker.exists():
         repaired = subprocess.run(["git", "rev-parse", "HEAD"], cwd=checkout, check=True,
                                   capture_output=True, text=True, encoding="utf-8",
                                   stdin=subprocess.DEVNULL, timeout=60).stdout.strip()
-        endpoint = f"repos/{{owner}}/{{repo}}/commits/{repaired}"
         responses = here / "gh-responses.json"
         rules = json.loads(responses.read_text("utf-8")) if responses.exists() else []
-        rules.extend([
-            {"args": ["api", "--paginate", "--jq", ".[]",
-                      endpoint + "/statuses?per_page=100"],
-             "stdout": "", "stderr": "", "exit": 0},
-            {"args": ["api", "--paginate", "--jq", ".check_runs[]",
-                      endpoint + "/check-runs?per_page=100&filter=all"],
-             "stdout": json.dumps({"name": "tests", "status": "completed",
-                                   "conclusion": "success", "completed_at": "2026-11-18T10:00:03Z",
-                                   "head_sha": repaired, "app": {"slug": "github-actions"},
-                                   "check_suite": {"id": 100}}) + "\\n",
-             "stderr": "", "exit": 0},
-            {"args": ["api", "--paginate", "--jq", ".workflow_runs[]",
-                      "--method", "GET", "--raw-field", "per_page=100", "--raw-field",
-                      "head_sha=" + repaired, "repos/{owner}/{repo}/actions/runs"],
-             "stdout": json.dumps({"check_suite_id": 100, "event": "push",
-                                   "path": ".github/workflows/forge.yml@refs/heads/main",
-                                   "head_branch": "main", "head_sha": repaired}) + "\\n",
-             "stderr": "", "exit": 0},
-        ])
+        prefix = ["api", "graphql", "-f", "operationName=ForgeDefaultTests"]
+        result = json.loads(next(rule["stdout"] for rule in reversed(rules) if rule["args"] == prefix))
+        # This first request still asks about the failed old head. The next fetch
+        # discovers the repair, whose own result is already present in GitHub.
+        result["data"]["repository"]["c" + repaired] = {
+            "status": None, "checkSuites": {"nodes": [{
+                "app": {"slug": "github-actions"}, "branch": {"name": "main"},
+                "workflowRun": {"event": "push", "workflow": {"path": ".github/workflows/forge.yml"}},
+                "checkRuns": {"nodes": [{"name": "tests", "status": "COMPLETED",
+                    "conclusion": "SUCCESS", "completedAt": "2026-11-18T10:00:03Z"}]}}]}}
+        rules.append({"args": prefix, "stdout": json.dumps(result), "stderr": "", "exit": 0})
         responses.write_text(json.dumps(rules), encoding="utf-8")
         marker.write_text(repaired, encoding="utf-8")
 '''
@@ -349,14 +362,15 @@ if plan_path.exists() and not marker.exists():
     "pending-then-failure", "failed-then-pending", "failed-then-cancelled",
     "failed-then-skipped", "tests-fail-after-full-green", "full-green-after-tests-fail",
     "red-at-limit", "repair-disjoint", "repair-overlap", "repair-disables-merge",
-    "human-land-handoff", "newer-pending-then-failure", "same-commit-rerun-green",
+    "human-land-handoff", "newer-failure-over-older-green", "same-commit-rerun-green",
     "foreign-tests-failure-only", "foreign-tests-success-only",
-    "forge-failure-foreign-success",
+    "forge-failure-foreign-success", "green-history",
 ], ids=["failure-during-pr-wait", "pending-rerun", "cancelled-rerun", "skipped-rerun",
        "tests-newest", "full-run-newest", "red-at-limit", "repair-disjoint",
        "repair-overlap", "disabled-during-wait", "human-land-handoff",
-       "newer-pending-turns-red", "same-commit-rerun-turns-green",
-       "foreign-failure-only", "foreign-success-only", "foreign-success-cannot-clear-red"])
+       "newer-result-in-one-snapshot", "same-commit-rerun-turns-green",
+       "foreign-failure-only", "foreign-success-only", "foreign-success-cannot-clear-red",
+       "one-default-result-request"])
 @pytest.mark.platform
 def test_3_merge_waits_while_the_default_branch_is_red(env, monkeypatch, case):
     from test_close import run
@@ -409,7 +423,14 @@ def test_3_merge_waits_while_the_default_branch_is_red(env, monkeypatch, case):
     original_head = env.repo.git("rev-parse", f"fix/{item}")
     default = env.repo.git("rev-parse", "origin/main")
     _github_ready_pr(env, item)
-    if case == "pending-then-failure":
+    if case == "green-history":
+        _default_ci_result(env, default, [_ci_run(default, "completed", "success", stamp)])
+        # Resultless commits must not cause one network read each. Keep them empty
+        # so this case changes admission cost without introducing another test run.
+        for _ in range(29):
+            env.repo.git("commit", "--allow-empty", "-qm", "Move the default branch")
+        env.repo.git("push", "-q", "origin", "main")
+    elif case == "pending-then-failure":
         monkeypatch.setenv("FORGE_CHECKS_WAIT", "1")
         _default_ci_result(env, default, [_ci_run(default, "in_progress", None, stamp)])
         head = env.repo.git("rev-parse", "fix/tidy-readme")
@@ -419,26 +440,24 @@ def test_3_merge_waits_while_the_default_branch_is_red(env, monkeypatch, case):
                   [_rows([run("tests", None, "in_progress"), run("forge-pr-check")]),
                    _rows([run("tests"), run("forge-pr-check")])])
         _fail_default_during_pr_checks(env, head, default, later)
-    elif case == "newer-pending-then-failure":
+    elif case == "newer-failure-over-older-green":
         older = default
         env.commit(env.repo.path, "between.txt", "A later default-branch commit.\n")
         env.repo.git("push", "-q", "origin", "main")
         newest = env.repo.git("rev-parse", "origin/main")
         _default_ci_result(env, older, [_ci_run(older, "completed", "success", stamp)])
-        pending = _ci_run(newest, "in_progress", None, later)
         failure = _ci_run(newest, "completed", "failure", later)
-        _default_ci_result(env, newest, [pending])
-        endpoint = f"repos/{{owner}}/{{repo}}/commits/{newest}/check-runs?per_page=100&filter=all"
-        _queue_gh(env, ["api", "--paginate", "--jq", ".check_runs[]", endpoint],
-                  [_rows([pending]), _rows([failure])])
+        # A single aggregate response removes the old network gap between reading
+        # a pending head and its older green ancestor. The head's finished result
+        # must take precedence even when the ancestor is also in that response.
+        _default_ci_result(env, newest, [failure])
     elif case == "same-commit-rerun-green":
         monkeypatch.setenv("FORGE_CHECKS_WAIT", "1")
         failed = _ci_run(default, "completed", "failure", stamp)
         green = _ci_run(default, "completed", "success", later)
-        _default_ci_result(env, default, [failed])
-        endpoint = f"repos/{{owner}}/{{repo}}/commits/{default}/check-runs?per_page=100&filter=all"
-        _queue_gh(env, ["api", "--paginate", "--jq", ".check_runs[]", endpoint],
-                  [_rows([failed]), _rows([failed, green])])
+        first = _default_ci_result(env, default, [failed])
+        second = _default_ci_result(env, default, [failed, green])
+        _queue_gh(env, DEFAULT_TESTS, [first, second])
     elif case in ("foreign-tests-failure-only", "foreign-tests-success-only"):
         conclusion = "failure" if case.endswith("failure-only") else "success"
         foreign = _ci_run(default, "completed", conclusion, later, suite_id=200)
@@ -470,14 +489,20 @@ def test_3_merge_waits_while_the_default_branch_is_red(env, monkeypatch, case):
         repair_content = ("Welcome\n\nKeep this paragraph.\n\nOriginal line\n" if case == "repair-overlap" else
                           "The repair is on the default branch.\n")
         _default_ci_result(env, default, [_ci_run(default, "completed", "failure", stamp)])
-        _repair_default_after_red(env, default, path=repair_path, content=repair_content,
+        _repair_default_after_red(env, path=repair_path, content=repair_content,
                                   make_human=case == "repair-disables-merge")
     else:
         _default_ci_result(env, default, [_ci_run(default, "completed", "failure", stamp)])
 
     result = env.repo.forge("merge", item)
     merged = env.gh_calls("pr", "merge")
-    if case == "full-green-after-tests-fail":
+    if case == "green-history":
+        assert result.returncode == 0, result.stdout + result.stderr
+        assert len(merged) == 1
+        assert len(env.gh_calls(*DEFAULT_TESTS)) == 1
+        assert not [call for call in env.gh_calls("api")
+                    if call[-1].endswith("/check-runs?per_page=100&filter=all")]
+    elif case == "full-green-after-tests-fail":
         assert result.returncode == 0, result.stdout + result.stderr
         assert len(merged) == 1
     elif case in ("same-commit-rerun-green", "foreign-tests-failure-only",
@@ -494,6 +519,7 @@ def test_3_merge_waits_while_the_default_branch_is_red(env, monkeypatch, case):
         repaired = (env.repo.bin / "default-repair.sha").read_text(encoding="utf-8")
         assert env.repo.git("merge-base", "--is-ancestor", repaired, "origin/main").strip() == ""
         assert result.stdout.count("The default branch is red. Forge will wait for a newer green test result.") == 1
+        assert len(env.gh_calls(*DEFAULT_TESTS)) == 2, "Reuse the green snapshot after the wait"
         if case == "repair-overlap":
             published = merged[0][merged[0].index("--match-head-commit") + 1]
             assert published != original_head
@@ -549,6 +575,7 @@ def test_4_a_laptop_repo_waits_on_a_failed_full_run(env, state, monkeypatch):
     merged = env.repo.forge("merge", item)
 
     attempts = env.gh_calls("pr", "merge")
+    assert not env.gh_calls(*DEFAULT_TESTS), "Laptop repos do not read CI check suites"
     if state == "failure":
         assert merged.returncode != 0, merged.stdout + merged.stderr
         assert not attempts

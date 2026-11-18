@@ -202,7 +202,8 @@ def merge(args: argparse.Namespace, *, refreshed: bool = False) -> int:
             if repo.merge_setting(top) != "agent":
                 repo.refuse(REFUSALS["owner_merges" if item == ENABLE else "disabled"], item=item)
             deadline = time.monotonic() + float(os.environ.get("FORGE_CHECKS_WAIT", "5400"))
-            while red(top, item=item):
+            refresh_red = False
+            while red(top, item=item, refresh=refresh_red):
                 if not red_announced:
                     print("The default branch is red. Forge will wait for a newer green test result.", flush=True)
                     red_announced = True
@@ -211,6 +212,7 @@ def merge(args: argparse.Namespace, *, refreshed: bool = False) -> int:
                     repo.refuse(REFUSALS["red_default"], item=item, full_run=fullrun.next_run(top))
                 time.sleep(min(15, left))
                 repo.git("fetch", "-q", "origin", default, cwd=top)
+                refresh_red = True
                 if repo.merge_setting(top) != "agent":
                     repo.refuse(REFUSALS["disabled"], item=item)
             if train or repo.git("rev-parse", f"origin/{default}", cwd=top) == checked_default:
@@ -423,36 +425,67 @@ def _save_ready(path: Path, receipt: dict) -> None:
     os.replace(saved, path)
 
 
-def red(top: Path, *, item: str = "") -> bool:
+def red(top: Path, *, item: str = "", refresh: bool = False) -> bool:
     """The newest finished test result on the newest commit with one decides."""
     default = repo.default_branch(top)
     commits = repo.git("rev-list", "--first-parent", "--max-count=30",
                        f"origin/{default}", cwd=top).splitlines()
     config = repo._config_text(story.show(top, f"origin/{default}", "forge.toml") or "")
+    ci = repo.test_place(config) == "ci"
+    snapshot = repo.command_fact("default test result", top, dict)
+    if ci and not refresh and snapshot.get("head") == commits[0]:
+        return snapshot["red"]
+    if ci:
+        # Use the local first-parent history: GraphQL history also includes commits
+        # from merged branches. Fetch their results together, without per-commit I/O.
+        fields = """status { contexts { context state createdAt } }
+          checkSuites(first:100,filterBy:{checkName:"tests"}) { nodes {
+            app { slug } branch { name } workflowRun { event workflow { path } }
+            checkRuns(first:100,filterBy:{checkName:"tests",checkType:ALL}) { nodes {
+              name status conclusion completedAt
+            } }
+          } }"""
+        objects = " ".join(f'c{sha}:object(oid:"{sha}") {{ ... on Commit {{ {fields} }} }}'
+                           for sha in commits)
+        query = ('query ForgeDefaultTests($owner:String!,$repo:String!) {'
+                 ' repository(owner:$owner,name:$repo) { ' + objects + ' } }')
+        done = repo.run("gh", "api", "graphql", "-f", "operationName=ForgeDefaultTests",
+                        "-F", "owner={owner}", "-F", "repo={repo}",
+                        "-f", "query=" + " ".join(query.split()), cwd=top, timeout=60)
+        try:
+            data = json.loads(done.stdout)
+            nodes = data["data"]["repository"]
+            if done.returncode or data.get("errors") or not isinstance(nodes, dict):
+                raise ValueError
+        except (ValueError, KeyError, TypeError):
+            repo.refuse(checks.REFUSALS["not_green"], item=item,
+                        reason="GitHub did not answer: " + (done.stderr.strip() or done.stdout.strip()
+                                                           or "no readable answer").rstrip("."))
 
     def result(sha: str) -> bool | None:
-        endpoint = f"repos/{{owner}}/{{repo}}/commits/{sha}"
-        statuses = checks._ask(top, item, ".", endpoint + "/statuses?per_page=100")
-        results = [(row.get("updated_at") or row.get("created_at"), row["state"] == "success")
+        if ci:
+            node = nodes.get("c" + sha) or {}
+            statuses = (node.get("status") or {}).get("contexts", [])
+        else:
+            rows = checks._ask(top, item, ".", f"repos/{{owner}}/{{repo}}/commits/{sha}/statuses?per_page=100")
+            statuses = [{"context": row.get("context"), "state": row.get("state", "").upper(),
+                         "createdAt": row.get("updated_at") or row.get("created_at")} for row in rows]
+        results = [(row.get("createdAt"), row["state"] == "SUCCESS")
                    for row in statuses if row.get("context") == fullrun.STATUS
-                   and row.get("state") in ("success", "failure", "error")]
-        if repo.test_place(config) == "ci":
-            runs = checks._ask(top, item, ".check_runs", endpoint + "/check-runs?per_page=100&filter=all")
-            finished_runs = [row for row in runs if row.get("name") == "tests"
-                             and row.get("status") == "completed" and row.get("completed_at")
-                             and row.get("app", {}).get("slug") == "github-actions"
-                             and row.get("conclusion") in ("success", "failure", "timed_out",
-                                                           "action_required", "startup_failure")]
-            if finished_runs:
-                workflows = checks._ask(top, item, ".workflow_runs", "repos/{owner}/{repo}/actions/runs",
-                                        "--method", "GET", "--raw-field", "per_page=100",
-                                        "--raw-field", f"head_sha={sha}")
-                own = {run.get("check_suite_id") for run in workflows
-                       if str(run.get("path", "")).partition("@")[0] == ".github/workflows/forge.yml"
-                       and run.get("event") == "push" and run.get("head_branch") == default
-                       and run.get("head_sha") == sha} - {None}
-                results.extend((row["completed_at"], row["conclusion"] == "success")
-                               for row in finished_runs if row.get("check_suite", {}).get("id") in own)
+                   and row.get("state") in ("SUCCESS", "FAILURE", "ERROR")]
+        if ci:
+            for suite in (node.get("checkSuites") or {}).get("nodes", []):
+                workflow = suite.get("workflowRun") or {}
+                if ((suite.get("app") or {}).get("slug") != "github-actions"
+                        or (suite.get("branch") or {}).get("name") != default
+                        or workflow.get("event") != "push"
+                        or (workflow.get("workflow") or {}).get("path") != ".github/workflows/forge.yml"):
+                    continue
+                results.extend((row["completedAt"], row["conclusion"] == "SUCCESS")
+                               for row in (suite.get("checkRuns") or {}).get("nodes", [])
+                               if row.get("name") == "tests" and row.get("status") == "COMPLETED"
+                               and row.get("completedAt") and row.get("conclusion") in
+                               ("SUCCESS", "FAILURE", "TIMED_OUT", "ACTION_REQUIRED", "STARTUP_FAILURE"))
         finished = [(datetime.fromisoformat(date.replace("Z", "+00:00")), green)
                     for date, green in results if date]
         if finished:
@@ -467,12 +500,14 @@ def red(top: Path, *, item: str = "") -> bool:
             red_result = found
             break
         pending.append(sha)
-    # A recent pending run can finish while the older commits are read. Read the
-    # newest commit last, so its result takes precedence just before a merge.
-    for sha in reversed(pending):
+    # Laptop full-run statuses still use separate reads. Recheck recent pending
+    # commits last; CI already supplied every result in one response.
+    for sha in reversed(pending) if not ci else []:
         found = result(sha)
         if found is not None:
             red_result = found
+    if ci:
+        snapshot.update(head=commits[0], red=red_result)
     return red_result
 
 
