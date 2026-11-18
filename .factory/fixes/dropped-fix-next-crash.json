@@ -11,14 +11,129 @@
   "done_when": "forge next and worker rounds skip a dropped fix whose checkout is gone, with no traceback; a command-level test drops a fix, removes its worktree and runs forge next; new and existing repos get it on upgrade",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [
+    {
+      "area": "worktrees.read() in src/forge/story.py",
+      "file": "src/forge/story.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 812,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: forge next and worker rounds skip a dropped fix whose checkout is gone, with no traceback",
+      "work": 2
+    },
+    {
+      "area": "worktrees.read() in src/forge/story.py",
+      "file": "src/forge/story.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 812,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: unrelated branch names can stop worker rounds",
+      "work": 2
+    },
+    {
+      "area": "src/forge/worker.py",
+      "file": "src/forge/worker.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 64,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: allow workers to run forge next when their assignment needs it",
+      "work": 1
+    },
+    {
+      "area": "test_1_next_skips_a_dropped_fix_whose_checkout_is_gone() in tests/test_next_skips_removed_dropped_fixes.py",
+      "file": "tests/test_next_skips_removed_dropped_fixes.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 40,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: clean-review worker round after a checkout is removed",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "fb11bffced99f5e3578a488adc8d2ae84b393f7d32d5ad7011de0aa98e40edd9",
+    "changed": "18daf8390180bddc4daa0f27cd002ec2639467331102d4208aede94de7c7d743",
+    "commit": "d163fcab0ab2075761d03f1ea51fbd02bcf4f2c2",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Not done\nCase: normal use - a teammate drops a fix, another teammate fetches the drop and removes their stale checkout.\nThe filter reads only the local branch's state. That branch can still say the fix is active even though its fetched remote state says dropped. The missing path remains in the inventory, and `board.py:985-991` runs Git with that path as its working directory, so `forge next` still raises FileNotFoundError. `nextstep.py:942-955` already recognizes when the remote drop is newer. The Done-when requires: forge next and worker rounds skip a dropped fix whose checkout is gone, with no traceback; a command-level test drops a fix, removes its worktree and runs forge next; new and existing repos get it on upgrade.",
+        "file": "src/forge/story.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 812,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: forge next and worker rounds skip a dropped fix whose checkout is gone, with no traceback",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - an adopted repo has a removed worktree for a conventionally named branch such as `fix/PROJ-123/login`, and a worker starts an unrelated Forge fix.\nThe new inventory calls `repo.state_path` for every missing `fix/` or `forge/` worktree without first establishing that its suffix is a Forge item. The suffix in this example is not a valid item, so `state_path` raises a refusal before `worker.checkout` can select the active fix. The refusal directs the user to `forge next`, which reaches the same new check. Previously the inventory did not validate unrelated branch names.\nAdds work: validate branch names before looking up fix state; F 2 x H 2 = 4; 2 x C = 4.",
+        "file": "src/forge/story.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 812,
+        "priority": "P1",
+        "title": "Functional: unrelated branch names can stop worker rounds",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 1, Harm 3\nRaise: Functional\nCase: normal use - a worker is assigned to reproduce or test a `forge next` defect.\nEvery worker brief now unconditionally says not to run `forge next`, even when the assignment explicitly requires that command. This fix's coordinator note asks the worker to reproduce the failure by running it, and `plans/FORGE-JOURNEY-1.md:112` gives another task that requires it. A worker following the new instruction cannot carry out that requested check. Limit the guidance to using `next` to choose work, rather than forbidding the command needed by the brief.",
+        "file": "src/forge/worker.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 64,
+        "priority": "P1",
+        "title": "Functional: allow workers to run forge next when their assignment needs it",
+        "work": 1
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - an existing worker receives another round after a clean review.\nThe named proof starts `active-greeting` and invokes `forge work` only once, with no earlier worker round or clean review. It therefore does not exercise the continued-brief path in `worker.py:655-658`. Its prompt assertions also do not check the positive instruction to complete the brief: removing that instruction from the continued prompt would leave this test passing. Extend the command-level proof to inspect a resumed round after a clean review and verify that it directs the worker to continue its brief.",
+        "file": "tests/test_next_skips_removed_dropped_fixes.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 40,
+        "priority": "P1",
+        "title": "Gate: clean-review worker round after a checkout is removed",
+        "work": 2
+      }
+    ],
+    "id": "060c585a-9c69-44c2-bb4d-57f438cc8e88",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-18T16:43:39.626718+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-18T17:01:18.982311+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-11-18T17:01:18.996284+00:00",
+    "file": "src/forge/story.py",
+    "wait_id": "c6938887-0206-4d20-a13a-5e0ddccb3a60"
+  },
   "stuck": {
     "close": null,
     "head": "bd1da78fd79c71b2569c69d06bdc529ddefc47b1",
