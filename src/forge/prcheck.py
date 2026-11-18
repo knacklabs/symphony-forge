@@ -63,6 +63,7 @@ jobs:
     runs-on: <runner>
     outputs:
       docs-only: ${{ steps.docs.outputs.docs-only }}
+      docs-tests: ${{ steps.docs.outputs.docs-tests }}
       one-group: ${{ steps.docs.outputs.one-group }}
     steps:
       - uses: actions/checkout@v7
@@ -124,6 +125,7 @@ jobs:
           TEST_GROUP_RESULT: ${{ needs.tests.result }}
           DOCS_CHECK: ${{ needs.docs-check.result }}
           DOCS_ONLY: ${{ needs.docs-check.outputs.docs-only }}
+        shell: bash
         run: test "$DOCS_CHECK" = success && { test "$TEST_GROUP_RESULT" = success || { test "$DOCS_ONLY" = true && test "$TEST_GROUP_RESULT" = skipped; }; }
       - if: needs.docs-check.outputs.docs-only == 'true'
         run: "echo 'docs only: tests skipped'"
@@ -416,6 +418,9 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
             "${{ needs.docs-check.outputs.one-group == 'true' && '1' || '<groups>' }}", "'1'")
         single = single.replace("    steps:\n", "    steps:\n<group-warning>", 1)
         template = template[:start] + single + template[gate:]
+    elif test_runner != cfg.get("runner", repo.DEFAULTS["runner"]):
+        template = template.replace("    runs-on: <test-runner>\n",
+            "    runs-on: ${{ needs.docs-check.outputs.docs-tests == 'true' && <runner> || <test-runner> }}\n")
     workflow = (template.replace("<full-triggers>", full_triggers)
                 .replace("<full-suite-job>", full_suite)
                 .replace("      - uses: astral-sh/setup-uv@v6\n",
