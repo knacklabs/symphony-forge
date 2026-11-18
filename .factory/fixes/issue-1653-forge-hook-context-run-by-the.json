@@ -4,12 +4,20 @@
   "done_when": "forge hook context finishes in about 2 seconds or less on a repo with many hotspots, prints at most a few hotspot lines with a pointer to the full list, and worker rounds start without an initialize timeout",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-18T01:44:42.035325+00:00",
       "step": "start"
     }
   ],
-  "why": "Issue 1653: forge hook context, run by the generated Claude SessionStart hook, takes 72 to 124 s and prints 150 to 200 KB in a client repo, almost all of it 'X keeps breaking: N noted problems are open there' blocks with full forge fix start commands, one per file. Claude worker rounds fail with 'Control request timeout: initialize', and every session gets a huge context."
+  "stuck": {
+    "close": null,
+    "head": "8b86056483a5a87e58eae28deed7b2d0b1489e58",
+    "keys": {},
+    "round": null
+  },
+  "why": "Issue 1653: forge hook context, run by the generated Claude SessionStart hook, takes 72 to 124 s and prints 150 to 200 KB in a client repo, almost all of it 'X keeps breaking: N noted problems are open there' blocks with full forge fix start commands, one per file. Claude worker rounds fail with 'Control request timeout: initialize', and every session gets a huge context.",
+  "worker": "claude"
 }
