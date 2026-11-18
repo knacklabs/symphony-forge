@@ -35,7 +35,7 @@ def test_2_worker_test_guidance_follows_the_repo_test_place(repo, monkeypatch, t
                              'test = "python -c \\\"print(123)\\\""\n'
                              'models.fix = { model = "sonnet", effort = "medium" }\n')
     repo.git("add", "forge.toml")
-    repo.git("commit", "-q", "-m", "Set the test place")
+    repo.git("commit", "--allow-empty", "-q", "-m", "Set the test place")
     repo.git("push", "-q", "origin", "main")
     started = repo.forge("fix", "start", "Check worker test guidance", "--done",
                          "Workers follow the repo test place", "--kind", "mechanical")

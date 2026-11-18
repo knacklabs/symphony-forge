@@ -43,7 +43,7 @@ def test_1_stop_releases_an_item_whose_run_ended(repo, gh, monkeypatch, tmp_path
     synced = repo.forge("sync")
     assert synced.returncode == 0, synced.stdout + synced.stderr
     repo.git("add", "-A")
-    repo.git("commit", "-qm", "Set the client tools")
+    repo.git("commit", "--allow-empty", "-qm", "Set the client tools")
     repo.git("switch", "-q", "main")
     repo.git("merge", "-q", "--ff-only", "fix/settings")
     _publish_default(repo, repo.git("remote", "get-url", "origin"))

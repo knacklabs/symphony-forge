@@ -181,7 +181,7 @@ def _next_rejects_the_first_placeholder_before_a_later_runnable_step(repo, gh):
     folder = worktree(repo, "task/BOARD-PAGE")
     # A human's historical merge lacks the outcome trailer now written by forge merge.
     repo.git("merge", "-q", "--squash", "task/BOARD-PAGE")
-    repo.git("commit", "-qm", "Merge the board task without an outcome")
+    repo.git("commit", "--allow-empty", "-qm", "Merge the board task without an outcome")
     repo.git("push", "-q", "origin", "main")
     repo.git("worktree", "remove", str(folder))
     made = repo.forge("fix", "start", "Polish the guide", "--done", "Reads clearly", "--slug", "polish")
@@ -269,7 +269,7 @@ def test_1_board_shows_stories_workers_checks_and_findings(repo, gh, request, co
                'models.build = { model = "gpt-6.1-sol", effort = "medium" }\n'
                'models.fix = { model = "gpt-6-luna", effort = "high" }\n')
     repo.git("add", "forge.toml")
-    repo.git("commit", "-qm", "Choose build model")
+    repo.git("commit", "--allow-empty", "-qm", "Choose build model")
     story(repo)
     repo.git("worktree", "add", str(repo.path.parent / "repo-BOARD"), "story/BOARD")
     assert plain_next(repo)[0] == "forge task start BOARD/PAGE"
@@ -347,7 +347,7 @@ def test_1_board_shows_stories_workers_checks_and_findings(repo, gh, request, co
         lock.unlink()
     # A landed task is finished, even though the committed state still says working.
     repo.git("add", "-A", cwd=folder)
-    repo.git("commit", "-qm", "Finish the task", cwd=folder)
+    repo.git("commit", "--allow-empty", "-qm", "Finish the task", cwd=folder)
     repo.git("merge", "--no-ff", "-m", "Accept the task", "task/BOARD-PAGE")
     repo.git("push", "-q", "origin", "main")
     child = next(r for r in view(repo, "board")["items"] if r["id"] == "BOARD")["children"][0]
@@ -361,7 +361,7 @@ def _successful_checks_do_not_replace_close_receipts(repo, gh, context):
     setup(repo, keys=())
     repo.write("forge.toml", (repo.path / "forge.toml").read_text() + 'checks = ["forge-pr-check"]\n')
     repo.git("add", "forge.toml")
-    repo.git("commit", "-qm", "Choose required check")
+    repo.git("commit", "--allow-empty", "-qm", "Choose required check")
     repo.git("push", "-q", "origin", "main")
     story(repo)
     assert repo.forge("task", "start", "BOARD/PAGE").returncode == 0
@@ -429,7 +429,7 @@ def _skipped_checks_fail_only_when_required(repo, gh, conclusion, required):
     setup(repo, keys=())
     repo.write("forge.toml", (repo.path / "forge.toml").read_text() + 'checks = ["forge-pr-check"]\n')
     repo.git("add", "forge.toml")
-    repo.git("commit", "-qm", "Choose required check")
+    repo.git("commit", "--allow-empty", "-qm", "Choose required check")
     repo.git("push", "-q", "origin", "main")
     made = repo.forge("fix", "start", "Polish the guide", "--done", "The guide reads clearly", "--slug", "polish")
     assert made.returncode == 0, made.stderr
@@ -464,7 +464,7 @@ def test_2_next_and_board_share_the_mod_contract(repo, gh, request, status, merg
     setup(repo, keys=())
     repo.write("forge.toml", (repo.path / "forge.toml").read_text() + f'merge = "{merge}"\n')
     repo.git("add", "forge.toml")
-    repo.git("commit", "-qm", "Choose merge owner")
+    repo.git("commit", "--allow-empty", "-qm", "Choose merge owner")
     repo.git("push", "-q", "origin", "main")
     made = repo.forge("fix", "start", "Polish the guide", "--done", "The guide reads clearly", "--slug", "polish")
     assert made.returncode == 0, made.stderr
@@ -619,7 +619,7 @@ def test_4_client_machine_views_follow_the_last_task_merge(env, history, phase):
         shutil.copytree(ROOT / "tests/fixtures/adopted-v1.2.2/client", repo.path,
                         dirs_exist_ok=True)
         repo.git("add", "-A")
-        repo.git("commit", "-qm", "Adopt Forge v1.2.2")
+        repo.git("commit", "--allow-empty", "-qm", "Adopt Forge v1.2.2")
         env.commit(repo.path, ".factory/fixes/upgrade-client.json", json.dumps({
             "kind": "fix", "branch": "fix/upgrade-client", "why": "Upgrade Forge",
             "done_when": "The client uses this release", "status": "started"}))
@@ -632,7 +632,7 @@ def test_4_client_machine_views_follow_the_last_task_merge(env, history, phase):
         synced = repo.forge("sync")
         assert synced.returncode == 0, synced.stderr
         repo.git("add", "-A")
-        repo.git("commit", "-qm", "Upgrade Forge and sync")
+        repo.git("commit", "--allow-empty", "-qm", "Upgrade Forge and sync")
         checkout = env.tmp / "upgraded-checkout"
         remote = repo.git("remote", "get-url", "origin")
         repo.git("clone", "-q", "--branch", "fix/upgrade-client", str(repo.path), str(checkout))
@@ -741,7 +741,7 @@ def test_4_client_machine_views_follow_the_last_task_merge(env, history, phase):
             if merged_fix:
                 # Retain the merged worktree to cover its permission-dependent cleanup instruction.
                 repo.git("merge", "--squash", "fix/tidy-readme")
-                repo.git("commit", "-qm", "Accept the fix")
+                repo.git("commit", "--allow-empty", "-qm", "Accept the fix")
                 repo.git("push", "-q", "origin", "main")
             repo.git("remote", "set-url", "origin", str(env.tmp / "unreachable.git"))
             offline = {r["id"]: r for r in view(repo, "board")["items"]}

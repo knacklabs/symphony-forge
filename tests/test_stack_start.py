@@ -281,7 +281,7 @@ def test_2_unsafe_starts_name_the_blocker_without_creating_work(env, previous, c
             elif case == "stacked-human-merged":
                 # A merge outside Forge has no receipt; B is a base once it holds the merge.
                 repo.git("merge", "-q", "--squash", "task/STACK-A")
-                repo.git("commit", "-qm", "Merge the first part on GitHub")
+                repo.git("commit", "--allow-empty", "-qm", "Merge the first part on GitHub")
                 repo.git("push", "-q", "origin", "main")
             part, command = "D", "forge next"
             problem = "STACK/D waits for STACK/B, which builds on STACK/A, so it starts once STACK/A merges."

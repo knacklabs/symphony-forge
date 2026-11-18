@@ -42,7 +42,7 @@ def test_2_worker_and_review_get_both_ui_skills_and_blocking_checks(env):
     config.write_text(config.read_text("utf-8") +
                       'models.lite = { model = "sonnet", effort = "medium" }\n', "utf-8")
     repo.git("add", "forge.toml")
-    repo.git("commit", "-q", "-m", "Pin worker model")
+    repo.git("commit", "--allow-empty", "-q", "-m", "Pin worker model")
     repo.git("push", "-q", "origin", "main")
     log = install_claude(repo)
     item, _ = env.start_fix()

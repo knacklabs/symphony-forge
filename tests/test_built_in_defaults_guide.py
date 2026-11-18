@@ -45,7 +45,7 @@ def test_6_the_constitution_lists_the_built_in_defaults_and_existing_apps_keep_t
                       config.read_text("utf-8"), flags=re.M)
     config.write_text(settings, encoding="utf-8")
     _fixture_git(repo, tmp_path, "add", "-A", cwd=client)
-    _fixture_git(repo, tmp_path, "commit", "-q", "-m", "Prepare the client", cwd=client)
+    _fixture_git(repo, tmp_path, "commit", "--allow-empty", "-q", "-m", "Prepare the client", cwd=client)
     _fixture_git(repo, tmp_path, "push", "-q", "origin", "main", cwd=client)
 
     started = repo.forge("fix", "start", "Check built-in defaults guide", "--done",
@@ -61,7 +61,7 @@ def test_6_the_constitution_lists_the_built_in_defaults_and_existing_apps_keep_t
         assert not (top / "libs/organisations").exists()
         # The worker receives a clean branch, not a reminder to commit sync's output.
         _fixture_git(repo, tmp_path, "add", "-A", cwd=top)
-        _fixture_git(repo, tmp_path, "commit", "-q", "-m", "Sync the client guide", cwd=top)
+        _fixture_git(repo, tmp_path, "commit", "--allow-empty", "-q", "-m", "Sync the client guide", cwd=top)
 
     # Audit: init and sync must copy the built-in schema and link rule into fixed rules.
     # A missing line lets new and adopted apps omit this database contract.
