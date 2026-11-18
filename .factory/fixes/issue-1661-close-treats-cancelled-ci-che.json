@@ -11,7 +11,7 @@
       "gain": 4,
       "harm": 3,
       "line": 350,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -37,7 +37,7 @@
       "gain": 3,
       "harm": 3,
       "line": 120,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -60,58 +60,38 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "3b90ad91c1a1d31af6fe5f8d3308cac44dcc015915526b8744fb9e80cb2a0fa1",
-    "changed": "72e9a172d3a1cd7d5d23a004e3639ce2722c1fb5d449b28c6f4051b1385dbcdf",
-    "commit": "4dbb8a6a3c4f210f3a80ca0f6687b327fdfaef47",
+    "branch_diff": "c5a5afb5bff9e20c2b1c6ab6910f340fc79e856cb426e7d9299440b5f41c2b96",
+    "changed": "ee7aa5798a6e0f26f830f6255e5b16c53347ef22b427e9ce7466be43ba77e9a8",
+    "commit": "3e4a6f648db8db5ec86615a0e64c61ff9455436f",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - one workflow runs different jobs for pull requests and manual dispatches on the same commit. If its pull-request `tests` job is cancelled and a newer dispatch run completes without running that job, the workflow ID and run number match this condition, so the cancelled `tests` check becomes PASS. Event-dependent job names are already used in `.github/workflows/forge.yml:97`; a skipped dispatch job with a different name does not satisfy or fail `tests`. `_pending` at `src/forge/checks.py:365` then counts the old cancelled check as the required passing check, allowing close to report green without successful PR tests. [GitHub supports event-specific jobs](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/trigger-a-workflow).",
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done\nCase: normal use - `forge land` retries a cancelled lint workflow, and the retry succeeds within a minute. `land.py:64` enables progress caching, and `checks.py:268-270` retains the original cancelled checks for 60 seconds. When the fresh workflow response reports completed attempt 2, this branch leaves those cached checks red even if the retry succeeded, so `_pending` reports a failure and recommends `forge work`. The previous round raised this cancellation classification problem. Its third-party case also remains: lines 345-347 leave a cancelled GitHub App check red when it has no matching Actions workflow. [GitHub's Checks API](https://docs.github.com/en/rest/checks/runs?apiVersion=latest) supports checks created by apps. The approved item remains unmet: \"When an item's CI checks were cancelled and none failed, close starts them again or waits for the newer run instead of sending the item to a worker round\".",
         "file": "src/forge/checks.py",
         "gain": 4,
         "harm": 3,
-        "line": 350,
-        "priority": "P1",
-        "title": "Do not treat a different event's completed run as a passing check",
-        "work": 2
-      },
-      {
-        "body": "Gain 5, Work 2, Harm 3\nRaise: Not done\nCase: normal use - a cancelled Actions workflow contains multiple jobs, as the matrix in `.github/workflows/forge.yml:41` does. After starting the first job's workflow again, the next cancelled job has the same run ID and reaches line 352 with the original completed snapshot, so it stays RED and close recommends `forge work` immediately. GitHub puts a workflow's jobs in one check suite ([GitHub documentation](https://docs.github.com/en/actions/how-tos/monitor-workflows/use-workflow-run-logs)). The same classification also occurs for a cancelled third-party check with no matching Actions run at lines 344-346. When an existing rerun is already running, lines 347-353 can try to start it again instead of waiting: GitHub retains the run number across attempts. The unmet item is: \"When an item's CI checks were cancelled and none failed, close starts them again or waits for the newer run instead of sending the item to a worker round\".",
-        "file": "src/forge/checks.py",
-        "gain": 5,
-        "harm": 3,
-        "line": 352,
+        "line": 357,
         "priority": "P1",
         "required_done_when": true,
         "title": "Not done: Cancelled checks are still reported as failed",
         "work": 2
       },
       {
-        "body": "Gain 3, Work 1, Harm 3\nRaise: Functional\nCase: normal use - a cancelled workflow is rerun, is cancelled again, and the user runs close again on the same head. The `rerun` set is recreated for every wait, so the new invocation starts the same workflow yet again instead of honoring the recorded one-retry limit. Repeated cancellations and restarts can keep consuming CI time without reaching the intended stop. GitHub exposes an attempt number that persists across reruns ([GitHub documentation](https://docs.github.com/en/actions/reference/workflows-and-actions/variables)).\nAdds work: recognize an already retried workflow when close restarts; F 2 x H 2 = 4; 2 x C = 2.",
-        "file": "src/forge/checks.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 120,
-        "priority": "P1",
-        "title": "Honor the single retry when close is restarted",
-        "work": 1
-      },
-      {
-        "body": "Gain 3, Work 1, Harm 3\nRaise: Test\nCase: normal use - a rerun remains pending or is cancelled a second time. The first two named proofs assert only a successful close and the rerun-call count; they would still pass if close returned before reading the pending and green answers. The third proof supplies only the original cancelled check and completed workflow, which the queue repeats (`tests/test_land.py:73`); it never supplies a new attempt that was cancelled. It therefore passes when the original cancellation is immediately mistaken for a second cancellation, and it does not verify the claimed worker dispatch.",
+        "body": "Gain 3, Work 1, Harm 3\nRaise: Test\nCase: normal use - a newer run of the same event is queued before it has published its own check runs. The second proof supplies a separate pending check from the newer suite, so it still passes if the cancelled check is incorrectly marked PASS while the newer workflow is running: that separate check forces the wait. Without that check, the same regression would let close report ready early. Lines 52-53 assert only success and the absence of a rerun; the proof needs to verify waiting when the newer run has not yet reported a job.",
         "file": "tests/test_close_reruns_cancelled_ci.py",
         "gain": 3,
         "harm": 3,
-        "line": 55,
+        "line": 48,
         "priority": "P1",
         "title": "Gate: tests/test_close_reruns_cancelled_ci.py",
         "work": 1
       }
     ],
-    "id": "4af07d72-30a3-4e8d-93e6-ebaa9f09e6c4",
+    "id": "6cb4a023-9ff5-46b9-ba98-7fb3b5b204b4",
     "status": "blocked"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-18T05:31:26.203001+00:00",
@@ -120,8 +100,17 @@
     {
       "at": "2026-11-18T06:31:17.083051+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-11-18T07:17:49.372244+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-11-18T07:17:49.372542+00:00",
+    "file": "src/forge/checks.py",
+    "wait_id": "ae2877ae-d1d0-4ff8-a729-46f0d08e2889"
+  },
   "stuck": {
     "close": "36c36ee1-0101-40d7-b73e-38dcfdab9963",
     "head": "b945df984357c6d641b077779aba07cf0f488a51",
