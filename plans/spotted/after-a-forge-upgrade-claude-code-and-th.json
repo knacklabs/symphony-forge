@@ -1,0 +1,70 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/upgrade.py\tFunctional: Give a usable command when an update needs elevation\tafter-a-forge-upgrade-claude-code-and-th",
+      "kind": "bug",
+      "path": "src/forge/upgrade.py",
+      "line": 261,
+      "text": "Functional: Give a usable command when an update needs elevation",
+      "from": "blocking",
+      "item": "after-a-forge-upgrade-claude-code-and-th",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/upgrade.py\tFunctional: Recognize the supported standalone and Windows npm installations\tafter-a-forge-upgrade-claude-code-and-th",
+      "kind": "bug",
+      "path": "src/forge/upgrade.py",
+      "line": 255,
+      "text": "Functional: Recognize the supported standalone and Windows npm installations",
+      "from": "blocking",
+      "item": "after-a-forge-upgrade-claude-code-and-th",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/upgrade.py\tFunctional: Update the npm installation that supplies Codex on PATH\tafter-a-forge-upgrade-claude-code-and-th",
+      "kind": "bug",
+      "path": "src/forge/upgrade.py",
+      "line": 255,
+      "text": "Functional: Update the npm installation that supplies Codex on PATH",
+      "from": "blocking",
+      "item": "after-a-forge-upgrade-claude-code-and-th",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/upgrade.py\tNot done: After the upgrade, Claude Code and the Codex CLI are at their latest versions, and the upgrade says which version each one.\tafter-a-forge-upgrade-claude-code-and-th",
+      "kind": "bug",
+      "path": "src/forge/upgrade.py",
+      "line": 220,
+      "text": "Not done: After the upgrade, Claude Code and the Codex CLI are at their latest versions, and the upgrade says which version each one.",
+      "from": "blocking",
+      "item": "after-a-forge-upgrade-claude-code-and-th",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\ttests/conftest.py\tGate: Keep the existing doctor test's fake tools on PATH\tafter-a-forge-upgrade-claude-code-and-th",
+      "kind": "bug",
+      "path": "tests/conftest.py",
+      "line": 574,
+      "text": "Gate: Keep the existing doctor test's fake tools on PATH",
+      "from": "blocking",
+      "item": "after-a-forge-upgrade-claude-code-and-th",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_upgrade_updates_agent_tools.py\tGate: test_1_upgrade_updates_both_tools_and_names_their_versions\tafter-a-forge-upgrade-claude-code-and-th",
+      "kind": "bug",
+      "path": "tests/test_upgrade_updates_agent_tools.py",
+      "line": 39,
+      "text": "Gate: test_1_upgrade_updates_both_tools_and_names_their_versions",
+      "from": "blocking",
+      "item": "after-a-forge-upgrade-claude-code-and-th",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
