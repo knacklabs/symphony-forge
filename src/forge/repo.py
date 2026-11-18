@@ -342,8 +342,7 @@ def resolve_commit(top: Path, ref: str) -> str:
 
 
 # Short network outages, as git and gh print them; the queue (land.py) starts a change again on them too.
-NETWORK = ("Could not resolve host", "i/o timeout", "Connection timed out", "Connection reset",
-           "error connecting to")
+NETWORK = github.NETWORK
 
 
 def _github_read(args: tuple[str, ...], execute) -> subprocess.CompletedProcess[str]:
@@ -966,6 +965,7 @@ def check_pin(cwd: str | os.PathLike[str] | None = None, item: str = "", words: 
     On the default branch a newer Forge runs while an upgrade fix waits: the default branch as last
     fetched still pins an older one, and a fix worktree pins the installed one.
     """
+    github.wait_for_reset = words in ("close", "merge", "land")
     if words == "work":
         from forge.worker import prepare
         prepare(item)  # Merge the default before even the release pin reads settings.
