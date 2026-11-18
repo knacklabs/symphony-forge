@@ -11,7 +11,7 @@
       "gain": 4,
       "harm": 3,
       "line": 196,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -24,7 +24,7 @@
       "gain": 4,
       "harm": 3,
       "line": 196,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -63,7 +63,7 @@
       "gain": 4,
       "harm": 2,
       "line": 196,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -73,68 +73,37 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "0ef50a83f825f5593a3f45036d6b5c535cc1ad0c74f40d3523d010cba9dc9dd5",
-    "changed": "cd1b07ea70c52e39aa9e698c3f1e81ab04001e12bada74ec7aa5e4a3654a7b88",
-    "commit": "2082323b35c8f66068556bd17ff5025bb10c1b2b",
+    "branch_diff": "698af2e7f53c00997f25977478db0b7247fdaa4e11afa4974ac6c56dbb234e85",
+    "changed": "de8705622ffc1e1d51fe073c9e7a74ca3543c77b57c83a1e81ee618778b278e1",
+    "commit": "830526d3a6e5dddde6186a6757d143b6c0c3f801",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done - The full owner-approved item is: \"forge hook context finishes in about 2 seconds or less on a repo with many hotspots, prints at most a few hotspot lines with a pointer to the full list, and worker rounds start without an initialize timeout\".\nCase: normal use - a client repository has spotted items and its Git remote is slow or unavailable. This call reaches `spotted.before_signoff` (`src/forge/spotted.py:144`), which calls `repo.default_config`; that function performs `git fetch` without a timeout (`src/forge/repo.py:721-725`, `222-224`). The hook can therefore exceed the startup deadline again, or exit before printing any context when the fetch fails. The reported 1.6-second measurement on this repository does not cover a slow remote.",
-        "file": "src/forge/nextstep.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 196,
-        "priority": "P1",
-        "required_done_when": true,
-        "title": "Not done: forge hook context finishes in about 2 seconds or less on a repo with many hotspots",
-        "work": 2
-      },
-      {
-        "body": "Gain 4, Work 1, Harm 3\nRaise: Gate - The new context output leaves existing tests asserting the removed output.\nCase: normal use - the repository runs its related or full test suite. `tests/test_contracts.py:364-366` still requires session context to start with the complete `forge next` output for both hosts, and `tests/test_contracts.py:414-416` requires it to contain \"waiting for approval\". For their normal ready-story fixtures, this changed line prints the pointer instead, so those tests fail. Update both contract checks for the approved shorter output.",
-        "file": "src/forge/nextstep.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 196,
-        "priority": "P1",
-        "title": "Gate: update the session-start host contract tests",
-        "work": 1
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Test - The named proof checks the displayed lines but neither the elapsed time nor worker initialization.\nCase: normal use - a Claude worker starts in a client repository with many hotspots. A hook that takes 30 seconds and then prints the same text still passes this test, as does a broken worker startup, because it never starts a worker. The fixture also uses a Forge source repo (`tests/test_story.py:137-141`), so it bypasses the client sign-off scan in `src/forge/spotted.py:144-160`. The one-off timing measurement does not provide a regression check for these Done-when details.",
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Test - The timed client-repository proof still invokes only `forge hook context`; it does not start a worker.\nCase: normal use - a Claude worker starts in a repository with many hotspots. The added test times the direct command at lines 64\u201366, while the existing worker contract uses an SDK stub that emits its initialization message without running the SessionStart hook (`tests/stubs/claude_agent_sdk.py:100-102`). An initialization timeout in the generated-hook and worker integration can therefore leave both checks green. The worker-start detail of the Done-when item still needs proof.",
         "file": "tests/test_hook_context_stays_short.py",
         "gain": 4,
         "harm": 3,
-        "line": 29,
+        "line": 65,
         "priority": "P1",
         "title": "Gate: test_1_hook_context_with_many_hotspots_stays_short",
         "work": 2
       },
       {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Test - The changed human-touch checks now read private `.factory` JSON records directly here and in `tests/test_approval_pin_notice.py:83-84`.\nCase: normal use - an answered question contributes to the reported human-touch measure. These assertions can pass while the reported aggregation is wrong, and a storage refactor can break them while the reported behavior remains correct. The test audit requires these checks at the user-visible Forge boundary.",
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Test - The repair leaves the blank-answer checks reading private records, while this public assertion covers only the story statistic.\nCase: normal use - a person answers or leaves a question blank during a fix. `tests/test_approval_pin_notice.py:83-84,101,110` still asserts the `.factory` JSON directly. The assertion here checks the story aggregate, which includes stories and tasks but excludes fixes (`src/forge/board.py:853-873`), so it does not replace those checks at an observable boundary. The private assertions can pass when the reported measure is wrong and fail after a storage-only refactor.",
         "file": "tests/test_next.py",
         "gain": 3,
         "harm": 3,
-        "line": 64,
+        "line": 60,
         "priority": "P1",
         "title": "Gate: check human-touch counts at an observable boundary",
         "work": 2
-      },
-      {
-        "body": "Gain 4, Work 1, Harm 2\nRaise: Gate - The repository's review rule requires each Forge change to say what a new client repo and an existing client repo on upgrade each receive.\nCase: normal use - a client initializes Forge or upgrades to this release. The change's proof and commit messages describe the shorter hook generally but do not state the result for each client-repo path. The earlier-adopted fixture in `tests/test_handover_notes.py:12-19` does not describe an upgrade. Record the release effect for both paths.",
-        "file": "src/forge/nextstep.py",
-        "gain": 4,
-        "harm": 2,
-        "line": 196,
-        "priority": "P1",
-        "title": "Gate: state what new and upgraded client repos receive",
-        "work": 1
       }
     ],
-    "id": "6c2a1cb5-a0fc-4623-9cc3-b16e11243f7e",
+    "id": "be4d8e97-3ebd-423a-bc4e-1bc6d2fbc797",
     "status": "blocked"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-18T01:44:42.035325+00:00",
@@ -143,16 +112,16 @@
     {
       "at": "2026-11-18T02:14:54.027427+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-11-18T02:33:18.778879+00:00",
+      "step": "review"
     }
   ],
   "stop": {
-    "at": "2026-11-18T02:14:54.041367+00:00",
-    "by": "owner",
-    "choice": "more",
-    "file": "src/forge/nextstep.py",
-    "reason": "Owner chose one more round: fix all five hook findings",
-    "wait_id": "84784a54-1bc3-4eda-a4fb-60797bf77673",
-    "worker_round": 1
+    "at": "2026-11-18T02:33:18.779184+00:00",
+    "file": "tests/test_hook_context_stays_short.py",
+    "wait_id": "e5d10b65-2efc-4575-b9f6-4da3631a3731"
   },
   "stuck": {
     "close": "903098f2-eb9e-493e-b56d-75e9997f5260",
