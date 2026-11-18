@@ -1,0 +1,15 @@
+{
+  "base": "67376f6c033979de5e01536db35aaf293d3e8899",
+  "branch": "fix/close-catches-workflow-drift",
+  "done_when": "close runs the release-checkout sync test (or forge sync --check) when a change touches the workflow generator or the templates and fails with one line naming the file to regenerate; and when the pinned release is newer than the newest published tag in Forge's own repo, close runs Forge from the source checkout instead of failing; new and existing repos get it on upgrade",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-18T15:25:03.931125+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "A change to the workflow generator (prcheck.py or the templates) can merge without the regenerated .github/workflows/forge.yml, which turns main red (it happened on 18 Nov 2026), and after a release bump merges, a branch that merges main pins a release that is not published yet, so close fails with 'Failed to resolve --with requirement' until the release is out"
+}
