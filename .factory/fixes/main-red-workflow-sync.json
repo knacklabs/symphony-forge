@@ -1,0 +1,30 @@
+{
+  "base": "4f67895a75c93805e5991f12a2250e12e987980d",
+  "branch": "fix/main-red-workflow-sync",
+  "done_when": "The committed .github/workflows/forge.yml matches forge sync output from main's source, and tests/test_release*.py::test_2_release_checkout_generated_files_match_sync passes on main",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "e628736b4a50e59526a5b283823b0cf9d5977306f8e43142fad94894b0de51d2",
+    "changed": "67bc0a508c6b468ad90da557173553ed1b12f431a2102c416a50abb639513453",
+    "commit": "5bdb7549788434e7e049b694fd5676151bb51206",
+    "dismissals": [],
+    "findings": [],
+    "id": "c2bc0a04-3e20-47fd-8587-c7ac79d9192d",
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-18T10:02:42.301724+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-18T10:08:09.874573+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Main is red since the nightly-runner fix merged: the committed .github/workflows/forge.yml no longer matches what forge sync generates, so the release-checkout sync test fails"
+}
