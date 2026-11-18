@@ -51,7 +51,7 @@ def _other_repo(tmp_path: Path, bin_dir: Path) -> Repo:
     other.write("DESIGN.md", "# App look\n\nUse a clear, quiet design for the basket shop.\n")
     other.write("docs/design/baskets/screen.svg", DESIGN_IMAGE)
     other.git("add", "-A")
-    other.git("commit", "-q", "-m", "Set up Forge")
+    other.git("commit", "--allow-empty", "-q", "-m", "Set up Forge")
     other.git("remote", "add", "origin", str(remote))
     other.git("push", "-q", "-u", "origin", "main")
     other.git("remote", "set-head", "origin", "main")

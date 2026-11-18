@@ -89,7 +89,7 @@ def _worker_merges_upgrade(env, upgraded):
 root = Path({json.dumps(env.repo.path.as_posix())})
 if (root / "forge.toml").read_text("utf-8") != {json.dumps(upgraded)}:
     (root / "forge.toml").write_text({json.dumps(upgraded)}, encoding="utf-8")
-    for args in (["add", "forge.toml"], ["commit", "-q", "-m", "Upgrade Forge"],
+    for args in (["add", "forge.toml"], ["commit", "--allow-empty", "-q", "-m", "Upgrade Forge"],
                  ["push", "-q", "origin", "main"]):
         subprocess.run(["git", "-C", str(root), *args], check=True,
                        stdin=subprocess.DEVNULL, timeout=60)
@@ -121,7 +121,7 @@ def test_1_running_command_continues_under_the_pin_merged_from_upgraded_default(
                 target.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(path, target)
         env.repo.git("add", "-A")
-        env.repo.git("commit", "-q", "-m", "Repo adopted on the earlier release")
+        env.repo.git("commit", "--allow-empty", "-q", "-m", "Repo adopted on the earlier release")
     original = (env.repo.path / "forge.toml").read_text("utf-8")
     original = re.sub(r'version = "[^"]+"', 'version = "v1.2.2"', original)
     original = original.replace('workers = "codex"', 'workers = "claude"')

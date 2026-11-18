@@ -28,7 +28,7 @@ def _release(env, adopted, lane_adapter="claude"):
         version = repo.forge("--version").stdout.split()[-1]
         shutil.copytree(ROOT / "tests/fixtures/adopted-v1.2.2/client", repo.path, dirs_exist_ok=True)
         repo.git("add", "-A")
-        repo.git("commit", "-qm", "Adopt on the earlier release")
+        repo.git("commit", "--allow-empty", "-qm", "Adopt on the earlier release")
         config = (repo.path / "forge.toml").read_text("utf-8").replace(
             'version = "v1.2.2"', f'version = "{version}"').replace(
             'workers = "codex"', f'workers = "{lane_adapter}"')

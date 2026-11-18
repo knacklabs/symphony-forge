@@ -12,7 +12,7 @@ def _configured(repo, checks: list[str]) -> None:
                'repo = "client"\nworkers = "claude"\ntest = "make check"\n'
                f"checks = {json.dumps(checks)}\ninterfaces = []\n")
     repo.git("add", "forge.toml")
-    repo.git("commit", "-q", "-m", "Configure Forge")
+    repo.git("commit", "--allow-empty", "-q", "-m", "Configure Forge")
 
 
 def test_3_forge_branches_require_a_started_record(repo, tmp_path):
@@ -23,7 +23,7 @@ def test_3_forge_branches_require_a_started_record(repo, tmp_path):
     repo.git("worktree", "add", "-q", "-b", branch, str(where))
     (where / "README.md").write_text(f"# {branch}\n", encoding="utf-8")
     repo.git("add", "README.md", cwd=where)
-    repo.git("commit", "-q", "-m", "Update readme", cwd=where)
+    repo.git("commit", "--allow-empty", "-q", "-m", "Update readme", cwd=where)
     checked = repo.forge("hook", "pr-check", "--base", base, "--head",
                          repo.git("rev-parse", "HEAD", cwd=where), "--branch", branch)
     assert checked.returncode == 1

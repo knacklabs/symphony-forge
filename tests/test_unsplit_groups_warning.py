@@ -49,7 +49,7 @@ def test_1_unsplit_groups_warn_without_refusal(repo, gh, monkeypatch, tmp_path,
     effective = 1 if warns else groups
     assert f"group: {list(range(1, effective + 1))}" in workflow
     repo.git("add", "-A")
-    repo.git("commit", "-qm", "Configure client test groups")
+    repo.git("commit", "--allow-empty", "-qm", "Configure client test groups")
     gh.respond("auth", "status")
     default = repo.git("symbolic-ref", "--short", "refs/remotes/origin/HEAD").removeprefix("origin/")
     gh.respond("api", f"repos/{{owner}}/{{repo}}/branches/{default}/protection",

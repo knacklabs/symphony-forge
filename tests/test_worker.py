@@ -54,7 +54,7 @@ def test_17_worker(repo, gh, monkeypatch):
     repo.write("tests/test_help_text.py", "from web import help\n")
     repo.write("web/test_board.py", "from web import board\n")
     repo.git("add", "forge.toml", "tests", "web")
-    repo.git("commit", "-q", "-m", "Pin Forge")
+    repo.git("commit", "--allow-empty", "-q", "-m", "Pin Forge")
     repo.git("push", "-q", "origin", "main")
     story(repo)
 

@@ -867,7 +867,7 @@ def _assert_feature_guidance(repo, client: Path, log: Path) -> str:
     # Fixture history bypasses branch and default-push gates for these two
     # setup commands only. The real fix start and work below keep their hooks.
     hooks = f"core.hooksPath={(client.parent / 'no-fixture-hooks').as_posix()}"
-    repo.git("-c", hooks, "commit", "-q", "-m",
+    repo.git("-c", hooks, "commit", "--allow-empty", "-q", "-m",
              "Keep the starter and its generated features", cwd=client)
     if repo.git("branch", "--show-current", cwd=client) != "main":
         branch = repo.git("branch", "--show-current", cwd=client)

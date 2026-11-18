@@ -60,7 +60,7 @@ def test_1_the_principles_reach_the_guide_and_the_worker(repo, gh, tmp_path, pre
     synced = repo.forge("sync", cwd=client)
     assert synced.returncode == 0, synced.stdout + synced.stderr
     repo.git("add", "-A", cwd=client)
-    repo.git("commit", "-q", "-m", "Use the current client guidance", cwd=client)
+    repo.git("commit", "--allow-empty", "-q", "-m", "Use the current client guidance", cwd=client)
     worked = repo.forge("work", item, cwd=client)
     assert worked.returncode == 0, worked.stdout + worked.stderr
     for host in (".claude", ".codex"):
@@ -88,7 +88,7 @@ def test_2_added_work_is_weighed_against_its_cost(env, adopted):
     if adopted:
         shutil.copytree(ROOT / "tests/fixtures/adopted-v1.2.2/client", repo.path, dirs_exist_ok=True)
         repo.git("add", "-A")
-        repo.git("commit", "-q", "-m", "Adopt on the earlier release")
+        repo.git("commit", "--allow-empty", "-q", "-m", "Adopt on the earlier release")
         config = (repo.path / "forge.toml").read_text("utf-8")
         config = config.replace('version = "v1.2.2"', f'version = "{version}"')
         config = config.replace('workers = "codex"', 'workers = "claude"')
@@ -106,7 +106,7 @@ def test_2_added_work_is_weighed_against_its_cost(env, adopted):
     synced = repo.forge("sync", cwd=where)
     assert synced.returncode == 0, synced.stdout + synced.stderr
     repo.git("add", "-A", cwd=where)
-    repo.git("commit", "-q", "-m", "Sync the client instructions", cwd=where)
+    repo.git("commit", "--allow-empty", "-q", "-m", "Sync the client instructions", cwd=where)
     log = install_claude(repo, worker=False)
     conftest._install(repo.bin, "claude", READER.format(python=sys.executable))
     env.commit(where, "docs/specs/basket.md", "# Basket\n\n## Why\n\nKeep a basket.\n")

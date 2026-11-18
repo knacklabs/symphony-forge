@@ -9,7 +9,7 @@ inside Forge and goes into every worker's brief. How Forge behaves is set by its
 ## Install
 
 You need git, the GitHub CLI (`gh`, signed in with `gh auth login`), `uv`, and the agent your
-repo uses: Claude Code, Codex, or both for split workers. Either agent can coordinate the work;
+repo uses: Claude Code, Codex, or both (new repos: Claude builds, and code reviews use Codex). Either agent can coordinate the work;
 with one tool selected, that tool reads plans. With both selected, the first read uses the other
 installed tool, or the coordinator's tool if the other is unavailable. Later reads keep that
 reader while available. A native read uses a separate `reader` subagent.

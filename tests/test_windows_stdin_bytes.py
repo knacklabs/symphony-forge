@@ -59,7 +59,7 @@ def adopt_earlier_release(env):
     repo.git("switch", "-qc", "fix/upgrade-client")
     shutil.copytree(ROOT / "tests/fixtures/adopted-v1.2.2/client", repo.path, dirs_exist_ok=True)
     repo.git("add", "-A")
-    repo.git("commit", "-qm", "Adopt the previous release")
+    repo.git("commit", "--allow-empty", "-qm", "Adopt the previous release")
     env.commit(repo.path, ".factory/fixes/upgrade-client.json", json.dumps({
         "kind": "fix", "branch": "fix/upgrade-client", "why": "Upgrade Forge",
         "done_when": "The client uses this release", "status": "started"}))
@@ -69,7 +69,7 @@ def adopt_earlier_release(env):
     synced = repo.forge("sync")
     assert synced.returncode == 0, synced.stderr
     repo.git("add", "-A")
-    repo.git("commit", "-qm", "Upgrade Forge")
+    repo.git("commit", "--allow-empty", "-qm", "Upgrade Forge")
     # The owner's merge lands the upgrade; a fresh clone stands in for it (main refuses commits).
     checkout = env.tmp / "upgraded-checkout"
     remote = repo.git("remote", "get-url", "origin")
