@@ -1,6 +1,13 @@
 {
   "base": "67376f6c033979de5e01536db35aaf293d3e8899",
   "branch": "fix/test-findings-advise",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1ef58-c5b4-7073-ab7a-b0a157aa9410",
+    "head": null,
+    "start": "9ace36006735e885ba11461e2ef90bb1a063b377"
+  },
   "done_when": "Review findings of the Test kind whose case is only a future change to a test fake or call order are advice and do not block close; tests select gh calls through one shared helper by path or query instead of by position or count; the two flaky tests no longer fail at random under load; new and existing repos get the review rule on upgrade",
   "fix_kind": "mechanical",
   "kind": "fix",
