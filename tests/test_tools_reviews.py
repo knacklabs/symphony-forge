@@ -66,7 +66,7 @@ def _doctor_defaults(env, tmp_path, monkeypatch, adopted):
     assert synced.returncode == 0, synced.stdout + synced.stderr
     assert config.read_bytes() == before
     repo.git("add", "-A", cwd=client)
-    repo.git("commit", "-qm", "Upgrade Forge files", cwd=client)
+    repo.git("commit", "-qm", "Upgrade Forge files", "--allow-empty", cwd=client)
     env.gh.respond("auth", "status")
     codex_home = tmp_path / "doctor-codex"
     codex_home.mkdir()
