@@ -111,8 +111,12 @@ if "--body-file" in args:  # the body as sent: the next call may rewrite the sam
     body = sys.stdin.read() if path == "-" else pathlib.Path(path).read_text("utf-8")
     append_json(here / "gh-bodies.jsonl", body)
 responses = here / "gh-responses.json"
-for rule in reversed(json.loads(responses.read_text("utf-8")) if responses.exists() else []):
+rules = json.loads(responses.read_text("utf-8")) if responses.exists() else []
+for rule in reversed(rules):
     if args[:len(rule["args"])] == rule["args"]:
+        if rule.get("then"):  # answers for the next calls, in order; the last one repeats
+            rule["stdout"] = rule["then"].pop(0) if len(rule["then"]) > 1 else rule["then"][0]
+            responses.write_text(json.dumps(rules))
         sys.stdout.write(rule["stdout"])
         sys.stderr.write(rule["stderr"])
         sys.exit(rule["exit"])

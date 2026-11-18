@@ -2,7 +2,7 @@
 import json
 import sys
 
-from test_close import CLEAN, env  # noqa: F401
+from test_close import CLEAN, GREEN, env, run  # noqa: F401
 
 STORY = "issue-1656-in-ci-test-repos-close-pushes"
 
@@ -17,7 +17,7 @@ for line in sys.stdin:
 """
 
 
-def test_1_record_push_waits_for_the_code_ci_run(env, tmp_path, monkeypatch):
+def test_1_record_push_waits_until_the_running_code_ci_run_ends(env, tmp_path, monkeypatch):
     config = (env.repo.path / "forge.toml").read_text("utf-8")
     env.repo.write("forge.toml", "\n".join(
         line for line in config.splitlines() if line.partition("=")[0].strip() != "test_place")
@@ -34,12 +34,19 @@ def test_1_record_push_waits_for_the_code_ci_run(env, tmp_path, monkeypatch):
     hook.write_text(HOOK.format(python=sys.executable, parent=parent, log=str(log),
                                 calls=str(env.repo.bin / "gh-calls.jsonl")), "utf-8")
     hook.chmod(0o755)
-    monkeypatch.setenv("FORGE_CHECKS_WAIT", "0")
     env.reviews(CLEAN)
+    # The code's run is still going on the first look, and is green on the next ones. The tests
+    # group has not reported yet, as when CI splits its tests into groups.
+    lines = lambda rows: "".join(json.dumps(row) + "\n" for row in rows)  # noqa: E731
+    env.gh.respond("api", "--paginate", "--jq", ".check_runs[]", stdout="")
+    rules = json.loads(env.gh.responses.read_text("utf-8"))
+    rules[-1]["then"] = [lines([run("docs-check"), run("tests (1/2)", None, "in_progress")]),
+                         lines(GREEN)]
+    env.gh.responses.write_text(json.dumps(rules), "utf-8")
 
     closed = env.close(item)
 
     assert closed.returncode == 0, closed.stdout + closed.stderr
     pushes = [json.loads(line) for line in log.read_text("utf-8").splitlines()]
     [record] = [push for push in pushes if push[1] == parent]
-    assert record[3] > 0, "close pushed its review record before it looked at the code's CI run"
+    assert record[3] >= 2, "close pushed its review record while the code's CI run was still going"

@@ -426,7 +426,7 @@ def close(args: argparse.Namespace) -> int:
         _save(top, item, state, message, *noted)
     elif noted:  # a reused clean review still records what the worker spotted
         _save(top, item, state, f"Review of {item}: {result['status']}", *noted)
-    checks.after_code_ci(top, item, branch, cfg, serious)
+    checks.after_code_ci(top, item, branch, cfg, serious, getattr(args, "check_slot", None))
     _push(top, branch, reviewed=True)
     head = repo.git("rev-parse", "HEAD", cwd=top)
     pr = _publish(top, item, state, branch, pr_target, pr, result, evidence)

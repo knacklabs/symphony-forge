@@ -107,24 +107,33 @@ def wait(top: Path, item: str, sha: str, names: list[str], *, branch: str,
             repo.record_timing(top, item, "CI wait", start, clock, result["outcome"])
 
 
-def let_finish(top: Path, item: str, sha: str, names: list[str]) -> None:
-    """Wait, within the usual limit, while sha's checks are queued or running. Close calls this
-    before it pushes a record-only commit, because that push cancels the run in progress."""
-    deadline = time.monotonic() + float(os.environ.get("FORGE_CHECKS_WAIT", "600"))
-    while True:
-        try:
-            busy = any(state in (PENDING, QUEUED) for name, state in _seen(top, item, sha)[0]
-                       if name in names)
-        except repo.Refused:
-            return  # The push is not worth refusing for a status GitHub cannot answer.
-        if not busy or time.monotonic() >= deadline:
-            return
-        time.sleep(15)
+def let_finish(top: Path, item: str, sha: str, slot: Callable[[bool], None] | None = None) -> None:
+    """Wait while any check on sha, except Forge's own review, is queued or running. Close calls
+    this before it pushes a record-only commit: that push cancels the run in progress, so the
+    record's own run could not reuse its result. Waiting reuses _seen and the wait's slot idea
+    (a running wait lends the land queue place back) and needs no change to the workflow.
+    Test groups report no `tests` check until they end, so the wait does not look for names."""
+    deadline = time.monotonic() + float(os.environ.get("FORGE_CHECKS_WAIT", "5400"))
+    try:
+        while True:
+            try:
+                seen = [state for name, state in _seen(top, item, sha)[0]
+                        if name not in ("forge-pr-check", "Review pull request")]
+            except repo.Refused:
+                return  # The push is not worth refusing for a status GitHub cannot answer.
+            if not any(state in (PENDING, QUEUED) for state in seen) or time.monotonic() >= deadline:
+                return
+            if slot is not None:
+                slot(QUEUED not in seen)  # queued runs keep the place; running ones lend it
+            time.sleep(15)
+    finally:
+        if slot is not None:
+            slot(False)
 
 
-def after_code_ci(top: Path, item: str, branch: str, cfg: dict[str, Any], serious: Any) -> None:
-    """Pushing only Forge's records cancels the code's CI run in progress, and the record's own
-    run then cannot reuse that result. Let the code's run end first."""
+def after_code_ci(top: Path, item: str, branch: str, cfg: dict[str, Any], serious: Any,
+                  slot: Callable[[bool], None] | None = None) -> None:
+    """Let the code's CI run end before close pushes only Forge's records on top of it."""
     remote = repo.run("git", "rev-parse", "-q", "--verify", f"origin/{branch}", cwd=top)
     if (serious or cfg["test_place"] != "ci" or remote.returncode
             or repo.run("git", "merge-base", "--is-ancestor", remote.stdout.strip(), "HEAD", cwd=top).returncode):
@@ -135,8 +144,7 @@ def after_code_ci(top: Path, item: str, branch: str, cfg: dict[str, Any], seriou
     if not any(paths) or any(path and not (path.startswith(review.BOOKKEEPING)
                                            or repo.SIGNOFF.fullmatch(path)) for path in paths):
         return
-    let_finish(top, item, remote.stdout.strip(),
-               [name for name in cfg["checks"] if name != "forge-pr-check"])
+    let_finish(top, item, remote.stdout.strip(), slot)
 
 
 def _wait(top: Path, item: str, sha: str, names: list[str], branch: str, progress: bool,
