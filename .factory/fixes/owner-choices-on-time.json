@@ -1,6 +1,13 @@
 {
   "base": "1a5b4d2cf1d9b0e80bb05627d2864a9ac40fd2bb",
   "branch": "fix/owner-choices-on-time",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1ef96-28c4-7403-93f7-0e9f6e980dc0",
+    "head": null,
+    "start": "c52722d0a17613a60420acfffa1ac81605323de9"
+  },
   "done_when": "When the intake or the first round predicts more than the fix file limit, Forge asks for the size allowance at fix start or before the round; forge next lists every pending owner choice first, with its exact question and how long it has waited; new and existing repos get it on upgrade",
   "fix_kind": "mechanical",
   "kind": "fix",
