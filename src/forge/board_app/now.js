@@ -90,7 +90,7 @@ function facts(snapshot) {
     || row.time_breakdown.nothing_running != null);
   const ids = new Set([...stories.filter(mine), ...cards].map((row) => row.id));
   return {
-    viewer, stages, signoff: snapshot.signoff || { line: '', open: [] },
+    viewer, stages, fullRun: snapshot.team.full_run, signoff: snapshot.signoff || { line: '', open: [] },
     asks: snapshot.team.needs_you.filter((ask) => viewer === null || ask.kind === 'run' || ids.has(ask.id)), // a failed run has no owner
     merged: viewer === null ? (kind === 'all' ? counted.parts + counted.fixes : counted[kind === 'task' ? 'parts' : 'fixes'])
       : recent.length,
@@ -132,17 +132,19 @@ function ask(entry) {
   const verb = VERB[entry.reason] || 'Decide';
   const run = entry.kind === 'run';
   const place = run ? (entry.fixing ? 'Fix in progress' : 'Full test run') : entry.kind === 'fix' ? 'Fix' : key(entry.id);
-  return el('button', { type: 'button', class: 'ask', 'data-focus': `ask:${entry.id}:${entry.reason}`,
+  return el(run && !entry.url ? 'div' : 'button', { type: run && !entry.url ? null : 'button',
+    class: 'ask', 'data-focus': `ask:${entry.id}:${entry.reason}`,
     'data-url': run && entry.url,
-    onclick: run && entry.url ? () => window.open(entry.url, '_blank', 'noopener') : open(entry) },
+    onclick: run ? (entry.url ? () => window.open(entry.url, '_blank', 'noopener') : null) : open(entry) },
     el('span', { class: 'ask-head' }, el('span', { class: 'verb' }, verb), el('span', { class: 'key' }, place)),
     el('span', { class: 'ask-title', title: entry.title }, entry.title),
-    entry.reason === 'checks failed' && el('span', { class: 'ask-why' }, entry.detail));
+    ['checks failed', 'full run due'].includes(entry.reason) && el('span', { class: 'ask-why' }, entry.detail));
 }
 
 function strip(shown) {
   const count = shown.asks.length;
   return el('section', { class: 'needs', 'aria-label': 'Needs you' },
+    shown.fullRun && el('p', { class: 'note' }, shown.fullRun.line),
     el('p', { class: 'needs-count' }, shown.viewer ? el('span', { class: 'now-who' }, `@${shown.viewer.replace(/^@/, '')}`) : null,
       el('strong', {}, String(count)), ' ', count === 1 ? 'needs you' : 'need you'),
     shown.viewer === '' ? el('p', { class: 'note' }, 'Your GitHub login is unknown, so no item shows as yours.') : null,

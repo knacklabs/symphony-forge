@@ -130,14 +130,10 @@ def run(top: Path) -> int:
     return status
 
 
-def notices(top: Path) -> list[str]:
-    try:
-        place = repo.test_place(repo.config(top))
-    except repo.Refused:
-        # Optional advice must not hide next's setup and unreadable-worktree reports.
-        return []
-    if place != "local" or not shutil.which("gh"):
-        return []
+def history(top: Path) -> list[dict] | None:
+    """Full-suite statuses on the default branch, shared by the local-run notices and board."""
+    if not shutil.which("gh"):
+        return None
     query = """query($owner:String!,$repo:String!,$branch:String!) {
       repository(owner:$owner,name:$repo) {
         ref(qualifiedName:$branch) { target { ... on Commit {
@@ -145,19 +141,36 @@ def notices(top: Path) -> list[str]:
         } } }
       }
     }"""
-    done = repo.run("gh", "api", "graphql", "-F", "owner={owner}", "-F", "repo={repo}",
-                    "-f", f"branch=refs/heads/{repo.default_branch(top)}",
-                    "-f", "query=" + " ".join(query.split()), cwd=top)
+    done = repo.command_fact(("full-suite", "history"), top, lambda: repo.run(
+        "gh", "api", "graphql", "-F", "owner={owner}", "-F", "repo={repo}",
+        "-f", f"branch=refs/heads/{repo.default_branch(top)}",
+        "-f", "query=" + " ".join(query.split()), cwd=top))
     if done.returncode:
-        return []
+        return None
     try:
         data = json.loads(done.stdout)
         if data.get("errors"):
-            return []
+            return None
         nodes = data["data"]["repository"]["ref"]["target"]["history"]["nodes"]
-        dates = [datetime.fromisoformat(row["createdAt"].replace("Z", "+00:00"))
-                 for node in nodes for row in (node.get("status") or {}).get("contexts", [])
-                 if row.get("context") == STATUS]
+        return [row for node in nodes for row in (node.get("status") or {}).get("contexts", [])
+                if row.get("context") == STATUS]
+    except (ValueError, KeyError, TypeError, AttributeError):
+        return None
+
+
+def notices(top: Path) -> list[str]:
+    try:
+        place = repo.test_place(repo.config(top))
+    except repo.Refused:
+        # Optional advice must not hide next's setup and unreadable-worktree reports.
+        return []
+    if place != "local":
+        return []
+    rows = history(top)
+    if rows is None:
+        return []
+    try:
+        dates = [datetime.fromisoformat(row["createdAt"].replace("Z", "+00:00")) for row in rows]
         if dates and datetime.fromisoformat(repo.now()) - max(dates) <= timedelta(hours=24):
             return []
     except (ValueError, KeyError, TypeError, AttributeError):

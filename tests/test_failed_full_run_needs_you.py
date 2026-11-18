@@ -10,6 +10,7 @@ changes only its `fixing` flag. Only GitHub is faked, at the stub gh.
 STORY = "FORGE-NIGHTLY-1"
 
 import json
+import os
 import shlex
 from datetime import datetime, timedelta, timezone
 
@@ -34,6 +35,8 @@ def run(number, file="forge.yml", conclusion="failure", event="schedule", attemp
     return {"id": number, "workflow_id": {"forge": 1, "backup": 2, "nightly": 3}[stem], "name": name or stem,
             "event": event, "conclusion": conclusion, "run_attempt": attempt, "head_branch": "main",
             "path": f".github/workflows/{file}", "created_at": f"2030-01-01T{number % 24:02d}:00:00Z",
+            # These lifecycle cases concern current results. Age has its own regression.
+            "updated_at": os.environ.get("FORGE_NOW", "2030-01-02T10:00:00+00:00"),
             "html_url": f"https://github.com/acme/shop/actions/runs/{number}"}
 
 

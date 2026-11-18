@@ -427,6 +427,11 @@ def _overlaps(top: Path, items: list[tuple[str, dict[str, Any]]],
 def _failed_schedules(top: Path) -> dict[str, list[str]]:
     """By workflow file: each failed scheduled or manual full run, with one fix to start or continue."""
     clean, alerts = board_facts.clean, {}
+    if health := board_facts.full_run_health(top):
+        alerts["full-suite-age"] = [health["line"]]
+        if health["needs_you"]:
+            alerts["full-suite-age"].append("Needs you: No green full test run in the last 24 hours. "
+                                           "Run the full suite before a release.")
     for run in board_facts.failed_schedules(top):
         key = f"({clean(run['file'])})"
         run = {**run, "workflow": f"{run['workflow']} {key}"}

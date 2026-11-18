@@ -410,6 +410,69 @@ def full_workflow(cfg: Item) -> str | None:
     return cfg.get("full_suite_workflow") or ("forge.yml" if repo.test_place(cfg) == "ci" else None)
 
 
+def _full_runs(top: Path, workflow: str, branch: str, event: str) -> list[Item] | None:
+    def fetch(_now: datetime) -> list[Item] | None:
+        done = repo.run("gh", "api", f"repos/{{owner}}/{{repo}}/actions/workflows/{workflow}/runs",
+                        "--method", "GET", "--raw-field", f"event={event}",
+                        "--raw-field", f"branch={branch}", "--raw-field", "per_page=100", cwd=top)
+        try:
+            runs = json.loads(done.stdout).get("workflow_runs") if not done.returncode else None
+            return runs if isinstance(runs, list) and all(isinstance(run, dict) for run in runs) else None
+        except (ValueError, AttributeError):
+            return None
+    name = hashlib.sha256(f"{workflow}\0{branch}\0{event}".encode()).hexdigest()[:12]
+    return _cached(top, f"full-runs-{name}-cache", fetch, seconds=600)
+
+
+def full_run_health(top: Path) -> Item | None:
+    cfg = _config(top)
+    workflow = full_workflow(cfg)
+    branch = repo.default_branch(top)
+    if workflow:
+        lists = [_full_runs(top, workflow, branch, event) for event in ("schedule", "workflow_dispatch")]
+        runs = None if any(rows is None for rows in lists) else [run for rows in lists for run in rows or []
+                if run.get("event") in ("schedule", "workflow_dispatch") and run.get("head_branch") == branch]
+    elif cfg.get("test"):
+        from forge import fullrun
+
+        rows = fullrun.history(top)
+        runs = None if rows is None else [{"conclusion": {"SUCCESS": "success", "FAILURE": "failure"}.get(row.get("state")),
+                "created_at": row.get("createdAt"), "updated_at": row.get("createdAt")}
+                for row in rows]
+    else:
+        return None
+    if runs is None:
+        return {"line": "The full test run history is not available. Check GitHub before a release.", "needs_you": False}
+    now = time_records.when(repo.now()) or datetime.now(timezone.utc)
+    def age(run: Item, field: str) -> float | None:
+        at = time_records.when(run.get(field))
+        return max(0, (now - at).total_seconds()) if at else None
+    complete = sorted((run for run in runs if run.get("conclusion")),
+                      key=lambda run: run.get("updated_at") or run.get("created_at", ""), reverse=True)
+    last = complete[0] if complete else None
+    line = f"No complete full test run on {branch}."
+    if last:
+        result = {"success": "passed", "failure": "failed", "cancelled": "was cancelled"}.get(
+            last["conclusion"], f"ended with {clean(last['conclusion'])}")
+        seconds = age(last, "updated_at")
+        hours = int(seconds // 3600) if seconds is not None else None
+        ago = " (completion time is not available)"
+        if hours is not None:
+            ago = " less than 1 hour ago" if hours == 0 else f" {hours} hour{'s' if hours != 1 else ''} ago"
+        line = f"Last complete full test run on {branch} {result}{ago}."
+    latest = max(runs, key=lambda run: run.get("created_at", ""), default=None)
+    if latest and not latest.get("conclusion"):
+        seconds = age(latest, "created_at")
+        hours = int(seconds // 3600) if seconds is not None else None
+        state = "queued" if latest.get("status") in ("queued", "waiting", "requested", "pending") else "in progress"
+        waited = f" for {hours} hour{'s' if hours != 1 else ''}" if hours is not None else ""
+        line += f" Latest full test run is {state}{waited}."
+    fresh = any(run.get("conclusion") == "success" and (seconds := age(run, "updated_at")) is not None
+                and seconds <= 86400 for run in complete)
+    return {"line": line, "needs_you": not fresh, "url": (latest or {}).get("html_url"),
+            "since": (last or {}).get("updated_at")}
+
+
 def failed_schedules(top: Path) -> list[Item]:
     """Failed scheduled workflows and manual full runs on the default branch.
     Read each run list once and one log per failed workflow, kept ten minutes.
@@ -427,9 +490,7 @@ def failed_schedules(top: Path) -> list[Item]:
         # ponytail: the newest 100 scheduled runs of all workflows; a frequent schedule can crowd out a daily one.
         # Separate query fields avoid cmd.exe interpreting an ampersand in a gh.cmd argument.
         def own(event: str) -> Any:
-            return repo.run("gh", "api", f"repos/{{owner}}/{{repo}}/actions/workflows/{workflow}/runs",
-                            "--method", "GET", "--raw-field", f"event={event}",
-                            "--raw-field", f"branch={branch}", "--raw-field", "per_page=100", cwd=top)
+            return _full_runs(top, workflow, branch, event)
         with ThreadPoolExecutor(3) as pool:
             manual_read = pool.submit(own, "workflow_dispatch")
             scheduled_read = pool.submit(own, "schedule") if full else None
@@ -443,13 +504,8 @@ def failed_schedules(top: Path) -> list[Item]:
             return None
         if not isinstance(runs, list) or not all(isinstance(run, dict) for run in runs):
             return None
-        for read in lists:
-            try:
-                more = json.loads(read.stdout).get("workflow_runs", []) if not read.returncode else []
-            except (ValueError, AttributeError):
-                more = []
-            if isinstance(more, list) and all(isinstance(run, dict) for run in more):
-                runs += more
+        for more in lists:
+            runs += more or []
         # One entry per run: the full workflow's own lists repeat runs of the shared one.
         runs = list({run.get("id", id(run)): run for run in runs}.values())
         runs.sort(key=lambda run: run.get("created_at", ""), reverse=True)
@@ -682,13 +738,19 @@ def team(top: Path, history: Item, items: dict[str, Item], maps: list[Item], bes
     now = time_records.when(repo.now()) or datetime.now(timezone.utc)
     rows = [row for parent in items.values() for row in (parent, *parent["children"])]
     waiting = needs_you(top, rows, readiness, person_waits, now, failed_runs(top, items, best, now))
+    health = full_run_health(top)
+    if health and health["needs_you"] and not any(row["kind"] == "run" for row in waiting):
+        waiting.append({**_entry({"id": "run:full-suite-age", "kind": "run",
+                                 "title": "No green full test run in the last 24 hours"},
+                                "full run due", health["line"], health["since"], now),
+                        "url": health["url"], "fixing": False})
     slow = blocked(top, rows, best, maps, now)
     work = [counts[kind][state] for state in ("in progress", "ready to merge") for kind in ("parts", "fixes")]
     building = counts["stories"]["building"]
     sentence = (f"{building} {'story' if building == 1 else 'stories'} building, {sum(work[:2])} parts and fixes "
                 f"in progress, {sum(work[2:])} ready to merge, {len(waiting)} need{'s' if len(waiting) == 1 else ''} "
                 f"you, {len(slow)} blocked or slow; {clause[0].lower()}{clause[1:]}")
-    return {"sentence": sentence, "counts": counts, "needs_you": waiting,
+    return {"sentence": sentence, "counts": counts, "needs_you": waiting, "full_run": health,
             # The page's In progress group: an item that needs you or is blocked sits in that group instead.
             "in_progress": [{key: row[key] for key in ("id", "title", "kind", "state")}
                             for row in items.values() if row.get("state") in IN_PROGRESS_STATES
