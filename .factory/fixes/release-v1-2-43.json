@@ -1,4 +1,5 @@
 {
+  "allow_large": "Release bump: every pinned reference changes (about 19 files), the same as each release; the owner chose to release after 1664 and 1665",
   "base": "c718fa86d0c8fb4d25d9fc4fd93f00de3f249cd8",
   "branch": "fix/release-v1-2-43",
   "done_when": "forge.toml, the package and every pinned reference say v1.2.43, and tests/test_release_version.py passes",
