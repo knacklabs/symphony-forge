@@ -1,0 +1,15 @@
+{
+  "base": "67376f6c033979de5e01536db35aaf293d3e8899",
+  "branch": "fix/test-findings-advise",
+  "done_when": "Review findings of the Test kind whose case is only a future change to a test fake or call order are advice and do not block close; tests select gh calls through one shared helper by path or query instead of by position or count; the two flaky tests no longer fail at random under load; new and existing repos get the review rule on upgrade",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-18T15:25:09.021096+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Review findings about how a test could miss a future change (a fake that matches exact request text, a gh call counted by position) block close and cost a round each, and tests that select gh calls by position or count break each time a command adds a GitHub request (4 times on 18 Nov 2026); two tests fail at random on busy runners (the machine memory budget test and test_3_worker_reruns_report_only_the_final_result)"
+}
