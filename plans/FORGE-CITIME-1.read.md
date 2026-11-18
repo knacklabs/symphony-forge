@@ -305,37 +305,44 @@ Only a genuine trade-off goes to the human, as a question with options.
     Raise: Not done — [plan](/plans/FORGE-CITIME-1.md:89); [API config](/src/forge/templates/starter/apps/api/vitest.config.ts:5); [Vitest 3.2.4](https://github.com/vitest-dev/vitest/blob/v3.2.4/packages/vitest/src/node/pool.ts#L207-L219).
     Case: normal use - A new app sets `groups = 16` for 16 runner slots. The starter has 15 API test files, and its API config does not enable `passWithNoTests`. On a shared-settings change, every group passes `--shard` to the API suite; Vitest rejects the group count before calling the planned sequencer. The required check fails even when all tests pass.
     Gain 5, Work 2, Harm 3
+    Disposition: cut - fixed in the builders section: each Vitest run under groups counts its files and caps the group count at that number; a group above the file count skips that run and passes; the TIMEGROUPS test covers it.
 
 45. Advisory: Not done: a test-only change can bypass the new `.forge` exception.
     Raise: Not done — [plan](/plans/FORGE-CITIME-1.md:80); [test-only classifier](/src/forge/templates/review-tests.py:55).
     Case: normal use - A pull request changes an existing Python test and `.forge/review-tests.py`. The test-only classifier excludes `.forge/` and can return true. Although the new small-change check returns false, `tests_only or small` still selects one group, contrary to the new all-groups exception.
     Gain 3, Work 2, Harm 3
+    Disposition: cut - fixed in the builders section: `one-group` is false whenever the shared check (Forge's picker script, CI files, lockfiles, shared settings) holds, also for a test-only change; the GROUPS test has that case.
 
 46. Advisory: Not done: the selection stage excludes the actual test picker.
     Raise: Not done — [plan](/plans/FORGE-CITIME-1.md:76); [picker](/src/forge/fasttest.py:793).
     Case: normal use - Forge’s own CI runs the Python test picker inside the `forge test --change` job step. The proposed calculation counts that entire step as tests, so time spent selecting files appears as test time. A slow picker can therefore lead the owner to investigate the wrong stage.
     Gain 3, Work 3, Harm 2
+    Disposition: cut - fixed in the builders section: the test step's stage is named `tests (with in-step selection)`, so picking inside the test command is not hidden as pure test time.
    Disposition: keep - below the bar (follow-up)
 
 47. Advisory: Not done: setup after `parent-tests` is absent from the stage totals.
     Raise: Not done — [plan](/plans/FORGE-CITIME-1.md:76); [workflow](/src/forge/prcheck.py:103).
     Case: normal use - The generated workflow restores caches, sets up Node and installs Forge after `parent-tests`. The plan counts setup only before that step and counts the test step separately, leaving those setup minutes out. A group can exceed ten minutes without receiving its over-budget line.
     Gain 3, Work 2, Harm 2
+    Disposition: cut - fixed in the builders section: setup counts every step except `parent-tests` and the test step, including those after `parent-tests`.
    Disposition: keep - below the bar (follow-up)
 
 48. Advisory: Not done: the jobs request can omit groups after a rerun.
     Raise: Not done — [plan](/plans/FORGE-CITIME-1.md:76); [GitHub jobs endpoint](https://docs.github.com/en/rest/actions/workflow-jobs#list-jobs-for-a-workflow-run).
     Case: normal use - A 16-group workflow is rerun in full. The requested endpoint includes both attempts but returns 30 jobs per page by default. One request cannot return all their jobs, so the report can omit a group’s stages or its over-budget line.
     Gain 3, Work 2, Harm 2
+    Disposition: cut - fixed in the builders section: the jobs request asks for 100 per page and is read with `gh api --paginate`.
    Disposition: keep - below the bar (follow-up)
 
 49. Advisory: Unproven: item 4: the selection-chain test can pass when no tests run.
     Raise: Test — [plan](/plans/FORGE-CITIME-1.md:108); [Python starter](/src/forge/templates/starter-python/scripts/test.mjs:68).
     Case: normal use - For a web change, `--list` prints the Vitest command without executing it. That command uses `--changed` and `--passWithNoTests`, so the proposed assertion can pass even when Vitest selects no files for the change.
     Gain 3, Work 2, Harm 3
+    Disposition: cut - fixed in the builders section: the live chain run executes the inner picker and fails unless Vitest reports at least one test ran.
 
 50. Advisory: Not done: the request count no longer matches the stated cost.
     Raise: Not done — [cost](/plans/FORGE-CITIME-1.md:16); [stage calculation](/plans/FORGE-CITIME-1.md:76).
     Case: normal use - A successful close needs the new GraphQL request for push history and a separate jobs request for stages. Doctor also needs the history request and at least one jobs request. The stated cost of one additional request each understates the GitHub traffic.
     Gain 2, Work 1, Harm 2
+    Disposition: cut - the cost line now says close makes two more GitHub requests and doctor two or three.
    Disposition: keep - below the bar (live with)
