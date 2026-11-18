@@ -4,12 +4,20 @@
   "done_when": "forge next and the board show the age and result of the last complete full run, including missing, queued for more than 24 hours and cancelled runs, and treat no green full run in the last 24 hours as Needs you before a release; new and existing repos get it on upgrade",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-18T14:04:06.332449+00:00",
       "step": "start"
     }
   ],
-  "why": "The board and forge next show only a failed full test run, not how old the last complete full run is or that it is missing, queued for hours or cancelled, so a release can go out with no recent green full run"
+  "stuck": {
+    "close": null,
+    "head": "b065fa3788a9211a601eea6afd39602a2dfe5216",
+    "keys": {},
+    "round": null
+  },
+  "why": "The board and forge next show only a failed full test run, not how old the last complete full run is or that it is missing, queued for hours or cancelled, so a release can go out with no recent green full run",
+  "worker": "codex"
 }
