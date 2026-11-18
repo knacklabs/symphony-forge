@@ -6,10 +6,6 @@ import json
 from test_story import claude_plan, hook, ready, setup
 
 
-def touches(path):
-    return json.loads(path.read_text(encoding="utf-8")).get("touches", 0)
-
-
 def test_15_human_touches(repo, claude_payload, codex_payload):
     setup(repo)
     shop = ready(repo, "SHOP")
@@ -59,9 +55,8 @@ def test_15_human_touches(repo, claude_payload, codex_payload):
                          input=json.dumps(claude_payload("SessionStart")))
     assert context.returncode == 0, context.stderr
     assert context.stdout == "Run forge next for the full picture.\n"
-    # The hook no longer lists touches; the records hold the counts.
-    story_dir = shop / ".factory" / "stories" / "SHOP"
-    assert touches(story_dir / "story.json") + touches(task / ".factory" / "stories" / "SHOP" / "tasks" / "SAVE.json") == 3
-    assert touches(fix / ".factory" / "fixes" / "tidy-up.json") == 1
+    # The hook lists no touches; forge next shows the measure.
+    shown = repo.forge("next").stdout
+    assert "a story usually needs a person 3 times" in shown, shown
     # SHOP/SAVE reads working, but no worker process is recorded for it, so none is building it.
-    assert "SHOP/SAVE's worker has stopped." in repo.forge("next").stdout
+    assert "SHOP/SAVE's worker has stopped." in shown

@@ -449,7 +449,7 @@ def _hotspots(top: Path, trees: dict[str, Path], cap: int | None = None) -> list
     ref = story.landed_ref(top)
     try:
         items = spotted.read(top, ref)
-        old = spotted.before_signoff(top, ref) if items else set()
+        old = spotted.before_signoff(top, ref, fetch=cap is None) if items else set()
         items = [entry for entry in items if entry["key"] not in old]
     except spotted.Unreadable as problem:
         return [f"{spotted.PATH} on the default branch can't be read, so no hotspots are "
