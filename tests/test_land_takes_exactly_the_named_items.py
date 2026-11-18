@@ -26,7 +26,8 @@ def test_1_two_named_items_are_tested_together_once_and_the_third_is_left_alone(
     assert not any("cc" in line for line in lines if line.startswith(("Starting", "Train:"))), text
     created = [call for call in env.gh_calls("pr", "create")[before:] if "forge-merge-train/" in " ".join(call)]
     assert len(created) == 1, text  # one combined check, not a second train
-    assert not [call for call in env.gh.calls() if call[:2] in (["run", "rerun"], ["workflow", "run"])], text
+    assert not [call for call in env.gh.calls() if call[:2] in (["run", "rerun"], ["workflow", "run"])
+                or call[:1] == ["api"] and "POST" in call], text
 
 
 def test_2_named_items_run_the_pinned_release(repo):
