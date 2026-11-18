@@ -121,7 +121,7 @@
     "status": "blocked"
   },
   "round": 3,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-18T06:22:46.550167+00:00",
@@ -142,8 +142,12 @@
   ],
   "stop": {
     "at": "2026-11-18T08:48:41.151242+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "src/forge/land.py",
-    "wait_id": "6c0e6087-4056-401a-97d1-1ee66fe9a659"
+    "reason": "Owner chose: fix the resume after a partial named batch; accept the older-main-pin case like --all (filed); drop the rare API-rerun test form",
+    "wait_id": "6c0e6087-4056-401a-97d1-1ee66fe9a659",
+    "worker_round": 3
   },
   "stuck": {
     "close": "3a7a556c-e587-4453-b1b1-2973f239ba93",
