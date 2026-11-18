@@ -4,12 +4,20 @@
   "done_when": "When an item's CI checks were cancelled and none failed, close starts them again or waits for the newer run instead of sending the item to a worker round",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-18T05:31:26.203001+00:00",
       "step": "start"
     }
   ],
-  "why": "Issue 1661: close treats cancelled CI checks as failed and gives forge work as the next step, so a worker round runs, finds nothing and hands back (6 times in one client day)."
+  "stuck": {
+    "close": null,
+    "head": "9bfddcf102aeaebbbd72a120a53733ba3f56aeb4",
+    "keys": {},
+    "round": null
+  },
+  "why": "Issue 1661: close treats cancelled CI checks as failed and gives forge work as the next step, so a worker round runs, finds nothing and hands back (6 times in one client day).",
+  "worker": "claude"
 }
