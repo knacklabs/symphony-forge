@@ -11,14 +11,106 @@
   "done_when": "When two or more tasks or fixes are Ready to merge, forge next and the skill suggest one forge land <item> <item> command naming them; with one Ready item nothing changes; new and existing repos get it on upgrade",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [
+    {
+      "area": "_report() in src/forge/nextstep.py",
+      "file": "src/forge/nextstep.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 402,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Batch ready items under the human merge policy",
+      "work": 2
+    },
+    {
+      "area": "_report() in src/forge/nextstep.py",
+      "file": "src/forge/nextstep.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 406,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Suggest a batch that the checkout's pinned Forge can run",
+      "work": 2
+    },
+    {
+      "area": "_report() in src/forge/nextstep.py",
+      "file": "src/forge/nextstep.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 403,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Remove individual merge advice repeated for a stacked task",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "2bd781bd64747db4f2261bb22f51270de5308688389e897a09b56c3eaad99574",
+    "changed": "21e67383e452ade29f9566584b0b2f94bdf11ba7669c7c8c9f6510f75d54ed59",
+    "commit": "e2a111037b2453f70ca3bf140cb6bd6787ec2ca2",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done\nCase: normal use - A live or adopted repository uses the default `merge = \"human\"` policy and has two ready changes.\n\nThe requested Done-when item is: When two or more tasks or fixes are Ready to merge, forge next and the skill suggest one forge land <item> <item> command naming them; with one Ready item nothing changes; new and existing repos get it on upgrade.\n\nIn this policy, `_item` emits individual pull-request merge instructions rather than `forge merge` lines (`src/forge/nextstep.py:1151`), so this filter produces no batch. The shipped skill also limits its new instruction to agent merges (`src/forge/templates/skill.md:2425`). Human merging is the default for live repositories (`src/forge/repo.py:553`), while the new test explicitly selects agent merging. The requested advice is therefore absent in that default case; any implementation must retain the human's control over the merges.",
+        "file": "src/forge/nextstep.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 402,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: Batch ready items under the human merge policy",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - After installing a newer Forge, a user runs `forge next` in a repository or open worktree still pinned to v1.2.42.\n\n`next` skips the release-pin check (`src/forge/cli.py:150`), so the installed version prints the new multi-item command. Running that command invokes the checkout's pinned release through `src/forge/repo.py:937` and `:964`; v1.2.42's `src/forge/land.py:857` accepts only one item. It rejects the suggested command, leaving both changes unmerged. This also affects old worktrees remaining after the default branch has upgraded; the new test runs only from a current-pin checkout and does not exercise the suggested command.",
+        "file": "src/forge/nextstep.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 406,
+        "priority": "P1",
+        "title": "Suggest a batch that the checkout's pinned Forge can run",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - A ready task has a built child waiting on it, and an independent fix is also ready.\n\nThe report emits the batch for the ready task and fix, but it also retains `Next: forge merge` for the task. The stacked-child path copies its base's next command after a line saying the child waits for the base (`src/forge/nextstep.py:713`); that line does not contain `is ready to merge`, so this filter misses the copied command. Following the remaining individual instruction merges the base outside the suggested batch and can start the extra CI run this fix is meant to avoid. The new test has no stacked child and therefore passes with this conflicting advice present.",
+        "file": "src/forge/nextstep.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 403,
+        "priority": "P1",
+        "title": "Remove individual merge advice repeated for a stacked task",
+        "work": 2
+      }
+    ],
+    "id": "d6754626-8b36-4386-bb04-9c4fb680d96d",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-18T14:04:16.418410+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-18T14:24:00.524622+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-11-18T14:24:00.536499+00:00",
+    "file": "src/forge/nextstep.py",
+    "wait_id": "447b1800-e51f-4840-af83-7d3241f728cf"
+  },
   "stuck": {
     "close": null,
     "head": "7d5cef08abd1fa77c7bf679ccf37c395cb049660",
