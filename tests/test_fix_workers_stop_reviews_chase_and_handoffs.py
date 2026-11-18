@@ -15,7 +15,7 @@ def worker_brief(repo):
     repo.write("forge.toml", f'version = "{version}"\nworkers = "claude"\n'
                'models.lite = { model = "sonnet", effort = "medium" }\n')
     repo.git("add", "forge.toml")
-    repo.git("commit", "-q", "-m", "Pin Forge")
+    repo.git("commit", "--allow-empty", "-q", "-m", "Pin Forge")
     repo.git("push", "-q", "origin", "main")
     started = repo.forge("fix", "start", "Clarify worker guidance", "--done", "Workers get clear rules")
     assert started.returncode == 0, started.stderr

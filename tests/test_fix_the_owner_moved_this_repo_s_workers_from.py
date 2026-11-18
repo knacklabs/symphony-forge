@@ -65,7 +65,7 @@ def test_1_this_repo_works_on_claude_low_and_reviews_on_codex(repo, monkeypatch,
     log = _codex(repo, monkeypatch, sdk_data)
     repo.write("forge.toml", text)
     repo.git("add", "forge.toml")
-    repo.git("commit", "-q", "-m", "Configure Forge")
+    repo.git("commit", "--allow-empty", "-q", "-m", "Configure Forge")
     repo.git("push", "-q", "origin", "main")
     started = repo.forge("fix", "start", "Move code work to Codex", "--done", "Codex builds it")
     assert started.returncode == 0, started.stderr
@@ -86,7 +86,7 @@ def test_2_forge_doctor_passes_on_this_repos_forge_toml(repo, gh, tmp_path, monk
     _signed_in_codex(repo)
     repo.write("forge.toml", (ROOT / "forge.toml").read_text(encoding="utf-8"))
     repo.git("add", "forge.toml")
-    repo.git("commit", "-q", "-m", "Configure Forge")
+    repo.git("commit", "--allow-empty", "-q", "-m", "Configure Forge")
     repo.git("push", "-q", "origin", "main")
     repo.git("checkout", "-q", "-b", "fix/doctor")  # sync refuses on main
     synced = repo.forge("sync")
@@ -113,5 +113,5 @@ def test_2_forge_doctor_passes_on_this_repos_forge_toml(repo, gh, tmp_path, monk
 
     assert done.returncode == 0, done.stdout + done.stderr
     assert "Everything checks out for Forge " in done.stdout, done.stdout
-    # Split runs code work on Codex, so doctor asks for its hook approval.
+    # This repo uses Codex for code and reviews, so doctor names the Codex hook approval.
     assert "approve Forge's hooks" in done.stdout

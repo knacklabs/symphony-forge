@@ -1,0 +1,171 @@
+{
+  "amendments": [
+    {
+      "at": "2026-11-18T04:33:08.949723+00:00",
+      "because": "Owner decision 18 Nov 2026: keep the other-family rule for cold reads",
+      "done_when": "forge init in a repo where both Claude and Codex are signed in writes workers = claude, with code reviews and cold reads on Codex, and a Claude-only repo keeps Claude for everything"
+    }
+  ],
+  "base": "a3272814e237b99271e2d7f844779588405e15d3",
+  "branch": "fix/new-client-repos-with-both-tools-install",
+  "done_when": "forge init in a repo where both Claude and Codex are signed in writes workers = claude, code reviews run on Codex, cold reads run on the other tool from the session, and a Claude-only repo keeps Claude for everything",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "src/forge/templates/skill.md",
+      "file": "src/forge/templates/skill.md",
+      "gain": 3,
+      "harm": 3,
+      "line": 446,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: cold reads run on the other tool from the session",
+      "work": 2
+    },
+    {
+      "area": "_settings() in src/forge/init.py",
+      "file": "src/forge/init.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 183,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Keep the existing test suite runnable with the new default",
+      "work": 2
+    },
+    {
+      "area": "_settings() in src/forge/init.py",
+      "file": "src/forge/init.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 183,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Check both tools' readiness with the new default",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/skill.md",
+      "file": "src/forge/templates/skill.md",
+      "gain": 4,
+      "harm": 2,
+      "line": 446,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Standard: Delete before adding",
+      "work": 1
+    },
+    {
+      "area": "tests/test_init_uses_signed_in_tools.py",
+      "file": "tests/test_init_uses_signed_in_tools.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 32,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: proof list",
+      "work": 1
+    },
+    {
+      "area": "_settings() in src/forge/init.py",
+      "file": "src/forge/init.py",
+      "gain": 1,
+      "harm": 1,
+      "line": 183,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Simpler: unrecorded approach \u2192 record deletion, cost and reuse checks",
+      "work": 1
+    },
+    {
+      "area": "doctor() in src/forge/doctor.py",
+      "file": "src/forge/doctor.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 352,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Keep the existing test suite runnable with the new default",
+      "work": 2
+    },
+    {
+      "area": "doctor() in src/forge/doctor.py",
+      "file": "src/forge/doctor.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 352,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Check both tools' readiness with the new default",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "8e2c63da1a6caaad6301530dcdc3cd83e2f59ca96368d058761b5a9e30c531db",
+    "changed": "5b5bcbc3a4cfaca8d135f591d6efef5fb2059cb85483eb352304cc8bd005477b",
+    "commit": "f124b9debda13540fb2fc35458d9a609332244bf",
+    "dismissals": [],
+    "findings": [],
+    "id": "44628f2f-1c5e-417d-8c13-f72bf840f45e",
+    "status": "clean"
+  },
+  "round": 4,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-18T03:34:42.748414+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-18T04:44:30.748706+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-18T05:11:47.455324+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-18T05:55:07.088165+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-18T07:13:43.864515+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-18T05:11:47.455937+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "src/forge/doctor.py",
+    "reason": "Owner chose one more round: fix the three remaining findings",
+    "wait_id": "382af966-4f77-420c-b0ee-a6a0112f4d95",
+    "worker_round": 2
+  },
+  "stuck": {
+    "close": "c0804b00-d68a-44ce-a8a1-5ef7af8dffcb",
+    "head": "80f32db0c25b4d1bb6327ab5a3fc437111734e14",
+    "keys": {},
+    "round": 3
+  },
+  "why": "New client repos with both tools installed default to workers = split, so plain build work goes to Codex. Owner direction 18 Nov 2026: by default Claude builds everything, and Codex is used only for code reviews and cold reads.",
+  "worker": "claude"
+}

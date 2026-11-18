@@ -24,7 +24,7 @@ def _client(repo, gh, tmp_path, previous, *, subagents=False):
     if previous:
         repo.write("forge.toml", settings)
         repo.git("add", "-A")
-        repo.git("commit", "-q", "-m", "Configure Claude client")
+        repo.git("commit", "--allow-empty", "-q", "-m", "Configure Claude client")
         repo.git("push", "-q", "origin", "main")
     else:
         client = tmp_path / "client"
@@ -42,7 +42,7 @@ def _client(repo, gh, tmp_path, previous, *, subagents=False):
     assert synced.returncode == 0, synced.stdout + synced.stderr
     if repo.git("status", "--porcelain", cwd=folder):
         repo.git("add", "-A", cwd=folder)
-        repo.git("commit", "-q", "-m", "Sync client adapters", cwd=folder)
+        repo.git("commit", "--allow-empty", "-q", "-m", "Sync client adapters", cwd=folder)
     return log, folder
 
 

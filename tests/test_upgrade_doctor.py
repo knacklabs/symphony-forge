@@ -63,7 +63,7 @@ def test_5_doctor_says_which_forge_version_it_compares_with(repo, gh, tmp_path, 
     if case == "all is well":
         request.getfixturevalue("doctor_sdks")
         toml.write_text(toml.read_text(encoding="utf-8").replace(
-            'workers = "split"', 'workers = "claude"', 1), encoding="utf-8")
+            'workers = "claude"', 'tools = "claude"\nworkers = "claude"', 1), encoding="utf-8")
         (tmp_path / "home").mkdir()
         monkeypatch.setenv("HOME", str(tmp_path / "home"))
         monkeypatch.setenv("USERPROFILE", str(tmp_path / "home"))

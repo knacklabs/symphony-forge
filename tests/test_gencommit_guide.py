@@ -87,7 +87,7 @@ def test_4_an_earlier_python_app_keeps_its_committed_files(unsynced_up):
                                                               "scripts/test.mjs", "scripts/affected.mjs")}
     repo.git("switch", "-q", "-c", "adoption")
     repo.git("add", "-A")
-    repo.git("-c", no_hooks, "commit", "-q", "-m", "The earlier Python app")
+    repo.git("-c", no_hooks, "commit", "--allow-empty", "-q", "-m", "The earlier Python app")
     repo.git("switch", "-q", "main")
     repo.git("merge", "-q", "--ff-only", "adoption")
     repo.git("-c", no_hooks, "push", "-q", "origin", "main")

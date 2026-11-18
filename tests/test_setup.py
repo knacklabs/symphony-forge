@@ -132,7 +132,7 @@ def test_28_sync(repo, tmp_path, monkeypatch):
                   "Stop": [{"hooks": [{"type": "command", "command": OLD_FORGE_HOOK}]}]}}))
     repo.write(".codex/config.toml", 'model = "o3"\n\n[features]\nweb_search = true\n')
     repo.git("add", "-A")
-    repo.git("commit", "-q", "-m", "Our own files")
+    repo.git("commit", "--allow-empty", "-q", "-m", "Our own files")
     # The repo's own git hooks, from before Forge; each logs its name, arguments and input.
     hooks = _hooks_folder(repo.path)
     ours = tmp_path / "our-hooks.log"
@@ -199,7 +199,7 @@ def test_28_sync(repo, tmp_path, monkeypatch):
 
     # The repo's own git hooks still run first, with the same arguments and input, then Forge's.
     calls = _stub_forge(tmp_path, monkeypatch)
-    repo.git("commit", "-q", "--allow-empty", "-m", "Checked by both hooks")
+    repo.git("commit", "--allow-empty", "-q", "--allow-empty", "-m", "Checked by both hooks")
     repo.git("push", "-q", "origin", "fix/adapters")
     ran = ours.read_text(encoding="utf-8").splitlines()
     assert ran[0] == "pre-commit " and ran[1].startswith("pre-push origin ")
@@ -209,7 +209,7 @@ def test_28_sync(repo, tmp_path, monkeypatch):
                                   f"{pushed}\n"), forge_calls
     # ... and when one of them fails, so does the commit, before Forge's hook runs.
     _executable(hooks / "pre-commit.pre-forge", "#!/bin/sh\nexit 1\n")
-    stopped = subprocess.run(["git", "commit", "-q", "--allow-empty", "-m", "Stopped"],
+    stopped = subprocess.run(["git", "commit", "--allow-empty", "-q", "--allow-empty", "-m", "Stopped"],
                              cwd=repo.path, capture_output=True, text=True)
     assert stopped.returncode != 0
     assert calls.read_text(encoding="utf-8") == forge_calls
@@ -274,7 +274,8 @@ def test_29_doctor(repo, gh, tmp_path, monkeypatch, case, rows, doctor_sdks):
     toml = client / "forge.toml"
     # These doctor cases exercise Claude workers, including its optional Codex trust advice.
     toml.write_text(toml.read_text(encoding="utf-8").replace(
-        'workers = "split"', 'workers = "claude"', 1), encoding="utf-8")
+        'workers = "claude"', 'workers = "claude"' if case in ("missing tool", "codex doesn't trust the project")
+        else 'tools = "claude"\nworkers = "claude"', 1), encoding="utf-8")
     if case.startswith("impeccable") or case == "no impeccable":
         # Clients now receive repo copies at init. Global placement still matters in Forge's
         # own repo, which deliberately receives neither skill, so retain these cases there.
@@ -350,7 +351,7 @@ def test_29_doctor(repo, gh, tmp_path, monkeypatch, case, rows, doctor_sdks):
             encoding="utf-8")
         repo.git("add", ".github/workflows/forge.yml", cwd=client)
         repo.git("-c", f"core.hooksPath={(tmp_path / 'no-hooks').as_posix()}",
-                 "commit", "-q", "-m", "Break the test workflow", cwd=client)
+                 "commit", "--allow-empty", "-q", "-m", "Break the test workflow", cwd=client)
     if case == "forge's own repo without git hooks":  # the workflow installs Forge from its checkout
         repo.git("checkout", "-q", "-b", "fix/own", cwd=client)  # sync refuses on main
         assert repo.forge("sync", cwd=client).returncode == 0
@@ -399,12 +400,11 @@ def test_29_doctor(repo, gh, tmp_path, monkeypatch, case, rows, doctor_sdks):
         assert done.returncode == 0, done.stdout + done.stderr
         assert "Warning: Claude Code is missing or older than v2.1.287" in done.stdout
     elif case == "codex doesn't trust the project":
-        # Advice, not a failure, and "everything checks out" never hides it.
-        assert done.returncode == 0, done.stdout + done.stderr
-        assert "- Note: Codex runs this repo's hooks only in a project it trusts" in done.stdout
+        # With both tools set, reviews use Codex, so missing trust is a failure.
+        assert done.returncode == 1, done.stdout + done.stderr
+        assert "Codex doesn't trust this project" in done.stdout
         assert (f'add trust_level = "trusted" under [projects.{json.dumps(str(client.resolve()))}] in '
                 f'{codex_home / "config.toml"}') in done.stdout
-        assert "Everything else checks out" in done.stdout
     elif case == "impeccable in CLAUDE_CONFIG_DIR":
         assert done.returncode == 0, done.stdout + done.stderr
         assert done.stdout.startswith("Everything checks out"), done.stdout

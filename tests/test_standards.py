@@ -84,7 +84,7 @@ def test_36_client_apps_simple(repo, tmp_path):
                              'models.build = { model = "opus", effort = "high" }\n'
                              'models.lite = { model = "sonnet", effort = "medium" }\n')
     repo.git("add", "forge.toml")
-    repo.git("commit", "-q", "-m", "Pin Forge")
+    repo.git("commit", "--allow-empty", "-q", "-m", "Pin Forge")
     repo.git("push", "-q", "origin", "main")
     story(repo)
     assert repo.forge("task", "start", "BOARD/PAGE").returncode == 0

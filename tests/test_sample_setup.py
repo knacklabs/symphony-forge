@@ -116,7 +116,7 @@ def test_2_a_sample_data_repo_runs_no_tests_or_ci_until_its_first_build_step(
     repo.write("docs/decisions/0000-prototype-build.md",
                '---\nstatus: accepted\nconfirmed_by: "Owner"\n---\n# Build the sample demo\n')
     repo.git("add", "-A")
-    _fixture_git(repo, tmp_path, "commit", "-q", "-m", "Enable the sample-data prototype")
+    _fixture_git(repo, tmp_path, "commit", "--allow-empty", "-q", "-m", "Enable the sample-data prototype")
     if case == "earlier adopted":
         repo.git("switch", "-q", "main")
         repo.git("merge", "-q", "--ff-only", "fix/sample-setup")
@@ -132,7 +132,7 @@ def test_2_a_sample_data_repo_runs_no_tests_or_ci_until_its_first_build_step(
     repo.git("add", "forge.toml", cwd=where)
     with monkeypatch.context() as worker:
         worker.setenv("FORGE_WORKER", "1")
-        refused = subprocess.run(["git", "commit", "-qm", "Change the sample setting"],
+        refused = subprocess.run(["git", "commit", "--allow-empty", "-qm", "Change the sample setting"],
                                  cwd=where, capture_output=True, text=True, encoding="utf-8")
     assert refused.returncode != 0
     assert "Workers leave forge.toml to the coordinator" in refused.stderr
@@ -197,7 +197,7 @@ def test_2_a_sample_data_repo_runs_no_tests_or_ci_until_its_first_build_step(
     signoff.parent.mkdir(parents=True, exist_ok=True)
     signoff.write_text("---\nstatus: accepted\n---\n", encoding="utf-8")
     repo.git("add", "docs/decisions/0001-client-signoff.md", cwd=top)
-    _fixture_git(repo, tmp_path, "commit", "-q", "-m", "Record accepted client sign-off", cwd=top)
+    _fixture_git(repo, tmp_path, "commit", "--allow-empty", "-q", "-m", "Record accepted client sign-off", cwd=top)
     _fixture_git(repo, tmp_path, "push", "-q", "origin", "main", cwd=top)
     after_signoff = repo.forge("next")
     assert after_signoff.returncode == 0, after_signoff.stderr
@@ -212,7 +212,7 @@ def test_2_a_sample_data_repo_runs_no_tests_or_ci_until_its_first_build_step(
                       encoding="utf-8")
     _settings(config, test_place="local", checks=[])
     repo.git("add", "-A", cwd=top)
-    _fixture_git(repo, tmp_path, "commit", "-q", "-m", "Remove the sample-data setting", cwd=top)
+    _fixture_git(repo, tmp_path, "commit", "--allow-empty", "-q", "-m", "Remove the sample-data setting", cwd=top)
     _fixture_git(repo, tmp_path, "push", "-q", "origin", "main", cwd=top)
     no_switch = repo.forge("next")
     assert no_switch.returncode == 0, no_switch.stderr
@@ -264,7 +264,7 @@ def test_7_turning_sample_data_off_needs_a_settled_personal_data_answer(
     _settings(config, repo="client", stage="prototype", test_place="local")
     # Earlier sign-off text is historical; both clients now need the explicit setting.
     repo.git("add", "-A", cwd=top)
-    _fixture_git(repo, tmp_path, "commit", "-q", "-m", "Prepare a sample-data prototype", cwd=top)
+    _fixture_git(repo, tmp_path, "commit", "--allow-empty", "-q", "-m", "Prepare a sample-data prototype", cwd=top)
     _fixture_git(repo, tmp_path, "push", "-q", "origin", "main", cwd=top)
 
     # The sample declaration leaves the open answer out of the app-constitution decision.
@@ -298,7 +298,7 @@ def test_7_turning_sample_data_off_needs_a_settled_personal_data_answer(
                                cwd=decision_fix)
     assert plan_accepted.returncode == 0, plan_accepted.stdout + plan_accepted.stderr
     repo.git("add", "-A", cwd=decision_fix)
-    repo.git("commit", "-q", "-m", "Accept the app constitution", cwd=decision_fix)
+    repo.git("commit", "--allow-empty", "-q", "-m", "Accept the app constitution", cwd=decision_fix)
     decision_branch = repo.git("branch", "--show-current", cwd=decision_fix)
     repo.git("merge", "--ff-only", decision_branch, cwd=top)
     _fixture_git(repo, tmp_path, "push", "-q", "origin", "main", cwd=top)
@@ -314,7 +314,7 @@ def test_7_turning_sample_data_off_needs_a_settled_personal_data_answer(
     _settings(unrelated / "forge.toml", workers="codex")
     (unrelated / "app.py").write_text("print('sample data')\n", encoding="utf-8")
     repo.git("add", "-A", cwd=unrelated)
-    repo.git("commit", "-q", "-m", "Adjust the sample worker", cwd=unrelated)
+    repo.git("commit", "--allow-empty", "-q", "-m", "Adjust the sample worker", cwd=unrelated)
     env.reviews(CLEAN)
     env.open_pr("")
     env.checks(GREEN)
@@ -337,7 +337,7 @@ def test_7_turning_sample_data_off_needs_a_settled_personal_data_answer(
             re.sub(r"(?m)^sample_data = true\n", "", changed), encoding="utf-8")
     (where / "app.py").write_text("print('real data starts here')\n", encoding="utf-8")
     repo.git("add", "-A", cwd=where)
-    repo.git("commit", "-q", "-m", "Turn off sample data", cwd=where)
+    repo.git("commit", "--allow-empty", "-q", "-m", "Turn off sample data", cwd=where)
     env.reviews(CLEAN)
     env.open_pr("")
     env.checks(GREEN)
@@ -352,7 +352,7 @@ def test_7_turning_sample_data_off_needs_a_settled_personal_data_answer(
         brief.write_text(re.sub(r"(?m)^- Personal data:.*$", f"- Personal data: {answer}",
                                 brief.read_text(encoding="utf-8")), encoding="utf-8")
         repo.git("add", "docs/product/BRIEF.md", cwd=where)
-        repo.git("commit", "-q", "-m", "Update the Personal data answer", cwd=where)
+        repo.git("commit", "--allow-empty", "-q", "-m", "Update the Personal data answer", cwd=where)
 
     closed = env.close(item)
     assert closed.returncode == 0, closed.stdout + closed.stderr

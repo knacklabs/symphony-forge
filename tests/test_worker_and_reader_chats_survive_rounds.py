@@ -34,7 +34,7 @@ def _adopted(repo):
                     dirs_exist_ok=True)
     repo.git("switch", "-qc", "adoption")
     repo.git("add", "-A")
-    repo.git("commit", "-qm", "Adopt earlier Forge")
+    repo.git("commit", "--allow-empty", "-qm", "Adopt earlier Forge")
     repo.git("switch", "-q", "main")
     repo.git("merge", "-q", "--ff-only", "adoption")
 
@@ -57,11 +57,11 @@ def _worker(repo, monkeypatch, sdk_data, app, kind, adopted=False):
         if kind == "fix":
             config.write_text(config.read_text("utf-8").replace('[models.fix]\nmodel = "gpt-6-sol"\neffort = "medium"',
                               '[models.fix]\nmodel = "gpt-6-sol"\neffort = "high"'), encoding="utf-8")
-    repo.git("commit", "-qam", "Choose client worker models", cwd=folder)
+    repo.git("commit", "--allow-empty", "-qam", "Choose client worker models", cwd=folder)
     if app == "claude" and kind == "task":
         # Fix start copies the default client settings.
         repo.write("forge.toml", config.read_text("utf-8"))
-        repo.git("commit", "-qam", "Choose Claude")
+        repo.git("commit", "--allow-empty", "-qam", "Choose Claude")
         repo.git("push", "-q", "origin", "main")
     if kind == "fix":
         repo.git("push", "-q", "origin", "main")
@@ -83,7 +83,7 @@ def _client_reader(repo, monkeypatch, tmp_path, sdk_data, app, adopted):
         config = folder / "forge.toml"
         config.write_text(config.read_text("utf-8").replace('repo = "forge-source"',
                           'repo = "client"'), encoding="utf-8")
-        repo.git("commit", "-qam", "Keep client reader settings", cwd=folder)
+        repo.git("commit", "--allow-empty", "-qam", "Keep client reader settings", cwd=folder)
     repo.git("push", "-q", "origin", "main")
     return reader
 
@@ -178,7 +178,7 @@ def test_1_worker_keeps_its_chat_across_rounds(repo, monkeypatch, sdk_data, tmp_
                 settings.write('\n[models.fix.claude]\nmodel = "sonnet"\neffort = "low"\n'
                                '\n[models.build.claude]\nmodel = "sonnet"\neffort = "low"\n'
                                '\n[models.lite.claude]\nmodel = "sonnet"\neffort = "low"\n')
-        repo.git("commit", "-qam", "Change worker settings", cwd=folder)
+        repo.git("commit", "--allow-empty", "-qam", "Change worker settings", cwd=folder)
     elif change == "record-missing":
         record.unlink()
     elif change == "machine-restart":
@@ -227,7 +227,7 @@ def test_2_plan_reader_keeps_its_chat_across_rounds(repo, monkeypatch, tmp_path,
              _session(calls(reader.log)[-1], "--session-id"))
     if adopted == "previous-release-round":
         repo.git("add", "--", "plans/SHOP.read.md", cwd=reader.shop)
-        repo.git("commit", "-qm", "Keep earlier reader findings", "--", "plans/SHOP.read.md", cwd=reader.shop)
+        repo.git("commit", "--allow-empty", "-qm", "Keep earlier reader findings", "--", "plans/SHOP.read.md", cwd=reader.shop)
         if app == "claude" and change == "record-missing":
             reader.dispose(FIRST, "cut")
             dirty = reader.text()
@@ -237,7 +237,7 @@ def test_2_plan_reader_keeps_its_chat_across_rounds(repo, monkeypatch, tmp_path,
             assert "Next: commit or undo those changes, then forge sync" in warned.stdout
             assert reader.text() == dirty
             repo.git("add", "--", "plans/SHOP.read.md", cwd=reader.shop)
-            repo.git("commit", "-qm", "Keep the reader disposition", "--", "plans/SHOP.read.md", cwd=reader.shop)
+            repo.git("commit", "--allow-empty", "-qm", "Keep the reader disposition", "--", "plans/SHOP.read.md", cwd=reader.shop)
         accepted = _accepted_read(reader.text())
         if app == "claude" and change == "record-missing":
             synced = repo.forge("sync", cwd=other)
@@ -257,7 +257,7 @@ def test_2_plan_reader_keeps_its_chat_across_rounds(repo, monkeypatch, tmp_path,
         shutil.rmtree(repo.path / ".git/forge")
     elif change == "fresh-worktree":
         repo.git("add", "-A", cwd=reader.shop)
-        repo.git("commit", "-qm", "Keep the reader notes", cwd=reader.shop)
+        repo.git("commit", "--allow-empty", "-qm", "Keep the reader notes", cwd=reader.shop)
         branch = repo.git("branch", "--show-current", cwd=reader.shop)
         repo.git("worktree", "remove", str(reader.shop))
         reader.shop = tmp_path / "fresh reader with spaces"
@@ -306,7 +306,7 @@ def test_3_only_a_missing_chat_or_changed_tool_starts_fresh(repo, monkeypatch, s
         config = folder / "forge.toml"
         config.write_text(config.read_text("utf-8").replace(f'workers = "{app}"',
                           f'workers = "{other}"'), encoding="utf-8")
-        repo.git("commit", "-qam", "Change worker tool", cwd=folder)
+        repo.git("commit", "--allow-empty", "-qam", "Change worker tool", cwd=folder)
     again = _work(repo, item)
     explanations = [line for line in again.stdout.splitlines() if line.startswith("Starting a new")]
     assert len(explanations) == 1, again.stdout
@@ -478,7 +478,7 @@ def test_8_worker_keeps_chat_with_routing_record_missing(repo, monkeypatch, sdk_
     data = json.loads(state.read_text("utf-8"))
     data.pop("worker")
     state.write_text(json.dumps(data), encoding="utf-8")
-    repo.git("commit", "-qam", "Keep the earlier routing record", cwd=folder)
+    repo.git("commit", "--allow-empty", "-qam", "Keep the earlier routing record", cwd=folder)
 
     again = _work(repo, item)
 
@@ -526,7 +526,7 @@ def test_10_failed_replacement_reader_keeps_its_chat(repo, monkeypatch, tmp_path
     reader.app = "claude" if app == "codex" else "codex"
     config = reader.shop / "forge.toml"
     config.write_text(f'tools = "{reader.app}"\n' + config.read_text("utf-8"), encoding="utf-8")
-    repo.git("commit", "-qam", "Choose replacement reader", cwd=reader.shop)
+    repo.git("commit", "--allow-empty", "-qam", "Choose replacement reader", cwd=reader.shop)
     reader.coordinate(app)
     reader.log = repo.bin / ("claude-calls.jsonl" if reader.app == "claude" else
                             "codex-app-server.jsonl")
@@ -556,7 +556,7 @@ def test_11_split_design_falls_back_after_clean_failure_without_hiding_worker_ed
     config = folder / "forge.toml"
     config.write_text(config.read_text("utf-8").replace('workers = "claude"',
                       'workers = "split"'), encoding="utf-8")
-    repo.git("commit", "-qam", "Use split client workers", cwd=folder)
+    repo.git("commit", "--allow-empty", "-qam", "Use split client workers", cwd=folder)
     if case in ("resumed-unpersisted", "replacement"):
         _work(repo, item)
         if case == "resumed-unpersisted":
@@ -564,7 +564,7 @@ def test_11_split_design_falls_back_after_clean_failure_without_hiding_worker_ed
             data = json.loads(state.read_text("utf-8"))
             data.pop("chat")
             state.write_text(json.dumps(data), encoding="utf-8")
-            repo.git("commit", "-qam", "Keep the earlier chat record", cwd=folder)
+            repo.git("commit", "--allow-empty", "-qam", "Keep the earlier chat record", cwd=folder)
         else:
             (repo.bin / "claude-sdk-sessions.json").unlink()
     monkeypatch.setenv("STUB_CLAUDE_EXIT", "3")
@@ -641,7 +641,7 @@ def test_13_previous_release_spec_reader_survives_removed_owner_and_metadata(
     first = _reader_chat(reader)
     # The old passing read committed its notes; restore the current release's pin for landing.
     if repo.git("diff", "--name-only", "--", "forge.toml", cwd=owner):
-        repo.git("commit", "-qam", "Keep the current Forge pin", "--", "forge.toml", cwd=owner)
+        repo.git("commit", "--allow-empty", "-qam", "Keep the current Forge pin", "--", "forge.toml", cwd=owner)
     repo.git("merge", "-q", "--ff-only", "fix/keep-invoice-plan")
     repo.git("worktree", "remove", str(owner))
     repo.git("branch", "--unset-upstream", "fix/keep-invoice-plan")
@@ -659,7 +659,7 @@ def test_13_previous_release_spec_reader_survives_removed_owner_and_metadata(
     assert synced.returncode == 0, synced.stdout + synced.stderr
     if repo.git("status", "--porcelain", cwd=upgrade):
         repo.git("add", "-A", cwd=upgrade)
-        repo.git("commit", "-qm", "Keep the generated upgrade files", cwd=upgrade)
+        repo.git("commit", "--allow-empty", "-qm", "Keep the generated upgrade files", cwd=upgrade)
     repo.git("merge", "-q", "--ff-only", "fix/chat-upgrade")
     # GitHub lands the upgrade; the freshly installed hooks correctly refuse a main push.
     remote = Path(repo.git("remote", "get-url", "origin"))
@@ -701,7 +701,7 @@ def test_16_sync_skips_stale_spec_reader_in_registered_worktree(
         repo.git("mv", "docs/specs/invoices.md", "docs/specs/billing.md", cwd=owner)
     else:
         repo.git("rm", "docs/specs/invoices.md", cwd=owner)
-    repo.git("commit", "-qam", "Retire the earlier spec", cwd=owner)
+    repo.git("commit", "--allow-empty", "-qam", "Retire the earlier spec", cwd=owner)
     before = repo.git("rev-parse", "HEAD", cwd=owner)
     _, synced = _sync_elsewhere(repo, tmp_path)
     assert synced.returncode == 0, synced.stdout + synced.stderr
@@ -821,9 +821,9 @@ def test_18_upgrade_preserves_unmerged_spec_reader_after_owner_moves(
         reader.fail(False)
     if change == "removed" and not failed:
         repo.git("add", "docs/specs/invoices.read.md", cwd=owner)
-        repo.git("commit", "-qm", "Keep earlier reader findings", cwd=owner)
+        repo.git("commit", "--allow-empty", "-qm", "Keep earlier reader findings", cwd=owner)
     if repo.git("diff", "--name-only", "--", "forge.toml", cwd=owner):
-        repo.git("commit", "-qam", "Keep the current Forge pin", "--", "forge.toml", cwd=owner)
+        repo.git("commit", "--allow-empty", "-qam", "Keep the current Forge pin", "--", "forge.toml", cwd=owner)
     relocated = tmp_path / "relocated spec owner with spaces"
     if change == "move":
         repo.git("worktree", "move", str(owner), str(relocated))
