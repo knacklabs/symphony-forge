@@ -63,7 +63,7 @@
     "id": "509cf787-e22d-43f4-ad86-ed2499a88fbf",
     "status": "blocked"
   },
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-18T06:49:12.784679+00:00",
@@ -76,8 +76,12 @@
   ],
   "stop": {
     "at": "2026-11-18T07:18:00.961984+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "forge.toml",
-    "wait_id": "a814b755-4a9f-479c-ba0f-9c662ddc56a8"
+    "reason": "Owner chose split: Codex builds code, Claude builds user-facing parts",
+    "wait_id": "a814b755-4a9f-479c-ba0f-9c662ddc56a8",
+    "worker_round": null
   },
   "why": "Owner direction 18 Nov 2026: Forge's own repo builds with Codex. forge.toml still says workers = claude."
 }
