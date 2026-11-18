@@ -9,51 +9,70 @@ STORY = "FIX-CANCELLED-CI-RERUN"
 RUN_LIST = ["api", "--paginate", "--jq", ".workflow_runs[]"]
 
 
-def _check(name: str, conclusion: str, suite: int = 5) -> dict:
-    return {**run(name, conclusion), "check_suite": {"id": suite}}
+def _check(name: str, conclusion: str | None, suite: int = 5, status: str = "completed") -> dict:
+    return {**run(name, conclusion, status), "check_suite": {"id": suite}}
 
 
-def _workflow(number: int, id: int, conclusion: str = "cancelled", status: str = "completed") -> str:
+def _workflow(number: int, id: int, conclusion: str | None = "cancelled", status: str = "completed",
+              attempt: int = 1, event: str = "pull_request") -> str:
     return json.dumps({"id": id, "check_suite_id": number, "workflow_id": 1, "run_number": number,
-                       "status": status, "conclusion": conclusion}) + "\n"
+                       "run_attempt": attempt, "event": event, "status": status,
+                       "conclusion": conclusion}) + "\n"
 
 
-def _close(env, monkeypatch, *looks: list[dict], workflows: str):
+OTHER = _check("forge-pr-check", "success", 6)
+CANCELLED = [_check("tests", "cancelled"), _check("lint", "cancelled"), OTHER]
+RUNNING = [_check("tests", None, status="in_progress"), _check("lint", "success"), OTHER]
+
+
+def _close(env, monkeypatch, *looks, workflows):
     monkeypatch.setenv("FORGE_CHECKS_WAIT", "600")
+    env.gh.respond("run", "rerun")
     _agent(env)
     _fix(env, "working", worked=True)
-    env.gh.respond("run", "rerun")
     _queue(env, RUNS, *_runs(*looks))
-    _queue(env, RUN_LIST, workflows)
+    _queue(env, RUN_LIST, *workflows)
     return env.repo.forge("close", ITEM)
 
 
-def test_1_cancelled_checks_are_run_again_once_then_waited_for(clock, monkeypatch):
-    land = clock
-    cancelled = [_check("tests", "cancelled"), _check("forge-pr-check", "success", 6)]
-    done = _close(land, monkeypatch, cancelled, [run("tests", None, "in_progress"), run("forge-pr-check")],
-                  GREEN, workflows=_workflow(5, 77))
+def test_1_a_cancelled_run_with_two_jobs_is_run_again_once_and_waited_for(clock, monkeypatch):
+    done = _close(clock, monkeypatch, CANCELLED, RUNNING, RUNNING, GREEN,
+                  workflows=(_workflow(5, 77), _workflow(5, 77, None, "in_progress", 2)))
 
     assert done.returncode == 0, done.stdout + done.stderr
-    assert land.gh_calls("run", "rerun") == [["run", "rerun", "77"]]
+    assert clock.gh_calls("run", "rerun") == [["run", "rerun", "77"]]
+    assert len(clock.gh_calls(*RUNS)) >= 4  # Close polled through cancelled, running, running, green.
 
 
-def test_2_cancelled_checks_wait_for_a_newer_run_instead_of_a_rerun(clock, monkeypatch):
-    land = clock
-    cancelled = [_check("tests", "cancelled"), _check("forge-pr-check", "success", 6)]
-    newer = [_check("tests", "cancelled"), _check("tests", None, 7), _check("forge-pr-check", "success", 6)]
-    newer[1]["status"] = "in_progress"
-    done = _close(land, monkeypatch, newer, GREEN, workflows=_workflow(5, 77) + _workflow(7, 78, None, "in_progress"))
+def test_2_a_newer_run_of_the_same_event_is_waited_for_without_a_rerun(clock, monkeypatch):
+    newer = [_check("tests", "cancelled"), _check("tests", None, 7, "in_progress"), OTHER]
+    done = _close(clock, monkeypatch, newer, GREEN,
+                  workflows=(_workflow(5, 77) + _workflow(7, 78, None, "in_progress"),))
 
     assert done.returncode == 0, done.stdout + done.stderr
-    assert not land.gh_calls("run", "rerun")
+    assert not clock.gh_calls("run", "rerun")
 
 
 def test_3_checks_cancelled_again_after_the_rerun_go_to_the_worker(clock, monkeypatch):
-    land = clock
-    cancelled = [_check("tests", "cancelled"), _check("forge-pr-check", "success", 6)]
-    done = _close(land, monkeypatch, cancelled, workflows=_workflow(5, 77))
+    done = _close(clock, monkeypatch, CANCELLED, CANCELLED,
+                  workflows=(_workflow(5, 77), _workflow(5, 77, attempt=2)))
 
     assert done.returncode == 1, done.stdout + done.stderr
-    assert "Checks failed on the pull request: tests." in done.stderr
-    assert len(land.gh_calls("run", "rerun")) == 1
+    assert "Checks failed on the pull request: tests, lint." in done.stderr
+    assert f"Next: forge work {ITEM}" in done.stderr
+    assert clock.gh_calls("run", "rerun") == [["run", "rerun", "77"]]
+
+
+def test_4_a_restarted_close_does_not_run_a_second_attempt_again(clock, monkeypatch):
+    done = _close(clock, monkeypatch, CANCELLED, workflows=(_workflow(5, 77, attempt=2),))
+
+    assert done.returncode == 1, done.stdout + done.stderr
+    assert not clock.gh_calls("run", "rerun")
+
+
+def test_5_a_newer_run_of_another_event_does_not_pass_the_cancelled_check(clock, monkeypatch):
+    done = _close(clock, monkeypatch, CANCELLED, RUNNING, GREEN,
+                  workflows=(_workflow(5, 77) + _workflow(7, 78, "success", event="workflow_dispatch"),))
+
+    assert clock.gh_calls("run", "rerun") == [["run", "rerun", "77"]]
+    assert done.returncode == 0, done.stdout + done.stderr
