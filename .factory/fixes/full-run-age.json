@@ -1,6 +1,13 @@
 {
   "base": "64105f1b7b691f43af2a995f8f72fe8da1372287",
   "branch": "fix/full-run-age",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1eef9-ac67-7731-a426-746a88a1839b",
+    "head": null,
+    "start": "5c466a2cf6593c54e8539270c12af2b25ef0097c"
+  },
   "done_when": "forge next and the board show the age and result of the last complete full run, including missing, queued for more than 24 hours and cancelled runs, and treat no green full run in the last 24 hours as Needs you before a release; new and existing repos get it on upgrade",
   "fix_kind": "mechanical",
   "kind": "fix",
