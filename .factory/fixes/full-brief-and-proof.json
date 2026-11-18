@@ -1,6 +1,13 @@
 {
   "base": "1a5b4d2cf1d9b0e80bb05627d2864a9ac40fd2bb",
   "branch": "fix/full-brief-and-proof",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1ef94-ca4c-74e2-a1ba-ac2bab209499",
+    "head": null,
+    "start": "86a723498c53a0f55cc12b4db7fef18171cbd3cd"
+  },
   "done_when": "Each worker round's brief carries the item's full Done-when, the callers of each changed function and the tests that cover them, and tells the worker to finish all of them before review; close names a missing proof list before the review and the skill tells the coordinator to add it when it commits a fix itself; a review finding that is only a missing proof list or approach record gets one automatic repair round without an owner question; new and existing repos get it on upgrade",
   "fix_kind": "mechanical",
   "kind": "fix",
