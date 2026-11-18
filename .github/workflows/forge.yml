@@ -22,7 +22,7 @@ jobs:
     runs-on: "ubuntu-24.04"
     outputs:
       docs-only: ${{ steps.docs.outputs.docs-only }}
-      one-group: ${{ steps.docs.outputs.one-group }}
+      one-group: ${{ 'false' }}
     steps:
       - uses: actions/checkout@v7
         with:

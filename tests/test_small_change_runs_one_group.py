@@ -5,6 +5,8 @@ The existing test-only cases cannot detect code-count or shared-input mistakes.
 No fake or production seam decides selection.
 Fixed shard counts must keep all groups: the old cases use Forge's pytest split
 and cannot catch omitted shards in a client's own command.
+Mixed suites protect the same contract when a dynamic count masks a fixed count
+elsewhere in the command. The owner now requires an explicit {groups} count.
 """
 import os
 import re
@@ -21,12 +23,16 @@ from test_testplace_workflow import _jobs
 STORY = "FORGE-CITIME-1"
 
 
-@pytest.mark.parametrize("fixed_shards", [False, True], ids=["forge-split", "fixed-shards"])
-def test_1_a_small_change_runs_one_test_group(repo, gh, tmp_path, fixed_shards):
+@pytest.mark.parametrize("fixed_shards,fast_test", [
+    (False, PYTEST + " --splits {groups} --group {group}"),
+    (True, "vitest run --shard={group}/4"),
+    (True, "vitest run --shard={group}/{groups} && vitest run --shard={group}/4"),
+], ids=["dynamic-count", "fixed-shards", "mixed-suites"])
+def test_1_a_small_change_runs_one_test_group(repo, gh, tmp_path, fixed_shards, fast_test):
     client = _new_client(repo, gh, tmp_path, "client")
     _branch(repo, client, "small-change")
     _settings(client, test=PYTEST, groups=4 if fixed_shards else 2,
-              fast_test="vitest run --shard={group}/4" if fixed_shards else "")
+              fast_test=fast_test)
     (client / "tests").mkdir(exist_ok=True)
     (client / "tests/test_example.py").write_text("def test_it(): assert True\n", encoding="utf-8")
     repo.git("add", "-A", cwd=client)

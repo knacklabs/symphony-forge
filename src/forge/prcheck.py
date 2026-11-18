@@ -396,8 +396,9 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
         full_suite = full_suite.replace("    steps:\n", "    steps:\n      - run: " + json.dumps(
             'echo "::warning::' + full_warning + '"') + "\n", 1)
     template = WORKFLOW
-    if "{groups}" not in change_command and (
-            "{group}" in change_command or not repo.pytest_split(top, change_command)):
+    if ("{groups}" not in change_command
+            or re.search(r"(?:\{group\}|--shard=\d+)/\d+",
+                         (cfg.get("fast_test") or "") + "\n" + cfg["test"])):
         # A fixed shard count must keep every shard, even for a small change.
         template = template.replace("steps.docs.outputs.one-group", "'false'")
     if groups == 1:

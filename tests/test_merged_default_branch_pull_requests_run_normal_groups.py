@@ -44,7 +44,9 @@ def test_1_pull_request_that_merged_the_default_branch_runs_normal_groups(
     if not adopted:
         # A new repo starts with one group; the pull request needs several to show the fan-out.
         _branch(repo, client, "merged-default")
-        _settings(client, test=PYTEST, groups=2)
+    # The one-group shortcut now requires an explicit Forge-controlled count.
+    _settings(client, test=PYTEST + " --splits {groups} --group {group}",
+              groups=6 if adopted else 2)
     ignore = client / ".gitignore"
     ignore.write_text((ignore.read_text("utf-8") if ignore.exists() else "")
                       + "\n__pycache__/\n", encoding="utf-8")
