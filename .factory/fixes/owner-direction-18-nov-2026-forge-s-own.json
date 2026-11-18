@@ -4,12 +4,80 @@
   "done_when": "Forge's own forge.toml says workers = codex, so new build and fix rounds in this repo run on Codex",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "known": [
+    {
+      "area": "forge.toml",
+      "file": "forge.toml",
+      "gain": 4,
+      "harm": 3,
+      "line": 4,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: source-worker tests still require Claude",
+      "work": 2
+    },
+    {
+      "area": "forge.toml",
+      "file": "forge.toml",
+      "gain": 3,
+      "harm": 3,
+      "line": 4,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Keep design routing for user-facing Forge tasks",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "cc1b8d60feb68ebf4085598b1cc36c7ee938895c701f90033e3b7dddc1c1aebb",
+    "changed": "6d03fc262fe7286797f48da5783aaadd502feced0c26bd9532fba26a36df4221",
+    "commit": "2db60a450e25c640c68efd86531455b1e02b0c20",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Gate - The configured full test suite will fail after this setting changes.\nCase: normal use - running the full suite or scheduled full-suite check.\n`tests/test_fix_the_owner_moved_this_repo_s_workers_from.py:48` reads this file and asserts that `workers` is `claude`. `tests/test_source_split_workers.py:13` also reads this file but expects a Claude call and no Codex turn. Both expectations conflict with the new setting; update the existing tests to exercise the Codex route.",
+        "file": "forge.toml",
+        "gain": 4,
+        "harm": 3,
+        "line": 4,
+        "priority": "P1",
+        "title": "Gate: source-worker tests still require Claude",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional - User-facing source tasks lose their configured design effort.\nCase: normal use - starting a User-facing story task in Forge's own repo.\nWith `repo = \"forge-source\"` and the default `tools = \"both\"`, `src/forge/repo.py:813` treats a User-facing row as design work only when workers are `claude` or `split`. This change therefore sends the task through `[models.build.codex]` at low effort instead of `[models.design.codex]` at high effort, contrary to the documented Codex routing at `src/forge/templates/skill.md:1930`.\nAdds work: preserve Codex design routing for source tasks; F 2 x H 2 = 4; 2 x C = 2",
+        "file": "forge.toml",
+        "gain": 3,
+        "harm": 3,
+        "line": 4,
+        "priority": "P1",
+        "title": "Keep design routing for user-facing Forge tasks",
+        "work": 2
+      }
+    ],
+    "id": "509cf787-e22d-43f4-ad86-ed2499a88fbf",
+    "status": "blocked"
+  },
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-18T06:49:12.784679+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-18T07:18:00.942294+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-11-18T07:18:00.961984+00:00",
+    "file": "forge.toml",
+    "wait_id": "a814b755-4a9f-479c-ba0f-9c662ddc56a8"
+  },
   "why": "Owner direction 18 Nov 2026: Forge's own repo builds with Codex. forge.toml still says workers = claude."
 }
