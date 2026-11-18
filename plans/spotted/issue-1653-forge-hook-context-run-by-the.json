@@ -41,8 +41,8 @@
       "text": "Gate: test_1_hook_context_with_many_hotspots_stays_short",
       "from": "blocking",
       "item": "issue-1653-forge-hook-context-run-by-the",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\ttests/test_next.py\tGate: check human-touch counts at an observable boundary\tissue-1653-forge-hook-context-run-by-the",
@@ -52,8 +52,8 @@
       "text": "Gate: check human-touch counts at an observable boundary",
       "from": "blocking",
       "item": "issue-1653-forge-hook-context-run-by-the",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     }
   ]
 }
