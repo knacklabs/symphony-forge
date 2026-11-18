@@ -80,7 +80,7 @@ Only a genuine trade-off goes to the human, as a question with options.
    Case: normal use - The default-branch test fails and someone reruns that same test successfully, without running the full suite.  
    The planned test uses a failed parent and a green child ([plan](/plans/FORGE-MERGEQ-1.md:75)). It would pass if the new reader used only the latest check attempt. Forge’s history reader explicitly requests all attempts to retain failures ([backfill.py](/src/forge/backfill.py:77)).  
    Gain 3, Work 2, Harm 3
-   Disposition: keep - by the chosen rule a green rerun of the failed tests is a green result, as the owner's decision 4 says (green clears the stop); Risks names it and the nightly full run is the backstop; owner question.
+   Disposition: keep - by the chosen rule a green rerun of the failed tests is a green result, as the owner's decision 4 says (green clears the stop); Risks names it as an accepted limit and the nightly full run is the backstop; settled by the owner, 18 Nov 2026.
 
 8. Blocking: Unproven: item 2: The laptop-test red wait has no failure test.
    Raise: Test  
