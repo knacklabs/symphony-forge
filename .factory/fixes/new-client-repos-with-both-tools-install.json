@@ -158,7 +158,7 @@
     "id": "796f6639-a2fb-45dd-9180-42bd79ecf384",
     "status": "blocked"
   },
-  "round": 2,
+  "round": 3,
   "status": "fixing",
   "steps": [
     {
@@ -184,10 +184,10 @@
     "worker_round": 2
   },
   "stuck": {
-    "close": "5a133daa-27ee-4afd-ace8-54b927ba0cab",
-    "head": "0d8fe4cf8aaa6400bfa0c83db0db99bfe8a903c1",
+    "close": "afd6a0f2-ec92-459a-9a48-7589b266f474",
+    "head": "7057d54bbe19cc8697f138dbb26fa77c22f00e18",
     "keys": {},
-    "round": 1
+    "round": 2
   },
   "why": "New client repos with both tools installed default to workers = split, so plain build work goes to Codex. Owner direction 18 Nov 2026: by default Claude builds everything, and Codex is used only for code reviews and cold reads.",
   "worker": "claude"
