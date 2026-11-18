@@ -1075,14 +1075,11 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
         statuses[item] = "hotspot" if state.get("stop") and not state["stop"].get("choice") else status
     if state.get("stop") and not state["stop"].get("choice"):
         stop = state["stop"]
-        if stop.get("predicted_files"):
-            return [f"Forge stopped {label}. Ask the human:", stop["question"],
-                    f'Next: cd {repo.quote(str(path or top))} && forge fix allow-large "<reason>"']
         if "question" in stop:
             return [f"Forge stopped {label}. Ask the human:", stop["question"],
-                    "Next: " + close.REFUSALS["stuck"][1].format(item=item)]
-        reason = "its review reached the round limit with open findings"
-        return [f"Close stopped {label}: {reason}.",
+                    f'Next: cd {repo.quote(str(path or top))} && forge fix allow-large "<reason>"' if stop.get("predicted_files")
+                    else "Next: " + close.REFUSALS["stuck"][1].format(item=item)]
+        return [f"Close stopped {label}: its review reached the round limit with open findings.",
                 review.stop_question(path or top, item, state),
                 "Next: " + close.REFUSALS["hotspot"][1].format(item=item, **stop)]
     if not path and status not in ("ready", "merged", "done"):  # its checkout is on another machine
