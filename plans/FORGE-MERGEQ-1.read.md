@@ -117,3 +117,4 @@ Only a genuine trade-off goes to the human, as a question with options.
     Case: normal use - `test_place` is `ci`, and a required `build` check runs the app tests without a check named `tests`.  
     The current workflow generator removes its test jobs unless `checks` contains `tests` ([prcheck.py](/src/forge/prcheck.py:294)). The amended plan promises a push run for CI-test repos but tests only the standard setup ([plan](/plans/FORGE-MERGEQ-1.md:75)); that test can pass while this supported configuration gets no post-merge test.  
     Gain 3, Work 2, Harm 3
+    Disposition: keep - a repo whose required checks are its own (no Forge `tests` job) runs its tests in its own workflow, which Forge does not generate; the push run covers Forge's generated test jobs only, and that repo's own main CI stays its owner's (coordinator ruling, not worth a second generator path)
