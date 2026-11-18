@@ -1,0 +1,15 @@
+{
+  "base": "67376f6c033979de5e01536db35aaf293d3e8899",
+  "branch": "fix/next-and-doctor-speed",
+  "done_when": "On Forge's own repo, forge next finishes in under 5 seconds and forge doctor in under 30 seconds on a warm run, with the same output as before; next reads merge history with one git log call and reuses the board's snapshot, and doctor reads its pull requests in one or a few batched requests; before and after times are in the pull request; new and existing repos get it on upgrade",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-18T15:14:57.669266+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "forge next takes about 25 seconds and forge doctor about 2.5 minutes on Forge's own repo: next makes about 600 git calls, most asking per item when it merged (story.completed and merged_at, the board numbers line), and doctor makes about 90 GitHub requests, one per merged pull request (doctor._prs) plus 4 slow ones for the CI time warning"
+}
