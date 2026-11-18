@@ -133,7 +133,7 @@
     "id": "6c2a1cb5-a0fc-4623-9cc3-b16e11243f7e",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -155,10 +155,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": null,
-    "head": "8b86056483a5a87e58eae28deed7b2d0b1489e58",
+    "close": "903098f2-eb9e-493e-b56d-75e9997f5260",
+    "head": "19e49e159f86e9d9498dbac1f348430188285d5b",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "Issue 1653: forge hook context, run by the generated Claude SessionStart hook, takes 72 to 124 s and prints 150 to 200 KB in a client repo, almost all of it 'X keeps breaking: N noted problems are open there' blocks with full forge fix start commands, one per file. Claude worker rounds fail with 'Control request timeout: initialize', and every session gets a huge context.",
   "worker": "claude"
