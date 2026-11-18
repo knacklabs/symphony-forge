@@ -149,7 +149,7 @@ def test_10_no_process_wide_setting(repo, gh, tmp_path, monkeypatch, sdk_data):
         'models.lite = { model = "claude-sonnet-5-5", effort = "low", '
         'subagents = "custom-haiku", subagent_effort = "medium" }'), encoding="utf-8")
     repo.git("add", "forge.toml", cwd=folder)
-    repo.git("commit", "-q", "-m", "Keep a separate lite helper budget", cwd=folder)
+    repo.git("commit", "--allow-empty", "-q", "-m", "Keep a separate lite helper budget", cwd=folder)
     settings = [folder / ".claude/settings.json", home / ".claude/settings.json",
                 claude_config / "settings.json"]
     before = {path: path.read_bytes() if path.exists() else None for path in settings}

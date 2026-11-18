@@ -29,7 +29,7 @@ def test_1_waiting_prerequisites_start_first_and_explain_their_place(
         shutil.copytree(ROOT / "tests/fixtures/adopted-v1.2.2/client", repo.path,
                         dirs_exist_ok=True)
         repo.git("add", "-A")
-        repo.git("commit", "-qm", "Adopt earlier Forge")
+        repo.git("commit", "--allow-empty", "-qm", "Adopt earlier Forge")
         _land_fixture(repo)
         version = repo.forge("--version").stdout.split()[-1]
         upgraded = repo.forge("upgrade", version)
@@ -52,7 +52,7 @@ def test_1_waiting_prerequisites_start_first_and_explain_their_place(
                'models.fix = { model = "opus", effort = "high" }\n' + GRILL)
     repo.write("plans/roadmap.json", '{"items": [{"key": "SHOP"}, {"key": "WISH"}]}')
     repo.git("add", "-A")
-    repo.git("commit", "-qm", "Configure the client")
+    repo.git("commit", "--allow-empty", "-qm", "Configure the client")
     repo.path = main
     repo.git("merge", "-q", "--ff-only", "fix/configure-client")
     _land_fixture(repo)
@@ -125,7 +125,7 @@ def test_2_finished_story_history_does_not_add_git_processes_to_agent_admission(
                'models.fix = { model = "opus", effort = "high" }\n')
     repo.write("plans/roadmap.json", '{"items": [{"key": "SHOP"}]}')
     repo.git("add", "-A")
-    repo.git("commit", "-qm", "Plan the unfinished story")
+    repo.git("commit", "--allow-empty", "-qm", "Plan the unfinished story")
     _land_fixture(repo)
     approved_constitution(repo)
     _install(repo.bin, "claude", READER.format(python=sys.executable))
@@ -155,7 +155,7 @@ def test_2_finished_story_history_does_not_add_git_processes_to_agent_admission(
                                json.dumps({"status": "done", "branch": f"story/{key}"}))
                     repo.write(f"plans/{key}.md", doc)
                 repo.git("add", "-A")
-                repo.git("commit", "-qm", "Earlier stories are finished")
+                repo.git("commit", "--allow-empty", "-qm", "Earlier stories are finished")
                 _land_fixture(repo)
                 for number in range(40):
                     repo.git("branch", f"story/FINISHED-{number}")

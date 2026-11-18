@@ -47,7 +47,7 @@ def test_6_claude_workers_use_resumable_sdk_turns_and_stop_their_tree(
                         dirs_exist_ok=True)
         repo.write("forge.toml", settings)
         repo.git("add", "-A")
-        repo.git("commit", "-qm", "Configure Claude client")
+        repo.git("commit", "--allow-empty", "-qm", "Configure Claude client")
         repo.git("push", "-q", "origin", "main")
     # The CLI remains installed, but workers must never use its headless transport.
     cli_log = install_claude(repo, worker=False)
@@ -62,7 +62,7 @@ def test_6_claude_workers_use_resumable_sdk_turns_and_stop_their_tree(
     assert synced.returncode == 0, synced.stdout + synced.stderr
     if repo.git("status", "--porcelain", cwd=folder):
         repo.git("add", "-A", cwd=folder)
-        repo.git("commit", "-qm", "Sync client adapters", cwd=folder)
+        repo.git("commit", "--allow-empty", "-qm", "Sync client adapters", cwd=folder)
     sdk_log = repo.bin / "claude-sdk-calls.jsonl"
     sessions = repo.bin / "claude-sdk-sessions.json"
     monkeypatch.delenv("CLAUDECODE", raising=False)
@@ -81,7 +81,7 @@ def test_6_claude_workers_use_resumable_sdk_turns_and_stop_their_tree(
             (shop / "forge.toml").write_text(
                 settings.replace('tools = "both"', 'tools = "claude"') +
                 'models.grill.claude = { model = "opus", effort = "high" }\n', encoding="utf-8")
-            repo.git("commit", "-qam", "Choose Claude reads", cwd=shop)
+            repo.git("commit", "--allow-empty", "-qam", "Choose Claude reads", cwd=shop)
             doc = shop / "plans/SHOP.md"
             doc.write_bytes(DOC.encode("utf-8"))
             monkeypatch.setenv("STUB_CLAUDE_RESULT", "No findings.\n")
@@ -189,7 +189,7 @@ elif args[:3] != ["pip", "install", "--python"] or args[-1] != "claude-agent-sdk
         chosen = json.loads(state_path.read_text("utf-8"))
         chosen["tool"] = "claude"
         state_path.write_text(json.dumps(chosen), encoding="utf-8")
-        repo.git("commit", "-qam", "Choose Claude for this item", cwd=folder)
+        repo.git("commit", "--allow-empty", "-qam", "Choose Claude for this item", cwd=folder)
         # The coordinator stays on main and executes the recovery that work gives.
         main_config = repo.path / "forge.toml"
         main_configured = main_config.read_text("utf-8")
@@ -212,7 +212,7 @@ elif args[:3] != ["pip", "install", "--python"] or args[-1] != "claude-agent-sdk
         assert "Claude Agent SDK" not in checked.stdout + checked.stderr
         main_config.write_text(main_configured, encoding="utf-8")
         config.write_text(configured, encoding="utf-8")
-        repo.git("commit", "-qam", "Restore Claude worker default", cwd=folder)
+        repo.git("commit", "--allow-empty", "-qam", "Restore Claude worker default", cwd=folder)
 
         if regression == "design-preflight":
             story(repo)
@@ -225,7 +225,7 @@ elif args[:3] != ["pip", "install", "--python"] or args[-1] != "claude-agent-sdk
                               '\n[models.design.claude]\nmodel = "sonnet"\neffort = "medium"\n'
                               '\n[models.design.codex]\nmodel = "gpt-6-sol"\neffort = "high"\n',
                               encoding="utf-8")
-            repo.git("commit", "-qam", "Choose split workers", cwd=design)
+            repo.git("commit", "--allow-empty", "-qam", "Choose split workers", cwd=design)
             before = repo.git("rev-parse", "HEAD", cwd=design)
             design_state = design / ".factory/stories/BOARD/tasks/PAGE.json"
             state_before = design_state.read_bytes()

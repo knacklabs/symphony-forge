@@ -28,7 +28,7 @@ def test_6_skill_adopts_a_live_app_and_repo_rules_win(repo):
     log = install_claude(repo)
     pin(repo)
     repo.git("add", "forge.toml")
-    repo.git("commit", "-q", "-m", "Pin Forge")
+    repo.git("commit", "--allow-empty", "-q", "-m", "Pin Forge")
     repo.git("push", "-q", "origin", "main")
     started = repo.forge("fix", "start", "Try the brief", "--done", "The brief carries the rule")
     assert started.returncode == 0, started.stderr

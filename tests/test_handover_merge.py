@@ -29,7 +29,7 @@ def _github_merge_edge(repo: Repo, remote: str, branch: str) -> None:
         sys.exit(1)
     subprocess.run(["git", "merge", "--squash", "FETCH_HEAD"], cwd=checkout, check=True,
                    capture_output=True)
-    subprocess.run(["git", "commit", "-q", "-m", args[args.index("--subject") + 1]],
+    subprocess.run(["git", "commit", "--allow-empty", "-q", "-m", args[args.index("--subject") + 1]],
                    cwd=checkout, check=True)
     subprocess.run(["git", "push", "-q", "origin", "main"], cwd=checkout, check=True)
     sys.exit(0)

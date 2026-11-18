@@ -135,7 +135,7 @@ def test_1_decision_open_ranks_every_open_question(repo, tmp_path, monkeypatch, 
         settings += '\nworkers = "claude"\n'
     config.write_text(settings, encoding="utf-8")
     repo.git("add", "-A", cwd=fix)
-    repo.git("commit", "-q", "-m", "Add open decision examples", cwd=fix)
+    repo.git("commit", "--allow-empty", "-q", "-m", "Add open decision examples", cwd=fix)
 
     log = install_claude(repo)
     worked = repo.forge("work", "record-client-approval", cwd=fix)

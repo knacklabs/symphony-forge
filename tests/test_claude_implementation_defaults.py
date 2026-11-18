@@ -101,7 +101,7 @@ def test_4_lite_and_fix_with_no_claude_entries_use_builtin_sonnet_low(repo):
     version = repo.forge("--version").stdout.split()[-1]
     repo.write("forge.toml", f'version = "{version}"\nworkers = "claude"\n')
     repo.git("add", "forge.toml")
-    repo.git("commit", "-qm", "Configure Claude workers")
+    repo.git("commit", "--allow-empty", "-qm", "Configure Claude workers")
     repo.git("push", "-q", "origin", "main")
     log = install_claude(repo)
     started = repo.forge("fix", "start", "Correct greeting", "--done", "Greeting is correct")

@@ -35,7 +35,7 @@ def test_1_tools_choose_one_tool_without_changing_the_work_process(repo, monkeyp
     assert len(_sent(codex_log, "turn/start")) == 1
     config.write_text(original.replace('workers = "codex"', 'workers = "claude"\ntools = "codex"') +
                       '\n[models.design.codex]\nmodel = "gpt-6-nova"\neffort = "xhigh"\n', encoding="utf-8")
-    repo.git("commit", "-qam", "Choose Codex", cwd=folder)
+    repo.git("commit", "--allow-empty", "-qam", "Choose Codex", cwd=folder)
     chosen = repo.forge("work", "BOARD/PAGE")
     assert chosen.returncode == 0, chosen.stdout + chosen.stderr
     # The app-server accepts models on the conversation, rather than on turn/start.
@@ -45,7 +45,7 @@ def test_1_tools_choose_one_tool_without_changing_the_work_process(repo, monkeyp
     plain_config = plain_folder / "forge.toml"
     plain_config.write_text(plain_config.read_text("utf-8").replace(
         'workers = "claude"', 'workers = "claude"\ntools = "codex"'), encoding="utf-8")
-    repo.git("commit", "-qam", "Choose Codex for plain work", cwd=plain_folder)
+    repo.git("commit", "--allow-empty", "-qam", "Choose Codex for plain work", cwd=plain_folder)
     plain = repo.forge("work", "BOARD/HELP")
     assert plain.returncode == 0, plain.stdout + plain.stderr
     assert _sent(codex_log, "thread/start")[-1]["config"]["model"] == "gpt-6-sol"
@@ -53,13 +53,13 @@ def test_1_tools_choose_one_tool_without_changing_the_work_process(repo, monkeyp
     # A source repo's unused workers value must not change its design model either.
     config.write_text(config.read_text("utf-8").replace('repo = "client"', 'repo = "forge-source"'),
                       encoding="utf-8")
-    repo.git("commit", "-qam", "Choose one tool in a source repo", cwd=folder)
+    repo.git("commit", "--allow-empty", "-qam", "Choose one tool in a source repo", cwd=folder)
     source = repo.forge("work", "BOARD/PAGE")
     assert source.returncode == 0, source.stdout + source.stderr
     assert _sent(codex_log, "thread/resume")[-1]["config"]["model"] == "gpt-6-nova"
     assert calls(claude_log) == []
     config.write_text(original.replace('workers = "codex"', 'workers = "split"\ntools = "claude"'), encoding="utf-8")
-    repo.git("commit", "-qam", "Choose Claude", cwd=folder)
+    repo.git("commit", "--allow-empty", "-qam", "Choose Claude", cwd=folder)
     monkeypatch.setenv("STUB_CLAUDE_EXIT", "3")
     # From Claude Code this round is the session's own subagent; from Codex it runs Claude's kit.
     monkeypatch.delenv("CLAUDECODE")
@@ -81,12 +81,12 @@ def test_10_doctor_checks_the_selected_tool_instead_of_workers(env, tmp_path, mo
         patient(lambda: shutil.copytree(ROOT / "tests/fixtures/adopted-v1.2.2/client", client,
                                          dirs_exist_ok=True))
         repo.git("add", "-A", cwd=client)
-        repo.git("commit", "-qm", "Adopt earlier Forge", cwd=client)
+        repo.git("commit", "--allow-empty", "-qm", "Adopt earlier Forge", cwd=client)
         config = client / "forge.toml"
         version = repo.forge("--version").stdout.split()[-1]
         config.write_text(re.sub(r'^version = .*$', f'version = "{version}"',
                                  config.read_text("utf-8"), flags=re.M), "utf-8")
-        repo.git("commit", "-qam", "Pin current Forge", cwd=client)
+        repo.git("commit", "--allow-empty", "-qam", "Pin current Forge", cwd=client)
         repo.git("push", "-q", "origin", "main", cwd=client)
     else:
         client, initialized = _fresh_client(repo, env.gh, tmp_path)
@@ -103,7 +103,7 @@ def test_10_doctor_checks_the_selected_tool_instead_of_workers(env, tmp_path, mo
     synced = repo.forge("sync", cwd=client)
     assert synced.returncode == 0, synced.stdout + synced.stderr
     repo.git("add", "-A", cwd=client)
-    repo.git("commit", "-qm", "Choose one tool", cwd=client)
+    repo.git("commit", "--allow-empty", "-qm", "Choose one tool", cwd=client)
     before = config.read_bytes()
     env.gh.respond("auth", "status")
     home = tmp_path / "doctor-home"

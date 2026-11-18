@@ -90,7 +90,7 @@ def test_24_resumed_earlier_worker_attaches_real_admission_wait_to_its_new_turn(
     synced = env.repo.forge("sync", cwd=where)
     assert synced.returncode == 0, synced.stdout + synced.stderr
     env.repo.git("add", "-A", cwd=where)
-    env.repo.git("commit", "-qm", "Sync the upgraded client", cwd=where)
+    env.repo.git("commit", "--allow-empty", "-qm", "Sync the upgraded client", cwd=where)
     machine_cores(env.repo, 2)
     held, held_where = env.start("held-worker", "fix/held-worker", ".factory/fixes/held-worker.json",
         {"kind": "fix", "why": "Hold the agent", "done_when": "The agent finishes"}, {})

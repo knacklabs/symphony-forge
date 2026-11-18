@@ -128,7 +128,7 @@ def approve_story(repo: conftest.Repo, key_doc: str, key: str = "SHOP", cwd: Pat
     signoff.write_text('---\nstatus: accepted\nconfirmed_by: "A Client"\n---\n\n# The client signed off\n',
                        encoding="utf-8")
     repo.git("add", "-A", cwd=top)
-    repo.git("commit", "-q", "-m", "Sign-off and roadmap", cwd=top)
+    repo.git("commit", "--allow-empty", "-q", "-m", "Sign-off and roadmap", cwd=top)
     repo.git("push", "-q", "origin", "main", cwd=top)
     if (settings.get("repo", "client") == "client"
             and not (top / "docs/product/CONSTITUTION.md").exists()):
@@ -193,7 +193,7 @@ class Forge:
         (where / rel).parent.mkdir(parents=True, exist_ok=True)
         (where / rel).write_bytes(text.encode("utf-8"))  # Same bytes on Windows as on Linux.
         self.repo.git("add", "-A", cwd=where)
-        self.repo.git("commit", "-q", "-m", message, cwd=where)
+        self.repo.git("commit", "--allow-empty", "-q", "-m", message, cwd=where)
         return self.repo.git("rev-parse", "HEAD", cwd=where)
 
     def approve_working_build(self) -> None:
@@ -280,7 +280,7 @@ def env(repo, gh, tmp_path, monkeypatch) -> Forge:
     repo.write("plans/SHOP.md", STORY_DOC)
     repo.write("docs/design/baskets/screen.svg", DESIGN_IMAGE)
     repo.git("add", "-A")
-    repo.git("commit", "-q", "-m", "Run on Forge")
+    repo.git("commit", "--allow-empty", "-q", "-m", "Run on Forge")
     repo.git("push", "-q", "origin", "main")
     gh.respond("pr", "list", stdout="[]")
     gh.respond("pr", "create", stdout="https://github.com/acme/shop/pull/7\n")

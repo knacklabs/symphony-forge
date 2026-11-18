@@ -31,7 +31,7 @@ def test_5_the_guides_name_the_mcp_server(repo, gh, tmp_path, setup):
         config.write_text(config.read_text("utf-8").replace(
             'version = "v1.2.2"', f'version = "{_version(repo)}"'), "utf-8")
         repo.git("add", "-A", cwd=client)
-        repo.git("commit", "-q", "-m", "Upgrade the earlier client", cwd=client)
+        repo.git("commit", "--allow-empty", "-q", "-m", "Upgrade the earlier client", cwd=client)
         repo.git("push", "-q", "origin", "main", cwd=client)
 
     started = repo.forge("fix", "start", "Check MCP guidance", "--done",
@@ -68,7 +68,7 @@ def test_5_the_guides_name_the_mcp_server(repo, gh, tmp_path, setup):
         'workers = "split"', 'workers = "claude"').replace(
         'workers = "codex"', 'workers = "claude"'), "utf-8")
     repo.git("add", "-A", cwd=client)
-    repo.git("commit", "-q", "-m", "Use the current MCP guidance", cwd=client)
+    repo.git("commit", "--allow-empty", "-q", "-m", "Use the current MCP guidance", cwd=client)
     worked = repo.forge("work", "check-mcp-guidance", cwd=client)
     assert worked.returncode == 0, worked.stdout + worked.stderr
     brief = " ".join(calls(log)[-1]["brief"].split())

@@ -15,7 +15,7 @@ def test_1_worker_brief_allows_existing_broken_tests_and_requires_handoff(repo):
                              'models.build = { model = "sonnet", effort = "medium" }\n'
                              'models.lite = { model = "sonnet", effort = "medium" }\n')
     repo.git("add", "forge.toml")
-    repo.git("commit", "-q", "-m", "Pin Forge")
+    repo.git("commit", "--allow-empty", "-q", "-m", "Pin Forge")
     repo.git("push", "-q", "origin", "main")
 
     started = repo.forge("fix", "start", "Allow broken existing tests", "--done",
@@ -55,7 +55,7 @@ def test_2_close_excludes_existing_tests_and_flags_weakened_tests(env):
     env.repo.write("tests/test_api.sh", "true\n")
     env.repo.write("tests/fixtures/data.txt", "original\n")
     env.repo.git("add", "tests", "web", "src")
-    env.repo.git("commit", "-q", "-m", "Add existing tests")
+    env.repo.git("commit", "--allow-empty", "-q", "-m", "Add existing tests")
     env.repo.git("push", "-q", "origin", "main")
     item, _ = env.start_task(changes={
         "app.py": "print('saved')\n",
