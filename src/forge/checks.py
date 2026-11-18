@@ -126,8 +126,9 @@ def after_code_ci(top: Path, item: str, branch: str, cfg: dict[str, Any], seriou
     """Pushing only Forge's records cancels the code's CI run in progress, and the record's own
     run then cannot reuse that result. Let the code's run end first."""
     remote = repo.run("git", "rev-parse", "-q", "--verify", f"origin/{branch}", cwd=top)
-    if serious or cfg["test_place"] != "ci" or remote.returncode:
-        return
+    if (serious or cfg["test_place"] != "ci" or remote.returncode
+            or repo.run("git", "merge-base", "--is-ancestor", remote.stdout.strip(), "HEAD", cwd=top).returncode):
+        return  # A replayed branch is not a record on top of the code CI is testing.
     from forge import review
     paths = repo.git("diff", "--name-only", "-z", "--no-renames", remote.stdout.strip(), "HEAD",
                      cwd=top).split("\0")
