@@ -24,6 +24,7 @@ REFUSALS = {
     "one_or_all": ("Give one change or --all, not both and not neither.",
                    "forge land <item>, or forge land --all"),
     "one_run": ("A land run already works in this repo.", "wait for it to end, then forge land --all"),
+    "unknown": ("No task or fix named {item}.", "forge board"),
     "note_all": ("Give one change with --note.", 'forge land <item> --note "<text>"'),
 }
 # A child of forge land --all: lend its queue place while close waits for CI.
@@ -45,14 +46,17 @@ say = partial(print, flush=True)
 def land(args: argparse.Namespace) -> int:
     if bool(args.item) == bool(getattr(args, "all", False)):
         repo.refuse(REFUSALS["one_or_all"])
-    if args.item is None:
+    if len(args.item) != 1:  # --all, or several named items: the same queue, the named ones only
         if getattr(args, "note", None) is not None:
             repo.refuse(REFUSALS["note_all"])
-        return _land_all()
+        for name in args.item:
+            if not repo.ITEM.fullmatch(name):
+                repo.refuse(repo.REFUSALS["bad_item"], item=name)
+        return _land_all(set(args.item))
     queued = os.environ.pop(QUEUED, "") == "1"
     member, hold = os.environ.pop(TRAIN, ""), os.environ.pop(HOLD, "") == "1"
     left = os.environ.pop(LEFT, "") == "1"
-    item = args.item
+    item = args.item[0]
     match = repo.ITEM.fullmatch(item)
     if not match or not (match["task"] or match["fix"]):
         repo.refuse(repo.REFUSALS["bad_item"], item=item)
@@ -347,7 +351,7 @@ def _hold() -> None:
         raise SystemExit("The land queue ended before this merge could start.")
 
 
-def _land_all() -> int:
+def _land_all(only: set[str]) -> int:
     """One run per repo, from the main checkout: a merge may remove the worktree it started in."""
     top = machine.main_checkout(Path.cwd())
     os.chdir(top)
@@ -356,27 +360,30 @@ def _land_all() -> int:
         if not codex._try_lock(lock):
             repo.refuse(REFUSALS["one_run"])
         try:
-            return _queue(top)
+            return _queue(top, only)
         finally:
             codex._unlock(lock)
 
 
-def _queue(top: Path) -> int:
+def _queue(top: Path, only: set[str]) -> int:
     """Close and merge every change in close, bases before stacked fixes, otherwise oldest first.
     Run up to the agent places at once. A change
     not yet ready waits for an older one in the run that shares a file with it, unless a human
-    merges: then nothing merges in the run, so nothing waits."""
+    merges: then nothing merges in the run, so nothing waits. With `only`, just those changes."""
     repo.git("fetch", "-q", "origin", cwd=top)
     default = repo.default_branch(top)
     hold = repo.merge_setting(top) == "agent"
     live = {run.get("item") for run in machine.entries() if run.get("repo_root") == top.as_posix()}
-    changes, needs, stacked, branches = [], {}, {}, {}
+    changes, needs, stacked, branches, seen = [], {}, {}, {}, set()
     prs = {pr.get("headRefName"): pr for pr in board._machine_prs(top)}
     for branch, tree in story.worktrees(top).items():
         found = None if branch.startswith("story/") else task.branch_item(branch, tree)
         if not found:
             continue
         item, state = found
+        seen.add(item)
+        if only and item not in only:
+            continue
         state = nextstep.at_ref(top, item, state, prs.get(branch))
         if state.get("status") == "dropped":
             continue
@@ -408,6 +415,8 @@ def _queue(top: Path) -> int:
             changes.append((age, item, files, ready))
             stacked[item] = state.get("stacked_on")
             branches[item] = branch
+    if unknown := sorted(only - seen):
+        repo.refuse(REFUSALS["unknown"], item=", ".join(unknown))
     changes.sort()
     queued = {item: age for age, item, *_ in changes}
     dependencies = TopologicalSorter({
@@ -854,14 +863,15 @@ def _child(top: Path, item: str, slots: dict[str, str], extra: dict[str, str] | 
 COMMANDS = [{
     "words": "land", "run": "land", "changes_state": True,
     "help": "Build, close, fix and merge a task or fix",
-    "args": [(('item',), {"nargs": "?", "help": "the task or fix to land"}),
+    "args": [(('item',), {"nargs": "*", "help": "the task or fix to land; name several to land only those"}),
              (("--note",), {"metavar": "TEXT", "help": "guide the first round this run starts"}),
              (("--all",), {"action": "store_true",
                            "help": "close and merge every change in close, oldest first"})],
     "position": 165,
-    "listing": "| `forge land <item>` / `forge land --all` | Builds, closes, runs at most one fix round and merges a "
-               "task or fix where the repo allows agent merges; `--all` closes and merges every change "
-               "in close, oldest first, several at a time, and tests two to five ready changes together once "
-               "where the agent merges and CI runs the tests; `--note \"<text>\"` guides one item's "
-               "first round; run it in the background |",
+    "listing": "| `forge land <item>` / `forge land <item> <item> ...` / `forge land --all` | Builds, closes, "
+               "runs at most one fix round and merges a task or fix where the repo allows agent merges; "
+               "`--all` closes and merges every change in close, and several named items only those, oldest "
+               "first, several at a time, and tests two to five ready changes together once where the agent "
+               "merges and CI runs the tests; `--note \"<text>\"` guides one item's first round; run it in "
+               "the background |",
 }]
