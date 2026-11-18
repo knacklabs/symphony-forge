@@ -620,12 +620,15 @@ def test_18_close(env, kind):
     # The checks close waited for are on the pushed head, and nothing was committed after them.
     pushed = env.repo.git("ls-remote", "origin", branch).split()[0]
     assert pushed == env.repo.git("rev-parse", "HEAD", cwd=where)
-    assert all(f"/commits/{pushed}/" in call[-1] for call in env.gh_calls("api")[-2:])
+    check_reads = [call for call in env.gh_calls("api") if "/commits/" in call[-1]
+                   and ("/check-runs" in call[-1] or "/status" in call[-1])][-2:]
+    assert len(check_reads) == 2
+    assert all(f"/commits/{pushed}/" in call[-1] for call in check_reads)
     # Before, ready was the final call. Close now publishes CI completion before ready and
     # the human merge wait after it; those body updates must not move ready ahead of checks.
     checks_and_ready = [call for call in env.gh.calls()
-                        if call[0] == "api" or call[:2] == ["pr", "ready"]]
-    assert checks_and_ready[-3:] == [*env.gh_calls("api")[-2:], ["pr", "ready", "7"]]
+                        if call in check_reads or call[:2] == ["pr", "ready"]]
+    assert checks_and_ready[-3:] == [*check_reads[-2:], ["pr", "ready", "7"]]
     published = body(env.gh_calls("pr", "edit")[-1])
     assert "## How it went" in published
     assert "CI passed" in published
