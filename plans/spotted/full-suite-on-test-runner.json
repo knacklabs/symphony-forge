@@ -1,0 +1,48 @@
+{
+  "items": [
+    {
+      "key": "bug\tforge.toml\tGate: source-worker tests still require Claude\towner-direction-18-nov-2026-forge-s-own",
+      "kind": "bug",
+      "path": "forge.toml",
+      "line": 4,
+      "text": "Gate: source-worker tests still require Claude",
+      "from": "blocking",
+      "item": "owner-direction-18-nov-2026-forge-s-own",
+      "status": "done",
+      "closed_by": "full-suite-on-test-runner"
+    },
+    {
+      "key": "bug\tforge.toml\tKeep design routing for user-facing Forge tasks\towner-direction-18-nov-2026-forge-s-own",
+      "kind": "bug",
+      "path": "forge.toml",
+      "line": 4,
+      "text": "Keep design routing for user-facing Forge tasks",
+      "from": "blocking",
+      "item": "owner-direction-18-nov-2026-forge-s-own",
+      "status": "done",
+      "closed_by": "full-suite-on-test-runner"
+    },
+    {
+      "key": "bug\tsrc/forge/prcheck.py\tKeep status-write tokens off pull-request test runners\tfull-suite-on-test-runner",
+      "kind": "bug",
+      "path": "src/forge/prcheck.py",
+      "line": 337,
+      "text": "Keep status-write tokens off pull-request test runners",
+      "from": "blocking",
+      "item": "full-suite-on-test-runner",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_nightly_test_machines.py\tGate: nightly runner selection at init and custom runner fallback\tfull-suite-on-test-runner",
+      "kind": "bug",
+      "path": "tests/test_nightly_test_machines.py",
+      "line": 20,
+      "text": "Gate: nightly runner selection at init and custom runner fallback",
+      "from": "blocking",
+      "item": "full-suite-on-test-runner",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
