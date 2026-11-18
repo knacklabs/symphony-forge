@@ -53,12 +53,6 @@ function hours(seconds) {
   return `${+(seconds / 86400).toFixed(1)} d`;
 }
 
-function median(values) {
-  const sorted = [...values].sort((a, b) => a - b);
-  const middle = sorted.length >> 1;
-  return sorted.length % 2 ? sorted[middle] : (sorted[middle - 1] + sorted[middle]) / 2;
-}
-
 // Everything the screen shows, for the Team view or only the viewer's items in the Me view.
 function facts(snapshot) {
   const viewer = Board.view === 'me' ? snapshot.viewer || '' : null;
@@ -94,7 +88,7 @@ function facts(snapshot) {
     asks: snapshot.team.needs_you.filter((ask) => viewer === null || ask.kind === 'run' || ids.has(ask.id)), // a failed run has no owner
     merged: viewer === null ? (kind === 'all' ? counted.parts + counted.fixes : counted[kind === 'task' ? 'parts' : 'fixes'])
       : recent.length,
-    median: timed.length ? hours(median(timed.map((row) => row.total_seconds))) : 'unknown',
+    dailyMedian: snapshot.daily_start_to_merge?.line || 'No measured merges today (UTC)',
     waiting: total && waitingKnown ? `${+(100 * waited / total).toFixed(1)}%` : 'unknown',
     red: cards.filter((row) => row.gates?.ci?.status === 'red' && STAGE_OF[row.stage] !== 'merged').length,
     stories: maps.filter((map) => !['done', 'needs a spec'].includes(map.stage))
@@ -210,7 +204,7 @@ function figures(shown) {
   const figure = (value, words, tone) => el('p', { 'data-tone': tone }, el('strong', {}, String(value)), ' ', words);
   return el('section', { class: 'now-figures', 'aria-label': 'Figures' },
     figure(shown.merged, 'merged, 7 days'),
-    figure(shown.median, 'median item'),
+    el('p', {}, shown.dailyMedian),
     figure(shown.waiting, 'waiting on people', 'needs-you'),
     figure(shown.red, 'red checks', shown.red ? 'stuck' : null));
 }

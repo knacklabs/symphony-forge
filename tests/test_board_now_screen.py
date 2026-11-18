@@ -120,7 +120,7 @@ with sync_playwright() as p:
             text = page.locator('body').inner_text()
             # The board's own words carry no command text, and an unknown fact says unknown.
             assert not re.search(r'\bforge [a-z]|--[a-z]|`', text), text  # a command, never the Forge name
-            assert 'unknown median item' in ' '.join(page.get_by_role('region', name='Figures').inner_text().split())
+            assert 'No measured merges today (UTC)' in ' '.join(page.get_by_role('region', name='Figures').inner_text().split())
             for name, count in expected['stages'].items():
                 region = page.get_by_role('region', name=name, exact=True)
                 if count > 4:
@@ -261,5 +261,6 @@ def test_13_the_figures_and_the_me_view_follow_forges_records(client, gh, tmp_pa
         merged = sum(board["team"]["counts"]["finished_last_7_days"].values())
         timed = [row["id"] for row in board["items"] if row["stage"] == "merged" and row["total_seconds"] is not None]
         assert merged >= 3 and sorted(timed) == ["done-1", "done-2", "done-3"], (merged, timed)
-        look(url, "figures", {"figures": [f"{merged} merged, 7 days", "2 h median item", "13.9% waiting on people",
+        # The median now covers today's merges in UTC, rather than the last seven days.
+        look(url, "figures", {"figures": [f"{merged} merged, 7 days", board["daily_start_to_merge"]["line"], "13.9% waiting on people",
                                           "1 red checks"]})

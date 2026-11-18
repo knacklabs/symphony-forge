@@ -812,6 +812,7 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
               for e in recorded if e.get("event") in (*event_lines, "worker question")][-20:]
     time_records.save_body_validation(top)
     return {"version": __version__, "repo_root": repo_root(top),
+            "daily_start_to_merge": time_records.daily_median(list(items.values())),
             **releases.collect(top, history, maps, items, tag_refs),
             "known_issues": known_issues.collect(top, {
                 "/".join(filter(None, (match["key"] or match["fix"], match["task"]))): (state, where)

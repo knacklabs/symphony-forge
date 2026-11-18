@@ -5,6 +5,7 @@ import json
 import hashlib
 import os
 import re
+import statistics
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
@@ -99,6 +100,36 @@ def _timestamp(value: str) -> datetime | None:
 
 def duration(value: float | None) -> str:
     return plain(value)
+
+
+def hours_minutes(seconds: float) -> str:
+    hours, minutes = divmod(int(seconds // 60), 60)
+    return f"{hours}h{minutes}m"
+
+
+def daily_median(items: list[dict[str, Any]]) -> dict[str, Any]:
+    today = when(repo.now()).date()
+    times = [row["total_seconds"] for parent in items for row in [parent, *parent.get("children", [])]
+             if row["kind"] in ("fix", "task") and (end := when(row.get("merged_at")))
+             and end.date() == today and row.get("total_seconds") is not None]
+    value = statistics.median(times) if times else None
+    return {"date": today.isoformat(), "median_seconds": value,
+            "line": "Median start to merge today (UTC): " + hours_minutes(value)
+                    if value is not None else "No measured merges today (UTC)"}
+
+
+def merge_line(top: Path, key: str, state: dict[str, Any], published: str, ended_at: str) -> str:
+    data = combined(top, key, {**state, "status": "merged"}, published, ended_at=ended_at)
+    end = when(ended_at)
+    seconds = data["total_seconds"]
+    if seconds is None or end is None:
+        return f"Merged {key}: start-to-merge time is not measured."
+    start = end - timedelta(seconds=seconds)
+    waits = {label: data["time_breakdown"].get(category) for category, label in zip(CATEGORIES[4:], LABELS[4:])}
+    measured = {label: value for label, value in waits.items() if value is not None and value > 0}
+    cause = max(measured, key=measured.get) if measured else "not measured"
+    return (f"Merged {key}: started {start.isoformat()}, merged {ended_at}, "
+            f"{hours_minutes(seconds)} start to merge; biggest wait: {cause}")
 
 
 def plain(seconds: float | None) -> str:
