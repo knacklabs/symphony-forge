@@ -120,7 +120,7 @@
     "id": "a54eb53f-b521-45f4-9707-f2fdf1348fc1",
     "status": "blocked"
   },
-  "round": 2,
+  "round": 3,
   "status": "fixing",
   "steps": [
     {
@@ -146,10 +146,12 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": "e13a47c5-6f4f-415c-801d-636f41462cab",
-    "head": "022a99f40d550403fc29df586d7aa62be15b3c06",
-    "keys": {},
-    "round": 1
+    "close": "6f2db5aa-de3f-4119-b8e3-4168a58224bd",
+    "head": "a7a959c180a5c8c615fefee3a3932e0202c8ed8b",
+    "keys": {
+      "the open P0 generate valid github actions runner expressions in src/forge/prcheck.py": 1
+    },
+    "round": 2
   },
   "why": "With one test group, a docs-only pull request still runs its tests result job on the fast test runner, so it takes a fast slot from real test work",
   "worker": "codex"
