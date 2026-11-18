@@ -130,7 +130,7 @@
     "id": "d02a5a97-e0eb-4759-a7fe-9443b074a455",
     "status": "blocked"
   },
-  "round": 2,
+  "round": 3,
   "status": "fixing",
   "steps": [
     {
@@ -156,10 +156,12 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": "b8404e68-92e5-4bb3-9582-363a91a6c57d",
-    "head": "a3877283386ef609b77da52ecf5fa42137cb4e6f",
-    "keys": {},
-    "round": 1
+    "close": "422e4269-10ca-43f1-b5fd-7376a01b35f3",
+    "head": "fb84d06efce8265fbafef125f98eb8815e6486c6",
+    "keys": {
+      "the open P0 unbounded full-run history blocks the board and next in src/forge/fullrun.py": 1
+    },
+    "round": 2
   },
   "why": "The board and forge next show only a failed full test run, not how old the last complete full run is or that it is missing, queued for hours or cancelled, so a release can go out with no recent green full run",
   "worker": "codex"
