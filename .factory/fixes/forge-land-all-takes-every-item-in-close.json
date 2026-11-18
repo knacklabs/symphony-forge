@@ -81,33 +81,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "005747f8419bf0f88aabb5f41680d7f2ead707aaca9538e4554a0cbeceb92a78",
-    "changed": "5b18e66333f4608dd1c1f2f22af72674242127265faffaa15e952b908d39287b",
-    "commit": "f53ad6d14990108ee11fedb346b85ed911335b5b",
-    "dismissals": [
-      {
-        "accepted": true,
-        "because": "Human accepted the remaining finding: Owner accepted on 18 Nov 2026: a teammate's clone that has not fetched a merge done elsewhere refuses that item; workaround git fetch; added to issue 1674",
-        "finding": 1
-      }
-    ],
-    "findings": [
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - a teammate resumes a partially completed batch from a clone that has no checkout of the merged item and has not fetched since it merged.\n`story.landed_ref()` returns the default branch as last fetched (`src/forge/story.py:838-845`), while the queue fetch occurs only after this preflight (`src/forge/land.py:378`). If `aa` was merged and its branch deleted on another machine, this check misses the merge and `close._worktree` cannot fetch the deleted branch (`src/forge/task.py:239-265`). Thus `forge land aa bb` still refuses before landing `bb`. The new test merges locally, which fetches the default branch during cleanup (`src/forge/merge.py:297`), so it does not expose this case.",
-        "file": "src/forge/land.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 56,
-        "priority": "P1",
-        "title": "Allow a partially completed named batch to resume",
-        "work": 2
-      }
-    ],
-    "id": "22d2021f-abda-44a3-adf3-f36b465eee8f",
+    "branch_diff": "85fe0641673221b6c46d10fd1bdf6b0edf54491734f039423a3fad3faf321d7d",
+    "changed": "0d0f5719e6a257674975b588fa756c07b8b2e43ffff97dd6cf5c4e011104f48a",
+    "commit": "a46ec81ba9e02a7d47338d0bbcdf298226244fc3",
+    "dismissals": [],
+    "findings": [],
+    "id": "94a71841-7fc7-4096-85cc-59b177f3da86",
     "status": "clean"
   },
   "round": 5,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-18T06:22:46.550167+00:00",
@@ -127,6 +110,10 @@
     },
     {
       "at": "2026-11-18T09:26:57.334884+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-18T09:49:54.433311+00:00",
       "step": "review"
     }
   ],
