@@ -1,0 +1,15 @@
+{
+  "base": "64105f1b7b691f43af2a995f8f72fe8da1372287",
+  "branch": "fix/docs-only-off-fast-runners",
+  "done_when": "A docs-only pull request runs no job on test_runner; its result job runs on runner; the required tests check keeps its name and pass rule; new repos get it at init and existing repos on upgrade and forge sync",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-18T14:04:11.292480+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "With one test group, a docs-only pull request still runs its tests result job on the fast test runner, so it takes a fast slot from real test work"
+}
