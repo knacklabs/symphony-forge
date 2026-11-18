@@ -1,0 +1,48 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/checks.py\tDo not treat a different event's completed run as a passing check\tissue-1661-close-treats-cancelled-ci-che",
+      "kind": "bug",
+      "path": "src/forge/checks.py",
+      "line": 350,
+      "text": "Do not treat a different event's completed run as a passing check",
+      "from": "blocking",
+      "item": "issue-1661-close-treats-cancelled-ci-che",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/checks.py\tHonor the single retry when close is restarted\tissue-1661-close-treats-cancelled-ci-che",
+      "kind": "bug",
+      "path": "src/forge/checks.py",
+      "line": 120,
+      "text": "Honor the single retry when close is restarted",
+      "from": "blocking",
+      "item": "issue-1661-close-treats-cancelled-ci-che",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/checks.py\tNot done: Cancelled checks are still reported as failed\tissue-1661-close-treats-cancelled-ci-che",
+      "kind": "bug",
+      "path": "src/forge/checks.py",
+      "line": 352,
+      "text": "Not done: Cancelled checks are still reported as failed",
+      "from": "blocking",
+      "item": "issue-1661-close-treats-cancelled-ci-che",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_close_reruns_cancelled_ci.py\tGate: tests/test_close_reruns_cancelled_ci.py\tissue-1661-close-treats-cancelled-ci-che",
+      "kind": "bug",
+      "path": "tests/test_close_reruns_cancelled_ci.py",
+      "line": 55,
+      "text": "Gate: tests/test_close_reruns_cancelled_ci.py",
+      "from": "blocking",
+      "item": "issue-1661-close-treats-cancelled-ci-che",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
