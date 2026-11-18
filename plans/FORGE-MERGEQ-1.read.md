@@ -1,13 +1,13 @@
 ---
 reader: codex (gpt-6.1-terra)
-read_at: 2026-11-18T04:30:57.697884+00:00
-seconds: 466.678
-read_hash: a7fc8db48422dd72e9166bd8cf536a55a2370ec6
-round: 1
+read_at: 2026-11-18T04:57:03.604812+00:00
+seconds: 358.47
+read_hash: d9908a45fa02aadcaa4a65db8d9055ed22c39b53
+round: 2
 passed: no
-doc_seen: a7fc8db48422dd72e9166bd8cf536a55a2370ec6
+doc_seen: d9908a45fa02aadcaa4a65db8d9055ed22c39b53
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+notes_seen: f298d0fd5b4ce3aebc99f7a8d3fab4946d3bd384
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a1ece5-0260-7cd2-b5a1-0a941555a861
 session:
@@ -88,3 +88,30 @@ Only a genuine trade-off goes to the human, as a question with options.
    The plan says this mode reads `forge-full-suite` ([plan](/plans/FORGE-MERGEQ-1.md:64)), but its red-wait test supplies a failed `tests` check instead. All named tests could pass if failed full-run statuses were ignored and laptop-test repos continued merging.  
    Gain 3, Work 2, Harm 3
    Disposition: cut - a laptop-test test now checks that a failed `forge-full-suite` result stops the merge and a green one lets it go.
+
+## Round 2
+
+9. Blocking: A red-branch wait can outlive permission for agent merges.
+   Raise: Security  
+   Case: normal use - While a merge waits for a failed default branch, the owner switches the repo to human merges; a later test run passes.  
+   The current merge path checks permission before its final GitHub call ([merge.py](/src/forge/merge.py:194)). The amended plan inserts a potentially 90-minute wait after that check and then merges when the result is green ([plan](/plans/FORGE-MERGEQ-1.md:67)), without requiring permission to be checked again. Forge can therefore merge after the owner has withdrawn permission.  
+   Gain 4, Work 2, Harm 4
+   Disposition: cut - after any red wait, merge checks the merge setting on the newest default branch again right before `gh pr merge`, as `merge.py:194-196` does, and stops with the usual human-merge refusal; the red-wait test withdraws permission during the wait (builders' section only).
+
+10. Advisory: A repair can bypass the combined test for overlapping changes.
+    Raise: Functional  
+    Case: normal use - A waiting pull request and the repair both edit different lines of the same file.  
+    The amended plan fetches the repair during the red wait and then merges ([plan](/plans/FORGE-MERGEQ-1.md:67)). The existing overlap comparison happens before that wait ([merge.py](/src/forge/merge.py:108)), so the new default-branch change can be merged without the combined run promised for overlapping files.  
+    Gain 3, Work 2, Harm 3
+
+11. Advisory: Disputed keep 7: A pending rerun can hide the last failed result.
+    Raise: Functional  
+    Case: normal use - Someone reruns a failed default-branch test and the new attempt is still running.  
+    The amended rule requests GitHub’s latest attempt and ignores pending results ([plan](/plans/FORGE-MERGEQ-1.md:67)). The pending attempt can hide the earlier failure, letting the scan fall back to an older green commit before any rerun passes. Forge’s existing history reader requests all attempts for this reason ([backfill.py](/src/forge/backfill.py:77)). This differs from the accepted green rerun.  
+    Gain 3, Work 2, Harm 3
+
+12. Advisory: Unproven: item 1: A CI repo with custom check names can get no push test.
+    Raise: Test  
+    Case: normal use - `test_place` is `ci`, and a required `build` check runs the app tests without a check named `tests`.  
+    The current workflow generator removes its test jobs unless `checks` contains `tests` ([prcheck.py](/src/forge/prcheck.py:294)). The amended plan promises a push run for CI-test repos but tests only the standard setup ([plan](/plans/FORGE-MERGEQ-1.md:75)); that test can pass while this supported configuration gets no post-merge test.  
+    Gain 3, Work 2, Harm 3
