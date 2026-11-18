@@ -53,11 +53,13 @@ def test_1_test_jobs_use_the_optional_machine(repo, gh, tmp_path, history, group
     workflow = (client / ".github/workflows/forge.yml").read_text("utf-8")
     jobs = dict(re.findall(r"^  ([\w-]+):\n(.*?)(?=^  [\w-]+:|\Z)", workflow.split("\njobs:\n", 1)[1], re.M | re.S))
     expected_jobs = {"tests", "forge-pr-check", "full-suite", "full-suite-result"}
-    if history == "new" and groups > 1:
+    if history == "new" and (groups > 1 or runner != test_runner):
         expected_jobs |= {"docs-check", "tests-passed"}
     assert set(jobs) == expected_jobs
     for name, job in jobs.items():
-        selected = json.loads(re.search(r"^    runs-on: (.+)$", job, re.M)[1])
+        label = re.search(r"^    runs-on: (.+)$", job, re.M)[1]
+        selected = (expression(label.replace("needs.docs-check.outputs.docs-tests", "'false'"))
+                    if label.startswith("${{") else json.loads(label))
         expected = "ubuntu-24.04" if history == "adopted" else test_runner if name in {"tests", "full-suite"} else runner
         assert selected == expected
     condition = re.search(r"^    if: (.+)$", jobs["tests"], re.M)[1]

@@ -1,0 +1,130 @@
+{
+  "base": "64105f1b7b691f43af2a995f8f72fe8da1372287",
+  "branch": "fix/docs-only-off-fast-runners",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1eef9-ae50-74b2-84d5-30f226f42961",
+    "head": null,
+    "start": "d883a0efd91c925d3c4b76d3d8afb95e72832243"
+  },
+  "done_when": "A docs-only pull request runs no job on test_runner; its result job runs on runner; the required tests check keeps its name and pass rule; new repos get it at init and existing repos on upgrade and forge sync",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "ships() in src/forge/prcheck.py",
+      "file": "src/forge/prcheck.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 405,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Keep the required result job executable on Windows",
+      "work": 1
+    },
+    {
+      "area": "ships() in src/forge/prcheck.py",
+      "file": "src/forge/prcheck.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 405,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Update the existing one-group runner test",
+      "work": 1
+    },
+    {
+      "area": "ships() in src/forge/prcheck.py",
+      "file": "src/forge/prcheck.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 405,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: A docs-only pull request runs no job on test_runner; its result job runs on runner; the required tests check keeps its name and as",
+      "work": 2
+    },
+    {
+      "area": "test_1_docs_only_pr_keeps_the_test_runner_free() in tests/test_docs_only_runner_allocation.py",
+      "file": "tests/test_docs_only_runner_allocation.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 45,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_docs_only_pr_keeps_the_test_runner_free",
+      "work": 2
+    },
+    {
+      "area": "ships() in src/forge/prcheck.py",
+      "file": "src/forge/prcheck.py",
+      "gain": 5,
+      "harm": 4,
+      "line": 423,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Generate valid GitHub Actions runner expressions",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "418675d9a89d9a94eb13c1cf8a4ae908fd4e2efd4aaed87abf7acac7448203d7",
+    "changed": "370b58dcb5d49fbd1f6e30d3b2d58e7efa4463060038264ee885cd11805b39ff",
+    "commit": "bb7ad728d7e533a8f682a9437ba10c13f8f9010b",
+    "dismissals": [],
+    "findings": [],
+    "id": "3ce65115-1b77-4a72-be38-ffd6b670240a",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-18T14:04:11.292480+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-18T14:29:34.265581+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-18T14:42:36.533623+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-18T14:54:42.605507+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-18T14:29:34.276455+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "src/forge/prcheck.py",
+    "reason": "Owner chose one more round: fix the four review findings",
+    "wait_id": "256435ab-89eb-4d90-97de-0e59226b2ad0",
+    "worker_round": 1
+  },
+  "stuck": {
+    "close": "6f2db5aa-de3f-4119-b8e3-4168a58224bd",
+    "head": "a7a959c180a5c8c615fefee3a3932e0202c8ed8b",
+    "keys": {
+      "the open P0 generate valid github actions runner expressions in src/forge/prcheck.py": 1
+    },
+    "round": 2
+  },
+  "why": "With one test group, a docs-only pull request still runs its tests result job on the fast test runner, so it takes a fast slot from real test work",
+  "worker": "codex"
+}
