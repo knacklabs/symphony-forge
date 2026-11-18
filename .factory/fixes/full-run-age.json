@@ -117,7 +117,7 @@
     "id": "4a5d37b0-1237-4947-8319-2a99b09ec13c",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -139,10 +139,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": null,
-    "head": "b065fa3788a9211a601eea6afd39602a2dfe5216",
+    "close": "b8404e68-92e5-4bb3-9582-363a91a6c57d",
+    "head": "a3877283386ef609b77da52ecf5fa42137cb4e6f",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "The board and forge next show only a failed full test run, not how old the last complete full run is or that it is missing, queued for hours or cancelled, so a release can go out with no recent green full run",
   "worker": "codex"
