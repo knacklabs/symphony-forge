@@ -134,8 +134,10 @@ def let_finish(top: Path, item: str, sha: str, slot: Callable[[bool], None] | No
 def after_code_ci(top: Path, item: str, branch: str, cfg: dict[str, Any], serious: Any,
                   slot: Callable[[bool], None] | None = None) -> None:
     """Let the code's CI run end before close pushes only Forge's records on top of it."""
+    if serious or cfg["test_place"] != "ci":
+        return
     remote = repo.run("git", "rev-parse", "-q", "--verify", f"origin/{branch}", cwd=top)
-    if (serious or cfg["test_place"] != "ci" or remote.returncode
+    if (remote.returncode
             or repo.run("git", "merge-base", "--is-ancestor", remote.stdout.strip(), "HEAD", cwd=top).returncode):
         return  # A replayed branch is not a record on top of the code CI is testing.
     from forge import review
