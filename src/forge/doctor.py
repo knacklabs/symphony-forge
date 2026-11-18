@@ -441,6 +441,9 @@ def doctor(args: argparse.Namespace) -> int:
     if cfg["test_place"] == "ci" and not cfg["checks"]:
         add("forge.toml names no checks, so close has nothing to wait for.", "ask your agent to set checks in forge.toml")
     if shutil.which("gh"):
+        from forge import citime
+        if warning := citime.warning(top):
+            print(f"- Warning: {warning}")
         prs = _prs(top, repo.current_branch(top), "--json", "headRefOid,state,number,headRefName")
         for pr in prs if isinstance(prs, list) else []:
             if not isinstance(pr, dict) or pr.get("state") != "OPEN" or not pr.get("headRefOid"):

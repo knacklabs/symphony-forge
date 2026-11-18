@@ -1,0 +1,81 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/citime.py\tClassify the generated workflow's selection time\tFORGE-CITIME-1/TIME",
+      "kind": "bug",
+      "path": "src/forge/citime.py",
+      "line": 123,
+      "text": "Classify the generated workflow's selection time",
+      "from": "blocking",
+      "item": "FORGE-CITIME-1/TIME",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/citime.py\tInclude cancelled jobs that reached their time limit\tFORGE-CITIME-1/TIME",
+      "kind": "bug",
+      "path": "src/forge/citime.py",
+      "line": 55,
+      "text": "Include cancelled jobs that reached their time limit",
+      "from": "blocking",
+      "item": "FORGE-CITIME-1/TIME",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/citime.py\tInclude the prerequisite selection job in each group's budget\tFORGE-CITIME-1/TIME",
+      "kind": "bug",
+      "path": "src/forge/citime.py",
+      "line": 165,
+      "text": "Include the prerequisite selection job in each group's budget",
+      "from": "blocking",
+      "item": "FORGE-CITIME-1/TIME",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/citime.py\tReport the current failure when an earlier push was slower\tFORGE-CITIME-1/TIME",
+      "kind": "bug",
+      "path": "src/forge/citime.py",
+      "line": 92,
+      "text": "Report the current failure when an earlier push was slower",
+      "from": "blocking",
+      "item": "FORGE-CITIME-1/TIME",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/citime.py\tRound runner usage for each job\tFORGE-CITIME-1/TIME",
+      "kind": "bug",
+      "path": "src/forge/citime.py",
+      "line": 84,
+      "text": "Round runner usage for each job",
+      "from": "blocking",
+      "item": "FORGE-CITIME-1/TIME",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_ci_time_report.py\tGate: tests/test_ci_time_report.py::test_1_close_prints_ci_time_and_doctor_warns_over_ten_minutes\tFORGE-CITIME-1/TIME",
+      "kind": "bug",
+      "path": "tests/test_ci_time_report.py",
+      "line": 161,
+      "text": "Gate: tests/test_ci_time_report.py::test_1_close_prints_ci_time_and_doctor_warns_over_ten_minutes",
+      "from": "blocking",
+      "item": "FORGE-CITIME-1/TIME",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "edge\tsrc/forge/citime.py\tNot done: the health check warns when the usual CI time of recent merged pull requests is over 10 minutes",
+      "kind": "edge",
+      "path": "src/forge/citime.py",
+      "line": 220,
+      "text": "Not done: the health check warns when the usual CI time of recent merged pull requests is over 10 minutes",
+      "from": "review",
+      "item": "FORGE-CITIME-1/TIME",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
