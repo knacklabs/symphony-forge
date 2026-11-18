@@ -45,6 +45,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/repo.py\tforge next reports that forge.toml is missing in a checkout where the file exists.",
+      "kind": "bug",
+      "path": "src/forge/repo.py",
+      "line": 44,
+      "text": "forge next reports that forge.toml is missing in a checkout where the file exists.",
+      "from": "worker",
+      "item": "FORGE-MERGEQ-1/RED",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_merge_waits_while_default_is_red.py\tGate: test_3_merge_waits_while_the_default_branch_is_red\tFORGE-MERGEQ-1/RED",
       "kind": "bug",
       "path": "tests/test_merge_waits_while_default_is_red.py",
