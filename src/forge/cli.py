@@ -148,7 +148,8 @@ def _run(argv: list[str] | None, holding: contextlib.ExitStack) -> int:
         from forge import review_skip
         return review_skip.show(args)
     if args.changes and not args.words.startswith("hook "):
-        repo.check_pin(item=getattr(args, "item", None) or "", words=args.words)
+        named = getattr(args, "item", None) or ""
+        repo.check_pin(item=named if isinstance(named, str) else (named[0] if named else ""), words=args.words)
     module, name = args.handler.split(":")
     try:
         function = getattr(importlib.import_module(f"forge.{module}"), name, None)

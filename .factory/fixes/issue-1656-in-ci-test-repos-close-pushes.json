@@ -1,0 +1,121 @@
+{
+  "base": "a3272814e237b99271e2d7f844779588405e15d3",
+  "branch": "fix/issue-1656-in-ci-test-repos-close-pushes",
+  "done_when": "A head commit that differs from its parent only in Forge's close records does not cancel the parent's CI run still in progress, and reuses its result when it finishes, so a record-only commit adds no full test run",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "let_finish() in src/forge/checks.py",
+      "file": "src/forge/checks.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 116,
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: Owner accepted both findings as known: a blocking review brings new code anyway, so the parent's run would be redone regardless; the reuse-after-wait test is a follow-up",
+      "round": 1,
+      "security": false,
+      "title": "Not done: A head commit that differs from its parent only in Forge's close records does not cancel the parent's CI run still in progress",
+      "work": 3
+    },
+    {
+      "area": "close() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 429,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Scale: Release the land queue place while parent CI runs",
+      "work": 2
+    },
+    {
+      "area": "test_1_record_push_waits_for_the_code_ci_run() in tests/test_close_pushes_record_after_code_ci.py",
+      "file": "tests/test_close_pushes_record_after_code_ci.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 45,
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: Owner accepted both findings as known: a blocking review brings new code anyway, so the parent's run would be redone regardless; the reuse-after-wait test is a follow-up",
+      "round": 1,
+      "security": false,
+      "title": "Gate: prove the running parent finishes and its result is reused",
+      "work": 2
+    },
+    {
+      "area": "test_1_record_push_waits_for_the_code_ci_run() in tests/test_close_pushes_record_after_code_ci.py",
+      "file": "tests/test_close_pushes_record_after_code_ci.py",
+      "gain": 4,
+      "harm": 1,
+      "line": 20,
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: Owner accepted both findings as known: a blocking review brings new code anyway, so the parent's run would be redone regardless; the reuse-after-wait test is a follow-up",
+      "round": 1,
+      "security": false,
+      "title": "Gate: proof list",
+      "work": 1
+    },
+    {
+      "area": "after_code_ci() in src/forge/checks.py",
+      "file": "src/forge/checks.py",
+      "gain": 1,
+      "harm": 1,
+      "line": 125,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Simpler: undocumented pre-push wait \u2192 explain the choice",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "331101ca9669e980606fcc835ab62d08b1f663205df581591f99fa1ecdba9e2c",
+    "changed": "07ba5b1fc635dd41643caa3d24fc3648dce8065597380829244f9777e929e337",
+    "commit": "38908701e733e92f63b74ff8cef1f64bade5e463",
+    "dismissals": [],
+    "findings": [],
+    "id": "20ce1c44-b8c7-40ae-a2b7-f261355fa0d5",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-18T03:54:15.907087+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-18T04:59:01.034133+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-18T05:53:41.948635+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-18T07:52:58.606431+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-18T05:53:41.948993+00:00",
+    "by": "owner",
+    "choice": "accept",
+    "file": "src/forge/checks.py",
+    "reason": "Owner accepted both findings as known: a blocking review brings new code anyway, so the parent's run would be redone regardless; the reuse-after-wait test is a follow-up",
+    "wait_id": "7db75879-c4b5-44c4-8053-207f95d5a241",
+    "worker_round": 2
+  },
+  "stuck": {
+    "close": "c9ed90f4-6e82-4f59-bd2e-974601aaba59",
+    "head": "e811ce03021a9187914f4ee3351c4edc97dc8274",
+    "keys": {},
+    "round": 2
+  },
+  "why": "Issue 1656: in CI-test repos, close pushes its review record commit a few minutes after the code, and that push cancels the code's own CI run in progress (concurrency cancel-in-progress). The parent then has no successful run, so .forge/review-tests.py cannot reuse it, and every record-only commit starts a full run again: 72% of one client's runs, about 28 minutes each.",
+  "worker": "claude"
+}

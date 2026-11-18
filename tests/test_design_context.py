@@ -56,7 +56,7 @@ def prepare(env, monkeypatch, sdk_data, family, *, adopted=False, starter=False,
         repo.write("docs/decisions/0001-client-signoff.md",
                    '---\nstatus: accepted\nconfirmed_by: "Client"\n---\n\n# Signed canvas\n')
     repo.git("add", "-A")
-    repo.git("commit", "-qm", "Save the app design")
+    repo.git("commit", "--allow-empty", "-qm", "Save the app design")
     _publish_default(repo, repo.git("remote", "get-url", "origin"))
     repo.git("switch", "-q", "main")
     repo.git("merge", "-q", "--ff-only", "fix/context-setup")

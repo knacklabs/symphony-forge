@@ -156,7 +156,7 @@ def test_5_a_family_switch_between_rounds_starts_fresh_with_the_brief_and_findin
     # Claude to Codex: a new Codex conversation with the whole brief and the finding.
     (folder / "forge.toml").write_text((folder / "forge.toml").read_text("utf-8").replace(
         'workers = "split"', 'workers = "codex"'), encoding="utf-8")
-    repo.git("commit", "-qam", "Switch workers", cwd=folder)
+    repo.git("commit", "--allow-empty", "-qam", "Switch workers", cwd=folder)
     monkeypatch.setenv("CLAUDECODE", "1")
     monkeypatch.delenv("CODEX_THREAD_ID")
     to_codex = repo.forge("work", "BOARD/PAGE")
@@ -171,7 +171,7 @@ def test_5_a_family_switch_between_rounds_starts_fresh_with_the_brief_and_findin
     # Codex back to Claude: Claude's earlier session is not resumed; a new one gets it all.
     (folder / "forge.toml").write_text((folder / "forge.toml").read_text("utf-8").replace(
         'workers = "codex"', 'workers = "split"'), encoding="utf-8")
-    repo.git("commit", "-qam", "Switch workers", cwd=folder)
+    repo.git("commit", "--allow-empty", "-qam", "Switch workers", cwd=folder)
     monkeypatch.setenv("CODEX_THREAD_ID", "thr-test-coordinator")
     monkeypatch.delenv("CLAUDECODE")
     to_claude = repo.forge("work", "BOARD/PAGE")
@@ -242,7 +242,7 @@ def test_8_a_fallback_after_a_claude_round_starts_codex_fresh_with_the_brief_and
         {"priority": "P1", "title": "Board misses a story", "body": "List every story.",
          "file": "web/board.py", "line": 1}]}
     state_file.write_text(json.dumps(state), encoding="utf-8")
-    repo.git("commit", "-qam", "Review findings", cwd=folder)
+    repo.git("commit", "--allow-empty", "-qam", "Review findings", cwd=folder)
 
     # Claude fails cleanly, so split falls back to Codex: a new conversation, not the first one.
     # With both tools and no coordinating session, both rounds use their kits.
@@ -279,7 +279,7 @@ def test_10_a_codex_start_cut_short_after_a_claude_round_leaves_the_retry_fresh(
     # conversation exists, as a start that times out is.
     (folder / "forge.toml").write_text((folder / "forge.toml").read_text("utf-8").replace(
         'workers = "split"', 'workers = "codex"'), encoding="utf-8")
-    repo.git("commit", "-qam", "Back to Codex", cwd=folder)
+    repo.git("commit", "--allow-empty", "-qam", "Back to Codex", cwd=folder)
     record = repo.path / ".git" / "forge" / "threads" / "task" / "BOARD" / "PAGE.json"
     monkeypatch.setenv("CLAUDECODE", "1")
     monkeypatch.delenv("CODEX_THREAD_ID")
@@ -305,13 +305,13 @@ def test_9_forge_next_names_the_default_branch_s_worker_for_a_task_after_another
     shop = worktree(repo, "story/SHOP")
     config = shop / "forge.toml"
     config.write_text(config.read_text("utf-8") + 'workers = "claude"\n', encoding="utf-8")
-    repo.git("commit", "-qam", "Claude workers for SHOP", cwd=shop)
+    repo.git("commit", "--allow-empty", "-qam", "Claude workers for SHOP", cwd=shop)
     assert repo.forge("task", "start", "TURN-1/T4").returncode == 0
     turn = worktree(repo, "task/TURN-1-T4")
     (turn / "src").mkdir()
     (turn / "src" / "turn.py").write_text("TURNS = 1\n", encoding="utf-8")
     repo.git("add", "-A", cwd=turn)
-    repo.git("commit", "-q", "-m", "Save turns", cwd=turn)
+    repo.git("commit", "--allow-empty", "-q", "-m", "Save turns", cwd=turn)
     repo.git("merge", "-q", "--no-ff", "-m", "Save turns (#1)", "task/TURN-1-T4")
     repo.git("push", "-q", "origin", "main")
 

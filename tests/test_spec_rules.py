@@ -79,7 +79,7 @@ def test_1_specs_state_each_rule_once(repo, client):
         assert "state each rule once, on an `R-<n>:` line" in text
         assert "`forge decision accept` then lists every spec line that names that ID" in text
     repo.git("add", "-A", cwd=top)
-    repo.git("commit", "-q", "-m", "Use current guidance", cwd=top)
+    repo.git("commit", "--allow-empty", "-q", "-m", "Use current guidance", cwd=top)
     _ok(repo.forge("work", item, cwd=top))
     brief = " ".join(calls(log)[-1]["brief"].split())
     assert "state each rule once, on an `R-<n>:` line" in brief
@@ -106,7 +106,7 @@ def test_2_accept_lists_the_spec_lines_that_name_its_rules(repo, client):
                "## Consequences\n\nUse the chosen rule.\n")
         decisions[slug] = path.relative_to(top).as_posix()
     repo.git("add", "-A", cwd=top)
-    repo.git("commit", "-q", "-m", "Propose choices", cwd=top)
+    repo.git("commit", "--allow-empty", "-q", "-m", "Propose choices", cwd=top)
     output = _ok(repo.forge("decision", "accept", "limits-move", "--by", "Ravi", cwd=top))
     assert output == (f"Accepted {decisions['limits-move']}, confirmed by Ravi.\n"
                       "These spec lines name R-13; in this change, update each one that no longer fits the decision:\n"

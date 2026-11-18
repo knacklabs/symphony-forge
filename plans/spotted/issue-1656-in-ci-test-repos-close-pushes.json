@@ -1,0 +1,59 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/checks.py\tNot done: A head commit that differs from its parent only in Forge's close records does not cancel the parent's CI run still in progress\tissue-1656-in-ci-test-repos-close-pushes",
+      "kind": "bug",
+      "path": "src/forge/checks.py",
+      "line": 116,
+      "text": "Not done: A head commit that differs from its parent only in Forge's close records does not cancel the parent's CI run still in progress",
+      "from": "blocking",
+      "item": "issue-1656-in-ci-test-repos-close-pushes",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tScale: Release the land queue place while parent CI runs\tissue-1656-in-ci-test-repos-close-pushes",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 429,
+      "text": "Scale: Release the land queue place while parent CI runs",
+      "from": "blocking",
+      "item": "issue-1656-in-ci-test-repos-close-pushes",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_close_pushes_record_after_code_ci.py\tGate: proof list\tissue-1656-in-ci-test-repos-close-pushes",
+      "kind": "bug",
+      "path": "tests/test_close_pushes_record_after_code_ci.py",
+      "line": 20,
+      "text": "Gate: proof list",
+      "from": "blocking",
+      "item": "issue-1656-in-ci-test-repos-close-pushes",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\ttests/test_close_pushes_record_after_code_ci.py\tGate: prove the running parent finishes and its result is reused\tissue-1656-in-ci-test-repos-close-pushes",
+      "kind": "bug",
+      "path": "tests/test_close_pushes_record_after_code_ci.py",
+      "line": 45,
+      "text": "Gate: prove the running parent finishes and its result is reused",
+      "from": "blocking",
+      "item": "issue-1656-in-ci-test-repos-close-pushes",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "simplify\tsrc/forge/checks.py\tSimpler: undocumented pre-push wait \u2192 explain the choice",
+      "kind": "simplify",
+      "path": "src/forge/checks.py",
+      "line": 125,
+      "text": "Simpler: undocumented pre-push wait \u2192 explain the choice",
+      "from": "review",
+      "item": "issue-1656-in-ci-test-repos-close-pushes",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

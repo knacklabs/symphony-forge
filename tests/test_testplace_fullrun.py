@@ -214,7 +214,15 @@ def test_3_full_run_is_nightly_and_daily(repo, gh, tmp_path, monkeypatch):
     assert "schedule:" in ci_workflow and "workflow_dispatch:" in ci_workflow
     assert "full-suite:" in ci_workflow and "forge test --full" in ci_workflow
     full_job = _jobs(ci_workflow)["full-suite"]
-    assert "statuses: write" in full_job and "GH_TOKEN:" in full_job
+    # Generated full runs use a matrix even for one group. The separate result job
+    # posts the status, keeping status-write tokens off machines that run tests.
+    assert "statuses: write" not in full_job and "GH_TOKEN:" in full_job
+    assert "FORGE_GROUP: ${{ matrix.group }}" in full_job
+    result_job = _jobs(ci_workflow)["full-suite-result"]
+    assert "needs: full-suite" in result_job
+    assert 'runs-on: "ubuntu-24.04"' in result_job
+    assert "statuses: write" in result_job
+    assert "context=forge-full-suite" in result_job
     assert "fetch-depth: 0" in full_job
     assert "actions/setup-python@" in full_job and "astral-sh/setup-uv@" in full_job
     version = repo.forge("--version").stdout.split()[-1]

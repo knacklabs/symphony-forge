@@ -20,7 +20,7 @@ def brief_of(repo) -> str:
     repo.write("forge.toml", f'version = "{version}"\nworkers = "claude"\n'
                'models.lite = { model = "sonnet", effort = "medium" }\n')
     repo.git("add", "forge.toml")
-    repo.git("commit", "-q", "-m", "Pin Forge")
+    repo.git("commit", "--allow-empty", "-q", "-m", "Pin Forge")
     repo.git("push", "-q", "origin", "main")
     started = repo.forge("fix", "start", "Greet readers", "--done", "The readme greets readers")
     assert started.returncode == 0, started.stderr
@@ -48,7 +48,7 @@ def test_1_worker_changes_needed_outside_scope_files_and_names_them(repo):
 def test_2_review_reports_only_outside_scope_files_the_work_does_not_need(env):
     env.repo.write("tests/test_old.py", "def test_old():\n    assert True\n")
     env.repo.git("add", "tests")
-    env.repo.git("commit", "-q", "-m", "Add an existing test")
+    env.repo.git("commit", "--allow-empty", "-q", "-m", "Add an existing test")
     env.repo.git("push", "-q", "origin", "main")
     item, _ = env.start_task(changes={"app.py": "print('saved')\n",
                                       "tests/test_old.py": "def test_old():\n    assert False\n"})

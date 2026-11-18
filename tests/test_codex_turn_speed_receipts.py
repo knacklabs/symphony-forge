@@ -60,12 +60,12 @@ def test_1_each_turn_says_and_records_whether_fast_ran(
         patient(lambda: shutil.copytree(ROOT / "tests/fixtures/adopted-v1.2.2/client", repo.path,
                                         dirs_exist_ok=True))
         repo.git("add", "-A")
-        repo.git("commit", "-qm", "Adopt earlier Forge")
+        repo.git("commit", "--allow-empty", "-qm", "Adopt earlier Forge")
         config = repo.path / "forge.toml"
         version = repo.forge("--version").stdout.split()[-1]
         config.write_text(re.sub(r'^version = .*$', f'version = "{version}"',
                                  config.read_text("utf-8"), flags=re.M), "utf-8")
-        repo.git("commit", "-qam", "Pin current Forge")
+        repo.git("commit", "--allow-empty", "-qam", "Pin current Forge")
         repo.git("push", "-q", "origin", "main")
         said, doctor = (text.replace("gpt-6-sol", "gpt-6.1-sol") for text in (said, doctor))
     _tiers(repo, tiers, receipt)

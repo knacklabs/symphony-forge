@@ -35,7 +35,7 @@ def _test_runs_share_processes_across_repos(
         shutil.copytree(ROOT / "tests/fixtures/adopted-v1.2.2/client", repo.path,
                         dirs_exist_ok=True)
         repo.git("add", "-A")
-        repo.git("commit", "-qm", "Adopt on the earlier release")
+        repo.git("commit", "--allow-empty", "-qm", "Adopt on the earlier release")
         version = repo.forge("--version").stdout.split()[-1]
         config = repo.path / "forge.toml"
         env.commit(repo.path, "forge.toml", config.read_text("utf-8").replace(
@@ -50,7 +50,7 @@ def _test_runs_share_processes_across_repos(
     repo.git("config", "core.hooksPath", str(tmp_path / "fixture-hooks"))
     if adopted:
         repo.git("add", "-A")
-        repo.git("commit", "-qm", "Sync the upgraded client")
+        repo.git("commit", "--allow-empty", "-qm", "Sync the upgraded client")
         repo.git("checkout", "-q", "main")
         repo.git("merge", "-q", "--ff-only", "fix/upgrade-lanes")
     machine_cores(repo, cores, system_count=64)

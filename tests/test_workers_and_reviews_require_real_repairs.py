@@ -40,7 +40,7 @@ def test_1_workers_and_reviews_receive_real_repair_rules(
         shutil.copytree(Path(__file__).parent / "fixtures/adopted-v1.2.2/client",
                         client, dirs_exist_ok=True)
         repo.git("add", "-A")
-        repo.git("commit", "-q", "-m", "Adopt on the earlier release")
+        repo.git("commit", "--allow-empty", "-q", "-m", "Adopt on the earlier release")
         assert 'version = "v1.2.2"' in (client / "forge.toml").read_text("utf-8")
     else:
         client, initialized = _fresh_client(repo, env.gh, tmp_path)
@@ -61,7 +61,7 @@ def test_1_workers_and_reviews_receive_real_repair_rules(
         synced = repo.forge("sync", cwd=where)
         assert synced.returncode == 0, synced.stdout + synced.stderr
         repo.git("add", "-A", cwd=where)
-        repo.git("commit", "-q", "-m", "Sync current rules", cwd=where)
+        repo.git("commit", "--allow-empty", "-q", "-m", "Sync current rules", cwd=where)
     log = install_claude(repo)
     worked = repo.forge("work", "repair-the-greeting", cwd=where)
     assert worked.returncode == 0, worked.stdout + worked.stderr

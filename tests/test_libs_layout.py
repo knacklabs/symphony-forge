@@ -300,7 +300,7 @@ def test_6_existing_apps_keep_their_layout(repo, gh, tmp_path, case):
     config.write_text(re.sub(r'^workers = ".*"$', 'workers = "claude"', settings, flags=re.M),
                       encoding="utf-8")
     _fixture_git(repo, tmp_path, "add", "-A", cwd=client)
-    _fixture_git(repo, tmp_path, "commit", "-q", "-m", "Prepare the earlier client", cwd=client)
+    _fixture_git(repo, tmp_path, "commit", "--allow-empty", "-q", "-m", "Prepare the earlier client", cwd=client)
     _fixture_git(repo, tmp_path, "push", "-q", "origin", "main", cwd=client)
     started = repo.forge("fix", "start", "Keep existing app layout", "--done",
                          "The existing app keeps its code and schema after sync", "--kind",
@@ -320,7 +320,7 @@ def test_6_existing_apps_keep_their_layout(repo, gh, tmp_path, case):
     assert not (top / "libs/shared/util").exists()
     assert not (top / "libs/projects/contracts").exists()
     _fixture_git(repo, tmp_path, "add", "-A", cwd=top)
-    _fixture_git(repo, tmp_path, "commit", "-q", "-m", "Sync the app guide", cwd=top)
+    _fixture_git(repo, tmp_path, "commit", "--allow-empty", "-q", "-m", "Sync the app guide", cwd=top)
     log = install_claude(repo)
     item = re.search(r"Next: forge work ([^\s]+)", started.stdout)[1]
     worked = repo.forge("work", item, cwd=top)

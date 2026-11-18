@@ -58,7 +58,7 @@ def _client(repo, version: str = "", workers: str = "claude") -> None:
                              f'tools = "{"both" if workers == "split" else workers}"\n'
                              'test = "true"\nchecks = ["tests"]\n')
     repo.git("add", "forge.toml")
-    repo.git("commit", "-q", "-m", "Set up client")
+    repo.git("commit", "--allow-empty", "-q", "-m", "Set up client")
 
 
 def _fake_uv(repo, tmp_path, monkeypatch, fail: str = "") -> Path:
@@ -242,7 +242,7 @@ def _work(repo, tmp_path, branch: str = "fix/done", commit: bool = True) -> tupl
     if commit:
         (folder / "change.txt").write_text("a change\n", encoding="utf-8")
         repo.git("add", "change.txt", cwd=folder)
-        repo.git("commit", "-q", "-m", "A change", cwd=folder)
+        repo.git("commit", "--allow-empty", "-q", "-m", "A change", cwd=folder)
     return folder, repo.git("rev-parse", "HEAD", cwd=folder)
 
 
@@ -263,7 +263,7 @@ def _a_finished_folder_with_a_lockfile_change_goes(repo, gh, tmp_path, monkeypat
     _client(repo)
     repo.write("uv.lock", "version = 1\n")
     repo.git("add", "uv.lock")
-    repo.git("commit", "-q", "-m", "Lock")
+    repo.git("commit", "--allow-empty", "-q", "-m", "Lock")
     folder, head = _work(repo, tmp_path)
     (folder / "uv.lock").write_text("version = 2\n", encoding="utf-8")
     _prs(gh, "fix/done", (head, state))
@@ -287,7 +287,7 @@ def _clean_and_cache_only_folders_are_removed(repo, gh, tmp_path, monkeypatch, _
     repo.write("src/app.py", "")
     repo.write("web/package.json", "{}\n")
     repo.git("add", ".gitignore", "src", "web")
-    repo.git("commit", "-q", "-m", "Ignore caches")
+    repo.git("commit", "--allow-empty", "-q", "-m", "Ignore caches")
     clean, clean_head = _work(repo, tmp_path, "task/CLEAN")
     cached, cached_head = _work(repo, tmp_path, "story/CACHED")
     for cache in (".venv/bin", "web/node_modules/x", "src/__pycache__"):
@@ -308,7 +308,7 @@ def _a_folder_holding_anything_else_is_kept(repo, gh, tmp_path, monkeypatch, lef
     _client(repo)
     repo.write(".gitignore", ".env\ndata/\n")
     repo.git("add", ".gitignore")
-    repo.git("commit", "-q", "-m", "Ignore secrets")
+    repo.git("commit", "--allow-empty", "-q", "-m", "Ignore secrets")
     folder, head = _work(repo, tmp_path)
     prs = [(head, "MERGED")]
     if leftover == "changed file":
@@ -326,7 +326,7 @@ def _a_folder_holding_anything_else_is_kept(repo, gh, tmp_path, monkeypatch, lef
     elif leftover == "submodules":
         (folder / ".gitmodules").write_text("", encoding="utf-8")
         repo.git("add", ".gitmodules", cwd=folder)
-        repo.git("commit", "-q", "-m", "Submodules", cwd=folder)
+        repo.git("commit", "--allow-empty", "-q", "-m", "Submodules", cwd=folder)
         prs = [(repo.git("rev-parse", "HEAD", cwd=folder), "MERGED")]
     elif leftover == "commit past the pull request":
         repo.git("commit", "-q", "--allow-empty", "-m", "Later", cwd=folder)

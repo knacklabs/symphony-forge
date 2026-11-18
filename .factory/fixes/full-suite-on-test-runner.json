@@ -1,0 +1,80 @@
+{
+  "base": "02c44b622a5a1b1bd8f74cb45b2204a93d9a0b31",
+  "branch": "fix/full-suite-on-test-runner",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1edf7-78eb-7280-b0ef-57bb13ad0b66",
+    "head": null,
+    "start": "6b92eea5c6960e0cfed0d06559d066d65bd00296"
+  },
+  "done_when": "When forge.toml sets test_runner, the generated forge.yml's scheduled full-suite job runs on test_runner; without it, the job runs on runner as today; new repos get it at init and existing repos on upgrade and forge sync",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "ships() in src/forge/prcheck.py",
+      "file": "src/forge/prcheck.py",
+      "gain": 5,
+      "harm": 4,
+      "line": 337,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": true,
+      "title": "Keep status-write tokens off pull-request test runners",
+      "work": 2
+    },
+    {
+      "area": "test_1_nightly_tests_use_test_runner_with_runner_as_fallback() in tests/test_nightly_test_machines.py",
+      "file": "tests/test_nightly_test_machines.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 20,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: nightly runner selection at init and custom runner fallback",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "a1893c8f468a0f4fe826885a4d02b07a1510fa9477f584bb85acac9d12ed5316",
+    "changed": "bb13b65e9e02221806d4b01d662f2451be2a35b6680c80125ee1c1cdfa872965",
+    "commit": "f744139d0901cd638ec9f8c93beeb80792b2e147",
+    "dismissals": [],
+    "findings": [],
+    "id": "1386d376-2c83-4405-ba72-5be5f2b4fb7d",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-18T09:19:58.101607+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-18T09:31:13.006672+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-18T09:36:57.522553+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-18T09:44:48.798192+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "a39ed3ab-3733-4ab9-af4e-5df6f41d167c",
+    "head": "f0c25424bce110fba0f41a23cd5826e2039b1767",
+    "keys": {},
+    "round": 2
+  },
+  "why": "Issue 1660: the generated workflow's scheduled full-suite job runs on runner, not test_runner, so a team cannot send the nightly full suite to its fast runners",
+  "worker": "codex"
+}

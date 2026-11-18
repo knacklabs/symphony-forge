@@ -46,7 +46,7 @@ def test_4_doctor_and_board_show_the_machine_split_and_agent_entries(env, tmp_pa
     if adopted:
         shutil.copytree(ROOT / "tests/fixtures/adopted-v1.2.2/client", repo.path, dirs_exist_ok=True)
         repo.git("add", "-A")
-        repo.git("commit", "-qm", "Adopt on the earlier release")
+        repo.git("commit", "--allow-empty", "-qm", "Adopt on the earlier release")
         config = (repo.path / "forge.toml").read_text("utf-8").replace(
             'version = "v1.2.2"', f'version = "{version}"').replace('workers = "codex"', f'workers = "{lane_adapter}"')
     else:
@@ -97,7 +97,7 @@ def test_4_doctor_and_board_show_the_machine_split_and_agent_entries(env, tmp_pa
         guide = (folder / host / "skills/forge/run-reference.md").read_text("utf-8")
         assert "forge board --json" in guide and "forge stop --id <id>" in guide
     repo.git("add", "-A", cwd=folder)
-    repo.git("commit", "-qm", "Sync the client guidance", cwd=folder)
+    repo.git("commit", "--allow-empty", "-qm", "Sync the client guidance", cwd=folder)
     # A process's usable cores can differ from the host total. The pytest picker must
     # forward the same budget that doctor and the agent lane use, not recompute the host half.
     base = repo.git("rev-parse", "HEAD", cwd=folder)
@@ -115,7 +115,7 @@ def test_4_doctor_and_board_show_the_machine_split_and_agent_entries(env, tmp_pa
     other = _other_repo(tmp_path, repo.bin)
     other.write("forge.toml", (other.path / "forge.toml").read_text("utf-8") + f'workers = "{lane_adapter}"\n')
     other.git("add", "forge.toml")
-    other.git("commit", "-qm", "Use Claude for workers")
+    other.git("commit", "--allow-empty", "-qm", "Use Claude for workers")
     other.git("push", "-q", "origin", "main")
     waiting = [make_work(other, f"Other typo {n}") for n in range(agents)]
     hold_agents(env)

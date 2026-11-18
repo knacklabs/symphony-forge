@@ -25,7 +25,7 @@ def test_1_review_and_cold_read_weigh_likelihood(env, adopted):
         shutil.copytree(Path(__file__).parent / "fixtures/adopted-v1.2.2/client",
                         repo.path, dirs_exist_ok=True)
         repo.git("add", "-A")
-        repo.git("commit", "-q", "-m", "Adopt on the earlier release")
+        repo.git("commit", "--allow-empty", "-q", "-m", "Adopt on the earlier release")
         config = (repo.path / "forge.toml").read_text("utf-8")
         config = config.replace('version = "v1.2.2"', f'version = "{version}"')
         config = config.replace('workers = "codex"', 'workers = "claude"')
@@ -43,7 +43,7 @@ def test_1_review_and_cold_read_weigh_likelihood(env, adopted):
     synced = repo.forge("sync", cwd=where)
     assert synced.returncode == 0, synced.stdout + synced.stderr
     repo.git("add", "-A", cwd=where)
-    repo.git("commit", "-q", "-m", "Sync the client instructions", cwd=where)
+    repo.git("commit", "--allow-empty", "-q", "-m", "Sync the client instructions", cwd=where)
 
     log = install_claude(repo, worker=False)
     conftest._install(repo.bin, "claude", READER.format(python=sys.executable))

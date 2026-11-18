@@ -35,7 +35,7 @@ def check_previous_release_upgrade_keeps_settings_and_runs_both_lanes(env, tmp_p
         "pathlib.Path('test-started').touch()\n"
         "while not pathlib.Path('test-go').exists(): time.sleep(0.05)\n")
     repo.git("add", "-A")
-    repo.git("commit", "-qm", "Client on the previous release")
+    repo.git("commit", "--allow-empty", "-qm", "Client on the previous release")
     repo.git("push", "-q", "origin", "main")
     before = tomllib.loads(old)
     installed = repo.forge("--version").stdout.split()[-1]
@@ -56,7 +56,7 @@ def check_previous_release_upgrade_keeps_settings_and_runs_both_lanes(env, tmp_p
     assert path.read_text("utf-8") == upgraded
     assert tomllib.loads(upgraded) == {**before, "version": installed}
     repo.git("add", "-A", cwd=upgrade_folder)
-    repo.git("commit", "-qm", "Upgrade Forge's lanes", cwd=upgrade_folder)
+    repo.git("commit", "--allow-empty", "-qm", "Upgrade Forge's lanes", cwd=upgrade_folder)
     # Land the upgrade in the disposable client's origin, as its human would.
     repo.git("push", "-q", "origin", "HEAD", cwd=upgrade_folder)
     remote = repo.git("remote", "get-url", "origin")
