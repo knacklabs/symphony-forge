@@ -328,8 +328,8 @@ A developer's own `tools`, `workers` and `[models.<kind>]` choices go in the git
 `runner` selects the GitHub Actions runner label in the generated `forge.yml`;
 it defaults to `"ubuntu-24.04"` because the starters' Playwright 1.56 browser installer
 does not support Ubuntu 26.04. Sync preserves explicit runner settings.
-Optional `test_runner` selects a different label for pull-request test jobs only, with one
-group or several groups. All other jobs, including the nightly full test run, use `runner`.
+Optional `test_runner` selects a different label for pull-request and nightly full-suite test jobs,
+with one group or several groups. All other jobs use `runner`.
 Without `test_runner`, all jobs use `runner`. Set the label in `forge.toml`, then run `forge sync`.
 For self-hosted Linux runners, initialise with
 `forge init --runner self-hosted`, or set `runner = "self-hosted"` (or a custom label) in an
@@ -2420,7 +2420,9 @@ to `plans/ideas.md` (or are empty) is not built: land runs the build round and c
 until real changes exist. New and existing repos get this on the current release. Close
 still stops for a pending question and gives open findings or failing tests a worker fix round.
 
-Use `forge land --all` in place of a hand-made merge lane. It takes every task and fix whose
+To land a chosen set, name the items: `forge land <item> <item> ...` runs the same queue and merge
+train for exactly those items and leaves every other item alone. It refuses a name that is no task or
+fix. Use `forge land --all` in place of a hand-made merge lane. It takes every task and fix whose
 status is reviewing, fixing, waiting for checks or ready, and leaves out, by name, one still with
 its builder, one already merged and one another command works on. It starts them oldest first,
 several at a time up to this machine's agent places, and merges each one when it passes.

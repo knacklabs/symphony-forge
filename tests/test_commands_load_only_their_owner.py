@@ -16,9 +16,9 @@ HELP = {**HELP_GOLDEN,
                 "Run tests in the machine test lane; --change selects related tests and checks\n\n"
                 "options:\n  -h, --help     show this help message and exit\n"
                 "  --pytest BASE\n  --full\n  --change\n",
-        "land": "usage: forge land [-h] [--note TEXT] [--all] [item]\n\n"
+        "land": "usage: forge land [-h] [--note TEXT] [--all] [item ...]\n\n"
                 "Build, close, fix and merge a task or fix\n\n"
-                "positional arguments:\n  item         the task or fix to land\n\n"
+                "positional arguments:\n  item         the task or fix to land; name several to land only those\n\n"
                 "options:\n  -h, --help   show this help message and exit\n"
                 "  --note TEXT  guide the first round this run starts\n"
                 "  --all        close and merge every change in close, oldest first\n",
