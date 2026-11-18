@@ -118,7 +118,7 @@
     "status": "blocked"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-18T14:04:06.332449+00:00",
@@ -131,8 +131,12 @@
   ],
   "stop": {
     "at": "2026-11-18T14:23:40.922985+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "src/forge/board_facts.py",
-    "wait_id": "39c23189-5659-4ee1-b030-28f35feda422"
+    "reason": "Owner chose one more round: fix the four review findings",
+    "wait_id": "39c23189-5659-4ee1-b030-28f35feda422",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
