@@ -401,7 +401,8 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
                          (cfg.get("fast_test") or "") + "\n" + cfg["test"])):
         # A fixed shard count must keep every shard, even for a small change.
         template = template.replace("steps.docs.outputs.one-group", "'false'")
-    if groups == 1:
+    # A separate test runner stays free until docs-check selects real test work.
+    if groups == 1 and test_runner == cfg.get("runner", repo.DEFAULTS["runner"]):
         start = template.index("  docs-check:\n")
         tests = template.index("  tests:\n", start)
         runner = template.index("    runs-on:", tests)
@@ -460,7 +461,7 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
                 .replace("<test-runner>", json.dumps(test_runner))
                 .replace("<runner>", json.dumps(cfg.get("runner", repo.DEFAULTS["runner"]))))
     if not ci_tests:
-        start = workflow.index("  docs-check:\n" if groups > 1 else "  tests:\n")
+        start = workflow.index("  docs-check:\n" if "  docs-check:\n" in workflow else "  tests:\n")
         end = workflow.index("  forge-pr-check:\n")
         workflow = workflow[:start] + workflow[end:]
     return {WORKFLOW_PATH: workflow,
