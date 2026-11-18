@@ -247,6 +247,9 @@ $delegation
 - Close and doctor cancel only this pull request's older forge.yml runs when they block its newest queued run. Client workflows stay untouched. If a run stays active after cancellation, Forge prints GitHub's force-cancel command for the operator. It never calls that command automatically. Close keeps waiting for the new run.
 - On new and upgraded repos, close and merge retry only the failed jobs once when only CI test
   groups fail or time out. They wait for that attempt. Cancelled runs use the same retry limit.
+  When the installed Forge is newer than the branch's pin, its CI wait and retry code runs.
+  The pinned release still runs the review and the other close steps. This applies to new
+  and existing repos after upgrade, without a pin change on each open branch.
   A second failure sends the item to `forge work`. For other test timeouts, rerun the tests job
   or split the suite. Generated pull request and nightly test jobs
   each get 60 minutes. The nightly run uses the repo's groups and records one

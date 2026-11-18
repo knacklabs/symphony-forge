@@ -992,6 +992,14 @@ def resume_pin(top: Path, previous: str, rounds: int | None = None, *, accepted:
 
 def run_release(release: str, args: list[str], cwd: str | os.PathLike[str] | None) -> int:
     """Run a Forge release's `forge <args>` through uv in cwd, its output streamed; its exit code."""
+    if args and args[0] in ("close", "merge", "land") and _older(release.removeprefix("v")):
+        bridge = str(Path(__file__).with_name("pinned_checks.py").resolve())
+        bootstrap = f"import runpy; runpy.run_path({bridge!r}, run_name='__main__')"
+        return subprocess.run(
+            [shutil.which("uv") or "uv", "run", "--isolated", "--no-project", "--with",
+             f"git+https://github.com/knacklabs/symphony-forge@{release}",
+             "python", "-I", "-c", bootstrap, sys.executable, *args],
+            cwd=cwd, env={**uv_env(), "FORGE_PINNED_RUN": release}).returncode
     return subprocess.run(
         [shutil.which("uv") or "uv", "tool", "run", "--from",
          f"git+https://github.com/knacklabs/symphony-forge@{release}", "forge", *args],
