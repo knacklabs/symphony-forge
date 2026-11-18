@@ -1,0 +1,15 @@
+{
+  "base": "a3272814e237b99271e2d7f844779588405e15d3",
+  "branch": "fix/forge-land-all-takes-every-item-in-close",
+  "done_when": "forge land <item> <item> ... closes and merges exactly the named items the way --all does, testing ready ones together once in the merge train and merging them in order without a re-test after each merge, and leaves every other item alone",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-18T06:22:46.550167+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "forge land --all takes every item in close, including items the owner has on hold, so a team cannot land a chosen set of Ready items with one combined check; merging them one by one re-runs the combined test after each merge (25-40 min each at a client). Owner, 18 Nov 2026: fix it and release fast."
+}
