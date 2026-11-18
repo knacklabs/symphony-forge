@@ -78,6 +78,7 @@ def wait(top: Path, item: str, sha: str, names: list[str], *, branch: str,
         names = shared
     start, clock = repo.now(), time.monotonic()
     released = False
+    report_time = False
 
     def waiting(value: bool) -> None:
         nonlocal released
@@ -91,7 +92,9 @@ def wait(top: Path, item: str, sha: str, names: list[str], *, branch: str,
         result.update(outcome="unknown", state="unknown")
         try:
             _wait(top, item, sha, names, branch, progress, result, waiting, train)
+            report_time = True
         except repo.Refused as error:
+            report_time = error.entry in (REFUSALS["red"], REFUSALS["timeout"])
             if error.entry is REFUSALS["red"]:
                 result["outcome"] = "failed"
             result["reason"] = str(error).split("\n", 1)[0]
@@ -103,6 +106,9 @@ def wait(top: Path, item: str, sha: str, names: list[str], *, branch: str,
             raise
         finally:
             waiting(False)
+            if report_time:
+                from forge import citime
+                citime.report(top, branch)
             repo.record_event(top, item, "CI result", commit=sha, start=start, **result)
             repo.record_timing(top, item, "CI wait", start, clock, result["outcome"])
 
