@@ -6,6 +6,7 @@ import pytest
 from test_spotted import entry
 from test_story import setup
 
+STORY = "FIX-HOOK-CONTEXT-STAYS-SHORT"
 pytestmark = pytest.mark.platform
 
 
