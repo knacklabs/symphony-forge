@@ -1,13 +1,13 @@
 ---
 reader: codex (gpt-6.1-terra)
-read_at: 2026-11-18T03:46:51.938873+00:00
-seconds: 700.714
-read_hash: 878e8a52a049c2315c3aa9bce720eb878bfa30a9
-round: 1
+read_at: 2026-11-18T04:13:23.525502+00:00
+seconds: 805.929
+read_hash: d1674823920a9ace885aaf9bca91e7a534a55d73
+round: 2
 passed: no
-doc_seen: 878e8a52a049c2315c3aa9bce720eb878bfa30a9
+doc_seen: d1674823920a9ace885aaf9bca91e7a534a55d73
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+notes_seen: 51888d4d04507f020a1637daf1b852fe887a7016
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a1ecb9-0d2c-7ba3-967f-9b980e7a0a1b
 session:
@@ -146,3 +146,50 @@ Only a genuine trade-off goes to the human, as a question with options.
     Case: normal use - With 20 measured pull requests, the median can fall between the tenth and eleventh times. The plan does not say which pull request supplies “the slowest job of the median one.”
     Gain 3, Work 1, Harm 2
    Disposition: keep - below the bar (follow-up)
+
+## Round 2
+
+20. Blocking: Unproven: item 3: the live proof can run every API file serially.
+    Raise: Test — [plan](/plans/FORGE-CITIME-1.md:95); [worker cap](/src/forge/node_workers.cjs:5).
+    Case: normal use - On a busy laptop, `forge test` can allocate one CPU, which limits Vitest to one worker. The live test inherits that limit, so all three runs can pass serially after `fileParallelism: false` is removed. The [shared invite-log lookup](/src/forge/templates/starter/apps/api/test/helpers.ts:34) can take another file’s token when the files do run concurrently.
+    Gain 3, Work 2, Harm 3
+    Disposition: cut - STARTER's live proof forces `--maxWorkers=2` or more, and the invite-log helper reads only its own file's data by a per-file key (builders' section only).
+
+21. Blocking: Unproven: item 3: the new shared-settings test can miss an indirect browser run.
+    Raise: Test — [plan](/plans/FORGE-CITIME-1.md:94); [Python test script](/src/forge/templates/starter-python/scripts/test.mjs:59).
+    Case: normal use - A `package.json` change selects everything. If the browser-install step is removed but the existing `pnpm test` fallback remains, `--list` prints only `pnpm test`; the proposed absence checks pass even though that [package script](/src/forge/templates/starter-python/package.json:17) runs `test:browser`.
+    Gain 3, Work 2, Harm 3
+    Disposition: cut - the browser check now follows the `package.json` scripts that each listed command runs, so `pnpm test` reaching `test:browser` fails it (builders' section only).
+
+22. Advisory: Not done: a test group reported as cancelled at its time limit is omitted from CI time.
+    Raise: Not done — [plan](/plans/FORGE-CITIME-1.md:70); [checks.py](/src/forge/checks.py:287).
+    Case: normal use - Forge already recognizes a test job cancelled near its time limit as timed out. The new calculation discards every cancelled run, so it can omit that group’s time and fail to name it as timed out, contrary to the accepted limit.
+    Gain 3, Work 2, Harm 3
+    Disposition: cut - a cancelled test job that ran to its time limit counts in the CI time, marked timed out, using `checks._tests_timeout`'s rule (builders' section only).
+
+23. Advisory: Not done: the lockfile check omits `Pipfile.lock`.
+    Raise: Not done — [plan](/plans/FORGE-CITIME-1.md:75); [fasttest.py](/src/forge/fasttest.py:402).
+    Case: normal use - A grouped Python repo changes `Pipfile.lock` and one code file. Forge recognizes that lockfile as a shared test input, but the planned list does not, so the change runs one group despite the promise to run all groups for a lockfile change.
+    Gain 3, Work 2, Harm 3
+
+24. Advisory: Not done: cancelled pushes can move the five-push window too far back.
+    Raise: Not done — [plan](/plans/FORGE-CITIME-1.md:70); [workflow concurrency](/src/forge/prcheck.py:52).
+    Case: normal use - A new push cancels an earlier push before any of its jobs finish. Because that push has no counted check, the proposed selection skips it and can report a slower run from before the last five pushes.
+    Gain 3, Work 2, Harm 2
+   Disposition: keep - below the bar (follow-up)
+
+25. Advisory: Unproven: item 2: the group test does not check the runner’s group count.
+    Raise: Test — [plan](/plans/FORGE-CITIME-1.md:90); [workflow](/src/forge/prcheck.py:85).
+    Case: normal use - The matrix can start only group 1 while `FORGE_GROUPS` still says 2. The proposed test checks the matrix and gate, so it can pass while the runner executes only the first half of the selected tests and the required check passes.
+    Gain 3, Work 2, Harm 3
+
+26. Advisory: Not done: external checks are counted as GitHub runner minutes.
+    Raise: Not done — [plan](/plans/FORGE-CITIME-1.md:70); [checks.py](/src/forge/checks.py:515).
+    Case: normal use - A pull request also has a check posted by an external scanning app. The planned sum includes that check’s elapsed time even though it did not use a GitHub Actions runner, overstating the reported runner minutes.
+    Gain 3, Work 2, Harm 2
+   Disposition: keep - below the bar (follow-up)
+
+27. Advisory: Plan gap: TIME can start before the record-commit fix that changes the same module.
+    Raise: Plan gap — [task table](/plans/FORGE-CITIME-1.md:104); [task admission](/src/forge/task.py:619).
+    Case: normal use - The local issue 1656 fix is still working and changes `checks.py`, which TIME also owns. The plan says that fix goes first but gives TIME no dependency on it; Forge’s started-work overlap check scans task branches, not fix branches.
+    Gain 4, Work 1, Harm 2
