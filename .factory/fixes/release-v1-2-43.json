@@ -1,0 +1,15 @@
+{
+  "base": "c718fa86d0c8fb4d25d9fc4fd93f00de3f249cd8",
+  "branch": "fix/release-v1-2-43",
+  "done_when": "forge.toml, the package and every pinned reference say v1.2.43, and tests/test_release_version.py passes",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-18T13:03:48.143451+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Release v1.2.43: publish what merged since v1.2.42"
+}
