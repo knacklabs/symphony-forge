@@ -719,8 +719,7 @@ def _with_local(cfg: dict[str, Any], top: Path) -> dict[str, Any]:
 
 
 def default_config(top: Path, at: str | None = None) -> dict[str, Any]:
-    """Fetch and read only the default branch's config for merge permission and checks. Session
-    hooks pass `at`, a ref already fetched: no network call."""
+    """Fetch, then read the default branch's config; `at` (a fetched ref) makes no network call."""
     default = default_branch(top)
     if not at and not command_fact("fetched origin", top, dict).get("all"):
         command_fact(("fetch default", default), top, lambda: git("fetch", "-q", "origin", default, cwd=top))
