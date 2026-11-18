@@ -1,6 +1,13 @@
 {
   "base": "64105f1b7b691f43af2a995f8f72fe8da1372287",
   "branch": "fix/docs-only-off-fast-runners",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1eef9-ae50-74b2-84d5-30f226f42961",
+    "head": null,
+    "start": "d883a0efd91c925d3c4b76d3d8afb95e72832243"
+  },
   "done_when": "A docs-only pull request runs no job on test_runner; its result job runs on runner; the required tests check keeps its name and pass rule; new repos get it at init and existing repos on upgrade and forge sync",
   "fix_kind": "mechanical",
   "kind": "fix",
