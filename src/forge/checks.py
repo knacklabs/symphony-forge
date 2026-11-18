@@ -149,7 +149,8 @@ def _wait(top: Path, item: str, sha: str, names: list[str], branch: str, progres
                        for name, state in seen):  # the pull_request workflow skips its own job of that name
                 _no_start(top, item, sha, branch)  # before a red or timed-out test can hide it
             _tests_timeout(top, item, sha, names, check_runs, seen)
-            _rerun_cancelled(top, item, sha, seen, check_runs)
+            if _rerun_cancelled(top, item, sha, seen, check_runs) and cache is not None:
+                cache.unlink(missing_ok=True)  # The next poll must read fresh results, not the cancelled ones.
             reason = _pending(item, names, seen)
             if mergeable == "UNKNOWN":
                 reason = reason or "GitHub has not determined whether this pull request can merge"
@@ -330,13 +331,13 @@ def _tests_timeout(top: Path, item: str, sha: str, names: list[str],
 
 
 def _rerun_cancelled(top: Path, item: str, sha: str, seen: list[tuple[str, str]],
-                     runs: list[dict[str, Any]]) -> None:
+                     runs: list[dict[str, Any]]) -> bool:
     """Cancelled checks are not failures when none failed. Decide per workflow run: wait for a newer
     run of the same workflow and event, or start the run again once (run_attempt 1); a second attempt stays red."""
     cancelled = [index for index, run in enumerate(runs)
                  if run.get("status") == "completed" and run.get("conclusion") == "cancelled"]
     if not cancelled or any(state == RED for index, (_, state) in enumerate(seen) if index not in cancelled):
-        return
+        return False
     workflows = _ask(top, item, ".workflow_runs", "repos/{owner}/{repo}/actions/runs", "--method", "GET",
                      "--raw-field", "per_page=100", "--raw-field", f"head_sha={sha}")
     decided: dict[Any, str | None] = {}
@@ -360,6 +361,7 @@ def _rerun_cancelled(top: Path, item: str, sha: str, seen: list[tuple[str, str]]
                     decided[suite] = PENDING
         if decided[suite]:
             seen[index] = (seen[index][0], decided[suite])
+    return any(decided.values())
 
 
 def _pending(item: str, names: list[str], seen: list[tuple[str, str]]) -> str:

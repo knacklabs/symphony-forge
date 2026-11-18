@@ -45,12 +45,13 @@ def test_1_a_cancelled_run_with_two_jobs_is_run_again_once_and_waited_for(clock,
 
 
 def test_2_a_newer_run_of_the_same_event_is_waited_for_without_a_rerun(clock, monkeypatch):
-    newer = [_check("tests", "cancelled"), _check("tests", None, 7, "in_progress"), OTHER]
-    done = _close(clock, monkeypatch, newer, GREEN,
-                  workflows=(_workflow(5, 77) + _workflow(7, 78, None, "in_progress"),))
+    # The newer run is queued and has published no check run yet, so only waiting can tell.
+    done = _close(clock, monkeypatch, [_check("tests", "cancelled"), OTHER], GREEN,
+                  workflows=(_workflow(5, 77) + _workflow(7, 78, None, "queued"),))
 
     assert done.returncode == 0, done.stdout + done.stderr
     assert not clock.gh_calls("run", "rerun")
+    assert len(clock.gh_calls(*RUNS)) >= 2  # Close read the checks again before it passed.
 
 
 def test_3_checks_cancelled_again_after_the_rerun_go_to_the_worker(clock, monkeypatch):
@@ -76,3 +77,17 @@ def test_5_a_newer_run_of_another_event_does_not_pass_the_cancelled_check(clock,
 
     assert clock.gh_calls("run", "rerun") == [["run", "rerun", "77"]]
     assert done.returncode == 0, done.stdout + done.stderr
+
+
+def test_6_land_reads_fresh_checks_after_the_rerun_so_a_passed_retry_counts(clock, monkeypatch):
+    clock.gh.respond("run", "rerun")
+    monkeypatch.setenv("FORGE_CHECKS_WAIT", "600")
+    _agent(clock)
+    _fix(clock, "working", worked=True)
+    _queue(clock, RUNS, *_runs(CANCELLED, GREEN))
+    _queue(clock, RUN_LIST, _workflow(5, 77), _workflow(5, 77, "success", attempt=2))
+
+    done = clock.repo.forge("land", ITEM)
+
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert clock.gh_calls("run", "rerun") == [["run", "rerun", "77"]]
