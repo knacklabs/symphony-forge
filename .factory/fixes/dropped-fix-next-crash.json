@@ -1,0 +1,15 @@
+{
+  "base": "1a5b4d2cf1d9b0e80bb05627d2864a9ac40fd2bb",
+  "branch": "fix/dropped-fix-next-crash",
+  "done_when": "forge next and worker rounds skip a dropped fix whose checkout is gone, with no traceback; a command-level test drops a fix, removes its worktree and runs forge next; new and existing repos get it on upgrade",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-18T16:43:39.626718+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "After forge fix drop, forge next raises FileNotFoundError on the dropped fix's worktree path, and a worker round that runs forge next then asks which failure or review finding to fix although its review was clean"
+}
