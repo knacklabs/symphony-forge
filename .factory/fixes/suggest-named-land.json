@@ -1,0 +1,15 @@
+{
+  "base": "64105f1b7b691f43af2a995f8f72fe8da1372287",
+  "branch": "fix/suggest-named-land",
+  "done_when": "When two or more tasks or fixes are Ready to merge, forge next and the skill suggest one forge land <item> <item> command naming them; with one Ready item nothing changes; new and existing repos get it on upgrade",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-18T14:04:16.418410+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "When two or more items are Ready to merge, forge next suggests merging them one by one, so each merge can start a new combined CI run"
+}
