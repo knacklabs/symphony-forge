@@ -20,7 +20,7 @@ def run(args, execute, cwd):
         done = execute()
         said = done.stderr + done.stdout
         if not done.returncode or not re.search(
-                r"\brate limit\b.*\bexceeded\b|\bHTTP\s+429\b", said, re.I | re.S):
+                r"\brate limit\b.*\bexceeded\b|\bexceeded\b.*\brate limit\b|\bHTTP\s+429\b", said, re.I | re.S):
             return done
         quota = repo.run("gh", "api", "rate_limit", cwd=cwd)
         resume = time.time() + 60

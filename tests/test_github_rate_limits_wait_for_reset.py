@@ -21,6 +21,7 @@ def limit(env, prefix, kind):
         "rest": "API rate limit exceeded for 192.0.2.1. (HTTP 403)",
         "graphql": "API rate limit already exceeded for user ID 1.",
         "secondary": "You have exceeded a secondary rate limit. Please wait a few minutes before you try again. (HTTP 429)",
+        "secondary-403": "HTTP 403: You have exceeded a secondary rate limit",
         "quota-failed": "API rate limit exceeded for 192.0.2.1. (HTTP 403)",
         "branch": 'no pull requests found for branch "fix/rate-limit-waits"',
     }[kind]
@@ -44,7 +45,7 @@ if args[:2] == ["api", "rate_limit"]:
     reset = int(marker.read_text("utf-8"))
     core = reset + {1000 if prefix == ['api', 'graphql'] else 0}
     graphql = reset + {0 if prefix == ['api', 'graphql'] else 1000}
-    print(json.dumps(dict(resources=dict(core=dict(remaining={10 if kind == 'secondary' else 0}, reset=core),
+    print(json.dumps(dict(resources=dict(core=dict(remaining={10 if kind in ('secondary', 'secondary-403') else 0}, reset=core),
                                         graphql=dict(remaining=0, reset=graphql)))))
     sys.exit(0)
 '''
@@ -54,6 +55,7 @@ if args[:2] == ["api", "rate_limit"]:
 @pytest.mark.parametrize("command,kind", [("close", "rest"),
                                          ("merge", "rest"), ("land", "rest"),
                                          ("land", "graphql"), ("close", "secondary"),
+                                         ("merge", "secondary-403"),
                                          ("close", "quota-failed")])
 def test_1_commands_wait_for_github_reset_and_continue(env, fake_clock, command, kind):
     if kind == "graphql":
@@ -79,9 +81,9 @@ def test_1_commands_wait_for_github_reset_and_continue(env, fake_clock, command,
     assert done.stderr.count("GitHub rate limit reached. Wait until ") == 1
     attempts = [float(line) for line in (env.repo.bin / "quota-times").read_text("utf-8").splitlines()]
     assert len(attempts) >= 2
-    pause = 60 if kind in ("quota-failed", "secondary") else 603
+    pause = 60 if kind in ("quota-failed", "secondary", "secondary-403") else 603
     assert pause - 1 <= attempts[1] - attempts[0] < pause + 7
-    if kind not in ("secondary", "quota-failed"):
+    if kind not in ("secondary", "secondary-403", "quota-failed"):
         reset = int((env.repo.bin / "quota-attempt").read_text("utf-8"))
         when = datetime.fromtimestamp(reset + 3, timezone.utc).strftime("%H:%M:%S UTC")
         assert f"GitHub rate limit reached. Wait until {when}, then continue.\n" in done.stderr
