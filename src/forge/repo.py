@@ -24,7 +24,7 @@ from pathlib import Path
 from threading import RLock
 from typing import Any, NoReturn
 
-from forge import __version__
+from forge import __version__, github
 
 # Every Forge command loads this shared runtime; child processes consume the recorded lock.
 os.environ["UV_FROZEN"] = "1"
@@ -287,7 +287,7 @@ def run(*args: str, cwd: str | os.PathLike[str] | None = None,
                 snapshots[args] = done
             return done
         return snapshots[args]
-    done = _github_read(args, execute) if args[0] == "gh" else execute()
+    done = _github_read(args, lambda: github.run(args, execute, cwd)) if args[0] == "gh" else execute()
     if args[:3] == ("gh", "pr", "merge") and not done.returncode:
         # Merges must show at once; other pull request changes wait for the minute cache.
         (forge_dir(cwd) / "prs-cache.json").unlink(missing_ok=True)
