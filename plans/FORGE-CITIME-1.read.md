@@ -318,21 +318,18 @@ Only a genuine trade-off goes to the human, as a question with options.
     Case: normal use - Forge’s own CI runs the Python test picker inside the `forge test --change` job step. The proposed calculation counts that entire step as tests, so time spent selecting files appears as test time. A slow picker can therefore lead the owner to investigate the wrong stage.
     Gain 3, Work 3, Harm 2
     Disposition: cut - fixed in the builders section: the test step's stage is named `tests (with in-step selection)`, so picking inside the test command is not hidden as pure test time.
-   Disposition: keep - below the bar (follow-up)
 
 47. Advisory: Not done: setup after `parent-tests` is absent from the stage totals.
     Raise: Not done — [plan](/plans/FORGE-CITIME-1.md:76); [workflow](/src/forge/prcheck.py:103).
     Case: normal use - The generated workflow restores caches, sets up Node and installs Forge after `parent-tests`. The plan counts setup only before that step and counts the test step separately, leaving those setup minutes out. A group can exceed ten minutes without receiving its over-budget line.
     Gain 3, Work 2, Harm 2
     Disposition: cut - fixed in the builders section: setup counts every step except `parent-tests` and the test step, including those after `parent-tests`.
-   Disposition: keep - below the bar (follow-up)
 
 48. Advisory: Not done: the jobs request can omit groups after a rerun.
     Raise: Not done — [plan](/plans/FORGE-CITIME-1.md:76); [GitHub jobs endpoint](https://docs.github.com/en/rest/actions/workflow-jobs#list-jobs-for-a-workflow-run).
     Case: normal use - A 16-group workflow is rerun in full. The requested endpoint includes both attempts but returns 30 jobs per page by default. One request cannot return all their jobs, so the report can omit a group’s stages or its over-budget line.
     Gain 3, Work 2, Harm 2
     Disposition: cut - fixed in the builders section: the jobs request asks for 100 per page and is read with `gh api --paginate`.
-   Disposition: keep - below the bar (follow-up)
 
 49. Advisory: Unproven: item 4: the selection-chain test can pass when no tests run.
     Raise: Test — [plan](/plans/FORGE-CITIME-1.md:108); [Python starter](/src/forge/templates/starter-python/scripts/test.mjs:68).
@@ -345,4 +342,3 @@ Only a genuine trade-off goes to the human, as a question with options.
     Case: normal use - A successful close needs the new GraphQL request for push history and a separate jobs request for stages. Doctor also needs the history request and at least one jobs request. The stated cost of one additional request each understates the GitHub traffic.
     Gain 2, Work 1, Harm 2
     Disposition: cut - the cost line now says close makes two more GitHub requests and doctor two or three.
-   Disposition: keep - below the bar (live with)
