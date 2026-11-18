@@ -1,6 +1,13 @@
 {
   "base": "02c44b622a5a1b1bd8f74cb45b2204a93d9a0b31",
   "branch": "fix/full-suite-on-test-runner",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1edf7-78eb-7280-b0ef-57bb13ad0b66",
+    "head": null,
+    "start": "6b92eea5c6960e0cfed0d06559d066d65bd00296"
+  },
   "done_when": "When forge.toml sets test_runner, the generated forge.yml's scheduled full-suite job runs on test_runner; without it, the job runs on runner as today; new repos get it at init and existing repos on upgrade and forge sync",
   "fix_kind": "mechanical",
   "kind": "fix",
