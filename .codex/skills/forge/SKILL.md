@@ -328,8 +328,8 @@ A developer's own `tools`, `workers` and `[models.<kind>]` choices go in the git
 `runner` selects the GitHub Actions runner label in the generated `forge.yml`;
 it defaults to `"ubuntu-24.04"` because the starters' Playwright 1.56 browser installer
 does not support Ubuntu 26.04. Sync preserves explicit runner settings.
-Optional `test_runner` selects a different label for pull-request test jobs only, with one
-group or several groups. All other jobs, including the nightly full test run, use `runner`.
+Optional `test_runner` selects a different label for pull-request and nightly full-suite test jobs,
+with one group or several groups. All other jobs use `runner`.
 Without `test_runner`, all jobs use `runner`. Set the label in `forge.toml`, then run `forge sync`.
 For self-hosted Linux runners, initialise with
 `forge init --runner self-hosted`, or set `runner = "self-hosted"` (or a custom label) in an
