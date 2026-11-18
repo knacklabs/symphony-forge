@@ -1,7 +1,14 @@
 {
+  "amendments": [
+    {
+      "at": "2026-11-18T04:33:08.949723+00:00",
+      "because": "Owner decision 18 Nov 2026: keep the other-family rule for cold reads",
+      "done_when": "forge init in a repo where both Claude and Codex are signed in writes workers = claude, with code reviews and cold reads on Codex, and a Claude-only repo keeps Claude for everything"
+    }
+  ],
   "base": "a3272814e237b99271e2d7f844779588405e15d3",
   "branch": "fix/new-client-repos-with-both-tools-install",
-  "done_when": "forge init in a repo where both Claude and Codex are signed in writes workers = claude, with code reviews and cold reads on Codex, and a Claude-only repo keeps Claude for everything",
+  "done_when": "forge init in a repo where both Claude and Codex are signed in writes workers = claude, code reviews run on Codex, cold reads run on the other tool from the session, and a Claude-only repo keeps Claude for everything",
   "fix_kind": "backend",
   "kind": "fix",
   "round": 1,
