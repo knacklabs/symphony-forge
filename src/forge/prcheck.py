@@ -63,6 +63,7 @@ jobs:
     runs-on: <runner>
     outputs:
       docs-only: ${{ steps.docs.outputs.docs-only }}
+      docs-tests: ${{ steps.docs.outputs.docs-tests }}
       one-group: ${{ steps.docs.outputs.one-group }}
     steps:
       - uses: actions/checkout@v7
@@ -124,6 +125,7 @@ jobs:
           TEST_GROUP_RESULT: ${{ needs.tests.result }}
           DOCS_CHECK: ${{ needs.docs-check.result }}
           DOCS_ONLY: ${{ needs.docs-check.outputs.docs-only }}
+        shell: bash
         run: test "$DOCS_CHECK" = success && { test "$TEST_GROUP_RESULT" = success || { test "$DOCS_ONLY" = true && test "$TEST_GROUP_RESULT" = skipped; }; }
       - if: needs.docs-check.outputs.docs-only == 'true'
         run: "echo 'docs only: tests skipped'"
@@ -297,15 +299,19 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
     test_install = ("      - run: " + ("uv tool install ." if source else sync.install_line(cfg["version"]))
                     + "\n        if: steps.parent-tests.outputs.reuse != 'true'\n"
                     if ci_tests else "")
-    test_runner = cfg.get("test_runner") or cfg.get("runner", repo.DEFAULTS["runner"])
+    regular_runner = cfg.get("runner", repo.DEFAULTS["runner"])
+    test_runner = cfg.get("test_runner") or regular_runner
+    plain_test = test
+    windows_test = test
     windows = test_runner.startswith("windows-")
-    if windows:
+    if windows or regular_runner.startswith("windows-"):
         # Each attempt gets its own PowerShell process, so exit or throw cannot end the retry.
         script = ("$ErrorActionPreference = 'Stop'\n& {\n" + test +
                   "\n}\nif (Test-Path variable:LASTEXITCODE) { exit $LASTEXITCODE }")
         attempt = ("& (Get-Process -Id $PID).Path -NoProfile -NonInteractive -Command '" +
                    script.replace("'", "''") + "'")
-        test = f"{attempt}\nif ($LASTEXITCODE -ne 0) {{ {attempt} }}\nexit $LASTEXITCODE"
+        windows_test = f"{attempt}\nif ($LASTEXITCODE -ne 0) {{ {attempt} }}\nexit $LASTEXITCODE"
+        test = windows_test if windows else plain_test
     full_node = node.replace("        if: steps.parent-tests.outputs.reuse != 'true'\n", "")
     npm_cache = ("      - uses: actions/cache@v4\n"
                  "        if: steps.parent-tests.outputs.reuse != 'true'\n"
@@ -401,7 +407,8 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
                          (cfg.get("fast_test") or "") + "\n" + cfg["test"])):
         # A fixed shard count must keep every shard, even for a small change.
         template = template.replace("steps.docs.outputs.one-group", "'false'")
-    if groups == 1:
+    # A separate test runner stays free until docs-check selects real test work.
+    if groups == 1 and test_runner == regular_runner:
         start = template.index("  docs-check:\n")
         tests = template.index("  tests:\n", start)
         runner = template.index("    runs-on:", tests)
@@ -415,6 +422,20 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
             "${{ needs.docs-check.outputs.one-group == 'true' && '1' || '<groups>' }}", "'1'")
         single = single.replace("    steps:\n", "    steps:\n<group-warning>", 1)
         template = template[:start] + single + template[gate:]
+    elif test_runner != regular_runner:
+        regular_label, tests_label = ("'" + label.replace("'", "''") + "'" for label in
+                                     (regular_runner, test_runner))
+        template = template.replace("    runs-on: <test-runner>\n",
+            "    runs-on: ${{ needs.docs-check.outputs.docs-tests == 'true' && "
+            + regular_label + " || " + tests_label + " }}\n")
+        if windows != regular_runner.startswith("windows-"):
+            docs_test = windows_test if regular_runner.startswith("windows-") else plain_test
+            template = template.replace("      - run: <test>\n"
+                "        if: steps.parent-tests.outputs.reuse != 'true'\n",
+                "      - run: " + json.dumps(docs_test) + "\n"
+                "        if: steps.parent-tests.outputs.reuse != 'true' && needs.docs-check.outputs.docs-tests == 'true'\n"
+                "      - run: <test>\n"
+                "        if: steps.parent-tests.outputs.reuse != 'true' && needs.docs-check.outputs.docs-tests != 'true'\n")
     workflow = (template.replace("<full-triggers>", full_triggers)
                 .replace("<full-suite-job>", full_suite)
                 .replace("      - uses: astral-sh/setup-uv@v6\n",
@@ -460,7 +481,7 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
                 .replace("<test-runner>", json.dumps(test_runner))
                 .replace("<runner>", json.dumps(cfg.get("runner", repo.DEFAULTS["runner"]))))
     if not ci_tests:
-        start = workflow.index("  docs-check:\n" if groups > 1 else "  tests:\n")
+        start = workflow.index("  docs-check:\n" if "  docs-check:\n" in workflow else "  tests:\n")
         end = workflow.index("  forge-pr-check:\n")
         workflow = workflow[:start] + workflow[end:]
     return {WORKFLOW_PATH: workflow,
