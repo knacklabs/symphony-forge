@@ -222,6 +222,7 @@ def read(args: Any) -> int:
         repo.refuse(REFUSALS["coordinator"], target=target)
     installed = {"claude": not claude_sdk.sdk_problem(), "codex": codex.installed()}
     installed[here] = True  # the coordinating app needs no external driver to read natively
+    other = "claude" if here == "codex" else "codex"
     # One tool always reads its own plans; both keep the earlier reader while it is installed.
     saved = codex.record(top, target, "Grill")
     recorded = ("codex" if record.get("conversation") else "claude" if record.get("session") else
@@ -230,7 +231,7 @@ def read(args: Any) -> int:
         recorded = "codex" if saved.get("conversation") else "claude" if saved.get("claude") else ""
     gone = recorded in NAMES and not installed[recorded]
     reader = (config["tools"] if config["tools"] != "both" else
-              recorded if recorded in NAMES and not gone else "codex" if installed["codex"] else "claude")
+              recorded if recorded in NAMES and not gone else other if installed[other] else here)
     why = (f"forge.toml's tools is now {reader}" if recorded in NAMES and reader != recorded
            and config["tools"] != "both" else
            f"its reader, {NAMES[recorded]}, is no longer installed" if gone else "")
