@@ -4,12 +4,20 @@
   "done_when": "forge init in a repo where both Claude and Codex are signed in writes workers = claude, with code reviews and cold reads on Codex, and a Claude-only repo keeps Claude for everything",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-18T03:34:42.748414+00:00",
       "step": "start"
     }
   ],
-  "why": "New client repos with both tools installed default to workers = split, so plain build work goes to Codex. Owner direction 18 Nov 2026: by default Claude builds everything, and Codex is used only for code reviews and cold reads."
+  "stuck": {
+    "close": null,
+    "head": "a90e74b9a74b694abd338c16208ffab79dac8fc1",
+    "keys": {},
+    "round": null
+  },
+  "why": "New client repos with both tools installed default to workers = split, so plain build work goes to Codex. Owner direction 18 Nov 2026: by default Claude builds everything, and Codex is used only for code reviews and cold reads.",
+  "worker": "claude"
 }
