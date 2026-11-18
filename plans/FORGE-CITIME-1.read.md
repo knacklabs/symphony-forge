@@ -222,35 +222,30 @@ Only a genuine trade-off goes to the human, as a question with options.
     Case: normal use - On a clean developer machine, a refresh that starts the API tests without their Docker stack cannot reach the test API. The planned test exercises placement and command listing, so it can pass while the documented refresh command fails.
     Gain 3, Work 3, Harm 2
     Disposition: cut - fixed in the builders section: the refresh is `node scripts/test.mjs --timings`, the starter's own full run with its Docker stack, so no separate script can miss the stack; the builder seeds the timings with it.
-   Disposition: keep - below the bar (follow-up)
 
 32. Advisory: Unproven: item 5: the test never runs Vitest with the new sequencer.
     Raise: Test — [plan](/plans/FORGE-CITIME-1.md:111); [starter configuration](/src/forge/templates/starter/apps/web/vitest.config.ts:14).
     Case: normal use - The placement helper and `--list` can pass even if the Vitest configuration does not load the sequencer. A grouped run would then use Vitest’s existing file-count split instead of recorded times.
     Gain 3, Work 3, Harm 3
     Disposition: cut - fixed in the builders section: the live run runs `--group 1/2` and `--group 2/2` and checks that the API files split into the whole set with none twice, which needs the sequencer loaded.
-   Disposition: keep - below the bar (follow-up)
 
 33. Advisory: Plan gap: the existing-app guide omits the wiring needed for timed groups.
     Raise: Plan gap — [plan](/plans/FORGE-CITIME-1.md:90); [group warning](/src/forge/quicktest.py:19).
     Case: normal use - An existing app follows the listed copy steps, but they do not include registering the sequencer in its Vitest configuration or adding group placeholders to its Forge commands. Copying the listed files alone does not enable timed groups.
     Gain 3, Work 2, Harm 2
     Disposition: cut - fixed in the builders section: the existing-app guide step now names registering the sequencer, `--shard` on each Vitest run, the `{group}`/`{groups}` placeholders, per-group setup and a refresh command.
-   Disposition: keep - below the bar (follow-up)
 
 34. Advisory: Not done: placement starts over for each affected project.
     Raise: Not done — [plan](/plans/FORGE-CITIME-1.md:84); [starter test script](/src/forge/templates/starter/scripts/test.mjs:65).
     Case: normal use - A change selects two library projects, each with one timed test file. The script starts Vitest separately for each project, so each placement starts with empty group totals and can assign both files to the same group. The groups can remain uneven even with current timings.
     Gain 3, Work 3, Harm 2
     Disposition: keep - each Vitest run balances its own files by time, so each project's split is even; balancing across projects needs one placement shared between separate Vitest runs, which is more code than the gain while the starter has few projects; the group time line shows it if it matters.
-   Disposition: keep - below the bar (follow-up)
 
 35. Advisory: Plan gap: doctor may lack the workflow needed to recognize an old timeout.
     Raise: Plan gap — [plan](/plans/FORGE-CITIME-1.md:74); [timeout check](/src/forge/checks.py:298).
     Case: normal use - In a fresh clone after squash merges, old pull-request commits need not exist locally. The reused rule reads each commit’s workflow with `git show`; when that commit is absent, it cannot identify a cancelled job at its time limit.
     Gain 3, Work 2, Harm 2
     Disposition: keep - when an old commit's workflow cannot be read, the cancelled run is left out as before; this needs a fresh clone, a squash merge and a time-limit cancel together, and the timed-out group still shows in the close line on the machine that ran close.
-   Disposition: keep - below the bar (follow-up)
 
 36. Advisory: Unproven: item 3: password-reset tests still read each other’s log events.
     Raise: Test — [API test](/src/forge/templates/starter/apps/api/test/api.e2e-spec.ts:7); [organisation test](/src/forge/templates/starter/apps/api/test/organisations.e2e-spec.ts:111).
