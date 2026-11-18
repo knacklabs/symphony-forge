@@ -1,0 +1,12 @@
+{
+  "doc": "plans/FORGE-CITIME-1.md",
+  "status": "planning",
+  "steps": [
+    {
+      "at": "2026-11-18T03:18:46.027160+00:00",
+      "step": "start"
+    }
+  ],
+  "title": "Client pull requests finish CI in about 10 minutes, and Forge shows when they do not",
+  "touches": 0
+}
