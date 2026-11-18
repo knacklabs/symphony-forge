@@ -91,7 +91,7 @@
     "status": "blocked"
   },
   "round": 2,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-18T05:31:26.203001+00:00",
@@ -108,8 +108,12 @@
   ],
   "stop": {
     "at": "2026-11-18T07:17:49.372542+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "src/forge/checks.py",
-    "wait_id": "ae2877ae-d1d0-4ff8-a729-46f0d08e2889"
+    "reason": "Owner chose one more small round: clear the cached checks after a rerun",
+    "wait_id": "ae2877ae-d1d0-4ff8-a729-46f0d08e2889",
+    "worker_round": 2
   },
   "stuck": {
     "close": "36c36ee1-0101-40d7-b73e-38dcfdab9963",
