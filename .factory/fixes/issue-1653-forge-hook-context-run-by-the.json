@@ -134,7 +134,7 @@
     "status": "blocked"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-18T01:44:42.035325+00:00",
@@ -147,8 +147,12 @@
   ],
   "stop": {
     "at": "2026-11-18T02:14:54.041367+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "src/forge/nextstep.py",
-    "wait_id": "84784a54-1bc3-4eda-a4fb-60797bf77673"
+    "reason": "Owner chose one more round: fix all five hook findings",
+    "wait_id": "84784a54-1bc3-4eda-a4fb-60797bf77673",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
