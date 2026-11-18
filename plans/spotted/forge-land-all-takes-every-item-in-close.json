@@ -8,8 +8,8 @@
       "text": "Allow a partially completed named batch to resume",
       "from": "blocking",
       "item": "forge-land-all-takes-every-item-in-close",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/land.py\tKeep named batches working when the main checkout has an older pin\tforge-land-all-takes-every-item-in-close",
