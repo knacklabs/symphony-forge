@@ -231,7 +231,7 @@ def read(args: Any) -> int:
         recorded = "codex" if saved.get("conversation") else "claude" if saved.get("claude") else ""
     gone = recorded in NAMES and not installed[recorded]
     reader = (config["tools"] if config["tools"] != "both" else
-              recorded if recorded in NAMES and not gone else other if installed[other] else here)
+              recorded if recorded in NAMES and not gone else "codex" if installed["codex"] else "claude")
     why = (f"forge.toml's tools is now {reader}" if recorded in NAMES and reader != recorded
            and config["tools"] != "both" else
            f"its reader, {NAMES[recorded]}, is no longer installed" if gone else "")

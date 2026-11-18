@@ -29,11 +29,11 @@ def _auth(repo, claude, codex):
 
 @pytest.mark.parametrize("claude,codex,tools,workers,message", [
     (True, False, "claude", "claude", "Only Claude is signed in. Forge uses Claude for all work."),
-    (True, True, "both", "split", ""),
-    (False, False, "both", "split", "Sign in to Claude or Codex before you start work."),
-    (True, None, "both", "split", ""),
-    (None, False, "both", "split", ""),
-    (False, True, "both", "split", ""),
+    (True, True, "both", "claude", ""),
+    (False, False, "both", "claude", "Sign in to Claude or Codex before you start work."),
+    (True, None, "both", "claude", ""),
+    (None, False, "both", "claude", ""),
+    (False, True, "codex", "codex", "Only Codex is signed in. Forge uses Codex for all work."),
 ])
 def test_1_init_uses_signed_in_tools(repo, gh, tmp_path, claude, codex, tools, workers, message):
     _auth(repo, claude, codex)

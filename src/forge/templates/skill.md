@@ -442,7 +442,8 @@ Before `forge init` writes any files in a new or existing repo, it checks Git's 
 
 When `forge init` writes settings, it checks `claude auth status` and `codex login status`.
 If only Claude is signed in, it sets `tools = "claude"` and `workers = "claude"` and says so.
-Otherwise it keeps split workers. An unavailable check keeps that default unless the binary is missing.
+If only Codex is signed in, it sets `tools = "codex"` and `workers = "codex"`.
+Otherwise it sets `workers = "claude"`: Claude builds, and code reviews and cold reads use Codex when it is installed. An unavailable check keeps that default unless the binary is missing.
 If neither tool is signed in, it asks you to sign in. Existing repos keep their settings.
 `forge doctor` says when the repo needs Codex but Codex is not signed in, and gives `codex login`.
 
