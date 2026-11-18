@@ -11,14 +11,129 @@
   "done_when": "A docs-only pull request runs no job on test_runner; its result job runs on runner; the required tests check keeps its name and pass rule; new repos get it at init and existing repos on upgrade and forge sync",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [
+    {
+      "area": "ships() in src/forge/prcheck.py",
+      "file": "src/forge/prcheck.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 405,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Keep the required result job executable on Windows",
+      "work": 1
+    },
+    {
+      "area": "ships() in src/forge/prcheck.py",
+      "file": "src/forge/prcheck.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 405,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Update the existing one-group runner test",
+      "work": 1
+    },
+    {
+      "area": "ships() in src/forge/prcheck.py",
+      "file": "src/forge/prcheck.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 405,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: A docs-only pull request runs no job on test_runner; its result job runs on runner; the required tests check keeps its name and as",
+      "work": 2
+    },
+    {
+      "area": "test_1_docs_only_pr_keeps_the_test_runner_free() in tests/test_docs_only_runner_allocation.py",
+      "file": "tests/test_docs_only_runner_allocation.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 45,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_docs_only_pr_keeps_the_test_runner_free",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "9e57da6536cfec724e8ca2158d8b67f993ecbb6fb32867795a8c4d45892f8a59",
+    "changed": "4154e5bda74bd4eac0a1bd182a0d566ab5fb158db4d9e34f7546318b077db98f",
+    "commit": "fb5dcc7a5db2c3ccad681d3ddba78ba7b0bf7e90",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 1, Harm 3\nRaise: Functional\nCase: normal use - a CI repo uses `runner = \"windows-latest\"`, a separate Linux `test_runner`, and one group.\nThis branch selects the grouped workflow for that configuration. Its result job runs on `runner`, but the command at `src/forge/prcheck.py:127` is Bash syntax and does not specify a shell. [GitHub Actions defaults to PowerShell on Windows](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax), so the required `tests` check fails even for a docs-only PR or a passing test group. The previous one-group result ran on the Linux test runner.",
+        "file": "src/forge/prcheck.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 405,
+        "priority": "P1",
+        "title": "Keep the required result job executable on Windows",
+        "work": 1
+      },
+      {
+        "body": "Gain 4, Work 1, Harm 3\nRaise: Functional\nCase: normal use - Forge runs its nightly or release full test suite.\n`tests/test_pull_request_test_machines.py:17-18` already tests one group with distinct runner labels, but lines 55-58 expect no `docs-check` or `tests-passed` jobs unless there are multiple groups. This change generates both jobs for that case, so that existing test will fail and keep the full suite red.",
+        "file": "src/forge/prcheck.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 405,
+        "priority": "P1",
+        "title": "Update the existing one-group runner test",
+        "work": 1
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Not done\nCase: normal use - a repo with a `.forge/always-tests.txt` list opens a documentation-only PR.\nThe shipped classifier at `src/forge/templates/review-tests.py:173-177` clears `docs_only` when that list is populated. The grouped workflow then starts its `tests` job on `test_runner` at `src/forge/prcheck.py:83-90`, so the fast runner is still occupied. Forge itself has this list, and `src/forge/templates/brief.md:408-411` says its required tests run on documentation-only changes; those tests still need to run while honoring the requested runner allocation.",
+        "file": "src/forge/prcheck.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 405,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: A docs-only pull request runs no job on test_runner; its result job runs on runner; the required tests check keeps its name and as",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - a docs-only PR is scheduled or an existing repo runs sync after upgrading.\nThe scheduling assertion only looks for the docs-only comparison in the job text. Changing the condition's `&&` to `||` would schedule the fast job for every PR while this test still passes. The sync loop at lines 35-39 also starts with the already-correct workflow written by init, so it would pass if sync stopped replacing existing workflows. The named proof therefore does not establish either scheduling or the existing-repo sync behavior.",
+        "file": "tests/test_docs_only_runner_allocation.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 45,
+        "priority": "P1",
+        "title": "Gate: test_1_docs_only_pr_keeps_the_test_runner_free",
+        "work": 2
+      }
+    ],
+    "id": "b58ac470-fa6d-4d8b-b970-0306e63f15f8",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-18T14:04:11.292480+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-18T14:29:34.265581+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-11-18T14:29:34.276455+00:00",
+    "file": "src/forge/prcheck.py",
+    "wait_id": "256435ab-89eb-4d90-97de-0e59226b2ad0"
+  },
   "stuck": {
     "close": null,
     "head": "84ac2ada00ba27f3d4841b130760aea63abe6c2a",
