@@ -1,6 +1,13 @@
 {
   "base": "67376f6c033979de5e01536db35aaf293d3e8899",
   "branch": "fix/close-catches-workflow-drift",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1ef43-7d5d-7b72-8751-603e54081607",
+    "head": null,
+    "start": "e03e9f6c859450254fc4f024a2662c3f904a76ea"
+  },
   "done_when": "close runs the release-checkout sync test (or forge sync --check) when a change touches the workflow generator or the templates and fails with one line naming the file to regenerate; and when the pinned release is newer than the newest published tag in Forge's own repo, close runs Forge from the source checkout instead of failing; new and existing repos get it on upgrade",
   "fix_kind": "mechanical",
   "kind": "fix",
