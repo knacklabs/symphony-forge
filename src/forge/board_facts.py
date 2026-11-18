@@ -424,6 +424,20 @@ def _full_runs(top: Path, workflow: str, branch: str, event: str) -> list[Item] 
     return _cached(top, f"full-runs-{name}-cache", fetch, seconds=600)
 
 
+def _attempts(top: Path, run: Item):
+    """Current run, then its earlier complete attempts, newest first."""
+    yield run
+    for attempt in range(run["run_attempt"] - 1 if type(run.get("run_attempt")) is int else 0, 0, -1):
+        got = repo.command_fact(("full-suite", run.get("id"), attempt), top, lambda: repo.run(
+            "gh", "api", f"repos/{{owner}}/{{repo}}/actions/runs/{run.get('id')}/attempts/{attempt}", cwd=top))
+        try:
+            prior = json.loads(got.stdout) if not got.returncode else {}
+            if prior.get("conclusion"):
+                yield {**run, **prior, "run_attempt": attempt, "earlier": True}
+        except (ValueError, AttributeError):
+            continue
+
+
 def full_run_health(top: Path) -> Item | None:
     cfg = _config(top)
     workflow = full_workflow(cfg)
@@ -432,14 +446,16 @@ def full_run_health(top: Path) -> Item | None:
         lists = [_full_runs(top, workflow, branch, event) for event in ("schedule", "workflow_dispatch")]
         runs = None if any(rows is None for rows in lists) else [run for rows in lists for run in rows or []
                 if run.get("event") in ("schedule", "workflow_dispatch") and run.get("head_branch") == branch]
-    elif cfg.get("test"):
+    else:
+        runs = []
+    if cfg.get("full_suite_workflow") or (not workflow and cfg.get("test")):
         from forge import fullrun
 
         rows = fullrun.history(top)
-        runs = None if rows is None else [{"conclusion": {"SUCCESS": "success", "FAILURE": "failure"}.get(row.get("state")),
-                "created_at": row.get("createdAt"), "updated_at": row.get("createdAt")}
-                for row in rows]
-    else:
+        recorded = None if rows is None else [{"conclusion": {"SUCCESS": "success", "FAILURE": "failure", "ERROR": "failure"}.get(row.get("state")),
+                    "created_at": row.get("createdAt"), "updated_at": row.get("createdAt")}
+                    for row in rows]
+    elif not workflow:
         return None
     if runs is None:
         return {"line": "The full test run history is not available. Check GitHub before a release.", "needs_you": False}
@@ -447,7 +463,12 @@ def full_run_health(top: Path) -> Item | None:
     def age(run: Item, field: str) -> float | None:
         at = time_records.when(run.get(field))
         return max(0, (now - at).total_seconds()) if at else None
-    complete = sorted((run for run in runs if run.get("conclusion")),
+    complete = [attempt for run in runs for attempt in _attempts(top, run) if attempt.get("conclusion")]
+    if cfg.get("full_suite_workflow") or not workflow:
+        if recorded is None:
+            return {"line": "The full test run history is not available. Check GitHub before a release.", "needs_you": False}
+        complete = [run for run in complete if run.get("conclusion") == "cancelled"] + recorded
+    complete = sorted((run for run in complete if run.get("conclusion")),
                       key=lambda run: run.get("updated_at") or run.get("created_at", ""), reverse=True)
     last = complete[0] if complete else None
     line = f"No complete full test run on {branch}."
@@ -461,16 +482,23 @@ def full_run_health(top: Path) -> Item | None:
             ago = " less than 1 hour ago" if hours == 0 else f" {hours} hour{'s' if hours != 1 else ''} ago"
         line = f"Last complete full test run on {branch} {result}{ago}."
     latest = max(runs, key=lambda run: run.get("created_at", ""), default=None)
-    if latest and not latest.get("conclusion"):
-        seconds = age(latest, "created_at")
+    queued = ("queued", "waiting", "requested", "pending")
+    pending = min((run for run in runs if not run.get("conclusion")),
+                  key=lambda run: (run.get("status") not in queued, run.get("created_at", "")), default=None)
+    if pending:
+        seconds = age(pending, "created_at")
         hours = int(seconds // 3600) if seconds is not None else None
-        state = "queued" if latest.get("status") in ("queued", "waiting", "requested", "pending") else "in progress"
+        state = "queued" if pending.get("status") in queued else "in progress"
         waited = f" for {hours} hour{'s' if hours != 1 else ''}" if hours is not None else ""
-        line += f" Latest full test run is {state}{waited}."
+        which = "Latest" if pending is latest else "A"
+        line += f" {which} full test run is {state}{waited}."
     fresh = any(run.get("conclusion") == "success" and (seconds := age(run, "updated_at")) is not None
                 and seconds <= 86400 for run in complete)
+    green = next((run for run in complete if run.get("conclusion") == "success"), None)
+    green_at = time_records.when(green.get("updated_at")) if green else None
+    since = (green_at + timedelta(hours=24)).isoformat() if green_at else (last or {}).get("updated_at")
     return {"line": line, "needs_you": not fresh, "url": (latest or {}).get("html_url"),
-            "since": (last or {}).get("updated_at")}
+            "since": since}
 
 
 def failed_schedules(top: Path) -> list[Item]:
@@ -512,17 +540,8 @@ def failed_schedules(top: Path) -> list[Item]:
 
         def finished(run: Item) -> Item | None:
             """The run, or for a rerun in progress or cancelled the latest attempt that finished."""
-            if run.get("conclusion") in ("success", "failure"):
-                return run
-            for attempt in range(run["run_attempt"] - 1 if type(run.get("run_attempt")) is int else 0, 0, -1):
-                got = repo.run("gh", "api", f"repos/{{owner}}/{{repo}}/actions/runs/{run.get('id')}/attempts/{attempt}", cwd=top)
-                try:
-                    conclusion = json.loads(got.stdout).get("conclusion") if got.returncode == 0 else None
-                except (ValueError, AttributeError):
-                    conclusion = None
-                if conclusion in ("success", "failure"):
-                    return {**run, "conclusion": conclusion, "run_attempt": attempt, "earlier": True}
-            return None
+            return next((attempt for attempt in _attempts(top, run)
+                         if attempt.get("conclusion") in ("success", "failure")), None)
         latest: dict[Any, Item] = {}
         for run in runs:  # newest first
             if run.get("workflow_id") in latest:  # a newer run decided it: read no attempts for this one
@@ -737,13 +756,14 @@ def team(top: Path, history: Item, items: dict[str, Item], maps: list[Item], bes
     later, clause = board_trends.facts(top, history, counts, list(items.values()), github, names)
     now = time_records.when(repo.now()) or datetime.now(timezone.utc)
     rows = [row for parent in items.values() for row in (parent, *parent["children"])]
-    waiting = needs_you(top, rows, readiness, person_waits, now, failed_runs(top, items, best, now))
+    runs = failed_runs(top, items, best, now)
     health = full_run_health(top)
-    if health and health["needs_you"] and not any(row["kind"] == "run" for row in waiting):
-        waiting.append({**_entry({"id": "run:full-suite-age", "kind": "run",
+    if health and health["needs_you"]:
+        runs.append({**_entry({"id": "run:full-suite-age", "kind": "run",
                                  "title": "No green full test run in the last 24 hours"},
                                 "full run due", health["line"], health["since"], now),
                         "url": health["url"], "fixing": False})
+    waiting = needs_you(top, rows, readiness, person_waits, now, runs)
     slow = blocked(top, rows, best, maps, now)
     work = [counts[kind][state] for state in ("in progress", "ready to merge") for kind in ("parts", "fixes")]
     building = counts["stories"]["building"]

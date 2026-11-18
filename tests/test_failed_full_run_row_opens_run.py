@@ -42,7 +42,8 @@ with sync_playwright() as p:
         row = needs.get_by_role("button", name=f"Fix {words} {title}")
         expect(row).to_be_visible()
         if mode == "fixing":
-            expect(needs).not_to_contain_text("Full test run")
+            # Only this failed row changes its label. The overdue-green row is independent.
+            expect(row).not_to_contain_text("Full test run")
         else:
             # The keyboard reaches the row, and a click opens the run in a new page, not a drawer.
             page.evaluate("async () => { const Board = (await import(new URL('app.js' + location.search, location.href))).Board;"
@@ -84,7 +85,7 @@ def test_1_a_failed_full_test_run_shows_under_needs_you_and_opens_the_run(client
     gh.respond("run", "view", "41", stdout="full suite\tRun tests\t2030-01-01T03:40:00Z FAILED tests/test_a.py::test_one - boom")
     with live(client) as url:
         team = snapshot(url)["team"]
-        runs = [entry for entry in team["needs_you"] if entry["kind"] == "run"]
+        runs = [entry for entry in team["needs_you"] if entry["reason"] == "failed run"]
         assert len(runs) == 1
         assert {key: runs[0][key] for key in ("id", "title", "reason", "kind", "detail", "url", "fixing")} == {
             "id": "run:forge.yml", "title": TITLE, "reason": "failed run", "kind": "run", "detail": "full suite",
@@ -98,6 +99,6 @@ def test_1_a_failed_full_test_run_shows_under_needs_you_and_opens_the_run(client
         done = "full suite of the scheduled forge (forge.yml) workflow pass again on the next scheduled run on main"
         started = client.forge(*shlex.split(f'fix start "{WHY}" --done "{done}" --kind mechanical'))
         assert started.returncode == 0, started.stdout + started.stderr
-        runs = [entry for entry in snapshot(url)["team"]["needs_you"] if entry["kind"] == "run"]
+        runs = [entry for entry in snapshot(url)["team"]["needs_you"] if entry["reason"] == "failed run"]
         assert [(entry["title"], entry["fixing"]) for entry in runs] == [(TITLE, True)]
         look(url, "fixing")

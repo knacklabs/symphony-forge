@@ -72,7 +72,8 @@ def read(repo):
     board = repo.forge("board", "--json")
     assert board.returncode == 0, board.stdout + board.stderr
     team = json.loads(board.stdout)["team"]
-    return said.stdout.splitlines(), [entry for entry in team["needs_you"] if entry["kind"] == "run"], team
+    # This rule owns failed workflow rows. Release-age advice has a separate row.
+    return said.stdout.splitlines(), [entry for entry in team["needs_you"] if entry["reason"] == "failed run"], team
 
 
 def configure(repo, original, setting):

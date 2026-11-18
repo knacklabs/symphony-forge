@@ -134,28 +134,37 @@ def history(top: Path) -> list[dict] | None:
     """Full-suite statuses on the default branch, shared by the local-run notices and board."""
     if not shutil.which("gh"):
         return None
-    query = """query($owner:String!,$repo:String!,$branch:String!) {
+    rows, after = [], ""
+    while True:
+        paging = ",after:$after" if after else ""
+        query = """query($owner:String!,$repo:String!,$branch:String!AFTER) {
       repository(owner:$owner,name:$repo) {
         ref(qualifiedName:$branch) { target { ... on Commit {
-          history(first:30) { nodes { status { contexts { context state createdAt } } } }
+          history(first:30PAGING) { nodes { status { contexts { context state createdAt } } }
+            pageInfo { hasNextPage endCursor } }
         } } }
       }
-    }"""
-    done = repo.command_fact(("full-suite", "history"), top, lambda: repo.run(
-        "gh", "api", "graphql", "-F", "owner={owner}", "-F", "repo={repo}",
-        "-f", f"branch=refs/heads/{repo.default_branch(top)}",
-        "-f", "query=" + " ".join(query.split()), cwd=top))
-    if done.returncode:
-        return None
-    try:
-        data = json.loads(done.stdout)
-        if data.get("errors"):
+    }""".replace("PAGING", paging).replace("AFTER", ",$after:String" if after else "")
+        done = repo.command_fact(("full-suite", "history", after), top, lambda: repo.run(
+            "gh", "api", "graphql", *(["-f", f"after={after}"] if after else []),
+            "-F", "owner={owner}", "-F", "repo={repo}",
+            "-f", f"branch=refs/heads/{repo.default_branch(top)}",
+            "-f", "query=" + " ".join(query.split()), cwd=top))
+        if done.returncode:
             return None
-        nodes = data["data"]["repository"]["ref"]["target"]["history"]["nodes"]
-        return [row for node in nodes for row in (node.get("status") or {}).get("contexts", [])
-                if row.get("context") == STATUS]
-    except (ValueError, KeyError, TypeError, AttributeError):
-        return None
+        try:
+            data = json.loads(done.stdout)
+            if data.get("errors"):
+                return None
+            page = data["data"]["repository"]["ref"]["target"]["history"]
+            rows += [row for node in page["nodes"] for row in (node.get("status") or {}).get("contexts", [])
+                     if row.get("context") == STATUS]
+            info = page.get("pageInfo", {})
+            if any(row.get("state") == "SUCCESS" for row in rows) or not info.get("hasNextPage"):
+                return rows
+            after = info["endCursor"]
+        except (ValueError, KeyError, TypeError, AttributeError):
+            return None
 
 
 def notices(top: Path) -> list[str]:
