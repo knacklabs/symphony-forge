@@ -110,5 +110,5 @@ def test_2_forge_doctor_passes_on_this_repos_forge_toml(repo, gh, tmp_path, monk
 
     assert done.returncode == 0, done.stdout + done.stderr
     assert "Everything checks out for Forge " in done.stdout, done.stdout
-    # No worker runs on Codex now, so doctor has no Codex hook approval to ask for.
-    assert "approve Forge's hooks" not in done.stdout
+    # Claude builds, but reviews run on Codex, so doctor still names the Codex hook approval.
+    assert "approve Forge's hooks" in done.stdout

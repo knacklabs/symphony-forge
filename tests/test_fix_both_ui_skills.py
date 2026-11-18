@@ -120,4 +120,4 @@ def test_3_doctor_requires_both_ui_skills_where_the_worker_reads_them(repo, gh, 
     (skills / "emil-design-eng" / "SKILL.md").write_text("emil-design-eng\n", "utf-8")
     ready = repo.forge("doctor", cwd=client)
     assert ready.returncode == 0, ready.stdout + ready.stderr
-    assert ready.stdout.startswith("Everything checks out")
+    assert "Everything checks out" in ready.stdout

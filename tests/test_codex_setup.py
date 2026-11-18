@@ -220,7 +220,8 @@ def test_11_codex_doctor(repo, gh, tmp_path, monkeypatch):
     assert not env.exists()
     assert len((repo.bin / "uv-calls.jsonl").read_text(encoding="utf-8").splitlines()) == 2
 
-    # Permit both tools again: a Codex cold read needs its SDK; trust stays advice.
+    # Permit both tools again: a Codex cold read needs its SDK, and reviews need trust.
+    trust("trusted")
     config.write_text(config.read_text("utf-8").replace('tools = "claude"', 'tools = "both"'), "utf-8")
     repo.git("add", "forge.toml", cwd=client)
     repo.git("commit", "-q", "-m", "Permit both tools", cwd=client)

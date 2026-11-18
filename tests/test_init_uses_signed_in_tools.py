@@ -70,3 +70,12 @@ def test_2_doctor_reports_codex_sign_in_without_changing_existing_settings(
     done = repo.forge("doctor", cwd=client)
     assert ("Codex is not signed in.\n  Fix: codex login" in done.stdout) is warns, done.stdout
     assert settings.read_text(encoding="utf-8") == text
+
+
+def test_3_doctor_reports_claude_sign_out_in_a_two_tool_repo(repo, gh, tmp_path):
+    _auth(repo, False, True)
+    version = repo.forge("--version").stdout.split()[-1]
+    client = _new_repo(repo, gh, tmp_path, f'version = "{version}"\nworkers = "claude"\n')
+    done = repo.forge("init", "--actions", "yes", cwd=client)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "Claude is not signed in.\n  Fix: run claude and sign in" in repo.forge("doctor", cwd=client).stdout
