@@ -140,7 +140,7 @@
     "status": "blocked"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-18T16:43:44.516570+00:00",
@@ -153,8 +153,12 @@
   ],
   "stop": {
     "at": "2026-11-18T17:05:24.036924+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "src/forge/board_app/now.js",
-    "wait_id": "c197fefd-d784-43b7-b163-de17866febbd"
+    "reason": "Owner decided on 18 Nov 2026 that fixes get two review rounds; this is the second",
+    "wait_id": "c197fefd-d784-43b7-b163-de17866febbd",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
