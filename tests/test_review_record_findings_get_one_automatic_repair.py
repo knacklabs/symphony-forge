@@ -19,6 +19,11 @@ STORY = "FIX-FULL-BRIEF-AND-PROOF"
                               "hyphenated-approach-record", "missing-proof-and-approach",
                               "other-open-finding-still-stops"])
 def test_3_record_only_review_findings_get_one_automatic_repair(env, record, mixed):
+    # Exercise the exception at the configured limit; ordinary fixes now default
+    # to two blocked reviews, covered by test_fix_review_round_limit.py.
+    config = (env.repo.path / "forge.toml").read_text("utf-8")
+    env.commit(env.repo.path, "forge.toml", "task_review_rounds = 1\n" + config)
+    env.repo.git("push", "-q", "origin", "main")
     item, where = env.start("full-brief-and-proof", "fix/full-brief-and-proof",
                             ".factory/fixes/full-brief-and-proof.json",
                             {"kind": "fix", "why": "Fix a small change",
