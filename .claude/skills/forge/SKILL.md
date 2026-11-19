@@ -1617,10 +1617,17 @@ also stay in place; only recognized cache directories may be discarded.
 5. Close's last line says who merges: the human, or `forge merge <fix>` when the repo allows it.
 
 Close runs the time-story backfill as part of the upgrade, with nothing extra to type. It
-rebuilds open items and items merged in the last six weeks from git and GitHub, marks them
+rebuilds open items and at most the 20 most recently merged items that need it within
+the last six weeks from git and GitHub, marks them
 "rebuilt from history", and leaves spans without evidence unknown. If GitHub cannot be reached,
 the next close on this machine retries the backfill. The agent then opens the board and reports
 what is still missing.
+
+The same bound applies to start-time repairs and missing histories on a fresh checkout.
+Unaffected items use no places in the batch. Merged items keep shared check evidence
+without old check-run requests. Retries keep the same batch and never take another 20.
+Older items keep their text or show unmeasured time. New and existing repos get this
+behavior on upgrade.
 
 A repo pinned to a release without `forge upgrade` runs it once through uv:
 `uvx --from git+https://github.com/knacklabs/symphony-forge@<release> forge upgrade <release>`.
