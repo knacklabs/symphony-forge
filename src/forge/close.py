@@ -721,12 +721,19 @@ def _merge_default(top: Path, item: str, branch: str, default: str,
                         "--no-update-refs", "--onto", target, baseline, cwd=top)
         if done.returncode and not merge_timings.resolve(
                 top, replay=True, ours=":3", incoming=":2"):
-            files = repo.git("diff", "--name-only", "--diff-filter=U", cwd=top).splitlines() or files
+            conflicts = repo.git("diff", "--name-only", "--diff-filter=U", cwd=top).splitlines()
             repo.run("git", "rebase", "--abort", cwd=top)
-            if not files:
+            if not conflicts:
                 done.check_returncode()
-            repo.refuse(REFUSALS["replay_conflict"], default=default, files=", ".join(files),
-                        item=item)
+            # The final merge is clean even though an intermediate commit clashes.
+            evidence = (review.commit_paragraph(top, baseline, "Before coding:", original) or
+                        review.commit_paragraph(top, baseline, "Functional check:", original))
+            proof = review.commit_paragraph(top, baseline, "Proof list:", original)
+            if proof and proof not in evidence:
+                evidence += "\n\n" + proof
+            replayed = repo.git("commit-tree", tree, "-p", target,
+                                "-m", "Replay the part's final changes", "-m", evidence, cwd=top)
+            repo.git("reset", "--keep", replayed, cwd=top)
         if repo.git("rev-parse", "HEAD^{tree}", cwd=top) != tree:
             evidence = (review.commit_paragraph(top, baseline, "Functional check:", original) or
                         review.commit_paragraph(top, baseline, "Proof list:", original))
