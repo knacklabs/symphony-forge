@@ -43,6 +43,17 @@
       "item": "task-start-wrong-base",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/fasttest.py\tThe client starts before its test-place start record is saved; check whether a nested picker can then wait behind its own parent.",
+      "kind": "edge",
+      "path": "src/forge/fasttest.py",
+      "line": 693,
+      "text": "The client starts before its test-place start record is saved; check whether a nested picker can then wait behind its own parent.",
+      "from": "worker",
+      "item": "task-start-wrong-base",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }

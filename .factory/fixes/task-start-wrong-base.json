@@ -67,49 +67,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "6a4dce61da713e0ce918b10cfbc7f8c7073c27c38592ab316bff2a807018f327",
-    "changed": "52569628663e8db34033ea9b1458ca6f0b898123fa9a59bd9fedd98d921d6472",
-    "commit": "bd3dbbf53dc96aee1b5cd7fe0bbd75c1d41792d1",
-    "dismissals": [
-      {
-        "accepted": true,
-        "because": "Human accepted the remaining finding: Owner accepted on 19 Nov 2026: close misses foreign commits without a task start record, and refuses after reverted foreign changes; filed as an issue",
-        "finding": 1
-      },
-      {
-        "accepted": true,
-        "because": "Human accepted the remaining finding: Owner accepted on 19 Nov 2026: close misses foreign commits without a task start record, and refuses after reverted foreign changes; filed as an issue",
-        "finding": 2
-      }
-    ],
-    "findings": [
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Not done\nCase: normal use - a developer cherry-picks another open task's new source file and edits one of its lines.\nFor a commit that adds the file in one hunk, line 720 requires every added line to remain in the net diff. Editing one line makes the check fail even though the rest of the imported code remains, so close can proceed without naming the other task. Separately, the patch IDs at line 702 include surrounding context, so a cherry-pick onto a version with different nearby lines can also go unmatched.",
-        "file": "src/forge/task.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 720,
-        "priority": "P1",
-        "required_done_when": true,
-        "title": "Not done: close misses imported commits without a task start record",
-        "work": 2
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 2\nRaise: Functional\nCase: normal use - a developer reverts a foreign merge, then independently adds the same assertion in a different test in a shared test file.\nThe foreign edit is gone, but this code records additions by path and line text without their position. If both tests add the same assertion, the comparison at line 720 treats the independent edit as the reverted foreign change. Close then refuses and asks for changes to be removed even though the foreign edit is no longer in the diff.",
-        "file": "src/forge/task.py",
-        "gain": 4,
-        "harm": 2,
-        "line": 682,
-        "priority": "P1",
-        "title": "Allow close after foreign changes have been reverted",
-        "work": 2
-      }
-    ],
-    "id": "c0c9add7-92c1-44ed-a5ce-3b2ced0c557c",
+    "branch_diff": "0843a323387e98688e0201e85324249c62f7ab3b51ec5a69205fed5d78d8058b",
+    "changed": "42508f0aa743c895e6560c6789ac014bd0ff196e65ad56e824592f764eca67c4",
+    "commit": "8ebc016ccfcddb6c5dcf8c8dfb2687f5d8291663",
+    "dismissals": [],
+    "findings": [],
+    "id": "b2e976d2-18ca-46dd-822d-b8f2679080a7",
     "status": "clean"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-19T03:08:24.838641+00:00",
@@ -121,6 +88,10 @@
     },
     {
       "at": "2026-11-19T04:10:48.192558+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-19T05:20:53.564508+00:00",
       "step": "review"
     }
   ],
