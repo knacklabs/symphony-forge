@@ -119,79 +119,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "88604ad8938ee7013b3240fb987f71eafc1eeba377da37db9a02ad9bbbbfb1d3",
-    "changed": "09ed512405dcda599eff670c7fccdfb662630919e5b8712ee52068d1cf9aa5c6",
-    "commit": "727c71e15e952419630576dd7f6eee815f129517",
-    "dismissals": [
-      {
-        "accepted": true,
-        "because": "Human accepted the remaining finding: Owner accepted on 19 Nov 2026: wait display gap and three missing test cases noted",
-        "finding": 1
-      },
-      {
-        "accepted": true,
-        "because": "Human accepted the remaining finding: Owner accepted on 19 Nov 2026: wait display gap and three missing test cases noted",
-        "finding": 2
-      },
-      {
-        "accepted": true,
-        "because": "Human accepted the remaining finding: Owner accepted on 19 Nov 2026: wait display gap and three missing test cases noted",
-        "finding": 3
-      },
-      {
-        "accepted": true,
-        "because": "Human accepted the remaining finding: Owner accepted on 19 Nov 2026: wait display gap and three missing test cases noted",
-        "finding": 4
-      }
-    ],
-    "findings": [
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Not done\nCase: normal use - An item reaches the 20 KB history limit after a worker question has been answered.\nThe milestone list reads only the events left after compaction. Compaction replaces older events with totals, intervals and short round lines, while the published state retains only the start step. The question, answer, and earlier hold, decision and resume timestamps consequently disappear from How it went.",
-        "file": "src/forge/time_records.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 558,
-        "priority": "P1",
-        "required_done_when": true,
-        "title": "Not done: Show the recorded boundaries of all waits",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - A fix is reviewed before it is promoted and another machine publishes its task.\nThe revised test performs a real review, but its promoted-task assertions check only the start and building time. It would still pass if promotion retained worker activity while dropping the fix's review result or review duration, leaving that part of the previously reported activity loss untested.",
-        "file": "tests/test_first_start_survives_history_changes.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 203,
-        "priority": "P1",
-        "title": "Gate: Prove promotion and existing published starts",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - A human merges a ready pull request several days after close.\nThe revised proof checks the published merge timestamp and rounded elapsed total, but never checks the final waiting breakdown in How it went. Its waiting assertions read the board, which independently derives the duration from GitHub's merge time. The test therefore still passes if the published waiting total remains at its pre-merge value.",
-        "file": "tests/test_recorded_wait_and_resume_times.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 191,
-        "priority": "P1",
-        "title": "Gate: Prove wait timestamps through the final merge",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - A worker repairs a blocked review and calls close again in the same turn.\nThe revised test runs the worker and both closes, but it sums work across all rounds and checks fixing time only at item level. It still passes if all 60 seconds of repair are assigned to the first review attempt and none to the later one, so the previously requested assignment proof remains missing.",
-        "file": "tests/test_recorded_wait_and_resume_times.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 137,
-        "priority": "P1",
-        "title": "Gate: Prove same-turn repairs through a real worker turn",
-        "work": 2
-      }
-    ],
-    "id": "ba221749-9b8b-4ff4-8d87-ab361b1739eb",
+    "branch_diff": "fc17d80e230a9ee8b676e5900e27bc9ccce5b8d7530a1802b3b99a9fe24b55e0",
+    "changed": "651a1778a623eb00712f85323ec47a7b8c6269cca2ca39f7c3abec8229acbab2",
+    "commit": "d3e77db6b6d62ec0840a1a12656d28632b1a2ff8",
+    "dismissals": [],
+    "findings": [],
+    "id": "066971a0-3190-4903-bcc9-97eeef2a6253",
     "status": "clean"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-19T01:59:29.031055+00:00",
@@ -203,6 +140,10 @@
     },
     {
       "at": "2026-11-19T04:02:35.600445+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-19T05:21:01.912164+00:00",
       "step": "review"
     }
   ],
