@@ -1,0 +1,15 @@
+{
+  "base": "c142046d17277a45bf624a405bb544b02ac9db82",
+  "branch": "fix/ci-poll-60s",
+  "done_when": "close, merge and land poll CI checks every 60 seconds by default, and FORGE_CHECKS_POLL sets another interval in seconds; new and existing repos get it on upgrade",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-19T04:46:51.106603+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "close polls CI checks every 15 seconds, so about 6 closes on one GitHub account use about 4,000 of the 5,000 API requests an hour; a client ran out of quota every hour on 19 Nov 2026 and nothing merged for hours"
+}
