@@ -398,8 +398,13 @@ Reviews run externally through Autoreview on the named tool; with both, Codex wh
 otherwise Claude. Normal, light and sign-off reviews use `[models.review]` or its per-tool entries.
 Unset entries use Autoreview's default model and effort; unset effort uses its default effort.
 
+When a background command stops or fails, follow its printed recovery steps before continuing.
+For a merge conflict, run the printed `forge work <item>` step. If a worker leaves uncommitted
+changes, inspect them and have the worker finish and commit its work before close reviews it.
+
 When a background round, close or merge ends, run `forge next` at once and do its first
-step. Do not wait on a timer or use a separate priority list.
+step after any recovery above. If recovery was needed, run `forge next` again for the current
+first step. Do not wait on a timer or use a separate priority list.
 
 **Running a handed-out round.** When Forge prints a subagent instruction, run that instruction
 as a background subagent of the named role. Keep the item's chat while the session is open;
