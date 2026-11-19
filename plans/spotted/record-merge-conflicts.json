@@ -45,6 +45,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/sync.py\tRetain both concurrent blocking reviews in the active result\trecord-merge-conflicts",
+      "kind": "bug",
+      "path": "src/forge/sync.py",
+      "line": 466,
+      "text": "Retain both concurrent blocking reviews in the active result",
+      "from": "blocking",
+      "item": "record-merge-conflicts",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_branch_merges_keep_forge_records.py\tGate: proof list\trecord-merge-conflicts",
       "kind": "bug",
       "path": "tests/test_branch_merges_keep_forge_records.py",
