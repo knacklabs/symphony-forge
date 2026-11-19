@@ -163,7 +163,7 @@
     "id": "0afdcbb3-fa27-4cdf-9c99-2bf8fb2054f6",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -185,10 +185,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": null,
-    "head": "6d94b9ae2c595dac86923b827f48c2c127e3a74e",
+    "close": "a2a88ea1-ce83-4567-a69b-fc3a9dd69351",
+    "head": "13a0871548faaca219a8c45b3ff2e4d406f732e0",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "Overnight at a client, round-limit, switch, narrow, split and size choices piled up (6 by midnight) while builders sat idle, because every such choice waits for the owner",
   "worker": "codex"
