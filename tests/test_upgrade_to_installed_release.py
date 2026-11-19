@@ -12,6 +12,7 @@ from pathlib import Path
 
 import pytest
 
+from conftest import ROOT
 from test_close import env  # noqa: F401
 from test_fix_agent_runs_wait_in_line import _other_repo, _until
 from test_board_after_upgrade import History
