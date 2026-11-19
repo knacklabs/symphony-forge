@@ -316,6 +316,9 @@ def merge(args: argparse.Namespace, *, refreshed: bool = False) -> int:
             "git", "push", f"--force-with-lease={remote_ref}:{head}", "origin", "--delete", branch, cwd=top).returncode):
         repo.refuse(REFUSALS["remote_branch"], item=item)
     repo.git("fetch", "-q", "origin", default, cwd=top)
+    ended_at = story.merged_at(top, f"origin/{default}", repo.state_path(item))
+    print(time_records.merge_line(worktree, item, repo.read_state(item, worktree) or {},
+                                  body if pr["state"] == "OPEN" else pr.get("body") or "", ended_at))
     status = repo.git("status", "--porcelain", "-z", "--no-renames", "--untracked-files=all",
                       cwd=worktree).split("\0")
     untracked = {worktree / entry[3:] for entry in status if entry.startswith("?? ")}

@@ -146,6 +146,10 @@ the next merge.
 | "Close takes too long running every test" | In a local-test repo, ask, then in a fix: set `fast_test` in `forge.toml`, a command close runs instead of `test`, with `{base}` replaced by the merge base with the default branch (for example `npx vitest run --changed {base}` plus lint). In a CI-test repo, its pull request check runs the tests that import the changed source files, not only the changed test files (see step 9 of 'Adopt a live app'); the nightly full run covers the rest. Then `forge close <fix>` |
 | "Upgrade Forge" | Ask which release, then `forge upgrade <release>`; Upgrade Forge, below |
 
+Merge and each item in land print the start time, merge time, elapsed hours and minutes,
+and largest wait from How it went. The board shows the median start-to-merge time for
+items merged today in UTC. New and existing repos get these figures on upgrade.
+
 `forge doctor` lists started fixes with no work commits after more than seven days.
 Each row gives `forge fix drop <fix> --because "<reason>"`. Only drop a fix after
 the owner agrees. `forge doctor --fix` does not drop these fixes. New and upgraded

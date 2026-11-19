@@ -28,7 +28,7 @@ from test_failed_full_run_row_opens_run import FORGE_RUNS, TITLE, URL
 from test_render_check import installed, prepare, run  # noqa: F401  (installed is a fixture)
 from test_uistandards_canvas import _browser
 from test_board_releases_known_issues_fit import FILES, KEPT
-from test_board_server import client, clone, live, pushed  # noqa: F401
+from test_board_server import client, clone, live, pushed, snapshot  # noqa: F401
 
 STORY = "FIX-BOARD-FOLD-STAYS-OPEN"
 pytestmark = pytest.mark.platform
@@ -482,19 +482,31 @@ def test_7_a_failed_run_row_opens_the_newest_failed_run_after_a_refresh(client, 
         shown(FAILED_AGAIN, url, teammate, client, AGAIN, TITLE)
 
 
-# The shipped rendered check opens each screen this fix changed, in light and dark, on the board's own data.
+# The shipped rendered check opens each changed screen in light and dark. A measured merge keeps the new figure
+# on the Now screen while the check measures its text.
 SCREENS = [("now", ""), ("item", "#item/SHOP"), ("releases", "#releases"), ("insights", "#insights")]
-# A card title on the first screen ends in an ellipsis by design (one line, cut). Whole titles are another fix.
-WAIVE = {"now": {"cut-text": "Card titles end in an ellipsis on one line; showing whole titles is a separate fix"}}
 
 
 @pytest.mark.timeout(480)
 def test_8_the_changed_screens_pass_the_rendered_check(client, gh, tmp_path, installed, monkeypatch):
-    shop(client, gh, tmp_path, PLAN)
+    teammate = shop(client, gh, tmp_path, PLAN)
+    merged_at = datetime.now(timezone.utc).replace(microsecond=0)
+    started_at = merged_at - timedelta(hours=1)
+    pushed(teammate, "Record a measured merge", {".factory/fixes/rendered.json": json.dumps({
+        "kind": "fix", "branch": "fix/rendered", "status": "merged", "why": "Render the daily figure",
+        "done_when": "The daily figure has a measured value", "finished": merged_at.isoformat(),
+        "steps": [{"step": "start", "at": started_at.isoformat()}]})})
+    client.git("fetch", "-q", "origin")
+    events = client.path / ".git/forge/events.jsonl"
+    events.parent.mkdir(exist_ok=True)
+    with events.open("a", encoding="utf-8") as log:
+        log.write(json.dumps({"item": "rendered", "event": "item finished", "at": merged_at.isoformat()}) + "\n")
+    monkeypatch.setenv("FORGE_NOW", merged_at.isoformat())
     with live(client, FORGE_BOARD_FETCH_WAIT="3600") as url:
+        assert snapshot(url)["daily_start_to_merge"]["line"] == "Median start to merge today (UTC): 1h0m"
         address = urlsplit(url)
         command = prepare(installed, ROOT / ".forge/design", [
-            {"name": name, "path": f"/?{address.query}{where}", "waive": WAIVE.get(name, {})} for name, where in SCREENS])
+            {"name": name, "path": f"/?{address.query}{where}"} for name, where in SCREENS])
         monkeypatch.setenv("BASE_URL", f"{address.scheme}://{address.netloc}")
         monkeypatch.setenv("CHROME_BIN", _browser())
         done = run(command)
