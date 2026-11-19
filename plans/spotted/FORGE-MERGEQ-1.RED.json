@@ -1,0 +1,92 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/merge.py\tDisputed keep 13: Another workflow can clear Forge's failed run\tFORGE-MERGEQ-1/RED",
+      "kind": "bug",
+      "path": "src/forge/merge.py",
+      "line": 440,
+      "text": "Disputed keep 13: Another workflow can clear Forge's failed run",
+      "from": "blocking",
+      "item": "FORGE-MERGEQ-1/RED",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/merge.py\tGate: Give an actionable next step when the red wait ends\tFORGE-MERGEQ-1/RED",
+      "kind": "bug",
+      "path": "src/forge/merge.py",
+      "line": 24,
+      "text": "Gate: Give an actionable next step when the red wait ends",
+      "from": "blocking",
+      "item": "FORGE-MERGEQ-1/RED",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/merge.py\tRecheck recent results after scanning pending commits\tFORGE-MERGEQ-1/RED",
+      "kind": "bug",
+      "path": "src/forge/merge.py",
+      "line": 447,
+      "text": "Recheck recent results after scanning pending commits",
+      "from": "blocking",
+      "item": "FORGE-MERGEQ-1/RED",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/merge.py\tThe default-branch GraphQL query rejects every CI-repo merge\tFORGE-MERGEQ-1/RED",
+      "kind": "bug",
+      "path": "src/forge/merge.py",
+      "line": 443,
+      "text": "The default-branch GraphQL query rejects every CI-repo merge",
+      "from": "blocking",
+      "item": "FORGE-MERGEQ-1/RED",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/prcheck.py\tKeep the push base out of pull request test runs\tFORGE-MERGEQ-1/RED",
+      "kind": "bug",
+      "path": "src/forge/prcheck.py",
+      "line": 95,
+      "text": "Keep the push base out of pull request test runs",
+      "from": "blocking",
+      "item": "FORGE-MERGEQ-1/RED",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/repo.py\tforge next reports that forge.toml is missing in a checkout where the file exists.",
+      "kind": "bug",
+      "path": "src/forge/repo.py",
+      "line": 44,
+      "text": "forge next reports that forge.toml is missing in a checkout where the file exists.",
+      "from": "worker",
+      "item": "FORGE-MERGEQ-1/RED",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_merge_waits_while_default_is_red.py\tGate: test_3_merge_waits_while_the_default_branch_is_red\tFORGE-MERGEQ-1/RED",
+      "kind": "bug",
+      "path": "tests/test_merge_waits_while_default_is_red.py",
+      "line": 290,
+      "text": "Gate: test_3_merge_waits_while_the_default_branch_is_red",
+      "from": "blocking",
+      "item": "FORGE-MERGEQ-1/RED",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/merge.py\tFollow-up: Keep waiting for the planned 90 minutes",
+      "kind": "edge",
+      "path": "src/forge/merge.py",
+      "line": 203,
+      "text": "Follow-up: Keep waiting for the planned 90 minutes",
+      "from": "review",
+      "item": "FORGE-MERGEQ-1/RED",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

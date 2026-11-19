@@ -72,7 +72,9 @@ def test_2_real_scope_overlap_refusal_names_the_path(repo, scope, shared, adopte
     story(repo, doc=doc, approved=doc, key="OTHER")
     refused = repo.forge("task", "start", "OTHER/ROUTES")
     assert refused.returncode == 1, refused.stdout + refused.stderr
-    assert "builds on BOARD/API" in refused.stderr
+    # Another story must merge first; its review no longer permits stacking.
+    assert (f"OTHER/ROUTES would change {scope}, which BOARD/API is changing and hasn't merged yet."
+            in refused.stderr)
     assert f"Scope overlap: {shared}." in refused.stderr
 
 

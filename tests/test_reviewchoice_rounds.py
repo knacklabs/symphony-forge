@@ -2,7 +2,7 @@
 
 Test audit: this protects the public forge.toml and command contract, including which checkout's
 limit `forge next` uses when it reports another worktree. A regression that ignores the configured
-limit, uses the reporting checkout's setting, applies the task setting to fixes, or treats a P0 like
+limit, uses the reporting checkout's setting, ignores the setting for fixes, or treats a P0 like
 a lower finding can stop work at the wrong time. Existing loop tests cover fixed limits, but not
 configurable limits or the adopted-client default. These cases run `forge read`, `forge close`,
 `forge next` and `forge sync`; they need no test-only production seam.
@@ -40,7 +40,6 @@ def _set_limit(path, key, value):
     "task-one",
     "task-p0-default",
     "task-p0-one",
-    "fix-default",
     "fix-one",
     "invalid",
     "adopted-task-default",
@@ -173,7 +172,7 @@ def test_3_cold_read_and_task_review_round_limits_are_configurable(env, case):
             assert "The review left serious findings open" in output
         return
 
-    # Fixes keep one review round both when task reviews default to two and when they are set to one.
+    # A fix stops after one review only when the configured limit is one.
     finding = note("P1", "The readme loses its greeting")
     env.reviews(blocked(finding))
     fix, _ = env.start_fix()

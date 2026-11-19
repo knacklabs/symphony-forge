@@ -2,6 +2,7 @@
 `forge board --out` and left out of `--json`, and the first-screen team lists.
 New plan reads use src/forge/story.py before those plans appear on the board."""
 import json
+import re
 import sys
 from datetime import datetime, timedelta, timezone
 
@@ -131,6 +132,10 @@ def test_7_first_screen(env, monkeypatch, previous):
         assert started.returncode == 0, started.stderr
     monkeypatch.delenv("GIT_COMMITTER_DATE")
     clock(monkeypatch, now)
+    config = re.sub(r"(?m)^task_review_rounds\s*=.*(?:\r?\n|$)", "",
+                    (env.repo.path / "forge.toml").read_text("utf-8"))
+    env.commit(env.repo.path, "forge.toml", "task_review_rounds = 1\n" + config)
+    env.repo.git("push", "-q", "origin", "main")
     # Six fixes; the owner accepts the first P1 before the human merge wait.
     for n in range(6):
         started = env.repo.forge("fix", "start", f"Speed up page {n + 1}", "--done", "It is fast", "--slug", f"speed-{n}")
