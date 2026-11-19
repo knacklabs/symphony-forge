@@ -78,8 +78,8 @@ def test_2_failed_nightly_run_blocks_a_story_task_with_repair_details(env, workf
 
     assert merged.returncode != 0
     assert merged.stderr == (
-        f"The nightly run Main branch suite ({NIGHTLY_URL}) failed. "
-        "Start a fix for it and merge that fix.\n")
+        f"The nightly run Main branch suite ({NIGHTLY_URL}) failed. Hold this task.\n"
+        "Next: start a fix for it and merge that fix\n")
     assert not env.gh_calls("pr", "merge")
     _assert_nightly_query(env, workflow)
 
@@ -126,19 +126,29 @@ def test_4_a_fix_can_merge_while_the_default_branch_is_red(env):
 
 
 @pytest.mark.platform
-def test_5_human_merge_advice_names_the_failed_nightly_and_repair(env):
-    # Land has a separate human-merge output path that does not call forge merge.
+@pytest.mark.parametrize("queued", [False, True], ids=["single", "queue"])
+def test_5_human_merge_advice_names_the_failed_nightly_and_repair(env, queued):
+    # Land has separate single and queue human-merge output paths. A red nightly
+    # must hold the task, and the queue must not classify it as ready to merge.
+    # Existing coverage checked the old, incorrect ready handoff. No new seam.
     item = _ready_task(env, merger="human")
     _nightly(env, "failure")
     url = "https://github.com/acme/shop/pull/7"
     env.gh.respond("pr", "view", "task/SHOP-T1", "--json", "url",
                    stdout=json.dumps({"url": url}))
 
-    ready = env.repo.forge("land", item)
+    ready = env.repo.forge("land", "--all" if queued else item)
 
-    assert ready.returncode == 0, ready.stdout + ready.stderr
-    assert (f"{item} is ready; a human merges its pull request: {url}. "
-            f"The nightly run Main branch suite ({NIGHTLY_URL}) failed. "
-            "Start a fix for it and merge that fix.") in ready.stdout
+    output = ready.stdout + ready.stderr
+    assert ready.returncode != 0, output
+    assert f"The nightly run Main branch suite ({NIGHTLY_URL}) failed. Hold this task." in output
+    assert "Next: start a fix for it and merge that fix" in output
+    assert f"{item} is ready; a human merges" not in output
+    if queued:
+        summary = next(line for line in ready.stdout.splitlines() if line.startswith("Merged ("))
+        assert "Ready to merge (0): none" in summary
+        assert f"Needs you (1): {item}" in summary
+        assert "Hold this task" in ready.stdout.split(summary)[1]
+        assert "Next: start a fix for it and merge that fix" in ready.stdout.split(summary)[1]
     assert not env.gh_calls("pr", "merge")
     _assert_nightly_query(env)

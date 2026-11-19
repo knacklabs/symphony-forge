@@ -329,14 +329,18 @@ recommendation first. Save the answer before moving to the next question.
 
 ## Merges and settings
 
-The default branch runs no tests after a merge. Pull requests keep their tests, and the nightly
-full run covers the default branch. Laptop-test repos keep their full runs. New repos get this
+The default branch starts no test run automatically after a merge. Pull requests keep their tests,
+and the nightly full run covers the default branch. A full run started by hand for a release or
+sign-off stays available. A scheduled run tests its checked-out commit even if the default branch
+moved while it waited for a runner. Laptop-test repos keep their full runs. New repos get this
 workflow at setup; existing repos get it on upgrade or `forge sync`.
 The newest nightly run of `full_suite_workflow`, or `forge.yml` when unset, decides whether
-merges stop. If its conclusion is failure, `forge merge` refuses a story part and names the
-run and the repair step. Start a fix for that failure and merge the fix. Fixes can still merge
+merges stop. If its conclusion is failure, `forge merge` refuses a story part, says to hold it,
+and names the run and the repair step on a `Next:` line. Start a fix for that failure and merge
+the fix. Fixes can still merge
 so the repair can reach the default branch. A green result, no nightly run, or another conclusion
-does not stop merges. When a person merges, land gives the same repair advice for a story part.
+does not stop merges. When a person merges, land holds the story part with the same repair advice.
+`forge land --all` lists the held part under Needs you.
 Forge cannot stop a merge on GitHub. No saved records change on upgrade.
 
 If the default branch moved after close, `forge merge` compares its new changed files with the item's changed files.

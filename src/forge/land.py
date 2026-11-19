@@ -173,9 +173,9 @@ def land(args: argparse.Namespace) -> int:
                 url = json.loads(close._gh(top, "pr", "view", branch, "--json", "url"))["url"]
                 repo.git("fetch", "-q", "origin", repo.default_branch(top), cwd=top)
                 nightly = merge.red(top, item=item)
-                note = (f". The nightly run {nightly} failed. Start a fix for it and merge that fix."
-                        if nightly else "")
-                say(f"{item} is ready; a human merges its pull request: {url}{note}")
+                if nightly:
+                    repo.refuse(merge.REFUSALS["red_default"], run=nightly)
+                say(f"{item} is ready; a human merges its pull request: {url}")
                 return 0
             if hold:
                 _hold()

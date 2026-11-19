@@ -18,7 +18,8 @@ COMMANDS = [{
 ENABLE = "let-the-agent-merge"
 
 REFUSALS = {
-    "red_default": ("The nightly run {run} failed. Start a fix for it and merge that fix.", ""),
+    "red_default": ("The nightly run {run} failed. Hold this task.",
+                    "start a fix for it and merge that fix"),
     "disabled": ("forge merge is disabled by merge = \"human\" in the default branch's forge.toml.",
                  "the repo owner runs forge merge enable in their own terminal"),
     "owner_only": ("Only the repo owner switches on agent merges, on {default}, from a terminal outside Claude Code or Codex.", "the repo owner runs forge merge enable on {default} in a terminal outside Claude Code or Codex"),

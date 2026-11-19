@@ -1,4 +1,4 @@
-"""The generated workflow spends test runners on pull requests and nightly runs.
+"""Automatic tests run on pull requests and nightly events; manual full runs stay.
 
 Audit: sync is the public delivery boundary. A restored push trigger repeats
 tests after merges. Existing workflow cases protected the opposite contract.
@@ -16,7 +16,7 @@ pytestmark = pytest.mark.platform
 
 
 @pytest.mark.parametrize("groups", [1, 3])
-def test_1_sync_keeps_main_tests_only_in_the_nightly_run(repo, gh, tmp_path, groups):
+def test_1_sync_keeps_automatic_main_tests_only_in_the_nightly_run(repo, gh, tmp_path, groups):
     client, initialized = _fresh_client(repo, gh, tmp_path)
     assert initialized.returncode == 0, initialized.stdout + initialized.stderr
     repo.git("switch", "-q", "-c", "fix/main-tests", cwd=client)
@@ -34,5 +34,7 @@ def test_1_sync_keeps_main_tests_only_in_the_nightly_run(repo, gh, tmp_path, gro
     jobs = _jobs(workflow)
     assert "github.event_name == 'push'" not in jobs["tests"]
     assert "github.event_name == 'schedule'" in jobs["full-suite"]
+    assert "github.event_name == 'workflow_dispatch'" in jobs["full-suite"]
+    assert "  workflow_dispatch:" in workflow
     assert "forge test --full" in jobs["full-suite"]
     assert "github.event_name == 'pull_request'" in jobs["tests"]
