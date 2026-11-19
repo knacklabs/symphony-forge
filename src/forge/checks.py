@@ -35,6 +35,7 @@ REFUSALS = {
                  "forge close {item}, which brings the default branch in"),
 }
 PASS, PENDING, RED, SKIPPED, QUEUED = "pass", "pending", "red", "skipped", "queued"
+POLL = float(os.environ.get("FORGE_CHECKS_POLL", "60"))
 
 
 def required(top: Path, default: str, head: str = "HEAD") -> list[str] | None:
@@ -138,7 +139,7 @@ def let_finish(top: Path, item: str, sha: str, names: list[str],
                 return
             if slot is not None:
                 slot(QUEUED not in states)  # queued runs keep the place; running ones lend it
-            time.sleep(15)
+            time.sleep(POLL)
     finally:
         if slot is not None:
             slot(False)
@@ -258,7 +259,7 @@ def _wait(top: Path, item: str, sha: str, names: list[str], branch: str, progres
             repo.refuse(REFUSALS["not_green"], reason=reason, item=item)
         # Queued checks keep backpressure; running checks need no local close place.
         waiting(not queued)
-        time.sleep(min(15, left))
+        time.sleep(min(POLL, left))
 
 
 def own_runs(top: Path, item: str, sha: str) -> list[dict[str, Any]]:

@@ -523,6 +523,7 @@ def fake_clock(repo, tmp_path, monkeypatch, request):
     An indirect parameter can jump the 15-second check polls across queue boundaries.
     Subprocess deadlines and OS wait polling retain real time.
     """
+    monkeypatch.setenv("FORGE_CHECKS_POLL", "15")
     folder = tmp_path / "clock"
     folder.mkdir()
     offset = folder / "elapsed"
