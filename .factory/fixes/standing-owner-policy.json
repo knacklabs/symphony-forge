@@ -164,7 +164,7 @@
     "status": "blocked"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-19T01:59:18.821263+00:00",
@@ -177,8 +177,12 @@
   ],
   "stop": {
     "at": "2026-11-19T02:44:56.227314+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "src/forge/close.py",
-    "wait_id": "2076cc3f-2247-4966-8821-8211ca06d4c7"
+    "reason": "Owner chose one more round on 19 Nov 2026",
+    "wait_id": "2076cc3f-2247-4966-8821-8211ca06d4c7",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
