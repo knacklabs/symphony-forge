@@ -1,6 +1,13 @@
 {
   "base": "b4039cc7e51cc868a233121f4b23515ed213b8ed",
   "branch": "fix/act-when-run-ends",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1f2d4-9422-79b3-ba4c-018fef757546",
+    "head": null,
+    "start": "e3f4a684541655eb0a2f406fde5f5f05f18b2202"
+  },
   "done_when": "The Forge skill says: when a background round, close or merge ends, run forge next at once and do its first step, with no timer; the generated skill copies match; new repos get it at init and existing repos on upgrade and forge sync",
   "fix_kind": "mechanical",
   "kind": "fix",
