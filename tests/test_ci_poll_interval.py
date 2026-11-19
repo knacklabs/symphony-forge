@@ -122,6 +122,10 @@ time.monotonic = lambda: real() + skipped
     marker = 'if args[:2] == ["pr", "checks"] and args[2].startswith("forge-merge-train/")'
     stub.write_text(stub.read_text("utf-8").replace(marker,
         'if args[:2] == ["pr", "checks"] and args[2].startswith("forge-merge-train/"):\n'
+        # REST reporting may already have advanced the shared fixture. This
+        # scenario needs a pending response at the remaining-job wait boundary.
+        f'    if not pathlib.Path({json.dumps(log.as_posix())}).exists():\n'
+        '        (here / "polled").unlink(missing_ok=True)\n'
         f'    with open({json.dumps(log.as_posix())}, "a") as file:\n'
         f'        file.write(pathlib.Path({json.dumps(elapsed.as_posix())}).read_text("utf-8") + "\\n")\n'
         + marker), encoding="utf-8")
