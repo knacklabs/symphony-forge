@@ -35,9 +35,6 @@ _deadline_log = None
 
 def pytest_configure(config: pytest.Config) -> None:
     """Windows CI needs a native deadline even outside the per-test timeout."""
-    # Apply to every command, including tests that do not use the repo fixture.
-    # Interval and controlled-clock tests explicitly select their own value.
-    os.environ["FORGE_CHECKS_POLL"] = "0.01"
     global _deadline_log
     seconds = float(os.environ.get("PYTEST_SESSION_DEADLINE") or "0")
     if not seconds:
@@ -460,7 +457,8 @@ def pytest_sessionfinish(session: pytest.Session) -> None:
 #   A Codex round would run as the session's own subagent, so a test that builds on Codex through
 #   the kit says so with the `claude_session` fixture; a test that needs no session deletes both.
 # - No Forge run around it: every FORGE_ variable (worker marker, test budget, pinned release,
-#   checkout forwarding, waits) is unset; a test that needs one sets it. FORGE_LIVE_CODEX stays:
+#   checkout forwarding, waits) is unset, then CI polling defaults to 0.01 seconds for tests.
+#   Interval and controlled-clock tests select their own value. FORGE_LIVE_CODEX stays:
 #   it is the real-Codex opt-in, set only by the codex-smoke workflow.
 # - No tool overrides: CODEX_BIN, CLAUDE_BIN and AUTOREVIEW are unset; a stub sets its own.
 # - No outer git: every GIT_ variable is unset (they leak in when tests run inside a git hook);
@@ -477,6 +475,9 @@ def isolated_environment(monkeypatch: pytest.MonkeyPatch) -> None:
         if name.startswith(("GIT_", "FORGE_")) and name != "FORGE_LIVE_CODEX" or name in (
                 "CLAUDECODE", "CODEX_BIN", "CLAUDE_BIN", "AUTOREVIEW"):
             monkeypatch.delenv(name)
+    # Set this after isolation, which would remove a session-level FORGE_ default.
+    # Autouse covers commands in tests that do not use the repo fixture too.
+    monkeypatch.setenv("FORGE_CHECKS_POLL", "0.01")
     # cmd.exe expands %CI% in a .cmd stub's arguments, case-insensitively: git's
     # --format=%x00%cI%x00 would reach git as %x00truex00 on CI runners.
     monkeypatch.delenv("CI", raising=False)
