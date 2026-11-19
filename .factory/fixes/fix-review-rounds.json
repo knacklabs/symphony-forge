@@ -18,7 +18,7 @@
       "gain": 3,
       "harm": 3,
       "line": 412,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -31,7 +31,7 @@
       "gain": 5,
       "harm": 3,
       "line": 412,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -44,7 +44,7 @@
       "gain": 4,
       "harm": 2,
       "line": 183,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -54,48 +54,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "57a762bcdbae230e6cc2cde3fa4c94752fb2d5abf05d78b903d225e256509db9",
-    "changed": "33badeab6852c0e6cf0d4316abae2d25fe6d931d58fa8b92c377a65ae4dc0e20",
-    "commit": "1d464b1ef312728957379a5d42c8954473dae2ac",
+    "branch_diff": "7e114897417e041c8f51afe05a9c3321e046adb7d56b142c25f2213dffccf86c",
+    "changed": "013e5f6d9ebd68e97cacfc4705048351e004fe6c33ce49c4aa880334c3a49ea3",
+    "commit": "d4bf73375d62635b492d6f234716021b07ec5844",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 3, Work 3, Harm 3\nRaise: Not done\nCase: normal use - A fix passes its first review, then a merge conflict is resolved and the review of that repair finds a P1. Close asks the owner immediately, although this is the first blocked review. `src/forge/close.py:384` records every completed review and line 407 counts all of them; the changed condition therefore reaches the default limit on this second review regardless of the first result. Conflict-repair reviews can report P1s (`src/forge/templates/review.md:504-507`). The coordinator's one-line ruling and the new regression test cover two consecutive blocked reviews, not this clean-then-blocked case. The complete promised item is: Fixes use task_review_rounds like story parts (default 2), so a fix stops for the owner only after its second blocked review; the skill and guide say so; new and existing repos get it on upgrade.",
-        "file": "src/forge/close.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 412,
-        "priority": "P1",
-        "required_done_when": true,
-        "title": "Not done: Fixes use task_review_rounds like story parts (default 2), so a fix stops for the owner only after its second blocked review",
-        "work": 3
-      },
-      {
-        "body": "Gain 5, Work 3, Harm 3\nRaise: Test\nCase: normal use - Pull request CI runs the required tests with the default review limit. The new behavior returns a worker-blocked refusal after the first P1, but tests still require an owner stop at that point: `tests/test_split_keeps_review_findings.py:49,63,106`, `test_owner_decides_at_the_round_limit.py:40`, `test_close_waits_for_review_loop_choice.py:27`, `test_review_loop_records_each_stop_choice.py:35`, `test_reviews_converge_on_changed_lines.py:70`, `test_react_review_rules.py:81`, `test_zod_rules.py:123`, `test_score_table.py:70`, `test_board_needs_you.py:93`, `test_queue_land_all.py:389`, `test_aha_review.py:69`, `test_mainonce_clash.py:108`, `test_accepted_records_reuse_green_ci.py:29`, `test_accepted_review_passes_first_pr_check.py:24`, `test_acceptance_publishes_final_review_once.py:23`, `test_merge_enable_mechanical_review.py:149`, `test_runner_without_gh.py:147`, `test_app_constitution.py:438`, `test_machine_views.py:143`, `test_board_runway.py:141`, and `test_failed_legacy_review_history.py:88`. Those latter paths are also under `tests/`. `tests/test_reads_wait_for_a_loop_choice.py:19` additionally requires the worker wording removed at `src/forge/worker.py:28`. The split tests are always selected by `.forge/always-tests.txt:5`; the other importers of the changed `test_close.py` are selected by `src/forge/fasttest.py:441-454`. These assertions conflict with the patch, so the required PR check will fail until they are updated.",
-        "file": "src/forge/close.py",
-        "gain": 5,
-        "harm": 3,
-        "line": 412,
-        "priority": "P1",
-        "title": "Gate: Review-stop and worker-guidance tests retain the old contract",
-        "work": 3
-      },
-      {
-        "body": "Gain 4, Work 1, Harm 2\nRaise: Gate\nCase: normal use - An owner consults the repository README to learn when a fix needs a decision. `README.md:139` and `README.md:193` still say a fix gets one review round, contradicting the updated skill and command guide. This leaves users expecting the very owner stop the change removes. The applicable rule says: \"Replacing behaviour deletes the old path, its tests and its docs in the same change.\"",
-        "file": "src/forge/templates/skill.md",
-        "gain": 4,
-        "harm": 2,
-        "line": 183,
-        "priority": "P1",
-        "title": "Standard: Delete before adding",
-        "work": 1
-      }
-    ],
-    "id": "3650e2ce-ac7f-4823-9290-6912b9386537",
-    "status": "blocked"
+    "findings": [],
+    "id": "9db573df-3b57-4b4a-ab49-6fc28ddaaf02",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-18T16:43:34.717641+00:00",
@@ -103,6 +71,10 @@
     },
     {
       "at": "2026-11-18T16:59:15.291721+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-19T01:54:01.157088+00:00",
       "step": "review"
     }
   ],
