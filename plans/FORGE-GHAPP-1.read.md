@@ -1,18 +1,18 @@
 ---
 reader: codex (gpt-6.1-terra)
-read_at: 2026-11-19T10:24:02.668817+00:00
-seconds: 603.377
-read_hash: 72b9c8389d22500c8b32cfd8bab377caedcc430a
-round: 2
+read_at: 2026-11-19T10:35:39.264886+00:00
+seconds: 553.423
+read_hash: 65b0b4dafd280629d76688f5082945a1bb34428e
+round: 3
 passed: no
-doc_seen: 72b9c8389d22500c8b32cfd8bab377caedcc430a
+doc_seen: 65b0b4dafd280629d76688f5082945a1bb34428e
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 905810241b8ba1ad385c252c02a33c8eb42b24ca
+notes_seen: 085575754a0b22bf4ac753c75d984b5c76ceb26e
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a1f310-0028-72f3-9e9d-4bbc5e73ad20
 session:
-loop_choice: more
-loop_reason: Owner chose one more round on 19 Nov 2026: save the login at setup, set Windows key permissions directly, drop the refusal link and page
+loop_choice:
+loop_reason:
 ---
 # Cold read notes
 
@@ -317,3 +317,29 @@ Only a genuine trade-off goes to the human, as a question with options.
    Adds work: report each budget’s reset separately; F 2 x H 1 = 2; 2 x C = 2  
    Gain 2, Work 1, Harm 1
    Disposition: keep - below the bar (live with)
+
+## Round 3
+
+33. Blocking: Disputed keep 27: an environment token can select the wrong developer’s app.
+
+   Raise: Not done  
+   Case: normal use - A developer has a stored `gh` login and sets `GH_TOKEN` for another GitHub account.  
+   [The revised plan](/plans/FORGE-GHAPP-1.md:86) selects the app using the stored login, but `GH_TOKEN` takes precedence over stored credentials. Forge can create the pull request as one account and merge it as the other account’s app. [GitHub CLI documentation](https://cli.github.com/manual/gh_help_environment), [GitHub CLI source](https://github.com/cli/cli/blob/v2.103.0/internal/config/config.go)  
+   Gain 5, Work 3, Harm 3
+   Disposition: keep - fixed by R33 in For the builders: with GH_TOKEN or GITHUB_TOKEN set, Forge does not use the app
+
+34. Blocking: Disputed keep 28: the Windows folder can retain another user’s explicit access.
+
+   Raise: Security  
+   Case: normal use - A shared Windows configuration folder already grants another account explicit full access to `github-apps`.  
+   [The new command](/plans/FORGE-GHAPP-1.md:88) removes inherited entries and replaces the current user’s entry; it leaves other explicit entries on the folder. That account can therefore delete or replace the saved key and app record even after the key file’s own permissions are tightened. [Microsoft: icacls](https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/icacls), [Microsoft: DeleteFile](https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-deletefile)  
+   Gain 5, Work 3, Harm 4
+   Disposition: keep - fixed by R34 in For the builders: icacls removes inherited and explicit access for all other accounts on the key folder and file, then checks it
+
+35. Blocking: Disputed keep 27: raw origin lookup skips Git URL shortcuts.
+
+   Raise: Not done  
+   Case: normal use - A developer uses a Git `insteadOf` rule that expands a shortcut such as `gh:owner/repo` to a GitHub URL.  
+   [The revised plan](/plans/FORGE-GHAPP-1.md:86) reads the unexpanded origin and treats it as non-GitHub, so the app is never selected. Existing [init protection](/src/forge/init.py:253) uses `git remote get-url`, which expands that rule. The [planned test](/plans/FORGE-GHAPP-1.md:106) starts with a raw GitHub URL and misses this case. [Git documentation](https://git-scm.com/docs/git-remote)  
+   Gain 5, Work 2, Harm 3
+   Disposition: keep - fixed by R35 in For the builders: the repo comes from git remote get-url origin, which expands insteadOf
