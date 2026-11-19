@@ -1,6 +1,13 @@
 {
   "base": "e2996699dda591224aea9b355564dc698ac77dac",
   "branch": "fix/squash-replay-on-conflict",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1f3c8-cc42-7801-8085-88fb69934a76",
+    "head": null,
+    "start": "0dcd667606deaf4a95c08207077073b51d23d3dd"
+  },
   "done_when": "When the one-by-one replay conflicts but the whole-branch merge (merge-tree of the replay baseline and the branch head onto main) is clean, close replays the part as one commit with that merged tree and continues; a real whole-branch conflict still refuses as today; new and existing repos get it on upgrade",
   "fix_kind": "mechanical",
   "kind": "fix",
