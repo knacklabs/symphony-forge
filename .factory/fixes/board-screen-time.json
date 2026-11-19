@@ -1,0 +1,15 @@
+{
+  "base": "0d1db0b7471dfab1dbce63263166f60b0832b1c1",
+  "branch": "fix/board-screen-time",
+  "done_when": "test_12 passes on main at any time of day and date, the board screen it checks keeps its rule, and if the cause is in the board code rather than the test, the board shows the right thing at that time",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-19T19:22:46.971769+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Main is red: tests/test_board_now_screen.py::test_12_the_first_screen_fits_a_laptop_window_and_keeps_every_item_reachable fails on every commit since about 18:00 UTC on 19 Nov 2026, including 77a35caa0 which passed CI at 14:56 UTC, so it depends on the time or date, not on code; its inline browser script fails a bare assert at line 100"
+}
