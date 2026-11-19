@@ -11,6 +11,8 @@ import subprocess
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+import pytest
+
 import conftest
 from github_api_stub import GitHubApiStub
 from test_close import env
@@ -18,6 +20,7 @@ from test_queue_land_all import client, _fix
 from test_train_land_all import train, _ready, _all
 
 STORY = "FORGE-GHAPP-1"
+pytestmark = pytest.mark.platform
 
 
 def marker(value):

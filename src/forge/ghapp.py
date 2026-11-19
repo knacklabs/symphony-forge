@@ -355,7 +355,7 @@ def _selection(top: Path) -> tuple[str, str, dict[str, Any] | None] | None:
     key = top.resolve()
     if key in _SELECTIONS:
         return _SELECTIONS[key]
-    location = _repository(top)
+    location = _repository(top) if any(folder().glob("*.json")) else None
     if location is None:
         _SELECTIONS[key] = None
         return None

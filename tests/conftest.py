@@ -128,9 +128,6 @@ for rule in reversed(rules):
 if args == ["config", "get", "user", "-h", "github.com"]:
     sys.stdout.write("octocat\\n")
     sys.exit(0)
-if args == ["api", "user", "--jq", ".login"]:
-    sys.stdout.write("octocat\\n")
-    sys.exit(0)
 if args[:2] == ["pr", "view"] and args[-2] == "--json" and args[-1] in (
         "mergeable,headRefOid", "mergeable,headRefOid,number,headRefName"):
     # Ordinary close fixtures have a mergeable pull request on the real pushed head.
