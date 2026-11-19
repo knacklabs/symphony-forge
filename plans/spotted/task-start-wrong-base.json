@@ -1,0 +1,59 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/task.py\tAllow close after foreign changes have been reverted\ttask-start-wrong-base",
+      "kind": "bug",
+      "path": "src/forge/task.py",
+      "line": 671,
+      "text": "Allow close after foreign changes have been reverted",
+      "from": "blocking",
+      "item": "task-start-wrong-base",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/task.py\tName the cross-story blocker when several tasks overlap\ttask-start-wrong-base",
+      "kind": "bug",
+      "path": "src/forge/task.py",
+      "line": 570,
+      "text": "Name the cross-story blocker when several tasks overlap",
+      "from": "blocking",
+      "item": "task-start-wrong-base",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/task.py\tNot done: close misses imported commits without a task start record\ttask-start-wrong-base",
+      "kind": "bug",
+      "path": "src/forge/task.py",
+      "line": 671,
+      "text": "Not done: close misses imported commits without a task start record",
+      "from": "blocking",
+      "item": "task-start-wrong-base",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/templates/brief.md\tNot done: resumed workers miss the new brief after upgrade\ttask-start-wrong-base",
+      "kind": "bug",
+      "path": "src/forge/templates/brief.md",
+      "line": 157,
+      "text": "Not done: resumed workers miss the new brief after upgrade",
+      "from": "blocking",
+      "item": "task-start-wrong-base",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/fasttest.py\tThe client starts before its test-place start record is saved; check whether a nested picker can then wait behind its own parent.",
+      "kind": "edge",
+      "path": "src/forge/fasttest.py",
+      "line": 693,
+      "text": "The client starts before its test-place start record is saved; check whether a nested picker can then wait behind its own parent.",
+      "from": "worker",
+      "item": "task-start-wrong-base",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

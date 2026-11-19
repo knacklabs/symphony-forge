@@ -1,0 +1,93 @@
+{
+  "base": "1a5b4d2cf1d9b0e80bb05627d2864a9ac40fd2bb",
+  "branch": "fix/fix-review-rounds",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1ef8c-464c-73a0-9873-2e096a038007",
+    "head": null,
+    "start": "e6aba34b13603c0e4cd5049e150dd230c802238e"
+  },
+  "done_when": "Fixes use task_review_rounds like story parts (default 2), so a fix stops for the owner only after its second blocked review; the skill and guide say so; new and existing repos get it on upgrade",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "close() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 412,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Fixes use task_review_rounds like story parts (default 2), so a fix stops for the owner only after its second blocked review",
+      "work": 3
+    },
+    {
+      "area": "close() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 412,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: Review-stop and worker-guidance tests retain the old contract",
+      "work": 3
+    },
+    {
+      "area": "src/forge/templates/skill.md",
+      "file": "src/forge/templates/skill.md",
+      "gain": 4,
+      "harm": 2,
+      "line": 183,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Standard: Delete before adding",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "428d2343e255d8b85ea9c7051d5ec530bb6697a16a20ba4093d00a278282c207",
+    "changed": "d121710fea3cd334d874905a7df30392cf3a2f5219b23b22a5aaa49ac43ac7ea",
+    "commit": "1e965af09982afe521a9ef2b982b7485354ea83e",
+    "dismissals": [],
+    "findings": [],
+    "id": "5db952d2-3368-4c7a-ac4d-4ec50d80b49e",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-18T16:43:34.717641+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-18T16:59:15.291721+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-19T01:54:01.157088+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-19T03:16:30.015663+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "aca90287-a56c-4525-a261-8b5a300b14e3",
+    "head": "927e6baa6ff5cc448c61c16c6362b0cbdffcc42e",
+    "keys": {},
+    "round": 2
+  },
+  "why": "Fixes stop for the owner's choice after the first blocked review unless a finding is P0 (close.py uses a fixed limit of 1 for fixes), while story parts get task_review_rounds (default 2); at a client this cost an owner question and 20-60 minutes three times on 18 Nov 2026",
+  "worker": "codex"
+}

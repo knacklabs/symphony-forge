@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Any
 
 from forge import (__version__, approval, board, board_facts, close, codex, gaps, githooks, machine, migration_warnings,
-                   journey, land, native, records, repo, review, spotted, story, score, task, time_records, upgrade)
+                   journey, land, native, owner_choices, records, repo, review, spotted, story, score, task, time_records, upgrade)
 from forge.task import _merged, _started, can_start, developer, github_login, owner, sections, start_base, unbuilt_fix, waits_for
 from forge.task import rows as task_rows
 
@@ -179,7 +179,7 @@ def next_step(args: Any) -> int:
         top, history, schedules=True, numbers=True, facts=facts)
     step = ([journey.step_line(top, _report_config(top, {}), history, idle=_idle(top)[0] in lines)]
             if (top / "forge.toml").is_file() else [])
-    print("\n".join(step + notice + lines))
+    print("\n".join(owner_choices.first(top, step + notice + lines, (facts["github"] or {}).get("open", []))))
     return 0
 
 
@@ -340,23 +340,7 @@ def _report(top: Path, history: dict[str, Any] | None = None,
                 pinned += alert[:-1] + found
             else:
                 lines += found
-    for path in sorted(trees.values()):  # a spec's read or confirmation on any work branch
-        for notes in sorted((path / "docs" / "specs").glob("*.read.md")):
-            text = notes.read_text(encoding="utf-8")
-            spec = notes.with_name(notes.name.removesuffix(".read.md") + ".md")
-            if spec.is_file():
-                record, findings = story._record(text)  # pyright: ignore[reportPrivateUsage]
-                spec_text = spec.read_text(encoding="utf-8")
-                fields, body = story._record(spec_text)  # pyright: ignore[reportPrivateUsage]
-                config = repo.config(path) if (path / "forge.toml").is_file() else repo.DEFAULTS
-                if story.stopped(record, findings, config["cold_read_rounds"]):
-                    lines += _read_loop(spec.stem, spec_text, text, path)
-                elif (fields.get("status") == "draft" and story.passed(record, findings)
-                      and record.get("read_hash") == repo.git("hash-object", "--", str(spec), cwd=path)):
-                    title = re.search(r"^# (.+)$", body, re.M)
-                    cd = f"cd {repo.quote(str(path))} && " if path != top else ""
-                    lines += [f"{review.plain(title[1]) if title else spec.stem} is ready for confirmation.",
-                              f'Next: {cd}forge spec confirm {spec.stem} --by "<name>"']
+    lines += owner_choices.documents(top, trees)
     quiet = not lines and not pinned
     lines = _refresh(top, trees) + (lines or ([] if pinned else _idle(top)))
     if (top / "forge.toml").is_file():
@@ -1077,19 +1061,19 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
         stop = state["stop"]
         if "question" in stop:
             return [f"Forge stopped {label}. Ask the human:", stop["question"],
-                    "Next: " + close.REFUSALS["stuck"][1].format(item=item)]
-        reason = "its review reached the round limit with open findings"
-        return [f"Close stopped {label}: {reason}.",
+                    f'Next: cd {repo.quote(str(path or top))} && forge fix allow-large "<reason>"' if stop.get("predicted_files")
+                    else "Next: " + close.REFUSALS["stuck"][1].format(item=item)]
+        return [f"Close stopped {label}: its review reached the round limit with open findings.",
                 review.stop_question(path or top, item, state),
                 "Next: " + close.REFUSALS["hotspot"][1].format(item=item, **stop)]
+    if question := owner_choices.worker_question(top, item, pr):
+        return [f"The worker on {label} asked a question. Ask the human:", question,
+                "Next: " + close.REFUSALS["question"][1].format(item=item)]
     if not path and status not in ("ready", "merged", "done"):  # its checkout is on another machine
         if pr or _commit(top, f"refs/remotes/origin/{state.get('branch', '')}"):
             return [f"{label} has no checkout on this machine.", f"Next: forge work {item}"]
         starter = board._starters(top).get(repo.state_path(item)) or "the person who started it"
         return [f"{label} was started by {starter} and runs on their machine."]
-    if question := codex.record(top, item).get("question"):  # close and work refuse until it is answered
-        return [f"The worker on {label} asked a question. Ask the human:", question,
-                "Next: " + close.REFUSALS["question"][1].format(item=item)]
     if receipt.get("tidied") is True:
         return []
     if status == "ready" and not path and repo.merge_setting(top) == "agent":

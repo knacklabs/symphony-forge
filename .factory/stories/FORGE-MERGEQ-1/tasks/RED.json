@@ -1,0 +1,150 @@
+{
+  "base": "3a8959a99be727fab5350411b1e0c893e2343e98",
+  "branch": "task/FORGE-MERGEQ-1-RED",
+  "chat": {
+    "approval": "3f9cdacabf3cd0f35a0a7d50586d8b986f81a9fe88127b5a00eb2e017e7dfb8b",
+    "claude": null,
+    "conversation": "01a1ef05-7b8d-7012-b8e3-59128e3e1bcf",
+    "head": null,
+    "start": "b6b1af53c6011bc7cbffb158c3189bd1b33c116e"
+  },
+  "known": [
+    {
+      "area": "src/forge/prcheck.py",
+      "file": "src/forge/prcheck.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 95,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Keep the push base out of pull request test runs",
+      "work": 1
+    },
+    {
+      "area": "red() in src/forge/merge.py",
+      "file": "src/forge/merge.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 440,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Disputed keep 13: Another workflow can clear Forge's failed run",
+      "work": 2
+    },
+    {
+      "area": "red() in src/forge/merge.py",
+      "file": "src/forge/merge.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 447,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Recheck recent results after scanning pending commits",
+      "work": 2
+    },
+    {
+      "area": "src/forge/merge.py",
+      "file": "src/forge/merge.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 24,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: Give an actionable next step when the red wait ends",
+      "work": 1
+    },
+    {
+      "area": "tests/test_merge_waits_while_default_is_red.py",
+      "file": "tests/test_merge_waits_while_default_is_red.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 290,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_3_merge_waits_while_the_default_branch_is_red",
+      "work": 2
+    },
+    {
+      "area": "merge() in src/forge/merge.py",
+      "file": "src/forge/merge.py",
+      "gain": 2,
+      "harm": 2,
+      "line": 203,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Follow-up: Keep waiting for the planned 90 minutes",
+      "work": 1
+    },
+    {
+      "area": "red() in src/forge/merge.py",
+      "file": "src/forge/merge.py",
+      "gain": 5,
+      "harm": 4,
+      "line": 443,
+      "outcome": "fixed in round 4",
+      "reason": "",
+      "round": 3,
+      "security": false,
+      "title": "The default-branch GraphQL query rejects every CI-repo merge",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "180d38e623c1f51dad4665066f15ece8d566134e0b32dfac1c68980079aa4ae4",
+    "changed": "678dcdc59f1be0c058ea266ff6a563e1aee2fd3fca95c4aea318ce6def7c52a6",
+    "commit": "bb9f1242c9198413075ef196adb0596f22a57718",
+    "dismissals": [],
+    "findings": [],
+    "id": "bda8fa90-9acd-4711-8eff-2eed0146fcd7",
+    "status": "clean"
+  },
+  "round": 6,
+  "stacked_on": "REMOTE-1/HOST",
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-18T14:17:31.848635+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-18T15:05:13.131785+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-18T16:11:16.671212+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-19T01:54:00.230898+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-19T02:10:52.054916+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-19T03:10:20.134049+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "59dd00e8-cb11-45fe-8199-aaa708a76ca9",
+    "head": "24d05596db6d830f0fbbadf3660752d8c5a4058c",
+    "keys": {},
+    "round": 5
+  },
+  "worker": "codex"
+}

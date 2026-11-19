@@ -28,7 +28,8 @@ def test_1_unsplittable_client_uses_one_tests_job(repo, gh, upgrade, count):
     found = jobs((repo.path / ".github/workflows/forge.yml").read_text("utf-8"))
     assert "docs-check" not in found and "tests-passed" not in found
     test = found["tests"]
-    assert "&& 'tests' || 'tests (other event)'" in test
+    # Pushes now publish the same tests result as pull requests, without a gate.
+    assert "'pull_request_target' && 'tests (other event)' || 'tests'" in test
     assert "strategy:" not in test and "needs:" not in test
     assert "run: python .forge/review-tests.py" in test
     assert "if: steps.parent-tests.outputs.reuse != 'true'" in test

@@ -25,8 +25,8 @@ HERE = Path(__file__).parent
 CONVENTIONS = (HERE / "templates" / "conventions").resolve()
 TEST_PATHS = repo.TEST_PATHS
 REVIEW_LOOP = (
-    "At the round limit (the repo's setting, two by default) for a task review, or after "
-    "one round for a fix, close stops when findings below P0 are still open. "
+    "At the round limit (the repo's setting, two by default) for a task or fix review, "
+    "close stops when findings below P0 are still open. "
     "Wait for the owner's recorded choice of one more round, "
     "split or accept. An open P0 never stops for the owner: fix it in this round. "
     "When the same P0 stays open two rounds in a row, Forge stops and asks the owner. "
@@ -69,6 +69,7 @@ FILE_OWNERSHIP = ("Do not change a file that another open task's Scope owns. "
                   "Leave it and name it in your handback. "
                   "This restriction excludes paths with a segment named tests, test, __tests__ or spec. "
                   "These test paths can be shared.")
+STORY_FILES = "Never delete story-level files, such as design images, to keep a part narrow."
 # Sent once, in the same conversation, when a round ends with changes left uncommitted.
 COMMIT_NUDGE = ("Your turn ended with changes left uncommitted, so the review can't see them. "
                 "Before you stop, $test_step "
@@ -585,6 +586,7 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
         "checkout": top.resolve().as_posix(),
         "start_here": START_HERE,
         "file_ownership": FILE_OWNERSHIP,
+        "story_files": STORY_FILES,
         "review_loop": REVIEW_LOOP,
         "live_run": LIVE_RUN,
         "handover": (HERE / "templates" / "handover.md").read_text(encoding="utf-8").strip(),
@@ -677,6 +679,7 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
                       f"\n## Current Done when\n\n{values['done']}\n")
         brief += "\n" + values["delegation"] + "\n"
         brief += "\n" + FILE_OWNERSHIP + "\n"
+        brief += "\n" + STORY_FILES + "\n"
         brief += "\n" + SETTINGS + "\n"
         brief += "\nNever run `forge stop`: only a person can stop a run, after confirmation in the host.\n"
         brief += "\n" + REVIEW_LOOP + "\n"

@@ -47,8 +47,8 @@ def test_3_reviews_and_reads_hold_a_query_on_another_modules_tables(env, tmp_pat
     setup_client(env, tmp_path, adopted)
     env.checks(GREEN)
     repo = env.repo
-    # A part's first review returns the serious-finding message. A fix instead reaches
-    # its one-round owner-choice stop; that policy has its own command coverage.
+    # A part's first review returns the serious-finding message. The default fix limit
+    # now follows the same two-round owner-choice policy, covered at its own command boundary.
     no_hooks = tmp_path / "fixture-no-hooks"
     no_hooks.mkdir(exist_ok=True)
     git = repo.git
