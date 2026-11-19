@@ -6,6 +6,11 @@ $summary
 Forge refuses it before it creates a branch. Use `forge start "<the idea>"` to explore an idea;
 discovery asks a question and starts no fix. Workers work only on their brief.
 
+Time history keeps the first recorded start, including a fix moved into a story and its first part.
+Holds, owner decisions, waits and resumed work keep their timestamps in How it went.
+Time without activity records stays unmeasured. Do not call it time with nothing running.
+New and existing repos get this behavior on upgrade. Earlier missing times stay unmeasured.
+
 Settled findings stay settled. Each reader and reviewer gets earlier rounds' notes and answers,
 including findings already fixed or dismissed. Do not reopen them with the same finding text
 (cold reads) or title and file (reviews); report a new defect with distinct text and new evidence.

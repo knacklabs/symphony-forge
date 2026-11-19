@@ -44,5 +44,6 @@ def test_22_outstanding_earlier_release_start_keeps_pre_upgrade_time_unknown(env
     monkeypatch.setenv("FORGE_NOW", (began + timedelta(seconds=70)).isoformat())
     current = row(env.repo, item)
     assert current["total_seconds"] == 70
-    assert 0 <= current["time_breakdown"]["nothing_running"] <= 10
+    assert current["time_breakdown"]["nothing_running"] is None
+    assert current["unknown_seconds"] >= 60
     assert sum(value or 0 for value in current["time_breakdown"].values()) <= 10

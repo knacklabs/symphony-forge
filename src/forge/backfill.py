@@ -109,6 +109,10 @@ def rebuild(top: Path, pr: dict[str, Any], *, pushed_head: str = "") -> tuple[st
     commits = [start, *repo.git("rev-list", "--reverse", "--ancestry-path", f"{start}..{head}", cwd=top).splitlines()]
     history = [(commit, repo.git("show", "-s", "--format=%cI%x00%s%x00%aN%x00%aE", commit,
                                 cwd=top).split("\0"), _json(top, commit, path)) for commit in commits]
+    # State timestamps survive rewrites and a fix's move to its task path.
+    saved_start = min((at for _, _, one in history for step in one.get("steps", [])
+                       if step.get("step") == "start" and (at := time_records.when(step.get("at")))),
+                      default=None)
     review_subject = re.compile(rf"^Review of {re.escape(key)}: (blocked|clean)\b")
     reviews = [one for _, (_, subject, _, _), one in history if review_subject.match(subject)]
     # Close pushes each reviewed work head before the review and its result commit afterwards.
@@ -119,7 +123,7 @@ def rebuild(top: Path, pr: dict[str, Any], *, pushed_head: str = "") -> tuple[st
     for commit, (at, subject, author, email), one in history:
         if commit == start:
             events.append({"id": f"rebuilt-start-{commit}", "item": key, "event": "item started",
-                           "at": at, "by": author, "email": email})
+                           "at": saved_start.isoformat() if saved_start else at, "by": author, "email": email})
         reviewed = review_subject.match(subject)
         if reviewed:
             last_green = None
@@ -177,7 +181,8 @@ def rebuild(top: Path, pr: dict[str, Any], *, pushed_head: str = "") -> tuple[st
         events.append({"id": f"rebuilt-finished-{head}", "item": key, "event": "item finished", "at": merged_at})
     # Approval happened before the item started: do not extend the item's unknown span to it.
     began = next(event["at"] for event in events if event["event"] == "item started")
-    state = {**state, "steps": [{"step": "start", "at": began}]}
+    state = {**state, "steps": [{"step": "start", "at": began},
+                               *[s for s in state.get("steps", []) if s.get("step") != "start"]]}
     record = {"events": events, "timings": timings, "state": state,
               "clean_reviews": clean, "rebuilt": True}
     return key, state, record

@@ -263,7 +263,7 @@ def item_totals(env, monkeypatch):
         for kind, seconds in (("working", 15), ("waiting", 20), ("unknown", 25)):
             assert current[f"{kind}_seconds"] == seconds
         assert current["total_seconds"] == 60
-        assert current["time_breakdown"]["nothing_running"] == 15
+        assert current["time_breakdown"]["nothing_running"] is None
 
 
 def approved_runway(env, monkeypatch, known):
