@@ -17,6 +17,7 @@ from test_merge_command import _ready, _merge_at_github
 from test_queue_land_all import client, _fix  # noqa: F401
 
 STORY = "check-waits-by-quota"
+pytestmark = pytest.mark.platform
 
 
 @pytest.mark.parametrize("command", ["close", "merge", "land"])

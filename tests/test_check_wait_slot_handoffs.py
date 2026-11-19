@@ -18,6 +18,7 @@ from test_land_releases_check_wait_slots import HELD_CHECKS
 from test_queue_land_all import _fix, _number, client  # noqa: F401
 
 STORY = "check-waits-by-quota"
+pytestmark = pytest.mark.platform
 
 
 @pytest.mark.parametrize("handoff", ["queued", "records"])

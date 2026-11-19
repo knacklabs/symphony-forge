@@ -4,9 +4,12 @@ The reset tests end after one refusal, so they miss retries against an expired
 snapshot. Only GitHub and the existing child clock are fake. Real close and its
 shared cache own the retries; no new production seam is needed.
 """
+import pytest
+
 from test_close import env  # noqa: F401
 
 STORY = "check-waits-by-quota"
+pytestmark = pytest.mark.platform
 
 
 def test_5_close_backs_off_after_a_cached_reset_passes(env, fake_clock):
