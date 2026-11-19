@@ -119,7 +119,7 @@
     "status": "blocked"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-19T13:52:00.521791+00:00",
@@ -132,8 +132,12 @@
   ],
   "stop": {
     "at": "2026-11-19T14:07:19.666839+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "src/forge/backfill.py",
-    "wait_id": "ebfd9cbd-6884-4fb1-9730-9ceee5a270c8"
+    "reason": "Owner decided on 18 Nov 2026 that fixes get two review rounds; this is the second",
+    "wait_id": "ebfd9cbd-6884-4fb1-9730-9ceee5a270c8",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
