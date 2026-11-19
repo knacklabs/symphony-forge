@@ -190,7 +190,12 @@ class Forge:
                  query: str | None = None) -> list[list[str]]:
         return self.gh.calls(*prefix, path=path, query=query)
 
-    def commit(self, where: Path, rel: str, text: str, message: str = "More work") -> str:
+    def commit(self, where: Path, rel: str, text: str, message: str = "More work", *,
+               proof: bool = True) -> str:
+        # General fixtures represent completed work. Proof-absence cases opt out
+        # so the real close preflight still decides whether the record is missing.
+        if proof and not re.search(r"(?m)^Proof list\b", message):
+            message += f"\n\nProof list:\n- The fixture change in {Path(rel).as_posix()}: checked by this command test"
         (where / rel).parent.mkdir(parents=True, exist_ok=True)
         (where / rel).write_bytes(text.encode("utf-8"))  # Same bytes on Windows as on Linux.
         self.repo.git("add", "-A", cwd=where)

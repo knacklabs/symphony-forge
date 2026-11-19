@@ -31,7 +31,7 @@ def test_1_review_reads_newest_proof_list_after_main_merge(env, previous):
     # The merge is already excluded. A later non-bookkeeping commit without a
     # label stopped the old search and hid the worker's newest proof list.
     env.open_pr(body(env.gh_calls("pr", "create")[-1]))
-    env.commit(where, "app.py", "print('complete greeting again')\n", "Retain the greeting")
+    env.commit(where, "app.py", "print('complete greeting again')\n", "Retain the greeting", proof=False)
     closed = env.close(item)
     assert closed.returncode == 0, closed.stdout + closed.stderr
     assert len(env.review_calls()) == 2

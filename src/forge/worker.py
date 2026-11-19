@@ -782,6 +782,8 @@ def _existing_tests(top: Path, scope: list[str]) -> str:
 
 def _changed_function_context(top: Path) -> str:
     """Name changed functions and the code and test files that grep finds referring to them."""
+    from forge import sync
+
     base = f"origin/{repo.default_branch(top)}"
     diff = repo.run("git", "diff", "--unified=0", "--no-color", base,
                     "--", cwd=top).stdout
@@ -830,14 +832,17 @@ def _changed_function_context(top: Path) -> str:
                 found.add(max(enclosing, key=lambda definition: definition[0])[2])
         return found
 
+    generated = sync.files(top, repo.config(top), check_syntax=False)
     for path in changed.keys() | removed.keys():
         if _test_file(path):
             continue
         source = top / path
+        text = source.read_text(encoding="utf-8") if source.is_file() else ""
+        if path in generated and text == generated[path]:
+            continue  # An upgrade's copied tools are not this item's worker edits.
         if line_numbers := changed.get(path):
             if source.is_file():
-                functions.update(containing_functions(source.read_text(encoding="utf-8").splitlines(),
-                                                      line_numbers))
+                functions.update(containing_functions(text.splitlines(), line_numbers))
         if line_numbers := removed.get(path):
             original = repo.run("git", "show", f"{base}:{path}", cwd=top).stdout.splitlines()
             functions.update(containing_functions(original, line_numbers))
