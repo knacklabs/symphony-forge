@@ -8,6 +8,15 @@ discovery asks a question and starts no fix. Workers work only on their brief.
 Forge ignores a dropped fix whose checkout no longer exists. A worker follows
 this brief even when there are no failed checks or open review findings.
 
+Time history keeps the first recorded start, including a fix moved into a story and its first part.
+Holds, owner decisions, waits and resumed work keep their timestamps in How it went.
+The moved part keeps the fix's recorded activity. Close refreshes the final merge wait when
+it sees a human merge; an agent merge refreshes it after GitHub confirms the merge.
+Time without activity records stays unmeasured. Do not call it time with nothing running.
+New and existing repos get this behavior on upgrade, including repairs to published starts
+and older compacted gaps. Upgrade checks each earlier rebuilt start once and keeps that repair
+for later upgrades. Earlier missing times stay unmeasured.
+
 Settled findings stay settled. Each reader and reviewer gets earlier rounds' notes and answers,
 including findings already fixed or dismissed. Do not reopen them with the same finding text
 (cold reads) or title and file (reviews); report a new defect with distinct text and new evidence.
@@ -666,10 +675,11 @@ part of that address only when the listed address has one. Set `phone: true` whe
 other answer, leave it out. When the browser tests run, the check opens each listed screen in light and
 dark and fails on sideways overflow, cut text, low contrast or a page that is not the listed screen.
 To set one kind of problem aside for a screen, add `waive: { '<kind>': '<the reason>' }` to its entry.
-On Windows, a builder's own bare `forge test` run skips each separate Playwright or Cypress step (directly or through one script of the repo) and prints one line that says so. A step that reaches Playwright through another file still runs. A test setting that is one combined script, or a script with a pre or post script, runs whole. `forge test --change`, close, the pull request check and the full run still run browser steps; Mac and Linux do not change.
-Close runs the browser tests only when the repo's close test command (`fast_test`, else `test`) includes
-them. If it does not, say so in your last message: the check then runs only in the full test run, until
-the coordinator adds the browser tests to `fast_test`. When you add a sample-data prototype's first
+On Windows, a builder's own bare `forge test` run skips each separate Playwright or Cypress step (directly or through one script of the repo) and prints one line that says so. A step that reaches Playwright through another file still runs. A test setting that is one combined script, or a script with a pre or post script, runs whole. Other runs keep their configured steps. Keep browser steps in the nightly full command, outside pull request CI and `fast_test`; this Windows shortcut does not change selection elsewhere.
+The rendered check runs with browser tests in the full test command and nightly full run.
+Keep browser tests outside `fast_test` and pull request CI, even when shared settings select
+all other tests. A broken screen can merge; the nightly run finds it the next morning.
+When you add a sample-data prototype's first
 tests, list every screen the prototype has. A new app asks the phone-view question before its build
 starts; an existing app asks at the next change to one of its screens.
 

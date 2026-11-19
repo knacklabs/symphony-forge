@@ -16,7 +16,6 @@ from test_pull_request_body_limit import publish_snapshot
 from test_worker import install_claude
 
 STORY = "FORGE-BOARD-3"
-FIELDS = {"work", "in_line", "waiting_for_person", "waiting_for_checks"}
 
 
 def configured_client(env, previous):
@@ -66,13 +65,6 @@ def write_history(env, rounds, *, append=False):
         path.write_bytes(("".join(json.dumps(record) + "\n" for record in records) + previous).encode("utf-8"))
 
 
-def assert_seconds(round_, expected=None):
-    assert set(round_["seconds"]) == FIELDS
-    assert all(type(value) in (int, float) and value >= 0 for value in round_["seconds"].values())
-    if expected is not None:
-        assert round_["seconds"] == expected
-
-
 @pytest.mark.timeout(600)
 @pytest.mark.parametrize("scenario,previous", [
     ("two-round-fix", False), ("two-round-fix", True),
@@ -90,13 +82,15 @@ def test_3_each_round_keeps_seconds_and_older_unrecorded_time_stays_unknown(
         monkeypatch.setenv("FORGE_NOW", (began + timedelta(seconds=120)).isoformat())
         write_history(env, [lifecycle(item, number, began + timedelta(seconds=60 * (number - 1)))
                             for number in (1, 2)])
-        rounds = row(env.repo, item)["rounds"]
+        current = row(env.repo, item)
+        rounds = current["rounds"]
         assert [one["round"] for one in rounds] == [1, 2]
         for one in rounds:
-            assert_seconds(one, {"work": 25, "in_line": 3,
-                                 "waiting_for_person": 21 - one["round"],
-                                 "waiting_for_checks": 11 + one["round"]})
-            assert sum(one["seconds"].values()) == 60
+            # Unrecorded gaps no longer count as a wait for a person.
+            assert one["seconds"] is None
+        assert current["working_seconds"] == 50
+        assert current["waiting_seconds"] == 45
+        assert current["unknown_seconds"] == 25
         return
 
     if scenario == "incomplete-lifecycle":
@@ -127,7 +121,8 @@ def test_3_each_round_keeps_seconds_and_older_unrecorded_time_stays_unknown(
     env.open_pr(body(env.gh_calls("pr", "edit")[-1]))
     first = row(env.repo, item)["rounds"]
     assert len(first) == 1
-    assert_seconds(first[0])
+    assert first[0]["seconds"] is None  # The gap between commands has no activity record.
+    assert row(env.repo, item)["working_seconds"] > 0
 
     if scenario == "old-published-summary":
         # Earlier releases published category totals, but not the new four measurements.
@@ -166,8 +161,8 @@ def test_3_each_round_keeps_seconds_and_older_unrecorded_time_stays_unknown(
         rounds = row(env.repo, item)["rounds"]
         assert [one["round"] for one in rounds] == [1, 2]
         for one in rounds:
-            assert_seconds(one)
-            assert one["seconds"]["work"] > 0
+            assert one["seconds"] is None
+            assert "built at" in one["line"]
         return
 
     # Independent earlier dates exceed the prose budget. The earliest review predates
@@ -213,10 +208,10 @@ def test_3_each_round_keeps_seconds_and_older_unrecorded_time_stays_unknown(
     assert all(one["line"].strip() for one in rounds), "Every round must have readable detail"
     assert row(env.repo, item)["total_seconds"] > 200 * 3600
     own = [one for one in rounds if one["round"] is not None]
-    assert own and any(one["seconds"] is not None for one in own)
+    assert own and all(one["seconds"] is None for one in own)
     for one in own:
         if one["round"] <= 201:
             assert one["seconds"] is None
             continue
         assert one["round"] == 202
-        assert_seconds(one)
+        assert one["seconds"] is None

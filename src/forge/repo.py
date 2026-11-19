@@ -1108,6 +1108,8 @@ def write_state(item: str, data: dict[str, Any], top: Path | None = None) -> str
     """Write an item's state in a checkout on a work branch. Returns the repo-relative path."""
     top = top or root()
     _work_branch(top)
+    from forge import time_records
+    time_records.date_transitions(data, read_state(item, top) or {})
     rel = state_path(item)
     path = top / rel
     path.parent.mkdir(parents=True, exist_ok=True)

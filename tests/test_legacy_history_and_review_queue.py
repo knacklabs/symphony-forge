@@ -38,9 +38,10 @@ def test_12_legacy_internal_gaps_stay_unknown_until_complete_activity_recording(
     assert current["time_breakdown"]["reviewing"] == 10
     assert current["time_breakdown"]["waiting_for_ci"] == 5
     assert current["time_breakdown"]["building"] == 5
-    assert current["time_breakdown"]["nothing_running"] == 5
+    assert current["time_breakdown"]["nothing_running"] is None
     assert current["time_breakdown"]["waiting_for_owner"] is None
-    assert sum(value or 0 for value in current["time_breakdown"].values()) == 25
+    assert sum(value or 0 for value in current["time_breakdown"].values()) == 20
+    assert current["unknown_seconds"] == 50
 
 
 def test_13_mixed_legacy_report_retains_observed_repeat_beside_an_unclassified_finding(env, monkeypatch):
@@ -85,7 +86,7 @@ def test_15_pre_upgrade_run_records_do_not_establish_complete_activity_history(e
     assert current["total_seconds"] == 70
     assert current["time_breakdown"]["reviewing"] == 10
     assert current["time_breakdown"]["building"] == 5
-    assert current["time_breakdown"]["nothing_running"] == 5
+    assert current["time_breakdown"]["nothing_running"] is None
 
 
 @pytest.mark.parametrize("upgraded", [False, True], ids=["historical-only", "after-upgrade"])
@@ -99,7 +100,8 @@ def test_16_historical_worker_question_without_end_stays_unknown(env, monkeypatc
         ] if upgraded else []),
     ], lambda at: [])
     assert current["time_breakdown"]["waiting_for_owner"] is None
-    assert current["time_breakdown"]["nothing_running"] == (5 if upgraded else None)
+    assert current["time_breakdown"]["nothing_running"] is None
+    assert current["unknown_seconds"] == (65 if upgraded else 70)
     assert all("waiting for the owner" not in round_["line"] for round_ in current["rounds"])
 
 

@@ -286,11 +286,10 @@ def test_3_one_huge_review_keeps_its_counts_and_round_line_within_the_record_bud
     env.repo.path = clone
     shared = row(env.repo, item)
     assert shared["rounds"][-1]["line"].startswith("Round 1: "), shared["rounds"]
-    if huge == "long-titles":
-        # Owner narrowed round seconds: after lifecycle compaction, a later close
-        # must not present partial measurements as the round's full duration.
-        assert shared["rounds"][-1]["seconds"] is None
-    else:
-        assert shared["rounds"][-1]["seconds"] is not None
+    # Compaction and the gaps between these real commands leave incomplete time.
+    # Publishing a large review must retain measured review time without turning
+    # that partial measurement into a complete round duration on another machine.
+    assert shared["rounds"][-1]["seconds"] is None
+    assert shared["unknown_seconds"] > 0
     assert re.search(r"review \w+ \(\d+ seconds?\)", shared["rounds"][-1]["line"])
     assert shared["rounds"][-1]["new_findings"] == (200 if huge == "long-titles" else 20)

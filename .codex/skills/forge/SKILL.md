@@ -6,6 +6,69 @@ description: Run Forge, which takes a story from approval to a merged pull reque
 
 # Forge
 
+## When CI is over 10 minutes
+
+Close reports the slowest run among a pull request's last five pushes: elapsed time, runner
+minutes, slowest job and available stages (runner wait, setup, selection, tests and reruns).
+It names groups over the fixed 10-minute budget. For failed checks it counts ended jobs and
+says how many were still running. Doctor warns when the median time of the last 20 merged
+pull requests exceeds 10 minutes. The warning never blocks a merge. Nothing is stored and
+the board does not change. Open the slowest job with `gh run view` before choosing a fix.
+Start with the largest measured cost:
+
+1. Upgrade to the record-commit rerun fix to remove repeated runs caused only by Forge records.
+   Keep runs that test changed code or a changed base.
+2. Run browser tests, including each screen's rendered check, nightly through the full command,
+   outside `fast_test` and pull request CI, even for shared-settings changes.
+3. Keep test setup and helpers from importing the app entry or the whole app. Preserve real
+   import dependencies: never drop changed files from related selection or replace them with
+   area names. Keep a table of slow tests and their input paths; run them for changed inputs on
+   pull requests and always nightly. Tests starting scripts name their inputs and are selected
+   explicitly when those inputs change. Use `**/<file>` excludes in Vitest config `exclude`, not
+   `--exclude`, which related and per-project runs can ignore. Run each file once per job:
+   a project run whole is excluded from related selection, while other projects' related files
+   still run. Test the whole document-only CI wrapper and inner picker chain, including executable
+   documents and contract inputs. Picker tests set both `FORGE_GROUP` and `FORGE_GROUPS` themselves.
+4. Run files in parallel before splitting runtimes. Check built-in isolation first: Vitest's
+   default `isolate: true` and Cloudflare's pool give each file its own worker, Miniflare and
+   temporary storage. Bound `maxWorkers`; use one worker per slot core in CI, capped across all
+   processes by cores and measured peak memory, including temporary storage. Each file owns its
+   data. Repair global resets before making a suite serial: await queued jobs, `waitUntil` work,
+   alarms and Durable Objects after timeouts before `beforeEach` resets only that file's data.
+   Never hide leftover work with ignored inserts, upserts, random keys, blind retries or serial
+   files. Timing bounds sit between good and bad cases with room for load; worker-count changes
+   need one parallel run of timing tests as proof.
+5. Small changes use one group only when the change command has an explicit `{groups}` count
+   and neither test command has a fixed shard count. Automatic pytest-split without these
+   placeholders keeps all groups. The small-change limit is five code files, with no lockfile,
+   shared settings, workflow or Forge selection-script change. Larger changes use all groups. Set
+   `groups` to the number of fast runner slots reserved for tests. Give each self-hosted slot its
+   own CPU set, memory share and enough cores for the job's worker limit. Use memory-backed
+   temporary storage only when that slot has room.
+6. Preinstall git, Python 3.11, uv, Node, the pinned package manager and Docker in the runner
+   image, and keep a warm package store. Do not cache `node_modules` or Playwright browsers.
+   Avoid burstable cloud machines such as AWS t2 and t3 for steady tests: exhausted CPU credits
+   slow them down. Prefer fixed-performance machines. Look for high `st` (steal time) in `top`
+   or `vmstat` while tests run to spot CPU contention. Before removing a runner machine, add
+   replacement capacity or move its label. Forge says likely missing runner only after a check
+   has waited five minutes.
+
+New repos get these rules at setup; existing repos get the guide on upgrade and sync, which
+preserve their own scripts and settings. Ask the owner before changing those through a fix.
+For browser selection and parallel API files, copy the matching starter's `scripts/test.mjs`
+changes; for TypeScript also adapt its API Vitest config, tests and helpers for file-owned data.
+
+For time-based Vitest groups in an existing app, use an owner-agreed fix: copy the TypeScript
+starter's `scripts/test-groups.mjs` and `scripts/timed-sequencer.mjs`, register
+`sequence: { sequencer }` in each grouped Vitest config and copy `scripts/test.mjs`'s `--group`
+handling. Count each run's files before passing `--shard`: use no more groups than files,
+skip only the current Vitest invocation when the job's group exceeds that count.
+Continue with the job's other test runs. Fail clearly for zero files, and place files only
+across groups in use so none is empty. Give every group its own setup. Put `{group}` and
+`{groups}` in `test` and `fast_test` through the settings fix. Add a refresh command that writes
+`test-timings.json` from Vitest's JSON report; commit the file through a fix. No CI job refreshes
+times or opens a pull request. Python pytest groups keep their split by recorded time.
+
 Close refuses a removed check together with other changes. Land the removal in its
 own fix that changes only `checks`, `test_place` and the generated workflow from
 `forge sync`. The refusal names each removed check. Merge then waits for the checks
@@ -1419,9 +1482,16 @@ keep existing settings until that fix changes them. An explicit `test_place` kee
    beside changed-test selection in TypeScript `fast_test`, through the normal settings fix after
    the human agrees. Keep `test` as the full suite. New repos get this review at setup; existing
    adopted repos get this guidance on upgrade and sync, with settings changed only through that fix.
-   If the app has Playwright browser tests, its close command (`fast_test`, else `test`) should run
-   them; if it does not, the rendered check runs only in the full test run. A worker who finds this
-   says so in its last message.
+   Keep browser tests and each screen's rendered check in the full test command and nightly
+   full run, not in `fast_test` or pull request CI, including shared-settings changes.
+   A broken screen can merge; the nightly run finds it the next morning.
+   The pytest picker retains non-pytest steps from `test`. It does not filter out browser steps.
+   For a combined Python/browser command, use a separate non-browser `fast_test` through the
+   owner's settings fix. For example, with `test = "uv run pytest -q && npx playwright test"`,
+   use `fast_test = "uv run pytest -q"`. This runs all Python tests on pull requests and keeps
+   browser tests nightly. Keep any required install, lint, type-check and setup steps too.
+   For changed-only Python selection, adapt the app's script to accept a base and omit browser
+   steps. Do not use `forge test --pytest {base}` alone to exclude them.
    Forge writes no `fast_test` by itself.
    Client CI caches npm downloads and the default pnpm stores by the root lockfile and enables
    uv's package cache. It keeps the app's own pnpm setup and version.
@@ -1440,8 +1510,10 @@ keep existing settings until that fix changes them. An explicit `test_place` kee
    The Python starter accepts a base in `node scripts/test.mjs <base>`; `--list` prints commands
    without running them. API changes select API types, ruff, mypy, import checks and all API
    tests, since HTTP tests have no import graph. Web and library changes select ESLint, the
-   TypeScript build, changed Vitest tests and the browser suite. Shared configuration or no
-   base runs everything. Existing apps keep their scripts on upgrade and sync; ask before
+   TypeScript build and changed Vitest tests. A base-argument run excludes browser tests and
+   their installation, even when shared configuration selects all other tests.
+   A no-base run includes the full browser suite nightly.
+   Existing apps keep their scripts on upgrade and sync; ask before
    adding this selection to them.
    The TypeScript starter uses Nx to name affected
    parts and run their lint, typecheck and tests; `--list <base>` prints the commands.
@@ -1466,8 +1538,8 @@ keep existing settings until that fix changes them. An explicit `test_place` kee
    tests need, in the order the script runs them, including any step that runs after the
    tests. Limit only the unit-test steps to the changed code with the runner's own option and
    `{base}`, for example `vitest run --changed {base}` or `jest --changedSince {base}`; npm
-   passes `--` options only to the last command of a script. Keep the browser-test steps,
-   because the pull request check runs `fast_test` too. Keep the setup a script runs before or
+   passes `--` options only to the last command of a script. Keep browser-test steps in the
+   nightly full command, outside `fast_test`. Keep the setup a script runs before or
    after itself (`pre` and `post` scripts). Run the command once with `{base}` set to the
    default branch. Tell the owner that changed-only selection follows imports, so API tests
    that reach the code only through a URL run only in the full test run. Then ask the owner,
@@ -2311,7 +2383,7 @@ upgrade. Upgrade never rewrites their `test` or `fast_test` settings. Doctor rep
 in the project: it loads a temporary pytest hook to exclude unrelated files, including on pytest
 before 8.2. Test launchers must preserve `PYTHONPATH`, forward pytest arguments and expose xdist
 options in the command or pytest configuration.
-On Windows, a builder's own bare `forge test` run skips each separate Playwright or Cypress step (directly or through one script of the repo) and prints one line that says so. A step that reaches Playwright through another file still runs. A test setting that is one combined script, or a script with a pre or post script, runs whole. `forge test --change`, close, the pull request check and the full run still run browser steps; Mac and Linux do not change.
+On Windows, a builder's own bare `forge test` run skips each separate Playwright or Cypress step (directly or through one script of the repo) and prints one line that says so. A step that reaches Playwright through another file still runs. A test setting that is one combined script, or a script with a pre or post script, runs whole. Other runs keep their configured steps. Keep browser steps in the nightly full command, outside pull request CI and `fast_test`; this Windows shortcut does not change selection elsewhere.
 Workers run tests only through bare `forge test`. It runs `fast_test`, or `test` when none is
 set (using pytest selection when supported), with `{base}` as the merge base with
 `origin/<default branch>`, in the same fair machine-wide test lane as close.
