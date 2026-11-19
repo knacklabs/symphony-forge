@@ -72,7 +72,7 @@
     "id": "0cbf153f-5352-4c4f-bcd2-ec0c6c9d2d2e",
     "status": "blocked"
   },
-  "round": 2,
+  "round": 3,
   "status": "fixing",
   "steps": [
     {
@@ -85,10 +85,12 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "ba93e24ad3e917d8575ae7556615e7bea0af79b0",
-    "keys": {},
-    "round": null
+    "close": "37bd8dfd-4c39-4915-ab1b-ae356682b388",
+    "head": "a92a1fc1d03d7015fb26cbe2111fb4d76135a258",
+    "keys": {
+      "the open P0 not done: warm runtime targets and batched pull-request reads in src/forge/doctor.py": 1
+    },
+    "round": 2
   },
   "why": "forge next takes about 25 seconds and forge doctor about 2.5 minutes on Forge's own repo: next makes about 600 git calls, most asking per item when it merged (story.completed and merged_at, the board numbers line), and doctor makes about 90 GitHub requests, one per merged pull request (doctor._prs) plus 4 slow ones for the CI time warning",
   "worker": "codex"
