@@ -213,7 +213,7 @@
     "id": "423e1200-d661-4146-9284-ddfd6ef65617",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -226,10 +226,12 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "a22a07079dbc405bb1f1f54596d1cf93d1445d8b",
-    "keys": {},
-    "round": null
+    "close": "1682659f-340d-49ac-870a-2a4265e634c8",
+    "head": "fd02a41f116a2045d1964b8a34985a933c6e5841",
+    "keys": {
+      "the open P0 not done: repair previously published starts on upgrade in src/forge/backfill.py": 1
+    },
+    "round": 1
   },
   "why": "Start-to-merge records are unreliable: starts can be rewritten (a task's early commits rewritten to one later time, a fix that became a task keeping the child's start), repairs show zero minutes, and unexplained time is labelled 'nothing running'",
   "worker": "codex"
