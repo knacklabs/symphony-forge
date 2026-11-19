@@ -77,15 +77,8 @@ def wait(top: Path, item: str, sha: str, names: list[str], *, branch: str,
     if shared is not None:
         names = shared
     start, clock = repo.now(), time.monotonic()
-    released = False
     report_time = False
     failed = False
-
-    def waiting(value: bool) -> None:
-        nonlocal released
-        if slot is not None and value != released:
-            slot(value)
-            released = value
 
     from forge import codex  # codex imports what imports checks
     # The waiting process: forge land --all leaves out a change only while that process runs.
@@ -93,8 +86,8 @@ def wait(top: Path, item: str, sha: str, names: list[str], *, branch: str,
         result.update(outcome="unknown", state="unknown")
         try:
             from forge import github
-            with github.check_wait(top):
-                _wait(top, item, sha, names, branch, progress, result, waiting, train)
+            with github.check_wait(top, slot) as (admit, waiting):
+                _wait(top, item, sha, names, branch, progress, result, waiting, admit, train)
             report_time = True
         except repo.Refused as error:
             report_time = error.entry in (REFUSALS["red"], REFUSALS["timeout"])
@@ -109,7 +102,6 @@ def wait(top: Path, item: str, sha: str, names: list[str], *, branch: str,
             result["reason"] = "Interrupted by Ctrl-C."
             raise
         finally:
-            waiting(False)
             if report_time:
                 from forge import citime
                 citime.report(top, branch, current=failed)
@@ -125,15 +117,16 @@ def let_finish(top: Path, item: str, sha: str, names: list[str],
     (a running wait lends the land queue place back) and needs no change to the workflow.
     Test groups report no `tests` check until they end, so the wait does not look for names."""
     from forge import github
-    with github.check_wait(top):
-        _let_finish(top, item, sha, names, slot)
+    with github.check_wait(top, slot) as (admit, waiting):
+        _let_finish(top, item, sha, names, waiting, admit)
 
 
 def _let_finish(top: Path, item: str, sha: str, names: list[str],
-                slot: Callable[[bool], None] | None) -> None:
+                slot: Callable[[bool], None] | None, admit: Callable[[], None]) -> None:
     deadline = time.monotonic() + float(os.environ.get("FORGE_CHECKS_WAIT", "5400"))
     try:
         while True:
+            admit()
             try:
                 seen, _, runs = _seen(top, item, sha)
             except repo.Refused:
@@ -172,7 +165,8 @@ def after_code_ci(top: Path, item: str, branch: str, cfg: dict[str, Any], seriou
 
 
 def _wait(top: Path, item: str, sha: str, names: list[str], branch: str, progress: bool,
-          result: dict[str, Any], waiting: Callable[[bool], None], train: bool = False) -> None:
+          result: dict[str, Any], waiting: Callable[[bool], None], admit: Callable[[], None],
+          train: bool = False) -> None:
     # ponytail: an env override is the whole wait seam (tests set 0 to look once).
     timeout = float(os.environ.get("FORGE_CHECKS_WAIT", "1800" if progress else "600"))
     deadline = time.monotonic() + timeout
@@ -184,6 +178,7 @@ def _wait(top: Path, item: str, sha: str, names: list[str], branch: str, progres
     cache = (repo.forge_dir(top) / f"check-wait-{repo.blob_hash(branch + sha)}.json"
              if progress else None)
     while True:
+        admit()
         queued = False
         running = False
         try:

@@ -37,15 +37,33 @@ def _quota(cwd):
 
 
 @contextmanager
-def check_wait(cwd):
-    """Hold a process-safe place for the whole wait, even when it lends its build place."""
+def check_wait(cwd, slot=None):
+    """Keep quota admission separate from a borrowed land place."""
     from forge import codex, repo
 
     folder = repo.forge_dir(cwd)
     announced = False
     held = None
-    try:
-        while held is None:
+    lent = False
+
+    def release():
+        nonlocal held
+        if held is not None:
+            codex._unlock(held)
+            held.close()
+            held = None
+
+    def waiting(value):
+        nonlocal lent
+        if slot is not None and value != lent:
+            if not value:
+                release()  # Other land children may hold every land place while waiting for quota.
+            lent = value
+            slot(value)
+
+    def admit():
+        nonlocal held, announced
+        while True:
             resources = _quota(cwd)
             limits = []
             for name, per_minute in (("core", 48), ("graphql", 4)):
@@ -57,22 +75,35 @@ def check_wait(cwd):
                     limits.append(max(0, int(quota["remaining"])) // (minutes * per_minute))
                 except (KeyError, TypeError, ValueError):
                     limits.append(1)  # An unavailable quota permits only one wait.
-            for number in range(min(limits)):
-                candidate = (folder / f"github-check-wait-{number}.lock").open("a+b")
-                if codex._try_lock(candidate):
-                    held = candidate
-                    break
-                candidate.close()
-            if held is None:
-                if not announced:
-                    print("Waiting for GitHub API quota before another check wait.", flush=True)
-                    announced = True
-                time.sleep(15)
-        yield
+            with codex._one_at_a_time(folder / "github-check-waits"):
+                # Renew before each poll. Count every holder, including places
+                # above a newly reduced budget, before admitting another wait.
+                release()
+                paths = sorted(folder.glob("github-check-wait-*.lock"))
+                active, free = 0, None
+                for path in paths:
+                    with path.open("a+b") as candidate:
+                        if codex._try_lock(candidate):
+                            codex._unlock(candidate)
+                            free = path
+                        else:
+                            active += 1
+                if active < min(limits):
+                    candidate = (free or folder / f"github-check-wait-{len(paths)}.lock").open("a+b")
+                    if codex._try_lock(candidate):
+                        held = candidate
+                        return
+                    candidate.close()
+            if not announced:
+                print("Waiting for GitHub API quota before another check wait.", flush=True)
+                announced = True
+            time.sleep(15)
+    try:
+        admit()
+        yield admit, waiting
     finally:
-        if held is not None:
-            codex._unlock(held)
-            held.close()
+        release()
+        waiting(False)
 
 
 def run(args, execute, cwd):
@@ -89,8 +120,9 @@ def run(args, execute, cwd):
         resume = time.time() + 60
         try:
             resource = resources["graphql" if args[1:3] == ("api", "graphql") else "core"]
-            if resource["remaining"] == 0:
-                resume = int(resource["reset"]) + 3
+            reset = int(resource["reset"]) + 3
+            if resource["remaining"] == 0 and reset > time.time():
+                resume = reset
         except (ValueError, KeyError, TypeError, AttributeError):
             pass  # An unavailable quota lookup still permits the documented one-minute retry.
         if not announced:

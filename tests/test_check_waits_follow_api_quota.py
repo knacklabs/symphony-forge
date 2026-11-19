@@ -2,6 +2,7 @@
 
 Reset recovery tests cannot detect excessive admission. Only GitHub and elapsed
 time are fake; commands, processes, locks and worktrees stay real. No new seam.
+Unequal resources and a falling budget expose ignored pools and occupied holes.
 """
 import json
 import subprocess
@@ -10,7 +11,7 @@ import time
 
 import pytest
 
-from conftest import machine_cores
+from conftest import patient
 from test_close import env  # noqa: F401
 from test_merge_command import _ready, _merge_at_github
 from test_queue_land_all import client, _fix  # noqa: F401
@@ -50,52 +51,105 @@ if sys.argv[1:3] == ["api", "rate_limit"]:
     assert all(after - before >= 60 for before, after in zip(reads, reads[1:]))
 
 
-@pytest.mark.parametrize("places", [1, 2])
-@pytest.mark.timeout(240)
-def test_2_land_caps_concurrent_waits_and_releases_places(client, monkeypatch, places):
+@pytest.mark.timeout(180)
+@pytest.mark.parametrize(("initial_core", "initial_graphql", "reduced_core", "reduced_graphql"), [
+    pytest.param(5760, 720, 5760, 240, id="graphql-limited"),
+    pytest.param(8640, 480, 2880, 480, id="core-limited"),
+])
+def test_2_concurrent_closes_follow_both_quotas_when_the_budget_falls(
+        client, monkeypatch, fake_clock, initial_core, initial_graphql, reduced_core, reduced_graphql):
     env = client
-    machine_cores(env.repo, 8)
-    for number in range(3):
-        _fix(env, monkeypatch, f"change-{number}", number + 1, {f"file{number}.py": "VALUE = 1\n"})
+    places = [_fix(env, monkeypatch, f"change-{number}", number + 1,
+                   {f"file{number}.py": "VALUE = 1\n"}) for number in range(3)]
+    # The parent alone advances the shared poll clock. Subprocess deadlines
+    # retain real time, including while a GitHub response is held.
+    clock = env.tmp / "clock"
+    (clock / "sitecustomize.py").write_text(
+        'import subprocess, time\nfrom pathlib import Path\nfrom types import SimpleNamespace\n'
+        'subprocess.time = SimpleNamespace(sleep=time.sleep)\nreal = time.monotonic\n'
+        f'offset = Path({json.dumps((clock / "elapsed").as_posix())})\n'
+        'time.monotonic = lambda: real() + float(offset.read_text("utf-8"))\n'
+        'real_sleep = time.sleep\ntime.sleep = lambda seconds: real_sleep(0.1 if seconds == 15 else seconds)\n',
+        encoding="utf-8")
     stub = env.repo.bin / "gh"
-    stub.write_text(stub.read_text("utf-8").replace(
-        'if args[:4] == ["api", "--paginate", "--jq", ".check_runs[]"]:',
-        f'''if args[:2] == ["api", "rate_limit"]:
-    answer(json.dumps({{"resources": {{name: {{"remaining": {places * 3000}, "reset": int(time.time()) + 3600}}
-                                       for name in ("core", "graphql")}}}}))
+    intercept = '''import threading, time
+if args[:2] == ["api", "rate_limit"]:
+    core, graphql = reduced_values if (here / "budget-shrunk").exists() else initial_values
+    append_json(here / "quota-reads", {"at": time.monotonic(), "core": core, "graphql": graphql})
+    print(json.dumps({"resources": {
+        "core": {"remaining": core, "reset": int(time.time()) + 3600},
+        "graphql": {"remaining": graphql, "reset": int(time.time()) + 3600}}}))
+    sys.exit(0)
 if args[:4] == ["api", "--paginate", "--jq", ".check_runs[]"]:
-    append_json(here / "budget-starts", args)
-    import threading
-    until = time.monotonic() + 45
-    while not (here / "budget-release").exists() and time.monotonic() < until:
+    branch = subprocess.run(["git", "branch", "--show-current"], capture_output=True,
+                            text=True).stdout.strip()
+    append_json(here / "budget-starts", {"branch": branch})
+    while not (here / "release-all").exists() and not (here / ("release-" + branch.replace("/", "-"))).exists():
         threading.Event().wait(0.05)
-if args[:4] == ["api", "--paginate", "--jq", ".check_runs[]"]:''', 1), encoding="utf-8")
-    output, error = env.tmp / "land.out", env.tmp / "land.err"
-    with output.open("wb") as stdout, error.open("wb") as stderr:
-        process = subprocess.Popen([sys.executable, str(env.repo.bin / "forge"), "land", "--all"],
-                                   cwd=env.repo.path, stdin=subprocess.DEVNULL, stdout=stdout, stderr=stderr)
-        rows = []
-        try:
-            deadline = time.monotonic() + 90
-            while process.poll() is None and time.monotonic() < deadline:
-                starts = env.repo.bin / "budget-starts"
-                rows = starts.read_text().splitlines() if starts.exists() else []
-                if len(rows) > places or (len(rows) == places and "Waiting for GitHub API quota" in output.read_text()):
-                    break
-                time.sleep(0.05)
-            assert len(rows) == places, output.read_text() + error.read_text()
-            assert "Waiting for GitHub API quota" in output.read_text()
-        finally:
-            (env.repo.bin / "budget-release").touch()
+'''
+    intercept = intercept.replace("reduced_values", repr((reduced_core, reduced_graphql)), 1)
+    intercept = intercept.replace("initial_values", repr((initial_core, initial_graphql)), 1)
+    stub.write_text(stub.read_text("utf-8").replace(
+        "args = sys.argv[1:]\n", "args = sys.argv[1:]\n" + intercept, 1), encoding="utf-8")
+    starts, quota = env.repo.bin / "budget-starts", env.repo.bin / "quota-reads"
+
+    def rows(path):
+        return [json.loads(line) for line in path.read_text("utf-8").splitlines()] if path.exists() else []
+
+    def until(condition):
+        deadline = time.monotonic() + 30
+        while time.monotonic() < deadline:
+            if condition():
+                return
+            time.sleep(0.05)
+        pytest.fail("The command did not reach the expected GitHub response.")
+
+    def advance(seconds):
+        temp = clock / "next-elapsed"
+        temp.write_text(str(seconds), encoding="utf-8")
+        patient(lambda: temp.replace(clock / "elapsed"))
+
+    processes, streams, outputs = [], [], []
+    try:
+        for number, where in enumerate(places):
+            output, error = env.tmp / f"close-{number}.out", env.tmp / f"close-{number}.err"
+            outputs.append((output, error))
+            stdout, stderr = output.open("wb"), error.open("wb")
+            streams.extend((stdout, stderr))
+            processes.append(subprocess.Popen(
+                [sys.executable, str(env.repo.bin / "forge"), "close", f"change-{number}"],
+                cwd=where, stdin=subprocess.DEVNULL, stdout=stdout, stderr=stderr))
+            if number < 2:
+                until(lambda: len(rows(starts)) == number + 1)
+        until(lambda: "Waiting for GitHub API quota" in outputs[2][0].read_text("utf-8"))
+        assert len(rows(starts)) == 2
+        (env.repo.bin / "budget-shrunk").touch()
+        advance(61)
+        until(lambda: any(row["core"] == reduced_core and row["graphql"] == reduced_graphql
+                          for row in rows(quota)))
+        # The lower place is demonstrably free once its real close exits.
+        (env.repo.bin / "release-fix-change-0").touch()
+        processes[0].wait(timeout=30)
+        assert processes[0].returncode == 0, outputs[0][1].read_text("utf-8")
+        advance(122)
+        # Only the third close can refresh now: the second is still inside gh.
+        until(lambda: len(rows(starts)) > 2 or len(rows(quota)) >= 3)
+        assert len(rows(starts)) == 2, "A new wait exceeded the reduced budget while the higher place stayed held."
+        reads = rows(quota)
+        assert len(reads) == 3
+        assert all(after["at"] - before["at"] >= 60 for before, after in zip(reads, reads[1:]))
+        (env.repo.bin / "release-fix-change-1").touch()
+        until(lambda: len(rows(starts)) == 3)
+    finally:
+        (env.repo.bin / "release-all").touch()
+        for process in processes:
             try:
-                process.wait(timeout=120)
+                process.wait(timeout=30)
             except subprocess.TimeoutExpired:
                 process.kill()
                 process.wait(timeout=10)
-    assert process.returncode == 0, output.read_text() + error.read_text()
-    assert "Merged (3):" in output.read_text()
-    reads = [row["at"] for row in (json.loads(line) for line in
-             (env.repo.bin / "gh-timed.jsonl").read_text().splitlines())
-             if row["args"][:2] == ["api", "rate_limit"]]
-    assert reads
-    assert all(after - before >= 60 for before, after in zip(reads, reads[1:]))
+        for stream in streams:
+            stream.close()
+    for process, (output, error) in zip(processes, outputs):
+        assert process.returncode == 0, output.read_text("utf-8") + error.read_text("utf-8")
+        assert "Ready:" in output.read_text("utf-8")

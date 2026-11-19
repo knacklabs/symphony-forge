@@ -39,6 +39,11 @@ def answer(out, code=0):
     sys.exit(code)
 
 
+if args[:2] == ["api", "rate_limit"]:
+    answer(json.dumps({"resources": {name: {"remaining": 50000, "reset": int(time.time()) + 3600}
+                                     for name in ("core", "graphql")}}))
+
+
 def heads():
     listed = subprocess.run(["git", "ls-remote", "--heads", remote], capture_output=True,
                             text=True).stdout.split()
