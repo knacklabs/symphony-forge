@@ -18,7 +18,7 @@
   "done_when": "No test run starts on main after a merge; the nightly full run is the only run on main, and Forge merges nothing while main's newest nightly result is red, naming the nightly run and the repair step; new and existing repos get it on upgrade and forge sync",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "round": 1,
+  "round": 2,
   "status": "working",
   "steps": [
     {
@@ -28,6 +28,11 @@
     {
       "at": "2026-11-19T17:42:24.342635+00:00",
       "round": 1,
+      "step": "resume"
+    },
+    {
+      "at": "2026-11-19T17:43:53.192725+00:00",
+      "round": 2,
       "step": "resume"
     }
   ],
