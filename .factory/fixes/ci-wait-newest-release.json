@@ -18,7 +18,7 @@
       "gain": 5,
       "harm": 3,
       "line": 93,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -31,7 +31,7 @@
       "gain": 4,
       "harm": 3,
       "line": 94,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -44,7 +44,7 @@
       "gain": 4,
       "harm": 3,
       "line": 52,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -57,7 +57,7 @@
       "gain": 4,
       "harm": 3,
       "line": 95,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -70,78 +70,110 @@
       "gain": 4,
       "harm": 3,
       "line": 35,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
       "title": "Gate: tests/test_ci_wait_uses_newer_installed_release.py::test_1_pinned_commands_use_newer_ci_recovery_and_keep_pinned_review",
       "work": 2
+    },
+    {
+      "area": "run_release() in src/forge/repo.py",
+      "file": "src/forge/repo.py",
+      "gain": null,
+      "harm": null,
+      "line": 995,
+      "outcome": "open",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Route close through the target worktree's pinned release",
+      "work": null
+    },
+    {
+      "area": "pinned() in src/forge/pinned_checks.py",
+      "file": "src/forge/pinned_checks.py",
+      "gain": null,
+      "harm": null,
+      "line": 124,
+      "outcome": "open",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Handle releases without the assumed close helpers",
+      "work": null
+    },
+    {
+      "area": "pinned.synced() in src/forge/pinned_checks.py",
+      "file": "src/forge/pinned_checks.py",
+      "gain": null,
+      "harm": null,
+      "line": 135,
+      "outcome": "open",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Preserve the branch pin before the older close merges main",
+      "work": null
+    },
+    {
+      "area": "test_1_pinned_close_after_upgrade_recovers_before_the_review_record_push() in tests/test_ci_wait_uses_newer_installed_release.py",
+      "file": "tests/test_ci_wait_uses_newer_installed_release.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 130,
+      "outcome": "open",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Gate: cover closing an older worktree from upgraded main",
+      "work": 2
     }
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "fb0ef1d41b54ef488bc0b7f3f2f11c9cfd4ce73fa891250de841c256240cd62e",
-    "changed": "966c93338225565a91a8efdff71f76f5cdb44ea766dc1f57797ef6fdf38078aa",
-    "commit": "5ce9c434782d8b0f2cec0c97241b67ee304fe883",
+    "branch_diff": "8b26a1ba74fbbc6929c929d8bb888946233db7addb7f60c1811b2954fde82460",
+    "changed": "16607124ce40d0c64ba6584651f2981ca542ddc20fc9d3084202e9527558db55",
+    "commit": "573758217c87135fe1ab1856cae846a4f90798e3",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 5, Work 2, Harm 3\nRaise: Not done\nCase: normal use - an upgrade has landed on the default branch while an open fix still pins v1.2.42. The pinned close calls `_synced` before reaching either bridged wait; v1.2.42:src/forge/close.py:824-831 refuses because the default branch has a newer pin and tells the user to merge it. Wrapping only the checks functions leaves that refusal in place, so close never reaches the installed CI recovery without the pin upgrade this fix is meant to avoid.\nDone when: close and merge use the installed release's CI wait and rerun behaviour when it is newer than the branch's pin, while review and the rest of close keep the pinned release; new and existing repos get it on upgrade",
-        "file": "src/forge/pinned_checks.py",
-        "gain": 5,
-        "harm": 3,
-        "line": 93,
+        "body": "chunk 1/2:\n\nWhen a user runs `forge close <item>` from an upgraded main checkout while the item's worktree still pins v1.2.42, `repo.check_pin` reads main's pin and returns before calling this dispatcher. The installed close then operates on the older worktree and its `_synced` check refuses the older pin before CI recovery or review. `forge land --all` has the same issue because its children start from main. The new test runs close from the item worktree, so it misses this common entry point.",
+        "file": "src/forge/repo.py",
+        "line": 995,
         "priority": "P1",
-        "required_done_when": true,
-        "title": "Not done: close and merge use the installed release's CI wait and rerun behaviour when it is newer than the branch's pin",
-        "work": 2
+        "title": "Route close through the target worktree's pinned release"
       },
       {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - Forge is installed newer than a v1.2.42 branch, and close saves its review while the code-head CI run is still active. The released v1.2.42 checks module has no `after_code_ci`, and its close pushes the review record directly at v1.2.42:src/forge/close.py:429. This `hasattr` guard therefore skips the installed pre-push wait entirely. The push cancels the code's running CI instead of letting its retry finish and reuse its result. The test fixture supplies a hook that the actual release does not have.",
+        "body": "chunk 1/2:\n\nThe bridge unconditionally reads `close._synced` and later `close._push`, but released versions do not all provide those helpers. The v1.0.0 close has neither, and v1.2.0 and v1.2.1 push directly without `_push`. Closing a branch pinned to one of those releases therefore raises `AttributeError` during bootstrap, even before review or CI. Existing repos can have these pins; the upgrade test itself uses v1.0.0 as an earlier release.",
         "file": "src/forge/pinned_checks.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 94,
+        "line": 124,
         "priority": "P1",
-        "title": "Functional: Run the pre-push CI wait for releases without its hook",
-        "work": 2
+        "title": "Handle releases without the assumed close helpers"
       },
       {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - an existing branch and default branch still pin v1.2.2 after the user installs a newer Forge. That release's `checks.wait` accepts only `top`, `item`, `sha` and `names` (v1.2.2:src/forge/checks.py:25), so binding its arguments produces no `branch`. The installed `checks.wait` requires that keyword (src/forge/checks.py:72-73), and the call in `serve` raises `TypeError` instead of waiting for CI. The branch can no longer close through this path.",
+        "body": "chunk 1/2:\n\nWrapping `_synced` is too late for older close implementations that merge the default branch first. The released v1.2.2 close always merges main before calling `_synced`, so a normal main upgrade changes the open branch's pin even when the merge has no conflict. The v1.2.42 close also merges main when GitHub reports the PR as behind, then resumes using the newly merged pin. These paths do not preserve the old pin and, in the latter case, can run review through the newer release.",
         "file": "src/forge/pinned_checks.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 52,
+        "line": 135,
         "priority": "P1",
-        "title": "Functional: Supply the branch for older pinned wait signatures",
-        "work": 2
+        "title": "Preserve the branch pin before the older close merges main"
       },
       {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - a user starts `forge land --all` from an older pinned checkout while the default branch still has that pin. The patch replaces `checks.wait` only in the current process. The released queue starts each item with a fresh interpreter and imports the pinned package again (v1.2.42:src/forge/land.py:825-831); its pin check sees the matching old version, so the child uses the old wait and treats a cancelled group as failed. The same loss occurs if a running v1.2.40 close merges a default branch pinned to v1.2.42: that release's `resume_pin` starts the intermediate release through its own unbridged `run_release` (v1.2.40:src/forge/repo.py:1017-1039). Both paths lose the newer recovery even though the installed release is newer.",
-        "file": "src/forge/pinned_checks.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 95,
-        "priority": "P1",
-        "title": "Functional: Preserve the CI bridge across pinned subprocesses",
-        "work": 2
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Test\nCase: normal use - a repo upgrades while an older branch remains open. The named proof sets the default branch to v1.2.42 and never advances it after creating the worktree. It also copies the current `close.py` into the supposed older package and replaces only `checks.py`, then asserts a rerun occurred without checking whether it finished before the review-record push. It therefore passes despite the actual v1.2.42 post-upgrade refusal and would pass if the pre-push bridge were removed but the final wait still retried. The named proof does not establish those promised behaviors.",
+        "body": "chunk 2/2:\n\nGain 4, Work 2, Harm 3\nRaise: Test\nCase: normal use - after main upgrades, a coordinator runs `forge close <item>` from the main checkout for an open v1.2.42 worktree. The upgrade test always invokes close from the older worktree, while the queue test leaves main on the old pin. From upgraded main, `src/forge/repo.py:937-939` returns before dispatching the pinned release, and `src/forge/close.py:801-811` refuses the worktree's unchanged pin before review or CI recovery. The named proof therefore passes while this upgrade path still fails. Exercise the command from upgraded main and require the pinned review and installed CI recovery.",
         "file": "tests/test_ci_wait_uses_newer_installed_release.py",
         "gain": 4,
         "harm": 3,
-        "line": 35,
+        "line": 130,
         "priority": "P1",
-        "title": "Gate: tests/test_ci_wait_uses_newer_installed_release.py::test_1_pinned_commands_use_newer_ci_recovery_and_keep_pinned_review",
+        "title": "Gate: cover closing an older worktree from upgraded main",
         "work": 2
       }
     ],
-    "id": "e88e2560-6d22-410f-84dc-fde66bb3a798",
+    "id": "88e2567e-6d4d-4a73-aedc-8ca1ae3789bf",
     "status": "blocked"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-18T16:44:13.929843+00:00",
@@ -150,8 +182,17 @@
     {
       "at": "2026-11-19T01:57:14.914425+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-11-19T03:40:51.620063+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-11-19T03:40:51.620403+00:00",
+    "file": "src/forge/repo.py",
+    "wait_id": "763cdfba-1748-4b3a-a29a-bd5bfc9f2584"
+  },
   "stuck": {
     "close": "635fd24e-00b8-4112-931b-9daf4e9004c8",
     "head": "92852eef0733ab02035decee93bdda9712381341",

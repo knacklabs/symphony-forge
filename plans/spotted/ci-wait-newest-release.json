@@ -34,6 +34,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/pinned_checks.py\tHandle releases without the assumed close helpers\tci-wait-newest-release",
+      "kind": "bug",
+      "path": "src/forge/pinned_checks.py",
+      "line": 124,
+      "text": "Handle releases without the assumed close helpers",
+      "from": "blocking",
+      "item": "ci-wait-newest-release",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/pinned_checks.py\tNot done: close and merge use the installed release's CI wait and rerun behaviour when it is newer than the branch's pin\tci-wait-newest-release",
       "kind": "bug",
       "path": "src/forge/pinned_checks.py",
@@ -45,12 +56,56 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/pinned_checks.py\tPreserve the branch pin before the older close merges main\tci-wait-newest-release",
+      "kind": "bug",
+      "path": "src/forge/pinned_checks.py",
+      "line": 135,
+      "text": "Preserve the branch pin before the older close merges main",
+      "from": "blocking",
+      "item": "ci-wait-newest-release",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/repo.py\tRoute close through the target worktree's pinned release\tci-wait-newest-release",
+      "kind": "bug",
+      "path": "src/forge/repo.py",
+      "line": 995,
+      "text": "Route close through the target worktree's pinned release",
+      "from": "blocking",
+      "item": "ci-wait-newest-release",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/conftest.py\tThe fake clock truncates its shared elapsed file while another process can read it, which can fail queue tests with an empty number.",
+      "kind": "bug",
+      "path": "tests/conftest.py",
+      "line": 543,
+      "text": "The fake clock truncates its shared elapsed file while another process can read it, which can fail queue tests with an empty number.",
+      "from": "worker",
+      "item": "ci-wait-newest-release",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/conftest.py\tThe leftover-process report can print secrets from process command lines.",
       "kind": "bug",
       "path": "tests/conftest.py",
       "line": 423,
       "text": "The leftover-process report can print secrets from process command lines.",
       "from": "worker",
+      "item": "ci-wait-newest-release",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_ci_wait_uses_newer_installed_release.py\tGate: cover closing an older worktree from upgraded main\tci-wait-newest-release",
+      "kind": "bug",
+      "path": "tests/test_ci_wait_uses_newer_installed_release.py",
+      "line": 130,
+      "text": "Gate: cover closing an older worktree from upgraded main",
+      "from": "blocking",
       "item": "ci-wait-newest-release",
       "status": "open",
       "closed_by": null
