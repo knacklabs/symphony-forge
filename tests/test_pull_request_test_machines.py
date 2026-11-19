@@ -64,8 +64,11 @@ def test_1_test_jobs_use_the_optional_machine(repo, gh, tmp_path, history, group
         assert selected == expected
     condition = re.search(r"^    if: (.+)$", jobs["tests"], re.M)[1]
     condition = condition.replace("needs.docs-check.outputs.docs-only", "'false'")
-    for event in ("pull_request", "pull_request_target", "schedule", "workflow_dispatch"):
-        assert bool(expression("${{ " + condition + " }}", event_name=event)) == (event == "pull_request")
+    # Sync adds default-branch push tests while retaining the selected machines.
+    # Trusted review and full-run events still use their separate jobs.
+    for event in ("pull_request", "pull_request_target", "push", "schedule", "workflow_dispatch"):
+        expected = event in ("pull_request", "push")
+        assert bool(expression("${{ " + condition + " }}", event_name=event)) == expected
     if test_runner is None:
         assert re.findall(r"^    runs-on: (.+)$", workflow, re.M) == re.findall(
             r"^    runs-on: (.+)$", before, re.M)

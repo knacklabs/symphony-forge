@@ -31,6 +31,10 @@ def start(args: Any) -> int:
     cfg = repo.config(top)
     prototype = repo.is_prototype(top, cfg)
     prompt = (Path(__file__).parent / "templates/start.md").read_text(encoding="utf-8")
+    prompt += ("\nFor a fix, list each predicted code file as File: <repo-relative path>. "
+               "Exclude tests, Markdown, generated files (including lockfiles), and files that forge sync writes. "
+               "If one repair needs more than five code files, keep Lane: fix and list them all; "
+               "Forge asks for the size allowance before work starts.\n")
     if not prototype:
         prompt += ("\nFor a big idea or a change to how people use the product, reply:\n"
                    "Lane: plan\nReason: <one plain sentence>\nKey: <new story key>\n"
@@ -59,10 +63,10 @@ def _reply(said: str, prototype: bool) -> dict[str, list[str]] | None:
     lane = fields["Lane"][0]
     required = {"fix": {"Why", "Done", "Kind"}, "plan": {"Key", "Title", "Change", "Problem", "Done"},
                 "discovery": {"Question"}, "later": set()}.get(lane)
-    if required is None or set(fields) != required | {"Lane", "Reason"}:
+    if required is None or set(fields) - ({"File"} if lane == "fix" else set()) != required | {"Lane", "Reason"}:
         return None
     if any(len(values) != 1 for key, values in fields.items()
-           if not (lane == "plan" and key in ("Change", "Done"))):
+           if not (lane == "plan" and key in ("Change", "Done") or lane == "fix" and key == "File")):
         return None
     if "`" in fields["Reason"][0] or "--" in fields["Reason"][0]:
         return None
@@ -113,7 +117,8 @@ def act(top: Path, fields: dict[str, list[str]], idea: str) -> None:
     before = story.worktrees(top)
     if lane == "fix":
         task.fix_start(argparse.Namespace(why=fields["Why"][0], done=fields["Done"][0],
-                                         kind=fields["Kind"][0], slug=None, next="land"))
+                                         kind=fields["Kind"][0], slug=None, next="land",
+                                         files=fields.get("File", [])))
     elif lane == "plan":
         key = fields["Key"][0]
         branch = f"story/{key}"

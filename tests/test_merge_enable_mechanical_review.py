@@ -139,12 +139,15 @@ def test_2_merge_enable_close_refuses_extra_changes_without_a_review(client, ext
 
 
 def test_3_other_fix_with_the_same_purpose_still_runs_model_review(owner):
+    config = (owner.repo.path / "forge.toml").read_text("utf-8")
+    owner.commit(owner.repo.path, "forge.toml", "task_review_rounds = 1\n" + config)
+    owner.repo.git("push", "-q", "origin", "main")
     item, _ = owner.start_fix({"app.py": "print('hello')\n"},
                               why="Let the agent merge this repo's ready pull requests.",
                               done_when='The default branch\'s forge.toml sets merge = "agent".')
     owner.reviews(blocked(finding("P1", "Keep the normal review")))
     closed = owner.close(item)
-    # An ordinary fix still invokes the model; its P1 stops at the review limit.
+    # An ordinary fix still invokes the model; the one-review fixture reaches the owner stop.
     assert closed.returncode == 1, closed.stdout + closed.stderr
     assert "reached the round limit with open findings" in closed.stderr
     assert "Keep the normal review" in closed.stderr

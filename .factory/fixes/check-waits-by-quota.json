@@ -1,0 +1,154 @@
+{
+  "base": "285e56632baf943e4c7524f2341a7bb52f3e7f0b",
+  "branch": "fix/check-waits-by-quota",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1f199-98c7-74a1-9a87-c23e6bacb547",
+    "head": null,
+    "start": "0c0e6e990f9cb597f15510cff98b174fec7dc1ad"
+  },
+  "done_when": "Close, merge and land limit how many check waits run at once by the remaining GitHub API quota (read from the rate-limit endpoint at most once a minute), and say when one waits for quota; new and existing repos get it on upgrade",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "let_finish() in src/forge/checks.py",
+      "file": "src/forge/checks.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 128,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Release the quota place before reacquiring a land place",
+      "work": 2
+    },
+    {
+      "area": "check_wait() in src/forge/github.py",
+      "file": "src/forge/github.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 60,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Check waits can exceed the remaining GitHub API quota",
+      "work": 2
+    },
+    {
+      "area": "run() in src/forge/github.py",
+      "file": "src/forge/github.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 88,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Avoid rapid retries after a cached quota reset passes",
+      "work": 1
+    },
+    {
+      "area": "wait() in src/forge/checks.py",
+      "file": "src/forge/checks.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 96,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: tests/test_queue_land_all.py::test_1_one_run_starts_changes_oldest_first_and_merges_each",
+      "work": 1
+    },
+    {
+      "area": "test_2_land_caps_concurrent_waits_and_releases_places() in tests/test_check_waits_follow_api_quota.py",
+      "file": "tests/test_check_waits_follow_api_quota.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 64,
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: Owner accepted on 19 Nov 2026: land test does not prove place release",
+      "round": 1,
+      "security": false,
+      "title": "Gate: tests/test_check_waits_follow_api_quota.py::test_2_land_caps_concurrent_waits_and_releases_places",
+      "work": 2
+    },
+    {
+      "area": "test_2_land_caps_concurrent_waits_and_releases_places() in tests/test_check_waits_follow_api_quota.py",
+      "file": "tests/test_check_waits_follow_api_quota.py",
+      "gain": 2,
+      "harm": 1,
+      "line": 85,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Standard: Tests build their own data with factories, own that data, don't depend on order, and never sleep",
+      "work": 2
+    },
+    {
+      "area": "test_2_land_caps_concurrent_waits_and_releases_places() in tests/test_check_waits_follow_api_quota.py",
+      "file": "tests/test_check_waits_follow_api_quota.py",
+      "gain": 2,
+      "harm": 2,
+      "line": 63,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Follow-up: Cover concurrent waits when the quota lookup fails",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "5de070bb13e243673d97716d0dbe7c3e9c2bc7e9ea39fb771783bdab3960531a",
+    "changed": "16b9478a33260b6c1534903ae82c9e78b5a60b700dd3e2bc17b2467fdae91420",
+    "commit": "052f257d0baee291fa3f1b8e76d929b76b7bcd27",
+    "dismissals": [],
+    "findings": [],
+    "id": "380d83ba-2261-4758-b67c-3bac132f27dd",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-19T01:59:34.824983+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-19T02:59:36.632173+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-19T04:04:27.743007+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-19T05:20:45.829291+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-19T04:04:27.743269+00:00",
+    "by": "owner",
+    "choice": "accept",
+    "file": "tests/test_check_waits_follow_api_quota.py",
+    "reason": "Owner accepted on 19 Nov 2026: land test does not prove place release",
+    "wait_id": "cfafbad9-9ed2-4b5b-ab64-94c7286aa5ec",
+    "worker_round": 2
+  },
+  "stuck": {
+    "close": "87c6acad-f9ba-4d76-af4d-ed9ef2ee9d26",
+    "head": "4dc2c7b54c7a0395b8dfccbb366285ebf3244bba",
+    "keys": {},
+    "round": 2
+  },
+  "why": "After a hold, close let about 20 check waits run at once while every check still ran all groups, using up the GitHub API quota",
+  "worker": "codex"
+}

@@ -42,6 +42,13 @@ if args[:2] == ["api", "rate_limit"]:
     if {kind == 'quota-failed'!r}:
         print("HTTP 403: You have exceeded a secondary rate limit.", file=sys.stderr)
         sys.exit(1)
+    # After the refused request succeeds, model the restored quota too. The
+    # admission gate now reads this endpoint again after recovery.
+    attempts = here / "quota-times"
+    if attempts.exists() and len(attempts.read_text("utf-8").splitlines()) >= 2:
+        print(json.dumps(dict(resources={{name: dict(remaining=5000, reset=int(time.time()) + 3600)
+                                          for name in ("core", "graphql")}})))
+        sys.exit(0)
     reset = int(marker.read_text("utf-8"))
     core = reset + {1000 if prefix == ['api', 'graphql'] else 0}
     graphql = reset + {0 if prefix == ['api', 'graphql'] else 1000}
@@ -73,6 +80,10 @@ def test_1_commands_wait_for_github_reset_and_continue(env, fake_clock, command,
             "number": 7, "state": "OPEN", "baseRefName": "main", "headRefOid": head,
             "headRefName": "fix/tidy-readme", "title": "Tidy readme", "isDraft": False}))
         _merge_at_github(env)
+        if command == "merge":
+            # Keep the fresh core-reset proof. Land also runs close, whose
+            # admission lookup supplies its cached-failure case below.
+            (env.tmp / "clock" / "elapsed").write_text("61", encoding="utf-8")
         prefix = ["pr", "view"]
     limit(env, prefix, kind)
     done = env.repo.forge(command, "--all" if kind == "graphql" else item,
@@ -81,9 +92,13 @@ def test_1_commands_wait_for_github_reset_and_continue(env, fake_clock, command,
     assert done.stderr.count("GitHub rate limit reached. Wait until ") == 1
     attempts = [float(line) for line in (env.repo.bin / "quota-times").read_text("utf-8").splitlines()]
     assert len(attempts) >= 2
-    pause = 60 if kind in ("quota-failed", "secondary", "secondary-403") else 603
+    # Close's admission lookup (also inside land) precedes the stub's exhaustion. It
+    # fails (there is no reset marker yet), and its one-minute cache also serves
+    # recovery. The old contract made another immediate quota request here.
+    cached_failure = command in ("close", "land") and kind == "rest"
+    pause = 60 if cached_failure or kind in ("quota-failed", "secondary", "secondary-403") else 603
     assert pause - 1 <= attempts[1] - attempts[0] < pause + 7
-    if kind not in ("secondary", "secondary-403", "quota-failed"):
+    if not cached_failure and kind not in ("secondary", "secondary-403", "quota-failed"):
         reset = int((env.repo.bin / "quota-attempt").read_text("utf-8"))
         when = datetime.fromtimestamp(reset + 3, timezone.utc).strftime("%H:%M:%S UTC")
         assert f"GitHub rate limit reached. Wait until {when}, then continue.\n" in done.stderr

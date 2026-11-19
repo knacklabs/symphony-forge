@@ -51,8 +51,11 @@ def _status_post_endpoint(sha: str) -> str:
 
 
 def _set_status(gh, sha: str, state: str | None) -> None:
-    statuses = [] if state is None else [{"context": "forge-full-suite", "state": state}]
+    statuses = [] if state is None else [{"context": "forge-full-suite", "state": state,
+                                         "created_at": "2026-11-18T10:00:00Z"}]
     gh.respond("api", _status_endpoint(sha), stdout=json.dumps(statuses))
+    gh.respond("api", "--paginate", "--jq", ".[]", _status_endpoint(sha) + "?per_page=100",
+               stdout=json.dumps(statuses))
 
 
 def _status_posts(gh) -> list[list[str]]:
@@ -530,8 +533,11 @@ def test_5_release_and_signoff_wait_for_a_green_full_run(repo, gh, tmp_path, mon
         "headRefOid": repo.git("rev-parse", "fix/tidy-readme"), "title": "Tidy readme",
         "isDraft": False, "body": ""}))
     _merge_at_github(env)
-    before = len(status_reads())
     merged = repo.forge("merge", item)
-    assert merged.returncode == 0, merged.stdout + merged.stderr
-    assert env.gh_calls("pr", "merge")
-    assert len(status_reads()) == before
+    # Full-run proof still gates releases and sign-off. Done-when 2 now also
+    # stops this ordinary merge while the default branch's newest result is red.
+    assert merged.returncode != 0, merged.stdout + merged.stderr
+    assert not env.gh_calls("pr", "merge")
+    assert "The default branch is red. Forge will wait for a newer green test result." in merged.stdout
+    assert "The default branch is still red. Forge did not merge the pull request." in merged.stderr
+    assert env.gh_calls("api", path=_status_endpoint(repo.git("rev-parse", "origin/main")) + "?per_page=100")

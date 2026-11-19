@@ -20,6 +20,13 @@ def setup_client(env, adopted):
     env.repo.git("push", "-q", "origin", "main")
 
 
+def set_one_review_round(env):
+    config = (env.repo.path / "forge.toml").read_text("utf-8")
+    env.commit(env.repo.path, "forge.toml", "task_review_rounds = 1\n" + config,
+               "Set one review round for this test")
+    env.repo.git("push", "-q", "origin", "main")
+
+
 @pytest.mark.parametrize("adopted", [False], ids=["new"])
 def test_1_clean_close_explains_why_findings_do_not_block(env, adopted):
     setup_client(env, adopted)
@@ -69,6 +76,7 @@ def required_note():
 @pytest.mark.parametrize("adopted", [False], ids=["new"])
 def test_3_required_acceptance_stays_open_in_the_next_review(env, adopted):
     setup_client(env, adopted)
+    set_one_review_round(env)
     item, where = env.start_fix()
     note = required_note()
     env.reviews(blocked(note))
@@ -87,6 +95,7 @@ def test_3_required_acceptance_stays_open_in_the_next_review(env, adopted):
 
 
 def test_4_worker_receives_required_acceptance_below_the_score_bar(env):
+    set_one_review_round(env)
     item, _ = env.start_fix()
     note = required_note()
     env.reviews(blocked(note))

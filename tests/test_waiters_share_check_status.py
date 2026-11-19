@@ -25,6 +25,11 @@ def test_1_waiters_share_one_status_read_per_minute(client, monkeypatch):
     env, sleeps, _ = client
     _fix(env, "working", worked=True)
     env.checks(_pending(1))
+    # This rule needs both commands to reach the status-cache lock. Unknown
+    # quota now permits one wait, so supply enough quota for that contention.
+    env.gh.respond("api", "rate_limit", stdout=json.dumps({"resources": {
+        name: {"remaining": 10000, "reset": int(time.time()) + 3600}
+        for name in ("core", "graphql")}}))
     monkeypatch.setenv("FORGE_CHECKS_WAIT", "0")
     clock = sleeps.parent / "sitecustomize.py"
     offset = sleeps.parent / "status-clock"
