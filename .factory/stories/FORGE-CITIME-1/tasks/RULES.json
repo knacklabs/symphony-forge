@@ -84,8 +84,8 @@
     "id": "33d18cfb-5092-49bf-9d00-371830523941",
     "status": "clean"
   },
-  "round": 2,
-  "status": "waiting for checks",
+  "round": 3,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-19T06:02:01.512198+00:00",
@@ -101,12 +101,10 @@
     }
   ],
   "stuck": {
-    "close": "8a9460c3-f9ca-4fab-b5e0-a75d63575a3a",
-    "head": "b0e9eab7d1869ba6c0bb85157d27ee8c575ac60e",
-    "keys": {
-      "the open P0 functional: skip only the current vitest invocation in src/forge/templates/conventions/testing.md": 1
-    },
-    "round": 1
+    "close": "b8384228-7ccc-475c-987e-9369bfd924df",
+    "head": "dd37b7db5670ddc891e14cd7a3394a8217afb0a4",
+    "keys": {},
+    "round": 2
   },
   "worker": "codex"
 }
