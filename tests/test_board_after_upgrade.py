@@ -77,6 +77,20 @@ if args[:2] == ["api", "graphql"]:
                 {"name": "forge-pr-check", "status": "COMPLETED", "conclusion": "SUCCESS"}]}}}}]}}
              for pr in prs if pr["state"] == "OPEN"]
     output({"data": {"repository": {"pullRequests": {"nodes": nodes}}}})
+if args and args[0] == "api" and any("/pulls?" in arg for arg in args):
+    if (here / "history-unreachable").exists():
+        sys.exit("GitHub is unreachable")
+    size = next((int(arg.split("=", 1)[1]) for arg in args if arg.startswith("per_page=")), 30)
+    page = next((int(arg.split("=", 1)[1]) for arg in args if arg.startswith("page=")), 1)
+    merged = [pr for pr in prs if pr["state"] == "MERGED"]
+    last = max(1, (len(merged) + size - 1) // size)
+    print("HTTP/2.0 200 OK")
+    if page < last:
+        print(f'Link: <https://api.github.com/repos/acme/shop/pulls?state=closed&page={page+1}>; rel="next", <https://api.github.com/repos/acme/shop/pulls?state=closed&page={last}>; rel="last"')
+    print()
+    for pr in merged[(page-1)*size:page*size]:
+        print(json.dumps({"number": pr["number"], "headRefName": pr["headRefName"]}))
+    sys.exit(0)
 if args[:2] == ["pr", "list"] and "--state" in args:
     if "--head" not in args and (here / "history-unreachable").exists():
         sys.exit("GitHub is unreachable")
