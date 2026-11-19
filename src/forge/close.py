@@ -223,10 +223,14 @@ def close(args: argparse.Namespace) -> int:
     review_ref, pr_target = f"origin/{default}", default
     if stacked_waiting:
         base = githooks.fix_base(top, state, review_ref, "HEAD")
+        task.check_foreign_work(top, item, f"origin/{default}",
+                                base if stacked_on.split("/")[0] == item.split("/")[0] else review_ref)
         repo.git("merge", "-q", "--no-edit", "-s", "ours", base, cwd=top)
         review_ref = f"forge-stack/{item.replace('/', '-')}"
         repo.git("update-ref", f"refs/remotes/{review_ref}", base, cwd=top)
         pr_target = f"task/{stacked_on.replace('/', '-')}"
+    else:
+        task.check_foreign_work(top, item, review_ref, review_ref)
     if pending := time_records.pending_merge_wait(top, item, (pr or {}).get("body") or "", reason="merge conflict"):
         repo.record_event(top, item, "owner wait end", wait_id=pending["id"])
         _refresh_record(top, item, state, pr)

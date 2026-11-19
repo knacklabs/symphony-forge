@@ -154,6 +154,7 @@ line asking you to split them into smaller stories; already approved larger stor
 Parts can start on one reviewed, unmerged part by default. `stack = "off"` in `forge.toml`
 makes new parts wait for merges. A part that builds on another part keeps that base until close
 moves its own changes onto the default branch after the base merges.
+Parts of another story must merge first. Never delete story-level files, such as design images, to keep a part narrow.
 Close reviews only the stacked part's own changes and waits for its base to merge before CI and merge.
 After Forge merges the base, run the printed `forge close <part>` step to move the part onto the default branch.
 If a new part waits for its base to include an earlier merge, close that base first, then start the new part again.

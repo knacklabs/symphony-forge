@@ -567,6 +567,8 @@ def stack_base(item: str, blockers: list[str], main: str, top: Path | None = Non
     top = top or repo.root()
     if not blockers or repo.config(top)["stack"] == "off":
         return None
+    if any(base.split("/", 1)[0] != item.split("/", 1)[0] for base in blockers):
+        return None
     if len(blockers) != 1:
         refuse(REFUSALS["two_bases"], item=item, deps=", ".join(blockers))
     base = blockers[0]
@@ -659,6 +661,18 @@ def waits_for(part: str, after: list[str], scope: list[str] | None = None,
     blockers = [item for item, owned in (busy or {}).items()
                 if any(_overlap(a, b) for a in (scope or []) for b in owned)]
     return [item for item in dict.fromkeys(waits + blockers) if item != part]
+
+
+def check_foreign_work(top: Path, item: str, main: str, base: str) -> None:
+    """Refuse inherited open-task history outside the task's reviewed base."""
+    if "/" not in item:
+        return
+    for other in _started(main, top):
+        if other != item and git("log", "--format=%H", "--diff-filter=A", f"{base}..HEAD",
+                                 "--", repo.state_path(other), cwd=top):
+            raise repo.Refused(f"{item} includes unmerged commits from {other}. "
+                               "Remove that part's commits from this branch before close.",
+                               f"forge work {item}")
 
 
 # --- forge fix start / forge fix allow-large -------------------------------------------
