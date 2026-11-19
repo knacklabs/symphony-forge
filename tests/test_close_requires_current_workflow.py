@@ -52,8 +52,7 @@ def test_1_close_requires_the_workflow_that_sync_generates(env, case):
 def source_checkout(env, command="", fast_test=""):
     """A synced source repo for close tests, with isolated hooks and real renderers."""
     repo = env.repo
-    repo.git("checkout", "-q", "fix/fixture-setup")
-    repo.git("merge", "-q", "--ff-only", "main")
+    repo.git("checkout", "-qb", "fix/fixture-setup")
     # Keep this a real source checkout, including the release test's renderer inputs.
     for name in repo.git("ls-files", cwd=ROOT).splitlines():
         source = ROOT / name

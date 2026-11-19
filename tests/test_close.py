@@ -280,19 +280,19 @@ def env(repo, gh, tmp_path, monkeypatch) -> Forge:
                              'models.build = { model = "opus", effort = "high" }\n')
     repo.write("plans/SHOP.md", STORY_DOC)
     repo.write("docs/design/baskets/screen.svg", DESIGN_IMAGE)
-    # Closing now requires the workflow even when the item did not change the pin.
-    repo.git("checkout", "-qb", "fix/fixture-setup")
-    repo.write(".factory/fixes/fixture-setup.json", json.dumps({"kind": "fix",
-        "branch": "fix/fixture-setup", "status": "working", "why": "Prepare checks",
-        "done_when": "The repo has its generated workflow"}))
-    synced = repo.forge("sync")
-    assert synced.returncode == 0, synced.stdout + synced.stderr
-    repo.git("config", "core.hooksPath", repo.bin.as_posix())
-    (repo.path / ".factory/fixes/fixture-setup.json").unlink()
     repo.git("add", "-A")
     repo.git("commit", "--allow-empty", "-q", "-m", "Run on Forge")
-    repo.git("checkout", "-q", "main")
-    repo.git("merge", "-q", "--ff-only", "fix/fixture-setup")
+    # Close needs the workflow, while sync and upgrade tests still need unsynced adapters.
+    # Render elsewhere so the shared fixture gains no other generated files or hooks.
+    rendered = tmp_path / "workflow"
+    repo.git("clone", "-q", repo.path.as_posix(), rendered.as_posix())
+    repo.git("switch", "-qc", "setup", cwd=rendered)
+    synced = repo.forge("sync", cwd=rendered)
+    assert synced.returncode == 0, synced.stdout + synced.stderr
+    repo.write(".github/workflows/forge.yml",
+               (rendered / ".github/workflows/forge.yml").read_text("utf-8"))
+    repo.git("add", ".github/workflows/forge.yml")
+    repo.git("commit", "-qm", "Prepare the close workflow")
     repo.git("push", "-q", "origin", "main")
     gh.respond("pr", "list", stdout="[]")
     gh.respond("pr", "create", stdout="https://github.com/acme/shop/pull/7\n")
