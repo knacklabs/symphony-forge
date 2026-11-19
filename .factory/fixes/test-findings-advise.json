@@ -1,0 +1,98 @@
+{
+  "base": "67376f6c033979de5e01536db35aaf293d3e8899",
+  "branch": "fix/test-findings-advise",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1ef58-c5b4-7073-ab7a-b0a157aa9410",
+    "head": null,
+    "start": "9ace36006735e885ba11461e2ef90bb1a063b377"
+  },
+  "done_when": "Review findings of the Test kind whose case is only a future change to a test fake or call order are advice and do not block close; tests select gh calls through one shared helper by path or query instead of by position or count; the two flaky tests no longer fail at random under load; new and existing repos get the review rule on upgrade",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "test_3_worker_reruns_report_only_the_final_result() in tests/test_parallel_worker_crash_keeps_failed_names.py",
+      "file": "tests/test_parallel_worker_crash_keeps_failed_names.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 144,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: the two flaky tests no longer fail at random under load",
+      "work": 3
+    },
+    {
+      "area": "test_1_close_publishes_after_review_and_ready_needs_both() in tests/test_close_overlaps_review_and_ci.py",
+      "file": "tests/test_close_overlaps_review_and_ci.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 49,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_close_publishes_after_review_and_ready_needs_both",
+      "work": 1
+    },
+    {
+      "area": "test_3_board_reports_github_occurrences_after_cache_expiry() in tests/test_machine_views.py",
+      "file": "tests/test_machine_views.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 594,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: tests select gh calls through one shared helper by path or query instead of by position or count",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "5fa98b6ce7d97180a7822216fc10c621c4d7f3f3f48fe7b78c976145d91b94c9",
+    "changed": "32720c43293948fe04d6e2ff3bccded6df5d110d47816996cd288334c1a91ff4",
+    "commit": "08977e998d865de3e8ac904b4cd0e6dc99ef1f86",
+    "dismissals": [],
+    "findings": [],
+    "id": "012a6cf5-cd3b-4308-ac3c-4fd56f8c0284",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-18T15:25:09.021096+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-18T17:01:27.326810+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-18T17:28:06.574230+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-18T17:01:27.358994+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "tests/test_parallel_worker_crash_keeps_failed_names.py",
+    "reason": "Owner decided on 18 Nov 2026 that fixes get two review rounds; this is the second",
+    "wait_id": "0a7c45f8-a291-4d35-b998-388c1b6098c4",
+    "worker_round": 2
+  },
+  "stuck": {
+    "close": "46b83623-ea36-42c0-8861-c5710bdb8c70",
+    "head": "e4709f1be0bd278d57ed1b97ac8f0449b41a9520",
+    "keys": {},
+    "round": 2
+  },
+  "why": "Review findings about how a test could miss a future change (a fake that matches exact request text, a gh call counted by position) block close and cost a round each, and tests that select gh calls by position or count break each time a command adds a GitHub request (4 times on 18 Nov 2026); two tests fail at random on busy runners (the machine memory budget test and test_3_worker_reruns_report_only_the_final_result)",
+  "worker": "codex"
+}
