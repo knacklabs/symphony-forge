@@ -57,7 +57,7 @@
       "gain": 3,
       "harm": 3,
       "line": 55,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 1,
       "security": false,
@@ -67,27 +67,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "33a740a65eb75c2303a78902b3e15762fa3349a3bc63df0d72f297b9edfb0325",
-    "changed": "8b4b8297aa75635521b7c64cb92921ed1004e9c372949df13dd42b60a5a5e73a",
-    "commit": "26ed86f6bc8af8ff745b96aca99a50ef82b8d88f",
+    "branch_diff": "61394c223ca76951d679cc7b820edd888b22a35efd20f7c8e194b0b86a5655de",
+    "changed": "f37260578151d4d5468141d52c379d319ef07e80783e49d5313240333c68b961",
+    "commit": "cd227be8d6815b57434313970a9135586c7b347f",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - an upgrade has an open item and more than 20 merged items needing repair.\nThe revised test checks the open item's start by decoding the hidden time record and asserting its private event and state fields. It would pass if that record contained the right start while the pull request's visible history still showed the wrong one, and it would fail after a record-format change that preserved the visible behavior. The previously requested check at the user-facing boundary remains missing from this bounded-batch proof.",
-        "file": "tests/test_upgrade_start_repair.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 73,
-        "priority": "P1",
-        "title": "Gate: tests/test_upgrade_start_repair.py::test_1_upgrade_bounds_existing_start_repairs",
-        "work": 2
-      }
-    ],
-    "id": "d9179add-142f-4f8e-b7c1-83bcd6e31f5c",
-    "status": "blocked"
+    "findings": [],
+    "id": "2c8c1cc4-1dd0-4315-a18e-ba305a192eeb",
+    "status": "clean"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-19T13:52:00.521791+00:00",
@@ -99,6 +88,10 @@
     },
     {
       "at": "2026-11-19T14:20:50.937658+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-19T14:28:17.861262+00:00",
       "step": "review"
     }
   ],
