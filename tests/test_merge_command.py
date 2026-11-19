@@ -167,16 +167,22 @@ def test_4_merge_refuses_a_changed_head_and_checks_the_recorded_head(env):
         "headRefName": "fix/tidy-readme", "title": "Tidy readme", "isDraft": False,
         "body": published_body}))
     env.checks([run("tests", "failure"), run("forge-pr-check")])
-    before_checks = len(env.gh_calls("api"))
+    endpoint = f"repos/{{owner}}/{{repo}}/commits/{head}"
+    check_runs_path = f"{endpoint}/check-runs?per_page=100"
+    statuses_path = f"{endpoint}/status?per_page=100"
+    before_check_runs = len(env.gh_calls("api", path=check_runs_path))
+    before_statuses = len(env.gh_calls("api", path=statuses_path))
     red = env.repo.forge("merge", item)
     assert red.stderr == (f"Checks failed on the pull request: tests.\n"
                           f"Next: forge work {item}\n")
-    lookups = env.gh_calls("api")[before_checks:]
-    endpoint = f"repos/{{owner}}/{{repo}}/commits/{head}"
+    check_runs = env.gh_calls("api", path=check_runs_path)
+    statuses = env.gh_calls("api", path=statuses_path)
+    assert len(check_runs) == before_check_runs + 1
+    assert len(statuses) == before_statuses + 1
     assert ["api", "--paginate", "--jq", ".check_runs[]",
-            f"{endpoint}/check-runs?per_page=100"] in lookups
+            check_runs_path] in check_runs
     assert ["api", "--paginate", "--jq", ".statuses[]",
-            f"{endpoint}/status?per_page=100"] in lookups
+            statuses_path] in statuses
     assert not env.gh_calls("pr", "merge")
     env.checks(GREEN)
     env.gh.respond("pr", "merge", stderr="merge queue refused the request\n", exit=1)

@@ -1,0 +1,37 @@
+{
+  "items": [
+    {
+      "key": "bug\ttests/test_close_overlaps_review_and_ci.py\tGate: test_1_close_publishes_after_review_and_ready_needs_both\ttest-findings-advise",
+      "kind": "bug",
+      "path": "tests/test_close_overlaps_review_and_ci.py",
+      "line": 49,
+      "text": "Gate: test_1_close_publishes_after_review_and_ready_needs_both",
+      "from": "blocking",
+      "item": "test-findings-advise",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_machine_views.py\tNot done: tests select gh calls through one shared helper by path or query instead of by position or count\ttest-findings-advise",
+      "kind": "bug",
+      "path": "tests/test_machine_views.py",
+      "line": 594,
+      "text": "Not done: tests select gh calls through one shared helper by path or query instead of by position or count",
+      "from": "blocking",
+      "item": "test-findings-advise",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_parallel_worker_crash_keeps_failed_names.py\tNot done: the two flaky tests no longer fail at random under load\ttest-findings-advise",
+      "kind": "bug",
+      "path": "tests/test_parallel_worker_crash_keeps_failed_names.py",
+      "line": 144,
+      "text": "Not done: the two flaky tests no longer fail at random under load",
+      "from": "blocking",
+      "item": "test-findings-advise",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
