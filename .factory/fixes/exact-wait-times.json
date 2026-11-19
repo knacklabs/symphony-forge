@@ -4,12 +4,20 @@
   "done_when": "Forge records hold, owner decision, wait and resume times with timestamps, keeps the first start of an item through rewrites and fix-to-task moves, and the How it went record splits start-to-merge into these parts; new and existing repos get it on upgrade",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-19T01:59:29.031055+00:00",
       "step": "start"
     }
   ],
-  "why": "Start-to-merge records are unreliable: starts can be rewritten (a task's early commits rewritten to one later time, a fix that became a task keeping the child's start), repairs show zero minutes, and unexplained time is labelled 'nothing running'"
+  "stuck": {
+    "close": null,
+    "head": "a22a07079dbc405bb1f1f54596d1cf93d1445d8b",
+    "keys": {},
+    "round": null
+  },
+  "why": "Start-to-merge records are unreliable: starts can be rewritten (a task's early commits rewritten to one later time, a fix that became a task keeping the child's start), repairs show zero minutes, and unexplained time is labelled 'nothing running'",
+  "worker": "codex"
 }
