@@ -1,0 +1,37 @@
+{
+  "items": [
+    {
+      "key": "bug\ttests/board_fixture.py\tGate: test_12 needs a time-controlled regression case\tboard-screen-time",
+      "kind": "bug",
+      "path": "tests/board_fixture.py",
+      "line": 53,
+      "text": "Gate: test_12 needs a time-controlled regression case",
+      "from": "blocking",
+      "item": "board-screen-time",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/board_fixture.py\tGate: tests/test_board_now_screen.py\tboard-screen-time",
+      "kind": "bug",
+      "path": "tests/board_fixture.py",
+      "line": 53,
+      "text": "Gate: tests/test_board_now_screen.py",
+      "from": "blocking",
+      "item": "board-screen-time",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/board_fixture.py\tNot done: test_12 passes on main at any time of day and date\tboard-screen-time",
+      "kind": "bug",
+      "path": "tests/board_fixture.py",
+      "line": 53,
+      "text": "Not done: test_12 passes on main at any time of day and date",
+      "from": "blocking",
+      "item": "board-screen-time",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
