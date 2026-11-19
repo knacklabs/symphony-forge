@@ -45,6 +45,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/checks.py\tReport approval-gated checks instead of waiting indefinitely\tlong-ci-queues",
+      "kind": "bug",
+      "path": "src/forge/checks.py",
+      "line": 267,
+      "text": "Report approval-gated checks instead of waiting indefinitely",
+      "from": "blocking",
+      "item": "long-ci-queues",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/citime.py\tThe board still labels cancelled test checks from check timestamps that can include runner queue time.",
       "kind": "bug",
       "path": "src/forge/citime.py",
@@ -73,6 +84,28 @@
       "line": 35,
       "text": "Gate: running-check progress cadence",
       "from": "blocking",
+      "item": "long-ci-queues",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/citime.py\tFollow-up: Avoid serial job lookups for every cancelled check",
+      "kind": "edge",
+      "path": "src/forge/citime.py",
+      "line": 89,
+      "text": "Follow-up: Avoid serial job lookups for every cancelled check",
+      "from": "review",
+      "item": "long-ci-queues",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/citime.py\tFollow-up: Exclude queued time from reported runner minutes",
+      "kind": "edge",
+      "path": "src/forge/citime.py",
+      "line": 94,
+      "text": "Follow-up: Exclude queued time from reported runner minutes",
+      "from": "review",
       "item": "long-ci-queues",
       "status": "open",
       "closed_by": null
