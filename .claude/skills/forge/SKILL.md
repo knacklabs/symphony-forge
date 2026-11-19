@@ -266,6 +266,20 @@ recommendation first. Save the answer before moving to the next question.
 
 ## Merges and settings
 
+In a repo with pull request CI tests, each push to the default branch runs the tests related
+to that merge. Laptop-test repos keep their full runs. New repos get this workflow at setup;
+existing repos get it when the upgrade refreshes Forge's files. The newest finished result on
+the newest default-branch commit with a result decides whether the branch is red. Merge runs
+from Forge's own workflow and full runs count the same way. A `tests` job from another workflow
+does not decide whether the branch is red. Forge looks back at most 30 commits. With no finished result
+in those commits, it treats the branch as not red. A pending, cancelled or skipped rerun does
+not clear a failed result.
+While the default branch is red, `forge merge` and `forge land` wait up to 90 minutes for a newer green result.
+If the wait ends, follow the printed repair step. To repair the branch, build a fix, have
+the owner merge it on GitHub, then start a full test run. The repair's green run or the green
+full run lets merges continue. When a person merges, land asks them to wait while the branch
+is red. Forge cannot stop a merge on GitHub. No saved records change on upgrade.
+
 If the default branch moved after close, `forge merge` compares its new changed files with the item's changed files.
 It merges the default branch locally to check the combined change.
 For repos with laptop tests, it runs `fast_test`, or `test` when none is set, in the one test lane with `{base}` as the
