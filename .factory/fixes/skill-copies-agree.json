@@ -155,7 +155,7 @@
     "status": "blocked"
   },
   "round": 2,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-19T01:59:23.987540+00:00",
@@ -171,9 +171,13 @@
     }
   ],
   "stop": {
+    "by": "owner",
+    "choice": "narrow",
     "question": "The generated copies of the Forge skill in client repos disagree on is stuck. It should deliver: Every generated skill copy (.claude, .codex and .agents) comes from the same template text and describes the round rule the code applies; a test compares the copies; new repos get it at init and existing repos on upgrade and forge sync\nTwo rounds in a row left the open P0 preserve existing .agents guides before replacing them in src/forge/story.py.\nThe worker tried: Review of skill-copies-agree: blocked; Preserve client guides before sync replaces them.\nChoose one: switch this item to Claude; keep Codex for one more round; or narrow or split it.",
+    "reason": "Owner chose on 19 Nov 2026: only the .claude and .codex copies from one template with a comparison test; .agents later",
     "tool": "codex",
-    "wait_id": "08c229f6-1d88-4933-9578-a8f5331b3015"
+    "wait_id": "08c229f6-1d88-4933-9578-a8f5331b3015",
+    "worker_round": 2
   },
   "stuck": {
     "close": "1dedecfe-a81d-4dcd-ad71-fa69d4e5f116",
