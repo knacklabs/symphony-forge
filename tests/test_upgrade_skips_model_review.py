@@ -147,16 +147,16 @@ def test_4_a_fix_that_forge_upgrade_did_not_make_gets_a_review(env, name, why):
 def test_5_an_earlier_blocking_finding_is_not_replaced_by_the_mechanical_result(unsynced_up):
     up = _ready(unsynced_up, False)
     assert up.run(RELEASE).returncode == 0
-    # A hand edit gets a review that blocks and stops for the owner's choice. Its finding names a
+    # A hand edit gets a blocked review and another worker round. Its finding names a
     # file that is not in the tree, so the review leaves no spotted record behind in the diff.
     _hand_edit(up)
     up.env.reviews(blocked({**finding("P1", "The note is wrong", "docs/missing.md"),
                             "body": "Gain 4, Work 1, Harm 2\nThe note is wrong."}), CLEAN)
-    stopped = up.repo.forge("close", NAME, cwd=up.folder)
-    assert len(up.env.review_calls()) == 1, stopped.stdout + stopped.stderr
-    chosen = up.repo.forge("close", NAME, "--resolve", "more", "--reason", "One more round",
-                           cwd=up.folder)
-    assert chosen.returncode == 0, chosen.stdout + chosen.stderr
+    held = up.repo.forge("close", NAME, cwd=up.folder)
+    assert held.returncode == 1, held.stdout + held.stderr
+    assert len(up.env.review_calls()) == 1, held.stdout + held.stderr
+    assert "The review left serious findings open" in held.stderr
+    assert "One more round, split or accept?" not in held.stderr
 
     # The worker drops the hand edit instead of repairing the finding. The branch is a pure
     # upgrade again, but the blocker was never checked, so the model reviews once more.

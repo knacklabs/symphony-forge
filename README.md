@@ -136,7 +136,7 @@ Review rules and recorded owner decisions settle a question for later readers an
 
 ### When a loop stops
 
-A fix gets one review round. A story part gets two. At the limit, open findings below P0 stop the change.
+Fixes and story parts use `task_review_rounds`, two by default. For a fix, only blocked reviews count toward this limit. At the limit, open findings below P0 stop the change.
 Forge asks: "One more round, split or accept?" Close, land and work show the same question until you answer.
 
 One more round gives the worker one more attempt. Split moves the open findings to a follow-up fix.
@@ -190,7 +190,7 @@ developer can take over using the discovery notes and answers page. To start one
 
 **The cold read loop.** A reader who did not write the plan reads it cold and lists its gaps. The agent fixes the plan, and the reader reads it again. After two rounds that still have open notes, Forge stops and you choose: accept, read again, or split. It exists because a gap found in the plan costs minutes, but the same gap found in the code costs a build round.
 
-**The build and review loop.** A worker builds the part and its tests, then a separate review checks the change. A serious problem goes back to the worker for another round. A task gets two review rounds and a fix gets one. At the limit Forge stops and asks you, but a P0 problem keeps the loop going. It exists because a reviewer sees problems that the worker cannot see in its own work.
+**The build and review loop.** A worker builds the part and its tests, then a separate review checks the change. A serious problem goes back to the worker for another round. Tasks and fixes use the repo's review limit, two by default. For a fix, only blocked reviews count toward this limit. At the limit Forge stops and asks you, but a P0 problem keeps the loop going. It exists because a reviewer sees problems that the worker cannot see in its own work.
 
 **The CI checks.** GitHub runs the repo's checks on the pull request. Close waits while they are queued or running, and a red check goes back to the worker. They exist because the checks run the tests on a clean machine, the same way for every change.
 

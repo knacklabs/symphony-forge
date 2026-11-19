@@ -72,7 +72,9 @@ def test_2_needs_you_lists_every_wait_oldest_first_on_every_machine(env, monkeyp
         blocking_problems(env)
         return
     toml = env.repo.path / "forge.toml"
-    env.commit(env.repo.path, "forge.toml", toml.read_text("utf-8")
+    config = re.sub(r"(?m)^task_review_rounds\s*=.*(?:\r?\n|$)", "",
+                    toml.read_text("utf-8"))
+    env.commit(env.repo.path, "forge.toml", "task_review_rounds = 1\n" + config
                + 'models.lite = { model = "sonnet", effort = "medium" }\n')
     env.repo.git("push", "-q", "origin", "main")
     if case == "size-warning":
