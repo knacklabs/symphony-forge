@@ -434,6 +434,10 @@ def test_3_reviews_and_reads_hold_work_against_the_constitution(env, tmp_path, m
         assert closed.returncode == 1, closed.stdout + closed.stderr
         if case == "part":
             assert "The review left serious findings open" in closed.stderr
+        elif case == "fix":
+            assert "The review left serious findings open" in closed.stderr
+            assert "reached the round limit with open findings" not in closed.stderr
+            assert "Constitution: The app uses Postgres" in closed.stderr
         else:
             assert "reached the round limit with open findings" in closed.stderr
             assert "Constitution: The app uses Postgres" in closed.stderr

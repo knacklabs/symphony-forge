@@ -23,21 +23,20 @@ STORY = "FORGE-ROUNDS-2"
 
 @pytest.mark.parametrize("case", ["part", "fix", "adopted fix", "session"])
 def test_1_at_the_round_limit_an_open_finding_below_p0_stops_for_the_owner(env, monkeypatch, case):
-    # The former contract silently kept P1s as follow-ups at the limit. Now
-    # only the owner's accept can turn these findings into follow-ups.
+    # The configured limit applies to fixes and story parts. A fix now needs
+    # two blocked reviews before the owner chooses what to do with the finding.
     client(env, case == "adopted fix")
     log = install_claude(env.repo)
     entry = note("P1", "Saving loses quantities")
-    env.reviews(blocked(entry))
+    env.reviews(blocked(entry), blocked(entry))
     item, where = env.start_approved_task(STORY_DOC) if case == "part" else env.start_fix()
-    if case == "part":
-        first = env.close(item)
-        assert first.returncode == 1, first.stdout + first.stderr
-        assert "The review left serious findings open" in first.stderr
-        assert "reached the round limit" not in first.stderr
-        env.commit(where, "app.py", "print('save quantities')\n", "Repair saving")
+    first = env.close(item)
+    assert first.returncode == 1, first.stdout + first.stderr
+    assert "The review left serious findings open" in first.stderr
+    assert "reached the round limit" not in first.stderr
+    env.commit(where, "app.py", "print('save quantities')\n", "Repair saving")
     stopped = env.close(item)
-    round_number = 2 if case == "part" else 1
+    round_number = 2
     line = (f"Review round {round_number} of {item} reached the round limit with open findings, "
             "so Forge stopped.")
     step = f'forge close {item} --resolve <more|split|accept> --reason "<human\'s choice>"'
@@ -88,7 +87,7 @@ def test_1_at_the_round_limit_an_open_finding_below_p0_stops_for_the_owner(env, 
         assert issues[entry["title"]]["kept"] == "follow-up"
         assert issues[entry["title"]]["reason"].startswith("Human accepted the remaining finding:")
     assert ready.returncode == 0 and "Ready" in ready.stdout, ready.stdout + ready.stderr
-    assert len(env.review_calls()) == (2 if case in ("part", "adopted fix") else 1)
+    assert len(env.review_calls()) == (3 if case == "adopted fix" else 2)
 
 
 @pytest.mark.parametrize("case", ["fix", "part", "adopted fix", "other p0"])
