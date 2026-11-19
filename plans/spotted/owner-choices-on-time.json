@@ -1,0 +1,70 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/owner_choices.py\tExclude generated files from the predicted fix size\towner-choices-on-time",
+      "kind": "bug",
+      "path": "src/forge/owner_choices.py",
+      "line": 14,
+      "text": "Exclude generated files from the predicted fix size",
+      "from": "blocking",
+      "item": "owner-choices-on-time",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/owner_choices.py\tNot done: forge next omits and mis-times pending owner choices\towner-choices-on-time",
+      "kind": "bug",
+      "path": "src/forge/owner_choices.py",
+      "line": 39,
+      "text": "Not done: forge next omits and mis-times pending owner choices",
+      "from": "blocking",
+      "item": "owner-choices-on-time",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/owner_choices.py\tPublish and enforce the intake size stop across machines\towner-choices-on-time",
+      "kind": "bug",
+      "path": "src/forge/owner_choices.py",
+      "line": 23,
+      "text": "Publish and enforce the intake size stop across machines",
+      "from": "blocking",
+      "item": "owner-choices-on-time",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/task.py\tAllow the owner to narrow a size-stopped fix\towner-choices-on-time",
+      "kind": "bug",
+      "path": "src/forge/task.py",
+      "line": 821,
+      "text": "Allow the owner to narrow a size-stopped fix",
+      "from": "blocking",
+      "item": "owner-choices-on-time",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/task.py\tPoint the size-stop refusal at the fix checkout\towner-choices-on-time",
+      "kind": "bug",
+      "path": "src/forge/task.py",
+      "line": 822,
+      "text": "Point the size-stop refusal at the fix checkout",
+      "from": "blocking",
+      "item": "owner-choices-on-time",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_owner_choices_before_work.py\tGate: owner-choice command tests\towner-choices-on-time",
+      "kind": "bug",
+      "path": "tests/test_owner_choices_before_work.py",
+      "line": 23,
+      "text": "Gate: owner-choice command tests",
+      "from": "blocking",
+      "item": "owner-choices-on-time",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
