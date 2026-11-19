@@ -1,0 +1,15 @@
+{
+  "base": "5047671e767e338664b030233c4a04e624aa48c8",
+  "branch": "fix/task-start-wrong-base",
+  "done_when": "forge task start bases a task only on its own story branch plus origin/main; close refuses a task whose diff holds another open task's commits and names that task; the worker brief says never to delete story-level files such as design images to keep a part narrow; new and existing repos get it on upgrade",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-19T03:08:24.838641+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "forge task start can create a task branch whose history holds another story's unmerged task commits (seen at a client on 19 Nov 2026: a docs-only part carried another task's migration and code, so close warned that four items add the same migration), and a builder told to keep a part narrow deleted the story's design images, so close then refused"
+}
