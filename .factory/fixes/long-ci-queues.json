@@ -132,63 +132,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "5c1e2bc6a5ce2f38b6dd8e68548b0442fc21e6b5e6822fa136fad68da41fc183",
-    "changed": "30f28ded00d882a8eaaf52ef49c2cdc924f097b412ca7551eac37fdc516a8856",
-    "commit": "ced440d1d8f245f24dc09c4e9beba46dc3811238",
-    "dismissals": [
-      {
-        "accepted": true,
-        "because": "Human accepted the remaining finding: Owner accepted on 19 Nov 2026: approval-gated checks are waited on without end; cancelled-check job lookups and queued runner minutes are follow-ups",
-        "finding": 1
-      },
-      {
-        "accepted": true,
-        "because": "Human accepted the remaining finding: Owner accepted on 19 Nov 2026: approval-gated checks are waited on without end; cancelled-check job lookups and queued runner minutes are follow-ups",
-        "finding": 2
-      },
-      {
-        "accepted": true,
-        "because": "Human accepted the remaining finding: Owner accepted on 19 Nov 2026: approval-gated checks are waited on without end; cancelled-check job lookups and queued runner minutes are follow-ups",
-        "finding": 3
-      }
-    ],
-    "findings": [
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - A pull request runs a check that requires approval for a protected GitHub environment.\nGitHub reports this check as `waiting`, but `_seen` at `src/forge/checks.py:715-718` classifies every non-queued, non-completed check as running. This line then removes its default deadline, so close, merge and land can wait for days while saying the check is still running, without telling anyone approval is needed. A failed sibling is also hidden by the active-check branch at lines 224-226. The pre-push wait at line 135 has the same problem. GitHub distinguishes this state from a running check in its [status-check documentation](https://docs.github.com/en/pull-requests/reference/status-checks).\nAdds work: distinguish approval-gated checks from running checks; F 2 x H 2 = 4; 2 x C = 4",
-        "file": "src/forge/checks.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 267,
-        "priority": "P1",
-        "title": "Report approval-gated checks instead of waiting indefinitely",
-        "work": 2
-      },
-      {
-        "body": "Gain 2, Work 2, Harm 2\nCase: normal use - The last 20 merged pull requests each have four superseded pushes with six cancelled test groups.\n`forge doctor` measures up to five heads per pull request, and this new lookup makes at least 480 sequential GitHub requests in that history, including lookups for cancelled checks that `_eligible` will discard. The generated workflow cancels superseded runs, so this can make a routine diagnosis slow and consume a substantial part of the API quota.",
-        "file": "src/forge/citime.py",
-        "gain": 2,
-        "harm": 2,
-        "line": 89,
-        "priority": "P2",
-        "title": "Follow-up: Avoid serial job lookups for every cancelled check",
-        "work": 2
-      },
-      {
-        "body": "Gain 2, Work 1, Harm 2\nCase: normal use - A test waits 50 minutes for a runner, runs for 60 minutes, and is cancelled at its limit.\nThe merged job supplies the correct `started_at`, but the runner-minute calculation at lines 103-107 still uses the check's queue-inclusive `startedAt`. The test consequently contributes 110 runner minutes instead of 60. The new fixture in `tests/test_job_runtime_excludes_runner_queue.py:87-114` demonstrates these timestamps and expects the same 110-minute duration.",
-        "file": "src/forge/citime.py",
-        "gain": 2,
-        "harm": 2,
-        "line": 94,
-        "priority": "P2",
-        "title": "Follow-up: Exclude queued time from reported runner minutes",
-        "work": 1
-      }
-    ],
-    "id": "466e7ac4-0091-4e0c-9c14-746bb5dbd4b8",
+    "branch_diff": "992ca21e20e0864260d90129e1e390558347600d6b286db0cb0d35c7abf89a1e",
+    "changed": "176d61bd933602b44c95074506a2b440907fb2179da14c5898104de8072c7efb",
+    "commit": "8906733412ed9417b72c3ce8f34680f25dd2ba0f",
+    "dismissals": [],
+    "findings": [],
+    "id": "b3c946c4-8c4c-4e34-8381-cbf92b7b5e34",
     "status": "clean"
   },
   "round": 4,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-18T15:24:58.020651+00:00",
@@ -204,6 +157,10 @@
     },
     {
       "at": "2026-11-19T03:34:39.578003+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-19T07:05:32.136748+00:00",
       "step": "review"
     }
   ],
