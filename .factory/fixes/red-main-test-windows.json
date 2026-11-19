@@ -11,8 +11,19 @@
   "done_when": "test_3_merge_waits_while_the_default_branch_is_red passes on Windows (forge-next.yml run on the fix branch) and on Linux, with the same rule checked; if the cause is in Forge's code and not the test, the code handles Windows line endings",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "41a3029bf5be87c87e87d346aa4274584049c5555df8569130a716579e5668ea",
+    "changed": "9eca7b5111b55e23b4fb0b34d31760fa5a76045fedfc1ee3f4a3e409cd4e070e",
+    "commit": "aa43fea918ef3da73bb7a102f6b6f6aa2130daac",
+    "dismissals": [],
+    "findings": [],
+    "id": "f8060989-bf67-4b98-afe5-b27ddfa37ec1",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-19T16:05:23.601698+00:00",
@@ -22,6 +33,10 @@
       "at": "2026-11-19T16:05:41.814587+00:00",
       "round": 1,
       "step": "resume"
+    },
+    {
+      "at": "2026-11-19T17:41:12.729644+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
