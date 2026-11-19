@@ -11,14 +11,175 @@
   "done_when": "forge.toml can set a standing owner policy (for example auto_more_round = true) under which close gives one more round automatically for P0 or P1 functional findings, at most once per item, and reports that it applied the policy; every other choice still waits for the owner; off by default; new and existing repos get the setting on upgrade",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [
+    {
+      "area": "close() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 422,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: the policy can permit more than one repair round per item",
+      "work": 2
+    },
+    {
+      "area": "close() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 418,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Do not spend the policy on a P0 that already continues",
+      "work": 1
+    },
+    {
+      "area": "close() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 421,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Carry the granted round through forge land",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/brief.md",
+      "file": "src/forge/templates/brief.md",
+      "gain": 4,
+      "harm": 2,
+      "line": 36,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Tell resumed workers that the policy authorized the round",
+      "work": 1
+    },
+    {
+      "area": "close() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 416,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Recognize indented Functional evidence",
+      "work": 1
+    },
+    {
+      "area": "tests/test_standing_review_policy.py",
+      "file": "tests/test_standing_review_policy.py",
+      "gain": 2,
+      "harm": 1,
+      "line": 10,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Follow-up: Correct the CI proof for checks that do not run on pull requests",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "edb8e6b27a11193af8ecc2af39dbf058f7e976ee50a23b3bc35b8617859f7d4e",
+    "changed": "71c44261f2f3f0fdd5dea6fb73d553965f409dec77b825f702a27a3e1ad05ebc",
+    "commit": "b2d83e88d2034e4f2b51d34ba759732da4f53fab",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done\nCase: normal use - the authorized worker round finishes without changing a reviewed file.\nClose reuses the same review ID in src/forge/close.py:304 and treats it as the authorized policy round again here. Each subsequent `forge work` can therefore start another P1 repair without an owner choice; the separate stuck-worker check in src/forge/close.py:571 covers P0s and failing tests, not this P1. The test repeats close before any worker turn and then changes app.py, so it misses this case.\nOwner-approved Done-when: forge.toml can set a standing owner policy (for example auto_more_round = true) under which close gives one more round automatically for P0 or P1 functional findings, at most once per item, and reports that it applied the policy; every other choice still waits for the owner; off by default; new and existing repos get the setting on upgrade",
+        "file": "src/forge/close.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 422,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: the policy can permit more than one repair round per item",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 1, Harm 2\nRaise: Functional\nCase: normal use - a review has both P0 and P1 functional findings, and the next review finds the P0 fixed but the P1 still open.\nThe first review records the policy as used even though src/forge/close.py:424 already lets an open P0 continue without a review-limit choice. The later P1 review has a new ID, so close asks the owner instead of granting the unused P1 round. This mixed-finding consequence is new evidence beyond the ruling that P0s retain their separate stuck-worker stop.",
+        "file": "src/forge/close.py",
+        "gain": 4,
+        "harm": 2,
+        "line": 418,
+        "priority": "P1",
+        "title": "Functional: Do not spend the policy on a P0 that already continues",
+        "work": 1
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 2\nRaise: Functional\nCase: normal use - `forge land` reaches the default two-review task limit after its first repair round.\nClose records and reports the policy, then returns its usual blocked result. The caller in src/forge/land.py:149 has already used its one fix round and stops instead of starting the policy-authorized round. A queued `forge land --all` also returns on a blocked review at src/forge/land.py:146. The new test calls close and next, so it does not exercise either landing path.",
+        "file": "src/forge/close.py",
+        "gain": 4,
+        "harm": 2,
+        "line": 421,
+        "priority": "P1",
+        "title": "Functional: Carry the granted round through forge land",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 1, Harm 2\nRaise: Functional\nCase: normal use - close applies the policy to a P1 and resumes the item's existing worker conversation.\nThe new policy paragraph is in the full brief, but src/forge/worker.py:652 builds a separate continued brief and src/forge/worker.py:678 inserts the old instruction from src/forge/worker.py:27, which tells the worker to wait for the owner's recorded choice at every P1 review limit. The continued brief does not say the policy was applied, so it directs the worker to wait for the choice already granted. The coordinator guide also retains the unconditional instruction at src/forge/templates/skill.md:2057.",
+        "file": "src/forge/templates/brief.md",
+        "gain": 4,
+        "harm": 2,
+        "line": 36,
+        "priority": "P1",
+        "title": "Functional: Tell resumed workers that the policy authorized the round",
+        "work": 1
+      },
+      {
+        "body": "Gain 4, Work 1, Harm 2\nRaise: Functional\nCase: normal use - a reviewer indents a `Raise: Functional` evidence line in a finding body.\nThe expression requires `Raise` in the first column, so close asks the owner despite the enabled policy. src/forge/autoreview.py:131 preserves the submitted body, while the other finding-label parsers in src/forge/score.py:14 accept leading whitespace. The test supplies only an unindented marker.",
+        "file": "src/forge/close.py",
+        "gain": 4,
+        "harm": 2,
+        "line": 416,
+        "priority": "P1",
+        "title": "Functional: Recognize indented Functional evidence",
+        "work": 1
+      },
+      {
+        "body": "Gain 2, Work 1, Harm 1\nThe proof list says pull request CI owns the missing lint, type and cross-platform checks. The pull request job at .github/workflows/forge.yml:89 runs the pytest-based command in forge.toml:6; the Windows job at .github/workflows/forge-next.yml:79 runs only on a schedule or manual dispatch. The listed checks therefore do not provide the claimed pull request proof. Correct the proof list to identify them as not run.",
+        "file": "tests/test_standing_review_policy.py",
+        "gain": 2,
+        "harm": 1,
+        "line": 10,
+        "priority": "P2",
+        "title": "Follow-up: Correct the CI proof for checks that do not run on pull requests",
+        "work": 1
+      }
+    ],
+    "id": "0afdcbb3-fa27-4cdf-9c99-2bf8fb2054f6",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-19T01:59:18.821263+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-19T02:44:56.215506+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-11-19T02:44:56.227314+00:00",
+    "file": "src/forge/close.py",
+    "wait_id": "2076cc3f-2247-4966-8821-8211ca06d4c7"
+  },
   "stuck": {
     "close": null,
     "head": "6d94b9ae2c595dac86923b827f48c2c127e3a74e",

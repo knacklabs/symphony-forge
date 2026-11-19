@@ -1,0 +1,70 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/close.py\tFunctional: Carry the granted round through forge land\tstanding-owner-policy",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 421,
+      "text": "Functional: Carry the granted round through forge land",
+      "from": "blocking",
+      "item": "standing-owner-policy",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tFunctional: Do not spend the policy on a P0 that already continues\tstanding-owner-policy",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 418,
+      "text": "Functional: Do not spend the policy on a P0 that already continues",
+      "from": "blocking",
+      "item": "standing-owner-policy",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tFunctional: Recognize indented Functional evidence\tstanding-owner-policy",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 416,
+      "text": "Functional: Recognize indented Functional evidence",
+      "from": "blocking",
+      "item": "standing-owner-policy",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tNot done: the policy can permit more than one repair round per item\tstanding-owner-policy",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 422,
+      "text": "Not done: the policy can permit more than one repair round per item",
+      "from": "blocking",
+      "item": "standing-owner-policy",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/brief.md\tFunctional: Tell resumed workers that the policy authorized the round\tstanding-owner-policy",
+      "kind": "bug",
+      "path": "src/forge/templates/brief.md",
+      "line": 36,
+      "text": "Functional: Tell resumed workers that the policy authorized the round",
+      "from": "blocking",
+      "item": "standing-owner-policy",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\ttests/test_standing_review_policy.py\tFollow-up: Correct the CI proof for checks that do not run on pull requests",
+      "kind": "edge",
+      "path": "tests/test_standing_review_policy.py",
+      "line": 10,
+      "text": "Follow-up: Correct the CI proof for checks that do not run on pull requests",
+      "from": "review",
+      "item": "standing-owner-policy",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
