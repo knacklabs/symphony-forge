@@ -1,0 +1,31 @@
+{
+  "allow_large": "Release bump: every pinned reference changes, the same as each release; the owner chose to release once the queue and polling fixes merged",
+  "base": "fdfc56ddaeb814af3258fd929480aabf8fbf0bff",
+  "branch": "fix/release-v1-2-44",
+  "done_when": "forge.toml, the package and every pinned reference say v1.2.44, and tests/test_release_version.py passes",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "ab605111f3ea94220c9d9a05535594301fc38f91e92da88689b9950e41a2f180",
+    "changed": "3d7e8584d2316c45cfe00a7f049b3a489cf32717e1759e880c12006216bbcffd",
+    "commit": "a1e442dc94da3c3c1bd3afc6e149704366b47412",
+    "dismissals": [],
+    "findings": [],
+    "id": "4eca3d67-4301-440a-a04c-23d63ac07bfc",
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-19T12:46:57.535374+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-19T12:52:45.352006+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Release v1.2.44: publish what merged since v1.2.43"
+}
