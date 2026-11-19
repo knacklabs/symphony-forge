@@ -228,8 +228,8 @@ def failed(top: Path) -> None:
 
 
 def run(top: Path) -> None:
-    """A best-effort whole rebuild. Keep the retry until all reads and writes succeeded."""
-    from forge import board, close, known_issues
+    """A bounded rebuild. Retries keep the same batch until it is published."""
+    from forge import close
 
     pending = repo.forge_dir(top) / "backfill-pending"
     repaired = pending.with_name("start-repair-done")
@@ -243,38 +243,41 @@ def run(top: Path) -> None:
         cutoff = time_records.when(repo.now()) - timedelta(days=42)
         prs = [*github["open"], *[pr for pr in board_facts.merged_prs(github)
                                 if time_records.when(pr.get("mergedAt")) and time_records.when(pr["mergedAt"]) >= cutoff]]
-        repairs_left = 20
         prs.sort(key=lambda pr: pr.get("mergedAt") or "", reverse=True)
+        eligible = []
         for pr in {pr["number"]: pr for pr in prs}.values():
-            shared = time_records.from_body(pr.get("body") or "")
+            body = pr.get("body") or ""
+            shared = time_records.from_body(body)
+            history = time_records.HISTORY_SECTION.search(body)
             if not pr.get("headRefName", "").startswith(("fix/", "task/", "story/")) or (
                     shared and (shared.get("start_checked") or not shared.get("rebuilt"))
-                    and "nothing running" not in (pr.get("body") or "")):
+                    and not (history and "nothing running" in re.sub(r"<!--.*?-->", "", history[0], flags=re.S))):
                 continue
-            merged_repair = bool(shared and pr.get("mergedAt"))
-            if shared and repaired.exists():
+            eligible.append(pr)
+        # Save the selection before fetching so a retry cannot take another 20.
+        if repaired.exists():
+            batch = json.loads(repaired.read_text("utf-8") or "[]")
+        else:
+            batch = [pr["number"] for pr in eligible if not pr.get("mergedAt")]
+            batch.extend(pr["number"] for pr in [pr for pr in eligible if pr.get("mergedAt")][:20])
+            repaired.write_text(json.dumps(batch), "utf-8")
+        for pr in eligible:
+            if pr["number"] not in batch:
                 continue
-            if merged_repair:
-                if not repairs_left:
-                    continue
-                repairs_left -= 1
-            rebuilt = rebuild(top, pr, read_checks=not merged_repair)
+            shared = time_records.from_body(pr.get("body") or "")
+            rebuilt = rebuild(top, pr, read_checks=not pr.get("mergedAt"))
             if rebuilt is None:
                 continue
             key, state, record = rebuilt
             if shared:
                 record = time_records.merged(record, shared)
             close._refresh_record(top, key, state, {**pr, "body": seed(pr.get("body") or "", record)})
-        known = []
-        for pr in _past(top):
-            if pr["headRefName"].startswith(("fix/", "task/", "story/")):
-                known.extend(known_issues._pull(top, pr))
-        board_facts._cached(top, "known-issues", lambda _: known, seconds=0)
+        repaired.write_text("[]", "utf-8")  # Finish the batch before unrelated reads can fail.
+        _past(top)
         fetched = repo.run("git", "fetch", "-q", "--tags", "origin", cwd=top)
         fetched.check_returncode()
-        # The board already owns plan owners, kept problems and release membership.
-        board.machine_board(top)
-        repaired.touch()
+        # The board reads its own known issues and releases when opened; doing
+        # that here would fetch every historical PR on a fresh checkout.
         pending.unlink(missing_ok=True)
     except (repo.Refused, subprocess.CalledProcessError, OSError, ValueError, KeyError, TypeError) as error:
         if isinstance(error, repo.Refused) and error.entry is close.REFUSALS["publish"]:

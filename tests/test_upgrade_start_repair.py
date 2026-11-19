@@ -1,13 +1,16 @@
-"""Existing start repairs have a bounded GitHub budget and run once.
+"""The upgrade bounds fresh fills and start repairs, including retries.
 
-Audit: existing upgrade coverage owns absent histories, not repairs of shared
-records. The old nothing-running condition rebuilds every merged PR. This
-command test uses real pull refs and only the existing GitHub edge fake.
-No production seam is needed.
+Audit: real distinct pull refs expose eager historical fetches. An unaffected
+PR mentions the bad phrase outside its history. A GitHub failure after the
+batch proves retries cannot select another twenty. Existing coverage does not
+exercise this budget. Only GitHub is faked, with no production test seam.
 """
 import json
+import re
 import time
 from datetime import timedelta
+
+import pytest
 
 from test_board_after_upgrade import History, NOW
 from test_close import env  # noqa: F401
@@ -16,47 +19,71 @@ from test_upgrade_command import RELEASE, unsynced_up  # noqa: F401
 STORY = "FIX-BOUNDED-START-REPAIR"
 
 
-def test_1_upgrade_bounds_existing_start_repairs(unsynced_up, monkeypatch):
+@pytest.mark.parametrize("fresh", [False, True], ids=["repair", "fresh-checkout"])
+def test_1_upgrade_bounds_existing_start_repairs(unsynced_up, monkeypatch, fresh):
     history = History(unsynced_up, monkeypatch)
-    history.item("old-start", 11, 1)
-    original = history.prs.pop()
-    merged_heads = set(history.checks)
     record = {"rebuilt": True, "start_checked": True, "events": [], "timings": [],
               "state": {"kind": "fix"}}
     body = ("<!-- forge:begin -->\n## How it went\n\nnothing running\n"
             "<!-- forge:time-record " + json.dumps(record) + " -->\n<!-- forge:end -->\n")
-    # Oldest first, so the request order cannot decide which twenty get repaired.
+    merged_heads = set()
+    # Distinct branches and refs prevent the identity cache from hiding fetches.
     for number in range(30):
-        pr = {**original, "number": 100 + number, "body": body,
-              "mergedAt": (NOW - timedelta(hours=30-number)).isoformat()}
-        history.prs.append(pr)
-        history.repo.git("push", "-q", "origin", original["headRefOid"] +
-                         f":refs/pull/{pr['number']}/head")
+        history.item(f"old-start-{number}", 100 + number, 1)
+        history.prs[-1].update(body="" if fresh else body,
+                              mergedAt=(NOW - timedelta(hours=30-number)).isoformat())
+        merged_heads.update(history.checks)
+    history.item("unaffected", 200, 0)
+    history.prs[-1]["body"] = ("Why: nothing running needs a better label.\n" +
+                              body.replace("nothing running", "Started by Original Starter"))
+    merged_heads.update(history.checks)
     history.item("open-start", 16, None)
-    history.prs[-1]["body"] = body
+    history.prs[-1]["body"] = "" if fresh else body
     history.publish()
+    # Fail only the later identity inventory, after the bounded pass published.
+    gh = history.repo.bin / "gh"
+    script = gh.read_text("utf-8")
+    needle = '    # Both fields return Actor'
+    script = script.replace(needle, '    if (here / "fail-past").exists():\n'
+                            '        sys.exit("GitHub is unreachable")\n' + needle, 1)
+    gh.write_text(script, "utf-8")
+    failure = history.repo.bin / "fail-past"
+    failure.touch()
     trace = history.up.tmp / "repair-git-trace.txt"
     monkeypatch.setenv("GIT_TRACE", trace.as_posix())
     began = time.monotonic()
     result = history.up.run(RELEASE)
     elapsed = time.monotonic() - began
     assert result.returncode == 0, result.stdout + result.stderr
-    edits = [call for call in history.env.gh.calls()
-             if call[:2] == ["pr", "edit"] and "--body-file" in call
-             and 100 <= int(call[2]) < 130]
-    fetches = [line for line in trace.read_text("utf-8").splitlines()
-               if "built-in: git fetch" in line and any(
-                   f"refs/pull/{number}/head" in line for number in [16, *range(100, 130)])]
-    print(f"Repair command: {elapsed:.2f} seconds, {len(fetches)} pull-ref fetches")
-    assert {int(call[2]) for call in edits} == set(range(110, 130))
+    assert "older items' time stories weren't rebuilt" in result.stdout
+    assert (history.main / ".git/forge/backfill-pending").exists()
+
+    def fetches():
+        return [int(match[1]) for line in trace.read_text("utf-8").splitlines()
+                if "built-in: git fetch" in line
+                and (match := re.search(r"refs/pull/(\d+)/head", line))]
+
+    expected = {16, *range(110, 130)}
+    assert set(fetches()) == expected
+    assert len(fetches()) == 21
     assert not [call for call in history.env.gh.calls()
                 if any(f"/commits/{head}/check-runs" in arg
                        for head in merged_heads for arg in call)]
-    assert history.record(16)
+    for number in expected:
+        rebuilt = history.record(number)
+        starts = [event for event in rebuilt["events"] if event["event"] == "item started"]
+        assert len(starts) == 1
+        assert starts[0]["by"] == "Original Starter"
+        assert starts[0]["at"] == (NOW - timedelta(days=5 if number == 16 else 6)).isoformat()
+        assert rebuilt["state"]["steps"][0]["at"] == starts[0]["at"]
+    for number in [*range(100, 110), 200]:
+        assert history.stored()[number]["body"] == next(
+            pr["body"] for pr in history.prs if pr["number"] == number)
+    print(f"Bounded upgrade ({fresh=}): {elapsed:.2f} seconds, {len(fetches())} pull-ref fetches")
     before = history.stored()
+    failure.unlink()
     again = history.up.run(RELEASE)
     assert again.returncode == 0, again.stdout + again.stderr
     assert history.stored() == before
-    assert len([call for call in history.env.gh.calls()
-                if call[:2] == ["pr", "edit"] and "--body-file" in call
-                and 100 <= int(call[2]) < 130]) == 20
+    assert len(fetches()) == 21
+    assert not (history.main / ".git/forge/backfill-pending").exists()
