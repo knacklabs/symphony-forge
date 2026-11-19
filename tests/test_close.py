@@ -524,6 +524,9 @@ def test_2_gates_check_outcomes(env, case, request):
 
 @pytest.mark.parametrize("kind", ["task", "fix"])
 def test_18_close(env, kind):
+    if kind == "fix":
+        config = (env.repo.path / "forge.toml").read_text("utf-8")
+        env.commit(env.repo.path, "forge.toml", "task_review_rounds = 1\n" + config)
     # This existing close flow exercises the configured human merge after client sign-off.
     env.commit(env.repo.path, "docs/decisions/0001-client-signoff.md",
                '---\nstatus: accepted\nconfirmed_by: "A Client"\n---\n')
@@ -572,7 +575,7 @@ def test_18_close(env, kind):
                      "`Not done: The readme opens with a greeting`"):
             assert line in prompt
     assert "## Test audit" in prompt and "`Simpler: <what to cut> → <what replaces it>`" in prompt
-    # The owner accepts a fix at its review limit. Story parts retain one repair round.
+    # The owner accepts a fix at its configured one-round limit.
     if kind == "fix":
         assert "reached the round limit with open findings" in first.stderr
         env.open_pr(body(env.gh_calls("pr", "create")[-1]), draft=True)
