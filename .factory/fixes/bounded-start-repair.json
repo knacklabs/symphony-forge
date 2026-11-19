@@ -75,8 +75,8 @@
     "id": "2c8c1cc4-1dd0-4315-a18e-ba305a192eeb",
     "status": "clean"
   },
-  "round": 3,
-  "status": "waiting for checks",
+  "round": 4,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-19T13:52:00.521791+00:00",
@@ -105,10 +105,10 @@
     "worker_round": 2
   },
   "stuck": {
-    "close": "04d0da74-f182-4c12-b080-e3e9e8e9c47f",
-    "head": "44bf05a9d80e08e2f7dc9ddae6ba85e075da9633",
+    "close": "6d6afd6a-543c-4d5c-ba4d-7fe990b3397a",
+    "head": "427becd192043dacd29b9183894845bd52a530e4",
     "keys": {},
-    "round": 2
+    "round": 3
   },
   "why": "The exact wait-times fix makes the first close after an upgrade repair every past item from the last six weeks: backfill.run rebuilds each pull request whose How it went text says 'nothing running', fetching each old pull request head and its check runs, so on Forge's own repo the first close ran over an hour and spends many GitHub requests",
   "worker": "codex"
