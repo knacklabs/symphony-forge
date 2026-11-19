@@ -140,7 +140,7 @@
     "id": "e88e2560-6d22-410f-84dc-fde66bb3a798",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -153,10 +153,12 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "1176a980af76087e35a367c7dbeeec2b52bf4834",
-    "keys": {},
-    "round": null
+    "close": "635fd24e-00b8-4112-931b-9daf4e9004c8",
+    "head": "92852eef0733ab02035decee93bdda9712381341",
+    "keys": {
+      "the open P0 not done: close and merge use the installed release's ci wait and rerun behaviour when it is newer than the branch's pin in src/forge/pinned_checks.py": 1
+    },
+    "round": 1
   },
   "why": "A branch pinned to the earlier release runs close and merge through that release, so CI-wait fixes in a newer installed release (rerun failed groups, cancelled is not failed) do not apply until each branch merges the pin upgrade",
   "worker": "codex"
