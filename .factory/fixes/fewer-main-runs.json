@@ -1,6 +1,13 @@
 {
   "base": "77a35caa0f80ad338fc8ff08e4ab788a27ea34ad",
   "branch": "fix/fewer-main-runs",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1f4e7-116a-70e1-8995-01babd8fe144",
+    "head": null,
+    "start": "adb29843872c9c0342a8f1fcc6cb48c29b72b508"
+  },
   "done_when": "No main run starts when the merged commit's code equals what the pull request's CI tested (main did not move since), and Forge records that result for main; when several merges land close together, a newer main run cancels the running one and tests everything since the last green main result, and a red result names the merges it covered; merges still stop while main's newest result is red; new and existing repos get it on upgrade and forge sync",
   "fix_kind": "mechanical",
   "kind": "fix",
