@@ -9,6 +9,13 @@
     "start": "64a21913a714810f52d165f90e5fcaf87bd826ea"
   },
   "done_when": "close and merge use the installed release's CI wait and rerun behaviour when it is newer than the branch's pin, while review and the rest of close keep the pinned release; new and existing repos get it on upgrade",
+  "drop": {
+    "at": "2026-11-19T04:05:34.367992+00:00",
+    "because": "Owner chose on 19 Nov 2026 to drop the cross-release bridge; pin upgrades merge first instead",
+    "by": "vrknetha <vrknetha@gmail.com> 1795061134 +0530",
+    "pull_request": 1698,
+    "status": "hotspot"
+  },
   "fix_kind": "mechanical",
   "kind": "fix",
   "known": [
@@ -173,7 +180,7 @@
     "status": "blocked"
   },
   "round": 2,
-  "status": "hotspot",
+  "status": "dropped",
   "steps": [
     {
       "at": "2026-11-18T16:44:13.929843+00:00",
@@ -186,6 +193,10 @@
     {
       "at": "2026-11-19T03:40:51.620063+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-11-19T04:05:34.368348+00:00",
+      "step": "drop"
     }
   ],
   "stop": {
