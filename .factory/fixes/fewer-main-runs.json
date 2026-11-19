@@ -18,8 +18,114 @@
   "done_when": "No test run starts on main after a merge; the nightly full run is the only run on main, and Forge merges nothing while main's newest nightly result is red, naming the nightly run and the repair step; new and existing repos get it on upgrade and forge sync",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [
+    {
+      "area": "red() in src/forge/merge.py",
+      "file": "src/forge/merge.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 437,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Let queued nightlies run when main advances",
+      "work": 2
+    },
+    {
+      "area": "ships() in src/forge/prcheck.py",
+      "file": "src/forge/prcheck.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 331,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: No test run starts on main after a merge; the nightly full run is the only run on main",
+      "work": 2
+    },
+    {
+      "area": "land() in src/forge/land.py",
+      "file": "src/forge/land.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 176,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Tell human mergers to hold the task while the nightly is red",
+      "work": 1
+    },
+    {
+      "area": "src/forge/merge.py",
+      "file": "src/forge/merge.py",
+      "gain": 2,
+      "harm": 1,
+      "line": 21,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Follow-up: Preserve nightly details in queue summaries",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "75f807547e6166452006ebf91e8b525d58fc80e223652650313c47db555f58eb",
+    "changed": "aa7e1badbc2346c5f4c1326e4a975eb46a1cc51763a40341709e6a5ffca70ee6",
+    "commit": "88219b34e281a41ad2f30edeadd0341bdff86d87",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - a nightly waits for a runner while pull requests continue to merge.\nThe generated workflow checks out the scheduled event's commit, but `src/forge/fullrun.py:80` fetches current main and refuses before running tests if that commit is no longer the tip. The new gate then treats the workflow failure as a failed nightly, instructs the user to start a fix, and blocks story merges even though no test failed. Rerunning the scheduled workflow retains the original SHA, while a manually dispatched run cannot clear this gate. This can leave the team blocked until the next scheduled run. [GitHub documents the rerun SHA behavior](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/re-run-workflows-and-jobs).\nAdds work: handle a moved default branch in the scheduled full run; F 2 x H 2 = 4; 2 x C = 4",
+        "file": "src/forge/merge.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 437,
+        "priority": "P1",
+        "title": "Let queued nightlies run when main advances",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Not done\nCase: normal use - a team prepares a release or sign-off after its last product merge.\nThe owner-approved item says: \"No test run starts on main after a merge; the nightly full run is the only run on main, and Forge merges nothing while main's newest nightly result is red, naming the nightly run and the repair step; new and existing repos get it on upgrade and forge sync\". The generated workflow still enables `workflow_dispatch` and its full-suite job runs for that event. The shipped guide at `src/forge/templates/skill.md:2302` tells teams to dispatch that full run on the default branch after the last product merge, so a non-nightly test run still starts there. The named workflow test checks that schedule is present and push is absent, but passes with this manual run enabled.",
+        "file": "src/forge/prcheck.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 331,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: No test run starts on main after a merge; the nightly full run is the only run on main",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 1, Harm 3\nRaise: Functional\nCase: normal use - a repo uses human merges and a story task reaches `forge land` after the nightly fails.\nThe handoff still says the task is ready and that a human merges its pull request; the new note asks for a fix but removes the previous instruction to wait before merging the task. The `forge land --all` path at `src/forge/land.py:559` also classifies it under \"Ready to merge\". A human following that handoff can merge the task while the nightly is red. The new human-advice test asserts this same ready-to-merge message, so it does not catch the regression.\nAdds work: retain the hold instruction in the human handoff; F 2 x H 2 = 4; 2 x C = 2",
+        "file": "src/forge/land.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 176,
+        "priority": "P1",
+        "title": "Tell human mergers to hold the task while the nightly is red",
+        "work": 1
+      },
+      {
+        "body": "Gain 2, Work 1, Harm 1\nCase: normal use - `forge land --all` encounters a red nightly for an agent-merged story task.\nThe new refusal has no `Next:` line. The queue parser at `src/forge/land.py:589` looks for one, so its final summary either uses the earlier `Next: forge merge` from close or reports a generic exit code. It omits the failed run and repair step and directs the user to retry, even though the detailed refusal appeared earlier in the streamed output.",
+        "file": "src/forge/merge.py",
+        "gain": 2,
+        "harm": 1,
+        "line": 21,
+        "priority": "P2",
+        "title": "Follow-up: Preserve nightly details in queue summaries",
+        "work": 1
+      }
+    ],
+    "id": "55f6dd12-3616-4c46-bf37-d928aa32a871",
+    "status": "blocked"
+  },
   "round": 3,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-19T17:42:15.162611+00:00",
@@ -39,6 +145,10 @@
       "at": "2026-11-19T18:05:55.995140+00:00",
       "round": 3,
       "step": "resume"
+    },
+    {
+      "at": "2026-11-19T18:16:21.958593+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
