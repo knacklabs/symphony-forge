@@ -25,8 +25,10 @@ from fnmatch import fnmatch
 from pathlib import Path
 from typing import Any
 
-from forge import autoreview, docskip, machine, noise, repo, score, spotted
+from forge import autoreview, docskip, machine, noise, repo, review_history, score, spotted
 from forge.task import branch_item, sections
+
+_settled = review_history.settled
 
 # The helper Forge runs: the upstream commit its installer stamps in the skill's .upstream-sha.
 AUTOREVIEW_PIN = "ce14dcca09b3affb922ddcca11465619e67f5114"
@@ -598,54 +600,13 @@ def _rulings(top: Path, base: str, history: list[dict[str, Any]]) -> str:
 
 def _history(top: Path, item: str, base: str, previous: dict[str, Any],
              ref: str = "HEAD", *, state: dict[str, Any] | None = None,
-             path: str = "", section: str = "", include_merged: bool = False) -> list[dict[str, Any]]:
-    """Git owns earlier reviews; later dismissals replace that round's original result."""
-    path = path or repo.state_path(item)
-    rounds = {}
-    traversal = "--full-history"  # Both machines' review snapshots survive a branch merge.
-    for sha in repo.git("rev-list", "--reverse", traversal, f"{base}..{ref}" if base else ref, "--", path,
-                        cwd=top).split():
-        saved = json.loads(repo.git("show", f"{sha}:{path}", cwd=top))
-        result = (saved.get(section, {}) if section else saved).get("review") or {}
-        if result.get("commit"):  # one per round: two rounds at one commit differ in their findings
-            if state is not None:
-                bound_review(top, item, state, result)
-            rounds[result["commit"], str(result.get("findings"))] = result
-    if previous.get("commit"):
-        if state is not None:
-            bound_review(top, item, state, previous)
-        rounds[previous["commit"], str(previous.get("findings"))] = previous
-    return list(rounds.values())
-
-
-def _settled(history: list[dict[str, Any]]) -> dict[tuple[str, str], str]:
-    """Earlier rounds' settled findings, one per identity under its first spelling."""
-    settled, earlier, names = {}, set(), {}
-    for result in history:
-        current = {score.identity(f["file"], f["title"]) for f in result.get("findings", [])}
-        names = {**{score.identity(f["file"], f["title"]): (f["file"], f["title"]) for f in result.get("findings", [])}, **names}
-        for key in earlier - current:
-            settled.setdefault(key, "fixed: absent from a later review")
-        for finding in score.open_findings(result):
-            if finding.get("required_done_when") and not str(finding.get("follow_up", "")).startswith("Split into"):
-                continue
-            if (outcome := score.bar(score.of(finding))) in ("follow-up", "live with"):
-                settled.setdefault(score.identity(finding["file"], finding["title"]), f"known: below the bar ({outcome})")
-            if finding.get("follow_up"):
-                settled.setdefault(score.identity(finding["file"], finding["title"]),
-                                   "known: " + finding["follow_up"])
-        accepted = set()
-        for dismissal in result.get("dismissals", []):
-            finding = result["findings"][dismissal["finding"] - 1]
-            key = score.identity(finding["file"], finding["title"])
-            if dismissal.get("accepted"):
-                accepted.add(key)
-                settled[key] = "accepted by the owner: " + dismissal["because"]
-            else:  # a repeat dismissed as known or accepted keeps that reason
-                settled[key] = (dismissal["because"] if dismissal["because"].startswith(
-                    ("known:", "accepted by the owner:")) else "dismissed because " + dismissal["because"])
-        earlier = (earlier | current) - accepted
-    return {names[key]: reason for key, reason in settled.items()}
+             path: str = "", section: str = "", include_merged: bool = False,
+             saved_rounds: list[dict[str, Any]] | None = None) -> list[dict[str, Any]]:
+    """Git owns earlier reviews; history keeps record ancestry outside the saved rows."""
+    bind = (lambda result: bound_review(top, item, state, result)) if state is not None else None
+    return review_history.history(top, item, base, previous, ref, state=state, path=path,
+                                  section=section, include_merged=include_merged,
+                                  saved_rounds=saved_rounds, bind=bind)
 
 
 def _cited_changed(top: Path, history: list[dict[str, Any]], key: tuple[str, str], head: str) -> bool:

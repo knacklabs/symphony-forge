@@ -59,6 +59,11 @@ def test_1_upgrade_to_installed_release_continues_during_runs(unsynced_up, tmp_p
         # Upgrade installs the shared record merge rule, including for older adoptions.
         assert upgrade.repo.git("config", "--get", "merge.forge-record.driver") == (
             "forge hook merge-roadmap %O %A %B %P")
+        # Ask Git for the effective rule immediately after upgrade. A configured
+        # driver alone does nothing unless the matching attributes are installed.
+        for path in (".factory/fixes/upgrade-proof.json", ".factory/stories/PROOF/story.json",
+                     ".factory/stories/PROOF/tasks/BUILD.json", ".factory/client-signoff.json"):
+            assert upgrade.repo.git("check-attr", "merge", "--", path) == f"{path}: merge: forge-record"
         assert reader.poll() is None, "Upgrade must leave the other repo's run alone"
     finally:
         finish(upgrade.repo, processes)

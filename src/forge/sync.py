@@ -40,7 +40,8 @@ COMMANDS = [{
 MERGE_DRIVER = "forge hook merge-roadmap %O %A %B"
 RECORD_DRIVER = MERGE_DRIVER + " %P"
 RECORD_RULES = tuple(f"{path} merge=forge-record" for path in (
-    ".factory/fixes/*.json", ".factory/stories/**/story.json", ".factory/stories/**/tasks/*.json"))
+    ".factory/fixes/*.json", ".factory/stories/**/story.json", ".factory/stories/**/tasks/*.json",
+    ".factory/client-signoff.json"))
 
 REFUSALS = {
     "outside": ("{path} leads outside this repo, so Forge won't write through it; remove that link.",
@@ -427,21 +428,44 @@ def merge_roadmap(base: str, ours: str, theirs: str) -> int:
 
 def merge_hook(args: argparse.Namespace) -> int:
     if args.path.startswith(".factory/"):
-        return merge_record(args.ours, args.theirs)
+        return merge_record(args.base, args.ours, args.theirs)
     return merge_roadmap(args.base, args.ours, args.theirs)
 
 
-def merge_record(ours: str, theirs: str) -> int:
+def merge_record(base: str, ours: str, theirs: str) -> int:
     """Keep concurrent observations and the state from the furthest worker round.
 
     A review is one snapshot: its finding numbers and dismissals must stay together.
     Git retains both machines' earlier review snapshots in the merged history.
     """
     try:
-        mine, other = (json.loads(Path(path).read_text(encoding="utf-8")) for path in (ours, theirs))
-        if not all(isinstance(value, dict) for value in (mine, other)):
+        old, mine, other = (json.loads(Path(path).read_text(encoding="utf-8") or "{}")
+                            for path in (base, ours, theirs))
+        if not all(isinstance(value, dict) for value in (old, mine, other)):
             return 1
         merged = dict(other if other.get("round", 0) > mine.get("round", 0) else mine)
+        if mine.get("round", 0) == other.get("round", 0):
+            missing = object()
+            for name in old.keys() | mine.keys() | other.keys():
+                if mine.get(name, missing) == old.get(name, missing):
+                    if name in other:
+                        merged[name] = other[name]
+                    else:
+                        merged.pop(name, None)
+        # Stories have no worker round. Keep the complete human approval, including
+        # its plan hash, when a concurrent read updates the rest of the record.
+        approvals = [side["approval"] for side in (mine, other) if side.get("approval")]
+        if approvals and mine.get("approval") != other.get("approval"):
+            merged["approval"] = max(approvals, key=lambda value: (value.get("round", 0), value.get("at", "")))
+        from forge.review import blocking
+        from forge.review_history import merge_review_snapshots
+
+        reviews = merge_review_snapshots([side["review"] for side in (merged, mine, other)
+                                          if side.get("review")])
+        if reviews:
+            merged["review"] = next((result for result in reviews if blocking(result)), reviews[0])
+        if "rounds" in mine or "rounds" in other:
+            merged["rounds"] = merge_review_snapshots(mine.get("rounds", []) + other.get("rounds", []))
         if "steps" in mine or "steps" in other:
             local, remote = mine.get("steps", []), other.get("steps", [])
             if not isinstance(local, list) or not isinstance(remote, list):

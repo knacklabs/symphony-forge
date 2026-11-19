@@ -236,6 +236,8 @@ def _report(top: Path, history: dict[str, Any] | None = None,
     fixes: list[tuple[dict[str, Any], list[str]]] = []
     parts: list[tuple[str, dict[str, Any]]] = []
     refusals: dict[Path, str] = {}
+    unusable_records = {repo.REFUSALS["bad_state"][0].format(path=rel, problem=problem)
+                        for (_, rel), problem in (history or {}).get("unusable", {}).items()}
     # Only forge next asks GitHub for scheduled runs; hooks stay offline. An open fix for a
     # failed run shows its own lines under it.
     alerts = (facts["alerts"] if facts is not None else _failed_schedules(top)) if schedules else {}
@@ -332,6 +334,8 @@ def _report(top: Path, history: dict[str, Any] | None = None,
                     else story.show(top, landed, repo.state_path(name)) is not None)):
             continue
         if state := remote_state(top, name, branch, prs.get(branch), history):
+            if state.get("status") == "unusable":
+                continue
             if state.get("status") == "dropped" or name in promoted:
                 continue
             found = _item(name, f"The fix {name}", state, top, None, prs, refusals)
@@ -398,6 +402,7 @@ def _report(top: Path, history: dict[str, Any] | None = None,
     report = (build + _due(top, history) + pinned + [line for alert in alerts.values() for line in alert]
             + nextstate.hotspots(top, trees, refusals=refusals)
             + _overlaps(top, list(item_states.items()), prs, (history or {}).get("states", {}))
+            + sorted(unusable_records)
             + lines + [f"{path}: {reason}" for path, reason in refusals.items()]
             + [f"Builds running: {running} of {agents['size']}"])
     ready = [(index, report[index - 1].split(" is ready to merge", 1)[0].removeprefix("The fix "), line)
@@ -553,8 +558,10 @@ def _stories(top: Path, history: dict[str, Any] | None = None,
         states = {key: story.completed(top, key, ref) for key in
                   re.findall(r"^\.factory/stories/([A-Z][A-Z0-9-]*)/story\.json$", listing, re.M)}
     else:
+        bad_landed = {rel for (source, rel) in history.get("unusable", {}) if source == history["landed"]}
         states = {key: state for key, state in history["stories"].items()
-                  if repo.state_path(key) not in history["expired"]}
+                  if repo.state_path(key) not in history["expired"]
+                  and repo.state_path(key) not in bad_landed}
     for key, state in states.items():
         found[key] = (None, state, (history["docs"].get(f"{ref}:plans/{key}.md", "") if history is not None
                                     else story.show(top, ref, f"plans/{key}.md") or ""))
@@ -577,6 +584,8 @@ def _stories(top: Path, history: dict[str, Any] | None = None,
             state = story.json_of(story.show(top, ref, repo.state_path(key)))
         else:  # the board's one read of every ref
             full = f"refs/heads/{ref}" if ref.startswith("story/") else f"refs/remotes/{ref}" if ref.startswith("origin/story/") else ref
+            if (full, repo.state_path(key)) in history.get("unusable", {}):
+                continue
             state = history["ref_states"].get(full, {}).get(repo.state_path(key), {})
         if state:
             found[key] = (story.stories_here(top).get(key), state, story._plan(top, key, history=history))

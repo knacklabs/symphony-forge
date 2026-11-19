@@ -166,7 +166,10 @@ If a base exists only on this machine, finish its work and run `forge close <bas
 and review it before you start a part on top of it.
 
 You can continue, close and merge published work on another machine with `forge work`, `forge close` and `forge merge`.
-Forge merges fix, story and task records as JSON: it keeps the higher worker round and both sides' steps and review history. New and existing repos get the merge rule on upgrade. `forge next` names an unusable record and continues with other items.
+Forge merges fix, story, task and client sign-off records as JSON. It keeps the higher worker
+round, story approvals, and both sides' steps, reviews and review choices. A review on another
+machine does not clear an open finding. New and existing repos get the merge rule on upgrade.
+`forge next` names each unusable record and continues with other items.
 Before every work round, Forge fetches and merges the default branch before it reads settings or writes the brief.
 When .test_durations is the only conflict, work and close keep both JSON objects' entries, use the default branch's values for shared keys, and commit the merge. This also applies when close replays a stacked item after its parent merges. A rejected automatic commit aborts the merge and keeps the usual conflict stop. Any other conflict keeps the usual stop.
 If that merge conflicts, the worker gets its normal full brief with one added line to finish and commit the merge first.

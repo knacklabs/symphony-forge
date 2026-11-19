@@ -455,11 +455,11 @@ def _signoff_review(top: Path, args: argparse.Namespace, answers: str, evidence:
     saved = document
     previous = saved.get("review") or {}
     inputs = _digest(json.dumps([answers, evidence, story.agents_section(top, "Review rules"), constitution(top)]))
-    history = saved.get("rounds") or review._history(
-        top, "client-signoff", "", previous, path=rel)
+    history = review._history(top, "client-signoff", "", previous, path=rel,
+                              saved_rounds=saved.get("rounds"))
     if previous:
+        previous = saved["review"] = history[-1]
         _signoff_known(top, previous, len(history))
-        history[-1] = previous
         saved["rounds"] = history
         opened = score.open_findings(previous)
         saved["stop"] = bool(opened and (saved.get("stop") or sample_data)
