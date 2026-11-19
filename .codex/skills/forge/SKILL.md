@@ -225,9 +225,6 @@ Build the list and the count in the client's design, as FORGE-NOSCREENS-1 requir
 No email until the SNS story.
 An app without the `notifications` module gets it by hand, from these names, when a feature first needs it.
 `forge sync` delivers this guide and keeps the app's code and migrations unchanged.
-Before sync replaces a differing `.agents/skills/forge` page, it saves the old bytes
-beside it with a `.pre-forge-` suffix and prints that path. Migration lists tracked
-team pages there in its existing `.forge-migrate/kept` list before it replaces them.
 
 ## After a demo
 
@@ -2058,7 +2055,8 @@ In `forge.toml`, `cold_read_rounds` sets the cold-read limit and `task_review_ro
 A person can ask you to skip the model review for a task or fix. Run `forge close <item> --no-review --by "<name>" --reason "<why>"` only when a person asks. Close adds the name and reason to the pull request. Close refuses if an earlier review blocked the item. Tests, CI, design checks and merge still run.
 
 At the round limit (the repo's setting, two by default), open findings below P0
-stop the item and ask the owner: one more round, split or accept.
+stop the item only when no P0 remains open.
+Forge asks the owner: one more round, split or accept.
 Accept makes the open findings follow-ups in Known issues with the owner's reason.
 An open P0 returns to the worker. When the same P0 stays open in two worker rounds in a row,
 Forge stops and asks the owner.
@@ -2066,7 +2064,7 @@ Forge stops and asks the owner.
 From the second review round, close checks the previous round's findings and new P0s that
 happen in normal use. The reviewer says fixed or not fixed for each previous finding.
 A round-one fix that breaks the main path counts as a P0 (Harm 4 or more). Open findings below
-P0 need the owner's choice at the limit, whether their lines changed or not.
+P0 need the owner's choice at the limit only when no P0 is open, whether their lines changed or not.
 A `Case: rare` finding does not block unless it names a kind the owner requires.
 A security hole or data loss that any user can reach is normal use. Reviewers and readers do not
 raise questions that Review rules or recorded owner
@@ -2582,7 +2580,7 @@ line starts with `Needs you:`, and the board lists the run under Needs you until
 manual full run passes. The mark is for the owner; still start the fix without asking.
 
 Close stops at the round limit (the repo's setting, two by default) for a story part or after one round for a fix when findings below P0
-remain open. It asks the owner: "One more round, split or accept?" Close, land and work show
+remain open and no P0 is open. It asks the owner: "One more round, split or accept?" Close, land and work show
 the same question until the owner records a choice. An open P0 returns to the worker.
 An older release's unanswered stop also waits for the owner.
 Land prints the owner's question, open findings and failing checks, then exits with status 3

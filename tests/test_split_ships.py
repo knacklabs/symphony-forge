@@ -37,9 +37,6 @@ SOURCES = {
     ".forge/design/render-check.mjs": "src/forge/templates/design/render-check.mjs",
     ".forge/design/render-check.d.mts": "src/forge/templates/design/render-check.d.mts",
 }
-# The shared Forge pages also belong to the .agents host folder.
-SOURCES.update({path.replace(".codex/", ".agents/", 1): source
-                for path, source in list(SOURCES.items()) if path.startswith(".codex/skills/forge/")})
 # The new contract includes every support file in the pinned design skills, for both hosts.
 SOURCES.update({f"{host}/skills/{path.relative_to(ROOT / 'src/forge/templates/skills').as_posix()}":
                 path.relative_to(ROOT).as_posix()

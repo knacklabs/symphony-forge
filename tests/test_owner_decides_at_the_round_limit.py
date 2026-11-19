@@ -252,7 +252,8 @@ def test_4_clients_get_the_owner_decides_at_the_round_limit_guide(unsynced_up, a
         client = up.folder
 
     sentences = (
-        "At the round limit (the repo's setting, two by default), open findings below P0 stop the item and ask the owner: one more round, split or accept.",
+        "At the round limit (the repo's setting, two by default), open findings below P0 stop the item only when no P0 remains open.",
+        "Forge asks the owner: one more round, split or accept.",
         "An open P0 returns to the worker.",
         "When the same P0 stays open in two worker rounds in a row, Forge stops and asks the owner.",
         "When two rounds in a row leave close's tests failing or the same P0 open, `forge work` stops the item.",

@@ -91,19 +91,20 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
     skill = (TEMPLATES / "skill.md").read_text(encoding="utf-8")
     return {
         ".forge/design/support.js": (TEMPLATES / "design/support.js").read_text(encoding="utf-8"),
-        **{f"{host}/skills/forge/SKILL.md": skill for host in (".claude", ".codex", ".agents")},
+        ".claude/skills/forge/SKILL.md": skill,
+        ".codex/skills/forge/SKILL.md": skill,
         **{f"{host}/skills/forge/standards.md":
            (TEMPLATES.parent / "standards.md").read_text(encoding="utf-8")
-           for host in (".claude", ".codex", ".agents")},
+           for host in (".claude", ".codex")},
         **{f"{host}/skills/forge/migrate-skill.md":
            (TEMPLATES / "migrate-skill.md").read_text(encoding="utf-8")
-           for host in (".claude", ".codex", ".agents")},
+           for host in (".claude", ".codex")},
         **{f"{host}/skills/forge/run-reference.md":
            (TEMPLATES / "run-reference.md").read_text(encoding="utf-8")
-           for host in (".claude", ".codex", ".agents")},
+           for host in (".claude", ".codex")},
         **{f"{host}/skills/forge/fde.md":
            sync._synced_text(".codex/skills/forge/fde.md", "fde.md")
-           for host in (".claude", ".codex", ".agents")},
+           for host in (".claude", ".codex")},
     }
 
 

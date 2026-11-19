@@ -87,7 +87,7 @@ VENDORED = ("factory", "forge", "forge.cmd", "harness.yaml", "harness", "install
             "docs/harness-philosophy.md", "docs/degraded-mode.md", "docs/windows.md",
             "docs/codex-factory.md", "docs/memory/factory-entry-contract.md", ".codex/agents",
             ".codex/explore.config.toml", ".codex/skills/forge", ".claude/skills/forge",
-            ".agents/skills/forge", ".claude/CLAUDE.md", ".envrc",
+            ".claude/CLAUDE.md", ".envrc",
             *(f".github/workflows/{name}.yml" for name in (
                 "factory-scaffold", "gardener", "harness-health", "roadmap-gate", "board-invariant",
                 "pr-link", "pr-ticket-check")))
