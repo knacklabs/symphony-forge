@@ -1,6 +1,13 @@
 {
   "base": "285e56632baf943e4c7524f2341a7bb52f3e7f0b",
   "branch": "fix/standing-owner-policy",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1f190-66c4-7891-a7d2-25d8d05efed0",
+    "head": null,
+    "start": "cdfd797c63ee9cb719fa78e5c0e3eb4a2cec79ca"
+  },
   "done_when": "forge.toml can set a standing owner policy (for example auto_more_round = true) under which close gives one more round automatically for P0 or P1 functional findings, at most once per item, and reports that it applied the policy; every other choice still waits for the owner; off by default; new and existing repos get the setting on upgrade",
   "fix_kind": "mechanical",
   "kind": "fix",
