@@ -1,0 +1,119 @@
+{
+  "base": "c142046d17277a45bf624a405bb544b02ac9db82",
+  "branch": "fix/ci-poll-60s",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1f221-1cdb-7b60-8d4b-b3ad6579eef8",
+    "head": null,
+    "start": "37f541af6a0ac4f1f28a8d29f4d8bf636808ecd2"
+  },
+  "done_when": "close, merge and land poll CI checks every 60 seconds by default, and FORGE_CHECKS_POLL sets another interval in seconds; new and existing repos get it on upgrade",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "_wait() in src/forge/checks.py",
+      "file": "src/forge/checks.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 262,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: close, merge and land poll CI checks every 60 seconds by default, and FORGE_CHECKS_POLL sets another interval in seconds",
+      "work": 2
+    },
+    {
+      "area": "fake_clock() in tests/conftest.py",
+      "file": "tests/conftest.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 526,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: CI wait tests still assume 15-second sleeps",
+      "work": 2
+    },
+    {
+      "area": "let_finish() in src/forge/checks.py",
+      "file": "src/forge/checks.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 142,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Keep the pre-push wait within its configured deadline",
+      "work": 2
+    },
+    {
+      "area": "test_1_ci_polls_at_the_configured_interval() in tests/test_ci_poll_interval.py",
+      "file": "tests/test_ci_poll_interval.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 28,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: polling interval through pre-push close and land",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "8e88bf2b355591cefae4c6154fa0498bf5f740f860d19d249ee4a14f6df7f34c",
+    "changed": "9c4dfaf205e65e6a1837025e2a9eccfffe7525b51e20c9f293b08ab9c7f3faa2",
+    "commit": "f5dd16db64c285f5ba8101c57a5b2cf383e3448e",
+    "dismissals": [],
+    "findings": [],
+    "id": "7d1f3804-edb3-49d2-9857-279dc077ae39",
+    "status": "clean"
+  },
+  "round": 4,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-19T04:46:51.106603+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-19T05:10:22.401442+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-19T06:57:33.841644+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-19T09:38:20.137867+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-19T11:09:01.680981+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-19T05:10:22.419286+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "src/forge/checks.py",
+    "reason": "Owner decided on 18 Nov 2026 that fixes get two review rounds; this is the second",
+    "wait_id": "099490a2-eeb0-48b7-a8cd-b2215e9c7ecd",
+    "worker_round": 1
+  },
+  "stuck": {
+    "close": "21ded6e3-e15e-438d-aff7-f6d32918e2da",
+    "head": "f075d3a7f9b29d994302aa293079089f422aaea0",
+    "keys": {},
+    "round": 3
+  },
+  "why": "close polls CI checks every 15 seconds, so about 6 closes on one GitHub account use about 4,000 of the 5,000 API requests an hour; a client ran out of quota every hour on 19 Nov 2026 and nothing merged for hours",
+  "worker": "codex"
+}

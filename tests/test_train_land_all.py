@@ -202,9 +202,9 @@ LATER = "so the ready changes merge one at a time, each with its own check."
 
 
 def _fast_polls(repo) -> None:
-    """The wait loops' 15-second polls last 1 second in every Forge and gh process, and the monotonic
-    clock shows the 15: a first answer of "still running" is read again after four polls, when the
-    60-second status snapshot ends, not after a minute. Another process still has time to act between two
+    """The wait loops' 60-second polls last 4 seconds in every Forge and gh process, and the monotonic
+    clock shows the 60: a first answer of "still running" is read again when the
+    status snapshot ends, not after a minute. Another process still has time to act between two
     polls, which the train waits for. Every other pause stays real."""
     startup = repo.bin / "sitecustomize.py"
     startup.write_text((startup.read_text("utf-8") if startup.exists() else "") + """
@@ -214,9 +214,9 @@ _skipped, _sleep, _monotonic = 0.0, time.sleep, time.monotonic
 
 def _poll(seconds):
     global _skipped
-    if seconds == 15:
-        _skipped += 14
-        _sleep(1)
+    if seconds == 60:
+        _skipped += 56
+        _sleep(4)
     else:
         _sleep(seconds)
 
@@ -232,6 +232,7 @@ def train(client, monkeypatch):
     gh.write_text(gh.read_text("utf-8").replace(MARKER, TRAIN_GH + MARKER, 1), "utf-8")
     machine_cores(env.repo, 20)  # ten agent places, so no change waits for a place
     _fast_polls(env.repo)
+    monkeypatch.setenv("FORGE_CHECKS_POLL", "60")
     monkeypatch.setenv("FORGE_CHECKS_WAIT", "4500")  # 300 s of the shortened polls
     env.remote = Path(env.repo.git("remote", "get-url", "origin")).as_posix()
     env.common = Path(env.repo.git("rev-parse", "--path-format=absolute", "--git-common-dir"))
