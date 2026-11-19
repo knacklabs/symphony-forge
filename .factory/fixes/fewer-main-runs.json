@@ -129,7 +129,7 @@
     "id": "55f6dd12-3616-4c46-bf37-d928aa32a871",
     "status": "blocked"
   },
-  "round": 3,
+  "round": 4,
   "status": "fixing",
   "steps": [
     {
@@ -154,13 +154,18 @@
     {
       "at": "2026-11-19T18:16:21.958593+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-11-19T18:17:04.814618+00:00",
+      "round": 4,
+      "step": "resume"
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "ff765f1a76c473e5e5723e4429567cfd78765514",
+    "close": "dcd8d9e5-2edf-473d-aa66-dc6bba388cec",
+    "head": "13a652ccee781a52a935429825efad36c90ade97",
     "keys": {},
-    "round": null
+    "round": 3
   },
   "why": "The run of related tests on main after each merge uses runners that waiting pull requests need, and it repeats the pull request's CI whenever main did not move between that CI and the merge",
   "worker": "codex"
