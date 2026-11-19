@@ -1,4 +1,11 @@
 {
+  "amendments": [
+    {
+      "at": "2026-11-19T17:43:47.397425+00:00",
+      "because": "Owner chose on 19 Nov 2026 to remove the run on main after each merge and gate merges on the nightly run instead",
+      "done_when": "No main run starts when the merged commit's code equals what the pull request's CI tested (main did not move since), and Forge records that result for main; when several merges land close together, a newer main run cancels the running one and tests everything since the last green main result, and a red result names the merges it covered; merges still stop while main's newest result is red; new and existing repos get it on upgrade and forge sync"
+    }
+  ],
   "base": "77a35caa0f80ad338fc8ff08e4ab788a27ea34ad",
   "branch": "fix/fewer-main-runs",
   "chat": {
@@ -8,7 +15,7 @@
     "head": null,
     "start": "adb29843872c9c0342a8f1fcc6cb48c29b72b508"
   },
-  "done_when": "No main run starts when the merged commit's code equals what the pull request's CI tested (main did not move since), and Forge records that result for main; when several merges land close together, a newer main run cancels the running one and tests everything since the last green main result, and a red result names the merges it covered; merges still stop while main's newest result is red; new and existing repos get it on upgrade and forge sync",
+  "done_when": "No test run starts on main after a merge; the nightly full run is the only run on main, and Forge merges nothing while main's newest nightly result is red, naming the nightly run and the repair step; new and existing repos get it on upgrade and forge sync",
   "fix_kind": "mechanical",
   "kind": "fix",
   "round": 1,
