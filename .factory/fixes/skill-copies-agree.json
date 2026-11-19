@@ -108,8 +108,8 @@
     "id": "12b1de13-5d00-44f2-b2b0-c5e59d660dad",
     "status": "clean"
   },
-  "round": 4,
-  "status": "waiting for checks",
+  "round": 5,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-19T01:59:23.987540+00:00",
@@ -133,10 +133,10 @@
     }
   ],
   "stuck": {
-    "close": "2d779331-ca61-4577-ab06-2a9ccaa93871",
-    "head": "016987d5a6a433b0f663cdfe9bff541742e94710",
+    "close": "6185efca-a10c-4104-b633-87657be46d9f",
+    "head": "78d138f5c4a2eb70928f1110c904ca0162a5f6a6",
     "keys": {},
-    "round": 3
+    "round": 4
   },
   "why": "The generated copies of the Forge skill in client repos disagree on the review round rule (one copy asks the owner after the second blocked round even for new findings, another describes P0 continuation)",
   "worker": "codex"
