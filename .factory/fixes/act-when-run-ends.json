@@ -1,0 +1,15 @@
+{
+  "base": "b4039cc7e51cc868a233121f4b23515ed213b8ed",
+  "branch": "fix/act-when-run-ends",
+  "done_when": "The Forge skill says: when a background round, close or merge ends, run forge next at once and do its first step, with no timer; the generated skill copies match; new repos get it at init and existing repos on upgrade and forge sync",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-19T08:02:52.521594+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Coordinators check work on a timer or a fixed priority list, so a finished round, close or merge can sit until the next check (measured: the median Forge item waits 24 minutes with nothing running)"
+}
