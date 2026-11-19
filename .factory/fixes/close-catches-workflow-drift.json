@@ -88,8 +88,8 @@
     "id": "7b7e96be-956b-40a1-8764-661c4ec3cc7e",
     "status": "clean"
   },
-  "round": 3,
-  "status": "waiting for checks",
+  "round": 4,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-18T15:25:03.931125+00:00",
@@ -118,10 +118,10 @@
     "worker_round": 2
   },
   "stuck": {
-    "close": "b2f139c3-e840-4c82-9816-3e6ae5871514",
-    "head": "94bee53723d54ef5cd948b60efced240a5aabf02",
+    "close": "76409fa5-7126-4fb5-b5a2-2870d73d8401",
+    "head": "c4b5b5682c8000d108747ec8bbc556ba9685be74",
     "keys": {},
-    "round": 2
+    "round": 3
   },
   "why": "A change to the workflow generator (prcheck.py or the templates) can merge without the regenerated .github/workflows/forge.yml, which turns main red (it happened on 18 Nov 2026), and after a release bump merges, a branch that merges main pins a release that is not published yet, so close fails with 'Failed to resolve --with requirement' until the release is out",
   "worker": "codex"
