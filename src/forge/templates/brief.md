@@ -8,6 +8,15 @@ discovery asks a question and starts no fix. Workers work only on their brief.
 Forge ignores a dropped fix whose checkout no longer exists. A worker follows
 this brief even when there are no failed checks or open review findings.
 
+Time history keeps the first recorded start, including a fix moved into a story and its first part.
+Holds, owner decisions, waits and resumed work keep their timestamps in How it went.
+The moved part keeps the fix's recorded activity. Close refreshes the final merge wait when
+it sees a human merge; an agent merge refreshes it after GitHub confirms the merge.
+Time without activity records stays unmeasured. Do not call it time with nothing running.
+New and existing repos get this behavior on upgrade, including repairs to published starts
+and older compacted gaps. Upgrade checks each earlier rebuilt start once and keeps that repair
+for later upgrades. Earlier missing times stay unmeasured.
+
 Settled findings stay settled. Each reader and reviewer gets earlier rounds' notes and answers,
 including findings already fixed or dismissed. Do not reopen them with the same finding text
 (cold reads) or title and file (reviews); report a new defect with distinct text and new evidence.

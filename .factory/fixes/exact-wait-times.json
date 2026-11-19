@@ -1,0 +1,175 @@
+{
+  "base": "285e56632baf943e4c7524f2341a7bb52f3e7f0b",
+  "branch": "fix/exact-wait-times",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1f19a-3870-7ad3-a93e-21d1b061bfe2",
+    "head": null,
+    "start": "33f76f5ea04a134ab5fcbf1627377aa4a4bf6fbc"
+  },
+  "done_when": "Forge records hold, owner decision, wait and resume times with timestamps, keeps the first start of an item through rewrites and fix-to-task moves, and the How it went record splits start-to-merge into these parts; new and existing repos get it on upgrade",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "item() in src/forge/time_records.py",
+      "file": "src/forge/time_records.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 160,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Preserve recorded fix activity when it becomes a task",
+      "work": 2
+    },
+    {
+      "area": "how_it_went() in src/forge/time_records.py",
+      "file": "src/forge/time_records.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 527,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Include the final merge wait in How it went",
+      "work": 2
+    },
+    {
+      "area": "rebuild() in src/forge/backfill.py",
+      "file": "src/forge/backfill.py",
+      "gain": 4,
+      "harm": 4,
+      "line": 113,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Repair previously published starts on upgrade",
+      "work": 2
+    },
+    {
+      "area": "item() in src/forge/time_records.py",
+      "file": "src/forge/time_records.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 342,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Reclassify gaps in earlier compacted histories",
+      "work": 2
+    },
+    {
+      "area": "how_it_went() in src/forge/time_records.py",
+      "file": "src/forge/time_records.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 535,
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: Owner accepted on 19 Nov 2026: wait display gap and three missing test cases noted",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Show the recorded boundaries of all waits",
+      "work": 1
+    },
+    {
+      "area": "test_3_upgrade_uses_saved_task_start_when_early_commits_share_rewrite_time() in tests/test_first_start_survives_history_changes.py",
+      "file": "tests/test_first_start_survives_history_changes.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 37,
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: Owner accepted on 19 Nov 2026: wait display gap and three missing test cases noted",
+      "round": 1,
+      "security": false,
+      "title": "Gate: Prove promotion and existing published starts",
+      "work": 2
+    },
+    {
+      "area": "test_1_hold_decision_and_resume_keep_their_times_and_gaps_stay_unmeasured() in tests/test_recorded_wait_and_resume_times.py",
+      "file": "tests/test_recorded_wait_and_resume_times.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 61,
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: Owner accepted on 19 Nov 2026: wait display gap and three missing test cases noted",
+      "round": 1,
+      "security": false,
+      "title": "Gate: Prove wait timestamps through the final merge",
+      "work": 2
+    },
+    {
+      "area": "test_2_recorded_worker_repairs_belong_to_the_later_review_attempt() in tests/test_recorded_wait_and_resume_times.py",
+      "file": "tests/test_recorded_wait_and_resume_times.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 89,
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: Owner accepted on 19 Nov 2026: wait display gap and three missing test cases noted",
+      "round": 1,
+      "security": false,
+      "title": "Gate: Prove same-turn repairs through a real worker turn",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "b1615b580e35026a172016e8f218d69d6aef296581c32b9a68d09ddff217e70b",
+    "changed": "d9bb7e45cea329748a56cdc9539a4b04d2b84920d5e79937338c68be671be767",
+    "commit": "af746c4b931df4171c89798f981af2d2cd502e5f",
+    "dismissals": [],
+    "findings": [],
+    "id": "edf2ff4f-a15b-427d-a258-e9b5ababa2f8",
+    "status": "clean"
+  },
+  "round": 5,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-19T01:59:29.031055+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-19T02:58:50.095889+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-19T04:02:35.600445+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-19T05:21:01.912164+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-19T06:14:09.119866+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-19T07:41:55.976889+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-19T04:02:35.600787+00:00",
+    "by": "owner",
+    "choice": "accept",
+    "file": "src/forge/time_records.py",
+    "reason": "Owner accepted on 19 Nov 2026: wait display gap and three missing test cases noted",
+    "wait_id": "0d50366c-9a86-4b66-83ba-4925d7322350",
+    "worker_round": 2
+  },
+  "stuck": {
+    "close": "fb0813b6-91b9-42ee-9188-49c2f6cd5246",
+    "head": "5088f757cea21453c06be5e9f9b28a64b2ab5c57",
+    "keys": {},
+    "round": 4
+  },
+  "why": "Start-to-merge records are unreliable: starts can be rewritten (a task's early commits rewritten to one later time, a fix that became a task keeping the child's start), repairs show zero minutes, and unexplained time is labelled 'nothing running'",
+  "worker": "codex"
+}

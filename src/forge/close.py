@@ -188,6 +188,7 @@ def close(args: argparse.Namespace) -> int:
             init.protect(top, default, cfg["checks"])
         _attach(top, item, branch)
         repo.record_event(top, item, "item finished")
+        _refresh_record(top, item, state, pr)
         if not retried_history and backfill.upgrade_fix(top, item, state):
             backfill.run(top)
         return _merged(top, item)
@@ -916,7 +917,7 @@ def _draft(top: Path, *args: str) -> str:
 def _pull_request(top: Path, branch: str) -> dict[str, Any] | None:
     """The branch's open pull request, else its merged one, else None."""
     prs = json.loads(_gh(top, "pr", "list", "--head", branch, "--state", "all",
-                         "--json", "number,state,body,isDraft,mergeable,mergeStateStatus,baseRefName"))
+                         "--json", "number,state,body,isDraft,mergeable,mergeStateStatus,baseRefName,mergedAt"))
     return next((pr for state in ("OPEN", "MERGED") for pr in prs if pr.get("state") == state),
                 None)
 
@@ -927,7 +928,10 @@ def _refresh_record(top: Path, item: str, state: dict[str, Any], pr: dict[str, A
         return ""
     if (repo.forge_dir(top) / "backfill-pending").exists() and not time_records.from_body(pr.get("body") or ""):
         return pr.get("body") or ""  # A partial local record would make the retry skip older evidence.
-    body = _bounded_body(time_records.refresh_record(top, item, state, pr.get("body") or ""))
+    ended_at = pr.get("mergedAt") if pr.get("state") == "MERGED" else None
+    if ended_at:
+        state = {**state, "status": "merged"}
+    body = _bounded_body(time_records.refresh_record(top, item, state, pr.get("body") or "", ended_at=ended_at))
     if body != (pr.get("body") or ""):
         path = repo.forge_dir(top) / f"pr-body-{item.replace('/', '-')}.md"
         path.write_bytes(body.encode("utf-8"))
@@ -1070,7 +1074,8 @@ def _bounded_body(body: str, *, suffix: str = "") -> str:
         record = time_records.from_body(body)
         before, after = body[:marker.start()], body[marker.end():]
         if record:
-            record = {k: record.get(k) for k in ("events", "timings", "summary", "state", "ready", "rebuilt", "clean_reviews")}
+            record = {k: record.get(k) for k in (
+                "events", "timings", "summary", "state", "ready", "rebuilt", "start_checked", "clean_reviews")}
             record["truncated"] = True
             while True:
                 body = before + "<!-- forge:time-record " + json.dumps(record, separators=(",", ":")) + " -->" + after
