@@ -131,8 +131,8 @@
     "id": "174bcc64-c78d-4203-bb28-2bdf0f684de1",
     "status": "clean"
   },
-  "round": 2,
-  "status": "waiting for checks",
+  "round": 3,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-19T01:59:34.824983+00:00",
@@ -157,12 +157,10 @@
     "worker_round": 2
   },
   "stuck": {
-    "close": "b35a2437-cf1e-4af5-b7a2-c8f6090bb3f0",
-    "head": "c7552382ce381bb14711539535b97535e934672a",
-    "keys": {
-      "the open P0 release the quota place before reacquiring a land place in src/forge/checks.py": 1
-    },
-    "round": 1
+    "close": "87c6acad-f9ba-4d76-af4d-ed9ef2ee9d26",
+    "head": "4dc2c7b54c7a0395b8dfccbb366285ebf3244bba",
+    "keys": {},
+    "round": 2
   },
   "why": "After a hold, close let about 20 check waits run at once while every check still ran all groups, using up the GitHub API quota",
   "worker": "codex"
