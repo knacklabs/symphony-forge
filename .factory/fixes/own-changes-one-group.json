@@ -1,0 +1,15 @@
+{
+  "base": "77a35caa0f80ad338fc8ff08e4ab788a27ea34ad",
+  "branch": "fix/own-changes-one-group",
+  "done_when": "In a repo whose tests run in CI, where each merge to main runs main's own related tests, forge test --change and the one-group rule judge only the pull request's own changes (base...HEAD), so a small fix that merged main runs one group; repos that test on the laptop keep today's widening; new and existing repos get it on upgrade and forge sync",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-19T16:49:26.646502+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "In repos whose tests run in CI, a pull request that merged main runs all test groups, because review-tests.py turns one_group off for any merge commit and forge test --change widens its base to what the merges brought; at a client almost every branch merges main, so small fixes take every fast slot (queue median about 16 min, up to 78)"
+}
