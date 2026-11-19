@@ -472,7 +472,8 @@ def pytest_sessionfinish(session: pytest.Session) -> None:
 #   A Codex round would run as the session's own subagent, so a test that builds on Codex through
 #   the kit says so with the `claude_session` fixture; a test that needs no session deletes both.
 # - No Forge run around it: every FORGE_ variable (worker marker, test budget, pinned release,
-#   checkout forwarding, waits) is unset; a test that needs one sets it. FORGE_LIVE_CODEX stays:
+#   checkout forwarding, waits) is unset, then CI polling defaults to 0.01 seconds for tests.
+#   Interval and controlled-clock tests select their own value. FORGE_LIVE_CODEX stays:
 #   it is the real-Codex opt-in, set only by the codex-smoke workflow.
 # - No tool overrides: CODEX_BIN, CLAUDE_BIN and AUTOREVIEW are unset; a stub sets its own.
 # - No outer git: every GIT_ variable is unset (they leak in when tests run inside a git hook);
@@ -489,6 +490,9 @@ def isolated_environment(monkeypatch: pytest.MonkeyPatch) -> None:
         if name.startswith(("GIT_", "FORGE_")) and name != "FORGE_LIVE_CODEX" or name in (
                 "CLAUDECODE", "CODEX_BIN", "CLAUDE_BIN", "AUTOREVIEW"):
             monkeypatch.delenv(name)
+    # Set this after isolation, which would remove a session-level FORGE_ default.
+    # Autouse covers commands in tests that do not use the repo fixture too.
+    monkeypatch.setenv("FORGE_CHECKS_POLL", "0.01")
     # cmd.exe expands %CI% in a .cmd stub's arguments, case-insensitively: git's
     # --format=%x00%cI%x00 would reach git as %x00truex00 on CI runners.
     monkeypatch.delenv("CI", raising=False)
@@ -535,26 +539,28 @@ def empty_claude_sdk(tmp_path_factory: pytest.TempPathFactory) -> Path:
 def fake_clock(repo, tmp_path, monkeypatch, request):
     """Advance sleeps without waiting; Forge and its gh children share elapsed time.
 
-    An indirect parameter can jump the 15-second check polls across queue boundaries.
+    An indirect parameter can jump the 60-second check polls across queue boundaries.
     Subprocess deadlines and OS wait polling retain real time.
     """
+    monkeypatch.setenv("FORGE_CHECKS_POLL", "60")
     folder = tmp_path / "clock"
     folder.mkdir()
     offset = folder / "elapsed"
     offset.write_text("0", encoding="utf-8")
-    (folder / "sitecustomize.py").write_text(f'''import subprocess, time
+    (folder / "sitecustomize.py").write_text(f'''import os, subprocess, time
 from pathlib import Path
 from types import SimpleNamespace
 subprocess.time = SimpleNamespace(sleep=time.sleep)
 real = time.monotonic
 offset = Path({offset.as_posix()!r})
-poll_seconds = {getattr(request, "param", 15)!r}
+poll_seconds = {getattr(request, "param", None)!r}
+poll_interval = float(os.environ.get("FORGE_CHECKS_POLL", "60"))
 
 def monotonic():
     return real() + float(offset.read_text("utf-8"))
 
 def sleep(seconds):
-    seconds = poll_seconds if seconds == 15 else seconds
+    seconds = poll_seconds if poll_seconds is not None and seconds == poll_interval else seconds
     offset.write_text(str(float(offset.read_text("utf-8")) + seconds), encoding="utf-8")
 
 time.sleep = sleep
