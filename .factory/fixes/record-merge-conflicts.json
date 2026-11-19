@@ -12,7 +12,7 @@
   "done_when": "When Forge merges a branch, it merges its own record files itself (the higher round, the union of steps and reviews) instead of leaving a text conflict, and forge next names an unusable record and goes on for the other items; new and existing repos get it on upgrade",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "round": 1,
+  "round": 2,
   "status": "working",
   "steps": [
     {
