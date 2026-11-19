@@ -525,6 +525,9 @@ def can_start(item: str, waiting: list[str], scope: list[str], started: dict[str
         waiting = [dep if "/" in dep else f"{key}/{dep}" for dep in waiting]
         waiting = [dep for dep in waiting if not _merged(main, dep, top)]
         blockers = waits_for(item, waiting, scope, started)
+        if len(blockers) > 1 and any(part.split("/", 1)[0] != key for part in blockers):
+            raise repo.Refused(f"{item} has open blockers: {', '.join(blockers)}. "
+                               "Parts of another story must merge first.", "forge next")
         stacked = stack_base(item, blockers, main, top)
         if waiting and not stacked:
             refuse(REFUSALS["waiting"], item=item, deps=", ".join(waiting))
@@ -570,6 +573,8 @@ def stack_base(item: str, blockers: list[str], main: str, top: Path | None = Non
     """The single reviewed remote base for a new part; refuse before any start mutation."""
     top = top or repo.root()
     if not blockers or repo.config(top)["stack"] == "off":
+        return None
+    if any(base.split("/", 1)[0] != item.split("/", 1)[0] for base in blockers):
         return None
     if len(blockers) != 1:
         refuse(REFUSALS["two_bases"], item=item, deps=", ".join(blockers))
@@ -663,6 +668,63 @@ def waits_for(part: str, after: list[str], scope: list[str] | None = None,
     blockers = [item for item, owned in (busy or {}).items()
                 if any(_overlap(a, b) for a in (scope or []) for b in owned)]
     return [item for item in dict.fromkeys(waits + blockers) if item != part]
+
+
+def _patch_changes(patch: str) -> list[tuple[set[str], set[str]]]:
+    """Added and removed content per hunk, with paths so equal lines stay separate."""
+    changes = []
+    for block in re.split(r"(?m)^diff --git ", patch)[1:]:
+        path, _, body = block.partition("\n")
+        if re.search(r"(?m)^GIT binary patch$", body):
+            index = re.search(r"(?m)^index [0-9a-f]+\.\.([0-9a-f]+)", body)
+            changes.append(({path + "\n" + index[1]}, set()))
+        for hunk in re.split(r"(?m)^@@[^\n]*\n", body)[1:]:
+            added = {path + "\n" + line for line in hunk.splitlines() if line.startswith("+")}
+            removed = {path + "\n" + line for line in hunk.splitlines() if line.startswith("-")}
+            if added or removed:
+                changes.append((added, removed))
+    return changes
+
+
+def check_foreign_work(top: Path, item: str, main: str, base: str) -> None:
+    """Compare open tasks' patches, but refuse only changes left in this task's net diff."""
+    if "/" not in item:
+        return
+    from forge import review
+
+    paths = [".", *(f":(exclude,glob){path}**" for path in review.BOOKKEEPING)]
+    net = set().union(*(added | removed for added, removed in _patch_changes(
+        git("diff", "--binary", "--full-index", "--no-renames", "-U0", base, "HEAD", "--", *paths, cwd=top))))
+    if not net:
+        return
+
+    def patches(*refs: str) -> dict[str, str]:
+        diff = git("log", "--format=commit %H", "--no-merges", "-p", "--binary", "--no-renames",
+                   *refs, "--", *paths, cwd=top)
+        result = run("git", "patch-id", "--stable", input=diff, cwd=top)
+        result.check_returncode()
+        return dict(line.split() for line in result.stdout.splitlines())
+
+    ours = patches("HEAD", "--not", base, main)
+    foreign = []
+    for other in _started(main, top):
+        if other == item:
+            continue
+        branch = f"task/{other.replace('/', '-')}"
+        refs = git("for-each-ref", "--format=%(refname)", f"refs/heads/{branch}",
+                   f"refs/remotes/origin/{branch}", cwd=top).splitlines()
+        for ref in refs:
+            start = git("log", "--reverse", "--format=%H", "--diff-filter=A", ref,
+                        "--", repo.state_path(other), cwd=top).splitlines()[0]
+            shared = ours.keys() & patches(ref, "--not", start, base, main).keys()
+            if any(any((added or removed) <= net for added, removed in _patch_changes(
+                    git("show", "--format=", "--binary", "--full-index", "--no-renames", "-U0",
+                        ours[patch], "--", *paths, cwd=top))) for patch in shared):
+                foreign.append(other)
+                break
+    if foreign:
+        raise repo.Refused(f"{item} includes unmerged commits from {', '.join(foreign)}. "
+                           "Remove or revert those changes before close.", f"forge work {item}")
 
 
 # --- forge fix start / forge fix allow-large -------------------------------------------
