@@ -52,8 +52,8 @@
       "text": "Gate: tests/test_close_requires_current_workflow.py::test_2_source_generator_changes_run_the_release_sync_test",
       "from": "blocking",
       "item": "close-catches-workflow-drift",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\ttests/test_forge_source_uses_unpublished_pin.py\tGate: tests/test_forge_source_uses_unpublished_pin.py::test_3_close_runs_an_unpublished_forge_source_pin_from_its_checkout\tclose-catches-workflow-drift",
