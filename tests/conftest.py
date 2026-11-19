@@ -101,11 +101,12 @@ else:
 
 GH_STUB = """#!{python}
 # Stub gh: records each call's arguments; the newest matching response answers.
-import json, pathlib, subprocess, sys
+import json, os, pathlib, subprocess, sys
 from json_log import append_json
 here = pathlib.Path(__file__).resolve().parent
 args = sys.argv[1:]
 append_json(here / "gh-calls.jsonl", args)
+append_json(here / "gh-tokens.jsonl", {{"args": args, "token": os.environ.get("GH_TOKEN")}})
 if "--body-file" in args:  # the body as sent: the next call may rewrite the same file
     path = args[args.index("--body-file") + 1]
     body = sys.stdin.read() if path == "-" else pathlib.Path(path).read_text("utf-8")
@@ -120,6 +121,12 @@ for rule in reversed(rules):
         sys.stdout.write(rule["stdout"])
         sys.stderr.write(rule["stderr"])
         sys.exit(rule["exit"])
+if args == ["config", "get", "user", "-h", "github.com"]:
+    sys.stdout.write("octocat\\n")
+    sys.exit(0)
+if args == ["api", "user", "--jq", ".login"]:
+    sys.stdout.write("octocat\\n")
+    sys.exit(0)
 if args[:2] == ["pr", "view"] and args[-2] == "--json" and args[-1] in (
         "mergeable,headRefOid", "mergeable,headRefOid,number,headRefName"):
     # Ordinary close fixtures have a mergeable pull request on the real pushed head.
@@ -341,6 +348,7 @@ class StubGh:
 
     def __init__(self, bin_dir: Path):
         self.responses, self.log = bin_dir / "gh-responses.json", bin_dir / "gh-calls.jsonl"
+        self.token_log = bin_dir / "gh-tokens.jsonl"
 
     def respond(self, *args: str, stdout: str = "", stderr: str = "", exit: int = 0) -> None:
         """Answer any call starting with args. The newest matching response wins."""
@@ -359,12 +367,19 @@ class StubGh:
                 and (path is None or any(path in arg for arg in call))
                 and (query is None or any(query in arg for arg in call))]
 
+    def token_calls(self, *prefix: str) -> list[dict[str, Any]]:
+        if not self.token_log.exists():
+            return []
+        calls = [json.loads(line) for line in self.token_log.read_text("utf-8").splitlines()]
+        return [call for call in calls if call["args"][:len(prefix)] == list(prefix)]
+
 
 @pytest.fixture(autouse=True)
 def isolated_forge_registry(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     # Every Forge subprocess must write its per-machine repo list inside this test's temp folder.
     monkeypatch.setenv("APPDATA" if os.name == "nt" else "XDG_CONFIG_HOME",
                        str(tmp_path / "config"))
+    monkeypatch.setenv("LOCALAPPDATA", str(tmp_path / "config"))
 
 
 def _left(tmp_path: Path) -> list[str]:

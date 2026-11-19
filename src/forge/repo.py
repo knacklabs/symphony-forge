@@ -240,6 +240,8 @@ def run(*args: str, cwd: str | os.PathLike[str] | None = None,
     # Bytes, not text mode: Windows text-mode stdin turns each "\n" into "\r\n", which pushes a
     # bounded pull request body past GitHub's limit and changes messages and hashes.
     def execute():
+        if args[0] == "gh":
+            from forge import ghapp
         snapshots = (_command_cache.get(("read snapshot",)) if _command_cache is not None
                      and env is None and input is None else None)
         # Board/next read one snapshot. Normal commands still resolve mutable refs
@@ -253,7 +255,8 @@ def run(*args: str, cwd: str | os.PathLike[str] | None = None,
                                   capture_output=True, timeout=timeout,
                                   # Git hooks need the caller's worker identity.
                                   env=(os.environ if env is None else env) if args[0] == "git"
-                                  else {**(os.environ if env is None else env), "FORGE_WORKER": "1"})
+                                  else {**(os.environ if env is None else env), "FORGE_WORKER": "1",
+                                        **(ghapp.env(args, cwd) if args[0] == "gh" and env is None else {})})
         except subprocess.TimeoutExpired:
             return subprocess.CompletedProcess([exe, *args[1:]], 1, "",
                                                f"{args[0]} did not answer within {timeout:g} seconds.\n")
