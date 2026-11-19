@@ -108,8 +108,8 @@
     "id": "98cda623-23bb-4aaf-9a55-df4bc677abab",
     "status": "clean"
   },
-  "round": 3,
-  "status": "waiting for checks",
+  "round": 4,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-19T01:59:23.987540+00:00",
@@ -129,13 +129,10 @@
     }
   ],
   "stuck": {
-    "close": "a1705dd1-b8c8-44f6-bf51-272da514f8b5",
-    "head": "813fc075b6e12ea66ffdb73c4a7afa3ed79e1495",
-    "keys": {
-      "the open P0 preserve existing .agents guides before replacing them in src/forge/story.py": 2,
-      "the open P0 preserve existing .agents guides before replacing them in src/forge/sync.py": 1
-    },
-    "round": 2
+    "close": "2d779331-ca61-4577-ab06-2a9ccaa93871",
+    "head": "016987d5a6a433b0f663cdfe9bff541742e94710",
+    "keys": {},
+    "round": 3
   },
   "why": "The generated copies of the Forge skill in client repos disagree on the review round rule (one copy asks the owner after the second blocked round even for new findings, another describes P0 continuation)",
   "worker": "codex"
