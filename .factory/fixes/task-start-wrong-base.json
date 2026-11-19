@@ -108,8 +108,8 @@
     "id": "c0c9add7-92c1-44ed-a5ce-3b2ced0c557c",
     "status": "clean"
   },
-  "round": 2,
-  "status": "waiting for checks",
+  "round": 3,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-19T03:08:24.838641+00:00",
@@ -134,10 +134,10 @@
     "worker_round": 2
   },
   "stuck": {
-    "close": "2667f91e-7018-4534-b4f0-bc2ecd9e939c",
-    "head": "a8bd8c8e1c457613012cd2f19ba8836d55c7777c",
+    "close": "a9f3fa40-5f59-47ec-ae18-bd3f667796e3",
+    "head": "4384b213757789744ca28f148b9c5105f651dd82",
     "keys": {},
-    "round": 1
+    "round": 2
   },
   "why": "forge task start can create a task branch whose history holds another story's unmerged task commits (seen at a client on 19 Nov 2026: a docs-only part carried another task's migration and code, so close warned that four items add the same migration), and a builder told to keep a part narrow deleted the story's design images, so close then refused",
   "worker": "codex"
