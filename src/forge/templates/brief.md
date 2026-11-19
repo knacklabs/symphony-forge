@@ -228,8 +228,9 @@ $delegation
   the owner agrees. When Forge refuses a fix for going past the five-file limit, stop and report that
   refusal in your last message.
 - Before the first fix round's code edits, list the code files your plan needs. Exclude tests,
-  Markdown and files that `forge sync` writes. If the list exceeds five and no recorded allowance
-  covers it, ask in your handoff: `Question: Allow this fix to change these code files: <files>?
+  Markdown, generated files (including lockfiles), and files that `forge sync` writes. If the list
+  exceeds five and no recorded allowance covers it, ask in your handoff:
+  `Question: Allow this fix to change these code files: <files>?
   The coordinator can record the choice with forge fix allow-large "<reason>".` Stop before edits
   or tests. Do not wait for a commit refusal. An existing allowance covers this check.
 - Only the human decides to drop a fix. Leave `forge fix drop <fix> --because "<reason>"`

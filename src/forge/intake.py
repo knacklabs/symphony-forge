@@ -32,7 +32,7 @@ def start(args: Any) -> int:
     prototype = repo.is_prototype(top, cfg)
     prompt = (Path(__file__).parent / "templates/start.md").read_text(encoding="utf-8")
     prompt += ("\nFor a fix, list each predicted code file as File: <repo-relative path>. "
-               "Exclude tests, Markdown and files that forge sync writes. "
+               "Exclude tests, Markdown, generated files (including lockfiles), and files that forge sync writes. "
                "If one repair needs more than five code files, keep Lane: fix and list them all; "
                "Forge asks for the size allowance before work starts.\n")
     if not prototype:
