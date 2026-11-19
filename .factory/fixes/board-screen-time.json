@@ -1,0 +1,99 @@
+{
+  "base": "0d1db0b7471dfab1dbce63263166f60b0832b1c1",
+  "branch": "fix/board-screen-time",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1f543-2039-7862-99b6-8d1e498c05ba",
+    "head": null,
+    "start": "aaf094226959f9b524d0c260ccc99049406db86a"
+  },
+  "done_when": "test_12 passes on main at any time of day and date, the board screen it checks keeps its rule, and if the cause is in the board code rather than the test, the board shows the right thing at that time",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "build() in tests/board_fixture.py",
+      "file": "tests/board_fixture.py",
+      "gain": 2,
+      "harm": 2,
+      "line": 53,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: test_12 passes on main at any time of day and date",
+      "work": 2
+    },
+    {
+      "area": "build() in tests/board_fixture.py",
+      "file": "tests/board_fixture.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 53,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: tests/test_board_now_screen.py",
+      "work": 2
+    },
+    {
+      "area": "build() in tests/board_fixture.py",
+      "file": "tests/board_fixture.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 53,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_12 needs a time-controlled regression case",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "8e58924b29c7000dd409c7a5a25ba07f94d2201f34ed9947869d04b7e39d0e9e",
+    "changed": "5ca993896bc7f674852fa3a212af9078d13c6cc0a0ea524253d30e1fe7cb6e5d",
+    "commit": "5569e233287246232c556ccffca7820dd619d2bc",
+    "dismissals": [],
+    "findings": [],
+    "id": "19d9f27d-5f21-44ba-bd48-06a8ce5c2f02",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-19T19:22:46.971769+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-19T19:22:58.004604+00:00",
+      "round": 1,
+      "step": "resume"
+    },
+    {
+      "at": "2026-11-19T19:34:53.004331+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-19T19:35:45.692070+00:00",
+      "round": 2,
+      "step": "resume"
+    },
+    {
+      "at": "2026-11-19T19:42:02.668412+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "19ee60ff-af84-46c7-9d42-97015fd96202",
+    "head": "8b0f05dac951c7be0484e9e3976508cbb83091a5",
+    "keys": {},
+    "round": 1
+  },
+  "why": "Main is red: tests/test_board_now_screen.py::test_12_the_first_screen_fits_a_laptop_window_and_keeps_every_item_reachable fails on every commit since about 18:00 UTC on 19 Nov 2026, including 77a35caa0 which passed CI at 14:56 UTC, so it depends on the time or date, not on code; its inline browser script fails a bare assert at line 100",
+  "worker": "codex"
+}
