@@ -1,0 +1,15 @@
+{
+  "base": "e2996699dda591224aea9b355564dc698ac77dac",
+  "branch": "fix/squash-replay-on-conflict",
+  "done_when": "When the one-by-one replay conflicts but the whole-branch merge (merge-tree of the replay baseline and the branch head onto main) is clean, close replays the part as one commit with that merged tree and continues; a real whole-branch conflict still refuses as today; new and existing repos get it on upgrade",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-19T12:29:37.707124+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "When a stacked part's parent has merged, close replays the part's own commits onto main one by one (git rebase in close._merge_default), so an early commit conflicts with later main edits of the same lines even when the whole-branch merge is clean; merging main into the branch never helps, and a client part looped 5 times on 19 Nov 2026"
+}
