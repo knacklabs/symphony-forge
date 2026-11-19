@@ -68,6 +68,7 @@ def client(env, request, monkeypatch):
         encoding="utf-8")
     monkeypatch.setenv("PYTHONPATH", str(folder) + os.pathsep + os.environ.get("PYTHONPATH", ""))
     monkeypatch.setenv("FORGE_CHECKS_WAIT", "60")
+    monkeypatch.setenv("FORGE_CHECKS_POLL", "60")
     return env, folder / "sleeps", remote
 
 
@@ -225,8 +226,9 @@ def test_2_land_retries_close_to_merge_default_or_report_its_conflict(client, co
 
 
 @pytest.mark.parametrize("command", ["close", "land"])
-def test_3_clean_pull_request_keeps_normal_waiting(client, command):
+def test_3_clean_pull_request_keeps_normal_waiting(client, command, monkeypatch):
     env, sleeps, _ = client
+    monkeypatch.setenv("FORGE_CHECKS_WAIT", "120")  # allow the full default poll before the deadline
     _fix(env, "working", worked=True)
     stub = env.repo.bin / "gh"
     stub.write_text(stub.read_text(encoding="utf-8").replace(
@@ -241,7 +243,7 @@ def test_3_clean_pull_request_keeps_normal_waiting(client, command):
     assert done.returncode == 0, done.stdout + done.stderr
     assert "clean review and green checks" in done.stdout
     assert len(env.gh_calls(*RUNS)) == 2
-    assert "15" in sleeps.read_text(encoding="utf-8").splitlines()
+    assert 60 in [float(value) for value in sleeps.read_text(encoding="utf-8").splitlines()]
 
 
 def test_4_land_recovers_a_conflict_during_merge_check_revalidation(client):

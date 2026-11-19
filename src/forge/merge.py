@@ -210,7 +210,7 @@ def merge(args: argparse.Namespace, *, refreshed: bool = False) -> int:
                 left = deadline - time.monotonic()
                 if left <= 0:
                     repo.refuse(REFUSALS["red_default"], item=item, full_run=fullrun.next_run(top))
-                time.sleep(min(15, left))
+                time.sleep(min(checks.POLL, left))
                 repo.git("fetch", "-q", "origin", default, cwd=top)
                 refresh_red = True
                 if repo.merge_setting(top) != "agent":

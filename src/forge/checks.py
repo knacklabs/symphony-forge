@@ -135,11 +135,12 @@ def let_finish(top: Path, item: str, sha: str, names: list[str],
                     for name, state in seen]
             _recover(top, item, sha, names, runs, seen)
             states = [state for _, state in seen]
-            if not any(state in (PENDING, QUEUED) for state in states) or time.monotonic() >= deadline:
+            left = deadline - time.monotonic()
+            if not any(state in (PENDING, QUEUED) for state in states) or left <= 0:
                 return
             if slot is not None:
                 slot(QUEUED not in states)  # queued runs keep the place; running ones lend it
-            time.sleep(POLL)
+            time.sleep(min(POLL, left))
     finally:
         if slot is not None:
             slot(False)
@@ -325,7 +326,7 @@ def _status(top: Path, item: str, sha: str, branch: str, cache: Path | None,
             value = None
             try:
                 saved = json.loads(cache.read_text(encoding="utf-8"))
-                if 0 <= time.monotonic() - saved["at"] < 60:
+                if 0 <= time.monotonic() - saved["at"] < min(POLL, 60):
                     value = saved["status"]
             except (OSError, ValueError, KeyError, TypeError):
                 pass

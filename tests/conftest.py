@@ -520,10 +520,10 @@ def empty_claude_sdk(tmp_path_factory: pytest.TempPathFactory) -> Path:
 def fake_clock(repo, tmp_path, monkeypatch, request):
     """Advance sleeps without waiting; Forge and its gh children share elapsed time.
 
-    An indirect parameter can jump the 15-second check polls across queue boundaries.
+    An indirect parameter can jump the 60-second check polls across queue boundaries.
     Subprocess deadlines and OS wait polling retain real time.
     """
-    monkeypatch.setenv("FORGE_CHECKS_POLL", "15")
+    monkeypatch.setenv("FORGE_CHECKS_POLL", "60")
     folder = tmp_path / "clock"
     folder.mkdir()
     offset = folder / "elapsed"
@@ -534,13 +534,13 @@ from types import SimpleNamespace
 subprocess.time = SimpleNamespace(sleep=time.sleep)
 real = time.monotonic
 offset = Path({offset.as_posix()!r})
-poll_seconds = {getattr(request, "param", 15)!r}
+poll_seconds = {getattr(request, "param", 60)!r}
 
 def monotonic():
     return real() + float(offset.read_text("utf-8"))
 
 def sleep(seconds):
-    seconds = poll_seconds if seconds == 15 else seconds
+    seconds = poll_seconds if seconds == 60 else seconds
     offset.write_text(str(float(offset.read_text("utf-8")) + seconds), encoding="utf-8")
 
 time.sleep = sleep
@@ -555,6 +555,9 @@ def repo(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, seed_repo: Path,
     # A launcher's marker and test budget, again: a module fixture may set them as a launcher would.
     monkeypatch.delenv("FORGE_WORKER", raising=False)
     monkeypatch.delenv("FORGE_TEST_CPUS", raising=False)
+    # Timing tests select the default or their own interval. Other command
+    # tests must not spend a real minute between two GitHub stub responses.
+    monkeypatch.setenv("FORGE_CHECKS_POLL", "0.01")
     gitconfig = tmp_path / "gitconfig"
     # Wait for automatic GC and maintenance (which uses gc.autoDetach as its fallback) before
     # a helper removes a temporary clone; detached maintenance can still write its objects.
