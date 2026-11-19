@@ -327,7 +327,7 @@ def _restart(top: Path, runs: list[str]) -> str:
             left = deadline - time.monotonic()
             if left <= 0:
                 return run
-            time.sleep(min(15, left))
+            time.sleep(min(checks.POLL, left))
     return ""
 
 
@@ -711,7 +711,7 @@ def _settled(top: Path, branch: str, own: set[int]) -> bool:
         left = deadline - time.monotonic()
         if left <= 0:
             return False
-        time.sleep(min(15, left))
+        time.sleep(min(checks.POLL, left))
 
 
 def _train(top: Path, default: str, plan: dict, merged: list[str], needs: dict, notes: list[str],

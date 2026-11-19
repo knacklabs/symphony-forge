@@ -55,12 +55,17 @@ def test_27_cancelled_ci_wait_keeps_observed_phase_reason_and_published_history(
         "time.sleep = cancel\n", encoding="utf-8")
     monkeypatch.setenv("FORGE_CHECKS_WAIT", "600")
     _queue(env, RUNS, *_runs([run("tests", None, status), run("forge-pr-check")]))
+    elapsed = env.tmp / "clock/elapsed"
+    before = float(elapsed.read_text("utf-8"))
 
     cancelled = env.repo.forge(command, ITEM)
 
     assert cancelled.returncode == 130, cancelled.stdout + cancelled.stderr
     assert "Traceback" not in cancelled.stderr
-    assert len(env.gh_calls(*RUNS)) >= 8  # Two minutes observed, not a deadline exhaustion.
+    # Two minutes now need two minute-long polls, rather than eight 15-second
+    # polls. Protect the elapsed wait directly as well as repeated observation.
+    assert float(elapsed.read_text("utf-8")) - before >= 120
+    assert len(env.gh_calls(*RUNS)) >= 2
     result = [event for event in records(env.repo, "events.jsonl")
               if event["event"] == "CI result"][-1]
     assert result["outcome"] == "gave_up_" + phase

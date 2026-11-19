@@ -1,0 +1,48 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/checks.py\tKeep the pre-push wait within its configured deadline\tci-poll-60s",
+      "kind": "bug",
+      "path": "src/forge/checks.py",
+      "line": 142,
+      "text": "Keep the pre-push wait within its configured deadline",
+      "from": "blocking",
+      "item": "ci-poll-60s",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/checks.py\tNot done: close, merge and land poll CI checks every 60 seconds by default, and FORGE_CHECKS_POLL sets another interval in seconds\tci-poll-60s",
+      "kind": "bug",
+      "path": "src/forge/checks.py",
+      "line": 262,
+      "text": "Not done: close, merge and land poll CI checks every 60 seconds by default, and FORGE_CHECKS_POLL sets another interval in seconds",
+      "from": "blocking",
+      "item": "ci-poll-60s",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/conftest.py\tGate: CI wait tests still assume 15-second sleeps\tci-poll-60s",
+      "kind": "bug",
+      "path": "tests/conftest.py",
+      "line": 526,
+      "text": "Gate: CI wait tests still assume 15-second sleeps",
+      "from": "blocking",
+      "item": "ci-poll-60s",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_ci_poll_interval.py\tGate: polling interval through pre-push close and land\tci-poll-60s",
+      "kind": "bug",
+      "path": "tests/test_ci_poll_interval.py",
+      "line": 28,
+      "text": "Gate: polling interval through pre-push close and land",
+      "from": "blocking",
+      "item": "ci-poll-60s",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

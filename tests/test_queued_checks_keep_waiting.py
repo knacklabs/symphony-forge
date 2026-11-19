@@ -21,8 +21,11 @@ STORY = "FIX-QUEUED-NOT-STOP"
     (command, "new") for command in ("close", "land", "land-merge")
 ] + [("land-merge", "upgraded")])
 @pytest.mark.parametrize("fake_clock", [900], indirect=True)
-def test_1_long_shared_pool_queue_keeps_waiting_then_passes(clock, history, command):
+def test_1_long_shared_pool_queue_keeps_waiting_then_passes(clock, history, command, monkeypatch):
     env = clock
+    # Keep the poll below the one-minute deadline so the clock can advance it
+    # by 15 minutes instead of seeing a sleep trimmed to the remaining time.
+    monkeypatch.setenv("FORGE_CHECKS_POLL", "0.01")
     _client(env, history, "self-hosted")
     if command == "land-merge":
         _agent(env)
