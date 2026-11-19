@@ -1,0 +1,15 @@
+{
+  "base": "0d1db0b7471dfab1dbce63263166f60b0832b1c1",
+  "branch": "fix/bare-helper-imports",
+  "done_when": "A change to a helper module in a test folder selects every test file that imports it, by bare name or by package path, in forge test --change and in CI; new and existing repos get it on upgrade and forge sync",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-19T19:35:34.654987+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Related-test selection misses a test file that imports a shared helper in tests/ by its bare name (import board_fixture, not tests.board_fixture), so a change to that helper selects none of the tests that use it and a green pull request check proves nothing; seen on 20 Nov 2026 with tests/board_fixture.py and tests/test_board_now_screen.py"
+}
