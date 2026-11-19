@@ -48,7 +48,9 @@ def build(folder: Path, version: str) -> Path:
                 + (f", round {n // len(WHAT) + 1}" if n >= len(WHAT) else "")) for n in range(44)]
     write("forge.toml", f'version = "{version}"\nrepo = "client"\n')
     write("plans/roadmap.json", {"items": [{"key": key, "title": title} for key, title in stories]})
-    start = now - timedelta(weeks=6)
+    # Anchor finished history to a UTC day: the latest finished fix is then
+    # yesterday at 06:00, never a measured merge today after 18:00 UTC.
+    start = now.replace(hour=0, minute=0, second=0) - timedelta(weeks=6)
     commit("Set up the shop", start)
 
     def step(name: str, at: datetime) -> dict:
