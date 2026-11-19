@@ -57,8 +57,8 @@
       "gain": 3,
       "harm": 3,
       "line": 56,
-      "outcome": "open",
-      "reason": "",
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: Owner accepted on 19 Nov 2026: the release sync test runs on the local-test path; the CI path of forge test --change is not proven by a test",
       "round": 1,
       "security": false,
       "title": "Gate: tests/test_close_requires_current_workflow.py::test_2_source_generator_changes_run_the_release_sync_test",
@@ -83,7 +83,13 @@
     "branch_diff": "48ac2b63ba2e50dbce81972253428f7d329cc7e6727a87a1e56fe397774b953d",
     "changed": "84edb0208ea27f34d1f1c13cf8f458981cabb1af3bff919c4c6a741ccbdb4ae0",
     "commit": "3291fc9444f85d04bf19817032de5b6abfdf7b4c",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner accepted on 19 Nov 2026: the release sync test runs on the local-test path; the CI path of forge test --change is not proven by a test",
+        "finding": 1
+      }
+    ],
     "findings": [
       {
         "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - a source pull request changes a generator or template and runs its checks in CI.\nThe replacement test forces `test_place = \"local\"` and changes only `src/forge/prcheck.py`. Forge's own configuration instead runs tests in CI (`forge.toml:8` and `src/forge/repo.py:604-607`). The test would still pass if the CI `forge test --change` path skipped the release sync check, or if `src/forge/fasttest.py:797` stopped selecting it for template changes. The previous finding therefore remains open for those paths.",
@@ -97,10 +103,10 @@
       }
     ],
     "id": "54551972-88e0-402a-8260-f224c2418b1a",
-    "status": "blocked"
+    "status": "clean"
   },
   "round": 2,
-  "status": "hotspot",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-18T15:25:03.931125+00:00",
@@ -117,8 +123,12 @@
   ],
   "stop": {
     "at": "2026-11-18T17:41:02.634736+00:00",
+    "by": "owner",
+    "choice": "accept",
     "file": "tests/test_close_requires_current_workflow.py",
-    "wait_id": "a2efcb8b-aee1-4506-9ed9-3d0c0d63acf9"
+    "reason": "Owner accepted on 19 Nov 2026: the release sync test runs on the local-test path; the CI path of forge test --change is not proven by a test",
+    "wait_id": "a2efcb8b-aee1-4506-9ed9-3d0c0d63acf9",
+    "worker_round": 2
   },
   "stuck": {
     "close": "163715be-bec8-4b2b-be48-6b7af63e1286",
