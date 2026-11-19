@@ -1622,6 +1622,11 @@ rebuilds open items and items merged in the last six weeks from git and GitHub, 
 the next close on this machine retries the backfill. The agent then opens the board and reports
 what is still missing.
 
+On upgrade, start-time repairs cover open items and at most the 20 most recently merged
+items that need repair. Merged repairs keep shared check evidence without old check-run
+requests. This repair runs once per machine. Repos without time histories keep the full
+six-week backfill. New and existing repos get this behavior on upgrade.
+
 A repo pinned to a release without `forge upgrade` runs it once through uv:
 `uvx --from git+https://github.com/knacklabs/symphony-forge@<release> forge upgrade <release>`.
 Until the upgrade merges, the default branch keeps working with the new release installed.
