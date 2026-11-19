@@ -1,6 +1,13 @@
 {
   "base": "0d1db0b7471dfab1dbce63263166f60b0832b1c1",
   "branch": "fix/bare-helper-imports",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1f54e-d3db-7ff3-896f-3e734528593d",
+    "head": null,
+    "start": "2f351dcf3eb428419f39eb2feff04868d5361895"
+  },
   "done_when": "A change to a helper module in a test folder selects every test file that imports it, by bare name or by package path, in forge test --change and in CI; new and existing repos get it on upgrade and forge sync",
   "fix_kind": "mechanical",
   "kind": "fix",
