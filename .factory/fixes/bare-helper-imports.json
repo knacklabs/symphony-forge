@@ -71,7 +71,7 @@
     "id": "d518d39c-50a3-4104-89b0-b533a4e7ce48",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -86,13 +86,18 @@
     {
       "at": "2026-11-19T19:48:56.745181+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-11-19T19:49:31.643982+00:00",
+      "round": 2,
+      "step": "resume"
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "0947f9d88508263bdc08117f64edfb6c059542f3",
+    "close": "62eb9d2c-7ac6-4918-be03-7f18fc3e6dbf",
+    "head": "0619ea8350e2c904188d601553a1350139acbfb8",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "Related-test selection misses a test file that imports a shared helper in tests/ by its bare name (import board_fixture, not tests.board_fixture), so a change to that helper selects none of the tests that use it and a green pull request check proves nothing; seen on 20 Nov 2026 with tests/board_fixture.py and tests/test_board_now_screen.py",
   "worker": "codex"
