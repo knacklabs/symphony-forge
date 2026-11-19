@@ -348,10 +348,16 @@ class StubGh:
         rules.append({"args": list(args), "stdout": stdout, "stderr": stderr, "exit": exit})
         self.responses.write_text(json.dumps(rules), encoding="utf-8")
 
-    def calls(self) -> list[list[str]]:
+    def calls(self, *prefix: str, path: str | None = None,
+              query: str | None = None) -> list[list[str]]:
         if not self.log.exists():
             return []
-        return [json.loads(line) for line in self.log.read_text("utf-8").splitlines()]
+        calls = [json.loads(line) for line in self.log.read_text("utf-8").splitlines()]
+        # Keep tests tied to the route or query they own, not GitHub call order.
+        return [call for call in calls
+                if call[:len(prefix)] == list(prefix)
+                and (path is None or any(path in arg for arg in call))
+                and (query is None or any(query in arg for arg in call))]
 
 
 @pytest.fixture(autouse=True)
