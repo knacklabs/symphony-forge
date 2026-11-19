@@ -1,6 +1,13 @@
 {
   "base": "285e56632baf943e4c7524f2341a7bb52f3e7f0b",
   "branch": "fix/exact-wait-times",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1f19a-3870-7ad3-a93e-21d1b061bfe2",
+    "head": null,
+    "start": "33f76f5ea04a134ab5fcbf1627377aa4a4bf6fbc"
+  },
   "done_when": "Forge records hold, owner decision, wait and resume times with timestamps, keeps the first start of an item through rewrites and fix-to-task moves, and the How it went record splits start-to-merge into these parts; new and existing repos get it on upgrade",
   "fix_kind": "mechanical",
   "kind": "fix",
