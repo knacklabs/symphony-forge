@@ -106,33 +106,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "ad52ba7d2dbdee09618f153d455d0326b2372fb17deed788a1725cd59405cace",
-    "changed": "8682c087cb8ce7ac2bffe57f81c43319fb2a19d9b6b08051c44cefe923237201",
-    "commit": "9450fc0ab3f521049e470ffdfd55b132317f011b",
-    "dismissals": [
-      {
-        "accepted": true,
-        "because": "Human accepted the remaining finding: Owner accepted on 19 Nov 2026: land test does not prove place release",
-        "finding": 1
-      }
-    ],
-    "findings": [
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Test.\nCase: normal use - the budget falls from two waits to one while the higher-numbered place remains held. The replacement test accepts the third quota-read log entry as evidence that the waiting close has evaluated the reduced budget, but the stub writes that entry before returning the quota response. The assertion can therefore run before that close attempts admission after the lower place is freed. The test then releases the higher place, so an implementation that admits the third wait despite the occupied higher place can pass. The test needs to establish that an admission attempt completed while the higher place was still held.",
-        "file": "tests/test_check_waits_follow_api_quota.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 136,
-        "priority": "P1",
-        "title": "Gate: tests/test_check_waits_follow_api_quota.py::test_2_land_caps_concurrent_waits_and_releases_places",
-        "work": 2
-      }
-    ],
-    "id": "174bcc64-c78d-4203-bb28-2bdf0f684de1",
+    "branch_diff": "1a393742b8105315baff3de02667cabafc6dce4d894cfe475377c81b74066440",
+    "changed": "c146a952ccd5bb10467da9aed8a3bc852c48271566060d88bdb9a24876fe507c",
+    "commit": "052f257d0baee291fa3f1b8e76d929b76b7bcd27",
+    "dismissals": [],
+    "findings": [],
+    "id": "380d83ba-2261-4758-b67c-3bac132f27dd",
     "status": "clean"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-19T01:59:34.824983+00:00",
@@ -144,6 +127,10 @@
     },
     {
       "at": "2026-11-19T04:04:27.743007+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-19T05:20:45.829291+00:00",
       "step": "review"
     }
   ],
