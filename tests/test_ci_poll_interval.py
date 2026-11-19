@@ -16,6 +16,7 @@ from test_queue_land_all import client  # noqa: F401
 from test_train_land_all import _all, _ready, _stub, train  # noqa: F401
 
 STORY = "ci-poll-60s"
+pytestmark = pytest.mark.platform
 
 
 @pytest.mark.parametrize("path,interval", [

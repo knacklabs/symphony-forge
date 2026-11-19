@@ -35,6 +35,9 @@ _deadline_log = None
 
 def pytest_configure(config: pytest.Config) -> None:
     """Windows CI needs a native deadline even outside the per-test timeout."""
+    # Apply to every command, including tests that do not use the repo fixture.
+    # Interval and controlled-clock tests explicitly select their own value.
+    os.environ["FORGE_CHECKS_POLL"] = "0.01"
     global _deadline_log
     seconds = float(os.environ.get("PYTEST_SESSION_DEADLINE") or "0")
     if not seconds:
@@ -528,19 +531,20 @@ def fake_clock(repo, tmp_path, monkeypatch, request):
     folder.mkdir()
     offset = folder / "elapsed"
     offset.write_text("0", encoding="utf-8")
-    (folder / "sitecustomize.py").write_text(f'''import subprocess, time
+    (folder / "sitecustomize.py").write_text(f'''import os, subprocess, time
 from pathlib import Path
 from types import SimpleNamespace
 subprocess.time = SimpleNamespace(sleep=time.sleep)
 real = time.monotonic
 offset = Path({offset.as_posix()!r})
-poll_seconds = {getattr(request, "param", 60)!r}
+poll_seconds = {getattr(request, "param", None)!r}
+poll_interval = float(os.environ.get("FORGE_CHECKS_POLL", "60"))
 
 def monotonic():
     return real() + float(offset.read_text("utf-8"))
 
 def sleep(seconds):
-    seconds = poll_seconds if seconds == 60 else seconds
+    seconds = poll_seconds if poll_seconds is not None and seconds == poll_interval else seconds
     offset.write_text(str(float(offset.read_text("utf-8")) + seconds), encoding="utf-8")
 
 time.sleep = sleep
@@ -555,9 +559,6 @@ def repo(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, seed_repo: Path,
     # A launcher's marker and test budget, again: a module fixture may set them as a launcher would.
     monkeypatch.delenv("FORGE_WORKER", raising=False)
     monkeypatch.delenv("FORGE_TEST_CPUS", raising=False)
-    # Timing tests select the default or their own interval. Other command
-    # tests must not spend a real minute between two GitHub stub responses.
-    monkeypatch.setenv("FORGE_CHECKS_POLL", "0.01")
     gitconfig = tmp_path / "gitconfig"
     # Wait for automatic GC and maintenance (which uses gc.autoDetach as its fallback) before
     # a helper removes a temporary clone; detached maintenance can still write its objects.
