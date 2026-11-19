@@ -896,12 +896,10 @@ def identity(pid: int) -> dict[str, Any] | None:
                     "stat=,lstart=,command=", "-p", str(pid))  # -ww: whole command
     gone = done.returncode == 1 and not (done.stdout + done.stderr).strip()
     fields = done.stdout.split(None, 1)
-    if not done.returncode and fields and fields[0].startswith("Z"):
+    if gone or (not done.returncode and fields and fields[0].startswith("Z")):
         return None
     *start, command = (fields[1] if len(fields) > 1 else "").split(None, 5) or [""]
     started = " ".join(start)
-    if gone:
-        return None
     if done.returncode or not started.strip() or not command.strip():
         return {"pid": pid}
     return {"pid": pid, "started": "UTC " + started.strip(), "command": command.strip()}
@@ -925,7 +923,7 @@ def _alive(recorded: dict[str, Any]) -> bool | None:
     return now is not None and now["started"] == recorded.get("started")
 
 
-def _stop_leftover(record: Path) -> tuple[bool, int | None]:
+def _stop_leftover(record: Path, running: set[int] | None = None) -> tuple[bool, int | None]:
     """Stop what the item's last call left running: its driver's whole process group when the
     driver still runs as recorded, and its app-server when that does. Returns whether it stopped
     any, and the id of one Forge can't confirm has gone, which counts as running and stays on
@@ -934,11 +932,11 @@ def _stop_leftover(record: Path) -> tuple[bool, int | None]:
     stopped, unknown = False, None
     # By id and start time only: under load ps can read a just-started app-server's program name
     # alone, so the command on record needn't name Codex.
-    for key, group in (("driver", True), ("app_server", False)):
-        recorded = saved.get(key) or {}
+    for recorded, group in ((saved.get("driver"), True), (saved.get("app_server"), False)):
         if not recorded:
             continue
-        alive = _alive(recorded)
+        pid = recorded.get("pid")
+        alive = False if running is not None and type(pid) is int and pid not in running else _alive(recorded)
         if alive:
             _stop(recorded, group)
             stopped, alive = True, _alive(recorded)
@@ -1176,6 +1174,8 @@ def tidy(checkout: Path) -> list[str]:
     threads = repo.forge_dir(checkout) / "threads"
     bases = sorted({path.with_suffix("") for path in threads.rglob("*.*")})
     me = (identity(os.getpid()) or {"pid": os.getpid()}) if bases else {}
+    pids = repo.run("ps", "-axo", "pid=") if bases and os.name != "nt" else None
+    running = {int(pid) for pid in pids.stdout.split()} if pids is not None and pids.returncode == 0 else None
     said = []
     for base in bases:
         folder, item = base.relative_to(threads).as_posix().split("/", 1)
@@ -1187,7 +1187,7 @@ def tidy(checkout: Path) -> list[str]:
                         "doctor leaves its Codex process alone.")
             continue
         try:
-            stopped, unknown = _stop_leftover(base.with_suffix(".json"))
+            stopped, unknown = _stop_leftover(base.with_suffix(".json"), running)
             if stopped:
                 said.append(f"Stopped the Codex processes that a crashed forge {command} {item} "
                             "left.")

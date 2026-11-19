@@ -1,0 +1,37 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/board.py\tRefresh the board snapshot after the concurrent fetch\tnext-and-doctor-speed",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 840,
+      "text": "Refresh the board snapshot after the concurrent fetch",
+      "from": "blocking",
+      "item": "next-and-doctor-speed",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board.py\tnext can fail if another command removes a work folder while the board reads it.",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 986,
+      "text": "next can fail if another command removes a work folder while the board reads it.",
+      "from": "worker",
+      "item": "next-and-doctor-speed",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/doctor.py\tNot done: Warm runtime targets and batched pull-request reads\tnext-and-doctor-speed",
+      "kind": "bug",
+      "path": "src/forge/doctor.py",
+      "line": 102,
+      "text": "Not done: Warm runtime targets and batched pull-request reads",
+      "from": "blocking",
+      "item": "next-and-doctor-speed",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

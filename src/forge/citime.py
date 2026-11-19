@@ -9,14 +9,14 @@ from pathlib import Path
 from statistics import median
 from typing import Any
 
-from forge import checks, repo
+from forge import checks, repo, time_records
 
 CHECKS = """checkSuites(first:20) { nodes { workflowRun { databaseId }
     checkRuns(first:100, filterBy: { checkType: ALL }) { nodes {
       name status conclusion startedAt completedAt
     } pageInfo { hasNextPage } }
   } pageInfo { hasNextPage } }"""
-COMMIT_CHECKS = "commits(last:100) { nodes { commit { oid " + CHECKS + " } } pageInfo { hasPreviousPage } }"
+COMMIT_CHECKS = "commits(last:100) { nodes { commit { id oid " + CHECKS + " } } pageInfo { hasPreviousPage } }"
 PUSH_HEADS = """commits(last:100) { nodes { commit {
   id statusCheckRollup { contexts { totalCount } }
 } } pageInfo { hasPreviousPage } }"""
@@ -41,6 +41,83 @@ def _pulls(top: Path, options: str, commits: str = COMMIT_CHECKS) -> dict[str, A
         return pulls if isinstance(pulls, dict) and isinstance(pulls.get("nodes"), list) else {}
     except (KeyError, TypeError):
         return {}
+
+
+def _complete_checks(commit: Any) -> bool:
+    if not isinstance(commit, dict): return False
+    suites = commit.get("checkSuites")
+    if not isinstance(suites, dict) or not isinstance(suites.get("nodes"), list): return False
+    page = suites.get("pageInfo")
+    if not isinstance(page, dict) or page.get("hasNextPage") is not False: return False
+    found = False
+    for suite in suites["nodes"]:
+        runs = suite.get("checkRuns") if isinstance(suite, dict) else None
+        if not isinstance(runs, dict) or not isinstance(runs.get("nodes"), list): return False
+        page = runs.get("pageInfo")
+        if not isinstance(page, dict) or page.get("hasNextPage") is not False: return False
+        for run in runs["nodes"]:
+            if not isinstance(run, dict) or str(run.get("status")).lower() != "completed": return False
+            found = True
+    return found
+
+
+def _history_checks(top: Path, ids: list[str], updates: list[Any] | None = None) -> dict[str, Any]:
+    """Reuse only complete check attempts for the same GraphQL commit id for sixty seconds."""
+    from forge import board_facts
+
+    path = repo.forge_dir(top) / "ci-check-history.json"
+    fetched: dict[str, Any] = {}
+    def refresh(now: datetime) -> dict[str, Any]:
+        entries: dict[str, Any] = {}
+        try:
+            data = json.loads(path.read_text(encoding="utf-8")).get("data", {})
+        except (OSError, ValueError, AttributeError):
+            data = {}
+        if isinstance(data, dict):
+            for node_id, entry in data.items():
+                if not isinstance(entry, dict): continue
+                cached_at = time_records.when(entry.get("fetched_at"))
+                commit = entry.get("commit")
+                fresh = cached_at is not None and 0 <= (now - cached_at).total_seconds() < 60
+                if fresh and isinstance(commit, dict) and commit.get("id") == node_id and _complete_checks(commit):
+                    entries[node_id] = entry
+        for commit in updates or ():
+            node_id = commit.get("id") if isinstance(commit, dict) else None
+            if isinstance(node_id, str) and _complete_checks(commit):
+                entries[node_id] = {"fetched_at": repo.now(), "commit": commit}
+        missing = [node_id for node_id in ids if node_id not in entries]
+        if missing:
+            groups = [missing[offset:offset + 50] for offset in range(0, len(missing), 50)]
+            fields = [f"checks_{offset}: nodes(ids:" + json.dumps(group)
+                      + ") { ... on Commit { id oid " + CHECKS.replace("workflowRun { databaseId }", "") + " } }"
+                      for offset, group in zip(range(0, len(missing), 50), groups)]
+            value = _read(top, "graphql", "-f", "query=query { " + " ".join(fields) + " }")
+            data = value.get("data") if isinstance(value, dict) else None
+            if not isinstance(data, dict): return entries
+            received = {}
+            for offset, group in zip(range(0, len(missing), 50), groups):
+                commits = data.get(f"checks_{offset}")
+                if not isinstance(commits, list): return entries
+                group_received = set()
+                for commit in commits:
+                    node_id = commit.get("id") if isinstance(commit, dict) else None
+                    if node_id not in group or node_id in received: return entries
+                    received[node_id] = commit
+                    group_received.add(node_id)
+                if group_received != set(group): return entries
+            fetched.update(received)
+            saved_at = repo.now()
+            for node_id, commit in received.items():
+                if _complete_checks(commit):
+                    entries[node_id] = {"fetched_at": saved_at, "commit": commit}
+        return entries
+
+    saved = board_facts._cached(top, "ci-check-history", refresh, seconds=0)
+    if not isinstance(saved, dict): return {}
+    result = {node_id: entry["commit"] for node_id, entry in saved.items()
+              if isinstance(entry, dict) and isinstance(entry.get("commit"), dict)}
+    result.update(fetched)
+    return result
 
 
 def _at(value: Any) -> float:
@@ -146,6 +223,9 @@ def _stages(jobs: list[dict[str, Any]]) -> str:
 
 def report(top: Path, branch: str, *, current: bool = False) -> None:
     prs = _pulls(top, f"first:1,states:OPEN,headRefName:{json.dumps(branch)}").get("nodes", [])
+    updates = [node.get("commit") for node in prs[0].get("commits", {}).get("nodes", [])
+               if isinstance(node, dict) and isinstance(node.get("commit"), dict)] if prs else []
+    if updates: _history_checks(top, [], updates)
     measured = _measure(top, prs[0], current) if prs else None
     if measured is None:
         return  # Timing is optional information; GitHub's check results still decide the gate.
@@ -191,7 +271,7 @@ def warning(top: Path) -> str:
     prs: list[dict[str, Any]] = []
     cursor = ""
     while True:
-        page = _pulls(top, "first:20,states:MERGED,orderBy:{field:UPDATED_AT,direction:DESC}" + cursor,
+        page = _pulls(top, "first:40,states:MERGED,orderBy:{field:UPDATED_AT,direction:DESC}" + cursor,
                       PUSH_HEADS)
         nodes = page.get("nodes", [])
         if not nodes:
@@ -220,19 +300,11 @@ def warning(top: Path) -> str:
     if not heads:
         return ""
     ids = list(heads)
-    for offset in range(0, len(ids), 50):
-        query = ("query { nodes(ids:" + json.dumps(ids[offset:offset + 50])
-                 + ") { ... on Commit { id oid " + CHECKS + " } } }")
-        value = _read(top, "graphql", "-f", "query=" + query)
-        if not isinstance(value, dict) or not isinstance(value.get("data", {}).get("nodes"), list):
-            return ""
-        for commit in value["data"]["nodes"]:
-            if not commit or commit.get("id") not in heads:
-                return ""
-            for node in heads.pop(commit["id"]):
-                node["commit"] = commit
-    if heads:
-        return ""
+    full_checks = _history_checks(top, ids)
+    if any(node_id not in full_checks for node_id in ids): return ""
+    for node_id, nodes in heads.items():
+        for node in nodes:
+            node["commit"] = full_checks[node_id]
     measured = [_measure(top, pr) for pr in prs[:20]]
     values = sorted((value for value in measured if value is not None and not value["pending"]),
                     key=lambda value: value["seconds"])

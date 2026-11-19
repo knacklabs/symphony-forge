@@ -8,6 +8,7 @@ import re
 import shutil
 import subprocess
 import tomllib
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
@@ -63,19 +64,65 @@ def _prs(top: Path, branch: str, *options: str) -> Any:
     done = repo.run("gh", "pr", "list", "--head", branch, "--state", "all", *options, cwd=top)
     try: return json.loads(done.stdout) if done.returncode == 0 else None
     except ValueError: return None
+def _files_fix_prs(top: Path, branches: list[str]) -> dict[str, Any]:
+    if not branches or not shutil.which("gh"): return {}
+    pulls = repo.command_fact("files fix pull requests", top, dict)
+    missing = [branch for branch in branches if branch not in pulls]
+    if missing:
+        pulls.update(_finished_prs(top, missing, first=30))
+    return pulls
+
+def _is_files_fix_finished(pulls: Any) -> bool:
+    prs = pulls.get("nodes") if isinstance(pulls, dict) else None
+    return isinstance(prs, list) and any(isinstance(pr, dict) and pr.get("state") in ("MERGED", "CLOSED")
+                                         for pr in prs)
+
 def _files_fix_finished(top: Path, branch: str) -> bool:
-    prs = _prs(top, branch, "--json", "state") if shutil.which("gh") else None
-    return isinstance(prs, list) and any(isinstance(pr, dict) and pr.get("state") in ("MERGED", "CLOSED") for pr in prs)
-def _open_files_fix(top: Path) -> str: return next((branch for branch in repo.git("for-each-ref", "--format=%(refname:short)",
-                 "refs/heads/fix/forge-files-*", cwd=top).splitlines() if not _files_fix_finished(top, branch)), "")
+    return _is_files_fix_finished(_files_fix_prs(top, [branch]).get(branch))
+
+def _open_files_fix(top: Path) -> str:
+    branches = repo.git("for-each-ref", "--format=%(refname:short)", "refs/heads/fix/forge-files-*",
+                        cwd=top).splitlines()
+    pulls = _files_fix_prs(top, branches)
+    return next((branch for branch in branches if not _is_files_fix_finished(pulls.get(branch))), "")
+
+def _finished_prs(top: Path, branches: list[str], *, first: int = 100) -> dict[str, Any]:
+    if not branches: return {}
+    fields = [f'worktree_{index}: pullRequests(first:{first},states:[OPEN,CLOSED,MERGED],'
+              f'orderBy:{{field:CREATED_AT,direction:DESC}},headRefName:{json.dumps(branch)}) '
+              "{ nodes { headRefOid state } pageInfo { hasNextPage } }"
+              for index, branch in enumerate(branches)]
+    query = ("query($owner:String!,$name:String!) { repository(owner:$owner,name:$name) { "
+             + " ".join(fields) + " } }")
+    done = repo.run("gh", "api", "graphql", "-F", "owner={owner}", "-F", "name={repo}",
+                    "-f", "query=" + query, cwd=top)
+    try:
+        answer = json.loads(done.stdout) if done.returncode == 0 else None
+    except ValueError:
+        return {}
+    if not isinstance(answer, dict) or answer.get("errors"):
+        return {}
+    data = answer.get("data")
+    if not isinstance(data, dict): return {}
+    data = data.get("repository")
+    if not isinstance(data, dict): return {}
+    return {branch: data.get(f"worktree_{index}") for index, branch in enumerate(branches)}
+
 def _finished(top: Path, main: Path) -> list[tuple[Path, str, str]]:
     if not shutil.which("gh"): return []
     open_fix = _open_files_fix(top)
-    found = []
+    candidates = []
     for branch, path in story.worktrees(top).items():
         if (not branch.startswith(("story/", "task/", "fix/", "forge/")) or branch == open_fix or path.resolve() in (main, top.resolve())
                 or (path / ".gitmodules").exists()): continue
-        prs = _prs(top, branch, "--limit", "100", "--json", "headRefOid,state")
+        candidates.append((branch, path))
+    pulls = _finished_prs(top, [branch for branch, _ in candidates])
+    found = []
+    for branch, path in candidates:
+        result = pulls.get(branch)
+        page = result.get("pageInfo") if isinstance(result, dict) else None
+        if not isinstance(page, dict) or page.get("hasNextPage") is not False: continue
+        prs = result.get("nodes")
         if not isinstance(prs, list) or len(prs) >= 100 or not all(isinstance(pr, dict) for pr in prs): continue
         head = repo.git("rev-parse", f"refs/heads/{branch}", cwd=top)
         states = {pr.get("state") for pr in prs if pr.get("headRefOid") == head}
@@ -417,32 +464,36 @@ def doctor(args: argparse.Namespace) -> int:
                          f"{_last(deleted).rstrip('.')}.", f"git branch -D {branch}")
         else: print(f"- Fixed: removed {path}, whose pull request is {state}.")
     rows += _files(top, cfg, wanted, args.fix and pinned == f"v{__version__}")
-    if not shutil.which("sh"): add("sh isn't on PATH, so no host hook can run.", "install Git, which brings sh, and put it on PATH")
-    elif wanted and sync.read(top / sync.LAUNCHER) != wanted.get(sync.LAUNCHER):
-        add(f"doctor didn't run the host hooks, because {sync.LAUNCHER} differs from what " "forge sync writes.")
-    else:
-        env = {**os.environ, "PATH": BARE_PATH} if os.name != "nt" else None  # Windows has no /usr/bin
-        bare = f" when run with PATH={BARE_PATH}" if env else ""
-        checked: dict[tuple[str, str], subprocess.CompletedProcess[str]] = {}
-        for rel in sync.HOSTS:
-            generated = set(_forge_hooks(wanted.get(rel, "")))
-            for event, command in _forge_hooks(sync.read(top / rel)):
-                if (event, command) not in generated: continue
+    with ThreadPoolExecutor(max_workers=5) as pool:
+        from forge import citime
+        warning_read = pool.submit(citime.warning, top) if shutil.which("gh") else None
+        if not shutil.which("sh"): add("sh isn't on PATH, so no host hook can run.", "install Git, which brings sh, and put it on PATH")
+        elif wanted and sync.read(top / sync.LAUNCHER) != wanted.get(sync.LAUNCHER):
+            add(f"doctor didn't run the host hooks, because {sync.LAUNCHER} differs from what " "forge sync writes.")
+        else:
+            env = {**os.environ, "PATH": BARE_PATH} if os.name != "nt" else None  # Windows has no /usr/bin
+            bare = f" when run with PATH={BARE_PATH}" if env else ""
+            checked = {}
+            hooks = [(rel, event, command) for rel in sync.HOSTS
+                     for event, command in _forge_hooks(sync.read(top / rel))
+                     if (event, command) in set(_forge_hooks(wanted.get(rel, "")))]
+            for rel, event, command in hooks:
                 key = (event, command)
                 if key not in checked:
                     payload = {"session_id": "forge-doctor", "cwd": str(top), "hook_event_name": event, **SAMPLES.get(event, {})}
-                    checked[key] = subprocess.run( [shutil.which("sh") or "sh", "-c", command], cwd=top,
+                    checked[key] = pool.submit(subprocess.run, [shutil.which("sh") or "sh", "-c", command], cwd=top,
                         input=json.dumps(payload), capture_output=True, text=True, encoding="utf-8", errors="replace", env=env)
-                done = checked[key]
+            for rel, event, command in hooks:
+                done = checked[event, command].result()
                 if done.returncode:
                     said = (done.stderr.strip() or "it printed nothing").splitlines()
                     fix = next((line[6:] for line in said if line.startswith("Next: ")), install)
                     add(f"The {event} hook in {rel} fails with exit code " f"{done.returncode}{bare}: {said[0]}", fix)
+        warning = warning_read.result() if warning_read else ""
     if cfg["test_place"] == "ci" and not cfg["checks"]:
         add("forge.toml names no checks, so close has nothing to wait for.", "ask your agent to set checks in forge.toml")
     if shutil.which("gh"):
-        from forge import citime
-        if warning := citime.warning(top):
+        if warning:
             print(f"- Warning: {warning}")
         prs = _prs(top, repo.current_branch(top), "--json", "headRefOid,state,number,headRefName")
         for pr in prs if isinstance(prs, list) else []:

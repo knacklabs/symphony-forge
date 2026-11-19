@@ -837,11 +837,9 @@ def numbers_line(top: Path, checks: list[str]) -> str:
 def _gather(top: Path, checks: list[str] | None = None) -> tuple[list[Item], list[Item] | None]:
     """Each story with its parts' start, green and touches, for the success numbers, and gh's pull
     requests (None without a working gh)."""
-    landed = story.landed_ref(top)
-    best: dict[str, Item] = {}
-    for rel, state, _ in _copies(top, landed):
-        if rel not in best or len(_steps(state)) > len(_steps(best[rel])):
-            best[rel] = state
+    history = _machine_history(top)
+    landed = history["landed"]
+    best = history["best"]
     prs = _prs(top)
     by_branch: dict[str, Item] = {}
     for pr in prs or []:  # newest first; a merged one wins
@@ -863,7 +861,7 @@ def _gather(top: Path, checks: list[str] | None = None) -> tuple[list[Item], lis
     stories = []
     for key in [*roadmap, *sorted((set(found) | set(parts)) - set(roadmap))]:
         state = found.get(key, {})
-        completed = story.completed(top, key, landed)
+        completed = story.completed(top, key, landed, history)
         if state.get("status") != "done" and completed.get("status") == "done":
             state = completed
         if roadmap.get(key, {}).get("status") == "done":
@@ -892,18 +890,19 @@ def _blob_texts(top: Path, specs: list[str], *, follow_notes: bool = False) -> d
 
 
 def _machine_history(top: Path) -> Item:
+    from forge import nextstep
+    return repo.command_fact(("board history", top.resolve(), tuple(nextstep.branch_tips(top).items())), top,
+                             lambda: _read_machine_history(top))
+
+
+def _read_machine_history(top: Path) -> Item:
     """A fresh bulk read: omit old completions before any per-item command work."""
     landed = story.landed_ref(top)
     history: Item = {"landed": landed}
     copies = _copies(top, landed, history)
-    log = repo.git("log", "--first-parent", "--diff-filter=A", "--no-renames",
-                   "--format=%x00%cI%x00%B%x00", "--name-only", landed, "--",
-                   ".factory/stories", ".factory/fixes", cwd=top).split("\0")[1:]
-    dates, messages = {}, {}
-    for at, message, paths in zip(log[::3], log[1::3], log[2::3]):
-        for rel in paths.splitlines():
-            if STATE.fullmatch(rel) and rel not in dates:
-                dates[rel], messages[rel] = _when(at).isoformat(), message
+    merged = story.merge_history(top, landed)
+    dates = {rel: at for rel, (at, _) in merged.items() if STATE.fullmatch(rel)}
+    messages = {rel: message for rel, (_, message) in merged.items() if STATE.fullmatch(rel)}
     landed_states = {rel: state for rel, state, where in copies if where == landed}
     states = {STATE.fullmatch(rel)["key"]: state for rel, state in landed_states.items()
               if STATE.fullmatch(rel)["key"] and not STATE.fullmatch(rel)["task"]}
@@ -931,7 +930,7 @@ def _machine_history(top: Path) -> Item:
         match = STATE.fullmatch(rel)
         if match["task"] and repo.state_path(match["key"]) in expired:
             expired.add(rel)
-    return {**history, "expired": expired, "step_counts": step_counts}
+    return {**history, "expired": expired, "step_counts": step_counts, "best": best}
 
 
 def _copies(top: Path, landed: str, history: Item | None = None) -> list[tuple[str, Item, Path | str]]:
@@ -987,7 +986,7 @@ def _copies(top: Path, landed: str, history: Item | None = None) -> list[tuple[s
                             "--", ".factory", cwd=path).split("\0"))
 
     work = [(branch, path) for branch, path in trees.items() if branch.startswith(PREFIXES)]
-    with ThreadPoolExecutor(max_workers=4) as pool:
+    with ThreadPoolExecutor(max_workers=8) as pool:
         changes = dict(zip((path for _, path in work), pool.map(changed_files, (path for _, path in work))))
     for branch, path in work:
         saved = state_files.get(refs.get(f"refs/heads/{branch}"), {})
@@ -995,7 +994,7 @@ def _copies(top: Path, landed: str, history: Item | None = None) -> list[tuple[s
         paths = (f"{prefix}/{name}"
                  for kind in ("stories", "fixes")
                  for folder, _, names in os.walk(path / ".factory" / kind)
-                 for prefix in (os.path.relpath(folder, path).replace(os.sep, "/"),)
+                 for prefix in (folder[len(str(path)) + 1:].replace(os.sep, "/"),)
                  for name in names if name.endswith(".json"))
         for rel in sorted(paths):
             if STATE.fullmatch(rel):
@@ -1032,6 +1031,10 @@ def _copies(top: Path, landed: str, history: Item | None = None) -> list[tuple[s
 
 
 def _prs(top: Path) -> list[Item] | None:
+    return repo.command_fact("board pull requests", top, lambda: _read_prs(top))
+
+
+def _read_prs(top: Path) -> list[Item] | None:
     """Every pull request gh can see, newest first, or None without a working gh."""
     github = board_facts.prs(top)
     if github is None:

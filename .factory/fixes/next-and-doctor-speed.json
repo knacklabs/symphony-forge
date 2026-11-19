@@ -1,0 +1,91 @@
+{
+  "allow_large": "Owner allowed on 18 Nov 2026: the speed fix may change nextstep.py as a sixth code file instead of becoming a story",
+  "base": "67376f6c033979de5e01536db35aaf293d3e8899",
+  "branch": "fix/next-and-doctor-speed",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1ef3a-0c8d-7751-8737-61582319e378",
+    "head": null,
+    "start": "6cdb571bae5284193dcbc323118b281ca8b355f1"
+  },
+  "done_when": "On Forge's own repo, forge next finishes in under 5 seconds and forge doctor in under 30 seconds on a warm run, with the same output as before; next reads merge history with one git log call and reuses the board's snapshot, and doctor reads its pull requests in one or a few batched requests; before and after times are in the pull request; new and existing repos get it on upgrade",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "_finished() in src/forge/doctor.py",
+      "file": "src/forge/doctor.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 102,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Warm runtime targets and batched pull-request reads",
+      "work": 4
+    },
+    {
+      "area": "_gather() in src/forge/board.py",
+      "file": "src/forge/board.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 840,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Refresh the board snapshot after the concurrent fetch",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "14550c99d5293bd6628babc87a57bd9c9d8b7c94cbc34ce08243483b746fa381",
+    "changed": "9a1dbec655452943c8c67aee91c8e7c369d2da34d024354e0499a598d3b69155",
+    "commit": "4ae258639650d83ec749cc9879edf0927bec3468",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 5, Work 4, Harm 3\nRaise: Not done\nCase: normal use - running forge next and forge doctor on Forge's own repository.\nThe owner-approved item requires: \"On Forge's own repo, forge next finishes in under 5 seconds and forge doctor in under 30 seconds on a warm run, with the same output as before; next reads merge history with one git log call and reuses the board's snapshot, and doctor reads its pull requests in one or a few batched requests; before and after times are in the pull request; new and existing repos get it on upgrade\".\nThe recorded final warm runs took 13.997, 21.136 and 8.847 seconds for next, and 66.57, 36.863 and 66.70 seconds for doctor. All exceed their targets. Doctor overlaps its host and CI checks here, but the recorded measurements still do not meet the deadline. Four workers were running during the measurements; the owner allowed noting the load but did not change the targets. The retained-branch batching and duplicate-history-read portions of the previous finding have been addressed.",
+        "file": "src/forge/doctor.py",
+        "gain": 5,
+        "harm": 3,
+        "line": 467,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: Warm runtime targets and batched pull-request reads",
+        "work": 4
+      }
+    ],
+    "id": "7317dc5c-aedc-4a01-96b5-5fd521a78055",
+    "status": "blocked"
+  },
+  "round": 3,
+  "status": "fixing",
+  "steps": [
+    {
+      "at": "2026-11-18T15:14:57.669266+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-18T17:35:34.675403+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-19T02:33:45.598433+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "37bd8dfd-4c39-4915-ab1b-ae356682b388",
+    "head": "a92a1fc1d03d7015fb26cbe2111fb4d76135a258",
+    "keys": {
+      "the open P0 not done: warm runtime targets and batched pull-request reads in src/forge/doctor.py": 1
+    },
+    "round": 2
+  },
+  "why": "forge next takes about 25 seconds and forge doctor about 2.5 minutes on Forge's own repo: next makes about 600 git calls, most asking per item when it merged (story.completed and merged_at, the board numbers line), and doctor makes about 90 GitHub requests, one per merged pull request (doctor._prs) plus 4 slow ones for the CI time warning",
+  "worker": "codex"
+}

@@ -28,10 +28,11 @@ def _commit(checks: list[dict]) -> dict:
     for check in checks:
         workflow = check["checkSuite"]["workflowRun"]
         suite = suites.setdefault(workflow["databaseId"], {
-            "workflowRun": workflow, "checkRuns": {"nodes": []}})
+            "workflowRun": workflow, "checkRuns": {"nodes": [], "pageInfo": {"hasNextPage": False}}})
         suite["checkRuns"]["nodes"].append({key: value for key, value in check.items()
                                            if key != "checkSuite"})
-    return {"commit": {"oid": "", "checkSuites": {"nodes": list(suites.values())}}}
+    return {"commit": {"oid": "", "checkSuites": {"nodes": list(suites.values()),
+                                                       "pageInfo": {"hasNextPage": False}}}}
 
 
 def _pull(number: int, checks: list[dict], *, state: str = "OPEN",
@@ -67,6 +68,11 @@ def _graphql(env, pulls: list[dict], *, exit: int = 0) -> None:
                     for child in value:
                         latest_checks(child)
             latest_checks(value)
+            node_ids = list(re.finditer(r"(?:(\\w+)\\s*:\\s*)?nodes\\(ids:\\s*(\\[[^]]+\\])\\)", query))
+            if node_ids:
+                commits = value["data"]["nodes"]
+                value["data"] = {match.group(1) or "nodes": [node for node in commits
+                    if node and node.get("id") in set(json.loads(match.group(2)))] for match in node_ids}
             rule["stdout"] = json.dumps(value)
         sys.stdout.write(rule["stdout"])''')
         stub.write_text(source, encoding="utf-8")
