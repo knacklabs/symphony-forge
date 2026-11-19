@@ -440,7 +440,7 @@ def red(top: Path, *, item: str = "", refresh: bool = False) -> bool:
         # from merged branches. Fetch their results together, without per-commit I/O.
         fields = """status { contexts { context state createdAt } }
           checkSuites(first:100,filterBy:{checkName:"tests"}) { nodes {
-            app { slug } branch { name } workflowRun { event workflow { path } }
+            app { slug } branch { name } workflowRun { event file { path } }
             checkRuns(first:100,filterBy:{checkName:"tests",checkType:ALL}) { nodes {
               name status conclusion completedAt
             } }
@@ -479,7 +479,7 @@ def red(top: Path, *, item: str = "", refresh: bool = False) -> bool:
                 if ((suite.get("app") or {}).get("slug") != "github-actions"
                         or (suite.get("branch") or {}).get("name") != default
                         or workflow.get("event") != "push"
-                        or (workflow.get("workflow") or {}).get("path") != ".github/workflows/forge.yml"):
+                        or (workflow.get("file") or {}).get("path") != ".github/workflows/forge.yml"):
                     continue
                 results.extend((row["completedAt"], row["conclusion"] == "SUCCESS")
                                for row in (suite.get("checkRuns") or {}).get("nodes", [])

@@ -190,6 +190,11 @@ def test_2_a_push_run_tests_only_what_that_merge_brought(repo, gh, tmp_path, mon
 # aggregate GitHub read. Per-commit reads can exhaust the account's quota. The
 # existing result cases do not constrain this cost; extend their command boundary
 # without adding a production seam or replaying the rule at another layer.
+# Schema regression: the emitted GitHub request must select the workflow path
+# from WorkflowRun.file, not the nonexistent Workflow.path. The previous fake
+# invented that field, so a green reply could hide GitHub's validation failure.
+# Extend the wire contract in this same command test, with GitHub-shaped replies
+# and no production seam. Field names are GitHub's public protocol, not source text.
 def _rows(rows: list[dict]) -> str:
     return "".join(json.dumps(row) + "\n" for row in rows)
 
@@ -211,7 +216,7 @@ def _ci_node(sha: str, runs: list[dict], statuses: list[dict] | None = None,
         "checkSuites": {"nodes": [
             {"app": {"slug": "github-actions"}, "branch": {"name": workflow["head_branch"]},
              "workflowRun": {"event": workflow["event"],
-                             "workflow": {"path": workflow["path"].partition("@")[0]}},
+                             "file": {"path": workflow["path"].partition("@")[0]}},
              "checkRuns": {"nodes": [
                  {"name": row["name"], "status": row["status"].upper(),
                   "conclusion": row["conclusion"].upper() if row["conclusion"] else None,
@@ -343,7 +348,7 @@ if plan_path.exists() and not marker.exists():
         result["data"]["repository"]["c" + repaired] = {
             "status": None, "checkSuites": {"nodes": [{
                 "app": {"slug": "github-actions"}, "branch": {"name": "main"},
-                "workflowRun": {"event": "push", "workflow": {"path": ".github/workflows/forge.yml"}},
+                "workflowRun": {"event": "push", "file": {"path": ".github/workflows/forge.yml"}},
                 "checkRuns": {"nodes": [{"name": "tests", "status": "COMPLETED",
                     "conclusion": "SUCCESS", "completedAt": "2026-11-18T10:00:03Z"}]}}]}}
         rules.append({"args": prefix, "stdout": json.dumps(result), "stderr": "", "exit": 0})
@@ -500,6 +505,10 @@ def test_3_merge_waits_while_the_default_branch_is_red(env, monkeypatch, case):
         assert result.returncode == 0, result.stdout + result.stderr
         assert len(merged) == 1
         assert len(env.gh_calls(*DEFAULT_TESTS)) == 1
+        query = next(arg.removeprefix("query=") for arg in env.gh_calls(*DEFAULT_TESTS)[0]
+                     if arg.startswith("query="))
+        assert not re.search(r"\bworkflow\s*\{[^{}]*\bpath\b", query), "Workflow has no path field"
+        assert re.search(r"\bfile\s*\{[^{}]*\bpath\b", query), "Read WorkflowRun.file.path"
         assert not [call for call in env.gh_calls("api")
                     if call[-1].endswith("/check-runs?per_page=100&filter=all")]
     elif case == "full-green-after-tests-fail":
