@@ -101,8 +101,8 @@
     "id": "76c0a7a9-8d39-48fb-8ff6-609b0767ee22",
     "status": "clean"
   },
-  "round": 3,
-  "status": "waiting for checks",
+  "round": 4,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-18T16:44:04.017358+00:00",
@@ -131,10 +131,10 @@
     "worker_round": 2
   },
   "stuck": {
-    "close": "03ad776b-16ae-4e92-9915-3c1e5f2a41fd",
-    "head": "673a80efaf4143a00e43b87438782b496faa9c10",
+    "close": "7609bedc-511b-4bb8-b663-d32dc8edfabf",
+    "head": "60d0385025a8ada553b9f3e37837a41f2151e871",
     "keys": {},
-    "round": 2
+    "round": 3
   },
   "why": "Worker rounds often need 2-4 rounds for selector, assertion or execution-path corrections the first round could have caught, and when the coordinator commits a small fix itself its first review blocks on 'proof list: missing' (measured at a client on 18 Nov 2026: 3 one-file fixes, 20-60 min each)",
   "worker": "codex"
