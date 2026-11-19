@@ -55,6 +55,10 @@ def test_1_upgrade_to_installed_release_continues_during_runs(unsynced_up, tmp_p
         name = "upgrade-forge-to-" + release.replace(".", "-")
         assert_ready(upgrade, result, ours(upgrade, installed=False, release=release, name=name),
                      release=release, name=name)
+        # Upgrade uses the same template for each host, including earlier adoptions.
+        template = (ROOT / "src/forge/templates/skill.md").read_text(encoding="utf-8")
+        for host in (".claude", ".codex", ".agents"):
+            assert upgrade.repo.git("show", f"fix/{name}:{host}/skills/forge/SKILL.md") == template.strip()
         assert not [call for call in upgrade.uv() if call["args"][:2] == ["tool", "install"]]
         assert reader.poll() is None, "Upgrade must leave the other repo's run alone"
     finally:

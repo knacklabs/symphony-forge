@@ -53,6 +53,8 @@ LISTED = {"AGENTS.md", ".gitattributes", ".gitignore", ".forge/hooks.sh", ".forg
           *(f"{host}/skills/simplified-technical-english/{name}" for host in (".claude", ".codex")
             for name in PLAIN_ENGLISH), *ROLE_FILES}
 LISTED.add(".forge/design/support.js")
+LISTED.update(f".agents/skills/forge/{name}" for name in
+              ("SKILL.md", "standards.md", "migrate-skill.md", "run-reference.md", "fde.md"))
 LISTED.update((".forge/design/ui-checks.js", ".forge/design/render-check.mjs", ".forge/design/render-check.d.mts"))
 LISTED.update(f"{host}/skills/forge/run-reference.md" for host in (".claude", ".codex"))
 # Init and sync now also deliver the complete pinned design skills to client repos.

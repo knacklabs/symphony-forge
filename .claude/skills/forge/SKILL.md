@@ -2053,8 +2053,8 @@ A person can ask you to skip the model review for a task or fix. Run `forge clos
 At the round limit (the repo's setting, two by default), open findings below P0
 stop the item and ask the owner: one more round, split or accept.
 Accept makes the open findings follow-ups in Known issues with the owner's reason.
-An open P0 never stops for the owner; the worker keeps fixing it. When the same P0 stays open
-two worker rounds in a row, Forge stops with the stuck question.
+An open P0 returns to the worker. When the same P0 stays open in two worker rounds in a row,
+Forge stops and asks the owner.
 
 From the second review round, close checks the previous round's findings and new P0s that
 happen in normal use. The reviewer says fixed or not fixed for each previous finding.
