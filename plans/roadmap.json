@@ -693,7 +693,7 @@
     },
     {
       "key": "FORGE-GHAPP-1",
-      "title": "Give each client its own GitHub app for Forge's GitHub work",
+      "title": "Give each developer their own GitHub app for Forge's GitHub work",
       "status": "pending",
       "order": 128
     }
