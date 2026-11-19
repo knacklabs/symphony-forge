@@ -1,4 +1,11 @@
 {
+  "amendments": [
+    {
+      "at": "2026-11-19T04:33:51.863891+00:00",
+      "because": "Owner narrowed it on 19 Nov 2026; .agents handling moves to a later fix",
+      "done_when": "Every generated skill copy (.claude, .codex and .agents) comes from the same template text and describes the round rule the code applies; a test compares the copies; new repos get it at init and existing repos on upgrade and forge sync"
+    }
+  ],
   "base": "285e56632baf943e4c7524f2341a7bb52f3e7f0b",
   "branch": "fix/skill-copies-agree",
   "chat": {
@@ -8,7 +15,7 @@
     "head": null,
     "start": "253f6be732346eb2e83a340d45bae8a184323bc6"
   },
-  "done_when": "Every generated skill copy (.claude, .codex and .agents) comes from the same template text and describes the round rule the code applies; a test compares the copies; new repos get it at init and existing repos on upgrade and forge sync",
+  "done_when": "The generated .claude and .codex copies of the Forge skill come from the same template text and describe the round rule the code applies; a test compares them; .agents copies are left as they are; new repos get it at init and existing repos on upgrade and forge sync",
   "fix_kind": "mechanical",
   "kind": "fix",
   "known": [
