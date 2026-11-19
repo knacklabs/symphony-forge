@@ -28,10 +28,11 @@ def _commit(checks: list[dict]) -> dict:
     for check in checks:
         workflow = check["checkSuite"]["workflowRun"]
         suite = suites.setdefault(workflow["databaseId"], {
-            "workflowRun": workflow, "checkRuns": {"nodes": []}})
+            "workflowRun": workflow, "checkRuns": {"nodes": [], "pageInfo": {"hasNextPage": False}}})
         suite["checkRuns"]["nodes"].append({key: value for key, value in check.items()
                                            if key != "checkSuite"})
-    return {"commit": {"oid": "", "checkSuites": {"nodes": list(suites.values())}}}
+    return {"commit": {"oid": "", "checkSuites": {"nodes": list(suites.values()),
+                                                       "pageInfo": {"hasNextPage": False}}}}
 
 
 def _pull(number: int, checks: list[dict], *, state: str = "OPEN",

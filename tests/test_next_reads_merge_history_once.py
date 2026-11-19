@@ -6,13 +6,32 @@ import sys
 
 import pytest
 
-from conftest import _install
+from conftest import Repo, _install
 from test_machine_views_recent_finished_items import client
+from test_pull_request_cache_survives_close import count_git
 from test_story import DOC
 
 STORY = "next-and-doctor-speed"
 NOW = "2026-11-18T12:00:00+00:00"
 STORIES = 12
+
+
+def _finish_story(repo, monkeypatch, key, touches=2):
+    repo.write(f".factory/stories/{key}/story.json", json.dumps({
+        "status": "approved", "title": f"Finished story {key}",
+        "approval": {"at": NOW}, "touches": touches,
+    }))
+    repo.write(f"plans/{key}.md", DOC)
+    paths = {f".factory/stories/{key}/tasks/{task}.json" for task in ("SAVE", "SHOW")}
+    for path in paths:
+        repo.write(path, json.dumps({"status": "merged", "touches": 1}))
+    repo.git("add", "-A")
+    with monkeypatch.context() as dated:
+        dated.setenv("GIT_AUTHOR_DATE", NOW)
+        dated.setenv("GIT_COMMITTER_DATE", NOW)
+        repo.git("commit", "-qm", "Finish story " + key + "\n\nForge-story-done: " +
+                 json.dumps({"key": key, "outcome": "The work is finished."}))
+    return paths
 
 
 @pytest.mark.platform
@@ -24,22 +43,7 @@ def test_1_next_reuses_the_merge_history_for_its_numbers(repo, gh, monkeypatch, 
     monkeypatch.setenv("FORGE_NOW", NOW)
     task_paths = set()
     for number in range(STORIES):
-        key = f"DONE-{number}"
-        repo.write(f".factory/stories/{key}/story.json", json.dumps({
-            "status": "approved", "title": f"Finished story {key}",
-            "approval": {"at": NOW}, "touches": 2,
-        }))
-        repo.write(f"plans/{key}.md", DOC)
-        for task in ("SAVE", "SHOW"):
-            path = f".factory/stories/{key}/tasks/{task}.json"
-            task_paths.add(path)
-            repo.write(path, json.dumps({"status": "merged", "touches": 1}))
-        repo.git("add", "-A")
-        with monkeypatch.context() as dated:
-            dated.setenv("GIT_AUTHOR_DATE", NOW)
-            dated.setenv("GIT_COMMITTER_DATE", NOW)
-            repo.git("commit", "-qm", "Finish story " + key + "\n\nForge-story-done: " +
-                     json.dumps({"key": key, "outcome": "The work is finished."}))
+        task_paths.update(_finish_story(repo, monkeypatch, f"DONE-{number}"))
     repo.git("push", "-q", "origin", "main")
 
     # Read-only commands must reuse a checkout's settings as its spec list grows.
@@ -110,3 +114,35 @@ sys.exit(subprocess.run([{json.dumps(real_git)}, *sys.argv[1:]]).returncode)
     per_task_reads = [args for args in calls if args[:1] == ["log"]
                       and any(path in args for path in task_paths)]
     assert per_task_reads == [], per_task_reads
+
+
+@pytest.mark.platform
+def test_5_next_counts_work_fetched_during_the_command(repo, gh, monkeypatch, tmp_path):
+    # Audit: the previous case pushes before the command sees origin/main.
+    # A teammate's merge must reach the numbers in this command, and migration
+    # warnings must share that commit's history instead of racing the board.
+    client(repo, gh, "new")
+    monkeypatch.setenv("FORGE_NOW", NOW)
+    _finish_story(repo, monkeypatch, "FIRST")
+    repo.git("push", "-q", "origin", "main")
+    before = repo.forge("next")
+    assert before.returncode == 0, before.stderr
+    assert "a story usually needs a person 4 times" in before.stdout
+    old = repo.git("rev-parse", "origin/main")
+    peer_path = tmp_path / "teammate"
+    repo.git("clone", "-q", repo.git("remote", "get-url", "origin"), str(peer_path))
+    peer = Repo(peer_path, repo.bin)
+    peer.git("config", "user.name", "A teammate")
+    peer.git("config", "user.email", "teammate@example.com")
+    _finish_story(peer, monkeypatch, "FETCHED", touches=6)
+    peer.git("push", "-q", "origin", "HEAD:main", "HEAD:refs/heads/story/FETCHED")
+    assert repo.git("rev-parse", "origin/main") == old
+    calls = count_git(repo)
+
+    shown = repo.forge("next")
+
+    assert shown.returncode == 0, shown.stderr
+    assert "a story usually needs a person 6 times" in shown.stdout, shown.stdout
+    history_reads = [args for args in calls() if args[:2] == ["log", "--first-parent"]
+                     and ".factory/stories" in args and ".factory/fixes" in args]
+    assert len(history_reads) == 1, history_reads

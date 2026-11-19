@@ -156,7 +156,7 @@ def next_step(args: Any) -> int:
     repo.forge_dir(top)
     repo.default_branch(top)
     story.worktrees(top)
-    # Independent network reads overlap each other and the bulk local history.
+    # Refresh origin before the local snapshot; independent GitHub reads overlap both.
     with ThreadPoolExecutor(max_workers=6) as pool:
         open_fields = "headRefName,headRefOid,body,url,isDraft"
         open_read = pool.submit(board_facts._listing, top, "open", fields=open_fields)
@@ -171,12 +171,12 @@ def next_step(args: Any) -> int:
                    "checks": pool.submit(checks), "github": github_read}
         activity = pool.submit(board._event_history, top)
         warning_read = pool.submit(migration_warnings.warnings, top)
-        numbers_read = pool.submit(board._prs, top)
-        history = board._machine_history(top)
+        numbers_read = pool.submit(board._prs, top) if repo.now()[:10] >= board.CHECK_DATE else None
         warnings = warning_read.result()
+        history = board._machine_history(top)
         activity.result()
         facts = {name: future.result() for name, future in pending.items()}
-        numbers_read.result()
+        if numbers_read is not None: numbers_read.result()
     lines = warnings + _report(
         top, history, schedules=True, numbers=True, facts=facts)
     step = ([journey.step_line(top, _report_config(top, {}), history, idle=_idle(top)[0] in lines)]
@@ -1196,12 +1196,5 @@ def _builder(item: str, state: dict[str, Any], folder: Path, refusals: dict[Path
 
 def _prs(top: Path, state: str, fields: str) -> list[dict[str, Any]]:
     """GitHub's pull requests in a state, when gh is available; git's landed state still works offline."""
-    if not shutil.which("gh"):
-        return []
-    done = repo.run("gh", "pr", "list", "--state", state, "--limit", "1000", "--json", fields, cwd=top)
-    try:
-        prs = json.loads(done.stdout) if done.returncode == 0 else []
-    except ValueError:
-        return []
-    return [pr for pr in prs if isinstance(pr, dict) and isinstance(pr.get("headRefName"), str)
-            ] if isinstance(prs, list) else []
+    prs = board_facts._listing(top, state, fields=fields) if shutil.which("gh") else None
+    return [pr for pr in prs or [] if isinstance(pr.get("headRefName"), str)]

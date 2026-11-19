@@ -13,6 +13,7 @@ from test_doctor_fix import _client
 STORY = "next-and-doctor-speed"
 
 
+@pytest.mark.platform
 @pytest.mark.skipif(os.name == "nt", reason="Codex uses native process APIs on Windows")
 def test_2_doctor_checks_a_shared_gone_codex_process_once(repo, gh, tmp_path, monkeypatch):
     _client(repo)

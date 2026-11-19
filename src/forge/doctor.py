@@ -64,15 +64,32 @@ def _prs(top: Path, branch: str, *options: str) -> Any:
     done = repo.run("gh", "pr", "list", "--head", branch, "--state", "all", *options, cwd=top)
     try: return json.loads(done.stdout) if done.returncode == 0 else None
     except ValueError: return None
-def _files_fix_finished(top: Path, branch: str) -> bool:
-    prs = _prs(top, branch, "--json", "state") if shutil.which("gh") else None
-    return isinstance(prs, list) and any(isinstance(pr, dict) and pr.get("state") in ("MERGED", "CLOSED") for pr in prs)
-def _open_files_fix(top: Path) -> str: return next((branch for branch in repo.git("for-each-ref", "--format=%(refname:short)",
-                 "refs/heads/fix/forge-files-*", cwd=top).splitlines() if not _files_fix_finished(top, branch)), "")
+def _files_fix_prs(top: Path, branches: list[str]) -> dict[str, Any]:
+    if not branches or not shutil.which("gh"): return {}
+    pulls = repo.command_fact("files fix pull requests", top, dict)
+    missing = [branch for branch in branches if branch not in pulls]
+    if missing:
+        pulls.update(_finished_prs(top, missing, first=30))
+    return pulls
 
-def _finished_prs(top: Path, branches: list[str]) -> dict[str, Any]:
+def _is_files_fix_finished(pulls: Any) -> bool:
+    prs = pulls.get("nodes") if isinstance(pulls, dict) else None
+    return isinstance(prs, list) and any(isinstance(pr, dict) and pr.get("state") in ("MERGED", "CLOSED")
+                                         for pr in prs)
+
+def _files_fix_finished(top: Path, branch: str) -> bool:
+    return _is_files_fix_finished(_files_fix_prs(top, [branch]).get(branch))
+
+def _open_files_fix(top: Path) -> str:
+    branches = repo.git("for-each-ref", "--format=%(refname:short)", "refs/heads/fix/forge-files-*",
+                        cwd=top).splitlines()
+    pulls = _files_fix_prs(top, branches)
+    return next((branch for branch in branches if not _is_files_fix_finished(pulls.get(branch))), "")
+
+def _finished_prs(top: Path, branches: list[str], *, first: int = 100) -> dict[str, Any]:
     if not branches: return {}
-    fields = [f'worktree_{index}: pullRequests(first:100,states:[OPEN,CLOSED,MERGED],headRefName:{json.dumps(branch)}) '
+    fields = [f'worktree_{index}: pullRequests(first:{first},states:[OPEN,CLOSED,MERGED],'
+              f'orderBy:{{field:CREATED_AT,direction:DESC}},headRefName:{json.dumps(branch)}) '
               "{ nodes { headRefOid state } pageInfo { hasNextPage } }"
               for index, branch in enumerate(branches)]
     query = ("query($owner:String!,$name:String!) { repository(owner:$owner,name:$name) { "

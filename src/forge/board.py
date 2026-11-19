@@ -890,7 +890,8 @@ def _blob_texts(top: Path, specs: list[str], *, follow_notes: bool = False) -> d
 
 
 def _machine_history(top: Path) -> Item:
-    return repo.command_fact(("board history", top.resolve()), top,
+    from forge import nextstep
+    return repo.command_fact(("board history", top.resolve(), tuple(nextstep.branch_tips(top).items())), top,
                              lambda: _read_machine_history(top))
 
 
