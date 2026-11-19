@@ -11,12 +11,191 @@
   "done_when": "Close, merge and land limit how many check waits run at once by the remaining GitHub API quota (read from the rate-limit endpoint at most once a minute), and say when one waits for quota; new and existing repos get it on upgrade",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [
+    {
+      "area": "let_finish() in src/forge/checks.py",
+      "file": "src/forge/checks.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 128,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Release the quota place before reacquiring a land place",
+      "work": 2
+    },
+    {
+      "area": "check_wait() in src/forge/github.py",
+      "file": "src/forge/github.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 60,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Check waits can exceed the remaining GitHub API quota",
+      "work": 2
+    },
+    {
+      "area": "run() in src/forge/github.py",
+      "file": "src/forge/github.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 88,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Avoid rapid retries after a cached quota reset passes",
+      "work": 1
+    },
+    {
+      "area": "wait() in src/forge/checks.py",
+      "file": "src/forge/checks.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 96,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: tests/test_queue_land_all.py::test_1_one_run_starts_changes_oldest_first_and_merges_each",
+      "work": 1
+    },
+    {
+      "area": "test_2_land_caps_concurrent_waits_and_releases_places() in tests/test_check_waits_follow_api_quota.py",
+      "file": "tests/test_check_waits_follow_api_quota.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 64,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: tests/test_check_waits_follow_api_quota.py::test_2_land_caps_concurrent_waits_and_releases_places",
+      "work": 2
+    },
+    {
+      "area": "test_2_land_caps_concurrent_waits_and_releases_places() in tests/test_check_waits_follow_api_quota.py",
+      "file": "tests/test_check_waits_follow_api_quota.py",
+      "gain": 2,
+      "harm": 1,
+      "line": 85,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Standard: Tests build their own data with factories, own that data, don't depend on order, and never sleep",
+      "work": 2
+    },
+    {
+      "area": "test_2_land_caps_concurrent_waits_and_releases_places() in tests/test_check_waits_follow_api_quota.py",
+      "file": "tests/test_check_waits_follow_api_quota.py",
+      "gain": 2,
+      "harm": 2,
+      "line": 63,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Follow-up: Cover concurrent waits when the quota lookup fails",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "f26784b8e149cbe1022c4af4c931931429707c4166df5fbd3ee5d55f5e7ad9fa",
+    "changed": "9ab55684262a1943e7be1df10127dd638ac5dad7dbd1dac6c233922011209ccc",
+    "commit": "c6af3a8526bb4d1e20bd259b928cf2de89c5f56e",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 5, Work 2, Harm 3\nRaise: Functional.\nCase: normal use - land processes several changes while one check wait is permitted. A running check can lend its land place, allowing other changes to fill every land place while waiting for quota. When the first check finishes, `_let_finish` calls `slot(False)` before returning, so it waits for a land place while still holding the quota lock. The other changes cannot release their land places because they cannot acquire that lock. Land then deadlocks. The regular `_wait` path has the same cycle when checks change from running to queued.",
+        "file": "src/forge/checks.py",
+        "gain": 5,
+        "harm": 3,
+        "line": 128,
+        "priority": "P1",
+        "title": "Release the quota place before reacquiring a land place",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done.\nCase: normal use - the available quota drops while several checks are running. If two waits hold places 0 and 1 and a later quota snapshot permits only one, place 1 remains held. When place 0 finishes, the next waiter acquires place 0 even though place 1 is still active, so two waits run under a one-place budget. The loop checks only the newly permitted indices, not all active holders.\nDone when: Close, merge and land limit how many check waits run at once by the remaining GitHub API quota (read from the rate-limit endpoint at most once a minute), and say when one waits for quota; new and existing repos get it on upgrade.",
+        "file": "src/forge/github.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 60,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: Check waits can exceed the remaining GitHub API quota",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 1, Harm 3\nRaise: Scale.\nCase: normal use - GitHub's secondary rate limit remains active after a nearly exhausted primary quota resets. If the cached primary snapshot says zero remaining and has less than a minute left before reset, the first retry waits until reset plus three seconds. A continued 429 then reuses that snapshot, whose reset time is now in the past, and repeatedly sleeps for zero seconds until the cache expires. This can send many requests while GitHub is already rate-limiting them.\nAdds work: back off when a cached reset has passed; F 2 x H 2 = 4; 2 x C = 2.",
+        "file": "src/forge/github.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 88,
+        "priority": "P1",
+        "title": "Avoid rapid retries after a cached quota reset passes",
+        "work": 1
+      },
+      {
+        "body": "Gain 4, Work 1, Harm 3\nRaise: Gate.\nCase: normal use - running the full repository test suite. The existing test keeps a separate `close busy` check wait open for up to 600 seconds while it waits for `land --all` to merge other changes. Its client fixture answers the quota endpoint with `{}` (`tests/test_setup.py:224`), so the new guard permits only that one busy wait; the other changes cannot reach their checks until it ends. The test kills the busy process only after land returns, while the suite's timeout is 150 seconds, so this test times out. Its fixture needs a quota response compatible with the concurrency the test exercises.",
+        "file": "src/forge/checks.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 96,
+        "priority": "P1",
+        "title": "Gate: tests/test_queue_land_all.py::test_1_one_run_starts_changes_oldest_first_and_merges_each",
+        "work": 1
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Test.\nCase: normal use - core and GraphQL have different remaining budgets, or the budget falls while checks are running. The concurrent test gives both resources the same fixed value for the entire run. It therefore still passes if admission ignores either resource, and it does not detect a new waiter exceeding a reduced budget while a higher-numbered place remains held. The coordinator's ruling requires both quotas to govern admission through reset.",
+        "file": "tests/test_check_waits_follow_api_quota.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 64,
+        "priority": "P1",
+        "title": "Gate: tests/test_check_waits_follow_api_quota.py::test_2_land_caps_concurrent_waits_and_releases_places",
+        "work": 2
+      },
+      {
+        "body": "Gain 2, Work 2, Harm 1\nRaise: Gate.\nCase: normal use - the concurrent quota test runs in CI. The applicable rule says: \u201cTests build their own data with factories, own that data, don't depend on order, and never sleep.\u201d This test calls `time.sleep` while polling, and its GitHub stub also repeatedly waits on a newly created, unsignalled event at lines 69\u201371.",
+        "file": "tests/test_check_waits_follow_api_quota.py",
+        "gain": 2,
+        "harm": 1,
+        "line": 85,
+        "priority": "P1",
+        "title": "Standard: Tests build their own data with factories, own that data, don't depend on order, and never sleep",
+        "work": 2
+      },
+      {
+        "body": "Gain 2, Work 1, Harm 2\nCase: normal use - the quota endpoint is temporarily unavailable while multiple closes run. The concurrent test always returns a successful quota response, while the failed-lookup recovery case runs only one command. A regression that permits multiple waits after a failed lookup would therefore pass the named tests, despite the documented one-wait fallback.\nAdds work: cover a failed quota lookup with concurrent waits; F 2 x H 2 = 4; 2 x C = 2.",
+        "file": "tests/test_check_waits_follow_api_quota.py",
+        "gain": 2,
+        "harm": 2,
+        "line": 63,
+        "priority": "P2",
+        "title": "Follow-up: Cover concurrent waits when the quota lookup fails",
+        "work": 1
+      }
+    ],
+    "id": "5c21a051-373a-4cf3-899d-ba00fa98549d",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-19T01:59:34.824983+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-19T02:59:36.632173+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
