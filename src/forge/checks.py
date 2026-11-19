@@ -92,7 +92,9 @@ def wait(top: Path, item: str, sha: str, names: list[str], *, branch: str,
     with repo.record_run(top, item, "ci", process=codex.identity(os.getpid())) as result:
         result.update(outcome="unknown", state="unknown")
         try:
-            _wait(top, item, sha, names, branch, progress, result, waiting, train)
+            from forge import github
+            with github.check_wait(top):
+                _wait(top, item, sha, names, branch, progress, result, waiting, train)
             report_time = True
         except repo.Refused as error:
             report_time = error.entry in (REFUSALS["red"], REFUSALS["timeout"])
@@ -122,6 +124,13 @@ def let_finish(top: Path, item: str, sha: str, names: list[str],
     record's own run could not reuse its result. Waiting reuses _seen and the wait's slot idea
     (a running wait lends the land queue place back) and needs no change to the workflow.
     Test groups report no `tests` check until they end, so the wait does not look for names."""
+    from forge import github
+    with github.check_wait(top):
+        _let_finish(top, item, sha, names, slot)
+
+
+def _let_finish(top: Path, item: str, sha: str, names: list[str],
+                slot: Callable[[bool], None] | None) -> None:
     deadline = time.monotonic() + float(os.environ.get("FORGE_CHECKS_WAIT", "5400"))
     try:
         while True:
