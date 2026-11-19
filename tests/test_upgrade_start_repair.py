@@ -4,6 +4,7 @@ Audit: real distinct pull refs expose eager historical fetches. An unaffected
 PR mentions the bad phrase outside its history. A GitHub failure after the
 batch proves retries cannot select another twenty. Existing coverage does not
 exercise this budget. Only GitHub is faked, with no production test seam.
+The visible Started line owns start repair proof; hidden record fields do not.
 """
 import json
 import re
@@ -70,12 +71,10 @@ def test_1_upgrade_bounds_existing_start_repairs(unsynced_up, monkeypatch, fresh
                 if any(f"/commits/{head}/check-runs" in arg
                        for head in merged_heads for arg in call)]
     for number in expected:
-        rebuilt = history.record(number)
-        starts = [event for event in rebuilt["events"] if event["event"] == "item started"]
-        assert len(starts) == 1
-        assert starts[0]["by"] == "Original Starter"
-        assert starts[0]["at"] == (NOW - timedelta(days=5 if number == 16 else 6)).isoformat()
-        assert rebuilt["state"]["steps"][0]["at"] == starts[0]["at"]
+        visible = re.sub(r"<!--.*?-->", "", history.stored()[number]["body"], flags=re.S)
+        how_it_went = visible.split("## How it went\n", 1)[1].split("\n## ", 1)[0]
+        assert re.findall(r"^Started: (.+)$", how_it_went, re.M) == [
+            (NOW - timedelta(days=5 if number == 16 else 6)).isoformat()]
     for number in [*range(100, 110), 200]:
         assert history.stored()[number]["body"] == next(
             pr["body"] for pr in history.prs if pr["number"] == number)
