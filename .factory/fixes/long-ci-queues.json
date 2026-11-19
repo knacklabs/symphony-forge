@@ -118,8 +118,8 @@
     "id": "24c4ff21-279f-46bb-97d8-4f358a460654",
     "status": "clean"
   },
-  "round": 2,
-  "status": "waiting for checks",
+  "round": 3,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-18T15:24:58.020651+00:00",
@@ -144,10 +144,10 @@
     "worker_round": 2
   },
   "stuck": {
-    "close": "282b5d10-268c-4c44-8697-831068d4e01e",
-    "head": "475ddb90083e34244d303dd8b463dedd57ff43d2",
+    "close": "18a1302f-f55c-4c19-b5d3-fcca4c4b0a2a",
+    "head": "d15fc73e458444240cc9a97b007d5476d7286250",
     "keys": {},
-    "round": 1
+    "round": 2
   },
   "why": "Issues 1666 and 1639: with long runner queues (57 to 118 minutes measured at a client), close and merge end their wait and print 'Next: forge close', so the coordinator restarts them many times, and time a job spends queued for a runner counts against the 60-minute test limit, so jobs that only waited are cancelled",
   "worker": "codex"
