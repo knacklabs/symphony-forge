@@ -1,6 +1,13 @@
 {
   "base": "77a35caa0f80ad338fc8ff08e4ab788a27ea34ad",
   "branch": "fix/own-changes-one-group",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1f4b6-eab0-7aa1-8fd9-55aba078e3c7",
+    "head": null,
+    "start": "51a09796cb2a48967d1603a326d670f24888f4ab"
+  },
   "done_when": "In a repo whose tests run in CI, where each merge to main runs main's own related tests, forge test --change and the one-group rule judge only the pull request's own changes (base...HEAD), so a small fix that merged main runs one group; repos that test on the laptop keep today's widening; new and existing repos get it on upgrade and forge sync",
   "fix_kind": "mechanical",
   "kind": "fix",
