@@ -123,7 +123,7 @@
     "id": "014a8659-8ff3-4ab9-ba68-1b038dfcc0b4",
     "status": "blocked"
   },
-  "round": 3,
+  "round": 4,
   "status": "fixing",
   "steps": [
     {
@@ -149,12 +149,10 @@
     "worker_round": 3
   },
   "stuck": {
-    "close": "03262c7f-ec1e-43d8-b474-27eac6ebc0e3",
-    "head": "3d9a4711b19a331ba9aaaaa423823c6fe2d6abed",
-    "keys": {
-      "the open P0 exclude generated files from the predicted fix size in src/forge/owner_choices.py": 1
-    },
-    "round": 2
+    "close": "ec202202-54aa-4ffc-b6a7-c8e03f98d46b",
+    "head": "4afb537ed531d6df1f0e5c4b7d8420b0ac809b9c",
+    "keys": {},
+    "round": 3
   },
   "why": "Owner choices wait 14-55 minutes at a client: the size allowance is asked mid-round instead of at fix start, and pending owner choices are not at the top of forge next with their wording and wait time",
   "worker": "codex"
