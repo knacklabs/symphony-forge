@@ -1,0 +1,70 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/pinned_checks.py\tFunctional: Preserve the CI bridge across pinned subprocesses\tci-wait-newest-release",
+      "kind": "bug",
+      "path": "src/forge/pinned_checks.py",
+      "line": 95,
+      "text": "Functional: Preserve the CI bridge across pinned subprocesses",
+      "from": "blocking",
+      "item": "ci-wait-newest-release",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/pinned_checks.py\tFunctional: Run the pre-push CI wait for releases without its hook\tci-wait-newest-release",
+      "kind": "bug",
+      "path": "src/forge/pinned_checks.py",
+      "line": 94,
+      "text": "Functional: Run the pre-push CI wait for releases without its hook",
+      "from": "blocking",
+      "item": "ci-wait-newest-release",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/pinned_checks.py\tFunctional: Supply the branch for older pinned wait signatures\tci-wait-newest-release",
+      "kind": "bug",
+      "path": "src/forge/pinned_checks.py",
+      "line": 52,
+      "text": "Functional: Supply the branch for older pinned wait signatures",
+      "from": "blocking",
+      "item": "ci-wait-newest-release",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/pinned_checks.py\tNot done: close and merge use the installed release's CI wait and rerun behaviour when it is newer than the branch's pin\tci-wait-newest-release",
+      "kind": "bug",
+      "path": "src/forge/pinned_checks.py",
+      "line": 93,
+      "text": "Not done: close and merge use the installed release's CI wait and rerun behaviour when it is newer than the branch's pin",
+      "from": "blocking",
+      "item": "ci-wait-newest-release",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/conftest.py\tThe leftover-process report can print secrets from process command lines.",
+      "kind": "bug",
+      "path": "tests/conftest.py",
+      "line": 423,
+      "text": "The leftover-process report can print secrets from process command lines.",
+      "from": "worker",
+      "item": "ci-wait-newest-release",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_ci_wait_uses_newer_installed_release.py\tGate: tests/test_ci_wait_uses_newer_installed_release.py::test_1_pinned_commands_use_newer_ci_recovery_and_keep_pinned_review\tci-wait-newest-release",
+      "kind": "bug",
+      "path": "tests/test_ci_wait_uses_newer_installed_release.py",
+      "line": 35,
+      "text": "Gate: tests/test_ci_wait_uses_newer_installed_release.py::test_1_pinned_commands_use_newer_ci_recovery_and_keep_pinned_review",
+      "from": "blocking",
+      "item": "ci-wait-newest-release",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
