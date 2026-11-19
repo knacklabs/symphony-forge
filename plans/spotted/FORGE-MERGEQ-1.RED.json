@@ -34,6 +34,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/merge.py\tThe default-branch GraphQL query rejects every CI-repo merge\tFORGE-MERGEQ-1/RED",
+      "kind": "bug",
+      "path": "src/forge/merge.py",
+      "line": 443,
+      "text": "The default-branch GraphQL query rejects every CI-repo merge",
+      "from": "blocking",
+      "item": "FORGE-MERGEQ-1/RED",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/prcheck.py\tKeep the push base out of pull request test runs\tFORGE-MERGEQ-1/RED",
       "kind": "bug",
       "path": "src/forge/prcheck.py",
