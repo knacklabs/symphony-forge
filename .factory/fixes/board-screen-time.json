@@ -18,7 +18,7 @@
       "gain": 2,
       "harm": 2,
       "line": 53,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -31,7 +31,7 @@
       "gain": 4,
       "harm": 3,
       "line": 53,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -44,7 +44,7 @@
       "gain": 3,
       "harm": 3,
       "line": 53,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -54,48 +54,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "fa14d7952a900fa731b2efc11baa4e98480b9ab96dd663294e9e26a4aaa0504b",
-    "changed": "6e8719d36c425a6a974dcdf32463eccb780ea0ef2175f08f7f82b4d4affdb53b",
-    "commit": "4b99f24ca275d838b779957988c057a2045c2fcd",
+    "branch_diff": "8e58924b29c7000dd409c7a5a25ba07f94d2201f34ed9947869d04b7e39d0e9e",
+    "changed": "5ca993896bc7f674852fa3a212af9078d13c6cc0a0ea524253d30e1fe7cb6e5d",
+    "commit": "5569e233287246232c556ccffca7820dd619d2bc",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 2, Work 2, Harm 2\nRaise: Not done\nCase: rare - the board snapshot is taken just before 10:00 UTC and the browser renders just after it.\nThe requested Done-when is: test_12 passes on main at any time of day and date, the board screen it checks keeps its rule, and if the cause is in the board code rather than the test, the board shows the right thing at that time. This anchor dates fix-43 at 10:00 UTC seven days earlier. The server calculates and caches the seven-day count in src/forge/board_facts.py:650 and src/forge/board_server.py:164, while src/forge/board_app/now.js:76 filters the rows using the browser's current time. Across 10:00, the cached count still includes fix-43 but the displayed rows exclude it, so the count assertion in tests/test_board_now_screen.py:119 fails.",
-        "file": "tests/board_fixture.py",
-        "gain": 2,
-        "harm": 2,
-        "line": 53,
-        "priority": "P1",
-        "required_done_when": true,
-        "title": "Not done: test_12 passes on main at any time of day and date",
-        "work": 2
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Gate\nCase: normal use - the pull request runs its required related-test check for this fixture change.\nThe check at .github/workflows/forge.yml:93 uses the selector in src/forge/fasttest.py:394, which identifies this changed helper as tests.board_fixture. The browser file imports board_fixture without that prefix at tests/test_board_now_screen.py:11, so the selector does not select it; .forge/always-tests.txt does not name it either. A green pull request check therefore supplies none of the listed proof from test_12, test_13, or the full browser file. Include the named file in the check.",
-        "file": "tests/board_fixture.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 53,
-        "priority": "P1",
-        "title": "Gate: tests/test_board_now_screen.py",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - the browser test runs at 14:56 UTC.\nThe fixture still reads the live clock at tests/board_fixture.py:26, and test_12 does not drive a time boundary. At 14:56 the original fixture also produces no measured merge today, so restoring the old expression would pass this proof while bringing back the failure after 18:00. Likewise, a run away from 10:00 can pass while the new seven-day cutoff failure remains. Exercise the relevant times under a controlled clock so the browser proof detects these regressions on every run.",
-        "file": "tests/board_fixture.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 53,
-        "priority": "P1",
-        "title": "Gate: test_12 needs a time-controlled regression case",
-        "work": 2
-      }
-    ],
-    "id": "91e6d5b9-105d-4caf-8efa-bf9b7fb95d28",
-    "status": "blocked"
+    "findings": [],
+    "id": "19d9f27d-5f21-44ba-bd48-06a8ce5c2f02",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-19T19:22:46.971769+00:00",
@@ -114,6 +82,10 @@
       "at": "2026-11-19T19:35:45.692070+00:00",
       "round": 2,
       "step": "resume"
+    },
+    {
+      "at": "2026-11-19T19:42:02.668412+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
