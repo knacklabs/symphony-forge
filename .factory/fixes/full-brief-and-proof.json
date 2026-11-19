@@ -44,7 +44,7 @@
       "gain": 4,
       "harm": 3,
       "line": 822,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 1,
       "security": false,
@@ -70,7 +70,7 @@
       "gain": 3,
       "harm": 3,
       "line": 337,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 1,
       "security": false,
@@ -83,7 +83,7 @@
       "gain": 3,
       "harm": 3,
       "line": 423,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 1,
       "security": false,
@@ -93,50 +93,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "2c1517d5cce5239eaff18a2f8a0ba0154355c531a8ca2728775bbfb8f6dbcb97",
-    "changed": "bf091bcbb9f68bc9b413be2eac322238b97f0824877382e3d1f103950bf12d3b",
-    "commit": "619e20640d45e89d5c1bfd2d77bf6a539accc8ec",
+    "branch_diff": "fde40b3305ad6675880a69e8119c1563485f5035062c7d972234a3d4ff307478",
+    "changed": "a10fd38b4098e85450330cdeca73a8eb46050f0ed8bbbdfa8375ffcac588442c",
+    "commit": "2779eb501364f334e5a09af7fc636c627f701d29",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done\nCase: normal use - A worker removes a redundant statement from the body of a multiline method such as `ProjectsController.create` at `src/forge/templates/starter/libs/projects/server/src/projects.controller.ts:70`. For a deletion-only hunk, this loop examines the removed statement for a function declaration but never records its enclosing method. The next round\u2019s map therefore omits `create` and its callers and tests. The new test replaces a body line, so it exercises an added line rather than this deletion case.",
-        "file": "src/forge/worker.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 797,
-        "priority": "P1",
-        "required_done_when": true,
-        "title": "Not done: Include multiline TypeScript methods in the worker brief",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 1, Harm 3\nRaise: Not done\nCase: normal use - A commit has an empty `Proof list:` followed by a separate `Functional check:` paragraph. `review.commit_paragraph` at `src/forge/review.py:702` captures the rest of the commit message, so this check treats the functional-check text as proof and starts review despite the empty list. The added tests cover an empty heading only when no later paragraph follows it.",
-        "file": "src/forge/close.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 340,
-        "priority": "P1",
-        "required_done_when": true,
-        "title": "Not done: Stop before review when the proof list is empty",
-        "work": 1
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Not done\nCase: normal use - A review reports `Gate: proof list` together with a missing-approach note titled `Simpler: Missing approach \u2192 record the need, simplest option and reuse`. Forge has already recorded that wording in `.factory/fixes/the-starter-s-browser-motion-test-fails.json:44`. It contains neither `before coding` nor the contiguous phrase `approach record`, so the all-findings check rejects it. Although both findings concern missing records, close reaches the round limit and asks the owner instead of granting the automatic repair round.",
-        "file": "src/forge/close.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 423,
-        "priority": "P1",
-        "required_done_when": true,
-        "title": "Not done: Grant the repair round for other missing-record findings",
-        "work": 2
-      }
-    ],
-    "id": "3a460100-df42-4ab1-b11a-2d1ff421ec98",
-    "status": "blocked"
+    "findings": [],
+    "id": "76c0a7a9-8d39-48fb-8ff6-609b0767ee22",
+    "status": "clean"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-18T16:44:04.017358+00:00",
@@ -148,6 +114,10 @@
     },
     {
       "at": "2026-11-19T01:54:59.515468+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-19T03:11:35.711723+00:00",
       "step": "review"
     }
   ],
