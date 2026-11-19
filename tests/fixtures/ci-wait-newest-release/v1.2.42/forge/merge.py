@@ -1,0 +1,417 @@
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import re
+import tomllib
+from pathlib import Path
+from forge import checks, close, codex, githooks, prcheck, repo, review, story, task, time_records
+
+COMMANDS = [{
+    "words": "merge", "run": "merge", "changes_state": False,
+    "help": "Merge a ready item when this repo allows it",
+    "args": [(('item',), {}), (('--outcome',), {"help": "outcome for a story's last task; defaults to its title"})], "position": 160,
+    "listing": "| `forge merge <item>` | Merges a ready item when the default branch allows agent merges; the story's last task records it done (`--outcome <sentence>` overrides its title) |\n"
+               "| `forge merge enable` | Run by the repo owner in their own terminal: opens the change that lets the agent merge ready pull requests, for the owner to merge |",
+}]
+ENABLE = "let-the-agent-merge"
+
+REFUSALS = {
+    "disabled": ("forge merge is disabled by merge = \"human\" in the default branch's forge.toml.",
+                 "the repo owner runs forge merge enable in their own terminal"),
+    "owner_only": ("Only the repo owner switches on agent merges, on {default}, from a terminal outside Claude Code or Codex.", "the repo owner runs forge merge enable on {default} in a terminal outside Claude Code or Codex"),
+    "enabled": ("The default branch's forge.toml already lets the agent merge.", "forge next"),
+    "taken": ("The fix let-the-agent-merge holds other work, so Forge left it alone.", "finish or remove that fix, then forge merge enable"),
+    "owner_merges": ("{item} changes the merge setting in forge.toml, so only the repo owner merges its pull request.", "the repo owner merges its pull request, then forge next"),
+    "not_ready": ("Forge has no clean ready record for {item}.", "forge close {item}"),
+    "changed": ("The pull request's head changed since Forge recorded {item} ready.", "forge close {item}"),
+    "retest_failed": ("The combined change failed its tests.\n{tests}", "forge work {item}"),
+    "train_moved": ("{default} no longer holds what the merge train tested, so {item} did not merge.",
+                    "forge land {item}"),
+    "dirty_retest": ("The worktree has uncommitted changes:\n{files}",
+                     "commit or set aside these changes, then forge merge {item}"),
+    "base_moved": ("The default branch moved five times after the retest. Run forge merge again.",
+                   "forge merge {item}"),
+    "pr": ("Forge needs an open pull request for {item} targeting {default} from {branch}.",
+           "open or correct its pull request, then forge close {item}"),
+    "merge_failed": ("GitHub did not merge the pull request for {item}: {reason}.", "check the pull request, then forge merge {item}"),
+    "pending": ("GitHub has not finished merging the pull request for {item}.", "check the pull request, then forge merge {item}"),
+    "stacked": ("{item} builds on {base}, which hasn't merged yet.", "forge merge {base}"),
+    "retarget": ("Forge could not point {other}'s pull request at {default}, so it kept {item}'s branch.",
+                 "check that pull request, then forge merge {item}"),
+    "remote_branch": ("Forge could not delete the remote branch for {item}.",
+                      "check the branch on GitHub, then forge merge {item}"),
+}
+def merge(args: argparse.Namespace, *, refreshed: bool = False) -> int:
+    top, item = repo.root(), args.item
+    if item == "enable":
+        return _enable(top)
+    if repo.merge_setting(top) != "agent":
+        repo.refuse(REFUSALS["owner_merges" if item == ENABLE else "disabled"], item=item)
+    worktree = close._worktree(item)
+    branch = repo.current_branch(worktree)
+    default = repo.default_branch(top)
+    repo.git("fetch", "-q", "origin", default, cwd=top)
+    stacked_on = (repo.read_state(item, worktree) or {}).get("stacked_on")
+    if stacked_on and not task._merged(f"origin/{default}", stacked_on, top):
+        repo.refuse(REFUSALS["stacked"], item=item, base=stacked_on)
+    path = repo.ready_path(item, top)
+    try:
+        receipt = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError, UnicodeDecodeError):
+        receipt = {}
+    head = receipt.get("commit") if isinstance(receipt, dict) else None
+    shown = repo.run("gh", "pr", "view", branch, "--json",
+                     "number,state,baseRefName,headRefName,headRefOid,title,isDraft,body", cwd=top)
+    if shown.returncode and shown.stderr.strip() == repo.REFUSALS["no_github"][0]:
+        repo.refuse(repo.REFUSALS["no_github"])
+    try:
+        pr = json.loads(shown.stdout) if shown.returncode == 0 else {}
+    except ValueError:
+        pr = {}
+    local_ready = (isinstance(receipt, dict) and receipt.get("review") == "clean"
+                   and isinstance(head, str) and re.fullmatch(r"[0-9a-f]{40,64}", head))
+    if not local_ready or (isinstance(pr, dict) and head != pr.get("headRefOid")):
+        shared = time_records.from_body(pr.get("body") or "") if isinstance(pr, dict) else {}
+        shared = shared.get("ready") or {}
+        shared_head = shared.get("commit")
+        if (shared.get("review") == "clean" and isinstance(shared_head, str)
+                and re.fullmatch(r"[0-9a-f]{40,64}", shared_head) and shared_head == pr.get("headRefOid")):
+            receipt = {name: shared[name] for name in ("commit", "review", "base") if name in shared}
+            head = shared_head
+        elif not local_ready:
+            repo.refuse(REFUSALS["not_ready"], item=item)
+    if (not isinstance(pr, dict) or pr.get("state") not in ("OPEN", "MERGED") or (pr.get("state") == "OPEN" and pr.get("isDraft") is not False)
+            or pr.get("baseRefName") != default or pr.get("headRefName") != branch
+            or not isinstance(pr.get("number"), int) or not isinstance(pr.get("title"), str)):
+        repo.refuse(REFUSALS["pr"], item=item, default=default, branch=branch)
+    if pr.get("headRefOid") != head:
+        repo.refuse(REFUSALS["changed"], item=item)
+    if pr["state"] == "OPEN":
+        base = repo.git("merge-base", head, f"origin/{default}", cwd=top)
+        before = story.show(top, base, "forge.toml")
+        after = story.show(top, head, "forge.toml")
+        before_merge = repo._config_text(before)["merge"] if before is not None else "human"
+        after_merge = repo._config_text(after)["merge"] if after is not None else "human"
+        if before_merge != after_merge:
+            repo.refuse(REFUSALS["owner_merges"], item=item)
+        if repo.git("rev-parse", branch, cwd=top) != head:
+            repo.refuse(REFUSALS["changed"], item=item)
+        # A retry may already contain main. Its saved head still owns the CI wait.
+        config = repo._sample_settings(worktree, repo._config_text(after or ""), head)
+        item_files = set(repo.git("diff", "--name-only", "--no-renames", "-z", base, head,
+                                  cwd=worktree).split("\0")) - {""}
+        moves = 0
+        combined_tested = False
+        train = getattr(args, "train", None)  # the default branch's tree that a merge train tested for this head
+        while True:
+            checked_default = repo.git("rev-parse", f"origin/{default}", cwd=top)
+            retested = checked_default != base and not train
+            overlap = False
+            ci_retest = False
+            if retested:
+                default_files = set(repo.git("diff", "--name-only", "--no-renames", "-z", base,
+                                             checked_default, cwd=worktree).split("\0")) - {""}
+                overlap = bool(item_files & default_files)
+            if retested and (not combined_tested or overlap):
+                status = repo.run("git", "status", "--porcelain", "-z", "--no-renames",
+                                  "--untracked-files=all", cwd=worktree)
+                status.check_returncode()
+                changes = status.stdout.split("\0")
+                if any(changes):
+                    repo.refuse(REFUSALS["dirty_retest"], item=item,
+                                files="\n".join(f"- {entry[3:]}" for entry in changes if entry))
+                print(f"{default} moved; Forge will merge it into this branch and run the related tests.", flush=True)
+                close._merge_default(worktree, item, branch, default,
+                                     {**pr, "mergeStateStatus": "BEHIND"}, repo.config(worktree))
+                # Keep guide repairs even when the original source-file sets did not overlap.
+                overlap = overlap or bool(repo.git("diff", "--name-only", checked_default, "HEAD", "--",
+                                                   ".claude/skills", ".codex/skills", cwd=worktree))
+                base = repo.git("merge-base", "HEAD", f"origin/{default}", cwd=worktree)
+                checked_default = base
+                config = repo.config(worktree)
+                # CI covered this head; only the incoming default-branch diff needs tests.
+                command = (config["fast_test"] or config["test"]).replace("{base}", head)
+                ci_retest = repo.test_place(config) == "ci" and any(
+                    check != "forge-pr-check" for check in config["checks"])
+                if ci_retest:
+                    print("Pull request CI runs the combined change's tests.",
+                          flush=True)
+                else:
+                    failed, tested = review.test_run(worktree, command, head, always=True)
+                    print(tested, flush=True)
+                    if failed:
+                        repo.refuse(REFUSALS["retest_failed"], item=item,
+                                    tests=tested.rsplit("Failed tests:\n", 1)[-1])
+                combined_tested = True
+                if overlap or ci_retest:
+                    head = repo.git("rev-parse", "HEAD", cwd=worktree)
+                    state = story.json_of(story.show(worktree, head, repo.state_path(item)))
+                    state["review"].update(
+                        changed=review.fingerprint(head, item, worktree, state, base),
+                        branch_diff=review.fingerprint(head, item, worktree, state, base, branch_diff=True))
+                    close._save(worktree, item, state, "Keep the review on the combined change")
+                    head = repo.git("rev-parse", "HEAD", cwd=worktree)
+                    close._push(worktree, branch)
+                    receipt["commit"] = head
+                    _save_ready(path, receipt)
+                else:
+                    # Only the local test needs this merge. Keep GitHub's already checked head.
+                    repo.git("reset", "--keep", head, cwd=worktree)
+            try:
+                if (checks.required(worktree, default, head) is not None or
+                        config["test_place"] == "ci" and (not retested or overlap or ci_retest)):
+                    checks.wait(worktree, item, head, config["checks"],
+                                branch=branch, progress=getattr(args, "wait_for_progress", False),
+                                slot=getattr(args, "check_slot", None))
+            except repo.Refused as error:
+                if error.entry is not checks.REFUSALS["conflict"] or refreshed:
+                    raise
+                print("GitHub reports a clash. Forge will run close again, then retry the merge.", flush=True)
+                close.close(argparse.Namespace(item=item, dismiss=None, because=None,
+                            wait_for_progress=getattr(args, "wait_for_progress", False),
+                            check_slot=getattr(args, "check_slot", None),
+                            land_rounds=getattr(args, "land_rounds", None),
+                            pin_before=["close", item] if not hasattr(args, "land_rounds") else None))
+                return merge(args, refreshed=True)
+            completion = ["--body-file", "-"]
+            item_state = story.json_of(story.show(worktree, head, repo.state_path(item)))
+            body = close._refresh_record(worktree, item, item_state, pr)
+            if "/" in item:
+                key, tid = item.split("/")
+                state = story.json_of(story.show(top, head, repo.state_path(key)))
+                landed = story.completed(top, key, f"origin/{default}")
+                doc = story.show(top, head, f"plans/{key}.md") or ""
+                tasks = story.parse(doc)["tasks"]
+                if (state.get("status") != "done" and landed.get("status") != "done"
+                        and any(row["id"] == tid for row in tasks)
+                        and all(row["id"] == tid or story.merged_at(
+                            top, f"origin/{default}", repo.state_path(f"{key}/{row['id']}")) for row in tasks)):
+                    outcome = getattr(args, "outcome", None) or state.get("title") or doc.splitlines()[0].lstrip("# ")
+                    body += "\n\nForge-story-done: " + json.dumps({"key": key, "outcome": outcome})
+            body = close._bounded_body(body, suffix=f"\n\nForge-merged: {item}")
+            repo.git("fetch", "-q", "origin", default, cwd=top)
+            if repo.merge_setting(top) != "agent":
+                repo.refuse(REFUSALS["owner_merges" if item == ENABLE else "disabled"], item=item)
+            if train or repo.git("rev-parse", f"origin/{default}", cwd=top) == checked_default:
+                break  # a train member never tests again: the check below decides
+            if combined_tested:
+                moves += 1
+            if moves >= 5:
+                repo.refuse(REFUSALS["base_moved"], item=item)
+            base = checked_default
+        if train and repo.git("rev-parse", f"origin/{default}^{{tree}}", cwd=top) != train:
+            repo.refuse(REFUSALS["train_moved"], item=item, default=default)
+        done = repo.run("gh", "pr", "merge", str(pr["number"]), "--squash",
+                        "--subject", pr["title"], *completion, "--match-head-commit", head, cwd=top, input=body)
+        after = repo.run("gh", "pr", "view", str(pr["number"]), "--json", "state", "--jq", ".state", cwd=top)
+        if after.returncode and after.stderr.strip() == repo.REFUSALS["no_github"][0]:
+            repo.refuse(repo.REFUSALS["no_github"])
+        merged = after.returncode == 0 and after.stdout.strip() == "MERGED"
+        if not merged:
+            if done.returncode:
+                shown = repo.run("gh", "pr", "view", str(pr["number"]), "--json",
+                                 "mergeStateStatus,headRefOid", cwd=top)
+                try:
+                    current = json.loads(shown.stdout) if shown.returncode == 0 else {}
+                except ValueError:
+                    current = {}
+                if (not refreshed and isinstance(current, dict) and current.get("headRefOid") == head
+                        and current.get("mergeStateStatus") in ("BEHIND", "DIRTY")):
+                    repo.git("fetch", "-q", "origin", default, cwd=top)
+                    if repo.run("git", "merge-base", "--is-ancestor", f"origin/{default}",
+                                head, cwd=top).returncode == 1:
+                        print(f"{default} moved; Forge is merging it into this branch, running "
+                              "close again and retrying the merge.", flush=True)
+                        close.close(argparse.Namespace(item=item, dismiss=None, because=None,
+                                    wait_for_progress=getattr(args, "wait_for_progress", False),
+                                    check_slot=getattr(args, "check_slot", None),
+                                    land_rounds=getattr(args, "land_rounds", None),
+                                    pin_before=["close", item] if not hasattr(args, "land_rounds") else None))
+                        return merge(args, refreshed=True)
+            reason = (done.stderr or done.stdout or "GitHub gave no reason").strip().splitlines()[-1]
+            repo.refuse(REFUSALS["merge_failed" if done.returncode else "pending"], item=item, reason=reason)
+    repo.record_event(top, item, "item finished", round=(repo.read_state(item, worktree) or {}).get("round"))
+    if "/" in item:
+        children = repo.run("gh", "pr", "list", "--base", branch, "--state", "open",
+                            "--limit", "1000", "--json", "number,headRefName", cwd=top)
+        if children.returncode:
+            if children.stderr.strip() == repo.REFUSALS["no_github"][0]:
+                repo.refuse(repo.REFUSALS["no_github"])
+            repo.refuse(REFUSALS["retarget"], other="a child", default=default, item=item)
+        try:
+            child_prs = json.loads(children.stdout)
+        except ValueError:
+            repo.refuse(REFUSALS["retarget"], other="a child", default=default, item=item)
+        if not isinstance(child_prs, list):
+            repo.refuse(REFUSALS["retarget"], other="a child", default=default, item=item)
+        trees = story.worktrees(top)
+        for child_pr in child_prs:
+            head_branch = child_pr.get("headRefName") if isinstance(child_pr, dict) else None
+            number = child_pr.get("number") if isinstance(child_pr, dict) else None
+            other = head_branch if isinstance(head_branch, str) else "a child"
+            if not isinstance(head_branch, str) or type(number) is not int:
+                repo.refuse(REFUSALS["retarget"], other=other, default=default, item=item)
+            found = task.branch_item(head_branch, trees[head_branch]) if head_branch in trees else None
+            head_ref = f"refs/remotes/origin/{head_branch}"
+            if not found and not repo.run("git", "show-ref", "--verify", head_ref, cwd=top).returncode:
+                try:
+                    found = prcheck._started(top, f"origin/{head_branch}", head_branch)
+                except repo.Refused:
+                    pass
+            if found:
+                other = found[0]
+            retargeted = repo.run("gh", "pr", "edit", str(number), "--base", default, cwd=top)
+            if retargeted.returncode:
+                if retargeted.stderr.strip() == repo.REFUSALS["no_github"][0]:
+                    repo.refuse(repo.REFUSALS["no_github"])
+                repo.refuse(REFUSALS["retarget"], other=other, default=default, item=item)
+            if found:
+                print(f"Next: forge close {other}")
+    main_checkout = repo.forge_dir(top).parent.parent
+    pending = receipt.get("pending_archives")
+    if pending is None:
+        pending = sorted(_conversations(main_checkout, item))
+        receipt["pending_archives"] = pending
+        _save_ready(path, receipt)
+    if not isinstance(pending, list) or not all(isinstance(thread, str) for thread in pending):
+        repo.refuse(REFUSALS["not_ready"], item=item)
+    failed_archives = []
+    for thread in pending[:]:
+        try:
+            archived = codex.archive(main_checkout, item, "Fix", thread)
+        except Exception:
+            archived = False
+        if not archived:
+            failed_archives.append(thread)
+            continue
+        pending.remove(thread)
+        _save_ready(path, receipt)
+    remote_ref = f"refs/heads/{branch}"
+    remote = repo.run("git", "ls-remote", "--heads", "origin", remote_ref, cwd=top)
+    remote_head = remote.stdout.split()[0] if remote.stdout.strip() else None
+    if remote.returncode or remote_head and (remote_head != head or repo.run(
+            "git", "push", f"--force-with-lease={remote_ref}:{head}", "origin", "--delete", branch, cwd=top).returncode):
+        repo.refuse(REFUSALS["remote_branch"], item=item)
+    repo.git("fetch", "-q", "origin", default, cwd=top)
+    status = repo.git("status", "--porcelain", "-z", "--no-renames", "--untracked-files=all",
+                      cwd=worktree).split("\0")
+    untracked = {worktree / entry[3:] for entry in status if entry.startswith("?? ")}
+    generated = {path for path, text in githooks.shims(worktree, repo.config(worktree)).items()
+                 if path in untracked and not path.is_symlink() and path.read_text(encoding="utf-8") == text}
+    kept = [name for name in task.worktree_files(worktree) if worktree / name not in generated]
+    dirty = bool(kept)
+    advanced = repo.git("rev-parse", branch, cwd=worktree) != head
+    if advanced:
+        print(f"Merged {item}. Its worktree at {worktree} has local commits outside the merged pull request, so Forge left it and its local branch in place.")
+    elif dirty:
+        print(f"Merged {item}. Its worktree at {worktree} has uncommitted local files, so Forge left it "
+              f"and its local branch in place: {', '.join(kept[:3])}")
+    else:
+        if top == worktree:
+            os.chdir(main_checkout)
+        for shim in generated:
+            shim.unlink()
+        # The pull request is merged, so a failed removal is only cleanup. Git may already have
+        # dropped the worktree's registration, which forge doctor needs, so the human deletes it.
+        if repo.run("git", "worktree", "remove", str(worktree), cwd=main_checkout).returncode:
+            dirty = True
+            print(f"Merged {item}. Forge could not fully remove its worktree at {worktree}; close any "
+                  f"program using that folder, then delete the folder {worktree}.")
+        else:
+            if repo.run("git", "show-ref", "--verify", f"refs/heads/{branch}", cwd=main_checkout).returncode == 0:
+                repo.git("branch", "-D", branch, cwd=main_checkout)
+            print(f"Merged {item} and removed its worktree and local branch.")
+    if dirty or advanced:
+        receipt["tidied"] = True
+        _save_ready(path, receipt)
+    else:
+        path.unlink(missing_ok=True)
+    if failed_archives:
+        print(f"Forge could not archive these Codex conversations for {item}: "
+              f"{', '.join(failed_archives)}. Codex can archive them later.")
+    return 0
+
+
+def _enable(top: Path) -> int:
+    """Open, or continue after an interruption, the fix that sets merge = "agent", and close it."""
+    default = repo.default_branch(top)
+    if any(os.environ.get(name) for name in ("CLAUDECODE", "CODEX_THREAD_ID")) or repo.current_branch(top) != default:
+        repo.refuse(REFUSALS["owner_only"], default=default)
+    if repo.default_config(top)["merge"] == "agent":
+        repo.refuse(REFUSALS["enabled"])
+    branch, ref, rel = f"fix/{ENABLE}", f"origin/{default}", repo.state_path(ENABLE)
+    path = story.worktrees(top).get(branch) or task._new_checkout(
+        ENABLE, branch, f"fix-{ENABLE}", ref, {"kind": "fix", "why": close.WHY, "done_when": close.DONE},
+        f"Start the fix: {close.WHY}")
+    base = repo.git("merge-base", "HEAD", ref, cwd=path)
+    files = set(repo.git("diff", "--name-only", base, cwd=path).splitlines())
+    files.update(repo.git("diff", "--cached", "--name-only", base, cwd=path).splitlines())
+    state = repo.read_state(ENABLE, path) or {}
+    settings = _other_settings(repo.git("show", f"{base}:forge.toml", cwd=path))
+    if (files - {rel, "forge.toml"} or (state.get("why"), state.get("done_when")) != (close.WHY, close.DONE)
+            or _other_settings((path / "forge.toml").read_bytes().decode("utf-8")) != settings
+            or _other_settings(repo.git("show", ":forge.toml", cwd=path)) != settings):
+        repo.refuse(REFUSALS["taken"])
+    remote_ref = f"refs/heads/{branch}"
+    remote_tip = None
+    if repo.git("ls-remote", "--heads", "origin", remote_ref, cwd=path):
+        repo.git("fetch", "-q", "origin", remote_ref, cwd=path)
+        remote_tip = repo.git("rev-parse", "FETCH_HEAD", cwd=path)
+        remote_base = repo.git("merge-base", remote_tip, ref, cwd=path)
+        history = f"{remote_base}..{remote_tip}"
+        remote_state = story.json_of(story.show(path, remote_tip, rel))
+        remote_files = repo.git("log", "-m", "--format=", "--name-only", history,
+                                "--", ".", f":!{rel}", ":!forge.toml", cwd=path)
+        remote_settings = _other_settings(repo.git("show", f"{remote_base}:forge.toml", cwd=path))
+        if (remote_files or (remote_state.get("why"), remote_state.get("done_when"),
+                             remote_state.get("kind"), remote_state.get("branch")) !=
+                (close.WHY, close.DONE, "fix", branch) or any(
+                    _other_settings(repo.git("show", f"{revision}:forge.toml", cwd=path)) != remote_settings
+                    for revision in repo.git("rev-list", history, cwd=path).splitlines())):
+            repo.refuse(REFUSALS["taken"])
+    if base != repo.git("rev-parse", ref, cwd=path):
+        # Save an interrupted edit before reset --keep, which refuses to overwrite local work.
+        repo.commit_state('Set merge = "agent" in forge.toml', rel, "forge.toml", top=path)
+        repo.git("reset", "--keep", ref, cwd=path)
+        repo.write_state(ENABLE, {**state, "base": repo.git("rev-parse", ref, cwd=path)}, path)
+    text = re.sub(r"""\A(?:(.*?^[ \t]*(?:merge|"merge"|'merge')[ \t]*=[ \t]*)(?:"[^"\n]*"|'[^'\n]*'|[^\s#]*)|((?:\#[^\n]*\n)*))""",
+                  lambda m: m[1] + '"agent"' if m[1] else m[2] + 'merge = "agent"' + ("\r\n" if "\r\n" in m.string else "\n"),
+                  (path / "forge.toml").read_bytes().decode("utf-8"), count=1, flags=re.S | re.M)  # bytes keep line endings
+    if repo._config_text(text)["merge"] != "agent":  # pyright: ignore[reportPrivateUsage]
+        repo.refuse(repo.REFUSALS["bad_config"], problem='Forge could not set merge = "agent" in it, so it left it alone')
+    (path / "forge.toml").write_bytes(text.encode("utf-8"))
+    repo.commit_state('Set merge = "agent" in forge.toml', rel, "forge.toml", top=path)
+    if remote_tip and repo.run("git", "merge-base", "--is-ancestor", remote_tip, "HEAD", cwd=path).returncode:
+        repo.git("push", f"--force-with-lease={remote_ref}:{remote_tip}", "origin", branch, cwd=path)
+    close.close(argparse.Namespace(item=ENABLE, dismiss=None, because=None))
+    print("Next: merge its pull request to switch on agent merges.")
+    return 0
+
+
+def _other_settings(text: str) -> dict:
+    try:
+        return {key: value for key, value in tomllib.loads(text).items() if key != "merge"}
+    except tomllib.TOMLDecodeError as exc:
+        repo.refuse(repo.REFUSALS["bad_config"], problem=exc)
+
+
+def _save_ready(path: Path, receipt: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    saved = path.with_suffix(".tmp")
+    saved.write_text(json.dumps(receipt) + "\n", encoding="utf-8")
+    os.replace(saved, path)
+
+
+def _conversations(top: Path, item: str) -> set[str]:
+    base = repo.forge_dir(top) / "threads" / ("task" if "/" in item else "fix") / item
+    found = {saved} if isinstance(saved := codex.record(top, item).get("conversation"), str) else set()
+    try:
+        for line in base.with_suffix(".log").read_text(encoding="utf-8").splitlines():
+            thread = json.loads(line).get("conversation")
+            if isinstance(thread, str):
+                found.add(thread)
+    except (OSError, ValueError):
+        pass
+    return found

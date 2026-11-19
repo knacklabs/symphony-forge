@@ -1,0 +1,558 @@
+"""Waiting through gh for every check on the pull request's head commit.
+
+Every check on the head must be green, and each check forge.toml names must be there and succeed.
+A check forge.toml doesn't name also passes when GitHub skipped it or called it neutral, as
+GitHub's own merge box does (a job that runs only on tags is skipped on every pull request). A
+named check that hasn't reported, or a GitHub API error, is "not green yet" with the reason.
+"""
+from __future__ import annotations
+
+import json
+import os
+import re
+import time
+import tomllib
+from collections.abc import Callable
+from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Any
+
+from forge import repo
+
+REFUSALS = {
+    "mixed_removal": ("Removed checks: {names}. Close refuses check removal with other changes.",
+                      "land the removal in its own fix that changes only the checks list, "
+                      "test_place and the generated workflow from forge sync, then close this change"),
+    "red": ("Checks failed on the pull request: {names}.", "forge work {item}"),
+    "timeout": ("On the pull request, the tests ran out of time{duration}.",
+                "rerun the tests job, or split the suite, then forge close {item}"),
+    "not_green": ("The checks are not green yet: {reason}.", "forge close {item}"),
+    "wait_ended": ("The check wait ended: {reason}. No decision is needed. "
+                   "Run forge land again to resume without restarting checks.", "forge land {item}"),
+    "no_start": ("The review check failed to start on GitHub.",
+                 "push a new commit or reopen the pull request on GitHub, so the check starts again"),
+    "conflict": ("GitHub reports this pull request clashes with the default branch, so it runs no checks on it.",
+                 "forge close {item}, which brings the default branch in"),
+}
+PASS, PENDING, RED, SKIPPED, QUEUED = "pass", "pending", "red", "skipped", "queued"
+
+
+def required(top: Path, default: str, head: str = "HEAD") -> list[str] | None:
+    """A check removal travels alone, apart from its records and synced workflow."""
+    from forge import prcheck, review, story
+
+    after = story.show(top, head, "forge.toml")
+    landed = story.show(top, f"origin/{default}", "forge.toml")
+    if after == landed:
+        return None
+    base = repo.git("merge-base", f"origin/{default}", head, cwd=top)
+    before = story.show(top, base, "forge.toml")
+    old, new = (tomllib.loads(text or "") for text in (before, after))
+    previous, current = old.get("checks", []), new.get("checks", [])
+    removed = sorted(set(previous) - set(current))
+    if not removed:
+        return None
+    files = repo.git("diff", "--name-only", "--no-renames", "-z",
+                     base, head, cwd=top).split("\0")
+    others = [path for path in files if path and path not in
+              ("forge.toml", ".github/workflows/forge.yml") and not path.startswith(review.BOOKKEEPING)]
+    workflow = ".github/workflows/forge.yml"
+    if workflow in files and story.show(top, head, workflow) != prcheck.ships(
+            top, repo._config_text(after or "")).get(workflow):
+        others.append(workflow)
+    for config in (old, new):
+        for key in ("checks", "test_place"):
+            config.pop(key, None)
+    if others or old != new or set(current) - set(previous):
+        repo.refuse(REFUSALS["mixed_removal"], names=", ".join(removed))
+    landed = tomllib.loads(landed or "")
+    return [name for name in landed.get("checks", []) if name in current]
+
+
+def wait(top: Path, item: str, sha: str, names: list[str], *, branch: str,
+         progress: bool = False, slot: Callable[[bool], None] | None = None, train: bool = False) -> None:
+    """Wait for green checks on sha; land renews its deadline on observed check progress. A merge
+    train's draft pull request stays red on Forge's own review on purpose, so that check never counts."""
+    shared = required(top, repo.default_branch(top), sha)
+    if shared is not None:
+        names = shared
+    start, clock = repo.now(), time.monotonic()
+    released = False
+
+    def waiting(value: bool) -> None:
+        nonlocal released
+        if slot is not None and value != released:
+            slot(value)
+            released = value
+
+    from forge import codex  # codex imports what imports checks
+    # The waiting process: forge land --all leaves out a change only while that process runs.
+    with repo.record_run(top, item, "ci", process=codex.identity(os.getpid())) as result:
+        result.update(outcome="unknown", state="unknown")
+        try:
+            _wait(top, item, sha, names, branch, progress, result, waiting, train)
+        except repo.Refused as error:
+            if error.entry is REFUSALS["red"]:
+                result["outcome"] = "failed"
+            result["reason"] = str(error).split("\n", 1)[0]
+            raise
+        except KeyboardInterrupt:
+            if result["state"] in ("queued", "running"):
+                result["outcome"] = "gave_up_" + result["state"]
+            result["reason"] = "Interrupted by Ctrl-C."
+            raise
+        finally:
+            waiting(False)
+            repo.record_event(top, item, "CI result", commit=sha, start=start, **result)
+            repo.record_timing(top, item, "CI wait", start, clock, result["outcome"])
+
+
+def _wait(top: Path, item: str, sha: str, names: list[str], branch: str, progress: bool,
+          result: dict[str, Any], waiting: Callable[[bool], None], train: bool = False) -> None:
+    # ponytail: an env override is the whole wait seam (tests set 0 to look once).
+    timeout = float(os.environ.get("FORGE_CHECKS_WAIT", "1800" if progress else "600"))
+    deadline = time.monotonic() + timeout
+    running_deadline = time.monotonic() + 90 * 60
+    previous = None
+    queued_since = None
+    printed_minute = None
+    requested: set[int] = set()
+    cache = (repo.forge_dir(top) / f"check-wait-{repo.blob_hash(branch + sha)}.json"
+             if progress else None)
+    while True:
+        queued = False
+        running = False
+        try:
+            seen, snapshot, check_runs, pr = _status(top, item, sha, branch, cache, requested)
+            if train:  # keep every entry's place, so the timeout reader still lines up with the runs
+                # Forge's own review is exactly the "Review pull request" run of forge.yml's
+                # pull_request_target workflow and the forge-pr-check status; _seen lists runs first.
+                own = _own_review(top, item, sha)
+                for index, (name, _) in enumerate(seen):
+                    if (name == "Review pull request" and check_runs[index].get("check_suite", {}).get("id") in own
+                            if index < len(check_runs) else name == "forge-pr-check"):
+                        seen[index] = (name, PASS)
+            running = any(state == PENDING for _, state in seen)
+            result["state"] = ("running" if running
+                               else "queued" if any(state == QUEUED for _, state in seen)
+                               else "unknown")
+            if progress and snapshot != previous:
+                previous = snapshot
+                deadline = time.monotonic() + timeout
+            if not isinstance(pr, dict):
+                repo.refuse(REFUSALS["not_green"], item=item,
+                            reason=pr.rstrip("."))
+            mergeable = pr.get("mergeable") if pr.get("headRefOid") == sha else None
+            if mergeable == "CONFLICTING":
+                repo.refuse(REFUSALS["conflict"], item=item)
+            if not any(name == "forge-pr-check" or name == "Review pull request" and state != SKIPPED
+                       for name, state in seen):  # the pull_request workflow skips its own job of that name
+                _no_start(top, item, sha, branch)  # before a red or timed-out test can hide it
+            _tests_timeout(top, item, sha, names, check_runs, seen)
+            reason = _pending(item, names, seen)
+            if mergeable == "UNKNOWN":
+                reason = reason or "GitHub has not determined whether this pull request can merge"
+            queued = any(state == QUEUED for _, state in seen)
+        except repo.Refused as error:
+            if cache is not None and error.entry is not REFUSALS["not_green"]:
+                cache.unlink(missing_ok=True)
+            if not progress or error.entry is not REFUSALS["not_green"]:
+                raise
+            result["state"] = "unknown"
+            reason = str(error).split("\n", 1)[0].removeprefix("The checks are not green yet: ").rstrip(".")
+        else:
+            if not reason:
+                if cache is not None:
+                    cache.unlink(missing_ok=True)  # The next gate must check green answers again.
+                result["outcome"] = "passed"
+                return
+        if queued:
+            now = time.monotonic()
+            if queued_since is None:
+                queued_since = now
+            minute = int((now - queued_since) / 60)
+            if minute != printed_minute:
+                print(f"Waiting: checks queued for {minute} minutes during this wait; "
+                      "shared runners may be busy or no runner may match the runner setting "
+                      "in forge.toml.", flush=True)
+                printed_minute = minute
+            # Keep close's queue policy and the explicit wait override. Land's
+            # normal short limit still applies when no check actually starts.
+            if timeout > 0 and (not progress or "FORGE_CHECKS_WAIT" in os.environ):
+                deadline = now + timeout
+        else:
+            queued_since = printed_minute = None
+        left = deadline - time.monotonic()
+        remaining = running_deadline - time.monotonic()
+        if progress or running:
+            left = (remaining if running and "FORGE_CHECKS_WAIT" not in os.environ
+                    else min(left, remaining))
+        if left <= 0:
+            if result["state"] in ("queued", "running"):
+                result["outcome"] = "gave_up_" + result["state"]
+            if progress or running:
+                reason = (f"The wait reached its 90 minutes limit: {reason}"
+                          if remaining <= 0 else
+                          f"GitHub has shown no check progress for {timeout / 60:g} minutes: {reason}")
+            if progress:
+                repo.refuse(REFUSALS["wait_ended"], reason=reason, item=item)
+            repo.refuse(REFUSALS["not_green"], reason=reason, item=item)
+        # Queued checks keep backpressure; running checks need no local close place.
+        waiting(not queued)
+        time.sleep(min(15, left))
+
+
+def own_runs(top: Path, item: str, sha: str) -> list[dict[str, Any]]:
+    """Forge's own review runs on sha: forge.yml's pull_request_target run."""
+    runs = _ask(top, item, ".workflow_runs", "repos/{owner}/{repo}/actions/runs", "--method", "GET",
+                "--raw-field", "per_page=100", "--raw-field", f"head_sha={sha}")
+    return [run for run in runs if run.get("event") == "pull_request_target"
+            and str(run.get("path", "")).partition("@")[0] == ".github/workflows/forge.yml"]
+
+
+def _no_start(top: Path, item: str, sha: str, branch: str) -> None:
+    """Stop when GitHub could not start Forge's review run for this branch's head commit."""
+    try:
+        runs = _ask(top, item, ".workflow_runs", "repos/{owner}/{repo}/actions/runs", "--method", "GET",
+                    "--raw-field", "per_page=100", "--raw-field", "event=pull_request_target",
+                    "--raw-field", f"branch={branch}")
+    except repo.Refused:
+        return  # A failed side lookup must not end the wait; the check status itself still decides.
+    if any(run.get("conclusion") == "startup_failure" and run.get("head_sha") == sha
+           and str(run.get("path", "")).partition("@")[0] == ".github/workflows/forge.yml"
+           for run in runs):
+        repo.refuse(REFUSALS["no_start"])
+
+
+def _own_review(top: Path, item: str, sha: str) -> set[Any]:
+    """The check suites of Forge's own review run on sha."""
+    return {run.get("check_suite_id") for run in own_runs(top, item, sha)} - {None}
+
+
+def _status(top: Path, item: str, sha: str, branch: str, cache: Path | None,
+            requested: set[int]) -> list[Any]:
+    def read() -> list[Any]:
+        seen, snapshot, runs = _seen(top, item, sha)
+        shown = repo.run("gh", "pr", "view", branch, "--json",
+                         "mergeable,headRefOid,number,headRefName", cwd=top, timeout=60)
+        try:
+            pr = json.loads(shown.stdout) if shown.returncode == 0 else None
+        except ValueError:
+            pr = None
+        if not isinstance(pr, dict):
+            said = (shown.stderr.strip() or "no readable mergeability answer").splitlines()[-1]
+            pr = said if said.startswith("GitHub did not answer.") else f"GitHub did not answer: {said}"
+        elif pr.get("headRefOid") == sha and pr.get("mergeable") != "CONFLICTING":
+            _cancel_superseded(top, item, runs, number=pr.get("number"), branch=branch,
+                               requested=requested)
+        return [seen, snapshot, runs, pr]
+
+    if cache is None:
+        return read()
+    from forge import codex
+    # The common Git directory and its lock share both reads and queue recovery
+    # across processes. Use the wait loop's clock for the snapshot's lifetime.
+    with cache.with_suffix(".guard").open("a+b") as guard:
+        # Nonblocking attempts bound both contention and persistent Windows lock errors.
+        for _ in range(100):
+            if codex._try_lock(guard):
+                break
+            time.sleep(0.1)
+        else:
+            repo.refuse(REFUSALS["not_green"], item=item,
+                        reason="Could not get access to the shared check status within 10 seconds")
+        try:
+            value = None
+            try:
+                saved = json.loads(cache.read_text(encoding="utf-8"))
+                if 0 <= time.monotonic() - saved["at"] < 60:
+                    value = saved["status"]
+            except (OSError, ValueError, KeyError, TypeError):
+                pass
+            if value is None:
+                try:
+                    value = read()
+                except repo.Refused as error:
+                    value = str(error)  # An outage must not make every waiter poll again.
+                temp = cache.with_suffix(".tmp")
+                temp.write_text(json.dumps({"at": time.monotonic(), "status": value}), encoding="utf-8")
+                os.replace(temp, cache)
+        finally:
+            codex._unlock(guard)
+    if isinstance(value, str):
+        raise repo.Refused(value, "", entry=REFUSALS["not_green"])
+    return value
+
+
+def _tests_timeout(top: Path, item: str, sha: str, names: list[str],
+                   runs: list[dict[str, Any]], seen: list[tuple[str, str]]) -> None:
+    if "tests" not in names:
+        return
+    candidates = [(index, run) for index, run in enumerate(runs) if run.get("status") == "completed"
+                  and run.get("conclusion") in ("timed_out", "cancelled")
+                  and (run.get("name") == "tests"
+                       or str(run.get("name", "")).startswith("tests (")
+                       or re.fullmatch(r"test group \d+ of \d+", str(run.get("name", ""))))]
+    if not candidates:
+        return
+    # Read the generated job's limit at the checked commit, not an uncommitted edit.
+    workflow = repo.run("git", "show", f"{sha}:.github/workflows/forge.yml", cwd=top)
+    job = re.search(r"(?ms)^  tests:[ \t]*\n(.*?)(?=^  \S|\Z)", workflow.stdout)
+    cap = re.search(r"(?m)^    timeout-minutes: (\d+)[ \t]*$", job[1]) if job else None
+    limit = int(cap[1]) if cap else None
+    timed_out: dict[int, str] = {}
+    for index, run in candidates:
+        try:
+            seconds = (datetime.fromisoformat(run["completed_at"])
+                       - datetime.fromisoformat(run["started_at"])).total_seconds()
+        except (KeyError, ValueError, TypeError):
+            seconds = None
+        if run["conclusion"] == "cancelled" and (
+                limit is None or seconds is None or abs(seconds - limit * 60) > 60):
+            continue
+        minutes = limit if limit is not None else round(seconds / 60) if seconds is not None else None
+        timed_out[index] = f" after {minutes} minutes" if minutes is not None else ""
+    if not timed_out:
+        return
+    ignored = set(timed_out)
+    suites = {runs[index].get("check_suite", {}).get("id") for index in timed_out
+              if re.fullmatch(r"test group \d+ of \d+", str(runs[index].get("name", "")))}
+    if suites:
+        # The generated tests aggregate fails when a group times out.
+        ignored.update(index for index, run in enumerate(runs)
+                       if run.get("name") == "tests" and run.get("conclusion") == "failure"
+                       and run.get("check_suite", {}).get("id") in suites)
+    # _seen lists check runs first, then commit statuses. Keep every independent
+    # failure, including one from another workflow with the same check name.
+    _pending(item, names, [entry for index, entry in enumerate(seen) if index not in ignored])
+    repo.refuse(REFUSALS["timeout"], duration=next(iter(timed_out.values())), item=item)
+
+
+def _pending(item: str, names: list[str], seen: list[tuple[str, str]]) -> str:
+    # A matrix job reports as "tests (ubuntu-latest)", and so on; each counts as its named
+    # check, and every one must pass. Checks forge.toml doesn't name go by their own name.
+    groups: dict[str, list[str]] = {want: [] for want in names}
+    for name, state in seen:
+        matches = [want for want in names if name == want or name.startswith(want + " (")]
+        if state == SKIPPED:
+            state = RED if matches else PASS
+        for want in matches or [name]:
+            groups.setdefault(want, []).append(state)
+    red, missing, pending = [], [], []
+    for want, states in groups.items():
+        if not states:
+            missing.append(want)
+        elif RED in states:  # failed, cancelled or timed out (a named one skipped too): red
+            red.append(want)
+        elif PENDING in states or QUEUED in states:
+            pending.append(want)
+    if red:
+        repo.refuse(REFUSALS["red"], names=", ".join(red), item=item)
+    return "; ".join([f"{name} has not reported" for name in missing]
+                     + [f"{name} is still {'running' if PENDING in groups[name] else 'queued'}"
+                        for name in pending])
+
+
+def queued_reason(top: Path, sha: str, item: str = "", *, number: int | None = None, branch: str = "") -> str:
+    """Doctor recovers queued runs, then diagnoses runner activity after five minutes."""
+    now = datetime.fromisoformat(repo.now())
+    queued = False
+    queued_names = set()
+    untimed_suites = set()
+    checks = _ask(top, item, ".check_runs",
+                  f"repos/{{owner}}/{{repo}}/commits/{sha}/check-runs?per_page=100")
+    checks = [check for check in checks if check.get("head_sha", sha) == sha]
+    if _cancel_superseded(top, item, checks, number=number, branch=branch):
+        return ""
+    for check in checks:
+        if check.get("status") != "queued" or check.get("head_sha", sha) != sha:
+            continue
+        try:
+            if datetime.fromisoformat(check["started_at"]) <= now - timedelta(minutes=5):
+                queued = True
+                queued_names.add(check.get("name", ""))
+        except (KeyError, ValueError, TypeError):
+            if suite := check.get("check_suite", {}).get("id"):
+                untimed_suites.add(suite)
+    if not queued and not untimed_suites:
+        return ""
+    since = now - timedelta(days=7)
+    cutoff = since.isoformat(timespec="seconds").replace("+00:00", "Z")
+    until = now.isoformat(timespec="seconds").replace("+00:00", "Z")
+    # Separate query fields avoid cmd.exe interpreting an ampersand in a gh.cmd argument.
+    runs = _ask(top, item, ".workflow_runs",
+                "repos/{owner}/{repo}/actions/runs", "--method", "GET",
+                "--raw-field", "per_page=100", "--raw-field", f"created={cutoff}..{until}",
+                paginate=False)
+    # Queued checks may have no start time; their linked current workflow attempt has one.
+    for run in runs[:100]:
+        if run.get("check_suite_id") not in untimed_suites or run.get("status") != "queued":
+            continue
+        try:
+            if since <= datetime.fromisoformat(run["run_started_at"]) <= now - timedelta(minutes=5):
+                queued = True
+                queued_names.update(check.get("name", "") for check in checks
+                                    if check.get("status") == "queued"
+                                    and check.get("check_suite", {}).get("id") == run["check_suite_id"])
+        except (KeyError, ValueError, TypeError):
+            pass
+    if not queued:
+        return ""
+    cfg = repo.config(top)
+    runners = {key: cfg[key] for key in ("runner", "test_runner") if cfg.get(key)}
+    missing = {}
+    started_labels = set()
+    # One newest-first page of runs and one page of latest jobs per run bound the lookup.
+    for run in runs[:100]:
+        if run.get("conclusion") == "success":
+            continue
+        try:
+            if not since <= datetime.fromisoformat(run["created_at"]) <= now:
+                continue
+        except (KeyError, ValueError, TypeError):
+            continue
+        jobs = _ask(top, item, ".jobs",
+                    f"repos/{{owner}}/{{repo}}/actions/runs/{run['id']}/jobs?per_page=100",
+                    paginate=False)
+        if run.get("head_sha") == sha:
+            # The matrix's result job and a single test job both appear as "tests".
+            labels = {label.casefold() for job in jobs if job.get("status") == "queued"
+                      and job.get("name") in queued_names for label in job.get("labels") or []}
+            missing.update({key: runner for key, runner in runners.items() if runner.casefold() in labels})
+        for job in jobs:
+            if not job.get("runner_id"):
+                continue
+            try:
+                if datetime.fromisoformat(job["started_at"]) <= now:
+                    started_labels.update(label.casefold() for label in job.get("labels") or [])
+            except (KeyError, ValueError, TypeError):
+                pass
+        if all(runner.casefold() in started_labels for runner in runners.values()):
+            return ""
+    # Keep the ordinary runner diagnosis when the sampled jobs supply no current labels.
+    if not missing:
+        missing = {"runner": cfg["runner"]}
+    missing = {key: runner for key, runner in missing.items() if runner.casefold() not in started_labels}
+    if not missing:
+        return ""
+    settings = ", ".join(f"{key} = {json.dumps(runner)}" for key, runner in sorted(missing.items()))
+    return ("Checks have been queued for at least five minutes: likely missing runner; "
+            "no matching job started in this repo's sampled non-successful runs from the "
+            f"last seven days using {settings} in forge.toml")
+
+
+def _cancel_superseded(top: Path, item: str, checks: list[dict[str, Any]], *,
+                       number: int | None, branch: str, requested: set[int] | None = None) -> bool:
+    """Recover only the selected PR's generated forge.yml concurrency groups."""
+    suites = {check.get("check_suite", {}).get("id") for check in checks
+              if check.get("status") == "queued"} - {None}
+    if not suites or not (number or branch):
+        return False
+    if requested is None:
+        requested = set()
+
+    def belongs(run: dict[str, Any]) -> bool:
+        # Never borrow identity from a commit-scoped check suite. Empty PR lists
+        # are usable only with the selected PR's head branch, not its commit.
+        prs = {pr.get("number") for pr in run.get("pull_requests") or []}
+        return ((prs == {number} if prs else run.get("head_branch") == branch)
+                and str(run.get("path", "")).partition("@")[0] == ".github/workflows/forge.yml")
+    try:
+        # Read active runs only, including old blockers outside doctor's history window.
+        runs = {run["id"]: run for status in ("queued", "pending", "in_progress")
+                for run in _ask(top, item, ".workflow_runs", "repos/{owner}/{repo}/actions/runs",
+                                "--method", "GET", "--raw-field", "per_page=100",
+                                "--raw-field", f"status={status}") if isinstance(run.get("id"), int)}
+    except repo.Refused:
+        return False  # Recovery is optional when GitHub cannot supply run identities.
+    pending: dict[int, int] = {}
+    for current in runs.values():
+        if (current.get("check_suite_id") not in suites
+                or not belongs(current)
+                or current.get("status") not in ("queued", "pending")
+                or current.get("event") not in ("pull_request", "pull_request_target")
+                or not current.get("workflow_id") or not current.get("name") or not current.get("head_branch")
+                or not isinstance(current.get("run_number"), int)):
+            continue
+        same = [run for run in runs.values()
+                if belongs(run) and all(run.get(key) == current[key] for key in ("workflow_id", "event", "head_branch"))
+                and (run.get("name") or "").casefold() == current["name"].casefold()
+                and isinstance(run.get("run_number"), int)]
+        if any(run["run_number"] > current["run_number"] for run in same):
+            continue  # A stale head must not cancel runs on behalf of a superseded run.
+        for run in same:
+            if (run["run_number"] >= current["run_number"]
+                    or run.get("status") not in ("queued", "pending", "in_progress")
+                    or run["id"] in requested):
+                continue
+            done = repo.run("gh", "run", "cancel", str(run["id"]), cwd=top, timeout=60)
+            if done.returncode == 0:
+                requested.add(run["id"])
+                pending[run["id"]] = current["id"]
+            else:
+                print(f"Could not cancel older run {run['id']}: {done.stderr.strip() or done.stdout.strip()}.",
+                      flush=True)
+    if pending:
+        time.sleep(2)
+    for run_id, current_id in pending.items():
+        shown = repo.run("gh", "run", "view", str(run_id), "--json", "status", cwd=top, timeout=60)
+        try:
+            status = json.loads(shown.stdout).get("status") if shown.returncode == 0 else None
+        except (ValueError, AttributeError):
+            status = None
+        if status in ("queued", "pending", "in_progress"):
+            state = "in progress" if status == "in_progress" else "queued"
+            print(f"Run {run_id} is still {state} after cancellation. "
+                  "If needed, use GitHub's force-cancel endpoint: "
+                  f"gh api -X POST repos/{{owner}}/{{repo}}/actions/runs/{run_id}/force-cancel", flush=True)
+        elif status == "completed":
+            print(f"Cancelled older run {run_id}. Waiting for run {current_id}.", flush=True)
+        else:
+            print(f"Requested cancellation of older run {run_id}. GitHub did not confirm its status.", flush=True)
+    return bool(pending)
+
+
+def _seen(top: Path, item: str, sha: str) -> tuple[list[tuple[str, str]], list[str], list[dict[str, Any]]]:
+    """Check outcomes on sha and the fields that show a run starting, ending or being replaced."""
+    # Every page: a failed matrix job on page two must still count.
+    endpoint = f"repos/{{owner}}/{{repo}}/commits/{sha}"
+    runs = _ask(top, item, ".check_runs", f"{endpoint}/check-runs?per_page=100")
+    statuses = _ask(top, item, ".statuses", f"{endpoint}/status?per_page=100")
+    # Ignore earlier pushes for both readiness and progress; GitHub's ordering is not progress.
+    runs = [run for run in runs if run.get("head_sha", sha) == sha]
+    if any(not entry.get(field) for entries, field in ((runs, "name"), (statuses, "context"))
+           for entry in entries):
+        repo.refuse(REFUSALS["not_green"], item=item, reason="GitHub reported no check name")
+    snapshot = sorted(json.dumps([entry.get(field) for field in fields])
+                      for entries, fields in (
+                          (runs, ("id", "name", "status", "conclusion", "started_at", "completed_at")),
+                          (statuses, ("id", "context", "state", "created_at")))
+                      for entry in entries)
+    seen = ([(str(run.get("name")), QUEUED if run.get("status") == "queued"
+              else PENDING if run.get("status") != "completed"
+              else PASS if run.get("conclusion") == "success"
+              else SKIPPED if run.get("conclusion") in ("skipped", "neutral") else RED)
+             for run in runs]
+            + [(str(status.get("context")), {"success": PASS, "pending": PENDING}.get(
+                status.get("state"), RED)) for status in statuses])
+    return seen, snapshot, runs
+
+
+def _ask(top: Path, item: str, field: str, endpoint: str, *options: str,
+         paginate: bool = True) -> list[dict[str, Any]]:
+    # --paginate with "<field>[]" prints one JSON object per line across all pages.
+    done = repo.run("gh", "api", *(["--paginate"] if paginate else []),
+                    "--jq", f"{field}[]", *options, endpoint, cwd=top, timeout=60)
+    try:
+        text = done.stdout.strip()
+        found = (json.loads(text) if text.startswith("[")
+                 else [json.loads(line) for line in text.splitlines() if line.strip()]
+                 ) if done.returncode == 0 else None
+    except ValueError:
+        found = None
+    if not isinstance(found, list) or not all(isinstance(entry, dict) for entry in found):
+        said = (done.stderr.strip() or done.stdout.strip() or "no readable answer").splitlines()[-1]
+        reason = said if said.startswith("GitHub did not answer.") else f"GitHub did not answer: {said.rstrip('.')}"
+        repo.refuse(REFUSALS["not_green"], reason=reason.rstrip("."),
+                    item=item)
+    return found

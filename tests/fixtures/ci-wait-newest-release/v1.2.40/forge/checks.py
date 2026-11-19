@@ -29,8 +29,6 @@ REFUSALS = {
     "not_green": ("The checks are not green yet: {reason}.", "forge close {item}"),
     "wait_ended": ("The check wait ended: {reason}. No decision is needed. "
                    "Run forge land again to resume without restarting checks.", "forge land {item}"),
-    "no_start": ("The review check failed to start on GitHub.",
-                 "push a new commit or reopen the pull request on GitHub, so the check starts again"),
     "conflict": ("GitHub reports this pull request clashes with the default branch, so it runs no checks on it.",
                  "forge close {item}, which brings the default branch in"),
 }
@@ -107,48 +105,6 @@ def wait(top: Path, item: str, sha: str, names: list[str], *, branch: str,
             repo.record_timing(top, item, "CI wait", start, clock, result["outcome"])
 
 
-def let_finish(top: Path, item: str, sha: str, slot: Callable[[bool], None] | None = None) -> None:
-    """Wait while any check on sha, except Forge's own review, is queued or running. Close calls
-    this before it pushes a record-only commit: that push cancels the run in progress, so the
-    record's own run could not reuse its result. Waiting reuses _seen and the wait's slot idea
-    (a running wait lends the land queue place back) and needs no change to the workflow.
-    Test groups report no `tests` check until they end, so the wait does not look for names."""
-    deadline = time.monotonic() + float(os.environ.get("FORGE_CHECKS_WAIT", "5400"))
-    try:
-        while True:
-            try:
-                seen = [state for name, state in _seen(top, item, sha)[0]
-                        if name not in ("forge-pr-check", "Review pull request")]
-            except repo.Refused:
-                return  # The push is not worth refusing for a status GitHub cannot answer.
-            if not any(state in (PENDING, QUEUED) for state in seen) or time.monotonic() >= deadline:
-                return
-            if slot is not None:
-                slot(QUEUED not in seen)  # queued runs keep the place; running ones lend it
-            time.sleep(15)
-    finally:
-        if slot is not None:
-            slot(False)
-
-
-def after_code_ci(top: Path, item: str, branch: str, cfg: dict[str, Any], serious: Any,
-                  slot: Callable[[bool], None] | None = None) -> None:
-    """Let the code's CI run end before close pushes only Forge's records on top of it."""
-    if serious or cfg["test_place"] != "ci":
-        return
-    from forge import review
-    # Three dots: a replayed branch, whose remote head is no ancestor, shows its code and is skipped.
-    # A branch with no remote head yet makes the diff fail, so nothing is running to wait for.
-    changed = repo.run("git", "diff", "--name-only", "-z", "--no-renames", f"origin/{branch}...HEAD", cwd=top)
-    paths = changed.stdout.split("\0")
-    if (changed.returncode or not any(paths)
-            or any(path and not (path.startswith(review.BOOKKEEPING) or repo.SIGNOFF.fullmatch(path))
-                   for path in paths)):
-        return
-    remote = repo.run("git", "rev-parse", f"origin/{branch}", cwd=top)
-    let_finish(top, item, remote.stdout.strip(), slot)
-
-
 def _wait(top: Path, item: str, sha: str, names: list[str], branch: str, progress: bool,
           result: dict[str, Any], waiting: Callable[[bool], None], train: bool = False) -> None:
     # ponytail: an env override is the whole wait seam (tests set 0 to look once).
@@ -187,12 +143,7 @@ def _wait(top: Path, item: str, sha: str, names: list[str], branch: str, progres
             mergeable = pr.get("mergeable") if pr.get("headRefOid") == sha else None
             if mergeable == "CONFLICTING":
                 repo.refuse(REFUSALS["conflict"], item=item)
-            if not any(name == "forge-pr-check" or name == "Review pull request" and state != SKIPPED
-                       for name, state in seen):  # the pull_request workflow skips its own job of that name
-                _no_start(top, item, sha, branch)  # before a red or timed-out test can hide it
             _tests_timeout(top, item, sha, names, check_runs, seen)
-            if _rerun_cancelled(top, item, sha, seen, check_runs) and cache is not None:
-                cache.unlink(missing_ok=True)  # The next poll must read fresh results, not the cancelled ones.
             reason = _pending(item, names, seen)
             if mergeable == "UNKNOWN":
                 reason = reason or "GitHub has not determined whether this pull request can merge"
@@ -252,20 +203,6 @@ def own_runs(top: Path, item: str, sha: str) -> list[dict[str, Any]]:
                 "--raw-field", "per_page=100", "--raw-field", f"head_sha={sha}")
     return [run for run in runs if run.get("event") == "pull_request_target"
             and str(run.get("path", "")).partition("@")[0] == ".github/workflows/forge.yml"]
-
-
-def _no_start(top: Path, item: str, sha: str, branch: str) -> None:
-    """Stop when GitHub could not start Forge's review run for this branch's head commit."""
-    try:
-        runs = _ask(top, item, ".workflow_runs", "repos/{owner}/{repo}/actions/runs", "--method", "GET",
-                    "--raw-field", "per_page=100", "--raw-field", "event=pull_request_target",
-                    "--raw-field", f"branch={branch}")
-    except repo.Refused:
-        return  # A failed side lookup must not end the wait; the check status itself still decides.
-    if any(run.get("conclusion") == "startup_failure" and run.get("head_sha") == sha
-           and str(run.get("path", "")).partition("@")[0] == ".github/workflows/forge.yml"
-           for run in runs):
-        repo.refuse(REFUSALS["no_start"])
 
 
 def _own_review(top: Path, item: str, sha: str) -> set[Any]:
@@ -370,40 +307,6 @@ def _tests_timeout(top: Path, item: str, sha: str, names: list[str],
     # failure, including one from another workflow with the same check name.
     _pending(item, names, [entry for index, entry in enumerate(seen) if index not in ignored])
     repo.refuse(REFUSALS["timeout"], duration=next(iter(timed_out.values())), item=item)
-
-
-def _rerun_cancelled(top: Path, item: str, sha: str, seen: list[tuple[str, str]],
-                     runs: list[dict[str, Any]]) -> bool:
-    """Cancelled checks are not failures when none failed. Decide per workflow run: wait for a newer
-    run of the same workflow and event, or start the run again once (run_attempt 1); a second attempt stays red."""
-    cancelled = [index for index, run in enumerate(runs)
-                 if run.get("status") == "completed" and run.get("conclusion") == "cancelled"]
-    if not cancelled or any(state == RED for index, (_, state) in enumerate(seen) if index not in cancelled):
-        return False
-    workflows = _ask(top, item, ".workflow_runs", "repos/{owner}/{repo}/actions/runs", "--method", "GET",
-                     "--raw-field", "per_page=100", "--raw-field", f"head_sha={sha}")
-    decided: dict[Any, str | None] = {}
-    for index in cancelled:
-        suite = runs[index].get("check_suite", {}).get("id")
-        current = next((run for run in workflows if suite is not None and run.get("check_suite_id") == suite), None)
-        if current is None or not isinstance(current.get("id"), int):
-            continue  # Without its run, nothing can start it again: it stays red.
-        if suite not in decided:
-            newer = [run for run in workflows if run.get("workflow_id") == current.get("workflow_id")
-                     and run.get("event") == current.get("event")
-                     and (run.get("run_number") or 0) > (current.get("run_number") or 0)]
-            decided[suite] = None
-            if newer:  # The newer run's own checks decide; until they finish, the check is not done.
-                decided[suite] = PASS if all(run.get("status") == "completed" for run in newer) else PENDING
-            elif current.get("status") != "completed":
-                decided[suite] = PENDING  # A rerun is already going; GitHub keeps the run and counts attempts.
-            elif (current.get("run_attempt") or 1) == 1:
-                if repo.run("gh", "run", "rerun", str(current["id"]), cwd=top, timeout=60).returncode == 0:
-                    print(f"Run {current['id']} was cancelled. Started it again; waiting for it.", flush=True)
-                    decided[suite] = PENDING
-        if decided[suite]:
-            seen[index] = (seen[index][0], decided[suite])
-    return any(decided.values())
 
 
 def _pending(item: str, names: list[str], seen: list[tuple[str, str]]) -> str:

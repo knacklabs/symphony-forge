@@ -1,0 +1,1200 @@
+"""forge close: close a task or fix by the close rule.
+
+Bring the default and remote branches in, save the review, then publish once. Run tests alongside
+the review on a laptop repo; on a CI repo, wait for the checks on the final pushed head.
+"""
+from __future__ import annotations
+
+import argparse
+import contextlib
+import io
+import json
+import os
+import re
+import subprocess
+import sys
+import tempfile
+import time
+import tomllib
+from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
+from typing import Any
+
+from forge.close_remote import push_replay, reconcile, replay_baseline, save_replay
+from forge import __version__, app_baseline, checks, codex, design, githooks, init, merge_review, merge_timings, migration_warnings, repo, review, review_skip, score, spotted, story, sync, task, time_records
+
+REFUSALS = {
+    "not_started": ("Forge has not started {item} in any worktree of this repo.", "forge next"),
+    "no_checks": ("forge.toml runs change tests in CI but names no checks.",
+                  'name the checks in forge.toml or set test_place = "local"'),
+    "publish": ("GitHub refused to update this pull request, so this command stopped.\n{problem}",
+                "{action}, then retry this command"),
+    "conflict": ("Merging {default} into {branch} conflicts in {files}.",
+                 "forge work {item} to merge the default branch and continue this work, then forge close {item}"),
+    "merge_failed": ("Merging {default} into {branch} failed; the merge was aborted: {problem}",
+                     "forge close {item}"),
+    "replay_conflict": ("Replaying this fix's own commits onto {default} conflicts in {files}.",
+                        "forge work {item} to merge the default branch and continue this work, then forge close {item}"),
+    "replay_remote": ("The remote branch has commits this checkout does not have, so Forge left it alone.",
+                      "fetch and reconcile {branch}, then forge close {item}"),
+    "base_merged_by_hand": ("{item} builds on {base}, which was merged on GitHub outside Forge, so its pull request still targets {base}'s branch.",
+                            "gh pr edit {number} --base {default}, then forge close {item}"),
+    "bad_dismiss": ("Each --dismiss needs an open finding number from the item's review and its own "
+                    "--because that starts with the file:line proving that finding wrong.",
+                    'forge close {item} --dismiss <n> --because "<file:line> <reason>"'),
+    "no_such_line": ("{where} is not a line of the reviewed commit, so it can't prove a finding "
+                     "wrong.", 'forge close {item} --dismiss <n> --because "<file:line> <reason>"'),
+    "no_such_base_line": ("{where} is not a line of the base commit, so it can't prove a finding "
+                          "wrong.", 'forge close {item} --dismiss <n> --because "<file:line> <reason>"'),
+    "blocked": ("The review left serious findings open: {findings}.",
+                'forge work {item}, or forge close {item} --dismiss <n> --because '
+                '"<file:line> <reason>"'),
+    "hotspot": ("Review round {round} of {item} reached the round limit with open findings, so Forge stopped. {question}",
+                'forge close {item} --resolve <more|split|accept> --reason "<human\'s choice>"'),
+    "bad_choice": ("Record the human's choice only on a stopped review loop, with a non-empty "
+                   "--reason and no finding dismissals.",
+                   'forge close {item} --resolve <more|split|accept> --reason "<human\'s choice>"'),
+    "stuck": ("The worker can't get past the same problem, so Forge stopped sending it back. "
+              "Ask the human:\n{question}",
+              'forge close {item} --resolve <switch|same|narrow|split> --reason "<human\'s choice>"'),
+    "chosen": ("The owner's choice is recorded; the worker's next round follows it.", "forge work {item}"),
+    "unsynced": ("This {kind} changes Forge's version, but {files} {verb} what forge sync writes "
+                 "for it.", "forge sync in {path}, commit what it wrote, then forge close {item}"),
+    "unsynced_forge": ("This {kind} pins Forge {pinned}, but Forge {installed} is running close, "
+                       "so it can't tell whether the {kind}'s files are what {pinned} writes.",
+                       "uv tool install git+https://github.com/knacklabs/symphony-forge@{pinned}, "
+                       "then forge close {item}"),
+    "tests_failed": ("`{command}` failed on this machine; the "
+                     "next worker round gets its output.", "forge work {item}"),
+    "question": ("The worker is waiting for an answer:\n{question}",
+                 'forge work {item} --note "<answer>"'),
+    "merge_switch": ("The merge switch must change only forge.toml's top-level merge setting to agent; "
+                     "it contains another change.",
+                     "the repo owner removes the extra change, then forge close {item}"),
+}
+REFUSALS.update(review_skip.REFUSALS)
+BEGIN, END = "<!-- forge:begin -->", "<!-- forge:end -->"
+# forge merge enable's fix is known by these; only the repo owner merges it.
+WHY, DONE = "Let the agent merge this repo's ready pull requests.", 'The default branch\'s forge.toml sets merge = "agent".'
+
+
+def close(args: argparse.Namespace) -> int:
+    from forge import backfill, records
+    from forge.merge import ENABLE
+
+    item = args.item
+    top = _worktree(item)
+    state, cfg = repo.read_state(item, top) or {}, repo.config(top)
+    skip = review_skip.requested(args, top, item, state)
+    retried_history = (repo.forge_dir(top) / "backfill-pending").exists()
+    if retried_history:
+        backfill.run(top)
+        state, cfg = repo.read_state(item, top) or {}, repo.config(top)
+    refreshed = migration_warnings.before_close(top)
+    switch = (item == ENABLE and state.get("kind") == "fix" and
+              (state.get("why"), state.get("done_when")) == (WHY, DONE))
+    choice, reason = getattr(args, "resolve", None), getattr(args, "reason", None)
+    continued = (os.environ.pop("FORGE_CLOSE_ACCEPTED", "") == "1" and choice == "accept"
+                 and reason and (state.get("stop") or {}).get("choice") == choice
+                 and state["stop"].get("reason") == reason.strip())
+    if choice or reason is not None and not skip:
+        stuck = "question" in (state.get("stop") or {})
+        if (not choice or not reason or not reason.strip() or
+                not state.get("stop") or (state["stop"].get("choice") and not continued
+                                          and state["stop"].get("by") != "default") or
+                args.dismiss or args.because or
+                (choice in ("accept", "more") if stuck else choice in ("switch", "same", "narrow"))):
+            repo.refuse((REFUSALS["bad_choice"][0], REFUSALS["stuck"][1]) if stuck
+                        else REFUSALS["bad_choice"], item=item)
+        if not continued:
+            plan_updated = False
+            if choice in ("narrow", "split") and "/" in item:
+                result = state.get("review") or {}
+                head = repo.resolve_commit(top, "HEAD")
+                base = repo.resolve_commit(top, f"origin/{repo.default_branch(top)}")
+                reviewed = result.get("branch_diff") == review.fingerprint(
+                    head, item, top, state, base, branch_diff=True)
+                plan_updated = task.apply_review_choice(top, item, choice, reason.strip())
+                # The owner's plan update does not require another code review. Keep any
+                # earlier unreviewed work or product edits merged from the story stale.
+                if reviewed and not repo.git("diff", "--name-only", head, "HEAD", "--", ".",
+                                             *[f":(exclude){path}" for path in review.BOOKKEEPING],
+                                             cwd=top):
+                    result.update(changed=review.fingerprint("HEAD", item, top, state, base),
+                                  branch_diff=review.fingerprint("HEAD", item, top, state, base,
+                                                                 branch_diff=True))
+            if choice == "switch":  # the next forge work runs this item on the other tool
+                state["tool"] = "claude" if state["stop"]["tool"] == "codex" else "codex"
+            if choice == "split" and (findings := score.open_findings(state.get("review") or {})):
+                details = "; ".join(f"{f['title']} ({f['file']}:{f['line']})" for f in findings)
+                follow_up = _start_follow_up(top, state, f"Review findings split from {item}: {details}",
+                                            f"A review no longer finds: {details}")
+                state["stop"]["fixes"] = [follow_up]
+                for finding in findings:
+                    finding["follow_up"] = f"Split into follow-up fix {follow_up}"
+                state["review"]["status"] = "clean"
+                score.remember(_known(top, item, state, f"origin/{repo.default_branch(top)}", state["review"]),
+                               state["review"], sum(step["step"] == "review" for step in state.get("steps", [])), {})
+            if choice == "accept":
+                result = state["review"]
+                dismissed = {d["finding"] for d in result["dismissals"]}
+                result["dismissals"].extend(
+                    {"finding": number, "because": f"Human accepted the remaining finding: {reason}",
+                     "accepted": True}
+                    for number, _ in enumerate(result["findings"], 1) if number not in dismissed)
+                result["status"] = "clean"
+                score.remember(_known(top, item, state, f"origin/{repo.default_branch(top)}", result),
+                               result, sum(step["step"] == "review" for step in state.get("steps", [])), {})
+            defaulted = state["stop"].get("by") == "default"
+            # the next worker round hears the owner's choice, including one reversing the default
+            state["stop"].update(by="owner", worker_round=state.get("round"))
+            state["stop"].update(choice=choice, reason=reason.strip())
+            state["status"] = "waiting for checks" if choice == "accept" else "fixing"
+            _save(top, item, state, f"Record the human's review loop choice: {choice}")
+            if not defaulted:
+                repo.record_event(top, item, "owner wait end", wait_id=state["stop"].get("wait_id"))
+                if choice != "accept":  # acceptance publishes after the final review records
+                    _push(top, repo.current_branch(top))  # every machine's board sees the wait end
+                    _refresh_record(top, item, state)
+        if choice in ("switch", "same", "more"):
+            print(f"Recorded the human's choice.\nNext: forge work {item}")
+            return 0
+        if choice != "accept":
+            print(f"Recorded the human's choice. {choice.capitalize()} the part as agreed.")
+            if plan_updated:
+                print("The worker gets the updated plan next round.")
+            if choice == "split" and state["stop"].get("fixes"):
+                print(f"Follow-up fix: {', '.join(state['stop']['fixes'])} owns the split findings.")
+            if "/" in item:
+                print(f"Next: forge work {item}")
+            else:
+                print(f'Next: forge fix amend {item} --done "<done when>" --because "<why>"')
+            return 0
+        if not continued:
+            print("Recorded the human's choice.")
+    if not switch:
+        check_stop(item, state, top)
+    question = codex.record(top, item).get("question")
+    if question:
+        repo.refuse(REFUSALS["question"], item=item, question=question)
+    if cfg["test_place"] == "ci" and not cfg["checks"]:
+        repo.refuse(REFUSALS["no_checks"])
+    branch, default = state["branch"], repo.default_branch(top)
+    stacked_on = state.get("stacked_on") if "/" in item else ""
+    pr = _pull_request(top, branch)
+    migrating = state.get("kind") in ("migrate", "adopt")  # Forge isn't on the default branch yet
+    if pr and pr["state"] == "MERGED":
+        if migrating:  # forge-pr-check can run now that the default branch has Forge, so require it
+            init.protect(top, default, cfg["checks"])
+        _attach(top, item, branch)
+        repo.record_event(top, item, "item finished")
+        if not retried_history and backfill.upgrade_fix(top, item, state):
+            backfill.run(top)
+        return _merged(top, item)
+
+    checks.required(top, default)
+    if not (skip or (state.get("review") or {}).get("skipped")):
+        review.require_engine(cfg)  # before merging or committing state
+    repairs = bool(stacked_on and (state.get("review") or {}).get("commit") and
+                   merge_review.repairs(top, state["review"]["commit"]))
+    try:
+        _merge_default(top, item, branch, default, pr, cfg, refreshed=refreshed, publish=False)
+    except repo.Refused as error:
+        if error.entry in (REFUSALS["conflict"], REFUSALS["replay_conflict"]):
+            if not time_records.pending_merge_wait(top, item, (pr or {}).get("body") or "", reason="merge conflict"):
+                repo.record_event(top, item, "owner wait start", reason="merge conflict")
+            _push(top, branch)
+            if pr:  # keep its review block; only the shared time record changes
+                _refresh_record(top, item, state, pr)
+            else:
+                _publish(top, item, state, branch, default, pr,
+                         {"status": "reviewing", "findings": [], "dismissals": []}, ("", ""))
+        raise
+    reconcile(top, branch)
+    state = repo.read_state(item, top) or state
+    previous = state.get("review") or {}
+    dismissals = _dismissals(args, item, previous)
+    legacy_diff = None
+    if (previous and "branch_diff" not in previous and previous.get("changed") ==
+            review.fingerprint("HEAD", item, top, state, f"origin/{default}")):
+        legacy_diff = review.fingerprint(previous["commit"], item, top, state,
+                                         f"origin/{default}", branch_diff=True)
+    stacked_waiting = bool(stacked_on and not task._merged(f"origin/{default}", stacked_on, top))
+    review_ref, pr_target = f"origin/{default}", default
+    if stacked_waiting:
+        base = githooks.fix_base(top, state, review_ref, "HEAD")
+        repo.git("merge", "-q", "--no-edit", "-s", "ours", base, cwd=top)
+        review_ref = f"forge-stack/{item.replace('/', '-')}"
+        repo.git("update-ref", f"refs/remotes/{review_ref}", base, cwd=top)
+        pr_target = f"task/{stacked_on.replace('/', '-')}"
+    if pending := time_records.pending_merge_wait(top, item, (pr or {}).get("body") or "", reason="merge conflict"):
+        repo.record_event(top, item, "owner wait end", wait_id=pending["id"])
+        _refresh_record(top, item, state, pr)
+    if "/" in item:
+        key = item.split("/")[0]
+        design.check(top, story.show(top, story.plan_ref(top, key), f"plans/{key}.md") or "", "HEAD", required=False)
+        excluded = list(review.DOC_EXCLUDES)
+        excluded += [path.replace(":(glob)", ":(exclude,glob)") for path in repo.TEST_PATHS]
+        stats = repo.git("diff", "--numstat", "-z", "--no-renames", f"{review_ref}...HEAD",
+                         "--", ".", *excluded, cwd=top)
+        counts = [row for record in stats.split("\0") if len(row := record.split("\t", 2)) == 3]
+        generated = repo.generated_files(top, [row[2] for row in counts], "HEAD")
+        lines = sum(int(number) for added, deleted, path in counts if path not in generated
+                    for number in (added, deleted) if number.isdigit())
+        if lines > 400:
+            print(f"Warning: This part changes {lines} lines outside tests and docs; aim for about 400.")
+    task.check_settings_change(item, top, state, default)
+    repo.resume_pin(top, cfg["version"], getattr(args, "land_rounds", None), accepted=choice == "accept",
+                    before=getattr(args, "pin_before", None))
+    cfg = records.sample_data_off(top, item)
+    local_tests = cfg["test_place"] == "local"
+    if not local_tests and "tests" in state:
+        state.pop("tests")
+        _save(top, item, state, "Leave change tests to CI")
+    if switch:
+        base = repo.git("merge-base", "HEAD", f"origin/{default}", cwd=top)
+        files = set(repo.git("diff", "--name-only", "--no-renames", f"origin/{default}...HEAD",
+                             cwd=top).splitlines())
+        if (files - {"forge.toml", repo.state_path(item)} or
+                repo.git("diff", "--summary", f"origin/{default}...HEAD", "--", "forge.toml", cwd=top)):
+            repo.refuse(REFUSALS["merge_switch"], item=item)
+        settings = tomllib.loads(repo.git("show", "HEAD:forge.toml", cwd=top))
+        original = tomllib.loads(repo.git("show", f"{base}:forge.toml", cwd=top))
+        if (settings.pop("merge", None) != "agent" or
+                settings != {key: value for key, value in original.items() if key != "merge"}):
+            repo.refuse(REFUSALS["merge_switch"], item=item)
+    for record in repo.git("diff", "--numstat", "-z", "--no-renames", "--diff-filter=A",
+                           f"origin/{default}...HEAD", "--", "tests/", cwd=top).split("\0"):
+        added, _, rest = record.partition("\t")
+        _, _, path = rest.partition("\t")
+        if added == "-" and path:
+            print(f"Test fixture {path} is binary; replace it with plain text files.",
+                  file=sys.stderr)
+            return 1
+    spotted.check(top, item)
+    design.require_working_build(top, review_ref)
+    head = repo.resolve_commit(top, "HEAD")
+    base = repo.resolve_commit(top, review_ref)
+    baseline = repo.git("merge-base", base, head, cwd=top)
+    changed_files = repo.git("diff", "--name-only", "-z", "--no-renames", baseline, head, cwd=top).split("\0")
+    app_baseline.check(top, cfg, baseline, changed_files)
+    app_baseline.services(top, cfg)
+    app_baseline.migrations(top, cfg, baseline)
+    if not migrating:
+        _synced(top, item, changed_files)
+    if skip:
+        review_skip.requested(args, top, item, state)
+    _warn_fix_kind(top, state, review_ref)
+    light = review.blocking_level(top, item, state, review_ref) == "P0"
+    result = previous
+    classified = review.bound_review(top, item, state, result)
+    head = repo.resolve_commit(top, "HEAD")
+    changed = review.fingerprint(head, item, top, state, base)
+    branch_diff = review.fingerprint(head, item, top, state, base,
+                                     branch_diff=True)
+    ancestor = repo.git("merge-base", base, head, cwd=top)
+    # The immutable read above is reused unless reconciliation merged remote work into HEAD.
+    files = repo.git("diff", "--name-only", "-z", "--no-renames", ancestor, head, cwd=top).split("\0")
+    task.require_fix_changes(item, state, top, files)
+    records_only = all(path.startswith(review.BOOKKEEPING) or repo.SIGNOFF.fullmatch(path) for path in files if path)
+    if records_only:
+        print("nothing to review: only Forge's records changed", flush=True)
+    replayed = bool(stacked_on and previous.get("commit") and repo.run(
+        "git", "merge-base", "--is-ancestor", previous["commit"], "HEAD", cwd=top).returncode)
+    fresh = (not replayed and (choice == "accept" or merge_review.covers(top, item, state, review_ref, result)) or
+             (not replayed or not review.blocking(result)) and result.get("branch_diff", legacy_diff) == branch_diff)
+    if repairs or records_only and review.blocking(result):
+        fresh = False
+    if switch:
+        fresh = fresh and result.get("mechanical") is True and not review.blocking(result)
+    if choice != "accept" and (review.blocking(result) or
+                               any(d.get("accepted") for d in result.get("dismissals", []))):
+        fresh = fresh and result.get("changed") == changed
+    refreshed = classified or fresh and (result.get("changed") != changed or
+                                         result.get("branch_diff") != branch_diff)
+    if fresh:
+        result.update(changed=changed, branch_diff=branch_diff)
+        # Keep the historical review commit unless replay removed it from this branch.
+        if (not re.fullmatch(r"[0-9a-f]{40}|[0-9a-f]{64}", str(result.get("commit", ""))) or
+                repo.run("git", "merge-base", "--is-ancestor", result["commit"],
+                         "HEAD", cwd=top).returncode != 0):
+            result["commit"] = repo.git("rev-parse", "HEAD", cwd=top)
+            refreshed = True
+    requested = []
+    for number, because in dismissals:
+        finding = previous["findings"][number - 1]
+        requested.append((finding, because, _check_line(top, item, result["commit"] if fresh else head,
+                                                       review_ref, because.split()[0])))
+    evidence = ("\n\n".join(part for part in (
+                    review.before_coding(top, base, head),
+                    review.commit_paragraph(top, review_ref, "Functional check:")) if part),
+                review.proof_list(top, review_ref))
+    repo.record_event(top, item, "close result")  # a stuck worker counts failures once per close
+    failed = 0
+    if not fresh:
+        if pending := time_records.pending_merge_wait(top, item, (pr or {}).get("body") or ""):
+            repo.record_event(top, item, "owner wait end", wait_id=pending["id"])
+        # Read after the merge, which may change the command.
+        command = review.close_test(top, base, head=head) if local_tests else ""
+        if pr:
+            pr = _publish(top, item, state, branch, pr_target, pr,
+                          {"status": "reviewing", "findings": [], "dismissals": []}, evidence)
+        start, clock = repo.now(), time.monotonic()
+        outcome = "failed"
+        selected: dict[str, str] = {}
+        test_note = ("Tests are running alongside this review; close waits for "
+                     f"both results before continuing. Command: `{command}`." if local_tests else
+                     "CI runs the change's related tests on the pull request; "
+                     "close waits for them after the review.")
+        # shortcut: an interrupted review waits for tests; add cancellation if immediate interruption is needed.
+        with ThreadPoolExecutor(max_workers=1) as pool:
+            testing = (pool.submit(review.test_run, top, command, review_ref, always=switch)
+                       if local_tests else None)
+            try:
+                if switch or records_only or skip or review_skip.upgrade_only(top, item, cfg, ancestor, head, [p for p in files if p], previous):
+                    head = repo.git("rev-parse", "HEAD", cwd=top)
+                    identity = repo.record_event(top, item, "review result", commit=head, outcome="clean", findings=[],
+                                                 review_round=review.round_number(top, item, state),
+                                                 **({"skipped": skip} if skip else {}))
+                    result = {"id": identity, "commit": head, "findings": [], "dismissals": [],
+                              "changed": changed, "branch_diff": branch_diff, "mechanical": True,
+                              **({"skipped": skip} if skip else {})}
+                else:
+                    # Git retains earlier rounds; replay needs a full review of the integrated change.
+                    result = review.run(top, item, state, cfg, review_ref, selected, {} if replayed or previous.get("skipped") else previous,
+                                        light=light, tested=test_note)
+                areas = _areas(top, result)
+                outcome = "blocked" if review.blocking(result) else "clean"
+            finally:
+                if outcome == "failed":
+                    repo.record_event(top, item, "review result", outcome=outcome, findings=None,
+                                      review_round=review.round_number(top, item, state))
+                repo.record_timing(top, item, "review", start, clock, outcome, selected)
+                if testing is not None:
+                    failed, tested = testing.result()
+                    print(tested, flush=True)
+                    evidence = (evidence[0], review.proof_list(top, review_ref, tested))
+                    if failed:
+                        state["tests"] = tested
+                        if outcome == "failed":
+                            state["status"] = "fixing"
+                            _save(top, item, state, f"Tests of {item} failed")
+                    else:
+                        state.pop("tests", None)
+        repo.add_step(state, "review")
+    elif local_tests:
+        command = review.close_test(top, review_ref)
+        failed, tested = review.test_run(top, command, review_ref, always=switch)
+        print(tested, flush=True)
+        evidence = (evidence[0], review.proof_list(top, review_ref, tested))
+        if failed:
+            state["tests"] = tested
+        else:
+            state.pop("tests", None)
+        state["status"] = "fixing" if failed or review.blocking(result) else "waiting for checks"
+        _save(top, item, state, f"Tests of {item}: {'failed' if failed else 'passed'}")
+    for finding, because, from_base in requested:
+        number = next((n for n, current in enumerate(result["findings"], 1)
+                       if score.identity(current["file"], current["title"]) == score.identity(finding["file"], finding["title"]) and score.priority(current) >= score.priority(finding)), 0)
+        if not number:
+            continue  # The repair review no longer reports this earlier finding.
+        result["dismissals"] = [d for d in result["dismissals"] if d["finding"] != number]
+        result["dismissals"].append({"finding": number, "because": because,
+                                     "from_base": from_base})
+    refreshed = review.declines(top, review_ref, result) or refreshed
+    serious = review.blocking(result)
+    stopped = None
+    round_number = sum(step["step"] == "review" for step in state.get("steps", []))
+    if not fresh or dismissals or refreshed:
+        score.remember(_known(top, item, state, review_ref, previous), result, round_number,
+                       {} if fresh else areas,
+                       repaired=previous if not (fresh or records_only or switch or replayed) else None)
+    if (serious and round_number >= (cfg["task_review_rounds"] if "/" in item else 1) and
+            not any(score.holds(f, "P0") for _, f in serious) and (not fresh or not state.get("stop"))):
+        stopped = {"file": serious[0][1]["file"], "at": repo.now(),
+                   "wait_id": repo.record_event(top, item, "owner wait start", reason="review loop")}
+        state["stop"] = stopped
+    noted = (spotted.own_path(item),) if not switch and spotted.record(
+        top, item, state, review_ref, result) else ()
+    if not fresh or dismissals or refreshed or stopped:
+        result["status"] = "blocked" if serious else "clean"
+        state.update(review=result, status="hotspot" if stopped else
+                     "fixing" if serious or failed else "waiting for checks")
+        message = f"Review of {item}: {result['status']}"
+        if stopped:
+            message += "; Forge stopped at the round limit with open findings"
+        _save(top, item, state, message, *noted)
+    elif noted:  # a reused clean review still records what the worker spotted
+        _save(top, item, state, f"Review of {item}: {result['status']}", *noted)
+    _push(top, branch, reviewed=True)
+    head = repo.git("rev-parse", "HEAD", cwd=top)
+    pr = _publish(top, item, state, branch, pr_target, pr, result, evidence)
+    _attach(top, item, branch)
+
+    print(f"Review: {review_skip.label(result)}.", flush=True)
+    for number, finding in serious:
+        print(f"{number}. {score.priority(finding)} {finding['title']} "
+              f"({finding['file']}:{finding['line']})\n{finding['body']}\n")
+    advice = [(n, f) for n, f in enumerate(result["findings"], 1)
+              if not f.get("required_done_when") and not score.holds(f, result.get("blocking_level"))]
+    if advice:
+        print("Advice that does not block the merge:" if serious else
+              "Follow-ups that do not block the merge (recorded in the pull request):")
+        for number, finding in advice:
+            priority = f"{score.priority(finding)} " if serious else ""
+            reason = finding.get("follow_up") or (
+                "Rare case outside normal use" if score.RARE.search(finding["body"]) else
+                "Light review holds only P0 findings" if result.get("blocking_level") == "P0"
+                and score.holds(finding) else "Below the review bar")
+            print(f"{number}. {priority}{finding['title']} "
+                  f"({finding['file']}:{finding['line']})\n"
+                  f"Does not block: {reason.rstrip('.')}.\n{finding['body']}\n")
+    if failed:
+        print("Failed tests:\n" + tested.rsplit("Failed tests:\n", 1)[-1], flush=True)
+    if failed and not stopped:
+        repo.refuse(REFUSALS["tests_failed"], command=command, item=item)
+    if serious:
+        if stopped:
+            repo.refuse(REFUSALS["hotspot"], item=item, round=round_number,
+                        question=review.stop_question(top, item, state), **stopped)
+        repo.refuse(REFUSALS["blocked"], item=item, findings="; ".join(
+            f"finding {n} ({f['title'].rstrip('.')})" for n, f in serious))
+    # forge-pr-check runs from the base branch, which has no Forge until migrate's or adopt's PR merges.
+    try:
+        if (not local_tests or checks.required(top, default, head) is not None) and not stacked_waiting:
+            checks.wait(top, item, head, [name for name in cfg["checks"]
+                                         if not (migrating and name == "forge-pr-check")],
+                        branch=branch, progress=getattr(args, "wait_for_progress", False),
+                        slot=getattr(args, "check_slot", None))
+    except BaseException:
+        _publish(top, item, state, branch, default, pr, result, evidence)
+        raise
+    # Publish successful CI with Ready, or once before restarting on a refreshed head.
+    if pr and pr.get("isDraft") and not stacked_waiting:  # a blocked review left it a draft
+        _gh(top, "pr", "ready", str(pr["number"]))
+    # Main can move during checks; DRAFT also hides an up-to-date requirement until ready.
+    pr = _pull_request(top, branch) or pr
+    _merge_default(top, item, branch, default, pr, cfg, publish=False)
+    if repo.git("rev-parse", "HEAD", cwd=top) != head:
+        _publish(top, item, state, branch, default, pr, result, evidence)
+        repo.resume_pin(top, cfg["version"], getattr(args, "land_rounds", None),
+                        accepted=choice == "accept", before=getattr(args, "pin_before", None))
+        again = argparse.Namespace(**vars(args))
+        again.dismiss = again.because = again.resolve = again.reason = again.by = None
+        again.no_review = False
+        return close(again)
+    if stacked_waiting:
+        if not task._merged(f"origin/{default}", stacked_on, top):
+            print(f"Reviewed {item}; it is tested and merges after {stacked_on} merges.")
+            print("Next: forge next")
+            return 0
+        again = argparse.Namespace(**vars(args))
+        again.dismiss = again.because = again.resolve = again.reason = again.by = None
+        again.no_review = False
+        return close(again)
+    merge = merger(top, state)
+    path = repo.ready_path(item, top)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if merge == "human":
+        pending = time_records.pending_merge_wait(top, item, (pr or {}).get("body") or "")
+        if not pending:
+            repo.record_event(top, item, "owner wait start", reason="merge", commit=head)
+    tmp = path.with_suffix(".tmp")
+    ready = {"commit": head, "review": "clean", **({"skipped": result["skipped"]} if result.get("skipped") else {})}
+    if "/" in item and state.get("stacked_on"):
+        ready["base"] = base
+    tmp.write_text(json.dumps(ready) + "\n", encoding="utf-8")
+    os.replace(tmp, path)
+    _publish(top, item, state, branch, default, pr, result, evidence)
+    proof = "no tests or CI in sample-data mode" if repo.sample_data(top, cfg) else "its tests passed on this machine" if local_tests else "green checks"
+    if merge == "agent":
+        print(f"Ready: {item} has {review_skip.readiness(result)} and {proof}.")
+        print(f"Next: forge merge {item}")
+    else:
+        print(f"Ready: {item} has {review_skip.readiness(result)} and {proof}. A human merges its pull request.")
+    if not retried_history and backfill.upgrade_fix(top, item, state):
+        backfill.run(top)
+    return 0
+
+
+def _warn_fix_kind(top: Path, state: dict[str, Any], base: str) -> None:
+    kind = state.get("fix_kind")
+    if not kind:
+        return
+    files = repo.git("diff", "--name-only", "-z", "--no-renames", f"{base}...HEAD",
+                     "--", ".", *[path.replace(":(glob)", ":(exclude,glob)")
+                                    for path in repo.TEST_PATHS], cwd=top).split("\0")
+    # This is advice: paths can suggest a mismatch, but cannot decide what a change does.
+    code = [Path(path) for path in files if path and not path.startswith(
+        (".factory/", "plans/", "docs/"))]
+    ui = any(path.suffix in {".html", ".css", ".scss", ".jsx", ".tsx", ".vue", ".svelte"}
+             or set(path.parts) & {"web", "frontend", "components", "screens", "pages"}
+             for path in code)
+    backend = any(path.suffix in {".py", ".ts", ".js", ".go", ".rs", ".java", ".rb"}
+                  for path in code)
+    if (kind == "backend" and ui or kind == "ui" and backend and not ui
+            or kind == "mechanical" and (ui or backend)):
+        print("Warning: The changed files do not match this fix's worker kind "
+              f"({kind}). Check the kind before the next round.")
+
+
+def _known(top: Path, item: str, state: dict[str, Any], base: str, previous: dict[str, Any]) -> list[Any]:
+    """The item's known findings; an item reviewed before the list gets its saved rounds first."""
+    if "known" not in state:
+        state["known"] = []
+        for number, old in enumerate(review._history(top, item, base, previous, state=state), 1):  # pyright: ignore[reportPrivateUsage]
+            score.remember(state["known"], old, number, _areas(top, old))
+    return state["known"]
+
+
+def _areas(top: Path, result: dict[str, Any]) -> dict[tuple[str, str], str]:
+    return {score.identity(f["file"], f["title"]): review.area(top, result["commit"], f["file"], f["line"])
+            for f in result.get("findings", [])}
+
+
+def _start_follow_up(top: Path, state: dict[str, Any], why: str, done: str) -> str:
+    out, here = io.StringIO(), os.getcwd()
+    try:  # fix start works in the current checkout: the follow-up stacks on this item
+        os.chdir(top)
+        with contextlib.redirect_stdout(out):
+            task.fix_start(argparse.Namespace(why=why, done=done, slug=None,
+                                              kind=state.get("fix_kind") or "mechanical"))
+    finally:
+        os.chdir(here)
+    return re.search(r"Started fix (\S+)", out.getvalue())[1]
+
+
+def check_stop(item: str, state: dict[str, Any], top: Path | None = None) -> None:
+    """A recorded choice releases a stop; a clean review does not."""
+    if state.get("stop") and "question" in state["stop"]:
+        if not state["stop"].get("choice"):
+            repo.refuse(REFUSALS["stuck"], item=item, question=state["stop"]["question"])
+        return
+    if state.get("stop") and not state["stop"].get("choice"):
+        repo.refuse(REFUSALS["hotspot"], item=item,
+                    question=review.stop_question(top or _worktree(item), item, state),
+                    **{"round": sum(step["step"] == "review" for step in state.get("steps", [])),
+                       **state["stop"]})
+
+
+def stuck_round(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any]) -> None:
+    """Stop after two rounds leave the same test failure or P0; a choice buys one more round."""
+    check_stop(item, state, top)
+    stop = state.get("stop") or {}
+    keys = ["close's tests failing"] if state.get("tests") else []
+    for _, finding in review.blocking(state.get("review") or {}):
+        if score.holds(finding, "P0"):
+            file, title = score.identity(finding["file"], finding["title"])
+            keys.append(f"the open P0 {title} in {file}")
+    # Each failure counts the rounds in a row that left it; a cleared one drops out. It counts only
+    # with both a new close and a worker round since the last count, so reruns count once.
+    # ponytail: close events live on this machine; a round on another machine counts once more.
+    stuck = state.get("stuck") or {}
+    closed = next((e["id"] for e in reversed(time_records.read(top, "events"))
+                   if e.get("item") == item and e.get("event") == "close result"), None)
+    if stuck and (stuck.get("close") == closed or stuck.get("round") == state.get("round")):
+        if "question" in stop:
+            state.pop("stop")
+        return
+    before = stuck.get("keys") or {}
+    counts = {key: before.get(key, 0) + 1 for key in keys}
+    same = [key for key, count in counts.items() if count >= 2]
+    if "question" in stop:
+        state.pop("stop")
+    elif same:
+        stuck_stop(top, item, state, cfg, "\n".join(f"Two rounds in a row left {key}." for key in same))
+    state["stuck"] = {"keys": counts, "head": repo.git("rev-parse", "HEAD", cwd=top), "close": closed,
+                      "round": state.get("round")}
+
+
+def stuck_stop(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any], what: str) -> None:
+    """Stop the item and refuse with a question the coordinator can ask the owner as it is."""
+    title, _, delivers = _title(top, item, state)
+    tool = state.get("tool") or state.get("worker") or repo.worker(cfg, "build", False)[0]
+    since = (state.get("stuck") or {}).get("head") or f"origin/{repo.default_branch(top)}"
+    tried = repo.git("log", "--first-parent", "--no-merges", "--format=%s", f"{since}..HEAD",
+                     "--", ".", ":(exclude).factory", cwd=top).splitlines()
+    other = "claude" if tool == "codex" else "codex"
+    choices = [f"switch this item to {other.title()}", f"keep {tool.title()} for one more round",
+               "or narrow or split it"]
+    question = (f"{title} is stuck. It should deliver: {delivers}\n{what}\n"
+                f"The worker tried: {'; '.join(dict.fromkeys(tried)) or 'no new commits'}.\n"
+                f"Choose one: {'; '.join(choices)}.")
+    state.update(stop={"question": question, "tool": tool},
+                 status="hotspot")
+    state["stop"]["wait_id"] = repo.record_event(top, item, "owner wait start", reason="stuck")
+    _save(top, item, state, f"{item} is stuck; Forge asks the owner")
+    share_wait(top, item, state, push=True)
+    repo.refuse(REFUSALS["stuck"], item=item, question=question)
+
+
+def branch_pr(top: Path, state: dict[str, Any]) -> dict[str, Any] | None:
+    """The item's open pull request, found on GitHub by its branch; None without one, without
+    GitHub or when the branch was never pushed."""
+    branch = state.get("branch") or repo.current_branch(top)
+    if repo.run("git", "rev-parse", "-q", "--verify", f"refs/remotes/origin/{branch}", cwd=top).returncode:
+        return None
+    with contextlib.suppress(repo.Refused, subprocess.CalledProcessError, ValueError):
+        pr = _pull_request(top, branch)
+        return pr if pr and pr.get("state") == "OPEN" else None
+    return None
+
+
+def share_wait(top: Path, item: str, state: dict[str, Any], push: bool = False) -> None:
+    """Forge just recorded a wait on a person: when the branch has a pull request, publish the
+    record (pushing first when the wait lives in the committed state), so every machine's board
+    sees the wait."""
+    if pr := branch_pr(top, state):
+        if push:
+            _push(top, state.get("branch") or repo.current_branch(top))
+        _refresh_record(top, item, state, pr)
+
+
+def merger(top: Path, state: dict[str, Any]) -> str:
+    """"human" for migrate, adopt and the merge switch's fix, else the repo's merge setting."""
+    return "human" if state.get("kind") in ("migrate", "adopt") or state.get("why") == WHY else repo.merge_setting(top)
+
+
+def _worktree(item: str) -> Path:
+    """Find the item's checkout, including work published on another machine."""
+    task.require_active(item)
+    branches = [f"task/{item.replace('/', '-')}"] if "/" in item else [f"fix/{item}", f"forge/{item}"]
+    if tree := task.pick_up(item, branches):
+        return tree
+    repo.refuse(REFUSALS["not_started"], item=item)
+
+
+def _dismissals(args: argparse.Namespace, item: str, previous: dict[str, Any]) -> list[tuple[int, str]]:
+    numbers, reasons = args.dismiss or [], args.because or []
+    open_numbers = {n for n, f in enumerate(previous.get("findings", []), 1) if f in score.open_findings(previous)}
+    if (len(numbers) != len(reasons) or not set(numbers) <= open_numbers
+            or not all(re.match(r"\S+:\d+\s+\S", r) for r in reasons)):
+        repo.refuse(REFUSALS["bad_dismiss"], item=item)
+    return list(zip(numbers, reasons))
+
+
+def _check_line(top: Path, item: str, commit: str, base: str, where: str) -> bool:
+    """Use the base only when the branch deleted the cited file."""
+    base = repo.git("merge-base", base, commit, cwd=top)
+    path, _, line = where.rpartition(":")
+    from_base = path in repo.git("diff", "--name-only", "-z", "--diff-filter=D", "--no-renames",
+                                 base, commit, "--", path, cwd=top).split("\0")
+    shown = repo.run("git", "show", f"{base if from_base else commit}:{path}", cwd=top)
+    if shown.returncode or not 1 <= int(line) <= len(shown.stdout.splitlines()):
+        repo.refuse(REFUSALS["no_such_base_line" if from_base else "no_such_line"],
+                    where=where, item=item)
+    return from_base
+
+
+def _merge_default(top: Path, item: str, branch: str, default: str,
+                   pr: dict[str, Any] | None, cfg: dict[str, Any], refreshed: bool = False,
+                   *, publish: bool = True) -> None:
+    migration_warnings.fetch_default(top, default, refreshed=refreshed)
+    repo.command_fact(("fetch default", default), top, lambda: None)
+    state = repo.read_state(item, top) or {}
+    base, parent = str(state.get("base", "")), str(state.get("stacked_on", ""))
+    target, original = f"origin/{default}", repo.git("rev-parse", "HEAD", cwd=top)
+    parent_branch = f"task/{parent.replace('/', '-')}" if parent else ""
+    if "/" in item and parent and not task._merged(target, parent, top):
+        return
+    stacked_part = "/" in item and bool(parent) and task._merged(target, parent, top)
+    if (stacked_part and not task.forge_merged(target, parent, top)
+            and (pr or {}).get("baseRefName") == parent_branch):
+        repo.refuse(REFUSALS["base_merged_by_hand"], item=item, base=parent,
+                    number=(pr or {}).get("number"), default=default)
+    if repo.run("git", "merge-base", "--is-ancestor", target, "HEAD", cwd=top).returncode == 0:
+        return
+    trial = repo.run("git", "merge-tree", "--write-tree", "--no-messages", "HEAD", target, cwd=top)
+    if trial.returncode not in (0, 1):
+        trial.check_returncode()
+    if (re.fullmatch(r"[0-9a-f]{40}|[0-9a-f]{64}", base) and (stacked_part or trial.returncode
+            and state.get("kind") == "fix" and repo.ITEM.fullmatch(parent) and task._merged(target, parent, top))
+            and repo.run("git", "merge-base", "--is-ancestor", base, "HEAD", cwd=top).returncode == 0):
+        target = repo.git("rev-parse", target, cwd=top)
+        remote_ref = f"refs/heads/{branch}"
+        remote = repo.git("ls-remote", "--heads", "origin", remote_ref, cwd=top)
+        lease = remote.split()[0] if remote else ""
+        if lease and repo.run("git", "merge-base", "--is-ancestor", lease, original, cwd=top).returncode:
+            repo.refuse(REFUSALS["replay_remote"], branch=branch, item=item)
+        baseline = replay_baseline(top, item, base, target, original)
+        merged = repo.run("git", "merge-tree", "--write-tree", "--name-only", "-z",
+                          "--no-messages", baseline, original, cwd=top)
+        if merged.returncode not in (0, 1):
+            merged.check_returncode()
+        tree, *files = merged.stdout.rstrip("\0").split("\0")
+        if merged.returncode and not (tree := merge_timings.resolve(
+                top, tree=tree, files=files, ours=original, incoming=target)):
+            repo.refuse(REFUSALS["replay_conflict"], default=default, files=", ".join(files),
+                        item=item)
+        # Pin the rebase against the developer's Git settings: no recreated merges, the engine that
+        # keeps empty commits, no autostash and no moving of other branches.
+        done = repo.run("git", "rebase", "--merge", "--no-rebase-merges", "--no-autostash",
+                        "--no-update-refs", "--onto", target, baseline, cwd=top)
+        if done.returncode and not merge_timings.resolve(
+                top, replay=True, ours=":3", incoming=":2"):
+            files = repo.git("diff", "--name-only", "--diff-filter=U", cwd=top).splitlines() or files
+            repo.run("git", "rebase", "--abort", cwd=top)
+            if not files:
+                done.check_returncode()
+            repo.refuse(REFUSALS["replay_conflict"], default=default, files=", ".join(files),
+                        item=item)
+        if repo.git("rev-parse", "HEAD^{tree}", cwd=top) != tree:
+            evidence = (review.commit_paragraph(top, baseline, "Functional check:", original) or
+                        review.commit_paragraph(top, baseline, "Proof list:", original))
+            repo.git("read-tree", "-u", "-m", tree, cwd=top)
+            repo.git("commit", "-q", "-m", "Keep the follow-up's merge edits", "-m", evidence, cwd=top)
+        if task.show(original, ".factory/client-signoff.json", top) is not None:
+            repo.git("checkout", original, "--", ".factory/client-signoff.json", cwd=top)
+            repo.commit_state("Keep the sign-off rounds after replay", ".factory/client-signoff.json", top=top)
+        sync.refresh_merged_guides(top, original)
+        save_replay(top, branch, original, lease)
+        if publish:
+            _push(top, branch)
+        return
+    if (trial.returncode == 0 and (pr or {}).get("mergeable") != "CONFLICTING"
+            and (pr or {}).get("mergeStateStatus") != "BEHIND"):
+        return
+    done = repo.run("git", "merge", "-q", "--no-edit", f"origin/{default}", cwd=top)
+    if done.returncode == 0:
+        return sync.refresh_merged_guides(top, original)
+    files = repo.git("diff", "--name-only", "--diff-filter=U", cwd=top).splitlines()
+    if not files:
+        raise subprocess.CalledProcessError(done.returncode, ["git", "merge"], done.stdout,
+                                            done.stderr)
+    try:
+        if merge_timings.resolve(top):
+            return sync.refresh_merged_guides(top, original)
+        # Read sync's inventory from a clean tree: conflicted adapters may not even parse.
+        with tempfile.TemporaryDirectory() as folder:
+            base = Path(folder) / "default"
+            repo.git("worktree", "add", "-q", "--detach", str(base), f"origin/{default}", cwd=top)
+            try:
+                ours = Path(__file__).resolve().parent
+                generated = set() if any((top / path).resolve().is_relative_to(ours) for path in files) \
+                    else {Path(path).as_posix() for path in sync.files(base, cfg)}
+                if folder := githooks.husky_folder(base):
+                    # Sync adds Forge's line, but the rest of these hooks belongs to the user.
+                    generated.difference_update((folder.resolve() / hook).relative_to(base.resolve()).as_posix()
+                                                for hook in ("pre-commit", "pre-push"))
+                if cfg.get("repo") == "forge-source":
+                    generated.add("docs/commands.md")
+            finally:
+                repo.git("worktree", "remove", "-f", str(base), cwd=top)
+        if set(files) <= generated:
+            repo.git("restore", f"--source=origin/{default}", "--staged", "--worktree", "--",
+                     *files, cwd=top)
+            release = "v" + repo._pin((top / "forge.toml").read_text(encoding="utf-8"))  # pyright: ignore[reportPrivateUsage]
+            # Keep argv on one line for uv's Windows .cmd shims.
+            script = ("from forge import repo, sync, githooks; "
+                      "top = repo.root(); cfg = repo.config(top); folder = githooks.husky_folder(top); "
+                      "keep = frozenset((folder.resolve() / hook).relative_to(top.resolve()).as_posix() "
+                      "for hook in ('pre-commit', 'pre-push')) if folder else frozenset(); "
+                      "sync.write(top, cfg, keep); "
+                      "sync.write_file(top, 'docs/commands.md', sync.command_page()) "
+                      "if cfg.get('repo') == 'forge-source' else None")
+            if release != cfg["version"] and repo.VERSION.fullmatch(release):
+                # Isolate Python imports too: the old checkout may have set PYTHONPATH.
+                done = repo.run("uv", "run", "--isolated", "--no-project", "--with",
+                                f"git+https://github.com/knacklabs/symphony-forge@{release}",
+                                "--python", sys.executable, "python", "-I", "-c", script, cwd=top,
+                                env=repo.uv_env())
+            else:
+                package = json.dumps((top / "src" if cfg.get("repo") == "forge-source"
+                                      else Path(__file__).resolve().parent.parent).as_posix())
+                done = repo.run(sys.executable, "-c",
+                                f"import sys; sys.path.insert(0, {package}); {script}", cwd=top)
+            done.check_returncode()
+            changed = [path for path in synced_changes(top) if path in generated]
+            if changed:
+                repo.git("add", "-A", "--", *changed, cwd=top)
+            repo.git("commit", "-q", "--no-edit", cwd=top)
+            return
+    except Exception as error:
+        repo.git("merge", "--abort", cwd=top)
+        repo.refuse(REFUSALS["merge_failed"], default=default, branch=branch,
+                    problem=(getattr(error, "stderr", "") or str(error)).strip(), item=item)
+    repo.git("merge", "--abort", cwd=top)
+    repo.refuse(REFUSALS["conflict"], default=default, branch=branch, files=", ".join(files),
+                path=top, item=item)
+
+
+def _synced(top: Path, item: str, changed_files: list[str]) -> None:
+    """An upgrade is ready only once forge sync, run by the Forge it pins on a copy of the commit
+    close pushes, changes and deletes nothing."""
+    toml = story.show(top, "HEAD", "forge.toml") or ""
+    pinned = repo._pin(toml)  # pyright: ignore[reportPrivateUsage]
+    if pinned == (release := repo._pin(story.show(top, f"origin/{repo.default_branch(top)}", "forge.toml") or "")):  # pyright: ignore[reportPrivateUsage]
+        return sync.check_guides(top, changed_files)
+    kind = "task" if "/" in item else "fix"
+    if (behind := repo._older(pinned, release)) or pinned != __version__:  # pyright: ignore[reportPrivateUsage]
+        repo.refuse(("This {kind} pins Forge {pinned}, but the default branch pins Forge {release}.", "forge work {item} to merge the default branch, then forge close {item}") if behind else REFUSALS["unsynced_forge"], kind=kind, pinned=f"v{pinned}",
+                    installed=f"v{__version__}", item=item, release=f"v{release}")
+    # forge sync refuses a detached HEAD, so the throwaway checkout gets a throwaway branch.
+    check, branch = Path(tempfile.mkdtemp()) / "sync", f"forge-synced-{os.getpid()}"
+    repo.git("worktree", "add", "-q", "-b", branch, str(check), "HEAD", cwd=top)
+    try:
+        cfg = repo.config(check)
+        sync.write(check, cfg)
+        if cfg.get("repo") == "forge-source":
+            sync.write_file(check, "docs/commands.md", sync.command_page())
+        stale = synced_changes(check)
+    finally:
+        repo.git("worktree", "remove", "-f", str(check), cwd=top)
+        repo.git("branch", "-D", branch, cwd=top)
+    if stale:
+        repo.refuse(REFUSALS["unsynced"], kind=kind, files=", ".join(stale),
+                    verb="aren't" if len(stale) > 1 else "isn't", path=top, item=item)
+
+
+def generated_fix_proof(done: str, evidence: str, item: str) -> str:
+    """Generated fixes give their first review the same proof as a worker commit."""
+    return (f"Proof list:\n- {done} Evidence: {evidence} "
+            f"forge close {item} reports the review result and test evidence from the repo's chosen test place "
+            "(including any skip reason).")
+
+
+def synced_changes(top: Path) -> list[str]:
+    """The files forge sync changed in a checkout, deletions included, without its new hook shims."""
+    # No rename detection, so each entry is one plain path; a rename lists its deletion and addition.
+    status = repo.run("git", "status", "--porcelain", "-z", "--no-renames", "--untracked-files=all",
+                      cwd=top).stdout
+    # sync's new hook shims are never committed, even when the hooks folder is in the checkout (husky).
+    hooks = repo.git("rev-parse", "--git-path", "hooks/", cwd=top)
+    return [entry[3:] for entry in status.split("\0") if entry and not entry.startswith(f"?? {hooks}")]
+
+
+def _push(top: Path, branch: str, *, reviewed: bool = False) -> None:
+    """Merge rejected remote history; retry other push failures after 1, 2 and 4 seconds."""
+    tags = repo.git("for-each-ref", "--format=%(refname)", "--merged", branch,
+                    "refs/tags/forge-start/", cwd=top).splitlines()
+    # Replay and copied plans can detach ownership history from the work branch.
+    retained = repo.git("for-each-ref", "--format=%(refname)",
+                        f"refs/tags/forge-start/{branch}", f"refs/tags/forge-plan/{branch}",
+                        cwd=top).splitlines()
+    tags = list(dict.fromkeys(tags + retained))
+    if push_replay(top, branch, tags):
+        return
+    for wait in (1, 2, 4, None):
+        try:
+            repo.git("push", "-q", "--atomic", "-u", "origin", branch, *tags, cwd=top)
+            return
+        except subprocess.CalledProcessError as error:
+            if re.search(r"\[rejected\].*\((non-fast-forward|fetch first)\)", error.stderr or ""):
+                if reviewed:
+                    item = (review.branch_item(branch, top) or (branch, {}))[0]
+                    repo.refuse(("Remote work arrived after the review.", "forge close {item}"), item=item)
+                reconcile(top, branch)
+                repo.git("push", "-q", "--atomic", "-u", "origin", branch, *tags, cwd=top)
+                return
+            if wait is None:
+                raise
+            time.sleep(wait)
+
+
+def _save(top: Path, item: str, state: dict[str, Any], message: str, *paths: str) -> None:
+    repo.write_state(item, state, top)
+    repo.commit_state(message, repo.state_path(item), *paths, top=top)
+
+
+def _gh(top: Path, *args: str) -> str:
+    done = repo.run("gh", *args, cwd=top)
+    if done.returncode:
+        if args[:2] == ("pr", "edit") and "--body-file" in args:
+            problem = (done.stderr or done.stdout or f"exit code {done.returncode}").strip()
+            action = ("wait for GitHub's rate limit to reset"
+                      if re.search(r"rate[ -]?limit|HTTP\s+429", problem, re.I)
+                      else "fix the GitHub problem")
+            repo.refuse(REFUSALS["publish"], problem=problem, action=action)
+        if done.stderr.strip() == repo.REFUSALS["no_github"][0]:
+            repo.refuse(repo.REFUSALS["no_github"])
+        raise subprocess.CalledProcessError(done.returncode, ["gh", *args], done.stdout,
+                                            done.stderr)
+    return done.stdout
+
+
+def _draft(top: Path, *args: str) -> str:
+    """A gh call that makes the pull request a draft. Where the repo allows no drafts (a private
+    repo on GitHub's free plan) it says so and returns ""; any other refusal still fails."""
+    try:
+        return _gh(top, *args)
+    except subprocess.CalledProcessError as error:
+        if "draft pull requests are not supported" not in error.stderr.lower():
+            raise
+    print("This repo doesn't allow draft pull requests, so the pull request is ready for review; "
+          "forge-pr-check still blocks its merge.")
+    return ""
+
+
+def _pull_request(top: Path, branch: str) -> dict[str, Any] | None:
+    """The branch's open pull request, else its merged one, else None."""
+    prs = json.loads(_gh(top, "pr", "list", "--head", branch, "--state", "all",
+                         "--json", "number,state,body,isDraft,mergeable,mergeStateStatus,baseRefName"))
+    return next((pr for state in ("OPEN", "MERGED") for pr in prs if pr.get("state") == state),
+                None)
+
+
+def _refresh_record(top: Path, item: str, state: dict[str, Any], pr: dict[str, Any] | None = None) -> str:
+    pr = pr or _pull_request(top, state.get("branch") or repo.current_branch(top))
+    if not pr:
+        return ""
+    if (repo.forge_dir(top) / "backfill-pending").exists() and not time_records.from_body(pr.get("body") or ""):
+        return pr.get("body") or ""  # A partial local record would make the retry skip older evidence.
+    body = _bounded_body(time_records.refresh_record(top, item, state, pr.get("body") or ""))
+    if body != (pr.get("body") or ""):
+        path = repo.forge_dir(top) / f"pr-body-{item.replace('/', '-')}.md"
+        path.write_bytes(body.encode("utf-8"))
+        _gh(top, "pr", "edit", str(pr["number"]), "--body-file", str(path))
+    return body
+
+
+def _publish(top: Path, item: str, state: dict[str, Any], branch: str, default: str,
+             pr: dict[str, Any] | None, result: dict[str, Any],
+             evidence: tuple[str, str]) -> dict[str, Any]:
+    """Open the pull request, or refresh its contract and Forge's block. While the review is
+    blocked or the local tests failed, the pull request is a draft."""
+    check, proof = evidence
+    published = (pr or {}).get("body") or ""
+    rebuilding = not time_records.from_body(published)
+    rebuilt = None
+    if rebuilding:
+        from forge import backfill
+        head = repo.git("rev-parse", "HEAD", cwd=top)
+        def reconstruct():
+            try:
+                rebuilt = backfill.rebuild(top, {**(pr or {}), "headRefName": branch}, pushed_head=head)
+                return rebuilt[2] if rebuilt else None
+            except (repo.Refused, subprocess.CalledProcessError, OSError, ValueError, KeyError, TypeError):
+                backfill.failed(top)
+                return None
+        rebuilt = repo.command_fact(("first publish history", branch, head), top, reconstruct)
+        if rebuilt:
+            published = backfill.seed(published, rebuilt)
+    history = time_records.how_it_went(top, item, state, published)
+    if rebuilding and rebuilt is None:
+        # Keep rendered local observations, but no record that would retire the missing-history retry.
+        history = re.sub(r"\n<!-- forge:time-record \{.*?\} -->", "", history, flags=re.S)
+    block = _block(result, "\n\n".join(part for part in (history, proof, check) if part))
+    draft = pr is None or result["status"] == "blocked" or bool(state.get("tests"))
+    # The body goes through a file under .git/forge/: in argv it meets length limits, and a
+    # multi-line argument can't pass through a Windows .cmd shim.
+    body_file = repo.forge_dir(top) / f"pr-body-{item.replace('/', '-')}.md"
+    if pr is None:
+        title, why, summary = _title(top, item, state)
+        notes = f"{state['notes']}\n\n" if state.get("notes") else ""  # migrate's plan
+        body_file.write_bytes(_bounded_body(f"Why: {why}\nDone when: {summary}\n\n{notes}{block}\n").encode("utf-8"))
+        create = ("--base", default, "--head", branch, "--title", title, "--body-file",
+                  str(body_file))
+        url = _draft(top, "pr", "create", "--draft", *create) if draft else ""
+        is_draft = bool(url)
+        url = url or _gh(top, "pr", "create", *create)
+        print(f"Opened the pull request: {url.strip()}")
+        number = int(url.strip().rsplit("/", 1)[1])
+        repo.record_event(top, item, "pull request published", number=number)
+        # Share the publication event, which did not exist when the initial body was rendered.
+        return _publish(top, item, state, branch, default,
+                        {"number": number, "state": "OPEN",
+                         "body": body_file.read_text(encoding="utf-8"), "isDraft": is_draft}, result, evidence)
+    if not any(event.get("item") == item and event.get("event") == "pull request published"
+               and event.get("number") == pr["number"] for event in time_records.read(top, "events")):
+        repo.record_event(top, item, "pull request published", number=pr["number"])
+    if draft and not pr.get("isDraft"):
+        _draft(top, "pr", "ready", str(pr["number"]), "--undo")
+    body = pr.get("body") or ""
+    marked = re.compile(re.escape(BEGIN) + ".*?" + re.escape(END), re.S)
+    new = (marked.sub(lambda _: block, body, count=1) if marked.search(body)
+           else f"{body.rstrip()}\n\n{block}\n")
+    _, _, summary = _title(top, item, state)
+    new = re.sub(r"^Done when:.*$", lambda _: f"Done when: {summary}", new, count=1, flags=re.M)
+    new = _bounded_body(new)
+    if new != body:
+        body_file.write_bytes(new.encode("utf-8"))
+        _gh(top, "pr", "edit", str(pr["number"]), "--body-file", str(body_file))
+        print("Updated the pull request's review block.")
+    return {**pr, "body": new}
+
+
+def _bounded_body(body: str, *, suffix: str = "") -> str:
+    """Keep every GitHub write bounded, cutting duplicated and advisory detail before the contract."""
+    limit = 65536 - len(suffix.encode("utf-8"))  # Reserve the final merge trailer.
+    note = ("Some detail was shortened to fit GitHub's pull request limit. "
+            "Git holds the full contract and proof; missing time evidence remains unknown.")
+    if len(body.encode("utf-8")) <= limit:
+        return body + suffix
+    body = body.replace(note + "\n", "")
+    body = re.sub(r"\n<!-- forge:history .*? -->", "", body)
+    body = re.sub(r"(?m)^([^\n<]+)\n(?:\1\n)+", r"\1\n", body)
+    budget = limit - len((note + "\n\n\n\n").encode("utf-8"))
+
+    def clip(text: str, size: int) -> str:
+        return text.encode("utf-8")[:max(0, size)].decode("utf-8", errors="ignore")
+
+    def cut(match: re.Match[str]) -> str:
+        text = match[0]
+        excess = len(body.encode("utf-8")) - budget
+        if excess <= 0:
+            return text
+        suffix = "\n</details>" if text.startswith("<details>") else ""
+        return clip(text.removesuffix("</details>"), max(256, len(text.encode("utf-8")) - excess - len(suffix))) + suffix
+
+    # These have full source evidence elsewhere, unlike the current contract and blocking status.
+    for pattern in (r"<details>.*?</details>",
+                    r"Proof list:.*?(?=\n(?:## |Functional check:|<!-- forge:)|\Z)",
+                    r"Functional check:.*?(?=\n(?:## |Proof list:|<!-- forge:)|\Z)",
+                    r"## How it went\n.*?(?=\n(?:Proof list:|Functional check:|<!-- forge:)|\Z)"):
+        body = re.sub(pattern, cut, body, flags=re.S)
+
+    # Keep completion metadata valid even when the owner supplied an exceptionally long outcome.
+    def outcome(match: re.Match[str]) -> str:
+        try:
+            data = json.loads(match[1])
+            return "Forge-story-done: " + json.dumps({"key": clip(data["key"], 512),
+                                                       "outcome": clip(data["outcome"], 2048)})
+        except (ValueError, KeyError, TypeError):
+            return ""
+
+    if len(body.encode("utf-8")) > budget:
+        body = re.sub(r"^Forge-story-done: (\{.*\})$", outcome, body, flags=re.M)
+    # Shorten long prose before source history; retain small owner notes and the review state.
+    lines = body.splitlines(keepends=True)
+    protected = ("Why:", "Done when:", "Review:", "The review found", "- Finding ")
+    def prose(minimum: int) -> str:
+        excess = sum(len(line.encode("utf-8")) for line in lines) - budget
+        essential = {next((i for i, line in enumerate(lines) if line.startswith(prefix)), -1)
+                     for prefix in protected[:4]}
+        for index in sorted(range(len(lines)), key=lambda i: (
+                lines[i].startswith(protected), -len(lines[i]) if minimum else i)):
+            if excess <= 0:
+                break
+            line = lines[index]
+            if line.rstrip() in (BEGIN, END) or line.startswith(("<!-- forge:time-record ", "Forge-story-done:")):
+                continue
+            keep = max(minimum, 64 if index in essential else 0)
+            size = len(line.encode("utf-8"))
+            if size > keep:
+                target = max(keep, size - excess)
+                lines[index] = clip(line, target - 1).rstrip() + "\n" if target else ""
+                excess -= size - len(lines[index].encode("utf-8"))
+        return "".join(lines)
+    body = prose(256)
+
+    marker = re.search(r"<!-- forge:time-record (\{.*?\}) -->", body, re.S)
+    if marker and len(body.encode("utf-8")) > budget:
+        record = time_records.from_body(body)
+        before, after = body[:marker.start()], body[marker.end():]
+        if record:
+            record = {k: record.get(k) for k in ("events", "timings", "summary", "state", "ready", "rebuilt", "clean_reviews")}
+            record["truncated"] = True
+            while True:
+                body = before + "<!-- forge:time-record " + json.dumps(record, separators=(",", ":")) + " -->" + after
+                if len(body.encode("utf-8")) <= budget:
+                    break
+                rows = next((record[name] for name in ("events", "timings", "clean_reviews") if record.get(name)), None)
+                if rows is None:
+                    break
+                del rows[:max(1, len(rows) // 4)]
+        else:
+            body = before + after
+    lines = body.splitlines(keepends=True)
+    body = prose(0)
+    return body.rstrip() + "\n\n" + note + "\n" + suffix
+
+
+def _block(result: dict[str, Any], check: str) -> str:
+    """Forge's block in the pull request body: the open blocking findings plainly first, or one
+    `Review: clean` line, then the dismissed and advisory findings folded away, then the worker's
+    functional check from its commit message. Each finding is a bullet naming its --dismiss number
+    in text, since GitHub renumbers an ordered list."""
+    because = {d["finding"]: d for d in result["dismissals"]}
+    blocking, rest, below = [], [], {"follow-up": [], "live with": []}
+    for n, finding in enumerate(result["findings"], 1):
+        outcome = "follow-up" if finding.get("follow_up") else score.bar(score.of(finding))
+        scores = score.of(finding)
+        line = "Gain {}, Work {}, Harm {}".format(*scores) if scores else ""
+        is_blocking = n not in because and (
+            finding.get("required_done_when") or score.holds(finding, result.get("blocking_level")))
+        note = (f"dismissed because {because[n]['because']}"
+                + (" (evidence from the base)" if because[n].get("from_base") else "")
+                if n in because
+                else "blocks the merge" if is_blocking
+                else finding.get("follow_up") or line if outcome in below
+                else "advisory: " + " ".join(score.strip(finding.get("body", "")).split()))
+        note += f"; {line}" if line and note != line else ""
+        (blocking if is_blocking else below[outcome] if n not in because and outcome in below
+         else rest).append(f"- Finding {n} ({score.priority(finding)}): {finding['title']} "
+                           f"({finding['file']}:{finding['line']}): {note}")
+    if result.get("skipped"):
+        lines = [BEGIN, f"Review: {review_skip.label(result, reason=True)}."]
+    elif result["status"] == "reviewing":
+        lines = [BEGIN, "Review: running; CI is running alongside it."]
+    elif result["status"] == "blocked":
+        lines = [BEGIN, "The review found serious problems.", "", *blocking]
+    else:
+        lines = [BEGIN, f"Review: clean, {len(because)} dismissed, {len(rest) - len(because) + sum(map(len, below.values()))} advice."]
+    folded = [*rest, *[line for name, title in (("follow-up", "Follow-ups:"), ("live with", "Lived with:"))
+                       if below[name] for line in ("", title, *below[name])]]
+    folded = folded[1:] if folded[:1] == [""] else folded
+    if folded:
+        lines += ["", "<details>", "<summary>Dismissed and advisory findings</summary>", "", *folded,
+                  "", "</details>"]
+    return "\n".join([*lines, *(["", check] if check else []), END])
+
+
+def _title(top: Path, item: str, state: dict[str, Any]) -> tuple[str, str, str]:
+    """A short title and the why and done-when lines for a new pull request."""
+    if "/" in item:
+        _, doc, row = review.task(top, item)
+        story_title = re.search(r"^# (.+)$", (top / "plans" / f"{item.split('/')[0]}.md").read_text(encoding="utf-8"), re.M)
+        title = f"{story_title[1]}: {row.get('name', '')}" if story_title else row.get("name", "")
+        why, summary = doc.get("Why", ""), row.get("what it delivers", "")
+    else:
+        why, summary = state.get("why", ""), state.get("done_when", "")
+        # The first sentence: it ends at . ! or ? (and any closing quote or bracket) before a
+        # space or the end, never in v1.2.10. The closing quote or bracket stays.
+        first = re.split(r"[.!?]([\"')\]]?)(?=\s|$)", why, maxsplit=1)
+        title = " ".join("".join(first[:2]).split())
+        if len(title) > 70:  # a title the owner reads at a glance; no space: a hard cut
+            title = title[:title.rfind(" ", 0, 71) if " " in title[:71] else 70].rstrip(",;:.!?")
+    return " ".join(title.split()) or item, " ".join(why.split()), " ".join(summary.split())
+
+
+def _attach(top: Path, item: str, branch: str) -> None:
+    """Link the pull request in the item's recorded Codex chat; a failure never stops the close."""
+    if (repo.read_state(item, top) or {}).get("worker") == "claude":
+        return
+    try:
+        if codex.record(top, item).get("conversation") and not codex.attach(top, item, json.loads(
+                _gh(top, "pr", "view", branch, "--json", "number,url,headRefName"))):
+            raise RuntimeError(f"see {repo.work_log(top, item)}")
+    except Exception as error:
+        print(f"Could not link the pull request in its Codex chat "
+              f"({(getattr(error, 'stderr', '') or str(error)).strip()}). The next forge close tries again.")
+
+
+def _merged(top: Path, item: str) -> int:
+    """A merged task needs no outcome step when its merge already recorded completion."""
+    print(f"The pull request for {item} is merged.")
+    key, _, name = item.partition("/")
+    if name:
+        if story.completed(top, key, story.landed_ref(top)).get("status") == "done":
+            print("Next: forge next")
+            return 0
+        tasks = review.rows(review.task(top, item)[1].get("Tasks", ""))
+        # ponytail: the newest 1,000 merged pull requests; search by branch when a repo has more.
+        merged = {pr.get("headRefName") for pr in json.loads(_gh(
+            top, "pr", "list", "--state", "merged", "--limit", "1000", "--json", "headRefName"))}
+        if all(f"task/{key}-{row.get('id', '').strip('`')}" in merged for row in tasks):
+            print(f'Every part of {key} is merged.\nNext: forge story done {key} "<outcome>"')
+    return 0
+
+
+COMMANDS = [{
+    "words": "close", "run": "close", "changes_state": True,
+    "help": "Close a task or fix by the close rule",
+    "args": [(('--show',), {"action": "store_true"}), (('--no-review',), {"action": "store_true"}), (('--by',), {"metavar": "NAME"}),
+             (('item',), {}), (('--dismiss',), {"type": int, "action": "append", "metavar": "N"}),
+             (('--because',), {"action": "append", "metavar": "FILE:LINE_REASON"}),
+             (('--resolve',), {"choices": ["more", "narrow", "split", "accept", "switch", "same"]}),
+             (('--reason',), {"help": "The person's reason for a skip or choice after a review loop stop"})],
+    "position": 150,
+    "listing": "| `forge close <item>` | Closes a task or fix; `--show` prints the latest saved review in full, with each finding's open, dismissed or follow-up state, and runs no tests or review; `--no-review --by \"<name>\" --reason \"<why>\"` skips only the model review when a person asks, unless an earlier review blocked the item; a fix gets one review round and a part two; open findings below P0 at the limit wait for `--resolve more`, `split` or `accept` with `--reason \"<human's choice>\"`; an open P0 returns to the worker, and the same P0 after two worker rounds stops for the owner; docs-only changes skip local and generated CI tests, and the required tests check passes with a docs-only note |",
+}]
