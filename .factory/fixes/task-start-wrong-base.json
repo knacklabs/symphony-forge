@@ -1,6 +1,13 @@
 {
   "base": "5047671e767e338664b030233c4a04e624aa48c8",
   "branch": "fix/task-start-wrong-base",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1f1d6-93a0-7922-b6aa-f1953b699dde",
+    "head": null,
+    "start": "e5ce15709038bb047b4f337d5f40e4ac007ebe1c"
+  },
   "done_when": "forge task start bases a task only on its own story branch plus origin/main; close refuses a task whose diff holds another open task's commits and names that task; the worker brief says never to delete story-level files such as design images to keep a part narrow; new and existing repos get it on upgrade",
   "fix_kind": "mechanical",
   "kind": "fix",
