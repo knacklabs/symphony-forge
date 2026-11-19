@@ -1,6 +1,13 @@
 {
   "base": "285e56632baf943e4c7524f2341a7bb52f3e7f0b",
   "branch": "fix/check-waits-by-quota",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1f199-98c7-74a1-9a87-c23e6bacb547",
+    "head": null,
+    "start": "0c0e6e990f9cb597f15510cff98b174fec7dc1ad"
+  },
   "done_when": "Close, merge and land limit how many check waits run at once by the remaining GitHub API quota (read from the rate-limit endpoint at most once a minute), and say when one waits for quota; new and existing repos get it on upgrade",
   "fix_kind": "mechanical",
   "kind": "fix",
