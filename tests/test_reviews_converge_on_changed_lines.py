@@ -67,7 +67,8 @@ def test_2_review_convergence_not_done_holds_fixes_and_approved_task_items(env, 
     if owner_item or kind == "fix":
         assert closed.returncode == 1 and note["title"].rstrip(".") in closed.stderr, closed.stdout + closed.stderr
         if kind == "fix":
-            assert "reached the round limit with open findings" in closed.stderr
+            assert "The review left serious findings open" in closed.stderr
+            assert "reached the round limit with open findings" not in closed.stderr
     else:
         assert closed.returncode == 0, closed.stdout + closed.stderr
         shown = body(env.gh_calls("pr", "edit")[-1])

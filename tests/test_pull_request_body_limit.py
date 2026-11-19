@@ -99,9 +99,8 @@ def test_1_every_pull_request_write_fits_github_and_keeps_current_review_facts(e
     reject_oversized_bodies(env)
     first = env.close(item)
     assert first.returncode == 1, first.stdout + first.stderr
-    refusal = ("The review left serious findings open" if "/" in item
-               else "reached the round limit with open findings, so Forge stopped.")
-    assert refusal in first.stderr, first.stderr
+    assert "The review left serious findings open" in first.stderr, first.stderr
+    assert "One more round, split or accept?" not in first.stderr
     text = latest_body(env)
     assert "Basket quantities disappear" in text
     assert "Done when:" in text
@@ -116,10 +115,6 @@ def test_1_every_pull_request_write_fits_github_and_keeps_current_review_facts(e
                       lambda _: "## How it went\n\n" + "篮" * 12_000, text, flags=re.S)
         assert len((text + owner_note).encode("utf-8")) < LIMIT
     publish_snapshot(env, item, text + owner_note)
-    if "/" not in item:
-        resumed = env.close(item, "--resolve", "more", "--reason",
-                            "Repair the basket quantity loss before merging")
-        assert resumed.returncode == 0, resumed.stdout + resumed.stderr
     env.commit(where, "app.py", "print('basket quantities survive')\n")
     env.reviews(CLEAN)
     second = env.close(item)
