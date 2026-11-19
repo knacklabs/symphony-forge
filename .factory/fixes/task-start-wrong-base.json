@@ -1,0 +1,115 @@
+{
+  "base": "5047671e767e338664b030233c4a04e624aa48c8",
+  "branch": "fix/task-start-wrong-base",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1f1d6-93a0-7922-b6aa-f1953b699dde",
+    "head": null,
+    "start": "e5ce15709038bb047b4f337d5f40e4ac007ebe1c"
+  },
+  "done_when": "forge task start bases a task only on its own story branch plus origin/main; close refuses a task whose diff holds another open task's commits and names that task; the worker brief says never to delete story-level files such as design images to keep a part narrow; new and existing repos get it on upgrade",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "check_foreign_work() in src/forge/task.py",
+      "file": "src/forge/task.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 671,
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: Owner accepted on 19 Nov 2026: close misses foreign commits without a task start record, and refuses after reverted foreign changes; filed as an issue",
+      "round": 1,
+      "security": false,
+      "title": "Not done: close misses imported commits without a task start record",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/brief.md",
+      "file": "src/forge/templates/brief.md",
+      "gain": 3,
+      "harm": 3,
+      "line": 157,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: resumed workers miss the new brief after upgrade",
+      "work": 2
+    },
+    {
+      "area": "stack_base() in src/forge/task.py",
+      "file": "src/forge/task.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 570,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Name the cross-story blocker when several tasks overlap",
+      "work": 2
+    },
+    {
+      "area": "check_foreign_work() in src/forge/task.py",
+      "file": "src/forge/task.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 671,
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: Owner accepted on 19 Nov 2026: close misses foreign commits without a task start record, and refuses after reverted foreign changes; filed as an issue",
+      "round": 1,
+      "security": false,
+      "title": "Allow close after foreign changes have been reverted",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "0843a323387e98688e0201e85324249c62f7ab3b51ec5a69205fed5d78d8058b",
+    "changed": "42508f0aa743c895e6560c6789ac014bd0ff196e65ad56e824592f764eca67c4",
+    "commit": "8ebc016ccfcddb6c5dcf8c8dfb2687f5d8291663",
+    "dismissals": [],
+    "findings": [],
+    "id": "b2e976d2-18ca-46dd-822d-b8f2679080a7",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-19T03:08:24.838641+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-19T03:51:09.486071+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-19T04:10:48.192558+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-19T05:20:53.564508+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-19T04:10:48.192831+00:00",
+    "by": "owner",
+    "choice": "accept",
+    "file": "src/forge/task.py",
+    "reason": "Owner accepted on 19 Nov 2026: close misses foreign commits without a task start record, and refuses after reverted foreign changes; filed as an issue",
+    "wait_id": "fb1bd815-1655-485d-a274-c127f02848f6",
+    "worker_round": 2
+  },
+  "stuck": {
+    "close": "a9f3fa40-5f59-47ec-ae18-bd3f667796e3",
+    "head": "4384b213757789744ca28f148b9c5105f651dd82",
+    "keys": {},
+    "round": 2
+  },
+  "why": "forge task start can create a task branch whose history holds another story's unmerged task commits (seen at a client on 19 Nov 2026: a docs-only part carried another task's migration and code, so close warned that four items add the same migration), and a builder told to keep a part narrow deleted the story's design images, so close then refused",
+  "worker": "codex"
+}

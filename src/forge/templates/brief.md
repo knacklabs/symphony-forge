@@ -35,9 +35,10 @@ The refusal lists untracked files. Code and documentation changes still qualify 
 If unreadable Autoreview output stops close, the refusal shows the saved output path, even if the retry writes no report.
 When the review service returns a rate or usage limit, close waits 30, then 60, then at most 120 seconds between retries without counting these answers as failed reviews.
 When GitHub reports its API rate limit, only close, merge and land wait until its reset time plus three seconds, then continue. They read the reset from `gh api rate_limit`: graphql for `gh api graphql` calls, core otherwise. If that quota still has requests left or the lookup fails, the command waits 60 seconds before another attempt. One line gives the wait time. Board and next keep their available local or cached data without this wait. New and existing repos get this behavior on upgrade.
+Close, merge and land share places for check waits across this repo's worktrees. The remaining GitHub API quota sets the number of places. They read the quota at most once a minute and say when a check wait must wait for quota. If the quota lookup fails, only one check wait runs. New and existing repos get this behavior on upgrade.
 From the second review round, close checks the previous round's findings and new P0s that
 happen in normal use. A round-one fix that breaks the main path counts as a P0.
-`task_review_rounds` sets the task review limit. At that limit (the repo's setting, two by default), open findings below P0 need the owner's choice before they become follow-ups.
+`task_review_rounds` sets the task and fix review limit. For a fix, only blocked reviews count toward this limit. At that limit (the repo's setting, two by default), open findings below P0 need the owner's choice before they become follow-ups.
 Every `Not done:` finding blocks a fix, including one about builder details.
 For a story task, `Not done` blocks only against a covered owner-approved Done-when item,
 including a title that starts with that item and adds words after it. Builder details
@@ -154,6 +155,7 @@ line asking you to split them into smaller stories; already approved larger stor
 Parts can start on one reviewed, unmerged part by default. `stack = "off"` in `forge.toml`
 makes new parts wait for merges. A part that builds on another part keeps that base until close
 moves its own changes onto the default branch after the base merges.
+Parts of another story must merge first. $story_files
 Close reviews only the stacked part's own changes and waits for its base to merge before CI and merge.
 After Forge merges the base, run the printed `forge close <part>` step to move the part onto the default branch.
 If a new part waits for its base to include an earlier merge, close that base first, then start the new part again.

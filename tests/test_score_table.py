@@ -7,6 +7,7 @@ stubbed; they write the scored findings and notes.
 """
 from __future__ import annotations
 
+import re
 from datetime import datetime, timezone
 
 import pytest
@@ -34,6 +35,15 @@ def _table(text: str) -> list[str]:
 def test_5_stop_questions_rank_open_notes_in_one_table(env, tmp_path, case):
     _client_on_this_release(env, tmp_path, case)
     repo = env.repo
+    config = re.sub(r"(?m)^task_review_rounds\s*=.*(?:\r?\n|$)", "",
+                    (repo.path / "forge.toml").read_text("utf-8"))
+    repo.write("forge.toml", "task_review_rounds = 1\n" + config)
+    no_hooks = tmp_path / "fixture-no-hooks"
+    no_hooks.mkdir(exist_ok=True)
+    hook_setting = f"core.hooksPath={no_hooks.as_posix()}"
+    repo.git("add", "forge.toml")
+    repo.git("-c", hook_setting, "commit", "-q", "-m", "Set one review round for this test")
+    repo.git("-c", hook_setting, "push", "-q", "origin", "main")
 
     # The guide arrives with the table rule, the coordinator's rule and the stop rule, and without the old rules.
     for host in (".claude", ".codex"):
@@ -45,7 +55,7 @@ def test_5_stop_questions_rank_open_notes_in_one_table(env, tmp_path, case):
         assert "never a dismissal for being unnecessary, rare or low value" not in guide
         assert "whatever files they were in" not in guide
 
-    # A fix stops on its first review with P1s at the bar. Its question lists every open
+    # With a one-review fixture, a fix's question lists every open
     # finding, ranked by the bar, then Harm, then Gain, then Work, below-bar ones too.
     item, where = env.start_fix()
     found = lambda title, scores, number, who="": _scored(  # noqa: E731
@@ -70,7 +80,7 @@ def test_5_stop_questions_rank_open_notes_in_one_table(env, tmp_path, case):
     stop = env.close(item).stderr
     assert _table(stop) == rows, stop
     assert "One more round, split or accept?" in stop.split(rows[-1], 1)[1]
-    # The P1s still open after the fix's first review need the owner's choice.
+    # The P1s still open after the fix's review need the owner's choice.
     assert ("Ask the human to choose one more round, split or accept the remaining findings, in these words:"
             in stop and "settle it yourself" not in stop)
     assert "\n".join(rows) in repo.forge("next").stdout

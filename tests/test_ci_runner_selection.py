@@ -56,7 +56,9 @@ def _tool_bootstrap(jobs: tuple[str, str]) -> None:
         for line in job.splitlines():
             if re.search(r"(?:run: |\| )python3?\b", line):
                 assert job.index("uses: actions/setup-python@") < job.index(line)
-        assert job.index("uses: astral-sh/setup-uv@") < job.index("- run:")
+        # Discovering origin/HEAD uses git before tool setup. uv must be ready
+        # before its first use, rather than before an unrelated shell command.
+        assert job.index("uses: astral-sh/setup-uv@") < job.index("uv tool install")
     tests = jobs[0]
     assert "uses: actions/setup-node@" in tests
     assert "node-version:" in tests or "node-version-file:" in tests
