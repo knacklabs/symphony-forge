@@ -11,14 +11,130 @@
   "done_when": "forge task start bases a task only on its own story branch plus origin/main; close refuses a task whose diff holds another open task's commits and names that task; the worker brief says never to delete story-level files such as design images to keep a part narrow; new and existing repos get it on upgrade",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [
+    {
+      "area": "check_foreign_work() in src/forge/task.py",
+      "file": "src/forge/task.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 671,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: close misses imported commits without a task start record",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/brief.md",
+      "file": "src/forge/templates/brief.md",
+      "gain": 3,
+      "harm": 3,
+      "line": 157,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: resumed workers miss the new brief after upgrade",
+      "work": 2
+    },
+    {
+      "area": "stack_base() in src/forge/task.py",
+      "file": "src/forge/task.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 570,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Name the cross-story blocker when several tasks overlap",
+      "work": 2
+    },
+    {
+      "area": "check_foreign_work() in src/forge/task.py",
+      "file": "src/forge/task.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 671,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Allow close after foreign changes have been reverted",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "dd1c9a9bb24666178fe26685ae62064f438691ac6f411096558c94c9a1724518",
+    "changed": "ca63bdf9f35208b01311195546cd241d9d06b5ff8a690ab3bfb5829f79c2c3da",
+    "commit": "9d0513e14598e051e6c44e014c8d502d1a6f7ab7",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Not done\nCase: normal use - a developer cherry-picks a code commit from another open task into the current task.\nThe check at src/forge/task.py:671 only looks for the commit that added the other task's state file. A cherry-pick of its code does not include that record, so close can proceed without naming the other task even though its changes are in the diff. It also misses later commits brought in from a same-story stacked parent when that parent's start record is already in the selected base (src/forge/close.py:225). The proof test at tests/test_task_branch_isolation.py:40 merges the whole peer branch, so it does not exercise either case.\nOwner-approved Done when: forge task start bases a task only on its own story branch plus origin/main; close refuses a task whose diff holds another open task's commits and names that task; the worker brief says never to delete story-level files such as design images to keep a part narrow; new and existing repos get it on upgrade",
+        "file": "src/forge/task.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 671,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: close misses imported commits without a task start record",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Not done\nCase: normal use - an existing repository upgrades Forge while a task is between worker rounds, then resumes its saved conversation.\nThis instruction is only in the full template. src/forge/worker.py:303 selects a short continued brief for a saved thread, and src/forge/worker.py:656 builds that brief without this instruction while telling the worker its earlier brief still applies. A conversation started before the upgrade therefore never receives the new protection for story-level files. The manual template check does not cover that delivery path.\nOwner-approved Done when: forge task start bases a task only on its own story branch plus origin/main; close refuses a task whose diff holds another open task's commits and names that task; the worker brief says never to delete story-level files such as design images to keep a part narrow; new and existing repos get it on upgrade",
+        "file": "src/forge/templates/brief.md",
+        "gain": 3,
+        "harm": 3,
+        "line": 157,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: resumed workers miss the new brief after upgrade",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 2\nRaise: Functional\nCase: normal use - a new part overlaps both a reviewed part in its own story and an open part in another story.\nThe new cross-story check returns no stack base for the whole blocker set. In src/forge/task.py:525-532, admission then either says the same-story dependency must merge or reports the first overlapping task, which can be the already-reviewed same-story part. In the latter case it directs the user to close that part again and continues giving the same direction, while the actual cross-story blocker is not named. Once the cross-story part merges, the same-story part could still be used as the reviewed base.",
+        "file": "src/forge/task.py",
+        "gain": 4,
+        "harm": 2,
+        "line": 570,
+        "priority": "P1",
+        "title": "Name the cross-story blocker when several tasks overlap",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 2\nRaise: Functional\nCase: normal use - a developer accidentally merges another open task, then reverts that merge so none of its changes remain in the pull request diff.\nThe guard searches the entire commit history for the other task's state-file addition. Reverting the merge removes its changes from the tree but leaves that addition in history, so close still refuses and asks for the other task's commits to be removed. This blocks a clean diff after a normal Git undo.",
+        "file": "src/forge/task.py",
+        "gain": 4,
+        "harm": 2,
+        "line": 671,
+        "priority": "P1",
+        "title": "Allow close after foreign changes have been reverted",
+        "work": 2
+      }
+    ],
+    "id": "d4199056-4717-45a3-b2e2-b08782011ec1",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-19T03:08:24.838641+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-19T03:51:09.486071+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-11-19T03:51:09.498750+00:00",
+    "file": "src/forge/task.py",
+    "wait_id": "57c893d5-66e0-428c-9ec8-c56ee6dde69e"
+  },
   "stuck": {
     "close": null,
     "head": "8d358da75d3a4857c59ee3b16ec1531511e3a3b8",
