@@ -12,12 +12,216 @@
   "done_when": "When Forge merges a branch, it merges its own record files itself (the higher round, the union of steps and reviews) instead of leaving a text conflict, and forge next names an unusable record and goes on for the other items; new and existing repos get it on upgrade",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [
+    {
+      "area": "merge_record() in src/forge/sync.py",
+      "file": "src/forge/sync.py",
+      "gain": 5,
+      "harm": 4,
+      "line": 444,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Disputed keep local state on equal rounds: story approvals are lost",
+      "work": 2
+    },
+    {
+      "area": "_history() in src/forge/review.py",
+      "file": "src/forge/review.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 605,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Preserve concurrent review histories and their dispositions",
+      "work": 2
+    },
+    {
+      "area": "src/forge/sync.py",
+      "file": "src/forge/sync.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 42,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Merge the client sign-off record",
+      "work": 2
+    },
+    {
+      "area": "_story() in src/forge/nextstep.py",
+      "file": "src/forge/nextstep.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 699,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Continue reporting for every unusable record",
+      "work": 3
+    },
+    {
+      "area": "test_1_close_merges_records_with_the_higher_round_and_both_histories() in tests/test_branch_merges_keep_forge_records.py",
+      "file": "tests/test_branch_merges_keep_forge_records.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 21,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_close_merges_records_with_the_higher_round_and_both_histories",
+      "work": 2
+    },
+    {
+      "area": "test_2_next_names_unusable_record_and_lists_other_items() in tests/test_next_reports_unusable_records.py",
+      "file": "tests/test_next_reports_unusable_records.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 40,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_2_next_names_unusable_record_and_lists_other_items",
+      "work": 2
+    },
+    {
+      "area": "test_1_upgrade_to_installed_release_continues_during_runs() in tests/test_upgrade_to_installed_release.py",
+      "file": "tests/test_upgrade_to_installed_release.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 60,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_upgrade_to_installed_release_continues_during_runs",
+      "work": 2
+    },
+    {
+      "area": "tests/test_branch_merges_keep_forge_records.py",
+      "file": "tests/test_branch_merges_keep_forge_records.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 17,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: proof list",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "9dd06fe16296261113f08ae0780abd37e19300b4fe25f0536ee21a8cef9c0375",
+    "changed": "7e9f01f91196901348cc157b4cdbd20b9274131fc9f90d03696350d3cd4712dc",
+    "commit": "e364888d7d7fa701b0999351e54277b23eec1cb4",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 5, Work 2, Harm 4\nRaise: Data loss\nCase: normal use - a story is approved on one machine while another machine completes a cold read on the same branch.\nThe ruling keeps the local state when rounds match, but it does not account for story records having no top-level worker round: the approval round is nested under `approval` (for example, `.factory/stories/FORGE-BAR-1/story.json:2`). `src/forge/approval.py:137` writes the human's approval and `src/forge/story.py:426` updates the record for a read. Both sides therefore compare as round zero, and this line keeps the unapproved local state, discarding the remote approval while retaining its `approved` step. The story must be approved again even though the approval was committed.",
+        "file": "src/forge/sync.py",
+        "gain": 5,
+        "harm": 4,
+        "line": 444,
+        "priority": "P1",
+        "title": "Disputed keep local state on equal rounds: story approvals are lost",
+        "work": 2
+      },
+      {
+        "body": "Gain 5, Work 2, Harm 3\nRaise: Not done\nCase: normal use - two machines independently review the same branch before close reconciles it.\nThe ruling calls for reading both parents' snapshots, but the resulting list is treated as a sequence of later reviews. If one parent reports a blocking finding and the other does not, `src/forge/review.py:625` can mark the finding fixed merely because it is absent from the independent review; `src/forge/review.py:1043` then removes the finding even if the next reviewer reports it again. Also, `src/forge/review.py:613` keys snapshots only by commit and findings, so concurrent dismissals of different findings in the same review overwrite each other. The ruling did not address these consequences of combining independent parent histories.",
+        "file": "src/forge/review.py",
+        "gain": 5,
+        "harm": 3,
+        "line": 605,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: Preserve concurrent review histories and their dispositions",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Not done\nCase: normal use - two machines continue the same client sign-off branch and each records a review.\nThe installed patterns cover fixes, stories and tasks but omit `.factory/client-signoff.json`, another Forge record. `src/forge/records.py:453` and `src/forge/records.py:567` show that sign-off writes its review history there. Concurrent edits to that file therefore still use Git's text merge and can leave close in a conflict, and the existing record driver does not combine its `rounds` history.",
+        "file": "src/forge/sync.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 42,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: Merge the client sign-off record",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 3, Harm 3\nRaise: Not done\nCase: normal use - an unusable task record has another task that shares its scope or depends on it from another story.\nThis guard recognizes only unusable dependencies named in the current story's `After` list. A malformed committed blocker reached through scope overlap or a cross-story dependency still reaches `src/forge/task.py:574` and `src/forge/task.py:577`, where JSON parsing or `.get` raises and stops the whole `forge next` report. Separately, remote-only malformed fix, story and task records are converted to `{}` by `src/forge/board.py:981` and `src/forge/story.py:921`, so they are omitted without being named. A changed non-UTF-8 local record also raises at `src/forge/board.py:1005` before the new reader can report it.",
+        "file": "src/forge/nextstep.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 699,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: Continue reporting for every unusable record",
+        "work": 3
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - machines reconcile a story approval or independent reviews.\nThe story fixture is populated with a synthetic fix record containing a top-level `round`, so this test passes when a real story's approval is discarded. Its review checks assert only that both titles occur in the prompt; they pass when a blocking finding is simultaneously marked fixed or one parent's dismissals are lost. It also omits the sign-off record and asserts private JSON fields directly at lines 67-76 instead of proving the preserved state at the Forge boundary.",
+        "file": "tests/test_branch_merges_keep_forge_records.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 21,
+        "priority": "P1",
+        "title": "Gate: test_1_close_merges_records_with_the_higher_round_and_both_histories",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - an unusable task blocks another task by scope or is referenced from another story.\nThe test writes only uncommitted local records and checks a dependency within the same story. It therefore passes while a committed malformed blocker makes `forge next` terminate through the scope or cross-story paths, and while malformed records on remote-only branches are silently omitted.",
+        "file": "tests/test_next_reports_unusable_records.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 40,
+        "priority": "P1",
+        "title": "Gate: test_2_next_names_unusable_record_and_lists_other_items",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - a new or earlier-adopted repository upgrades to this release.\nThe added assertion checks only the Git driver command. It still passes if upgrade configures that command but fails to install the matching record attributes, leaving the installed driver unused. The separate merge test removes and reinstalls the local setup before its merge, so it does not prove that upgrade installed the complete rule for either repository case.",
+        "file": "tests/test_upgrade_to_installed_release.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 60,
+        "priority": "P1",
+        "title": "Gate: test_1_upgrade_to_installed_release_continues_during_runs",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Gate\nCase: normal use - the change is merged for a Windows client on the strength of the stated CI proof.\nThe proof list assigns platform, lint and type-check proof to pull-request CI, but `.github/workflows/forge.yml:42` runs the related tests on Linux and `forge.toml:6` supplies a pytest command; no lint or type-check command is configured there. The Windows job runs only on a schedule or manual dispatch (`.github/workflows/forge-next.yml:81`) and selects `-m platform` at line 146. This new merge-driver test has no platform marker, so even that Windows job skips the central regression test.",
+        "file": "tests/test_branch_merges_keep_forge_records.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 17,
+        "priority": "P1",
+        "title": "Gate: proof list",
+        "work": 2
+      }
+    ],
+    "id": "cb297e8e-3175-4a22-a436-5b3a25cacb86",
+    "status": "blocked"
+  },
   "round": 2,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-19T01:59:14.309390+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-19T03:11:35.166203+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
