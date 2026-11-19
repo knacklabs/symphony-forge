@@ -180,6 +180,9 @@ def test_2_a_push_run_tests_only_what_that_merge_brought(repo, gh, tmp_path, mon
 
 
 # Test-audit gate for tests 3 and 4:
+# Platform setup: Git stores LF text, and repair commits must use the same bytes
+# on every OS. The history request must also fit Windows command limits while
+# retaining all 30 commits in one request; the GitHub stub records its stdin.
 # 1. Protect merge and land behavior against the newest default-branch test result.
 # 2. Another workflow can hide a failure, or a pending run can fail during the history scan.
 #    A successful rerun must release the wait, and a timeout must explain the repair step.
@@ -329,7 +332,7 @@ if plan_path.exists() and not marker.exists():
         if plan["make_human"]:
             content = path.read_text("utf-8").replace('merge = "agent"', 'merge = "human"')
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(content, encoding="utf-8")
+        path.write_bytes(content.encode("utf-8"))
         subprocess.run(["git", "add", plan["path"]], cwd=checkout, check=True,
                        stdin=subprocess.DEVNULL, timeout=60)
         subprocess.run(["git", "commit", "-q", "-m", "Repair the default branch"],
@@ -505,8 +508,9 @@ def test_3_merge_waits_while_the_default_branch_is_red(env, monkeypatch, case):
         assert result.returncode == 0, result.stdout + result.stderr
         assert len(merged) == 1
         assert len(env.gh_calls(*DEFAULT_TESTS)) == 1
-        query = next(arg.removeprefix("query=") for arg in env.gh_calls(*DEFAULT_TESTS)[0]
-                     if arg.startswith("query="))
+        query = json.loads((env.repo.bin / "gh-queries.jsonl").read_text("utf-8").splitlines()[0])
+        for sha in env.repo.git("rev-list", "--first-parent", "--max-count=30", "HEAD").splitlines():
+            assert f'object(oid:"{sha}")' in query
         assert not re.search(r"\bworkflow\s*\{[^{}]*\bpath\b", query), "Workflow has no path field"
         assert re.search(r"\bfile\s*\{[^{}]*\bpath\b", query), "Read WorkflowRun.file.path"
         assert not [call for call in env.gh_calls("api")
