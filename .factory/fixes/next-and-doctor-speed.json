@@ -1,12 +1,5 @@
 {
   "allow_large": "Owner allowed on 18 Nov 2026: the speed fix may change nextstep.py as a sixth code file instead of becoming a story",
-  "amendments": [
-    {
-      "at": "2026-11-19T02:33:42.317830+00:00",
-      "because": "Owner accepted the measured gain on 19 Nov 2026 instead of the 5 s and 30 s targets",
-      "done_when": "On Forge's own repo, forge next finishes in under 5 seconds and forge doctor in under 30 seconds on a warm run, with the same output as before; next reads merge history with one git log call and reuses the board's snapshot, and doctor reads its pull requests in one or a few batched requests; before and after times are in the pull request; new and existing repos get it on upgrade"
-    }
-  ],
   "base": "67376f6c033979de5e01536db35aaf293d3e8899",
   "branch": "fix/next-and-doctor-speed",
   "chat": {
@@ -16,7 +9,7 @@
     "head": null,
     "start": "6cdb571bae5284193dcbc323118b281ca8b355f1"
   },
-  "done_when": "On Forge's own repo, forge next takes about 6-9 seconds (from 27 s) and forge doctor about 37-67 seconds (from about 2.2 minutes) with other work running, with the same output as before; next reads merge history with one git log call and reuses the board's snapshot, and doctor reads its pull requests in batched requests; before and after times are in the pull request; new and existing repos get it on upgrade",
+  "done_when": "On Forge's own repo, forge next finishes in under 5 seconds and forge doctor in under 30 seconds on a warm run, with the same output as before; next reads merge history with one git log call and reuses the board's snapshot, and doctor reads its pull requests in one or a few batched requests; before and after times are in the pull request; new and existing repos get it on upgrade",
   "fix_kind": "mechanical",
   "kind": "fix",
   "known": [
@@ -39,7 +32,7 @@
       "gain": 4,
       "harm": 3,
       "line": 840,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -49,34 +42,24 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "ae91f89b6da2dec4e7dbd0e397024704fbd738a7075d4e2a7b8f8316f9b42359",
-    "changed": "4d90d594f4ebec235e49156c67eed9f62459724e49f19e55fa87cf79cb919b09",
-    "commit": "b007f0f80ea9f249117cac502a11d1fd5128bb11",
+    "branch_diff": "14550c99d5293bd6628babc87a57bd9c9d8b7c94cbc34ce08243483b746fa381",
+    "changed": "9a1dbec655452943c8c67aee91c8e7c369d2da34d024354e0499a598d3b69155",
+    "commit": "4ae258639650d83ec749cc9879edf0927bec3468",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 5, Work 4, Harm 3\nRaise: Not done\nCase: normal use - running the commands on Forge's own repository, including after file-repair branches accumulate.\nThe owner-approved item is: \"On Forge's own repo, forge next finishes in under 5 seconds and forge doctor in under 30 seconds on a warm run, with the same output as before; next reads merge history with one git log call and reuses the board's snapshot, and doctor reads its pull requests in one or a few batched requests; before and after times are in the pull request; new and existing repos get it on upgrade\".\nThe recorded final warm runs took 13.380 and 6.581 seconds for next, and 38.205 and 67.00 seconds for doctor, all above the targets. Batching is also incomplete: doctor.py:70-71 still runs a separate `gh pr list` for each retained finished `fix/forge-files-*` branch before the new batch runs; ten such branches cause ten serial PR reads. The one-log guarantee can also fail: nextstep.py:173-175 overlaps the board history with migration_warnings.py:83, and both can enter story.py:885 for the same commit before repo.py:140-145 caches either result, launching two history reads.",
+        "body": "Gain 5, Work 4, Harm 3\nRaise: Not done\nCase: normal use - running forge next and forge doctor on Forge's own repository.\nThe owner-approved item requires: \"On Forge's own repo, forge next finishes in under 5 seconds and forge doctor in under 30 seconds on a warm run, with the same output as before; next reads merge history with one git log call and reuses the board's snapshot, and doctor reads its pull requests in one or a few batched requests; before and after times are in the pull request; new and existing repos get it on upgrade\".\nThe recorded final warm runs took 13.997, 21.136 and 8.847 seconds for next, and 66.57, 36.863 and 66.70 seconds for doctor. All exceed their targets. Doctor overlaps its host and CI checks here, but the recorded measurements still do not meet the deadline. Four workers were running during the measurements; the owner allowed noting the load but did not change the targets. The retained-branch batching and duplicate-history-read portions of the previous finding have been addressed.",
         "file": "src/forge/doctor.py",
         "gain": 5,
         "harm": 3,
-        "line": 102,
+        "line": 467,
         "priority": "P1",
         "required_done_when": true,
         "title": "Not done: Warm runtime targets and batched pull-request reads",
         "work": 4
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - a teammate has merged work since this checkout last fetched, and `forge next` refreshes origin.\nnextstep.py:173-175 starts the fetch in migration_warnings.py:34 concurrently with the board-history read. If the local read finishes first, this line reuses its pre-fetch `best` states for the factory numbers even after next waits for the fetch; repo.py:312-317 does not invalidate the cached board history. Before this change, `_gather` read the copies after that wait, so newly fetched stories and tasks contributed to the numbers. The new regression fixture pushes before starting the command, so it does not exercise a fetch that advances the default branch during the read.",
-        "file": "src/forge/board.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 840,
-        "priority": "P1",
-        "title": "Refresh the board snapshot after the concurrent fetch",
-        "work": 2
       }
     ],
-    "id": "0cbf153f-5352-4c4f-bcd2-ec0c6c9d2d2e",
+    "id": "7317dc5c-aedc-4a01-96b5-5fd521a78055",
     "status": "blocked"
   },
   "round": 3,
@@ -88,6 +71,10 @@
     },
     {
       "at": "2026-11-18T17:35:34.675403+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-19T02:33:45.598433+00:00",
       "step": "review"
     }
   ],
