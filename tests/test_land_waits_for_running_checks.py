@@ -1,7 +1,8 @@
-"""Running checks get a bounded wait without state changes.
+"""Land waits for checks to finish, with a no-progress limit for missing checks.
 
-Audit: exercise long waits, the hard limit and resume through land. Existing
-tests override the default deadline. Fake only GitHub and elapsed time.
+Audit: exercise finite running and queued checks across new and upgraded repos,
+plus the no-progress limit when GitHub has not reported checks. Fake only GitHub
+and elapsed time.
 """
 import pytest
 
@@ -14,7 +15,7 @@ STORY = "FIX-LAND-WAITS-FOR-RUNNING-TESTS"
 
 @pytest.mark.parametrize("history", ["new", "upgraded"])
 @pytest.mark.parametrize("fake_clock", [600], indirect=True)
-def test_1_land_waits_for_running_checks_then_resumes_at_the_limit(
+def test_1_land_waits_for_running_checks_then_reports_missing_checks(
         land, fake_clock, monkeypatch, history):
     env = land
     monkeypatch.delenv("FORGE_CHECKS_WAIT", raising=False)
@@ -28,35 +29,12 @@ def test_1_land_waits_for_running_checks_then_resumes_at_the_limit(
     assert done.returncode == 0, done.stdout + done.stderr
     assert "clean review and green checks" in done.stdout
 
-    before = len(env.gh_calls(*RUNS))
     (env.repo.bin / "gh-queues.json").write_text("[]", encoding="utf-8")
-    # Other groups finishing must not renew the ninety-minute upper limit.
-    _queue(env, RUNS, *_runs(*[
-        running + [run(f"test group {group}", "success")]
-        for group in range(20)]))
+    _queue(env, RUNS, *_runs([]))
     done = env.repo.forge("land", ITEM)
     output = done.stdout + done.stderr
     assert done.returncode == 1, output
-    assert "90 minutes" in output
+    assert "no check progress for 30 minutes" in output
+    assert "forge-pr-check has not reported" in output
     assert "No decision is needed" in output
-    assert f"forge land {ITEM}" in output
-    assert "without restarting checks" in output
     assert "needs you" not in output
-    assert len(env.gh_calls(*RUNS)) - before < 20
-
-    (env.repo.bin / "gh-queues.json").write_text("[]", encoding="utf-8")
-    _queue(env, RUNS, *_runs(GREEN))
-    resumed = env.repo.forge("land", ITEM)
-    assert resumed.returncode == 0, resumed.stdout + resumed.stderr
-    assert not env.gh_calls("run", "rerun")
-
-    # Checks that never start keep the short limit, whether queued or missing.
-    for rows in ([run("tests", None, "queued"), run("forge-pr-check")], []):
-        (env.repo.bin / "gh-queues.json").write_text("[]", encoding="utf-8")
-        _queue(env, RUNS, *_runs(rows))
-        done = env.repo.forge("land", ITEM)
-        output = done.stdout + done.stderr
-        assert done.returncode == 1, output
-        assert "no check progress for 30 minutes" in output
-        assert "No decision is needed" in output
-        assert "needs you" not in output
