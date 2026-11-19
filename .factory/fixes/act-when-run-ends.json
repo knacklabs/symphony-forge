@@ -47,7 +47,7 @@
     "id": "0720c145-a8d9-4569-9ded-69eff56a6bd3",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -69,10 +69,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": null,
-    "head": "666b3dc0a597960683ae5a92688f5bea6cc1b43e",
+    "close": "801aed27-b124-4601-80b2-95700c5efee6",
+    "head": "73c7208df626bc3ce5a1a76f7873a59fc6bee6f5",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "Coordinators check work on a timer or a fixed priority list, so a finished round, close or merge can sit until the next check (measured: the median Forge item waits 24 minutes with nothing running)",
   "worker": "codex"
