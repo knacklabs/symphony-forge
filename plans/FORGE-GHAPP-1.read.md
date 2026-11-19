@@ -1,18 +1,18 @@
 ---
 reader: codex (gpt-6.1-terra)
-read_at: 2026-11-19T10:09:01.854667+00:00
-seconds: 756.655
-read_hash: 703f278feecce5aaeea262eaada723461362f779
-round: 1
+read_at: 2026-11-19T10:24:02.668817+00:00
+seconds: 603.377
+read_hash: 72b9c8389d22500c8b32cfd8bab377caedcc430a
+round: 2
 passed: no
-doc_seen: 703f278feecce5aaeea262eaada723461362f779
+doc_seen: 72b9c8389d22500c8b32cfd8bab377caedcc430a
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: e072ce081b7902683f07950c72845ba19b368259
+notes_seen: 905810241b8ba1ad385c252c02a33c8eb42b24ca
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a1f310-0028-72f3-9e9d-4bbc5e73ad20
 session:
-loop_choice:
-loop_reason:
+loop_choice: more
+loop_reason: Owner chose one more round on 19 Nov 2026: save the login at setup, set Windows key permissions directly, drop the refusal link and page
 ---
 # Cold read notes
 
@@ -265,3 +265,51 @@ Only a genuine trade-off goes to the human, as a question with options.
     Adds work: select saved apps for the repo owner before lookup; F 2 x H 2 = 4; 2 x C = 4  
     Gain 3, Work 2, Harm 2
    Disposition: keep - below the bar (follow-up)
+
+## Round 2
+
+27. Blocking: Disputed keep 16: app selection waits for the exhausted personal budget.
+
+   Raise: Not done  
+   Case: normal use - Agents exhaust the developer’s GitHub budget before the developer starts merge.  
+   The revised [plan](/plans/FORGE-GHAPP-1.md:86) reads the active login with the personal sign-in before selecting the app. [That read](/src/forge/task.py:323) goes through [GitHub’s rate-limit wait](/src/forge/github.py:109), so Forge waits for the personal budget to reset before it can use the app’s separate budget. This is the main failure the story is meant to remove.  
+   Gain 5, Work 3, Harm 3
+
+28. Blocking: The Windows key folder can inherit access for other users.
+
+   Raise: Security  
+   Case: normal use - A Windows developer uses a shared local folder for `LOCALAPPDATA` and Python 3.11.9.  
+   [The plan](/plans/FORGE-GHAPP-1.md:88) relies on modes `0700` and `0600`, but this [supported Python version](/pyproject.toml:9) does not apply Windows access controls for `0700`; that support began in 3.11.10. The key can inherit the shared folder’s permissions, letting another account read it. [Python](https://docs.python.org/3.11/library/os.html#os.mkdir), [Microsoft](https://learn.microsoft.com/en-us/windows/win32/fileio/file-security-and-access-rights)  
+   Gain 5, Work 3, Harm 4
+
+29. Blocking: Disputed keep 12: the new refusal link is left behind by automatic submission.
+
+   Raise: Functional  
+   Case: normal use - An organization member without the App Manager role is refused by GitHub.  
+   [The new page](/plans/FORGE-GHAPP-1.md:100) submits to GitHub as soon as it loads, taking the developer away from its `/refused` link. The plan gives no instruction to return to that page, so the intended immediate refusal can still take 15 minutes. The [test](/plans/FORGE-GHAPP-1.md:111) calls the link directly and would pass with this browser flow broken.  
+   Gain 4, Work 2, Harm 3
+
+30. Blocking: Disputed keep 20: the new refusal interaction still skips the functional check.
+
+   Raise: Gate  
+   Case: normal use - A developer needs to use the new refusal link during setup.  
+   The revised [plan](/plans/FORGE-GHAPP-1.md:100) adds an interactive local page, but again says [Design: none](/plans/FORGE-GHAPP-1.md:17) and marks [SETUP user-facing: no](/plans/FORGE-GHAPP-1.md:126), contrary to the stated disposition. [Review](/src/forge/review.py:325) therefore omits the functional check for this new interaction.  
+   Gain 4, Work 2, Harm 2
+
+31. Advisory: Disputed keep 23: personal pull-request calls consult the app’s quota after a rate-limit error.
+
+   Raise: Functional  
+   Case: normal use - The personal budget runs out while Forge creates a pull request, but the app still has requests left.  
+   [The plan](/plans/FORGE-GHAPP-1.md:92) exempts pull-request creation from the app token but applies the token to the separate quota read. [The wait](/src/forge/github.py:119) then sees the app’s available budget and retries the rate-limited personal call every minute, even after the cache expires.  
+   Adds work: select the quota for the identity that made the failed call; F 2 x H 2 = 4; 2 x C = 4  
+   Gain 3, Work 2, Harm 2
+   Disposition: keep - below the bar (follow-up)
+
+32. Advisory: Doctor gives one reset time for two separate budgets.
+
+   Raise: Functional  
+   Case: normal use - The REST and GraphQL budgets reset at different times.  
+   [The planned line](/plans/FORGE-GHAPP-1.md:94) reports both balances followed by one reset time, although GitHub returns a separate reset for each budget. A developer checking when requests will resume can be given the wrong time. [GitHub: rate-limit response](https://docs.github.com/en/rest/rate-limit/rate-limit)  
+   Adds work: report each budget’s reset separately; F 2 x H 1 = 2; 2 x C = 2  
+   Gain 2, Work 1, Harm 1
+   Disposition: keep - below the bar (live with)
