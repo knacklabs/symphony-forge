@@ -12,6 +12,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/task.py\tClosing a promoted task from another machine before its plan merge is published can raise a missing-plan traceback.",
+      "kind": "bug",
+      "path": "src/forge/task.py",
+      "line": 210,
+      "text": "Closing a promoted task from another machine before its plan merge is published can raise a missing-plan traceback.",
+      "from": "worker",
+      "item": "exact-wait-times",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/time_records.py\tNot done: Include the final merge wait in How it went\texact-wait-times",
       "kind": "bug",
       "path": "src/forge/time_records.py",

@@ -18,7 +18,7 @@
       "gain": 4,
       "harm": 3,
       "line": 160,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -31,7 +31,7 @@
       "gain": 4,
       "harm": 3,
       "line": 527,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -44,7 +44,7 @@
       "gain": 4,
       "harm": 4,
       "line": 113,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -57,7 +57,7 @@
       "gain": 4,
       "harm": 3,
       "line": 342,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -119,102 +119,58 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "51b552251e87464888c413be49bb371b7e930191d13c37093e7d10f8fbd140f3",
-    "changed": "0a8c46fed112697a104057bd28242332e807fa9442354d569e45ac19be3acec4",
-    "commit": "b95816b545635cd65d1a734c59ac8db8eb9aaf85",
+    "branch_diff": "88604ad8938ee7013b3240fb987f71eafc1eeba377da37db9a02ad9bbbbfb1d3",
+    "changed": "09ed512405dcda599eff670c7fccdfb662630919e5b8712ee52068d1cf9aa5c6",
+    "commit": "727c71e15e952419630576dd7f6eee815f129517",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done\nCase: normal use - A fix has recorded worker or review time before it is promoted into a story.\nThe promoted task keeps the fix's start step, but the history reader filters events and timings by the new task key. The old measurements remain under the fix key and disappear from the task's breakdown even when the local logs are available. The rebuild also starts at the task-state addition, after the move; see src/forge/backfill.py:103-111 and src/forge/story.py:1142-1152.",
-        "file": "src/forge/time_records.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 160,
-        "priority": "P1",
-        "required_done_when": true,
-        "title": "Not done: Preserve recorded fix activity when it becomes a task",
-        "work": 2
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done\nCase: normal use - A human merges a ready pull request several days after Forge closes it.\nHow it went is last published when the item becomes ready, so its waiting total ends then rather than at the merge. The merged-PR path in src/forge/close.py:186-193 returns without refreshing the record; src/forge/merge.py:179-181 also refreshes before its merge. The board can use GitHub's merge time, but the published How it went record remains a pre-merge snapshot.",
-        "file": "src/forge/time_records.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 527,
-        "priority": "P1",
-        "required_done_when": true,
-        "title": "Not done: Include the final merge wait in How it went",
-        "work": 2
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 4\nRaise: Not done\nCase: normal use - An earlier Forge release has already published a rebuilt record whose rewritten commit date replaced the saved task start.\nThe new saved-start search only runs inside rebuild. The upgrade scan skips every pull request that already has a time record, including one with the incorrect start (src/forge/backfill.py:234-237), so its published How it went remains wrong after upgrade. The named upgrade test supplies a pull request without a prior record.",
-        "file": "src/forge/backfill.py",
-        "gain": 4,
-        "harm": 4,
-        "line": 113,
-        "priority": "P1",
-        "required_done_when": true,
-        "title": "Not done: Repair previously published starts on upgrade",
-        "work": 2
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done\nCase: normal use - An upgraded repository reads a longer item's previously compacted pull-request history, where the earlier release classified uncovered gaps as nothing running.\nThis change classifies newly derived intervals as unknown, but src/forge/time_records.py:663-669 and 818-835 carry an existing summary's category totals and round text forward unchanged. Its nothing_running total therefore survives, and src/forge/board_app/now.js:86-90 still adds it to time waiting on people. Folded older round text can also retain the old label.",
-        "file": "src/forge/time_records.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 342,
-        "priority": "P1",
-        "required_done_when": true,
-        "title": "Not done: Reclassify gaps in earlier compacted histories",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 1, Harm 3\nRaise: Not done\nCase: normal use - A worker asks the owner a question and later resumes with the answer.\nForge records the question as a worker question event and the answer as owner wait end (src/forge/worker.py:230-232 and 420-424), but the milestone list omits worker question. How it went shows the wait's end without its start timestamp. It likewise omits a recorded lane left end when a queued run is cancelled.",
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Not done\nCase: normal use - An item reaches the 20 KB history limit after a worker question has been answered.\nThe milestone list reads only the events left after compaction. Compaction replaces older events with totals, intervals and short round lines, while the published state retains only the start step. The question, answer, and earlier hold, decision and resume timestamps consequently disappear from How it went.",
         "file": "src/forge/time_records.py",
         "gain": 3,
         "harm": 3,
-        "line": 535,
+        "line": 558,
         "priority": "P1",
         "required_done_when": true,
         "title": "Not done: Show the recorded boundaries of all waits",
-        "work": 1
+        "work": 2
       },
       {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - A worked fix is promoted, or an earlier release already published its history before upgrade.\nThe promoted-fix parameter writes a task state with the desired start and a from_fix field directly; it never runs the fix-to-story move, so it passes even if that move loses the start or recorded activity. The upgrade fixture also starts with no published time record, so it cannot catch the existing-record upgrade failure. The only start assertion rounds the elapsed time to whole days.",
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - A fix is reviewed before it is promoted and another machine publishes its task.\nThe revised test performs a real review, but its promoted-task assertions check only the start and building time. It would still pass if promotion retained worker activity while dropping the fix's review result or review duration, leaving that part of the previously reported activity loss untested.",
         "file": "tests/test_first_start_survives_history_changes.py",
         "gain": 3,
         "harm": 3,
-        "line": 37,
+        "line": 203,
         "priority": "P1",
         "title": "Gate: Prove promotion and existing published starts",
         "work": 2
       },
       {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - A worker waits for an answer, or a ready pull request waits for a human merge.\nThe named lifecycle proof asserts timestamps for hold, decision and resume only, then ends after close. It would still pass if every wait-start or wait-end milestone were missing, and it never checks the final start-to-merge breakdown. The existing question-wait test checks board intervals but not those timestamps in How it went.",
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - A human merges a ready pull request several days after close.\nThe revised proof checks the published merge timestamp and rounded elapsed total, but never checks the final waiting breakdown in How it went. Its waiting assertions read the board, which independently derives the duration from GitHub's merge time. The test therefore still passes if the published waiting total remains at its pre-merge value.",
         "file": "tests/test_recorded_wait_and_resume_times.py",
         "gain": 3,
         "harm": 3,
-        "line": 61,
+        "line": 191,
         "priority": "P1",
         "title": "Gate: Prove wait timestamps through the final merge",
         "work": 2
       },
       {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - A worker repairs a blocked review and calls close again in the same turn.\nThe named proof writes the expected private event-log records directly, then reads the board. It never runs that worker and both closes, so it still passes if Forge stops producing the events needed to measure or assign the repair. This leaves the named repair behavior without the required command-level proof.",
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - A worker repairs a blocked review and calls close again in the same turn.\nThe revised test runs the worker and both closes, but it sums work across all rounds and checks fixing time only at item level. It still passes if all 60 seconds of repair are assigned to the first review attempt and none to the later one, so the previously requested assignment proof remains missing.",
         "file": "tests/test_recorded_wait_and_resume_times.py",
         "gain": 3,
         "harm": 3,
-        "line": 89,
+        "line": 137,
         "priority": "P1",
         "title": "Gate: Prove same-turn repairs through a real worker turn",
         "work": 2
       }
     ],
-    "id": "423e1200-d661-4146-9284-ddfd6ef65617",
+    "id": "ba221749-9b8b-4ff4-8d87-ab361b1739eb",
     "status": "blocked"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-19T01:59:29.031055+00:00",
@@ -223,8 +179,17 @@
     {
       "at": "2026-11-19T02:58:50.095889+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-11-19T04:02:35.600445+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-11-19T04:02:35.600787+00:00",
+    "file": "src/forge/time_records.py",
+    "wait_id": "0d50366c-9a86-4b66-83ba-4925d7322350"
+  },
   "stuck": {
     "close": "1682659f-340d-49ac-870a-2a4265e634c8",
     "head": "fd02a41f116a2045d1964b8a34985a933c6e5841",
