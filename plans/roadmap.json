@@ -684,6 +684,12 @@
       "title": "Client pull requests finish CI in about 10 minutes, and Forge shows when they do not",
       "status": "pending",
       "order": 126
+    },
+    {
+      "key": "FORGE-MERGEQ-1",
+      "title": "Ready pull requests stop re-running CI against each other",
+      "status": "pending",
+      "order": 127
     }
   ],
   "epics": [

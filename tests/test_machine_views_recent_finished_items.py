@@ -248,8 +248,9 @@ def test_1_machine_views_omit_old_finished_items_without_more_git_calls(
     repo.git("commit", "-qm", "Start the overlapping task", cwd=busy)
     blocked, _ = traced(repo, monkeypatch, "board", tmp_path / "trace.jsonl")
     blocked_live = next(row for row in blocked["items"] if row["id"] == "LIVE")
-    # The local start is known; its reviewed remote changes are still needed.
-    assert blocked_live["next"]["line"] == "LIVE/PENDING waits for BUSY/HOLD to publish reviewed changes."
+    # The other story must merge, even after its task publishes a clean review.
+    assert blocked_live["next"]["line"] == (
+        "LIVE/PENDING would change src/pending.py, which BUSY/HOLD is changing and hasn't merged yet.")
     assert blocked_live["next"]["command"] != "forge task start LIVE/PENDING"
     repo.git("worktree", "remove", "--force", str(busy))
     repo.git("branch", "-D", "task/BUSY-HOLD")
