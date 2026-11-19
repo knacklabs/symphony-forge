@@ -1,6 +1,13 @@
 {
   "base": "77a35caa0f80ad338fc8ff08e4ab788a27ea34ad",
   "branch": "fix/red-main-test-windows",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1f48e-830d-77e0-96ec-e87da9c02f2c",
+    "head": null,
+    "start": "7fb83ad300efd24ebd76f9165838d4823b6d6707"
+  },
   "done_when": "test_3_merge_waits_while_the_default_branch_is_red passes on Windows (forge-next.yml run on the fix branch) and on Linux, with the same rule checked; if the cause is in Forge's code and not the test, the code handles Windows line endings",
   "fix_kind": "mechanical",
   "kind": "fix",
