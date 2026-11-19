@@ -431,7 +431,21 @@ def related(base: str) -> tuple[list[str], list[str], bool, list[str]]:
                     modules.append((".".join(below), path, root))
 
     def hits(test: Path, module: str, source: Path, root: Path) -> bool:
-        return test.is_relative_to(root) and mentions(test, module, source)
+        if not test.is_relative_to(root):
+            return False
+        if mentions(test, module, source):
+            return True
+        # pytest also exposes the test's folder and test roots for bare imports.
+        folders = {test.parent} | {folder for folder in test.parents
+                                  if folder.name in {"tests", "test"}}
+        for folder in folders:
+            if source.is_relative_to(folder):
+                parts = module_parts(source.relative_to(folder))
+                if parts[-1] == "__init__":
+                    parts.pop()
+                if parts and mentions(test, ".".join(parts), source):
+                    return True
+        return False
 
     found = {source for module, source, root in modules
              if any(hits(path, module, source, root) for path in tests)}
