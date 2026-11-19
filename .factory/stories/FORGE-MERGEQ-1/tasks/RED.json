@@ -111,9 +111,9 @@
     "id": "cc4e6f80-5f06-4a65-8330-deace18411df",
     "status": "clean"
   },
-  "round": 5,
+  "round": 6,
   "stacked_on": "REMOTE-1/HOST",
-  "status": "waiting for checks",
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-18T14:17:31.848635+00:00",
@@ -137,12 +137,10 @@
     }
   ],
   "stuck": {
-    "close": "d0db6080-188c-43ae-bcf7-2ba39019f57b",
-    "head": "883f3320ba2f233493dc317b43c9180fa77e5a65",
-    "keys": {
-      "the open P0 the default-branch graphql query rejects every ci-repo merge in src/forge/merge.py": 1
-    },
-    "round": 4
+    "close": "59dd00e8-cb11-45fe-8199-aaa708a76ca9",
+    "head": "24d05596db6d830f0fbbadf3660752d8c5a4058c",
+    "keys": {},
+    "round": 5
   },
   "worker": "codex"
 }
