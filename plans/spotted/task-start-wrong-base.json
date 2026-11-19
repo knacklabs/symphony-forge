@@ -8,8 +8,8 @@
       "text": "Allow close after foreign changes have been reverted",
       "from": "blocking",
       "item": "task-start-wrong-base",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/task.py\tName the cross-story blocker when several tasks overlap\ttask-start-wrong-base",
@@ -30,8 +30,8 @@
       "text": "Not done: close misses imported commits without a task start record",
       "from": "blocking",
       "item": "task-start-wrong-base",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/templates/brief.md\tNot done: resumed workers miss the new brief after upgrade\ttask-start-wrong-base",
