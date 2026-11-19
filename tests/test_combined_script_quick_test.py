@@ -34,7 +34,8 @@ GUIDE = (
     "that names the script and suggest no command; you write the command.",
     "Keep every step the tests need, in the order the script runs them, including any step that "
     "runs after the tests.",
-    "Keep the browser-test steps, because the pull request check runs `fast_test` too.",
+    # Browser tests now belong to the nightly full command, outside pull request CI.
+    "Keep browser-test steps in the nightly full command, outside `fast_test`.",
     "Keep the setup a script runs before or after itself (`pre` and `post` scripts).",
     "Then ask the owner, and set it in `forge.toml` through a fix.",
 )

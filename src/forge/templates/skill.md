@@ -38,8 +38,10 @@ Start with the largest measured cost:
    Never hide leftover work with ignored inserts, upserts, random keys, blind retries or serial
    files. Timing bounds sit between good and bad cases with room for load; worker-count changes
    need one parallel run of timing tests as proof.
-5. Small changes automatically use one group: up to five code files with no lockfile, shared
-   settings, workflow or Forge selection-script change. Larger changes use all groups. Set
+5. Small changes use one group only when the change command has an explicit `{groups}` count
+   and neither test command has a fixed shard count. Automatic pytest-split without these
+   placeholders keeps all groups. The small-change limit is five code files, with no lockfile,
+   shared settings, workflow or Forge selection-script change. Larger changes use all groups. Set
    `groups` to the number of fast runner slots reserved for tests. Give each self-hosted slot its
    own CPU set, memory share and enough cores for the job's worker limit. Use memory-backed
    temporary storage only when that slot has room.
@@ -60,7 +62,8 @@ For time-based Vitest groups in an existing app, use an owner-agreed fix: copy t
 starter's `scripts/test-groups.mjs` and `scripts/timed-sequencer.mjs`, register
 `sequence: { sequencer }` in each grouped Vitest config and copy `scripts/test.mjs`'s `--group`
 handling. Count each run's files before passing `--shard`: use no more groups than files,
-let jobs above that count pass without work, fail clearly for zero files, and place files only
+skip only the current Vitest invocation when the job's group exceeds that count.
+Continue with the job's other test runs. Fail clearly for zero files, and place files only
 across groups in use so none is empty. Give every group its own setup. Put `{group}` and
 `{groups}` in `test` and `fast_test` through the settings fix. Add a refresh command that writes
 `test-timings.json` from Vitest's JSON report; commit the file through a fix. No CI job refreshes
@@ -1482,6 +1485,13 @@ keep existing settings until that fix changes them. An explicit `test_place` kee
    Keep browser tests and each screen's rendered check in the full test command and nightly
    full run, not in `fast_test` or pull request CI, including shared-settings changes.
    A broken screen can merge; the nightly run finds it the next morning.
+   The pytest picker retains non-pytest steps from `test`. It does not filter out browser steps.
+   For a combined Python/browser command, use a separate non-browser `fast_test` through the
+   owner's settings fix. For example, with `test = "uv run pytest -q && npx playwright test"`,
+   use `fast_test = "uv run pytest -q"`. This runs all Python tests on pull requests and keeps
+   browser tests nightly. Keep any required install, lint, type-check and setup steps too.
+   For changed-only Python selection, adapt the app's script to accept a base and omit browser
+   steps. Do not use `forge test --pytest {base}` alone to exclude them.
    Forge writes no `fast_test` by itself.
    Client CI caches npm downloads and the default pnpm stores by the root lockfile and enables
    uv's package cache. It keeps the app's own pnpm setup and version.
@@ -1500,8 +1510,10 @@ keep existing settings until that fix changes them. An explicit `test_place` kee
    The Python starter accepts a base in `node scripts/test.mjs <base>`; `--list` prints commands
    without running them. API changes select API types, ruff, mypy, import checks and all API
    tests, since HTTP tests have no import graph. Web and library changes select ESLint, the
-   TypeScript build, changed Vitest tests and the browser suite. Shared configuration or no
-   base runs everything. Existing apps keep their scripts on upgrade and sync; ask before
+   TypeScript build and changed Vitest tests. A base-argument run excludes browser tests and
+   their installation, even when shared configuration selects all other tests.
+   A no-base run includes the full browser suite nightly.
+   Existing apps keep their scripts on upgrade and sync; ask before
    adding this selection to them.
    The TypeScript starter uses Nx to name affected
    parts and run their lint, typecheck and tests; `--list <base>` prints the commands.

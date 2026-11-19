@@ -22,11 +22,16 @@ and browser tests. Set forge.toml's `test` to `node scripts/test.mjs`. This scri
 dependencies and builds the apps. It runs
 `COREPACK_ENABLE_DOWNLOAD_PROMPT=0 corepack pnpm exec playwright install --with-deps chromium`.
 It starts a fresh test database and app, then runs the root test script. Run `forge sync` to write
-this into the one `tests` check:
+this into the one `tests` check. Set a separate change command that excludes browser steps:
 
 ```toml
 test = "node scripts/test.mjs"
+fast_test = "node scripts/test.mjs {base}"
 ```
+
+The script's base-argument mode must omit browser tests and their installation, even when shared
+settings select all other tests. Its no-base mode must run the full browser suite nightly.
+For an existing app, ask the owner before this script or settings change.
 
 ## End-to-end tests
 
@@ -151,8 +156,10 @@ run of timing tests as proof.
 For time-based Vitest groups in an existing app, ask the owner and make a fix. Copy the
 TypeScript starter's `scripts/test-groups.mjs`, `scripts/timed-sequencer.mjs` and the `--group`
 handling in `scripts/test.mjs`. Register `sequence: { sequencer }` in each grouped Vitest config.
-Count files before passing `--shard`: use no more groups than files, skip extra jobs, fail
-clearly for zero files and leave no group in use empty. Each group gets its own setup.
+Count files before passing `--shard`: use no more groups than files.
+When the job's group exceeds that count, skip only this Vitest invocation.
+Continue with the job's other test runs. Fail clearly for zero files and leave no group in use
+empty. Each group gets its own setup.
 Through the settings fix, put `{group}` and `{groups}` in `test` and `fast_test`. Add a refresh
 command that writes `test-timings.json` from Vitest's JSON report and commit it through a fix.
 No CI job refreshes times or opens a pull request. Python pytest groups keep their existing split.
