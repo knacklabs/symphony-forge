@@ -87,7 +87,7 @@
     "status": "blocked"
   },
   "round": 2,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-19T13:52:00.521791+00:00",
@@ -104,8 +104,12 @@
   ],
   "stop": {
     "at": "2026-11-19T14:20:50.937898+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "tests/test_upgrade_start_repair.py",
-    "wait_id": "83e3a9f1-b159-4981-81c8-63b23bf5e299"
+    "reason": "Owner chose one more round on 19 Nov 2026: fix the test finding",
+    "wait_id": "83e3a9f1-b159-4981-81c8-63b23bf5e299",
+    "worker_round": 2
   },
   "stuck": {
     "close": "d482618c-7b8f-43b2-91c2-1fbd0b75fa75",
