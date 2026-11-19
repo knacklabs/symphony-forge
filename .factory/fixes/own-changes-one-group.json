@@ -93,7 +93,7 @@
     "id": "14b7c573-6888-4bd0-a42e-91ece74512c1",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -108,13 +108,18 @@
     {
       "at": "2026-11-19T17:06:27.119545+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-11-19T17:07:18.999647+00:00",
+      "round": 2,
+      "step": "resume"
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "8139be3eaa729bf275bf93a0521ee1f13b1147e8",
+    "close": "c4d4639f-b94e-4d5a-91e5-151cbd614c16",
+    "head": "acc9d903426661edd0cb0e2ff6ecb84702dd3cf1",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "In repos whose tests run in CI, a pull request that merged main runs all test groups, because review-tests.py turns one_group off for any merge commit and forge test --change widens its base to what the merges brought; at a client almost every branch merges main, so small fixes take every fast slot (queue median about 16 min, up to 78)",
   "worker": "codex"
