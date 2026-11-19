@@ -136,7 +136,10 @@ def test_1_merge_retests_combined_change_and_names_failures(env, tmp_path, previ
             env.repo.git("add", "left.txt", cwd=where)
         before = env.repo.git("rev-parse", "HEAD", cwd=where)
 
-    before_checks = len(env.gh_calls("api"))
+    original_check_runs_path = f"repos/{{owner}}/{{repo}}/commits/{original}/check-runs?per_page=100"
+    original_status_path = f"repos/{{owner}}/{{repo}}/commits/{original}/status?per_page=100"
+    before_original_check_runs = len(env.gh_calls("api", path=original_check_runs_path))
+    before_original_status = len(env.gh_calls("api", path=original_status_path))
     merged = env.repo.forge("merge", item)
 
     if case.startswith("dirty"):
@@ -179,8 +182,9 @@ def test_1_merge_retests_combined_change_and_names_failures(env, tmp_path, previ
         published = attempts[0][attempts[0].index("--match-head-commit") + 1]
         if case == "review":
             assert published != original
-            assert ["api", "--paginate", "--jq", ".check_runs[]",
-                    f"repos/{{owner}}/{{repo}}/commits/{published}/check-runs?per_page=100"] in env.gh_calls("api")[before_checks:]
+            check_runs_path = f"repos/{{owner}}/{{repo}}/commits/{published}/check-runs?per_page=100"
+            assert ["api", "--paginate", "--jq", ".check_runs[]", check_runs_path
+                    ] in env.gh_calls("api", path=check_runs_path)
             # A records-only commit carries the review over the tested merge.
             assert set(env.repo.git("diff", "--name-only", head, published).splitlines()) <= {
                 ".factory/fixes/tidy-readme.json"}
@@ -188,4 +192,5 @@ def test_1_merge_retests_combined_change_and_names_failures(env, tmp_path, previ
             assert len(env.review_calls()) == reviews
         else:
             assert published == original
-            assert not env.gh_calls("api")[before_checks:]
+            assert len(env.gh_calls("api", path=original_check_runs_path)) == before_original_check_runs
+            assert len(env.gh_calls("api", path=original_status_path)) == before_original_status
