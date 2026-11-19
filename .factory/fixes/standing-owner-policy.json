@@ -1,0 +1,15 @@
+{
+  "base": "285e56632baf943e4c7524f2341a7bb52f3e7f0b",
+  "branch": "fix/standing-owner-policy",
+  "done_when": "forge.toml can set a standing owner policy (for example auto_more_round = true) under which close gives one more round automatically for P0 or P1 functional findings, at most once per item, and reports that it applied the policy; every other choice still waits for the owner; off by default; new and existing repos get the setting on upgrade",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-19T01:59:18.821263+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Overnight at a client, round-limit, switch, narrow, split and size choices piled up (6 by midnight) while builders sat idle, because every such choice waits for the owner"
+}
