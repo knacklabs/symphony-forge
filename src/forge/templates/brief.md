@@ -201,6 +201,9 @@ for that commit's CI, even when the changed files do not overlap. This uses the 
 pytest picker, with no new test collection. Other runners and custom fast commands keep
 their local retest. Repos whose tests run only on the laptop keep their local runs.
 The nightly full run on the default branch covers the rest.
+No test run starts on the default branch after a merge. If the newest nightly run fails,
+merge refuses a story part and names the run. Start a fix for it and merge that fix.
+Fixes can still merge to repair the failure. New and existing repos get this on upgrade and sync.
 `forge test --full` fails if the whole run has no tests. Set `test` in `forge.toml` to run
 the whole suite. An empty group of a nonempty suite is valid.
 Before the retest, Forge refuses uncommitted changes and names their files. After tests and

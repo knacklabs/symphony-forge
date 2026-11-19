@@ -4,11 +4,9 @@ import argparse
 import json
 import os
 import re
-import time
 import tomllib
-from datetime import datetime
 from pathlib import Path
-from forge import checks, close, codex, fullrun, github, githooks, prcheck, repo, review, story, task, time_records
+from forge import checks, close, codex, github, githooks, prcheck, repo, review, story, task, time_records
 
 COMMANDS = [{
     "words": "merge", "run": "merge", "changes_state": False,
@@ -20,9 +18,7 @@ COMMANDS = [{
 ENABLE = "let-the-agent-merge"
 
 REFUSALS = {
-    "red_default": ("The default branch is still red. Forge did not merge the pull request.",
-                    "start a fix for the failed default-branch tests. Have the owner merge it on GitHub, "
-                    "then run {full_run}. After a green result, run forge merge {item}"),
+    "red_default": ("The nightly run {run} failed. Start a fix for it and merge that fix.", ""),
     "disabled": ("forge merge is disabled by merge = \"human\" in the default branch's forge.toml.",
                  "the repo owner runs forge merge enable in their own terminal"),
     "owner_only": ("Only the repo owner switches on agent merges, on {default}, from a terminal outside Claude Code or Codex.", "the repo owner runs forge merge enable on {default} in a terminal outside Claude Code or Codex"),
@@ -109,7 +105,6 @@ def merge(args: argparse.Namespace, *, refreshed: bool = False) -> int:
         item_files = set(repo.git("diff", "--name-only", "--no-renames", "-z", base, head,
                                   cwd=worktree).split("\0")) - {""}
         moves = 0
-        red_announced = False
         combined_tested = False
         train = getattr(args, "train", None)  # the default branch's tree that a merge train tested for this head
         while True:
@@ -201,20 +196,8 @@ def merge(args: argparse.Namespace, *, refreshed: bool = False) -> int:
             repo.git("fetch", "-q", "origin", default, cwd=top)
             if repo.merge_setting(top) != "agent":
                 repo.refuse(REFUSALS["owner_merges" if item == ENABLE else "disabled"], item=item)
-            deadline = time.monotonic() + float(os.environ.get("FORGE_CHECKS_WAIT", "5400"))
-            refresh_red = False
-            while red(top, item=item, refresh=refresh_red):
-                if not red_announced:
-                    print("The default branch is red. Forge will wait for a newer green test result.", flush=True)
-                    red_announced = True
-                left = deadline - time.monotonic()
-                if left <= 0:
-                    repo.refuse(REFUSALS["red_default"], item=item, full_run=fullrun.next_run(top))
-                time.sleep(min(checks.POLL, left))
-                repo.git("fetch", "-q", "origin", default, cwd=top)
-                refresh_red = True
-                if repo.merge_setting(top) != "agent":
-                    repo.refuse(REFUSALS["disabled"], item=item)
+            if nightly := red(top, item=item):
+                repo.refuse(REFUSALS["red_default"], run=nightly)
             if train or repo.git("rev-parse", f"origin/{default}", cwd=top) == checked_default:
                 break  # a train member never tests again: the check below decides
             if combined_tested:
@@ -431,90 +414,31 @@ def _save_ready(path: Path, receipt: dict) -> None:
     os.replace(saved, path)
 
 
-def red(top: Path, *, item: str = "", refresh: bool = False) -> bool:
-    """The newest finished test result on the newest commit with one decides."""
+def red(top: Path, *, item: str = "") -> str:
+    """Name the failed newest nightly run; fixes remain free to repair it."""
+    if item and "/" not in item:
+        return ""
     default = repo.default_branch(top)
-    commits = repo.git("rev-list", "--first-parent", "--max-count=30",
-                       f"origin/{default}", cwd=top).splitlines()
     config = repo._config_text(story.show(top, f"origin/{default}", "forge.toml") or "")
-    ci = repo.test_place(config) == "ci"
-    snapshot = repo.command_fact("default test result", top, dict)
-    if ci and not refresh and snapshot.get("head") == commits[0]:
-        return snapshot["red"]
-    if ci:
-        # Use the local first-parent history: GraphQL history also includes commits
-        # from merged branches. Fetch their results together, without per-commit I/O.
-        fields = """status { contexts { context state createdAt } }
-          checkSuites(first:100,filterBy:{checkName:"tests"}) { nodes {
-            app { slug } branch { name } workflowRun { event file { path } }
-            checkRuns(first:100,filterBy:{checkName:"tests",checkType:ALL}) { nodes {
-              name status conclusion completedAt
-            } }
-          } }"""
-        objects = " ".join(f'c{sha}:object(oid:"{sha}") {{ ... on Commit {{ {fields} }} }}'
-                           for sha in commits)
-        query = ('query ForgeDefaultTests($owner:String!,$repo:String!) {'
-                 ' repository(owner:$owner,name:$repo) { ' + objects + ' } }')
-        done = repo.run("gh", "api", "graphql", "-f", "operationName=ForgeDefaultTests",
-                        "-F", "owner={owner}", "-F", "repo={repo}",
-                        "-f", "query=" + " ".join(query.split()), cwd=top, timeout=60)
-        try:
-            data = json.loads(done.stdout)
-            nodes = data["data"]["repository"]
-            if done.returncode or data.get("errors") or not isinstance(nodes, dict):
-                raise ValueError
-        except (ValueError, KeyError, TypeError):
-            repo.refuse(checks.REFUSALS["not_green"], item=item,
-                        reason="GitHub did not answer: " + (done.stderr.strip() or done.stdout.strip()
-                                                           or "no readable answer").rstrip("."))
-
-    def result(sha: str) -> bool | None:
-        if ci:
-            node = nodes.get("c" + sha) or {}
-            statuses = (node.get("status") or {}).get("contexts", [])
-        else:
-            rows = checks._ask(top, item, ".", f"repos/{{owner}}/{{repo}}/commits/{sha}/statuses?per_page=100")
-            statuses = [{"context": row.get("context"), "state": row.get("state", "").upper(),
-                         "createdAt": row.get("updated_at") or row.get("created_at")} for row in rows]
-        results = [(row.get("createdAt"), row["state"] == "SUCCESS")
-                   for row in statuses if row.get("context") == fullrun.STATUS
-                   and row.get("state") in ("SUCCESS", "FAILURE", "ERROR")]
-        if ci:
-            for suite in (node.get("checkSuites") or {}).get("nodes", []):
-                workflow = suite.get("workflowRun") or {}
-                if ((suite.get("app") or {}).get("slug") != "github-actions"
-                        or (suite.get("branch") or {}).get("name") != default
-                        or workflow.get("event") != "push"
-                        or (workflow.get("file") or {}).get("path") != ".github/workflows/forge.yml"):
-                    continue
-                results.extend((row["completedAt"], row["conclusion"] == "SUCCESS")
-                               for row in (suite.get("checkRuns") or {}).get("nodes", [])
-                               if row.get("name") == "tests" and row.get("status") == "COMPLETED"
-                               and row.get("completedAt") and row.get("conclusion") in
-                               ("SUCCESS", "FAILURE", "TIMED_OUT", "ACTION_REQUIRED", "STARTUP_FAILURE"))
-        finished = [(datetime.fromisoformat(date.replace("Z", "+00:00")), green)
-                    for date, green in results if date]
-        if finished:
-            return not max(finished, key=lambda result: result[0])[1]
-        return None
-
-    pending = []
-    red_result = False
-    for sha in commits:
-        found = result(sha)
-        if found is not None:
-            red_result = found
-            break
-        pending.append(sha)
-    # Laptop full-run statuses still use separate reads. Recheck recent pending
-    # commits last; CI already supplied every result in one response.
-    for sha in reversed(pending) if not ci else []:
-        found = result(sha)
-        if found is not None:
-            red_result = found
-    if ci:
-        snapshot.update(head=commits[0], red=red_result)
-    return red_result
+    workflow = config.get("full_suite_workflow")
+    if not workflow and repo.test_place(config) != "ci":
+        return ""
+    endpoint = f"repos/{{owner}}/{{repo}}/actions/workflows/{workflow or 'forge.yml'}/runs"
+    done = repo.run("gh", "api", endpoint, "--method", "GET", "--raw-field", "event=schedule",
+                    "--raw-field", f"branch={default}", "--raw-field", "per_page=1", cwd=top, timeout=60)
+    try:
+        runs = json.loads(done.stdout)["workflow_runs"]
+        if done.returncode or not isinstance(runs, list) or any(not isinstance(run, dict) for run in runs):
+            raise ValueError
+    except (ValueError, KeyError, TypeError):
+        repo.refuse(checks.REFUSALS["not_green"], item=item,
+                    reason="GitHub did not answer: " + (done.stderr.strip() or done.stdout.strip()
+                                                       or "no readable answer").rstrip("."))
+    if not runs or runs[0].get("conclusion") != "failure":
+        return ""
+    run = runs[0]
+    name = run.get("display_title") or run.get("name") or "Full test suite"
+    return name + (f" ({run['html_url']})" if run.get("html_url") else "")
 
 
 def _conversations(top: Path, item: str) -> set[str]:

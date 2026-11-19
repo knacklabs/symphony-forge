@@ -353,11 +353,10 @@ def test(args) -> int:
             else:
                 print("forge.toml names no test command, so forge test ran none.")
             return 0
-        push_base = os.environ.get("FORGE_PUSH_BASE") if args.change else None
-        base = push_base or f"origin/{repo.default_branch(top)}"
+        base = f"origin/{repo.default_branch(top)}"
         if repo.run("git", "rev-parse", "--verify", base, cwd=top).returncode:
             raise repo.Refused(f"Fetch {base} first: run git fetch origin, then forge test.", "")
-        if args.change and not push_base:
+        if args.change:
             # Include incoming changes merged into this PR, even under Actions'
             # synthetic merge. Main's current tip alone hides their test files.
             merges = repo.git("rev-list", "--merges", f"{base}..HEAD", cwd=top).splitlines()
@@ -369,8 +368,7 @@ def test(args) -> int:
             command = skip_browser(top, command)
         # CI groups reuse their own passes; explicit ungrouped commands always execute.
         status, report = review.test_run(top, command, base,
-                                        always=not (args.change and "FORGE_GROUPS" in os.environ
-                                                    and not push_base),
+                                        always=not (args.change and "FORGE_GROUPS" in os.environ),
                                         closing=args.change)
         print(report)
         return status
