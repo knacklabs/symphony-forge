@@ -1,6 +1,13 @@
 {
   "base": "fdfc56ddaeb814af3258fd929480aabf8fbf0bff",
   "branch": "fix/bounded-start-repair",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1f414-3e87-7ea1-81c4-0895336caed8",
+    "head": null,
+    "start": "f6d429eed7c34da63266c0422fa5f60b1d1511fc"
+  },
   "done_when": "The first close after an upgrade repairs at most the open items and the 20 most recently merged ones, reads no check runs for merged items it repairs, and finishes the repair in minutes on Forge's own repo; later closes do not repeat it; new and existing repos get it on upgrade",
   "fix_kind": "mechanical",
   "kind": "fix",
