@@ -1,0 +1,15 @@
+{
+  "base": "285e56632baf943e4c7524f2341a7bb52f3e7f0b",
+  "branch": "fix/check-waits-by-quota",
+  "done_when": "Close, merge and land limit how many check waits run at once by the remaining GitHub API quota (read from the rate-limit endpoint at most once a minute), and say when one waits for quota; new and existing repos get it on upgrade",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-19T01:59:34.824983+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "After a hold, close let about 20 check waits run at once while every check still ran all groups, using up the GitHub API quota"
+}
