@@ -18,6 +18,9 @@ When docs/product/CONSTITUTION.md is approved, follow it. A review holds work th
 After a merge of main, close applies a requested dismissal to the same title and file in the
 current review, even if its number changes. Only the human chooses which findings to dismiss.
 Only use the model-review skip when a person asks and no earlier review blocked the item.
+Test or Gate findings based only on a future change to a test fake or GitHub call order are
+advice and do not block close. A real gap where today's code can do the wrong thing and the
+test still passes keeps its normal blocking score.
 
 After a merge of the default branch, close keeps an earlier clean review and reviews only
 conflict repairs and later worker edits; a clean merge needs no new review. The usual close
