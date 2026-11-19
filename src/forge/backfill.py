@@ -88,7 +88,7 @@ def _checks(top: Path, head: str) -> list[dict[str, Any]]:
     return runs
 
 
-def rebuild(top: Path, pr: dict[str, Any], *, pushed_head: str = "") -> tuple[str, dict[str, Any], dict[str, Any]] | None:
+def rebuild(top: Path, pr: dict[str, Any], *, pushed_head: str = "", read_checks: bool = True) -> tuple[str, dict[str, Any], dict[str, Any]] | None:
     """Fetch the original branch into FETCH_HEAD, even after a squash and branch deletion."""
     if pushed_head:
         head = pushed_head  # First publication just pushed this original history from this checkout.
@@ -148,7 +148,7 @@ def rebuild(top: Path, pr: dict[str, Any], *, pushed_head: str = "") -> tuple[st
             continue
         settings = tomllib.loads(story.show(top, commit, "forge.toml") or "")
         required = settings.get("checks", [])
-        runs = _checks(top, commit) if repo.test_place(settings) == "ci" else []
+        runs = _checks(top, commit) if read_checks and repo.test_place(settings) == "ci" else []
         named = [run for run in runs if any(run.get("name") == want
                  or str(run.get("name") or "").startswith(want + " (") for want in required)]
         began = [time_records.when(run.get("started_at")) for run in named]
@@ -232,6 +232,7 @@ def run(top: Path) -> None:
     from forge import board, close, known_issues
 
     pending = repo.forge_dir(top) / "backfill-pending"
+    repaired = pending.with_name("start-repair-done")
     try:
         pending.touch()
         if not shutil.which("gh"):
@@ -242,13 +243,22 @@ def run(top: Path) -> None:
         cutoff = time_records.when(repo.now()) - timedelta(days=42)
         prs = [*github["open"], *[pr for pr in board_facts.merged_prs(github)
                                 if time_records.when(pr.get("mergedAt")) and time_records.when(pr["mergedAt"]) >= cutoff]]
+        repairs_left = 20
+        prs.sort(key=lambda pr: pr.get("mergedAt") or "", reverse=True)
         for pr in {pr["number"]: pr for pr in prs}.values():
             shared = time_records.from_body(pr.get("body") or "")
             if not pr.get("headRefName", "").startswith(("fix/", "task/", "story/")) or (
                     shared and (shared.get("start_checked") or not shared.get("rebuilt"))
                     and "nothing running" not in (pr.get("body") or "")):
                 continue
-            rebuilt = rebuild(top, pr)
+            merged_repair = bool(shared and pr.get("mergedAt"))
+            if shared and repaired.exists():
+                continue
+            if merged_repair:
+                if not repairs_left:
+                    continue
+                repairs_left -= 1
+            rebuilt = rebuild(top, pr, read_checks=not merged_repair)
             if rebuilt is None:
                 continue
             key, state, record = rebuilt
@@ -264,6 +274,7 @@ def run(top: Path) -> None:
         fetched.check_returncode()
         # The board already owns plan owners, kept problems and release membership.
         board.machine_board(top)
+        repaired.touch()
         pending.unlink(missing_ok=True)
     except (repo.Refused, subprocess.CalledProcessError, OSError, ValueError, KeyError, TypeError) as error:
         if isinstance(error, repo.Refused) and error.entry is close.REFUSALS["publish"]:
