@@ -166,6 +166,7 @@ makes new parts wait for merges. A part that builds on another part keeps that b
 moves its own changes onto the default branch after the base merges.
 If an intermediate commit conflicts but the final change merges cleanly, close uses one
 commit for the final change and keeps the worker's evidence and Proof list.
+It keeps earlier review records as separate commits.
 Conflicts in the final change still stop close. New and existing repos get this on upgrade.
 Parts of another story must merge first. $story_files
 Close reviews only the stacked part's own changes and waits for its base to merge before CI and merge.

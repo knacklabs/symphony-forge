@@ -20,7 +20,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any
 
-from forge.close_remote import push_replay, reconcile, replay_baseline, save_replay
+from forge.close_remote import push_replay, reconcile, replay_baseline, save_replay, squash_replay
 from forge import __version__, app_baseline, checks, codex, design, githooks, init, merge_review, merge_timings, migration_warnings, repo, review, review_skip, score, spotted, story, sync, task, time_records
 
 REFUSALS = {
@@ -726,13 +726,7 @@ def _merge_default(top: Path, item: str, branch: str, default: str,
             if not conflicts:
                 done.check_returncode()
             # The final merge is clean even though an intermediate commit clashes.
-            evidence = (review.commit_paragraph(top, baseline, "Before coding:", original) or
-                        review.commit_paragraph(top, baseline, "Functional check:", original))
-            proof = review.commit_paragraph(top, baseline, "Proof list:", original)
-            if proof and proof not in evidence:
-                evidence += "\n\n" + proof
-            replayed = repo.git("commit-tree", tree, "-p", target,
-                                "-m", "Replay the part's final changes", "-m", evidence, cwd=top)
+            replayed = squash_replay(top, baseline, original, target, tree)
             repo.git("reset", "--keep", replayed, cwd=top)
         if repo.git("rev-parse", "HEAD^{tree}", cwd=top) != tree:
             evidence = (review.commit_paragraph(top, baseline, "Functional check:", original) or
