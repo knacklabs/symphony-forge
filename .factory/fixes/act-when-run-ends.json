@@ -48,7 +48,7 @@
     "status": "blocked"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-19T08:02:52.521594+00:00",
@@ -61,8 +61,12 @@
   ],
   "stop": {
     "at": "2026-11-19T08:11:49.727324+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "src/forge/templates/skill.md",
-    "wait_id": "d0c2dcda-f8bd-42ff-ac45-3dceeec1b40b"
+    "reason": "Owner decided on 18 Nov 2026 that fixes get two review rounds; this is the second",
+    "wait_id": "d0c2dcda-f8bd-42ff-ac45-3dceeec1b40b",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
