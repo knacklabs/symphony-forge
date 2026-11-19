@@ -18,8 +18,8 @@
       "gain": 3,
       "harm": 3,
       "line": 671,
-      "outcome": "open",
-      "reason": "",
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: Owner accepted on 19 Nov 2026: close misses foreign commits without a task start record, and refuses after reverted foreign changes; filed as an issue",
       "round": 1,
       "security": false,
       "title": "Not done: close misses imported commits without a task start record",
@@ -57,8 +57,8 @@
       "gain": 4,
       "harm": 2,
       "line": 671,
-      "outcome": "open",
-      "reason": "",
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: Owner accepted on 19 Nov 2026: close misses foreign commits without a task start record, and refuses after reverted foreign changes; filed as an issue",
       "round": 1,
       "security": false,
       "title": "Allow close after foreign changes have been reverted",
@@ -70,7 +70,18 @@
     "branch_diff": "6a4dce61da713e0ce918b10cfbc7f8c7073c27c38592ab316bff2a807018f327",
     "changed": "52569628663e8db34033ea9b1458ca6f0b898123fa9a59bd9fedd98d921d6472",
     "commit": "bd3dbbf53dc96aee1b5cd7fe0bbd75c1d41792d1",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner accepted on 19 Nov 2026: close misses foreign commits without a task start record, and refuses after reverted foreign changes; filed as an issue",
+        "finding": 1
+      },
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner accepted on 19 Nov 2026: close misses foreign commits without a task start record, and refuses after reverted foreign changes; filed as an issue",
+        "finding": 2
+      }
+    ],
     "findings": [
       {
         "body": "Gain 3, Work 2, Harm 3\nRaise: Not done\nCase: normal use - a developer cherry-picks another open task's new source file and edits one of its lines.\nFor a commit that adds the file in one hunk, line 720 requires every added line to remain in the net diff. Editing one line makes the check fail even though the rest of the imported code remains, so close can proceed without naming the other task. Separately, the patch IDs at line 702 include surrounding context, so a cherry-pick onto a version with different nearby lines can also go unmatched.",
@@ -95,10 +106,10 @@
       }
     ],
     "id": "c0c9add7-92c1-44ed-a5ce-3b2ced0c557c",
-    "status": "blocked"
+    "status": "clean"
   },
   "round": 2,
-  "status": "hotspot",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-19T03:08:24.838641+00:00",
@@ -115,8 +126,12 @@
   ],
   "stop": {
     "at": "2026-11-19T04:10:48.192831+00:00",
+    "by": "owner",
+    "choice": "accept",
     "file": "src/forge/task.py",
-    "wait_id": "fb1bd815-1655-485d-a274-c127f02848f6"
+    "reason": "Owner accepted on 19 Nov 2026: close misses foreign commits without a task start record, and refuses after reverted foreign changes; filed as an issue",
+    "wait_id": "fb1bd815-1655-485d-a274-c127f02848f6",
+    "worker_round": 2
   },
   "stuck": {
     "close": "2667f91e-7018-4534-b4f0-bc2ecd9e939c",
