@@ -1,0 +1,111 @@
+{
+  "base": "1a5b4d2cf1d9b0e80bb05627d2864a9ac40fd2bb",
+  "branch": "fix/dropped-fix-next-crash",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1ef8c-469e-7ba1-b237-e29b31ccaeaf",
+    "head": null,
+    "start": "cdc7f79f123bcc063490e0a3fc3d3920663c8311"
+  },
+  "done_when": "forge next and worker rounds skip a dropped fix whose checkout is gone, with no traceback; a command-level test drops a fix, removes its worktree and runs forge next; new and existing repos get it on upgrade",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "worktrees.read() in src/forge/story.py",
+      "file": "src/forge/story.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 812,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: forge next and worker rounds skip a dropped fix whose checkout is gone, with no traceback",
+      "work": 2
+    },
+    {
+      "area": "worktrees.read() in src/forge/story.py",
+      "file": "src/forge/story.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 812,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: unrelated branch names can stop worker rounds",
+      "work": 2
+    },
+    {
+      "area": "src/forge/worker.py",
+      "file": "src/forge/worker.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 64,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: allow workers to run forge next when their assignment needs it",
+      "work": 1
+    },
+    {
+      "area": "test_1_next_skips_a_dropped_fix_whose_checkout_is_gone() in tests/test_next_skips_removed_dropped_fixes.py",
+      "file": "tests/test_next_skips_removed_dropped_fixes.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 40,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: clean-review worker round after a checkout is removed",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "4a620fae07389ac2a6afe8cac729a87c603bf0810fd5f47fb6405812c2684307",
+    "changed": "a078fcc7d056774f275778c81ccafefcb522ccdd3c646947a49ed9a6819216be",
+    "commit": "9edb575e58db41a3d908564bc9d5ad9a1c97b229",
+    "dismissals": [],
+    "findings": [],
+    "id": "b26feb01-21b3-4fc6-b94d-79fe99332e72",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-18T16:43:39.626718+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-18T17:01:18.982311+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-18T17:23:29.603414+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-18T17:01:18.996284+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "src/forge/story.py",
+    "reason": "Owner decided on 18 Nov 2026 that fixes get two review rounds; this is the second",
+    "wait_id": "c6938887-0206-4d20-a13a-5e0ddccb3a60",
+    "worker_round": 1
+  },
+  "stuck": {
+    "close": "44039d3d-0980-46a9-9c57-992b09ef7d41",
+    "head": "05d444a37aa7d39cbb12dd42473cdeb6ff67d868",
+    "keys": {},
+    "round": 1
+  },
+  "why": "After forge fix drop, forge next raises FileNotFoundError on the dropped fix's worktree path, and a worker round that runs forge next then asks which failure or review finding to fix although its review was clean",
+  "worker": "codex"
+}
