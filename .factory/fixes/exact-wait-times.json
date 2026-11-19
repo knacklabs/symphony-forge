@@ -1,0 +1,15 @@
+{
+  "base": "285e56632baf943e4c7524f2341a7bb52f3e7f0b",
+  "branch": "fix/exact-wait-times",
+  "done_when": "Forge records hold, owner decision, wait and resume times with timestamps, keeps the first start of an item through rewrites and fix-to-task moves, and the How it went record splits start-to-merge into these parts; new and existing repos get it on upgrade",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-19T01:59:29.031055+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Start-to-merge records are unreliable: starts can be rewritten (a task's early commits rewritten to one later time, a fix that became a task keeping the child's start), repairs show zero minutes, and unexplained time is labelled 'nothing running'"
+}
