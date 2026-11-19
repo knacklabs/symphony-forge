@@ -109,8 +109,6 @@ def test_1_broad_related_tests_wait_for_ci(env, tmp_path, monkeypatch,
                        f"repos/{{owner}}/{{repo}}/commits/{original}/check-runs?per_page=100",
                        stdout="".join(json.dumps(check) + "\n" for check in
                                       [run("tests"), run("forge-pr-check")]))
-    before_checks = len(env.gh_calls("api"))
-
     merged = env.repo.forge("merge", item)
     attempts = env.gh_calls("pr", "merge")
 
@@ -129,9 +127,9 @@ def test_1_broad_related_tests_wait_for_ci(env, tmp_path, monkeypatch,
             published = attempts[0][attempts[0].index("--match-head-commit") + 1]
         assert published != original
         env.repo.git("merge-base", "--is-ancestor", advanced, published, cwd=remote)
-        assert ["api", "--paginate", "--jq", ".check_runs[]",
-                f"repos/{{owner}}/{{repo}}/commits/{published}/check-runs?per_page=100"
-                ] in env.gh_calls("api")[before_checks:]
+        check_runs_path = f"repos/{{owner}}/{{repo}}/commits/{published}/check-runs?per_page=100"
+        assert ["api", "--paginate", "--jq", ".check_runs[]", check_runs_path
+                ] in env.gh_calls("api", path=check_runs_path)
         if ci_red:
             assert merged.returncode != 0
             assert "Checks failed on the pull request: tests." in merged.stderr

@@ -137,7 +137,11 @@ def pytest_unconfigure(config):
 def test_3_worker_reruns_report_only_the_final_result(repo, gh, tmp_path, monkeypatch, failing, restart):
     client = _client(repo, gh, tmp_path)
     client.write("tests/test_result.py", "import os\nfrom pathlib import Path\n"
-                 "def test_worker_dies_once():\n"
+                 "def test_worker_dies_once(request):\n"
+                 # The plugin sends its rerun allowance without waiting for an answer.
+                 # Read it back on the same socket before killing the worker, so the
+                 # controller has received it even when its socket thread is busy.
+                 "    assert request.config.failures_db.get_test_reruns(request.node.nodeid) == 1\n"
                  "    marker = Path('crashed')\n"
                  "    if not marker.exists():\n        marker.touch()\n        os._exit(42)\n"
                  + ("def test_failure():\n    assert False, 'real assertion failure'\n"
