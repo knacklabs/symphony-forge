@@ -221,6 +221,9 @@ Build the list and the count in the client's design, as FORGE-NOSCREENS-1 requir
 No email until the SNS story.
 An app without the `notifications` module gets it by hand, from these names, when a feature first needs it.
 `forge sync` delivers this guide and keeps the app's code and migrations unchanged.
+Before sync replaces a differing `.agents/skills/forge` page, it saves the old bytes
+beside it with a `.pre-forge-` suffix and prints that path. Migration lists tracked
+team pages there in its existing `.forge-migrate/kept` list before it replaces them.
 
 ## After a demo
 

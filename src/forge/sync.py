@@ -597,12 +597,23 @@ def write(top: Path, cfg: dict[str, Any], keep: frozenset[str] = frozenset()) ->
     if changed:
         repo._work_branch(top)  # the shared rule: a born default branch or a detached HEAD refuses
         roles.refuse_foreign(top, changed)
+    preserved = []
     for rel in changed:
+        path = top / rel
+        if rel.startswith(".agents/skills/forge/") and path.is_file():
+            if not path.resolve().is_relative_to(top.resolve()):
+                repo.refuse(REFUSALS["outside"], path=rel)
+            # These pages used to belong to the team, including ignored files.
+            # A unique sibling keeps their exact bytes without replacing an earlier backup.
+            with tempfile.NamedTemporaryFile(prefix=path.name + ".pre-forge-", dir=path.parent,
+                                             delete=False) as backup:
+                backup.write(path.read_bytes())
+            preserved.append(Path(backup.name).relative_to(top).as_posix())
         if wanted[rel]:
             write_file(top, rel, wanted[rel])
         else:
             (top / rel).unlink()
-    return changed + [rel for rel in links if rel not in changed]
+    return changed + preserved + [rel for rel in links if rel not in changed]
 
 
 def check_guides(top: Path, changed_files: list[str]) -> None:
