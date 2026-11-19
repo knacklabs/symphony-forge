@@ -4,12 +4,20 @@
   "done_when": "Every generated skill copy (.claude, .codex and .agents) comes from the same template text and describes the round rule the code applies; a test compares the copies; new repos get it at init and existing repos on upgrade and forge sync",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-19T01:59:23.987540+00:00",
       "step": "start"
     }
   ],
-  "why": "The generated copies of the Forge skill in client repos disagree on the review round rule (one copy asks the owner after the second blocked round even for new findings, another describes P0 continuation)"
+  "stuck": {
+    "close": null,
+    "head": "f0eef2c4deb20863777f4c9285914b988a072757",
+    "keys": {},
+    "round": null
+  },
+  "why": "The generated copies of the Forge skill in client repos disagree on the review round rule (one copy asks the owner after the second blocked round even for new findings, another describes P0 continuation)",
+  "worker": "codex"
 }
