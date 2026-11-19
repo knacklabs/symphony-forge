@@ -11,12 +11,75 @@
   "done_when": "Every generated skill copy (.claude, .codex and .agents) comes from the same template text and describes the round rule the code applies; a test compares the copies; new repos get it at init and existing repos on upgrade and forge sync",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [
+    {
+      "area": "ships() in src/forge/story.py",
+      "file": "src/forge/story.py",
+      "gain": 2,
+      "harm": 4,
+      "line": 94,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Preserve existing .agents guides before replacing them",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/skill.md",
+      "file": "src/forge/templates/skill.md",
+      "gain": 4,
+      "harm": 2,
+      "line": 2056,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: Existing sync and review-round guide tests fail",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "fcc7730bc3849a36cefef19709f61f888eaf30094ec795fcbfb2f604c2ffceed",
+    "changed": "efbc79338a1b772f90589348aa8608206af92f2c60118741e62d2f83ebd36be3",
+    "commit": "e7bb3dbd7025d60855f9d12195b25890279a2c9e",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 2, Work 2, Harm 4\nRaise: Data loss\nCase: normal use - An existing Forge client has team-maintained Forge pages under `.agents/skills/forge` and runs sync, upgrade, or migration.\nThis adds that previously unmanaged directory to the shipped files. `sync.write` overwrites differing content without preserving it (`src/forge/sync.py:595-602`), including ignored or uncommitted files during a direct sync. Migration also misses these pages: its preservation inventory covers the older `.claude` and `.codex` paths, but excludes `.agents` (`src/forge/migrate.py:85-90,229-249,652-653`). Team-specific instructions disappear from the active repo; untracked copies cannot be recovered from Git. The ruling to ship the companion pages did not address this collision.\nAdds work: preserve previously unmanaged .agents pages before replacement; F 1 x H 1 = 1; 2 x C = 4",
+        "file": "src/forge/story.py",
+        "gain": 2,
+        "harm": 4,
+        "line": 94,
+        "priority": "P1",
+        "title": "Preserve existing .agents guides before replacing them",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 2\nRaise: Gate\nCase: normal use - The pull request runs its related tests.\n`tests/test_split_ships.py:19-24,71` expects an exact sync inventory containing only the `.claude` and `.codex` Forge pages, so the five new `.agents` pages make both cases fail. Separately, `tests/test_owner_decides_at_the_round_limit.py:254-264` still requires the sentence removed at this line, so both of its guide cases fail too. Both files import the changed `test_setup` module and are selected by the related-test picker, preventing the tests check from passing.",
+        "file": "src/forge/templates/skill.md",
+        "gain": 4,
+        "harm": 2,
+        "line": 2056,
+        "priority": "P1",
+        "title": "Gate: Existing sync and review-round guide tests fail",
+        "work": 2
+      }
+    ],
+    "id": "7be27ad2-ed1f-4328-b9dd-a878c80f591c",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-19T01:59:23.987540+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-19T02:41:46.609756+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
