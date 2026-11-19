@@ -226,6 +226,12 @@ def run(*args: str, cwd: str | os.PathLike[str] | None = None,
     exe = shutil.which(args[0])
     if exe is None:
         refuse(REFUSALS["missing_tool"], tool=args[0])
+    if args[0] == "git" and args[1:2] in (("merge",), ("merge-tree",), ("rebase",)):
+        top = Path(cwd or Path.cwd())
+        if (top / "forge.toml").is_file():
+            from forge import sync
+            # Git config stays on one machine; a published branch carries only attributes.
+            command_fact("merge rules", top, lambda: sync.install_merge_rules(top))
     if _command_cache is not None and env is None and input is None:
         spec = (args[2] if len(args) == 3 and args[:2] == ("git", "show")
                 and ":" in args[2] and not args[2].startswith("-")

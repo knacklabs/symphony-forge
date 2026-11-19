@@ -602,7 +602,7 @@ def _history(top: Path, item: str, base: str, previous: dict[str, Any],
     """Git owns earlier reviews; later dismissals replace that round's original result."""
     path = path or repo.state_path(item)
     rounds = {}
-    traversal = "--full-history" if include_merged else "--first-parent"
+    traversal = "--full-history"  # Both machines' review snapshots survive a branch merge.
     for sha in repo.git("rev-list", "--reverse", traversal, f"{base}..{ref}" if base else ref, "--", path,
                         cwd=top).split():
         saved = json.loads(repo.git("show", f"{sha}:{path}", cwd=top))

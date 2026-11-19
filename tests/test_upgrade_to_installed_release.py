@@ -56,6 +56,9 @@ def test_1_upgrade_to_installed_release_continues_during_runs(unsynced_up, tmp_p
         assert_ready(upgrade, result, ours(upgrade, installed=False, release=release, name=name),
                      release=release, name=name)
         assert not [call for call in upgrade.uv() if call["args"][:2] == ["tool", "install"]]
+        # Upgrade installs the shared record merge rule, including for older adoptions.
+        assert upgrade.repo.git("config", "--get", "merge.forge-record.driver") == (
+            "forge hook merge-roadmap %O %A %B %P")
         assert reader.poll() is None, "Upgrade must leave the other repo's run alone"
     finally:
         finish(upgrade.repo, processes)
