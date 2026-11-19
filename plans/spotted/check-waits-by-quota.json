@@ -52,8 +52,8 @@
       "text": "Gate: tests/test_check_waits_follow_api_quota.py::test_2_land_caps_concurrent_waits_and_releases_places",
       "from": "blocking",
       "item": "check-waits-by-quota",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "edge\ttests/test_check_waits_follow_api_quota.py\tFollow-up: Cover concurrent waits when the quota lookup fails",
