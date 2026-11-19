@@ -249,7 +249,7 @@ Every client repo moves through seven steps. `forge next` names the current step
 
 **The build and review loop.** A worker builds the part and its tests, then a separate review checks the change. A serious problem goes back to the worker for another round. Tasks and fixes get review rounds up to the repo's setting, two by default. At the round limit (the repo's setting, two by default), Forge stops and asks the owner, but a P0 problem keeps the loop going. It exists because a reviewer sees problems that the worker cannot see in its own work.
 
-**The CI checks.** GitHub runs the repo's checks on the pull request. Close and merge wait until queued or running checks finish, and a red check goes back to the worker. Progress prints at most once every five minutes. The test time limit excludes time in the runner queue. New and existing repos get this behaviour on upgrade. They exist because the tests must run on a clean machine, the same way for every change. If uv installation fails, the generated workflow retries it once before the job fails.
+**The CI checks.** GitHub runs the repo's checks on the pull request. Close and merge wait until queued or running checks finish. A red check ends the wait at once, even while other checks are queued or running, and goes back to the worker. Progress prints at most once every five minutes. The test time limit excludes time in the runner queue. New and existing repos get this behaviour on upgrade. They exist because the tests must run on a clean machine, the same way for every change. If uv installation fails, the generated workflow retries it once before the job fails.
 On GitHub Actions, `forge test` streams the test output into the job log.
 
 `forge next` adds one line under each running item that says what it waits on, why and for how long. Give that line to the person when they ask why something takes time.
@@ -2508,6 +2508,7 @@ loops, with check waits and bounded fix rounds. Land waits for the pushed head's
 GitHub shows progress or a check is in progress, retrying unreadable or failed answers. It stops
 waiting on green or failed checks, or after 30 minutes without progress when no check is queued or running.
 Queued or running checks keep the command alive until they finish. Progress prints at most once every five minutes.
+Any failed check ends the wait at once, even while other checks are queued or running.
 At the no-progress limit, no decision is needed.
 Run `forge land <item>` again to resume without restarting checks.
 `FORGE_CHECKS_WAIT` keeps its explicit no-progress wait for running or missing checks.

@@ -65,11 +65,12 @@ def test_1_active_checks_finish_after_long_queue(land, fake_clock, monkeypatch, 
 @pytest.mark.parametrize("command", ["close", "merge", "land"])
 @pytest.mark.parametrize("case", ["red-queued", "red-running", "timeout-running", "retry"])
 @pytest.mark.parametrize("fake_clock", [600], indirect=True)
-def test_3_checks_wait_for_active_siblings_and_retries(land, fake_clock, monkeypatch, tmp_path, command, case):
-    """Audit: failures cannot end active checks; recovery cannot reuse a stale deadline.
+def test_3_failed_checks_end_waits_and_retries_keep_waiting(land, fake_clock, monkeypatch, tmp_path, command, case):
+    """Audit: a required failure ends the wait; recovery cannot reuse a stale deadline.
 
-    Prior coverage has no failed sibling or retry after ten minutes. Only gh and
-    the existing clock are faked; elapsed command time proves the wait occurred.
+    Round six replaces the earlier failed-sibling wait policy. The existing table
+    owns that command contract and a retry after ten minutes. Only gh and the
+    existing clock are faked; elapsed command time distinguishes the two paths.
     """
     from test_close_reruns_cancelled_ci import _workflow
 
@@ -93,19 +94,20 @@ def test_3_checks_wait_for_active_siblings_and_retries(land, fake_clock, monkeyp
         start = datetime(2026, 11, 18, tzinfo=timezone.utc)
         bad = ({**run("tests (windows-latest)", "timed_out"), "started_at": start.isoformat(),
                 "completed_at": (start + timedelta(minutes=60)).isoformat()}
-               if case == "timeout-running" else run("lint", "failure"))
-        active = run("tests", None, "queued" if case == "red-queued" else "in_progress")
+               if case == "timeout-running" else run("tests (windows-latest)", "failure"))
+        active = run("tests (ubuntu-latest)", None, "queued" if case == "red-queued" else "in_progress")
         _queue(env, RUNS, *_runs(*([[bad, active, run("forge-pr-check")]] * 3), [bad, *GREEN]))
     elapsed = tmp_path / "clock" / "elapsed"
     before = float(elapsed.read_text("utf-8"))
 
     done = env.repo.forge(command, ITEM, cwd=where)
     output = done.stdout + done.stderr
-    assert float(elapsed.read_text("utf-8")) - before >= 1800, output
     if case == "retry":
+        assert float(elapsed.read_text("utf-8")) - before >= 1800, output
         assert done.returncode == 0, output
         assert "Started it again; waiting for it" in output, output
     else:
+        assert float(elapsed.read_text("utf-8")) == before, output
         assert done.returncode == 1, output
         assert ("the tests ran out of time" if case == "timeout-running"
-                else "Checks failed on the pull request: lint") in output, output
+                else "Checks failed on the pull request: tests") in output, output

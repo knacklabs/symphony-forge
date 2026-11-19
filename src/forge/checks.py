@@ -145,8 +145,8 @@ def _let_finish(top: Path, item: str, sha: str, names: list[str],
             # This head predates the review record. Its review cannot be green yet.
             seen = [(name, PASS if name in ("forge-pr-check", "Review pull request") else state)
                     for name, state in seen]
-            if not any(state in (PENDING, QUEUED) for _, state in seen):
-                _recover(top, item, sha, names, runs, seen)
+            _recover(top, item, sha, names, runs, seen)
+            _pending(item, names, seen)  # A failure ends the wait before a record-only push.
             states = [state for _, state in seen]
             if not any(state in (PENDING, QUEUED) for state in states):
                 return
@@ -222,19 +222,15 @@ def _wait(top: Path, item: str, sha: str, names: list[str], branch: str, progres
             if not any(name == "forge-pr-check" or name == "Review pull request" and state != SKIPPED
                        for name, state in seen):  # the pull_request workflow skips its own job of that name
                 _no_start(top, item, sha, branch)  # before a red or timed-out test can hide it
+            if train:
+                # The train reads failed-job logs and owns its one retry in land._red.
+                _tests_timeout(top, item, sha, names, check_runs, seen)
+            elif _recover(top, item, sha, names, check_runs, seen) and cache is not None:
+                cache.unlink(missing_ok=True)  # Read the new attempt instead of cached failures.
+            reason = _pending(item, names, seen)  # Report failures even while siblings are active.
             active = [(name, state) for name, state in seen if state in (PENDING, QUEUED)]
-            result["state"] = ("running" if any(state == PENDING for _, state in active)
-                               else "queued" if active else "unknown")
             if active:
-                # A failed sibling or timeout cannot end another job's wait.
                 reason = _pending(item, [], active)
-            else:
-                if train:
-                    # The train reads failed-job logs and owns its one retry in land._red.
-                    _tests_timeout(top, item, sha, names, check_runs, seen)
-                elif _recover(top, item, sha, names, check_runs, seen) and cache is not None:
-                    cache.unlink(missing_ok=True)  # Read the new attempt instead of cached failures.
-                reason = _pending(item, names, seen)
             if mergeable == "UNKNOWN":
                 reason = reason or "GitHub has not determined whether this pull request can merge"
             queued = any(state == QUEUED for _, state in seen)
