@@ -10,8 +10,11 @@ this brief even when there are no failed checks or open review findings.
 
 Time history keeps the first recorded start, including a fix moved into a story and its first part.
 Holds, owner decisions, waits and resumed work keep their timestamps in How it went.
+The moved part keeps the fix's recorded activity. Close refreshes the final merge wait when
+it sees a human merge; an agent merge refreshes it after GitHub confirms the merge.
 Time without activity records stays unmeasured. Do not call it time with nothing running.
-New and existing repos get this behavior on upgrade. Earlier missing times stay unmeasured.
+New and existing repos get this behavior on upgrade, including repairs to published starts
+and older compacted gaps. Earlier missing times stay unmeasured.
 
 Settled findings stay settled. Each reader and reviewer gets earlier rounds' notes and answers,
 including findings already fixed or dismissed. Do not reopen them with the same finding text

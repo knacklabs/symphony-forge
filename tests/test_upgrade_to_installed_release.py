@@ -1,8 +1,9 @@
 """Upgrade to the installed release while a real read holds a machine lane.
 
-Test-audit: protects upgrade completion without reinstalling a live release.
-The regression is the unconditional run refusal; existing tests cover only installs
-with live runs or no-run install skips. Use the real command, with no production seam.
+Test-audit: protects upgrade completion without reinstalling a live release and
+repairs an earlier-adopted task's published start in the same upgrade. Existing
+coverage rebuilds old records separately; it does not cover this upgrade path.
+Use the real command and a GitHub edge fake, with no production seam.
 """
 import os
 import re
@@ -11,9 +12,12 @@ from pathlib import Path
 
 import pytest
 
-from conftest import ROOT
 from test_close import env  # noqa: F401
 from test_fix_agent_runs_wait_in_line import _other_repo, _until
+from test_board_after_upgrade import History
+from test_first_start_survives_history_changes import (
+    assert_rewritten_published_task_start, prepare_rewritten_published_task,
+)
 from test_lanes_agents import finish, hold_agents, start
 from test_story import worktree
 from test_upgrade_command import assert_ready, ours, unsynced_up, up  # noqa: F401
@@ -23,16 +27,18 @@ pytestmark = pytest.mark.platform
 
 
 @pytest.mark.parametrize("adopted", [False, True], ids=["new", "earlier-adoption"])
-def test_1_upgrade_to_installed_release_continues_during_runs(unsynced_up, tmp_path, adopted, request):
+def test_1_upgrade_to_installed_release_continues_during_runs(
+        unsynced_up, tmp_path, adopted, request, monkeypatch):
     upgrade = unsynced_up if adopted else request.getfixturevalue("up")
+    history = None
+    published_item = None
+    started_at = None
     if adopted:
-        upgrade.repo.git("switch", "-q", "-c", "adoption")
-        shutil.copytree(ROOT / "tests/fixtures/adopted-v1.2.2/client", upgrade.repo.path,
-                        dirs_exist_ok=True)
-        upgrade.repo.git("add", "-A")
-        upgrade.repo.git("commit", "-qm", "Use the earlier adoption")
-        upgrade.repo.git("switch", "-q", "main")
-        upgrade.repo.git("merge", "-q", "--ff-only", "adoption")
+        # History prepares the earlier-adopted repo and publishes a task whose
+        # old time record contains the rewritten start. Do this before pinning
+        # its version so this stays the installed-release upgrade under test.
+        history = History(upgrade, monkeypatch)
+        published_item, started_at = prepare_rewritten_published_task(history)
     release = upgrade.repo.forge("--version").stdout.split()[-1]
     # Both a new repo and an earlier-adopted repo can pin an older release.
     upgrade.on_main("forge.toml", re.sub(r'^version = ".*"', 'version = "v1.0.0"',
@@ -60,3 +66,6 @@ def test_1_upgrade_to_installed_release_continues_during_runs(unsynced_up, tmp_p
     finally:
         finish(upgrade.repo, processes)
     assert all(process.returncode == 0 for process in processes)
+    if history is not None:
+        assert published_item is not None and started_at is not None
+        assert_rewritten_published_task_start(history, published_item, started_at)

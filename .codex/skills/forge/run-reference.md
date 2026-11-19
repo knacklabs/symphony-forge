@@ -205,6 +205,10 @@ timings stay unknown, including gaps after newer activity records. Earlier run a
 do not establish completeness; historical questions without a recorded end stay unknown.
 How it went also shows timestamps for holds, owner decisions, waits and resumed work.
 The first recorded start survives commit rewrites and a fix moved into a story and its first part.
+The first part also keeps the fix's recorded work and reviews. Upgrade repairs earlier published
+starts and labels old compacted gaps as unmeasured time. Close refreshes How it went when it sees
+a human merge. An agent merge refreshes it after GitHub confirms the merge. Both use GitHub's
+merge time, so a later observation does not extend the final wait.
 
 Quote the item's round lines when explaining a long run, then quote the relevant breakdown
 categories rather than adding overlapping stage timers. The board page shows these same

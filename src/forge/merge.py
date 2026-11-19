@@ -234,6 +234,9 @@ def merge(args: argparse.Namespace, *, refreshed: bool = False) -> int:
             reason = (done.stderr or done.stdout or "GitHub gave no reason").strip().splitlines()[-1]
             repo.refuse(REFUSALS["merge_failed" if done.returncode else "pending"], item=item, reason=reason)
     repo.record_event(top, item, "item finished", round=(repo.read_state(item, worktree) or {}).get("round"))
+    if finished := close._pull_request(worktree, branch):
+        if finished.get("state") == "MERGED" and finished.get("mergedAt"):
+            close._refresh_record(worktree, item, repo.read_state(item, worktree) or {}, finished)
     if "/" in item:
         children = repo.run("gh", "pr", "list", "--base", branch, "--state", "open",
                             "--limit", "1000", "--json", "number,headRefName", cwd=top)
