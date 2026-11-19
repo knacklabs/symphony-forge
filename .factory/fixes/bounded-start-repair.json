@@ -4,12 +4,20 @@
   "done_when": "The first close after an upgrade repairs at most the open items and the 20 most recently merged ones, reads no check runs for merged items it repairs, and finishes the repair in minutes on Forge's own repo; later closes do not repeat it; new and existing repos get it on upgrade",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-19T13:52:00.521791+00:00",
       "step": "start"
     }
   ],
-  "why": "The exact wait-times fix makes the first close after an upgrade repair every past item from the last six weeks: backfill.run rebuilds each pull request whose How it went text says 'nothing running', fetching each old pull request head and its check runs, so on Forge's own repo the first close ran over an hour and spends many GitHub requests"
+  "stuck": {
+    "close": null,
+    "head": "2db6b249c5ec98e89dcd790ba5cc2642ddcacfa8",
+    "keys": {},
+    "round": null
+  },
+  "why": "The exact wait-times fix makes the first close after an upgrade repair every past item from the last six weeks: backfill.run rebuilds each pull request whose How it went text says 'nothing running', fetching each old pull request head and its check runs, so on Forge's own repo the first close ran over an hour and spends many GitHub requests",
+  "worker": "codex"
 }
