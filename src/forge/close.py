@@ -409,7 +409,18 @@ def close(args: argparse.Namespace) -> int:
         score.remember(_known(top, item, state, review_ref, previous), result, round_number,
                        {} if fresh else areas,
                        repaired=previous if not (fresh or records_only or switch or replayed) else None)
-    if (serious and round_number >= (cfg["task_review_rounds"] if "/" in item else 1) and
+    policy_round = False
+    at_limit = round_number >= (cfg["task_review_rounds"] if "/" in item else 1)
+    if (serious and at_limit and cfg["auto_more_round"] and
+            all(score.priority(f) in ("P0", "P1") and
+                re.search(r"^Raise:[ \t]*Functional\b", f["body"], re.I | re.M)
+                for _, f in serious)):
+        if not state.get("auto_more_round"):
+            state["auto_more_round"] = result["id"]
+            refreshed = True
+            print("Applied the owner's policy: one more round for functional findings.", flush=True)
+        policy_round = state["auto_more_round"] == result["id"]
+    if (serious and at_limit and not policy_round and
             not any(score.holds(f, "P0") for _, f in serious) and (not fresh or not state.get("stop"))):
         stopped = {"file": serious[0][1]["file"], "at": repo.now(),
                    "wait_id": repo.record_event(top, item, "owner wait start", reason="review loop")}

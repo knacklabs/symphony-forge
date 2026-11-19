@@ -33,6 +33,10 @@ When GitHub reports its API rate limit, only close, merge and land wait until it
 From the second review round, close checks the previous round's findings and new P0s that
 happen in normal use. A round-one fix that breaks the main path counts as a P0.
 `task_review_rounds` sets the task review limit. At that limit (the repo's setting, two by default), open findings below P0 need the owner's choice before they become follow-ups.
+With `auto_more_round = true` in forge.toml, close applies the owner's policy once per item:
+one more round when all open blocking findings are P0 or P1 with `Raise: Functional`.
+Close reports the policy when it applies it. The setting is off by default.
+All other choices still wait for the owner. New and existing repos can use this setting after upgrade.
 Every `Not done:` finding blocks a fix, including one about builder details.
 For a story task, `Not done` blocks only against a covered owner-approved Done-when item,
 including a title that starts with that item and adds words after it. Builder details
