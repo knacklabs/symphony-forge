@@ -274,6 +274,7 @@ Only a genuine trade-off goes to the human, as a question with options.
    Case: normal use - Agents exhaust the developer’s GitHub budget before the developer starts merge.  
    The revised [plan](/plans/FORGE-GHAPP-1.md:86) reads the active login with the personal sign-in before selecting the app. [That read](/src/forge/task.py:323) goes through [GitHub’s rate-limit wait](/src/forge/github.py:109), so Forge waits for the personal budget to reset before it can use the app’s separate budget. This is the main failure the story is meant to remove.  
    Gain 5, Work 3, Harm 3
+   Disposition: keep - fixed: setup saves the login with the app; close, merge and land read the active login from gh's local settings and the repo from the origin URL, so choosing the app makes no request on the developer's budget
 
 28. Blocking: The Windows key folder can inherit access for other users.
 
@@ -281,6 +282,7 @@ Only a genuine trade-off goes to the human, as a question with options.
    Case: normal use - A Windows developer uses a shared local folder for `LOCALAPPDATA` and Python 3.11.9.  
    [The plan](/plans/FORGE-GHAPP-1.md:88) relies on modes `0700` and `0600`, but this [supported Python version](/pyproject.toml:9) does not apply Windows access controls for `0700`; that support began in 3.11.10. The key can inherit the shared folder’s permissions, letting another account read it. [Python](https://docs.python.org/3.11/library/os.html#os.mkdir), [Microsoft](https://learn.microsoft.com/en-us/windows/win32/fileio/file-security-and-access-rights)  
    Gain 5, Work 3, Harm 4
+   Disposition: keep - fixed: on Windows, icacls sets the folder and the key file to the current user only before the key is kept; a failure deletes the file and refuses
 
 29. Blocking: Disputed keep 12: the new refusal link is left behind by automatic submission.
 
@@ -288,6 +290,7 @@ Only a genuine trade-off goes to the human, as a question with options.
    Case: normal use - An organization member without the App Manager role is refused by GitHub.  
    [The new page](/plans/FORGE-GHAPP-1.md:100) submits to GitHub as soon as it loads, taking the developer away from its `/refused` link. The plan gives no instruction to return to that page, so the intended immediate refusal can still take 15 minutes. The [test](/plans/FORGE-GHAPP-1.md:111) calls the link directly and would pass with this browser flow broken.  
    Gain 4, Work 2, Harm 3
+   Disposition: keep - fixed: the refusal link and the interactive page are gone; the page is only a self-submitting form, and setup prints the App Manager line after 15 minutes without GitHub's return
 
 30. Blocking: Disputed keep 20: the new refusal interaction still skips the functional check.
 
@@ -295,6 +298,7 @@ Only a genuine trade-off goes to the human, as a question with options.
    Case: normal use - A developer needs to use the new refusal link during setup.  
    The revised [plan](/plans/FORGE-GHAPP-1.md:100) adds an interactive local page, but again says [Design: none](/plans/FORGE-GHAPP-1.md:17) and marks [SETUP user-facing: no](/plans/FORGE-GHAPP-1.md:126), contrary to the stated disposition. [Review](/src/forge/review.py:325) therefore omits the functional check for this new interaction.  
    Gain 4, Work 2, Harm 2
+   Disposition: keep - fixed: no interactive page remains, so Design: none and SETUP not user-facing hold
 
 31. Advisory: Disputed keep 23: personal pull-request calls consult the app’s quota after a rate-limit error.
 
