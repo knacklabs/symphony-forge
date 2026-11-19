@@ -380,7 +380,7 @@ if plan_path.exists() and not marker.exists():
        "foreign-failure-only", "foreign-success-only", "foreign-success-cannot-clear-red",
        "one-default-result-request"])
 @pytest.mark.platform
-def test_3_merge_waits_while_the_default_branch_is_red(env, monkeypatch, case):
+def test_3_merge_waits_while_the_default_branch_is_red(env, monkeypatch, request, case):
     from test_close import run
     from test_merge_command import _ready
 
@@ -491,7 +491,10 @@ def test_3_merge_waits_while_the_default_branch_is_red(env, monkeypatch, case):
         _default_ci_result(env, default, [_ci_run(default, "completed", "failure", test_when)],
                            [_full_run("success", full_when)])
     elif case in ("repair-disjoint", "repair-overlap", "repair-disables-merge"):
-        monkeypatch.setenv("FORGE_CHECKS_WAIT", "1")
+        # The GitHub hook clones and pushes a real repair. Its runtime must not
+        # exhaust the wait before Forge can fetch it on a slower Windows runner.
+        request.getfixturevalue("fake_clock")
+        monkeypatch.setenv("FORGE_CHECKS_WAIT", "120")
         repair_path = ("README.md" if case == "repair-overlap" else
                        "forge.toml" if case == "repair-disables-merge" else "repair.txt")
         repair_content = ("Welcome\n\nKeep this paragraph.\n\nOriginal line\n" if case == "repair-overlap" else
