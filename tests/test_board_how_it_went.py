@@ -136,14 +136,12 @@ def test_5_how_it_went_is_shared_and_story_time_counts_each_instant_once(env, mo
     where = next(Path(block.splitlines()[0].removeprefix("worktree "))
                  for block in listing.split("\n\n") if f"branch refs/heads/fix/{item}" in block)
     env.commit(where, "app.py", "print('basket')\n")
-    # An open P1 stops for the owner at the round limit and remains across machines.
-    env.reviews(blocked(p1_at_bar("Basket disappears")))
+    # Two blocked reviews stop for the owner at the default round limit and remain across machines.
+    env.reviews(blocked(p1_at_bar("Basket disappears")),
+                blocked(p1_at_bar("Basket disappears")))
     env.checks([run("tests", None, "queued"), run("forge-pr-check")])
     first = env.close(item)
     assert first.returncode == 1, first.stdout + first.stderr
-    published(env, item)
-    chosen = env.close(item, "--resolve", "more", "--reason", "Repair the basket loss")
-    assert chosen.returncode == 0, chosen.stdout + chosen.stderr
     published(env, item)
     machine_a = env.repo.path
     remote = env.repo.git("remote", "get-url", "origin")
@@ -362,10 +360,12 @@ def read_history_batching(env, monkeypatch):
 
 def warm_checks_cache(env, monkeypatch):
     def check_reads():
-        return [call for call in env.gh_calls("api", "graphql")
-                if any("StatusContext" in arg for arg in call)]
+        return env.gh_calls("api", "graphql", query="StatusContext")
 
     github_list_fields(env)
+    config = (env.repo.path / "forge.toml").read_text("utf-8")
+    env.commit(env.repo.path, "forge.toml", "task_review_rounds = 1\n" + config)
+    env.repo.git("push", "-q", "origin", "main")
     item, where = env.start_fix(round=1)
     env.reviews(blocked(p1_at_bar("Basket disappears")))
     first = env.close(item)
@@ -530,6 +530,8 @@ def question_wait(env, monkeypatch):
 
 
 def conflict_wait(env, monkeypatch):
+    config = (env.repo.path / "forge.toml").read_text("utf-8")
+    env.commit(env.repo.path, "forge.toml", "task_review_rounds = 1\n" + config)
     env.commit(env.repo.path, "app.py", "print('old basket')\n")
     env.repo.git("push", "-q", "origin", "main")
     item, where = env.start_fix({"app.py": "print('branch basket')\n"}, round=1)

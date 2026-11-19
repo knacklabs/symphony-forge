@@ -343,8 +343,19 @@ def _close_refuses(up):
     up.repo.git("add", "docs/notes.md", cwd=up.folder)
     up.repo.git("-c", f"core.hooksPath={up.tmp / 'no-hooks'}", "commit", "-q", "-m", "Add a note",
                 cwd=up.folder)
-    up.env.reviews(blocked({**finding("P1", "The launcher pins the wrong release", ".forge/hooks.sh"),
-                            "body": "Gain 4, Work 1, Harm 2\nThe launcher runs the wrong release."}))
+    blocker = blocked({**finding("P1", "The launcher pins the wrong release", ".forge/hooks.sh"),
+                       "body": "Gain 4, Work 1, Harm 2\nThe launcher runs the wrong release."})
+    up.env.reviews(blocker, blocker)
+
+    first = up.run(RELEASE)
+    assert first.returncode == 1, first.stdout + first.stderr
+    assert "The review left serious findings open" in first.stderr
+    assert "One more round, split or accept?" not in first.stderr
+    # The upgrade command must also return the owner question after a second blocked review.
+    (up.folder / "docs" / "notes.md").write_text("repaired hand edit\n", encoding="utf-8")
+    up.repo.git("add", "docs/notes.md", cwd=up.folder)
+    up.repo.git("-c", f"core.hooksPath={up.tmp / 'no-hooks'}", "commit", "-q", "-m", "Repair the note",
+                cwd=up.folder)
 
     done = up.run(RELEASE)
 
