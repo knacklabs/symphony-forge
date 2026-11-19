@@ -31,23 +31,75 @@
       "gain": 4,
       "harm": 2,
       "line": 2056,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
       "title": "Gate: Existing sync and review-round guide tests fail",
       "work": 2
+    },
+    {
+      "area": "write() in src/forge/sync.py",
+      "file": "src/forge/sync.py",
+      "gain": 2,
+      "harm": 4,
+      "line": 610,
+      "outcome": "open",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Preserve existing .agents guides before replacing them",
+      "work": 2
+    },
+    {
+      "area": "write() in src/forge/sync.py",
+      "file": "src/forge/sync.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 608,
+      "outcome": "open",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Keep generated backups from forcing a model review on upgrades",
+      "work": 2
+    },
+    {
+      "area": "ships() in src/forge/story.py",
+      "file": "src/forge/story.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 94,
+      "outcome": "open",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Not done: Deliver the .agents guide when its directory is ignored",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/skill.md",
+      "file": "src/forge/templates/skill.md",
+      "gain": 3,
+      "harm": 2,
+      "line": 2059,
+      "outcome": "open",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Not done: Explain the round limit when P0 and lower findings coexist",
+      "work": 1
     }
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "fcc7730bc3849a36cefef19709f61f888eaf30094ec795fcbfb2f604c2ffceed",
-    "changed": "efbc79338a1b772f90589348aa8608206af92f2c60118741e62d2f83ebd36be3",
-    "commit": "e7bb3dbd7025d60855f9d12195b25890279a2c9e",
+    "branch_diff": "87def62f79978e3e9bcf2cb3de65d9bc3c795a948b180fd03ef017448f3d6777",
+    "changed": "ce4bd694d085ebabd4d04d9c46bd06161bfe84782ea1e52038fbe214c8a2064a",
+    "commit": "ca1bf3236fc9442810538cfe833b92630922e54b",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 2, Work 2, Harm 4\nRaise: Data loss\nCase: normal use - An existing Forge client has team-maintained Forge pages under `.agents/skills/forge` and runs sync, upgrade, or migration.\nThis adds that previously unmanaged directory to the shipped files. `sync.write` overwrites differing content without preserving it (`src/forge/sync.py:595-602`), including ignored or uncommitted files during a direct sync. Migration also misses these pages: its preservation inventory covers the older `.claude` and `.codex` paths, but excludes `.agents` (`src/forge/migrate.py:85-90,229-249,652-653`). Team-specific instructions disappear from the active repo; untracked copies cannot be recovered from Git. The ruling to ship the companion pages did not address this collision.\nAdds work: preserve previously unmanaged .agents pages before replacement; F 1 x H 1 = 1; 2 x C = 4",
+        "body": "chunk 1/2:\n\nGain 2, Work 2, Harm 4\nRaise: Data loss\nCase: normal use - An existing client keeps an ignored, untracked Forge guide under `.agents` and upgrades Forge.\nIf the ignore rule is in an untracked `.agents/.gitignore`, `forge upgrade` accepts the checkout because it ignores untracked files (`src/forge/upgrade.py:82-85`) and creates a separate worktree from the committed branch (`src/forge/upgrade.py:176-178`). Neither the local guide nor its ignore rule is in that worktree, so sync creates the new guide without saving the original. After the upgrade merges, a normal pull can overwrite the ignored local guide: Git merge updates ignored files by default. Its contents are then absent from both Git and the backup.\nAdds work: preserve ignored local guides across the upgrade worktree; F 1 x H 1 = 1; 2 x C = 4",
         "file": "src/forge/story.py",
         "gain": 2,
         "harm": 4,
@@ -57,17 +109,49 @@
         "work": 2
       },
       {
-        "body": "Gain 4, Work 2, Harm 2\nRaise: Gate\nCase: normal use - The pull request runs its related tests.\n`tests/test_split_ships.py:19-24,71` expects an exact sync inventory containing only the `.claude` and `.codex` Forge pages, so the five new `.agents` pages make both cases fail. Separately, `tests/test_owner_decides_at_the_round_limit.py:254-264` still requires the sentence removed at this line, so both of its guide cases fail too. Both files import the changed `test_setup` module and are selected by the related-test picker, preventing the tests check from passing.",
-        "file": "src/forge/templates/skill.md",
-        "gain": 4,
-        "harm": 2,
-        "line": 2056,
+        "body": "chunk 2/2:\n\nGain 2, Work 2, Harm 4\nRaise: Data loss\nCase: normal use - A team shares its Forge guide between hosts by making `.agents/skills/forge/SKILL.md` a symlink to `.codex/skills/forge/SKILL.md`, and the shared guide has uncommitted team edits. `story.ships` lists the Codex path before the agents path, so `sync.write` overwrites the shared file before this backup reads it. The reported `.pre-forge-` file consequently contains the new template, and the team edits are lost. Capture the agents pages before writing any host path.",
+        "file": "src/forge/sync.py",
+        "gain": 2,
+        "harm": 4,
+        "line": 610,
         "priority": "P1",
-        "title": "Gate: Existing sync and review-round guide tests fail",
+        "title": "Preserve existing .agents guides before replacing them",
         "work": 2
+      },
+      {
+        "body": "chunk 2/2:\n\nGain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - A repo initialized with this release upgrades to a later release that changes the Forge guide. Sync creates a `.pre-forge-*` copy of the previously generated `.agents` guide, and `forge upgrade` commits that untracked backup. `review_skip.upgrade_only` accepts only paths returned by `sync.synced`; the backup is not in the sync inventory, so an otherwise mechanical upgrade invokes the model reviewer. This can block an upgrade when the reviewer is unavailable, and the new-client cases in `tests/test_upgrade_skips_model_review.py` expect no review call. The named upgrade proof misses this because it upgrades to the already-installed template.",
+        "file": "src/forge/sync.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 608,
+        "priority": "P1",
+        "title": "Keep generated backups from forcing a model review on upgrades",
+        "work": 2
+      },
+      {
+        "body": "chunk 2/2:\n\nGain 4, Work 2, Harm 3\nRaise: Not done\nCase: normal use - An existing client ignores `.agents/` because it contains local agent files. During upgrade, sync writes the new guide in the upgrade worktree, but `close.synced_changes` uses `git status` without ignored files, so `upgrade.py` never stages it. The subsequent sync check uses the same status-based inventory and can pass; the upgrade commit and other checkouts receive no `.agents` guide. A new repository with that ignore rule also fails init because `repo.commit_state` explicitly adds the ignored paths without forcing them. This leaves the promised init and upgrade delivery incomplete.",
+        "file": "src/forge/story.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 94,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: Deliver the .agents guide when its directory is ignored",
+        "work": 2
+      },
+      {
+        "body": "chunk 2/2:\n\nGain 3, Work 1, Harm 2\nRaise: Not done\nCase: normal use - A review reaches its limit with both a blocking P0 and a blocking lower-priority finding. The guide says lower-priority findings stop the item and ask the owner, while the new sentence says the P0 returns to the worker. `close.py:412-413` instead postpones the owner stop whenever any P0 remains open. The same unconditional owner-stop claim appears at `skill.md:2580`, so the generated guide can direct a coordinator to ask for a choice that close has not requested. The updated guide test asserts the unconditional sentence and does not catch this contradiction.",
+        "file": "src/forge/templates/skill.md",
+        "gain": 3,
+        "harm": 2,
+        "line": 2059,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: Explain the round limit when P0 and lower findings coexist",
+        "work": 1
       }
     ],
-    "id": "7be27ad2-ed1f-4328-b9dd-a878c80f591c",
+    "id": "82516cd5-6dc8-409d-9c51-00bbfcbb2f8c",
     "status": "blocked"
   },
   "round": 2,
@@ -79,6 +163,10 @@
     },
     {
       "at": "2026-11-19T02:41:46.609756+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-19T03:41:40.167155+00:00",
       "step": "review"
     }
   ],
