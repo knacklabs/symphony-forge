@@ -143,9 +143,11 @@ def test_4_close_keeps_its_fixed_wait(clock):
     _queue(env, RUNS, *_runs(*[look for stage in range(4) for look in [_pending(stage)] * 3], GREEN))
     done = env.repo.forge("close", ITEM)
     assert done.returncode == 1
-    # Active checks now name each matrix job, instead of the combined tests group.
+    # Sixty-second polling reaches the limit while both matrix jobs still run.
+    # The refusal names every active check at that point.
     assert ("The checks are not green yet: GitHub has shown no check progress for 1 minutes: "
-            "tests (windows-latest) is still running; forge-pr-check is still running.") in done.stderr
+            "tests (windows-latest) is still running; tests (ubuntu-latest) is still running; "
+            "forge-pr-check is still running.") in done.stderr
     assert not env.gh_calls("pr", "merge")
 
 
