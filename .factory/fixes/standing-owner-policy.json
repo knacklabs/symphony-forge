@@ -1,0 +1,155 @@
+{
+  "base": "285e56632baf943e4c7524f2341a7bb52f3e7f0b",
+  "branch": "fix/standing-owner-policy",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1f190-66c4-7891-a7d2-25d8d05efed0",
+    "head": null,
+    "start": "cdfd797c63ee9cb719fa78e5c0e3eb4a2cec79ca"
+  },
+  "done_when": "forge.toml can set a standing owner policy (for example auto_more_round = true) under which close gives one more round automatically for P0 or P1 functional findings, at most once per item, and reports that it applied the policy; every other choice still waits for the owner; off by default; new and existing repos get the setting on upgrade",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "close() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 422,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: the policy can permit more than one repair round per item",
+      "work": 2
+    },
+    {
+      "area": "close() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 418,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Do not spend the policy on a P0 that already continues",
+      "work": 1
+    },
+    {
+      "area": "close() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 421,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Carry the granted round through forge land",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/brief.md",
+      "file": "src/forge/templates/brief.md",
+      "gain": 4,
+      "harm": 2,
+      "line": 36,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Tell resumed workers that the policy authorized the round",
+      "work": 1
+    },
+    {
+      "area": "close() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 416,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Recognize indented Functional evidence",
+      "work": 1
+    },
+    {
+      "area": "tests/test_standing_review_policy.py",
+      "file": "tests/test_standing_review_policy.py",
+      "gain": 2,
+      "harm": 1,
+      "line": 10,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Follow-up: Correct the CI proof for checks that do not run on pull requests",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "6c8c183a50d8e5f1cf5677c7d3e7852c0a389691dd872adcc97c53e125f316d8",
+    "changed": "d417c09a051c7ce885738b15805a34028e7d88035194a85dbf14cb8f5b880189",
+    "commit": "654b9ef031f9cea0b82f76e2b3c577d41bb3fb37",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done\nCase: normal use - after a review with functional and nonfunctional findings, the owner chooses more, the worker fixes the nonfunctional finding, and the subsequent policy-authorized turn changes no reviewed file.\nThe previous owner choice remains in `state[\"stop\"]` when close grants the policy. After the authorized turn, close reuses the unchanged review, but line 425 does not replace an existing stop, even if it was already answered. `check_stop` at line 571 accepts that stale choice, so further `forge work` turns can start without a new owner decision.",
+        "file": "src/forge/close.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 424,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: the policy can permit more than one repair round per item",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 2\nRaise: Functional\nCase: normal use - the first repair leaves a P1 functional finding and causes local tests to fail as the task reaches its review limit.\nClose grants the policy, but `src/forge/close.py:467` returns `tests_failed` before returning the blocked-review result. `src/forge/land.py:146` recognizes a pending policy only for the latter, so direct land after its ordinary repair and queued land both stop without starting the authorized worker round.",
+        "file": "src/forge/close.py",
+        "gain": 4,
+        "harm": 2,
+        "line": 422,
+        "priority": "P1",
+        "title": "Functional: Carry the granted round through forge land",
+        "work": 2
+      }
+    ],
+    "id": "554e508b-f7a4-4ab2-b8f2-e20c16b9ac00",
+    "status": "blocked"
+  },
+  "round": 2,
+  "status": "hotspot",
+  "steps": [
+    {
+      "at": "2026-11-19T01:59:18.821263+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-19T02:44:56.215506+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-19T03:12:12.288415+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-19T03:12:12.288690+00:00",
+    "file": "src/forge/close.py",
+    "wait_id": "cf5c17fe-9451-4880-8903-ddeb4964b37b"
+  },
+  "stuck": {
+    "close": "a2a88ea1-ce83-4567-a69b-fc3a9dd69351",
+    "head": "13a0871548faaca219a8c45b3ff2e4d406f732e0",
+    "keys": {},
+    "round": 1
+  },
+  "why": "Overnight at a client, round-limit, switch, narrow, split and size choices piled up (6 by midnight) while builders sat idle, because every such choice waits for the owner",
+  "worker": "codex"
+}

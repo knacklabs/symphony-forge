@@ -2047,11 +2047,17 @@ restore after they fetch.
 ## Closing
 
 In `forge.toml`, `cold_read_rounds` sets the cold-read limit and `task_review_rounds` sets the task-review limit. Each accepts 1 or 2 and defaults to 2. Fixes keep one review round.
+The owner can set `auto_more_round = true` in `forge.toml` to permit one more review round per item.
+At the review limit, close applies this policy only when all open blocking findings are P0 or P1
+with `Raise: Functional`. Close reports the policy when it applies it. The setting is off by default.
+P0 findings already return to the worker and do not use this permission. The permitted round ends
+when the next worker turn starts, even when that turn changes no reviewed file.
+All other choices still wait for the owner. New and existing repos can use this setting after upgrade.
 
 A person can ask you to skip the model review for a task or fix. Run `forge close <item> --no-review --by "<name>" --reason "<why>"` only when a person asks. Close adds the name and reason to the pull request. Close refuses if an earlier review blocked the item. Tests, CI, design checks and merge still run.
 
 At the round limit (the repo's setting, two by default), open findings below P0
-stop the item and ask the owner: one more round, split or accept.
+stop the item and ask the owner: one more round, split or accept, unless close applies the policy above.
 Accept makes the open findings follow-ups in Known issues with the owner's reason.
 An open P0 never stops for the owner; the worker keeps fixing it. When the same P0 stays open
 two worker rounds in a row, Forge stops with the stuck question.
