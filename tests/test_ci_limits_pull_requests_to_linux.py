@@ -18,6 +18,9 @@ def expression(text, **github):
     # ponytail: covers the ==, &&, || and fromJSON this workflow uses, not GitHub's full grammar.
     code = re.sub(r"github\.[\w.]+", lambda name: repr(github.get(name[0][7:])), inner[1])
     code = code.replace("needs.selection.outputs.test-only", repr(github.get("test_only", "false")))
+    code = code.replace("always()", "True")
+    code = code.replace("needs.docs-check.result", repr(github.get("docs_result", "success")))
+    code = code.replace("needs.docs-check.outputs.docs-only", repr(github.get("docs_only", "false")))
     return eval(code.replace("&&", " and ").replace("||", " or "), {"fromJSON": json.loads})
 
 
@@ -71,11 +74,21 @@ def test_2_pull_requests_keep_closes_named_checks():
     workflow = (ROOT / ".github/workflows/forge.yml").read_text(encoding="utf-8")
     # Shared checks stay generated; Forge's additional Windows installer check has its own owner test.
     assert {"tests", "forge-pr-check"} <= set(checks)
-    for name, event in (("tests", "pull_request"), ("forge-pr-check", "pull_request_target")):
-        job = workflow.split(f"\n  {name}:\n", 1)[1].split("\n  forge-pr-check:", 1)[0]
-        assert f"if: github.event_name == '{event}'" in job
+    # The required test gate now answers to pushes too. Evaluate the emitted
+    # event condition and name, retaining the PR contract without fixing its syntax.
+    jobs = dict(re.findall(r"^  ([\w-]+):\n(.*?)(?=^  [\w-]+:|\Z)",
+                           workflow.split("\njobs:\n", 1)[1], re.M | re.S))
+    for name in ("tests", "forge-pr-check"):
+        job = jobs.get("tests-passed", jobs["tests"]) if name == "tests" else jobs[name]
+        condition = re.search(r"^    if: (.+)$", job, re.M)[1]
+        for event in ("pull_request", "pull_request_target", "push", "schedule", "workflow_dispatch"):
+            expected = event in ("pull_request", "push") if name == "tests" else event == "pull_request_target"
+            assert bool(expression("${{ " + condition + " }}", event_name=event)) == expected
         if name == "tests":
-            assert f"&& '{name}' || '{name} (other event)'" in job
+            emitted_name = re.search(r"^    name: (.+)$", job, re.M)[1]
+            for event in ("pull_request", "push"):
+                assert expression(emitted_name, event_name=event) == "tests"
+            assert expression(emitted_name, event_name="pull_request_target") == "tests (other event)"
         else:
             assert "name: Review pull request\n" in job
             assert "-f context=forge-pr-check" in job

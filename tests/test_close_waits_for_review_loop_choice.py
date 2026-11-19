@@ -23,8 +23,8 @@ def stopped(env, kind="task"):
     doc = STORY_DOC.replace("Shoppers can save their basket with one click",
                             "Shoppers can **save** their basket at `app.py:3` with one click")
     item, where = env.start_approved_task(doc) if kind == "task" else env.start_fix()
-    # Fixes stop on a P1 at the bar after one review; story parts retain two reviews.
-    final_round = 2 if "/" in item else 1
+    # Both fixes and story parts use the configured two-review limit by default.
+    final_round = 2
     for number in range(1, final_round + 1):
         env.reviews(blocked({**finding("P1", f"Round {number} defect", "src/a.py"),
                              "body": "Gain 4, Work 1, Harm 2\nNormal saves lose the basket."}))

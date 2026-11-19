@@ -30,6 +30,18 @@ if args[:2] == ["pr", "view"]:
     _install(env.repo.bin, "gh", "#!" + sys.executable + "\n" + code + fallback)
 
 
+def _set_one_review_round(env):
+    config = (env.repo.path / "forge.toml").read_text("utf-8")
+    config = re.sub(r"(?m)^task_review_rounds\s*=.*(?:\r?\n|$)", "", config)
+    env.repo.write("forge.toml", "task_review_rounds = 1\n" + config)
+    no_hooks = env.tmp / "fixture-no-hooks"
+    no_hooks.mkdir(exist_ok=True)
+    hook_setting = f"core.hooksPath={no_hooks.as_posix()}"
+    env.repo.git("add", "forge.toml")
+    env.repo.git("-c", hook_setting, "commit", "-q", "-m", "Set one review round for this test")
+    env.repo.git("-c", hook_setting, "push", "-q", "origin", "main")
+
+
 def _open_pr(env, content, *, mergeable="MERGEABLE", merge_state="CLEAN"):
     env.gh.respond("pr", "list", "--head", stdout=json.dumps([{
         "number": 7, "state": "OPEN", "body": content, "isDraft": True,
@@ -93,15 +105,17 @@ def _draft_clash(env, require_current):
                       f"with pathlib.Path({json.dumps(tested.as_posix())}).open('a', encoding='utf-8') as out:\n"
                       "    out.write(json.dumps(head) + '\\n')\n", encoding="utf-8")
     config = (env.repo.path / "forge.toml").read_text("utf-8")
+    config = re.sub(r"(?m)^task_review_rounds\s*=.*(?:\r?\n|$)", "", config)
     command = f'"{sys.executable}" "{script.as_posix()}"'
     config = re.sub(r'^fast_test = .*\n', '', config, flags=re.M)
     config = re.sub(r'^test_place = .*\n', '', config, flags=re.M)
-    env.commit(env.repo.path, "forge.toml", 'test_place = "local"\nfast_test = '
+    env.commit(env.repo.path, "forge.toml", "task_review_rounds = 1\n"
+               + 'test_place = "local"\nfast_test = '
                + json.dumps(command) + "\n" + config)
     env.commit(env.repo.path, "NEWS.md", "Old news\n")
     env.repo.git("push", "-q", "origin", "main")
     item, where = env.start_fix({"app.py": "print('draft greeting')\n"})
-    # A fix's P1 at the bar stops for the owner's repair choice.
+    # This clash case uses one review so its repair-choice setup stays short.
     env.reviews(blocked({**finding("P1", "Greeting breaks the main path"), "body": "Gain 4, Work 1, Harm 2\nThe greeting is incomplete."}), CLEAN)
     first = env.close(item)
     assert first.returncode == 1, first.stdout + first.stderr
@@ -138,6 +152,7 @@ def _clash_during_checks(env, require_current):
 def test_1_close_rounds_leave_unrelated_main_changes_out_of_the_pull_request(env, previous):
     client(env, previous)
     _green_pull_request(env)
+    _set_one_review_round(env)
     item, where = env.start_fix({"app.py": "print('draft greeting')\n"})
     env.commit(env.repo.path, "NEWS.md", "Another change landed\n")
     env.repo.git("push", "-q", "origin", "main")

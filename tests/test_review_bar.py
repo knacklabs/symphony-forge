@@ -85,8 +85,8 @@ def test_2_a_listed_kind_blocks_at_any_score(env, tmp_path, case):
     assert "## Kinds a change must not miss" in prompt and "legal" in prompt
 
     env.open_pr(body(env.gh_calls("pr", "edit")[-1]), draft=True)
-    chosen = env.close(item, "--resolve", "more", "--reason", "Repair the missing legal notice")
-    assert chosen.returncode == 0, chosen.stdout + chosen.stderr
+    assert "The review left serious findings open" in closed.stderr
+    assert "One more round, split or accept?" not in closed.stderr
     env.commit(where, "app.py", "print('still here')\n",
                "Declined: Must: Legal: the cookie notice is missing (app.py): not worth the code - small")
     repeated = env.close(item)

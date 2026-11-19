@@ -1,0 +1,37 @@
+{
+  "approval": {
+    "at": "2026-11-18T10:47:38.415503+00:00",
+    "by": "human-via-Claude",
+    "event": "toolu_01KtnTo513v5UGCwefFw1FkW",
+    "hash": "3f9cdacabf3cd0f35a0a7d50586d8b986f81a9fe88127b5a00eb2e017e7dfb8b",
+    "round": 3,
+    "runtime": "claude",
+    "session": "c01a489d-c76f-41c1-8371-d6f0052b027c"
+  },
+  "doc": "plans/FORGE-MERGEQ-1.md",
+  "status": "approved",
+  "steps": [
+    {
+      "at": "2026-11-18T04:00:08.767397+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-18T04:30:57.726359+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-11-18T04:57:03.642039+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-11-18T05:52:03.156805+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-11-18T10:47:38.415835+00:00",
+      "step": "approved"
+    }
+  ],
+  "title": "Ready pull requests stop re-running CI against each other",
+  "touches": 1
+}

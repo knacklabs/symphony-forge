@@ -45,8 +45,8 @@ def test_1_split_moves_every_open_finding_to_one_linked_fix(env, tmp_path, previ
     seed(env, "src/safe.py")
     item, where = env.start_approved_task(STORY_DOC) if kind == "task" else env.start_fix()
     safe = finding("P1", "Proven safe", "src/safe.py")
-    # A fix's first P1 at the bar asks the owner; a part stops after two rounds and keeps its prior dismissal.
-    last_round = 2 if kind == "task" else 1
+    # Fixes and parts both stop after two blocked reviews and keep prior dismissals.
+    last_round = 2
     for number in range(1, last_round + 1):
         env.commit(where, "src/a.py", f"pass  # round {number}\n")
         env.commit(where, "app.py", f"print({number})\n")
@@ -96,6 +96,9 @@ def test_2_split_not_done_finding_stays_settled_in_a_later_review(env):
     """A split 'Not done' finding on the fix's own Done-when must not block a later review."""
     env.checks(GREEN)
     seed(env, "src/a.py")
+    config = (env.repo.path / "forge.toml").read_text("utf-8")
+    env.commit(env.repo.path, "forge.toml", "task_review_rounds = 1\n" + config)
+    env.repo.git("push", "-q", "origin", "main")
     item, where = env.start_fix()
     env.commit(where, "src/a.py", "pass  # round 1\n")
     missed = {**finding("P1", "Not done: The readme opens with a greeting", "src/a.py"),
