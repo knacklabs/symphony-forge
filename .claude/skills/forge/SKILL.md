@@ -2440,7 +2440,12 @@ still stops for a pending question and gives open findings or failing tests a wo
 
 To land a chosen set, name the items: `forge land <item> <item> ...` runs the same queue and merge
 train for exactly those items and leaves every other item alone. It refuses a name that is no task or
-fix. Use `forge land --all` in place of a hand-made merge lane. It takes every task and fix whose
+fix. When two or more tasks or fixes are ready to merge and this checkout pins v1.2.43 or later,
+follow `forge next`: run one `forge land <item> <item> ...` command with those names. Where agent
+merges are allowed, they share one combined check. With human merges, land lists the ready pull
+requests for the human to merge. With one ready item or an older pin, follow the usual next step.
+New and existing repos get this advice on upgrade. Use `forge land --all` in place of a hand-made
+merge lane. It takes every task and fix whose
 status is reviewing, fixing, waiting for checks or ready, and leaves out, by name, one still with
 its builder, one already merged and one another command works on. It starts them oldest first,
 several at a time up to this machine's agent places, and merges each one when it passes.

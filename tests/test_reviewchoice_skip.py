@@ -372,7 +372,8 @@ def _ready_and_board(env):
     board = env.repo.forge("board", "--json")
     assert next_step.returncode == 0, next_step.stderr
     assert f"The fix {item} is ready to merge." in next_step.stdout
-    assert f"Next: forge merge {item}" in next_step.stdout
+    # Both closed fixes stay ready, including the human's review skip, in one batch.
+    assert f"Next: forge land {clean_item} {item}" in next_step.stdout
     assert f"The fix {clean_item} is ready to merge." in next_step.stdout
     assert board.returncode == 0, board.stderr
     data = json.loads(board.stdout)

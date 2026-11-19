@@ -60,7 +60,11 @@ TEST_STEPS = {
 }
 START_HERE = ("Do not read the coordinator guide (the forge skill's `SKILL.md`): this brief has "
               "everything a worker needs. Start from the files and tests this brief names, and "
-              "search the rest of the repo only for what they call or what calls them.")
+              "search the rest of the repo only for what they call or what calls them. "
+              "Do not use `forge next` to choose work: it guides the coordinator across all items. "
+              "Run it when this brief needs it. "
+              "If this round has no failed checks or open findings, complete this brief; "
+              "do not ask which failure or finding to fix.")
 FILE_OWNERSHIP = ("Do not change a file that another open task's Scope owns. "
                   "Leave it and name it in your handback. "
                   "This restriction excludes paths with a segment named tests, test, __tests__ or spec. "
