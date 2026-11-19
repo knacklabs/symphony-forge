@@ -1,4 +1,5 @@
 {
+  "allow_large": "Owner allowed on 19 Nov 2026: the generated .gitattributes counts as a sixth code file",
   "base": "285e56632baf943e4c7524f2341a7bb52f3e7f0b",
   "branch": "fix/record-merge-conflicts",
   "chat": {
