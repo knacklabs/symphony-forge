@@ -44,9 +44,17 @@ def test_1_hold_decision_and_resume_keep_their_times_and_gaps_stay_unmeasured(en
     item, where = env.start_fix(steps=[{"step": "start", "at": at(0)}])
     install_claude(env.repo)
     env.reviews(blocked(finding("P1", "Basket disappears")))
+    # Fixes now stop after two blocked reviews; reach that stop through real closes
+    # before testing the dated owner decision and delayed worker resume.
+    monkeypatch.setenv("FORGE_NOW", at(15))
+    first = env.close(item)
+    assert first.returncode == 1, first.stdout + first.stderr
+    env.open_pr(body(env.gh_calls("pr", "create")[-1]), draft=True)
+    env.commit(where, "app.py", "print('basket repair still incomplete')\n")
     monkeypatch.setenv("FORGE_NOW", at(30))
     held = env.close(item)
     assert held.returncode == 1, held.stdout + held.stderr
+    assert "reached the round limit" in held.stderr
     monkeypatch.setenv("FORGE_NOW", at(90))
     decided = env.close(item, "--resolve", "more", "--reason", "Keep the basket")
     assert decided.returncode == 0, decided.stdout + decided.stderr
