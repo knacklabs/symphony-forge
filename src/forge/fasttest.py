@@ -357,7 +357,7 @@ def test(args) -> int:
         base = push_base or f"origin/{repo.default_branch(top)}"
         if repo.run("git", "rev-parse", "--verify", base, cwd=top).returncode:
             raise repo.Refused(f"Fetch {base} first: run git fetch origin, then forge test.", "")
-        if args.change and not push_base:
+        if args.change and not push_base and repo.test_place(cfg) == "local":
             # Include incoming changes merged into this PR, even under Actions'
             # synthetic merge. Main's current tip alone hides their test files.
             merges = repo.git("rev-list", "--merges", f"{base}..HEAD", cwd=top).splitlines()

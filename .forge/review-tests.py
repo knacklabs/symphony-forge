@@ -6,6 +6,7 @@ import re
 import shutil
 import subprocess
 import sys
+import tomllib
 from pathlib import Path
 from urllib.parse import quote
 from urllib.request import Request, urlopen
@@ -338,8 +339,8 @@ records_only = "--records-only" in sys.argv[1:]
 try:
     # Sync copies close's classifier and supplies its Git path exclusions.
     if not records_only and os.environ.get("BASE_SHA") and os.environ.get("DOCS_ONLY_EXCLUDES"):
-        # `forge test --change` widens to what a merged-in default branch brought, which one
-        # group cannot finish. Ask about the pull request's own branch, not Actions' merge result.
+        # Local test selection includes incoming merges. CI covers main separately.
+        # Ask about the pull request's own branch, not Actions' merge result.
         merged = run("git", "rev-list", "--merges",
                      f"{os.environ['BASE_SHA']}..{os.environ['HEAD_SHA']}")
         tests_only, platform_files = test_files(Path.cwd(), os.environ["BASE_SHA"],
@@ -353,8 +354,12 @@ try:
             docs_only, tests_only = False, True
             one_group = True
         if merged:
-            tests_only, platform_files = False, []
-            one_group = False
+            cfg = tomllib.loads(Path("forge.toml").read_text("utf-8"))
+            place = cfg.get("test_place", "ci" if any(
+                check != "forge-pr-check" for check in cfg.get("checks", [])) else "local")
+            if place == "local":
+                tests_only, platform_files = False, []
+                one_group = False
     if records_only:
         passed = os.environ.get("GITHUB_EVENT_NAME") in {"push", "pull_request"} and reuse()
     else:
