@@ -11,14 +11,130 @@
   "done_when": "The first close after an upgrade repairs at most the open items and the 20 most recently merged ones, reads no check runs for merged items it repairs, and finishes the repair in minutes on Forge's own repo; later closes do not repeat it; new and existing repos get it on upgrade",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [
+    {
+      "area": "run() in src/forge/backfill.py",
+      "file": "src/forge/backfill.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 277,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: A retry can repair more than 20 merged items",
+      "work": 2
+    },
+    {
+      "area": "run() in src/forge/backfill.py",
+      "file": "src/forge/backfill.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 260,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Unaffected pull requests consume the merged repair budget",
+      "work": 2
+    },
+    {
+      "area": "run() in src/forge/backfill.py",
+      "file": "src/forge/backfill.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 246,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Scale: A fresh checkout still fetches every historical pull request",
+      "work": 2
+    },
+    {
+      "area": "test_1_upgrade_bounds_existing_start_repairs() in tests/test_upgrade_start_repair.py",
+      "file": "tests/test_upgrade_start_repair.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 55,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: tests/test_upgrade_start_repair.py::test_1_upgrade_bounds_existing_start_repairs",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "b162fc4440fbbdae432ee26a23771dfd2db793ac746acb7b35a8a5f13cb56bcb",
+    "changed": "8a72fcc5b5b9d73e8ba5502f33c32234c9ab1e9b030be2e1cb7f34173274edf8",
+    "commit": "b071ba0a3e9bb156b450c4c515995592e9f445b6",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done\nCase: normal use - GitHub fails after the first batch is published and a developer retries the close.\nThe completion marker is written only after the later history, tag and board reads succeed. If one of those reads fails after 20 merged repairs, the pending file remains but the marker does not. The next close calls backfill again (`src/forge/close.py:89`), resets the budget to 20, and repairs the next eligible merged items. With 30 eligible items, one failed read can therefore lead to all 30 being repaired across the two closes, contrary to the cap and the requirement that later closes not repeat the repair.",
+        "file": "src/forge/backfill.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 277,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: A retry can repair more than 20 merged items",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done\nCase: normal use - a recently merged fix mentions \u201cnothing running\u201d in its Why text, while older items still need their starts repaired.\nThe eligibility check at `src/forge/backfill.py:250` searches the entire PR body, so a record whose start was already checked is selected merely because the phrase appears outside How it went. This fix and the earlier exact-wait-times fix both use that phrase in their Why text, which `src/forge/close.py:976` puts in the PR body. The new decrement spends a limited slot on such an unaffected PR; once the marker is written, an older item that actually needed repair is left unrepaired.",
+        "file": "src/forge/backfill.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 260,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: Unaffected pull requests consume the merged repair budget",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Scale\nCase: normal use - the first upgrade close on a fresh clone of a repository with hundreds of merged Forge items.\nThe limit bounds `rebuild`, but before marking the repair complete, `src/forge/backfill.py:269` iterates every historical Forge branch returned by `_past`. On an empty cache, `src/forge/known_issues.py:30` fetches each PR head serially. Forge's main tree has 840 landed fix-state files, so this path can add hundreds of network fetches; at one second each, 800 fetches alone take over 13 minutes. The reported 8.69-second measurement does not exercise that workload: its 30 PRs share one branch name, so `_past` collapses them to one known-issue fetch.",
+        "file": "src/forge/backfill.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 246,
+        "priority": "P1",
+        "title": "Scale: A fresh checkout still fetches every historical pull request",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - an upgrade has an open item and more than 20 merged items needing repair.\nThe open-item assertion passes even if the open item is never repaired: line 36 already assigns it a body containing a time record, and `history.record(16)` only reads that record. The merged assertions check PR edits, while the Git fetch count is merely printed; an implementation that rebuilds all 30 heads but edits only 20 would also pass. The named proof therefore does not establish the open repair or the rebuild budget. It needs to check the repaired start at the observable boundary and assert the fetch budget, including after a partial failure.",
+        "file": "tests/test_upgrade_start_repair.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 55,
+        "priority": "P1",
+        "title": "Gate: tests/test_upgrade_start_repair.py::test_1_upgrade_bounds_existing_start_repairs",
+        "work": 2
+      }
+    ],
+    "id": "c300a8a7-a000-466e-afe1-e7c57e649733",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-19T13:52:00.521791+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-19T14:07:19.654305+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-11-19T14:07:19.666839+00:00",
+    "file": "src/forge/backfill.py",
+    "wait_id": "ebfd9cbd-6884-4fb1-9730-9ceee5a270c8"
+  },
   "stuck": {
     "close": null,
     "head": "2db6b249c5ec98e89dcd790ba5cc2642ddcacfa8",
