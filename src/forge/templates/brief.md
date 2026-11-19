@@ -14,7 +14,8 @@ The moved part keeps the fix's recorded activity. Close refreshes the final merg
 it sees a human merge; an agent merge refreshes it after GitHub confirms the merge.
 Time without activity records stays unmeasured. Do not call it time with nothing running.
 New and existing repos get this behavior on upgrade, including repairs to published starts
-and older compacted gaps. Earlier missing times stay unmeasured.
+and older compacted gaps. Upgrade checks each earlier rebuilt start once and keeps that repair
+for later upgrades. Earlier missing times stay unmeasured.
 
 Settled findings stay settled. Each reader and reviewer gets earlier rounds' notes and answers,
 including findings already fixed or dismissed. Do not reopen them with the same finding text

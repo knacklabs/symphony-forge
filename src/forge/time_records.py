@@ -335,7 +335,7 @@ def item(top: Path, key: str, state: dict[str, Any], *,
                                 if e.get("round") == worker_round and e.get("kind") in ("test", "review")
                                 and e.get("event") in ("lane joined", "run start")
                                 and (at := when(e.get("at"))) and (prior_at is None or at >= prior_at)), {})
-                starts = [at for value in (prior_at.isoformat() if prior_at else None,
+                starts = [at for value in (previous["result"].get("at"),
                                           trigger.get("at"), timing.get("start"), result.get("at"))
                           if (at := when(value))]
                 began = min(starts) if starts else None
@@ -565,10 +565,10 @@ def how_it_went(top: Path, key: str, state: dict[str, Any], published: str = "",
     legacy = data.get("legacy_text") or None
     starts = [when(s.get("at")) for s in data["state"].get("steps", [])
               if s.get("step") == "start" and when(s.get("at"))]
-    if older := data.get("summary"):
+    if (older := data.get("summary")) and older["total_seconds"] is not None:
         starts.append(when(older["until"]) - timedelta(seconds=older["total_seconds"]))
     start_steps = [{"step": "start", "at": min(starts).isoformat()}] if starts else []
-    base = {**_capped({**{name: data.get(name) for name in ("ready", "rebuilt", "truncated", "ended_at")},
+    base = {**_capped({**{name: data.get(name) for name in ("ready", "rebuilt", "start_checked", "truncated", "ended_at")},
                        "state": {"status": data["state"].get("status"),
                                  "steps": start_steps}}),
             "legacy_text": legacy[:7999] + "…" if legacy and len(legacy) > 8000 else legacy}
@@ -918,8 +918,8 @@ def merged(local: dict[str, Any], published: dict[str, Any]) -> dict[str, Any]:
         state = {**state, "steps": [min(starts, key=lambda step: step["at"])]}
     if summary:
         recovered = min((when(step["at"]) for step in starts), default=None)
-        previous = until - timedelta(seconds=summary["total_seconds"])
-        if recovered and recovered < previous:
+        previous = until - timedelta(seconds=summary["total_seconds"]) if summary["total_seconds"] is not None else None
+        if recovered and previous and recovered < previous:
             summary = copy.deepcopy(summary)
             seconds = (previous - recovered).total_seconds()
             for name in ("total_seconds", "unknown_seconds"):
@@ -937,7 +937,8 @@ def merged(local: dict[str, Any], published: dict[str, Any]) -> dict[str, Any]:
     if summary:
         data = {**_summed(summary, data), "summary": summary}
     data.update(rows, source="pull request and local" if local.get("events") or local.get("timings")
-                else "pull request", rebuilt=bool(local.get("rebuilt") or published.get("rebuilt")))
+                else "pull request", rebuilt=bool(local.get("rebuilt") or published.get("rebuilt")),
+                start_checked=bool(local.get("start_checked") or published.get("start_checked")))
     data["ready"] = published.get("ready")
     data["legacy_text"] = published.get("legacy_text")
     data["truncated"] = bool(local.get("truncated") or published.get("truncated"))

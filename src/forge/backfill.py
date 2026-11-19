@@ -188,7 +188,7 @@ def rebuild(top: Path, pr: dict[str, Any], *, pushed_head: str = "") -> tuple[st
     state = {**state, "steps": [{"step": "start", "at": began},
                                *[s for s in state.get("steps", []) if s.get("step") != "start"]]}
     record = {"events": events, "timings": timings, "state": state,
-              "clean_reviews": clean, "rebuilt": True, "ended_at": merged_at}
+              "clean_reviews": clean, "rebuilt": True, "start_checked": True, "ended_at": merged_at}
     if origin:
         previous = repo.run("gh", "pr", "list", "--head", f"fix/{origin}", "--state", "all",
                             "--json", "body", cwd=top)
@@ -245,7 +245,8 @@ def run(top: Path) -> None:
         for pr in {pr["number"]: pr for pr in prs}.values():
             shared = time_records.from_body(pr.get("body") or "")
             if not pr.get("headRefName", "").startswith(("fix/", "task/", "story/")) or (
-                    shared and not shared.get("rebuilt") and "nothing running" not in (pr.get("body") or "")):
+                    shared and (shared.get("start_checked") or not shared.get("rebuilt"))
+                    and "nothing running" not in (pr.get("body") or "")):
                 continue
             rebuilt = rebuild(top, pr)
             if rebuilt is None:
