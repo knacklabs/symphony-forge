@@ -18,7 +18,7 @@
       "gain": 4,
       "harm": 3,
       "line": 360,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -31,7 +31,7 @@
       "gain": 4,
       "harm": 3,
       "line": 77,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -44,7 +44,7 @@
       "gain": 3,
       "harm": 3,
       "line": 403,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -54,47 +54,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "e88f897e180434ef4e4cc51bd3f0423b24d4c904611941852cf16601084ee7ee",
-    "changed": "49f96b7f9088a8eb16a74b7a487b9069afcfdd7fb5141b4eddc803e39c3e1ad2",
-    "commit": "d32cd007c4cc84cf9b7e03be5e0e8dbcc944664d",
+    "branch_diff": "3db38dd04b3fc8f3270a099b697aaf5646ee260443df18463e06761a25777840",
+    "changed": "1a38898c3588ad38a1b432393974c330b7c96ac9a5131e8b8df45a2054363901",
+    "commit": "68acc7784cf5ceff91a0aea3ef4495070be5e2a1",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - a pull request and main edit different lines of the same module, while main also adds an integration test through an unchanged adapter.\nThe narrowed base excludes main\u2019s new test, and the picker at src/forge/fasttest.py:433\u2013448 matches tests only when they directly name the changed source. For example, a test importing checkout, which imports the changed pricing module, is skipped even if it fails on the combined tree; main\u2019s green run tested the old pricing code. tests/test_merge_uses_ci_tests.py:118\u2013150 demonstrates this selection failure, and a nonconflicting main edit to pricing makes the file sets overlap. The owner\u2019s accepted mixing limit covers disjoint file sets, not this overlapping case (plans/FORGE-MERGEQ-1.md:23\u201325, 31\u201334).\nAdds work: retain tests that exercise changed code through another module; F 2 x H 2 = 4; 2 x C = 4",
-        "file": "src/forge/fasttest.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 360,
-        "priority": "P1",
-        "title": "Merged CI changes can skip a failing integration test",
-        "work": 2
-      },
-      {
-        "body": "Gain 4, Work 1, Harm 3\nRaise: Test\nCase: normal use - a small CI pull request has merged main and is eligible for the one-group shortcut.\nThe named proof checks only the classifier output. Its fixture uses a pytest command without an explicit {groups} count, so src/forge/prcheck.py:409\u2013413 forces the generated workflow\u2019s one-group output to false and the configured two groups still run. The test passes without checking that workflow decision. Use an eligible dynamically grouped command and verify the generated workflow\u2019s resulting group count after the merge.",
-        "file": "tests/test_ci_selects_own_changes_after_merge.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 77,
-        "priority": "P1",
-        "title": "Gate: merged CI pull requests run one group",
-        "work": 1
-      },
-      {
-        "body": "Gain 3, Work 1, Harm 3\nRaise: Gate\nCase: normal use - a coordinator handles a pull request after main advances.\nThe new brief says CI selects only the pull request\u2019s changes, but src/forge/templates/skill.md:363\u2013364 still tells coordinators that CI selects tests added by the default branch. src/forge/story.py:88\u201395 ships that stale guidance to both agent hosts on sync, so coordinators are told that coverage exists when it no longer does. This breaks the standard: \u201cReplacing behaviour deletes the old path, its tests and its docs in the same change.\u201d",
-        "file": "src/forge/templates/brief.md",
-        "gain": 3,
-        "harm": 3,
-        "line": 403,
-        "priority": "P1",
-        "title": "Standard: Delete before adding",
-        "work": 1
-      }
-    ],
-    "id": "14b7c573-6888-4bd0-a42e-91ece74512c1",
-    "status": "blocked"
+    "findings": [],
+    "id": "0febc706-a3fb-4e3c-b920-0d2959c827ab",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-19T16:49:26.646502+00:00",
@@ -113,6 +82,10 @@
       "at": "2026-11-19T17:07:18.999647+00:00",
       "round": 2,
       "step": "resume"
+    },
+    {
+      "at": "2026-11-19T17:16:51.019684+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
