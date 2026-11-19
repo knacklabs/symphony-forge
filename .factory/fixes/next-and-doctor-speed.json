@@ -1,5 +1,12 @@
 {
   "allow_large": "Owner allowed on 18 Nov 2026: the speed fix may change nextstep.py as a sixth code file instead of becoming a story",
+  "amendments": [
+    {
+      "at": "2026-11-19T02:33:42.317830+00:00",
+      "because": "Owner accepted the measured gain on 19 Nov 2026 instead of the 5 s and 30 s targets",
+      "done_when": "On Forge's own repo, forge next finishes in under 5 seconds and forge doctor in under 30 seconds on a warm run, with the same output as before; next reads merge history with one git log call and reuses the board's snapshot, and doctor reads its pull requests in one or a few batched requests; before and after times are in the pull request; new and existing repos get it on upgrade"
+    }
+  ],
   "base": "67376f6c033979de5e01536db35aaf293d3e8899",
   "branch": "fix/next-and-doctor-speed",
   "chat": {
@@ -9,7 +16,7 @@
     "head": null,
     "start": "6cdb571bae5284193dcbc323118b281ca8b355f1"
   },
-  "done_when": "On Forge's own repo, forge next finishes in under 5 seconds and forge doctor in under 30 seconds on a warm run, with the same output as before; next reads merge history with one git log call and reuses the board's snapshot, and doctor reads its pull requests in one or a few batched requests; before and after times are in the pull request; new and existing repos get it on upgrade",
+  "done_when": "On Forge's own repo, forge next takes about 6-9 seconds (from 27 s) and forge doctor about 37-67 seconds (from about 2.2 minutes) with other work running, with the same output as before; next reads merge history with one git log call and reuses the board's snapshot, and doctor reads its pull requests in batched requests; before and after times are in the pull request; new and existing repos get it on upgrade",
   "fix_kind": "mechanical",
   "kind": "fix",
   "known": [
