@@ -17,14 +17,26 @@ from test_close import env  # noqa: F401
 STORY = "FIX-CLOSE-CATCHES-WORKFLOW-DRIFT"
 
 
-@pytest.mark.parametrize("case", ["stale", "missing", "sample-data"])
+@pytest.mark.parametrize("case", ["stale", "missing", "sample-data", "inherited"])
 def test_1_close_requires_the_workflow_that_sync_generates(env, case):
     # Missing output must fail too; sample-data sync deliberately keeps existing CI.
+    # An unrelated fix can retain a workflow from an earlier generator. This guards
+    # close's scope, which changed-workflow cases cannot reach, through real close.
+    if case == "inherited":
+        workflow = env.repo.path / ".github/workflows/forge.yml"
+        env.commit(env.repo.path, ".github/workflows/forge.yml",
+                   workflow.read_text("utf-8") + "\n# Earlier generator\n")
+        env.repo.git("push", "-q", "origin", "main")
     if case == "sample-data":
         settings = (env.repo.path / "forge.toml").read_text("utf-8")
         env.commit(env.repo.path, "forge.toml", 'stage = "prototype"\nsample_data = true\n' + settings)
         env.repo.git("push", "-q", "origin", "main")
     item, where = env.start_fix({"app.py": "print('hello')\n"})
+    if case == "inherited":
+        closed = env.close(item)
+        assert closed.returncode == 0, closed.stdout + closed.stderr
+        assert "Ready:" in closed.stdout
+        return
     if case == "sample-data":
         env.commit(where, ".github/workflows/forge.yml", "name: existing client checks\n")
         closed = env.close(item)

@@ -31,7 +31,6 @@ def test_1_failed_test_jobs_retry_once_and_wait(clock, monkeypatch, command, fai
     _agent(clock)
     where = _fix(clock, "working", worked=True, changes={
         "app.py": "print('hello')\n",
-        ".github/workflows/forge.yml": "name: Forge\njobs:\n  tests:\n    timeout-minutes: 60\n",
     })
     # Audit: the code's failed run must recover before the review-only push.
     # The real remote hook observes the code-head reads at that push boundary.
@@ -91,7 +90,6 @@ def test_2_other_failures_and_used_attempts_do_not_restart_ci(clock, monkeypatch
     clock.repo.git("push", "-q", "origin", "main")
     _fix(clock, "working", worked=True, changes={
         "app.py": "print('hello')\n",
-        ".github/workflows/forge.yml": "name: Forge\njobs:\n  tests:\n    timeout-minutes: 60\n",
     })
     clock.gh.respond("run", "rerun")
     clock.gh.respond("run", "view", stdout='{"attempt": 2}')

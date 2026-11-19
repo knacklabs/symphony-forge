@@ -66,12 +66,15 @@ def test_2_close_distinguishes_test_time_limits_from_worker_failures(
         land, history, conclusion, seconds, name, timeout):
     env = land
     _client(env, history, "ubuntu-latest")
+    legacy_workflow = (env.repo.path / ".github/workflows/forge.yml").read_text(encoding="utf-8")
+    # This older limit is part of the client's default branch before the fix starts.
+    env.commit(env.repo.path, ".github/workflows/forge.yml",
+               legacy_workflow.replace("    timeout-minutes: 60\n",
+                                       "    timeout-minutes: 30\n", 1),
+               "Keep the client's thirty minute test limit")
+    env.repo.git("push", "-q", "origin", "main")
     where = _fix(env, "working", worked=True, changes={
         "package.json": '{"scripts":{"test":"node --test"}}\n',
-        ".github/workflows/forge.yml": (
-            "name: Forge\non: pull_request\njobs:\n  tests:\n"
-            "    timeout-minutes: 30\n    runs-on: ubuntu-latest\n"
-            "    steps:\n      - run: node --test\n"),
     })
     start = datetime(2026, 10, 19, tzinfo=timezone.utc)
     failed = {**run(name, conclusion), "started_at": start.isoformat(),

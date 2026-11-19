@@ -90,10 +90,10 @@ def _sync_workflow(env, settings):
         branch = "fix/workflow-fixture"
         env.repo.git("worktree", "add", "-qb", branch, str(where), "HEAD")
         try:
-            env.commit(where, "forge.toml", settings)
             env.commit(where, ".factory/fixes/workflow-fixture.json", json.dumps({
                 "kind": "fix", "branch": branch, "status": "working",
                 "why": "Prepare the pinned workflow", "done_when": "The workflow matches sync"}))
+            env.commit(where, "forge.toml", settings)
             synced = subprocess.run([sys.executable, str(program / "forge"), "sync"],
                                     cwd=where, capture_output=True, text=True, timeout=60)
             assert synced.returncode == 0, synced.stdout + synced.stderr
