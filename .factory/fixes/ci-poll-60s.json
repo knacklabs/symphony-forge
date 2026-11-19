@@ -18,7 +18,7 @@
       "gain": 4,
       "harm": 3,
       "line": 262,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -31,7 +31,7 @@
       "gain": 4,
       "harm": 3,
       "line": 526,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -44,7 +44,7 @@
       "gain": 3,
       "harm": 3,
       "line": 142,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -57,7 +57,7 @@
       "gain": 3,
       "harm": 3,
       "line": 28,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -67,58 +67,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "8c079f520fa8e2af50daca4a3d44873961521de01ff1256b6ecf8c85d6a1393f",
-    "changed": "a2886916f2cba93d44daa272134b45432ebdb5e259f047300eee914130883c51",
-    "commit": "b9a3041013d14b77bc9422b76883e1886093a490",
+    "branch_diff": "dfa628aa27489f89a948329d5b4fe22975d91c34dd3d2538df216b5d6101d194",
+    "changed": "1beb5ee18293b2b7bd6b583d6649a9baec204848f277c528acb57af44005c8f1",
+    "commit": "d39014333fa3af4d0eb982a3bea960f6ad71cc48",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done\nCase: normal use - running land with a sub-minute override, or waiting for remaining jobs after a merge-train check fails.\nThe full Done-when item also says that new and existing repos get the behavior on upgrade. Land passes `progress=True` (`src/forge/land.py:73`), but `src/forge/checks.py:328` retains each status for 60 seconds. Thus `FORGE_CHECKS_POLL=10` still reads GitHub only once per minute; with `FORGE_CHECKS_WAIT=30`, land can stop even after checks turn green. Separately, the merge-train wait at `src/forge/land.py:700-711` polls `gh pr checks` every 15 seconds regardless of the setting. The coordinator's two-loop ruling did not account for the status cache or this train loop.",
-        "file": "src/forge/checks.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 262,
-        "priority": "P1",
-        "required_done_when": true,
-        "title": "Not done: close, merge and land poll CI checks every 60 seconds by default, and FORGE_CHECKS_POLL sets another interval in seconds",
-        "work": 2
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Gate\nCase: normal use - the pull request runs its related tests on Linux.\nThis override applies only to tests using `fake_clock`. `tests/test_close_pushes_record_after_code_ci.py:20-49` uses neither that fixture nor a polling override, so the new 60-second sleep at `src/forge/checks.py:142` exceeds the command's 60-second timeout in `tests/conftest.py:323-330`. `tests/test_conflicting_pull_requests_stop_check_waits.py:227-244` uses a separate fake clock and still asserts a 15-second sleep. The changed conftest selects these tests for the related run, so they need to be adapted for the new default.",
-        "file": "tests/conftest.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 526,
-        "priority": "P1",
-        "title": "Gate: CI wait tests still assume 15-second sleeps",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional\nCase: normal use - closing a previously pushed change while its CI is running, with `FORGE_CHECKS_WAIT=120` and `FORGE_CHECKS_POLL=300`.\nThe deadline at `src/forge/checks.py:126` is checked only before this full 300-second sleep, so close waits five minutes before checking the two-minute limit. This delays the review-record push beyond the configured wait; the previous 15-second sleep did not cause that delay. Cap this sleep at the remaining deadline, as the final check wait does at line 262.",
-        "file": "src/forge/checks.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 142,
-        "priority": "P1",
-        "title": "Keep the pre-push wait within its configured deadline",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - closing an already-pushed change or landing with a configured polling interval.\nThe new proof starts an unpushed fix (`tests/test_land.py:115-127`) and runs standalone close, so `after_code_ci` returns before the pre-push wait (`src/forge/checks.py:156-163`) and land's cached wait is never exercised. Both parametrizations would still pass if the pre-push loop reverted to 15 seconds or land ignored a sub-minute override. The existing pre-push and train tests check ordering or read counts, not polling intervals. Extend the command-boundary proof to cover these paths.",
-        "file": "tests/test_ci_poll_interval.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 28,
-        "priority": "P1",
-        "title": "Gate: polling interval through pre-push close and land",
-        "work": 2
-      }
-    ],
-    "id": "f55807b8-ed8c-4084-9969-79103a41bdc9",
-    "status": "blocked"
+    "findings": [],
+    "id": "abcfbdcf-677c-407f-aacd-cfc4c2e0a568",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-19T04:46:51.106603+00:00",
@@ -126,6 +84,10 @@
     },
     {
       "at": "2026-11-19T05:10:22.401442+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-19T06:57:33.841644+00:00",
       "step": "review"
     }
   ],
