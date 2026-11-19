@@ -11,8 +11,68 @@
   "done_when": "A change to a helper module in a test folder selects every test file that imports it, by bare name or by package path, in forge test --change and in CI; new and existing repos get it on upgrade and forge sync",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [
+    {
+      "area": "related.hits() in src/forge/fasttest.py",
+      "file": "src/forge/fasttest.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 440,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Bare imports from nested test helper folders are skipped",
+      "work": 2
+    },
+    {
+      "area": "related.hits() in src/forge/fasttest.py",
+      "file": "src/forge/fasttest.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 444,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Avoid crashing on a test helper named src.py",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "cda1958993eab230bed857c76d0ec5e8a840609cfc69aaf9a5bfc1f40a11592f",
+    "changed": "c5acaa19b1960a9858e5483ffe0ebfea4da18aeb3357d25fbaed560392d66859",
+    "commit": "60f2aafbfda78e2b97720874e1bdfa12589945f8",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Not done\nCase: normal use - pytest has tests/nested on its pythonpath, and tests/nested/child/test_screen.py imports tests/nested/board_fixture.py as board_fixture.\nThe selector checks the child's own folder and ancestors named test or tests, but not tests/nested. It therefore looks for nested.board_fixture rather than the valid bare import and omits the reader from forge test --change and CI. The new test already puts tests/nested on pythonpath, but its nested child reader uses from nested.board_fixture instead, so it does not catch this failure. This leaves the owner-approved item unmet: A change to a helper module in a test folder selects every test file that imports it, by bare name or by package path, in forge test --change and in CI; new and existing repos get it on upgrade and forge sync.",
+        "file": "src/forge/fasttest.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 440,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: Bare imports from nested test helper folders are skipped",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional\nCase: normal use - a project changes tests/src.py, a test-support module imported as src with tests on Python's module path.\nThe new call at line 443 passes src.py to module_parts(), which strips its sole src component and returns an empty list. Indexing parts[-1] then raises IndexError before forge test --change can run tests. The same stripping also misses package-path readers such as import src.helper for a helper at tests/src/helper.py.",
+        "file": "src/forge/fasttest.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 444,
+        "priority": "P1",
+        "title": "Functional: Avoid crashing on a test helper named src.py",
+        "work": 2
+      }
+    ],
+    "id": "d518d39c-50a3-4104-89b0-b533a4e7ce48",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-19T19:35:34.654987+00:00",
@@ -22,6 +82,10 @@
       "at": "2026-11-19T19:35:44.828901+00:00",
       "round": 1,
       "step": "resume"
+    },
+    {
+      "at": "2026-11-19T19:48:56.745181+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
