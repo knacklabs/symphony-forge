@@ -436,11 +436,12 @@ def related(base: str) -> tuple[list[str], list[str], bool, list[str]]:
         if mentions(test, module, source):
             return True
         # pytest also exposes the test's folder and test roots for bare imports.
-        folders = {test.parent} | {folder for folder in test.parents
-                                  if folder.name in {"tests", "test"}}
+        folders = [test.parent, *(folder for folder in source.parents
+                                  if folder != test.parent and
+                                  any(part in {"tests", "test"} for part in folder.parts))]
         for folder in folders:
             if source.is_relative_to(folder):
-                parts = module_parts(source.relative_to(folder))
+                parts = list(source.relative_to(folder).with_suffix("").parts)
                 if parts[-1] == "__init__":
                     parts.pop()
                 if parts and mentions(test, ".".join(parts), source):

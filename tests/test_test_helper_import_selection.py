@@ -3,6 +3,7 @@
 Test-audit: execution receipts protect selection for bare and package imports.
 The old selector misses bare imports; existing package-import tests cannot catch it.
 An unrelated failing module catches over-selection. No production seam is needed.
+Nested roots and src module names exercise missed imports and the former crash.
 """
 import json
 import sys
@@ -15,7 +16,8 @@ STORY = "FIX-BARE-HELPER-IMPORTS"
 
 @pytest.mark.platform
 @pytest.mark.parametrize("folder", ["tests", "tests/nested"])
-def test_1_helper_changes_run_all_importing_test_files(repo, tmp_path, monkeypatch, folder):
+@pytest.mark.parametrize("module", ["board_fixture", "src", "src.helper"])
+def test_1_helper_changes_run_all_importing_test_files(repo, tmp_path, monkeypatch, folder, module):
     monkeypatch.setenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", "1")
     monkeypatch.setenv("PYTEST_ADDOPTS", "")
     receipts = tmp_path / "receipts"
@@ -31,14 +33,15 @@ def test_1_helper_changes_run_all_importing_test_files(repo, tmp_path, monkeypat
     repo.write("tests/__init__.py", "")
     if folder != "tests":
         repo.write(folder + "/__init__.py", "")
-    helper = folder + "/board_fixture.py"
+    helper = folder + "/" + module.replace(".", "/") + ".py"
+    if "." in module:
+        repo.write(folder + "/src/__init__.py", "")
     repo.write(helper, "VALUE = 1\n")
     imports = {
-        "bare": "import board_fixture\nVALUE = board_fixture.VALUE\n",
-        "from": "from board_fixture import VALUE\n",
-        "package": f"from {folder.replace('/', '.')}.board_fixture import VALUE\n",
-        "child/root": ("from board_fixture import VALUE\n" if folder == "tests"
-                       else "from nested.board_fixture import VALUE\n"),
+        "bare": f"import {module}\nVALUE = {module}.VALUE\n",
+        "from": f"from {module} import VALUE\n",
+        "package": f"from {folder.replace('/', '.')}.{module} import VALUE\n",
+        "child/root": f"from {module} import VALUE\n",
     }
     for name, statement in imports.items():
         path = Path(folder) / Path(name).with_name(f"test_{Path(name).name}.py")
