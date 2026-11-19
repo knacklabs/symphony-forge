@@ -4,40 +4,19 @@
 
 ## What changes for you
 
-<What the people who use this will notice, in plain English. No IDs, codes or jargon. End each
-item with its source in plain words, such as (Source: the client's note on late orders, 12 Oct),
-or with the sourced item that needs it, such as (Needed by: the Customers screen). A source is a
-client note, a brief answer, a decision, a screen marked Build now at sign-off, a fixed rule of
-the app, or the owner's own request with its date. Name each screen, field, endpoint, tool and
-setting that the plan adds in one of these items.>
-
-<!-- For user-facing parts: run impeccable init if PRODUCT.md is absent. Design the screens
-in a Claude Design artifact made with the client's design system (link in
-docs/design/design-system.md); on a Codex-only host without artifact tools, use HTML artboards.
-Save each screen and its images in docs/design/<KEY>/. Copy .forge/design/support.js beside
-the HTML screens and run it for a 1440 by 900 PNG per screen. Commit the folder. Use its git tree
-id (git rev-parse HEAD:docs/design/<KEY>) in the last line below. For small changes to existing
-screens that add no screen and change no flow, use Design: none (<why>) instead.
-Remove this comment and omit
-the Design line for a backend-only story. Cold read follows the design; one plan approval binds
-these exact files. A folder edit needs its new tree id and a new plan approval.
-The rule starts with the next plan read and approval. Plans approved without a Design line
-before this rule keep their existing approval. -->
-Design: docs/design/<KEY>/ (<tree id>)
+- During setup, each client creates its own Forge GitHub app inside its own GitHub organization, and the client keeps the app's keys.
+- Close, merge, land and runner work act through that app, using its own identity and hourly request budget instead of the owner's personal sign-in.
+- A later story sets up and checks GitHub's standard runner tool for the client, and Forge builds no runner manager of its own.
 
 ## Why
 
-Give each client its own GitHub app for Forge's GitHub work
-
-
+Forge's close, merge and land run on the owner's personal GitHub sign-in, and at one client that sign-in hit its 5,000 requests an hour several times a day on 18 and 19 November 2026.
 
 ## Done when
 
-<!-- One bold plain sentence per result, which the owner approves: no code names, file paths or
-test names. Its evidence, edge cases and proving tests go under the same number in Done-when
-details. -->
-
-1. **Something anyone can observe once this is done.**
+1. **forge doctor shows which identity close, merge and land use for a repo and how much of its hourly budget is left.**
+2. **A new repo gets its app at init, and an existing repo gets it through one setup step after upgrading, with both paths written down in the plan.**
+3. **The app's keys stay with the client, Forge never writes them into a tracked repo file, and the plan says where the laptop reads them from.**
 
 ## Risks
 
