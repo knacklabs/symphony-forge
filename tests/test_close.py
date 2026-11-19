@@ -186,8 +186,9 @@ class Forge:
         self.gh.respond("pr", "list", "--head", stdout=json.dumps(
             [{"number": 7, "state": state, "body": body, "isDraft": draft}]))
 
-    def gh_calls(self, *prefix: str) -> list[list[str]]:
-        return [call for call in self.gh.calls() if call[:len(prefix)] == list(prefix)]
+    def gh_calls(self, *prefix: str, path: str | None = None,
+                 query: str | None = None) -> list[list[str]]:
+        return self.gh.calls(*prefix, path=path, query=query)
 
     def commit(self, where: Path, rel: str, text: str, message: str = "More work") -> str:
         (where / rel).parent.mkdir(parents=True, exist_ok=True)
@@ -621,6 +622,8 @@ def test_18_close(env, kind):
 
     # A dismissal cites the line that proves the finding wrong; the committed review still covers
     # the head (only state moved it), so no new round runs, and close waits for green checks.
+    # Inspect this invocation's checks, without earlier closes satisfying the assertion.
+    env.gh.log.write_text("", encoding="utf-8")
     second = env.close(item, "--dismiss", "1", "--because", "app.py:1 the basket is saved here")
     assert second.returncode == 0, second.stderr
     assert len(env.review_calls()) == 1
@@ -631,15 +634,20 @@ def test_18_close(env, kind):
     # The checks close waited for are on the pushed head, and nothing was committed after them.
     pushed = env.repo.git("ls-remote", "origin", branch).split()[0]
     assert pushed == env.repo.git("rev-parse", "HEAD", cwd=where)
-    check_reads = [call for call in env.gh_calls("api") if "/commits/" in call[-1]
-                   and ("/check-runs" in call[-1] or "/status" in call[-1])][-2:]
-    assert len(check_reads) == 2
-    assert all(f"/commits/{pushed}/" in call[-1] for call in check_reads)
+    check_reads = env.gh_calls("api", path=f"/commits/{pushed}/check-runs?")
+    status_reads = env.gh_calls("api", path=f"/commits/{pushed}/status?")
+    assert check_reads and status_reads
     # Before, ready was the final call. Close now publishes CI completion before ready and
     # the human merge wait after it; those body updates must not move ready ahead of checks.
-    checks_and_ready = [call for call in env.gh.calls()
-                        if call in check_reads or call[:2] == ["pr", "ready"]]
-    assert checks_and_ready[-3:] == [*check_reads[-2:], ["pr", "ready", "7"]]
+    seen_checks, seen_status = False, False
+    for call in env.gh.calls():
+        seen_checks |= call in check_reads
+        seen_status |= call in status_reads
+        if call == ["pr", "ready", "7"]:
+            assert seen_checks and seen_status
+            break
+    else:
+        pytest.fail("Close did not make the pull request ready after its checks")
     published = body(env.gh_calls("pr", "edit")[-1])
     assert "## How it went" in published
     assert "CI passed" in published
