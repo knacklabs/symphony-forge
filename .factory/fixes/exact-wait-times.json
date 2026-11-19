@@ -127,8 +127,8 @@
     "id": "0274f802-a900-43ab-a4a9-ca95ea79beb5",
     "status": "clean"
   },
-  "round": 4,
-  "status": "waiting for checks",
+  "round": 5,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-19T01:59:29.031055+00:00",
@@ -161,10 +161,10 @@
     "worker_round": 2
   },
   "stuck": {
-    "close": "71e369f2-0576-4c3c-a8ae-32e07e6c6e5a",
-    "head": "b2b371b36b974d96f5def45b7079051b7a7afbcf",
+    "close": "fb0813b6-91b9-42ee-9188-49c2f6cd5246",
+    "head": "5088f757cea21453c06be5e9f9b28a64b2ab5c57",
     "keys": {},
-    "round": 3
+    "round": 4
   },
   "why": "Start-to-merge records are unreliable: starts can be rewritten (a task's early commits rewritten to one later time, a fix that became a task keeping the child's start), repairs show zero minutes, and unexplained time is labelled 'nothing running'",
   "worker": "codex"
