@@ -75,8 +75,8 @@
     "id": "abcfbdcf-677c-407f-aacd-cfc4c2e0a568",
     "status": "clean"
   },
-  "round": 2,
-  "status": "waiting for checks",
+  "round": 3,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-19T04:46:51.106603+00:00",
@@ -101,10 +101,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": "907872c6-dbee-4c05-9248-e661d4b2c248",
-    "head": "767a7f585852fad6660d42e07f285c3fed6777bf",
+    "close": "7bc1d843-f230-46bd-a419-c6f576fe9bad",
+    "head": "5f8cbcbed817780b1e12e90cf005cd2a7fd9e818",
     "keys": {},
-    "round": 1
+    "round": 2
   },
   "why": "close polls CI checks every 15 seconds, so about 6 closes on one GitHub account use about 4,000 of the 5,000 API requests an hour; a client ran out of quota every hour on 19 Nov 2026 and nothing merged for hours",
   "worker": "codex"
