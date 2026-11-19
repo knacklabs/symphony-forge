@@ -1,0 +1,119 @@
+{
+  "base": "fdfc56ddaeb814af3258fd929480aabf8fbf0bff",
+  "branch": "fix/bounded-start-repair",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1f414-3e87-7ea1-81c4-0895336caed8",
+    "head": null,
+    "start": "f6d429eed7c34da63266c0422fa5f60b1d1511fc"
+  },
+  "done_when": "The first close after an upgrade repairs at most the open items and the 20 most recently merged ones, reads no check runs for merged items it repairs, and finishes the repair in minutes on Forge's own repo; later closes do not repeat it; new and existing repos get it on upgrade",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "run() in src/forge/backfill.py",
+      "file": "src/forge/backfill.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 277,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: A retry can repair more than 20 merged items",
+      "work": 2
+    },
+    {
+      "area": "run() in src/forge/backfill.py",
+      "file": "src/forge/backfill.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 260,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Unaffected pull requests consume the merged repair budget",
+      "work": 2
+    },
+    {
+      "area": "run() in src/forge/backfill.py",
+      "file": "src/forge/backfill.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 246,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Scale: A fresh checkout still fetches every historical pull request",
+      "work": 2
+    },
+    {
+      "area": "test_1_upgrade_bounds_existing_start_repairs() in tests/test_upgrade_start_repair.py",
+      "file": "tests/test_upgrade_start_repair.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 55,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: tests/test_upgrade_start_repair.py::test_1_upgrade_bounds_existing_start_repairs",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "9f939f073bd864bccb101e9824d948daeb385580159893a986dcbb32ba7b3a39",
+    "changed": "c7cc19f539f33555624406b96090ddf4af32386e6330e8f641de793bdbe05a39",
+    "commit": "fbd0fd4fc13913adb5ce4b1031cdb7390a355e5a",
+    "dismissals": [],
+    "findings": [],
+    "id": "abc9bd21-71b4-444d-8e87-1397949882f2",
+    "status": "clean"
+  },
+  "round": 4,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-19T13:52:00.521791+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-19T14:07:19.654305+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-19T14:20:50.937658+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-19T14:28:17.861262+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-19T14:45:45.798223+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-19T14:20:50.937898+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "tests/test_upgrade_start_repair.py",
+    "reason": "Owner chose one more round on 19 Nov 2026: fix the test finding",
+    "wait_id": "83e3a9f1-b159-4981-81c8-63b23bf5e299",
+    "worker_round": 2
+  },
+  "stuck": {
+    "close": "6d6afd6a-543c-4d5c-ba4d-7fe990b3397a",
+    "head": "427becd192043dacd29b9183894845bd52a530e4",
+    "keys": {},
+    "round": 3
+  },
+  "why": "The exact wait-times fix makes the first close after an upgrade repair every past item from the last six weeks: backfill.run rebuilds each pull request whose How it went text says 'nothing running', fetching each old pull request head and its check runs, so on Forge's own repo the first close ran over an hour and spends many GitHub requests",
+  "worker": "codex"
+}

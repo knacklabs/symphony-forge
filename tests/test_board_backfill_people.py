@@ -67,9 +67,13 @@ def test_6_upgrade_fills_past_people_owners_issues_and_releases(unsynced_up, mon
         failure.unlink()
         retried = repo.forge("close", "upgrade-forge-to-v9-9-9", cwd=up.folder)
         assert retried.returncode == 0, retried.stdout + retried.stderr
-    failure.touch()  # Upgrade must fill the facts before the first board read.
+    # Upgrade keeps the identity inventory; the first online board read now
+    # recovers older review evidence on demand instead of during every close.
     shown = board(repo)
-    first = rows(shown)
+    failure.touch()
+    offline = board(repo)
+    assert offline["known_issues"] == shown["known_issues"]
+    first = rows(offline)
     [issue] = shown["known_issues"]
     assert issue == {"item": "SHOP/T1", "file": "past-first.py", "line": 1,
                      "title": "Add a greeting example", "gain": 3, "work": 4, "harm": 2,
@@ -109,18 +113,33 @@ def test_6_upgrade_fills_past_people_owners_issues_and_releases(unsynced_up, mon
 
 
 def test_15_upgrade_preserves_published_times_when_a_part_ages_out(unsynced_up, monkeypatch):
-    """The real first upgrade publishes CI history from GitHub's check times.
+    """The real first upgrade publishes an open part's measured CI history.
+    Merge it before the second upgrade: merged backfills no longer read checks.
     Later upgrades must retain it after the part leaves the recent PR window.
     No local worker or check logs supply this part's recorded time.
     """
     history = History(unsynced_up, monkeypatch)
     history.story()
-    history.item("older-part", 31, 21, task="T1")
+    history.item("older-part", 31, None, task="T1")
     history.publish()
     up, repo = history.up, history.repo
     first = up.run(RELEASE)
     assert first.returncode == 0, first.stdout + first.stderr
     assert history.record(31), "The first upgrade must publish the original check history"
+    # GitHub merges in its own checkout, outside the client's commit hooks.
+    github = up.tmp / "github-merge"
+    repo.git("clone", "-q", history.remote, github.as_posix())
+    repo.git("fetch", "-q", "origin", "refs/pull/31/head", cwd=github)
+    repo.git("merge", "-q", "--squash", "FETCH_HEAD", cwd=github)
+    repo.git("commit", "--allow-empty", "-qm", "Merge the older part", cwd=github)
+    repo.git("push", "-q", "origin", "main", cwd=github)
+    repo.git("fetch", "-q", "origin")
+    repo.git("merge", "-q", "--ff-only", "origin/main")
+    published = history.stored()
+    published[31].update(state="MERGED", mergedAt=NOW.isoformat(),
+                         mergedBy={"login": "merger", "name": "Human Merger"})
+    (repo.bin / "historical-prs.json").write_text(json.dumps(list(published.values())), "utf-8")
+    history.clear_caches()
     before = rows(board(repo))
     assert before["SHOP/T1"]["waiting_seconds"] > 0
     assert before["SHOP"]["waiting_seconds"] >= before["SHOP/T1"]["waiting_seconds"]

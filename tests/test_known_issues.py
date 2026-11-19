@@ -135,11 +135,10 @@ def test_4_board_lists_kept_review_problems_since_adoption(kept_history):
         assert row["reason"], row
 
 
-def test_14_board_reads_each_merged_pull_request_once(kept_history, monkeypatch, tmp_path, request):
+def test_14_board_reads_each_merged_pull_request_once(kept_history, monkeypatch, tmp_path):
     # A minute-cache regression would preserve the JSON but repeat every network
     # fetch. Trace real Git to observe that distinct board-refresh contract.
     repo, _, _ = kept_history
-    previous = request.node.callspec.params["kept_history"]
     fetches = []
     for seconds in (0, 86401):
         trace = tmp_path / f"git-{seconds}.jsonl"
@@ -151,10 +150,9 @@ def test_14_board_reads_each_merged_pull_request_once(kept_history, monkeypatch,
         fetches.append([event["argv"] for event in events if event.get("event") == "start"
                         and "fetch" in event.get("argv", [])
                         and "refs/pull/11/head" in event["argv"]])
-    # Upgrade now fills the adopted repo before its first board read. A new
-    # repo still fetches on demand. Expiring the aggregate must never refetch
-    # either repo's immutable pull-request evidence.
-    assert len(fetches[0]) == (0 if previous else 1), fetches
+    # Both new and upgraded repos fetch old review evidence on demand. Expiring
+    # the aggregate must never refetch immutable pull-request evidence.
+    assert len(fetches[0]) == 1, fetches
     assert fetches[1] == [], fetches
 
 
