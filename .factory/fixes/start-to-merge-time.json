@@ -88,8 +88,8 @@
     "id": "b5256a41-1979-4568-ba7c-aecba7203a26",
     "status": "clean"
   },
-  "round": 2,
-  "status": "waiting for checks",
+  "round": 3,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-18T16:43:44.516570+00:00",
@@ -114,10 +114,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": "47ebb8b8-33f3-4635-917c-e956e017aea3",
-    "head": "e9cf65d3d4301824255323a936f2a415e936bbf1",
+    "close": "934e04e2-b0d7-4332-81f0-cc787063d98e",
+    "head": "1d974c38880a7cdef790fff1abe606b76ce61e9d",
     "keys": {},
-    "round": 1
+    "round": 2
   },
   "why": "The owner measures time from a task or fix start to its merge, but merge prints no such time and the board shows no daily figure, so it is read by hand from records",
   "worker": "codex"
