@@ -14,7 +14,7 @@ import pytest
 
 from test_close import env  # noqa: F401
 from test_conflicting_pull_requests_stop_check_waits import client  # noqa: F401
-from test_land import BRANCH, ITEM, RUNS, _fix
+from test_land import BRANCH, ITEM, _fix
 from test_land_waits_for_check_progress import _pending
 
 STORY = "many-land-runs-each-poll-github-for-chec"
@@ -35,10 +35,12 @@ def test_1_waiters_share_one_status_read_per_minute(client, monkeypatch):
         offset.write_text(str(elapsed), encoding="utf-8")
         done = env.repo.forge("land", ITEM)
         assert done.returncode == 1, done.stdout + done.stderr
-        assert "tests is still running" in done.stderr
-        assert len(env.gh_calls(*RUNS)) == expected
-        assert len(env.gh_calls("pr", "view", BRANCH, "--json",
-                                "mergeable,headRefOid,number,headRefName")) == expected
+        # The wait now names each active matrix job instead of the tests group.
+        for runner in ("windows-latest", "ubuntu-latest"):
+            assert f"tests ({runner}) is still running" in done.stderr
+        assert len(env.gh_calls("api", path="/check-runs?")) == expected
+        assert len(env.gh_calls("pr", "view", BRANCH,
+                               query="mergeable,headRefOid,number,headRefName")) == expected
 
     # Sequential reuse cannot reach contention or a stalled fetch. Stall only
     # GitHub, then run two real commands: neither lock nor refusal is mocked.
