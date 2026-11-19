@@ -88,7 +88,7 @@ def test_1_merge_waits_for_combined_ci_without_laptop_tests(env, tmp_path, previ
     remote_branch = env.repo.git("ls-remote", "origin", "refs/heads/fix/tidy-readme")
     assert remote_branch.split()[0] == published
     env.repo.git("merge-base", "--is-ancestor", advanced, published, cwd=remote)
-    assert any(f"/commits/{published}/" in call[-1] for call in env.gh_calls("api"))
+    assert env.gh_calls("api", path=f"/commits/{published}/")
 
     retried = env.repo.forge("merge", item)
 
@@ -98,7 +98,8 @@ def test_1_merge_waits_for_combined_ci_without_laptop_tests(env, tmp_path, previ
     assert not log.exists()
     assert env.repo.git("rev-parse", "HEAD", cwd=where) == published
     assert "main moved;" not in retried.stdout
-    before_checks = len(env.gh_calls("api"))
+    commit_checks_path = f"/commits/{published}/"
+    before_checks = len(env.gh_calls("api", path=commit_checks_path))
     env.checks([run(check), run("forge-pr-check")])
 
     finished = env.repo.forge("merge", item)
@@ -108,8 +109,7 @@ def test_1_merge_waits_for_combined_ci_without_laptop_tests(env, tmp_path, previ
     assert attempt[attempt.index("--match-head-commit") + 1] == published
     assert not log.exists()
     assert "main moved;" not in finished.stdout
-    assert any(f"/commits/{published}/" in call[-1]
-               for call in env.gh_calls("api")[before_checks:])
+    assert len(env.gh_calls("api", path=commit_checks_path)) > before_checks
 
 
 # Audit: CI's public change-test command must select both sides of a merge.

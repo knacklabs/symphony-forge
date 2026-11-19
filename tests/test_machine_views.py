@@ -391,7 +391,7 @@ def _successful_checks_do_not_replace_close_receipts(repo, gh, context):
     assert row["next"] == {"command": "forge close polish", "line": "Polish the guide is waiting for its checks.",
                           "step": "forge close polish"}
     # The GitHub request must ask for the fallback; a canned response cannot prove that.
-    query = next(c for c in gh.calls() if c[:2] == ["api", "graphql"])
+    query = next(c for c in gh.calls("api", "graphql", query="StatusContext"))
     assert "startedAt" in " ".join(query)
     assert "\n" not in query[-1], "Windows .cmd shims must receive the whole query on one line"
     # Failures need work, while other results still need close's receipt.
@@ -530,7 +530,8 @@ def test_3_board_reports_github_occurrences_after_cache_expiry(repo, gh, monkeyp
         return
     setup(repo, keys=())
     assert view(repo, "board")["items"] == []
-    initial_calls = len([c for c in gh.calls() if c[:2] == ["api", "graphql"]])
+    check_query = "pullRequests(first: 25"
+    initial_calls = len(gh.calls("api", "graphql", query=check_query))
     monkeypatch.setenv("FORGE_NOW", "2026-10-04T10:00:00+00:00")
     for name in ("first", "second", "older"):
         made = repo.forge("fix", "start", name, "--done", "Reads clearly", "--slug", name)
@@ -562,7 +563,7 @@ def test_3_board_reports_github_occurrences_after_cache_expiry(repo, gh, monkeyp
     # The --out board uses the same cache; it must not refresh the open checks early.
     written = repo.forge("board", "--out", str(repo.path / ".git/forge/cache-board.json"))
     assert written.returncode == 0, written.stderr
-    assert len([c for c in gh.calls() if c[:2] == ["api", "graphql"]]) == initial_calls + 1
+    assert len(gh.calls("api", "graphql", query=check_query)) == initial_calls + 1
     monkeypatch.setenv("FORGE_NOW", "2026-10-04T10:01:00+00:00")
     rows = {r["id"]: r for r in view(repo, "board")["items"]}
     assert rows["first"]["pr"]["checks"] == "fail"
@@ -590,9 +591,9 @@ def test_3_board_reports_github_occurrences_after_cache_expiry(repo, gh, monkeyp
     monkeypatch.setenv("FORGE_NOW", "2026-10-04T10:04:00+00:00")
     events = {r["id"]: r for r in view(repo, "board")["items"]}["first"]["occurrences"]
     assert {e["id"] for e in events} == {"check-run:111371488291:2026-10-04T10:03:00Z", "status:SC_kwDNIULPAAAADOokTrg"}
-    calls = [c for c in gh.calls() if c[:2] == ["api", "graphql"]]
+    calls = gh.calls("api", "graphql", query=check_query)
     assert len(calls) == initial_calls + 5
-    assert "first: 25" in " ".join(calls[-1]) and "CREATED_AT" in " ".join(calls[-1])
+    assert all("CREATED_AT" in " ".join(call) for call in calls)
 
 
 @pytest.mark.parametrize("phase,history", [

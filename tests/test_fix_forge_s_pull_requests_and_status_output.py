@@ -111,7 +111,7 @@ def test_5_board_links_items_to_pull_requests(repo, gh, tmp_path):
     calls = [call for call in gh.calls() if call[:2] == ["pr", "list"]]
     # One board snapshot: one open list and seven weekly searches.
     assert len(calls) == 8
-    assert len([call for call in gh.calls() if call[:2] == ["api", "graphql"]]) == 1
+    assert len(gh.calls("api", "graphql", query="pullRequests(first: 25")) == 1
 
 
 def test_6_next_requires_a_close_receipt_and_names_findings(repo, gh):
