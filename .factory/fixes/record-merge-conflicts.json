@@ -4,12 +4,20 @@
   "done_when": "When Forge merges a branch, it merges its own record files itself (the higher round, the union of steps and reviews) instead of leaving a text conflict, and forge next names an unusable record and goes on for the other items; new and existing repos get it on upgrade",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-19T01:59:14.309390+00:00",
       "step": "start"
     }
   ],
-  "why": "When one fix is built on two machines, close merges the branch's remote and the fix's own record .factory/fixes/<fix>.json conflicts as text, leaving the checkout mid-merge; then forge next refuses for every item with '.factory/fixes/<fix>.json is not usable' (seen twice at a client on 18 Nov 2026)"
+  "stuck": {
+    "close": null,
+    "head": "339f71a8fd09a4070245c79a4c3639a0b08b37d6",
+    "keys": {},
+    "round": null
+  },
+  "why": "When one fix is built on two machines, close merges the branch's remote and the fix's own record .factory/fixes/<fix>.json conflicts as text, leaving the checkout mid-merge; then forge next refuses for every item with '.factory/fixes/<fix>.json is not usable' (seen twice at a client on 18 Nov 2026)",
+  "worker": "codex"
 }
