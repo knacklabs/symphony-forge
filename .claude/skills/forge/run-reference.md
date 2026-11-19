@@ -187,7 +187,8 @@ provide live worker and reader metadata; completed timing durations supply stage
 times. Values remain null where the producer has not recorded them.
 
 `time_breakdown` separates building, own tests, reviewing, fixing findings, waiting for CI,
-waiting in line, waiting for the owner and nothing running. Overlapping steps count once:
+waiting in line and waiting for the owner. Time without a recorded activity stays unmeasured.
+The legacy `nothing_running` field stays null for new observations. Overlapping steps count once:
 tests and recorded waits come out of the enclosing worker's time. `rounds` retains each round's
 plain `line`, its finding titles, priorities and files, and its new and repeated finding counts.
 Round lines number review attempts; the row's current `round` still identifies its worker turn.
@@ -200,8 +201,14 @@ An earlier release's failed CI timing without an explicit result also stays unkn
 Old records are not filled in with guessed findings, durations or zeroes. A known original start
 can give an elapsed total even when some earlier activity is unknown; that unknown time is not
 called idle and the known breakdown need not add up to the elapsed total. Gaps between legacy
-timings stay unknown until complete activity recording begins. Earlier run and question events
+timings stay unknown, including gaps after newer activity records. Earlier run and question events
 do not establish completeness; historical questions without a recorded end stay unknown.
+How it went also shows timestamps for holds, owner decisions, waits and resumed work.
+The first recorded start survives commit rewrites and a fix moved into a story and its first part.
+The first part also keeps the fix's recorded work and reviews. Upgrade repairs earlier published
+starts and labels old compacted gaps as unmeasured time. Close refreshes How it went when it sees
+a human merge. An agent merge refreshes it after GitHub confirms the merge. Both use GitHub's
+merge time, so a later observation does not extend the final wait.
 
 Quote the item's round lines when explaining a long run, then quote the relevant breakdown
 categories rather than adding overlapping stage timers. The board page shows these same

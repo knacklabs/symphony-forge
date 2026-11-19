@@ -1,0 +1,103 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/backfill.py\tNot done: Repair previously published starts on upgrade\texact-wait-times",
+      "kind": "bug",
+      "path": "src/forge/backfill.py",
+      "line": 113,
+      "text": "Not done: Repair previously published starts on upgrade",
+      "from": "blocking",
+      "item": "exact-wait-times",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/task.py\tClosing a promoted task from another machine before its plan merge is published can raise a missing-plan traceback.",
+      "kind": "bug",
+      "path": "src/forge/task.py",
+      "line": 210,
+      "text": "Closing a promoted task from another machine before its plan merge is published can raise a missing-plan traceback.",
+      "from": "worker",
+      "item": "exact-wait-times",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/time_records.py\tNot done: Include the final merge wait in How it went\texact-wait-times",
+      "kind": "bug",
+      "path": "src/forge/time_records.py",
+      "line": 527,
+      "text": "Not done: Include the final merge wait in How it went",
+      "from": "blocking",
+      "item": "exact-wait-times",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/time_records.py\tNot done: Preserve recorded fix activity when it becomes a task\texact-wait-times",
+      "kind": "bug",
+      "path": "src/forge/time_records.py",
+      "line": 160,
+      "text": "Not done: Preserve recorded fix activity when it becomes a task",
+      "from": "blocking",
+      "item": "exact-wait-times",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/time_records.py\tNot done: Reclassify gaps in earlier compacted histories\texact-wait-times",
+      "kind": "bug",
+      "path": "src/forge/time_records.py",
+      "line": 342,
+      "text": "Not done: Reclassify gaps in earlier compacted histories",
+      "from": "blocking",
+      "item": "exact-wait-times",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/time_records.py\tNot done: Show the recorded boundaries of all waits\texact-wait-times",
+      "kind": "bug",
+      "path": "src/forge/time_records.py",
+      "line": 535,
+      "text": "Not done: Show the recorded boundaries of all waits",
+      "from": "blocking",
+      "item": "exact-wait-times",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\ttests/test_first_start_survives_history_changes.py\tGate: Prove promotion and existing published starts\texact-wait-times",
+      "kind": "bug",
+      "path": "tests/test_first_start_survives_history_changes.py",
+      "line": 37,
+      "text": "Gate: Prove promotion and existing published starts",
+      "from": "blocking",
+      "item": "exact-wait-times",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\ttests/test_recorded_wait_and_resume_times.py\tGate: Prove same-turn repairs through a real worker turn\texact-wait-times",
+      "kind": "bug",
+      "path": "tests/test_recorded_wait_and_resume_times.py",
+      "line": 89,
+      "text": "Gate: Prove same-turn repairs through a real worker turn",
+      "from": "blocking",
+      "item": "exact-wait-times",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\ttests/test_recorded_wait_and_resume_times.py\tGate: Prove wait timestamps through the final merge\texact-wait-times",
+      "kind": "bug",
+      "path": "tests/test_recorded_wait_and_resume_times.py",
+      "line": 61,
+      "text": "Gate: Prove wait timestamps through the final merge",
+      "from": "blocking",
+      "item": "exact-wait-times",
+      "status": "done",
+      "closed_by": "dismissed"
+    }
+  ]
+}
