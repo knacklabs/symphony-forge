@@ -1,4 +1,10 @@
-"""A review that finds only a missing record gives the worker one repair round."""
+"""A review that finds only a missing record gives the worker one repair round.
+
+The mixed-record case protects the same command contract for the review's real
+missing-approach wording alongside a proof finding. Earlier cases used only one
+finding with a contiguous record label. The real close owns the grant and stop;
+only the external review service supplies findings, with no production seam.
+"""
 import pytest
 
 from test_close import blocked, body, env, finding
@@ -7,9 +13,11 @@ STORY = "FIX-FULL-BRIEF-AND-PROOF"
 
 
 @pytest.mark.parametrize("record, mixed", [("proof", False), ("sentinel", False),
-                         ("approach", False), ("hyphenated approach", False), ("proof", True)],
+                         ("approach", False), ("hyphenated approach", False),
+                         ("both records", False), ("proof", True)],
                          ids=["missing-proof-entry", "proof-list-says-missing", "missing-approach-record",
-                              "hyphenated-approach-record", "other-open-finding-still-stops"])
+                              "hyphenated-approach-record", "missing-proof-and-approach",
+                              "other-open-finding-still-stops"])
 def test_3_record_only_review_findings_get_one_automatic_repair(env, record, mixed):
     item, where = env.start("full-brief-and-proof", "fix/full-brief-and-proof",
                             ".factory/fixes/full-brief-and-proof.json",
@@ -18,11 +26,13 @@ def test_3_record_only_review_findings_get_one_automatic_repair(env, record, mix
                             {"app.py": "print('hello')\n"})
     if record == "sentinel":
         env.commit(where, "app.py", "print('hello')\n", "Work\n\nProof list: missing")
-    title = ("Gate: proof list" if record in ("proof", "sentinel") else
+    title = ("Gate: proof list" if record in ("proof", "sentinel", "both records") else
              "Simpler: Missing before-coding record" if record == "hyphenated approach" else
              "Simpler: Missing Before coding record")
     problem = finding("P1", title)
     findings = [problem, *([finding("P2", "Simpler: use a dict")] if mixed else [])]
+    if record == "both records":
+        findings.append(finding("P1", "Simpler: Missing approach → record the need, simplest option and reuse"))
     env.reviews(blocked(*findings), blocked(*findings))
 
     first = env.close(item)

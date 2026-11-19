@@ -787,29 +787,26 @@ def _changed_function_context(top: Path) -> str:
                     "--", cwd=top).stdout
     functions = set()
     changed: dict[str, set[int]] = {}
+    removed: dict[str, set[int]] = {}
     path = ""
-    line_number = 0
+    line_number = old_line_number = 0
     for line in diff.splitlines():
         if line.startswith("diff --git "):
             path = line.split(" b/", 1)[1].rstrip('"') if " b/" in line else ""
         elif line.startswith("@@"):
-            match = re.search(r"\+(\d+)(?:,\d+)?", line)
-            line_number = int(match[1]) if match else 0
+            match = re.search(r"-(\d+)(?:,\d+)? \+(\d+)(?:,\d+)?", line)
+            old_line_number, line_number = map(int, match.groups()) if match else (0, 0)
         elif path and line.startswith("+") and not line.startswith("+++"):
             changed.setdefault(path, set()).add(line_number)
             line_number += 1
         elif path and line.startswith("-") and not line.startswith("---"):
-            if not _test_file(path) and (name := _function_name(line[1:])):
-                functions.add(name)
+            removed.setdefault(path, set()).add(old_line_number)
+            old_line_number += 1
         elif path and line.startswith(" "):
             line_number += 1
-    for path, line_numbers in changed.items():
-        if _test_file(path):
-            continue
-        source = top / path
-        if not source.is_file():
-            continue
-        lines = source.read_text(encoding="utf-8").splitlines()
+            old_line_number += 1
+
+    def containing_functions(lines: list[str], line_numbers: set[int]) -> set[str]:
         definitions = []
         for index, source_line in enumerate(lines):
             if not source_line.strip():
@@ -817,6 +814,7 @@ def _changed_function_context(top: Path) -> str:
             if name := _function_name("\n".join(lines[index:])):
                 indent = len(source_line) - len(source_line.lstrip())
                 definitions.append((index + 1, indent, name))
+        found = set()
         for changed_line in line_numbers:
             if not 1 <= changed_line <= len(lines):
                 continue
@@ -824,12 +822,25 @@ def _changed_function_context(top: Path) -> str:
             if not source_line.strip():
                 continue
             if name := _function_name("\n".join(lines[changed_line - 1:])):
-                functions.add(name)
+                found.add(name)
             indent = len(source_line) - len(source_line.lstrip())
             enclosing = [definition for definition in definitions
                          if definition[0] < changed_line and definition[1] < indent]
             if enclosing:
-                functions.add(max(enclosing, key=lambda definition: definition[0])[2])
+                found.add(max(enclosing, key=lambda definition: definition[0])[2])
+        return found
+
+    for path in changed.keys() | removed.keys():
+        if _test_file(path):
+            continue
+        source = top / path
+        if line_numbers := changed.get(path):
+            if source.is_file():
+                functions.update(containing_functions(source.read_text(encoding="utf-8").splitlines(),
+                                                      line_numbers))
+        if line_numbers := removed.get(path):
+            original = repo.run("git", "show", f"{base}:{path}", cwd=top).stdout.splitlines()
+            functions.update(containing_functions(original, line_numbers))
     if not functions:
         return "None."
 

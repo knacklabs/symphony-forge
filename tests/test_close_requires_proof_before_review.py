@@ -3,6 +3,9 @@
 Audit: the command refusal and absence of a review call protect the preflight
 contract. Removing the preflight lets Autoreview run. Existing proof-delivery
 coverage only supplies a list. No production-only test seam is needed.
+The empty-heading case also covers a later functional-check paragraph: that
+separate record cannot supply proof entries. Earlier cases ended at the heading
+and could not detect a parser that consumes the rest of the commit message.
 Land's human and agent paths need their own transport witness because an ignored
 return value can falsely report readiness after the same close failure.
 """
@@ -14,7 +17,8 @@ from test_land import _agent, land  # noqa: F401
 STORY = "FIX-FULL-BRIEF-AND-PROOF"
 
 
-@pytest.mark.parametrize("proof", ["", "\n\nProof list:", "\n\nProof list:\n   "])
+@pytest.mark.parametrize("proof", ["", "\n\nProof list:", "\n\nProof list:\n   ",
+                         "\n\nProof list:\n\nFunctional check: Opened the greeting."])
 def test_1_close_names_missing_proof_before_review(env, proof):
     item, where = env.start_fix()
     env.repo.git("commit", "--amend", "-q", "-m", "Commit the coordinator repair" + proof, cwd=where)
@@ -24,7 +28,8 @@ def test_1_close_names_missing_proof_before_review(env, proof):
     assert f"forge close {item}" in closed.stderr
     assert env.review_calls() == []
     env.repo.git("commit", "--allow-empty", "-q", "-m", "Record the proof",
-                 "-m", "Proof list:\n- The greeting: manual check passed", cwd=where)
+                 "-m", "Proof list:\n- The greeting: manual check passed\n\n"
+                 "Functional check: Opened the greeting.", cwd=where)
     ready = env.close(item)
     assert ready.returncode == 0, ready.stdout + ready.stderr
     assert len(env.review_calls()) == 1

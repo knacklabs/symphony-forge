@@ -420,7 +420,7 @@ def close(args: argparse.Namespace) -> int:
     record_findings = bool(serious) and bool(opened) and all(
         f["title"].casefold().startswith("gate: proof list") or
         f["title"].casefold().startswith("simpler:") and
-        re.search(r"\b(?:before[- ]coding|approach record)\b", f["title"], re.I) and
+        re.search(r"\b(?:before[- ]coding|approach\b.*\brecord)\b", f["title"], re.I) and
         re.search(r"\b(?:missing|absent|no|lacks?|not present|does not (?:include|have))\b",
                   f["title"], re.I) for f in opened)
     repair_round = state.get("record_repair_round")
