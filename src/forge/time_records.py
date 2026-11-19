@@ -15,7 +15,7 @@ from forge import repo
 CATEGORIES = ("building", "own_tests", "reviewing", "fixing_findings", "waiting_for_ci",
               "waiting_in_line", "waiting_for_owner", "nothing_running")
 LABELS = ("building", "own tests", "reviewing", "fixing findings", "waiting for CI",
-          "waiting in line", "waiting for the owner", "nothing running")
+          "waiting in line", "waiting for the owner", "unmeasured time")
 HISTORY_SECTION = re.compile(
     r"## How it went\n.*?(?=\n(?:## |Proof list:|Functional check:|<!-- forge:end -->)|\Z)", re.S)
 RESUMED = "<!-- forge:history-resumed -->"
@@ -26,6 +26,32 @@ RECORD_BUDGET = 20_000  # bytes of shared detail; older rounds fold into the tot
 ROUND_CATEGORIES = {"work": CATEGORIES[:4], "in_line": ("waiting_in_line",),
                     "waiting_for_person": ("waiting_for_owner", "nothing_running"),
                     "waiting_for_checks": ("waiting_for_ci",)}
+
+
+def date_transitions(state: dict[str, Any], previous: dict[str, Any]) -> None:
+    """Keep lifecycle instants in the committed state, independent of local logs."""
+    if not previous:
+        return  # Creating or moving a state file is not a worker resume or a new hold.
+    stop, old = state.get("stop") or {}, previous.get("stop") or {}
+    steps = state.get("steps", [])
+    if stop and (not old or stop.get("at") != old.get("at")):
+        stop.setdefault("at", repo.now())
+        steps.append({"step": "hold", "at": stop["at"], "round": state.get("round")})
+    if stop.get("choice") and (stop.get("choice"), stop.get("reason"), stop.get("by")) != (
+            old.get("choice"), old.get("reason"), old.get("by")):
+        steps.append({"step": "owner decision", "at": repo.now(), "round": state.get("round"),
+                      "choice": stop["choice"], "by": stop.get("by")})
+    if (isinstance(state.get("round"), int) and state["round"] != previous.get("round")
+            and state.get("status") in ("working", "fixing")):
+        steps.append({"step": "resume", "at": repo.now(), "round": state.get("round")})
+    if steps:
+        state["steps"] = steps
+
+
+def _lifecycle(state: dict[str, Any], key: str) -> list[dict[str, Any]]:
+    return [{**step, "item": key, "event": step["step"],
+             "id": "state-" + hashlib.sha256(json.dumps(step, sort_keys=True).encode()).hexdigest()}
+            for step in state.get("steps", []) if step.get("step") in ("hold", "owner decision", "resume")]
 
 
 def _mark(finding: dict[str, Any]) -> str:
@@ -169,12 +195,23 @@ def pending_merge_wait(top: Path, key: str, published: str = "", *, reason: str 
                  and event.get("reason") == reason and event.get("id") not in ended), None)
 
 
+def _observations(top: Path, key: str, state: dict[str, Any], name: str,
+                  given: list[dict[str, Any]] | None = None) -> list[dict[str, Any]]:
+    origin = state.get("from_fix") if key else None
+    rows = read(top, name) if given is None or origin else given
+    return [{**row, "item": key} for row in rows if row.get("item") in (key, origin)
+            and row.get("item") is not None]
+
+
 def item(top: Path, key: str, state: dict[str, Any], *,
          events: list[dict[str, Any]] | None = None,
          timings: list[dict[str, Any]] | None = None,
          ended_at: str | None = None, summary: dict[str, Any] | None = None) -> dict[str, Any]:
-    events = [e for e in (read(top, "events") if events is None else events) if e.get("item") == key]
-    timings = [t for t in (read(top, "timings") if timings is None else timings) if t.get("item") == key]
+    events = list({e.get("id") or json.dumps(e, sort_keys=True): e for e in
+                   [*_observations(top, key, state, "events", events), *_lifecycle(state, key)]
+                   if e.get("item") == key}.values())
+    events.sort(key=lambda e: e.get("at") or "")
+    timings = _observations(top, key, state, "timings", timings)
     lane_rounds = {e["lane_id"]: e["round"] for e in events if e.get("event") == "work phase"
                    and e.get("lane_id") and isinstance(e.get("round"), int)}
     events = [{**e, "round": lane_rounds[e["lane_id"]]}
@@ -191,6 +228,7 @@ def item(top: Path, key: str, state: dict[str, Any], *,
         start = min(start, began) if start else began
     # Intervals overlap: tests, lane and CI waits take precedence over their enclosing worker.
     spans: list[tuple[datetime, datetime, str, int | None]] = []
+    closed_owner_spans: list[tuple[datetime, datetime]] = []
     # Only the new lifecycle records establish complete activity recording.
     complete_since = min((at for e in events if e.get("event") in (
         "work phase", "lane joined", "owner wait start")
@@ -241,6 +279,14 @@ def item(top: Path, key: str, state: dict[str, Any], *,
                 spans.append((a, b, "waiting_in_line", e.get("round")))
             elif a and end:
                 spans.append((a, end, "unknown", e.get("round")))
+        elif e.get("event") == "hold":
+            finish = next((f for f in events[index + 1:] if f.get("event") in
+                           ("owner decision", "resume", "hold")), None)
+            a, b = when(e.get("at")), when(finish.get("at")) if finish else end
+            if a and b:
+                spans.append((a, b, "waiting_for_owner", e.get("round")))
+                if finish:
+                    closed_owner_spans.append((a, b))
         elif e.get("event") in ("owner wait start", "worker question"):
             finish = next((f for f in events if f.get("event") == "owner wait end"
                            and f.get("wait_id") == e.get("id")), None)
@@ -250,6 +296,8 @@ def item(top: Path, key: str, state: dict[str, Any], *,
                 continue  # Earlier workers answered questions without recording their end.
             if a and b:
                 spans.append((a, b, "waiting_for_owner", e.get("round")))
+                if finish:
+                    closed_owner_spans.append((a, b))
     # A worker turn can contain several closes. Each review result keeps its own line.
     numbers = sorted({r["round"] for r in [*events, *timings] if isinstance(r.get("round"), int)})
     if (any(e.get("event") == "review result" and e.get("round") is None for e in events)
@@ -287,7 +335,8 @@ def item(top: Path, key: str, state: dict[str, Any], *,
                                 if e.get("round") == worker_round and e.get("kind") in ("test", "review")
                                 and e.get("event") in ("lane joined", "run start")
                                 and (at := when(e.get("at"))) and (prior_at is None or at >= prior_at)), {})
-                starts = [at for value in (trigger.get("at"), timing.get("start"), result.get("at"))
+                starts = [at for value in (previous["result"].get("at"),
+                                          trigger.get("at"), timing.get("start"), result.get("at"))
                           if (at := when(value))]
                 began = min(starts) if starts else None
             attempts.append({"worker_round": worker_round, "number": result.get("review_round"),
@@ -334,18 +383,24 @@ def item(top: Path, key: str, state: dict[str, Any], *,
     if start and bound:
         points = sorted({start, bound, *[max(start, min(bound, p)) for a, b, _, _ in spans for p in (a, b)],
                          *([max(start, min(bound, complete_since))] if complete_since else []),
+                         *[at for e in events if e.get("event") == "review result"
+                           and (at := when(e.get("at"))) and start <= at <= bound],
                          *[max(start, min(bound, r["start"])) for r in attempts if r["start"]]})
         priority = ("own_tests", "waiting_in_line", "waiting_for_ci", "reviewing",
                     "fixing_findings", "building", "waiting_for_owner", "unknown")
         for a, b in zip(points, points[1:]):
             covering = [(category, number) for x, y, category, number in spans if x <= a and y >= b]
-            category, number = min(covering, key=lambda c: priority.index(c[0])) if covering else (
-                "nothing_running" if end and complete_since and a >= complete_since else "unknown", None)
+            category, number = min(covering, key=lambda c: priority.index(c[0])) if covering else ("unknown", None)
+            if category == "building":
+                reviewed = next((e for e in reversed(events) if e.get("event") == "review result"
+                                 and e.get("round") == number and (at := when(e.get("at"))) and at <= a), {})
+                if reviewed.get("outcome") == "blocked":
+                    category = "fixing_findings"
             intervals.append({"start": a.isoformat(), "end": b.isoformat(), "category": category,
                               "kind": "working" if category in CATEGORIES[:4] else
                                       "waiting" if category in CATEGORIES[4:7] else "unknown"})
             if category == "unknown":
-                if (index := attempt(number, a)) is not None:
+                if (index := attempt(number, a, idle=number is None)) is not None:
                     unknown_rounds.add(index)
                 continue
             seconds = (b - a).total_seconds()
@@ -355,11 +410,7 @@ def item(top: Path, key: str, state: dict[str, Any], *,
                 by_category = per_attempt.setdefault(index, {})
                 by_category[category] = by_category.get(category, 0) + seconds
                 if category == "waiting_for_owner":
-                    waits = [] if merged else [e for e in events if e.get("round") == number
-                             and e.get("event") in ("owner wait start", "worker question")
-                             and (at := when(e.get("at"))) and at <= a]
-                    finished_wait = merged or any(any(f.get("event") == "owner wait end" and f.get("wait_id") == e.get("id")
-                                           and (at := when(f.get("at"))) and at >= b for f in events) for e in waits)
+                    finished_wait = merged or any(x <= a and y >= b for x, y in closed_owner_spans)
                     if finished_wait or merged:
                         owner_done[index] = owner_done.get(index, 0) + seconds
                     else:
@@ -433,6 +484,10 @@ def item(top: Path, key: str, state: dict[str, Any], *,
                 times = [per_attempt.get(index, {}).get(c) for c in categories]
                 seconds = sum(t for t in times if t is not None) if any(t is not None for t in times) else None
                 steps.append(f"{label} {outcomes} ({duration(round(seconds, 3) if seconds is not None else None)})")
+        if not timing_rows.get((index, "worker round")):
+            steps.extend(f"{category.replace('_', ' ')} {duration(seconds)}"
+                         for category in ("building", "fixing_findings")
+                         if (seconds := per_attempt.get(index, {}).get(category)))
         for category, label in (("waiting_in_line", "in line"), ("waiting_for_owner", "waiting for the owner")):
             seconds = (owner_done.get(index) if category == "waiting_for_owner"
                        else per_attempt.get(index, {}).get(category))
@@ -461,10 +516,10 @@ def item(top: Path, key: str, state: dict[str, Any], *,
 
 
 def how_it_went(top: Path, key: str, state: dict[str, Any], published: str = "", *,
-               preserve_ready: bool = False) -> str:
-    records = {name: [row for row in read(top, name) if row.get("item") == key]
+               preserve_ready: bool = False, ended_at: str | None = None) -> str:
+    records = {name: _observations(top, key, state, name)
                for name in ("events", "timings")}
-    data = _combined(top, key, state, published, **records)
+    data = _combined(top, key, state, published, ended_at=ended_at, **records)
     data["clean_reviews"] = list({r.get("id") or r.get("commit"): r
                                   for r in [*data.get("clean_reviews", []),
                                             *[e for e in data["events"] if e.get("event") == "review result"
@@ -502,14 +557,20 @@ def how_it_went(top: Path, key: str, state: dict[str, Any], published: str = "",
         retained = text.rsplit(RESUMED, 1)[0].rstrip() if complete else text
         if complete and RESUMED not in text:
             retained = ""
+    retained = retained.replace("nothing running", "unmeasured time")
     if retained:
         data["legacy_text"] = retained
     # The whole published record is measured, and each entry in it has a fixed maximum size.
     # An earlier release's retained history text is one entry with a larger fixed limit.
     legacy = data.get("legacy_text") or None
-    base = {**_capped({**{name: data.get(name) for name in ("ready", "rebuilt", "truncated")},
-                       "state": {"steps": [{"step": "start", "at": s.get("at")}
-                                           for s in data["state"].get("steps", []) if s.get("step") == "start"]}}),
+    starts = [when(s.get("at")) for s in data["state"].get("steps", [])
+              if s.get("step") == "start" and when(s.get("at"))]
+    if (older := data.get("summary")) and older["total_seconds"] is not None:
+        starts.append(when(older["until"]) - timedelta(seconds=older["total_seconds"]))
+    start_steps = [{"step": "start", "at": min(starts).isoformat()}] if starts else []
+    base = {**_capped({**{name: data.get(name) for name in ("ready", "rebuilt", "start_checked", "truncated", "ended_at")},
+                       "state": {"status": data["state"].get("status"),
+                                 "steps": start_steps}}),
             "legacy_text": legacy[:7999] + "…" if legacy and len(legacy) > 8000 else legacy}
     clean = [{k: r[k] for k in ("id", "commit", "at", "round", "outcome") if k in r} for r in data["clean_reviews"]]
     # Close's saved review snapshot has no round or time: keep only the newest one.
@@ -519,13 +580,41 @@ def how_it_went(top: Path, key: str, state: dict[str, Any], published: str = "",
     view = merged({"ended_at": data.get("ended_at")}, {**rows, "summary": summary, "state": data["state"]}) \
         if summary else data
     times = "; ".join(f"{label}: {duration(view['time_breakdown'][category])}"
-                      for category, label in zip(CATEGORIES, LABELS))
-    times = "; ".join(f"{kind}: {duration(view[f'{kind}_seconds'])}"
+                      for category, label in zip(CATEGORIES, LABELS) if category != "nothing_running")
+    times = "; ".join(f"{'unmeasured time' if kind == 'unknown' else kind}: {duration(view[f'{kind}_seconds'])}"
                       for kind in ("working", "waiting", "unknown")) + "\n\n" + times
     # A rebuild also sees reviews already rendered by releases without a shared record.
     retained_rounds = set(re.findall(r"^Round (\d+):", retained, re.M)) if data.get("rebuilt") else set()
     current = times + "\n\n" + "\n".join(r["line"] for r in view["rounds"]
                                             if str(r["round"]) not in retained_rounds)
+    if starts:
+        current += "\n\nStarted: " + min(starts).isoformat()
+    if data.get("ended_at"):
+        current += f"\nMerged: {data['ended_at']}\nStart to merge: {duration(data['total_seconds'])}"
+    milestones = {"hold": "On hold", "owner decision": "Owner decision", "resume": "Resumed",
+                  "owner wait start": "Wait started", "owner wait end": "Wait ended",
+                  "worker question": "Wait started", "lane joined": "Wait started",
+                  "lane admitted": "Wait ended", "lane left": "Wait ended"}
+    questions = {e.get("id") for e in rows["events"] if e.get("event") == "worker question"}
+    admitted = {e.get("lane_id") for e in rows["events"] if e.get("event") == "lane admitted"}
+    dated = []
+    for event in rows["events"]:
+        kind = event.get("event")
+        if kind not in milestones or not when(event.get("at")):
+            continue
+        suffix = f" ({event['choice']})" if event.get("choice") else ""
+        if kind == "lane left":
+            if not event.get("end_known", True) or event.get("lane_id") in admitted:
+                continue
+            suffix += " (cancelled)"
+        elif kind == "worker question":
+            suffix += " (question)"
+        elif kind == "owner wait end" and event.get("wait_id") in questions:
+            suffix += " (answer)"
+        label = "Default decision" if event.get("by") == "default" else milestones[kind]
+        dated.append(f"{label}: {event['at']}{suffix}")
+    if dated:
+        current += "\n\n" + "\n".join(dated)
     if retained:
         current = (retained + "\n\n" + RESUMED + "\n\n"
                    "Observed after resuming in this checkout (totals are separate from the "
@@ -612,6 +701,17 @@ def _from_body(body: str) -> dict[str, Any]:
                 and all(type(folded.get(kind, 0)) in (int, float) and folded.get(kind, 0) >= 0
                         for kind in ("working", "waiting", "unknown"))):
             summary["folded"] = None
+        if summary:
+            # Old producers already counted these intervals as unknown in the
+            # elapsed totals, but also exposed them as idle in the category/round views.
+            summary["time_breakdown"]["nothing_running"] = None
+            for span in summary["intervals"]:
+                if span.get("category") == "nothing_running":
+                    span.update(category="unknown", kind="unknown")
+            for entry in summary["rounds"]:
+                entry["line"] = entry["line"].replace("nothing running", "unmeasured time")
+                if (entry.get("seconds") or {}).pop("nothing_running", 0):
+                    entry["seconds_known"] = False
         cache = _validation_cache()
         digest = hashlib.sha256(match[1].encode("utf-8")).hexdigest()
         if digest not in cache["bodies"]:
@@ -765,7 +865,7 @@ def _combined(top: Path, key: str, state: dict[str, Any], published: str, *,
     record = view_body(published)
     if not record:
         return merged(item(top, key, state, events=events, timings=timings, ended_at=ended_at), {})
-    rows = {name: [r for r in (read(top, name) if given is None else given) if r.get("item") == key]
+    rows = {name: _observations(top, key, state, name, given)
             for name, given in (("events", events), ("timings", timings))}
     return merged({**rows, "state": state, "ended_at": ended_at}, record)
 
@@ -786,18 +886,21 @@ def merged(local: dict[str, Any], published: dict[str, Any]) -> dict[str, Any]:
         return {**local, "source": "local"}
     # A reconstructed review and its original local observation are the same review.
     # Accepting findings can commit a clean snapshot of the same blocked review.
-    observed = {e.get("commit") for e in local.get("events", [])
-                if e.get("event") == "review result" and e.get("commit")}
-    replaced = {e["rebuilt_commit"] for e in published.get("events", [])
+    events = [*local.get("events", []), *published.get("events", [])]
+    observed = {e.get("commit") for e in events
+                if e.get("event") == "review result" and e.get("commit") and not e.get("rebuilt_commit")}
+    replaced = {e["rebuilt_commit"] for e in events
                 if e.get("rebuilt_commit") and e.get("commit") in observed}
     rows = {}
     for name in ("events", "timings"):
         unique = {}
-        for row in [*published.get(name, []), *local.get(name, [])]:
+        for row in [*published.get(name, []), *local.get(name, []),
+                    *(_lifecycle(local.get("state", {}), "") if name == "events" else [])]:
             if row.get("rebuilt_commit") in replaced:
                 continue
             identity = row.get("id") if name == "events" else None
-            unique.setdefault(identity or json.dumps(row, sort_keys=True), {**row})
+            unique.setdefault(identity or json.dumps({k: v for k, v in row.items() if k != "item"},
+                                                     sort_keys=True), {**row})
         rows[name] = sorted(unique.values(), key=lambda row: row.get("at") or row.get("start") or "")
     summary = published.get("summary")
     until = when((summary or {}).get("until"))
@@ -814,14 +917,28 @@ def merged(local: dict[str, Any], published: dict[str, Any]) -> dict[str, Any]:
     if starts:
         state = {**state, "steps": [min(starts, key=lambda step: step["at"])]}
     if summary:
+        recovered = min((when(step["at"]) for step in starts), default=None)
+        previous = until - timedelta(seconds=summary["total_seconds"]) if summary["total_seconds"] is not None else None
+        if recovered and previous and recovered < previous:
+            summary = copy.deepcopy(summary)
+            seconds = (previous - recovered).total_seconds()
+            for name in ("total_seconds", "unknown_seconds"):
+                summary[name] += seconds
+            if folded := summary.get("folded"):
+                folded.update(start=recovered.isoformat(), unknown=folded.get("unknown", 0) + seconds)
+            else:
+                summary["intervals"].insert(0, {"start": recovered.isoformat(), "end": previous.isoformat(),
+                                               "category": "unknown", "kind": "unknown"})
         state = {**state, "steps": [{"step": "start", "at": summary["until"]}]}
     data = item(Path("."), "", state, events=[{**r, "item": ""} for r in rows["events"]],
-                timings=[{**r, "item": ""} for r in rows["timings"]], ended_at=local.get("ended_at"),
+                timings=[{**r, "item": ""} for r in rows["timings"]],
+                ended_at=local.get("ended_at") or published.get("ended_at"),
                 summary=summary)
     if summary:
         data = {**_summed(summary, data), "summary": summary}
     data.update(rows, source="pull request and local" if local.get("events") or local.get("timings")
-                else "pull request", rebuilt=bool(local.get("rebuilt") or published.get("rebuilt")))
+                else "pull request", rebuilt=bool(local.get("rebuilt") or published.get("rebuilt")),
+                start_checked=bool(local.get("start_checked") or published.get("start_checked")))
     data["ready"] = published.get("ready")
     data["legacy_text"] = published.get("legacy_text")
     data["truncated"] = bool(local.get("truncated") or published.get("truncated"))
@@ -830,8 +947,8 @@ def merged(local: dict[str, Any], published: dict[str, Any]) -> dict[str, Any]:
     return data
 
 
-def refresh_record(top: Path, key: str, state: dict[str, Any], body: str) -> str:
-    history = how_it_went(top, key, state, body, preserve_ready=True)
+def refresh_record(top: Path, key: str, state: dict[str, Any], body: str, *, ended_at: str | None = None) -> str:
+    history = how_it_went(top, key, state, body, preserve_ready=True, ended_at=ended_at)
     def replace(block: re.Match[str]) -> str:
         text, count = HISTORY_SECTION.subn(lambda _: history + "\n", block[0], count=1)
         return text if count else text.replace("<!-- forge:end -->", history + "\n<!-- forge:end -->", 1)
