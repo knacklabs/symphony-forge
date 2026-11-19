@@ -101,12 +101,16 @@ else:
 
 GH_STUB = """#!{python}
 # Stub gh: records each call's arguments; the newest matching response answers.
-import json, os, pathlib, subprocess, sys
+import hashlib, json, os, pathlib, subprocess, sys
 from json_log import append_json
 here = pathlib.Path(__file__).resolve().parent
 args = sys.argv[1:]
 append_json(here / "gh-calls.jsonl", args)
-append_json(here / "gh-tokens.jsonl", {{"args": args, "token": os.environ.get("GH_TOKEN")}})
+def token_marker(name):
+    value = os.environ.get(name)
+    return "sha256:" + hashlib.sha256(value.encode()).hexdigest() if value else None
+append_json(here / "gh-tokens.jsonl", {{"args": args, "token": token_marker("GH_TOKEN"),
+                                      "github_token": token_marker("GITHUB_TOKEN")}})
 if "--body-file" in args:  # the body as sent: the next call may rewrite the same file
     path = args[args.index("--body-file") + 1]
     body = sys.stdin.read() if path == "-" else pathlib.Path(path).read_text("utf-8")
@@ -476,6 +480,7 @@ def pytest_sessionfinish(session: pytest.Session) -> None:
 #   Interval and controlled-clock tests select their own value. FORGE_LIVE_CODEX stays:
 #   it is the real-Codex opt-in, set only by the codex-smoke workflow.
 # - No tool overrides: CODEX_BIN, CLAUDE_BIN and AUTOREVIEW are unset; a stub sets its own.
+# - No inherited GitHub credentials: GH_TOKEN and GITHUB_TOKEN are unset; a test sets dummy ones.
 # - No outer git: every GIT_ variable is unset (they leak in when tests run inside a git hook);
 #   the `repo` fixture gives git its own config.
 # - Machine lanes: the forge shim reports an idle machine; `machine_cores` sets a core count.
@@ -488,7 +493,7 @@ def isolated_environment(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("PYTHONPATH", raising=False)
     for name in list(os.environ):
         if name.startswith(("GIT_", "FORGE_")) and name != "FORGE_LIVE_CODEX" or name in (
-                "CLAUDECODE", "CODEX_BIN", "CLAUDE_BIN", "AUTOREVIEW"):
+                "CLAUDECODE", "CODEX_BIN", "CLAUDE_BIN", "AUTOREVIEW", "GH_TOKEN", "GITHUB_TOKEN"):
             monkeypatch.delenv(name)
     # Set this after isolation, which would remove a session-level FORGE_ default.
     # Autouse covers commands in tests that do not use the repo fixture too.

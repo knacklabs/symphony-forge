@@ -396,20 +396,17 @@ def doctor(top: Path) -> list[tuple[str, str]]:
         return rows
     owner, name = location
     login = _login(top)
-    use_env = "GH_TOKEN" in os.environ or "GITHUB_TOKEN" in os.environ
+    use_env = os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")
     app = None if use_env else saved(login, owner)
     installed = None
     token = None
-    selection_all = False
     app_failed = False
 
     if app:
         try:
             installed = installation(app, owner, name)
             if installed:
-                selection_all = installed.get("repository_selection") == "all"
-                if not selection_all:
-                    token = _token(app, owner, name, installed)
+                token = _token(app, owner, name, installed)
         except (OSError, ValueError, KeyError, TypeError) as error:
             app_failed = True
             reason = _message(str(error))
@@ -420,8 +417,8 @@ def doctor(top: Path) -> list[tuple[str, str]]:
             rows.append((f"Your GitHub app {app['slug']} could not be used: {reason}.", fix))
 
     if use_env:
-        identity = f"use the token in {'GH_TOKEN' if 'GH_TOKEN' in os.environ else 'GITHUB_TOKEN'}"
-    elif token or selection_all:
+        identity = f"use the token in {'GH_TOKEN' if os.environ.get('GH_TOKEN') else 'GITHUB_TOKEN'}"
+    elif token:
         identity = f"act as your app {app['slug']}"
     else:
         identity = f"use your gh sign-in {login}" if login else "use your gh sign-in"
@@ -435,23 +432,19 @@ def doctor(top: Path) -> list[tuple[str, str]]:
               f'owner of {owner} to change it to "Only select repositories" with only the repos '
               f'you work on. {settings}')
 
-    # A wide install is already a clear warning; doctor avoids another app request here.
-    if selection_all:
-        print(f"- GitHub: close, merge and land {identity}.")
+    budget = _budget(top, token)
+    line = f"- GitHub: close, merge and land {identity}."
+    if budget:
+        line += f" {budget}"
     else:
-        budget = _budget(top, token)
-        line = f"- GitHub: close, merge and land {identity}."
-        if budget:
-            line += f" {budget}"
-        else:
-            line += " The request budget could not be read."
-        if not use_env and not app:
-            line += " You have no Forge GitHub app on this laptop for this repo: forge init --github-app."
-        elif app and installed is None and not app_failed:
-            install_url = f"https://github.com/apps/{urllib.parse.quote(app['slug'], safe='')}/installations/new"
-            line += (f" Your app {app['slug']} is not installed on {owner}/{name} yet: an owner of "
-                     f"{owner} installs it on {install_url}.")
-        print(line)
+        line += " The request budget could not be read."
+    if not use_env and not app:
+        line += " You have no Forge GitHub app on this laptop for this repo: forge init --github-app."
+    elif app and installed is None and not app_failed:
+        install_url = f"https://github.com/apps/{urllib.parse.quote(app['slug'], safe='')}/installations/new"
+        line += (f" Your app {app['slug']} is not installed on {owner}/{name} yet: an owner of "
+                 f"{owner} installs it on {install_url}.")
+    print(line)
     return rows
 
 
@@ -460,7 +453,7 @@ def env(args: tuple[str, ...] | list[str], cwd: str | os.PathLike[str] | None) -
 
     global _WARNED
     args = tuple(args)
-    if (not github.wait_for_reset or "GH_TOKEN" in os.environ or "GITHUB_TOKEN" in os.environ
+    if (not github.wait_for_reset or os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")
             or _SELECTING
             or args[1:3] == ("pr", "create")
             or (args[1:3] == ("pr", "edit") and "--body-file" in args)):
