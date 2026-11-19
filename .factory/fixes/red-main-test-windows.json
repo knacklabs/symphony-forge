@@ -4,12 +4,25 @@
   "done_when": "test_3_merge_waits_while_the_default_branch_is_red passes on Windows (forge-next.yml run on the fix branch) and on Linux, with the same rule checked; if the cause is in Forge's code and not the test, the code handles Windows line endings",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-19T16:05:23.601698+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-19T16:05:41.814587+00:00",
+      "round": 1,
+      "step": "resume"
     }
   ],
-  "why": "The Windows release check fails tests/test_merge_waits_while_default_is_red.py::test_3_merge_waits_while_the_default_branch_is_red in two cases (repair-overlap, one-default-result-request): on Windows, merging main into the fixture branch conflicts in README.md, which looks like a line-ending difference in the test's setup; Linux passes"
+  "stuck": {
+    "close": null,
+    "head": "f995cb81537596bcb086a458508eda91fa3f411a",
+    "keys": {},
+    "round": null
+  },
+  "why": "The Windows release check fails tests/test_merge_waits_while_default_is_red.py::test_3_merge_waits_while_the_default_branch_is_red in two cases (repair-overlap, one-default-result-request): on Windows, merging main into the fixture branch conflicts in README.md, which looks like a line-ending difference in the test's setup; Linux passes",
+  "worker": "codex"
 }
