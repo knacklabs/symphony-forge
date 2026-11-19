@@ -21,9 +21,8 @@ WHAT = ["save a basket", "track a parcel", "return an order", "split a payment",
 PARTS = ["Store the record", "Show it on the page", "Send a notice", "Add the report line"]
 
 
-def build(folder: Path, version: str) -> Path:
+def build(folder: Path, version: str, *, now: datetime) -> Path:
     remote, client = folder / "origin.git", folder / "client"
-    now = datetime.now(timezone.utc).replace(microsecond=0)
     env = {**os.environ, "GIT_AUTHOR_NAME": "Asha Rao", "GIT_AUTHOR_EMAIL": "asha@example.com",
            "GIT_COMMITTER_NAME": "Asha Rao", "GIT_COMMITTER_EMAIL": "asha@example.com"}
 
@@ -108,4 +107,4 @@ def build(folder: Path, version: str) -> Path:
 
 
 if __name__ == "__main__":
-    print(build(Path(sys.argv[1]), sys.argv[2]))
+    print(build(Path(sys.argv[1]), sys.argv[2], now=datetime.now(timezone.utc).replace(microsecond=0)))
