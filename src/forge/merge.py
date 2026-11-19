@@ -457,7 +457,7 @@ def red(top: Path, *, item: str = "", refresh: bool = False) -> bool:
                  ' repository(owner:$owner,name:$repo) { ' + objects + ' } }')
         done = repo.run("gh", "api", "graphql", "-f", "operationName=ForgeDefaultTests",
                         "-F", "owner={owner}", "-F", "repo={repo}",
-                        "-f", "query=" + " ".join(query.split()), cwd=top, timeout=60)
+                        "-F", "query=@-", cwd=top, timeout=60, input=" ".join(query.split()))
         try:
             data = json.loads(done.stdout)
             nodes = data["data"]["repository"]

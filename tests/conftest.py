@@ -106,6 +106,8 @@ from json_log import append_json
 here = pathlib.Path(__file__).resolve().parent
 args = sys.argv[1:]
 append_json(here / "gh-calls.jsonl", args)
+if "query=@-" in args:
+    append_json(here / "gh-queries.jsonl", sys.stdin.read())
 if "--body-file" in args:  # the body as sent: the next call may rewrite the same file
     path = args[args.index("--body-file") + 1]
     body = sys.stdin.read() if path == "-" else pathlib.Path(path).read_text("utf-8")
