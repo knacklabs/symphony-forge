@@ -93,7 +93,7 @@
       "gain": 5,
       "harm": 4,
       "line": 443,
-      "outcome": "open",
+      "outcome": "fixed in round 4",
       "reason": "",
       "round": 3,
       "security": false,
@@ -103,28 +103,17 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "1c16e6a0a92fbb35767d419420e1d74d7a0d68a150fdc623965b5f9ed66675f7",
-    "changed": "285fbfecda7b663bde3cc32232b9dbf328f63644e5b0b228afc894c15071a963",
-    "commit": "502d007a702194a270dc0fe60cede58c7841d116",
+    "branch_diff": "d52ed2545f328f307a2fffad790d29531049ab28ffb1d65f2d88cce17d812e67",
+    "changed": "08f50763915c9ff3fee0c070232c44b83df5378c687a8f59b4f24b60648cf788",
+    "commit": "764e2e2f77075c0b0eaa0ea7617c9504c1dc02cd",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 5, Work 2, Harm 4\nRaise: Functional\nCase: normal use - In a CI-test repository, a ready pull request reaches the default-branch health check. The query asks for `workflowRun.workflow.path`, but GitHub's [`Workflow` type](https://docs.github.com/en/graphql/reference/actions#workflow) has no `path` field; the path is exposed on `WorkflowRun.file` instead. GitHub rejects the entire query during validation, so `red()` refuses every `forge merge` and also prevents the human `forge land` hand-off, even when the default branch is green. The test fixture at `tests/test_merge_waits_while_default_is_red.py:213` supplies the nonexistent field and therefore does not catch the failure.",
-        "file": "src/forge/merge.py",
-        "gain": 5,
-        "harm": 4,
-        "line": 443,
-        "priority": "P0",
-        "title": "The default-branch GraphQL query rejects every CI-repo merge",
-        "work": 2
-      }
-    ],
-    "id": "2855fb17-84f0-454a-8199-c77367559a67",
-    "status": "blocked"
+    "findings": [],
+    "id": "cc4e6f80-5f06-4a65-8330-deace18411df",
+    "status": "clean"
   },
   "round": 5,
   "stacked_on": "REMOTE-1/HOST",
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-18T14:17:31.848635+00:00",
@@ -140,6 +129,10 @@
     },
     {
       "at": "2026-11-19T01:54:00.230898+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-19T02:10:52.054916+00:00",
       "step": "review"
     }
   ],
