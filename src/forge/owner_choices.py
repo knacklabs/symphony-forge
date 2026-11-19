@@ -141,6 +141,8 @@ def first(top: Path, lines: list[str], prs: list[dict] | None = None) -> list[st
         branch = pr.get("headRefName") or (f"task/{item.replace('/', '-')}" if "/" in item else f"fix/{item}")
         state = (repo.read_state(item, where) or nextstep.remote_state(top, item, branch, pr)) if item else {}
         stop = state.get("stop") or {}
+        if item == "client-signoff":
+            stop = json.loads(story._text(where / ".factory/client-signoff.json") or "{}").get("owner_wait") or {}
         reason = ("approval" if plan else "sign-off" if item == "client-signoff" else
                   "confirmation" if "spec confirm" in command else "read" if "cold read" in line else
                   "size" if stop.get("predicted_files") else "stuck" if "question" in stop else "review loop")

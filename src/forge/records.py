@@ -507,6 +507,8 @@ def _signoff_review(top: Path, args: argparse.Namespace, answers: str, evidence:
             repo.write_state(item, state, top)
             repo.commit_state("Record the owner's sign-off findings", repo.state_path(item), top=top)
         saved["stop"] = False
+        if wait := saved.pop("owner_wait", None):
+            repo.record_event(top, "client-signoff", "owner wait end", wait_id=wait["wait_id"])
         saved["choice"] = {"resolve": choice, "reason": reason.strip()}
         history[-1] = previous
         saved["rounds"] = history
@@ -575,6 +577,10 @@ def _signoff_review(top: Path, args: argparse.Namespace, answers: str, evidence:
     held = [(n, f) for n, f in enumerate(result["findings"], 1) if f in opened]
     saved.update(review=result, rounds=history + [result], inputs=inputs,
                  stop=bool(held and (sample_data or len(history) + 1 >= 2 and not critical)))
+    if saved["stop"]:
+        at = repo.now()
+        saved["owner_wait"] = {"at": at, "wait_id": repo.record_event(
+            top, "client-signoff", "owner wait start", reason="sign-off", at=at)}
     _write(top / rel, json.dumps(document, indent=2) + "\n")
     repo.commit_state("Record the client sign-off review", rel, top=top)
     if saved["stop"]:

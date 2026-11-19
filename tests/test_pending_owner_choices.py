@@ -7,12 +7,17 @@ Test-audit:
    unrelated event for its duration, or select an older same-name document from another worktree.
 3. Existing next tests cover fix stops and story approval/read resolution. They do not cover
    document cold reads, sign-off, spec confirmation or duplicate document notes across worktrees.
+   Sign-off must create its own wait through the decision command and retain it across a clone.
+   The task case guards slash-separated item names that the fix cases cannot reach.
 4. The test uses the real `forge next` command and needs no production seam.
 """
 import json
 import pytest
 
+from conftest import Repo
 from test_board_status_and_times import _records, _fix, client  # noqa: F401
+from test_close import env, STORY_DOC  # noqa: F401
+from test_proto_signoff import _client, _decision
 from test_story import new_story, setup
 from test_start_sorts_ideas import _land_setup
 
@@ -100,23 +105,32 @@ def test_7_next_lists_current_document_stop_and_spec_confirmation_with_matching_
     assert f"Waited 1 hour.\nRound 2 of the cold read of {slug}" in fallback.stdout
 
 
-def test_8_next_lists_signoff_question_with_its_reason_wait(client):
-    top = client.path
-    question = {
-        "id": "signoff-review",
-        "findings": [{"title": "Sign-off leaves a gap", "file": "app.py", "line": 1,
-                      "priority": "P1",
-                      "gain": 4, "work": 1, "harm": 3,
-                      "body": "Gain 4, Work 1, Harm 3\nCase: normal use - The prototype misses an answer."}],
-    }
-    record = {"review": question, "stop": True}
-    state_path = top / ".factory/client-signoff.json"
-    state_path.parent.mkdir(parents=True, exist_ok=True)
-    state_path.write_text(json.dumps(record), encoding="utf-8")
-    _records(client, "events.jsonl", [
-        _wait("client-signoff", "sign-off", "2026-10-09T11:46:00+00:00", "signoff-wait"),
-        _wait("client-signoff", "merge conflict", "2026-10-09T11:59:00+00:00", "unrelated-wait"),
-    ])
+def test_8_next_lists_signoff_question_with_its_reason_wait(repo, tmp_path, monkeypatch, gh):
+    monkeypatch.setenv("FORGE_NOW", "2026-10-09T11:00:00+00:00")
+    fix, answers, queue = _client(repo, tmp_path, monkeypatch)
+    proposal = _decision(fix, answers)
+    repo.git("add", proposal.relative_to(fix).as_posix(), cwd=fix)
+    repo.git("commit", "-qm", "Record proposed sign-off", cwd=fix)
+    report = {"report": {"review_status": "findings", "findings": [{
+        "title": "Sign-off leaves a gap", "priority": "P1",
+        "body": "Gain 5, Work 2, Harm 4\nCase: normal use - The prototype misses an answer.",
+        "code_location": {"file_path": "app.py", "line": 1}}]}}
+    for at in ("11:00:00", "11:46:00", "11:59:00"):
+        monkeypatch.setenv("FORGE_NOW", f"2026-10-09T{at}+00:00")
+        queue.write_text(json.dumps([report]), encoding="utf-8")
+        stopped = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
+        assert stopped.returncode == 1, stopped.stdout + stopped.stderr
+    assert "One more round, split or accept?" in stopped.stderr
+    # Only committed data crosses to this machine. No event history or fabricated wait does.
+    peer = tmp_path / "second-machine"
+    branch = repo.git("branch", "--show-current", cwd=fix)
+    repo.git("push", "-q", "origin", "HEAD", cwd=fix)
+    repo.git("clone", "--no-local", "-q", "-b", branch,
+             repo.git("remote", "get-url", "origin", cwd=fix), str(peer))
+    client = Repo(peer, repo.bin)
+    gh.respond("pr", "list", stdout="[]")
+    gh.respond("api", "graphql", stdout=json.dumps({"data": {"repository": {"pullRequests": {"nodes": []}}}}))
+    monkeypatch.setenv("FORGE_NOW", "2026-10-09T12:00:00+00:00")
     result = client.forge("next")
     assert result.returncode == 0, result.stdout + result.stderr
     block = (
@@ -124,13 +138,19 @@ def test_8_next_lists_signoff_question_with_its_reason_wait(client):
         "Ask the human to choose one more round, split or accept the remaining findings, in these words:\n"
         "Client sign-off: The prototype matches the client's answers\nIt still has these problems:\n"
         "| # | Problem, for whom | Gain | Work | Harm | Proposed |\n|---|---|---|---|---|---|\n"
-        "| 1 | Sign-off leaves a gap: case: normal use - The prototype misses an answer. | 4 | 1 | 3 | fix this round |\n"
+        "| 1 | Sign-off leaves a gap: case: normal use - The prototype misses an answer. | 5 | 2 | 4 | fix now |\n"
         "One more round, split or accept?\n"
         "- One more round: repair these cases in its Done when and run one more round.\n"
         "- Split: move these cases into a new story or fix of their own; this one goes on without them.\n"
         "- Accept: the findings stay in the item's Known issues with your reason, and sign-off continues.")
     assert block in result.stdout, result.stdout
     assert result.stdout.index("Waited 14 minutes.\nClient sign-off needs your choice.") < result.stdout.index("Step ")
+    resolved = client.forge("decision", "accept", "client-signoff", "--by", "Ravi",
+                            "--resolve", "accept", "--reason", "The owner accepts this limitation")
+    assert resolved.returncode == 0, resolved.stdout + resolved.stderr
+    shown = client.forge("next")
+    assert shown.returncode == 0, shown.stderr
+    assert "Client sign-off needs your choice." not in shown.stdout
 
 
 def test_9_next_shows_a_worker_question_from_the_shared_pull_request(client, gh):
@@ -155,3 +175,30 @@ def test_9_next_shows_a_worker_question_from_the_shared_pull_request(client, gh)
              + question + '\nNext: forge work remote-question --note "<answer>"')
     assert block in shown.stdout
     assert shown.stdout.index(block) < shown.stdout.index("Step ")
+
+
+def test_10_next_lists_task_round_limit_with_its_owner_wait(env, monkeypatch):
+    item, tree = env.start_approved_task(STORY_DOC)
+    path = tree / ".factory/stories/SHOP/tasks/T1.json"
+    state = json.loads(path.read_text(encoding="utf-8"))
+    state["stop"] = {"round": 2, "at": "2026-10-01T11:00:00+00:00", "wait_id": "task-choice"}
+    path.write_text(json.dumps(state), encoding="utf-8")
+    _records(env.repo, "events.jsonl", [
+        _wait(item, "review loop", "2026-10-09T11:05:00+00:00", "task-choice"),
+        _wait(item, "merge conflict", "2026-10-09T11:59:00+00:00", "unrelated"),
+    ])
+    monkeypatch.setenv("FORGE_NOW", "2026-10-09T12:00:00+00:00")
+    shown = env.repo.forge("next")
+    assert shown.returncode == 0, shown.stdout + shown.stderr
+    block = (
+        "Waited 55 minutes.\nClose stopped SHOP/T1: its review reached the round limit with open findings.\n"
+        "Ask the human to choose one more round, split or accept the remaining findings, in these words:\n"
+        "Save a basket (part of Shoppers can save a basket): Shoppers can save their basket with one click\n"
+        "One more round, split or accept?\n"
+        "- One more round: repair these cases in its Done when and run one more round.\n"
+        "- Split: move these cases into a new story or fix of their own; this one goes on without them.\n"
+        "- Accept: the 0 findings listed become follow-ups in Known issues with your reason; close then goes on "
+        "to the checks, and merging is still a separate step.")
+    assert block in shown.stdout, shown.stdout
+    assert shown.stdout.index(block) < shown.stdout.index("Step ")
+    assert f'Next: forge close {item} --resolve <more|split|accept> --reason "<human\'s choice>"' in shown.stdout

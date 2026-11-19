@@ -30,6 +30,8 @@ def test_1_intake_requests_size_allowance_before_work(intake, file_count):
     assert ("Exclude tests, Markdown, generated files (including lockfiles), and files that forge sync writes."
             in offered["prompt"])
     assert "Forge asks for the size allowance before work starts." in offered["prompt"]
+    assert ("If one repair needs more than five code files, keep Lane: fix and list them all;"
+            in offered["prompt"])
     reply = _fix("Repair labels across six modules") + "\n" + "\n".join(
         f"File: module{n}.py" for n in range(file_count))
     reply += "\nFile: src/test_labels.py\nFile: README.md\nFile: module0.py"
@@ -103,6 +105,7 @@ def test_3_first_round_brief_asks_for_size_before_edits(env, monkeypatch):
     assert "Do not wait for a commit refusal." in brief
     assert 'forge fix allow-large "<reason>"' in brief
     assert "If the list exceeds five and no recorded allowance covers it, ask in your handoff:" in brief
+    assert "Question: Allow this fix to change these code files: <files>?" in brief
     assert "Stop before edits or tests." in brief
     assert "Markdown, generated files (including lockfiles), and files that `forge sync` writes." in brief
     monkeypatch.setenv("FORGE_NOW", "2026-10-09T12:00:00+00:00")
@@ -128,14 +131,23 @@ def test_4_next_surfaces_approval_and_read_resolution_before_routine_advice(repo
         "   Gain 4, Work 1, Harm 3\n", encoding="utf-8")
     stopped = repo.forge("read", "WAIT")
     assert stopped.returncode != 0 and "One more round, split or accept?" in stopped.stderr
+    _records(repo, "events.jsonl", [
+        {"id": "approval", "item": "SHOP", "event": "owner wait start", "reason": "approval",
+         "at": "2026-10-09T11:20:00+00:00"},
+        {"id": "read", "item": "WAIT", "event": "owner wait start", "reason": "read",
+         "at": "2026-10-09T11:46:00+00:00"},
+        {"id": "unrelated", "item": "WAIT", "event": "owner wait start", "reason": "merge conflict",
+         "at": "2026-10-09T11:59:00+00:00"},
+    ])
     monkeypatch.setenv("FORGE_NOW", "2026-10-09T12:00:00+00:00")
     result = repo.forge("next")
     assert result.returncode == 0, result.stderr
     for question in ("Approve this plan?", "One more round, split or accept?"):
         assert result.stdout.index(question) < result.stdout.index("Step ")
-    assert result.stdout.count("Waited 55 minutes.") == 2
+    approval = result.stdout.split("Waited 40 minutes.\n", 1)[1].split("\nWaited ", 1)[0]
+    assert "Approve this plan?" in approval
     exact_question = stopped.stderr.split("\nNext: ", 1)[0]
-    assert f"Waited 55 minutes.\n{exact_question}" in result.stdout
+    assert f"Waited 14 minutes.\n{exact_question}" in result.stdout
 
 
 def _large_intake(intake):
