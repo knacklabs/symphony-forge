@@ -1,0 +1,128 @@
+{
+  "base": "1a5b4d2cf1d9b0e80bb05627d2864a9ac40fd2bb",
+  "branch": "fix/start-to-merge-time",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1ef8f-9323-7b91-84f8-2e90c4430927",
+    "head": null,
+    "start": "1d2a6d8b72fdec50d442f922d16e69370a64cf4f"
+  },
+  "done_when": "forge merge (and land, for each item) prints 'Merged <item>: started <time>, merged <time>, <h>h<m>m start to merge; biggest wait: <cause>' from the item's How it went record, and the board shows the median start-to-merge time of items merged that day; new and existing repos get it on upgrade",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "src/forge/board_app/now.js",
+      "file": "src/forge/board_app/now.js",
+      "gain": 4,
+      "harm": 3,
+      "line": 91,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Keep the daily median scoped to the Me view",
+      "work": 2
+    },
+    {
+      "area": "machine_board() in src/forge/board.py",
+      "file": "src/forge/board.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 815,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Use the known merge time when PR data is stale",
+      "work": 1
+    },
+    {
+      "area": "tests/test_start_to_merge_time.py",
+      "file": "tests/test_start_to_merge_time.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 44,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_merge_and_land_print_start_to_merge_time",
+      "work": 2
+    },
+    {
+      "area": "test_2_board_shows_daily_median_from_merge_history() in tests/test_start_to_merge_time.py",
+      "file": "tests/test_start_to_merge_time.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 64,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_2_board_shows_daily_median_from_merge_history",
+      "work": 2
+    },
+    {
+      "area": "src/forge/board_app/now.js",
+      "file": "src/forge/board_app/now.js",
+      "gain": 4,
+      "harm": 2,
+      "line": 207,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: rendered check",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "c1928c4bda1f22987025ddad98333666bd84781bb77a0a1fab89267acb982d27",
+    "changed": "9ae2e8fb736e4a3243c61db933062e155f2d010c47f023bfc7cb2e509c4f7de7",
+    "commit": "68c77466985d12a75ce75ea686a7d8afce869c02",
+    "dismissals": [],
+    "findings": [],
+    "id": "09c58c35-cd0b-43a1-9d7f-2b7c2fe7c0bc",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-18T16:43:44.516570+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-18T17:05:24.024342+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-19T01:53:52.546342+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-19T03:30:39.659864+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-18T17:05:24.036924+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "src/forge/board_app/now.js",
+    "reason": "Owner decided on 18 Nov 2026 that fixes get two review rounds; this is the second",
+    "wait_id": "c197fefd-d784-43b7-b163-de17866febbd",
+    "worker_round": 1
+  },
+  "stuck": {
+    "close": "934e04e2-b0d7-4332-81f0-cc787063d98e",
+    "head": "1d974c38880a7cdef790fff1abe606b76ce61e9d",
+    "keys": {},
+    "round": 2
+  },
+  "why": "The owner measures time from a task or fix start to its merge, but merge prints no such time and the board shows no daily figure, so it is read by hand from records",
+  "worker": "codex"
+}

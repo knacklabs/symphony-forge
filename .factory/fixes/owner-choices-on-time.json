@@ -1,0 +1,141 @@
+{
+  "base": "1a5b4d2cf1d9b0e80bb05627d2864a9ac40fd2bb",
+  "branch": "fix/owner-choices-on-time",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1ef96-28c4-7403-93f7-0e9f6e980dc0",
+    "head": null,
+    "start": "c52722d0a17613a60420acfffa1ac81605323de9"
+  },
+  "done_when": "When the intake or the first round predicts more than the fix file limit, Forge asks for the size allowance at fix start or before the round; forge next lists every pending owner choice first, with its exact question and how long it has waited; new and existing repos get it on upgrade",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "first() in src/forge/owner_choices.py",
+      "file": "src/forge/owner_choices.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 39,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: forge next omits and mis-times pending owner choices",
+      "work": 2
+    },
+    {
+      "area": "size_choice() in src/forge/owner_choices.py",
+      "file": "src/forge/owner_choices.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 23,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Publish and enforce the intake size stop across machines",
+      "work": 2
+    },
+    {
+      "area": "require_active() in src/forge/task.py",
+      "file": "src/forge/task.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 821,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Allow the owner to narrow a size-stopped fix",
+      "work": 2
+    },
+    {
+      "area": "size_choice() in src/forge/owner_choices.py",
+      "file": "src/forge/owner_choices.py",
+      "gain": 3,
+      "harm": 4,
+      "line": 14,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Exclude generated files from the predicted fix size",
+      "work": 1
+    },
+    {
+      "area": "require_active() in src/forge/task.py",
+      "file": "src/forge/task.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 822,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Point the size-stop refusal at the fix checkout",
+      "work": 1
+    },
+    {
+      "area": "test_1_intake_requests_size_allowance_before_work() in tests/test_owner_choices_before_work.py",
+      "file": "tests/test_owner_choices_before_work.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 23,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: owner-choice command tests",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "5f7b49b8d072041cf291111f9a0f29bb719de6899a3636dc89c0889e571275b3",
+    "changed": "c4e9edc53c3767fc92115cf6eaea2befdaa7aab9341019ce9461e555c885f697",
+    "commit": "701c7bb0577419b201a0bc707363525101279189",
+    "dismissals": [],
+    "findings": [],
+    "id": "5b22ca6e-e989-4b46-9db3-9689510b6e82",
+    "status": "clean"
+  },
+  "round": 4,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-18T16:44:09.279803+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-18T17:41:05.651357+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-19T02:26:51.706987+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-19T02:45:16.822869+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-19T02:26:51.707384+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "src/forge/owner_choices.py",
+    "reason": "Owner chose one more round on 19 Nov 2026",
+    "wait_id": "0ce4dedd-df87-46b2-84b5-d78fa8e14337",
+    "worker_round": 3
+  },
+  "stuck": {
+    "close": "ec202202-54aa-4ffc-b6a7-c8e03f98d46b",
+    "head": "4afb537ed531d6df1f0e5c4b7d8420b0ac809b9c",
+    "keys": {},
+    "round": 3
+  },
+  "why": "Owner choices wait 14-55 minutes at a client: the size allowance is asked mid-round instead of at fix start, and pending owner choices are not at the top of forge next with their wording and wait time",
+  "worker": "codex"
+}
