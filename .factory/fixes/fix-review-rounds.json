@@ -62,8 +62,8 @@
     "id": "9db573df-3b57-4b4a-ab49-6fc28ddaaf02",
     "status": "clean"
   },
-  "round": 2,
-  "status": "waiting for checks",
+  "round": 3,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-18T16:43:34.717641+00:00",
@@ -79,12 +79,10 @@
     }
   ],
   "stuck": {
-    "close": "b1e3b63e-ad35-4618-9876-925dd6f08d21",
-    "head": "f7993cb0c6043ef1f489efe2dbdf71dcea1752c3",
-    "keys": {
-      "the open P0 gate: review-stop and worker-guidance tests retain the old contract in src/forge/close.py": 1
-    },
-    "round": 1
+    "close": "aca90287-a56c-4525-a261-8b5a300b14e3",
+    "head": "927e6baa6ff5cc448c61c16c6362b0cbdffcc42e",
+    "keys": {},
+    "round": 2
   },
   "why": "Fixes stop for the owner's choice after the first blocked review unless a finding is P0 (close.py uses a fixed limit of 1 for fixes), while story parts get task_review_rounds (default 2); at a client this cost an owner question and 20-60 minutes three times on 18 Nov 2026",
   "worker": "codex"
