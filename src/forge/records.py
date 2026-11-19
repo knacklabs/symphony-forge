@@ -445,6 +445,21 @@ def _signoff_known(top: Path, result: dict[str, Any], round_number: int) -> None
     repo.commit_state("Keep lesser sign-off findings as known issues", repo.state_path(item), top=top)
 
 
+SIGNOFF_CHOICE = ('forge decision accept client-signoff --by "<name>" '
+                  '--resolve <accept|more|split> --reason "<human\'s choice>"')
+
+
+def signoff_question(top: Path, result: dict, *, sample_data: bool) -> str:
+    from forge import review
+
+    acceptance = (("this accepts a P0 if one remains. A person declared only sample data and no back end, "
+                   "so owner acceptance is allowed here. " if sample_data else "")
+                  + "the findings stay in the item's Known issues with your reason, and sign-off continues.")
+    return review.stop_question(top, "client-signoff", {
+        "why": "Client sign-off", "done_when": "The prototype matches the client's answers", "review": result},
+        accept=acceptance)
+
+
 def _signoff_review(top: Path, args: argparse.Namespace, answers: str, evidence: str,
                     *, unchanged: bool = False, sample_data: bool = False) -> str:
     """Keep sign-off rounds in the record across squash merges and reuse owner choices."""
@@ -467,11 +482,7 @@ def _signoff_review(top: Path, args: argparse.Namespace, answers: str, evidence:
         _write(top / rel, json.dumps(document, indent=2) + "\n")
         repo.commit_state("Apply the prototype bar to saved sign-off findings", rel, top=top)
     choice, reason = getattr(args, "resolve", None), getattr(args, "reason", None)
-    next_step = ('forge decision accept client-signoff --by "<name>" '
-                 '--resolve <accept|more|split> --reason "<human\'s choice>"')
-    acceptance = (("this accepts a P0 if one remains. A person declared only sample data and no back end, "
-                   "so owner acceptance is allowed here. " if sample_data else "")
-                  + "the findings stay in the item's Known issues with your reason, and sign-off continues.")
+    next_step = SIGNOFF_CHOICE
     if choice or reason is not None:
         if not saved.get("stop") or not choice or not reason or not reason.strip():
             repo.refuse(("Record the owner's choice only after sign-off stops, with a reason.", next_step))
@@ -496,15 +507,15 @@ def _signoff_review(top: Path, args: argparse.Namespace, answers: str, evidence:
             repo.write_state(item, state, top)
             repo.commit_state("Record the owner's sign-off findings", repo.state_path(item), top=top)
         saved["stop"] = False
+        if wait := saved.pop("owner_wait", None):
+            repo.record_event(top, "client-signoff", "owner wait end", wait_id=wait["wait_id"])
         saved["choice"] = {"resolve": choice, "reason": reason.strip()}
         history[-1] = previous
         saved["rounds"] = history
         _write(top / rel, json.dumps(document, indent=2) + "\n")
         repo.commit_state("Record the owner's sign-off choice", rel, top=top)
     if saved.get("stop") and unchanged:
-        repo.refuse((review.stop_question(top, "client-signoff", {
-            "why": "Client sign-off", "done_when": "The prototype matches the client's answers", "review": previous},
-            accept=acceptance), next_step))
+        repo.refuse((signoff_question(top, previous, sample_data=sample_data), next_step))
     if (unchanged and not score.open_findings(previous) and choice != "more"
             and (choice in ("accept", "split") or saved.get("inputs") == inputs)):
         return previous["commit"]
@@ -566,12 +577,14 @@ def _signoff_review(top: Path, args: argparse.Namespace, answers: str, evidence:
     held = [(n, f) for n, f in enumerate(result["findings"], 1) if f in opened]
     saved.update(review=result, rounds=history + [result], inputs=inputs,
                  stop=bool(held and (sample_data or len(history) + 1 >= 2 and not critical)))
+    if saved["stop"]:
+        at = repo.now()
+        saved["owner_wait"] = {"at": at, "wait_id": repo.record_event(
+            top, "client-signoff", "owner wait start", reason="sign-off", at=at)}
     _write(top / rel, json.dumps(document, indent=2) + "\n")
     repo.commit_state("Record the client sign-off review", rel, top=top)
     if saved["stop"]:
-        repo.refuse((review.stop_question(top, "client-signoff", {
-            "why": "Client sign-off", "done_when": "The prototype matches the client's answers", "review": result},
-            accept=acceptance), next_step))
+        repo.refuse((signoff_question(top, result, sample_data=sample_data), next_step))
     if critical or held:
         from shlex import quote
 
