@@ -236,14 +236,16 @@ def _folder(name: str) -> Path:
     return main.parent / f"{main.name}-{name}"
 
 
-def pick_up(item: str, branches: list[str]) -> Path | None:
+def pick_up(item: str, branches: list[str], *, allow_size: bool = False) -> Path | None:
     """Find the item's checkout, or make one from its published state."""
-    from forge import story
+    from forge import owner_choices, story
 
     top = repo.root()
     for branch, tree in story.worktrees(top).items():
         state = repo.read_state(item, tree)
         if state and state.get("branch") == branch:
+            if not allow_size:
+                owner_choices.require_size(tree, state)
             return tree
     for branch in branches:
         if run("git", "fetch", "-q", "origin", branch, cwd=top).returncode:
@@ -262,6 +264,8 @@ def pick_up(item: str, branches: list[str]) -> Path | None:
                                    f"forge work {item}")
         else:
             git("worktree", "add", "-q", "--track", "-b", branch, str(path), remote, cwd=top)
+        if not allow_size:
+            owner_choices.require_size(path, state)
         return path
     return None
 
@@ -713,8 +717,15 @@ def fix_start(args: argparse.Namespace) -> None:
         state["stacked_on"] = parent[0]
     if prototype:
         state["allow_large"] = "Prototype before sign-off"
+    from forge import owner_choices
+
+    owner_choices.size_choice(top, name, state, getattr(args, "files", []))
     path = _new_checkout(name, f"fix/{name}", f"fix-{name}", base, state, f"Start the fix: {why}")
     print(f"Started fix {name} on fix/{name} in {path}")
+    if stop := state.get("stop"):
+        print(f'Ask the owner: {stop["question"]} Record the choice with forge fix allow-large "<reason>".')
+        print(f'Next: cd {repo.quote(str(path))} && forge fix allow-large "<reason>"')
+        return
     if name != slug:
         print(f"Fix name {slug} is already taken; using {name}.")
     print(f"Next: forge {getattr(args, 'next', 'work')} {name}")
@@ -734,6 +745,9 @@ def allow_large(args: argparse.Namespace) -> None:
             run.get("kind") in ("work", "worker") for run in board.active_runs(top, name)):
         refuse(REFUSALS["worker_allow"])
     state["allow_large"] = args.reason.strip()
+    if (state.get("stop") or {}).get("predicted_files"):
+        repo.record_event(top, name, "owner wait end", wait_id=state["stop"].get("wait_id"))
+        del state["stop"]
     kind, limit = ("story part", "line limit") if "/" in name else ("fix", "fix limit")
     repo.commit_state(f"Allow the {kind} past the {limit}: {state['allow_large']}",
                       repo.write_state(name, state, top), top=top)
@@ -783,8 +797,12 @@ def amend(args: argparse.Namespace) -> None:
     text = args.done if args.done is not None else args.append
     if not (_one_line(text) and _one_line(args.because)):
         refuse(REFUSALS["amend_lines"], fix=args.item)
-    from forge import close  # close imports story, which imports this module
-    top = close._worktree(args.item)
+    require_active(args.item, allow_size=True)
+    top = pick_up(args.item, [f"fix/{args.item}", f"forge/{args.item}"], allow_size=True)
+    if top is None:
+        from forge import close
+
+        repo.refuse(close.REFUSALS["not_started"], item=args.item)
     state = repo.read_state(args.item, top) or {}
     old = state.get("done_when", "")
     new = text.strip() if args.done is not None else f"{old} {text.strip()}"
@@ -793,6 +811,9 @@ def amend(args: argparse.Namespace) -> None:
     state.setdefault("amendments", []).append(
         {"done_when": old, "because": args.because.strip(), "at": repo.now()})
     state["done_when"] = new
+    if (state.get("stop") or {}).get("predicted_files"):
+        repo.record_event(top, args.item, "owner wait end", wait_id=state["stop"].get("wait_id"))
+        del state["stop"]  # The first plan checks the narrower result's files again.
     # The review reads Ruling: lines from the branch's commits, so it drops findings on the old text.
     ruling = (f'Ruling: Done-when changed from "{old}" to '
               f'"{new}" because {args.because.strip()}; judge the new text.')
@@ -803,10 +824,16 @@ def amend(args: argparse.Namespace) -> None:
     print(f"Next: forge {command} {args.item}")
 
 
-def require_active(item: str, top: Path | None = None) -> None:
+def require_active(item: str, top: Path | None = None, *, allow_size: bool = False) -> None:
     """A retained checkout cannot resume a dropped fix without an explicit restore."""
-    from forge import nextstep
+    from forge import nextstep, owner_choices, story
 
+    location = top or repo.root()
+    location = next((path for branch, path in story.worktrees(location).items()
+                     if branch == f"fix/{item}"), location)
+    state = repo.read_state(item, location) or {}
+    if not allow_size:
+        owner_choices.require_size(location, state)
     if re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", item):
         top = top or repo.root()
         for branch in (f"fix/{item}", f"forge/{item}"):
