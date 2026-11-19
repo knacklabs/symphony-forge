@@ -18,7 +18,7 @@
       "gain": 4,
       "harm": 3,
       "line": 401,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -28,27 +28,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "1e9e8eccbe5b2082736ff43e276a32c25087c86a9a8f74c5c70c152683ca3d7c",
-    "changed": "f152f61773b8e2f0160b065c212f0c2c6300d845bc8edf6c1661826c63b0660a",
-    "commit": "0b42c52fcc323b9102f411c276bd9e2a7b83c382",
+    "branch_diff": "36d22966ca6f315109df7a51f19b85a007e619e91f100e61c443265ec31545cf",
+    "changed": "5b933c3474f6848f38080106c7aade434f11b0a4b7ac5af07277289456f1c57f",
+    "commit": "29f947b6d98c8c4eae71119d11bbcb16cef9eea7",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - a completed worker's branch conflicts with the default branch during a background close.\n`src/forge/close.py:200-212` aborts the merge and directs the coordinator to run `forge work`, but leaves the item in its working state. `src/forge/nextstep.py:1096-1109` then recommends `forge close` again. Following the new instruction repeats the failing close instead of resolving the conflict. Similarly, a worker can warn that it left uncommitted changes (`src/forge/worker.py:437-439`), while `forge next` directs close before those changes are inspected; close reviews `HEAD` (`src/forge/close.py:280-283`). These `forge next` behaviors are evidence not addressed by the coordinator's text-only ruling.\nAdds work: surface these recovery steps through `forge next`; F 3 x H 2 = 6; 2 x C = 4",
-        "file": "src/forge/templates/skill.md",
-        "gain": 4,
-        "harm": 3,
-        "line": 401,
-        "priority": "P1",
-        "title": "Preserve recovery steps when background commands stop",
-        "work": 2
-      }
-    ],
-    "id": "0720c145-a8d9-4569-9ded-69eff56a6bd3",
-    "status": "blocked"
+    "findings": [],
+    "id": "b401263c-4d88-4970-9680-afdaaab8bc1e",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-19T08:02:52.521594+00:00",
@@ -56,6 +45,10 @@
     },
     {
       "at": "2026-11-19T08:11:49.716625+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-19T08:16:07.434149+00:00",
       "step": "review"
     }
   ],
