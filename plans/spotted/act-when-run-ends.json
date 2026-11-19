@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/templates/skill.md\tPreserve recovery steps when background commands stop\tact-when-run-ends",
+      "kind": "bug",
+      "path": "src/forge/templates/skill.md",
+      "line": 401,
+      "text": "Preserve recovery steps when background commands stop",
+      "from": "blocking",
+      "item": "act-when-run-ends",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
