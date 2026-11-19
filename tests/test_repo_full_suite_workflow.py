@@ -57,7 +57,9 @@ def test_1_repo_workflow_replaces_only_the_optional_full_suite(repo, gh, adopted
         assert (entry in workflow) == adopted
     assert re.search(r"^  pull_request:\s*$", workflow, re.M)
     tests_job = _jobs(workflow.split("\njobs:\n", 1)[1])["tests"]
-    assert "    if: github.event_name == 'pull_request'\n" in tests_job
+    # An external full-suite workflow replaces only the nightly run. The related
+    # tests now run on pushes too, as required for all CI-test repos.
+    assert "    if: github.event_name == 'pull_request' || github.event_name == 'push'\n" in tests_job
     assert '- run: "forge test --change"' in tests_job
 
     sha = repo.git("rev-parse", "origin/main")

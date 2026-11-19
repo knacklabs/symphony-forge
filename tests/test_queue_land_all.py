@@ -78,7 +78,8 @@ if args[:4] == ["api", "--paginate", "--jq", ".check_runs[]"]:  # a branch's own
     own = here / ("checks-" + branch.replace("/", "-") + ".txt")
     if own.exists():
         answer(own.read_text())
-if args[:2] == ["api", "graphql"]:  # the board's one read of open pull requests and their checks
+if args[:2] == ["api", "graphql"] and "operationName=ForgeDefaultTests" not in args:
+    # The board's open pull requests; default test results use a separate query.
     nodes = []
     for path in sorted(here.glob("pr-*.json")):
         found = pr(json.loads(path.read_text("utf-8"))["headRefName"])
@@ -227,7 +228,7 @@ def _fix(env, monkeypatch, slug: str, day: int, files: dict[str, str], status: s
     return where
 
 
-def _settings(env, **values: str) -> None:
+def _settings(env, **values: str | int) -> None:
     """The default branch's forge.toml with these settings, published as the fixture publishes it."""
     repo = env.repo
     repo.git("switch", "fix/upgrade-client")
@@ -369,6 +370,8 @@ def test_1_one_run_starts_changes_oldest_first_and_merges_each(client, monkeypat
 def test_2_a_change_sharing_a_file_waits_for_the_older_one(client, monkeypatch, older):
     env = client
     machine_cores(env.repo, 4)  # two agent places, as on CI: fewer places than changes
+    if older == "stops":
+        _settings(env, task_review_rounds=1)
     # A P1 at the bar reaches the owner-needed review stop.
     answer = CLEAN if older == "merges" else blocked({**finding("P1", "Saving drops line one", "shared.py"), "body": "Gain 4, Work 1, Harm 2\nSaving drops line one."})
     _fix(env, monkeypatch, "aa", 1, {"shared.py": _edit(1, "first")}, answer=answer,
@@ -445,6 +448,7 @@ def test_3_a_failed_check_naming_none_of_the_files_runs_again_once(client, monke
 
 def test_4_a_change_that_needs_you_stops_alone(client, monkeypatch):
     env = client
+    _settings(env, task_review_rounds=1)
     _fix(env, monkeypatch, "stuck", 1, {"stuck.py": "x = 1\n"},
          answer=blocked({**finding("P1", "Saving drops the basket", "stuck.py"), "body": "Gain 4, Work 1, Harm 2\nSaving drops the basket."}))
     _fix(env, monkeypatch, "clean", 2, {"clean.py": "x = 1\n"})

@@ -184,7 +184,7 @@ Every client repo moves through seven steps. `forge next` names the current step
 
 **The cold read loop.** A reader who did not write the plan reads it cold and lists its gaps. You fix the plan, and the reader reads it again. At the round limit (the repo's setting, two by default), Forge stops and the owner chooses: accept, read again, or split. It exists because a gap found in the plan costs minutes, but the same gap found in the code costs a build round.
 
-**The build and review loop.** A worker builds the part and its tests, then a separate review checks the change. A serious problem goes back to the worker for another round. A task gets review rounds up to the repo's setting, two by default, and a fix gets one. At the round limit (the repo's setting, two by default), Forge stops and asks the owner, but a P0 problem keeps the loop going. It exists because a reviewer sees problems that the worker cannot see in its own work.
+**The build and review loop.** A worker builds the part and its tests, then a separate review checks the change. A serious problem goes back to the worker for another round. Tasks and fixes get review rounds up to the repo's setting, two by default. At the round limit (the repo's setting, two by default), Forge stops and asks the owner, but a P0 problem keeps the loop going. It exists because a reviewer sees problems that the worker cannot see in its own work.
 
 **The CI checks.** GitHub runs the repo's checks on the pull request. Close and merge wait up to 90 minutes while a check is running, and a red check goes back to the worker. At a wait limit, the message names the limit and the checks still running. They exist because the checks run the tests on a clean machine, the same way for every change. If uv installation fails, the generated workflow retries it once before the job fails.
 On GitHub Actions, `forge test` streams the test output into the job log.
@@ -265,6 +265,20 @@ recommendation first. Save the answer before moving to the next question.
   Remove an entry when the owner says to do it now, as the command table explains.
 
 ## Merges and settings
+
+In a repo with pull request CI tests, each push to the default branch runs the tests related
+to that merge. Laptop-test repos keep their full runs. New repos get this workflow at setup;
+existing repos get it when the upgrade refreshes Forge's files. The newest finished result on
+the newest default-branch commit with a result decides whether the branch is red. Merge runs
+from Forge's own workflow and full runs count the same way. A `tests` job from another workflow
+does not decide whether the branch is red. Forge looks back at most 30 commits. With no finished result
+in those commits, it treats the branch as not red. A pending, cancelled or skipped rerun does
+not clear a failed result.
+While the default branch is red, `forge merge` and `forge land` wait up to 90 minutes for a newer green result.
+If the wait ends, follow the printed repair step. To repair the branch, build a fix, have
+the owner merge it on GitHub, then start a full test run. The repair's green run or the green
+full run lets merges continue. When a person merges, land asks them to wait while the branch
+is red. Forge cannot stop a merge on GitHub. No saved records change on upgrade.
 
 If the default branch moved after close, `forge merge` compares its new changed files with the item's changed files.
 It merges the default branch locally to check the combined change.
@@ -2050,7 +2064,7 @@ restore after they fetch.
 
 ## Closing
 
-In `forge.toml`, `cold_read_rounds` sets the cold-read limit and `task_review_rounds` sets the task-review limit. Each accepts 1 or 2 and defaults to 2. Fixes keep one review round.
+In `forge.toml`, `cold_read_rounds` sets the cold-read limit and `task_review_rounds` sets the task and fix review limit. Each accepts 1 or 2 and defaults to 2. For a fix, only blocked reviews count toward this limit.
 
 A person can ask you to skip the model review for a task or fix. Run `forge close <item> --no-review --by "<name>" --reason "<why>"` only when a person asks. Close adds the name and reason to the pull request. Close refuses if an earlier review blocked the item. Tests, CI, design checks and merge still run.
 
@@ -2578,7 +2592,7 @@ For the full test run Forge knows (`full_suite_workflow`, or `forge.yml` in a CI
 line starts with `Needs you:`, and the board lists the run under Needs you until a later scheduled or
 manual full run passes. The mark is for the owner; still start the fix without asking.
 
-Close stops at the round limit (the repo's setting, two by default) for a story part or after one round for a fix when findings below P0
+Close stops at the round limit (the repo's setting, two by default) for a story part or fix when findings below P0
 remain open. It asks the owner: "One more round, split or accept?" Close, land and work show
 the same question until the owner records a choice. An open P0 returns to the worker.
 An older release's unanswered stop also waits for the owner.
