@@ -112,7 +112,7 @@ def test_3_lanes_say_who_needs_the_person_and_what_runs_now(env, tmp_path, monke
     # A review-loop stop waits for the owner, even while a test run of the item goes on.
     seed(env, "src/a.py")
     _, loop = env.start("loop", "fix/loop", ".factory/fixes/loop.json", {**FIX, "why": "Loop"}, {"loop.py": "x\n"})
-    rounds(env, "loop", loop, ["src/a.py"])
+    rounds(env, "loop", loop, ["src/a.py", "src/b.py"])
     mine = {"repo_name": repo.path.name, "repo_root": repo.path.resolve().as_posix()}
     loops = [{"title": "Loop", **mine}]
     assert lanes(env)["needs_you"] == loops

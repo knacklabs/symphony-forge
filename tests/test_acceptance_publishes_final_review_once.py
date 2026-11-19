@@ -14,6 +14,9 @@ STORY = "review-findings-split-from-close-pushes"
 @pytest.mark.parametrize("previous", [False], ids=["new"])
 def test_1_acceptance_publishes_once_after_final_review_records(env, previous):
     client(env, previous)
+    config = (env.repo.path / "forge.toml").read_text("utf-8")
+    env.commit(env.repo.path, "forge.toml", "task_review_rounds = 1\n" + config)
+    env.repo.git("push", "-q", "origin", "main")
     item, where = env.start_fix()
     defect = finding("P1", "Greeting needs more detail")
     defect["body"] = "Gain 4, Work 1, Harm 2\nCase: normal use - Readers miss the detail."

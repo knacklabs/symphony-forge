@@ -34,7 +34,9 @@ def test_25_failed_earlier_review_keeps_retry_ordinal_and_unseen_findings_unknow
     _install(env.repo.bin, "old-forge", FORGE_SHIM.format(
         python=sys.executable, src=(old / "src").as_posix()))
     modern = (env.repo.path / "forge.toml").read_text("utf-8")
+    modern = re.sub(r"(?m)^task_review_rounds\s*=.*(?:\r?\n|$)", "", modern)
     earlier = modern.replace(re.search(r'version = "[^"]+"', modern)[0], 'version = "v1.2.2"')
+    one_review_round = "task_review_rounds = 1\n" + modern
     env.commit(env.repo.path, "forge.toml", earlier, "Use earlier Forge")
     env.repo.git("push", "-q", "origin", "main")
     began = datetime(2026, 1, 1, tzinfo=timezone.utc)
@@ -73,7 +75,7 @@ def test_25_failed_earlier_review_keeps_retry_ordinal_and_unseen_findings_unknow
                                           for e in records(env.repo, "events.jsonl"))
 
     # Upgrade landed settings, then the outstanding branch, as an existing client does.
-    env.commit(env.repo.path, "forge.toml", modern, "Upgrade Forge")
+    env.commit(env.repo.path, "forge.toml", one_review_round, "Upgrade Forge")
     env.repo.git("push", "-q", "origin", "main")
     env.repo.git("fetch", "-q", "origin", cwd=where)
     env.repo.git("merge", "-q", "--no-edit", "origin/main", cwd=where)
@@ -81,8 +83,8 @@ def test_25_failed_earlier_review_keeps_retry_ordinal_and_unseen_findings_unknow
     monkeypatch.setenv("FORGE_NOW", (began + timedelta(seconds=30)).isoformat())
     env.reviews(CLEAN if mechanical else blocked(finding("P1", "Greeting disappears")))
     retried = env.close(item)
-    # The failed legacy attempt has no completed review. The modern first fix
-    # review stops on a P1 until the owner accepts it as a follow-up.
+    # The failed legacy attempt has no completed review. The one-review fixture
+    # stops on the modern P1 until the owner accepts it as a follow-up.
     if not mechanical:
         assert retried.returncode == 1, retried.stdout + retried.stderr
         assert "reached the round limit with open findings" in retried.stderr

@@ -1,0 +1,59 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/board.py\tFunctional: Use the known merge time when PR data is stale\tstart-to-merge-time",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 815,
+      "text": "Functional: Use the known merge time when PR data is stale",
+      "from": "blocking",
+      "item": "start-to-merge-time",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board_app/now.js\tFunctional: Keep the daily median scoped to the Me view\tstart-to-merge-time",
+      "kind": "bug",
+      "path": "src/forge/board_app/now.js",
+      "line": 91,
+      "text": "Functional: Keep the daily median scoped to the Me view",
+      "from": "blocking",
+      "item": "start-to-merge-time",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board_app/now.js\tGate: rendered check\tstart-to-merge-time",
+      "kind": "bug",
+      "path": "src/forge/board_app/now.js",
+      "line": 207,
+      "text": "Gate: rendered check",
+      "from": "blocking",
+      "item": "start-to-merge-time",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_start_to_merge_time.py\tGate: test_1_merge_and_land_print_start_to_merge_time\tstart-to-merge-time",
+      "kind": "bug",
+      "path": "tests/test_start_to_merge_time.py",
+      "line": 44,
+      "text": "Gate: test_1_merge_and_land_print_start_to_merge_time",
+      "from": "blocking",
+      "item": "start-to-merge-time",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_start_to_merge_time.py\tGate: test_2_board_shows_daily_median_from_merge_history\tstart-to-merge-time",
+      "kind": "bug",
+      "path": "tests/test_start_to_merge_time.py",
+      "line": 64,
+      "text": "Gate: test_2_board_shows_daily_median_from_merge_history",
+      "from": "blocking",
+      "item": "start-to-merge-time",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

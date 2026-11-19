@@ -125,7 +125,7 @@ def test_1_merge_retests_combined_change_and_names_failures(env, tmp_path, previ
         stub = (env.repo.bin / "gh").read_text("utf-8")
         _install(env.repo.bin, "gh", stub.replace("args = sys.argv[1:]", (
             "args = sys.argv[1:]\n"
-            "if args[:1] == ['api'] and '.check_runs[]' in args:\n"
+            "if args[-1].endswith('/check-runs?per_page=100'):\n"
             "    (here / 'ci-polled').write_text('CI is still queued', encoding='utf-8')\n"
             "    sys.stderr.write('CI is still queued\\n')\n"
             "    sys.exit(1)"), 1))

@@ -243,6 +243,10 @@ def _missing_tool_skip(env, monkeypatch):
 def _blocked_history(env, tmp_path, resolution, adopted=False):
     if adopted:
         setup_adopted_client(env, True)
+    # This skip-history contract needs a stopped review, so select a one-round limit.
+    config = (env.repo.path / "forge.toml").read_text("utf-8")
+    env.commit(env.repo.path, "forge.toml", "task_review_rounds = 1\n" + config)
+    env.repo.git("push", "-q", "origin", "main")
     item, where = env.start_fix()
     branch = "fix/tidy-readme"
     stale = None
@@ -258,7 +262,8 @@ def _blocked_history(env, tmp_path, resolution, adopted=False):
             local_tip = env.commit(clone_path, "local.py", "print('local work')\n")
     env.reviews(blocked(finding("P1", "Not done: The readme opens with a greeting")))
     first = env.close(item)
-    assert first.returncode == 1
+    assert first.returncode == 1, first.stdout + first.stderr
+    assert "reached the round limit with open findings" in first.stderr
     env.open_pr(body(env.gh_calls("pr", "create")[-1]), draft=True)
     head = env.repo.git("rev-parse", "HEAD", cwd=where)
     direct = _skip(env, item)
@@ -267,7 +272,7 @@ def _blocked_history(env, tmp_path, resolution, adopted=False):
     assert env.repo.git("rev-parse", "HEAD", cwd=where) == head
     assert len(env.review_calls()) == 1
     if resolution in ("worker-clean", "stale-clone", "diverged-clone"):
-        # A fix has one review round. The owner records another round before the worker repairs it.
+        # At the configured limit, the owner records another round before the worker repairs it.
         more = env.close(item, "--resolve", "more", "--reason", "Repair the greeting")
         assert more.returncode == 0, more.stdout + more.stderr
         env.commit(where, "app.py", "print('the greeting is now present')\n")

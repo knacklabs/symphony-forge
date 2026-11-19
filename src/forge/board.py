@@ -260,7 +260,6 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
         if state.get("branch") in remembered | merged_prs}}
     by_branch.update({p["headRefName"]: p for p in finished_prs})
     merged_details = {p["headRefName"]: p for p in finished_prs}
-    merged_dates = {branch: pr.get("mergedAt") for branch, pr in merged_details.items()}
     # Rows and counts must read the same published drop or restore, even with a stale worktree.
     for rel, (state, where) in list(best.items()):
         if fix := STATE.fullmatch(rel)["fix"]:
@@ -638,7 +637,7 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
                 "merged_at": finished_at if finished else None,
                 **({k: v for k, v in time_records.combined(
                     top, item, state, (pr or {}).get("body") or "", events=activity, timings=item_timings,
-                    ended_at=merged_dates.get(branch)).items()
+                    ended_at=finished_at if finished else None).items()
                     if k not in ("events", "timings", "state", "ended_at", "seen", "known", "summary")}
                    if kind != "story" or time_records.view_body((pr or {}).get("body") or "") else {}),
                 "stages": stages, "occurrences": events, "next": board_facts.machine_next(lines),
@@ -813,6 +812,7 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
               for e in recorded if e.get("event") in (*event_lines, "worker question")][-20:]
     time_records.save_body_validation(top)
     return {"version": __version__, "repo_root": repo_root(top),
+            "daily_start_to_merge": time_records.daily_median(list(items.values()), viewer=viewer),
             **releases.collect(top, history, maps, items, tag_refs),
             "known_issues": known_issues.collect(top, {
                 "/".join(filter(None, (match["key"] or match["fix"], match["task"]))): (state, where)

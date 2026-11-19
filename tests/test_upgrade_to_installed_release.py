@@ -16,7 +16,7 @@ from test_close import env  # noqa: F401
 from test_fix_agent_runs_wait_in_line import _other_repo, _until
 from test_lanes_agents import finish, hold_agents, start
 from test_story import worktree
-from test_upgrade_command import assert_ready, ours, unsynced_up, up  # noqa: F401
+from test_upgrade_command import MARK, assert_ready, ours, unsynced_up, up  # noqa: F401
 
 STORY = "upgrade-no-install-no-refusal"
 pytestmark = pytest.mark.platform
@@ -55,6 +55,12 @@ def test_1_upgrade_to_installed_release_continues_during_runs(unsynced_up, tmp_p
         name = "upgrade-forge-to-" + release.replace(".", "-")
         assert_ready(upgrade, result, ours(upgrade, installed=False, release=release, name=name),
                      release=release, name=name)
+        # The release fixture appends its marker to the source template. Both hosts
+        # must receive that whole release template, including the marker.
+        template = (ROOT / "src/forge/templates/skill.md").read_text(encoding="utf-8")
+        expected = (template + f"\n<!-- {MARK} {release} -->\n").strip()
+        for host in (".claude", ".codex"):
+            assert upgrade.repo.git("show", f"fix/{name}:{host}/skills/forge/SKILL.md") == expected
         assert not [call for call in upgrade.uv() if call["args"][:2] == ["tool", "install"]]
         # Upgrade installs the shared record merge rule, including for older adoptions.
         assert upgrade.repo.git("config", "--get", "merge.forge-record.driver") == (

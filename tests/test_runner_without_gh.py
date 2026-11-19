@@ -136,6 +136,9 @@ def test_1_review_status_is_set_without_gh(env, github, tmp_path, adopted, revie
 def test_2_earlier_green_run_is_read_without_gh(env, github, tmp_path, previous):
     server, calls, answers = github
     client(env, previous)
+    config = (env.repo.path / "forge.toml").read_text("utf-8")
+    env.commit(env.repo.path, "forge.toml", "task_review_rounds = 1\n" + config)
+    env.repo.git("push", "-q", "origin", "main")
     env.commit(env.repo.path, "greeting.py", "GREETING = 'Hello'\n")
     env.repo.git("push", "-q", "origin", "main")
     item, where = env.start_fix()
