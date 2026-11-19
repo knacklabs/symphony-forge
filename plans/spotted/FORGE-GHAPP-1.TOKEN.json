@@ -1,0 +1,92 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/board.py\tForge next crashed once when a temporary task record disappeared; reported in issue 1711.",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 1005,
+      "text": "Forge next crashed once when a temporary task record disappeared; reported in issue 1711.",
+      "from": "worker",
+      "item": "FORGE-GHAPP-1/TOKEN",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/conftest.py\tKeep inherited GitHub credentials out of the test log\tFORGE-GHAPP-1/TOKEN",
+      "kind": "bug",
+      "path": "tests/conftest.py",
+      "line": 109,
+      "text": "Keep inherited GitHub credentials out of the test log",
+      "from": "blocking",
+      "item": "FORGE-GHAPP-1/TOKEN",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_github_app_token.py\tGate: test_1_doctor_shows_who_close_acts_as_and_the_budget_left\tFORGE-GHAPP-1/TOKEN",
+      "kind": "bug",
+      "path": "tests/test_github_app_token.py",
+      "line": 141,
+      "text": "Gate: test_1_doctor_shows_who_close_acts_as_and_the_budget_left",
+      "from": "blocking",
+      "item": "FORGE-GHAPP-1/TOKEN",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_github_app_token.py\tGate: test_4_close_merge_and_land_act_as_the_app_and_fall_back\tFORGE-GHAPP-1/TOKEN",
+      "kind": "bug",
+      "path": "tests/test_github_app_token.py",
+      "line": 256,
+      "text": "Gate: test_4_close_merge_and_land_act_as_the_app_and_fall_back",
+      "from": "blocking",
+      "item": "FORGE-GHAPP-1/TOKEN",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/ghapp.py\tFollow-up: GitHub SSH host aliases",
+      "kind": "edge",
+      "path": "src/forge/ghapp.py",
+      "line": 338,
+      "text": "Follow-up: GitHub SSH host aliases",
+      "from": "review",
+      "item": "FORGE-GHAPP-1/TOKEN",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/ghapp.py\tNot done: Close, merge and land use the developer's app token",
+      "kind": "edge",
+      "path": "src/forge/ghapp.py",
+      "line": 463,
+      "text": "Not done: Close, merge and land use the developer's app token",
+      "from": "review",
+      "item": "FORGE-GHAPP-1/TOKEN",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/ghapp.py\tNot done: forge doctor shows which identity close, merge and land use for a repo",
+      "kind": "edge",
+      "path": "src/forge/ghapp.py",
+      "line": 439,
+      "text": "Not done: forge doctor shows which identity close, merge and land use for a repo",
+      "from": "review",
+      "item": "FORGE-GHAPP-1/TOKEN",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/github.py\tThe shared quota cache can reuse the previous identity's budget for up to one minute.",
+      "kind": "edge",
+      "path": "src/forge/github.py",
+      "line": 22,
+      "text": "The shared quota cache can reuse the previous identity's budget for up to one minute.",
+      "from": "worker",
+      "item": "FORGE-GHAPP-1/TOKEN",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
