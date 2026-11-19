@@ -136,7 +136,7 @@
     "id": "bf209faf-e1f1-4d71-8225-1b3aa48a274a",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -149,10 +149,12 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "4aa9c93429fb0acc455281cf979037c6486ffdad",
-    "keys": {},
-    "round": null
+    "close": "8a9460c3-f9ca-4fab-b5e0-a75d63575a3a",
+    "head": "b0e9eab7d1869ba6c0bb85157d27ee8c575ac60e",
+    "keys": {
+      "the open P0 functional: skip only the current vitest invocation in src/forge/templates/conventions/testing.md": 1
+    },
+    "round": 1
   },
   "worker": "codex"
 }
