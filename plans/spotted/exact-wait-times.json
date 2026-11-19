@@ -63,8 +63,8 @@
       "text": "Not done: Show the recorded boundaries of all waits",
       "from": "blocking",
       "item": "exact-wait-times",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\ttests/test_first_start_survives_history_changes.py\tGate: Prove promotion and existing published starts\texact-wait-times",
@@ -74,8 +74,8 @@
       "text": "Gate: Prove promotion and existing published starts",
       "from": "blocking",
       "item": "exact-wait-times",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\ttests/test_recorded_wait_and_resume_times.py\tGate: Prove same-turn repairs through a real worker turn\texact-wait-times",
@@ -85,8 +85,8 @@
       "text": "Gate: Prove same-turn repairs through a real worker turn",
       "from": "blocking",
       "item": "exact-wait-times",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\ttests/test_recorded_wait_and_resume_times.py\tGate: Prove wait timestamps through the final merge\texact-wait-times",
@@ -96,8 +96,8 @@
       "text": "Gate: Prove wait timestamps through the final merge",
       "from": "blocking",
       "item": "exact-wait-times",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     }
   ]
 }
