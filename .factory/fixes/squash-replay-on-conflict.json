@@ -116,7 +116,7 @@
     "id": "d35e2794-13f0-43b8-b448-0b35b53fbd5f",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -129,10 +129,13 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "d107695793efef09eaee7449575f3e8529f0f7bc",
-    "keys": {},
-    "round": null
+    "close": "b19a8b6b-7d01-44f6-bec3-917fdfdbdf26",
+    "head": "2857187aca09d70796aa312fd7646072cea21a2b",
+    "keys": {
+      "the open P0 keep planning evidence from the worker's separate commit in src/forge/close.py": 1,
+      "the open P0 preserve earlier review rounds during the squash in src/forge/close.py": 1
+    },
+    "round": 1
   },
   "why": "When a stacked part's parent has merged, close replays the part's own commits onto main one by one (git rebase in close._merge_default), so an early commit conflicts with later main edits of the same lines even when the whole-branch merge is clean; merging main into the branch never helps, and a client part looped 5 times on 19 Nov 2026",
   "worker": "codex"
