@@ -1,0 +1,114 @@
+{
+  "branch": "task/FORGE-CITIME-1-RULES",
+  "chat": {
+    "approval": "1280d44b1a637b802f4fe8e3abbad6a3bcd0cc63776d2c73dab88bc44c52e21d",
+    "claude": null,
+    "conversation": "01a1f266-2404-76a2-839f-ba3d933ee2cf",
+    "head": null,
+    "start": "180ecd7d679283b6a34671bf9a3f77a84ad2f634"
+  },
+  "known": [
+    {
+      "area": "src/forge/templates/conventions/testing.md",
+      "file": "src/forge/templates/conventions/testing.md",
+      "gain": 5,
+      "harm": 3,
+      "line": 154,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Skip only the current Vitest invocation",
+      "work": 1
+    },
+    {
+      "area": "src/forge/templates/skill.md",
+      "file": "src/forge/templates/skill.md",
+      "gain": 4,
+      "harm": 3,
+      "line": 1529,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: Update the synced-guide browser policy test",
+      "work": 1
+    },
+    {
+      "area": "src/forge/templates/skill.md",
+      "file": "src/forge/templates/skill.md",
+      "gain": 4,
+      "harm": 3,
+      "line": 1482,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: The testing rules and the guide tell clients to run browser tests nightly instead of in the pull request check",
+      "work": 1
+    },
+    {
+      "area": "src/forge/templates/skill.md",
+      "file": "src/forge/templates/skill.md",
+      "gain": 4,
+      "harm": 3,
+      "line": 41,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Qualify when small changes use one group",
+      "work": 1
+    },
+    {
+      "area": "src/forge/templates/skill.md",
+      "file": "src/forge/templates/skill.md",
+      "gain": 2,
+      "harm": 2,
+      "line": 56,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Later: STARTER and TIMEGROUPS must supply the referenced starter changes",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "ca5b45b79d8d769c02a8539d2c3bf9531aea8b9201fb0e55874b4d3b6f012cdc",
+    "changed": "ae2981f7627c5607e54f2cc2cb5707591a7da3728abe90afbd84639b5d7d912a",
+    "commit": "efce833186a25b89d77f6705b2cd9499bf7a1b31",
+    "dismissals": [],
+    "findings": [],
+    "id": "59a206c7-b6f1-4f1c-82b8-f6f7288de99d",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-19T06:02:01.512198+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-19T06:15:38.932761+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-19T06:20:56.451694+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-19T07:47:07.549098+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "b8384228-7ccc-475c-987e-9369bfd924df",
+    "head": "dd37b7db5670ddc891e14cd7a3394a8217afb0a4",
+    "keys": {},
+    "round": 2
+  },
+  "worker": "codex"
+}

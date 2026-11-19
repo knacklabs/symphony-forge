@@ -278,10 +278,11 @@ def test_4_board_subtracts_nested_tests_and_includes_idle_time_for_tasks_and_fix
         assert current["time_breakdown"]["building"] == 10
         assert current["time_breakdown"]["own_tests"] == 10
         assert current["time_breakdown"]["reviewing"] == 5
-        assert current["time_breakdown"]["nothing_running"] >= 5
+        assert current["time_breakdown"]["nothing_running"] is None
+        assert current["unknown_seconds"] >= 5
         assert current["total_seconds"] >= 60
         assert current["total_seconds"] == pytest.approx(sum(
-            value for value in current["time_breakdown"].values() if value is not None), abs=1)
+            value for value in current["time_breakdown"].values() if value is not None) + current["unknown_seconds"], abs=1)
     parent = row(env.repo, "SHOP")
     # RECORD now gives stories a runway derived from their parts without counting overlaps twice.
     assert parent["time_breakdown"]["working"] == 25
@@ -416,8 +417,9 @@ def test_10_adopted_item_time_before_its_first_new_log_is_not_invented_as_idle(e
     current = row(env.repo, item)
     assert current["total_seconds"] >= 60
     assert current["time_breakdown"]["building"] == 10
-    # Thirty earlier seconds have no activity log; only the time after the known end is idle.
-    assert current["time_breakdown"]["nothing_running"] == pytest.approx(current["total_seconds"] - 40, abs=1)
+    # Gaps on either side of a recorded run stay unmeasured.
+    assert current["time_breakdown"]["nothing_running"] is None
+    assert current["unknown_seconds"] == pytest.approx(current["total_seconds"] - 10, abs=1)
 
 
 @pytest.mark.parametrize("step,outcome,category", [

@@ -100,16 +100,24 @@ def rebuild(top: Path, pr: dict[str, Any], *, pushed_head: str = "") -> tuple[st
     if identity is None:
         return None
     key, state = identity
-    path = repo.state_path(key)
-    starts = repo.git("log", "--reverse", "--diff-filter=A", "--format=%H", head, "--", path,
+    paths = [repo.state_path(key)]
+    if origin := state.get("from_fix"):
+        paths.append(repo.state_path(origin))
+    starts = repo.git("log", "--reverse", "--diff-filter=A", "--format=%H", head, "--", *paths,
                       cwd=top).splitlines()
     if not starts:
         raise ValueError("The item's start commit could not be read")
     start = starts[0]
     commits = [start, *repo.git("rev-list", "--reverse", "--ancestry-path", f"{start}..{head}", cwd=top).splitlines()]
     history = [(commit, repo.git("show", "-s", "--format=%cI%x00%s%x00%aN%x00%aE", commit,
-                                cwd=top).split("\0"), _json(top, commit, path)) for commit in commits]
-    review_subject = re.compile(rf"^Review of {re.escape(key)}: (blocked|clean)\b")
+                                cwd=top).split("\0"), next((one for path in paths
+                                    if (one := _json(top, commit, path))), {})) for commit in commits]
+    # State timestamps survive rewrites and a fix's move to its task path.
+    saved_start = min((at for _, _, one in history for step in one.get("steps", [])
+                       if step.get("step") == "start" and (at := time_records.when(step.get("at")))),
+                      default=None)
+    keys = "|".join(re.escape(name) for name in (key, origin) if name)
+    review_subject = re.compile(rf"^Review of (?:{keys}): (blocked|clean)\b")
     reviews = [one for _, (_, subject, _, _), one in history if review_subject.match(subject)]
     # Close pushes each reviewed work head before the review and its result commit afterwards.
     work_heads = {(one.get("review") or {}).get("commit"): number
@@ -119,7 +127,7 @@ def rebuild(top: Path, pr: dict[str, Any], *, pushed_head: str = "") -> tuple[st
     for commit, (at, subject, author, email), one in history:
         if commit == start:
             events.append({"id": f"rebuilt-start-{commit}", "item": key, "event": "item started",
-                           "at": at, "by": author, "email": email})
+                           "at": saved_start.isoformat() if saved_start else at, "by": author, "email": email})
         reviewed = review_subject.match(subject)
         if reviewed:
             last_green = None
@@ -177,9 +185,17 @@ def rebuild(top: Path, pr: dict[str, Any], *, pushed_head: str = "") -> tuple[st
         events.append({"id": f"rebuilt-finished-{head}", "item": key, "event": "item finished", "at": merged_at})
     # Approval happened before the item started: do not extend the item's unknown span to it.
     began = next(event["at"] for event in events if event["event"] == "item started")
-    state = {**state, "steps": [{"step": "start", "at": began}]}
+    state = {**state, "steps": [{"step": "start", "at": began},
+                               *[s for s in state.get("steps", []) if s.get("step") != "start"]]}
     record = {"events": events, "timings": timings, "state": state,
-              "clean_reviews": clean, "rebuilt": True}
+              "clean_reviews": clean, "rebuilt": True, "start_checked": True, "ended_at": merged_at}
+    if origin:
+        previous = repo.run("gh", "pr", "list", "--head", f"fix/{origin}", "--state", "all",
+                            "--json", "body", cwd=top)
+        previous.check_returncode()
+        for old in json.loads(previous.stdout):
+            if shared := time_records.from_body(old.get("body") or ""):
+                record = time_records.merged(record, shared)
     return key, state, record
 
 
@@ -227,12 +243,17 @@ def run(top: Path) -> None:
         prs = [*github["open"], *[pr for pr in board_facts.merged_prs(github)
                                 if time_records.when(pr.get("mergedAt")) and time_records.when(pr["mergedAt"]) >= cutoff]]
         for pr in {pr["number"]: pr for pr in prs}.values():
-            if not pr.get("headRefName", "").startswith(("fix/", "task/", "story/")) or time_records.from_body(pr.get("body") or ""):
+            shared = time_records.from_body(pr.get("body") or "")
+            if not pr.get("headRefName", "").startswith(("fix/", "task/", "story/")) or (
+                    shared and (shared.get("start_checked") or not shared.get("rebuilt"))
+                    and "nothing running" not in (pr.get("body") or "")):
                 continue
             rebuilt = rebuild(top, pr)
             if rebuilt is None:
                 continue
             key, state, record = rebuilt
+            if shared:
+                record = time_records.merged(record, shared)
             close._refresh_record(top, key, state, {**pr, "body": seed(pr.get("body") or "", record)})
         known = []
         for pr in _past(top):
