@@ -118,7 +118,7 @@
     "status": "blocked"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-19T04:46:51.106603+00:00",
@@ -131,8 +131,12 @@
   ],
   "stop": {
     "at": "2026-11-19T05:10:22.419286+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "src/forge/checks.py",
-    "wait_id": "099490a2-eeb0-48b7-a8cd-b2215e9c7ecd"
+    "reason": "Owner decided on 18 Nov 2026 that fixes get two review rounds; this is the second",
+    "wait_id": "099490a2-eeb0-48b7-a8cd-b2215e9c7ecd",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
