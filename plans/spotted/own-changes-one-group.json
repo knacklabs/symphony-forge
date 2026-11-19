@@ -23,6 +23,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_board_now_screen.py\tThe first-screen browser test fails at its daily median text check on both this branch and main.",
+      "kind": "bug",
+      "path": "tests/test_board_now_screen.py",
+      "line": 124,
+      "text": "The first-screen browser test fails at its daily median text check on both this branch and main.",
+      "from": "worker",
+      "item": "own-changes-one-group",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_ci_selects_own_changes_after_merge.py\tGate: merged CI pull requests run one group\town-changes-one-group",
       "kind": "bug",
       "path": "tests/test_ci_selects_own_changes_after_merge.py",
