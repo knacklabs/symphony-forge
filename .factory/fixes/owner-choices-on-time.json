@@ -18,7 +18,7 @@
       "gain": 4,
       "harm": 3,
       "line": 39,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 1,
       "security": false,
@@ -83,7 +83,7 @@
       "gain": 3,
       "harm": 3,
       "line": 23,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 1,
       "security": false,
@@ -93,38 +93,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "4e5bc18371cc79ec58c8dc3f577d52c5526d4292ff3ccebfaa4e704f6995083a",
-    "changed": "0a0198366190017e5f1b8b5f321b80d18715e2919b634c299c38d402fe4ce12c",
-    "commit": "aa1578ebaeeb27aa8726a854c4dfd05de5dd98ae",
+    "branch_diff": "2d624eb4007c44ad3105c943cfe275ae600ba1dc158c1571dadda0eaade9a642",
+    "changed": "c7300d66298a9aeb8e752b4807ca5018913841245f0d20041726a04fd1ac0c35",
+    "commit": "701c7bb0577419b201a0bc707363525101279189",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Not done: When the intake or the first round predicts more than the fix file limit, Forge asks for the size allowance at fix start or before the round; forge next lists every pending owner choice first, with its exact question and how long it has waited; new and existing repos get it on upgrade\nCase: normal use - A sign-off review reaches its limit, and a teammate opens the shared checkout on another machine. The sign-off record stores no wait time (src/forge/records.py:576), and this fallback reads only the current machine's event history, so `forge next` reports that the wait time is not recorded. The sign-off test seeds a `sign-off` wait event, but the sign-off flow does not create one.",
-        "file": "src/forge/owner_choices.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 157,
-        "priority": "P1",
-        "required_done_when": true,
-        "title": "Not done: forge next omits and mis-times pending owner choices",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - Intake or a first-round worker predicts six code files. Test 1 supplies `Lane: fix` itself and does not check the instruction to keep an over-limit repair in that lane; the base intake prompt says fixes change at most five files (src/forge/templates/start.md:6). Test 3 supplies the file-naming question itself but does not check that the delivered question template asks for the file names (src/forge/templates/brief.md:233). Both tests can therefore pass after those instructions are removed, leaving the early choice or its file list unprotected.",
-        "file": "tests/test_owner_choices_before_work.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 29,
-        "priority": "P1",
-        "title": "Gate: owner-choice command tests",
-        "work": 2
-      }
-    ],
-    "id": "014a8659-8ff3-4ab9-ba68-1b038dfcc0b4",
-    "status": "blocked"
+    "findings": [],
+    "id": "5b22ca6e-e989-4b46-9db3-9689510b6e82",
+    "status": "clean"
   },
   "round": 4,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-18T16:44:09.279803+00:00",
@@ -136,6 +114,10 @@
     },
     {
       "at": "2026-11-19T02:26:51.706987+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-19T02:45:16.822869+00:00",
       "step": "review"
     }
   ],
