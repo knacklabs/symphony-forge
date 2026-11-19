@@ -1,0 +1,12 @@
+{
+  "doc": "plans/FORGE-GHAPP-1.md",
+  "status": "planning",
+  "steps": [
+    {
+      "at": "2026-11-19T08:51:17.194487+00:00",
+      "step": "start"
+    }
+  ],
+  "title": "Give each client its own GitHub app for Forge's GitHub work",
+  "touches": 0
+}
