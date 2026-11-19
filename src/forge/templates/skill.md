@@ -398,6 +398,9 @@ Reviews run externally through Autoreview on the named tool; with both, Codex wh
 otherwise Claude. Normal, light and sign-off reviews use `[models.review]` or its per-tool entries.
 Unset entries use Autoreview's default model and effort; unset effort uses its default effort.
 
+When a background round, close or merge ends, run `forge next` at once and do its first
+step. Do not wait on a timer or use a separate priority list.
+
 **Running a handed-out round.** When Forge prints a subagent instruction, run that instruction
 as a background subagent of the named role. Keep the item's chat while the session is open;
 continue the named subagent when told to, or start fresh with the whole brief in a new session.
