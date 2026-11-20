@@ -11,8 +11,67 @@
   "done_when": "src/forge/templates/skill.md (and both generated SKILL.md copies) has the client release and sign-off full-run paragraph as before 4b5a40b0a, the daily cut rule stays only in docs/guide.md's Releasing Forge section, and tests/test_full_run_starts_before_notes.py passes on main",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [
+    {
+      "area": "src/forge/templates/skill.md",
+      "file": "src/forge/templates/skill.md",
+      "gain": 4,
+      "harm": 3,
+      "line": 2307,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Forge releases lose their cut and Windows instructions",
+      "work": 1
+    },
+    {
+      "area": "src/forge/templates/skill.md",
+      "file": "src/forge/templates/skill.md",
+      "gain": 3,
+      "harm": 3,
+      "line": 2307,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: tests/test_full_run_starts_before_notes.py",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "cfbb6d605c47ee830ef3a66a2f4f94a414934b6a97a985df9c4c0fbee7932258",
+    "changed": "6f6905c47d0accef382ee57d3fe1f226a8fa40638285ab3e4e7bb3ad24947e5d",
+    "commit": "891b05d3ea03ec97963cb10ad8d306776d3279c0",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 1, Harm 3\nRaise: Functional\nCase: normal use - a coordinator prepares a Forge release after the last merge.\nThe three skills also guide work in Forge's own repository. This change removes their only reference to the Forge release guide while leaving the general instruction to start a full run immediately. The guide requires a 05:00 UTC cut, a passed Windows run and a merge freeze (docs/guide.md:689), but the tag hook checks only the latest full-run status and commit (src/forge/githooks.py:161). A coordinator following the skill can therefore publish without the Forge-specific steps. The recorded ruling removes the copied policy but does not address the lost guide pointer. Keep a Forge-specific pointer without copying the daily-cut rule into the client instructions.\nAdds work: retain a pointer to Forge's release guide; F 3 x H 2 = 6; 2 x C = 2",
+        "file": "src/forge/templates/skill.md",
+        "gain": 4,
+        "harm": 3,
+        "line": 2307,
+        "priority": "P1",
+        "title": "Functional: Forge releases lose their cut and Windows instructions",
+        "work": 1
+      },
+      {
+        "body": "Gain 3, Work 1, Harm 3\nRaise: Gate\nCase: normal use - close verifies this pull request.\nThe proof list says close's PR check will report this test, but .github/workflows/forge.yml:93 runs `forge test --change`. Its selector at src/forge/fasttest.py:458 selects changed tests, related Python modules and file-relative input readers. The named test instead imports `ROOT` and reads a generated client guide (tests/test_full_run_starts_before_notes.py:11 and :33), and it is absent from .forge/always-tests.txt, so none of its three cases is selected for this diff. The always-run guide test checks that copies equal the template, which also holds when all copies contain the broken paragraph. The worker reports a direct local pass, but a green close check cannot provide the promised PR proof. Arrange for the named test to run in that check.",
+        "file": "src/forge/templates/skill.md",
+        "gain": 3,
+        "harm": 3,
+        "line": 2307,
+        "priority": "P1",
+        "title": "Gate: tests/test_full_run_starts_before_notes.py",
+        "work": 1
+      }
+    ],
+    "id": "8348508d-7989-4a61-b0be-9d5c849be475",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-20T06:36:02.826360+00:00",
@@ -22,6 +81,10 @@
       "at": "2026-11-20T06:37:19.226166+00:00",
       "round": 1,
       "step": "resume"
+    },
+    {
+      "at": "2026-11-20T08:37:19.407055+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
