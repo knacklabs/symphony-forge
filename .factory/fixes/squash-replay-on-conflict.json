@@ -87,7 +87,7 @@
     "status": "blocked"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-19T12:29:37.707124+00:00",
@@ -100,8 +100,19 @@
     {
       "at": "2026-11-20T05:52:35.058222+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-11-20T05:53:11.819725+00:00",
+      "round": 2,
+      "step": "hold"
     }
   ],
+  "stop": {
+    "at": "2026-11-20T05:53:11.819725+00:00",
+    "question": "When a stacked part's parent has merged, close replays the part's own is stuck. It should deliver: When the one-by-one replay conflicts but the whole-branch merge (merge-tree of the replay baseline and the branch head onto main) is clean, close replays the part as one commit with that merged tree and continues; a real whole-branch conflict still refuses as today; new and existing repos get it on upgrade\nTwo rounds in a row left the open P0 preserve earlier review rounds during the squash in src/forge/close.py.\nThe worker tried: Keep review history and evidence during a squash replay.\nChoose one: switch this item to Claude; keep Codex for one more round; or narrow or split it.",
+    "tool": "codex",
+    "wait_id": "4913cc58-ccd0-4edf-878a-defa7d6cd7e9"
+  },
   "stuck": {
     "close": "b19a8b6b-7d01-44f6-bec3-917fdfdbdf26",
     "head": "2857187aca09d70796aa312fd7646072cea21a2b",
