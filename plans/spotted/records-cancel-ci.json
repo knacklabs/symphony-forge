@@ -45,6 +45,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/review.py\tThe docs-only classifier still excludes application code under plans when the whole pull request changes only that folder.",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 41,
+      "text": "The docs-only classifier still excludes application code under plans when the whole pull request changes only that folder.",
+      "from": "worker",
+      "item": "records-cancel-ci",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/templates/review-tests.py\tAllow cancelled and retried record-only runs to execute tests\trecords-cancel-ci",
       "kind": "bug",
       "path": "src/forge/templates/review-tests.py",
