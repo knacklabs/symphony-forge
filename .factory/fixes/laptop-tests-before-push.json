@@ -1,0 +1,15 @@
+{
+  "base": "a291873644fe4943653cb8413469ec21a8704e08",
+  "branch": "fix/laptop-tests-before-push",
+  "done_when": "In every test_place, a work round ends with the change's related tests run on the laptop through forge test --change; when they fail, Forge sends the worker one repair turn before the round ends and pushes, and the round's result says the tests ran and passed or what still fails; CI still runs its checks; new and existing repos get it on upgrade",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-20T05:17:19.436535+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "In repos with test_place ci (Forge's own repo and most clients), the worker brief says related tests stay in pull request CI, so workers push without running their change's tests: 38 of 46 failed Forge PR runs since 17 Nov 2026 (83%) were the branch's own bug, at least 30 of them caught by the branch's own related tests, each costing a 12-18 minute CI run and 14 branches failing 2-4 times"
+}
