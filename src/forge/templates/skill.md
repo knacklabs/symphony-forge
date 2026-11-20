@@ -360,8 +360,10 @@ It publishes the combined change and waits for that commit's checks, even when t
 files do not overlap. This applies to every test runner and custom fast command.
 The wait uses the combined branch's test setting and required check names.
 A retry waits for the same saved head's checks, with those same check names.
-`forge test --change` includes incoming changes from merges into the pull request,
-so CI also selects tests that the default branch added before the merge.
+In CI-test repos, `forge test --change` selects the pull request's own source changes
+(`base...HEAD`) plus test files that merges from the default branch added or changed.
+The one-group rule counts only the pull request's own changes. Local-test repos keep
+all incoming changes in test selection and keep all groups after a merge.
 Repos whose tests run only on the laptop keep their local runs. The `forge-pr-check`
 check reviews the change and runs no app tests, so that check alone does not replace the local retest.
 The nightly full run on the default branch covers the rest. With no retest, the usual CI wait applies.
