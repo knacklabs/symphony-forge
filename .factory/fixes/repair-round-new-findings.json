@@ -99,7 +99,7 @@
     "id": "b4ed79ca-c536-4b09-8586-9f54175e842b",
     "status": "blocked"
   },
-  "round": 2,
+  "round": 3,
   "status": "fixing",
   "steps": [
     {
@@ -135,6 +135,11 @@
       "choice": "more",
       "round": 2,
       "step": "owner decision"
+    },
+    {
+      "at": "2026-11-20T04:56:38.903496+00:00",
+      "round": 3,
+      "step": "resume"
     }
   ],
   "stop": {
@@ -147,10 +152,10 @@
     "worker_round": 2
   },
   "stuck": {
-    "close": "4b5ca035-963e-4714-b1e4-e66e3261e212",
-    "head": "d6b0f246f128ee8fd0369e634834e57e76e209ba",
+    "close": "6cbe9ba3-2fe5-4aac-9bde-bd95f107a13a",
+    "head": "f609aee2aea1a45fdec55dea5d8da97ddb2cd443",
     "keys": {},
-    "round": 1
+    "round": 2
   },
   "why": "Repair-round reviews keep raising new P1 findings in code the repair did not change, although the repair-review prompt (src/forge/templates/review.md, Repair review) allows a new finding only when it is a P0 in normal use; 25 of 38 merged items since 17 Nov 2026 needed 3 or more rounds",
   "worker": "codex"
