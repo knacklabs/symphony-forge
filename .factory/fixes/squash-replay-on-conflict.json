@@ -67,23 +67,23 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "1b3168e24ffdb207c41b9a4e022aa787bb492cd20ce889273831e9db008c7758",
-    "changed": "6bcb2228084fbda842dfc7a0ab4f971863d847eb3eac97a5abd90424264430f3",
-    "commit": "bd029d14d4a8f10f184a53915697571ed68a1160",
+    "branch_diff": "0fa3273b09627a67bb3a475009797d461ba18852d4a97ef761634dedfd766f7d",
+    "changed": "1d3fcafd7fce7fe6f3d06206c325fb8e40a6e02319d2109084f95fdef575e443",
+    "commit": "1c83c685da1bc18df71e7d3e7db97a3d1bc7ad5d",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 4, Work 3, Harm 4\nRaise: Data loss\nCase: normal use - a teammate clones a squashed stacked part and a reviewer repeats a dismissed finding whose cited line is unchanged.\n`squash_replay` copies review-state snapshots without retaining the original commits referenced by their `review.commit` fields (`src/forge/close_remote.py:47`). The published start tag points to the initial commit, not the later reviewed commits (`src/forge/task.py:297`). In a fresh network clone, `review._cited_changed` treats its failed diff against the missing commit as a changed citation (`src/forge/review.py:666`), so `review.run` does not carry the dismissal and close can block on the settled finding again. The new test checks that the reason appears in the prompt but does not repeat the finding.",
+        "body": "Gain 4, Work 3, Harm 4\nRaise: Functional\nCase: normal use - a teammate picks up the replayed part in a checkout made before its earlier reviews, or clones only that branch.\nThe new tag points to the old tip, which is outside the replayed branch. `task.pick_up` fetches the branch (`src/forge/task.py:250-251`), and close's refresh fetches branch refs (`src/forge/migration_warnings.py:33-35`); [Git automatically follows only tags pointing into fetched history](https://git-scm.com/docs/git-fetch). A single-branch clone likewise omits the old tip. The cited commit is therefore unavailable on the teammate's machine, even though the test's full clone receives it. `review._cited_changed` treats the failed diff as a changed citation (`src/forge/review.py:664-668`), so a repeated finding can block close despite its unchanged, previously dismissed line.",
         "file": "src/forge/close.py",
         "gain": 4,
         "harm": 4,
-        "line": 729,
+        "line": 741,
         "priority": "P1",
         "title": "Preserve earlier review rounds during the squash",
         "work": 3
       }
     ],
-    "id": "f8112e55-0478-4d7c-af06-c6f4fe469b73",
+    "id": "847c540d-2ded-47df-a906-a33a3a9e2862",
     "status": "blocked"
   },
   "round": 3,
@@ -117,6 +117,10 @@
       "at": "2026-11-20T05:55:06.664290+00:00",
       "round": 3,
       "step": "resume"
+    },
+    {
+      "at": "2026-11-20T09:01:08.775434+00:00",
+      "step": "review"
     }
   ],
   "stuck": {

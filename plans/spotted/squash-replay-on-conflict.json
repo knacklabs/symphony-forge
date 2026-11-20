@@ -43,6 +43,17 @@
       "item": "squash-replay-on-conflict",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/task.py\tpick_up fetches only the branch, so a single-branch clone made before the replay gets the forge-replayed tag only after a fetch with --tags.",
+      "kind": "edge",
+      "path": "src/forge/task.py",
+      "line": 251,
+      "text": "pick_up fetches only the branch, so a single-branch clone made before the replay gets the forge-replayed tag only after a fetch with --tags.",
+      "from": "worker",
+      "item": "squash-replay-on-conflict",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
