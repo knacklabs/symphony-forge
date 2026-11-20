@@ -126,7 +126,7 @@
     "status": "blocked"
   },
   "round": 5,
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-20T04:07:50.110997+00:00",
@@ -188,16 +188,18 @@
     {
       "at": "2026-11-20T14:23:51.429290+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-11-20T14:45:46.521426+00:00",
+      "round": 5,
+      "step": "hold"
     }
   ],
   "stop": {
-    "at": "2026-11-20T04:52:38.823113+00:00",
-    "by": "owner",
-    "choice": "more",
-    "file": "src/forge/autoreview.py",
-    "reason": "Owner chose one more round on 20 Nov 2026: update the test that expects a new P1 to block",
-    "wait_id": "0285fc96-17a0-4372-8cc9-1d90cf9585dc",
-    "worker_round": 2
+    "at": "2026-11-20T14:45:46.521426+00:00",
+    "question": "Repair-round reviews keep raising new P1 findings in code the repair is stuck. It should deliver: From the second review round on, Forge itself keeps only the previous findings that are still open plus new P0 findings; any other new finding is recorded as a follow-up on the item, shown in close's advice, and does not block the merge; round-one reviews and the owner's choices at the round limit are unchanged; new and existing repos get it on upgrade\nTwo rounds in a row left the open P0 [p1] do not restore follow-up status to an escalated p0 in src/forge/autoreview.py.\nThe worker tried: Keep P0 findings blocking across repair history.\nChoose one: switch this item to Claude; keep Codex for one more round; or narrow or split it.",
+    "tool": "codex",
+    "wait_id": "f4ff10e9-7cbc-4acf-91f0-56e3f47187a4"
   },
   "stuck": {
     "close": "f8279054-d0f4-43f4-bace-c589bc9e7f6d",
