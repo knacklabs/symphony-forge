@@ -86,7 +86,7 @@
     "id": "f8112e55-0478-4d7c-af06-c6f4fe469b73",
     "status": "blocked"
   },
-  "round": 2,
+  "round": 3,
   "status": "fixing",
   "steps": [
     {
@@ -112,28 +112,22 @@
       "choice": "switch",
       "round": 2,
       "step": "owner decision"
+    },
+    {
+      "at": "2026-11-20T05:55:06.664290+00:00",
+      "round": 3,
+      "step": "resume"
     }
   ],
-  "stop": {
-    "at": "2026-11-20T05:53:11.819725+00:00",
-    "by": "owner",
-    "choice": "switch",
-    "question": "When a stacked part's parent has merged, close replays the part's own is stuck. It should deliver: When the one-by-one replay conflicts but the whole-branch merge (merge-tree of the replay baseline and the branch head onto main) is clean, close replays the part as one commit with that merged tree and continues; a real whole-branch conflict still refuses as today; new and existing repos get it on upgrade\nTwo rounds in a row left the open P0 preserve earlier review rounds during the squash in src/forge/close.py.\nThe worker tried: Keep review history and evidence during a squash replay.\nChoose one: switch this item to Claude; keep Codex for one more round; or narrow or split it.",
-    "reason": "Owner chose on 20 Nov 2026 to switch this item to Claude for the open P0",
-    "tool": "codex",
-    "wait_id": "4913cc58-ccd0-4edf-878a-defa7d6cd7e9",
-    "worker_round": 2
-  },
   "stuck": {
-    "close": "b19a8b6b-7d01-44f6-bec3-917fdfdbdf26",
-    "head": "2857187aca09d70796aa312fd7646072cea21a2b",
+    "close": "f29cc2e2-8ba7-405e-8aae-39063eac95ed",
+    "head": "9be89109fecd9d2d557b51ded9c050efe10e9919",
     "keys": {
-      "the open P0 keep planning evidence from the worker's separate commit in src/forge/close.py": 1,
-      "the open P0 preserve earlier review rounds during the squash in src/forge/close.py": 1
+      "the open P0 preserve earlier review rounds during the squash in src/forge/close.py": 2
     },
-    "round": 1
+    "round": 2
   },
   "tool": "claude",
   "why": "When a stacked part's parent has merged, close replays the part's own commits onto main one by one (git rebase in close._merge_default), so an early commit conflicts with later main edits of the same lines even when the whole-branch merge is clean; merging main into the branch never helps, and a client part looped 5 times on 19 Nov 2026",
-  "worker": "codex"
+  "worker": "claude"
 }
