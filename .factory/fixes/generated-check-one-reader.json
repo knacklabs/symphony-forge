@@ -1,6 +1,13 @@
 {
   "base": "ecd8d670d78d6fdf906f15aabcfcbc02e9ae3405",
   "branch": "fix/generated-check-one-reader",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1f8ba-e5a1-7353-92f9-e85ce12c454f",
+    "head": null,
+    "start": "9512bc23cf09803acc2a30dd19f0e9b164c4eba9"
+  },
   "done_when": "close starts one cat-file batch reader again, tests/test_git_process_ceiling.py passes on main, and the review still leaves generated and deleted file content out",
   "fix_kind": "mechanical",
   "kind": "fix",
