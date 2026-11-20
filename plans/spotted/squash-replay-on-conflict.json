@@ -34,6 +34,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/repo.py\tThe generated-file check starts a second cat-file --batch reader in close, and the default branch fails the git process ceiling tests since ecd8d670d.",
+      "kind": "bug",
+      "path": "src/forge/repo.py",
+      "line": 379,
+      "text": "The generated-file check starts a second cat-file --batch reader in close, and the default branch fails the git process ceiling tests since ecd8d670d.",
+      "from": "worker",
+      "item": "squash-replay-on-conflict",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_close_squashes_clean_stacked_replay.py\tGate: test_1_close_squashes_only_intermediate_conflicts\tsquash-replay-on-conflict",
       "kind": "bug",
       "path": "tests/test_close_squashes_clean_stacked_replay.py",
