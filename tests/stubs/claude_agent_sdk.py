@@ -124,7 +124,8 @@ async def query(*, prompt, options):
     if len(log.read_text("utf-8").splitlines()) >= int(
             os.environ.get("STUB_CLAUDE_COMMIT_FROM") or 0) > 0:
         subprocess.run(["git", "add", "-A"], check=True)
-        subprocess.run(["git", "commit", "-q", "-m", "Worker round"], check=True)
+        subprocess.run(["git", "commit", "-q", "-m", "Worker round",
+                        "-m", "Proof list: tests/test_worker.py"], check=True)
     yield AssistantMessage([TextBlock("SDK worker output")], options.model)
     if options.permission_mode == "plan" and "STUB_CLAUDE_RESULT" not in os.environ:
         said = here / "claude-says.md"

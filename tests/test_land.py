@@ -85,7 +85,8 @@ COMMITS = '''if options.permission_mode != "plan" and not int(os.environ.get("ST
     done = len(list(Path.cwd().glob("work-*.txt")))
     Path(f"work-{done + 1}.txt").write_text("worked\\n", encoding="utf-8")
     subprocess.run(["git", "add", "-A"], check=True, stdin=subprocess.DEVNULL, timeout=60)
-    subprocess.run(["git", "commit", "-q", "-m", "Worker round"], check=True,
+    subprocess.run(["git", "commit", "-q", "-m", "Worker round", "-m",
+                    "Proof list:\\n- Requested work: manual check passed"], check=True,
                    stdin=subprocess.DEVNULL, timeout=60)
 '''
 
@@ -123,7 +124,7 @@ def _fix(env, status: str = "started", worked: bool = False, changes: dict | Non
     env.commit(where, f".factory/fixes/{ITEM}.json", json.dumps(lines),
                f"{ITEM} is working" if worked else f"Start the fix: {lines['why']}")
     for path, text in (changes or ({"app.py": "print('hello')\n"} if worked else {})).items():
-        env.commit(where, path, text, "Worker round")
+        env.commit(where, path, text, "Worker round\n\nProof list:\n- Requested work: manual check passed")
     return where
 
 

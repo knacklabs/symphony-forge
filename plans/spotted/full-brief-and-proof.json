@@ -1,0 +1,70 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/close.py\tFunctional: Preserve close for generated adoption and migration branches\tfull-brief-and-proof",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 337,
+      "text": "Functional: Preserve close for generated adoption and migration branches",
+      "from": "blocking",
+      "item": "full-brief-and-proof",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tFunctional: Propagate the missing-proof failure to forge land\tfull-brief-and-proof",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 340,
+      "text": "Functional: Propagate the missing-proof failure to forge land",
+      "from": "blocking",
+      "item": "full-brief-and-proof",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tNot done: Grant the repair round for other missing-record findings\tfull-brief-and-proof",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 423,
+      "text": "Not done: Grant the repair round for other missing-record findings",
+      "from": "blocking",
+      "item": "full-brief-and-proof",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tNot done: Stop before review when the proof list is empty\tfull-brief-and-proof",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 337,
+      "text": "Not done: Stop before review when the proof list is empty",
+      "from": "blocking",
+      "item": "full-brief-and-proof",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/worker.py\tFunctional: Exclude unchanged methods from the changed-function map\tfull-brief-and-proof",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 789,
+      "text": "Functional: Exclude unchanged methods from the changed-function map",
+      "from": "blocking",
+      "item": "full-brief-and-proof",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/worker.py\tNot done: Include multiline TypeScript methods in the worker brief\tfull-brief-and-proof",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 822,
+      "text": "Not done: Include multiline TypeScript methods in the worker brief",
+      "from": "blocking",
+      "item": "full-brief-and-proof",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

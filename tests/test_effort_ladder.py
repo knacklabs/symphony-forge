@@ -392,7 +392,8 @@ def test_8_native_round_names_the_requested_effort(
     (folder / "fail_test.py").write_text("print('intentional native close failure')\n"
                                          "raise SystemExit(1)\n", encoding="utf-8")
     repo.git("add", "-A", cwd=folder)
-    repo.git("commit", "-q", "-m", "Prepare a native worker round", cwd=folder)
+    repo.git("commit", "-q", "-m", "Prepare a native worker round", "-m",
+             "Proof list: tests/test_effort_ladder.py::test_8_native_round_names_the_requested_effort", cwd=folder)
 
     host = Session(repo, tmp_path / f"{family}-host", host_name)
     try:

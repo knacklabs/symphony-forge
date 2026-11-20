@@ -205,7 +205,8 @@ def client(env, request):
 
 
 def _fix(env, monkeypatch, slug: str, day: int, files: dict[str, str], status: str = "reviewing",
-         message: str = "Worker round", answer: dict = CLEAN, **state) -> Path:
+         message: str = "Worker round\n\nProof list: tests/test_queue_land_all.py",
+         answer: dict = CLEAN, **state) -> Path:
     """forge fix start on a given day (its start commit dates the change), then the worker's
     commit, with the status a close part-way through leaves."""
     with monkeypatch.context() as dated:
@@ -375,10 +376,12 @@ def test_2_a_change_sharing_a_file_waits_for_the_older_one(client, monkeypatch, 
     # A P1 at the bar reaches the owner-needed review stop.
     answer = CLEAN if older == "merges" else blocked({**finding("P1", "Saving drops line one", "shared.py"), "body": "Gain 4, Work 1, Harm 2\nSaving drops line one."})
     _fix(env, monkeypatch, "aa", 1, {"shared.py": _edit(1, "first")}, answer=answer,
-         message="Worker round\n\nSpotted: bug shared.py:4 line four repeats itself")
+         message="Worker round\n\nProof list: tests/test_queue_land_all.py\n\n"
+                 "Spotted: bug shared.py:4 line four repeats itself")
     _fix(env, monkeypatch, "bb", 2, {"shared.py": _edit(7, "last")})
     _fix(env, monkeypatch, "cc", 3, {"other.py": "x = 1\n"},
-         message="Worker round\n\nSpotted: simplify shared.py:2 line two could go")
+         message="Worker round\n\nProof list: tests/test_queue_land_all.py\n\n"
+                 "Spotted: simplify shared.py:2 line two could go")
     if older == "merges":
         _fix(env, monkeypatch, "dd", 4, {"shared.py": _edit(4, "middle")}, status="working")
         closed = env.repo.forge("close", "dd")

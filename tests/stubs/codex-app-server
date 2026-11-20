@@ -165,7 +165,8 @@ def main():
                     import subprocess
                     subprocess.run(["git", "add", "-A"], cwd=cwd, check=True)
                     if subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=cwd).returncode:
-                        subprocess.run(["git", "commit", "-q", "-m", "Worker round"], cwd=cwd,
+                        subprocess.run(["git", "commit", "-q", "-m", "Worker round",
+                                        "-m", "Proof list: tests/test_worker.py"], cwd=cwd,
                                        check=True, stdout=sys.stderr)
                 if status == "vanish":
                     return

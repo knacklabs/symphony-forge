@@ -197,7 +197,12 @@ class Forge:
                  query: str | None = None) -> list[list[str]]:
         return self.gh.calls(*prefix, path=path, query=query)
 
-    def commit(self, where: Path, rel: str, text: str, message: str = "More work") -> str:
+    def commit(self, where: Path, rel: str, text: str, message: str = "More work", *,
+               proof: bool = True) -> str:
+        # General fixtures represent completed work. Proof-absence cases opt out
+        # so the real close preflight still decides whether the record is missing.
+        if proof and not re.search(r"(?m)^Proof list\b", message):
+            message += f"\n\nProof list:\n- The fixture change in {Path(rel).as_posix()}: checked by this command test"
         (where / rel).parent.mkdir(parents=True, exist_ok=True)
         (where / rel).write_bytes(text.encode("utf-8"))  # Same bytes on Windows as on Linux.
         self.repo.git("add", "-A", cwd=where)
@@ -230,7 +235,7 @@ class Forge:
         self.repo.git("worktree", "add", "-q", "-b", branch, str(where))
         self.commit(where, rel, json.dumps({"branch": branch, "status": "working", **state}), "Start")
         for path, text in changes.items():
-            self.commit(where, path, text, "Work")
+            self.commit(where, path, text, "Work\n\nProof list:\n- The requested change: manual check passed")
         return item, where
 
     def start_fix(self, changes: dict[str, str] | None = None, **state: str) -> tuple[str, Path]:
@@ -257,7 +262,7 @@ class Forge:
         assert started.returncode == 0, started.stderr
         where = Path(started.stdout.splitlines()[0].rsplit(" in ", 1)[1])
         for path, text in (changes or {"app.py": "print('saved')\n", "other.py": "x = 1\n"}).items():
-            self.commit(where, path, text, "Work")
+            self.commit(where, path, text, "Work\n\nProof list:\n- The requested change: manual check passed")
         return f"SHOP/{task}", where
 
     def close(self, item: str, *extra: str):

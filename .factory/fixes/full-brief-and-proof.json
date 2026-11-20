@@ -1,0 +1,145 @@
+{
+  "base": "1a5b4d2cf1d9b0e80bb05627d2864a9ac40fd2bb",
+  "branch": "fix/full-brief-and-proof",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1ef94-ca4c-74e2-a1ba-ac2bab209499",
+    "head": null,
+    "start": "86a723498c53a0f55cc12b4db7fef18171cbd3cd"
+  },
+  "done_when": "Each worker round's brief carries the item's full Done-when, the callers of each changed function and the tests that cover them, and tells the worker to finish all of them before review; close names a missing proof list before the review and the skill tells the coordinator to add it when it commits a fix itself; a review finding that is only a missing proof list or approach record gets one automatic repair round without an owner question; new and existing repos get it on upgrade",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "close() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 4,
+      "harm": 4,
+      "line": 337,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Preserve close for generated adoption and migration branches",
+      "work": 2
+    },
+    {
+      "area": "close() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 340,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Propagate the missing-proof failure to forge land",
+      "work": 1
+    },
+    {
+      "area": "_function_name() in src/forge/worker.py",
+      "file": "src/forge/worker.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 822,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Include multiline TypeScript methods in the worker brief",
+      "work": 2
+    },
+    {
+      "area": "_changed_function_context() in src/forge/worker.py",
+      "file": "src/forge/worker.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 789,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Exclude unchanged methods from the changed-function map",
+      "work": 2
+    },
+    {
+      "area": "close() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 337,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Stop before review when the proof list is empty",
+      "work": 1
+    },
+    {
+      "area": "close() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 423,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Grant the repair round for other missing-record findings",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "b7a3eac1913cf0fbe9799354f00e56e00c1c0af727418035395e00b4f2cd7105",
+    "changed": "b406791bdfa9fe348977435e7ea96168dfb0c00d0b78827665ca741262257074",
+    "commit": "a36a07016e2a264b4dc708824898951dfbbc9013",
+    "dismissals": [],
+    "findings": [],
+    "id": "69ae77b2-18c5-4851-a419-cff95617429a",
+    "status": "clean"
+  },
+  "round": 5,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-18T16:44:04.017358+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-18T17:25:33.827870+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-19T01:54:59.515468+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-19T03:11:35.711723+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-19T07:50:55.638084+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-19T01:54:59.515733+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "src/forge/worker.py",
+    "reason": "Owner chose one more round on 19 Nov 2026",
+    "wait_id": "03bdce3e-7a15-44df-878e-dcc6f5ede91c",
+    "worker_round": 2
+  },
+  "stuck": {
+    "close": "7609bedc-511b-4bb8-b663-d32dc8edfabf",
+    "head": "60d0385025a8ada553b9f3e37837a41f2151e871",
+    "keys": {},
+    "round": 3
+  },
+  "why": "Worker rounds often need 2-4 rounds for selector, assertion or execution-path corrections the first round could have caught, and when the coordinator commits a small fix itself its first review blocks on 'proof list: missing' (measured at a client on 18 Nov 2026: 3 one-file fixes, 20-60 min each)",
+  "worker": "codex"
+}

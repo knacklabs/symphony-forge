@@ -49,6 +49,8 @@ REFUSALS = {
     "blocked": ("The review left serious findings open: {findings}.",
                 'forge work {item}, or forge close {item} --dismiss <n> --because '
                 '"<file:line> <reason>"'),
+    "missing_proof": ("Proof list: missing. Add the full Proof list to the last commit.",
+                      "forge close {item}"),
     "hotspot": ("Review round {round} of {item} reached the round limit with open findings, so Forge stopped. {question}",
                 'forge close {item} --resolve <more|split|accept> --reason "<human\'s choice>"'),
     "bad_choice": ("Record the human's choice only on a stopped review loop, with a non-empty "
@@ -337,6 +339,11 @@ def close(args: argparse.Namespace) -> int:
     repo.record_event(top, item, "close result")  # a stuck worker counts failures once per close
     failed = 0
     if not fresh:
+        mechanical = switch or records_only or skip or review_skip.upgrade_only(
+            top, item, cfg, ancestor, head, [p for p in files if p], previous)
+        if not (mechanical or migrating) and not review.commit_paragraph(
+                top, review_ref, "Proof list:").partition(":")[2].strip():
+            repo.refuse(REFUSALS["missing_proof"], item=item)
         if pending := time_records.pending_merge_wait(top, item, (pr or {}).get("body") or ""):
             repo.record_event(top, item, "owner wait end", wait_id=pending["id"])
         # Read after the merge, which may change the command.
@@ -356,7 +363,7 @@ def close(args: argparse.Namespace) -> int:
             testing = (pool.submit(review.test_run, top, command, review_ref, always=switch)
                        if local_tests else None)
             try:
-                if switch or records_only or skip or review_skip.upgrade_only(top, item, cfg, ancestor, head, [p for p in files if p], previous):
+                if mechanical:
                     head = repo.git("rev-parse", "HEAD", cwd=top)
                     identity = repo.record_event(top, item, "review result", commit=head, outcome="clean", findings=[],
                                                  review_round=review.round_number(top, item, state),
@@ -414,12 +421,17 @@ def close(args: argparse.Namespace) -> int:
         score.remember(_known(top, item, state, review_ref, previous), result, round_number,
                        {} if fresh else areas,
                        repaired=previous if not (fresh or records_only or switch or replayed) else None)
-    blocked_rounds = round_number
-    if serious and "/" not in item:
-        blocked_rounds = sum(bool(review.blocking(old)) for old in
-                             review._history(top, item, review_ref, result, state=state))  # pyright: ignore[reportPrivateUsage]
-    if (serious and blocked_rounds >= cfg["task_review_rounds"] and
-            not any(score.holds(f, "P0") for _, f in serious) and (not fresh or not state.get("stop"))):
+    record_findings = bool(serious) and all(
+        f["title"].casefold().startswith("gate: proof list") or
+        re.search(r"^Simpler:.*\b(?:before[- ]coding|approach\b.*\brecord)\b", f["title"], re.I) and
+        re.search(r"\b(?:missing|absent|no|lacks?|not present|does not (?:include|have))\b",
+                  f["title"], re.I) for f in score.open_findings(result))
+    record_repair = record_findings and state.setdefault("record_repair_round", round_number) == round_number
+    if (serious and (round_number if "/" in item else sum(
+            bool(review.blocking(old)) for old in review._history(  # pyright: ignore[reportPrivateUsage]
+                top, item, review_ref, result, state=state))) >= cfg["task_review_rounds"] and
+            not any(score.holds(f, "P0") for _, f in serious) and
+            not record_repair and (not fresh or not state.get("stop"))):
         stopped = {"file": serious[0][1]["file"], "at": repo.now(),
                    "wait_id": repo.record_event(top, item, "owner wait start", reason="review loop")}
         state["stop"] = stopped

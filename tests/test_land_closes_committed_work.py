@@ -61,7 +61,9 @@ def test_1_land_closes_a_hand_committed_fix_without_a_worker(land, history):
                          "The package version is updated", "--slug", "bump-version", "--kind", "mechanical")
     assert started.returncode == 0, started.stderr
     where = repo.path.parent / f"{repo.path.name}-fix-bump-version"
-    env.commit(where, "VERSION", "2.0.0\n", "Bump the package version")
+    # A coordinator commit now needs the same proof record as a worker commit.
+    env.commit(where, "VERSION", "2.0.0\n", "Bump the package version\n\n"
+               "Proof list:\n- Package version: manual version check passed")
     before = (where / "forge.toml").read_text()
     base = repo.git("rev-parse", "origin/main", cwd=where)
     updates = env.tmp / "published-heads"

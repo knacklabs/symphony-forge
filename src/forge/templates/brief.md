@@ -376,6 +376,13 @@ You may also update an existing test your intended change breaks, even outside S
 such test and why it changed in your handoff, and never weaken a test to hide a defect.
 
 <!-- end -->
+## Changed functions at round start
+
+$changed_functions
+
+Complete the full Done-when for this item before review, including every listed caller
+and test for each changed function.
+
 ## Tests first
 
 One command-level test per rule is enough.

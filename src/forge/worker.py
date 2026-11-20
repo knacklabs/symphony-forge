@@ -43,6 +43,9 @@ SETTINGS = ("Workers never edit `forge.toml`. Never edit it even temporarily. It
             "coordinator, through a settings fix the owner asked for. Report a needed settings "
             "change in your last message instead. To run an extra suite, run its command directly "
             "alongside `forge test`.")
+SOURCE_SUFFIXES = {".py", ".pyi", ".js", ".jsx", ".ts", ".tsx", ".mjs", ".cjs", ".go", ".rs",
+                   ".java", ".kt", ".kts", ".cs", ".rb", ".php", ".swift", ".c", ".h", ".cc",
+                   ".cpp", ".hpp", ".vue", ".svelte", ".sh", ".bash"}
 TEST_STEPS = {
     "sample": ("commit your work on this branch first, then walk each demo step in a browser and "
                "record its result in the `Proof list:`; "
@@ -646,6 +649,7 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
     values["summary"] = (f"Fix round {round_number} on {subject}." if round_number > 1 else
                          f"Build {subject} for {match['key']}." if match["task"] else
                          f"Fix: {subject}.")
+    values["changed_functions"] = _changed_function_context(top)
     if findings or failing:
         on.add("fix-round")
         values["findings"] = "\n".join(
@@ -677,6 +681,12 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
             brief += (f"\nScope: {values['scope']}\nTests: {values['tests']}\n"
                       f"Existing related tests: {values['existing_tests']}.\n"
                       f"\n## Current Done when\n\n{values['done']}\n")
+        else:
+            brief += f"\n## Current Done when\n\nDone when: {values['done']}\n"
+        brief += ("\n## Changed functions at round start\n\n"
+                  + values["changed_functions"] + "\n\n"
+                  "Complete the full Done-when for this item before review, including "
+                  "every listed caller and test for each changed function.\n")
         brief += "\n" + values["delegation"] + "\n"
         brief += "\n" + FILE_OWNERSHIP + "\n"
         brief += "\n" + STORY_FILES + "\n"
@@ -771,6 +781,116 @@ def _existing_tests(top: Path, scope: list[str]) -> str:
     found = repo.run("git", "grep", "-l", "-w", "-F", *patterns, "--", *TEST_PATHS,
                      cwd=top).stdout.splitlines() if names else []
     return ", ".join(f"`{path}`" for path in found) or "none found"
+
+
+def _changed_function_context(top: Path) -> str:
+    """Name changed functions and the code and test files that grep finds referring to them."""
+    from forge import sync
+
+    base = f"origin/{repo.default_branch(top)}"
+    diff = repo.run("git", "diff", "--unified=0", "--no-color", base,
+                    "--", cwd=top).stdout
+    functions = set()
+    changed: dict[str, set[int]] = {}
+    removed: dict[str, set[int]] = {}
+    path = ""
+    line_number = old_line_number = 0
+    for line in diff.splitlines():
+        if line.startswith("diff --git "):
+            path = line.split(" b/", 1)[1].rstrip('"') if " b/" in line else ""
+        elif line.startswith("@@"):
+            match = re.search(r"-(\d+)(?:,\d+)? \+(\d+)(?:,\d+)?", line)
+            old_line_number, line_number = map(int, match.groups()) if match else (0, 0)
+        elif path and line.startswith("+") and not line.startswith("+++"):
+            changed.setdefault(path, set()).add(line_number)
+            line_number += 1
+        elif path and line.startswith("-") and not line.startswith("---"):
+            removed.setdefault(path, set()).add(old_line_number)
+            old_line_number += 1
+        elif path and line.startswith(" "):
+            line_number += 1
+            old_line_number += 1
+
+    def containing_functions(lines: list[str], line_numbers: set[int]) -> set[str]:
+        definitions = []
+        for index, source_line in enumerate(lines):
+            if not source_line.strip():
+                continue
+            if name := _function_name("\n".join(lines[index:])):
+                indent = len(source_line) - len(source_line.lstrip())
+                definitions.append((index + 1, indent, name))
+        found = set()
+        for changed_line in line_numbers:
+            if not 1 <= changed_line <= len(lines):
+                continue
+            source_line = lines[changed_line - 1]
+            if not source_line.strip():
+                continue
+            if name := _function_name("\n".join(lines[changed_line - 1:])):
+                found.add(name)
+            indent = len(source_line) - len(source_line.lstrip())
+            enclosing = [definition for definition in definitions
+                         if definition[0] < changed_line and definition[1] < indent]
+            if enclosing:
+                found.add(max(enclosing, key=lambda definition: definition[0])[2])
+        return found
+
+    generated = sync.files(top, repo.config(top), check_syntax=False)
+    for path in changed.keys() | removed.keys():
+        if _test_file(path):
+            continue
+        source = top / path
+        text = source.read_text(encoding="utf-8") if source.is_file() else ""
+        if path in generated and text == generated[path]:
+            continue  # An upgrade's copied tools are not this item's worker edits.
+        if line_numbers := changed.get(path):
+            if source.is_file():
+                functions.update(containing_functions(text.splitlines(), line_numbers))
+        if line_numbers := removed.get(path):
+            original = repo.run("git", "show", f"{base}:{path}", cwd=top).stdout.splitlines()
+            functions.update(containing_functions(original, line_numbers))
+    if not functions:
+        return "None."
+
+    rows = []
+    for function in sorted(functions):
+        files = repo.run("git", "grep", "-l", "-w", "-F", "-e", function, "--", ".",
+                         cwd=top).stdout.splitlines()
+        callers = {file for file in files if Path(file).suffix.lower() in SOURCE_SUFFIXES
+                   and not _test_file(file)}
+        tests = {file for file in files if _test_file(file)}
+        listed = lambda paths: ", ".join(f"`{path}`" for path in sorted(paths)) or "none found"
+        rows.append(f"- `{function}`: callers {listed(callers)}; tests {listed(tests)}")
+    return "\n".join(rows)
+
+
+def _test_file(path: str) -> bool:
+    parts = Path(path).parts
+    name = parts[-1].lower() if parts else ""
+    return (any(part.lower() in {"test", "tests", "__tests__", "spec"} for part in parts)
+            or name.startswith("test_") or name.endswith("_test.py")
+            or re.search(r"\.(?:test|spec)\.", name) is not None)
+
+
+def _function_name(source: str) -> str | None:
+    patterns = (
+        r"^\s*(?:(?:export|default)\s+)*(?:async\s+)?(?:def|function|fn)\s+([A-Za-z_$][\w$]*)\s*\(",
+        r"^\s*func\s+(?:\([^)]*\)\s*)?([A-Za-z_$][\w$]*)\s*\(",
+        r"^\s*(?:export\s+)?(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*(?:async\s+)?"
+        r"(?:function\b|\([^)]*\)\s*(?::[^=]+)?=>|[A-Za-z_$][\w$]*\s*=>)",
+        r"^\s*(?:(?:public|private|protected|static|async|override|abstract|final|virtual)\s+)*([A-Za-z_$][\w$]*)\s*\([^)]*\)\s*(?:\:[^{=]+)?\{",
+    )
+    match = next((candidate for pattern in patterns
+                  if (candidate := re.match(pattern, source))), None)
+    if match:
+        return match[1] if match[1] not in {"if", "for", "while", "switch", "catch", "with", "match"} else None
+    method = re.match(
+        r"^\s*(?:(?:public|private|protected|static|async|override|abstract|final|virtual|get|set)\s+)*"
+        r"([A-Za-z_$][\w$]*)\s*\(", source)
+    if method and method[1] not in {"if", "for", "while", "switch", "catch", "with", "match"} \
+            and re.search(r"\)\s*(?::[^;{=]+)?\{", source.split(";", 1)[0], re.S):
+        return method[1]
+    return None
 
 
 def _claude(item: str, top: Path, brief: str, fresh_brief: str | None, models: list[str],

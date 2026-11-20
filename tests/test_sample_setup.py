@@ -314,7 +314,9 @@ def test_7_turning_sample_data_off_needs_a_settled_personal_data_answer(
     _settings(unrelated / "forge.toml", workers="codex")
     (unrelated / "app.py").write_text("print('sample data')\n", encoding="utf-8")
     repo.git("add", "-A", cwd=unrelated)
-    repo.git("commit", "--allow-empty", "-q", "-m", "Adjust the sample worker", cwd=unrelated)
+    repo.git("commit", "--allow-empty", "-q", "-m", "Adjust the sample worker", "-m",
+             "Proof list: tests/test_sample_setup.py::test_7_turning_sample_data_off_needs_a_settled_personal_data_answer",
+             cwd=unrelated)
     env.reviews(CLEAN)
     env.open_pr("")
     env.checks(GREEN)
@@ -337,7 +339,9 @@ def test_7_turning_sample_data_off_needs_a_settled_personal_data_answer(
             re.sub(r"(?m)^sample_data = true\n", "", changed), encoding="utf-8")
     (where / "app.py").write_text("print('real data starts here')\n", encoding="utf-8")
     repo.git("add", "-A", cwd=where)
-    repo.git("commit", "--allow-empty", "-q", "-m", "Turn off sample data", cwd=where)
+    repo.git("commit", "--allow-empty", "-q", "-m", "Turn off sample data", "-m",
+             "Proof list: tests/test_sample_setup.py::test_7_turning_sample_data_off_needs_a_settled_personal_data_answer",
+             cwd=where)
     env.reviews(CLEAN)
     env.open_pr("")
     env.checks(GREEN)
@@ -352,7 +356,9 @@ def test_7_turning_sample_data_off_needs_a_settled_personal_data_answer(
         brief.write_text(re.sub(r"(?m)^- Personal data:.*$", f"- Personal data: {answer}",
                                 brief.read_text(encoding="utf-8")), encoding="utf-8")
         repo.git("add", "docs/product/BRIEF.md", cwd=where)
-        repo.git("commit", "--allow-empty", "-q", "-m", "Update the Personal data answer", cwd=where)
+        repo.git("commit", "--allow-empty", "-q", "-m", "Update the Personal data answer", "-m",
+                 "Proof list: tests/test_sample_setup.py::test_7_turning_sample_data_off_needs_a_settled_personal_data_answer",
+                 cwd=where)
 
     closed = env.close(item)
     assert closed.returncode == 0, closed.stdout + closed.stderr
