@@ -939,7 +939,7 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                      *([previous["commit"]] if previous.get("commit") else []), cwd=tree)
             from forge import merge_review
             conflict_base = merge_review.base(top, item, state, base, previous)
-            review_base = conflict_base or previous.get("commit") or base
+            review_base = conflict_base or previous.get("commit") or repo.git("rev-parse", base, cwd=tree)
             if conflict_base:
                 repo.git("fetch", "-q", str(top), conflict_base, cwd=tree)
                 snapshot = repo.git("commit-tree", repo.git("rev-parse", "HEAD^{tree}", cwd=tree),
@@ -949,8 +949,11 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                 merged_base = repo.git("merge-base", base, "HEAD", cwd=tree)
                 if repo.git("merge-base", base, review_base, cwd=tree) != merged_base:
                     review_base = merged_base
+        # Original commit IDs reuse the source checkout's immutable merge-base result.
+        review_start = (repo.git("merge-base", review_base, "HEAD", cwd=tree) if signoff_prompt
+                        else conflict_base or repo.git("merge-base", review_base, head, cwd=top))
         summary, filtered_base = autoreview.hide_generated(
-            tree, repo.git("merge-base", review_base, "HEAD", cwd=tree), "HEAD",
+            tree, review_start, "HEAD",
             source=None if signoff_prompt else top, source_head="" if signoff_prompt else head)
         prompt += summary
         review_base = filtered_base or review_base
