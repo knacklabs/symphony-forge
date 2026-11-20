@@ -70,7 +70,7 @@
     "id": "6ee1cc67-ca00-433b-80af-478249a30f35",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -85,13 +85,20 @@
     {
       "at": "2026-11-20T11:51:48.936048+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-11-20T11:52:53.486491+00:00",
+      "round": 2,
+      "step": "resume"
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "c54f3da0b1e4f5aac45a509580f81f12bf77c3f6",
-    "keys": {},
-    "round": null
+    "close": "eefd55c6-8766-4751-b7ae-71806bd6eed9",
+    "head": "22445da6bf8586f436ea17b7ab26832ccbd0bd38",
+    "keys": {
+      "the open P0 preserve compatibility with git 2.39 in src/forge/repo.py": 1
+    },
+    "round": 1
   },
   "why": "Main is red: the 1728 fix (ecd8d670d) added a generated-file check (src/forge/repo.py:379, read-tree HEAD and check-attr linguist-generated) that starts a second git cat-file --batch reader during every close, so tests/test_git_process_ceiling.py's three close cases fail (2 readers where 1 is allowed); the merge's related-test selection did not pick that test",
   "worker": "codex"
