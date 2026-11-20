@@ -310,14 +310,16 @@ def close_tests(base: str) -> int:
     parts = quicktest.test_parts(Path.cwd(), command)
     scripts = json.loads(package.read_text("utf-8")).get("scripts", {}) if package.is_file() else {}
     # Compound scripts forward npm arguments to the last command, not every runner.
-    if not parts or re.search(r"[;|]", command) or any(re.search(r"&&|[;|]", scripts[script])
+    if (not any(kind in ("python", "vitest", "jest") for kind, _, _ in parts)
+            or re.search(r"[;|]", command) or any(re.search(r"&&|[;|]", scripts[script])
             for kind, part, _ in parts if kind in ("vitest", "jest")
-            for script in scripts if re.search(r"\b" + re.escape(script) + r"\b", part)):
+            for script in scripts if re.search(r"\b" + re.escape(script) + r"\b", part))):
+        if os.environ.get("FORGE_RELATED_LIMIT") == "1":
+            print(WIDE_SELECTION, flush=True)
+            return 0
         return subprocess.run(command, shell=True).returncode
     if not any(kind in ("vitest", "jest") for kind, _, _ in parts):
-        if any(kind == "python" for kind, _, _ in parts):
-            return pytest_tests(base, command)
-        return subprocess.run(command, shell=True).returncode
+        return pytest_tests(base, command)
     for kind, part, passthrough in parts:
         if kind == "python":
             status = pytest_tests(base, part)
@@ -337,41 +339,17 @@ def close_tests(base: str) -> int:
     return 0
 
 
+NO_TESTS = "No tests ran:"
+WIDE_SELECTION = "skipped: selection near the full suite, CI tests it"
+
+
 def test(args) -> int:
     if args.full:
         from forge import fullrun
 
         return fullrun.run(repo.root())
     if args.base is None:
-        from forge import review
-        top = repo.root()
-        cfg = repo.config(top)
-        if not (cfg["fast_test"] or cfg["test"]):
-            if repo.sample_data(top, cfg):
-                print("This is a sample-data prototype, so tests are off until client sign-off.\n"
-                      "After sign-off, ask the coordinator to set sample_data = false in forge.toml.")
-            else:
-                print("forge.toml names no test command, so forge test ran none.")
-            return 0
-        push_base = os.environ.get("FORGE_PUSH_BASE") if args.change else None
-        base = push_base or f"origin/{repo.default_branch(top)}"
-        if repo.run("git", "rev-parse", "--verify", base, cwd=top).returncode:
-            raise repo.Refused(f"Fetch {base} first: run git fetch origin, then forge test.", "")
-        if args.change and not push_base and repo.test_place(cfg) == "local":
-            # Include incoming changes merged into this PR, even under Actions'
-            # synthetic merge. Main's current tip alone hides their test files.
-            merges = repo.git("rev-list", "--merges", f"{base}..HEAD", cwd=top).splitlines()
-            if merges:
-                base = repo.git("merge-base", "--octopus", base,
-                                *(f"{commit}^1" for commit in merges), cwd=top)
-        command = review.close_test(top, base, closing=args.change)
-        if not args.change:
-            command = skip_browser(top, command)
-        # CI groups reuse their own passes; explicit ungrouped commands always execute.
-        status, report = review.test_run(top, command, base,
-                                        always=not (args.change and "FORGE_GROUPS" in os.environ
-                                                    and not push_base),
-                                        closing=args.change)
+        status, report = run_related(repo.root(), change=args.change)
         print(report)
         return status
     from forge import review
@@ -389,6 +367,37 @@ def test(args) -> int:
         return pytest_tests(args.base, command, entry)
     finally:
         machine.leave(entry)
+
+
+def run_related(top: Path, *, change: bool, retry: bool = True,
+                limit_selection: bool = False) -> tuple[int, str]:
+    """The related-test command, shared by the CLI and the worker's final check."""
+    from forge import review
+
+    cfg = repo.config(top)
+    if not (cfg["fast_test"] or cfg["test"]):
+        return 0, ("This is a sample-data prototype, so tests are off until client sign-off.\n"
+                   "After sign-off, ask the coordinator to set sample_data = false in forge.toml."
+                   if repo.sample_data(top, cfg) else
+                   f"{NO_TESTS} forge.toml names no test command, so forge test ran none.")
+    push_base = os.environ.get("FORGE_PUSH_BASE") if change else None
+    base = push_base or f"origin/{repo.default_branch(top)}"
+    if repo.run("git", "rev-parse", "--verify", base, cwd=top).returncode:
+        raise repo.Refused(f"Fetch {base} first: run git fetch origin, then forge test.", "")
+    if change and not push_base and repo.test_place(cfg) == "local":
+        # Include incoming changes merged into this PR, even under Actions'
+        # synthetic merge. Main's current tip alone hides their test files.
+        merges = repo.git("rev-list", "--merges", f"{base}..HEAD", cwd=top).splitlines()
+        if merges:
+            base = repo.git("merge-base", "--octopus", base,
+                            *(f"{commit}^1" for commit in merges), cwd=top)
+    command = review.close_test(top, base, closing=change)
+    if not change:
+        command = skip_browser(top, command)
+    # CI groups reuse their own passes; explicit ungrouped commands always execute.
+    return review.test_run(top, command, base,
+                           always=not (change and "FORGE_GROUPS" in os.environ and not push_base),
+                           closing=change, retry=retry, limit_selection=limit_selection)
 
 
 def related(base: str) -> tuple[list[str], list[str], bool, list[str]]:
@@ -803,6 +812,7 @@ def pytest_tests(base: str, command: str, entry: dict | None = None) -> int:
         parts = quicktest.test_parts(Path.cwd(), command)
     environment = dict(os.environ)
     worker = environment.pop("FORGE_WORKER_TESTS", None) == "1"
+    limit_selection = environment.pop("FORGE_RELATED_LIMIT", None) == "1"
     allocation = entry
     if allocation is None and (parent := environment.get("FORGE_TEST_LANE")):
         allocation = next((run for run in machine.entries() if run["id"] == parent
@@ -818,6 +828,11 @@ def pytest_tests(base: str, command: str, entry: dict | None = None) -> int:
     required = always[:]
     named = []
     picked, tests, shared_changed, missed = related(base)
+    selected = set(picked) | {name.split("::", 1)[0] for name in always}
+    if limit_selection and (
+            shared_changed or (tests and len(selected) * 2 >= len(tests))):
+        print(WIDE_SELECTION, flush=True)
+        return 0
     # Tests that run the program from outside never name its files, so say what local runs miss.
     from forge import review  # imported late: review's imports lead back here
     print("".join(f"{review.GAP}{source}. The nightly full run covers it.\n" for source in missed),
@@ -848,7 +863,7 @@ def pytest_tests(base: str, command: str, entry: dict | None = None) -> int:
         shared_changed = False
     if not shared_changed:
         if not picked and not always and not named:
-            print("No tests ran: no changed or module-related test files were selected.")
+            print(f"{NO_TESTS} no changed or module-related test files were selected.")
             checks = " && ".join(part for kind, part, _ in parts if kind != "python")
             return run_logged(checks, environment, entry) if checks else 0
         # Keep shell setup, test roots and pytest settings in the repo's full command.
