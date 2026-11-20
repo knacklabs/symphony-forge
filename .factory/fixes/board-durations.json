@@ -1,6 +1,13 @@
 {
   "base": "41c53141ecc53527d8952bc84065e55e6f5ffbe4",
   "branch": "fix/board-durations",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1f6f3-e075-7112-b2ef-f97f45872472",
+    "head": null,
+    "start": "66dfb37c9ea9524a393ad1bd126972775473bd2b"
+  },
   "done_when": ".test_durations names the two parametrized board cases instead of the old id, and test_1_recorded_timings_name_existing_tests passes on main",
   "fix_kind": "mechanical",
   "kind": "fix",
