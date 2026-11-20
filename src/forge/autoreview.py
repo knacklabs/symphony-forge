@@ -22,13 +22,15 @@ def hide_generated(tree: Path, start: str, head: str) -> str:
                        start, head, cwd=tree).split("\0")
     deleted = [path for path in deleted if path]
     counts = {row[2]: row[:2] for record in repo.git(
-        "diff", "--numstat", "--diff-filter=d", "-z", "--no-renames", start, head,
+        "diff", "--numstat", "-z", "--no-renames", start, head,
         cwd=tree).split("\0") if len(row := record.split("\t", 2)) == 3}
     attrs = repo.run("git", "check-attr", "--stdin", "-z", "linguist-generated", cwd=tree,
                      input="\0".join(counts)).stdout.split("\0")
     marked = {path for path, value in zip(attrs[::3], attrs[2::3]) if value in ("set", "true")}
     generated = []
     for path, count in counts.items():
+        if path in deleted:
+            continue
         if path in marked or "-" in count or path.lower().endswith((".map", ".min.js", ".min.css")):
             generated.append(path)
             continue
@@ -56,6 +58,7 @@ def hide_generated(tree: Path, start: str, head: str) -> str:
                         "-m", "Branch head without deleted and generated files' contents", cwd=tree)
     repo.git("checkout", "-q", "-f", "--detach", snapshot, cwd=tree)
     summaries = [f"deleted: {path} ({sizes[start][path]} bytes)" for path in deleted]
+    summaries += [f"{path}: - added, - removed" for path in deleted if "-" in counts[path]]
     summaries += [f"generated: {path} ({sizes[head][path]} bytes)\n"
                   f"  {path}: {counts[path][0]} added, {counts[path][1]} removed"
                   for path in generated]
