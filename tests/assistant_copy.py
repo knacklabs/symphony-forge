@@ -21,9 +21,17 @@ def copy_assistant(app: Path) -> None:
         skill / "apps" / "api" / "prisma" / "migrations" / "20261106000000_assistant",
         app / "apps" / "api" / "prisma" / "migrations" / "20261106000000_assistant",
     )
+    shutil.copytree(
+        skill / "apps" / "api" / "prisma" / "migrations" / "20261106010000_assistant_usage",
+        app / "apps" / "api" / "prisma" / "migrations" / "20261106010000_assistant_usage",
+    )
     shutil.copyfile(
         skill / "apps" / "api" / "test" / "assistant-chats.e2e-spec.ts",
         app / "apps" / "api" / "test" / "assistant-chats.e2e-spec.ts",
+    )
+    shutil.copyfile(
+        skill / "apps" / "api" / "test" / "assistant-model.e2e-spec.ts",
+        app / "apps" / "api" / "test" / "assistant-model.e2e-spec.ts",
     )
     shutil.copyfile(
         skill / "apps" / "api" / "test" / "assistant-api.e2e-spec.ts",
@@ -54,6 +62,7 @@ def copy_assistant(app: Path) -> None:
         "  deletedProjects   Project[] @relation(\"ProjectDeletedBy\")\n"
         "  createdChats      AssistantChat[] @relation(\"ChatCreatedBy\")\n"
         "  modifiedChats     AssistantChat[] @relation(\"ChatModifiedBy\")\n"
+        "  assistantUsage    AssistantUsage[]\n"
     ))
 
     api_package = app / "apps" / "api" / "package.json"
@@ -93,6 +102,11 @@ def copy_assistant(app: Path) -> None:
         "; corepack pnpm run assistant:setup || { echo 'Assistant storage setup failed. Check DATABASE_URL and the assistant package.' >&2; exit 1; }; exec corepack pnpm run start:prod\"]",
     )
     app_module = app / "apps" / "api" / "src" / "app.module.ts"
+    _replace_once(
+        app_module,
+        "    ConfigModule.forRoot({ isGlobal: true, validate: validateEnvironment }),\n",
+        "    ConfigModule.forRoot({ isGlobal: true, validate: values => ({ ...values, ...validateEnvironment(values) }) }),\n",
+    )
     _replace_once(app_module, "import { Module } from '@nestjs/common';\n", (
         "import { Module } from '@nestjs/common';\n"
         "import { AssistantModule } from '@app/assistant-server';\n"
@@ -101,12 +115,13 @@ def copy_assistant(app: Path) -> None:
         "    HealthModule,\n"
         "    AssistantModule,\n"
     ))
-    # The copied app has five additional tables even when the module is not
+    # The copied app has six additional tables even when the module is not
     # imported. Keep the exact catalog check and include their owning schema.
     _replace_once(app / "apps/api/test/database.e2e-spec.ts",
                   "      Notification: 'notifications',\n", (
         "      Notification: 'notifications',\n"
         "      AssistantChat: 'assistant',\n"
+        "      AssistantUsage: 'assistant',\n"
         "      checkpoints: 'assistant', checkpoint_blobs: 'assistant',\n"
         "      checkpoint_writes: 'assistant', checkpoint_migrations: 'assistant',\n"
     ))

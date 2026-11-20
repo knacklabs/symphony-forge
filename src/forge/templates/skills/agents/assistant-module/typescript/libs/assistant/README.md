@@ -10,7 +10,9 @@ Run these commands from the app root. Use `.codex/skills` or `.claude/skills`, a
 cp -R .codex/skills/agents/assistant-module/typescript/libs/assistant libs/assistant
 cp .codex/skills/agents/assistant-module/typescript/apps/api/prisma/schema/assistant.prisma apps/api/prisma/schema/assistant.prisma
 cp -R .codex/skills/agents/assistant-module/typescript/apps/api/prisma/migrations/20261106000000_assistant apps/api/prisma/migrations/20261106000000_assistant
+cp -R .codex/skills/agents/assistant-module/typescript/apps/api/prisma/migrations/20261106010000_assistant_usage apps/api/prisma/migrations/20261106010000_assistant_usage
 cp .codex/skills/agents/assistant-module/typescript/apps/api/test/assistant-chats.e2e-spec.ts apps/api/test/assistant-chats.e2e-spec.ts
+cp .codex/skills/agents/assistant-module/typescript/apps/api/test/assistant-model.e2e-spec.ts apps/api/test/assistant-model.e2e-spec.ts
 cp .codex/skills/agents/assistant-module/typescript/apps/api/test/assistant-api.e2e-spec.ts apps/api/test/assistant-api.e2e-spec.ts
 ```
 
@@ -43,6 +45,7 @@ In `apps/api/prisma/schema/auth.prisma`, add these fields to `Account`:
 ```prisma
 createdChats  AssistantChat[] @relation("ChatCreatedBy")
 modifiedChats AssistantChat[] @relation("ChatModifiedBy")
+assistantUsage AssistantUsage[]
 ```
 
 Add `@app/assistant-server` as a `workspace:*` dependency in `apps/api/package.json`. Add `../../libs/assistant/server` to the references in `apps/api/tsconfig.json`. Add the assistant scope rule to `eslint.config.mjs`. Permit assistant code to use assistant, core, shared and contracts libraries.
@@ -78,7 +81,7 @@ Add `corepack pnpm run assistant:setup` after `prisma migrate deploy` in the `CM
 In `apps/api/test/database.e2e-spec.ts`, extend the expected catalog in `each module keeps its tables in its own schema` with these entries. Keep the existing entries and the exact equality assertion.
 
 ```ts
-AssistantChat: 'assistant',
+AssistantChat: 'assistant', AssistantUsage: 'assistant',
 checkpoints: 'assistant', checkpoint_blobs: 'assistant',
 checkpoint_writes: 'assistant', checkpoint_migrations: 'assistant',
 ```
@@ -88,6 +91,18 @@ Keep these entries when the module is not imported. Its migration and storage se
 ## Settings
 
 When the app imports the assistant module, set `ASSISTANT_AI_KEY`, `ASSISTANT_MODEL`, `ASSISTANT_SPEND_CAP_USD`, `ASSISTANT_PRICE_INPUT_USD_PER_MTOK` and `ASSISTANT_PRICE_OUTPUT_USD_PER_MTOK`. Set `ASSISTANT_AI_URL` only for an OpenAI-compatible service with a custom address. Keep each value in the app's `.env` or its host settings. Do not put a key in code.
+
+The starter validator returns only core settings. Keep the other values in the result from `ConfigModule.forRoot`. Set its `validate` option in `apps/api/src/app.module.ts` to:
+
+```ts
+values => ({ ...values, ...validateEnvironment(values) })
+```
+
+This keeps the assistant settings in `ConfigService` after the starter checks its settings.
+
+Add `AssistantModel` and `AssistantUsage` from `@app/assistant-server` to the API module's providers. They check the settings at start-up. Dollar amounts must be non-negative decimal strings with at most six decimal places. Zero sets a used-up cap or a free token price. Prices use US dollars per million tokens. `AssistantUsage.cost` rounds the total cost up to one micro-dollar per turn.
+
+Before a turn, call `AssistantUsage.canStart`. After the turn, call `record(accountId, chatId, inputTokens, outputTokens)`. These billing rows contain no message text. They remain after the chat expires, with an empty chat link. The cap counts the current UTC calendar month across the whole app.
 
 Build the Assistant page in the app's design by the `The assistant page` section in the agents skill. The template contains no page or route.
 
@@ -104,4 +119,4 @@ The app's session and CSRF guards protect the routes under `/api/v1/assistant/ch
 
 The contracts package defines the five blocks and the stream events. Each stream event uses `{ event, data }`; `done` has an empty data object. A pending interrupt carries `title`, `lines` and `expiresAt` in its value. The read endpoint uses the interrupt's own id as `confirmId`.
 
-Run the app's normal test command after the copy. The starter's API test pattern includes both copied test files. To leave the module off, omit `AssistantModule` from the app's imports. The ordinary API needs no assistant settings in that state.
+Run the app's normal test command after the copy. The starter's API test pattern includes the copied test files. To leave the module off, omit `AssistantModule` from the app's imports. The ordinary API needs no assistant settings in that state.
