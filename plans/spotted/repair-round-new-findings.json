@@ -1,0 +1,59 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/autoreview.py\tGate: existing review-loop tests still require new P1 findings to block\trepair-round-new-findings",
+      "kind": "bug",
+      "path": "src/forge/autoreview.py",
+      "line": 31,
+      "text": "Gate: existing review-loop tests still require new P1 findings to block",
+      "from": "blocking",
+      "item": "repair-round-new-findings",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/autoreview.py\tKeep priority-tagged Not fixed findings blocking\trepair-round-new-findings",
+      "kind": "bug",
+      "path": "src/forge/autoreview.py",
+      "line": 27,
+      "text": "Keep priority-tagged Not fixed findings blocking",
+      "from": "blocking",
+      "item": "repair-round-new-findings",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tNot done: repair-round Not done follow-ups can block a later review\trepair-round-new-findings",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 1101,
+      "text": "Not done: repair-round Not done follow-ups can block a later review",
+      "from": "blocking",
+      "item": "repair-round-new-findings",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tPreserve blocking on the first review after a skipped review\trepair-round-new-findings",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 1054,
+      "text": "Preserve blocking on the first review after a skipped review",
+      "from": "blocking",
+      "item": "repair-round-new-findings",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tRecord new Not done findings on story-task guidance\trepair-round-new-findings",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 1054,
+      "text": "Record new Not done findings on story-task guidance",
+      "from": "blocking",
+      "item": "repair-round-new-findings",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
