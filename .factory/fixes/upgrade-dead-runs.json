@@ -18,7 +18,7 @@
       "gain": 3,
       "harm": 3,
       "line": 21,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 1,
       "security": false,
@@ -41,28 +41,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "b759f450589852c52dd0dc7d43d4465a56a9785fa4c9a14618002e9eaa3d2d8a",
+    "branch_diff": "befe6ca0d52ead59ada9e10c007b925df63ccf8c457d8e9be522cb368be6f4df",
     "changed": "c878de5381320245faa049fc4bf8ed4a1868a91d69d1cde265ddca88d7ba01d2",
-    "commit": "79156decd594921720316e6e8bae6590171d45c4",
+    "commit": "5bccb10ea9ecbdcf78ea4ed4c30d92a1ca8ba053",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 3, Work 3, Harm 3\nRaise: Not done. Case: normal use - a close has a clean review and is waiting for the already-pushed code's CI before pushing its review record. `src/forge/close.py:438` enters `checks.after_code_ci`, but the `let_finish` wait at `src/forge/checks.py:123` writes no run-start record. The review lane has already ended, so the new scan at `src/forge/upgrade.py:101` cannot see the live close and upgrade can install a replacement release while it waits. The new test waits for a CI run-start at `tests/test_upgrade_waits_for_live_commands.py:34`, so it exercises the later recorded wait rather than this one.",
-        "file": "tests/test_upgrade_ignores_ended_processes.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 21,
-        "priority": "P1",
-        "required_done_when": true,
-        "title": "Not done: live CI waits do not block forge upgrade",
-        "work": 3
-      }
-    ],
-    "id": "2ac0566a-4e7e-4f67-8f49-6d78dd60d20b",
-    "status": "blocked"
+    "findings": [],
+    "id": "ca10c2a6-5bf2-4bb6-8438-8c314c8c9341",
+    "status": "clean"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-20T05:46:31.133591+00:00",
@@ -102,6 +90,10 @@
       "choice": "more",
       "round": 3,
       "step": "owner decision"
+    },
+    {
+      "at": "2026-11-20T12:29:40.470722+00:00",
+      "step": "review"
     }
   ],
   "stop": {
