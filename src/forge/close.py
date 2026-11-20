@@ -521,7 +521,7 @@ def close(args: argparse.Namespace) -> int:
         from forge import land
 
         print(f"Ready: {item} has {review_skip.readiness(result)} and {proof}.")
-        items = [item, *sorted(land.ready_items(top) - {item})]
+        items = [item, *sorted(land.ready_items(top, item))]
         print("Next: forge land " + " ".join(items) if len(items) > 1 else f"Next: forge merge {item}")
     else:
         print(f"Ready: {item} has {review_skip.readiness(result)} and {proof}. A human merges its pull request.")

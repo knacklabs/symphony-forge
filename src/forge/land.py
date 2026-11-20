@@ -373,8 +373,8 @@ def _land_all(only: set[str]) -> int:
             codex._unlock(lock)
 
 
-def ready_items(top: Path) -> set[str]:
-    """Active agent-merge items with close evidence at their current head.
+def ready_items(top: Path, current: str) -> set[str]:
+    """Other active agent-merge items with close evidence at their current head.
 
     Read close receipts directly: a report can hide tasks during a plan read,
     and its cached optional checks do not revoke a completed local close.
@@ -386,6 +386,8 @@ def ready_items(top: Path) -> set[str]:
         if not entry:
             continue
         item, state = entry
+        if item == current:  # close already established this item's readiness
+            continue
         state = nextstep.at_ref(top, item, state)
         if (state.get("status") not in IN_CLOSE or close.merger(tree, state) != "agent"
                 or state.get("stop") and not state["stop"].get("choice")
@@ -407,7 +409,6 @@ def _queue(top: Path, only: set[str]) -> int:
     hold = repo.merge_setting(top) == "agent"
     live = {run.get("item") for run in machine.entries() if run.get("repo_root") == top.as_posix()}
     changes, needs, stacked, branches = [], {}, {}, {}
-    ready = ready_items(top)
     prs = {pr.get("headRefName"): pr for pr in board._machine_prs(top)}
     for branch, tree in story.worktrees(top).items():
         found = None if branch.startswith("story/") else task.branch_item(branch, tree)
@@ -441,7 +442,10 @@ def _queue(top: Path, only: set[str]) -> int:
             files = {path for path in repo.git("diff", "--name-only", "-z", "--no-renames",
                                                f"origin/{default}...HEAD", cwd=tree).split("\0")
                      if path and path != spotted.PATH and not path.startswith(".factory/")}
-            changes.append((age, item, files, item in ready))
+            pr = prs.get(branch)
+            ready = nextstep._item_readiness(item, state, tree, board._checks(
+                pr, repo.config(tree)["checks"])[0], pr=pr)[0] == "ready"
+            changes.append((age, item, files, ready))
             stacked[item] = state.get("stacked_on")
             branches[item] = branch
     changes.sort()
