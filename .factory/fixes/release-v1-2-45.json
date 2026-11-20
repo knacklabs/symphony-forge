@@ -1,6 +1,13 @@
 {
   "base": "bb2cefadfba141ffbc3347f7ca3383f3b5d1afef",
   "branch": "fix/release-v1-2-45",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1f984-52c6-72a2-9d67-44cf7b1cba62",
+    "head": null,
+    "start": "8d6790e256eeb767b3db6d97eb9d62d9570b2eb0"
+  },
   "done_when": "Every version reference that names the current release says v1.2.45 (as the v1.2.44 release fix did, keeping v1.2.44 references used as a minimum release), the release version tests pass, and nothing else changes",
   "fix_kind": "mechanical",
   "kind": "fix",
