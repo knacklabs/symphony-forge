@@ -396,10 +396,15 @@ For each Done-when item you cover that changes runtime behaviour, write one end-
 boundary the user touches, named for the item; a settings, docs, deletion or test-only item is
 proven by the check the item names. Name a new test file after the behaviour it proves, never
 after the fix's slug. In a local-test repo, run each test and watch it fail, then build until it
-passes. In a CI-test repo, wider related tests, lint and type checks stay in pull request CI.
+passes. In every test place, run the change's related tests on the laptop. CI runs its wider checks.
 Never edit or delete a test to make it pass; if a test
 is wrong, say so. A test whose result a stub or fake decides proves nothing. Use the test-audit
 skill whenever you write or change a test. Before you stop, $test_step
+After the worker turn, Forge runs `forge test --change` in the machine's test lane.
+If it fails, Forge sends one repair turn with the test report, then runs it again.
+The round records the test result, including any failure left after that repair.
+Sample-data rounds keep their browser proof and run no automated tests.
+New and existing repos get this behavior on upgrade.
 Without an explicit `test_place`, Forge uses CI only if `checks` names a check other than
 `forge-pr-check`. That review-only check runs no app tests. Otherwise close runs tests locally.
 An explicit `test_place` keeps its value. Keep `test` as the full suite for the nightly run;

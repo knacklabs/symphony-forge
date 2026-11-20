@@ -9,6 +9,7 @@ import re
 import shutil
 import signal
 import subprocess
+import sys
 import tempfile
 import time
 import uuid
@@ -56,8 +57,8 @@ TEST_STEPS = {
               "run of five or fewer related test files skips the lane's wait unless the test "
               "command or pytest config has a doctest option. It always runs, including uncommitted "
               "changes. Then commit any fixes. The nightly full run covers the rest."),
-    "ci": "wider related tests, lint and type checks stay in pull request CI.",
 }
+TEST_STEPS["ci"] = TEST_STEPS["local"] + " CI runs the wider set of checks."
 START_HERE = ("Do not read the coordinator guide (the forge skill's `SKILL.md`): this brief has "
               "everything a worker needs. Start from the files and tests this brief names, and "
               "search the rest of the repo only for what they call or what calls them. "
@@ -396,7 +397,18 @@ def _work(args: argparse.Namespace) -> bool:
                         finally:
                             codex._record(codex._item_file(top, item, ".json", kind),
                                 claude={**saved, "head": git("rev-parse", "HEAD", cwd=top)})
-                    outcome = "completed"
+                    outcome = "failed"
+                    failed, report = related_tests(top)
+                    if failed:
+                        saved = codex.record(top, item)["claude"]
+                        try:
+                            nudged += "\n" + _run(item, top, test_nudge(report), claude, budget,
+                                                   resume=saved["id"])
+                        finally:
+                            codex._record(codex._item_file(top, item, ".json", kind),
+                                claude={**saved, "head": git("rev-parse", "HEAD", cwd=top)})
+                        failed, report = related_tests(top)
+                    outcome = "failed" if failed else "completed"
                     return False
             name = f"{match['key']} · {subject}" if match["task"] else f"Fix · {subject}"
             if len(name) > 60:
@@ -420,6 +432,18 @@ def _work(args: argparse.Namespace) -> bool:
                     result, outcome = again, "failed"
                 else:
                     nudged = (again.get("text") or "").strip()
+            if outcome == "completed":
+                outcome = "failed"
+                failed, report = related_tests(top)
+                if failed:
+                    again = codex.run(top, item, kind, name, test_nudge(report), "full-access",
+                                      result["conversation"], "", approval, design=design,
+                                      effort=chosen["effort"])
+                    nudged += "\n" + (again.get("text") or "").strip()
+                    result = again
+                    failed, report = related_tests(top)
+                outcome = ("completed" if not failed and result["status"] == "completed"
+                           else "failed")
         finally:
             _restore_settings(item, top, state)
             if final is not None:
@@ -442,6 +466,25 @@ def _work(args: argparse.Namespace) -> bool:
                    else "Codex never reported its end")
             refuse(REFUSALS["turn"], why=why, log=repo.work_log(top, item), item=item)
     return False
+
+
+def related_tests(top: Path) -> tuple[int, str]:
+    """Finish every non-sample round with the existing change command and its test lane."""
+    if repo.sample_data(top):
+        return 0, ""
+    code = (f"import sys; sys.path.insert(0, {str(HERE.parent)!r}); "
+            "from forge.cli import main; sys.exit(main(['test', '--change']))")
+    result = repo.run(sys.executable, "-c", code, cwd=top)
+    report = (result.stdout + result.stderr).strip()
+    print(report, flush=True)
+    print("Related tests failed." if result.returncode else "Related tests passed.", flush=True)
+    return result.returncode, report
+
+
+def test_nudge(report: str) -> str:
+    return ("The change's related tests failed. Repair the failures below and commit your work. "
+            "Forge will run forge test --change once more after this turn. "
+            "If tests still fail, report what remains.\n\n" + report)
 
 
 def questions(*answers: str) -> str:

@@ -283,7 +283,14 @@ def _work_result(path: Path, item: str, pending: dict[str, Any], said: str, owne
         print(f"Send this to subagent {subagent}, then hand back again:\n"
               f"{worker.commit_nudge(top)}")
         return True
-    outcome = "completed"
+    failed, report = worker.related_tests(top)
+    if failed and not pending.get("tests_nudged"):
+        codex._record(path, pending={**pending, "tests_nudged": True,
+                                    "said": worker.questions(pending.get("said", ""), said)})
+        print(f"Send this to subagent {subagent}, then hand back again:\n"
+              f"{worker.test_nudge(report)}")
+        return True
+    outcome = "failed" if failed else "completed"
     asked = worker.questions(pending.get("said", ""), said)
     identity = repo.record_event(top, item, "worker question", question=asked) if asked else None
     codex._record(path, question=asked or None, question_id=identity,
