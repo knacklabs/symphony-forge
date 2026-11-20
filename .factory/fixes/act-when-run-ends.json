@@ -1,0 +1,72 @@
+{
+  "base": "b4039cc7e51cc868a233121f4b23515ed213b8ed",
+  "branch": "fix/act-when-run-ends",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1f2d4-9422-79b3-ba4c-018fef757546",
+    "head": null,
+    "start": "e3f4a684541655eb0a2f406fde5f5f05f18b2202"
+  },
+  "done_when": "The Forge skill says: when a background round, close or merge ends, run forge next at once and do its first step, with no timer; the generated skill copies match; new repos get it at init and existing repos on upgrade and forge sync",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "src/forge/templates/skill.md",
+      "file": "src/forge/templates/skill.md",
+      "gain": 4,
+      "harm": 3,
+      "line": 401,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Preserve recovery steps when background commands stop",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "36d22966ca6f315109df7a51f19b85a007e619e91f100e61c443265ec31545cf",
+    "changed": "5b933c3474f6848f38080106c7aade434f11b0a4b7ac5af07277289456f1c57f",
+    "commit": "29f947b6d98c8c4eae71119d11bbcb16cef9eea7",
+    "dismissals": [],
+    "findings": [],
+    "id": "b401263c-4d88-4970-9680-afdaaab8bc1e",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-19T08:02:52.521594+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-19T08:11:49.716625+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-19T08:16:07.434149+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-19T08:11:49.727324+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "src/forge/templates/skill.md",
+    "reason": "Owner decided on 18 Nov 2026 that fixes get two review rounds; this is the second",
+    "wait_id": "d0c2dcda-f8bd-42ff-ac45-3dceeec1b40b",
+    "worker_round": 1
+  },
+  "stuck": {
+    "close": "801aed27-b124-4601-80b2-95700c5efee6",
+    "head": "73c7208df626bc3ce5a1a76f7873a59fc6bee6f5",
+    "keys": {},
+    "round": 1
+  },
+  "why": "Coordinators check work on a timer or a fixed priority list, so a finished round, close or merge can sit until the next check (measured: the median Forge item waits 24 minutes with nothing running)",
+  "worker": "codex"
+}
