@@ -1,0 +1,48 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tMerged CI changes can skip a failing integration test\town-changes-one-group",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 360,
+      "text": "Merged CI changes can skip a failing integration test",
+      "from": "blocking",
+      "item": "own-changes-one-group",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/brief.md\tStandard: Delete before adding\town-changes-one-group",
+      "kind": "bug",
+      "path": "src/forge/templates/brief.md",
+      "line": 403,
+      "text": "Standard: Delete before adding",
+      "from": "blocking",
+      "item": "own-changes-one-group",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_board_now_screen.py\tThe first-screen browser test fails at its daily median text check on both this branch and main.",
+      "kind": "bug",
+      "path": "tests/test_board_now_screen.py",
+      "line": 124,
+      "text": "The first-screen browser test fails at its daily median text check on both this branch and main.",
+      "from": "worker",
+      "item": "own-changes-one-group",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_ci_selects_own_changes_after_merge.py\tGate: merged CI pull requests run one group\town-changes-one-group",
+      "kind": "bug",
+      "path": "tests/test_ci_selects_own_changes_after_merge.py",
+      "line": 77,
+      "text": "Gate: merged CI pull requests run one group",
+      "from": "blocking",
+      "item": "own-changes-one-group",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

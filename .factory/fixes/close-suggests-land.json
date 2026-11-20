@@ -1,0 +1,129 @@
+{
+  "base": "41c53141ecc53527d8952bc84065e55e6f5ffbe4",
+  "branch": "fix/close-suggests-land",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1f70b-469d-72f3-a8ba-d7809160f514",
+    "head": null,
+    "start": "4bd749d664a961d99baef306ea071899cf30f166"
+  },
+  "done_when": "When close reports Ready and one or more other items are also Ready, its Next line names one 'forge land <this> <others>' command (forge merge stays for a single Ready item), and the skill has a short 'Keep CI fast' section: land Ready items together, do not rerun close while checks are queued, do not merge main by hand right before a merge; new and existing repos get it on upgrade and forge sync",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "close() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 524,
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: Owner accepted on 20 Nov 2026: items from another laptop stay under known issue 1674",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Close names a single merge when its report hides another Ready item",
+      "work": 2
+    },
+    {
+      "area": "close() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 524,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Exclude the owner-held merge-enable fix from close's batch",
+      "work": 2
+    },
+    {
+      "area": "close() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 524,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Scale: Avoid rebuilding the full next report after every successful close",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "99dfcd59795509e3a268c837d411072c57e9d674ca29a970bb48a3a642f282ba",
+    "changed": "ece974d4863724aa0c1e84717a2ac72e7736219b409fe03a21e53ef79991acda",
+    "commit": "397e35c58730f8755d99f78b9e3766df763ad451",
+    "dismissals": [],
+    "findings": [],
+    "id": "aff9e5d6-25a9-422f-ba42-4a085ef28696",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-20T03:41:03.751468+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-20T03:41:12.853622+00:00",
+      "round": 1,
+      "step": "resume"
+    },
+    {
+      "at": "2026-11-20T03:52:19.042005+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-20T04:09:32.507740+00:00",
+      "round": 2,
+      "step": "resume"
+    },
+    {
+      "at": "2026-11-20T04:18:04.300388+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-20T04:18:04.316532+00:00",
+      "round": 2,
+      "step": "hold"
+    },
+    {
+      "at": "2026-11-20T04:19:25.408795+00:00",
+      "by": "owner",
+      "choice": "accept",
+      "round": 2,
+      "step": "owner decision"
+    },
+    {
+      "at": "2026-11-20T05:18:49.146840+00:00",
+      "round": 3,
+      "step": "resume"
+    },
+    {
+      "at": "2026-11-20T08:57:42.526432+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-20T04:18:04.316532+00:00",
+    "by": "owner",
+    "choice": "accept",
+    "file": "src/forge/close.py",
+    "reason": "Owner accepted on 20 Nov 2026: items from another laptop stay under known issue 1674",
+    "wait_id": "98efe4f7-b0be-45f4-a041-6d18cc709d81",
+    "worker_round": 2
+  },
+  "stuck": {
+    "close": "d2a13f81-d543-4a0b-80d6-90f55cb784d7",
+    "head": "aeb9aea1b9824ab5331e3641794335789547f5fa",
+    "keys": {},
+    "round": 2
+  },
+  "why": "Agents merge Ready items one at a time, so each merge after main moves costs a full CI run: forge close's Ready line says 'Next: forge merge <item>' even when other items are Ready, and the skill mentions the land train only in one table row; seen at a client on 19-20 Nov 2026",
+  "worker": "codex"
+}
