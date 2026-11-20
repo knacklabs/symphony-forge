@@ -1,0 +1,126 @@
+{
+  "amendments": [
+    {
+      "at": "2026-11-20T12:56:45.647479+00:00",
+      "because": "Owner chose the mixed split on 20 Nov 2026: near-full-suite selections skip the laptop run, after laptop runs in Forge's own repo took over 2 hours and blocked the machine",
+      "done_when": "In every test_place, a work round ends with the change's related tests run on the laptop through forge test --change; when they fail, Forge sends the worker one repair turn before the round ends and pushes, and the round's result says the tests ran and passed or what still fails; CI still runs its checks; new and existing repos get it on upgrade"
+    }
+  ],
+  "base": "a291873644fe4943653cb8413469ec21a8704e08",
+  "branch": "fix/laptop-tests-before-push",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1f763-659d-7c91-8481-fea4fdd21e3a",
+    "head": null,
+    "start": "839b0c17766f2ebff2b52328046a39d45bf22e9c"
+  },
+  "done_when": "In every test_place, a work round ends with the change's related tests run on the laptop through forge test --change, except when the selection is near the full suite (then the round skips the laptop run and says CI tests it); when the laptop run fails, Forge sends the worker one repair turn before the round ends and pushes; the round's result says the tests ran and passed, were skipped, or what still fails; CI still runs its checks; new and existing repos get it on upgrade",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "_work() in src/forge/worker.py",
+      "file": "src/forge/worker.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 448,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Do not report an uncommitted repair as a passing branch",
+      "work": 2
+    },
+    {
+      "area": "related_tests() in src/forge/worker.py",
+      "file": "src/forge/worker.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 480,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Send a repair turn when the first related-test run fails",
+      "work": 2
+    },
+    {
+      "area": "_work() in src/forge/worker.py",
+      "file": "src/forge/worker.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 445,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Preserve worker questions across both nudges",
+      "work": 1
+    },
+    {
+      "area": "related_tests() in src/forge/worker.py",
+      "file": "src/forge/worker.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 484,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Do not claim related tests passed when none ran",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "9ec00dfcb7a08ad53aca47f5b6f3fa3aed8dad95654e0d4dada25033c7cb30ed",
+    "changed": "6df17f5ce41812df087bcb6fb16658dddbf736d521e8262b36ff99489b49b332",
+    "commit": "e4d4f3769d9411b98f27c4d37bb9f75cebe82ce5",
+    "dismissals": [],
+    "findings": [],
+    "id": "cddeb2dd-a1a8-4af1-9ab4-c7c65332b574",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-20T05:17:19.436535+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-20T05:17:27.808015+00:00",
+      "round": 1,
+      "step": "resume"
+    },
+    {
+      "at": "2026-11-20T05:57:45.870554+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-20T05:58:20.532251+00:00",
+      "round": 2,
+      "step": "resume"
+    },
+    {
+      "at": "2026-11-20T12:57:03.616118+00:00",
+      "round": 3,
+      "step": "resume"
+    },
+    {
+      "at": "2026-11-20T14:28:39.917844+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "768c491f-d5c6-41ad-9043-25ec26e44254",
+    "head": "dd23ab80ec7d5a3a05f57df8261d1b04d7401976",
+    "keys": {
+      "the open P0 functional: do not report an uncommitted repair as a passing branch in src/forge/worker.py": 1
+    },
+    "round": 1
+  },
+  "why": "In repos with test_place ci (Forge's own repo and most clients), the worker brief says related tests stay in pull request CI, so workers push without running their change's tests: 38 of 46 failed Forge PR runs since 17 Nov 2026 (83%) were the branch's own bug, at least 30 of them caught by the branch's own related tests, each costing a 12-18 minute CI run and 14 branches failing 2-4 times",
+  "worker": "codex"
+}
