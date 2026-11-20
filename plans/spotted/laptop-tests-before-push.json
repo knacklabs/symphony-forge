@@ -43,6 +43,28 @@
       "item": "laptop-tests-before-push",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "improve\tsrc/forge/sync.py\tThe sync message tells people to set local mode for laptop change tests even though workers now run related tests locally.",
+      "kind": "improve",
+      "path": "src/forge/sync.py",
+      "line": 743,
+      "text": "The sync message tells people to set local mode for laptop change tests even though workers now run related tests locally.",
+      "from": "worker",
+      "item": "laptop-tests-before-push",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "improve\tsrc/forge/templates/starter/scripts/affected.mjs\tA change only to Forge records selects all app parts and starts the full container and browser setup.",
+      "kind": "improve",
+      "path": "src/forge/templates/starter/scripts/affected.mjs",
+      "line": 15,
+      "text": "A change only to Forge records selects all app parts and starts the full container and browser setup.",
+      "from": "worker",
+      "item": "laptop-tests-before-push",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }

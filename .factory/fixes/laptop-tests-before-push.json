@@ -25,7 +25,7 @@
       "gain": 5,
       "harm": 3,
       "line": 448,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -38,7 +38,7 @@
       "gain": 3,
       "harm": 3,
       "line": 480,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -51,7 +51,7 @@
       "gain": 4,
       "harm": 3,
       "line": 445,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -64,7 +64,7 @@
       "gain": 3,
       "harm": 3,
       "line": 484,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -74,58 +74,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "4aa2e75d695b25664ba3672687022a57443ee39519badbc77d8524f82feba435",
-    "changed": "c84225de719d7058a76a10063f6da1cb322ed14850f9bf48d4656328719e3b62",
-    "commit": "7ca540026e0d0c1070c70bcd899d823467d5ddb2",
+    "branch_diff": "9ec00dfcb7a08ad53aca47f5b6f3fa3aed8dad95654e0d4dada25033c7cb30ed",
+    "changed": "6df17f5ce41812df087bcb6fb16658dddbf736d521e8262b36ff99489b49b332",
+    "commit": "e4d4f3769d9411b98f27c4d37bb9f75cebe82ce5",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 5, Work 2, Harm 3\nRaise: Functional\nCase: normal use - A worker commits a failing change, then fixes the failure in its repair turn but leaves that fix uncommitted.\nThe recheck runs against the working tree and can pass, after which the round is marked completed even though the committed branch still fails. The only commit nudge in the Claude and Codex paths happens before the repair; the final warning does not prevent close from reviewing and pushing HEAD. Native work has the same gap if its commit nudge was already used. The named proof always commits the repair, so it misses this case.",
-        "file": "src/forge/worker.py",
-        "gain": 5,
-        "harm": 3,
-        "line": 448,
-        "priority": "P1",
-        "title": "Functional: Do not report an uncommitted repair as a passing branch",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Not done\nCase: normal use - A related pytest test fails in the first run but passes when retried by itself.\nOwner-approved Done when: In every test_place, a work round ends with the change's related tests run on the laptop through forge test --change; when they fail, Forge sends the worker one repair turn before the round ends and pushes, and the round's result says the tests ran and passed or what still fails; CI still runs its checks; new and existing repos get it on upgrade.\nThe new call uses `forge test --change`, which calls `review.test_run` with `closing=True` (`src/forge/fasttest.py:371`). That function retries failed pytest files and returns success if the retry passes (`src/forge/review.py:448`), so no repair turn is sent and the round is reported as passed. The named proof uses a standalone check script rather than pytest, so it cannot expose this retry.",
-        "file": "src/forge/worker.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 480,
-        "priority": "P1",
-        "required_done_when": true,
-        "title": "Not done: Send a repair turn when the first related-test run fails",
-        "work": 2
-      },
-      {
-        "body": "Gain 4, Work 1, Harm 3\nRaise: Functional\nCase: normal use - A worker first needs the commit nudge, then asks the owner a question during the test-repair turn.\nThe Claude and Codex paths append the repair message to the previous nudge with only one newline, but `questions` recognizes a `Question:` block only at the beginning of an answer or after a blank line (`src/forge/worker.py:494`). The question is therefore not recorded, and close can proceed without the required answer. Native work has a sibling loss: after the test nudge saves an earlier question, a subsequent commit nudge overwrites `pending['said']` (`src/forge/native.py:280-289`).",
-        "file": "src/forge/worker.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 445,
-        "priority": "P1",
-        "title": "Functional: Preserve worker questions across both nudges",
-        "work": 1
-      },
-      {
-        "body": "Gain 3, Work 1, Harm 3\nRaise: Functional\nCase: normal use - A non-sample repo has no configured test command, or the pytest picker selects no related files.\nBoth cases return exit status zero while explicitly saying no tests ran (`src/forge/fasttest.py:349` and `src/forge/fasttest.py:825`). This line then prints `Related tests passed` and the round completes, falsely describing an untested change as passing. The named proof always configures a check that executes, so it does not cover either result.",
-        "file": "src/forge/worker.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 484,
-        "priority": "P1",
-        "title": "Functional: Do not claim related tests passed when none ran",
-        "work": 1
-      }
-    ],
-    "id": "3f4f7f3b-ae3d-4b02-a981-6e1bf030a0a5",
-    "status": "blocked"
+    "findings": [],
+    "id": "cddeb2dd-a1a8-4af1-9ab4-c7c65332b574",
+    "status": "clean"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-20T05:17:19.436535+00:00",
@@ -149,6 +107,10 @@
       "at": "2026-11-20T12:57:03.616118+00:00",
       "round": 3,
       "step": "resume"
+    },
+    {
+      "at": "2026-11-20T14:28:39.917844+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
