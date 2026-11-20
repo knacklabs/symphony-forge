@@ -1,6 +1,13 @@
 {
   "base": "41c53141ecc53527d8952bc84065e55e6f5ffbe4",
   "branch": "fix/close-suggests-land",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1f70b-469d-72f3-a8ba-d7809160f514",
+    "head": null,
+    "start": "4bd749d664a961d99baef306ea071899cf30f166"
+  },
   "done_when": "When close reports Ready and one or more other items are also Ready, its Next line names one 'forge land <this> <others>' command (forge merge stays for a single Ready item), and the skill has a short 'Keep CI fast' section: land Ready items together, do not rerun close while checks are queued, do not merge main by hand right before a merge; new and existing repos get it on upgrade and forge sync",
   "fix_kind": "mechanical",
   "kind": "fix",
