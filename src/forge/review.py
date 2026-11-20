@@ -1044,6 +1044,10 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                         settled[score.identity(finding["file"], finding["title"])] = accepted_reason
                     elif finding["priority"] == "P0":
                         settled.pop(score.identity(finding["file"], finding["title"]), None)
+            for finding in findings:
+                key = score.identity(finding["file"], finding["title"])
+                if score.priority(finding) == "P0" and settled.get(key, "").startswith("fixed:"):
+                    settled.pop(key)
             findings = [finding for finding in findings if not settled.get(
                 score.identity(finding["file"], finding["title"]), "").startswith("fixed:")]
             if not signoff_prompt:

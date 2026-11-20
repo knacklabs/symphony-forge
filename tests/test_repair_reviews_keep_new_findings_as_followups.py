@@ -5,6 +5,10 @@ advice. A reviewer that ignores the prompt currently expands the owner stop.
 Extend this owner test for tagged repeats, retained follow-ups and story guidance:
 the previous cases omit these lifecycle paths. Fake only Autoreview and GitHub
 at their existing external boundaries; no production seam is needed.
+
+P0 escalation audit: close must block when earlier advice or a fixed P1 comes
+back as P0. Existing cases keep severity unchanged, so cannot catch history
+silencing that escalation. Exercise both histories through close, with no seam.
 """
 import pytest
 
@@ -68,3 +72,38 @@ def test_1_repair_review_keeps_new_p1_as_followup(env, kind, priority, title, fo
     serious, advice = third.stdout.split("Advice that does not block the merge:", 1)
     assert old_title in serious and title not in serious
     assert title in advice and "Does not block: Follow-up" in advice
+
+
+@pytest.mark.parametrize("earlier", ["follow-up", "fixed"])
+def test_2_p0_escalations_block_even_after_followup_or_repair(env, earlier):
+    client(env, adopted=False)
+    blocker = finding("P1", "The greeting is missing")
+    title = "Saving a basket fails"
+    tracked = finding("P1", "[P1] " + title)
+    item, where = env.start_fix()
+    env.reviews(blocked(blocker, tracked) if earlier == "fixed" else blocked(blocker))
+    first = env.close(item)
+    assert first.returncode == 1, first.stdout + first.stderr
+    env.open_pr(body(env.gh_calls("pr", "create")[-1]), draft=True)
+    env.commit(where, "app.py", "print('save the basket')\n")
+    env.reviews(blocked(blocker, tracked) if earlier == "follow-up" else blocked(blocker))
+    second = env.close(item)
+    assert second.returncode == 1, second.stdout + second.stderr
+    if earlier == "follow-up":
+        assert title in second.stdout.split("Advice that does not block the merge:", 1)[1]
+    choice = env.close(item, "--resolve", "more", "--reason", "The owner chose another round")
+    assert choice.returncode == 0, choice.stdout + choice.stderr
+    env.commit(where, "app.py", "raise RuntimeError('saving now loses the basket')\n")
+    escalated = finding("P0", "[P0] " + title)
+    escalated["body"] += "\nCase: normal use - Saving now loses every basket on the main path."
+    env.reviews(blocked(escalated))
+
+    third = env.close(item)
+
+    assert third.returncode == 1, third.stdout + third.stderr
+    assert escalated["title"] in third.stderr
+    assert "Ready:" not in third.stdout
+    assert "Does not block:" not in third.stdout
+    assert "One more round, split or accept?" not in third.stderr
+    published = body(env.gh_calls("pr", "edit")[-1])
+    assert f"(P0): {escalated['title']}" in published
