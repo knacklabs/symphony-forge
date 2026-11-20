@@ -1,0 +1,15 @@
+{
+  "base": "a291873644fe4943653cb8413469ec21a8704e08",
+  "branch": "fix/repair-round-new-findings",
+  "done_when": "From the second review round on, Forge itself keeps only the previous findings that are still open plus new P0 findings; any other new finding is recorded as a follow-up on the item, shown in close's advice, and does not block the merge; round-one reviews and the owner's choices at the round limit are unchanged; new and existing repos get it on upgrade",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-20T04:07:50.110997+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Repair-round reviews keep raising new P1 findings in code the repair did not change, although the repair-review prompt (src/forge/templates/review.md, Repair review) allows a new finding only when it is a P0 in normal use; 25 of 38 merged items since 17 Nov 2026 needed 3 or more rounds"
+}
