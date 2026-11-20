@@ -80,34 +80,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "9cbe78b2b218498d4cadba7a00e368330455975c7ba91891fff841e62e3e394a",
-    "changed": "4db7e23518f19518ea38d1eccfb377773daf57dbc3c2e1ef4f84be9ed5dcca32",
-    "commit": "4acfebd210c42693654361c7666af8d7cc2881ed",
-    "dismissals": [
-      {
-        "accepted": true,
-        "because": "Human accepted the remaining finding: Owner accepted on 20 Nov 2026: the rare design-file case after a main merge stays a follow-up; the client's large deletion case is fixed",
-        "finding": 1
-      }
-    ],
-    "findings": [
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done\nCase: normal use - a blocked change is repaired after an updated default branch is merged into it.\nThe prompt classifies design files against the previous reviewed commit, but `review.py:949-954` can reset the actual comparison base to the updated default branch. If the previous commit removed a `linguist-generated` attribute and updated a short-lined `PRODUCT.md`, `DESIGN.md`, or applicable `SCREENS.md`, neither that commit nor HEAD marks the file. The prompt therefore includes its full content, even though the actual comparison base still marks it generated and the diff filter omits it. A large generated design file can again exhaust the review input limit. The new design-context test covers only a first review, so it misses this repair-review case.",
-        "file": "src/forge/review.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 337,
-        "priority": "P1",
-        "required_done_when": true,
-        "title": "Not done: Generated content still reaches the review",
-        "work": 2
-      }
-    ],
-    "id": "50cf3114-7299-4118-82f0-d2960758e11c",
+    "branch_diff": "6aed2dd03bdb51026a1e2fd14358829f4e892d3853c0d47cd9aa42bbb5361014",
+    "changed": "83088068adf37264be2535d6bdcad5d8aecce5798209be988665ab181b1f5de5",
+    "commit": "88611bcf995dd98e1a1c897ec112900839afea0c",
+    "dismissals": [],
+    "findings": [],
+    "id": "6e402252-6c07-497e-9f32-4c2f279a8a23",
     "status": "clean"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-20T06:56:52.782494+00:00",
@@ -147,6 +129,10 @@
       "at": "2026-11-20T09:59:21.979447+00:00",
       "round": 3,
       "step": "resume"
+    },
+    {
+      "at": "2026-11-20T10:09:10.016153+00:00",
+      "step": "review"
     }
   ],
   "stop": {
