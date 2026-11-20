@@ -1,6 +1,13 @@
 {
   "base": "41c53141ecc53527d8952bc84065e55e6f5ffbe4",
   "branch": "fix/records-cancel-ci",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1f700-ca70-7da3-8707-a8f22c94f142",
+    "head": null,
+    "start": "052a1e68f959c5aec2afc73e7f6b38139246ad0c"
+  },
   "done_when": "A push whose new commits change only Forge's record files never cancels or restarts a running or queued test run of the same code: close holds its record commits until the checks report (or pushes them with the code), and a record-only push reuses the earlier result; new and existing repos get it on upgrade and forge sync",
   "fix_kind": "mechanical",
   "kind": "fix",
