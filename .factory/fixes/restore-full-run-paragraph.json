@@ -44,7 +44,7 @@
       "gain": 5,
       "harm": 4,
       "line": 7,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 2,
       "security": false,
@@ -54,27 +54,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "252502fd6068dea4919ddf8bc2bda1c41981686098db7b5225cdca3a3486d46a",
-    "changed": "3a27c58f9b938b4907fda608b630469d731b34385a77aba94a26694c4034d43c",
-    "commit": "7ca20346ec9a404f6e3c248a7337fd88f4316273",
+    "branch_diff": "495e43573cbd97dc03e31fafe7f00f7a708733a46731743345bccc26a7e756bd",
+    "changed": "c7ef5ce3d4b3396113abf06379e9cd5478c7337e08cad90d624c22791d6def3d",
+    "commit": "b7a1895a5879a22c2267465b4465d018d5fc767a",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 5, Work 1, Harm 4\nRaise: Functional\nCase: normal use - a maintainer runs the required full suite on main before a Forge release.\nThe new entry is copied into a temporary client by `tests/test_required_repo_rules.py:45`, but that test creates files only for the six previous entries at `tests/test_required_repo_rules.py:37`. Its four cases therefore pass the new, nonexistent test path to pytest through `src/forge/fasttest.py:860`, causing pytest to fail. The scheduled and manual full-suite workflow runs these cases, so it cannot produce the green result required to push a release tag. Update the fixture and its expectations to include the new required test.",
-        "file": ".forge/always-tests.txt",
-        "gain": 5,
-        "harm": 4,
-        "line": 7,
-        "priority": "P0",
-        "title": "Functional: The required-test list makes Forge full runs fail",
-        "work": 1
-      }
-    ],
-    "id": "0c2f3794-959a-4946-bb35-33a2980ef158",
-    "status": "blocked"
+    "findings": [],
+    "id": "dc42ec9a-bd88-405a-9b23-d72e851186f2",
+    "status": "clean"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-20T06:36:02.826360+00:00",
@@ -102,6 +91,10 @@
       "at": "2026-11-20T08:46:57.873287+00:00",
       "round": 3,
       "step": "resume"
+    },
+    {
+      "at": "2026-11-20T08:50:44.238922+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
