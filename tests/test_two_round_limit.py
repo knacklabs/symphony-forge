@@ -216,7 +216,12 @@ def test_3_land_runs_at_most_one_fix_round(
                                   f"Closing {ITEM}.", expected]
         assert "client greeting missing" in stopped.stdout + stopped.stderr
         assert "client greeting missing" in _workers(land)[0]["brief"]
-        assert len(_workers(land)) == 1 and len(land.review_calls()) == 2
+        # One work round now includes its one related-test repair turn. Land must
+        # still stop after that round rather than starting another review loop.
+        workers = _workers(land)
+        assert len(workers) == 2 and len(land.review_calls()) == 2
+        assert "related tests failed" in workers[1]["brief"]
+        assert "client greeting missing" in workers[1]["brief"]
         return
 
     from test_tools_session_hold import Session
