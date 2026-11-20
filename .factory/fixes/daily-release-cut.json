@@ -1,6 +1,13 @@
 {
   "base": "a291873644fe4943653cb8413469ec21a8704e08",
   "branch": "fix/daily-release-cut",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1f723-f8b5-74e2-b7a3-2ae956430d3c",
+    "head": null,
+    "start": "95aa35a053e093dacd5fdfbb0960c73da3d3b09f"
+  },
   "done_when": "The 'Releasing Forge' section of docs/guide.md says: cut once a day at 05:00 UTC from the newest main commit whose Linux full run and Windows run passed; the contents are frozen at the cut and only a fix without which the release is unsafe or its checks cannot pass may join; later work waits for the next day; publish within 30 minutes of the cut without a separate owner yes; skip the day when nothing merged or main is red",
   "fix_kind": "mechanical",
   "kind": "fix",
