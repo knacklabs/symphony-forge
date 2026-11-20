@@ -1,0 +1,15 @@
+{
+  "base": "41c53141ecc53527d8952bc84065e55e6f5ffbe4",
+  "branch": "fix/close-suggests-land",
+  "done_when": "When close reports Ready and one or more other items are also Ready, its Next line names one 'forge land <this> <others>' command (forge merge stays for a single Ready item), and the skill has a short 'Keep CI fast' section: land Ready items together, do not rerun close while checks are queued, do not merge main by hand right before a merge; new and existing repos get it on upgrade and forge sync",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-20T03:41:03.751468+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Agents merge Ready items one at a time, so each merge after main moves costs a full CI run: forge close's Ready line says 'Next: forge merge <item>' even when other items are Ready, and the skill mentions the land train only in one table row; seen at a client on 19-20 Nov 2026"
+}
