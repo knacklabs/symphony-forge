@@ -18,7 +18,7 @@
       "gain": 4,
       "harm": 3,
       "line": 2307,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -31,43 +31,46 @@
       "gain": 3,
       "harm": 3,
       "line": 2307,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
       "title": "Gate: tests/test_full_run_starts_before_notes.py",
       "work": 1
+    },
+    {
+      "area": ".forge/always-tests.txt",
+      "file": ".forge/always-tests.txt",
+      "gain": 5,
+      "harm": 4,
+      "line": 7,
+      "outcome": "open",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Functional: The required-test list makes Forge full runs fail",
+      "work": 1
     }
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "cfbb6d605c47ee830ef3a66a2f4f94a414934b6a97a985df9c4c0fbee7932258",
-    "changed": "6f6905c47d0accef382ee57d3fe1f226a8fa40638285ab3e4e7bb3ad24947e5d",
-    "commit": "891b05d3ea03ec97963cb10ad8d306776d3279c0",
+    "branch_diff": "252502fd6068dea4919ddf8bc2bda1c41981686098db7b5225cdca3a3486d46a",
+    "changed": "3a27c58f9b938b4907fda608b630469d731b34385a77aba94a26694c4034d43c",
+    "commit": "7ca20346ec9a404f6e3c248a7337fd88f4316273",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 4, Work 1, Harm 3\nRaise: Functional\nCase: normal use - a coordinator prepares a Forge release after the last merge.\nThe three skills also guide work in Forge's own repository. This change removes their only reference to the Forge release guide while leaving the general instruction to start a full run immediately. The guide requires a 05:00 UTC cut, a passed Windows run and a merge freeze (docs/guide.md:689), but the tag hook checks only the latest full-run status and commit (src/forge/githooks.py:161). A coordinator following the skill can therefore publish without the Forge-specific steps. The recorded ruling removes the copied policy but does not address the lost guide pointer. Keep a Forge-specific pointer without copying the daily-cut rule into the client instructions.\nAdds work: retain a pointer to Forge's release guide; F 3 x H 2 = 6; 2 x C = 2",
-        "file": "src/forge/templates/skill.md",
-        "gain": 4,
-        "harm": 3,
-        "line": 2307,
-        "priority": "P1",
-        "title": "Functional: Forge releases lose their cut and Windows instructions",
-        "work": 1
-      },
-      {
-        "body": "Gain 3, Work 1, Harm 3\nRaise: Gate\nCase: normal use - close verifies this pull request.\nThe proof list says close's PR check will report this test, but .github/workflows/forge.yml:93 runs `forge test --change`. Its selector at src/forge/fasttest.py:458 selects changed tests, related Python modules and file-relative input readers. The named test instead imports `ROOT` and reads a generated client guide (tests/test_full_run_starts_before_notes.py:11 and :33), and it is absent from .forge/always-tests.txt, so none of its three cases is selected for this diff. The always-run guide test checks that copies equal the template, which also holds when all copies contain the broken paragraph. The worker reports a direct local pass, but a green close check cannot provide the promised PR proof. Arrange for the named test to run in that check.",
-        "file": "src/forge/templates/skill.md",
-        "gain": 3,
-        "harm": 3,
-        "line": 2307,
-        "priority": "P1",
-        "title": "Gate: tests/test_full_run_starts_before_notes.py",
+        "body": "Gain 5, Work 1, Harm 4\nRaise: Functional\nCase: normal use - a maintainer runs the required full suite on main before a Forge release.\nThe new entry is copied into a temporary client by `tests/test_required_repo_rules.py:45`, but that test creates files only for the six previous entries at `tests/test_required_repo_rules.py:37`. Its four cases therefore pass the new, nonexistent test path to pytest through `src/forge/fasttest.py:860`, causing pytest to fail. The scheduled and manual full-suite workflow runs these cases, so it cannot produce the green result required to push a release tag. Update the fixture and its expectations to include the new required test.",
+        "file": ".forge/always-tests.txt",
+        "gain": 5,
+        "harm": 4,
+        "line": 7,
+        "priority": "P0",
+        "title": "Functional: The required-test list makes Forge full runs fail",
         "work": 1
       }
     ],
-    "id": "8348508d-7989-4a61-b0be-9d5c849be475",
+    "id": "0c2f3794-959a-4946-bb35-33a2980ef158",
     "status": "blocked"
   },
   "round": 2,
@@ -90,6 +93,10 @@
       "at": "2026-11-20T08:38:13.484071+00:00",
       "round": 2,
       "step": "resume"
+    },
+    {
+      "at": "2026-11-20T08:45:46.758460+00:00",
+      "step": "review"
     }
   ],
   "stuck": {

@@ -1,6 +1,17 @@
 {
   "items": [
     {
+      "key": "bug\t.forge/always-tests.txt\tFunctional: The required-test list makes Forge full runs fail\trestore-full-run-paragraph",
+      "kind": "bug",
+      "path": ".forge/always-tests.txt",
+      "line": 7,
+      "text": "Functional: The required-test list makes Forge full runs fail",
+      "from": "blocking",
+      "item": "restore-full-run-paragraph",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tdocs/guide.md\tFunctional: A frozen cut cannot be pushed after main advances\tdaily-release-cut",
       "kind": "bug",
       "path": "docs/guide.md",
