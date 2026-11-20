@@ -1,4 +1,11 @@
 {
+  "amendments": [
+    {
+      "at": "2026-11-20T12:56:45.647479+00:00",
+      "because": "Owner chose the mixed split on 20 Nov 2026: near-full-suite selections skip the laptop run, after laptop runs in Forge's own repo took over 2 hours and blocked the machine",
+      "done_when": "In every test_place, a work round ends with the change's related tests run on the laptop through forge test --change; when they fail, Forge sends the worker one repair turn before the round ends and pushes, and the round's result says the tests ran and passed or what still fails; CI still runs its checks; new and existing repos get it on upgrade"
+    }
+  ],
   "base": "a291873644fe4943653cb8413469ec21a8704e08",
   "branch": "fix/laptop-tests-before-push",
   "chat": {
@@ -8,7 +15,7 @@
     "head": null,
     "start": "839b0c17766f2ebff2b52328046a39d45bf22e9c"
   },
-  "done_when": "In every test_place, a work round ends with the change's related tests run on the laptop through forge test --change; when they fail, Forge sends the worker one repair turn before the round ends and pushes, and the round's result says the tests ran and passed or what still fails; CI still runs its checks; new and existing repos get it on upgrade",
+  "done_when": "In every test_place, a work round ends with the change's related tests run on the laptop through forge test --change, except when the selection is near the full suite (then the round skips the laptop run and says CI tests it); when the laptop run fails, Forge sends the worker one repair turn before the round ends and pushes; the round's result says the tests ran and passed, were skipped, or what still fails; CI still runs its checks; new and existing repos get it on upgrade",
   "fix_kind": "mechanical",
   "kind": "fix",
   "known": [
