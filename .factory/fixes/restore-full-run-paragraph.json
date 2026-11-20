@@ -1,0 +1,15 @@
+{
+  "base": "4b5a40b0a536e066e1312d59417c63b4ec6b58a1",
+  "branch": "fix/restore-full-run-paragraph",
+  "done_when": "src/forge/templates/skill.md (and both generated SKILL.md copies) has the client release and sign-off full-run paragraph as before 4b5a40b0a, the daily cut rule stays only in docs/guide.md's Releasing Forge section, and tests/test_full_run_starts_before_notes.py passes on main",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-20T06:36:02.826360+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Main is red: the daily-release-cut fix (4b5a40b0a) rewrote the client skill paragraph 'After the last product merge for a release or sign-off, start the full run at once with gh workflow run forge.yml --ref <default>...' although the daily cut is a rule for Forge's own releases only; tests/test_full_run_starts_before_notes.py::test_1 fails on every pull request, and the combined CI of the train that merged it did not select that test"
+}
