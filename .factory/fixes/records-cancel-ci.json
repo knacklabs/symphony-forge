@@ -196,7 +196,7 @@
     "status": "blocked"
   },
   "round": 3,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-20T03:29:36.361890+00:00",
@@ -233,12 +233,23 @@
       "at": "2026-11-20T16:56:31.702354+00:00",
       "round": 3,
       "step": "hold"
+    },
+    {
+      "at": "2026-11-20T16:57:25.659861+00:00",
+      "by": "owner",
+      "choice": "more",
+      "round": 3,
+      "step": "owner decision"
     }
   ],
   "stop": {
     "at": "2026-11-20T16:56:31.702354+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "src/forge/templates/review-tests.py",
-    "wait_id": "fef8b951-0c8f-4ebb-81e5-dd6cb743ddca"
+    "reason": "Owner chose one more round on 20 Nov 2026: fix all four findings",
+    "wait_id": "fef8b951-0c8f-4ebb-81e5-dd6cb743ddca",
+    "worker_round": 3
   },
   "stuck": {
     "close": "235f4d5e-fa1a-45ed-930b-4a4f6fbf6337",
