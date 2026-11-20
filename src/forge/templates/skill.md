@@ -360,8 +360,10 @@ It publishes the combined change and waits for that commit's checks, even when t
 files do not overlap. This applies to every test runner and custom fast command.
 The wait uses the combined branch's test setting and required check names.
 A retry waits for the same saved head's checks, with those same check names.
-`forge test --change` includes incoming changes from merges into the pull request,
-so CI also selects tests that the default branch added before the merge.
+In CI-test repos, `forge test --change` selects the pull request's own source changes
+(`base...HEAD`) plus test files that merges from the default branch added or changed.
+The one-group rule counts only the pull request's own changes. Local-test repos keep
+all incoming changes in test selection and keep all groups after a merge.
 Repos whose tests run only on the laptop keep their local runs. The `forge-pr-check`
 check reviews the change and runs no app tests, so that check alone does not replace the local retest.
 The nightly full run on the default branch covers the rest. With no retest, the usual CI wait applies.
@@ -2539,6 +2541,12 @@ the first round this run starts, not later fix rounds. A fix whose commits only 
 to `plans/ideas.md` (or are empty) is not built: land runs the build round and close refuses it
 until real changes exist. New and existing repos get this on the current release. Close
 still stops for a pending question and gives open findings or failing tests a worker fix round.
+
+### Keep CI fast
+
+- Run one `forge land` command for Ready items together. This saves repeated CI runs. See the table's merge rows.
+- Do not rerun close while checks are queued. This saves duplicate check waits.
+- Do not merge main by hand just before a merge. This saves another CI run.
 
 To land a chosen set, name the items: `forge land <item> <item> ...` runs the same queue and merge
 train for exactly those items and leaves every other item alone. It refuses a name that is no task or

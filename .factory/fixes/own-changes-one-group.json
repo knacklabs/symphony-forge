@@ -1,0 +1,117 @@
+{
+  "base": "77a35caa0f80ad338fc8ff08e4ab788a27ea34ad",
+  "branch": "fix/own-changes-one-group",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1f4b6-eab0-7aa1-8fd9-55aba078e3c7",
+    "head": null,
+    "start": "51a09796cb2a48967d1603a326d670f24888f4ab"
+  },
+  "done_when": "In a repo whose tests run in CI, where each merge to main runs main's own related tests, forge test --change and the one-group rule judge only the pull request's own changes (base...HEAD), so a small fix that merged main runs one group; repos that test on the laptop keep today's widening; new and existing repos get it on upgrade and forge sync",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "test() in src/forge/fasttest.py",
+      "file": "src/forge/fasttest.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 360,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Merged CI changes can skip a failing integration test",
+      "work": 2
+    },
+    {
+      "area": "test_1_merged_main_keeps_ci_selection_on_own_changes() in tests/test_ci_selects_own_changes_after_merge.py",
+      "file": "tests/test_ci_selects_own_changes_after_merge.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 77,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: merged CI pull requests run one group",
+      "work": 1
+    },
+    {
+      "area": "src/forge/templates/brief.md",
+      "file": "src/forge/templates/brief.md",
+      "gain": 3,
+      "harm": 3,
+      "line": 403,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Standard: Delete before adding",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "224c4c5d9dcc63e3c714c9583086b1cae601ca8328bd5f60bd4265be9b29797b",
+    "changed": "670e566fca6f407cf4ad240fc312888367278af927824b81acb604ca3fafb3d9",
+    "commit": "c61dec09015968397f269d8a2808ffb8ad5a356b",
+    "dismissals": [],
+    "findings": [],
+    "id": "7465834d-da84-42c0-a604-d94897bdec70",
+    "status": "clean"
+  },
+  "round": 4,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-19T16:49:26.646502+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-19T16:49:49.742187+00:00",
+      "round": 1,
+      "step": "resume"
+    },
+    {
+      "at": "2026-11-19T17:06:27.119545+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-19T17:07:18.999647+00:00",
+      "round": 2,
+      "step": "resume"
+    },
+    {
+      "at": "2026-11-19T17:16:51.019684+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-19T17:57:08.834177+00:00",
+      "round": 3,
+      "step": "resume"
+    },
+    {
+      "at": "2026-11-19T18:02:12.219489+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-19T18:41:29.104798+00:00",
+      "round": 4,
+      "step": "resume"
+    },
+    {
+      "at": "2026-11-19T18:46:25.101528+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "ef3a6b10-446f-498d-90f9-d00826f270cc",
+    "head": "72a02279f6a03739625edd65b6419759485d8bea",
+    "keys": {},
+    "round": 3
+  },
+  "why": "In repos whose tests run in CI, a pull request that merged main runs all test groups, because review-tests.py turns one_group off for any merge commit and forge test --change widens its base to what the merges brought; at a client almost every branch merges main, so small fixes take every fast slot (queue median about 16 min, up to 78)",
+  "worker": "codex"
+}

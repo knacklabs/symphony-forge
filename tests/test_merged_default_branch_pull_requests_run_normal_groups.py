@@ -1,4 +1,4 @@
-"""A pull request whose branch merged the default branch in runs the normal test groups.
+"""In local-test repos, a branch that merged main keeps the normal test groups.
 
 Test-audit: `forge test --change` widens its selection to what a merged-in default branch
 brought, so one group would run past its time limit. This runs the shipped CI script on the
@@ -60,6 +60,10 @@ def test_1_pull_request_that_merged_the_default_branch_runs_normal_groups(
     repo.git("commit", "-qm", "Set up", cwd=client)
     synced = repo.forge("sync", cwd=client)
     assert synced.returncode == 0, synced.stdout + synced.stderr
+    # Exercise the legacy classifier with local settings and the existing CI workflow.
+    config = (client / "forge.toml").read_text("utf-8")
+    config = re.sub(r"^test_place = .*\n", "", config, flags=re.M)
+    (client / "forge.toml").write_text('test_place = "local"\n' + config, encoding="utf-8")
     repo.git("add", "-A", cwd=client)
     repo.git("commit", "-qm", "Sync", "--allow-empty", cwd=client)
     workflow = (client / ".github/workflows/forge.yml").read_text("utf-8")
