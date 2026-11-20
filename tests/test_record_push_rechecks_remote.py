@@ -11,11 +11,14 @@ STORY = "FIX-RECORDS-CANCEL-CI"
 
 
 @pytest.mark.parametrize("fake_clock", [150], indirect=True)
-def test_4_rejected_record_push_waits_for_the_new_remote_run(env, tmp_path, monkeypatch, fake_clock):
+@pytest.mark.parametrize("defaulted", [False, True])
+def test_4_rejected_record_push_waits_for_the_new_remote_run(env, tmp_path, monkeypatch, fake_clock,
+                                                          defaulted):
     # Audit: another machine can publish between the check read and the real push.
     # The pre-receive hook observes the retry; only GitHub triggers the other Git writer.
     # Ordinary close waits cannot observe this new remote-head lifecycle.
-    item, where = env.start_fix(stop={"file": "app.py"})
+    # Reversing a default choice must use the same checked push as an ordinary choice.
+    item, where = env.start_fix(stop={"file": "app.py", **({"by": "default"} if defaulted else {})})
     env.repo.git("push", "-q", "-u", "origin", "fix/tidy-readme", cwd=where)
     parent = env.repo.git("rev-parse", "HEAD", cwd=where)
     writer = tmp_path / "other-machine"
@@ -26,6 +29,7 @@ def test_4_rejected_record_push_waits_for_the_new_remote_run(env, tmp_path, monk
     origin = env.repo.path.parent / env.repo.git("remote", "get-url", "origin")
     origin = origin if origin.is_absolute() else env.repo.path / origin
     hook = origin / "hooks" / "pre-receive"
+    (env.repo.bin / "gh-calls.jsonl").touch(exist_ok=True)
     hook.write_text(HOOK.format(python=sys.executable, parent=incoming, log=log.as_posix(),
                                calls=(env.repo.bin / "gh-calls.jsonl").as_posix()), "utf-8")
     hook.chmod(0o755)
@@ -59,6 +63,7 @@ def test_4_rejected_record_push_waits_for_the_new_remote_run(env, tmp_path, monk
 
     assert closed.returncode == 0, closed.stdout + closed.stderr
     assert "Recorded the human's choice" in closed.stdout
+    assert trigger.exists(), "The choice was pushed without waiting for the published code"
     pushes = [json.loads(line) for line in log.read_text("utf-8").splitlines()]
     [retry] = [push for push in pushes if push[1] == incoming]
     assert retry[3] >= 4, "The reconciled record push cancelled the new queued run"

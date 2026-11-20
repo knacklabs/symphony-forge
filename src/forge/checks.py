@@ -7,10 +7,10 @@ named check that hasn't reported, or a GitHub API error, is "not green yet" with
 """
 from __future__ import annotations
 
-import contextlib
 import json
 import os
 import re
+import subprocess
 import time
 import tomllib
 from collections.abc import Callable
@@ -41,16 +41,26 @@ POLL = float(os.environ.get("FORGE_CHECKS_POLL", "60"))
 _progress_at: float | None = None
 
 
-@contextlib.contextmanager
-def publish_on_exit(top: Path):
+def publish_on_exit(top: Path, run: Callable[[], int]) -> int:
     """Flush newly saved records when close stops before its normal push."""
     from forge import close, review
-    before, branch = repo.git("rev-parse", "HEAD", cwd=top), repo.current_branch(top)
+    # Picking up the item already read this command's worktree snapshot.
+    trees = [dict(line.partition(" ")[::2] for line in block.splitlines())
+             for block in repo.git("worktree", "list", "--porcelain", cwd=top).split("\n\n")]
+    current = next(tree for tree in trees if Path(tree["worktree"]).resolve() == top.resolve())
+    before, branch = current["HEAD"], current["branch"].removeprefix("refs/heads/")
+    flush = True
     try:
-        yield
+        result = run()
+        flush = result != 0
+        return result
+    except subprocess.CalledProcessError as error:
+        # The push already exhausted its bounded retries; keep the records local.
+        flush = error.cmd[:2] != ["git", "push"]
+        raise
     finally:
         # A merged item's checkout can be removed or returned to the default branch.
-        if top.exists() and repo.current_branch(top) == branch:
+        if flush and top.exists() and repo.current_branch(top) == branch:
             saved = repo.git("log", "--format=", "--name-only", f"{before}..HEAD", cwd=top).splitlines()
             remote = repo.run("git", "rev-parse", f"origin/{branch}", cwd=top)
             if (any(path.startswith(review.BOOKKEEPING) or repo.SIGNOFF.fullmatch(path) for path in saved)
@@ -180,11 +190,15 @@ def _let_finish(top: Path, item: str, sha: str, names: list[str],
                 if error.entry not in (REFUSALS["red"], REFUSALS["timeout"]):
                     raise
                 return  # A red result ends this wait; the caller must still publish its review.
-            workflows = [run for run in _ask(top, item, ".workflow_runs",
+            states = [state for _, state in seen]
+            # Active jobs already keep the wait open. Recovery also reads their workflow;
+            # another read here can get ahead of its still-stale aggregate check.
+            workflows = []
+            if not any(state in (PENDING, QUEUED) for state in states):
+                workflows = [run for run in _ask(top, item, ".workflow_runs",
                          "repos/{owner}/{repo}/actions/runs", "--method", "GET",
                          "--raw-field", "per_page=100", "--raw-field", f"head_sha={sha}")
                          if run.get("event") != "pull_request_target" and run.get("head_sha", sha) == sha]
-            states = [state for _, state in seen]
             states.extend(QUEUED if run.get("status") == "queued" else PENDING
                           for run in workflows if run.get("status") != "completed")
             active = any(state in (PENDING, QUEUED) for state in states)
@@ -219,10 +233,10 @@ def after_code_ci(top: Path, item: str, branch: str, cfg: dict[str, Any],
             or any(path and not (path.startswith(review.BOOKKEEPING) or repo.SIGNOFF.fullmatch(path))
                    for path in paths)):
         return
-    remote = repo.run("git", "rev-parse", f"origin/{branch}", cwd=top)
-    if remote.stdout.strip() == repo.git("rev-parse", "HEAD", cwd=top):
+    remote, head = repo.git("rev-parse", f"origin/{branch}", "HEAD", cwd=top).splitlines()
+    if remote == head:
         return
-    let_finish(top, item, remote.stdout.strip(), cfg["checks"], slot)
+    let_finish(top, item, remote, cfg["checks"], slot)
 
 
 def _wait(top: Path, item: str, sha: str, names: list[str], branch: str, progress: bool,

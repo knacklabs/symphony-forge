@@ -10,6 +10,7 @@ from test_close_pushes_record_after_code_ci import HOOK
 
 STORY = "FIX-RECORDS-CANCEL-CI"
 
+@pytest.mark.platform
 @pytest.mark.parametrize("fake_clock,polls,override,conclusion", [
     (150, 3, None, "success"), (150, 3, None, "failure"), (150, 3, "0", "success"),
     (150, 3, None, "code"),

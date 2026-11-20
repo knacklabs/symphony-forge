@@ -81,8 +81,7 @@ WHY, DONE = "Let the agent merge this repo's ready pull requests.", 'The default
 
 def close(args: argparse.Namespace) -> int:
     top = _worktree(args.item)
-    with checks.publish_on_exit(top):
-        return _close(args, top)
+    return checks.publish_on_exit(top, lambda: _close(args, top))
 
 
 def _close(args: argparse.Namespace, top: Path) -> int:
@@ -159,9 +158,9 @@ def _close(args: argparse.Namespace, top: Path) -> int:
             _save(top, item, state, f"Record the human's review loop choice: {choice}")
             if not defaulted:
                 repo.record_event(top, item, "owner wait end", wait_id=state["stop"].get("wait_id"))
-                if choice != "accept":  # acceptance publishes after the final review records
-                    _push(top, repo.current_branch(top))  # every machine's board sees the wait end
-                    _refresh_record(top, item, state)
+            if choice != "accept":  # acceptance publishes after the final review records
+                _push(top, repo.current_branch(top))  # every machine's board sees the wait end
+                _refresh_record(top, item, state)
         if choice in ("switch", "same", "more"):
             print(f"Recorded the human's choice.\nNext: forge work {item}")
             return 0

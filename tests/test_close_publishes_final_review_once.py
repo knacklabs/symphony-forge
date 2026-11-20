@@ -42,18 +42,21 @@ def test_1_close_publishes_once_after_saving_review(env, previous, replay):
     assert closed.returncode == 0, closed.stdout + closed.stderr
     heads = [line.split()[1] for line in updates.read_text("utf-8").splitlines()
              if line.split()[2] == f"refs/heads/fix/{item}"]
-    assert len(heads) == 1, heads
-    assert heads == [env.repo.git("rev-parse", "HEAD", cwd=where)]
-    checked = env.repo.forge("hook", "pr-check", "--base", "origin/main", "--head", heads[0],
+    # The interrupted close flushes its saved records; the resumed close publishes its review.
+    assert len(heads) == (2 if replay == "interrupted" else 1), heads
+    assert heads[-1] == env.repo.git("rev-parse", "HEAD", cwd=where)
+    checked = env.repo.forge("hook", "pr-check", "--base", "origin/main", "--head", heads[-1],
                              "--branch", f"fix/{item}", cwd=where)
     assert checked.returncode == 0, checked.stdout + checked.stderr
     product = "src/shared.py" if replay else "app.py"
-    assert env.repo.git("show", f"{heads[0]}:{product}", cwd=where) == (
+    assert env.repo.git("show", f"{heads[-1]}:{product}", cwd=where) == (
         "FOLLOWUP = True\n" + "# stable\n" * 20 if replay else "print('hello')\n").rstrip("\n")
     assert "Review: clean" in body(env.gh_calls("pr", "create")[-1])
     for field in (".check_runs[]", ".statuses[]"):
         calls = env.gh_calls("api", "--paginate", "--jq", field)
-        assert calls and all(f"/commits/{heads[0]}/" in call[-1] for call in calls)
+        # A resumed close first waits on the flushed head, then gates its final reviewed head.
+        assert calls and all(any(f"/commits/{head}/" in call[-1] for head in heads) for call in calls)
+        assert f"/commits/{heads[-1]}/" in calls[-1][-1]
 
 
 @pytest.mark.platform
