@@ -1,0 +1,15 @@
+{
+  "base": "41c53141ecc53527d8952bc84065e55e6f5ffbe4",
+  "branch": "fix/board-durations",
+  "done_when": ".test_durations names the two parametrized board cases instead of the old id, and test_1_recorded_timings_name_existing_tests passes on main",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-20T03:15:27.101700+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Main's .test_durations still names tests/test_board_now_screen.py::test_12_the_first_screen_fits_a_laptop_window_and_keeps_every_item_reachable, which the board time fix turned into two parametrized cases, so test_1_recorded_timings_name_existing_tests fails on any pull request that selects it"
+}
