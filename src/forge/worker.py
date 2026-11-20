@@ -772,9 +772,9 @@ def commit_nudge(top: Path) -> str:
     return prompt + ("\n" + sample_proof() + "\n" if sample else "")
 
 
-def design_context(top: Path, text: str, user_facing: bool) -> tuple[str, str]:
+def design_context(top: Path, text: str, user_facing: bool, *, review_base: str = "") -> tuple[str, str]:
     """The same design and short skill guidance on both hosts; only an owned canvas sets a gate."""
-    from forge import roles, sync
+    from forge import autoreview, roles, sync
 
     body = task.sections(text).get("What changes for you", "")
     named = re.search(r"^Design: (docs/design/[^/\s]+/) \(", body, re.M)
@@ -792,9 +792,16 @@ def design_context(top: Path, text: str, user_facing: bool) -> tuple[str, str]:
         files = sorted(path.relative_to(top).as_posix() for path in (top / folder).rglob("*") if path.is_file())
         parts.append("Screens, images and design files (open the images when checking screens):\n"
                      + "\n".join(f"- `{path}`" for path in files))
-    for name in ["PRODUCT.md", "DESIGN.md", *([folder + "SCREENS.md"] if folder else [])]:
+    names = ["PRODUCT.md", "DESIGN.md", *([folder + "SCREENS.md"] if folder else [])]
+    generated = autoreview.generated_paths(top, review_base, "HEAD", names) if review_base else set()
+    for name in names:
         path = top / name
-        parts.append(f"### {name}\n\n" + (path.read_text(encoding="utf-8").strip() if path.is_file() else "Missing."))
+        if path.is_file() and name in generated:
+            size = repo.git("cat-file", "-s", f"HEAD:{name}", cwd=top)
+            content = f"generated: {name} ({size} bytes)"
+        else:
+            content = path.read_text(encoding="utf-8").strip() if path.is_file() else "Missing."
+        parts.append(f"### {name}\n\n" + content)
     if user_facing:
         parts += ["### impeccable and emil-design-eng\n\n"
                   "impeccable owns layout, type, colour, states and copy: shape before building, then audit and polish. "

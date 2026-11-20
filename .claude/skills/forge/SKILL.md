@@ -360,8 +360,10 @@ It publishes the combined change and waits for that commit's checks, even when t
 files do not overlap. This applies to every test runner and custom fast command.
 The wait uses the combined branch's test setting and required check names.
 A retry waits for the same saved head's checks, with those same check names.
-`forge test --change` includes incoming changes from merges into the pull request,
-so CI also selects tests that the default branch added before the merge.
+In CI-test repos, `forge test --change` selects the pull request's own source changes
+(`base...HEAD`) plus test files that merges from the default branch added or changed.
+The one-group rule counts only the pull request's own changes. Local-test repos keep
+all incoming changes in test selection and keep all groups after a merge.
 Repos whose tests run only on the laptop keep their local runs. The `forge-pr-check`
 check reviews the change and runs no app tests, so that check alone does not replace the local retest.
 The nightly full run on the default branch covers the rest. With no retest, the usual CI wait applies.
@@ -2304,14 +2306,12 @@ That workflow must post `forge-full-suite` on the default branch commit after it
 `gh api --method POST "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" -f context=forge-full-suite -f "state=$state"`.
 Give the status job `permissions: {statuses: write}` and set `GH_TOKEN: ${{ github.token }}` in the posting step's `env`.
 In CI mode without this setting, `forge.yml` also runs `forge test --full` once a day on the default branch and supports
-`workflow_dispatch`. After the last product merge for a release or sign-off, reuse a passed full run
-on that exact commit. If it has none, start the full run
-with `gh workflow run forge.yml --ref <default>` when full-run proof is required.
+`workflow_dispatch`. After the last product merge for a release or sign-off, start the full run
+at once with `gh workflow run forge.yml --ref <default>` when full-run proof is required.
 Prepare the release or sign-off notes while it runs, then follow that same run with
 `gh run watch <run-id> --exit-status`; do not wait for the nightly run or the tag push.
 Local mode has no scheduled job; after the last product merge for a release or sign-off,
-reuse a passed full run on that exact commit. Otherwise start `forge test --full`
-in the main checkout when full-run proof is required.
+start `forge test --full` at once in the main checkout when full-run proof is required.
 Prepare notes while it runs and wait for that same command to finish. For the daily run outside
 a release or sign-off, run it when `forge next` says it is due and the machine is quiet.
 A green full run on the latest default-branch
@@ -2323,17 +2323,7 @@ An app repair on the sign-off branch can use the default branch's green run.
 A failed latest full run still blocks.
 Earlier clients need no migration, and accepted sign-off records stay valid. Everyday merges do
 not wait for a full run.
-For Forge's own releases, merge the version-bump fix before the nightly Linux full run and Windows run.
-Cut once a day at 05:00 UTC from the newest main commit whose two runs passed.
-Record that commit's full SHA (commit identifier). It must contain the new version.
-If current main is ahead of it, skip the day: the release gate requires current main.
-Reuse those passed runs. Hold merges until you push the tag and check the installed version.
-Freeze the contents at the cut. Only a fix needed for release safety or passed checks can join.
-Such a fix needs both runs to pass and a new recorded cut commit before the tag.
-Later work waits for the next day. Tag the recorded full SHA, never `origin/main`.
-Publish within 30 minutes of the cut without a separate owner yes.
-Skip the day when nothing merged since the last release or main is red.
-See the Forge repo's `docs/guide.md`, Releasing Forge, for the commands.
+In Forge's own repository, releases follow the "Releasing Forge" section of `docs/guide.md` for the daily cut, Windows run and merge freeze.
 A failed scheduled or manual full run appears in `forge next` with its failed test names.
 The required `forge-pr-check` fails a pull request from a branch Forge did not start.
 Before the first committed review, this check stays pending. A stale or blocked review still
@@ -2551,6 +2541,12 @@ the first round this run starts, not later fix rounds. A fix whose commits only 
 to `plans/ideas.md` (or are empty) is not built: land runs the build round and close refuses it
 until real changes exist. New and existing repos get this on the current release. Close
 still stops for a pending question and gives open findings or failing tests a worker fix round.
+
+### Keep CI fast
+
+- Run one `forge land` command for Ready items together. This saves repeated CI runs. See the table's merge rows.
+- Do not rerun close while checks are queued. This saves duplicate check waits.
+- Do not merge main by hand just before a merge. This saves another CI run.
 
 To land a chosen set, name the items: `forge land <item> <item> ...` runs the same queue and merge
 train for exactly those items and leaves every other item alone. It refuses a name that is no task or

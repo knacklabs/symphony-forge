@@ -1,0 +1,37 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/close.py\tFunctional: Exclude the owner-held merge-enable fix from close's batch\tclose-suggests-land",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 524,
+      "text": "Functional: Exclude the owner-held merge-enable fix from close's batch",
+      "from": "blocking",
+      "item": "close-suggests-land",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tNot done: Close names a single merge when its report hides another Ready item\tclose-suggests-land",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 524,
+      "text": "Not done: Close names a single merge when its report hides another Ready item",
+      "from": "blocking",
+      "item": "close-suggests-land",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tScale: Avoid rebuilding the full next report after every successful close\tclose-suggests-land",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 524,
+      "text": "Scale: Avoid rebuilding the full next report after every successful close",
+      "from": "blocking",
+      "item": "close-suggests-land",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
