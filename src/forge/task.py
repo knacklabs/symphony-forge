@@ -248,7 +248,7 @@ def pick_up(item: str, branches: list[str], *, allow_size: bool = False) -> Path
                 owner_choices.require_size(tree, state)
             return tree
     for branch in branches:
-        if run("git", "fetch", "-q", "origin", branch, cwd=top).returncode:
+        if run("git", "fetch", "-q", "origin", branch, repo.replayed_tags(branch), cwd=top).returncode:
             continue
         remote = f"origin/{branch}"
         state = story.json_of(show(remote, repo.state_path(item), top))
