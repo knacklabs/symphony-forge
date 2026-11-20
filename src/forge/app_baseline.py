@@ -143,6 +143,13 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
                               "skills/app-baseline/SKILL.md")
     database = (sync.TEMPLATES / "skills/database/SKILL.md").read_text(encoding="utf-8")
     agents = (sync.TEMPLATES / "skills/agents/SKILL.md").read_text(encoding="utf-8")
-    return {f"{host}/skills/{name}/SKILL.md": text
+    files = {f"{host}/skills/{name}/SKILL.md": text
             for host in (".claude", ".codex")
             for name, text in (("app-baseline", skill), ("database", database), ("agents", agents))}
+    source = sync.TEMPLATES / "skills/agents/assistant-module"
+    files.update({f"{host}/skills/agents/assistant-module/{path.relative_to(source).as_posix()}":
+                  path.read_text(encoding="utf-8")
+                  for path in sorted(source.rglob("*"))
+                  if path.is_file() and "__pycache__" not in path.parts
+                  for host in (".claude", ".codex")})
+    return files

@@ -1,0 +1,102 @@
+{
+  "base": "d4e844077858528cdf1191e28c2b9702b8c1e9f5",
+  "branch": "task/FORGE-ASSIST-1-PYMODEL",
+  "chat": {
+    "approval": "c276549ec321871ed6b007a41985ed8ac0386fa2eb30ff0ce7b634bfea33d386",
+    "claude": null,
+    "conversation": "01a1afd0-696b-7042-9a35-e77b425cd440",
+    "head": null,
+    "start": "705288c3d6e895358642fc0d001f341eb7577e5a"
+  },
+  "known": [
+    {
+      "area": "src/forge/templates/skills/agents/assistant-module/python/apps/api/app/assistant/guard.py",
+      "file": "src/forge/templates/skills/agents/assistant-module/python/apps/api/app/assistant/guard.py",
+      "gain": 4,
+      "harm": 4,
+      "line": 7,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": true,
+      "title": "Agents: Never take secrets by speech or chat",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/skills/agents/assistant-module/python/apps/api/app/assistant/README.md",
+      "file": "src/forge/templates/skills/agents/assistant-module/python/apps/api/app/assistant/README.md",
+      "gain": 4,
+      "harm": 2,
+      "line": 23,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Keep the documented schema inventory entries as strings",
+      "work": 1
+    },
+    {
+      "area": "src/forge/templates/skills/agents/assistant-module/python/apps/api/app/assistant/README.md",
+      "file": "src/forge/templates/skills/agents/assistant-module/python/apps/api/app/assistant/README.md",
+      "gain": 4,
+      "harm": 2,
+      "line": 125,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Document settings for all three test API containers",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "b414d0fefdbe7d24e9939bc4d747973fd92dc1073bb1963a2e0d7859f31b6662",
+    "changed": "216934c56db23ab5063d31b91fcf34a59c7241e59866f4c4821e736b2a6f6df6",
+    "commit": "339cefd967c9fcf0ac1fe605c696a2b5db6d469e",
+    "dismissals": [],
+    "findings": [],
+    "id": "60daae00-483b-4562-84e2-46dbdb16e9f1",
+    "status": "clean"
+  },
+  "round": 6,
+  "stacked_on": "FORGE-ASSIST-1/PYSTORE",
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-06T07:43:24.763386+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-06T08:03:32.262391+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-06T08:11:18.126172+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-06T09:37:41.708070+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-06T10:04:38.782295+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-06T10:10:18.086365+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-06T11:02:47.203241+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "064fffc9-da28-47c6-a3cf-8da7b595ae93",
+    "head": "5f2af3a735a62371793f29752761c80393296255",
+    "keys": {},
+    "round": 5
+  },
+  "worker": "codex"
+}

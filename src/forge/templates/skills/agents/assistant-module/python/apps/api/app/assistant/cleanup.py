@@ -10,6 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session, sessionmaker
 
+from app.assistant.model import load_settings
 from app.assistant.models import Chat
 from app.core import log_event
 
@@ -74,6 +75,7 @@ async def assistant_lifespan(
     database_url: str,
     environment: str = "unknown",
 ) -> AsyncIterator[PostgresSaver]:
+    load_settings()
     conninfo = make_conninfo(
         database_url.replace("postgresql+psycopg://", "postgresql://", 1),
         options="-c search_path=assistant,public",
