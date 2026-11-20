@@ -93,7 +93,7 @@
     "id": "d13672c8-2068-417d-822f-7389471dca9d",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -108,13 +108,20 @@
     {
       "at": "2026-11-20T04:22:30.754953+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-11-20T04:23:06.627174+00:00",
+      "round": 2,
+      "step": "resume"
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "8ac8273732d1ed4da375d7379f21e98d478688ff",
-    "keys": {},
-    "round": null
+    "close": "f01e21e1-6a58-4cd9-ab00-b234773ef6c0",
+    "head": "bc69f881ee52bd1d30aad6bfb14ea9c426615eba",
+    "keys": {
+      "the open P0 functional: a frozen cut cannot be pushed after main advances in docs/guide.md": 1
+    },
+    "round": 1
   },
   "why": "Forge releases wait on scope added during the release: v1.2.44 waited about 20 hours while four fixes were added after the cut; the owner chose on 20 Nov 2026 one release a day from green main, with frozen contents, published without a separate owner yes",
   "worker": "codex"
