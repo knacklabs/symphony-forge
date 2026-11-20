@@ -333,7 +333,8 @@ def instructions(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any
             chosen.insert(1, "promote")
     has_web = any((top / path / "package.json").is_file() for path in ("apps/web", "web", "frontend"))
     chosen += (["screens"] if cfg["repo"] == "client" and has_web else []) + ["app-rules"]
-    values["design_context"], owned_design = worker.design_context(top, design_text, user_facing)
+    values["design_context"], owned_design = worker.design_context(top, design_text, user_facing,
+                                                                 review_base=previous.get("commit") or base)
     chosen.append("design-context")
     if owned_design:
         values["design_folder"] = owned_design
@@ -949,7 +950,10 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                 merged_base = repo.git("merge-base", base, "HEAD", cwd=tree)
                 if repo.git("merge-base", base, review_base, cwd=tree) != merged_base:
                     review_base = merged_base
-        prompt += autoreview.hide_generated(tree, repo.git("merge-base", review_base, "HEAD", cwd=tree), "HEAD")
+        summary, filtered_base = autoreview.hide_generated(
+            tree, repo.git("merge-base", review_base, "HEAD", cwd=tree), "HEAD")
+        prompt += summary
+        review_base = filtered_base or review_base
         # The worker brief's standards page, as rules; a prompt file keeps it out of argv.
         rules = block.split("<!-- standards -->\n", 1)[1].split("\n<!-- ", 1)[0]
         # The branch may track this path, even as a link out of the tree: drop it unfollowed,
