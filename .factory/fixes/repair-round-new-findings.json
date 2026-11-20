@@ -76,17 +76,64 @@
       "security": false,
       "title": "Gate: existing review-loop tests still require new P1 findings to block",
       "work": 2
+    },
+    {
+      "area": "repair_findings() in src/forge/autoreview.py",
+      "file": "src/forge/autoreview.py",
+      "gain": 4,
+      "harm": 4,
+      "line": 30,
+      "outcome": "open",
+      "reason": "",
+      "round": 4,
+      "security": false,
+      "title": "[P1] Do not restore follow-up status to an escalated P0",
+      "work": 2
+    },
+    {
+      "area": "identity() in src/forge/score.py",
+      "file": "src/forge/score.py",
+      "gain": 4,
+      "harm": 4,
+      "line": 155,
+      "outcome": "open",
+      "reason": "",
+      "round": 4,
+      "security": false,
+      "title": "[P1] Preserve a P0 when a fixed finding recurs with a priority tag",
+      "work": 2
     }
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "73b70d4251e956b644b011eb68179fc0d8e7bb5ca9b46b553360f0bf169fcac3",
-    "changed": "06511b6bb481d1bf5bf3d3b4cfb1c5361d72ba5b893845f96a11a7a6791fc694",
-    "commit": "3da0f070645bd300dfb5b0110ec9da7a94069820",
+    "branch_diff": "9a9e8bc037b1e98acd60dcfed4a38aeb704f4d3f2267d9af9898e5cd3e91b754",
+    "changed": "2754f5dbbbb91fb1fd5df74c9fe94ad178e4f01c11d2547225216253854e7923",
+    "commit": "59a312a88507e4f5f6de2804d512da443cd15a2f",
     "dismissals": [],
-    "findings": [],
-    "id": "aa34486a-c73c-44bf-a7a2-0e03ddc0bf33",
-    "status": "clean"
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 4\nRaise: Functional\nCase: normal use - A repair review records an export problem as a P1 follow-up; a later review finds that the same problem exposes another customer's invoices and reports it as P0. The `key in followups` branch sets `follow_up` without checking the current severity. `score.holds` then treats the P0 as nonblocking, and `bound_review` skips it. If the earlier blocker is fixed, close can proceed despite the newly discovered data exposure.",
+        "file": "src/forge/autoreview.py",
+        "gain": 4,
+        "harm": 4,
+        "line": 30,
+        "priority": "P1",
+        "title": "[P1] Do not restore follow-up status to an escalated P0",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 4\nRaise: Functional\nCase: normal use - A review reports `[P1] Saving a basket fails`, a repair review marks it fixed, and a later edit breaks the main save path, which the next reviewer reports as `[P0] Saving a basket fails` in the same file. This change makes the two titles share an identity. `src/forge/review.py:1043` then drops the P0 because that identity was previously marked fixed, before checking its severity or the intervening edit. The prior implementation kept these priority-tagged titles distinct, so this case newly allows close to miss the P0.",
+        "file": "src/forge/score.py",
+        "gain": 4,
+        "harm": 4,
+        "line": 155,
+        "priority": "P1",
+        "title": "[P1] Preserve a P0 when a fixed finding recurs with a priority tag",
+        "work": 2
+      }
+    ],
+    "id": "3875da7a-a99a-41b9-a031-0d7ba1464257",
+    "status": "blocked"
   },
   "round": 4,
   "status": "fixing",
@@ -138,6 +185,10 @@
       "at": "2026-11-20T05:59:45.396482+00:00",
       "round": 4,
       "step": "resume"
+    },
+    {
+      "at": "2026-11-20T12:37:18.722223+00:00",
+      "step": "review"
     }
   ],
   "stop": {
