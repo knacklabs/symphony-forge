@@ -38,7 +38,7 @@ def source_root(path: Path) -> Path:
 
 def module_parts(path: Path) -> list[str]:
     parts = list(path.with_suffix("").parts)
-    return parts[1:] if parts[0] == "src" else parts
+    return parts[1:] if len(parts) > 1 and parts[0] == "src" else parts
 
 
 def pytest_options(arguments: list[str]) -> str:

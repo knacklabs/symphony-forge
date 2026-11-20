@@ -4,6 +4,7 @@ Test-audit: execution receipts protect selection for bare and package imports.
 The old selector misses bare imports; existing package-import tests cannot catch it.
 An unrelated failing module catches over-selection. No production seam is needed.
 Nested roots and src module names exercise missed imports and the former crash.
+An independent nested project also exercises project-relative module resolution.
 """
 import json
 import sys
@@ -15,9 +16,11 @@ STORY = "FIX-BARE-HELPER-IMPORTS"
 
 
 @pytest.mark.platform
-@pytest.mark.parametrize("folder", ["tests", "tests/nested"])
+@pytest.mark.parametrize("folder,project", [
+    ("tests", False), ("tests/nested", False), ("tests/nested", True),
+], ids=["tests", "tests/nested", "nested-project"])
 @pytest.mark.parametrize("module", ["board_fixture", "src", "src.helper"])
-def test_1_helper_changes_run_all_importing_test_files(repo, tmp_path, monkeypatch, folder, module):
+def test_1_helper_changes_run_all_importing_test_files(repo, tmp_path, monkeypatch, folder, project, module):
     monkeypatch.setenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", "1")
     monkeypatch.setenv("PYTEST_ADDOPTS", "")
     receipts = tmp_path / "receipts"
@@ -33,6 +36,8 @@ def test_1_helper_changes_run_all_importing_test_files(repo, tmp_path, monkeypat
     repo.write("tests/__init__.py", "")
     if folder != "tests":
         repo.write(folder + "/__init__.py", "")
+    if project:
+        repo.write(folder + "/pyproject.toml", '[project]\nname = "nested-tests"\nversion = "1.0"\n')
     helper = folder + "/" + module.replace(".", "/") + ".py"
     if "." in module:
         repo.write(folder + "/src/__init__.py", "")
