@@ -31,7 +31,7 @@
       "gain": 4,
       "harm": 4,
       "line": 729,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -44,7 +44,7 @@
       "gain": 3,
       "harm": 3,
       "line": 734,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -57,7 +57,7 @@
       "gain": 3,
       "harm": 3,
       "line": 28,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -67,53 +67,23 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "d752cf46475a3cdeafcf24ceb798535a2191cbe604c2cf1f06bc4ecb35d8404e",
-    "changed": "e274cf8e9b319a49a1c4f0dcd672744f1feaff6b95285d2f76d43af6f666819f",
-    "commit": "9074f8e847b04560f743633b14a22b30a0ca7d89",
+    "branch_diff": "1b3168e24ffdb207c41b9a4e022aa787bb492cd20ce889273831e9db008c7758",
+    "changed": "6bcb2228084fbda842dfc7a0ab4f971863d847eb3eac97a5abd90424264430f3",
+    "commit": "bd029d14d4a8f10f184a53915697571ed68a1160",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 4, Work 3, Harm 4\nRaise: Data loss\nCase: normal use - a stacked part has been reviewed more than once before its parent merges.\nThe replacement commit has only the default-branch tip as a parent, so the earlier review-result commits disappear from the published branch. `review._history` in `src/forge/review.py:605` reads those snapshots from first-parent history; after the squash it can see only the latest snapshot. Earlier findings and dismissals therefore no longer reach the next review and can be raised again. A fresh clone cannot reconstruct those rounds from the branch. The coordinator's single-commit ruling did not address this history consumer.",
-        "file": "src/forge/close.py",
-        "gain": 4,
-        "harm": 4,
-        "line": 734,
-        "priority": "P1",
-        "title": "Preserve earlier review rounds during the squash",
-        "work": 3
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 4\nRaise: Data loss\nCase: normal use - the worker records `Before coding:` in the required empty commit, then makes a code commit with its proof list.\n`review.commit_paragraph` in `src/forge/review.py:698` stops at the latest non-bookkeeping commit for this label, so it returns empty when the planning paragraph is in the earlier commit. The squash then removes that commit from branch history, leaving the next review and pull request without the planning evidence the coordinator required. Earlier `Ruling:`, `Declined:` and `Spotted:` lines can be lost for the same reason. The new test hides the planning case by putting `Before coding:` in the last code commit.",
+        "body": "Gain 4, Work 3, Harm 4\nRaise: Data loss\nCase: normal use - a teammate clones a squashed stacked part and a reviewer repeats a dismissed finding whose cited line is unchanged.\n`squash_replay` copies review-state snapshots without retaining the original commits referenced by their `review.commit` fields (`src/forge/close_remote.py:47`). The published start tag points to the initial commit, not the later reviewed commits (`src/forge/task.py:297`). In a fresh network clone, `review._cited_changed` treats its failed diff against the missing commit as a changed citation (`src/forge/review.py:666`), so `review.run` does not carry the dismissal and close can block on the settled finding again. The new test checks that the reason appears in the prompt but does not repeat the finding.",
         "file": "src/forge/close.py",
         "gain": 4,
         "harm": 4,
         "line": 729,
         "priority": "P1",
-        "title": "Keep planning evidence from the worker's separate commit",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional\nCase: normal use - a follow-up fix has an intermediate replay conflict after its parent is squash-merged, while its final changes merge cleanly.\nThis replay path also handles stacked fixes. The new commit adds both the fix's state file and its product work, so `task.unbuilt_fix` at `src/forge/task.py:847` treats that commit as the start and excludes its work from the search. After a successful close, `forge land` consequently starts another build at `src/forge/land.py:102` instead of landing the ready fix.",
-        "file": "src/forge/close.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 734,
-        "priority": "P1",
-        "title": "Keep squashed follow-up fixes recognizable as built",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 1, Harm 3\nRaise: Test\nCase: normal use - main gains a file while the stacked part is being developed.\nThe fixture creates `default_note.py` on main in `tests/test_close_replays_after_parent_review_commits.py:83`, but this test checks only `app.py` and `use.py`. An implementation that parents the replay commit on main while using the original part tree would delete that main-only file and still pass these assertions. The required merged-tree result therefore lacks effective proof; the command-level test needs to check the main-only content too.",
-        "file": "tests/test_close_squashes_clean_stacked_replay.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 28,
-        "priority": "P1",
-        "title": "Gate: test_1_close_squashes_only_intermediate_conflicts",
-        "work": 1
+        "title": "Preserve earlier review rounds during the squash",
+        "work": 3
       }
     ],
-    "id": "d35e2794-13f0-43b8-b448-0b35b53fbd5f",
+    "id": "f8112e55-0478-4d7c-af06-c6f4fe469b73",
     "status": "blocked"
   },
   "round": 2,
@@ -125,6 +95,10 @@
     },
     {
       "at": "2026-11-19T12:42:34.678024+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-20T05:52:35.058222+00:00",
       "step": "review"
     }
   ],
