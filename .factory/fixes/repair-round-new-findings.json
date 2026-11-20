@@ -1,6 +1,13 @@
 {
   "base": "a291873644fe4943653cb8413469ec21a8704e08",
   "branch": "fix/repair-round-new-findings",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1f723-c939-73d1-9094-b431875e15bd",
+    "head": null,
+    "start": "1c3eff5b81e47c8b93efb6ab8dff4adb151ce49f"
+  },
   "done_when": "From the second review round on, Forge itself keeps only the previous findings that are still open plus new P0 findings; any other new finding is recorded as a follow-up on the item, shown in close's advice, and does not block the merge; round-one reviews and the owner's choices at the round limit are unchanged; new and existing repos get it on upgrade",
   "fix_kind": "mechanical",
   "kind": "fix",
