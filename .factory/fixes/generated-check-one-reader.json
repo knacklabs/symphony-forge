@@ -18,7 +18,7 @@
       "gain": 5,
       "harm": 3,
       "line": 373,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -31,7 +31,7 @@
       "gain": 4,
       "harm": 3,
       "line": 22,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -41,37 +41,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "891f38ec288a829c191a097a08ca5b39ae763475f8ae7b705c2fecb870ffdcff",
-    "changed": "5d5a8443c1ee43519921a5e321f4df27850e0b90cd8350630c476e633cd3a872",
-    "commit": "033237e36119fc8b6ab60bbb85dbf62aa91daa5e",
+    "branch_diff": "c005a1bf9ea140a8357bd9416aa681d086bfd279c60eb352280dd7cdd77d4781",
+    "changed": "453ccc3aeb7915eeac8a653afc2c8f0d82f4d5e2496013a82f68cd2965aa4169",
+    "commit": "b9ddb37f88fe643672a904d2c9533b4d37dbc576",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 5, Work 2, Harm 3\nRaise: Functional\nCase: normal use - a new or upgraded client runs Forge on a Debian 12 self-hosted runner using its packaged Git.\n`git check-attr --source` was introduced in Git 2.40, while Debian 12 packages Git 2.39.5. With that Git, checking any nonempty set of committed paths raises an error, so ordinary closes and the affected process-ceiling tests fail. The previous index-based check worked on this version; `docs/start.md:28` and `:45` require Git to be installed but specify no newer minimum. See the [Git 2.40 release notes](https://github.com/git/git/blob/v2.40.0/Documentation/RelNotes/2.40.0.txt) and the [Debian package](https://packages.debian.org/bookworm/git).",
-        "file": "src/forge/repo.py",
-        "gain": 5,
-        "harm": 3,
-        "line": 373,
-        "priority": "P1",
-        "title": "Preserve compatibility with Git 2.39",
-        "work": 2
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Scale\nCase: normal use - a repository regenerates 200 tracked JSON snapshots of 5 MB each and closes the change.\nThis call loads both versions of every text file before checking their `linguist-generated` attributes. `repo.py:167-169` retains the byte dictionary while decoding the text, so this example requires roughly 4 GB for those inputs alone, causing severe swapping or termination on a memory-limited runner. Previously, marked files were classified first and their blobs were skipped. The existing large-folder test deletes its files, so it does not exercise this added memory cost.",
-        "file": "src/forge/autoreview.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 22,
-        "priority": "P1",
-        "title": "Classify generated files before loading their contents",
-        "work": 2
-      }
-    ],
-    "id": "6ee1cc67-ca00-433b-80af-478249a30f35",
-    "status": "blocked"
+    "findings": [],
+    "id": "cd7de4b9-2180-4f30-bb17-f6513add74b0",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-20T11:32:28.404532+00:00",
@@ -90,6 +69,10 @@
       "at": "2026-11-20T11:52:53.486491+00:00",
       "round": 2,
       "step": "resume"
+    },
+    {
+      "at": "2026-11-20T12:06:00.323093+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
