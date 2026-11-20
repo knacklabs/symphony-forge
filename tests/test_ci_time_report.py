@@ -17,10 +17,14 @@ def _at(minutes: float = 0, seconds: int = 0) -> str:
 
 
 def _check(name: str, started: str, completed: str | None, *, conclusion: str = "SUCCESS",
-           run_id: int = 101, status: str = "COMPLETED") -> dict:
-    return {"name": name, "status": status, "conclusion": conclusion,
-            "startedAt": started, "completedAt": completed,
-            "checkSuite": {"workflowRun": {"databaseId": run_id}}}
+           run_id: int = 101, status: str = "COMPLETED",
+           details_url: str | None = None) -> dict:
+    check = {"name": name, "status": status, "conclusion": conclusion,
+             "startedAt": started, "completedAt": completed,
+             "checkSuite": {"workflowRun": {"databaseId": run_id}}}
+    if details_url:
+        check["detailsUrl"] = details_url
+    return check
 
 
 def _commit(checks: list[dict]) -> dict:
@@ -209,15 +213,20 @@ def _timeout(env, conclusion):
                      "    steps:\n      - run: python -m pytest\n")
     timeout = {**run("test group 1 of 2", conclusion),
                "started_at": _at(), "completed_at": _at(45),
+               "details_url": "https://github.com/acme/shop/actions/runs/301/job/701",
                "check_suite": {"id": 301}}
     running = {**run("test group 2 of 2", None, "in_progress"),
                "started_at": _at(10), "check_suite": {"id": 301}}
     aggregate = {**run("tests", "failure"), "check_suite": {"id": 301}}
-    env.checks([aggregate, timeout, running, run("forge-pr-check")])
+    # Close now waits for every live job to end. Its optional GraphQL timing
+    # snapshot can still lag behind the live REST checks and show a running job.
+    env.checks([aggregate, timeout, {**running, "status": "completed", "conclusion": "success"},
+                run("forge-pr-check")])
     pr = {"number": 7, "state": "OPEN", "headRefName": "fix/timed-out-tests",
                     "commits": {"nodes": [_commit([
                         _check("test group 1 of 2", _at(), _at(45), conclusion=conclusion.upper(),
-                               run_id=301),
+                               run_id=301,
+                               details_url="https://github.com/acme/shop/actions/runs/301/job/701"),
                         _check("test group 2 of 2", _at(10), None, status="IN_PROGRESS",
                                conclusion="", run_id=301),
                     ])]}}
@@ -228,6 +237,11 @@ def _timeout(env, conclusion):
         {"name": "test group 2 of 2", "created_at": _at(9), "started_at": _at(10),
          "run_attempt": 1, "status": "in_progress", "steps": []},
     ])
+    env.gh.respond("api", "--paginate", "--jq", "[.][]",
+                   "repos/{owner}/{repo}/actions/jobs/701", stdout=json.dumps({
+                       "runner_id": 9, "started_at": _at(), "completed_at": _at(45),
+                       "steps": [{"name": "Run tests", "started_at": _at()}],
+                   }))
     timed = env.repo.forge("close", timed_item, cwd=timed_where)
     assert timed.returncode == 1, timed.stdout + timed.stderr
     assert "On the pull request, the tests ran out of time" in timed.stderr
@@ -236,10 +250,19 @@ def _timeout(env, conclusion):
     assert "timed out" in (timed.stdout + timed.stderr).lower()
     assert "1 job was still running" in timed.stdout + timed.stderr
     if conclusion == "cancelled":
-        history = [_pull(100 + n, [
-            _check("test group 1 of 1", _at(), _at(45), conclusion="CANCELLED"),
-            _check("tests", _at(), _at(0, 30))], state="MERGED", merged=_at(-1440 * n))
-            for n in range(20)]
+        history = []
+        for n in range(20):
+            job_id = 1000 + n
+            history.append(_pull(100 + n, [
+                _check("test group 1 of 1", _at(), _at(45), conclusion="CANCELLED",
+                       details_url=f"https://github.com/acme/shop/actions/runs/301/job/{job_id}"),
+                _check("tests", _at(), _at(0, 30))], state="MERGED", merged=_at(-1440 * n)))
+            env.gh.respond("api", "--paginate", "--jq", "[.][]",
+                           f"repos/{{owner}}/{{repo}}/actions/jobs/{job_id}",
+                           stdout=json.dumps({"runner_id": 9, "started_at": _at(),
+                                              "completed_at": _at(45),
+                                              "steps": [{"name": "Run tests",
+                                                         "started_at": _at()}]}))
         for pr in history:
             pr["commits"]["nodes"][-1]["commit"]["oid"] = sha
         _graphql(env, history)
@@ -287,8 +310,10 @@ def _current_failure(env):
     pr["commits"]["nodes"].insert(0, _commit([
         _check("test group 1 of 2", _at(), _at(12), run_id=100)]))
     _graphql(env, [pr])
+    # The live checks end before close reports a failure. The timing snapshot
+    # still exercises a lagging GraphQL job alongside the current failed attempt.
     env.checks([run("tests", "failure"), run("test group 1 of 2", "failure"),
-                run("test group 2 of 2", None, "in_progress"), run("forge-pr-check")])
+                run("test group 2 of 2"), run("forge-pr-check")])
     _jobs(env, 101, [_job("test group 1 of 2", _at(20), _at(20), _at(21), [])])
     done = env.repo.forge("close", item, cwd=where)
     assert done.returncode == 1, done.stdout + done.stderr

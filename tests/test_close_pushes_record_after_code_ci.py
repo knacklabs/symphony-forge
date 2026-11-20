@@ -1,8 +1,10 @@
 """Close pushes its review record only after the code's own CI run ends (issue 1656)."""
 import json
 import sys
+import pytest
 
 from test_close import CLEAN, GREEN, env, run  # noqa: F401
+from test_checks_finish_after_long_runner_queues import _watch_progress
 
 STORY = "issue-1656-in-ci-test-repos-close-pushes"
 
@@ -17,7 +19,14 @@ for line in sys.stdin:
 """
 
 
-def test_1_record_push_waits_until_the_running_code_ci_run_ends(env, tmp_path, monkeypatch):
+@pytest.mark.parametrize("fake_clock,polls,override", [(900, 9, None), (150, 3, None), (150, 3, "0")],
+                         indirect=["fake_clock"])
+def test_1_record_push_waits_until_the_running_code_ci_run_ends(env, tmp_path, monkeypatch, fake_clock,
+                                                               polls, override):
+    # Audit: the two phases share one output cadence; an explicit wait limit must
+    # stop before the push that cancels unfinished CI. The existing remote hook
+    # owns that lifecycle, which ordinary post-push wait tests cannot observe.
+    progress = _watch_progress(tmp_path)
     config = (env.repo.path / "forge.toml").read_text("utf-8")
     env.repo.write("forge.toml", "\n".join(
         line for line in config.splitlines() if line.partition("=")[0].strip() != "test_place")
@@ -34,21 +43,36 @@ def test_1_record_push_waits_until_the_running_code_ci_run_ends(env, tmp_path, m
     hook.write_text(HOOK.format(python=sys.executable, parent=parent, log=str(log),
                                 calls=str(env.repo.bin / "gh-calls.jsonl")), "utf-8")
     hook.chmod(0o755)
-    monkeypatch.setenv("FORGE_CHECKS_WAIT", "120")  # the fixture default is a single look
+    monkeypatch.delenv("FORGE_CHECKS_WAIT", raising=False)
+    if override is not None:
+        monkeypatch.setenv("FORGE_CHECKS_WAIT", override)
     env.reviews(CLEAN)
-    # The code's run is still going on the first look, and is green on the next ones. The tests
-    # group has not reported yet, as when CI splits its tests into groups.
+    # The record push must not cancel the code's CI, even past the old 90-minute wait.
+    # This lifecycle boundary needs the remote push hook, which ordinary wait tests lack.
     lines = lambda rows: "".join(json.dumps(row) + "\n" for row in rows)  # noqa: E731
+    running = lines([run("docs-check"), run("tests (1/2)", None, "in_progress")])
     env.checks(GREEN)
     env.gh.respond("api", "--paginate", "--jq", ".check_runs[]", stdout="")
     rules = json.loads(env.gh.responses.read_text("utf-8"))
-    rules[-1]["then"] = [lines([run("docs-check"), run("tests (1/2)", None, "in_progress")]),
-                         lines(GREEN)]
+    rules[-1]["then"] = [running] * 2 + [lines(GREEN)] if override is None else [lines(GREEN)]
+    env.gh.responses.write_text(json.dumps(rules), "utf-8")
+    endpoint = f"repos/{{owner}}/{{repo}}/commits/{parent}/check-runs?per_page=100"
+    env.gh.respond("api", "--paginate", "--jq", ".check_runs[]", endpoint, stdout="")
+    rules = json.loads(env.gh.responses.read_text("utf-8"))
+    rules[-1]["then"] = [running] * polls + [lines(GREEN)]
     env.gh.responses.write_text(json.dumps(rules), "utf-8")
 
     closed = env.close(item)
 
+    pushes = [json.loads(line) for line in log.read_text("utf-8").splitlines()] if log.exists() else []
+    if override is not None:
+        assert closed.returncode == 1, closed.stdout + closed.stderr
+        assert "no check progress for 0 minutes" in closed.stderr
+        assert not [push for push in pushes if push[1] == parent], pushes
+        return
     assert closed.returncode == 0, closed.stdout + closed.stderr
-    pushes = [json.loads(line) for line in log.read_text("utf-8").splitlines()]
+    assert "Waiting: the code's checks are still queued or running." in closed.stdout
     [record] = [push for push in pushes if push[1] == parent]
-    assert record[3] >= 2, "close pushed its review record while the code's CI run was still going"
+    assert record[3] >= polls + 1, "close pushed its review record while the code's CI run was still going"
+    notices = [json.loads(line) for line in progress.read_text("utf-8").splitlines()]
+    assert all(after[0] - before[0] >= 300 for before, after in zip(notices, notices[1:])), notices

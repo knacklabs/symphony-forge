@@ -117,6 +117,9 @@ if args[:1] == ["api"] and "/commits/" in endpoint and train_sha(sha_of(endpoint
                  "status": "completed"}
         if red.get("settle") and not (here / "polled").exists():
             later.update(status="in_progress", conclusion=None)
+            # The job finishes on its next status read, whichever GitHub API reads it.
+            (here / "polled").touch()
+            append_json(here / "gh-calls.jsonl", ["settle-pending"])
         rows = [{**tests, "name": "test group 1 of 2", "status": "completed",
                  "conclusion": red.get("conclusion", "failure")}, later, rows[1]]
     elif red is not None and red.get("slow"):  # a re-run's jobs run again: still running, then green

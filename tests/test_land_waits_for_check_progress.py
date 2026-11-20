@@ -82,7 +82,7 @@ def test_1_land_waits_through_a_long_run_with_progress(clock, history):
     else:
         assert f"{ITEM} is ready; a human merges" in done.stdout
     assert done.stdout.count(f"Closing {ITEM}.") == 1
-    assert len(env.gh_calls(*RUNS)) >= 6
+    assert len(env.gh_calls("api", path="/check-runs?")) >= 6
 
 
 @pytest.mark.parametrize("answer", ["{", "failed"])
@@ -131,9 +131,9 @@ def test_3_land_stops_when_github_shows_no_check_progress(clock, answer):
     if answer == "unreadable":
         # Four attempts take seven seconds before the failure cache starts.
         # The wait's deadline expires before that cached failure does.
-        assert len(env.gh_calls(*RUNS)) == 4
+        assert len(env.gh_calls("api", path="/check-runs?")) == 4
     else:
-        assert len(env.gh_calls(*RUNS)) == 2
+        assert len(env.gh_calls("api", path="/check-runs?")) == 2
 
 
 def test_4_close_keeps_its_fixed_wait(clock):
@@ -143,8 +143,11 @@ def test_4_close_keeps_its_fixed_wait(clock):
     _queue(env, RUNS, *_runs(*[look for stage in range(4) for look in [_pending(stage)] * 3], GREEN))
     done = env.repo.forge("close", ITEM)
     assert done.returncode == 1
+    # Sixty-second polling reaches the limit while both matrix jobs still run.
+    # The refusal names every active check at that point.
     assert ("The checks are not green yet: GitHub has shown no check progress for 1 minutes: "
-            "tests is still running; forge-pr-check is still running.") in done.stderr
+            "tests (windows-latest) is still running; tests (ubuntu-latest) is still running; "
+            "forge-pr-check is still running.") in done.stderr
     assert not env.gh_calls("pr", "merge")
 
 
@@ -176,7 +179,8 @@ def test_5_land_keeps_progress_waiting_during_merge_revalidation(clock, answer):
     if answer == "stuck":
         assert done.returncode == 1, done.stdout + done.stderr
         assert "GitHub has shown no check progress" in done.stderr
-        assert "tests is still running" in done.stderr
+        for runner in ("windows-latest", "ubuntu-latest"):
+            assert f"tests ({runner}) is still running" in done.stderr
         assert not env.gh_calls("pr", "merge")
     else:
         assert done.returncode == 0, done.stdout + done.stderr

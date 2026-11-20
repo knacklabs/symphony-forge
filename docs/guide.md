@@ -17,7 +17,7 @@ reader while available. A native read uses a separate `reader` subagent.
 Install the release a repo pins (uv brings Python 3.11 or later if you don't have it):
 
 ```
-uv tool install git+https://github.com/knacklabs/symphony-forge@v1.2.43
+uv tool install git+https://github.com/knacklabs/symphony-forge@v1.2.44
 ```
 
 `forge --version` prints the installed version. Each repo pins its release in `forge.toml`, and
@@ -686,18 +686,30 @@ A repo pinned to a release older than the command upgrades once with
 
 For Forge's maintainers:
 
+Cut one release a day at 05:00 UTC from the newest main commit whose Linux full run
+and Windows run passed. Freeze the contents at the cut. Only a fix without which the
+release is unsafe or its checks cannot pass may join; later work waits for the next day.
+Publish within 30 minutes of the cut, without a separate owner yes.
+Skip the day when nothing merged since the last release or main is red.
+Hold merges from the cut until you push the tag and check the installed version.
+
 1. In a fix, set `__version__` in `src/forge/__init__.py` to the new version (without the `v`),
-   close it and merge it.
-2. Start one Linux full run with `gh workflow run forge.yml --ref main`.
-   Confirm it is green. This workflow posts the full-run status that sign-off and release read.
-   Start the Windows platform run with `gh workflow run forge-next.yml --ref main`.
-   Confirm it is green before you tag the release.
-3. Tag the merge commit `vX.Y.Z` and push the tag: `git tag vX.Y.Z <merge commit>`, then
-   `git push origin vX.Y.Z`. Check the tag's tree matches the default branch with
-   `git diff --quiet vX.Y.Z origin/main`.
+   close it and merge it before the nightly runs.
+2. Before the cut, reuse passed nightly runs on the version-bump commit or a later main commit.
+   If a run is missing, start it with `gh workflow run forge.yml --ref main` (Linux) or
+   `gh workflow run forge-next.yml --ref main` (Windows). Both must pass before the cut.
+   At 05:00 UTC, select the newest main commit whose Linux full run and Windows run passed.
+   Record its full SHA (commit identifier) as the cut commit. It must contain the new version.
+   If current main is ahead of that commit, skip the day: the release gate requires current main.
+   Reuse the passed nightly runs on that exact commit. Do not start them again.
+   The Linux workflow posts the full-run status that sign-off and release read.
+   If an essential fix must join, repeat both runs and record its tested commit before the tag.
+3. Tag the exact cut commit with `git tag vX.Y.Z <full cut SHA>`, then `git push origin vX.Y.Z`.
+   Use the recorded full SHA, never `origin/main`. Check the tag's tree against the cut with
+   `git diff --quiet vX.Y.Z <full cut SHA>`.
    The tag push runs the Windows checks again or reuses passed proof for the same tree.
    Confirm that run is green too.
-4. Install from the tag and check that `forge --version` prints `vX.Y.Z`.
+4. Install from the tag and check that `forge --version` prints `vX.Y.Z`. Then allow merges again.
 5. Score the release. Nothing else starts this, a pull request never does, and it never holds the
    release. Use Claude only, in your own Claude Code session. Use no model whose id contains
    `fable` or `astra`.

@@ -103,7 +103,15 @@ def test_2_other_failures_and_used_attempts_do_not_restart_ci(clock, monkeypatch
         failed[0] = _group("success")
     if timeout:
         name = "tests" if stop == "tests-timeout" else "tests (ubuntu-latest)"
-        failed = [{**_group("cancelled"), "name": name}, OTHER, _check("lint", "success", 8)]
+        failed = [{**_group("cancelled"), "name": name,
+                   "details_url": "https://github.com/acme/shop/actions/runs/77/job/701"},
+                  OTHER, _check("lint", "success", 8)]
+        # A genuine timeout needs runner execution evidence, not only check age.
+        clock.gh.respond("api", "--paginate", "--jq", "[.][]",
+                         "repos/{owner}/{repo}/actions/jobs/701", stdout=json.dumps({
+                             "runner_id": 9, "started_at": failed[0]["started_at"],
+                             "completed_at": failed[0]["completed_at"],
+                         }))
     if stop == "cancelled-first":
         _queue(clock, RUNS, *_runs([_check("tests", "cancelled"), OTHER], failed))
         _queue(clock, RUN_LIST, _workflow(5, 77), _workflow(5, 77, "failure", attempt=2))

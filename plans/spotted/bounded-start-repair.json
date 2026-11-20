@@ -1,0 +1,48 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/backfill.py\tNot done: A retry can repair more than 20 merged items\tbounded-start-repair",
+      "kind": "bug",
+      "path": "src/forge/backfill.py",
+      "line": 277,
+      "text": "Not done: A retry can repair more than 20 merged items",
+      "from": "blocking",
+      "item": "bounded-start-repair",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/backfill.py\tNot done: Unaffected pull requests consume the merged repair budget\tbounded-start-repair",
+      "kind": "bug",
+      "path": "src/forge/backfill.py",
+      "line": 260,
+      "text": "Not done: Unaffected pull requests consume the merged repair budget",
+      "from": "blocking",
+      "item": "bounded-start-repair",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/backfill.py\tScale: A fresh checkout still fetches every historical pull request\tbounded-start-repair",
+      "kind": "bug",
+      "path": "src/forge/backfill.py",
+      "line": 246,
+      "text": "Scale: A fresh checkout still fetches every historical pull request",
+      "from": "blocking",
+      "item": "bounded-start-repair",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_upgrade_start_repair.py\tGate: tests/test_upgrade_start_repair.py::test_1_upgrade_bounds_existing_start_repairs\tbounded-start-repair",
+      "kind": "bug",
+      "path": "tests/test_upgrade_start_repair.py",
+      "line": 55,
+      "text": "Gate: tests/test_upgrade_start_repair.py::test_1_upgrade_bounds_existing_start_repairs",
+      "from": "blocking",
+      "item": "bounded-start-repair",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

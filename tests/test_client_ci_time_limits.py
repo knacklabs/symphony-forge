@@ -3,6 +3,7 @@
 Audit: real init/sync and close commands own these contracts. GitHub and the
 reviewer alone are faked. Short cancellations and ordinary failures remain red.
 """
+import json
 from datetime import datetime, timedelta, timezone
 
 import pytest
@@ -76,6 +77,15 @@ def test_2_close_distinguishes_test_time_limits_from_worker_failures(
     start = datetime(2026, 10, 19, tzinfo=timezone.utc)
     failed = {**run(name, conclusion), "started_at": start.isoformat(),
               "completed_at": (start + timedelta(seconds=seconds)).isoformat()}
+    if conclusion == "cancelled":
+        failed["details_url"] = "https://github.com/acme/shop/actions/runs/301/job/701"
+        env.gh.respond("api", "--paginate", "--jq", "[.][]",
+                       "repos/{owner}/{repo}/actions/jobs/701", stdout=json.dumps({
+                           "runner_id": 9, "started_at": start.isoformat(),
+                           "completed_at": failed["completed_at"],
+                           "steps": [{"name": "Run tests", "status": "completed",
+                                      "started_at": start.isoformat()}],
+                       }))
     jobs = [job for job in GREEN if job["name"] != name.split(" (")[0]]
     if name.startswith("test group "):
         jobs = [run("tests", "failure"), run("forge-pr-check")]

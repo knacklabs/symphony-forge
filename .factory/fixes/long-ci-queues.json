@@ -1,0 +1,196 @@
+{
+  "base": "67376f6c033979de5e01536db35aaf293d3e8899",
+  "branch": "fix/long-ci-queues",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1ef43-7c91-71d1-9af2-b44c5c4b8679",
+    "head": null,
+    "start": "bba3e03b6e7a109a610d12e307ffca3756d96ea5"
+  },
+  "done_when": "close, merge and land keep waiting while checks are queued or running, printing a progress line at most every 5 minutes, until the checks finish; the test time limit counts only time a job ran, not time it waited for a runner; new and existing repos get it on upgrade",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "_tests_timeout() in src/forge/checks.py",
+      "file": "src/forge/checks.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 402,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: count only job runtime toward the test limit",
+      "work": 2
+    },
+    {
+      "area": "_wait() in src/forge/checks.py",
+      "file": "src/forge/checks.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 250,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: keep waiting while any check remains active",
+      "work": 2
+    },
+    {
+      "area": "let_finish() in src/forge/checks.py",
+      "file": "src/forge/checks.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 125,
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: Owner accepted on 18 Nov 2026: with a set FORGE_CHECKS_WAIT, the pre-push wait still waits through a runner queue; waiting through the queue is the wanted default",
+      "round": 1,
+      "security": false,
+      "title": "Honor the wait override before pushing the review record",
+      "work": 1
+    },
+    {
+      "area": "let_finish() in src/forge/checks.py",
+      "file": "src/forge/checks.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 125,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: keep progress lines at least five minutes apart",
+      "work": 1
+    },
+    {
+      "area": "test_1_active_checks_finish_after_long_queue() in tests/test_checks_finish_after_long_runner_queues.py",
+      "file": "tests/test_checks_finish_after_long_runner_queues.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 35,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: running-check progress cadence",
+      "work": 1
+    },
+    {
+      "area": "tests/test_checks_finish_after_long_runner_queues.py",
+      "file": "tests/test_checks_finish_after_long_runner_queues.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 15,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: proof list",
+      "work": 1
+    },
+    {
+      "area": "_wait() in src/forge/checks.py",
+      "file": "src/forge/checks.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 267,
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: Owner accepted on 19 Nov 2026: approval-gated checks are waited on without end; cancelled-check job lookups and queued runner minutes are follow-ups",
+      "round": 3,
+      "security": false,
+      "title": "Report approval-gated checks instead of waiting indefinitely",
+      "work": 2
+    },
+    {
+      "area": "_measure() in src/forge/citime.py",
+      "file": "src/forge/citime.py",
+      "gain": 2,
+      "harm": 2,
+      "line": 89,
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: Owner accepted on 19 Nov 2026: approval-gated checks are waited on without end; cancelled-check job lookups and queued runner minutes are follow-ups",
+      "round": 3,
+      "security": false,
+      "title": "Follow-up: Avoid serial job lookups for every cancelled check",
+      "work": 2
+    },
+    {
+      "area": "_measure() in src/forge/citime.py",
+      "file": "src/forge/citime.py",
+      "gain": 2,
+      "harm": 2,
+      "line": 94,
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: Owner accepted on 19 Nov 2026: approval-gated checks are waited on without end; cancelled-check job lookups and queued runner minutes are follow-ups",
+      "round": 3,
+      "security": false,
+      "title": "Follow-up: Exclude queued time from reported runner minutes",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "bc778ee014117f2bbd20832c5f173befbfdc2e0c5558f8484308f46f676dd901",
+    "changed": "677fd0b6f7364f4228babe7ae704a79a9bcae42ffb223557dbecb2db0e73634f",
+    "commit": "0a26c48dc773ddccf414d4a6b472e729f3b9e5c3",
+    "dismissals": [],
+    "findings": [],
+    "id": "2eeebe5c-8f82-42de-9128-cd44a346f1fd",
+    "status": "clean"
+  },
+  "round": 8,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-18T15:24:58.020651+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-18T15:57:18.618863+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-18T16:48:02.159655+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-19T03:34:39.578003+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-19T07:05:32.136748+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-19T10:24:50.315430+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-19T11:43:45.546447+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-19T12:29:32.432206+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-19T03:34:39.578386+00:00",
+    "by": "owner",
+    "choice": "accept",
+    "file": "src/forge/checks.py",
+    "reason": "Owner accepted on 19 Nov 2026: approval-gated checks are waited on without end; cancelled-check job lookups and queued runner minutes are follow-ups",
+    "wait_id": "1e5dbf93-512d-492a-b799-a564c1631552",
+    "worker_round": 3
+  },
+  "stuck": {
+    "close": "4119f141-8f04-4407-87c3-bbd4908805a4",
+    "head": "3e2813aa1a8d37fbc53fbddf22cfeae6af1eceff",
+    "keys": {},
+    "round": 7
+  },
+  "why": "Issues 1666 and 1639: with long runner queues (57 to 118 minutes measured at a client), close and merge end their wait and print 'Next: forge close', so the coordinator restarts them many times, and time a job spends queued for a runner counts against the 60-minute test limit, so jobs that only waited are cancelled",
+  "worker": "codex"
+}

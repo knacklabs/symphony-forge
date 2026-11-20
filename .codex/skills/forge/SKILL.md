@@ -249,7 +249,7 @@ Every client repo moves through seven steps. `forge next` names the current step
 
 **The build and review loop.** A worker builds the part and its tests, then a separate review checks the change. A serious problem goes back to the worker for another round. Tasks and fixes get review rounds up to the repo's setting, two by default. At the round limit (the repo's setting, two by default), Forge stops and asks the owner, but a P0 problem keeps the loop going. It exists because a reviewer sees problems that the worker cannot see in its own work.
 
-**The CI checks.** GitHub runs the repo's checks on the pull request. Close and merge wait up to 90 minutes while a check is running, and a red check goes back to the worker. At a wait limit, the message names the limit and the checks still running. They exist because the checks run the tests on a clean machine, the same way for every change. If uv installation fails, the generated workflow retries it once before the job fails.
+**The CI checks.** GitHub runs the repo's checks on the pull request. Close and merge wait until queued or running checks finish. A red check ends the wait at once, even while other checks are queued or running, and goes back to the worker. Progress prints at most once every five minutes. The test time limit excludes time in the runner queue. New and existing repos get this behaviour on upgrade. They exist because the tests must run on a clean machine, the same way for every change. If uv installation fails, the generated workflow retries it once before the job fails.
 On GitHub Actions, `forge test` streams the test output into the job log.
 
 `forge next` adds one line under each running item that says what it waits on, why and for how long. Give that line to the person when they ask why something takes time.
@@ -1617,10 +1617,17 @@ also stay in place; only recognized cache directories may be discarded.
 5. Close's last line says who merges: the human, or `forge merge <fix>` when the repo allows it.
 
 Close runs the time-story backfill as part of the upgrade, with nothing extra to type. It
-rebuilds open items and items merged in the last six weeks from git and GitHub, marks them
+rebuilds open items and at most the 20 most recently merged items that need it within
+the last six weeks from git and GitHub, marks them
 "rebuilt from history", and leaves spans without evidence unknown. If GitHub cannot be reached,
 the next close on this machine retries the backfill. The agent then opens the board and reports
 what is still missing.
+
+The same bound applies to start-time repairs and missing histories on a fresh checkout.
+Unaffected items use no places in the batch. Merged items keep shared check evidence
+without old check-run requests. Retries keep the same batch and never take another 20.
+Older items keep their text or show unmeasured time. New and existing repos get this
+behavior on upgrade.
 
 A repo pinned to a release without `forge upgrade` runs it once through uv:
 `uvx --from git+https://github.com/knacklabs/symphony-forge@<release> forge upgrade <release>`.
@@ -2297,12 +2304,14 @@ That workflow must post `forge-full-suite` on the default branch commit after it
 `gh api --method POST "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" -f context=forge-full-suite -f "state=$state"`.
 Give the status job `permissions: {statuses: write}` and set `GH_TOKEN: ${{ github.token }}` in the posting step's `env`.
 In CI mode without this setting, `forge.yml` also runs `forge test --full` once a day on the default branch and supports
-`workflow_dispatch`. After the last product merge for a release or sign-off, start the full run
-at once with `gh workflow run forge.yml --ref <default>` when full-run proof is required.
+`workflow_dispatch`. After the last product merge for a release or sign-off, reuse a passed full run
+on that exact commit. If it has none, start the full run
+with `gh workflow run forge.yml --ref <default>` when full-run proof is required.
 Prepare the release or sign-off notes while it runs, then follow that same run with
 `gh run watch <run-id> --exit-status`; do not wait for the nightly run or the tag push.
 Local mode has no scheduled job; after the last product merge for a release or sign-off,
-start `forge test --full` at once in the main checkout when full-run proof is required.
+reuse a passed full run on that exact commit. Otherwise start `forge test --full`
+in the main checkout when full-run proof is required.
 Prepare notes while it runs and wait for that same command to finish. For the daily run outside
 a release or sign-off, run it when `forge next` says it is due and the machine is quiet.
 A green full run on the latest default-branch
@@ -2314,6 +2323,17 @@ An app repair on the sign-off branch can use the default branch's green run.
 A failed latest full run still blocks.
 Earlier clients need no migration, and accepted sign-off records stay valid. Everyday merges do
 not wait for a full run.
+For Forge's own releases, merge the version-bump fix before the nightly Linux full run and Windows run.
+Cut once a day at 05:00 UTC from the newest main commit whose two runs passed.
+Record that commit's full SHA (commit identifier). It must contain the new version.
+If current main is ahead of it, skip the day: the release gate requires current main.
+Reuse those passed runs. Hold merges until you push the tag and check the installed version.
+Freeze the contents at the cut. Only a fix needed for release safety or passed checks can join.
+Such a fix needs both runs to pass and a new recorded cut commit before the tag.
+Later work waits for the next day. Tag the recorded full SHA, never `origin/main`.
+Publish within 30 minutes of the cut without a separate owner yes.
+Skip the day when nothing merged since the last release or main is red.
+See the Forge repo's `docs/guide.md`, Releasing Forge, for the commands.
 A failed scheduled or manual full run appears in `forge next` with its failed test names.
 The required `forge-pr-check` fails a pull request from a branch Forge did not start.
 Before the first committed review, this check stays pending. A stale or blocked review still
@@ -2504,19 +2524,20 @@ round if the check is still red.
 
 Use `forge land <item>` for build, close, fix rounds and merge where agent merges are allowed;
 otherwise it hands the ready pull request to the human. It replaces private landing and CI-wait
-loops, with bounded check waiting and fix rounds. Land waits for the pushed head's checks while
+loops, with check waits and bounded fix rounds. Land waits for the pushed head's checks while
 GitHub shows progress or a check is in progress, retrying unreadable or failed answers. It stops
-waiting on green or failed checks, or after 30 minutes without a check starting, finishing or
-being replaced while none are in progress. Each wait ends at 90 minutes,
-even if checks remain in progress. At either wait limit, no decision is needed.
+waiting on green or failed checks, or after 30 minutes without progress when no check is queued or running.
+Queued or running checks keep the command alive until they finish. Progress prints at most once every five minutes.
+Any failed check ends the wait at once, even while other checks are queued or running.
+At the no-progress limit, no decision is needed.
 Run `forge land <item>` again to resume without restarting checks.
-`FORGE_CHECKS_WAIT` keeps its explicit no-progress wait instead of the longer running-check wait.
+`FORGE_CHECKS_WAIT` keeps its explicit no-progress wait for running or missing checks.
 Close, merge and land poll CI checks every 60 seconds. `FORGE_CHECKS_POLL` sets another interval
 in seconds. New and existing repos get this behavior on upgrade.
 If GitHub fails to start the review check, close stops at once and says so. It does not wait again.
 Push a new commit or reopen the pull request on GitHub, then run `forge close <item>`.
 Land says which checks are still running, missing, or
-unreadable. Close and merge also wait up to 90 minutes while a check is running.
+unreadable. Close and merge also wait until queued or running checks finish.
 With no running or queued checks, they wait at most ten minutes. When close
 stops, follow its refusal and the
 Closing section above, then run it again. Run it in the background and keep watching it.
