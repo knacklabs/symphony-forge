@@ -2304,14 +2304,14 @@ That workflow must post `forge-full-suite` on the default branch commit after it
 `gh api --method POST "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" -f context=forge-full-suite -f "state=$state"`.
 Give the status job `permissions: {statuses: write}` and set `GH_TOKEN: ${{ github.token }}` in the posting step's `env`.
 In CI mode without this setting, `forge.yml` also runs `forge test --full` once a day on the default branch and supports
-`workflow_dispatch`. After the last product merge for a release or sign-off, reuse a passed full run
-on that exact commit. If it has none, start the full run
-with `gh workflow run forge.yml --ref <default>` when full-run proof is required.
+`workflow_dispatch`. Reuse a passed full run on the exact final commit when one exists.
+After the last product merge for a release or sign-off, start the full run
+at once with `gh workflow run forge.yml --ref <default>` if that commit still needs full-run proof.
 Prepare the release or sign-off notes while it runs, then follow that same run with
 `gh run watch <run-id> --exit-status`; do not wait for the nightly run or the tag push.
 Local mode has no scheduled job; after the last product merge for a release or sign-off,
-reuse a passed full run on that exact commit. Otherwise start `forge test --full`
-in the main checkout when full-run proof is required.
+reuse a passed full run on that exact commit. Otherwise start `forge test --full` at once in the main checkout
+when full-run proof is required.
 Prepare notes while it runs and wait for that same command to finish. For the daily run outside
 a release or sign-off, run it when `forge next` says it is due and the machine is quiet.
 A green full run on the latest default-branch
