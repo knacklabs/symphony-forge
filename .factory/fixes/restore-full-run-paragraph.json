@@ -70,7 +70,7 @@
     "id": "8348508d-7989-4a61-b0be-9d5c849be475",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -85,13 +85,18 @@
     {
       "at": "2026-11-20T08:37:19.407055+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-11-20T08:38:13.484071+00:00",
+      "round": 2,
+      "step": "resume"
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "9a10adfe3e19bbeaf2ee82ec59abb64ed9f4ac6e",
+    "close": "ff0a1867-c979-41f3-9b91-44d77919669c",
+    "head": "978631dfac9bb908feb758423a35f36ac0212148",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "Main is red: the daily-release-cut fix (4b5a40b0a) rewrote the client skill paragraph 'After the last product merge for a release or sign-off, start the full run at once with gh workflow run forge.yml --ref <default>...' although the daily cut is a rule for Forge's own releases only; tests/test_full_run_starts_before_notes.py::test_1 fails on every pull request, and the combined CI of the train that merged it did not select that test",
   "worker": "codex"
