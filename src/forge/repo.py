@@ -14,7 +14,6 @@ import shlex
 import shutil
 import subprocess
 import sys
-import tempfile
 import time
 import tomllib
 import uuid
@@ -371,16 +370,12 @@ def generated_files(top: Path, paths: list[str], head: str = "") -> set[str]:
     """Read generated marks from the staged index, or a committed head without checking it out."""
     if not paths:
         return set()
-    with tempfile.TemporaryDirectory() as folder:
-        env = dict(os.environ)
-        if head:
-            env["GIT_INDEX_FILE"] = str(Path(folder) / "index")
-            git("read-tree", head, cwd=top, env=env)
-        attrs = run("git", "check-attr", "--cached", "--stdin", "-z", "linguist-generated",
-                    cwd=top, env=env, input="\0".join(paths))
-        attrs.check_returncode()
-        values = attrs.stdout.split("\0")
-        return {path for path, value in zip(values[::3], values[2::3]) if value in ("set", "true")}
+    source = ("--source", head) if head else ("--cached",)
+    attrs = run("git", "check-attr", *source, "--stdin", "-z", "linguist-generated",
+                cwd=top, input="\0".join(paths))
+    attrs.check_returncode()
+    values = attrs.stdout.split("\0")
+    return {path for path, value in zip(values[::3], values[2::3]) if value in ("set", "true")}
 
 
 def commit_log(top: Path, base: str, head: str = "HEAD") -> list[tuple[str, str, list[str]]]:

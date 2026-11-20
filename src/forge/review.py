@@ -884,8 +884,7 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         saved = repo.forge_dir(top) / f"review-{item.replace('/', '-')}.json"
         saved.unlink(missing_ok=True)
         # Git's transport avoids copying an object store while another close changes it.
-        repo.git("clone", "-q", "--no-local", "--no-checkout", str(top), str(tree), cwd=top)
-        repo.git("checkout", "-q", "--detach", head, cwd=tree)
+        repo.git("clone", "-q", "--no-local", str(top), str(tree), cwd=top)
         if signoff_prompt:
             if only is not None:
                 review_base = repo.git("commit-tree", EMPTY_TREE, "-m", "Empty product review base",
@@ -940,7 +939,7 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                      *([previous["commit"]] if previous.get("commit") else []), cwd=tree)
             from forge import merge_review
             conflict_base = merge_review.base(top, item, state, base, previous)
-            review_base = conflict_base or previous.get("commit") or repo.git("rev-parse", base, cwd=tree)
+            review_base = conflict_base or previous.get("commit") or base
             if conflict_base:
                 repo.git("fetch", "-q", str(top), conflict_base, cwd=tree)
                 snapshot = repo.git("commit-tree", repo.git("rev-parse", "HEAD^{tree}", cwd=tree),
@@ -951,7 +950,8 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                 if repo.git("merge-base", base, review_base, cwd=tree) != merged_base:
                     review_base = merged_base
         summary, filtered_base = autoreview.hide_generated(
-            tree, repo.git("merge-base", review_base, "HEAD", cwd=tree), "HEAD")
+            tree, repo.git("merge-base", review_base, "HEAD", cwd=tree), "HEAD",
+            source=None if signoff_prompt else top, source_head="" if signoff_prompt else head)
         prompt += summary
         review_base = filtered_base or review_base
         # The worker brief's standards page, as rules; a prompt file keeps it out of argv.
