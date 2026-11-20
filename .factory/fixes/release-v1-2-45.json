@@ -1,4 +1,5 @@
 {
+  "allow_large": "Owner allowed on 20 Nov 2026: the release version bump changes the version number in 7 code files, as every release does",
   "base": "bb2cefadfba141ffbc3347f7ca3383f3b5d1afef",
   "branch": "fix/release-v1-2-45",
   "chat": {
