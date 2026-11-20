@@ -1,0 +1,116 @@
+{
+  "base": "0d1db0b7471dfab1dbce63263166f60b0832b1c1",
+  "branch": "fix/bare-helper-imports",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1f54e-d3db-7ff3-896f-3e734528593d",
+    "head": null,
+    "start": "2f351dcf3eb428419f39eb2feff04868d5361895"
+  },
+  "done_when": "A change to a helper module in a test folder selects every test file that imports it, by bare name or by package path, in forge test --change and in CI; new and existing repos get it on upgrade and forge sync",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "related.hits() in src/forge/fasttest.py",
+      "file": "src/forge/fasttest.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 440,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Bare imports from nested test helper folders are skipped",
+      "work": 2
+    },
+    {
+      "area": "related.hits() in src/forge/fasttest.py",
+      "file": "src/forge/fasttest.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 444,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Avoid crashing on a test helper named src.py",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "bc7de90909cb6c6c0a097779e3b3d4991e537bbeb12c23ad9445e7ebe59b00cd",
+    "changed": "9508f00b32d51542688736bcab6480bba12c9d849a6680bb74896d352d7e4112",
+    "commit": "93f8088e657788f7dd34f3e4100ed7b349720129",
+    "dismissals": [],
+    "findings": [],
+    "id": "30fd7a3c-032b-4c9a-ab93-e91208cfafa2",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-19T19:35:34.654987+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-19T19:35:44.828901+00:00",
+      "round": 1,
+      "step": "resume"
+    },
+    {
+      "at": "2026-11-19T19:48:56.745181+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-19T19:49:31.643982+00:00",
+      "round": 2,
+      "step": "resume"
+    },
+    {
+      "at": "2026-11-19T19:55:02.480611+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-19T19:55:02.496504+00:00",
+      "round": 2,
+      "step": "hold"
+    },
+    {
+      "at": "2026-11-20T03:14:39.610633+00:00",
+      "by": "owner",
+      "choice": "more",
+      "round": 2,
+      "step": "owner decision"
+    },
+    {
+      "at": "2026-11-20T03:15:39.467783+00:00",
+      "round": 3,
+      "step": "resume"
+    },
+    {
+      "at": "2026-11-20T03:18:42.952566+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-19T19:55:02.496504+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "src/forge/fasttest.py",
+    "reason": "Owner chose one more round on 20 Nov 2026 for the src.py crash",
+    "wait_id": "56b9e218-3b00-4551-ac0d-53cd4131521e",
+    "worker_round": 2
+  },
+  "stuck": {
+    "close": "9658da58-8296-40ef-a2bc-8dbf0b4fac9c",
+    "head": "eb30b1a062dc75e1758b7d37a3b038999500ac2f",
+    "keys": {},
+    "round": 2
+  },
+  "why": "Related-test selection misses a test file that imports a shared helper in tests/ by its bare name (import board_fixture, not tests.board_fixture), so a change to that helper selects none of the tests that use it and a green pull request check proves nothing; seen on 20 Nov 2026 with tests/board_fixture.py and tests/test_board_now_screen.py",
+  "worker": "codex"
+}

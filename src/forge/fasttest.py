@@ -38,7 +38,7 @@ def source_root(path: Path) -> Path:
 
 def module_parts(path: Path) -> list[str]:
     parts = list(path.with_suffix("").parts)
-    return parts[1:] if parts[0] == "src" else parts
+    return parts[1:] if len(parts) > 1 and parts[0] == "src" else parts
 
 
 def pytest_options(arguments: list[str]) -> str:
@@ -441,7 +441,22 @@ def related(base: str) -> tuple[list[str], list[str], bool, list[str]]:
                     modules.append((".".join(below), path, root))
 
     def hits(test: Path, module: str, source: Path, root: Path) -> bool:
-        return test.is_relative_to(root) and mentions(test, module, source)
+        if not test.is_relative_to(root):
+            return False
+        if mentions(test, module, source):
+            return True
+        # pytest also exposes the test's folder and test roots for bare imports.
+        folders = [test.parent, *(folder for folder in source.parents
+                                  if folder != test.parent and
+                                  any(part in {"tests", "test"} for part in folder.parts))]
+        for folder in folders:
+            if source.is_relative_to(folder):
+                parts = list(source.relative_to(folder).with_suffix("").parts)
+                if parts[-1] == "__init__":
+                    parts.pop()
+                if parts and mentions(test, ".".join(parts), source):
+                    return True
+        return False
 
     found = {source for module, source, root in modules
              if any(hits(path, module, source, root) for path in tests)}

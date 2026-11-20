@@ -1,0 +1,101 @@
+{
+  "base": "a291873644fe4943653cb8413469ec21a8704e08",
+  "branch": "fix/daily-release-cut",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1f723-f8b5-74e2-b7a3-2ae956430d3c",
+    "head": null,
+    "start": "95aa35a053e093dacd5fdfbb0960c73da3d3b09f"
+  },
+  "done_when": "The 'Releasing Forge' section of docs/guide.md says: cut once a day at 05:00 UTC from the newest main commit whose Linux full run and Windows run passed; the contents are frozen at the cut and only a fix without which the release is unsafe or its checks cannot pass may join; later work waits for the next day; publish within 30 minutes of the cut without a separate owner yes; skip the day when nothing merged or main is red",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "docs/guide.md",
+      "file": "docs/guide.md",
+      "gain": 5,
+      "harm": 3,
+      "line": 689,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: A frozen cut cannot be pushed after main advances",
+      "work": 3
+    },
+    {
+      "area": "docs/guide.md",
+      "file": "docs/guide.md",
+      "gain": 4,
+      "harm": 3,
+      "line": 697,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: The checklist can tag a different commit from the tested cut",
+      "work": 1
+    },
+    {
+      "area": "docs/guide.md",
+      "file": "docs/guide.md",
+      "gain": 4,
+      "harm": 2,
+      "line": 697,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: Reconcile the coordinator's release instructions",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "184592ff307530bfa4dc21cd88312c955f77b04c04755f12ccaf12cb82ce49aa",
+    "changed": "d8834a966517c14667e288bb89e4ec0b42f1dac5a0459f075cfcb2f0155936fa",
+    "commit": "2616f056579536f6d3318162af086c294dc85703",
+    "dismissals": [],
+    "findings": [],
+    "id": "436607fe-5898-432a-ac9d-8fbdaec65066",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-20T04:08:01.738256+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-20T04:08:11.129824+00:00",
+      "round": 1,
+      "step": "resume"
+    },
+    {
+      "at": "2026-11-20T04:22:30.754953+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-20T04:23:06.627174+00:00",
+      "round": 2,
+      "step": "resume"
+    },
+    {
+      "at": "2026-11-20T04:28:24.311360+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "f01e21e1-6a58-4cd9-ab00-b234773ef6c0",
+    "head": "bc69f881ee52bd1d30aad6bfb14ea9c426615eba",
+    "keys": {
+      "the open P0 functional: a frozen cut cannot be pushed after main advances in docs/guide.md": 1
+    },
+    "round": 1
+  },
+  "why": "Forge releases wait on scope added during the release: v1.2.44 waited about 20 hours while four fixes were added after the cut; the owner chose on 20 Nov 2026 one release a day from green main, with frozen contents, published without a separate owner yes",
+  "worker": "codex"
+}
