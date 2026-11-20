@@ -690,6 +690,12 @@
       "title": "Ready pull requests stop re-running CI against each other",
       "status": "pending",
       "order": 127
+    },
+    {
+      "key": "FORGE-FASTPATH-1",
+      "title": "Merging and closing waste fewer CI runs by default",
+      "status": "pending",
+      "order": 128
     }
   ],
   "epics": [

@@ -1,0 +1,12 @@
+{
+  "doc": "plans/FORGE-FASTPATH-1.md",
+  "status": "planning",
+  "steps": [
+    {
+      "at": "2026-11-20T04:41:48.804829+00:00",
+      "step": "start"
+    }
+  ],
+  "title": "Merging and closing waste fewer CI runs by default",
+  "touches": 0
+}
