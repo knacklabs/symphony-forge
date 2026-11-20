@@ -890,8 +890,7 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         saved = repo.forge_dir(top) / f"review-{item.replace('/', '-')}.json"
         saved.unlink(missing_ok=True)
         # Git's transport avoids copying an object store while another close changes it.
-        repo.git("clone", "-q", "--no-local", "--no-checkout", str(top), str(tree), cwd=top)
-        repo.git("checkout", "-q", "--detach", head, cwd=tree)
+        repo.git("clone", "-q", "--no-local", str(top), str(tree), cwd=top)
         if signoff_prompt:
             if only is not None:
                 review_base = repo.git("commit-tree", EMPTY_TREE, "-m", "Empty product review base",
@@ -956,8 +955,12 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                 merged_base = repo.git("merge-base", base, "HEAD", cwd=tree)
                 if repo.git("merge-base", base, review_base, cwd=tree) != merged_base:
                     review_base = merged_base
+        # Original commit IDs reuse the source checkout's immutable merge-base result.
+        review_start = (repo.git("merge-base", review_base, "HEAD", cwd=tree) if signoff_prompt
+                        else conflict_base or repo.git("merge-base", review_base, head, cwd=top))
         summary, filtered_base = autoreview.hide_generated(
-            tree, repo.git("merge-base", review_base, "HEAD", cwd=tree), "HEAD")
+            tree, review_start, "HEAD",
+            source=None if signoff_prompt else top, source_head="" if signoff_prompt else head)
         prompt += summary
         review_base = filtered_base or review_base
         # The worker brief's standards page, as rules; a prompt file keeps it out of argv.

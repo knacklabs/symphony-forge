@@ -4,6 +4,7 @@ Includes the warning work in src/forge/migration_warnings.py for related-test se
 Also covers src/forge/design.py's passive approval checks.
 Includes src/forge/records.py's approved constitution lookup in next.
 Includes src/forge/board.py's worktree reads shared by src/forge/nextstep.py.
+Includes src/forge/autoreview.py and src/forge/review.py's generated-content reads.
 """
 
 import json
