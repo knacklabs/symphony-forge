@@ -61,7 +61,7 @@
     "status": "blocked"
   },
   "round": 2,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-19T19:35:34.654987+00:00",
@@ -89,12 +89,23 @@
       "at": "2026-11-19T19:55:02.496504+00:00",
       "round": 2,
       "step": "hold"
+    },
+    {
+      "at": "2026-11-20T03:14:39.610633+00:00",
+      "by": "owner",
+      "choice": "more",
+      "round": 2,
+      "step": "owner decision"
     }
   ],
   "stop": {
     "at": "2026-11-19T19:55:02.496504+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "src/forge/fasttest.py",
-    "wait_id": "56b9e218-3b00-4551-ac0d-53cd4131521e"
+    "reason": "Owner chose one more round on 20 Nov 2026 for the src.py crash",
+    "wait_id": "56b9e218-3b00-4551-ac0d-53cd4131521e",
+    "worker_round": 2
   },
   "stuck": {
     "close": "62eb9d2c-7ac6-4918-be03-7f18fc3e6dbf",
