@@ -54,34 +54,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "8eb15f6532224db65081f05dc8cfbe79f5e5753a12face771e329d48fcc1809c",
-    "changed": "3fc1fa1f7c2a94d068c75db4ebce9b07bbcc145291263162cadb656223ee75c7",
-    "commit": "4d3e156d658d6b79e85182e06e57b6c9eaef6b20",
-    "dismissals": [
-      {
-        "accepted": true,
-        "because": "Human accepted the remaining finding: Owner accepted on 20 Nov 2026: items from another laptop stay under known issue 1674",
-        "finding": 1
-      }
-    ],
-    "findings": [
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Not done\nCase: normal use - a teammate closes a fix with local tests while an unrelated optional check is red, then this machine closes another fix. The teammate's clean receipt is published in the pull request (`src/forge/time_records.py:527-536`), but `land.ready_items` visits only local worktrees (`src/forge/land.py:384`). Even if the teammate's worktree has been picked up, it calls `_item_readiness` without the pull request (`src/forge/land.py:395`), so the shared receipt cannot be read (`src/forge/nextstep.py:873-878`). The other Ready fix is still omitted and close prints a single merge command, causing separate CI runs. The new test closes both fixes in the same clone (`tests/test_close_batches_ready_merges.py:25-26`), so it misses this case.",
-        "file": "src/forge/close.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 524,
-        "priority": "P1",
-        "required_done_when": true,
-        "title": "Not done: Close names a single merge when its report hides another Ready item",
-        "work": 2
-      }
-    ],
-    "id": "d4f11112-8e4b-483d-a984-ff670daeeecb",
+    "branch_diff": "99dfcd59795509e3a268c837d411072c57e9d674ca29a970bb48a3a642f282ba",
+    "changed": "ece974d4863724aa0c1e84717a2ac72e7736219b409fe03a21e53ef79991acda",
+    "commit": "397e35c58730f8755d99f78b9e3766df763ad451",
+    "dismissals": [],
+    "findings": [],
+    "id": "aff9e5d6-25a9-422f-ba42-4a085ef28696",
     "status": "clean"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-20T03:41:03.751468+00:00",
@@ -121,6 +103,10 @@
       "at": "2026-11-20T05:18:49.146840+00:00",
       "round": 3,
       "step": "resume"
+    },
+    {
+      "at": "2026-11-20T08:57:42.526432+00:00",
+      "step": "review"
     }
   ],
   "stop": {
