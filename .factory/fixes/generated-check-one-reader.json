@@ -1,0 +1,15 @@
+{
+  "base": "ecd8d670d78d6fdf906f15aabcfcbc02e9ae3405",
+  "branch": "fix/generated-check-one-reader",
+  "done_when": "close starts one cat-file batch reader again, tests/test_git_process_ceiling.py passes on main, and the review still leaves generated and deleted file content out",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-20T11:32:28.404532+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Main is red: the 1728 fix (ecd8d670d) added a generated-file check (src/forge/repo.py:379, read-tree HEAD and check-attr linguist-generated) that starts a second git cat-file --batch reader during every close, so tests/test_git_process_ceiling.py's three close cases fail (2 readers where 1 is allowed); the merge's related-test selection did not pick that test"
+}
