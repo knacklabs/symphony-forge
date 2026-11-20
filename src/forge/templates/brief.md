@@ -404,6 +404,11 @@ passes. In a CI-test repo, wider related tests, lint and type checks stay in pul
 Never edit or delete a test to make it pass; if a test
 is wrong, say so. A test whose result a stub or fake decides proves nothing. Use the test-audit
 skill whenever you write or change a test. Before you stop, $test_step
+In CI-test repos, `forge test --change` selects the pull request's own source changes
+(`base...HEAD`) plus test files that merges from main added or changed. The one-group rule
+counts only the pull request's own changes. Local-test repos keep all incoming changes in
+test selection and keep all groups after a merge. New and existing repos get this rule on
+upgrade and sync.
 Without an explicit `test_place`, Forge uses CI only if `checks` names a check other than
 `forge-pr-check`. That review-only check runs no app tests. Otherwise close runs tests locally.
 An explicit `test_place` keeps its value. Keep `test` as the full suite for the nightly run;

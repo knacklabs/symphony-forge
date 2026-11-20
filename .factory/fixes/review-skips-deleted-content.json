@@ -1,0 +1,155 @@
+{
+  "base": "4b5a40b0a536e066e1312d59417c63b4ec6b58a1",
+  "branch": "fix/review-skips-deleted-content",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1f7c0-859b-7d83-9acc-b0de739f8145",
+    "head": null,
+    "start": "cd22f55eb1d8915ab0de9e5e09f1317b747f7a8b"
+  },
+  "done_when": "Close's review input lists a deleted file by path and size only, never its content, and leaves out the content of generated, minified and source-map files (listed by path and size); a fix that deletes a large build folder is reviewed within a normal review's input size; other changes are reviewed as before; new and existing repos get it on upgrade",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "run() in src/forge/review.py",
+      "file": "src/forge/review.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 952,
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: Owner accepted on 20 Nov 2026: the rare design-file case after a main merge stays a follow-up; the client's large deletion case is fixed",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Generated content still reaches the review",
+      "work": 2
+    },
+    {
+      "area": "hide_generated() in src/forge/autoreview.py",
+      "file": "src/forge/autoreview.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 54,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Restoring a deleted file hides new files beneath its former path",
+      "work": 2
+    },
+    {
+      "area": "hide_generated() in src/forge/autoreview.py",
+      "file": "src/forge/autoreview.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 34,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: proof list omits linguist-generated files",
+      "work": 1
+    },
+    {
+      "area": "test_1_close_summarizes_deleted_and_generated_build_content() in tests/test_review_omits_deleted_and_minified_content.py",
+      "file": "tests/test_review_omits_deleted_and_minified_content.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 53,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: review-input test misses long lines introduced at the head",
+      "work": 1
+    },
+    {
+      "area": "test_1_close_summarizes_deleted_and_generated_build_content() in tests/test_review_omits_deleted_and_minified_content.py",
+      "file": "tests/test_review_omits_deleted_and_minified_content.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 61,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: review-input byte-size test fails on Windows",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "6aed2dd03bdb51026a1e2fd14358829f4e892d3853c0d47cd9aa42bbb5361014",
+    "changed": "83088068adf37264be2535d6bdcad5d8aecce5798209be988665ab181b1f5de5",
+    "commit": "88611bcf995dd98e1a1c897ec112900839afea0c",
+    "dismissals": [],
+    "findings": [],
+    "id": "6e402252-6c07-497e-9f32-4c2f279a8a23",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-20T06:56:52.782494+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-20T06:59:10.660658+00:00",
+      "round": 1,
+      "step": "resume"
+    },
+    {
+      "at": "2026-11-20T09:06:04.035299+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-20T09:33:19.476277+00:00",
+      "round": 2,
+      "step": "resume"
+    },
+    {
+      "at": "2026-11-20T09:54:21.429535+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-20T09:54:21.461083+00:00",
+      "round": 2,
+      "step": "hold"
+    },
+    {
+      "at": "2026-11-20T09:55:21.311686+00:00",
+      "by": "owner",
+      "choice": "accept",
+      "round": 2,
+      "step": "owner decision"
+    },
+    {
+      "at": "2026-11-20T09:59:21.979447+00:00",
+      "round": 3,
+      "step": "resume"
+    },
+    {
+      "at": "2026-11-20T10:09:10.016153+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-20T09:54:21.461083+00:00",
+    "by": "owner",
+    "choice": "accept",
+    "file": "src/forge/review.py",
+    "reason": "Owner accepted on 20 Nov 2026: the rare design-file case after a main merge stays a follow-up; the client's large deletion case is fixed",
+    "wait_id": "788f66af-4207-4443-9fce-381bfb528aa4",
+    "worker_round": 2
+  },
+  "stuck": {
+    "close": "132dfc2e-31a3-4beb-a6ae-406d50446088",
+    "head": "060b7fbcfcaffc1fe45eb6bfc0b54b2b9d127d78",
+    "keys": {},
+    "round": 2
+  },
+  "why": "Issue 1728: a fix that deletes a large tracked build folder (89 files, 88.6 MB including a 75 MB source map and an 11.7 MB minified bundle, 40,208 lines deleted) can never be reviewed: close's review sends deleted, minified and source-map content to the model and hits the usage limit every time (3 of 3 tries, then the organization's spend limit); the client finished the pull request by hand",
+  "worker": "codex"
+}

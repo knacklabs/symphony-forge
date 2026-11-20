@@ -357,7 +357,7 @@ def test(args) -> int:
         base = push_base or f"origin/{repo.default_branch(top)}"
         if repo.run("git", "rev-parse", "--verify", base, cwd=top).returncode:
             raise repo.Refused(f"Fetch {base} first: run git fetch origin, then forge test.", "")
-        if args.change and not push_base:
+        if args.change and not push_base and repo.test_place(cfg) == "local":
             # Include incoming changes merged into this PR, even under Actions'
             # synthetic merge. Main's current tip alone hides their test files.
             merges = repo.git("rev-list", "--merges", f"{base}..HEAD", cwd=top).splitlines()
@@ -400,6 +400,16 @@ def related(base: str) -> tuple[list[str], list[str], bool, list[str]]:
     tests = [Path(name) for name in files
              if (Path(name).name.startswith("test_") or Path(name).name.endswith("_test.py"))
              and name.endswith(".py") and Path(name).is_file()]
+    if (not os.environ.get("FORGE_PUSH_BASE")
+            and repo.test_place(tomllib.loads(Path("forge.toml").read_text("utf-8"))) == "ci"):
+        # Main's tests can reach PR sources through unchanged adapters. Keep those
+        # tests without treating main's source changes as part of this PR.
+        for merge in repo.git("rev-list", "--merges", f"{base}..HEAD").splitlines():
+            changed += [name for name in git_files("diff", "--no-renames", "--name-only",
+                                                   f"{merge}^1", "HEAD")
+                        if Path(name) in tests or Path(name).name == "conftest.py"
+                        or any(part in {"tests", "test", "__tests__", "spec"}
+                               for part in Path(name).parts)]
     fixtures = [Path(name).parent for name in changed if Path(name).name == "conftest.py"]
     shared_names = [name for name in changed
               if name == "conftest.py"
