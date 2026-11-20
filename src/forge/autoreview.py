@@ -35,30 +35,43 @@ def repair_findings(findings: list[dict[str, Any]], previous: dict[str, Any],
 
 def generated_paths(tree: Path, start: str, head: str, paths: list[str]) -> set[str]:
     """Generated text on either side, shared by the diff and its design context."""
-    marked = repo.generated_files(tree, paths, start) | repo.generated_files(tree, paths, head)
-    marked |= {path for path in paths if path.lower().endswith((".map", ".min.js", ".min.css"))}
+    marked = {path for path in paths if path.lower().endswith((".map", ".min.js", ".min.css"))}
+    if not paths:
+        return marked
+    attributes = sorted({(parent / ".gitattributes").as_posix()
+                         for path in paths for parent in Path(path).parents})
+    blobs = repo.blob_bytes(tree, [f"{ref}:{path}" for path in attributes for ref in (start, head)])
+    marked |= repo.generated_files(tree, paths, start)
+    if any(blobs.get(f"{start}:{path}") != blobs.get(f"{head}:{path}") for path in attributes):
+        marked |= repo.generated_files(tree, paths, head)
     for path in paths:
         if path in marked:
             continue
         for ref in (start, head):
-            blob = repo.run("git", "cat-file", "blob", f"{ref}:{path}", cwd=tree)
-            lines = blob.stdout.splitlines() if blob.returncode == 0 else []
+            lines = repo.blob_texts(tree, [f"{ref}:{path}"]).get(f"{ref}:{path}", "").splitlines()
             if sum(len(line) > 1000 for line in lines) > len(lines) / 2:
                 marked.add(path)
                 break
     return marked
 
 
-def hide_generated(tree: Path, start: str, head: str) -> tuple[str, str]:
+def hide_generated(tree: Path, start: str, head: str, *, source: Path | None = None,
+                   source_head: str = "") -> tuple[str, str]:
     """Summaries and a filtered base; omit exact paths from both review trees."""
-    deleted = repo.git("diff", "--name-only", "--diff-filter=D", "-z", "--no-renames",
+    records = repo.git("diff", "--raw", "--numstat", "-z", "--no-renames",
                        start, head, cwd=tree).split("\0")
-    deleted = [path for path in deleted if path]
-    counts = {row[2]: row[:2] for record in repo.git(
-        "diff", "--numstat", "-z", "--no-renames", start, head,
-        cwd=tree).split("\0") if len(row := record.split("\t", 2)) == 3}
+    deleted, index = [], 0
+    while records[index].startswith(":"):
+        if records[index].split()[-1] == "D":
+            deleted.append(records[index + 1])
+        index += 2
+    counts = {row[2]: row[:2] for record in records[index:]
+              if len(row := record.split("\t", 2)) == 3}
     active = [path for path in counts if path not in deleted]
-    marked = generated_paths(tree, start, head, [path for path in active if "-" not in counts[path]])
+    # Ordinary reviews read original commits through the command's existing reader.
+    # Sign-off's synthetic trees are available only inside the review clone.
+    marked = generated_paths(source or tree, start, source_head or head,
+                             [path for path in active if "-" not in counts[path]])
     generated = [path for path in active if path in marked or "-" in counts[path]]
     omitted = deleted + generated
     if not omitted:

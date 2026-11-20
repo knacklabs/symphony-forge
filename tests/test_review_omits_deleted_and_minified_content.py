@@ -1,8 +1,13 @@
 """forge close keeps deleted build output and generated file contents out of review input."""
 from __future__ import annotations
 
+import json
+import shutil
+import sys
+
 import pytest
 
+from conftest import _install
 from test_close import env  # noqa: F401
 
 STORY = "review-skips-deleted-content"
@@ -112,11 +117,11 @@ def test_2_close_omits_generated_content_from_design_context(env, classification
         "PRODUCT.md", "DESIGN.md", "docs/design/prototype/SCREENS.md",
     )
     if classification == "removed attributes":
-        attributes = "".join(f"{path} linguist-generated\n" for path in (
-            "assets/generated.js", *context_paths,
-        ))
+        attributes = "assets/* -linguist-generated\n" + "".join(
+            f"{path} linguist-generated\n" for path in context_paths)
         base = {
             ".gitattributes": attributes,
+            "assets/.gitattributes": "generated.js linguist-generated\n",
             "assets/generated.js": "BASE_ASSET_CONTENT_MARKER\n",
             "PRODUCT.md": "BASE_PRODUCT_CONTEXT_MARKER\n",
             "DESIGN.md": "BASE_DESIGN_CONTEXT_MARKER\n",
@@ -124,6 +129,7 @@ def test_2_close_omits_generated_content_from_design_context(env, classification
         }
         head = {
             ".gitattributes": "",
+            "assets/.gitattributes": "",
             "assets/generated.js": "HEAD_ASSET_CONTENT_MARKER\n",
             "PRODUCT.md": "HEAD_PRODUCT_CONTEXT_MARKER\n",
             "DESIGN.md": "HEAD_DESIGN_CONTEXT_MARKER\n",
@@ -155,6 +161,30 @@ def test_2_close_omits_generated_content_from_design_context(env, classification
     for path, content in head.items():
         env.commit(where, path, content)
 
+    # Observe the real Git reader: attribute-marked blobs must never reach Python.
+    real_git = shutil.which("git")
+    reads = env.tmp / "blob-reads.jsonl"
+    _install(env.repo.bin, "git", f'''#!{sys.executable}
+import pathlib, subprocess, sys
+from json_log import append_json
+args = sys.argv[1:]
+if args[:1] == ["check-attr"] and any(arg.startswith("--source") for arg in args):
+    sys.exit("Git 2.39 does not support check-attr --source")
+if args[:2] == ["cat-file", "--batch"]:
+    with subprocess.Popen([{json.dumps(real_git)}, *args], stdin=subprocess.PIPE) as child:
+        try:
+            for request in sys.stdin.buffer:
+                append_json(pathlib.Path({json.dumps(reads.as_posix())}), request.decode("utf-8").rstrip("\\n"))
+                child.stdin.write(request)
+                child.stdin.flush()
+        finally:
+            child.stdin.close()
+        code = child.wait()
+else:
+    code = subprocess.call([{json.dumps(real_git)}, *args])
+sys.exit(code)
+''')
+
     closed = env.close(item)
 
     assert closed.returncode == 0, closed.stdout + closed.stderr
@@ -166,6 +196,8 @@ def test_2_close_omits_generated_content_from_design_context(env, classification
         assert marker not in prompt
         assert marker not in diff
     if classification == "removed attributes":
+        requested = [json.loads(line) for line in reads.read_text("utf-8").splitlines()]
+        assert not [spec for spec in requested if spec.partition(":")[2] in generated_paths]
         for marker in ("BASE_ASSET_CONTENT_MARKER", "HEAD_ASSET_CONTENT_MARKER"):
             assert marker not in diff + prompt
     else:
