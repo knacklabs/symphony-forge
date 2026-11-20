@@ -83,7 +83,7 @@
       "gain": 4,
       "harm": 4,
       "line": 30,
-      "outcome": "open",
+      "outcome": "fixed in round 6",
       "reason": "",
       "round": 4,
       "security": false,
@@ -106,27 +106,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "a11de36a23218234c4ed629293dc0f0fbad24a9c261a8f034f3f167fadafe7ec",
-    "changed": "8d061355fa3f7bcd1129ad8bbfe88b1eed7893de32c8e5c4253473d00b26d6bf",
-    "commit": "04537a618a4dbad85cfe3ff399e7b13a992fb56e",
+    "branch_diff": "b886d21eeccc4b39ed2d5f033df9ba74ded1ff3098799b9de7b90ec7a99826fd",
+    "changed": "ba515de50245499981a6bb04d59d9521b8b881edc2bc801d1451617f9477a19d",
+    "commit": "a2ec3d40f93e7628a13e0a6f36f1d5db34ad5da0",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 2, Harm 4\nRaise: Functional\nCase: normal use - A story task\u2019s repair review records a P1 follow-up titled `Not done: The checkout uses the tax formatter`. A later repair makes every checkout fail because that formatter is missing, and the reviewer repeats the finding as a normal-use P0. Although this check no longer marks it as a repair follow-up, `src/forge/noise.py:34` then drops it because the title does not match an approved Done-when sentence. If the earlier blocker is fixed, close can proceed despite the broken checkout. The escalation test exercises fixes, not story tasks.\n\nThe same outcome occurs if a P1 follow-up is later reported as a rare P0 and then as a normal-use P0. `src/forge/review.py:1026` includes the rare occurrence\u2019s raw P0 in the settlement ceiling, so lines 1059\u20131064 carry a `known:` dismissal onto the normal-use P0.",
-        "file": "src/forge/autoreview.py",
-        "gain": 4,
-        "harm": 4,
-        "line": 30,
-        "priority": "P1",
-        "title": "[P1] Do not restore follow-up status to an escalated P0",
-        "work": 2
-      }
-    ],
-    "id": "fdcb454a-23b3-4eb4-9164-4720407b274a",
-    "status": "blocked"
+    "findings": [],
+    "id": "2942eba5-15bb-404e-b32c-154c673149d2",
+    "status": "clean"
   },
   "round": 6,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-20T04:07:50.110997+00:00",
@@ -205,6 +194,10 @@
       "at": "2026-11-20T14:47:11.825458+00:00",
       "round": 6,
       "step": "resume"
+    },
+    {
+      "at": "2026-11-20T15:03:55.305380+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
