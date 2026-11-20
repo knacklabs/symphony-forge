@@ -278,17 +278,14 @@ def _work_result(path: Path, item: str, pending: dict[str, Any], said: str, owne
             print("Restored forge.toml changes committed on this branch; settings change in their own fix.",
                   flush=True)
     left = repo.git("status", "--porcelain", "-uall", cwd=top).splitlines()
-    if left and not pending.get("nudged"):
-        codex._record(path, pending={**pending, "nudged": True, "said": said})
-        print(f"Send this to subagent {subagent}, then hand back again:\n"
-              f"{worker.commit_nudge(top)}")
-        return True
-    failed, report = worker.related_tests(top)
-    if failed and not pending.get("tests_nudged"):
-        codex._record(path, pending={**pending, "tests_nudged": True,
+    used = {kind for kind, key in (("commit", "nudged"), ("tests", "tests_nudged")) if pending.get(key)}
+    action, prompt, failed = worker.round_nudge(top, item, state, used)
+    if action:
+        key = "nudged" if action == "commit" else "tests_nudged"
+        codex._record(path, pending={**pending, key: True,
                                     "said": worker.questions(pending.get("said", ""), said)})
         print(f"Send this to subagent {subagent}, then hand back again:\n"
-              f"{worker.test_nudge(report)}")
+              f"{prompt}")
         return True
     outcome = "failed" if failed else "completed"
     asked = worker.questions(pending.get("said", ""), said)

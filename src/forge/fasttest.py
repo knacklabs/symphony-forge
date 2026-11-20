@@ -337,41 +337,16 @@ def close_tests(base: str) -> int:
     return 0
 
 
+NO_TESTS = "No tests ran:"
+
+
 def test(args) -> int:
     if args.full:
         from forge import fullrun
 
         return fullrun.run(repo.root())
     if args.base is None:
-        from forge import review
-        top = repo.root()
-        cfg = repo.config(top)
-        if not (cfg["fast_test"] or cfg["test"]):
-            if repo.sample_data(top, cfg):
-                print("This is a sample-data prototype, so tests are off until client sign-off.\n"
-                      "After sign-off, ask the coordinator to set sample_data = false in forge.toml.")
-            else:
-                print("forge.toml names no test command, so forge test ran none.")
-            return 0
-        push_base = os.environ.get("FORGE_PUSH_BASE") if args.change else None
-        base = push_base or f"origin/{repo.default_branch(top)}"
-        if repo.run("git", "rev-parse", "--verify", base, cwd=top).returncode:
-            raise repo.Refused(f"Fetch {base} first: run git fetch origin, then forge test.", "")
-        if args.change and not push_base:
-            # Include incoming changes merged into this PR, even under Actions'
-            # synthetic merge. Main's current tip alone hides their test files.
-            merges = repo.git("rev-list", "--merges", f"{base}..HEAD", cwd=top).splitlines()
-            if merges:
-                base = repo.git("merge-base", "--octopus", base,
-                                *(f"{commit}^1" for commit in merges), cwd=top)
-        command = review.close_test(top, base, closing=args.change)
-        if not args.change:
-            command = skip_browser(top, command)
-        # CI groups reuse their own passes; explicit ungrouped commands always execute.
-        status, report = review.test_run(top, command, base,
-                                        always=not (args.change and "FORGE_GROUPS" in os.environ
-                                                    and not push_base),
-                                        closing=args.change)
+        status, report = run_related(repo.root(), change=args.change)
         print(report)
         return status
     from forge import review
@@ -389,6 +364,36 @@ def test(args) -> int:
         return pytest_tests(args.base, command, entry)
     finally:
         machine.leave(entry)
+
+
+def run_related(top: Path, *, change: bool, retry: bool = True) -> tuple[int, str]:
+    """The related-test command, shared by the CLI and the worker's final check."""
+    from forge import review
+
+    cfg = repo.config(top)
+    if not (cfg["fast_test"] or cfg["test"]):
+        return 0, ("This is a sample-data prototype, so tests are off until client sign-off.\n"
+                   "After sign-off, ask the coordinator to set sample_data = false in forge.toml."
+                   if repo.sample_data(top, cfg) else
+                   f"{NO_TESTS} forge.toml names no test command, so forge test ran none.")
+    push_base = os.environ.get("FORGE_PUSH_BASE") if change else None
+    base = push_base or f"origin/{repo.default_branch(top)}"
+    if repo.run("git", "rev-parse", "--verify", base, cwd=top).returncode:
+        raise repo.Refused(f"Fetch {base} first: run git fetch origin, then forge test.", "")
+    if change and not push_base:
+        # Include incoming changes merged into this PR, even under Actions'
+        # synthetic merge. Main's current tip alone hides their test files.
+        merges = repo.git("rev-list", "--merges", f"{base}..HEAD", cwd=top).splitlines()
+        if merges:
+            base = repo.git("merge-base", "--octopus", base,
+                            *(f"{commit}^1" for commit in merges), cwd=top)
+    command = review.close_test(top, base, closing=change)
+    if not change:
+        command = skip_browser(top, command)
+    # CI groups reuse their own passes; explicit ungrouped commands always execute.
+    return review.test_run(top, command, base,
+                           always=not (change and "FORGE_GROUPS" in os.environ and not push_base),
+                           closing=change, retry=retry)
 
 
 def related(base: str) -> tuple[list[str], list[str], bool, list[str]]:
@@ -838,7 +843,7 @@ def pytest_tests(base: str, command: str, entry: dict | None = None) -> int:
         shared_changed = False
     if not shared_changed:
         if not picked and not always and not named:
-            print("No tests ran: no changed or module-related test files were selected.")
+            print(f"{NO_TESTS} no changed or module-related test files were selected.")
             checks = " && ".join(part for kind, part, _ in parts if kind != "python")
             return run_logged(checks, environment, entry) if checks else 0
         # Keep shell setup, test roots and pytest settings in the repo's full command.

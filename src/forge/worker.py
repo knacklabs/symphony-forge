@@ -9,7 +9,6 @@ import re
 import shutil
 import signal
 import subprocess
-import sys
 import tempfile
 import time
 import uuid
@@ -329,11 +328,11 @@ def _work(args: argparse.Namespace) -> bool:
                             fresh_brief or brief, thread, fresh, chosen, family)
             return False
         start, clock = repo.now(), time.monotonic()
-        nudge = commit_nudge(top)
         outcome = "failed"
         final = None
         asked = ""
-        nudged = ""
+        nudged = []
+        used = set()
         try:
             if not on_codex:
                 budget = repo.subagent_budget(config, "build" if design else kind.lower())
@@ -388,28 +387,17 @@ def _work(args: argparse.Namespace) -> bool:
                                           changes=_changes(top, saved.get("head") or saved["start"]))
                     on_codex = True
                 else:
-                    _restore_settings(item, top, state)
-                    if git("status", "--porcelain", "-uall", cwd=top):
-                        print(NUDGING, flush=True)
+                    while True:
+                        action, prompt, failed = round_nudge(top, item, state, used)
+                        if not action:
+                            break
+                        used.add(action)
                         saved = codex.record(top, item)["claude"]
                         try:
-                            nudged = _run(item, top, nudge, claude, budget, resume=saved["id"])
+                            nudged.append(_run(item, top, prompt, claude, budget, resume=saved["id"]))
                         finally:
                             codex._record(codex._item_file(top, item, ".json", kind),
                                 claude={**saved, "head": git("rev-parse", "HEAD", cwd=top)})
-                    outcome = "failed"
-                    _restore_settings(item, top, state)
-                    failed, report = related_tests(top)
-                    if failed:
-                        saved = codex.record(top, item)["claude"]
-                        try:
-                            nudged += "\n" + _run(item, top, test_nudge(report), claude, budget,
-                                                   resume=saved["id"])
-                        finally:
-                            codex._record(codex._item_file(top, item, ".json", kind),
-                                claude={**saved, "head": git("rev-parse", "HEAD", cwd=top)})
-                        _restore_settings(item, top, state)
-                        failed, report = related_tests(top)
                     outcome = "failed" if failed else "completed"
                     return False
             name = f"{match['key']} · {subject}" if match["task"] else f"Fix · {subject}"
@@ -424,34 +412,25 @@ def _work(args: argparse.Namespace) -> bool:
                                on_thread=(lambda _: print(building, flush=True)) if on_codex else None)
             outcome = "completed" if result["status"] == "completed" else "failed"
             final = (result.get("text") or "") if outcome == "completed" else None
-            _restore_settings(item, top, state)
-            if outcome == "completed" and git("status", "--porcelain", "-uall", cwd=top):
-                print(NUDGING, flush=True)
-                again = codex.run(top, item, kind, name, nudge, "full-access",
-                                  result["conversation"], "", approval, design=design,
-                                  effort=chosen["effort"])
-                if again["status"] != "completed":
-                    result, outcome = again, "failed"
-                else:
-                    nudged = (again.get("text") or "").strip()
             if outcome == "completed":
                 outcome = "failed"
-                _restore_settings(item, top, state)
-                failed, report = related_tests(top)
-                if failed:
-                    again = codex.run(top, item, kind, name, test_nudge(report), "full-access",
-                                      result["conversation"], "", approval, design=design,
-                                      effort=chosen["effort"])
-                    nudged += "\n" + (again.get("text") or "").strip()
-                    result = again
-                    _restore_settings(item, top, state)
-                    failed, report = related_tests(top)
+                while True:
+                    action, prompt, failed = round_nudge(top, item, state, used)
+                    if not action:
+                        break
+                    used.add(action)
+                    result = codex.run(top, item, kind, name, prompt, "full-access",
+                                       result["conversation"], "", approval, design=design,
+                                       effort=chosen["effort"])
+                    nudged.append(result.get("text") or "")
+                    if result["status"] != "completed":
+                        break
                 outcome = ("completed" if not failed and result["status"] == "completed"
                            else "failed")
         finally:
             _restore_settings(item, top, state)
             if final is not None:
-                asked = questions(final, nudged)
+                asked = questions(final, *nudged)
                 identity = repo.record_event(top, item, "worker question", question=asked) if asked else None
                 codex._record(codex._item_file(top, item, ".json", kind),
                               question=asked or None, question_id=identity)
@@ -472,17 +451,36 @@ def _work(args: argparse.Namespace) -> bool:
     return False
 
 
+def round_nudge(top: Path, item: str, state: dict[str, Any], used: set[str]) -> tuple[str, str, int]:
+    """Use each existing nudge once, testing only after the worker's last commit."""
+    _restore_settings(item, top, state)
+    if git("status", "--porcelain", "-uall", cwd=top):
+        if "commit" not in used:
+            print(NUDGING, flush=True)
+            return "commit", commit_nudge(top), 1
+        print("Related tests failed: the worker left changes uncommitted. "
+              "No related tests ran on that repair.", flush=True)
+        return "", "", 1
+    failed, report = related_tests(top)
+    if failed and "tests" not in used:
+        return "tests", test_nudge(report), failed
+    return "", "", failed
+
+
 def related_tests(top: Path) -> tuple[int, str]:
     """Finish every non-sample round with the existing change command and its test lane."""
-    if repo.sample_data(top):
+    config = repo.config(top)
+    if repo.sample_data(top, config):
         return 0, ""
-    code = (f"import sys; sys.path.insert(0, {str(HERE.parent)!r}); "
-            "from forge.cli import main; sys.exit(main(['test', '--change']))")
-    result = repo.run(sys.executable, "-c", code, cwd=top)
-    report = (result.stdout + result.stderr).strip()
+    from forge import fasttest
+
+    status, report = fasttest.run_related(top, change=True, retry=False)
     print(report, flush=True)
-    print("Related tests failed." if result.returncode else "Related tests passed.", flush=True)
-    return result.returncode, report
+    empty = ("The Python picker selected no related tests; the test command exited successfully."
+             if config["fast_test"] or config["test"] else "No related tests ran.")
+    print("Related tests failed." if status else
+          empty if fasttest.NO_TESTS in report else "Related tests passed.", flush=True)
+    return status, report
 
 
 def test_nudge(report: str) -> str:

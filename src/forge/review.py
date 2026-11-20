@@ -384,7 +384,7 @@ RENDERED = ("Rendered problem: ", "Rendered check: ")  # close never cuts these;
 
 
 def test_run(top: Path, command: str, base: str, *, always: bool = False,
-             closing: bool = True) -> tuple[int, str]:
+             closing: bool = True, retry: bool = True) -> tuple[int, str]:
     """Run or skip tests; report a bounded tail, all failed tests and the full log path."""
     command = repo.grouped(top, command)
     branch = repo.current_branch(top) or "HEAD"  # Pull-request CI checks out a detached HEAD.
@@ -462,7 +462,7 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False,
                         done = subprocess.CompletedProcess(command, 0, done.stdout +
                                                            "\nThis group got no tests to run.\n")
                     history.append(done.stdout)
-                    if not closing or attempt or done.returncode == 0:
+                    if not closing or not retry or attempt or done.returncode == 0:
                         break
                     if any(json.loads(line[len(fasttest.INVOCATION_HEADER):]).get("interrupted")
                            for line in evidence.splitlines() if line.startswith(fasttest.INVOCATION_HEADER)):
@@ -499,7 +499,7 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False,
         shown = {n for n, line in enumerate(out) if any(mark in line for mark in RENDERED)}
         picked = sorted(({i for n, line in enumerate(out) if "skip" in line.lower()
                           for i in (n - 1, n) if i >= 0} | set(range(max(0, len(out) - 30), len(out)))
-                         | {n for n, line in enumerate(out) if line.startswith(GAP)}) - shown)
+                         | {n for n, line in enumerate(out) if line.startswith((GAP, fasttest.NO_TESTS))}) - shown)
         lines = [out[i] for i in picked]
         if len(lines) > 80:  # the tail is the last 30 picked; the earliest skip lines fill the rest
             lines = [*lines[:50], f"({len(lines) - 80} skip lines cut here)", *lines[-30:]]

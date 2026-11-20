@@ -400,8 +400,10 @@ passes. In every test place, run the change's related tests on the laptop. CI ru
 Never edit or delete a test to make it pass; if a test
 is wrong, say so. A test whose result a stub or fake decides proves nothing. Use the test-audit
 skill whenever you write or change a test. Before you stop, $test_step
-After the worker turn, Forge runs `forge test --change` in the machine's test lane.
-If it fails, Forge sends one repair turn with the test report, then runs it again.
+After the worker's last commit, Forge runs `forge test --change` in the machine's test lane.
+The first failure sends one repair turn with the test report, without an isolated test retry.
+Forge tests the committed repair again; a repair left uncommitted is reported as failed.
+Questions from either nudge stay open. With no related tests, the result says so instead of passed.
 The round records the test result, including any failure left after that repair.
 Sample-data rounds keep their browser proof and run no automated tests.
 New and existing repos get this behavior on upgrade.

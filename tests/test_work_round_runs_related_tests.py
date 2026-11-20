@@ -19,10 +19,12 @@ STORY = "laptop-tests-before-push"
 # Existing prompt tests cannot detect a command that never runs. Only the external model is fake;
 # the configured check, git commits, work command and test lane are real. No production seam.
 # Repair turns also leave settings edits that Forge must restore before the real recheck.
+# Earlier cases always committed the repair and used at most one nudge. A dirty repair must
+# not certify HEAD, and a question must survive the next nudge in either order.
 # Runtime owners: src/forge/worker.py and src/forge/native.py.
 @pytest.mark.platform
 @pytest.mark.parametrize("test_place", ["local", "ci"])
-@pytest.mark.parametrize("result", ["pass", "repair", "red"])
+@pytest.mark.parametrize("result", ["pass", "repair", "red", "uncommitted", "questions"])
 @pytest.mark.parametrize("route", ["external", "native", "codex"])
 def test_1_work_runs_related_tests_and_repairs_once(repo, monkeypatch, tmp_path, request,
                                                   test_place, result, route):
@@ -53,7 +55,24 @@ def test_1_work_runs_related_tests_and_repairs_once(repo, monkeypatch, tmp_path,
     started = repo.forge("fix", "start", "Repair product", "--done", "The product check passes",
                          "--kind", "mechanical")
     assert started.returncode == 0, started.stdout + started.stderr
-    expected = 1 if result == "pass" else 2
+    expected = 1 if result in {"pass", "uncommitted"} else 2
+    expected_turns = 3 if result in {"uncommitted", "questions"} else expected
+
+    def check_result(built):
+        assert counted.read_text("utf-8").splitlines() == ["run"] * expected
+        red = result in {"red", "uncommitted"}
+        assert ("Related tests failed" if red else "Related tests passed.") in built.stdout
+        if result == "uncommitted":
+            assert "Related tests passed." not in built.stdout
+            folder = repo.path.parent / f"{repo.path.name}-fix-repair-product"
+            assert repo.git("show", "HEAD:product.txt", cwd=folder) == "broken"
+            assert (folder / "product.txt").read_text("utf-8") == "good"
+        if result == "questions":
+            refused = repo.forge("work", "repair-product")
+            assert refused.returncode == 1, refused.stdout + refused.stderr
+            if route == "native":
+                assert "Question: Commit question?" in refused.stderr
+            assert "Question: Repair question?" in refused.stderr
     if route == "codex":
         # The real SDK talks to a fake model service; only that service makes the worker edit.
         monkeypatch.setenv("XDG_DATA_HOME", str(request.getfixturevalue("sdk_data")))
@@ -61,13 +80,18 @@ def test_1_work_runs_related_tests_and_repairs_once(repo, monkeypatch, tmp_path,
         marker = '        elif method == "turn/start":\n'
         edit = ("            import subprocess\n"
                 "            repairing = \"The change's related tests failed.\" in params['input'][0]['text']\n"
-                f"            good = {result == 'pass'!r} or (repairing and {result == 'repair'!r})\n"
+                "            committing = 'Your turn ended' in params['input'][0]['text']\n"
+                f"            good = {result == 'pass'!r} or (repairing and {result in {'repair', 'uncommitted', 'questions'}!r})\n"
                 f"            if repairing and {result == 'repair'!r}:\n"
                 "                settings = pathlib.Path(cwd) / 'forge.toml'\n"
                 f"                settings.write_text(settings.read_text('utf-8').replace({('test = ' + json.dumps(command))!r}, 'test = \"echo bypass\"'), encoding='utf-8')\n"
                 "            (pathlib.Path(cwd) / 'product.txt').write_text('good' if good else 'broken', encoding='utf-8')\n"
-                "            subprocess.run(['git', 'add', 'product.txt'], cwd=cwd, check=True)\n"
-                "            subprocess.run(['git', 'commit', '--allow-empty', '-qm', 'Worker edit'], cwd=cwd, check=True, stdout=sys.stderr)\n")
+                f"            leave = ({result == 'uncommitted'!r} and not committing) or ({result == 'questions'!r} and not committing and not repairing)\n"
+                "            if not leave:\n"
+                "                subprocess.run(['git', 'add', 'product.txt'], cwd=cwd, check=True)\n"
+                "                subprocess.run(['git', 'commit', '--allow-empty', '-qm', 'Worker edit'], cwd=cwd, check=True, stdout=sys.stderr)\n"
+                f"            if {result == 'questions'!r}:\n"
+                "                os.environ['STUB_CODEX_TEXT'] = ('Committed.' if committing else 'Question: Repair question?' if repairing else 'Built.')\n")
         _install(repo.bin, "codex-app-server", stub.replace(marker, marker + edit))
         monkeypatch.setenv("CODEX_BIN", str(repo.bin / (
             "codex-app-server.cmd" if os.name == "nt" else "codex-app-server")))
@@ -75,12 +99,11 @@ def test_1_work_runs_related_tests_and_repairs_once(repo, monkeypatch, tmp_path,
         assert built.returncode == 0, built.stdout + built.stderr
         codex_log = repo.bin / "codex-app-server.jsonl"
         turns = _sent(codex_log, "turn/start")
-        assert len(turns) == expected
+        assert len(turns) == expected_turns
         if result != "pass":
-            assert "product is broken" in turns[1]["input"][0]["text"]
+            assert any("product is broken" in turn["input"][0]["text"] for turn in turns[1:])
             assert _sent(codex_log, "thread/resume")
-        assert counted.read_text("utf-8").splitlines() == ["run"] * expected
-        assert ("Related tests failed." if result == "red" else "Related tests passed.") in built.stdout
+        check_result(built)
         return
     if route == "native":
         # A real session owns the native handback and must keep its place for the repair turn.
@@ -97,26 +120,35 @@ def test_1_work_runs_related_tests_and_repairs_once(repo, monkeypatch, tmp_path,
             match = re.search(r"forge handback repair-product --round (\d+)", given.stdout)
             assert match, given.stdout + given.stderr
             number = match[1]
-            for turn in range(expected):
-                good = result == "pass" or (turn == 1 and result == "repair")
+            actions = [(result == "pass", True, "The edit is committed.")]
+            if result in {"repair", "red"}:
+                actions.append((result == "repair", True, "The repair is committed."))
+            elif result == "uncommitted":
+                actions = [(False, False, "Built."), (False, True, "Committed."),
+                           (True, False, "Repaired.")]
+            elif result == "questions":
+                actions = [(False, True, "Question: Commit question?"),
+                           (True, False, "Question: Repair question?"), (True, True, "Committed.")]
+            for turn, (good, commit, text) in enumerate(actions):
                 (folder / "product.txt").write_text("good" if good else "broken", "utf-8")
                 if turn == 1 and result == "repair":
                     settings = folder / "forge.toml"
                     settings.write_text(settings.read_text("utf-8").replace(
                         "test = " + json.dumps(command), 'test = "echo bypass"'), "utf-8")
-                repo.git("add", "product.txt", cwd=folder)
-                repo.git("commit", "--allow-empty", "-qm", "Worker edit", cwd=folder)
+                if commit:
+                    repo.git("add", "product.txt", cwd=folder)
+                    repo.git("commit", "--allow-empty", "-qm", "Worker edit", cwd=folder)
                 built = host.forge("handback", "repair-product", "--round", number,
-                                   "--subagent", "worker", "--text", "The edit is committed.")
+                                   "--subagent", "worker", "--text", text)
                 assert built.returncode == 0, built.stdout + built.stderr
                 if turn == 0 and result != "pass":
                     assert "Send this to subagent worker, then hand back again:" in built.stdout
-                    assert "product is broken" in built.stdout
+                    if result != "uncommitted":
+                        assert "product is broken" in built.stdout
             assert "Send this to subagent" not in built.stdout
         finally:
             host.close()
-        assert counted.read_text("utf-8").splitlines() == ["run"] * expected
-        assert ("Related tests failed." if result == "red" else "Related tests passed.") in built.stdout
+        check_result(built)
         return
     sdk = repo.bin / "claude_agent_sdk" / "__init__.py"
     source = sdk.read_text("utf-8")
@@ -124,21 +156,25 @@ def test_1_work_runs_related_tests_and_repairs_once(repo, monkeypatch, tmp_path,
     assert marker in source
     edit = ("    import subprocess\n"
             f"    repairing = \"The change's related tests failed.\" in prompt\n"
-            f"    good = {result == 'pass'!r} or (repairing and {result == 'repair'!r})\n"
+            "    committing = 'Your turn ended' in prompt\n"
+            f"    good = {result == 'pass'!r} or (repairing and {result in {'repair', 'uncommitted', 'questions'}!r})\n"
             f"    if repairing and {result == 'repair'!r}:\n"
             "        settings = Path('forge.toml')\n"
             f"        settings.write_text(settings.read_text('utf-8').replace({('test = ' + json.dumps(command))!r}, 'test = \"echo bypass\"'), encoding='utf-8')\n"
             "    Path('product.txt').write_text('good' if good else 'broken', encoding='utf-8')\n"
-            "    subprocess.run(['git', 'add', 'product.txt'], check=True)\n"
-            "    subprocess.run(['git', 'commit', '--allow-empty', '-qm', 'Worker edit'], check=True)\n")
+            f"    leave = ({result == 'uncommitted'!r} and not committing) or ({result == 'questions'!r} and not committing and not repairing)\n"
+            "    if not leave:\n"
+            "        subprocess.run(['git', 'add', 'product.txt'], check=True)\n"
+            "        subprocess.run(['git', 'commit', '--allow-empty', '-qm', 'Worker edit'], check=True)\n"
+            f"    if {result == 'questions'!r}:\n"
+            "        os.environ['STUB_CLAUDE_RESULT'] = ('Committed.' if committing else 'Question: Repair question?' if repairing else 'Built.')\n")
     sdk.write_text(source.replace(marker, edit + marker), "utf-8")
     built = repo.forge("work", "repair-product")
     assert built.returncode == 0, built.stdout + built.stderr
     assert counted.exists(), built.stdout + built.stderr
-    assert counted.read_text("utf-8").splitlines() == ["run"] * expected
     turns = calls(log)
-    assert len(turns) == expected
+    assert len(turns) == expected_turns
     if result != "pass":
-        assert "product is broken" in turns[1]["brief"]
+        assert any("product is broken" in turn["brief"] for turn in turns[1:])
         assert turns[1]["options"]["resume"]
-    assert ("Related tests failed." if result == "red" else "Related tests passed.") in built.stdout
+    check_result(built)

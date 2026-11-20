@@ -137,7 +137,7 @@ def test_3_build_rounds_run_as_session_subagents(repo, gh, monkeypatch, tmp_path
         assert busy.returncode == 1 and repo.git("rev-parse", "HEAD", cwd=folder) == head
 
         # Uncommitted work gets the commit nudge and keeps the place; a second hand-back with the
-        # work still uncommitted warns and frees it.
+        # work still uncommitted reports a failed round, warns and frees it.
         (folder / "web").mkdir(exist_ok=True)
         (folder / "web/help.py").write_text("WORDS = {}\n", "utf-8")
         nudged = handback("BOARD/HELP", number, "Built it.")
@@ -166,7 +166,7 @@ def test_3_build_rounds_run_as_session_subagents(repo, gh, monkeypatch, tmp_path
                    and e["kind"] == "work"]
         assert (begun["kind"], begun["round"], begun["family"]) == ("work", 1, tool)
         assert begun["requested"] is True
-        assert (ended["run_id"], ended["outcome"]) == (begun["id"], "completed")
+        assert (ended["run_id"], ended["outcome"]) == (begun["id"], "failed")
 
         # The next round continues the subagent on the role's model; an uncommitted forge.toml
         # edit, even a broken one, is put back, and a closing question is recorded.
