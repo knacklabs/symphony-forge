@@ -333,7 +333,8 @@ def instructions(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any
             chosen.insert(1, "promote")
     has_web = any((top / path / "package.json").is_file() for path in ("apps/web", "web", "frontend"))
     chosen += (["screens"] if cfg["repo"] == "client" and has_web else []) + ["app-rules"]
-    values["design_context"], owned_design = worker.design_context(top, design_text, user_facing)
+    values["design_context"], owned_design = worker.design_context(top, design_text, user_facing,
+                                                                 review_base=previous.get("commit") or base)
     chosen.append("design-context")
     if owned_design:
         values["design_folder"] = owned_design
@@ -949,7 +950,10 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                 merged_base = repo.git("merge-base", base, "HEAD", cwd=tree)
                 if repo.git("merge-base", base, review_base, cwd=tree) != merged_base:
                     review_base = merged_base
-        prompt += _hide_generated(tree, repo.git("merge-base", review_base, "HEAD", cwd=tree), "HEAD")
+        summary, filtered_base = autoreview.hide_generated(
+            tree, repo.git("merge-base", review_base, "HEAD", cwd=tree), "HEAD")
+        prompt += summary
+        review_base = filtered_base or review_base
         # The worker brief's standards page, as rules; a prompt file keeps it out of argv.
         rules = block.split("<!-- standards -->\n", 1)[1].split("\n<!-- ", 1)[0]
         # The branch may track this path, even as a link out of the tree: drop it unfollowed,
@@ -1144,30 +1148,6 @@ def declines(top: Path, base: str, result: dict[str, Any]) -> bool:
             finding["follow_up"] = score.DECLINED + reason
             changed = True
     return changed
-
-
-def _hide_generated(tree: Path, start: str, head: str) -> str:
-    """Put changed binary and linguist-generated files back as they were at start in the review
-    tree, so their contents stay out of the reviewed diff.
-    Returns the lines naming those files with their changed-line counts, or "" when there are none."""
-    counts = {row[2]: row[:2] for record in repo.git(
-        "diff", "--numstat", "-z", "--no-renames", start, head, cwd=tree).split("\0")
-        if len(row := record.split("\t", 2)) == 3}
-    attrs = repo.run("git", "check-attr", "--stdin", "-z", "linguist-generated", cwd=tree,
-                     input="\0".join(counts)).stdout.split("\0")
-    marked = {path for path, value in zip(attrs[::3], attrs[2::3]) if value in ("set", "true")}
-    generated = [path for path, count in counts.items() if path in marked or "-" in count]
-    if not generated:
-        return ""
-    repo.git("restore", f"--source={start}", "--staged", "--", *generated, cwd=tree)
-    snapshot = repo.git("commit-tree", repo.git("write-tree", cwd=tree), "-p", head,
-                        "-m", "Branch head without generated files' contents", cwd=tree)
-    repo.git("checkout", "-q", "-f", "--detach", snapshot, cwd=tree)
-    return ("\n\n## Generated files\n\nEach listed change is committed at the real branch head with the listed line counts. "
-            "The review tree only restores each file to the branch start to keep its contents out of "
-            "the diff. A missing or untracked copy in the review tree is not a finding:\n"
-            + _bullets(f"{path}: {counts[path][0]} added, {counts[path][1]} removed"
-                       for path in generated))
 
 
 def _launcher(folder: Path, tree: Path, engine: str) -> Path | None:
