@@ -1,0 +1,50 @@
+{
+  "base": "41c53141ecc53527d8952bc84065e55e6f5ffbe4",
+  "branch": "fix/board-durations",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1f6f3-e075-7112-b2ef-f97f45872472",
+    "head": null,
+    "start": "66dfb37c9ea9524a393ad1bd126972775473bd2b"
+  },
+  "done_when": ".test_durations names the two parametrized board cases instead of the old id, and test_1_recorded_timings_name_existing_tests passes on main",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "9250e0ea589c89097a9885ff9178e4dd38c4e23e13802976a1f072d86304f3a7",
+    "changed": "922c5565d201378aba48f8cbd643d1be560e567bec2534c2e664293a943f044e",
+    "commit": "7d339fbbba8d90bb8264a7c34ca6aa40eb06f59f",
+    "dismissals": [],
+    "findings": [],
+    "id": "eddcd09b-22af-430d-8dfe-28d8693bbef2",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-20T03:15:27.101700+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-20T03:15:38.400170+00:00",
+      "round": 1,
+      "step": "resume"
+    },
+    {
+      "at": "2026-11-20T03:20:37.497890+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "c2818566ad54cfe38212aa1c41b1c98bf1dd70f2",
+    "keys": {},
+    "round": null
+  },
+  "why": "Main's .test_durations still names tests/test_board_now_screen.py::test_12_the_first_screen_fits_a_laptop_window_and_keeps_every_item_reachable, which the board time fix turned into two parametrized cases, so test_1_recorded_timings_name_existing_tests fails on any pull request that selects it",
+  "worker": "codex"
+}
