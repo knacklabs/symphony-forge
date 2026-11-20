@@ -31,7 +31,7 @@
       "gain": 3,
       "harm": 3,
       "line": 444,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 1,
       "security": false,
@@ -41,27 +41,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "80f130ec612ac81080500b207d612edede0d95ca877ac22508173a7462f73f4b",
-    "changed": "725457c9c64e918747fc15958acd189169954fa977b3a62717dc7f91bb2645eb",
-    "commit": "d0c4a96808b7a2a5a095fde71ba5782359ddee3b",
+    "branch_diff": "bc7de90909cb6c6c0a097779e3b3d4991e537bbeb12c23ad9445e7ebe59b00cd",
+    "changed": "9508f00b32d51542688736bcab6480bba12c9d849a6680bb74896d352d7e4112",
+    "commit": "93f8088e657788f7dd34f3e4100ed7b349720129",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional\nCase: normal use - a nested Python test project has `tests/nested/pyproject.toml` and a helper at `tests/nested/src.py` imported as `src`.\nThe repair avoids stripping `src` in `hits()`, but `related()` still passes the helper's path relative to the nested project root through `module_parts()` at src/forge/fasttest.py:427. That function strips the sole `src` component, so indexing `below[-1]` at line 428 raises `IndexError` before any tests run. Nested test projects are already a supported layout (tests/test_pyproject_changes_keep_tests_related_and_locks_frozen.py:245); the new regression test does not create a project file in its nested folder.",
-        "file": "src/forge/fasttest.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 444,
-        "priority": "P1",
-        "title": "Functional: Avoid crashing on a test helper named src.py",
-        "work": 2
-      }
-    ],
-    "id": "3ce6bbb6-d2d6-45b6-99b3-db6c0fd7aa62",
-    "status": "blocked"
+    "findings": [],
+    "id": "30fd7a3c-032b-4c9a-ab93-e91208cfafa2",
+    "status": "clean"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-19T19:35:34.654987+00:00",
@@ -101,6 +90,10 @@
       "at": "2026-11-20T03:15:39.467783+00:00",
       "round": 3,
       "step": "resume"
+    },
+    {
+      "at": "2026-11-20T03:18:42.952566+00:00",
+      "step": "review"
     }
   ],
   "stop": {
