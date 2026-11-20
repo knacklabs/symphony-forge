@@ -1,6 +1,13 @@
 {
   "base": "4b5a40b0a536e066e1312d59417c63b4ec6b58a1",
   "branch": "fix/restore-full-run-paragraph",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1f7ac-84ba-7052-be04-eed6695bd266",
+    "head": null,
+    "start": "3c44d16bd81fb2d1d6bdedaeda8816fb6f97004a"
+  },
   "done_when": "src/forge/templates/skill.md (and both generated SKILL.md copies) has the client release and sign-off full-run paragraph as before 4b5a40b0a, the daily cut rule stays only in docs/guide.md's Releasing Forge section, and tests/test_full_run_starts_before_notes.py passes on main",
   "fix_kind": "mechanical",
   "kind": "fix",
