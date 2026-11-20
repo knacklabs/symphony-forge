@@ -80,8 +80,8 @@
     "id": "d4f11112-8e4b-483d-a984-ff670daeeecb",
     "status": "clean"
   },
-  "round": 2,
-  "status": "waiting for checks",
+  "round": 3,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-20T03:41:03.751468+00:00",
@@ -116,6 +116,11 @@
       "choice": "accept",
       "round": 2,
       "step": "owner decision"
+    },
+    {
+      "at": "2026-11-20T05:18:49.146840+00:00",
+      "round": 3,
+      "step": "resume"
     }
   ],
   "stop": {
@@ -128,10 +133,10 @@
     "worker_round": 2
   },
   "stuck": {
-    "close": "a5b3b524-ebbb-4e0b-91b7-31b268c3903e",
-    "head": "0a6a40aa72804a56036b203dc01beab8a4c4c971",
+    "close": "d2a13f81-d543-4a0b-80d6-90f55cb784d7",
+    "head": "aeb9aea1b9824ab5331e3641794335789547f5fa",
     "keys": {},
-    "round": 1
+    "round": 2
   },
   "why": "Agents merge Ready items one at a time, so each merge after main moves costs a full CI run: forge close's Ready line says 'Next: forge merge <item>' even when other items are Ready, and the skill mentions the land train only in one table row; seen at a client on 19-20 Nov 2026",
   "worker": "codex"
