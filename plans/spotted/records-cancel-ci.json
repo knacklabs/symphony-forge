@@ -41,8 +41,8 @@
       "text": "Wait for retries on earlier same-code heads",
       "from": "blocking",
       "item": "records-cancel-ci",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/review.py\tThe docs-only classifier still excludes application code under plans when the whole pull request changes only that folder.",
@@ -118,8 +118,8 @@
       "text": "Select the latest completed attempt when reusing a result",
       "from": "blocking",
       "item": "records-cancel-ci",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\ttests/test_git_process_ceiling.py\tClose starts two cat-file batches and exceeds its process ceilings on the default branch too.",
