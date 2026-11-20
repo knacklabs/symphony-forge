@@ -1,6 +1,8 @@
 """Reconcile remote branch work before close chooses its review head."""
 import json
+import os
 import subprocess
+import tempfile
 from pathlib import Path
 
 from forge import checks, repo, review
@@ -36,14 +38,56 @@ def replay_baseline(top: Path, item: str, base: str, target: str, original: str)
                     "-m", "Follow-up replay baseline", cwd=top)
 
 
+def squash_replay(top: Path, baseline: str, original: str, target: str, tree: str) -> str:
+    """Keep record snapshots before one product commit, with all worker messages.
+
+    Review history reads first-parent snapshots. Fixes also need their start record
+    before the product work, so a teammate can still recognise a completed build.
+    """
+    commits = repo.git("rev-list", "--reverse", "--first-parent", f"{baseline}..{original}",
+                       cwd=top).splitlines()
+    messages, parent = [], target
+    with tempfile.TemporaryDirectory() as folder:
+        env = {**os.environ, "GIT_INDEX_FILE": str(Path(folder) / "index")}
+        repo.git("read-tree", target, cwd=top, env=env)
+        for sha in commits:
+            message = repo.git("show", "-s", "--format=%B", sha, cwd=top)
+            messages.append(message)
+            paths = repo.git("diff", "--name-only", "-z", f"{sha}^", sha, "--",
+                             ".factory", "plans", cwd=top).rstrip("\0").split("\0")
+            if not paths[0]:
+                continue
+            for path in paths:
+                entry = repo.git("ls-tree", sha, "--", path, cwd=top)
+                if entry:
+                    updated = repo.run("git", "update-index", "--index-info", input=entry + "\n",
+                                       cwd=top, env=env)
+                    updated.check_returncode()
+                else:
+                    repo.git("update-index", "--force-remove", "--", path, cwd=top, env=env)
+            snapshot = repo.git("write-tree", cwd=top, env=env)
+            saved = repo.run("git", "commit-tree", snapshot, "-p", parent,
+                             input=message, cwd=top)
+            saved.check_returncode()
+            parent = saved.stdout.strip()
+    saved = repo.run("git", "commit-tree", tree, "-p", parent, cwd=top,
+                     input="Replay the part's final changes\n\n" + "\n\n".join(reversed(messages)))
+    saved.check_returncode()
+    return saved.stdout.strip()
+
+
 def push_replay(top: Path, branch: str, tags: list[str]) -> bool:
     path = replay_file(top, branch)
     if not path.exists():
         return False
     pending = json.loads(path.read_text(encoding="utf-8"))
+    # Earlier review rounds cite commits that the replay drops. This tag lets another machine
+    # read them. It is made here, since a fetch that prunes tags would remove an unpushed one.
+    kept = f"refs/tags/forge-replayed/{branch}/{pending['original']}"
+    repo.git("update-ref", kept, pending["original"], cwd=top)
     published = repo.run("git", "push", "-q", "--atomic", "-u",
                          f"--force-with-lease=refs/heads/{branch}:{pending['lease']}",
-                         "origin", branch, *tags, cwd=top)
+                         "origin", branch, *tags, kept, cwd=top)
     if published.returncode:
         repo.git("reset", "--keep", pending["original"], cwd=top)
         path.unlink()

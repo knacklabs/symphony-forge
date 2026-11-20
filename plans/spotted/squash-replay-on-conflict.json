@@ -1,0 +1,81 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/close.py\tKeep planning evidence from the worker's separate commit\tsquash-replay-on-conflict",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 729,
+      "text": "Keep planning evidence from the worker's separate commit",
+      "from": "blocking",
+      "item": "squash-replay-on-conflict",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tKeep squashed follow-up fixes recognizable as built\tsquash-replay-on-conflict",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 734,
+      "text": "Keep squashed follow-up fixes recognizable as built",
+      "from": "blocking",
+      "item": "squash-replay-on-conflict",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tPreserve earlier review rounds during the squash\tsquash-replay-on-conflict",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 734,
+      "text": "Preserve earlier review rounds during the squash",
+      "from": "blocking",
+      "item": "squash-replay-on-conflict",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/repo.py\tThe generated-file check starts a second cat-file --batch reader in close, and the default branch fails the git process ceiling tests since ecd8d670d.",
+      "kind": "bug",
+      "path": "src/forge/repo.py",
+      "line": 379,
+      "text": "The generated-file check starts a second cat-file --batch reader in close, and the default branch fails the git process ceiling tests since ecd8d670d.",
+      "from": "worker",
+      "item": "squash-replay-on-conflict",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_close_squashes_clean_stacked_replay.py\tGate: test_1_close_squashes_only_intermediate_conflicts\tsquash-replay-on-conflict",
+      "kind": "bug",
+      "path": "tests/test_close_squashes_clean_stacked_replay.py",
+      "line": 28,
+      "text": "Gate: test_1_close_squashes_only_intermediate_conflicts",
+      "from": "blocking",
+      "item": "squash-replay-on-conflict",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/task.py\tpick_up fetches only the branch, so a single-branch clone made before the replay gets the forge-replayed tag only after a fetch with --tags.",
+      "kind": "edge",
+      "path": "src/forge/task.py",
+      "line": 251,
+      "text": "pick_up fetches only the branch, so a single-branch clone made before the replay gets the forge-replayed tag only after a fetch with --tags.",
+      "from": "worker",
+      "item": "squash-replay-on-conflict",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "simplify\tsrc/forge/task.py\tThe pick-up fetch and the branch refresh at close both fetch the replay tag; each one alone passes the test, and both stay as the owner chose.",
+      "kind": "simplify",
+      "path": "src/forge/task.py",
+      "line": 251,
+      "text": "The pick-up fetch and the branch refresh at close both fetch the replay tag; each one alone passes the test, and both stay as the owner chose.",
+      "from": "worker",
+      "item": "squash-replay-on-conflict",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
