@@ -90,20 +90,113 @@
       "security": false,
       "title": "Gate: Update the shipped instructions for failed parent runs",
       "work": 1
+    },
+    {
+      "area": "reuse() in src/forge/templates/review-tests.py",
+      "file": "src/forge/templates/review-tests.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 123,
+      "outcome": "open",
+      "reason": "",
+      "round": 3,
+      "security": false,
+      "title": "Do not treat all code under plans/ as Forge records",
+      "work": 2
+    },
+    {
+      "area": "after_code_ci() in src/forge/checks.py",
+      "file": "src/forge/checks.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 239,
+      "outcome": "open",
+      "reason": "",
+      "round": 3,
+      "security": false,
+      "title": "Wait for retries on earlier same-code heads",
+      "work": 2
+    },
+    {
+      "area": "reuse() in src/forge/templates/review-tests.py",
+      "file": "src/forge/templates/review-tests.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 154,
+      "outcome": "open",
+      "reason": "",
+      "round": 3,
+      "security": false,
+      "title": "Select the latest completed attempt when reusing a result",
+      "work": 2
+    },
+    {
+      "area": "reuse() in src/forge/templates/review-tests.py",
+      "file": "src/forge/templates/review-tests.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 141,
+      "outcome": "open",
+      "reason": "",
+      "round": 3,
+      "security": false,
+      "title": "Bound workflow history lookups across record pushes",
+      "work": 2
     }
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "9e67d158975181a3ca632415c5a2f500e635661aeb257877ac908e0afb83be50",
-    "changed": "8b10207710602bd9782742bdb50920b264d215c73ffbf7de74b017ad8069fa79",
-    "commit": "5d60b50666183e78267a55ffb4d79481c2333b13",
+    "branch_diff": "53faec9c1070f874114d6ba591d249116c7579d5bfca06265998efc8e5a2e574",
+    "changed": "aec0e38755a00138e3f20feb76185e00050dcae4de6bf6acc0f780636a921a7e",
+    "commit": "ff4f34eddc15a612e89b1136f61269d9178981c9",
     "dismissals": [],
-    "findings": [],
-    "id": "963902f2-fdf0-449f-8998-f8ed067debe0",
-    "status": "clean"
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - An adopted application has a business module such as `plans/models.py`. After a passing run on a pull request that also changed `app.py`, a later commit changes only that module. The pull request is not docs-only, but this predicate treats the module change as bookkeeping, so the generated workflow reuses the parent's success and reports green without testing the new code. The same classifier is shipped in `.forge/review-tests.py:298`.",
+        "file": "src/forge/templates/review-tests.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 123,
+        "priority": "P1",
+        "title": "Do not treat all code under plans/ as Forge records",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - A code run passes, close publishes record commit B, and B's workflow reuses that success. A developer then reruns the original code run to investigate an intermittent failure while another close prepares record commit C. This call checks only B, whose run is complete, so C is pushed while the retry on the earlier head is running. The generated workflow groups pull-request runs by PR number rather than SHA, so the push cancels that retry even though the code is unchanged.",
+        "file": "src/forge/checks.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 239,
+        "priority": "P1",
+        "title": "Wait for retries on earlier same-code heads",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - The original code run fails, a later record-only run inherits that failure, and a developer reruns the original run successfully. GitHub retains a run's ID on a retry, so selecting the largest ID still chooses the later record-only failure. Subsequent record pushes keep the check red despite the newer successful test attempt; the inverse can also reuse green after a newer retry fails. The history test assigns a new ID to each result and does not cover a retried run. [GitHub documents that run IDs do not change on rerun.](https://docs.github.com/en/actions/reference/workflows-and-actions/variables)",
+        "file": "src/forge/templates/review-tests.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 154,
+        "priority": "P1",
+        "title": "Select the latest completed attempt when reusing a result",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Scale\nCase: normal use - With the source workflow's six test groups, each record-only run invokes this full ancestor search in docs-check and all six groups. Seventeen successive record pushes within an hour require at least 7 \u00d7 (1 + ... + 17) = 1,071 workflow API requests, exceeding the standard GITHUB_TOKEN limit of 1,000 requests per hour per repository. Once requests fail, the exception handler sets reuse to false and the test groups restart, and other workflow API calls can fail as well. [GitHub documents the repository rate limit.](https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api)",
+        "file": "src/forge/templates/review-tests.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 141,
+        "priority": "P1",
+        "title": "Bound workflow history lookups across record pushes",
+        "work": 2
+      }
+    ],
+    "id": "72f7b1fc-d60b-47cc-8326-c8c0ede9bb71",
+    "status": "blocked"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-20T03:29:36.361890+00:00",
@@ -131,8 +224,22 @@
       "at": "2026-11-20T06:34:17.714252+00:00",
       "round": 3,
       "step": "resume"
+    },
+    {
+      "at": "2026-11-20T16:56:31.683459+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-20T16:56:31.702354+00:00",
+      "round": 3,
+      "step": "hold"
     }
   ],
+  "stop": {
+    "at": "2026-11-20T16:56:31.702354+00:00",
+    "file": "src/forge/templates/review-tests.py",
+    "wait_id": "fef8b951-0c8f-4ebb-81e5-dd6cb743ddca"
+  },
   "stuck": {
     "close": "235f4d5e-fa1a-45ed-930b-4a4f6fbf6337",
     "head": "49e3a25d317075e0b6df6c0b66b3f9b9d1c2c111",
