@@ -81,9 +81,13 @@ def push_replay(top: Path, branch: str, tags: list[str]) -> bool:
     if not path.exists():
         return False
     pending = json.loads(path.read_text(encoding="utf-8"))
+    # Earlier review rounds cite commits that the replay drops. This tag lets another machine
+    # read them. It is made here, since a fetch that prunes tags would remove an unpushed one.
+    kept = f"refs/tags/forge-replayed/{branch}/{pending['original']}"
+    repo.git("update-ref", kept, pending["original"], cwd=top)
     published = repo.run("git", "push", "-q", "--atomic", "-u",
                          f"--force-with-lease=refs/heads/{branch}:{pending['lease']}",
-                         "origin", branch, *tags, cwd=top)
+                         "origin", branch, *tags, kept, cwd=top)
     if published.returncode:
         repo.git("reset", "--keep", pending["original"], cwd=top)
         path.unlink()

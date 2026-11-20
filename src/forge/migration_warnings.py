@@ -31,8 +31,9 @@ def warnings(top: Path) -> list[str]:
     lanes = ("task/", "fix/", "story/")
     fetched = repo.command_fact("fetched origin", top, dict)
     if not fetched.get("all"):
-        result = repo.run("git", "fetch", "-q", "--prune", "origin",
-                          "+refs/heads/*:refs/remotes/origin/*", cwd=top)
+        # The item's replay tags come with the branches: reviews of the replayed branch cite their commits.
+        result = repo.run("git", "fetch", "-q", "--prune", "origin", "+refs/heads/*:refs/remotes/origin/*",
+                          *([repo.replayed_tags(current)] if current else []), cwd=top)
         if result.returncode:
             return ["Warning: Forge could not refresh origin's branches. "
                     "Check the remote and run this command again."]

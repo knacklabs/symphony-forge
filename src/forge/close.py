@@ -737,8 +737,6 @@ def _merge_default(top: Path, item: str, branch: str, default: str,
             repo.git("checkout", original, "--", ".factory/client-signoff.json", cwd=top)
             repo.commit_state("Keep the sign-off rounds after replay", ".factory/client-signoff.json", top=top)
         sync.refresh_merged_guides(top, original)
-        # Earlier review rounds cite commits that the replay drops; this tag lets another machine read them.
-        repo.git("update-ref", f"refs/tags/forge-replayed/{branch}/{original}", original, cwd=top)
         save_replay(top, branch, original, lease)
         if publish:
             _push(top, branch)
@@ -862,7 +860,7 @@ def _push(top: Path, branch: str, *, reviewed: bool = False) -> None:
     # Replay and copied plans can detach ownership history from the work branch.
     retained = repo.git("for-each-ref", "--format=%(refname)",
                         f"refs/tags/forge-start/{branch}", f"refs/tags/forge-plan/{branch}",
-                        f"refs/tags/forge-replayed/{branch}", cwd=top).splitlines()
+                        cwd=top).splitlines()
     tags = list(dict.fromkeys(tags + retained))
     if push_replay(top, branch, tags):
         return

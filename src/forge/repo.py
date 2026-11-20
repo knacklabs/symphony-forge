@@ -422,6 +422,11 @@ def current_branch(cwd: str | os.PathLike[str] | None = None) -> str:
     return git("branch", "--show-current", cwd=cwd)
 
 
+def replayed_tags(branch: str) -> str:
+    """The refspec for the pre-replay heads that earlier reviews of `branch` cite."""
+    return f"+refs/tags/forge-replayed/{branch}/*:refs/tags/forge-replayed/{branch}/*"
+
+
 def default_branch(cwd: str | os.PathLike[str] | None = None) -> str:
     # ponytail: origin/HEAD, else "main". A remote-less repo on another name needs origin/HEAD set.
     done = command_fact("default branch", cwd, lambda: run(

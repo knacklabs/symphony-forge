@@ -1,5 +1,7 @@
 """Close publishes a clean final change despite an intermediate replay conflict."""
 
+from pathlib import Path
+
 import pytest
 
 from test_close import CLEAN, blocked, env, finding  # noqa: F401
@@ -26,6 +28,8 @@ def test_1_close_squashes_only_intermediate_conflicts(env, kind):
     else:
         repo, parent, _, item, part, _ = stacked(env)
         branch, path, own_path = f"fix/{item}", "src/shared.py", "src/repair.py"
+    solo = env.tmp / "pickup"
+    repo.git("clone", "-q", "--no-local", repo.git("remote", "get-url", "origin"), str(solo))
     plan = ("Before coding:\nNeed: Keep the separate planning evidence.\n"
             "Simplest option: Reuse the final merged tree.\nExisting code reused: Git.\n\n"
             "Ruling: Keep this separate plan - it records the worker choice.\n"
@@ -102,3 +106,14 @@ def test_1_close_squashes_only_intermediate_conflicts(env, kind):
     assert note in env.prompt()
     assert reason in env.prompt()
     assert "Keep the separate planning evidence" in env.prompt()
+
+    # This teammate cloned before the branch had its reviews, so only a fetch of the
+    # branch and of its replay tag can bring the commits that the reviews cite.
+    picked = repo.forge("close", item, cwd=solo)
+    assert picked.returncode == 0, picked.stdout + picked.stderr
+    listing = repo.git("worktree", "list", "--porcelain", cwd=solo).split("\n\n")
+    tree = Path(next(block.splitlines()[0].removeprefix("worktree ") for block in listing
+                     if f"branch refs/heads/{branch}" in block.splitlines()))
+    env.commit(tree, own_path, "OWN_VALUE = 4\n", "Check after a pick-up")
+    again = repo.forge("close", item, cwd=solo)
+    assert again.returncode == 0, again.stdout + again.stderr
