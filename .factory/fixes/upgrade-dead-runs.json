@@ -1,6 +1,13 @@
 {
   "base": "4b5a40b0a536e066e1312d59417c63b4ec6b58a1",
   "branch": "fix/upgrade-dead-runs",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1f77f-720c-7bf2-b183-eb13947ad177",
+    "head": null,
+    "start": "9f6eb4c8918a0b5eee68f345e93557f09717a3bd"
+  },
   "done_when": "forge upgrade counts a run as in progress only while its recorded process is still alive (the same process identity the lanes use), so a run whose process is gone no longer blocks the upgrade; a live run still blocks it; new and existing repos get it",
   "fix_kind": "mechanical",
   "kind": "fix",
