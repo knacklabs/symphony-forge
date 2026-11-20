@@ -47,6 +47,10 @@ def test_2_first_pytest_failure_still_sends_a_repair_turn(repo, tmp_path):
                "    count = int(runs.read_text('utf-8')) + 1 if runs.exists() else 1\n"
                "    runs.write_text(str(count), encoding='utf-8')\n"
                "    assert count > 1, 'the first pytest run must fail'\n")
+    # Keep this repair contract narrow under the near-full selection rule.
+    # Unrelated tests fail if the selector accidentally includes them.
+    for number in range(3):
+        repo.write(f"tests/test_unrelated_{number}.py", "def test_unrelated():\n    assert False\n")
     test_command = f'{json.dumps(Path(sys.executable).as_posix())} -m pytest -q tests/test_retry.py'
     _setup(repo, test_command=test_command, always_test=["tests/test_retry.py"])
 

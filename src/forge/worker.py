@@ -54,8 +54,10 @@ TEST_STEPS = {
               "or `test` when none is set, in the machine's one test lane with `{base}` as the "
               "merge base with `origin/<default branch>`, on at most two test processes; a picker "
               "run of five or fewer related test files skips the lane's wait unless the test "
-              "command or pytest config has a doctest option. It always runs, including uncommitted "
-              "changes. Then commit any fixes. The nightly full run covers the rest."),
+              "command or pytest config has a doctest option. The command includes uncommitted "
+              "changes. Then commit any fixes. Skip the laptop run when the selection has at least "
+              "half of the test files or the selection falls back to the full suite; CI tests it. "
+              "The nightly full run covers the rest."),
 }
 TEST_STEPS["ci"] = TEST_STEPS["local"] + " CI runs the wider set of checks."
 START_HERE = ("Do not read the coordinator guide (the forge skill's `SKILL.md`): this brief has "
@@ -474,8 +476,10 @@ def related_tests(top: Path) -> tuple[int, str]:
         return 0, ""
     from forge import fasttest
 
-    status, report = fasttest.run_related(top, change=True, retry=False)
+    status, report = fasttest.run_related(top, change=True, retry=False, limit_selection=True)
     print(report, flush=True)
+    if fasttest.WIDE_SELECTION in report and not status:
+        return status, report
     empty = ("The Python picker selected no related tests; the test command exited successfully."
              if config["fast_test"] or config["test"] else "No related tests ran.")
     print("Related tests failed." if status else

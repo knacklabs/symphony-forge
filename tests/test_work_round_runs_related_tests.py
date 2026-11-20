@@ -47,6 +47,7 @@ def test_1_work_runs_related_tests_and_repairs_once(repo, monkeypatch, tmp_path,
                f'workers = "{family}"\n'
                f'test_place = "{test_place}"\nchecks = ["tests"]\n'
                f'test = {json.dumps(command)}\n'
+               f'fast_test = {json.dumps(command)}\n'
                f'models.lite = {{ model = "{model}", effort = "medium" }}\n')
     repo.write("product.txt", "good")
     repo.git("add", "-A")

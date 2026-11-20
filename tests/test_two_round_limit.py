@@ -197,7 +197,8 @@ def test_3_land_runs_at_most_one_fix_round(
         config = (land.repo.path / "forge.toml").read_text("utf-8")
         config = re.sub(r"(?m)^test_place\s*=.*(?:\r?\n|$)", "", config)
         land.commit(land.repo.path, "forge.toml", 'test_place = "local"\n'
-                    + "test = " + json.dumps(command) + "\n" + config)
+                    + "test = " + json.dumps(command) + "\n"
+                    + "fast_test = " + json.dumps(command) + "\n" + config)
         land.repo.git("push", "-q", "origin", "main")
     where = _fix(land, "working", worked=True)
     # The old three-repair contract becomes one repair for local tests and session CI checks.

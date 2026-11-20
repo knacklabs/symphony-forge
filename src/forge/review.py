@@ -385,7 +385,8 @@ RENDERED = ("Rendered problem: ", "Rendered check: ")  # close never cuts these;
 
 
 def test_run(top: Path, command: str, base: str, *, always: bool = False,
-             closing: bool = True, retry: bool = True) -> tuple[int, str]:
+             closing: bool = True, retry: bool = True,
+             limit_selection: bool = False) -> tuple[int, str]:
     """Run or skip tests; report a bounded tail, all failed tests and the full log path."""
     command = repo.grouped(top, command)
     branch = repo.current_branch(top) or "HEAD"  # Pull-request CI checks out a detached HEAD.
@@ -434,6 +435,9 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False,
                        PYTEST_PLUGINS=",".join(filter(None, [os.environ.get("PYTEST_PLUGINS"),
                                                              "_forge_test_results"])))
             env.pop("FORGE_WORKER_TESTS", None)
+            env.pop("FORGE_RELATED_LIMIT", None)
+            if limit_selection:
+                env["FORGE_RELATED_LIMIT"] = "1"
             if not closing:
                 env["FORGE_WORKER_TESTS"] = "1"
             with repo.record_run(top, item, "test") as ran:
@@ -485,11 +489,13 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False,
                                    ". They passed on the one retry.\n")
                 done = subprocess.CompletedProcess(command, done.returncode, "".join(history))
                 outcome = ran["outcome"] = "passed" if done.returncode == 0 else "failed"
-            if product and product == records.tested_product(top):
+                if outcome == "passed" and fasttest.WIDE_SELECTION in done.stdout:
+                    outcome = ran["outcome"] = "skipped"
+            if outcome != "skipped" and product and product == records.tested_product(top):
                 evidence = results.read_text("utf-8") if results.is_file() else done.stdout
                 results.write_text("# " + json.dumps({"product": product, "exit": done.returncode})
                                    + "\n" + evidence, "utf-8")
-            if done.returncode == 0 and passed:
+            if outcome == "passed" and passed:
                 passed.parent.mkdir(exist_ok=True)
                 # The run's per-test results, so a close that skips this run still lists them.
                 passed.write_text(results.read_text("utf-8") if results.is_file() else "", "utf-8")

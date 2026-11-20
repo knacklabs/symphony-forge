@@ -310,14 +310,16 @@ def close_tests(base: str) -> int:
     parts = quicktest.test_parts(Path.cwd(), command)
     scripts = json.loads(package.read_text("utf-8")).get("scripts", {}) if package.is_file() else {}
     # Compound scripts forward npm arguments to the last command, not every runner.
-    if not parts or re.search(r"[;|]", command) or any(re.search(r"&&|[;|]", scripts[script])
+    if (not any(kind in ("python", "vitest", "jest") for kind, _, _ in parts)
+            or re.search(r"[;|]", command) or any(re.search(r"&&|[;|]", scripts[script])
             for kind, part, _ in parts if kind in ("vitest", "jest")
-            for script in scripts if re.search(r"\b" + re.escape(script) + r"\b", part)):
+            for script in scripts if re.search(r"\b" + re.escape(script) + r"\b", part))):
+        if os.environ.get("FORGE_RELATED_LIMIT") == "1":
+            print(WIDE_SELECTION, flush=True)
+            return 0
         return subprocess.run(command, shell=True).returncode
     if not any(kind in ("vitest", "jest") for kind, _, _ in parts):
-        if any(kind == "python" for kind, _, _ in parts):
-            return pytest_tests(base, command)
-        return subprocess.run(command, shell=True).returncode
+        return pytest_tests(base, command)
     for kind, part, passthrough in parts:
         if kind == "python":
             status = pytest_tests(base, part)
@@ -338,6 +340,7 @@ def close_tests(base: str) -> int:
 
 
 NO_TESTS = "No tests ran:"
+WIDE_SELECTION = "skipped: selection near the full suite, CI tests it"
 
 
 def test(args) -> int:
@@ -366,7 +369,8 @@ def test(args) -> int:
         machine.leave(entry)
 
 
-def run_related(top: Path, *, change: bool, retry: bool = True) -> tuple[int, str]:
+def run_related(top: Path, *, change: bool, retry: bool = True,
+                limit_selection: bool = False) -> tuple[int, str]:
     """The related-test command, shared by the CLI and the worker's final check."""
     from forge import review
 
@@ -393,7 +397,7 @@ def run_related(top: Path, *, change: bool, retry: bool = True) -> tuple[int, st
     # CI groups reuse their own passes; explicit ungrouped commands always execute.
     return review.test_run(top, command, base,
                            always=not (change and "FORGE_GROUPS" in os.environ and not push_base),
-                           closing=change, retry=retry)
+                           closing=change, retry=retry, limit_selection=limit_selection)
 
 
 def related(base: str) -> tuple[list[str], list[str], bool, list[str]]:
@@ -808,6 +812,7 @@ def pytest_tests(base: str, command: str, entry: dict | None = None) -> int:
         parts = quicktest.test_parts(Path.cwd(), command)
     environment = dict(os.environ)
     worker = environment.pop("FORGE_WORKER_TESTS", None) == "1"
+    limit_selection = environment.pop("FORGE_RELATED_LIMIT", None) == "1"
     allocation = entry
     if allocation is None and (parent := environment.get("FORGE_TEST_LANE")):
         allocation = next((run for run in machine.entries() if run["id"] == parent
@@ -823,6 +828,11 @@ def pytest_tests(base: str, command: str, entry: dict | None = None) -> int:
     required = always[:]
     named = []
     picked, tests, shared_changed, missed = related(base)
+    selected = set(picked) | {name.split("::", 1)[0] for name in always}
+    if limit_selection and (
+            shared_changed or (tests and len(selected) * 2 >= len(tests))):
+        print(WIDE_SELECTION, flush=True)
+        return 0
     # Tests that run the program from outside never name its files, so say what local runs miss.
     from forge import review  # imported late: review's imports lead back here
     print("".join(f"{review.GAP}{source}. The nightly full run covers it.\n" for source in missed),

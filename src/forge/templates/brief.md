@@ -396,11 +396,15 @@ For each Done-when item you cover that changes runtime behaviour, write one end-
 boundary the user touches, named for the item; a settings, docs, deletion or test-only item is
 proven by the check the item names. Name a new test file after the behaviour it proves, never
 after the fix's slug. In a local-test repo, run each test and watch it fail, then build until it
-passes. In every test place, run the change's related tests on the laptop. CI runs its wider checks.
+passes. In every test place, run the change's related tests on the laptop unless the selection
+is near the full suite, as described below. CI runs its wider checks.
 Never edit or delete a test to make it pass; if a test
 is wrong, say so. A test whose result a stub or fake decides proves nothing. Use the test-audit
 skill whenever you write or change a test. Before you stop, $test_step
 After the worker's last commit, Forge runs `forge test --change` in the machine's test lane.
+When it selects at least half of the test files, including required tests, or the selection falls
+back to the full suite, Forge skips the laptop run and records
+`skipped: selection near the full suite, CI tests it`. Explicit test commands and CI still run.
 The first failure sends one repair turn with the test report, without an isolated test retry.
 Forge tests the committed repair again; a repair left uncommitted is reported as failed.
 Questions from either nudge stay open. With no related tests, the result says so instead of passed.
