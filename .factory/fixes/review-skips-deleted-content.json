@@ -1,6 +1,13 @@
 {
   "base": "4b5a40b0a536e066e1312d59417c63b4ec6b58a1",
   "branch": "fix/review-skips-deleted-content",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1f7c0-859b-7d83-9acc-b0de739f8145",
+    "head": null,
+    "start": "cd22f55eb1d8915ab0de9e5e09f1317b747f7a8b"
+  },
   "done_when": "Close's review input lists a deleted file by path and size only, never its content, and leaves out the content of generated, minified and source-map files (listed by path and size); a fix that deletes a large build folder is reviewed within a normal review's input size; other changes are reviewed as before; new and existing repos get it on upgrade",
   "fix_kind": "mechanical",
   "kind": "fix",
