@@ -84,14 +84,19 @@ def test_1_close_squashes_only_intermediate_conflicts(env, kind):
         "rev-parse", "HEAD", cwd=part)
     assert repo.git("status", "--porcelain", cwd=part) == ""
 
-    # A teammate must receive the old reviews too, without local backup objects.
+    # A teammate must receive the old reviews too. A network clone gets only what the
+    # remote refs reach; a plain clone from a folder would copy the squashed commits.
     clone = env.tmp / "teammate"
-    repo.git("clone", "-q", "--branch", branch, repo.git("remote", "get-url", "origin"), str(clone))
+    repo.git("clone", "-q", "--no-local", "--branch", branch,
+             repo.git("remote", "get-url", "origin"), str(clone))
     if kind == "fix":
         landed = repo.forge("land", item, cwd=clone)
         assert f"Building {item}." not in landed.stdout, landed.stdout + landed.stderr
         assert f"Closing {item}." in landed.stdout, landed.stdout + landed.stderr
     env.commit(clone, own_path, "OWN_VALUE = 3\n", "Check on another machine")
+    # The reviewer repeats the dismissed finding. Its cited line is unchanged, so the
+    # dismissal must still hold although the clone has none of the squashed commits.
+    env.reviews(blocked(finding("P1", note, "witness.py")))
     checked = repo.forge("close", item, cwd=clone)
     assert checked.returncode == 0, checked.stdout + checked.stderr
     assert note in env.prompt()
