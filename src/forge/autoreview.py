@@ -19,9 +19,7 @@ TOKENS = ("input_tokens", "cached_input_tokens", "output_tokens", "reasoning_out
 def generated_paths(tree: Path, start: str, head: str, paths: list[str]) -> set[str]:
     """Generated text on either side, shared by the diff and its design context."""
     marked = {path for path in paths if path.lower().endswith((".map", ".min.js", ".min.css"))}
-    contents = repo.blob_texts(tree, [f"{ref}:{path}" for path in paths if path not in marked
-                                    for ref in (start, head)])
-    if not contents:
+    if not paths:
         return marked
     attributes = sorted({(parent / ".gitattributes").as_posix()
                          for path in paths for parent in Path(path).parents})
@@ -33,7 +31,7 @@ def generated_paths(tree: Path, start: str, head: str, paths: list[str]) -> set[
         if path in marked:
             continue
         for ref in (start, head):
-            lines = contents.get(f"{ref}:{path}", "").splitlines()
+            lines = repo.blob_texts(tree, [f"{ref}:{path}"]).get(f"{ref}:{path}", "").splitlines()
             if sum(len(line) > 1000 for line in lines) > len(lines) / 2:
                 marked.add(path)
                 break
