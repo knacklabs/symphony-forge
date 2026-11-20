@@ -106,8 +106,8 @@
     "id": "50cf3114-7299-4118-82f0-d2960758e11c",
     "status": "clean"
   },
-  "round": 2,
-  "status": "waiting for checks",
+  "round": 3,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-20T06:56:52.782494+00:00",
@@ -142,6 +142,11 @@
       "choice": "accept",
       "round": 2,
       "step": "owner decision"
+    },
+    {
+      "at": "2026-11-20T09:59:21.979447+00:00",
+      "round": 3,
+      "step": "resume"
     }
   ],
   "stop": {
@@ -154,10 +159,10 @@
     "worker_round": 2
   },
   "stuck": {
-    "close": "b7760bdb-0ee6-4073-840d-4a7eae3afb0a",
-    "head": "e2cdc15af8a1c6033b4aacbf4f15f4e6e510b473",
+    "close": "132dfc2e-31a3-4beb-a6ae-406d50446088",
+    "head": "060b7fbcfcaffc1fe45eb6bfc0b54b2b9d127d78",
     "keys": {},
-    "round": 1
+    "round": 2
   },
   "why": "Issue 1728: a fix that deletes a large tracked build folder (89 files, 88.6 MB including a 75 MB source map and an 11.7 MB minified bundle, 40,208 lines deleted) can never be reviewed: close's review sends deleted, minified and source-map content to the model and hits the usage limit every time (3 of 3 tries, then the organization's spend limit); the client finished the pull request by hand",
   "worker": "codex"
