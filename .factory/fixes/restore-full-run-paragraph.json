@@ -1,0 +1,110 @@
+{
+  "base": "4b5a40b0a536e066e1312d59417c63b4ec6b58a1",
+  "branch": "fix/restore-full-run-paragraph",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1f7ac-84ba-7052-be04-eed6695bd266",
+    "head": null,
+    "start": "3c44d16bd81fb2d1d6bdedaeda8816fb6f97004a"
+  },
+  "done_when": "src/forge/templates/skill.md (and both generated SKILL.md copies) has the client release and sign-off full-run paragraph as before 4b5a40b0a, the daily cut rule stays only in docs/guide.md's Releasing Forge section, and tests/test_full_run_starts_before_notes.py passes on main",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "src/forge/templates/skill.md",
+      "file": "src/forge/templates/skill.md",
+      "gain": 4,
+      "harm": 3,
+      "line": 2307,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Forge releases lose their cut and Windows instructions",
+      "work": 1
+    },
+    {
+      "area": "src/forge/templates/skill.md",
+      "file": "src/forge/templates/skill.md",
+      "gain": 3,
+      "harm": 3,
+      "line": 2307,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: tests/test_full_run_starts_before_notes.py",
+      "work": 1
+    },
+    {
+      "area": ".forge/always-tests.txt",
+      "file": ".forge/always-tests.txt",
+      "gain": 5,
+      "harm": 4,
+      "line": 7,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Functional: The required-test list makes Forge full runs fail",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "495e43573cbd97dc03e31fafe7f00f7a708733a46731743345bccc26a7e756bd",
+    "changed": "c7ef5ce3d4b3396113abf06379e9cd5478c7337e08cad90d624c22791d6def3d",
+    "commit": "b7a1895a5879a22c2267465b4465d018d5fc767a",
+    "dismissals": [],
+    "findings": [],
+    "id": "dc42ec9a-bd88-405a-9b23-d72e851186f2",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-20T06:36:02.826360+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-20T06:37:19.226166+00:00",
+      "round": 1,
+      "step": "resume"
+    },
+    {
+      "at": "2026-11-20T08:37:19.407055+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-20T08:38:13.484071+00:00",
+      "round": 2,
+      "step": "resume"
+    },
+    {
+      "at": "2026-11-20T08:45:46.758460+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-20T08:46:57.873287+00:00",
+      "round": 3,
+      "step": "resume"
+    },
+    {
+      "at": "2026-11-20T08:50:44.238922+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "2a36349c-a2a1-49d6-8a27-f60f4b104858",
+    "head": "6877470aba9f1a4a67c31ad60764d620bf338ff4",
+    "keys": {
+      "the open P0 functional: the required-test list makes forge full runs fail in .forge/always-tests.txt": 1
+    },
+    "round": 2
+  },
+  "why": "Main is red: the daily-release-cut fix (4b5a40b0a) rewrote the client skill paragraph 'After the last product merge for a release or sign-off, start the full run at once with gh workflow run forge.yml --ref <default>...' although the daily cut is a rule for Forge's own releases only; tests/test_full_run_starts_before_notes.py::test_1 fails on every pull request, and the combined CI of the train that merged it did not select that test",
+  "worker": "codex"
+}

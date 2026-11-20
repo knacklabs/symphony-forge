@@ -1,0 +1,169 @@
+{
+  "items": [
+    {
+      "key": "bug\t.forge/always-tests.txt\tFunctional: The required-test list makes Forge full runs fail\trestore-full-run-paragraph",
+      "kind": "bug",
+      "path": ".forge/always-tests.txt",
+      "line": 7,
+      "text": "Functional: The required-test list makes Forge full runs fail",
+      "from": "blocking",
+      "item": "restore-full-run-paragraph",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tdocs/guide.md\tFunctional: A frozen cut cannot be pushed after main advances\tdaily-release-cut",
+      "kind": "bug",
+      "path": "docs/guide.md",
+      "line": 689,
+      "text": "Functional: A frozen cut cannot be pushed after main advances",
+      "from": "blocking",
+      "item": "daily-release-cut",
+      "status": "done",
+      "closed_by": "restore-full-run-paragraph"
+    },
+    {
+      "key": "bug\tdocs/guide.md\tFunctional: The checklist can tag a different commit from the tested cut\tdaily-release-cut",
+      "kind": "bug",
+      "path": "docs/guide.md",
+      "line": 697,
+      "text": "Functional: The checklist can tag a different commit from the tested cut",
+      "from": "blocking",
+      "item": "daily-release-cut",
+      "status": "done",
+      "closed_by": "restore-full-run-paragraph"
+    },
+    {
+      "key": "bug\tdocs/guide.md\tGate: Reconcile the coordinator's release instructions\tdaily-release-cut",
+      "kind": "bug",
+      "path": "docs/guide.md",
+      "line": 697,
+      "text": "Gate: Reconcile the coordinator's release instructions",
+      "from": "blocking",
+      "item": "daily-release-cut",
+      "status": "done",
+      "closed_by": "restore-full-run-paragraph"
+    },
+    {
+      "key": "bug\tsrc/forge/templates/skill.md\tFunctional: Forge releases lose their cut and Windows instructions\trestore-full-run-paragraph",
+      "kind": "bug",
+      "path": "src/forge/templates/skill.md",
+      "line": 2307,
+      "text": "Functional: Forge releases lose their cut and Windows instructions",
+      "from": "blocking",
+      "item": "restore-full-run-paragraph",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/skill.md\tFunctional: Qualify when small changes use one group\tFORGE-CITIME-1/RULES",
+      "kind": "bug",
+      "path": "src/forge/templates/skill.md",
+      "line": 41,
+      "text": "Functional: Qualify when small changes use one group",
+      "from": "blocking",
+      "item": "FORGE-CITIME-1/RULES",
+      "status": "done",
+      "closed_by": "restore-full-run-paragraph"
+    },
+    {
+      "key": "bug\tsrc/forge/templates/skill.md\tGate: Existing sync and review-round guide tests fail\tskill-copies-agree",
+      "kind": "bug",
+      "path": "src/forge/templates/skill.md",
+      "line": 2056,
+      "text": "Gate: Existing sync and review-round guide tests fail",
+      "from": "blocking",
+      "item": "skill-copies-agree",
+      "status": "done",
+      "closed_by": "restore-full-run-paragraph"
+    },
+    {
+      "key": "bug\tsrc/forge/templates/skill.md\tGate: Update the synced-guide browser policy test\tFORGE-CITIME-1/RULES",
+      "kind": "bug",
+      "path": "src/forge/templates/skill.md",
+      "line": 1529,
+      "text": "Gate: Update the synced-guide browser policy test",
+      "from": "blocking",
+      "item": "FORGE-CITIME-1/RULES",
+      "status": "done",
+      "closed_by": "restore-full-run-paragraph"
+    },
+    {
+      "key": "bug\tsrc/forge/templates/skill.md\tGate: tests/test_full_run_starts_before_notes.py\trestore-full-run-paragraph",
+      "kind": "bug",
+      "path": "src/forge/templates/skill.md",
+      "line": 2307,
+      "text": "Gate: tests/test_full_run_starts_before_notes.py",
+      "from": "blocking",
+      "item": "restore-full-run-paragraph",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/skill.md\tNot done: Explain the round limit when P0 and lower findings coexist\tskill-copies-agree",
+      "kind": "bug",
+      "path": "src/forge/templates/skill.md",
+      "line": 2059,
+      "text": "Not done: Explain the round limit when P0 and lower findings coexist",
+      "from": "blocking",
+      "item": "skill-copies-agree",
+      "status": "done",
+      "closed_by": "restore-full-run-paragraph"
+    },
+    {
+      "key": "bug\tsrc/forge/templates/skill.md\tNot done: cold reads run on the other tool from the session\tnew-client-repos-with-both-tools-install",
+      "kind": "bug",
+      "path": "src/forge/templates/skill.md",
+      "line": 446,
+      "text": "Not done: cold reads run on the other tool from the session",
+      "from": "blocking",
+      "item": "new-client-repos-with-both-tools-install",
+      "status": "done",
+      "closed_by": "restore-full-run-paragraph"
+    },
+    {
+      "key": "bug\tsrc/forge/templates/skill.md\tStandard: Delete before adding\tfix-review-rounds",
+      "kind": "bug",
+      "path": "src/forge/templates/skill.md",
+      "line": 183,
+      "text": "Standard: Delete before adding",
+      "from": "blocking",
+      "item": "fix-review-rounds",
+      "status": "done",
+      "closed_by": "restore-full-run-paragraph"
+    },
+    {
+      "key": "bug\tsrc/forge/templates/skill.md\tStandard: Delete before adding\tnew-client-repos-with-both-tools-install",
+      "kind": "bug",
+      "path": "src/forge/templates/skill.md",
+      "line": 446,
+      "text": "Standard: Delete before adding",
+      "from": "blocking",
+      "item": "new-client-repos-with-both-tools-install",
+      "status": "done",
+      "closed_by": "restore-full-run-paragraph"
+    },
+    {
+      "key": "bug\ttests/test_full_run_starts_before_notes.py\tGate: test_1_full_run_starts_after_last_product_merge_before_notes\tstart-full-run-early",
+      "kind": "bug",
+      "path": "tests/test_full_run_starts_before_notes.py",
+      "line": 15,
+      "text": "Gate: test_1_full_run_starts_after_last_product_merge_before_notes",
+      "from": "blocking",
+      "item": "start-full-run-early",
+      "status": "done",
+      "closed_by": "restore-full-run-paragraph"
+    },
+    {
+      "key": "edge\tsrc/forge/templates/skill.md\tNot done: The testing rules and the guide tell clients to run browser tests nightly instead of in the pull request check",
+      "kind": "edge",
+      "path": "src/forge/templates/skill.md",
+      "line": 1482,
+      "text": "Not done: The testing rules and the guide tell clients to run browser tests nightly instead of in the pull request check",
+      "from": "review",
+      "item": "FORGE-CITIME-1/RULES",
+      "status": "done",
+      "closed_by": "restore-full-run-paragraph"
+    }
+  ]
+}

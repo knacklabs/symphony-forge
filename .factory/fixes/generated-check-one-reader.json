@@ -1,0 +1,95 @@
+{
+  "base": "ecd8d670d78d6fdf906f15aabcfcbc02e9ae3405",
+  "branch": "fix/generated-check-one-reader",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1f8ba-e5a1-7353-92f9-e85ce12c454f",
+    "head": null,
+    "start": "9512bc23cf09803acc2a30dd19f0e9b164c4eba9"
+  },
+  "done_when": "close starts one cat-file batch reader again, tests/test_git_process_ceiling.py passes on main, and the review still leaves generated and deleted file content out",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "generated_files() in src/forge/repo.py",
+      "file": "src/forge/repo.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 373,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Preserve compatibility with Git 2.39",
+      "work": 2
+    },
+    {
+      "area": "generated_paths() in src/forge/autoreview.py",
+      "file": "src/forge/autoreview.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 22,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Classify generated files before loading their contents",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "feb8234e0356fe925fcb5ffb6b0a7a381a4c949c4bab85fdfef5aa52cd4de588",
+    "changed": "c397d03c185b0dc1d0dd368de03337ba96c0cd3b5b553c145dbe1317a723fde8",
+    "commit": "0b56de3da27820540473eab3fce5a098d5c74bac",
+    "dismissals": [],
+    "findings": [],
+    "id": "eabbdb7e-fd43-4a83-9416-1bbafc3dc8dd",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-20T11:32:28.404532+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-20T11:32:38.580531+00:00",
+      "round": 1,
+      "step": "resume"
+    },
+    {
+      "at": "2026-11-20T11:51:48.936048+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-20T11:52:53.486491+00:00",
+      "round": 2,
+      "step": "resume"
+    },
+    {
+      "at": "2026-11-20T12:06:00.323093+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-20T12:54:17.483714+00:00",
+      "round": 3,
+      "step": "resume"
+    },
+    {
+      "at": "2026-11-20T13:05:38.199013+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "d25e93d5-61b6-40f2-a568-b43e73f3c56c",
+    "head": "82af0471f6de9f173bd20a416812f7fd174b3f43",
+    "keys": {},
+    "round": 2
+  },
+  "why": "Main is red: the 1728 fix (ecd8d670d) added a generated-file check (src/forge/repo.py:379, read-tree HEAD and check-attr linguist-generated) that starts a second git cat-file --batch reader during every close, so tests/test_git_process_ceiling.py's three close cases fail (2 readers where 1 is allowed); the merge's related-test selection did not pick that test",
+  "worker": "codex"
+}

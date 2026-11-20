@@ -152,7 +152,9 @@ def test_3_overlapping_fixes_can_close_and_merge(env):
         env.open_pr("")
         closed = env.close(item)
         assert closed.returncode == 0, closed.stdout + closed.stderr
-        assert f"Next: forge merge {item}" in closed.stdout
+        # One Ready fix keeps merge advice. With both Ready, close names the batch.
+        expected = f"forge merge {first}" if item == first else f"forge land {second} {first}"
+        assert f"Next: {expected}" in closed.stdout.splitlines()
     advice = env.repo.forge("next")
     assert advice.returncode == 0, advice.stderr
     assert "merge one first" in advice.stdout

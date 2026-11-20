@@ -1,0 +1,37 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/autoreview.py\tClassify generated files before loading their contents\tgenerated-check-one-reader",
+      "kind": "bug",
+      "path": "src/forge/autoreview.py",
+      "line": 22,
+      "text": "Classify generated files before loading their contents",
+      "from": "blocking",
+      "item": "generated-check-one-reader",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/repo.py\tPreserve compatibility with Git 2.39\tgenerated-check-one-reader",
+      "kind": "bug",
+      "path": "src/forge/repo.py",
+      "line": 373,
+      "text": "Preserve compatibility with Git 2.39",
+      "from": "blocking",
+      "item": "generated-check-one-reader",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_git_process_ceiling.py\tThe close-with-history check counted 91 Git commands against its limit of 90.",
+      "kind": "bug",
+      "path": "tests/test_git_process_ceiling.py",
+      "line": 104,
+      "text": "The close-with-history check counted 91 Git commands against its limit of 90.",
+      "from": "worker",
+      "item": "FORGE-SAMPLE-1/SIGNOFF",
+      "status": "done",
+      "closed_by": "generated-check-one-reader"
+    }
+  ]
+}
