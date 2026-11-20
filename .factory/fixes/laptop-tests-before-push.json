@@ -117,7 +117,7 @@
     "id": "3f4f7f3b-ae3d-4b02-a981-6e1bf030a0a5",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -132,13 +132,20 @@
     {
       "at": "2026-11-20T05:57:45.870554+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-11-20T05:58:20.532251+00:00",
+      "round": 2,
+      "step": "resume"
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "7a149235b1c2b927291767b63d06f9c9a2744157",
-    "keys": {},
-    "round": null
+    "close": "768c491f-d5c6-41ad-9043-25ec26e44254",
+    "head": "dd23ab80ec7d5a3a05f57df8261d1b04d7401976",
+    "keys": {
+      "the open P0 functional: do not report an uncommitted repair as a passing branch in src/forge/worker.py": 1
+    },
+    "round": 1
   },
   "why": "In repos with test_place ci (Forge's own repo and most clients), the worker brief says related tests stay in pull request CI, so workers push without running their change's tests: 38 of 46 failed Forge PR runs since 17 Nov 2026 (83%) were the branch's own bug, at least 30 of them caught by the branch's own related tests, each costing a 12-18 minute CI run and 14 branches failing 2-4 times",
   "worker": "codex"
