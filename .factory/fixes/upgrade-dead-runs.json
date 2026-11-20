@@ -71,7 +71,7 @@
     "id": "842d9b50-5266-4027-a96e-8ab10653eb44",
     "status": "blocked"
   },
-  "round": 2,
+  "round": 3,
   "status": "fixing",
   "steps": [
     {
@@ -91,13 +91,18 @@
     {
       "at": "2026-11-20T06:15:06.301023+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-11-20T06:15:49.330035+00:00",
+      "round": 3,
+      "step": "resume"
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "2966e471e710fe21230d6bbeab6e4d495fb0e70d",
+    "close": "913f0d38-2e3b-402b-b79c-387e2911a141",
+    "head": "5acd0bc21f1a9c85bf84f244696eefe8a533b703",
     "keys": {},
-    "round": null
+    "round": 2
   },
   "why": "forge upgrade refuses with 'Forge runs are still in progress' for runs whose process is gone: an intake read that joined its lane but never recorded an end, and a close review killed seconds after it started (lane left with end_known false); a client hit it on 20 Nov 2026 upgrading to v1.2.44 with no forge process running and had to install by hand",
   "worker": "codex"
