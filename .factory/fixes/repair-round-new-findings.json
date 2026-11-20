@@ -18,7 +18,7 @@
       "gain": 4,
       "harm": 3,
       "line": 1054,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -31,7 +31,7 @@
       "gain": 4,
       "harm": 3,
       "line": 27,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -44,7 +44,7 @@
       "gain": 4,
       "harm": 3,
       "line": 1101,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -57,7 +57,7 @@
       "gain": 3,
       "harm": 3,
       "line": 1054,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -80,68 +80,27 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "8681475e507cb85ced0a681fb36bfd89ab0fbfe00781d411415ef47f58a1ae33",
-    "changed": "ddd784f44a98d779b369a9f5b36ce364e02de4b13a25d74a32a5b9a38f875b26",
-    "commit": "c9cdaaa4596607262e3bcf76260505d8744887b8",
+    "branch_diff": "d750a2785dd51ed9b1ac723326a375cf3b61b1bbedbe1cad7d5be0fc6e3771d6",
+    "changed": "846fdd48611775ba6b30f775400c650b8ce926e1544f343def42ee3973ac8e98",
+    "commit": "e9efb7e2cd3b3895c549131ba33f654bd84f6866",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - A person skips a review, adds another product change, and runs close normally. `close.py:369` deliberately passes an empty previous review so the first actual model review covers the full branch, but this fallback retrieves the skipped record from history and treats every ordinary P1 as a repair-round follow-up. Close can therefore mark the item ready despite a P1 found by its first real review. The existing skipped-review test supplies a clean result and misses this case.",
-        "file": "src/forge/review.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 1054,
-        "priority": "P1",
-        "title": "Preserve blocking on the first review after a skipped review",
-        "work": 2
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - Round one reports `[P1] Saving loses the basket`, and the repair reviewer returns `[P1] Not fixed: Saving loses the basket` for the same file. The classifier strips the priority tag only for its gate checks; it passes the original title to `score.identity`, which strips `Not fixed:` only at the start of the whole title (`src/forge/score.py:153`). The still-open finding is therefore classified as new advice, so close can proceed without the original blocker being fixed.",
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Gate\nCase: normal use - The related CI run still selects an owner-choice test that requires a new P1 to block. `tests/test_review_choice_updates_plan.py:19` imports the changed review-loop test module, so the selector at `src/forge/fasttest.py:456` and `src/forge/docskip.py:93` includes it. Its split cases at `tests/test_review_choice_updates_plan.py:69-75` return `Basket defect 1`, then `Basket defect 2`, and assert that both closes fail. The classifier makes the second finding advice, so the second close succeeds and the test never reaches the split behavior. The same assumption remains in `tests/test_review_loop_records_each_stop_choice.py:28-34`, `tests/test_land_returns_the_owner_question.py:28-34`, `tests/test_land_records_review_loop_choice.py:15-19`, and `tests/test_item_time_history.py:117-124`. Retain an earlier blocker in these cases so they continue to exercise the owner-choice and history behavior.",
         "file": "src/forge/autoreview.py",
         "gain": 4,
         "harm": 3,
-        "line": 27,
-        "priority": "P1",
-        "title": "Keep priority-tagged Not fixed findings blocking",
-        "work": 2
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done\nCase: normal use - A repair review records a new `Not done:` P1 as advice, the owner chooses one more round, and the next reviewer repeats that still-open note. It now matches the previous review, so the classifier does not restore `REPAIR_FOLLOWUP`; this condition marks it required and removes its carried `known:` dismissal. The prior advice consequently blocks again. A new `Not done:` note labelled `Case: rare` also loses the marker when `bound_review` replaces its follow-up reason, allowing a subsequent classification to reopen it.\nThe affected Done-when is: From the second review round on, Forge itself keeps only the previous findings that are still open plus new P0 findings; any other new finding is recorded as a follow-up on the item, shown in close's advice, and does not block the merge; round-one reviews and the owner's choices at the round limit are unchanged; new and existing repos get it on upgrade",
-        "file": "src/forge/review.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 1101,
-        "priority": "P1",
-        "required_done_when": true,
-        "title": "Not done: repair-round Not done follow-ups can block a later review",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional\nCase: normal use - A second-round review of a story task returns a new `Not done:` P1 about a builder detail rather than a covered owner-approved item. `review.py:1046` sends it through `noise.drop` before this classifier runs; `src/forge/noise.py:34` discards that finding. It is never recorded on the item or shown in close's advice, despite the Done-when requiring other new findings, including new Not done findings, to become follow-ups. The new command test exercises this case only for a fix, where the drop does not apply.",
-        "file": "src/forge/review.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 1054,
-        "priority": "P1",
-        "title": "Record new Not done findings on story-task guidance",
-        "work": 2
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Gate\nCase: normal use - The pull-request related-test run selects `tests/test_two_round_limit.py`, whose P1 case at line 117 still expects a new round-two finding to block. This classifier makes that finding advice, so the assertion no longer holds. The owner-choice and split fixtures in `tests/test_close_waits_for_review_loop_choice.py:28` and `tests/test_split_keeps_review_findings.py:50` likewise use a different P1 title in round two to reach the stop, so they no longer reach the behavior they test. Update those cases to retain an earlier blocker and continue exercising the owner choices.",
-        "file": "src/forge/autoreview.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 31,
+        "line": 30,
         "priority": "P1",
         "title": "Gate: existing review-loop tests still require new P1 findings to block",
         "work": 2
       }
     ],
-    "id": "23cc641f-49ed-4761-82c1-e9f28edd7fc2",
+    "id": "b4ed79ca-c536-4b09-8586-9f54175e842b",
     "status": "blocked"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-20T04:07:50.110997+00:00",
@@ -160,8 +119,22 @@
       "at": "2026-11-20T04:24:24.652979+00:00",
       "round": 2,
       "step": "resume"
+    },
+    {
+      "at": "2026-11-20T04:52:38.805236+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-20T04:52:38.823113+00:00",
+      "round": 2,
+      "step": "hold"
     }
   ],
+  "stop": {
+    "at": "2026-11-20T04:52:38.823113+00:00",
+    "file": "src/forge/autoreview.py",
+    "wait_id": "0285fc96-17a0-4372-8cc9-1d90cf9585dc"
+  },
   "stuck": {
     "close": "4b5ca035-963e-4714-b1e4-e66e3261e212",
     "head": "d6b0f246f128ee8fd0369e634834e57e76e209ba",
