@@ -36,6 +36,11 @@ conflict repairs and later worker edits; a clean merge needs no new review. The 
 tests still run on the merged code, keeping earlier findings and allowances from this item's records.
 When close, land or merge brings in changed guide templates, Forge refreshes the committed
 skill copies before tests and push. It leaves other generated files alone.
+Close checks a changed or missing client workflow against sync and asks you to run `forge sync`
+and commit `.github/workflows/forge.yml` when it differs. An unchanged existing workflow can
+stay until the client upgrades. In Forge's source repo, changes to
+the workflow generator or templates select the release-checkout sync test. When that repo
+pins a release newer than the published tags, Forge runs its source checkout until release.
 If that diff contains only records under `.factory/` and `plans/`, close records a clean review without a model call,
 except for the unfinished fix below.
 For a fix whose branch changes only `.factory/` and spotted records against the default branch,

@@ -818,6 +818,14 @@ def pytest_tests(base: str, command: str, entry: dict | None = None) -> int:
     required = always[:]
     named = []
     picked, tests, shared_changed, missed = related(base)
+    settings = tomllib.loads(Path("forge.toml").read_text("utf-8"))
+    if settings.get("repo") == "forge-source":
+        changed = git_files("diff", "--no-renames", "--name-only", base)
+        if any(path == "src/forge/prcheck.py" or path.startswith("src/forge/templates/")
+               for path in changed):
+            sync_test = "tests/test_release_version.py::test_2_release_checkout_generated_files_match_sync"
+            always = list(dict.fromkeys(always + [sync_test]))
+            required = list(dict.fromkeys(required + [sync_test]))
     # Tests that run the program from outside never name its files, so say what local runs miss.
     from forge import review  # imported late: review's imports lead back here
     print("".join(f"{review.GAP}{source}. The nightly full run covers it.\n" for source in missed),

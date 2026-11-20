@@ -4,7 +4,9 @@ STORY = "repin-mid-run"
 import json
 import re
 import shutil
+import subprocess
 import sys
+import tempfile
 import tomllib
 from pathlib import Path
 
@@ -76,8 +78,36 @@ sys.exit(main())
 ''')
 
 
+def _sync_workflow(env, settings):
+    """Render each fixture's real pinned workflow without changing its guide conflicts."""
+    version = tomllib.loads(settings)["version"]
+    source = env.tmp / "earlier-source" if version == "v1.2.2" else ROOT / "src"
+    program = env.tmp / "workflow-bin"
+    program.mkdir(exist_ok=True)
+    _install(program, "forge", FORGE_SHIM.format(python=sys.executable, src=source.as_posix()))
+    with tempfile.TemporaryDirectory(dir=env.tmp) as folder:
+        where = Path(folder) / "checkout"
+        branch = "fix/workflow-fixture"
+        env.repo.git("worktree", "add", "-qb", branch, str(where), "HEAD")
+        try:
+            env.commit(where, ".factory/fixes/workflow-fixture.json", json.dumps({
+                "kind": "fix", "branch": branch, "status": "working",
+                "why": "Prepare the pinned workflow", "done_when": "The workflow matches sync"}))
+            env.commit(where, "forge.toml", settings)
+            synced = subprocess.run([sys.executable, str(program / "forge"), "sync"],
+                                    cwd=where, capture_output=True, text=True, timeout=60)
+            assert synced.returncode == 0, synced.stdout + synced.stderr
+            workflow = (where / ".github/workflows/forge.yml").read_text("utf-8")
+        finally:
+            env.repo.git("config", "core.hooksPath", (Path(folder) / "unused-hooks").as_posix())
+            env.repo.git("worktree", "remove", "-f", str(where))
+            env.repo.git("branch", "-D", branch)
+    env.commit(env.repo.path, ".github/workflows/forge.yml", workflow, "Sync the fixture workflow")
+
+
 def _upgrade_default(env, upgraded):
     env.commit(env.repo.path, "forge.toml", upgraded, "Upgrade Forge")
+    _sync_workflow(env, upgraded)
     env.repo.git("push", "-q", "origin", "main")
 
 
@@ -97,6 +127,11 @@ subprocess.run(["git", "fetch", "-q", "origin"], check=True,
                stdin=subprocess.DEVNULL, timeout=60)
 subprocess.run(["git", "merge", "-q", "--no-edit", "origin/main"], check=True,
                stdin=subprocess.DEVNULL, timeout=60)
+subprocess.run([{json.dumps(sys.executable)}, {json.dumps((env.tmp / 'current-bin' / 'forge').as_posix())},
+                "sync"], check=True, stdin=subprocess.DEVNULL, timeout=60)
+for args in (["config", "core.hooksPath", {json.dumps((env.tmp / 'worker-unused-hooks').as_posix())}],
+             ["add", "-A"], ["commit", "--allow-empty", "-q", "-m", "Sync the upgraded workflow"]):
+    subprocess.run(["git", *args], check=True, stdin=subprocess.DEVNULL, timeout=60)
 '''
     upgrade = "".join("    " + line + "\n" for line in upgrade.splitlines())
     # Attach the model's edit to the SDK message boundary, independently of the
@@ -113,6 +148,7 @@ def test_1_running_command_continues_under_the_pin_merged_from_upgraded_default(
         land, adoption, stage, monkeypatch):
     env = land
     current = env.repo.forge("--version").stdout.split()[-1]
+    _earlier_release(env)
     if adoption == "earlier-adopted":
         fixture = ROOT / "tests" / "fixtures" / "adopted-v1.2.2" / "client"
         for path in fixture.rglob("*"):
@@ -137,6 +173,7 @@ def test_1_running_command_continues_under_the_pin_merged_from_upgraded_default(
         original = ("test = " + json.dumps(f'"{sys.executable}" "{suite}"') + "\n"
                     + re.sub(r'^test = .*\n', '', original, flags=re.M))
     env.commit(env.repo.path, "forge.toml", original, "Run the pinned earlier release")
+    _sync_workflow(env, original)
     guide_conflict = stage.endswith("guide-conflict")
     guide = ".codex/skills/forge/SKILL.md"
     if guide_conflict:
@@ -163,7 +200,6 @@ def test_1_running_command_continues_under_the_pin_merged_from_upgraded_default(
                            '"body":"","isDraft":true,"mergeStateStatus":"BEHIND"}]')
     else:
         _worker_merges_upgrade(env, upgraded)
-    _earlier_release(env)
     monkeypatch.setenv("FORGE_PINNED_RUN", "v1.2.2")
     command = "close" if stage.startswith("close-") else "land"
     done = env.repo.forge(command, ITEM, cwd=where)
@@ -210,9 +246,11 @@ def test_2_land_keeps_its_one_fix_round_limit_after_the_worker_changes_the_pin(
         land, monkeypatch):
     env = land
     current = env.repo.forge("--version").stdout.split()[-1]
+    _earlier_release(env)
     original = re.sub(r'version = "[^"]+"', 'version = "v1.2.2"',
                       (env.repo.path / "forge.toml").read_text("utf-8"))
     env.commit(env.repo.path, "forge.toml", original, "Run the pinned earlier release")
+    _sync_workflow(env, original)
     env.repo.git("push", "-q", "origin", "main")
     where = _fix(env, "working", worked=True)
     # Persistent CI failures still need repair rounds. P1s no longer block a fix, and P0s
@@ -222,7 +260,6 @@ def test_2_land_keeps_its_one_fix_round_limit_after_the_worker_changes_the_pin(
     upgraded = original.replace('version = "v1.2.2"',
         f'version = "{current}"\nfast_test = ""')
     _worker_merges_upgrade(env, upgraded)
-    _earlier_release(env)
     monkeypatch.setenv("FORGE_PINNED_RUN", "v1.2.2")
     done = env.repo.forge("land", ITEM, cwd=where)
     assert done.returncode == 1, done.stdout + done.stderr
@@ -251,6 +288,8 @@ def test_3_close_continues_the_current_human_accept_choice_under_changed_pin(
     env.commit(env.repo.path, "forge.toml", original, "Run the pinned earlier release")
     env.repo.git("push", "-q", "origin", "main")
     _earlier_release(env)
+    _sync_workflow(env, original)
+    env.repo.git("push", "-q", "origin", "main")
     monkeypatch.setenv("FORGE_PINNED_RUN", "v1.2.2")
     item, where = stopped(env)
     reviewed = len(env.review_calls())

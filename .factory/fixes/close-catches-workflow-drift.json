@@ -1,0 +1,132 @@
+{
+  "base": "67376f6c033979de5e01536db35aaf293d3e8899",
+  "branch": "fix/close-catches-workflow-drift",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1ef43-7d5d-7b72-8751-603e54081607",
+    "head": null,
+    "start": "e03e9f6c859450254fc4f024a2662c3f904a76ea"
+  },
+  "done_when": "close runs the release-checkout sync test (or forge sync --check) when a change touches the workflow generator or the templates and fails with one line naming the file to regenerate; and when the pinned release is newer than the newest published tag in Forge's own repo, close runs Forge from the source checkout instead of failing; new and existing repos get it on upgrade",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "_synced() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 809,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Close crashes for sample-data prototypes with an existing workflow",
+      "work": 1
+    },
+    {
+      "area": "check_pin() in src/forge/repo.py",
+      "file": "src/forge/repo.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 938,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: close does not consistently use the source checkout for an unpublished pin",
+      "work": 3
+    },
+    {
+      "area": "_synced() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 809,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Close skips a missing generated client workflow",
+      "work": 1
+    },
+    {
+      "area": "test_2_source_generator_changes_run_the_release_sync_test() in tests/test_close_requires_current_workflow.py",
+      "file": "tests/test_close_requires_current_workflow.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 56,
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: Owner accepted on 19 Nov 2026: the release sync test runs on the local-test path; the CI path of forge test --change is not proven by a test",
+      "round": 1,
+      "security": false,
+      "title": "Gate: tests/test_close_requires_current_workflow.py::test_2_source_generator_changes_run_the_release_sync_test",
+      "work": 2
+    },
+    {
+      "area": "test_3_close_runs_an_unpublished_forge_source_pin_from_its_checkout() in tests/test_forge_source_uses_unpublished_pin.py",
+      "file": "tests/test_forge_source_uses_unpublished_pin.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 57,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: tests/test_forge_source_uses_unpublished_pin.py::test_3_close_runs_an_unpublished_forge_source_pin_from_its_checkout",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "711bf3839878c172539fda2e767d34fc1c2298bfc70c9dd0d556ca22e68ce679",
+    "changed": "f5c61d53eb5c7d0d8f070f0b60e57f6d584be93bb6f0582f9633bfeb114970ee",
+    "commit": "f457d1a2a7d6931c56b88c5d9f7f85b85a711d8e",
+    "dismissals": [],
+    "findings": [],
+    "id": "f85072cd-4b0b-4e45-b4d9-c2bd77069ff9",
+    "status": "clean"
+  },
+  "round": 4,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-18T15:25:03.931125+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-18T16:05:16.065717+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-18T17:41:02.634416+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-19T05:07:38.628367+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-19T07:52:50.019390+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-18T17:41:02.634736+00:00",
+    "by": "owner",
+    "choice": "accept",
+    "file": "tests/test_close_requires_current_workflow.py",
+    "reason": "Owner accepted on 19 Nov 2026: the release sync test runs on the local-test path; the CI path of forge test --change is not proven by a test",
+    "wait_id": "a2efcb8b-aee1-4506-9ed9-3d0c0d63acf9",
+    "worker_round": 2
+  },
+  "stuck": {
+    "close": "76409fa5-7126-4fb5-b5a2-2870d73d8401",
+    "head": "c4b5b5682c8000d108747ec8bbc556ba9685be74",
+    "keys": {},
+    "round": 3
+  },
+  "why": "A change to the workflow generator (prcheck.py or the templates) can merge without the regenerated .github/workflows/forge.yml, which turns main red (it happened on 18 Nov 2026), and after a release bump merges, a branch that merges main pins a release that is not published yet, so close fails with 'Failed to resolve --with requirement' until the release is out",
+  "worker": "codex"
+}

@@ -84,6 +84,9 @@ def close(args: argparse.Namespace) -> int:
 
     item = args.item
     top = _worktree(item)
+    pinned = repo._pin(story.show(top, "HEAD", "forge.toml") or "")  # pyright: ignore[reportPrivateUsage]
+    if pinned and pinned != __version__ and repo.source_release(f"v{pinned}", top):
+        repo.check_pin(top, item, "close")
     state, cfg = repo.read_state(item, top) or {}, repo.config(top)
     skip = review_skip.requested(args, top, item, state)
     retried_history = (repo.forge_dir(top) / "backfill-pending").exists()
@@ -786,10 +789,14 @@ def _merge_default(top: Path, item: str, branch: str, default: str,
                       "if cfg.get('repo') == 'forge-source' else None")
             if release != cfg["version"] and repo.VERSION.fullmatch(release):
                 # Isolate Python imports too: the old checkout may have set PYTHONPATH.
-                done = repo.run("uv", "run", "--isolated", "--no-project", "--with",
-                                f"git+https://github.com/knacklabs/symphony-forge@{release}",
-                                "--python", sys.executable, "python", "-I", "-c", script, cwd=top,
-                                env=repo.uv_env())
+                if repo.source_release(release, top):
+                    done = repo.run("uv", "run", "--project", str(top), "--python", sys.executable,
+                                    "python", "-I", "-c", script, cwd=top, env=repo.uv_env())
+                else:
+                    done = repo.run("uv", "run", "--isolated", "--no-project", "--with",
+                                    f"git+https://github.com/knacklabs/symphony-forge@{release}",
+                                    "--python", sys.executable, "python", "-I", "-c", script, cwd=top,
+                                    env=repo.uv_env())
             else:
                 package = json.dumps((top / "src" if cfg.get("repo") == "forge-source"
                                       else Path(__file__).resolve().parent.parent).as_posix())
@@ -811,8 +818,13 @@ def _merge_default(top: Path, item: str, branch: str, default: str,
 
 
 def _synced(top: Path, item: str, changed_files: list[str]) -> None:
-    """An upgrade is ready only once forge sync, run by the Forge it pins on a copy of the commit
-    close pushes, changes and deletes nothing."""
+    """Check workflow edits and require upgrades to commit all their pinned sync output."""
+    cfg, workflow = repo.config(top), ".github/workflows/forge.yml"
+    committed = story.show(top, "HEAD", workflow)
+    if cfg.get("repo") != "forge-source" and (workflow in changed_files or committed is None):
+        from forge import prcheck
+        if (expected := prcheck.ships(top, cfg).get(workflow)) is not None and committed != expected:
+            repo.refuse(("Run forge sync and commit .github/workflows/forge.yml", ""))
     toml = story.show(top, "HEAD", "forge.toml") or ""
     pinned = repo._pin(toml)  # pyright: ignore[reportPrivateUsage]
     if pinned == (release := repo._pin(story.show(top, f"origin/{repo.default_branch(top)}", "forge.toml") or "")):  # pyright: ignore[reportPrivateUsage]

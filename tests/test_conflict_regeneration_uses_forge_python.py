@@ -19,9 +19,15 @@ def test_6_conflict_regeneration_uses_forge_python_despite_client_pin(
     earlier = repin._earlier_release
 
     def pinned_client(env):
-        env.commit(env.tmp / "repo-fix-tidy-readme", ".python-version", "3.10\n",
-                   "Keep the client's Python pin")
         earlier(env, real_uv=True)
+        start_fix = repin._fix
+
+        def pinned_worktree(env, *args, **kwargs):
+            where = start_fix(env, *args, **kwargs)
+            env.commit(where, ".python-version", "3.10\n", "Keep the client's Python pin")
+            return where
+
+        monkeypatch.setattr(repin, "_fix", pinned_worktree)
 
     monkeypatch.delenv("UV_PYTHON", raising=False)
     monkeypatch.setattr(repin, "_earlier_release", pinned_client)

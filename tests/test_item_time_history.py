@@ -12,6 +12,7 @@ from test_close_holds_after_three_blocked_reviews import client_item
 from test_close_test_runs_wait_in_line import Close, ONE, SUITE, _fix, _release, _running, _with_test_command
 from test_worker import install_claude
 from test_last_task_records_story_outcome import github_merge
+from test_running_commands_follow_changed_forge_pin import _sync_workflow
 from test_upgrade_command import Upgrade
 
 STORY = "FIX-WHERE-TIME-WENT"
@@ -95,6 +96,8 @@ def test_1_looping_item_retains_findings_ci_give_up_owner_wait_and_pull_request_
                'models.lite = { model = "sonnet", effort = "medium" }\n'
                'models.build = { model = "sonnet", effort = "medium" }\n'
                + f'test = {json.dumps(command)}\n')
+    _sync_workflow(env, (env.repo.path / "forge.toml").read_text("utf-8"))
+    env.repo.git("push", "-q", "origin", "main")
     env.repo.git("fetch", "-q", "origin", "main")
     env.repo.git("merge", "-X", "theirs", "--no-edit", "origin/main", cwd=where)
     if previous:
@@ -153,6 +156,9 @@ def test_1_looping_item_retains_findings_ci_give_up_owner_wait_and_pull_request_
     config = env.repo.path / "forge.toml"
     Upgrade(env, tmp_path).on_main("forge.toml", config.read_text("utf-8").replace(
         'test_place = "local"', 'test_place = "ci"'), "Leave accepted changes to CI")
+    # The coordinator's settings change lands with its generated CI workflow.
+    _sync_workflow(env, config.read_text("utf-8"))
+    env.repo.git("push", "-q", "origin", "main")
     env.repo.git("fetch", "-q", "origin", "main")
     env.repo.git("merge", "-X", "theirs", "--no-edit", "origin/main", cwd=where)
     env.checks([run("tests", None, "queued"), run("forge-pr-check")])

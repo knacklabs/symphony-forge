@@ -934,7 +934,14 @@ def check_pin(cwd: str | os.PathLike[str] | None = None, item: str = "", words: 
         if pending.get("head"):
             handed = run("git", "show", f"{pending['head']}:forge.toml", cwd=pending["checkout"])
             pinned = _pin(handed.stdout)
+    raw_pin = _pin((top / "forge.toml").read_text(encoding="utf-8"))
+    if (not pinned and raw_pin and raw_pin != __version__
+            and source_release(f"v{raw_pin}", top)
+            and os.environ.get("FORGE_PINNED_RUN") != f"source:v{raw_pin}"):
+        sys.exit(run_release(f"v{raw_pin}", sys.argv[1:], cwd))
     pinned = pinned or config(top)["version"].removeprefix("v")
+    if os.environ.get("FORGE_PINNED_RUN") == f"source:v{pinned}":
+        return
     if pinned == __version__:
         return
     from forge import story
@@ -990,12 +997,30 @@ def resume_pin(top: Path, previous: str, rounds: int | None = None, *, accepted:
     sys.exit(run_release(release, sys.argv[1:], top))
 
 
+def source_release(release: str, top: Path) -> bool:
+    """Whether an unpublished Forge-source release must run from this checkout."""
+    settings = top / "forge.toml"
+    if not settings.is_file() or tomllib.loads(settings.read_text("utf-8")).get("repo") != "forge-source":
+        return False
+    tags = run("git", "tag", "--list", cwd=top).stdout.splitlines()
+    return all(_older(tag.removeprefix("v"), release.removeprefix("v"))
+               for tag in tags if VERSION.fullmatch(tag))
+
+
 def run_release(release: str, args: list[str], cwd: str | os.PathLike[str] | None) -> int:
-    """Run a Forge release's `forge <args>` through uv in cwd, its output streamed; its exit code."""
-    return subprocess.run(
-        [shutil.which("uv") or "uv", "tool", "run", "--from",
-         f"git+https://github.com/knacklabs/symphony-forge@{release}", "forge", *args],
-        cwd=cwd, env={**uv_env(), "FORGE_PINNED_RUN": release}).returncode
+    """Run a published Forge release, or an unpublished source pin, through uv."""
+    uv = shutil.which("uv") or "uv"
+    top = root(cwd)
+    if source_release(release, top):
+        print(f"Forge {release} is not published yet, so this checkout runs through uv.", file=sys.stderr)
+        command = [uv, "run", "--project", str(top), "forge", *args]
+        marker = f"source:{release}"
+    else:
+        command = [uv, "tool", "run", "--from",
+                   f"git+https://github.com/knacklabs/symphony-forge@{release}", "forge", *args]
+        marker = release
+    return subprocess.run(command, cwd=cwd,
+                          env={**uv_env(), "FORGE_PINNED_RUN": marker}).returncode
 
 
 def uv_env() -> dict[str, str]:
@@ -1040,9 +1065,17 @@ def _pin(text: str) -> str:
 
 def _older(version: str, target: str = __version__) -> bool:
     """The version is a release older than the target (the installed Forge by default)."""
-    release, installed = (re.match(r"(\d+)\.(\d+)\.(\d+)", v) for v in (version, target))
-    return bool(release and installed and
-                tuple(map(int, release.groups())) < tuple(map(int, installed.groups())))
+    def key(value: str) -> tuple[Any, ...] | None:
+        match = re.fullmatch(r"(\d+)\.(\d+)\.(\d+)(.*)", value)
+        if not match:
+            return None
+        suffix = match[4]
+        identifiers = tuple((0, int(part)) if part.isdigit() else (1, part.lower())
+                            for part in re.findall(r"[0-9A-Za-z]+", suffix))
+        return (*map(int, match.group(1, 2, 3)), not bool(suffix), identifiers)
+
+    release, installed = key(version), key(target)
+    return release is not None and installed is not None and release < installed
 
 
 def roadmap(top: Path | None = None) -> list[dict[str, Any]]:
