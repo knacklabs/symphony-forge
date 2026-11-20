@@ -11,8 +11,68 @@
   "done_when": "forge upgrade counts a run as in progress only while its recorded process is still alive (the same process identity the lanes use), so a run whose process is gone no longer blocks the upgrade; a live run still blocks it; new and existing repos get it",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [
+    {
+      "area": "tests/test_upgrade_ignores_ended_processes.py",
+      "file": "tests/test_upgrade_ignores_ended_processes.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 21,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: live CI waits do not block forge upgrade",
+      "work": 3
+    },
+    {
+      "area": "test_1_upgrade_blocks_only_while_the_recorded_process_is_alive() in tests/test_upgrade_ignores_ended_processes.py",
+      "file": "tests/test_upgrade_ignores_ended_processes.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 73,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: dead-process upgrade regression proof",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "cea4c77de63b287405607794bc8c32875515aec263210e20fcaeed85e36c0bf6",
+    "changed": "9c6c5df76c54708396546d984b48d0be2e7b4a726655852e383c4612964acaf3",
+    "commit": "5fbb94078517850e839826dcefb2a858fa66125e",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 3, Harm 3\nRaise: Not done. Case: normal use - a close or land command is waiting for CI after its review and test lanes have emptied. `src/forge/checks.py:96` records that wait as a run with the live Forge process identity, but `src/forge/upgrade.py:93` checks only machine lane entries. Consequently, upgrade can replace the installed release while that command is still running; the command later resumes and can import code from the replacement release. `src/forge/land.py:410` also distinguishes live CI waits from lane entries. The new test covers reads, intake and reviews but misses this live run.\n\nDone when: forge upgrade counts a run as in progress only while its recorded process is still alive (the same process identity the lanes use), so a run whose process is gone no longer blocks the upgrade; a live run still blocks it; new and existing repos get it.",
+        "file": "tests/test_upgrade_ignores_ended_processes.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 21,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: live CI waits do not block forge upgrade",
+        "work": 3
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Test. Case: normal use - an interrupted review's lane has already been cleared before upgrade, or an unrelated process has reused an ended run's PID. The review case invokes upgrade at line 73 and only checks for `lane left` afterward. The upgrade itself calls `machine.entries()`, whose cleanup writes that event in `src/forge/machine.py:763`; the test therefore does not establish the reported `end_known: false` history before the command. A refusal based on an already-present event could pass this test. The test also waits for the numeric PIDs to disappear at line 72, so it never checks the required start identity when a PID is reused; the existing reuse test at `tests/test_pid_reuse_keeps_run.py:98` exercises the board, not upgrade. Establish those states before invoking upgrade and check its installation decision.",
+        "file": "tests/test_upgrade_ignores_ended_processes.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 73,
+        "priority": "P1",
+        "title": "Gate: dead-process upgrade regression proof",
+        "work": 2
+      }
+    ],
+    "id": "842d9b50-5266-4027-a96e-8ab10653eb44",
+    "status": "blocked"
+  },
   "round": 2,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-20T05:46:31.133591+00:00",
@@ -27,6 +87,10 @@
       "at": "2026-11-20T05:54:01.169099+00:00",
       "round": 2,
       "step": "resume"
+    },
+    {
+      "at": "2026-11-20T06:15:06.301023+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
