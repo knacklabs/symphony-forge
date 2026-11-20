@@ -68,10 +68,18 @@ def test_1_review_choice_publishes_builder_details_and_merges_them_into_the_task
         assert worked.returncode == 0, worked.stdout + worked.stderr
         for number in (1, 2):
             env.commit(where, "app.py", f"print('basket attempt {number}')\n")
-            env.reviews(blocked({**finding("P1", f"Basket defect {number}"),
-                                 "body": "Gain 3, Work 2, Harm 3\nSaving loses a basket."}))
+            defects = [{**finding("P1", "Basket defect 1"),
+                        "body": "Gain 3, Work 2, Harm 3\nSaving loses a basket."}]
+            if number == 2:
+                defects.append(finding("P1", "Basket defect 2"))
+            env.reviews(blocked(*defects))
             held = env.close(item)
             assert held.returncode == 1, held.stdout + held.stderr
+            if number == 2:
+                # The earlier blocker keeps the split stop; the new P1 is only advice.
+                serious, advice = held.stdout.split("Advice that does not block the merge:", 1)
+                assert "Basket defect 1" in serious and "Basket defect 2" not in serious
+                assert "Basket defect 2" in advice and "Does not block: Follow-up" in advice
         assert "One more round, split or accept?" in held.stderr
     before = env.repo.git("show", "story/SHOP:plans/SHOP.md")
     reason = "Save one basket only; shared baskets move to a later part."
