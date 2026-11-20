@@ -9,6 +9,8 @@ at their existing external boundaries; no production seam is needed.
 P0 escalation audit: close must block when earlier advice or a fixed P1 comes
 back as P0. Existing cases keep severity unchanged, so cannot catch history
 silencing that escalation. Exercise both histories through close, with no seam.
+Story guidance and a rare P0 history extend the same command test: the fix-only
+cases cannot reach the guidance filter or a P0 settlement ceiling.
 """
 import pytest
 
@@ -74,25 +76,32 @@ def test_1_repair_review_keeps_new_p1_as_followup(env, kind, priority, title, fo
     assert title in advice and "Does not block: Follow-up" in advice
 
 
-@pytest.mark.parametrize("earlier", ["follow-up", "fixed"])
+@pytest.mark.parametrize("earlier", ["follow-up", "fixed", "story guidance", "rare P0"])
 def test_2_p0_escalations_block_even_after_followup_or_repair(env, earlier):
     client(env, adopted=False)
     blocker = finding("P1", "The greeting is missing")
-    title = "Saving a basket fails"
+    title = ("Not done: The checkout uses the tax formatter" if earlier == "story guidance"
+             else "Saving a basket fails")
     tracked = finding("P1", "[P1] " + title)
-    item, where = env.start_fix()
+    if earlier == "rare P0":
+        tracked = finding("P0", "[P0] " + title)
+        tracked["body"] += "\nCase: rare - Only an unusual basket fails to save."
+    followup = earlier in ("follow-up", "story guidance")
+    item, where = env.start_task() if earlier == "story guidance" else env.start_fix()
     env.reviews(blocked(blocker, tracked) if earlier == "fixed" else blocked(blocker))
     first = env.close(item)
     assert first.returncode == 1, first.stdout + first.stderr
     env.open_pr(body(env.gh_calls("pr", "create")[-1]), draft=True)
     env.commit(where, "app.py", "print('save the basket')\n")
-    env.reviews(blocked(blocker, tracked) if earlier == "follow-up" else blocked(blocker))
+    env.reviews(blocked(blocker) if earlier == "fixed" else blocked(blocker, tracked))
     second = env.close(item)
     assert second.returncode == 1, second.stdout + second.stderr
-    if earlier == "follow-up":
+    if followup:
         assert title in second.stdout.split("Advice that does not block the merge:", 1)[1]
-    choice = env.close(item, "--resolve", "more", "--reason", "The owner chose another round")
-    assert choice.returncode == 0, choice.stdout + choice.stderr
+    # A rare P0 used to ask for an owner choice; a blocking P0 continues repairs.
+    if earlier != "rare P0" or "One more round, split or accept?" in second.stderr:
+        choice = env.close(item, "--resolve", "more", "--reason", "The owner chose another round")
+        assert choice.returncode == 0, choice.stdout + choice.stderr
     env.commit(where, "app.py", "raise RuntimeError('saving now loses the basket')\n")
     escalated = finding("P0", "[P0] " + title)
     escalated["body"] += "\nCase: normal use - Saving now loses every basket on the main path."

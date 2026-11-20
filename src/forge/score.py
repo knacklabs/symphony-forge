@@ -128,7 +128,9 @@ def of(finding: dict[str, Any]) -> Scores | None:
 
 
 def holds(finding: dict[str, Any], level: str | None = "P1") -> bool:
-    """A finding holds work by the bar (only `block` at the P0-only level), or unscored by priority."""
+    """P0 always holds; other findings use the bar, or priority when unscored."""
+    if finding.get("priority") == "P0":
+        return True
     if finding.get("follow_up") or RARE.search(finding.get("body", "")):
         return False
     outcome = bar(of(finding))

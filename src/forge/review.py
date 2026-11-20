@@ -1049,8 +1049,8 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                         settled.pop(score.identity(finding["file"], finding["title"]), None)
             for finding in findings:
                 key = score.identity(finding["file"], finding["title"])
-                if score.priority(finding) == "P0" and settled.get(key, "").startswith("fixed:"):
-                    settled.pop(key)
+                if score.holds(finding, "P0"):
+                    settled.pop(key, None)
             findings = [finding for finding in findings if not settled.get(
                 score.identity(finding["file"], finding["title"]), "").startswith("fixed:")]
             if not signoff_prompt:
@@ -1102,7 +1102,13 @@ def bound_review(top: Path, item: str, state: dict[str, Any], result: dict[str, 
     settings = repo.review_settings(top)
     kinds = {kind.strip().casefold() for kind in settings.get("always_block", [])}
     minimum = settings.get("added_work_min_gain", 3)
-    for finding in (f for f in findings if f.get("follow_up") != autoreview.REPAIR_FOLLOWUP):
+    for finding in findings:
+        if score.holds(finding, "P0"):
+            if finding.pop("follow_up", None):
+                changed = True
+            continue
+        if finding.get("follow_up") == autoreview.REPAIR_FOLLOWUP:
+            continue
         title = re.sub(r"^\[P[0-3]\]\s*", "", finding["title"].strip())
         missed = re.match(r"Not done\s*:\s*(.*)", title, re.I)
         approved_missed = missed and ("/" not in item or any(
@@ -1131,6 +1137,7 @@ def bound_review(top: Path, item: str, state: dict[str, Any], result: dict[str, 
             finding["follow_up"] = reason
             changed = True
     kept = [d for d in result.get("dismissals", []) if not (
+        d.get("carried") and score.holds(findings[d["finding"] - 1], "P0") or
         not d.get("accepted") and d["because"].startswith("known:") and not d["because"].startswith("known: Split into")
         and (findings[d["finding"] - 1].get("required_done_when")
              or (d["because"].startswith("known: " + score.ADDED_WORK_REASON)

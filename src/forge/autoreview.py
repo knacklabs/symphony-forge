@@ -27,7 +27,7 @@ def repair_findings(findings: list[dict[str, Any]], previous: dict[str, Any],
     for finding in findings:
         title = re.sub(r"^\[P[0-3]\]\s*", "", finding["title"].strip())
         key = score.identity(finding["file"], finding["title"])
-        if score.priority(finding) != "P0" and (key in followups or (repair and key not in earlier
+        if not score.holds(finding, "P0") and (key in followups or (repair and key not in earlier
                 and not score.MUST.match(title)
                 and not re.match(r"Gate\s*:", title, re.I))):
             finding["follow_up"] = REPAIR_FOLLOWUP
