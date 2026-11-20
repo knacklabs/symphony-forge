@@ -1600,6 +1600,9 @@ also stay in place; only recognized cache directories may be discarded.
 1. Ask which release to move to, recommending the newest.
 2. If the target release differs from the release on PATH, wait until no Forge runs are in
    progress anywhere on the machine. An install during a close can mix two releases.
+   This includes close and land while they wait for CI. A run whose recorded process ended
+   no longer blocks the install, even without an end record. A reused process number does
+   not keep that run alive. New and existing repos get this check on upgrade.
    `forge upgrade` names those runs and asks you to wait. If the target release is already on
    PATH, upgrade skips the install and continues while other runs remain in progress.
 3. Run `forge upgrade <release>` in the main checkout, on the default branch. It installs the

@@ -70,14 +70,19 @@ def test_1_upgrade_blocks_only_while_the_recorded_process_is_alive(up, tmp_path,
             reader.wait(timeout=30)
         (up.repo.bin / "go-all").touch()
         _until(lambda: all(not alive(pid) for pid in processes), "the reader's model process to end")
+
+        lanes = up.repo.forge("lanes", "--json")
+        assert lanes.returncode == 0, lanes.stdout + lanes.stderr
+        view = json.loads(lanes.stdout)
+        assert not view["agents"]["entries"] and not view["tests"]["entries"]
+        events = [json.loads(line) for line in events_path.read_text("utf-8").splitlines()]
+        assert any(row["event"] == "lane left" and row.get("end_known") is False for row in events)
+        assert not any(row["event"] == "run end" for row in events)
         ended = up.run(RELEASE)
         assert ended.returncode == 1, ended.stdout + ended.stderr
         assert "Installing Forge" in ended.stderr, ended.stdout + ended.stderr
         assert "Forge runs are still in progress" not in ended.stderr
         assert [call["args"] for call in up.uv()] == [install()]
-        events = [json.loads(line) for line in events_path.read_text("utf-8").splitlines()]
-        assert any(row["event"] == "lane left" and row.get("end_known") is False for row in events)
-        assert not any(row["event"] == "run end" for row in events)
     finally:
         if owner:
             owner.close()
