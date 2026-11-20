@@ -2539,6 +2539,12 @@ to `plans/ideas.md` (or are empty) is not built: land runs the build round and c
 until real changes exist. New and existing repos get this on the current release. Close
 still stops for a pending question and gives open findings or failing tests a worker fix round.
 
+### Keep CI fast
+
+- Run one `forge land` command for Ready items together. This saves repeated CI runs. See the table's merge rows.
+- Do not rerun close while checks are queued. This saves duplicate check waits.
+- Do not merge main by hand just before a merge. This saves another CI run.
+
 To land a chosen set, name the items: `forge land <item> <item> ...` runs the same queue and merge
 train for exactly those items and leaves every other item alone. It refuses a name that is no task or
 fix. When two or more tasks or fixes are ready to merge and this checkout pins v1.2.43 or later,

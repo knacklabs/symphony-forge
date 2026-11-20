@@ -518,8 +518,12 @@ def close(args: argparse.Namespace) -> int:
     _publish(top, item, state, branch, default, pr, result, evidence)
     proof = "no tests or CI in sample-data mode" if repo.sample_data(top, cfg) else "its tests passed on this machine" if local_tests else "green checks"
     if merge == "agent":
+        from forge import nextstep
+
         print(f"Ready: {item} has {review_skip.readiness(result)} and {proof}.")
-        print(f"Next: forge merge {item}")
+        print(next((line for line in nextstep._report(top, ready_first=item)
+                    if line.startswith("Next: forge land ") and item in line.split()[3:]),
+                   f"Next: forge merge {item}"))
     else:
         print(f"Ready: {item} has {review_skip.readiness(result)} and {proof}. A human merges its pull request.")
     if not retried_history and backfill.upgrade_fix(top, item, state):
