@@ -1,0 +1,15 @@
+{
+  "base": "41c53141ecc53527d8952bc84065e55e6f5ffbe4",
+  "branch": "fix/records-cancel-ci",
+  "done_when": "A push whose new commits change only Forge's record files never cancels or restarts a running or queued test run of the same code: close holds its record commits until the checks report (or pushes them with the code), and a record-only push reuses the earlier result; new and existing repos get it on upgrade and forge sync",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-20T03:29:36.361890+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Issue 1723: during forge close, Forge's own record commits (review result, owner choice, stuck/fixing) are pushed while the pull request's test groups are queued or running; the generated workflow cancels in-progress pull_request runs, so each record push throws away the running tests and all groups restart on unchanged code (one client night: 25 of 44 runs cancelled, 50 of 55 cancels caused by record pushes)"
+}
