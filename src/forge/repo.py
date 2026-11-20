@@ -372,15 +372,27 @@ def generated_files(top: Path, paths: list[str], head: str = "") -> set[str]:
     if not paths:
         return set()
     with tempfile.TemporaryDirectory() as folder:
-        env = dict(os.environ)
+        env, cached = None, ("--cached",)
         if head:
-            env["GIT_INDEX_FILE"] = str(Path(folder) / "index")
-            git("read-tree", head, cwd=top, env=env)
-        attrs = run("git", "check-attr", "--cached", "--stdin", "-z", "linguist-generated",
+            # Git 2.39 has no check-attr --source. Give its parser only the attributes,
+            # with an empty index so missing attributes cannot fall back to this checkout.
+            attributes = {(parent / ".gitattributes").as_posix()
+                          for path in paths for parent in Path(path).parents}
+            for spec, data in blob_bytes(top, [f"{head}:{path}" for path in attributes]).items():
+                target = Path(folder) / spec.partition(":")[2]
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_bytes(data)
+            dot = top / ".git"
+            gitdir = (top / dot.read_text(encoding="utf-8").strip().removeprefix("gitdir: ")
+                      if dot.is_file() else dot).resolve()
+            env = {**os.environ, "GIT_DIR": str(gitdir), "GIT_WORK_TREE": folder,
+                   "GIT_INDEX_FILE": str(Path(folder) / "index")}
+            cached = ()
+        attrs = run("git", "check-attr", *cached, "--stdin", "-z", "linguist-generated",
                     cwd=top, env=env, input="\0".join(paths))
-        attrs.check_returncode()
-        values = attrs.stdout.split("\0")
-        return {path for path, value in zip(values[::3], values[2::3]) if value in ("set", "true")}
+    attrs.check_returncode()
+    values = attrs.stdout.split("\0")
+    return {path for path, value in zip(values[::3], values[2::3]) if value in ("set", "true")}
 
 
 def commit_log(top: Path, base: str, head: str = "HEAD") -> list[tuple[str, str, list[str]]]:

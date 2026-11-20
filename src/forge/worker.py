@@ -748,7 +748,8 @@ def design_context(top: Path, text: str, user_facing: bool, *, review_base: str 
         parts.append("Screens, images and design files (open the images when checking screens):\n"
                      + "\n".join(f"- `{path}`" for path in files))
     names = ["PRODUCT.md", "DESIGN.md", *([folder + "SCREENS.md"] if folder else [])]
-    generated = autoreview.generated_paths(top, review_base, "HEAD", names) if review_base else set()
+    generated = autoreview.generated_paths(top, review_base, "HEAD", [
+        name for name in names if (top / name).is_file()]) if review_base else set()
     for name in names:
         path = top / name
         if path.is_file() and name in generated:
