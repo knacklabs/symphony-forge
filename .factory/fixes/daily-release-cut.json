@@ -18,7 +18,7 @@
       "gain": 5,
       "harm": 3,
       "line": 689,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -31,7 +31,7 @@
       "gain": 4,
       "harm": 3,
       "line": 697,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -44,7 +44,7 @@
       "gain": 4,
       "harm": 2,
       "line": 697,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -54,47 +54,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "b73b60c1c088354d4a262214a33ab97db1df77b1f48879420143c6ae846c9d52",
-    "changed": "79742d19b2d9e902024aeaecfd04ed9f37652ffee3a02bf5dccc1fec780e9ece",
-    "commit": "345d86f4a0fa97fdd38972efefde405bf3a5e33e",
+    "branch_diff": "184592ff307530bfa4dc21cd88312c955f77b04c04755f12ccaf12cb82ce49aa",
+    "changed": "d8834a966517c14667e288bb89e4ec0b42f1dac5a0459f075cfcb2f0155936fa",
+    "commit": "2616f056579536f6d3318162af086c294dc85703",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 5, Work 3, Harm 3\nRaise: Functional\nCase: normal use - another fix merges after the nightly runs but before 05:00, with main's normal checks green.\nThe new rule selects the latest commit with both passed runs, but `src/forge/fullrun.py:34` checks the current main commit and `src/forge/githooks.py:162` refuses a release tag unless it points to that commit. A tag on the earlier, fully tested cut therefore cannot be pushed, even if the newer commit later gets a green full run. The tree comparison at `docs/guide.md:704` also requires the tag to match moving main. The coordinator's docs-only ruling did not account for this existing gate, so the release must wait or include later work.",
-        "file": "docs/guide.md",
-        "gain": 5,
-        "harm": 3,
-        "line": 689,
-        "priority": "P1",
-        "title": "Functional: A frozen cut cannot be pushed after main advances",
-        "work": 3
-      },
-      {
-        "body": "Gain 4, Work 1, Harm 3\nRaise: Functional\nCase: normal use - a maintainer selects the 05:00 cut, then follows the numbered release steps.\nStep 1 at `docs/guide.md:695` merges a version bump after that selection. This step reuses the cut commit's runs, while step 3 at `docs/guide.md:702` tags the version-bump merge, so the tagged tree is not the one whose runs passed. The pre-push gate at `src/forge/githooks.py:162` then refuses the tag until the new commit has a green full run. The checklist needs to place the version bump before the tested cut and identify the cut as the commit to tag.",
-        "file": "docs/guide.md",
-        "gain": 4,
-        "harm": 3,
-        "line": 697,
-        "priority": "P1",
-        "title": "Functional: The checklist can tag a different commit from the tested cut",
-        "work": 1
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 2\nRaise: Gate\nCase: normal use - a coordinator releases Forge when the selected commit already has two green nightly runs.\nThis step says to reuse those runs, but `src/forge/templates/skill.md:2306` tells the coordinator to start and watch a fresh full run after the last product merge. The repository's review rule requires a skill or brief update when a coordinator step changes; neither was updated. The coordinator's docs-only ruling did not address the conflicting shipped instruction, which can add a full-run wait to the release.\nAdds work: reconcile the agent's release guidance; F 3 x H 2 = 6; 2 x C = 2",
-        "file": "docs/guide.md",
-        "gain": 4,
-        "harm": 2,
-        "line": 697,
-        "priority": "P1",
-        "title": "Gate: Reconcile the coordinator's release instructions",
-        "work": 2
-      }
-    ],
-    "id": "d13672c8-2068-417d-822f-7389471dca9d",
-    "status": "blocked"
+    "findings": [],
+    "id": "436607fe-5898-432a-ac9d-8fbdaec65066",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-20T04:08:01.738256+00:00",
@@ -113,6 +82,10 @@
       "at": "2026-11-20T04:23:06.627174+00:00",
       "round": 2,
       "step": "resume"
+    },
+    {
+      "at": "2026-11-20T04:28:24.311360+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
