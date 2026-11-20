@@ -266,11 +266,12 @@ $delegation
   in your next round. Close saves the review before this push. A push that changes only Forge
   records waits for the published code's checks to report, even with a blocked review.
   A refusal, wait limit or Ctrl-C still publishes saved records before close exits.
-  Records can also travel with the next code push. Later review, acceptance and
-  spotted records reuse a green run of the same code and base, including across records saved
-  before one push. If you need CI evidence, commit and stop instead of asking the coordinator
-  to push or run CI. CI is the merge gate. Commit your local proof in the `Proof list:` without
-  waiting for CI results or timings.
+  Records can also travel with the next code push. Review, owner, worker, spotted and story-plan
+  records reuse the newest finished run of the same code and base, including across record-only
+  merges. A cancelled run, a run that failed to start, or no finished result runs the tests. A
+  failed result stays failed, and GitHub retries run the tests again. If you need CI evidence,
+  commit and stop instead of asking the coordinator to push or run CI. CI is the merge gate. Commit
+  your local proof in the `Proof list:` without waiting for CI results or timings.
 - Close and doctor cancel only this pull request's older forge.yml runs when they block its newest queued run. Client workflows stay untouched. If a run stays active after cancellation, Forge prints GitHub's force-cancel command for the operator. It never calls that command automatically. Close keeps waiting for the new run.
 - On new and upgraded repos, close and merge retry only the failed jobs once when only CI test
   groups fail or time out. They wait for that attempt. Cancelled runs use the same retry limit.

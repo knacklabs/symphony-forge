@@ -103,55 +103,58 @@ def small_change(base: str, excludes: list[str], tests_only: bool) -> bool:
 
 
 def reuse() -> str:
-    head = os.environ["HEAD_SHA"]
+    if int(os.environ.get("GITHUB_RUN_ATTEMPT", "1")) > 1:
+        return ""
+    pending = [os.environ["HEAD_SHA"]]
+    visited = set()
     base = os.environ.get("BASE_SHA")
     workflow = os.environ["GITHUB_WORKFLOW_REF"].split("@", 1)[0].rsplit("/", 1)[1]
     endpoint = f"repos/{os.environ['GITHUB_REPOSITORY']}/actions/workflows/{quote(workflow)}/runs"
-    while True:
+    finished = []
+    while pending:
+        head = pending.pop()
+        if head in visited:
+            continue
+        visited.add(head)
         parents = run("git", "rev-list", "--parents", "-n", "1", head).split()
-        if len(parents) != 2:
-            return ""
-        head, parent = parents
-        # A push tests the branch itself. A PR also needs its current base covered.
-        if base:
-            run("git", "merge-base", "--is-ancestor", base, parent)
-        paths = run("git", "diff", "--name-only", "--no-renames", parent, head).splitlines()
-        if not paths:
-            return ""
-        for path in paths:
-            if re.fullmatch(r"plans/spotted/[^/]+\.json", path):
+        for parent in parents[1:]:
+            paths = run("git", "diff", "--name-only", "--no-renames", parent, head).splitlines()
+            if any(not path.startswith((".factory/", "plans/"))
+                   and not re.fullmatch(r"docs/decisions/\d{4,}-[a-z0-9-]*client-signoff\.md",
+                                        path)
+                   for path in paths):
                 continue
-            if not re.fullmatch(r"\.factory/(fixes/[^/]+|stories/[^/]+/tasks/[^/]+)\.json", path):
-                return ""
-            before, after = (json.loads(run("git", "show", f"{rev}:{path}"))
-                             for rev in (parent, head))
-            if not isinstance(before, dict) or not isinstance(after, dict):
-                return ""
-            if before.get("review") != after.get("review") and not isinstance(after.get("review"), dict):
-                return ""
-            # Acceptance also updates known findings and can save several commits before
-            # one push. Contracts and all other state must stay identical at every step.
-            bookkeeping = {"review", "tests", "status", "steps", "flagged", "stop", "known",
-                           "round", "worker", "stuck", "tool", "land"}
-            if ({k: v for k, v in before.items() if k not in bookkeeping}
-                    != {k: v for k, v in after.items() if k not in bookkeeping}):
-                return ""
-        runs = ([json.loads(line) for line in run("gh", "api", "--paginate", "--jq",
-                                                ".workflow_runs[]", endpoint, "--method", "GET",
-                                                "-f", f"head_sha={parent}", "-f", "per_page=100").splitlines()]
-                if shutil.which("gh") else api_runs(endpoint, parent))
-        # Target-event runs check the PR but skip tests, so their success proves nothing here.
-        matching = [r for r in runs if r.get("head_sha") == parent
-                    and (r.get("event") == "push" or r.get("event") == "pull_request"
-                         and base and any(pr.get("base", {}).get("sha") == base
-                                          and pr.get("head", {}).get("sha") == parent
-                                          for pr in r.get("pull_requests", [])))]
-        latest = max(matching, key=lambda r: r["id"], default={})
-        if latest:
-            if latest.get("status") != "completed" or not latest.get("conclusion"):
-                return ""
-            return "success" if latest.get("conclusion") == "success" else "failure"
-        head = parent
+            # A PR parent must have tested the same base, including on both sides of
+            # a record-only merge.
+            if base:
+                try:
+                    run("git", "merge-base", "--is-ancestor", base, parent)
+                except subprocess.CalledProcessError:
+                    continue
+            pending.append(parent)
+            # Empty diffs and record-only merges keep the product code unchanged.
+            # Search every such ancestor because a newer one may still be queued.
+            if not shutil.which("gh"):
+                runs = api_runs(endpoint, parent)
+            else:
+                runs = [json.loads(line) for line in run("gh", "api", "--paginate", "--jq",
+                                                         ".workflow_runs[]", endpoint,
+                                                         "--method", "GET", "-f",
+                                                         f"head_sha={parent}", "-f",
+                                                         "per_page=100").splitlines()]
+            # Target-event runs check the PR but skip tests, so their success proves nothing.
+            matching = [r for r in runs if r.get("head_sha") == parent
+                        and (r.get("event") == "push" or r.get("event") == "pull_request"
+                             and base and any(pr.get("base", {}).get("sha") == base
+                                              and pr.get("head", {}).get("sha") == parent
+                                              for pr in r.get("pull_requests", [])))]
+            finished.extend(r for r in matching
+                            if r.get("status") == "completed" and r.get("conclusion"))
+    latest = max(finished, key=lambda r: r["id"], default={})
+    if not latest:
+        return ""
+    conclusion = latest["conclusion"]
+    return conclusion if conclusion in {"success", "failure"} else ""
 
 
 if sys.argv[1:2] == ["status"]:
@@ -192,7 +195,7 @@ try:
         failed_parent = allowed_event and parent_conclusion == "failure"
     else:
         failed_parent = parent_conclusion == "failure"
-        passed = docs_only or bool(parent_conclusion)
+        passed = docs_only or parent_conclusion in {"success", "failure"}
 except (subprocess.CalledProcessError, ValueError, KeyError, TypeError, OSError, SyntaxError):
     # Missing history, unreadable records or unavailable GitHub proof runs the full suite.
     parent_conclusion = ""

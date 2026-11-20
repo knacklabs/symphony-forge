@@ -4,7 +4,7 @@ import os
 import sys
 import pytest
 
-from test_close import GREEN, blocked, finding, env, run  # noqa: F401
+from test_close import CLEAN, GREEN, blocked, finding, env, run  # noqa: F401
 from test_checks_finish_after_long_runner_queues import _watch_progress
 from test_close_pushes_record_after_code_ci import HOOK
 
@@ -13,6 +13,7 @@ STORY = "FIX-RECORDS-CANCEL-CI"
 @pytest.mark.parametrize("fake_clock,polls,override,conclusion", [
     (150, 3, None, "success"), (150, 3, None, "failure"), (150, 3, "0", "success"),
     (150, 3, None, "code"),
+    (150, 3, None, "queued"), (150, 3, None, "net-empty"),
     pytest.param(150, 3, None, "interrupt", marks=pytest.mark.skipif(
         os.name == "nt", reason="POSIX signal delivery to the close process"))],
                          indirect=["fake_clock"])
@@ -31,7 +32,16 @@ def test_1_record_push_waits_until_the_running_code_ci_run_ends(env, tmp_path, m
     env.repo.git("push", "-q", "origin", "main")
     item, where = env.start_fix()
     env.repo.git("push", "-q", "-u", "origin", "fix/tidy-readme", cwd=where)
-    parent = env.repo.git("rev-parse", "HEAD", cwd=where)
+    if conclusion == "net-empty":
+        env.reviews(CLEAN)
+        env.checks(GREEN)
+        first = env.close(item)
+        assert first.returncode == 0, first.stdout + first.stderr
+        env.commit(where, "plans/spotted-temporary.md", "Temporary record\n", "Save a record")
+        env.repo.git("rm", "plans/spotted-temporary.md", cwd=where)
+        env.repo.git("commit", "-q", "-m", "Remove the temporary record", cwd=where)
+        env.repo.git("fetch", "origin", cwd=where)
+    parent = env.repo.git("rev-parse", "origin/fix/tidy-readme", cwd=where)
     log = tmp_path / "remote-pushes.jsonl"
     hook = env.repo.path.parent / env.repo.git("remote", "get-url", "origin")
     hook = (hook if hook.is_absolute() else env.repo.path / hook) / "hooks/pre-receive"
@@ -43,17 +53,27 @@ def test_1_record_push_waits_until_the_running_code_ci_run_ends(env, tmp_path, m
         monkeypatch.setenv("FORGE_CHECKS_WAIT", override)
     # The remote observes actual pushes. Existing coverage covers clean reviews,
     # but misses blocked reviews bypassing the wait. No test-only seam is needed.
-    env.reviews(blocked(finding("P1", "The main action fails")))
+    env.reviews(CLEAN if conclusion == "net-empty" else
+                blocked(finding("P1", "The main action fails")))
     # The record push must not cancel the code's queued or running tests.
     # This lifecycle boundary needs the remote push hook, which ordinary wait tests lack.
     lines = lambda rows: "".join(json.dumps(row) + "\n" for row in rows)  # noqa: E731
     running = lines([run("docs-check"), run("tests (1/2)", None, "in_progress")])
-    finished = lines([run("docs-check"), run("tests", conclusion)])
+    if conclusion in ("queued", "net-empty"):
+        running = lines([run("forge-pr-check")])
+    finished = lines([run("docs-check"), run("tests", "failure" if conclusion == "failure" else "success")])
     env.checks(GREEN)
     env.gh.respond("api", "--paginate", "--jq", ".check_runs[]", stdout="")
     rules = json.loads(env.gh.responses.read_text("utf-8"))
     rules[-1]["then"] = [running] * 2 + [lines(GREEN)] if override is None else [lines(GREEN)]
     env.gh.responses.write_text(json.dumps(rules), "utf-8")
+    if conclusion in ("queued", "net-empty"):
+        env.gh.respond("api", "--paginate", "--jq", ".workflow_runs[]", stdout="")
+        rules = json.loads(env.gh.responses.read_text("utf-8"))
+        workflow = {"id": 77, "head_sha": parent, "event": "pull_request", "status": "queued"}
+        rules[-1]["then"] = [lines([workflow])] * polls + [lines([
+            {**workflow, "status": "completed", "conclusion": "success"}])]
+        env.gh.responses.write_text(json.dumps(rules), "utf-8")
     endpoint = f"repos/{{owner}}/{{repo}}/commits/{parent}/check-runs?per_page=100"
     env.gh.respond("api", "--paginate", "--jq", ".check_runs[]", endpoint, stdout="")
     rules = json.loads(env.gh.responses.read_text("utf-8"))
@@ -92,7 +112,11 @@ def test_1_record_push_waits_until_the_running_code_ci_run_ends(env, tmp_path, m
         assert "no check progress for 0 minutes" in closed.stderr
         assert [push for push in pushes if push[1] == parent], pushes
         return
-    assert closed.returncode == 1, closed.stdout + closed.stderr
+    assert closed.returncode == (0 if conclusion == "net-empty" else 1), closed.stdout + closed.stderr
+    if conclusion == "failure":
+        assert "The main action fails" in closed.stdout, closed.stdout + closed.stderr
+        bodies = env.repo.bin / "gh-bodies.jsonl"
+        assert "The main action fails" in bodies.read_text("utf-8")
     assert "Waiting: the code's checks are still queued or running." in closed.stdout
     [record] = [push for push in pushes if push[1] == parent]
     assert record[3] >= polls + 1, "close pushed its review record while the code's CI run was still going"

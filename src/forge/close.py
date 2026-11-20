@@ -878,7 +878,7 @@ def _push_ready(top: Path, branch: str, *, reviewed: bool = False) -> None:
                     item = (review.branch_item(branch, top) or (branch, {}))[0]
                     repo.refuse(("Remote work arrived after the review.", "forge close {item}"), item=item)
                 reconcile(top, branch)
-                repo.git("push", "-q", "--atomic", "-u", "origin", branch, *tags, cwd=top)
+                _push(top, branch)  # Recheck the newly fetched head before publishing records.
                 return
             if wait is None:
                 raise

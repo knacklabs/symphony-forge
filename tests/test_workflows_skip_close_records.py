@@ -80,6 +80,6 @@ def test_1_workflows_skip_only_close_records_with_their_own_passing_parent(
                        cwd=env.repo.path, check=True)
     assert receipt.exists() == (case not in ("records", "failed"))
     if case not in ("code", "docs"):
-        [call] = [c for c in env.gh_calls("api") if ".workflow_runs[]" in c]
-        assert "repos/acme/client/actions/workflows/build.yml/runs" in call
-        assert f"head_sha={parent}" in call
+        calls = [c for c in env.gh_calls("api") if ".workflow_runs[]" in c]
+        assert any("repos/acme/client/actions/workflows/build.yml/runs" in call
+                   and f"head_sha={parent}" in call for call in calls)

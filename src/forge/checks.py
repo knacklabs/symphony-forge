@@ -45,18 +45,17 @@ _progress_at: float | None = None
 def publish_on_exit(top: Path):
     """Flush newly saved records when close stops before its normal push."""
     from forge import close, review
-    before = repo.git("rev-parse", "HEAD", cwd=top)
+    before, branch = repo.git("rev-parse", "HEAD", cwd=top), repo.current_branch(top)
     try:
         yield
-    except (repo.Refused, KeyboardInterrupt):
-        branch = repo.current_branch(top)
-        changed = repo.run("git", "diff", "--name-only", "-z", f"origin/{branch}", "HEAD", cwd=top)
-        paths = [path for path in changed.stdout.split("\0") if path]
-        if (before != repo.git("rev-parse", "HEAD", cwd=top) and not changed.returncode
-                and paths and all(path.startswith(review.BOOKKEEPING)
-                                  or repo.SIGNOFF.fullmatch(path) for path in paths)):
-            close._push_ready(top, branch, reviewed=True)
-        raise
+    finally:
+        # A merged item's checkout can be removed or returned to the default branch.
+        if top.exists() and repo.current_branch(top) == branch:
+            saved = repo.git("log", "--format=", "--name-only", f"{before}..HEAD", cwd=top).splitlines()
+            remote = repo.run("git", "rev-parse", f"origin/{branch}", cwd=top)
+            if (any(path.startswith(review.BOOKKEEPING) or repo.SIGNOFF.fullmatch(path) for path in saved)
+                    and remote.stdout.strip() != repo.git("rev-parse", "HEAD", cwd=top)):
+                close._push_ready(top, branch, reviewed=True)
 
 
 def push_after_checks(top: Path, branch: str, *, reviewed: bool = False,
@@ -156,7 +155,7 @@ def let_finish(top: Path, item: str, sha: str, names: list[str],
     this before it pushes a record-only commit: that push cancels the run in progress, so the
     record's own run could not reuse its result. Waiting reuses _seen and the wait's slot idea
     (a running wait lends the land queue place back) and needs no change to the workflow.
-    Test groups report no `tests` check until they end, so the wait does not look for names."""
+    A workflow can be queued before its job checks exist, so inspect workflows too."""
     from forge import github
     with github.check_wait(top, slot) as (admit, waiting):
         _let_finish(top, item, sha, names, waiting, admit)
@@ -164,27 +163,37 @@ def let_finish(top: Path, item: str, sha: str, names: list[str],
 
 def _let_finish(top: Path, item: str, sha: str, names: list[str],
                 slot: Callable[[bool], None] | None, admit: Callable[[], None]) -> None:
-    timeout = float(os.environ["FORGE_CHECKS_WAIT"]) if "FORGE_CHECKS_WAIT" in os.environ else None
-    deadline = time.monotonic() + timeout if timeout is not None else None
+    explicit = "FORGE_CHECKS_WAIT" in os.environ
+    timeout = float(os.environ.get("FORGE_CHECKS_WAIT", "600"))
+    deadline = time.monotonic() + timeout
     try:
         while True:
             admit()
-            try:
-                seen, _, runs = _seen(top, item, sha)
-            except repo.Refused:
-                return  # The push is not worth refusing for a status GitHub cannot answer.
+            seen, _, runs = _seen(top, item, sha)
             # This head predates the review record. Its review cannot be green yet.
             seen = [(name, PASS if name in ("forge-pr-check", "Review pull request") else state)
                     for name, state in seen]
-            _recover(top, item, sha, names, runs, seen)
-            _pending(item, names, seen)  # A failure ends the wait before a record-only push.
+            try:
+                _recover(top, item, sha, names, runs, seen)
+                missing = _pending(item, [name for name in names if name != "forge-pr-check"], seen)
+            except repo.Refused as error:
+                if error.entry not in (REFUSALS["red"], REFUSALS["timeout"]):
+                    raise
+                return  # A red result ends this wait; the caller must still publish its review.
+            workflows = [run for run in _ask(top, item, ".workflow_runs",
+                         "repos/{owner}/{repo}/actions/runs", "--method", "GET",
+                         "--raw-field", "per_page=100", "--raw-field", f"head_sha={sha}")
+                         if run.get("event") != "pull_request_target" and run.get("head_sha", sha) == sha]
             states = [state for _, state in seen]
-            if not any(state in (PENDING, QUEUED) for state in states):
+            states.extend(QUEUED if run.get("status") == "queued" else PENDING
+                          for run in workflows if run.get("status") != "completed")
+            active = any(state in (PENDING, QUEUED) for state in states)
+            if not active and (not missing or workflows):
                 return
             now = time.monotonic()
-            if timeout is not None and timeout > 0 and QUEUED in states:
+            if explicit and timeout > 0 and QUEUED in states:
                 deadline = now + timeout
-            left = deadline - now if deadline is not None else POLL
+            left = POLL if active and not explicit else deadline - now
             if left <= 0:
                 repo.refuse(REFUSALS["not_green"], item=item,
                             reason=f"GitHub has shown no check progress for {timeout / 60:g} minutes: "
@@ -206,11 +215,13 @@ def after_code_ci(top: Path, item: str, branch: str, cfg: dict[str, Any],
     # A branch with no remote head yet makes the diff fail, so nothing is running to wait for.
     changed = repo.run("git", "diff", "--name-only", "-z", "--no-renames", f"origin/{branch}...HEAD", cwd=top)
     paths = changed.stdout.split("\0")
-    if (changed.returncode or not any(paths)
+    if (changed.returncode
             or any(path and not (path.startswith(review.BOOKKEEPING) or repo.SIGNOFF.fullmatch(path))
                    for path in paths)):
         return
     remote = repo.run("git", "rev-parse", f"origin/{branch}", cwd=top)
+    if remote.stdout.strip() == repo.git("rev-parse", "HEAD", cwd=top):
+        return
     let_finish(top, item, remote.stdout.strip(), cfg["checks"], slot)
 
 
