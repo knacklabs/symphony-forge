@@ -1,0 +1,15 @@
+{
+  "base": "4b5a40b0a536e066e1312d59417c63b4ec6b58a1",
+  "branch": "fix/review-skips-deleted-content",
+  "done_when": "Close's review input lists a deleted file by path and size only, never its content, and leaves out the content of generated, minified and source-map files (listed by path and size); a fix that deletes a large build folder is reviewed within a normal review's input size; other changes are reviewed as before; new and existing repos get it on upgrade",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-20T06:56:52.782494+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Issue 1728: a fix that deletes a large tracked build folder (89 files, 88.6 MB including a 75 MB source map and an 11.7 MB minified bundle, 40,208 lines deleted) can never be reviewed: close's review sends deleted, minified and source-map content to the model and hits the usage limit every time (3 of 3 tries, then the organization's spend limit); the client finished the pull request by hand"
+}
