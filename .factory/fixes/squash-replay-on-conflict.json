@@ -75,8 +75,8 @@
     "id": "8fff4583-a411-4efa-a8dd-f55f290d0aa1",
     "status": "clean"
   },
-  "round": 5,
-  "status": "waiting for checks",
+  "round": 6,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-19T12:29:37.707124+00:00",
@@ -140,13 +140,18 @@
     {
       "at": "2026-11-20T10:47:42.897627+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-11-20T11:26:56.758981+00:00",
+      "round": 6,
+      "step": "resume"
     }
   ],
   "stuck": {
-    "close": "52adc05d-63ca-4ed7-a6c3-169113a6ca64",
-    "head": "556f6eba413a83d4f5ec7881db145e0d51759573",
+    "close": "ba90d408-8724-4964-988f-871b12cf0b08",
+    "head": "203d2e618fb91787f2fbce9bda527ea42ce1586d",
     "keys": {},
-    "round": 4
+    "round": 5
   },
   "tool": "claude",
   "why": "When a stacked part's parent has merged, close replays the part's own commits onto main one by one (git rebase in close._merge_default), so an early commit conflicts with later main edits of the same lines even when the whole-branch merge is clean; merging main into the branch never helps, and a client part looped 5 times on 19 Nov 2026",
