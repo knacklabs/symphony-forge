@@ -54,10 +54,12 @@ TEST_STEPS = {
               "or `test` when none is set, in the machine's one test lane with `{base}` as the "
               "merge base with `origin/<default branch>`, on at most two test processes; a picker "
               "run of five or fewer related test files skips the lane's wait unless the test "
-              "command or pytest config has a doctest option. It always runs, including uncommitted "
-              "changes. Then commit any fixes. The nightly full run covers the rest."),
-    "ci": "wider related tests, lint and type checks stay in pull request CI.",
+              "command or pytest config has a doctest option. The command includes uncommitted "
+              "changes. Then commit any fixes. Skip the laptop run when the selection has at least "
+              "half of the test files or the selection falls back to the full suite; CI tests it. "
+              "The nightly full run covers the rest."),
 }
+TEST_STEPS["ci"] = TEST_STEPS["local"] + " CI runs the wider set of checks."
 START_HERE = ("Do not read the coordinator guide (the forge skill's `SKILL.md`): this brief has "
               "everything a worker needs. Start from the files and tests this brief names, and "
               "search the rest of the repo only for what they call or what calls them. "
@@ -328,11 +330,11 @@ def _work(args: argparse.Namespace) -> bool:
                             fresh_brief or brief, thread, fresh, chosen, family)
             return False
         start, clock = repo.now(), time.monotonic()
-        nudge = commit_nudge(top)
         outcome = "failed"
         final = None
         asked = ""
-        nudged = ""
+        nudged = []
+        used = set()
         try:
             if not on_codex:
                 budget = repo.subagent_budget(config, "build" if design else kind.lower())
@@ -387,16 +389,18 @@ def _work(args: argparse.Namespace) -> bool:
                                           changes=_changes(top, saved.get("head") or saved["start"]))
                     on_codex = True
                 else:
-                    _restore_settings(item, top, state)
-                    if git("status", "--porcelain", "-uall", cwd=top):
-                        print(NUDGING, flush=True)
+                    while True:
+                        action, prompt, failed = round_nudge(top, item, state, used)
+                        if not action:
+                            break
+                        used.add(action)
                         saved = codex.record(top, item)["claude"]
                         try:
-                            nudged = _run(item, top, nudge, claude, budget, resume=saved["id"])
+                            nudged.append(_run(item, top, prompt, claude, budget, resume=saved["id"]))
                         finally:
                             codex._record(codex._item_file(top, item, ".json", kind),
                                 claude={**saved, "head": git("rev-parse", "HEAD", cwd=top)})
-                    outcome = "completed"
+                    outcome = "failed" if failed else "completed"
                     return False
             name = f"{match['key']} · {subject}" if match["task"] else f"Fix · {subject}"
             if len(name) > 60:
@@ -410,20 +414,25 @@ def _work(args: argparse.Namespace) -> bool:
                                on_thread=(lambda _: print(building, flush=True)) if on_codex else None)
             outcome = "completed" if result["status"] == "completed" else "failed"
             final = (result.get("text") or "") if outcome == "completed" else None
-            _restore_settings(item, top, state)
-            if outcome == "completed" and git("status", "--porcelain", "-uall", cwd=top):
-                print(NUDGING, flush=True)
-                again = codex.run(top, item, kind, name, nudge, "full-access",
-                                  result["conversation"], "", approval, design=design,
-                                  effort=chosen["effort"])
-                if again["status"] != "completed":
-                    result, outcome = again, "failed"
-                else:
-                    nudged = (again.get("text") or "").strip()
+            if outcome == "completed":
+                outcome = "failed"
+                while True:
+                    action, prompt, failed = round_nudge(top, item, state, used)
+                    if not action:
+                        break
+                    used.add(action)
+                    result = codex.run(top, item, kind, name, prompt, "full-access",
+                                       result["conversation"], "", approval, design=design,
+                                       effort=chosen["effort"])
+                    nudged.append(result.get("text") or "")
+                    if result["status"] != "completed":
+                        break
+                outcome = ("completed" if not failed and result["status"] == "completed"
+                           else "failed")
         finally:
             _restore_settings(item, top, state)
             if final is not None:
-                asked = questions(final, nudged)
+                asked = questions(final, *nudged)
                 identity = repo.record_event(top, item, "worker question", question=asked) if asked else None
                 codex._record(codex._item_file(top, item, ".json", kind),
                               question=asked or None, question_id=identity)
@@ -442,6 +451,46 @@ def _work(args: argparse.Namespace) -> bool:
                    else "Codex never reported its end")
             refuse(REFUSALS["turn"], why=why, log=repo.work_log(top, item), item=item)
     return False
+
+
+def round_nudge(top: Path, item: str, state: dict[str, Any], used: set[str]) -> tuple[str, str, int]:
+    """Use each existing nudge once, testing only after the worker's last commit."""
+    _restore_settings(item, top, state)
+    if git("status", "--porcelain", "-uall", cwd=top):
+        if "commit" not in used:
+            print(NUDGING, flush=True)
+            return "commit", commit_nudge(top), 1
+        print("Related tests failed: the worker left changes uncommitted. "
+              "No related tests ran on that repair.", flush=True)
+        return "", "", 1
+    failed, report = related_tests(top)
+    if failed and "tests" not in used:
+        return "tests", test_nudge(report), failed
+    return "", "", failed
+
+
+def related_tests(top: Path) -> tuple[int, str]:
+    """Finish every non-sample round with the existing change command and its test lane."""
+    config = repo.config(top)
+    if repo.sample_data(top, config):
+        return 0, ""
+    from forge import fasttest
+
+    status, report = fasttest.run_related(top, change=True, retry=False, limit_selection=True)
+    print(report, flush=True)
+    if fasttest.WIDE_SELECTION in report and not status:
+        return status, report
+    empty = ("The Python picker selected no related tests; the test command exited successfully."
+             if config["fast_test"] or config["test"] else "No related tests ran.")
+    print("Related tests failed." if status else
+          empty if fasttest.NO_TESTS in report else "Related tests passed.", flush=True)
+    return status, report
+
+
+def test_nudge(report: str) -> str:
+    return ("The change's related tests failed. Repair the failures below and commit your work. "
+            "Forge will run forge test --change once more after this turn. "
+            "If tests still fail, report what remains.\n\n" + report)
 
 
 def questions(*answers: str) -> str:
