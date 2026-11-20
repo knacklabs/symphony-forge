@@ -1,0 +1,70 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/checks.py\tNot done: Flush saved records on early exits with unpushed code\trecords-cancel-ci",
+      "kind": "bug",
+      "path": "src/forge/checks.py",
+      "line": 55,
+      "text": "Not done: Flush saved records on early exits with unpushed code",
+      "from": "blocking",
+      "item": "records-cancel-ci",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/checks.py\tNot done: Wait for the actual queued run before publishing records\trecords-cancel-ci",
+      "kind": "bug",
+      "path": "src/forge/checks.py",
+      "line": 67,
+      "text": "Not done: Wait for the actual queued run before publishing records",
+      "from": "blocking",
+      "item": "records-cancel-ci",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/checks.py\tPublish the review and owner question after a red check ends the wait\trecords-cancel-ci",
+      "kind": "bug",
+      "path": "src/forge/checks.py",
+      "line": 67,
+      "text": "Publish the review and owner question after a red check ends the wait",
+      "from": "blocking",
+      "item": "records-cancel-ci",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/review-tests.py\tAllow cancelled and retried record-only runs to execute tests\trecords-cancel-ci",
+      "kind": "bug",
+      "path": "src/forge/templates/review-tests.py",
+      "line": 153,
+      "text": "Allow cancelled and retried record-only runs to execute tests",
+      "from": "blocking",
+      "item": "records-cancel-ci",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/review-tests.py\tGate: Update the shipped instructions for failed parent runs\trecords-cancel-ci",
+      "kind": "bug",
+      "path": "src/forge/templates/review-tests.py",
+      "line": 214,
+      "text": "Gate: Update the shipped instructions for failed parent runs",
+      "from": "blocking",
+      "item": "records-cancel-ci",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/review-tests.py\tNot done: Reuse results across all record-only commits\trecords-cancel-ci",
+      "kind": "bug",
+      "path": "src/forge/templates/review-tests.py",
+      "line": 134,
+      "text": "Not done: Reuse results across all record-only commits",
+      "from": "blocking",
+      "item": "records-cancel-ci",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
