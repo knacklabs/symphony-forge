@@ -11,7 +11,7 @@
   "done_when": "forge upgrade counts a run as in progress only while its recorded process is still alive (the same process identity the lanes use), so a run whose process is gone no longer blocks the upgrade; a live run still blocks it; new and existing repos get it",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "round": 1,
+  "round": 2,
   "status": "working",
   "steps": [
     {
@@ -21,6 +21,11 @@
     {
       "at": "2026-11-20T05:48:05.521546+00:00",
       "round": 1,
+      "step": "resume"
+    },
+    {
+      "at": "2026-11-20T05:54:01.169099+00:00",
+      "round": 2,
       "step": "resume"
     }
   ],
