@@ -96,7 +96,7 @@
       "gain": 4,
       "harm": 4,
       "line": 155,
-      "outcome": "open",
+      "outcome": "fixed in round 5",
       "reason": "",
       "round": 4,
       "security": false,
@@ -106,13 +106,13 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "9a9e8bc037b1e98acd60dcfed4a38aeb704f4d3f2267d9af9898e5cd3e91b754",
-    "changed": "2754f5dbbbb91fb1fd5df74c9fe94ad178e4f01c11d2547225216253854e7923",
-    "commit": "59a312a88507e4f5f6de2804d512da443cd15a2f",
+    "branch_diff": "a11de36a23218234c4ed629293dc0f0fbad24a9c261a8f034f3f167fadafe7ec",
+    "changed": "8d061355fa3f7bcd1129ad8bbfe88b1eed7893de32c8e5c4253473d00b26d6bf",
+    "commit": "04537a618a4dbad85cfe3ff399e7b13a992fb56e",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 4, Work 2, Harm 4\nRaise: Functional\nCase: normal use - A repair review records an export problem as a P1 follow-up; a later review finds that the same problem exposes another customer's invoices and reports it as P0. The `key in followups` branch sets `follow_up` without checking the current severity. `score.holds` then treats the P0 as nonblocking, and `bound_review` skips it. If the earlier blocker is fixed, close can proceed despite the newly discovered data exposure.",
+        "body": "Gain 4, Work 2, Harm 4\nRaise: Functional\nCase: normal use - A story task\u2019s repair review records a P1 follow-up titled `Not done: The checkout uses the tax formatter`. A later repair makes every checkout fail because that formatter is missing, and the reviewer repeats the finding as a normal-use P0. Although this check no longer marks it as a repair follow-up, `src/forge/noise.py:34` then drops it because the title does not match an approved Done-when sentence. If the earlier blocker is fixed, close can proceed despite the broken checkout. The escalation test exercises fixes, not story tasks.\n\nThe same outcome occurs if a P1 follow-up is later reported as a rare P0 and then as a normal-use P0. `src/forge/review.py:1026` includes the rare occurrence\u2019s raw P0 in the settlement ceiling, so lines 1059\u20131064 carry a `known:` dismissal onto the normal-use P0.",
         "file": "src/forge/autoreview.py",
         "gain": 4,
         "harm": 4,
@@ -120,19 +120,9 @@
         "priority": "P1",
         "title": "[P1] Do not restore follow-up status to an escalated P0",
         "work": 2
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 4\nRaise: Functional\nCase: normal use - A review reports `[P1] Saving a basket fails`, a repair review marks it fixed, and a later edit breaks the main save path, which the next reviewer reports as `[P0] Saving a basket fails` in the same file. This change makes the two titles share an identity. `src/forge/review.py:1043` then drops the P0 because that identity was previously marked fixed, before checking its severity or the intervening edit. The prior implementation kept these priority-tagged titles distinct, so this case newly allows close to miss the P0.",
-        "file": "src/forge/score.py",
-        "gain": 4,
-        "harm": 4,
-        "line": 155,
-        "priority": "P1",
-        "title": "[P1] Preserve a P0 when a fixed finding recurs with a priority tag",
-        "work": 2
       }
     ],
-    "id": "3875da7a-a99a-41b9-a031-0d7ba1464257",
+    "id": "fdcb454a-23b3-4eb4-9164-4720407b274a",
     "status": "blocked"
   },
   "round": 5,
@@ -194,6 +184,10 @@
       "at": "2026-11-20T12:46:51.746232+00:00",
       "round": 5,
       "step": "resume"
+    },
+    {
+      "at": "2026-11-20T14:23:51.429290+00:00",
+      "step": "review"
     }
   ],
   "stop": {
