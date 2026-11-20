@@ -398,6 +398,7 @@ def _work(args: argparse.Namespace) -> bool:
                             codex._record(codex._item_file(top, item, ".json", kind),
                                 claude={**saved, "head": git("rev-parse", "HEAD", cwd=top)})
                     outcome = "failed"
+                    _restore_settings(item, top, state)
                     failed, report = related_tests(top)
                     if failed:
                         saved = codex.record(top, item)["claude"]
@@ -407,6 +408,7 @@ def _work(args: argparse.Namespace) -> bool:
                         finally:
                             codex._record(codex._item_file(top, item, ".json", kind),
                                 claude={**saved, "head": git("rev-parse", "HEAD", cwd=top)})
+                        _restore_settings(item, top, state)
                         failed, report = related_tests(top)
                     outcome = "failed" if failed else "completed"
                     return False
@@ -434,6 +436,7 @@ def _work(args: argparse.Namespace) -> bool:
                     nudged = (again.get("text") or "").strip()
             if outcome == "completed":
                 outcome = "failed"
+                _restore_settings(item, top, state)
                 failed, report = related_tests(top)
                 if failed:
                     again = codex.run(top, item, kind, name, test_nudge(report), "full-access",
@@ -441,6 +444,7 @@ def _work(args: argparse.Namespace) -> bool:
                                       effort=chosen["effort"])
                     nudged += "\n" + (again.get("text") or "").strip()
                     result = again
+                    _restore_settings(item, top, state)
                     failed, report = related_tests(top)
                 outcome = ("completed" if not failed and result["status"] == "completed"
                            else "failed")

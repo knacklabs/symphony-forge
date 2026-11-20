@@ -18,6 +18,9 @@ STORY = "laptop-tests-before-push"
 # Regression: CI-mode work returns without executing that check, or repeatedly repairs a red run.
 # Existing prompt tests cannot detect a command that never runs. Only the external model is fake;
 # the configured check, git commits, work command and test lane are real. No production seam.
+# Repair turns also leave settings edits that Forge must restore before the real recheck.
+# Runtime owners: src/forge/worker.py and src/forge/native.py.
+@pytest.mark.platform
 @pytest.mark.parametrize("test_place", ["local", "ci"])
 @pytest.mark.parametrize("result", ["pass", "repair", "red"])
 @pytest.mark.parametrize("route", ["external", "native", "codex"])
@@ -59,6 +62,9 @@ def test_1_work_runs_related_tests_and_repairs_once(repo, monkeypatch, tmp_path,
         edit = ("            import subprocess\n"
                 "            repairing = \"The change's related tests failed.\" in params['input'][0]['text']\n"
                 f"            good = {result == 'pass'!r} or (repairing and {result == 'repair'!r})\n"
+                f"            if repairing and {result == 'repair'!r}:\n"
+                "                settings = pathlib.Path(cwd) / 'forge.toml'\n"
+                f"                settings.write_text(settings.read_text('utf-8').replace({('test = ' + json.dumps(command))!r}, 'test = \"echo bypass\"'), encoding='utf-8')\n"
                 "            (pathlib.Path(cwd) / 'product.txt').write_text('good' if good else 'broken', encoding='utf-8')\n"
                 "            subprocess.run(['git', 'add', 'product.txt'], cwd=cwd, check=True)\n"
                 "            subprocess.run(['git', 'commit', '--allow-empty', '-qm', 'Worker edit'], cwd=cwd, check=True, stdout=sys.stderr)\n")
@@ -94,6 +100,10 @@ def test_1_work_runs_related_tests_and_repairs_once(repo, monkeypatch, tmp_path,
             for turn in range(expected):
                 good = result == "pass" or (turn == 1 and result == "repair")
                 (folder / "product.txt").write_text("good" if good else "broken", "utf-8")
+                if turn == 1 and result == "repair":
+                    settings = folder / "forge.toml"
+                    settings.write_text(settings.read_text("utf-8").replace(
+                        "test = " + json.dumps(command), 'test = "echo bypass"'), "utf-8")
                 repo.git("add", "product.txt", cwd=folder)
                 repo.git("commit", "--allow-empty", "-qm", "Worker edit", cwd=folder)
                 built = host.forge("handback", "repair-product", "--round", number,
@@ -115,6 +125,9 @@ def test_1_work_runs_related_tests_and_repairs_once(repo, monkeypatch, tmp_path,
     edit = ("    import subprocess\n"
             f"    repairing = \"The change's related tests failed.\" in prompt\n"
             f"    good = {result == 'pass'!r} or (repairing and {result == 'repair'!r})\n"
+            f"    if repairing and {result == 'repair'!r}:\n"
+            "        settings = Path('forge.toml')\n"
+            f"        settings.write_text(settings.read_text('utf-8').replace({('test = ' + json.dumps(command))!r}, 'test = \"echo bypass\"'), encoding='utf-8')\n"
             "    Path('product.txt').write_text('good' if good else 'broken', encoding='utf-8')\n"
             "    subprocess.run(['git', 'add', 'product.txt'], check=True)\n"
             "    subprocess.run(['git', 'commit', '--allow-empty', '-qm', 'Worker edit'], check=True)\n")
