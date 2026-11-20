@@ -177,6 +177,7 @@ def test_2_close_omits_generated_content_from_design_context(env, classification
     assert "ORDINARY_CHANGE_REMAINS_VISIBLE" in diff
 
 
+@pytest.mark.platform
 def test_3_close_keeps_new_files_beneath_a_deleted_file_path_in_the_review(env):
     old_server = "OLD_EXTENSIONLESS_SERVER_MARKER\n"
     env.commit(env.repo.path, "bin/server", old_server)
