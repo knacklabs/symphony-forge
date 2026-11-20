@@ -1,0 +1,48 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/worker.py\tFunctional: Do not claim related tests passed when none ran\tlaptop-tests-before-push",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 484,
+      "text": "Functional: Do not claim related tests passed when none ran",
+      "from": "blocking",
+      "item": "laptop-tests-before-push",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/worker.py\tFunctional: Do not report an uncommitted repair as a passing branch\tlaptop-tests-before-push",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 448,
+      "text": "Functional: Do not report an uncommitted repair as a passing branch",
+      "from": "blocking",
+      "item": "laptop-tests-before-push",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/worker.py\tFunctional: Preserve worker questions across both nudges\tlaptop-tests-before-push",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 445,
+      "text": "Functional: Preserve worker questions across both nudges",
+      "from": "blocking",
+      "item": "laptop-tests-before-push",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/worker.py\tNot done: Send a repair turn when the first related-test run fails\tlaptop-tests-before-push",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 480,
+      "text": "Not done: Send a repair turn when the first related-test run fails",
+      "from": "blocking",
+      "item": "laptop-tests-before-push",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
