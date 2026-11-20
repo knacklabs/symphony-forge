@@ -100,7 +100,7 @@
     "status": "blocked"
   },
   "round": 2,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-20T04:07:50.110997+00:00",
@@ -128,12 +128,23 @@
       "at": "2026-11-20T04:52:38.823113+00:00",
       "round": 2,
       "step": "hold"
+    },
+    {
+      "at": "2026-11-20T04:56:25.750055+00:00",
+      "by": "owner",
+      "choice": "more",
+      "round": 2,
+      "step": "owner decision"
     }
   ],
   "stop": {
     "at": "2026-11-20T04:52:38.823113+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "src/forge/autoreview.py",
-    "wait_id": "0285fc96-17a0-4372-8cc9-1d90cf9585dc"
+    "reason": "Owner chose one more round on 20 Nov 2026: update the test that expects a new P1 to block",
+    "wait_id": "0285fc96-17a0-4372-8cc9-1d90cf9585dc",
+    "worker_round": 2
   },
   "stuck": {
     "close": "4b5ca035-963e-4714-b1e4-e66e3261e212",
