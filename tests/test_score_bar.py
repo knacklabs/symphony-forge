@@ -115,6 +115,10 @@ def test_2_only_notes_at_the_bar_hold_work_and_the_rest_are_listed(env, tmp_path
     closed = env.close(item)
     assert closed.returncode == 1, closed.stdout + closed.stderr
     assert "The review left serious findings open" in closed.stderr
+    first_review = body(env.gh_calls("pr", "edit")[-1])
+    lived_text = first_review.split("Lived with:", 1)[1].split("</details>", 1)[0]
+    assert "The button label is long" in lived_text
+    assert "Gain 2, Work 1, Harm 1" in lived_text
     assert repo.forge("work", item).returncode == 0
     brief = _findings_in(calls(log)[-1]["brief"])
     assert all(title in brief for title, *_ in held)
@@ -138,13 +142,9 @@ def test_2_only_notes_at_the_bar_hold_work_and_the_rest_are_listed(env, tmp_path
     assert ready.returncode == 0, ready.stdout + ready.stderr
     assert "Ready:" in ready.stdout
     text = body(env.gh_calls("pr", "edit")[-1])
-    follow_text, live_text = text.split("Follow-ups:", 1)[1].split("</details>", 1)[0].split("Lived with:", 1)
-    for title, gain, work, harm in followed:
+    follow_text = text.split("Follow-ups:", 1)[1].split("</details>", 1)[0].split("Lived with:", 1)[0]
+    for title, gain, work, harm in [*followed, *lived]:
         assert title in follow_text and f"Gain {gain}, Work {work}, Harm {harm}" in follow_text
-        assert title not in live_text
-    for title, gain, work, harm in lived:
-        assert title in live_text and f"Gain {gain}, Work {work}, Harm {harm}" in live_text
-        assert title not in follow_text
 
 
 def _approve(env, doc: str, no_hooks: str) -> Path:
