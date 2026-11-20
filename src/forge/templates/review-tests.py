@@ -8,7 +8,7 @@ import subprocess
 import sys
 import tomllib
 from pathlib import Path
-from urllib.parse import quote
+from urllib.parse import quote, urlencode
 from urllib.request import Request, urlopen
 
 
@@ -33,15 +33,10 @@ def api(path: str, body: dict | None = None) -> dict:
         return json.load(response)
 
 
-def api_runs(endpoint: str, sha: str) -> list[dict]:
-    """The same workflow-run list as `gh api --paginate`, for a runner without gh."""
-    runs, page = [], 1
-    while True:
-        found = api(f"{endpoint}?head_sha={sha}&per_page=100&page={page}")["workflow_runs"]
-        runs += found
-        if len(found) < 100:
-            return runs
-        page += 1
+def api_runs(endpoint: str, branch: str) -> list[dict]:
+    """Read one bounded page of this branch's workflow history without gh."""
+    query = urlencode({"branch": branch, "per_page": 30})
+    return api(f"{endpoint}?{query}")["workflow_runs"]
 
 
 def set_status(context: str, state: str, job_name: str) -> None:
@@ -106,52 +101,57 @@ def small_change(base: str, excludes: list[str], tests_only: bool) -> bool:
 def reuse() -> str:
     if int(os.environ.get("GITHUB_RUN_ATTEMPT", "1")) > 1:
         return ""
-    pending = [os.environ["HEAD_SHA"]]
-    visited = set()
+    if (os.environ.get("GITHUB_EVENT_NAME") == "pull_request"
+            and os.environ.get("PR_REUSE") in {"true", "false"}):
+        return (os.environ.get("PR_PARENT_CONCLUSION", "")
+                if os.environ["PR_REUSE"] == "true" else "")
+    branch = (os.environ.get("GITHUB_HEAD_REF") or os.environ.get("GITHUB_REF_NAME")
+              or run("git", "branch", "--show-current"))
+    if not branch:
+        return ""
+    head = os.environ["HEAD_SHA"]
     base = os.environ.get("BASE_SHA")
     workflow = os.environ["GITHUB_WORKFLOW_REF"].split("@", 1)[0].rsplit("/", 1)[1]
     endpoint = f"repos/{os.environ['GITHUB_REPOSITORY']}/actions/workflows/{quote(workflow)}/runs"
-    finished = []
-    while pending:
-        head = pending.pop()
-        if head in visited:
+    if not shutil.which("gh"):
+        runs = api_runs(endpoint, branch)
+    else:
+        runs = [json.loads(line) for line in run("gh", "api", "--jq", ".workflow_runs[]",
+                                                 endpoint, "--method", "GET", "--raw-field",
+                                                 f"branch={branch}", "--raw-field",
+                                                 "per_page=30").splitlines()]
+    # Target-event runs check the PR but skip tests, so their success proves nothing.
+    matching = [r for r in runs if r.get("head_sha") != head
+                and (r.get("event") == "push" or r.get("event") == "pull_request"
+                     and base and any(pr.get("base", {}).get("sha") == base
+                                      and pr.get("head", {}).get("sha") == r.get("head_sha")
+                                      for pr in r.get("pull_requests", [])))]
+    same_code_heads, inspected = set(), set()
+    for result in matching:
+        candidate = result.get("head_sha")
+        if not candidate or candidate in inspected:
             continue
-        visited.add(head)
-        parents = run("git", "rev-list", "--parents", "-n", "1", head).split()
-        for parent in parents[1:]:
-            paths = run("git", "diff", "--name-only", "--no-renames", parent, head).splitlines()
-            if any(not path.startswith((".factory/", "plans/"))
-                   and not re.fullmatch(r"docs/decisions/\d{4,}-[a-z0-9-]*client-signoff\.md",
-                                        path)
-                   for path in paths):
-                continue
-            # A PR parent must have tested the same base, including on both sides of
-            # a record-only merge.
+        inspected.add(candidate)
+        try:
+            run("git", "merge-base", "--is-ancestor", candidate, head)
             if base:
-                try:
-                    run("git", "merge-base", "--is-ancestor", base, parent)
-                except subprocess.CalledProcessError:
-                    continue
-            pending.append(parent)
-            # Empty diffs and record-only merges keep the product code unchanged.
-            # Search every such ancestor because a newer one may still be queued.
-            if not shutil.which("gh"):
-                runs = api_runs(endpoint, parent)
-            else:
-                runs = [json.loads(line) for line in run("gh", "api", "--paginate", "--jq",
-                                                         ".workflow_runs[]", endpoint,
-                                                         "--method", "GET", "-f",
-                                                         f"head_sha={parent}", "-f",
-                                                         "per_page=100").splitlines()]
-            # Target-event runs check the PR but skip tests, so their success proves nothing.
-            matching = [r for r in runs if r.get("head_sha") == parent
-                        and (r.get("event") == "push" or r.get("event") == "pull_request"
-                             and base and any(pr.get("base", {}).get("sha") == base
-                                              and pr.get("head", {}).get("sha") == parent
-                                              for pr in r.get("pull_requests", [])))]
-            finished.extend(r for r in matching
-                            if r.get("status") == "completed" and r.get("conclusion"))
-    latest = max(finished, key=lambda r: r["id"], default={})
+                run("git", "merge-base", "--is-ancestor", base, candidate)
+        except subprocess.CalledProcessError:
+            continue
+        paths = run("git", "diff", "--name-only", "--no-renames", candidate, head).splitlines()
+        if all(path.startswith((".factory/", "plans/spotted/")) for path in paths):
+            same_code_heads.add(candidate)
+    same_code = [result for result in matching if result.get("head_sha") in same_code_heads]
+    # GitHub returns a run ID's latest attempt and conclusion. An active retry means the
+    # previous completed result is not safe to reuse yet.
+    if any(result.get("status") != "completed" for result in same_code):
+        return ""
+    finished = [result for result in same_code if result.get("conclusion")]
+    latest = max(finished,
+                 key=lambda result: (result.get("updated_at") or result.get("run_started_at") or "",
+                                     int(result.get("run_attempt") or 1),
+                                     int(result.get("id") or 0)),
+                 default={})
     if not latest:
         return ""
     conclusion = latest["conclusion"]

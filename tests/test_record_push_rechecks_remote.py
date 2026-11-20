@@ -23,7 +23,7 @@ def test_4_rejected_record_push_waits_for_the_new_remote_run(env, tmp_path, monk
     parent = env.repo.git("rev-parse", "HEAD", cwd=where)
     writer = tmp_path / "other-machine"
     env.repo.git("worktree", "add", "-q", "--detach", writer.as_posix(), "HEAD", cwd=where)
-    env.commit(writer, "plans/spotted.json", "{}\n", "Save another machine's record")
+    env.commit(writer, "plans/spotted/other-machine.json", "{}\n", "Save another machine's record")
     incoming = env.repo.git("rev-parse", "HEAD", cwd=writer)
     log = tmp_path / "pushes.jsonl"
     origin = env.repo.path.parent / env.repo.git("remote", "get-url", "origin")
@@ -32,6 +32,11 @@ def test_4_rejected_record_push_waits_for_the_new_remote_run(env, tmp_path, monk
     (env.repo.bin / "gh-calls.jsonl").touch(exist_ok=True)
     hook.write_text(HOOK.format(python=sys.executable, parent=incoming, log=log.as_posix(),
                                calls=(env.repo.bin / "gh-calls.jsonl").as_posix()), "utf-8")
+    # The branch lookup can now see this same-code run before the push rejects.
+    # Observe that run's completion rather than demand repeated per-head job reads.
+    hook.write_text(hook.read_text("utf-8").replace(
+        '"commits/" + ' + repr(incoming) + ' + "/check-runs" in call',
+        '"branch=fix/tidy-readme" in call'), "utf-8")
     hook.chmod(0o755)
     env.checks(GREEN)
     endpoint = f"repos/{{owner}}/{{repo}}/commits/{incoming}/check-runs?per_page=100"
@@ -40,10 +45,10 @@ def test_4_rejected_record_push_waits_for_the_new_remote_run(env, tmp_path, monk
     lines = lambda rows: "".join(json.dumps(row) + "\n" for row in rows)  # noqa: E731
     rules[-1]["then"] = [lines([run("forge-pr-check")])] * 3 + [lines(GREEN)]
     env.gh.responses.write_text(json.dumps(rules), "utf-8")
-    env.gh.respond("api", "--paginate", "--jq", ".workflow_runs[]", stdout="")
+    env.gh.respond("api", "--jq", ".workflow_runs[]", stdout="")
     rules = json.loads(env.gh.responses.read_text("utf-8"))
     workflow = {"id": 77, "head_sha": incoming, "event": "pull_request", "status": "queued"}
-    # The first workflow read is still for the earlier published head.
+    # The branch history includes the other machine's newly published head.
     rules[-1]["then"] = [lines([workflow])] * 4 + [lines([
         {**workflow, "status": "completed", "conclusion": "success"}])]
     env.gh.responses.write_text(json.dumps(rules), "utf-8")
@@ -66,4 +71,4 @@ def test_4_rejected_record_push_waits_for_the_new_remote_run(env, tmp_path, monk
     assert trigger.exists(), "The choice was pushed without waiting for the published code"
     pushes = [json.loads(line) for line in log.read_text("utf-8").splitlines()]
     [retry] = [push for push in pushes if push[1] == incoming]
-    assert retry[3] >= 4, "The reconciled record push cancelled the new queued run"
+    assert retry[3] >= 5, "The reconciled record push cancelled the new queued run"

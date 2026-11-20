@@ -188,6 +188,7 @@ class Forge:
                         stdout=json.dumps({"data": {"repository": {}}}))
         # No old queued workflow unless the case supplies one explicitly.
         self.gh.respond("api", "--paginate", "--jq", ".workflow_runs[]", stdout="")
+        self.gh.respond("api", "--jq", ".workflow_runs[]", stdout="")
 
     def open_pr(self, body: str, state: str = "OPEN", draft: bool = False) -> None:
         self.gh.respond("pr", "list", "--head", stdout=json.dumps(

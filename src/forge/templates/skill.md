@@ -2472,8 +2472,12 @@ Upgrade close leaves the repo's local git hooks alone,
 including when it regenerates conflicted Forge files with the newly pinned release.
 If conflicted-merge handling fails, close aborts the merge and reports the error before retrying.
 After upgrading, run `forge sync` to receive
-the tests workflow's quick pass: it reuses the newest finished result for the same code across
-Forge record commits under `.factory/` or `plans/`, owner sign-off records, and record-only merges.
+the tests workflow's quick pass: it reuses the latest completed attempt for the same code across
+Forge record commits under `.factory/` or `plans/spotted/`, including record-only merges.
+Other files under `plans/` do not qualify for this quick pass. Close waits for earlier same-code retries before pushing
+records. The pull request workflow reads the branch's last 30 runs in one request and shares
+the result with its test groups. A newer attempt's result takes precedence even when GitHub
+keeps its original run identifier.
 Any change outside those records runs the suite on the pull request merged into its current base.
 Cancelled runs, runs that failed to start and missing finished results also run the suite. Reuse
 requires each parent to include the current base; a parent pull request run must have tested that
@@ -2499,8 +2503,8 @@ steps:
 
 The output is `records_only=true` only for a push or pull request with a successful, finished run
 of this workflow on the same code and, for a pull request, the same base. Forge records under
-`.factory/` and `plans/`, owner sign-off records, and record-only merges can reuse that result. The
-newest finished run wins; queued runs do not replace it. A failed result writes `false` and exits
+`.factory/` and `plans/spotted/` records, including record-only merges, can reuse that result. The
+latest completed attempt wins; a newer attempt still running makes the suite run. A failed result writes `false` and exits
 with an error so the job keeps the failure. A cancelled run, a run that failed to start, or no
 finished result writes `false` and lets later steps run.
 GitHub retries run the tests again. For pull requests, the parent must include the current base

@@ -46,7 +46,7 @@ def test_1_workflows_skip_only_close_records_with_their_own_passing_parent(
     head = env.repo.git("rev-parse", "HEAD")
     answer = {"id": 1, "head_sha": parent, "event": "push", "status": "completed",
               "conclusion": "failure" if case == "failed" else "success"}
-    env.gh.respond("api", "--paginate", "--jq", ".workflow_runs[]",
+    env.gh.respond("api", "--jq", ".workflow_runs[]",
                    stdout="" if case == "missing" else json.dumps(answer),
                    exit=1 if case == "api-error" else 0)
     action = (env.repo.path / ".forge/records-only/action.yml").read_text("utf-8")
@@ -62,6 +62,7 @@ def test_1_workflows_skip_only_close_records_with_their_own_passing_parent(
     output = tmp_path / "outputs"
     process_env = {**os.environ, **action_env, "GITHUB_OUTPUT": str(output),
                    "GITHUB_REPOSITORY": "acme/client", "GITHUB_EVENT_NAME": "push",
+                   "GITHUB_HEAD_REF": "", "GITHUB_REF_NAME": "fix/client-workflow",
                    "GITHUB_WORKFLOW_REF": "acme/client/.github/workflows/build.yml@refs/heads/main",
                    # An unrelated workflow must never inherit Forge's docs-only shortcut.
                    "DOCS_ONLY_EXCLUDES": '[":(exclude)**"]'}
@@ -82,4 +83,5 @@ def test_1_workflows_skip_only_close_records_with_their_own_passing_parent(
     if case not in ("code", "docs"):
         calls = [c for c in env.gh_calls("api") if ".workflow_runs[]" in c]
         assert any("repos/acme/client/actions/workflows/build.yml/runs" in call
-                   and f"head_sha={parent}" in call for call in calls)
+                   and "branch=fix/client-workflow" in call
+                   and "per_page=30" in call and "--paginate" not in call for call in calls)

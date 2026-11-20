@@ -118,6 +118,7 @@ def test_2_tests_workflow_reuses_only_a_review_record_on_a_tested_parent(env, tm
     workflow_ref = "acme/shop/.github/workflows/forge.yml@refs/heads/main"
     monkeypatch.setenv("GITHUB_WORKFLOW_REF", workflow_ref)
     monkeypatch.setenv("GITHUB_REPOSITORY", "acme/shop")
+    monkeypatch.setenv("GITHUB_HEAD_REF", "fix/reuse-tests")
     output = tmp_path / "output"
     monkeypatch.setenv("GITHUB_OUTPUT", str(output))
     answer = {"id": 1, "head_sha": parent, "status": "completed", "conclusion": "success",
@@ -131,8 +132,12 @@ def test_2_tests_workflow_reuses_only_a_review_record_on_a_tested_parent(env, tm
         answer.update(status="in_progress", conclusion=None)
     rows = [] if case == "missing" else [answer]
     if case == "newer-red":
-        rows.append(dict(answer, id=2, conclusion="failure"))
+        rows.append(dict(answer, id=2, conclusion="failure",
+                         updated_at="2026-11-20T11:00:00Z"))
     env.gh.respond("api", "--paginate", "--jq", ".workflow_runs[]",
+                   stdout="\n".join(json.dumps(row) for row in rows),
+                   exit=1 if case == "api-error" else 0)
+    env.gh.respond("api", "--jq", ".workflow_runs[]",
                    stdout="\n".join(json.dumps(row) for row in rows),
                    exit=1 if case == "api-error" else 0)
     if case in ("push", "base-advanced"):
@@ -141,6 +146,7 @@ def test_2_tests_workflow_reuses_only_a_review_record_on_a_tested_parent(env, tm
         answer["event"] = "push"
         env.gh.respond("api", "--paginate", "--jq", ".workflow_runs[]",
                        stdout=json.dumps(answer))
+        env.gh.respond("api", "--jq", ".workflow_runs[]", stdout=json.dumps(answer))
 
     done = subprocess.run([sys.executable, ".forge/review-tests.py"], cwd=client,
                           capture_output=True, text=True, timeout=30)
@@ -160,10 +166,12 @@ def test_2_tests_workflow_reuses_only_a_review_record_on_a_tested_parent(env, tm
                                capture_output=True, text=True, timeout=30)
         assert suite.returncode == 1 and "AssertionError" in suite.stderr
     if case not in ("code", "base-advanced"):
-        [call] = [c for c in env.gh_calls("api") if ".workflow_runs[]" in c]
+        calls = [c for c in env.gh_calls("api") if ".workflow_runs[]" in c]
+        [call] = calls[-1:]
         assert "repos/acme/shop/actions/workflows/forge.yml/runs" in call
         assert call[call.index("--method") + 1] == "GET"
-        assert f"head_sha={parent}" in call and "per_page=100" in call
+        assert "branch=fix/reuse-tests" in call and "per_page=30" in call
+        assert "--paginate" not in call
         # Separate query fields survive Windows .cmd shims; an event filter would hide pushes.
         assert not any("&" in arg or "event=" in arg for arg in call)
 

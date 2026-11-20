@@ -159,23 +159,25 @@ def wait(top: Path, item: str, sha: str, names: list[str], *, branch: str,
             repo.record_timing(top, item, "CI wait", start, clock, result["outcome"])
 
 
-def let_finish(top: Path, item: str, sha: str, names: list[str],
+def let_finish(top: Path, item: str, sha: str, names: list[str], branch: str,
                slot: Callable[[bool], None] | None = None) -> None:
     """Wait while any check on sha, except Forge's own review, is queued or running. Close calls
     this before it pushes a record-only commit: that push cancels the run in progress, so the
     record's own run could not reuse its result. Waiting reuses _seen and the wait's slot idea
     (a running wait lends the land queue place back) and needs no change to the workflow.
-    A workflow can be queued before its job checks exist, so inspect workflows too."""
+    A workflow can be queued before its job checks exist. Inspect the branch's recent
+    workflows too, including retries on earlier heads with the same code."""
     from forge import github
     with github.check_wait(top, slot) as (admit, waiting):
-        _let_finish(top, item, sha, names, waiting, admit)
+        _let_finish(top, item, sha, names, branch, waiting, admit)
 
 
-def _let_finish(top: Path, item: str, sha: str, names: list[str],
+def _let_finish(top: Path, item: str, sha: str, names: list[str], branch: str,
                 slot: Callable[[bool], None] | None, admit: Callable[[], None]) -> None:
     explicit = "FORGE_CHECKS_WAIT" in os.environ
     timeout = float(os.environ.get("FORGE_CHECKS_WAIT", "600"))
     deadline = time.monotonic() + timeout
+    same_code = {sha: True}
     try:
         while True:
             admit()
@@ -183,22 +185,39 @@ def _let_finish(top: Path, item: str, sha: str, names: list[str],
             # This head predates the review record. Its review cannot be green yet.
             seen = [(name, PASS if name in ("forge-pr-check", "Review pull request") else state)
                     for name, state in seen]
+            failed = False
             try:
                 _recover(top, item, sha, names, runs, seen)
                 missing = _pending(item, [name for name in names if name != "forge-pr-check"], seen)
             except repo.Refused as error:
                 if error.entry not in (REFUSALS["red"], REFUSALS["timeout"]):
                     raise
-                return  # A red result ends this wait; the caller must still publish its review.
-            states = [state for _, state in seen]
+                failed = True
+                missing = ""  # Still let an earlier same-code retry finish before publishing.
+            states = [] if failed else [state for _, state in seen]
             # Active jobs already keep the wait open. Recovery also reads their workflow;
             # another read here can get ahead of its still-stale aggregate check.
             workflows = []
             if not any(state in (PENDING, QUEUED) for state in states):
-                workflows = [run for run in _ask(top, item, ".workflow_runs",
+                recent = _ask(top, item, ".workflow_runs",
                          "repos/{owner}/{repo}/actions/runs", "--method", "GET",
-                         "--raw-field", "per_page=100", "--raw-field", f"head_sha={sha}")
-                         if run.get("event") != "pull_request_target" and run.get("head_sha", sha) == sha]
+                         "--raw-field", "per_page=30", "--raw-field", f"branch={branch}", paginate=False)
+                for run in recent:
+                    if run.get("event") == "pull_request_target":
+                        continue
+                    head = run.get("head_sha", sha)
+                    if head == sha and failed:
+                        continue  # This run reported red; only earlier retries can hold the records.
+                    if head != sha and run.get("status") == "completed":
+                        continue
+                    if head not in same_code:
+                        # Record pushes cancel the whole PR's workflow, including retries
+                        # on an earlier head. Compare code once per immutable commit.
+                        same_code[head] = repo.run(
+                            "git", "diff", "--quiet", sha, head, "--", ".",
+                            ":(exclude).factory/", ":(exclude)plans/spotted/", cwd=top).returncode == 0
+                    if same_code[head]:
+                        workflows.append(run)
             states.extend(QUEUED if run.get("status") == "queued" else PENDING
                           for run in workflows if run.get("status") != "completed")
             active = any(state in (PENDING, QUEUED) for state in states)
@@ -224,19 +243,18 @@ def _let_finish(top: Path, item: str, sha: str, names: list[str],
 def after_code_ci(top: Path, item: str, branch: str, cfg: dict[str, Any],
                   slot: Callable[[bool], None] | None = None) -> None:
     """Let the code's CI run end before close pushes only Forge's records on top of it."""
-    from forge import review
     # Three dots: a replayed branch, whose remote head is no ancestor, shows its code and is skipped.
     # A branch with no remote head yet makes the diff fail, so nothing is running to wait for.
     changed = repo.run("git", "diff", "--name-only", "-z", "--no-renames", f"origin/{branch}...HEAD", cwd=top)
     paths = changed.stdout.split("\0")
     if (changed.returncode
-            or any(path and not (path.startswith(review.BOOKKEEPING) or repo.SIGNOFF.fullmatch(path))
+            or any(path and not path.startswith((".factory/", "plans/spotted/"))
                    for path in paths)):
         return
     remote, head = repo.git("rev-parse", f"origin/{branch}", "HEAD", cwd=top).splitlines()
     if remote == head:
         return
-    let_finish(top, item, remote, cfg["checks"], slot)
+    let_finish(top, item, remote, cfg["checks"], branch, slot)
 
 
 def _wait(top: Path, item: str, sha: str, names: list[str], branch: str, progress: bool,

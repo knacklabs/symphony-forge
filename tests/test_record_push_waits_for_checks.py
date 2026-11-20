@@ -15,6 +15,7 @@ STORY = "FIX-RECORDS-CANCEL-CI"
     (150, 3, None, "success"), (150, 3, None, "failure"), (150, 3, "0", "success"),
     (150, 3, None, "code"),
     (150, 3, None, "queued"), (150, 3, None, "net-empty"),
+    (150, 3, None, "earlier-running"), (150, 3, None, "earlier-queued"),
     pytest.param(150, 3, None, "interrupt", marks=pytest.mark.skipif(
         os.name == "nt", reason="POSIX signal delivery to the close process"))],
                          indirect=["fake_clock"])
@@ -33,13 +34,15 @@ def test_1_record_push_waits_until_the_running_code_ci_run_ends(env, tmp_path, m
     env.repo.git("push", "-q", "origin", "main")
     item, where = env.start_fix()
     env.repo.git("push", "-q", "-u", "origin", "fix/tidy-readme", cwd=where)
-    if conclusion == "net-empty":
+    earlier = conclusion.startswith("earlier-")
+    code_head = env.repo.git("rev-parse", "HEAD", cwd=where)
+    if conclusion == "net-empty" or earlier:
         env.reviews(CLEAN)
         env.checks(GREEN)
         first = env.close(item)
         assert first.returncode == 0, first.stdout + first.stderr
-        env.commit(where, "plans/spotted-temporary.md", "Temporary record\n", "Save a record")
-        env.repo.git("rm", "plans/spotted-temporary.md", cwd=where)
+        env.commit(where, "plans/spotted/temporary.md", "Temporary record\n", "Save a record")
+        env.repo.git("rm", "plans/spotted/temporary.md", cwd=where)
         env.repo.git("commit", "-q", "-m", "Remove the temporary record", cwd=where)
         env.repo.git("fetch", "origin", cwd=where)
     parent = env.repo.git("rev-parse", "origin/fix/tidy-readme", cwd=where)
@@ -48,6 +51,15 @@ def test_1_record_push_waits_until_the_running_code_ci_run_ends(env, tmp_path, m
     hook = (hook if hook.is_absolute() else env.repo.path / hook) / "hooks/pre-receive"
     hook.write_text(HOOK.format(python=sys.executable, parent=parent, log=log.as_posix(),
                                 calls=(env.repo.bin / "gh-calls.jsonl").as_posix()), "utf-8")
+    if earlier:
+        # Audit: the remote must see an earlier same-code rerun finish before
+        # receiving records. Immediate-head tests miss it once a record run is green.
+        # The real push hook and GitHub edge need no production seam.
+        before = len(env.gh_calls("api", query="branch=fix/tidy-readme"))
+        hook.write_text(hook.read_text("utf-8").replace(
+            '"commits/" + ' + repr(parent) + ' + "/check-runs" in call',
+            '"branch=fix/tidy-readme" in call').replace(
+            "looked = sum", f"looked = -{before} + sum"), "utf-8")
     hook.chmod(0o755)
     monkeypatch.delenv("FORGE_CHECKS_WAIT", raising=False)
     if override is not None:
@@ -69,7 +81,7 @@ def test_1_record_push_waits_until_the_running_code_ci_run_ends(env, tmp_path, m
     rules[-1]["then"] = [running] * 2 + [lines(GREEN)] if override is None else [lines(GREEN)]
     env.gh.responses.write_text(json.dumps(rules), "utf-8")
     if conclusion in ("queued", "net-empty"):
-        env.gh.respond("api", "--paginate", "--jq", ".workflow_runs[]", stdout="")
+        env.gh.respond("api", "--jq", ".workflow_runs[]", stdout="")
         rules = json.loads(env.gh.responses.read_text("utf-8"))
         workflow = {"id": 77, "head_sha": parent, "event": "pull_request", "status": "queued"}
         rules[-1]["then"] = [lines([workflow])] * polls + [lines([
@@ -80,6 +92,17 @@ def test_1_record_push_waits_until_the_running_code_ci_run_ends(env, tmp_path, m
     rules = json.loads(env.gh.responses.read_text("utf-8"))
     rules[-1]["then"] = [running] * polls + [finished]
     env.gh.responses.write_text(json.dumps(rules), "utf-8")
+    if earlier:
+        # GitHub keeps the original run ID when someone starts another attempt.
+        running = {"id": 77, "head_sha": code_head, "event": "pull_request", "run_attempt": 2,
+                   "status": "queued" if conclusion == "earlier-queued" else "in_progress"}
+        record = {"id": 88, "head_sha": parent, "event": "pull_request", "status": "completed",
+                  "conclusion": "success"}
+        env.gh.respond("api", "--jq", ".workflow_runs[]", stdout="")
+        rules = json.loads(env.gh.responses.read_text("utf-8"))
+        rules[-1]["then"] = [lines([record, running])] * polls + [lines([
+            record, {**running, "status": "completed", "conclusion": "success"}])]
+        env.gh.responses.write_text(json.dumps(rules), "utf-8")
     if conclusion == "code":
         # A code push can carry records immediately: the older run tests different code.
         env.commit(where, "app.py", "print('changed action')\n", "Change the action")
@@ -113,7 +136,7 @@ def test_1_record_push_waits_until_the_running_code_ci_run_ends(env, tmp_path, m
         assert "no check progress for 0 minutes" in closed.stderr
         assert [push for push in pushes if push[1] == parent], pushes
         return
-    assert closed.returncode == (0 if conclusion == "net-empty" else 1), closed.stdout + closed.stderr
+    assert closed.returncode == (0 if conclusion == "net-empty" or earlier else 1), closed.stdout + closed.stderr
     if conclusion == "failure":
         assert "The main action fails" in closed.stdout, closed.stdout + closed.stderr
         bodies = env.repo.bin / "gh-bodies.jsonl"
