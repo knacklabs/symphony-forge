@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tFunctional: Avoid crashing on a test helper named src.py\tbare-helper-imports",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 444,
+      "text": "Functional: Avoid crashing on a test helper named src.py",
+      "from": "blocking",
+      "item": "bare-helper-imports",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tNot done: Bare imports from nested test helper folders are skipped\tbare-helper-imports",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 440,
+      "text": "Not done: Bare imports from nested test helper folders are skipped",
+      "from": "blocking",
+      "item": "bare-helper-imports",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
