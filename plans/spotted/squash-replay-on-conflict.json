@@ -54,6 +54,17 @@
       "item": "squash-replay-on-conflict",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "simplify\tsrc/forge/task.py\tThe pick-up fetch and the branch refresh at close both fetch the replay tag; each one alone passes the test, and both stay as the owner chose.",
+      "kind": "simplify",
+      "path": "src/forge/task.py",
+      "line": 251,
+      "text": "The pick-up fetch and the branch refresh at close both fetch the replay tag; each one alone passes the test, and both stay as the owner chose.",
+      "from": "worker",
+      "item": "squash-replay-on-conflict",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
