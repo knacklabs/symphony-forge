@@ -1,0 +1,15 @@
+{
+  "base": "bb2cefadfba141ffbc3347f7ca3383f3b5d1afef",
+  "branch": "fix/release-v1-2-45",
+  "done_when": "Every version reference that names the current release says v1.2.45 (as the v1.2.44 release fix did, keeping v1.2.44 references used as a minimum release), the release version tests pass, and nothing else changes",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-20T15:11:09.483412+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Release v1.2.45: publish what merged since v1.2.44 (record pushes no longer cancel CI, one group after merging main, close names forge land, nightly gate with fixes always merging, review rounds block only on open findings and new P0s, laptop tests before push, upgrade ignores dead runs, review skips deleted and minified content, squash replay for stacked parts)"
+}
