@@ -30,8 +30,8 @@
       "text": "Not done: Generated content still reaches the review",
       "from": "blocking",
       "item": "review-skips-deleted-content",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\ttests/test_review_omits_deleted_and_minified_content.py\tGate: review-input byte-size test fails on Windows\treview-skips-deleted-content",
