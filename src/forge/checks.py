@@ -7,6 +7,7 @@ named check that hasn't reported, or a GitHub API error, is "not green yet" with
 """
 from __future__ import annotations
 
+import contextlib
 import json
 import os
 import re
@@ -38,6 +39,35 @@ PASS, PENDING, RED, SKIPPED, QUEUED = "pass", "pending", "red", "skipped", "queu
 POLL = float(os.environ.get("FORGE_CHECKS_POLL", "60"))
 # One CLI process can wait before a push, after it, and again during merge.
 _progress_at: float | None = None
+
+
+@contextlib.contextmanager
+def publish_on_exit(top: Path):
+    """Flush newly saved records when close stops before its normal push."""
+    from forge import close, review
+    before = repo.git("rev-parse", "HEAD", cwd=top)
+    try:
+        yield
+    except (repo.Refused, KeyboardInterrupt):
+        branch = repo.current_branch(top)
+        changed = repo.run("git", "diff", "--name-only", "-z", f"origin/{branch}", "HEAD", cwd=top)
+        paths = [path for path in changed.stdout.split("\0") if path]
+        if (before != repo.git("rev-parse", "HEAD", cwd=top) and not changed.returncode
+                and paths and all(path.startswith(review.BOOKKEEPING)
+                                  or repo.SIGNOFF.fullmatch(path) for path in paths)):
+            close._push_ready(top, branch, reviewed=True)
+        raise
+
+
+def push_after_checks(top: Path, branch: str, *, reviewed: bool = False,
+                      slot: Callable[[bool], None] | None = None) -> None:
+    """Wait before record pushes, but flush saved records even when the wait stops."""
+    from forge import close, review
+    try:
+        after_code_ci(top, (review.branch_item(branch, top) or (branch, {}))[0],
+                      branch, repo.config(top), slot)
+    finally:
+        close._push_ready(top, branch, reviewed=reviewed)
 
 
 def _notice(message: str) -> None:
@@ -168,11 +198,9 @@ def _let_finish(top: Path, item: str, sha: str, names: list[str],
             slot(False)
 
 
-def after_code_ci(top: Path, item: str, branch: str, cfg: dict[str, Any], serious: Any,
+def after_code_ci(top: Path, item: str, branch: str, cfg: dict[str, Any],
                   slot: Callable[[bool], None] | None = None) -> None:
     """Let the code's CI run end before close pushes only Forge's records on top of it."""
-    if serious or cfg["test_place"] != "ci":
-        return
     from forge import review
     # Three dots: a replayed branch, whose remote head is no ancestor, shows its code and is skipped.
     # A branch with no remote head yet makes the diff fail, so nothing is running to wait for.

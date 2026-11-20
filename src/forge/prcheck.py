@@ -110,6 +110,8 @@ jobs:
           BASE_SHA: ${{ github.event_name == 'push' && github.event.before || github.event.pull_request.base.sha }}
           DOCS_ONLY_EXCLUDES: '<docs-excludes>'
         run: python .forge/review-tests.py
+      - if: steps.parent-tests.outputs.parent-conclusion == 'failure'
+        run: exit 1
 <npm-cache><node><test-install>      - run: <test>
         if: steps.parent-tests.outputs.reuse != 'true'
 

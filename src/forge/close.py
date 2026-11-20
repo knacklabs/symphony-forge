@@ -21,6 +21,7 @@ from pathlib import Path
 from typing import Any
 
 from forge.close_remote import push_replay, reconcile, replay_baseline, save_replay
+from forge.checks import push_after_checks as _push
 from forge import __version__, app_baseline, checks, codex, design, githooks, init, merge_review, merge_timings, migration_warnings, repo, review, review_skip, score, spotted, story, sync, task, time_records
 
 REFUSALS = {
@@ -79,11 +80,16 @@ WHY, DONE = "Let the agent merge this repo's ready pull requests.", 'The default
 
 
 def close(args: argparse.Namespace) -> int:
+    top = _worktree(args.item)
+    with checks.publish_on_exit(top):
+        return _close(args, top)
+
+
+def _close(args: argparse.Namespace, top: Path) -> int:
     from forge import backfill, records
     from forge.merge import ENABLE
 
     item = args.item
-    top = _worktree(item)
     state, cfg = repo.read_state(item, top) or {}, repo.config(top)
     skip = review_skip.requested(args, top, item, state)
     retried_history = (repo.forge_dir(top) / "backfill-pending").exists()
@@ -435,8 +441,7 @@ def close(args: argparse.Namespace) -> int:
         _save(top, item, state, message, *noted)
     elif noted:  # a reused clean review still records what the worker spotted
         _save(top, item, state, f"Review of {item}: {result['status']}", *noted)
-    checks.after_code_ci(top, item, branch, cfg, serious, getattr(args, "check_slot", None))
-    _push(top, branch, reviewed=True)
+    _push(top, branch, reviewed=True, slot=getattr(args, "check_slot", None))
     head = repo.git("rev-parse", "HEAD", cwd=top)
     pr = _publish(top, item, state, branch, pr_target, pr, result, evidence)
     _attach(top, item, branch)
@@ -852,7 +857,7 @@ def synced_changes(top: Path) -> list[str]:
     return [entry[3:] for entry in status.split("\0") if entry and not entry.startswith(f"?? {hooks}")]
 
 
-def _push(top: Path, branch: str, *, reviewed: bool = False) -> None:
+def _push_ready(top: Path, branch: str, *, reviewed: bool = False) -> None:
     """Merge rejected remote history; retry other push failures after 1, 2 and 4 seconds."""
     tags = repo.git("for-each-ref", "--format=%(refname)", "--merged", branch,
                     "refs/tags/forge-start/", cwd=top).splitlines()

@@ -263,7 +263,10 @@ $delegation
   default branch, never skip the git hooks, never push and never merge: Forge and the human do that.
 - Never amend or rebase a commit that is already pushed.
 - `forge close` pushes the committed branch and runs CI on every platform. CI output reaches you
-  in your next round. Close saves the review before this push. Later review, acceptance and
+  in your next round. Close saves the review before this push. A push that changes only Forge
+  records waits for the published code's checks to report, even with a blocked review.
+  A refusal, wait limit or Ctrl-C still publishes saved records before close exits.
+  Records can also travel with the next code push. Later review, acceptance and
   spotted records reuse a green run of the same code and base, including across records saved
   before one push. If you need CI evidence, commit and stop instead of asking the coordinator
   to push or run CI. CI is the merge gate. Commit your local proof in the `Proof list:` without

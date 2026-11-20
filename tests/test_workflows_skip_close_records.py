@@ -69,16 +69,16 @@ def test_1_workflows_skip_only_close_records_with_their_own_passing_parent(
     command[0] = sys.executable
     checked = subprocess.run(command, cwd=env.repo.path, env=process_env,
                              capture_output=True, text=True, timeout=30)
-    assert checked.returncode == 0, checked.stderr
+    assert checked.returncode == (1 if case == "failed" else 0), checked.stderr
     outputs = dict(line.split("=", 1) for line in output.read_text("utf-8").splitlines())
     assert outputs["records_only"] == str(case == "records").lower(), checked.stdout
     # Run the client's real next step with the documented condition and observe its effect.
     receipt = tmp_path / "build-ran"
-    if outputs["records_only"] != "true":
+    if outputs["records_only"] != "true" and checked.returncode == 0:
         subprocess.run([sys.executable, "-c",
                         f"from pathlib import Path; Path({json.dumps(str(receipt))}).touch()"],
                        cwd=env.repo.path, check=True)
-    assert receipt.exists() == (case != "records")
+    assert receipt.exists() == (case not in ("records", "failed"))
     if case not in ("code", "docs"):
         [call] = [c for c in env.gh_calls("api") if ".workflow_runs[]" in c]
         assert "repos/acme/client/actions/workflows/build.yml/runs" in call

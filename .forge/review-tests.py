@@ -1,4 +1,4 @@
-"""CI may reuse a successful ancestor workflow across close-record commits."""
+"""CI reuses a completed ancestor workflow result across close-record commits."""
 import ast
 import json
 import os
@@ -277,7 +277,7 @@ def small_change(base: str, excludes: list[str], tests_only: bool) -> bool:
     return tests_only or 0 < code <= 5
 
 
-def reuse() -> bool:
+def reuse() -> str:
     head = os.environ["HEAD_SHA"]
     base = os.environ.get("BASE_SHA")
     workflow = os.environ["GITHUB_WORKFLOW_REF"].split("@", 1)[0].rsplit("/", 1)[1]
@@ -285,31 +285,32 @@ def reuse() -> bool:
     while True:
         parents = run("git", "rev-list", "--parents", "-n", "1", head).split()
         if len(parents) != 2:
-            return False
+            return ""
         head, parent = parents
         # A push tests the branch itself. A PR also needs its current base covered.
         if base:
             run("git", "merge-base", "--is-ancestor", base, parent)
         paths = run("git", "diff", "--name-only", "--no-renames", parent, head).splitlines()
         if not paths:
-            return False
+            return ""
         for path in paths:
             if re.fullmatch(r"plans/spotted/[^/]+\.json", path):
                 continue
             if not re.fullmatch(r"\.factory/(fixes/[^/]+|stories/[^/]+/tasks/[^/]+)\.json", path):
-                return False
+                return ""
             before, after = (json.loads(run("git", "show", f"{rev}:{path}"))
                              for rev in (parent, head))
             if not isinstance(before, dict) or not isinstance(after, dict):
-                return False
+                return ""
             if before.get("review") != after.get("review") and not isinstance(after.get("review"), dict):
-                return False
+                return ""
             # Acceptance also updates known findings and can save several commits before
             # one push. Contracts and all other state must stay identical at every step.
-            bookkeeping = {"review", "tests", "status", "steps", "flagged", "stop", "known"}
+            bookkeeping = {"review", "tests", "status", "steps", "flagged", "stop", "known",
+                           "round", "worker", "stuck", "tool", "land"}
             if ({k: v for k, v in before.items() if k not in bookkeeping}
                     != {k: v for k, v in after.items() if k not in bookkeeping}):
-                return False
+                return ""
         runs = ([json.loads(line) for line in run("gh", "api", "--paginate", "--jq",
                                                 ".workflow_runs[]", endpoint, "--method", "GET",
                                                 "-f", f"head_sha={parent}", "-f", "per_page=100").splitlines()]
@@ -322,7 +323,9 @@ def reuse() -> bool:
                                           for pr in r.get("pull_requests", [])))]
         latest = max(matching, key=lambda r: r["id"], default={})
         if latest:
-            return latest.get("status") == "completed" and latest.get("conclusion") == "success"
+            if latest.get("status") != "completed" or not latest.get("conclusion"):
+                return ""
+            return "success" if latest.get("conclusion") == "success" else "failure"
         head = parent
 
 
@@ -335,6 +338,8 @@ docs_tests = False
 tests_only, platform_files = False, []
 one_group = False
 records_only = "--records-only" in sys.argv[1:]
+parent_conclusion = ""
+failed_parent = False
 try:
     # Sync copies close's classifier and supplies its Git path exclusions.
     if not records_only and os.environ.get("BASE_SHA") and os.environ.get("DOCS_ONLY_EXCLUDES"):
@@ -355,15 +360,22 @@ try:
         if merged:
             tests_only, platform_files = False, []
             one_group = False
+    parent_conclusion = "" if docs_only else reuse()
     if records_only:
-        passed = os.environ.get("GITHUB_EVENT_NAME") in {"push", "pull_request"} and reuse()
+        allowed_event = os.environ.get("GITHUB_EVENT_NAME") in {"push", "pull_request"}
+        passed = allowed_event and parent_conclusion == "success"
+        failed_parent = allowed_event and parent_conclusion == "failure"
     else:
-        passed = docs_only or reuse()
+        failed_parent = parent_conclusion == "failure"
+        passed = docs_only or bool(parent_conclusion)
 except (subprocess.CalledProcessError, ValueError, KeyError, TypeError, OSError, SyntaxError):
     # Missing history, unreadable records or unavailable GitHub proof runs the full suite.
+    parent_conclusion = ""
     passed = False
+    failed_parent = False
 with Path(os.environ["GITHUB_OUTPUT"]).open("a", encoding="utf-8") as output:
     output.write(f"{'records_only' if records_only else 'reuse'}={str(passed).lower()}\n")
+    output.write(f"parent-conclusion={parent_conclusion}\n")
     if docs_only:
         output.write("docs-only=true\n")
     output.write(f"docs-tests={str(docs_tests).lower()}\n")
@@ -371,5 +383,8 @@ with Path(os.environ["GITHUB_OUTPUT"]).open("a", encoding="utf-8") as output:
     output.write(f"one-group={str(one_group).lower()}\n")
     output.write(f"platform-files={json.dumps(platform_files)}\n")
     output.write(f"run-windows={str(not tests_only or bool(platform_files)).lower()}\n")
-print("docs only: tests skipped" if docs_only else
+print("Earlier tests did not pass; only close records changed." if failed_parent else
+      "docs only: tests skipped" if docs_only else
       "Earlier tests passed; only close records changed." if passed else "Run the test suite.")
+if records_only and failed_parent:
+    sys.exit(1)
