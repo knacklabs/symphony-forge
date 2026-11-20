@@ -1,0 +1,103 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: Continue reporting for every unusable record\trecord-merge-conflicts",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 699,
+      "text": "Not done: Continue reporting for every unusable record",
+      "from": "blocking",
+      "item": "record-merge-conflicts",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tNot done: Preserve concurrent review histories and their dispositions\trecord-merge-conflicts",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 605,
+      "text": "Not done: Preserve concurrent review histories and their dispositions",
+      "from": "blocking",
+      "item": "record-merge-conflicts",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/sync.py\tDisputed keep local state on equal rounds: story approvals are lost\trecord-merge-conflicts",
+      "kind": "bug",
+      "path": "src/forge/sync.py",
+      "line": 444,
+      "text": "Disputed keep local state on equal rounds: story approvals are lost",
+      "from": "blocking",
+      "item": "record-merge-conflicts",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/sync.py\tNot done: Merge the client sign-off record\trecord-merge-conflicts",
+      "kind": "bug",
+      "path": "src/forge/sync.py",
+      "line": 42,
+      "text": "Not done: Merge the client sign-off record",
+      "from": "blocking",
+      "item": "record-merge-conflicts",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/sync.py\tRetain both concurrent blocking reviews in the active result\trecord-merge-conflicts",
+      "kind": "bug",
+      "path": "src/forge/sync.py",
+      "line": 466,
+      "text": "Retain both concurrent blocking reviews in the active result",
+      "from": "blocking",
+      "item": "record-merge-conflicts",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_branch_merges_keep_forge_records.py\tGate: proof list\trecord-merge-conflicts",
+      "kind": "bug",
+      "path": "tests/test_branch_merges_keep_forge_records.py",
+      "line": 17,
+      "text": "Gate: proof list",
+      "from": "blocking",
+      "item": "record-merge-conflicts",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_branch_merges_keep_forge_records.py\tGate: test_1_close_merges_records_with_the_higher_round_and_both_histories\trecord-merge-conflicts",
+      "kind": "bug",
+      "path": "tests/test_branch_merges_keep_forge_records.py",
+      "line": 21,
+      "text": "Gate: test_1_close_merges_records_with_the_higher_round_and_both_histories",
+      "from": "blocking",
+      "item": "record-merge-conflicts",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_next_reports_unusable_records.py\tGate: test_2_next_names_unusable_record_and_lists_other_items\trecord-merge-conflicts",
+      "kind": "bug",
+      "path": "tests/test_next_reports_unusable_records.py",
+      "line": 40,
+      "text": "Gate: test_2_next_names_unusable_record_and_lists_other_items",
+      "from": "blocking",
+      "item": "record-merge-conflicts",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_upgrade_to_installed_release.py\tGate: test_1_upgrade_to_installed_release_continues_during_runs\trecord-merge-conflicts",
+      "kind": "bug",
+      "path": "tests/test_upgrade_to_installed_release.py",
+      "line": 60,
+      "text": "Gate: test_1_upgrade_to_installed_release_continues_during_runs",
+      "from": "blocking",
+      "item": "record-merge-conflicts",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

@@ -23,7 +23,8 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
-from forge import __version__, approval, board_facts, board_graph, codex, machine, native, repo, review_skip, story, task
+from forge import (__version__, approval, board_facts, board_graph, codex, machine, native, nextstate, repo,
+                   review_skip, story, task)
 
 COMMANDS = [{
     "words": "board", "run": "board", "changes_state": False,
@@ -977,10 +978,13 @@ def _copies(top: Path, landed: str, history: Item | None = None) -> list[tuple[s
                 tree = line.split()[1]
                 if tree != base_tree:
                     snapshots[tree] = dict(snapshots[base_tree])
-    texts = _blob_texts(top, list(dict.fromkeys(blob for files in snapshots.values() for blob in files.values())))
-    blobs = {blob: repo.without_size_stop(story.json_of(text)) for blob, text in texts.items()}
     state_files = {tree: {rel: blob for rel, blob in sorted(files.items()) if STATE.fullmatch(rel)}
                    for tree, files in snapshots.items()}
+    state_blobs = list(dict.fromkeys(blob for files in state_files.values() for blob in files.values()))
+    state_blob_set = set(state_blobs)
+    all_blobs = dict.fromkeys(blob for files in snapshots.values() for blob in files.values())
+    texts = _blob_texts(top, [blob for blob in all_blobs if blob not in state_blob_set])
+    blobs, unusable = nextstate.parse_blobs(repo.blob_bytes(top, state_blobs))
     # Bulk Git supplies clean state; changed and untracked state still needs fresh disk reads.
     def changed_files(path: Path) -> set[str]:
         return set(repo.git("diff", "HEAD", "--name-only", "--no-renames", "-z",
@@ -1002,10 +1006,7 @@ def _copies(top: Path, landed: str, history: Item | None = None) -> list[tuple[s
                 if rel in saved and rel not in changed:
                     state = blobs[saved[rel]]
                 else:
-                    text = (path / rel).read_text(encoding="utf-8")
-                    if text not in parsed:
-                        parsed[text] = repo.without_size_stop(story.json_of(text))
-                    state = parsed[text]
+                    state = nextstate.changed_state(path / rel, parsed)
                 found.append((rel, state, path))
     seen_states = set()
     for ref, tree in refs.items():
@@ -1016,8 +1017,8 @@ def _copies(top: Path, landed: str, history: Item | None = None) -> list[tuple[s
                     found.append((rel, blobs[blob], ref))
     if history is not None:
         history["worktrees"] = trees
-        history["ref_states"] = {ref: {rel: blobs[blob] for rel, blob in state_files[tree].items()}
-                                 for ref, tree in refs.items()}
+        history["unusable"], history["ref_states"] = nextstate.ref_states(
+            refs, state_files, blobs, unusable)
         history["docs"] = {f"{alias}:{rel}": texts[blob] for ref, tree in refs.items()
                            for alias in (ref, ref.removeprefix("refs/heads/").removeprefix("refs/remotes/"))
                            for rel, blob in snapshots[tree].items() if rel not in state_files[tree]}

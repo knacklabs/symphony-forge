@@ -31,12 +31,17 @@ COMMANDS = [{
     "listing": "| `forge sync` | Writes the generated files for both hosts, the CI workflow and the git hooks |",
 }, {
     "words": "hook merge-roadmap", "run": "merge_hook", "changes_state": False,
-    "help": "Merge the roadmap or spotted list for git",
-    "args": [((name,), {}) for name in ("base", "ours", "theirs")], "position": 285,
-    "listing": "| `forge hook merge-roadmap` | Git's merge rule for the roadmap and spotted list |",
+    "help": "Merge Forge records, the roadmap or spotted list for git",
+    "args": [*(((name,), {}) for name in ("base", "ours", "theirs")),
+             (("path",), {"nargs": "?", "default": ""})], "position": 285,
+    "listing": "| `forge hook merge-roadmap` | Git's merge rule for Forge records, the roadmap and spotted list |",
 }]
 
 MERGE_DRIVER = "forge hook merge-roadmap %O %A %B"
+RECORD_DRIVER = MERGE_DRIVER + " %P"
+RECORD_RULES = tuple(f"{path} merge=forge-record" for path in (
+    ".factory/fixes/*.json", ".factory/stories/**/story.json", ".factory/stories/**/tasks/*.json",
+    ".factory/client-signoff.json"))
 
 REFUSALS = {
     "outside": ("{path} leads outside this repo, so Forge won't write through it; remove that link.",
@@ -362,9 +367,9 @@ def _access_comment(top: str) -> str:
                    + [line for line, _ in kept[at:]])
 
 
-def merge_attributes(text: str) -> str:
+def merge_attributes(text: str, extra: tuple[str, ...] = ()) -> str:
     # The pinned Windows launcher has CRLF bytes; Git must keep the upstream copy unchanged.
-    rules = (ROADMAP_RULE, SPOTTED_RULE, *(f"{host}/skills/impeccable/scripts/impeccable.cmd -text"
+    rules = (ROADMAP_RULE, SPOTTED_RULE, *extra, *(f"{host}/skills/impeccable/scripts/impeccable.cmd -text"
                                          for host in (".claude", ".codex")))
     missing = [rule for rule in rules if rule not in text.splitlines()]
     if missing:
@@ -422,7 +427,56 @@ def merge_roadmap(base: str, ours: str, theirs: str) -> int:
 
 
 def merge_hook(args: argparse.Namespace) -> int:
+    if args.path.startswith(".factory/"):
+        return merge_record(args.base, args.ours, args.theirs)
     return merge_roadmap(args.base, args.ours, args.theirs)
+
+
+def merge_record(base: str, ours: str, theirs: str) -> int:
+    """Keep concurrent observations and the state from the furthest worker round.
+
+    A review is one snapshot: its finding numbers and dismissals must stay together.
+    Git retains both machines' earlier review snapshots in the merged history.
+    """
+    try:
+        old, mine, other = (json.loads(Path(path).read_text(encoding="utf-8") or "{}")
+                            for path in (base, ours, theirs))
+        if not all(isinstance(value, dict) for value in (old, mine, other)):
+            return 1
+        merged = dict(other if other.get("round", 0) > mine.get("round", 0) else mine)
+        if mine.get("round", 0) == other.get("round", 0):
+            missing = object()
+            for name in old.keys() | mine.keys() | other.keys():
+                if mine.get(name, missing) == old.get(name, missing):
+                    if name in other:
+                        merged[name] = other[name]
+                    else:
+                        merged.pop(name, None)
+        # Stories have no worker round. Keep the complete human approval, including
+        # its plan hash, when a concurrent read updates the rest of the record.
+        approvals = [side["approval"] for side in (mine, other) if side.get("approval")]
+        if approvals and mine.get("approval") != other.get("approval"):
+            merged["approval"] = max(approvals, key=lambda value: (value.get("round", 0), value.get("at", "")))
+        from forge.review import blocking
+        from forge.review_history import merge_review_snapshots
+
+        reviews = merge_review_snapshots([side["review"] for side in (merged, mine, other)
+                                          if side.get("review")])
+        if reviews:
+            merged["review"] = next((result for result in reviews if blocking(result)), reviews[0])
+        if "rounds" in mine or "rounds" in other:
+            merged["rounds"] = merge_review_snapshots(mine.get("rounds", []) + other.get("rounds", []))
+        if "steps" in mine or "steps" in other:
+            local, remote = mine.get("steps", []), other.get("steps", [])
+            if not isinstance(local, list) or not isinstance(remote, list):
+                return 1
+            values = list(local)
+            values.extend(value for value in remote if value not in values)
+            merged["steps"] = sorted(values, key=lambda step: step.get("at", ""))
+    except (ValueError, TypeError, AttributeError):
+        return 1
+    Path(ours).write_bytes((json.dumps(merged, indent=2, sort_keys=True) + "\n").encode("utf-8"))
+    return 0
 
 
 def _synced_text(source: str, packaged: str) -> str:
@@ -699,14 +753,15 @@ def install_merge_rules(top: Path) -> bool:
     # Local attributes and config are shared by worktrees, including on an older default branch.
     common = Path(repo.git("rev-parse", "--path-format=absolute", "--git-common-dir", cwd=top))
     current_attributes = read(common / "info/attributes")
-    attributes = merge_attributes(current_attributes)
+    attributes = merge_attributes(current_attributes, RECORD_RULES)
     changed = current_attributes != attributes
     if changed:
         write_file(common, "info/attributes", attributes)
-    current = repo.run("git", "config", "--get", "merge.forge-roadmap.driver", cwd=top).stdout
-    if current.strip() != MERGE_DRIVER:
-        repo.git("config", "merge.forge-roadmap.driver", MERGE_DRIVER, cwd=top)
-        changed = True
+    for name, driver in (("forge-roadmap", MERGE_DRIVER), ("forge-record", RECORD_DRIVER)):
+        current = repo.run("git", "config", "--get", f"merge.{name}.driver", cwd=top).stdout
+        if current.strip() != driver:
+            repo.git("config", f"merge.{name}.driver", driver, cwd=top)
+            changed = True
     return changed
 
 

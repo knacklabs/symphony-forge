@@ -580,10 +580,12 @@ def stack_base(item: str, blockers: list[str], main: str, top: Path | None = Non
         refuse(REFUSALS["two_bases"], item=item, deps=", ".join(blockers))
     base = blockers[0]
     ref = "origin/task/" + base.replace("/", "-")
-    state = json.loads(show(ref, repo.state_path(base), top) or "{}")
+    from forge import nextstate
+
+    state = nextstate.read_ref_state(base, ref, top)
     if not state or state.get("branch") != ref.removeprefix("origin/"):
         local = ref.removeprefix("origin/")
-        local_state = json.loads(show(local, repo.state_path(base), top) or "{}")
+        local_state = nextstate.read_ref_state(base, local, top)
         if local_state.get("branch") == local:
             refuse(REFUSALS["base_local"], item=item, base=base)
         refuse(REFUSALS["base_not_started"], item=item, base=base)

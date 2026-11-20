@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Any
 
 from forge import (__version__, approval, board, board_facts, close, codex, gaps, githooks, machine, migration_warnings,
-                   journey, land, native, owner_choices, records, repo, review, spotted, story, score, task, time_records, upgrade)
+                   journey, land, native, nextstate, owner_choices, records, repo, review, story, score, task, time_records, upgrade)
 from forge.task import _merged, _started, can_start, developer, github_login, owner, sections, start_base, unbuilt_fix, waits_for
 from forge.task import rows as task_rows
 
@@ -193,7 +193,7 @@ def context_hook(args: Any) -> int:
     top = repo.root()
     # Short and offline: no GitHub, story history or per-worktree settings. The step line needs
     # every story's record, so it stays in forge next.
-    print("\n".join(_hotspots(top, {}, 3) + ["Run forge next for the full picture."]))
+    print("\n".join(nextstate.hotspots(top, {}, 3) + ["Run forge next for the full picture."]))
     notes = story.show(top, story.landed_ref(top), "docs/handover.md") or ""
     heading = "## Decisions and lessons\n"
     if heading in notes:
@@ -236,6 +236,8 @@ def _report(top: Path, history: dict[str, Any] | None = None,
     fixes: list[tuple[dict[str, Any], list[str]]] = []
     parts: list[tuple[str, dict[str, Any]]] = []
     refusals: dict[Path, str] = {}
+    unusable_records = {repo.REFUSALS["bad_state"][0].format(path=rel, problem=problem)
+                        for (_, rel), problem in (history or {}).get("unusable", {}).items()}
     # Only forge next asks GitHub for scheduled runs; hooks stay offline. An open fix for a
     # failed run shows its own lines under it.
     alerts = (facts["alerts"] if facts is not None else _failed_schedules(top)) if schedules else {}
@@ -264,7 +266,7 @@ def _report(top: Path, history: dict[str, Any] | None = None,
         prs.update({pr["headRefName"]: {**pr, **prs.get(pr["headRefName"], {})}
                     for pr in (facts["checks"] if facts is not None else board._machine_prs(top))
                     if isinstance(pr.get("headRefName"), str)})
-    stories = _stories(top, history)
+    stories = _stories(top, history, refusals)
     if history is not None and any(
             rel in history["expired"] and (match := board.STATE.fullmatch(rel))["task"]
             and match["key"] in stories and stories[match["key"]][1].get("status") != "done"
@@ -278,7 +280,7 @@ def _report(top: Path, history: dict[str, Any] | None = None,
         if state.get("status") == "done":
             promoted.update(part["from_fix"] for name in task.rows(task.sections(text))
                             if re.fullmatch(r"[A-Z0-9][A-Z0-9-]*", name)
-                            and (part := _task(top, key, name, trees, merged_prs, history, prs)).get("from_fix"))
+                            and (part := _task(top, key, name, trees, merged_prs, history, prs, refusals)).get("from_fix"))
             continue
         title = state.get("title") or key
         readiness: dict[str, Any] = {}
@@ -304,9 +306,9 @@ def _report(top: Path, history: dict[str, Any] | None = None,
     lines += unassigned_starts
     for branch, path in sorted(trees.items()):
         kind, _, name = branch.partition("/")  # forge/<name> is migrate's fix
-        state = (repo.read_state(name, path) if kind in ("fix", "forge")
+        state = (nextstate.read_state(name, path, refusals) if kind in ("fix", "forge")
                  and re.fullmatch(r"[a-z0-9][a-z0-9-]*", name) else None)
-        if state is not None:
+        if state is not None and state.get("status") != "unusable":
             state = at_ref(top, name, state, prs.get(branch))
             if state.get("status") == "dropped" or name in promoted:
                 continue
@@ -332,6 +334,8 @@ def _report(top: Path, history: dict[str, Any] | None = None,
                     else story.show(top, landed, repo.state_path(name)) is not None)):
             continue
         if state := remote_state(top, name, branch, prs.get(branch), history):
+            if state.get("status") == "unusable":
+                continue
             if state.get("status") == "dropped" or name in promoted:
                 continue
             found = _item(name, f"The fix {name}", state, top, None, prs, refusals)
@@ -360,7 +364,6 @@ def _report(top: Path, history: dict[str, Any] | None = None,
     # Appended statistics never enter machine_next's first line or command.
     if (history is None or numbers) and repo.now()[:10] >= board.CHECK_DATE:
         lines.append(board.numbers_line(top, _report_config(top, refusals)["checks"]))
-    lines += [f"{path}: {reason}" for path, reason in refusals.items()]
     build = []
     if ((top / "forge.toml").is_file() and cfg["repo"] == "client"
             and not any(line.startswith("Next: git worktree remove ") for line in lines)
@@ -381,8 +384,11 @@ def _report(top: Path, history: dict[str, Any] | None = None,
     item_states.update((f"The fix {state['branch'].partition('/')[2]}", state)
                        for state, _ in fixes if state.get("branch"))
     report = (build + _due(top, history) + pinned + [line for alert in alerts.values() for line in alert]
-            + _hotspots(top, trees) + _overlaps(top, list(item_states.items()), prs, (history or {}).get("states", {}))
-            + lines + [f"Builds running: {running} of {agents['size']}"])
+            + nextstate.hotspots(top, trees, refusals=refusals)
+            + _overlaps(top, list(item_states.items()), prs, (history or {}).get("states", {}))
+            + sorted(unusable_records)
+            + lines + [f"{path}: {reason}" for path, reason in refusals.items()]
+            + [f"Builds running: {running} of {agents['size']}"])
     ready = [(index, report[index - 1].split(" is ready to merge", 1)[0].removeprefix("The fix "), line)
              for index, line in enumerate(report) if line.startswith(("Next: forge merge ", "Next: merge "))
              and index and " is ready to merge" in report[index - 1]]
@@ -438,46 +444,6 @@ def _failed_schedules(top: Path) -> dict[str, list[str]]:
                        *([f"Failing tests: {', '.join(run['tests'])}."] if run["tests"] else []),
                        f'Next: forge fix start "{why}" --done "{done}" --kind mechanical']
     return alerts
-
-
-def _hotspots(top: Path, trees: dict[str, Path], cap: int | None = None) -> list[str]:
-    """Hotspots on the default branch, unless their fix already has a worktree. With a cap, the
-    session context names that many and points to forge next for the rest."""
-    ref = story.landed_ref(top)
-    try:
-        items = spotted.read(top, ref)
-        old = spotted.before_signoff(top, ref, offline=cap is not None) if items else set()
-        items = [entry for entry in items if entry["key"] not in old]
-    except spotted.Unreadable as problem:
-        return [f"{spotted.PATH} on the default branch can't be read, so no hotspots are "
-                f"listed: {problem}."]
-    hotspots = spotted.hotspots(items)
-    if not hotspots:
-        return []
-    files = set(repo.git("ls-tree", "-r", "-z", "--name-only", ref, cwd=top).split("\0"))
-    whys = {(repo.read_state(branch.partition("/")[2], path) or {}).get("why")
-            for branch, path in trees.items()
-            if re.fullmatch(r"(?:fix|forge)/[a-z0-9][a-z0-9-]*", branch)}
-    lines: list[list[str]] = []
-    for hotspot in hotspots:
-        path, count = hotspot["path"], hotspot["count"]
-        why, done = spotted.fix_text(path, hotspot["texts"])
-        if path not in files or why in whys:
-            continue
-        reason = (f"{count} noted problems are open there." if hotspot["reason"] == "open"
-                  else f"{count} changes had the same kind of serious review finding there.")
-        suffix = Path(path).suffix.lower()
-        kind = ("ui" if suffix in {".html", ".css", ".scss", ".jsx", ".tsx", ".vue", ".svelte"}
-                or suffix in {".ts", ".js"} and set(Path(path).parts) & {
-                    "web", "frontend", "components", "screens", "pages"}
-                else "backend" if suffix in {".py", ".ts", ".js", ".go", ".rs", ".java", ".rb",
-                                             ".sql", ".prisma"} else "mechanical")
-        lines.append([f"{path} keeps breaking: {reason}",
-                      f'Next: forge fix start "{why}" --done "{done}" --kind {kind}'])
-    if cap is None:
-        return [line for block in lines for line in block]
-    more = f"{len(lines) - cap} more files keep breaking. Run forge next for the list."
-    return [block[0] for block in lines[:cap]] + ([more] if len(lines) > cap else [])
 
 
 def _needs_demo_address(top: Path) -> bool:
@@ -566,7 +532,8 @@ def _idle(top: Path) -> list[str]:
     return ["No story or fix is in progress.", 'Next: forge start "<idea>"']
 
 
-def _stories(top: Path, history: dict[str, Any] | None = None) -> dict[str, tuple[Path | None, dict[str, Any], str]]:
+def _stories(top: Path, history: dict[str, Any] | None = None,
+             refusals: dict[Path, str] | None = None) -> dict[str, tuple[Path | None, dict[str, Any], str]]:
     """Each story's worktree (None once it is only on the default branch), state and doc text."""
     found: dict[str, tuple[Path | None, dict[str, Any], str]] = {}
     ref = story.landed_ref(top)
@@ -575,16 +542,19 @@ def _stories(top: Path, history: dict[str, Any] | None = None) -> dict[str, tupl
         states = {key: story.completed(top, key, ref) for key in
                   re.findall(r"^\.factory/stories/([A-Z][A-Z0-9-]*)/story\.json$", listing, re.M)}
     else:
+        bad_landed = {rel for (source, rel) in history.get("unusable", {}) if source == history["landed"]}
         states = {key: state for key, state in history["stories"].items()
-                  if repo.state_path(key) not in history["expired"]}
+                  if repo.state_path(key) not in history["expired"]
+                  and repo.state_path(key) not in bad_landed}
     for key, state in states.items():
         found[key] = (None, state, (history["docs"].get(f"{ref}:plans/{key}.md", "") if history is not None
                                     else story.show(top, ref, f"plans/{key}.md") or ""))
     for key, path in story.stories_here(top).items():
         if history is not None and repo.state_path(key) in history["expired"]:
             continue
-        state, doc = repo.read_state(key, path), path / "plans" / f"{key}.md"
-        if state is not None and found.get(key, (None, {}, ""))[1].get("status") != "done":
+        state, doc = nextstate.read_state(key, path, refusals), path / "plans" / f"{key}.md"
+        if (state is not None and state.get("status") != "unusable"
+                and found.get(key, (None, {}, ""))[1].get("status") != "done"):
             found[key] = (path, state, doc.read_text(encoding="utf-8") if doc.is_file() else "")
     for branch in [ref.removeprefix("refs/remotes/origin/") for ref in branch_tips(top)
                    if ref.startswith("refs/remotes/origin/story/")]:
@@ -598,6 +568,8 @@ def _stories(top: Path, history: dict[str, Any] | None = None) -> dict[str, tupl
             state = story.json_of(story.show(top, ref, repo.state_path(key)))
         else:  # the board's one read of every ref
             full = f"refs/heads/{ref}" if ref.startswith("story/") else f"refs/remotes/{ref}" if ref.startswith("origin/story/") else ref
+            if (full, repo.state_path(key)) in history.get("unusable", {}):
+                continue
             state = history["ref_states"].get(full, {}).get(repo.state_path(key), {})
         if state:
             found[key] = (story.stories_here(top).get(key), state, story._plan(top, key, history=history))
@@ -621,7 +593,7 @@ def _story(top: Path, key: str, path: Path | None, text: str,
     ref = story.plan_ref(top, key, history)
     if ref != story.landed_ref(top):
         text = story._plan(top, key, history=history)
-    states = {name: _task(top, key, name, trees, merged_prs, history, prs)
+    states = {name: _task(top, key, name, trees, merged_prs, history, prs, refusals)
               for name in task_rows(sections(text)) if re.fullmatch(r"[A-Z0-9][A-Z0-9-]*", name)}
     if readiness is not None:
         readiness.update(stage="planning", parts={}, waits={}, stacked={})
@@ -671,14 +643,15 @@ def _story(top: Path, key: str, path: Path | None, text: str,
     lines: list[str] = cleanup
     part_statuses: dict[str, str] = {}
     for task in doc["tasks"]:
-        if states[task["id"]] and task["id"] not in merged:
+        if (states[task["id"]] and states[task["id"]].get("status") != "unusable"
+                and task["id"] not in merged):
             item = f"{key}/{task['id']}"
             state = states[task["id"]]
             found = _item(item, item, state, top,
                           trees.get(f"task/{key}-{task['id']}"), prs, refusals, part_statuses)
             if (base := state.get("stacked_on")) and "/" in base:
                 base_key, base_name = base.split("/")
-                base_state = _task(top, base_key, base_name, trees, merged_prs, history, prs)
+                base_state = _task(top, base_key, base_name, trees, merged_prs, history, prs, refusals)
                 pr = prs.get(state["branch"], {})
                 head = review_ref(top, state["branch"], pr)
                 built = part_statuses.get(item) == "ready" or (
@@ -716,7 +689,8 @@ def _story(top: Path, key: str, path: Path | None, text: str,
     busy = _started(main, top, history)
     waits = {row["id"]: waits_for(f"{key}/{row['id']}", [dep for dep in row["after"]
              if not _merged(main, dep if "/" in dep else f"{key}/{dep}", top)], row["scope"], busy)
-             for row in doc["tasks"] if not states[row["id"]]}
+             for row in doc["tasks"] if not states[row["id"]] and not any(
+                 states.get(dep.removeprefix(f"{key}/"), {}).get("status") == "unusable" for dep in row["after"])}
     admission = {row["id"]: repo.command_fact(
         ("can start", f"{key}/{row['id']}", tuple(row["after"]), tuple(row["scope"]), main), top,
         lambda: can_start(f"{key}/{row['id']}", row["after"], row["scope"], busy, main, top))
@@ -839,7 +813,8 @@ def _read_loop(target: str, doc: str, notes: str, where: Path | None = None) -> 
 
 
 def _task(top: Path, key: str, task: str, trees: dict[str, Path], merged_prs: set[str],
-          history: dict[str, Any] | None = None, prs: dict[str, dict[str, Any]] | None = None) -> dict[str, Any]:
+          history: dict[str, Any] | None = None, prs: dict[str, dict[str, Any]] | None = None,
+          refusals: dict[Path, str] | None = None) -> dict[str, Any]:
     """A task's state: merged on the default branch or GitHub, else from its worktree."""
     item = f"{key}/{task}"
     if history is not None:
@@ -851,8 +826,11 @@ def _task(top: Path, key: str, task: str, trees: dict[str, Path], merged_prs: se
         return {**landed, "status": "merged"}
     branch = f"task/{key}-{task}"
     path = trees.get(branch)
-    state = ((repo.read_state(item, path) if path else remote_state(top, item, branch, (prs or {}).get(branch), history))
+    state = ((nextstate.read_state(item, path, refusals) if path else
+              remote_state(top, item, branch, (prs or {}).get(branch), history))
              or {})
+    if state.get("status") == "unusable":
+        return state
     return {**state, "status": "merged"} if branch in merged_prs else state
 
 
